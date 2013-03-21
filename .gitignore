@@ -5,3 +5,4 @@ bin
 generated
 .jnilib
 .gradle
+gradle.properties
