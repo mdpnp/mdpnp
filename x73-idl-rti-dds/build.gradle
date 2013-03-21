@@ -27,27 +27,6 @@ jar.doFirst {
   }
 }
 
-// mdpnp repositories
-repositories {
-  maven { 
-    credentials { 
-      username ICE_IC01_USER
-      password ICE_IC01_PASSWORD
-    }
-    url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-rti-infrastructure-community'
-  }
-  // Repository for external libs specific to mdpnp
-  maven { 
-    url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-release-local'
-  }
-  // Repository proxy for maven central
-  maven { 
-    url 'http://arvi.mgh.harvard.edu:8080/artifactory/repo1'
-  }
-  // Fall back to maven central actual as necessary
-  mavenCentral();
-}
-
 dependencies { 
   // nddsjava.jar is the java binding library for RTI DDS
   compile group: 'org.mdpnp.rti.dds', name: 'nddsjava-rt', version: '5.0'
