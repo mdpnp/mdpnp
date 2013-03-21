@@ -1,0 +1,148 @@
+/**
+ * The following nomenclature partitions exist
+ */
+enum NomPartitionVals
+{
+  nom_part_unspec = 0,
+  nom_part_obj    = 1,  /// object-oriented partition
+  nom_part_metric = 2,  /// metric [supervisory control and data acquisition
+                        ///  (SCADA)] partition
+  nom_part_alert  = 3,  /// alerts/events partition
+  nom_part_dim    = 4,  /// dimensions partition
+  nom_part_vattr  = 5,  /// virtual attribute partition for Operation objects
+  nom_part_pgrp   = 6,  /// parameter group ID partition
+  nom_part_sites  = 7,  /// measurement and body site locations
+  nom_part_infrastruct  = 8,    /// infrastructure elements partition
+  nom_part_fef  = 9,        /// file exchange format partition
+  nom_part_ecg_extn = 10,   /// ECG extensions partition
+  nom_part_ext_nom  = 256,  /// IDs of other nomenclatures and dictionaries
+  nom_part_priv     = 1024  /// private partition
+};
+
+enum OperationalStateVals
+{
+  os_disabled  = 0,
+  os_enabled   = 1,
+  os_not_available = 2
+};
+
+enum AdministrativeStateVals
+{
+  as_locked  = 0,
+  as_unlocked  = 1,
+  as_shutting_down  = 2
+};
+
+enum ProdSpecTypeVals
+{
+  ps_unspecified    = 0,
+  ps_serial_number  = 1,
+  ps_part_number  = 2,
+  ps_hw_revision  = 3,
+  ps_sw_revision  = 4,
+  ps_fw_revision  = 5,
+  ps_protocol_revision  = 6
+};
+
+enum MetricStatus {
+  metric_off = 0,
+  metric_not_ready = 1,
+  metric_standby = 2,
+  metric_transduc_discon = 8,
+  metric_hw_discon = 9
+};
+
+enum MetricStructureType {
+  simple = 0,
+  compound = 1,
+  complex = 2
+};
+
+enum MetricAccess {
+  avail_intermittent = 0,
+  upd_periodic = 1,
+  upd_episodic = 2,
+  msmt_noncontinuous = 3,
+  acc_evrep = 4,
+  acc_get = 5,
+  acc_scan = 6,
+  gen_opt_sync = 8,
+  sc_opt_normal = 10,
+  sc_opt_extensive = 11,
+  sc_opt_long_pd_avail = 12,
+  sc_opt_confirm = 13,
+  sc_opt_refresh = 14
+};
+
+enum MetricCategory {
+  mcat_unspec = 0,
+  auto_measurement = 1,
+  manual_measurement = 2,
+  auto_setting = 3,
+  manual_setting = 4,
+  auto_calculation = 5,
+  manual_calculation = 6
+};
+
+enum MetricRelevance {
+  rv_unspec = 0,
+  rv_internal = 1,
+  rv_store_only = 2,
+  rc_no_recording = 3,
+  rv_phys_ev_ind = 4,
+  rv_btb_metric = 5,
+  rv_app_specific = 8,
+  rv_service = 9
+};
+
+enum MetricCalType {
+  cal_unspec = 0,
+  cal_offset = 1,
+  cal_gain = 2,
+  cal_two_point = 3
+};
+
+enum MetricCalState {
+  not_calibrated = 0,
+  cal_required = 1,
+  calibrated = 2
+};
+
+enum SimpleColorVals
+{
+  col_black   = 0,
+  col_red     = 1,
+  col_green   = 2,
+  col_yellow  = 3,
+  col_blue    = 4,
+  col_magenta = 5,
+  col_cyan    = 6,
+  col_white   = 7
+};
+
+enum CharSetVals
+{
+  charset_unspec  = 0,
+  charset_iso_10646_ucs_2  = 1000,  /// ISO 10646 two-octet character encoding scheme, big endian
+  charset_iso_10646_ucs_4  = 1001,  /// ISO 10646 four-octet character encoding scheme, big endian
+  charset_iso_8859_1  = 4,  /// encoding according to ISO/IEC 8859 Part 1
+  charset_iso_8859_2  = 5,  /// encoding according to ISO/IEC 8859 Part 2
+  charset_iso_8859_3  = 6,  /// encoding according to ISO/IEC 8859 Part 3
+  charset_iso_8859_4  = 7,  /// encoding according to ISO/IEC 8859 Part 4
+  charset_iso_8859_5  = 8,  /// encoding according to ISO/IEC 8859 Part 5
+  charset_iso_8859_6  = 9,  /// encoding according to ISO/IEC 8859 Part 6
+  charset_iso_8859_7  = 10,  /// encoding according to ISO/IEC 8859 Part 7
+  charset_iso_8859_8  = 11,  /// encoding according to ISO/IEC 8859 Part 8
+  charset_iso_8859_9  = 12,  /// encoding according to ISO/IEC 8859 Part 9
+  charset_iso_8859_10  = 13,  /// encoding according to ISO/IEC 8859 Part 10
+  charset_iso_8859_13  = 109,  /// encoding according to ISO/IEC 8859 Part 13
+  charset_iso_8859_14  = 110,  /// encoding according to ISO/IEC 8859 Part 14
+  charset_iso_8859_15  = 111,  /// encoding according to ISO/IEC 8859 Part 15
+  charset_iso_2022_kr  = 37,  /// encoding according to RFC 1557 (Korean Character Encoding)
+  charset_ks_c_5601  = 36,  /// encoding according to Korean Industrial Standard, KSC 5601-1987
+  charset_iso_2022_jp  = 39,  /// encoding according to RFC 1468 (Japanese Character Encoding)
+  charset_iso_2022_jp_2  = 40,  /// encoding according to RFC 1554 (Japanese Character Encoding)
+  charset_jis_x0208  = 63,  /// encoding according to JIS X0208:1983,1990
+  charset_iso_2022_cn  = 104,  /// encoding according to RFC 1922 (Chinese Character Encoding)
+  charset_gb_2312  = 2025  /// encoding according to Chinese Graphic
+};

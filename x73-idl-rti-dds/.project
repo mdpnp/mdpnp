@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>ice-types</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.jdt.core.javabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.springsource.ide.eclipse.gradle.core.nature</nature>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>org.eclipse.jdt.groovy.core.groovyNature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>classes</name>
+			<type>2</type>
+			<location>/Users/jplourde/Documents/workspace/ice-types/target/classes</location>
+		</link>
+		<link>
+			<name>nddsjava.jar</name>
+			<type>2</type>
+			<location>/Users/jplourde/Documents/workspace/ice-types/${env.NDDSHOME}/class/nddsjava.jar</location>
+		</link>
+	</linkedResources>
+</projectDescription>

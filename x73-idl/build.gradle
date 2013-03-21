@@ -1,0 +1,25 @@
+apply plugin: 'maven'
+
+defaultTasks 'build'
+
+// early alpha
+version = 0.1
+group = 'org.mdpnp'
+
+task build(type: Zip) { 
+  baseName = project.name
+  from 'src/main/idl'
+  include '**/*.idl'
+}
+
+artifacts {  archives build }
+
+uploadArchives { 
+  repositories { 
+    mavenDeployer { 
+      repository(url: 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-release-local') { 
+	authentication(userName: MDPNP_WRITE_USER, password: MDPNP_WRITE_PASSWORD)
+      }
+    }
+  }
+}

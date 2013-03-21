@@ -1,0 +1,7 @@
+*~
+build
+bin
+.DS_Store
+generated
+.jnilib
+.gradle

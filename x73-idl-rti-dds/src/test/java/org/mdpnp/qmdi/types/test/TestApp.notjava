@@ -1,0 +1,164 @@
+package org.mdpnp.qmdi.types.test;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+import org.mdpnp.qmdi.types.DIMT_Numeric;
+import org.mdpnp.qmdi.types.DIMT_NumericDataReader;
+import org.mdpnp.qmdi.types.DIMT_NumericDataWriter;
+import org.mdpnp.qmdi.types.DIMT_NumericTypeSupport;
+import org.mdpnp.qmdi.types.MetricSpecUpd;
+import org.mdpnp.qmdi.types.MetricSpecUpdDataReader;
+import org.mdpnp.qmdi.types.MetricSpecUpdTypeSupport;
+import org.mdpnp.qmdi.types.NuObsValUpd;
+import org.mdpnp.qmdi.types.NuObsValUpdDataReader;
+import org.mdpnp.qmdi.types.NuObsValUpdTypeSupport;
+import org.mdpnp.qmdi.types.NuObsValue;
+
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.DataReader;
+import com.rti.dds.subscription.DataReaderListener;
+import com.rti.dds.subscription.LivelinessChangedStatus;
+import com.rti.dds.subscription.RequestedDeadlineMissedStatus;
+import com.rti.dds.subscription.RequestedIncompatibleQosStatus;
+import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleLostStatus;
+import com.rti.dds.subscription.SampleRejectedStatus;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriberListener;
+import com.rti.dds.subscription.SubscriptionMatchedStatus;
+import com.rti.dds.topic.Topic;
+
+public class TestApp {
+	enum PubOrSub {
+		Pub,Sub
+	};
+	
+	public static void main( String[] args) throws InterruptedException, IOException {
+		DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(0, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		DIMT_NumericTypeSupport.register_type(participant, DIMT_NumericTypeSupport.get_type_name());
+		Topic topic1 = participant.create_topic(DIMT_NumericTypeSupport.get_type_name(), DIMT_NumericTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		Topic topic2 = participant.create_topic(NuObsValUpdTypeSupport.get_type_name(), NuObsValUpdTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		Topic topic3 = participant.create_topic(MetricSpecUpdTypeSupport.get_type_name(), MetricSpecUpdTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		
+		
+		
+		PubOrSub pos = null;
+		if(args.length >= 1) {
+			if("pub".equals(args[0])) {
+				pos = PubOrSub.Pub;
+			} else if("sub".equals(args[0])) {
+				pos = PubOrSub.Sub;
+			}
+		}
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		while(null == pos) {
+			System.err.println("pub or sub?");
+			String line = br.readLine();
+			if("pub".equals(line)) {
+				pos = PubOrSub.Pub;
+			} else if("sub".equals(line)) {
+				pos = PubOrSub.Sub;
+			}
+		}
+		
+		
+		switch(pos) {
+		case Pub:
+			Publisher publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+	
+			DIMT_NumericDataWriter writer = (DIMT_NumericDataWriter) publisher.create_datawriter(topic1, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+//			DIMT_NumericDataWriter writer = (DIMT_NumericDataWriter) publisher.create_datawriter(topic1, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+			
+			DIMT_Numeric num = (DIMT_Numeric) DIMT_Numeric.create();
+			NuObsValue nov = (NuObsValue) NuObsValue.create();
+			nov.value = 95.0;
+			
+			num.compound_nu_obs_value.values.add(nov);
+//			num.compound_nu_obs_value = null;
+			
+			while(true) {
+				writer.write(num, InstanceHandle_t.HANDLE_NIL);
+				
+				Thread.sleep(2000L);
+			}
+			
+		case Sub:
+			DataReaderListener sl = new DataReaderListener() {
+				private final SampleInfo sampleInfo = new SampleInfo();
+				private final NuObsValUpd novu = new NuObsValUpd();
+				private final DIMT_Numeric num = new DIMT_Numeric();
+				private final MetricSpecUpd msu = new MetricSpecUpd();
+				
+				@Override
+				public void on_subscription_matched(DataReader arg0,
+						SubscriptionMatchedStatus arg1) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void on_sample_rejected(DataReader arg0, SampleRejectedStatus arg1) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void on_sample_lost(DataReader arg0, SampleLostStatus arg1) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void on_requested_incompatible_qos(DataReader arg0,
+						RequestedIncompatibleQosStatus arg1) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void on_requested_deadline_missed(DataReader arg0,
+						RequestedDeadlineMissedStatus arg1) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void on_liveliness_changed(DataReader arg0,
+						LivelinessChangedStatus arg1) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void on_data_available(DataReader arg0) {
+					if(arg0 instanceof DIMT_NumericDataReader) {
+						DIMT_NumericDataReader r = (DIMT_NumericDataReader) arg0;
+						r.take_next_sample(num, sampleInfo);
+						System.out.println(num);
+					} else if(arg0 instanceof NuObsValUpdDataReader) {
+						NuObsValUpdDataReader r = (NuObsValUpdDataReader) arg0;
+						r.take_next_sample(novu, sampleInfo);
+						System.out.println(novu);
+					} else if(arg0 instanceof MetricSpecUpdDataReader) {
+						MetricSpecUpdDataReader r = (MetricSpecUpdDataReader) arg0;
+						r.take_next_sample(msu, sampleInfo);
+						System.out.println(msu);
+					}
+				}
+			};
+			Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+			//			DIMT_NumericDataReader reader = (DIMT_NumericDataReader) subscriber.create_datareader(topic, Subscriber.DATAREADER_QOS_DEFAULT, sl, StatusKind.DATA_AVAILABLE_STATUS);
+			break;
+		default:
+		}
+		
+		
+		
+	}
+}
