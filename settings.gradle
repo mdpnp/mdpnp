@@ -1,1 +1,1 @@
-include 'x73-idl', 'x73-idl-rti-dds', 'oridion-capnostream', 'x73-prototype'
+include 'data-types:x73-idl', 'data-types:x73-idl-rti-dds', 'data-types:x73-prototype'

@@ -6,3 +6,4 @@ generated
 .jnilib
 .gradle
 gradle.properties
+.settings/
