@@ -1,2 +1,35 @@
 defaultTasks 'build'
 
+subprojects { 
+  repositories {
+    // Repository for a build of purejavacomm
+    maven {
+      url 'http://www.sparetimelabs.com/maven2'
+    }
+    
+    
+    // Repository for RTI artifacts available to members of the infrastructure community
+    if(project.hasProperty('ICE_IC01_USER') && project.hasProperty('ICE_IC01_PASSWORD')) {
+      maven { 
+	credentials { 
+	  username ICE_IC01_USER
+	  password ICE_IC01_PASSWORD
+	}
+	url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-rti-infrastructure-community'
+      }
+    } else {
+      println "No access to ICE_IC01 infrastructure community artifacts"
+    }
+
+    // Repository for external libs specific to mdpnp
+    maven { 
+      url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-release-local'
+    }
+    // Repository proxy for maven central
+    maven { 
+      url 'http://arvi.mgh.harvard.edu:8080/artifactory/repo1'
+    }
+    // Fall back to maven central actual as necessary
+    mavenCentral();
+  }
+}
