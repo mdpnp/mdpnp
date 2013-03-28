@@ -56,7 +56,7 @@ task rtiddsgenExplodeResources(type: Copy) {
   configurations.rtiddsgen.filter { 
     it.toString().endsWith(".zip")}.each { 
     from zipTree(it)}
-  into 'build/rtiddsgen'
+  into new File(project.projectDir, 'build/rtiddsgen').getAbsolutePath()
 }
 
 // Runs the RTI DDS Generate code generator for all idl files under src/main/idl
@@ -67,7 +67,11 @@ task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) << {
   FileTree idlFiles = project(':data-types:x73-idl').build.source
 
   //println idlFiles
-  String loc = new File('build/rtiddsgen/jcpp').getAbsolutePath()
+  String loc = new File(project.projectDir, 'build/rtiddsgen/jcpp').getAbsolutePath()
+
+  if(System.properties['os.name'].toLowerCase().contains("windows")) {
+    loc = loc + '.cmd'
+  }
 
   String myMain = 'com.rti.ndds.nddsgen.Main'
   List<String> myArgs = ['-language', 'Java', /*'-package', 'org.mdpnp.qmdi.types',*//*, '-ppDisable', */ '-ppPath', loc, '-d', 'generated/src/main/java', '-ppOption', '-I'+project(':data-types:x73-idl').projectDir+'/src/main/idl', '-replace', '-inputIdl']
