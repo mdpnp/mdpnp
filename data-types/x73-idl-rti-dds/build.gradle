@@ -37,6 +37,7 @@ dependencies {
   // all these dependencies are for the code generator
   rtiddsgen group: 'com.rti.dds', name: 'rtiddsgen-resource', version: '5.0'
   rtiddsgen group: 'com.rti.dds', name: 'rtiddsgen', version: '5.0'
+  rtiddsgen group: 'org.anarres', name: 'cpp-bin', version: '1.2.6'
   rtiddsgen group: 'xalan', name: 'xalan', version: '2.7.1'
   rtiddsgen group: 'org.antlr', name: 'antlr', version: '3.5'
   rtiddsgen group: 'org.aspectj', name: 'aspectjrt', version: '1.7.2'
@@ -66,9 +67,10 @@ task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) << {
   FileTree idlFiles = project(':data-types:x73-idl').build.source
 
   //println idlFiles
+  String loc = new File('build/rtiddsgen/jcpp').getAbsolutePath()
 
   String myMain = 'com.rti.ndds.nddsgen.Main'
-  List<String> myArgs = ['-language', 'Java', /*'-package', 'org.mdpnp.qmdi.types',*/ '-d', 'generated/src/main/java', '-ppOption', '-I'+project(':data-types:x73-idl').projectDir+'/src/main/idl', '-replace', '-inputIdl']
+  List<String> myArgs = ['-language', 'Java', /*'-package', 'org.mdpnp.qmdi.types',*//*, '-ppDisable', */ '-ppPath', loc, '-d', 'generated/src/main/java', '-ppOption', '-I'+project(':data-types:x73-idl').projectDir+'/src/main/idl', '-replace', '-inputIdl']
   
   for(File f : idlFiles) { 
     println 'Generating from ' + f.name
