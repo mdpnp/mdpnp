@@ -7,7 +7,30 @@ subprojects {
       url 'http://www.sparetimelabs.com/maven2'
     }
     
-    
+    // Repository for javacv/javacpp
+    maven { 
+      url 'http://maven2.javacv.googlecode.com/git/'
+    }
+
+    // Repository for jogamp
+    maven { 
+      url 'http://www.jogamp.org/deployment/maven/'
+    }
+
+    // Repository for restlet
+    maven { 
+      url 'http://maven.restlet.org'
+    }
+
+    // specifically javax.transaction.jta 1.0.1B only exists here in jar form (pom only in maven central)
+    maven { 
+      url 'http://download.java.net/maven/2/'
+    }
+
+    maven { 
+      url 'http://maven.eclipse.org'
+    }
+
     // Repository for RTI artifacts available to members of the infrastructure community
     if(project.hasProperty('ICE_IC01_USER') && project.hasProperty('ICE_IC01_PASSWORD')) {
       maven { 
@@ -29,6 +52,7 @@ subprojects {
     maven { 
       url 'http://arvi.mgh.harvard.edu:8080/artifactory/repo1'
     }
+    
     // Fall back to maven central actual as necessary
     mavenCentral();
   }
