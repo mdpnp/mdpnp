@@ -16,6 +16,6 @@ if(hasProperty('ICE_IC01_USER') && hasProperty('ICE_IC01_PASSWORD')) {
   include 'data-types:x73-prototype'
 }
 
-//include 'himss-2013:docsubmit'
-//include 'himss-2013:docreceive'
+include 'himss-2013:docsubmit'
+include 'himss-2013:docreceive'
 

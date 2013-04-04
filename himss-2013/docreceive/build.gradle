@@ -1,0 +1,52 @@
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'ear'
+defaultTasks 'build'
+
+version = '0.1'
+group = 'org.mdpnp'
+
+ear {
+  deploymentDescriptor { 
+    applicationName = name
+    initializeInOrder = true
+    displayName = name
+    description = ''
+    webModule(war.archiveName, '/'+name)
+  }
+}
+
+// Include only classes from the main sourceSet,
+// do not package dependent jars in the war
+war { 
+  classpath = sourceSets.main.output.classesDir
+}
+
+// Building the ear depends on the war
+ear.dependsOn('war')
+ear { 
+  excludes += [
+    "**/*.class"
+  ]
+  includeEmptyDirs = false
+}
+
+dependencies {
+  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+  compile group: 'org.apache.cxf', name: 'cxf-bundle', version: '2.7.1'
+  compile group: 'org.connectopensource', name: 'CONNECTCommonTypesLib', version: '4.0.0'
+  compile group: 'org.connectopensource', name: 'DocumentSubmissionCore', version: '4.0.0'
+
+  // earlib dependencies
+  earlib group: 'org.springframework', name: 'spring-web', version: '3.0.7.RELEASE'
+  earlib group: 'org.connectopensource', name: 'CONNECTCommonTypesLib', version: '4.0.0'
+  earlib group: 'org.connectopensource', name: 'DocumentSubmissionCore', version: '4.0.0'
+  earlib group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+  earlib group: 'org.apache.cxf', name: 'cxf-bundle', version: '2.7.1'
+
+
+  // include the war in the deployment of the ear
+  deploy files(war.archivePath)
+
+  testCompile group: 'junit', name: 'junit', version: '4.11'
+}

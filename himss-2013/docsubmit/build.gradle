@@ -1,0 +1,14 @@
+apply plugin: 'java'
+defaultTasks 'build'
+
+version = '0.1'
+group = 'org.mdpnp'
+
+dependencies {
+  compile group: 'org.apache.cxf', name: 'cxf-bundle', version: '2.7.1'
+  
+  compile group: 'org.connectopensource', name: 'CONNECTCommonTypesLib', version: '4.0.0'
+  compile group: 'org.connectopensource', name: 'DocumentSubmissionCore', version: '4.0.0'
+  compile group: 'org.restlet.jse', name: 'org.restlet', version: '2.1.1'
+  compile group: 'org.restlet.jse', name: 'org.restlet.ext.xml', version: '2.1.1'
+}
