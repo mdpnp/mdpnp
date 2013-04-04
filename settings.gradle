@@ -1,1 +1,21 @@
-include 'data-types:x73-idl', 'data-types:x73-idl-rti-dds', 'data-types:x73-prototype', 'device-interfaces:oridion-capnostream'
+include 'data-types:x73-idl'
+
+
+//include 'device-interfaces:common'
+include 'device-interfaces:oridion-capnostream'
+//include 'device-interfaces:intellivue'
+//include 'device-interfaces:medibus', 'device-interfaces:bernoulli', 'device-interfaces:ltp', 'device-interfaces:masimo', 'device-interfaces:nellcor', 'device-interfaces:nonin'
+
+//include 'interop-lab:demo-comms'
+//include 'interop-lab:demo-device-interfaces'
+
+//include 'interop-lab:demo-apps'
+
+if(hasProperty('ICE_IC01_USER') && hasProperty('ICE_IC01_PASSWORD')) { 
+  include 'data-types:x73-idl-rti-dds'
+  include 'data-types:x73-prototype'
+}
+
+//include 'himss-2013:docsubmit'
+//include 'himss-2013:docreceive'
+
