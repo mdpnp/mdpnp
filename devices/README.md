@@ -1,4 +1,4 @@
-Device Interfaces
+Devices
 =============
 
 Implementations of interface software for devices in our lab.  
