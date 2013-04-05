@@ -5,6 +5,9 @@ apply plugin: 'java'
 // By default we build (no task specified)
 defaultTasks 'build'
 
+sourceCompatibility = JAVA_VERSION_SOURCE
+targetCompatibility = JAVA_VERSION_CLASSES
+
 // early alpha
 version = 0.1
 

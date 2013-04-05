@@ -42,7 +42,8 @@ public class ASCIIFieldDelegate implements Runnable {
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public ASCIIFieldDelegate(Object target, URL properties) throws IOException, NoSuchFieldException, SecurityException {
-		this.target = null==target?this:target;
+	    target = null == target ? this : target;
+		this.target = target;
 		InputStream is = properties.openStream();
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
 		String line;
@@ -79,6 +80,34 @@ public class ASCIIFieldDelegate implements Runnable {
 		this.lineInfo = lineInfo.toArray(new LineInfo[0]);
 	}
 	
+	protected final static java.lang.reflect.Field fieldIfAvailable(Class<?> type, String fieldName) {
+        try {
+            return type.getDeclaredField(fieldName);
+        } catch (NoSuchFieldException nsfe) {
+            
+        }
+        Class<?> parent = type.getSuperclass();
+        if(null != parent) {
+            return fieldIfAvailable(parent, fieldName);
+        } else {
+            return null;
+        }
+    }
+    
+    protected final static Method methodIfAvailable(Class<?> type, String name, Class<?> [] params, Class<?> returnType) {
+        try {
+            java.lang.reflect.Method method = type.getDeclaredMethod(name, params);
+            if(null != returnType) {
+                if(!returnType.equals(method.getReturnType())) {
+                    return null;
+                }
+            }
+            return method;
+        } catch(Throwable t) {
+            return null;
+        }               
+    }
+	
 	private static class LineInfo {
 		private final Pattern pattern;
 		private Method fireMethod;
@@ -90,20 +119,7 @@ public class ASCIIFieldDelegate implements Runnable {
 			private java.util.Map<String, Object> enumValues;
 			private DateFormat dateFormat;
 			
-			private final static Method methodIfAvailable(Class<?> type, String name, Class<?> [] params, Class<?> returnType) {
-				try {
-					java.lang.reflect.Method method = type.getDeclaredMethod(name, new Class<?>[] {String.class});
-					if(null != returnType) {
-						if(!returnType.equals(method.getReturnType())) {
-							return null;
-						}
-					}
-					method.setAccessible(true);
-					return method;
-				} catch(Throwable t) {
-					return null;
-				}				
-			}
+			
 			
 			public Field(Class<?> type, String fieldName) throws NoSuchFieldException, SecurityException {
 				String[] fieldFilter = fieldName.split("\t");
@@ -116,9 +132,12 @@ public class ASCIIFieldDelegate implements Runnable {
 
 				this.method = methodIfAvailable(type, fieldName, new Class<?>[] {String.class}, null);
 				if(null == this.method) {
-					this.field = type.getDeclaredField(fieldName);
-					this.field.setAccessible(true);
+					this.field = fieldIfAvailable(type, fieldName);
+					if(null != this.field) {
+					    this.field.setAccessible(true);
+					}
 				} else {
+				    this.method.setAccessible(true);
 					this.field = null;
 				}
 			}
@@ -173,23 +192,16 @@ public class ASCIIFieldDelegate implements Runnable {
 		}
 
 		public final boolean setFireMethod(Class<?> type, String name) {
-			try {
-				fireMethod = type.getMethod(name, new Class<?>[0]);
-				return true;
-			} catch (NoSuchMethodException e) {
-				
-			} catch (SecurityException e) {
-				
-			}
-			try {
-				fireMethod = type.getMethod(name, new Class<?>[] {type});
-				return true;
-			} catch (NoSuchMethodException e) {
-				
-			} catch (SecurityException e) {
-				
-			}
-			return false;
+		    this.fireMethod = methodIfAvailable(type, name, new Class<?>[0], null);
+		    if(null == this.fireMethod) {
+		        this.fireMethod = methodIfAvailable(type, name, new Class<?>[] {type}, null);
+		    }
+		    if(null != this.fireMethod) {
+		        fireMethod.setAccessible(true);
+		        return true;
+		    } else {
+		        return false;
+		    }
 		}
 		
 		public final void addField(Class<?> type, String name) throws NoSuchFieldException, SecurityException {
@@ -255,6 +267,7 @@ public class ASCIIFieldDelegate implements Runnable {
 		
 		public boolean parseLine(String line, Object target) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 			Matcher m;
+			System.err.println(line);
 			if( (m=pattern.matcher(line)).matches()) {
 				for(int i = 0; i < fields.size(); i++) {
 					try {
@@ -277,12 +290,13 @@ public class ASCIIFieldDelegate implements Runnable {
 						}
 					} catch (Throwable t) {
 						setNullField(target, fields.get(i));
-						t.printStackTrace();
+//						t.printStackTrace();
 					}
 				}
 				if(null != fireMethod) {
 					try {
 						if(fireMethod.getParameterTypes().length == 1) {
+						    System.err.println(fireMethod+"\t"+target);
 							fireMethod.invoke(target, target);
 						} else if(fireMethod.getParameterTypes().length == 0) {
 							fireMethod.invoke(target);

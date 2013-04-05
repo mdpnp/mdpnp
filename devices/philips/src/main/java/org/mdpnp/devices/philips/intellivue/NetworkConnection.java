@@ -1,0 +1,9 @@
+package org.mdpnp.devices.philips.intellivue;
+
+import java.io.IOException;
+import java.nio.channels.SelectionKey;
+
+public interface NetworkConnection {
+	void read(SelectionKey sk) throws IOException;
+	void write(SelectionKey sk) throws IOException;
+}

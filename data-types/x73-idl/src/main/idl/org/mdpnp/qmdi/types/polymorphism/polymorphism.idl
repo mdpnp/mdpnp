@@ -1,11 +1,8 @@
 #ifndef  _POLYMORPHISM_IDL_
 #define  _POLYMORPHISM_IDL_
 
-/********************
-
-
-// Elements of a numeric
 /*************
+Elements of a numeric
 **** TOP 
 Class	MDC_ATTR_CLASS	OIDType
 Name-Binding	MDC_ATTR_NAME_BINDING	OIDType
@@ -61,8 +58,8 @@ module org {
 					typedef unsigned short INTU16;
 					typedef INTU16 OIDType;
 
-					valuetype Attribute {
-					
+					valuetype Attr {
+						
 					};
 
 					/**
@@ -92,7 +89,7 @@ module org {
 					
 					struct AttributeValueAssertion {
 						OIDType attribute_id;
-						Attribute attribute_value;
+						Attr attribute_value;
 					};
 					
 					typedef sequence<AttributeValueAssertion> AttributeList;
@@ -103,11 +100,11 @@ module org {
 						AttributeList relation_attributes;
 					};
 					
-					valuetype Foo : Attribute {
+					valuetype Foo : Attr {
 						public long fooValue;
 					};
 					
-					valuetype Bar : Attribute {
+					valuetype Bar : Attr {
 						public string barValue;
 					};
 					

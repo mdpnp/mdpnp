@@ -4,6 +4,9 @@ defaultTasks 'build'
 version = '0.1'
 group = 'org.mdpnp'
 
+sourceCompatibility = JAVA_VERSION_SOURCE
+targetCompatibility = JAVA_VERSION_CLASSES
+
 dependencies { 
   compile project(':data-types:x73-idl-rti-dds')
   testCompile project(':data-types:x73-idl-rti-dds')
