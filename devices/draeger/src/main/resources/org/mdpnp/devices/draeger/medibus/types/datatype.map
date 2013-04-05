@@ -1,0 +1,6 @@
+0x24	AlarmLimitsCP1
+0x27	AlarmsCP1
+0x29	DeviceSettings
+0x2B	AlarmLimitsCP2
+0x2E	AlarmsCP2
+0x2A	TextMessages

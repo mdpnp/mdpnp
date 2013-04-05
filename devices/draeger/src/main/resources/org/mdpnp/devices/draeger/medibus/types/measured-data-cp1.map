@@ -1,0 +1,79 @@
+0x05	BreathingPressure	mbar
+0x06	ComplianceFrac	mlPerMBar
+0x07	Compliance
+0x08	Resistance
+0x09	CarbonDioxideProduction
+0x0B	ResistanceFrac
+0x50	InspHalothanekPa	kPa
+0x51	ExpHalothanekPa	kPa
+0x52	InspEnfluranekPa	kPa
+0x53	ExpEnfluranekPa	kPa
+0x54	InspIsofluranekPa	kPa
+0x55	ExpIsofluranekPa	kPa
+0x56	InspDesfluranekPa	kPa
+0x57	ExpDesfluranekPa	kPa
+0x58	InspSevofluranekPa	kPa
+0x59	ExpSevofluranekPa	kPa
+0x5A	InspAgentkPa	kPa
+0x5B	ExpAgentkPa	kPa
+0x5C	InspAgent2kPa	kPa
+0x5D	ExpAgent2kPa	kPa
+0x64	O2Uptake	TenMlPerMin
+0x6B	AmbientPressure	mbar
+0x71	MinimalAirwayPressure
+0x72	OcclusionPressure
+0x73	MeanBreathingPressure	mbar
+0x74	PlateauPressure	mbar
+0x78	PEEPBreathingPressure	mbar
+0x79	IntrinsicPEEPBreathingPressure
+0x7A	SpontaneousMinuteVolumeFrac
+0x7D	PeakBreathingPressure	mbar
+0x81	TrappedVolume
+0x82	TidalVolumeFrac
+0x88	TidalVolume	mL
+0x89	DeadSpace
+0x8A	RelativeDeadSpace
+0x8B	InspiratorySpontaneousSupportVolume
+0xAC	InspMAC	None
+0xAD	ExpMAC	None
+0xAE	InspDesfluranePct	pct
+0xAF	ExpDesfluranePct	pct
+0xB0	InspSevofluranePct	pct
+0xB1	ExpSevofluranePct	pct
+0xB2	Leakage	mLPerMin
+0xB4	RespiratoryRatePressure	OnePerMin
+0xB5	SpontaneousRespiratoryRate
+0xB7	SpontaneousMinuteVolume
+0xB8	RespiratoryMinuteVolume
+0xB9	RespiratoryMinuteVolumeFrac	L
+0xBD	ApneaDuration	sec
+0xC1	AirwayTemperature
+0xC4	DeltaO2	pct
+0xC9	RapidShallowBreathingIndex
+0xD5	RespiratoryRateCO2	OnePerMin
+0xD6	RespiratoryRate
+0xD7	RespiratoryRateVolumePerFlow	OnePerMin
+0xD9	RespiratoryRateDerived	OnePerMin
+0xDA	InspCO2Pct	pct
+0xDB	EndTidalCO2Percent	pct
+0xDF	PulseRateDerived	OnePerMin
+0xE1	PulseRateOximeter	OnePerMin
+0xE3	EndTidalCO2kPa	kPa
+0xE5	InspCO2mmHg	mmHg
+0xE6	EndTidalCO2mmHg	mmHg
+0xE9	InspAgentPct	pct
+0xEA	ExpAgentPct	pct
+0xEB	OxygenSaturation	pct
+0xED	InspAgent2Pct	pct
+0xEE	ExpAgent2Pct	pct
+0xEF	ExpO2	pct
+0xF0	InspO2	pct
+0xF4	InspHalothanePct	pct
+0xF5	ExpHalothanePct	pct
+0xF6	InspEnfluranePct	pct
+0xF7	ExpEnfluranePct	pct
+0xF8	InspIsofluranePct	pct
+0xF9	ExpIsofluranePct	pct
+0xFB	InspN2OPct	pct
+0xFC	ExpN2OPct	pct
+0xFF	InspCO2kPa	kPa
