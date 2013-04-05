@@ -1,14 +1,17 @@
 include 'data-types:x73-idl'
 
 
-//include 'device-interfaces:common'
-include 'device-interfaces:oridion-capnostream'
-//include 'device-interfaces:intellivue'
-//include 'device-interfaces:medibus', 'device-interfaces:bernoulli', 'device-interfaces:ltp', 'device-interfaces:masimo', 'device-interfaces:nellcor', 'device-interfaces:nonin'
+include 'devices:common'
+include 'devices:oridion'
+//include 'devices:philips'
+//include 'devices:draeger'
+//include 'devices:cpc'
+//include 'devices:masimo'
+//include 'devices:nellcor'
+//include 'devices:nonin'
 
 //include 'interop-lab:demo-comms'
-//include 'interop-lab:demo-device-interfaces'
-
+//include 'interop-lab:demo-devices'
 //include 'interop-lab:demo-apps'
 
 if(hasProperty('ICE_IC01_USER') && hasProperty('ICE_IC01_PASSWORD')) { 
@@ -18,4 +21,6 @@ if(hasProperty('ICE_IC01_USER') && hasProperty('ICE_IC01_PASSWORD')) {
 
 include 'himss-2013:docsubmit'
 include 'himss-2013:docreceive'
+
+
 

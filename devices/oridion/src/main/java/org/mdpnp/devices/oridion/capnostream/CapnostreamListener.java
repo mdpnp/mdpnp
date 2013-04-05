@@ -1,4 +1,4 @@
-package org.mdpnp.devices.impl.oridion;
+package org.mdpnp.devices.oridion.capnostream;
 
 public interface CapnostreamListener {
 	void deviceIdSoftwareVersion(String s);
