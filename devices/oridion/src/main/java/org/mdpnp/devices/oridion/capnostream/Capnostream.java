@@ -1,4 +1,6 @@
-package org.mdpnp.devices.impl.oridion;
+package org.mdpnp.devices.oridion.capnostream;
+
+import static org.mdpnp.devices.io.util.Bits.getUnsignedInt;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -17,13 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Capnostream {
-	// TODO need a common project containing this type of stuff
-	public static final long getUnsignedInt(byte[] b, int off) {
-		return ((b[off + 3] & 0xFFL) << 0L) | ((b[off + 2] & 0xFFL) << 8L)
-				| ((b[off + 1] & 0xFFL) << 16L) | ((b[off + 0] & 0xFFL) << 24L);
-
-	}
-
 	private final Set<CapnostreamListener> listeners = new CopyOnWriteArraySet<CapnostreamListener>();
 	private static final Logger log = LoggerFactory
 			.getLogger(Capnostream.class);

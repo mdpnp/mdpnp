@@ -1,6 +1,15 @@
 defaultTasks 'build'
 
+// I don't want to apply the java plug-in to all 
+// subprojects
+ext {
+    JAVA_VERSION_SOURCE = 1.6
+    JAVA_VERSION_CLASSES = 1.6
+}
+
 subprojects {
+    
+    
     repositories {
         // Virtual repository of all remote repositories
         // used in the mdpnp project
