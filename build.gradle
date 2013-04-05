@@ -1,59 +1,56 @@
 defaultTasks 'build'
 
-subprojects { 
-  repositories {
-    // Repository for a build of purejavacomm
-    maven {
-      url 'http://www.sparetimelabs.com/maven2'
-    }
-    
-    // Repository for javacv/javacpp
-    maven { 
-      url 'http://maven2.javacv.googlecode.com/git/'
-    }
+subprojects {
+    repositories {
+        // Virtual repository of all remote repositories
+        // used in the mdpnp project
+        maven {
+            // Apply credentials if available to allow deployment into caches
+            if(project.hasProperty('MDPNP_WRITE_USER') && project.hasProperty('MDPNP_WRITE_PASSWORD')) {
+                credentials {
+                    username MDPNP_WRITE_USER
+                    password MDPNP_WRITE_PASSWORD
+                }
+            }
+            url 'http://arvi.mgh.harvard.edu:8080/artifactory/remote-repos' }
 
-    // Repository for jogamp
-    maven { 
-      url 'http://www.jogamp.org/deployment/maven/'
-    }
+        // Repository for RTI artifacts available to members of the infrastructure community ICE_IC01
+        if(project.hasProperty('ICE_IC01_USER') && project.hasProperty('ICE_IC01_PASSWORD')) {
+            maven {
+                credentials {
+                    username ICE_IC01_USER
+                    password ICE_IC01_PASSWORD
+                }
+                url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-rti-infrastructure-community'
+            }
+        } else {
+            println "No access to ICE_IC01 infrastructure community artifacts"
+        }
 
-    // Repository for restlet
-    maven { 
-      url 'http://maven.restlet.org'
-    }
+        // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
+        maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-release-local' }
 
-    // specifically javax.transaction.jta 1.0.1B only exists here in jar form (pom only in maven central)
-    maven { 
-      url 'http://download.java.net/maven/2/'
-    }
+        // All the following should be covered by the remote-repos repository above
+        // They are included her for reference (and potentially fallback)
+        
+        // Repository for a build of purejavacomm
+        maven { url 'http://www.sparetimelabs.com/maven2' }
 
-    maven { 
-      url 'http://maven.eclipse.org'
-    }
+        // Repository for javacv/javacpp
+        maven {  url 'http://maven2.javacv.googlecode.com/git/' }
 
-    // Repository for RTI artifacts available to members of the infrastructure community
-    if(project.hasProperty('ICE_IC01_USER') && project.hasProperty('ICE_IC01_PASSWORD')) {
-      maven { 
-	credentials { 
-	  username ICE_IC01_USER
-	  password ICE_IC01_PASSWORD
-	}
-	url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-rti-infrastructure-community'
-      }
-    } else {
-      println "No access to ICE_IC01 infrastructure community artifacts"
-    }
+        // Repository for jogamp
+        maven {  url 'http://www.jogamp.org/deployment/maven/' }
 
-    // Repository for external libs specific to mdpnp
-    maven { 
-      url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-release-local'
+        // Repository for restlet
+        maven {  url 'http://maven.restlet.org' }
+
+        // specifically javax.transaction.jta 1.0.1B only exists here in jar form (pom only in maven central)
+        maven {  url 'http://download.java.net/maven/2/' }
+
+        maven {  url 'http://maven.eclipse.org' }
+
+        // Fall back to maven central actual as necessary
+        mavenCentral();
     }
-    // Repository proxy for maven central
-    maven { 
-      url 'http://arvi.mgh.harvard.edu:8080/artifactory/repo1'
-    }
-    
-    // Fall back to maven central actual as necessary
-    mavenCentral();
-  }
 }
