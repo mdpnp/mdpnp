@@ -2,7 +2,6 @@ package org.mdpnp.devices.philips.intellivue.attribute;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.mdpnp.devices.philips.intellivue.Formatable;
 import org.mdpnp.devices.philips.intellivue.data.AbsoluteTime;
 import org.mdpnp.devices.philips.intellivue.data.Altitude;
 import org.mdpnp.devices.philips.intellivue.data.ApplicationArea;
@@ -66,10 +65,6 @@ public class AttributeFactory {
 	
 	public static final Attribute<MdibObjectSupport> getMdibObjectSupport() {
 		return getAttribute(0x102, MdibObjectSupport.class);
-	}
-	
-	public static final Attribute<?> getAttribute(AttributeId aid) {
-		return getAttribute(aid.asOid());
 	}
 	
 	public static final <T extends Value> Attribute<T> getAttribute(int oid, Class<T> valueClass) {
