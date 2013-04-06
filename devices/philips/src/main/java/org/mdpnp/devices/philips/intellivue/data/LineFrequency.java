@@ -3,9 +3,8 @@ package org.mdpnp.devices.philips.intellivue.data;
 import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
-import org.mdpnp.devices.philips.intellivue.Formatable;
 
-public enum LineFrequency implements EnumParseable<LineFrequency>, Formatable {
+public enum LineFrequency implements EnumMessage<LineFrequency> {
 	LINE_F_UNSPEC,
 	LINE_F_50HZ,
 	LINE_F_60HZ;

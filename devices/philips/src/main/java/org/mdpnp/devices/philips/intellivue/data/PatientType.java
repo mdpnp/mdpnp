@@ -3,9 +3,8 @@ package org.mdpnp.devices.philips.intellivue.data;
 import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
-import org.mdpnp.devices.philips.intellivue.Formatable;
 
-public enum PatientType implements EnumParseable<PatientType>, Formatable {
+public enum PatientType implements EnumMessage<PatientType> {
 	PAT_TYPE_UNSPECIFIED,
 	ADULT,
 	PEDIATRIC,

@@ -3,9 +3,8 @@ package org.mdpnp.devices.philips.intellivue.data;
 import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
-import org.mdpnp.devices.philips.intellivue.Formatable;
 
-public enum PatientBSAFormula implements EnumParseable<PatientBSAFormula>, Formatable {
+public enum PatientBSAFormula implements EnumMessage<PatientBSAFormula> {
 	BSA_FORMULA_UNSPEC,
 	BSA_FORMULA_BOYD,
 	BSA_FORMULA_DUBOIS;

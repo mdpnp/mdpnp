@@ -3,10 +3,9 @@ package org.mdpnp.devices.philips.intellivue.data;
 import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
-import org.mdpnp.devices.philips.intellivue.Formatable;
 
 
-public enum SimpleColor implements EnumParseable<SimpleColor>, Formatable {
+public enum SimpleColor implements EnumMessage<SimpleColor> {
 	Black,
 	Red,
 	Green,

@@ -3,10 +3,9 @@ package org.mdpnp.devices.philips.intellivue.data;
 import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
-import org.mdpnp.devices.philips.intellivue.Formatable;
 
 
-public enum ApplicationArea implements EnumParseable<ApplicationArea>, Formatable {
+public enum ApplicationArea implements EnumMessage<ApplicationArea> {
 	AREA_UNSPEC,
 	AREA_OPERATING_ROOM,
 	AREA_INTENSIVE_CARE,

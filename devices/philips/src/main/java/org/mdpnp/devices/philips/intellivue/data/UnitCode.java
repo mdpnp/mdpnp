@@ -3,9 +3,8 @@ package org.mdpnp.devices.philips.intellivue.data;
 import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
-import org.mdpnp.devices.philips.intellivue.Formatable;
 
-public enum UnitCode implements EnumParseable<UnitCode>, Formatable {
+public enum UnitCode implements EnumMessage<UnitCode> {
     /**
      * (/)
      * Hex: 0x00

@@ -3,9 +3,8 @@ package org.mdpnp.devices.philips.intellivue.data;
 import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
-import org.mdpnp.devices.philips.intellivue.Formatable;
 
-public enum PatientPacedMode implements EnumParseable<PatientPacedMode>, Formatable {
+public enum PatientPacedMode implements EnumMessage<PatientPacedMode> {
 	PAT_NOT_PACED,
 	PAT_PACED_GEN;
 	

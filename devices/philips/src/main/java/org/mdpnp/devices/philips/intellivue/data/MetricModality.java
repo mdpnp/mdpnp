@@ -3,9 +3,8 @@ package org.mdpnp.devices.philips.intellivue.data;
 import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
-import org.mdpnp.devices.philips.intellivue.Formatable;
 
-public enum MetricModality implements EnumParseable<MetricModality>, Formatable {
+public enum MetricModality implements EnumMessage<MetricModality> {
 	MANUAL,
 	APERIODIC,
 	VERIFIED;

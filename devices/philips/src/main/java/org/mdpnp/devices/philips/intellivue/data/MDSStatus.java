@@ -3,9 +3,8 @@ package org.mdpnp.devices.philips.intellivue.data;
 import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
-import org.mdpnp.devices.philips.intellivue.Formatable;
 
-public enum MDSStatus implements EnumParseable<MDSStatus>, Formatable {
+public enum MDSStatus implements EnumMessage<MDSStatus> {
 	Disconnected,
 	Unassociated,
 	Operating;
