@@ -1,0 +1,17 @@
+HR_ECG_MODE	ElectroCardioGram.HR_ECG_MODE
+RR_APNEA	PulseOximeter.RR_APNEA
+SPO2_C_LOCK	PulseOximeter.C_LOCK
+HR	PulseOximeter.PULSE
+RR	Ventilator.RESPIRATORY_RATE
+ETCO2	Capnograph.END_TIDAL_CO2
+SPO2	PulseOximeter.SPO2
+NIBP_SYS	NoninvasiveBloodPressure.SYSTOLIC
+NIBP_DIAS	NoninvasiveBloodPressure.DIASTOLIC
+NIBP_PULSE	NoninvasiveBloodPressure.PULSE
+P1_SYS	InvasiveBloodPressure.SYSTOLIC
+P1_DIAS	InvasiveBloodPressure.DIASTOLIC
+P1	InvasiveBloodPressure.PRESSURE
+#P2_SYS	NoninvasiveBloodPressure.SYSTOLIC
+#P2_DIAS	NoninvasiveBloodPressure.DIASTOLIC
+ECG	ElectroCardioGram.I
+PLETH	PulseOximeter.PLETH

@@ -1,0 +1,10 @@
+*.class
+.jnilib
+
+# Package Files #
+*.war
+*.ear
+/deploy
+.DS_Store
+/bin
+*~

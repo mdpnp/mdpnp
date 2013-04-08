@@ -10,9 +10,9 @@ include 'devices:philips'
 include 'devices:masimo'
 include 'devices:nellcor'
 
-//include 'interop-lab:demo-comms'
-//include 'interop-lab:demo-devices'
-//include 'interop-lab:demo-apps'
+include 'interop-lab:demo-comms'
+include 'interop-lab:demo-devices'
+include 'interop-lab:demo-apps'
 
 if(hasProperty('ICE_IC01_USER') && hasProperty('ICE_IC01_PASSWORD')) { 
   include 'data-types:x73-idl-rti-dds'
