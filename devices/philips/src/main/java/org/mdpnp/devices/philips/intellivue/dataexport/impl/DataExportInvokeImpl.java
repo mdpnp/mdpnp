@@ -14,7 +14,6 @@ public class DataExportInvokeImpl implements DataExportInvoke {
 
 	private int invokeId;
 	private CommandType commandType;
-	private int length;
 	
 	private DataExportCommand command;
 	
@@ -33,11 +32,12 @@ public class DataExportInvokeImpl implements DataExportInvoke {
 		this.invokeId = i;
 	}
 
-	@Override
+	@SuppressWarnings("unused")
+    @Override
 	public void parse(ByteBuffer bb) {
 		invokeId = Bits.getUnsignedShort(bb);
 		commandType = CommandType.valueOf(Bits.getUnsignedShort(bb));
-		length = Bits.getUnsignedShort(bb);
+		int length = Bits.getUnsignedShort(bb);
 		command = CommandFactory.buildCommand(commandType, false);
 		command.setMessage(this);
 		command.parse(bb);

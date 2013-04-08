@@ -85,7 +85,8 @@ public class AttributeFactory {
 		}
 	}
 	
-	public static final <T extends EnumMessage<T>> Attribute<EnumValue<T>> getEnumAttribute(OIDType oid, Class<T> enumClass) {
+	@SuppressWarnings("unchecked")
+    public static final <T extends EnumMessage<T>> Attribute<EnumValue<T>> getEnumAttribute(OIDType oid, Class<T> enumClass) {
 		
 		try {
 			return new AttributeImpl<EnumValue<T>>(oid, new EnumValueImpl<T>((T) ((Object[])enumClass.getMethod("values", new Class<?>[0]).invoke(null))[0]));
@@ -229,7 +230,8 @@ public class AttributeFactory {
 
 	}
 	
-	public static final <T extends EnumMessage<T>> Attribute<?> getAttribute(OIDType oid) {
+	@SuppressWarnings("unchecked")
+    public static final <T extends EnumMessage<T>> Attribute<?> getAttribute(OIDType oid) {
 		Class<?> valueType = valueType(oid);
 		if(valueType.isEnum()) {
 			return getEnumAttribute(oid, (Class<T>)valueType);

@@ -102,36 +102,19 @@ public class Util {
 	}
 	
 	public static  class PrefixLengthShort {
-//		private ByteBuffer bb;
-		private int pos;
-				
 		public interface Builder<T extends Parseable> {
 			T build();
 		}
 		
 		public void begin(ByteBuffer bb) {
 			putUnsignedShort(bb, 0);
-			pos = bb.position();
 		}
-		
-		
-		
-//		public void done() {
-//			int length = bb.position() - pos;
-//			bb.position(pos - 2);
-//			Bits.putUnsignedShort(bb, length);
-//			bb.position(bb.position() + length);
-//			
-//		}
-		
-		private static final Class[] noclass = new Class[0];
-		private static final Object[] noobject = new Object[0];
-		
 		
 		public static <T extends Parseable> void read(ByteBuffer bb, Collection<T> list, Class<? extends T> clazz) {
 			read(bb, list, true, clazz);
 		}
-		public static <T extends Parseable> void read(ByteBuffer bb, Collection<T> list, boolean clear, Class<? extends T> clazz) {
+		@SuppressWarnings("unused")
+        public static <T extends Parseable> void read(ByteBuffer bb, Collection<T> list, boolean clear, Class<? extends T> clazz) {
 			if(clear) {
 				list.clear();
 			}
@@ -159,7 +142,8 @@ public class Util {
 			read(bb, list, true, b);
 		}
 		
-		public static <T extends Parseable> void read(ByteBuffer bb, Collection<T> list, boolean clear, Builder<T> b) {
+		@SuppressWarnings("unused")
+        public static <T extends Parseable> void read(ByteBuffer bb, Collection<T> list, boolean clear, Builder<T> b) {
 			if(clear) {
 				list.clear();
 			}

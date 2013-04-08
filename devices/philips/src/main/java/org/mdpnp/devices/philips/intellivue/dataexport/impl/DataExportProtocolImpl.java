@@ -24,7 +24,8 @@ public class DataExportProtocolImpl implements DataExportProtocol {
 	
 	private final Map<Integer, DataExportLinkedResult> linked = new HashMap<Integer, DataExportLinkedResult>();
 	
-	@Override
+	@SuppressWarnings("unused")
+    @Override
 	public DataExportMessage parse(ByteBuffer bb) {
 		header.parse(bb);
 		RemoteOperation remoteOperation = RemoteOperation.valueOf(Bits.getUnsignedShort(bb));

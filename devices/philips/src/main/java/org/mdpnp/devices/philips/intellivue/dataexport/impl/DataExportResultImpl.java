@@ -35,7 +35,8 @@ public class DataExportResultImpl implements DataExportResult {
 		return 0xFFFF & bb.getShort(bb.position() + 0);
 	}
 	
-	@Override
+	@SuppressWarnings("unused")
+    @Override
 	public void parse(ByteBuffer bb) {
 		invokeId = Bits.getUnsignedShort(bb);
 		commandType = CommandType.valueOf(Bits.getUnsignedShort(bb));
@@ -45,7 +46,8 @@ public class DataExportResultImpl implements DataExportResult {
 		command.parse(bb);
 	}
 	
-	public void parseMore(ByteBuffer bb) {
+	@SuppressWarnings("unused")
+    public void parseMore(ByteBuffer bb) {
 		invokeId = Bits.getUnsignedShort(bb);
 		commandType = CommandType.valueOf(Bits.getUnsignedShort(bb));
 		int length = Bits.getUnsignedShort(bb);

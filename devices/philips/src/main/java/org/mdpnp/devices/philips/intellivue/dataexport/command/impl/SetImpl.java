@@ -27,13 +27,13 @@ public class SetImpl implements Set {
 			
 		}
 		
-		AttributeModEntryImpl(ModifyOperator modifyOperator, Attribute attributeValueAssertion) {
+		AttributeModEntryImpl(ModifyOperator modifyOperator, Attribute<?> attributeValueAssertion) {
 			this.modifyOperator = modifyOperator;
 			this.attributeValueAssertion = attributeValueAssertion;
 		}
 		
 		private ModifyOperator modifyOperator;
-		private final Attribute attributeValueAssertion;
+		private final Attribute<?> attributeValueAssertion;
 		
 		@Override
 		public ModifyOperator getModifyOperator() {
@@ -41,7 +41,7 @@ public class SetImpl implements Set {
 		}
 
 		@Override
-		public Attribute getAttributeValueAssertion() {
+		public Attribute<?> getAttributeValueAssertion() {
 			return attributeValueAssertion;
 		}
 
@@ -95,7 +95,7 @@ public class SetImpl implements Set {
 		return list;
 	}
 	@Override
-	public void add(ModifyOperator modifyOperator, Attribute ava) {
+	public void add(ModifyOperator modifyOperator, Attribute<?> ava) {
 		list.add(new AttributeModEntryImpl(modifyOperator, ava));
 	}
 	

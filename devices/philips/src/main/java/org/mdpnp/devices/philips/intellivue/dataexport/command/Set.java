@@ -11,11 +11,11 @@ import org.mdpnp.devices.philips.intellivue.dataexport.ModifyOperator;
 public interface Set extends DataExportCommand {
 	interface AttributeModEntry extends Parseable, Formatable {
 		ModifyOperator getModifyOperator();
-		Attribute getAttributeValueAssertion();
+        Attribute<?> getAttributeValueAssertion();
 	}
 	
 	List<AttributeModEntry> getList();
 //	void add(ModifyOperator modifyOperator, AttributeValueAssertion ava);
-	void add(ModifyOperator modifyOperator, Attribute attribute);
+	void add(ModifyOperator modifyOperator, Attribute<?> attribute);
 	SetResult createResult();
 }

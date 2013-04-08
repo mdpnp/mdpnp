@@ -56,7 +56,8 @@ public class ConnectIndicationImpl implements ConnectIndication {
 	}
 	
 	
-	public void parse(ByteBuffer bb) {
+	@SuppressWarnings("unused")
+    public void parse(ByteBuffer bb) {
 		nomenclature.parse(bb);
 		remoteOperation = RemoteOperation.valueOf(Bits.getUnsignedShort(bb));
 		int length = Bits.getUnsignedShort(bb);

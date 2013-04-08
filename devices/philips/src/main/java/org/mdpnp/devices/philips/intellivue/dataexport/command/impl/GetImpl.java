@@ -35,7 +35,8 @@ public class GetImpl implements Get {
 		parse(bb, false);
 	}
 	
-	private void parse(ByteBuffer bb, boolean clear) {
+	@SuppressWarnings("unused")
+    private void parse(ByteBuffer bb, boolean clear) {
 		managedObject.parse(bb);
 		scope = Bits.getUnsignedInt(bb);
 		int count = Bits.getUnsignedShort(bb);

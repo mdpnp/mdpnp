@@ -5,10 +5,7 @@ import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
 
 import org.mdpnp.devices.gui.waveform.DCT;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataRequest;
@@ -58,19 +55,19 @@ public class SimulatedPulseOximeterImpl extends IntellivueAcceptor {
 		this.count = ++this.count>=pleth.length?0:this.count;
 		return count;
 	}
-	private final ThreadGroup tg = new ThreadGroup("") {
-		@Override
-		public void uncaughtException(Thread t, Throwable e) {
-			e.printStackTrace();
-			super.uncaughtException(t, e);
-		}
-	};
-	private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-		@Override
-		public Thread newThread(Runnable r) {
-			return new Thread(tg, r);
-		}
-	});
+//	private final ThreadGroup tg = new ThreadGroup("") {
+//		@Override
+//		public void uncaughtException(Thread t, Throwable e) {
+//			e.printStackTrace();
+//			super.uncaughtException(t, e);
+//		}
+//	};
+//	private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+//		@Override
+//		public Thread newThread(Runnable r) {
+//			return new Thread(tg, r);
+//		}
+//	});
 	private ScheduledFuture<?> task;
 	
 	private Integer invoke;
@@ -213,29 +210,6 @@ public class SimulatedPulseOximeterImpl extends IntellivueAcceptor {
 		MyTask task = new MyTask();
 		task.setInterval(334L);
 		networkLoop.add(task);
-	}
-	
-	private static class MiniMean {
-		private double basis;
-		private final double[] memory;
-		private int nextLoc = 0;
-		
-		MiniMean(int sz, double initialValue) {
-			basis = sz * initialValue;
-			memory = new double[sz];
-			for(int i = 0; i < memory.length; i++) {
-				memory[i] = initialValue;
-			}
-		}
-		void apply(double x) {
-			basis -= memory[nextLoc>0?(nextLoc-1):(memory.length-1)];
-			basis += x;
-			memory[nextLoc] = x;
-			nextLoc = ++nextLoc>=memory.length?0:nextLoc;
-		}
-		double get() {
-			return basis / memory.length;
-		}
 	}
 	
 	private static class State {

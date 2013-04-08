@@ -24,7 +24,6 @@ public class DataExportErrorImpl implements DataExportError {
 	private int invoke;
 	private RemoteError error;
 	private ErrorDetail detail;
-	private int length;
 	
 	private static final ErrorDetail buildErrorDetail(RemoteError error) {
 		switch(error) {
@@ -53,11 +52,12 @@ public class DataExportErrorImpl implements DataExportError {
 		}
 	}
 	
-	@Override
+	@SuppressWarnings("unused")
+    @Override
 	public void parse(ByteBuffer bb) {
 		invoke = Bits.getUnsignedShort(bb);
 		error = RemoteError.valueOf(Bits.getUnsignedShort(bb));
-		length = Bits.getUnsignedShort(bb);
+		int length = Bits.getUnsignedShort(bb);
 		detail = buildErrorDetail(error);
 		
 		detail.parse(bb);

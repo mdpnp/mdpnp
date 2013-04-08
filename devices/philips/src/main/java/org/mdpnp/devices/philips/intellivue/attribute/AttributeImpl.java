@@ -24,7 +24,8 @@ public class AttributeImpl<T extends Value> implements Attribute<T> {
 		this.value = value;
 	}
 	
-	@Override
+	@SuppressWarnings("unused")
+    @Override
 	public void parse(ByteBuffer bb) {
 		oid = OIDType.lookup(Bits.getUnsignedShort(bb));
 		int length = Bits.getUnsignedShort(bb);

@@ -45,7 +45,8 @@ public class ErrorDetailGetListImpl implements ErrorDetailGetList {
 		return managedObject;
 	}
 
-	@Override
+	@SuppressWarnings("unused")
+    @Override
 	public void parse(ByteBuffer bb) {
 		managedObject.parse(bb);
 		int count = Bits.getUnsignedShort(bb);
