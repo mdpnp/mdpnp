@@ -68,7 +68,7 @@ import com.googlecode.javacpp.Loader;
 import com.googlecode.javacv.cpp.opencv_objdetect;
 import com.jeffplourde.util.math.RTRegression;
 
-public class JeffGUI extends JPanel implements GatewayListener {
+public class XRayVentPanel extends JPanel implements GatewayListener {
 	private FramePanel cameraPanel;
 	private final Gateway gateway;
 
@@ -118,7 +118,7 @@ public class JeffGUI extends JPanel implements GatewayListener {
 		
 		return panel;
 	}
-	private static final Logger log = LoggerFactory.getLogger(JeffGUI.class);
+	private static final Logger log = LoggerFactory.getLogger(XRayVentPanel.class);
 	
 	public void changeSource(String source) {
 
@@ -291,7 +291,7 @@ public class JeffGUI extends JPanel implements GatewayListener {
 //	private Clip shutterClip;
 	
 	private AcceptedDevices devices;
-	public JeffGUI(Gateway gateway, DemoPanel demoPanel, AcceptedDevices devices) {
+	public XRayVentPanel(Gateway gateway, DemoPanel demoPanel, AcceptedDevices devices) {
 		super(new BorderLayout());
 //		try {
 //			shutterClip = Manager.createPlayer(new MediaLocator(JeffGUI.class.getResource("shutter.mp3")));
@@ -422,19 +422,19 @@ public class JeffGUI extends JPanel implements GatewayListener {
 		
 		demoPanel.getContent().setLayout(new BorderLayout());
 //		demoPanel.setLayout(new BorderLayout());
-		final JeffGUI jeffGUI = new JeffGUI(gateway, demoPanel, new AcceptedDevices());
-		demoPanel.getContent().add(jeffGUI, BorderLayout.CENTER);
+		final XRayVentPanel xrayVentPanel = new XRayVentPanel(gateway, demoPanel, new AcceptedDevices());
+		demoPanel.getContent().add(xrayVentPanel, BorderLayout.CENTER);
 		frame.setSize(640,480);
 		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		final GetConnected getConnected = new GetConnected(frame, gateway);
-		jeffGUI.start();
+		xrayVentPanel.start();
 		getConnected.connect();
 		
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
-				jeffGUI.stop();
+			    xrayVentPanel.stop();
 				getConnected.disconnect();
 			}
 		});

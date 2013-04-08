@@ -14,7 +14,7 @@ import java.util.TimeZone;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
 
-import org.mdpnp.apps.testapp.xray.JeffGUI;
+import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 import org.mdpnp.comms.Gateway;
 import org.mdpnp.comms.nomenclature.PulseOximeter;
 import org.mdpnp.comms.nomenclature.Ventilator;
@@ -125,7 +125,7 @@ public class DemoApp {
 		
 //		final Gateway xray_gateway = new Gateway();
 //		final ApolloImpl xray_device = new ApolloImpl(xray_gateway);
-		final JeffGUI jeffGUI = new JeffGUI(gateway, panel, nc.getAcceptedDevices());
+		final XRayVentPanel xrayVentPanel = new XRayVentPanel(gateway, panel, nc.getAcceptedDevices());
 //		final GetConnected getConnected = new GetConnected(frame, xray_gateway) {
 //			@Override
 //			protected void abortConnect() {
@@ -134,7 +134,7 @@ public class DemoApp {
 //		};
 //		
 //		
-		panel.getContent().add(jeffGUI, "xray");
+		panel.getContent().add(xrayVentPanel, "xray");
 		
 //		final EngineerConsole engineerConsole = new EngineerConsole(gateway);
 //		panel.getContent().add(engineerConsole, "biomed");
@@ -187,12 +187,12 @@ public class DemoApp {
 					} else if("X-Ray Ventilator Sync".equals(o)) {
 						setGoBack("main", new Runnable() {
 							public void run() {
-								jeffGUI.stop();
+							    xrayVentPanel.stop();
 //								getConnected.disconnect();
 							}
 						});
 						ol.show(panel.getContent(), "xray");
-						jeffGUI.start();
+						xrayVentPanel.start();
 //						getConnected.connect();
 					}
 				}
