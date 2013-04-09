@@ -22,5 +22,6 @@ if(hasProperty('ICE_IC01_USER') && hasProperty('ICE_IC01_PASSWORD')) {
 include 'himss-2013:docsubmit'
 include 'himss-2013:docreceive'
 include 'himss-2013:infusion-pump-ui'
+include 'himss-2013:settings-transfer'
 
 

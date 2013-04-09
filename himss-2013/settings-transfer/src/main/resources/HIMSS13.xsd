@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  trasport report always present
+  may or may not be on a ventilaror
+  may or may not be on a monitor
+  may have none, one, or more infusion pumps
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:element name="patientTransfer">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="or_icu_transport_report"/>
+        <xs:element minOccurs="0" ref="ventilator"/>
+        <xs:element minOccurs="0" ref="multiparam_monitor"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="infusion_pump"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <!--
+    patient always present
+    may have none, one, or more disposable_devices
+    may have none, one, or more line
+    may have none, one, or more blood_product
+    may have none, one, or more medication_order
+  -->
+  <xs:element name="or_icu_transport_report">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="patient"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="line"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="disposable_devices"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="blood_product"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="medication_order"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <!--
+    name always present
+    birthTime always present
+    weight always present
+    height always present
+    mrn always present
+    may have none, one, or more allergy
+    location always present
+    status always present
+    surgeon always present
+    anesthesiologist always present
+    type_of_surgery always present
+  -->
+  <xs:element name="patient">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="patient_name"/>
+        <xs:element ref="birthTime"/>
+        <xs:element ref="weight"/>
+        <xs:element ref="height"/>
+        <xs:element ref="mrn"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="allergy"/>
+        <xs:element ref="location"/>
+        <xs:element ref="status"/>
+        <xs:element ref="surgeon"/>
+        <xs:element ref="anesthesiologist"/>
+        <xs:element ref="type_of_surgery"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <!--
+    family always present
+    given always present
+  -->
+  <xs:element name="patient_name">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="family"/>
+        <xs:element ref="given"/>
+      </xs:sequence>
+      <xs:attribute name="use"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="family" type="xs:string"/>
+  <xs:element name="given" type="xs:string"/>
+  <!-- 'use' may or may not be present -->
+  <xs:element name="birthTime">
+    <xs:complexType>
+      <xs:attribute name="value" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="weight" type="xs:string"/>
+  <xs:element name="height" type="xs:string"/>
+  <xs:element name="mrn" type="xs:string"/>
+  <xs:element name="allergy" type="xs:string"/>
+  <xs:element name="location" type="xs:string"/>
+  <xs:element name="status" type="xs:string"/>
+  <xs:element name="surgeon" type="xs:string"/>
+  <xs:element name="anesthesiologist" type="xs:string"/>
+  <xs:element name="type_of_surgery" type="xs:string"/>
+  <xs:element name="line">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="name"/>
+        <xs:element ref="type"/>
+        <xs:element ref="side"/>
+        <xs:element ref="site"/>
+        <xs:element ref="invasive_pressure"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="name" type="xs:string"/>
+  <xs:element name="type" type="any"/>
+  <xs:element name="side" type="xs:string"/>
+  <xs:element name="site" type="xs:string"/>
+  <xs:element name="invasive_pressure" type="xs:string"/>
+  <xs:element name="disposable_devices">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="dd_chest_tube"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="dd_chest_tube">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="name"/>
+        <xs:element ref="chest_tube_count_left"/>
+        <xs:element ref="chest_tube_count_right"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="chest_tube_count_left" type="xs:string"/>
+  <xs:element name="chest_tube_count_right" type="xs:string"/>
+  <xs:element name="blood_product">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="name"/>
+        <xs:element ref="num_units_used_in_or"/>
+        <xs:element ref="num_units_ordered"/>
+        <xs:element ref="status"/>
+        <xs:element ref="keep_on_hand"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="num_units_used_in_or" type="xs:string"/>
+  <xs:element name="num_units_ordered" type="xs:string"/>
+  <xs:element name="keep_on_hand" type="xs:string"/>
+  <xs:element name="medication_order">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="drug_name"/>
+        <xs:element ref="dose"/>
+        <xs:element ref="route"/>
+        <xs:element ref="rate"/>
+        <xs:element ref="frequency"/>
+        <xs:element ref="ordered_by"/>
+        <xs:element ref="date_time_of_order"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="drug_name" type="xs:string"/>
+  <xs:element name="dose" type="xs:string"/>
+  <xs:element name="route" type="xs:string"/>
+  <xs:element name="rate" type="xs:string"/>
+  <xs:element name="frequency" type="xs:string"/>
+  <xs:element name="ordered_by" type="xs:string"/>
+  <xs:element name="date_time_of_order" type="xs:string"/>
+  <xs:element name="ventilator">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="manufacturer"/>
+        <xs:element ref="model"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="setting"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="manufacturer" type="xs:string"/>
+  <xs:element name="model" type="xs:string"/>
+  <xs:element name="setting">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="id"/>
+        <xs:element ref="units"/>
+        <xs:element ref="value"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="id" type="xs:string"/>
+  <xs:element name="units" type="xs:string"/>
+  <xs:element name="value" type="xs:string"/>
+  <xs:element name="multiparam_monitor">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="manufacturer"/>
+        <xs:element ref="model"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="alarm_limit"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="measurement"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="alarm_limit">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="id"/>
+        <xs:element ref="units"/>
+        <xs:element ref="high_value"/>
+        <xs:element ref="low_value"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="high_value" type="xs:string"/>
+  <xs:element name="low_value" type="xs:string"/>
+  <xs:element name="measurement">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="id"/>
+        <xs:element ref="units"/>
+        <xs:element ref="value"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="infusion_pump">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="manufacturer"/>
+        <xs:element ref="model"/>
+        <xs:element ref="drug"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="setting"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="drug">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="name"/>
+        <xs:element ref="route"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="any" mixed="true">
+    <xs:sequence>
+      <xs:any minOccurs="0" maxOccurs="unbounded" processContents="strict"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

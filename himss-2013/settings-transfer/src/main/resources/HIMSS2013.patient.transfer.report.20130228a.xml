@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE patientTransfer SYSTEM "HIMSS13.dtd">
+<!--
+	This supports a demonstration of an ICE system to take place at
+	HIMSS 2013, conducted by Quantum and DocBox. The demo simulates
+	the transfer of a single patient from OR to ICU and includes
+	transfer of patient-related data from one ICE located in the OR,
+	to another ICE located in the ICU.
+
+	This file defines the following data elements related to the single
+	patient to transfer:
+		- Patient data
+		- Lines
+		- Disposable devices
+		- Blood products
+		- Medication orders
+		- Ventilator  settings
+		- Multiparameter monitor settings
+		- Infusion pump settings
+
+-->
+<patientTransfer>
+	<!--
+		OR to ICU transport report
+	-->
+	<or_icu_transport_report>
+
+		<patient>
+			<patient_name use="L">
+				<family>Jones</family>
+				<given>Randall</given>
+			</patient_name>
+			<birthTime value="19820704"/>
+			<weight>80</weight>  <!-- kg -->
+			<height>190</height> <!-- cm -->
+
+			<mrn>864034</mrn>  <!-- medical record number -->
+			<allergy>latex</allergy>  <!-- Repeat this element as required -->
+			<location>OR 7</location>
+			<status>Everything went fine, for once</status>
+			<surgeon>Michael DeBakey</surgeon>
+			<anesthesiologist>William Morton</anesthesiologist>
+			<type_of_surgery>CABGx3</type_of_surgery>
+		</patient>
+
+		<!--
+			Lines
+
+			The XML Patient Transfer Report compiled by the MDCF system specifies between two and five lines.
+
+			The report ALWAYS contains the following two non-pressure lines:
+				- IV : 14, right, forearm
+				- Pulmonary Artery : VIP, right, internal jugular
+
+			The report MAY contain the following pressure lines:
+				- Arterial : left, radial, pressure
+				- Central Venous : left, subclavian, pressure
+				- Arterial : right, femoral, pressure
+
+			The MDCF UI has the ability to specify pressure lines to include in the report. The user specifies a number between 0 and 3. When the user enters:
+				0, the report contains no pressure lines;
+				1, the report contains the first pressure line from the above list;
+				2, the report contains the first and second listed pressure lines;
+				3, the report contains all listed pressure lines.
+
+			NOTE	Given the described UI, the report never contains the last pressure line in combination with the first or last.
+
+			NOTE 	Specify a line element for each line required.
+
+			NOTE	line.name = one of: Arterial, Central Venous, Pulmonary Artery, IV
+					line.type = one of : CCO (continuous cardiac output), mixed venous, VIP, paced, 14 (guage, IV only)
+					line.site = one of: subclavian, internal jugular, radial, femoral, forearm
+		-->
+
+		<!-- IV line -->
+		<line>
+			<name>IV</name>
+			<type>14</type>  <!-- always 14 (gauge) -->
+			<side>right</side>
+			<site>forearm</site>  <!-- always forearm -->
+			<invasive_pressure>N</invasive_pressure>
+		</line>
+
+		<!-- Pulmonary Artery line -->
+		<line>
+			<name>Pulmonary Artery</name>
+			<type>VIP</type>
+			<side>right</side>
+			<site>internal jugular</site>
+			<invasive_pressure>N</invasive_pressure>
+		</line>
+
+		<!-- Arterial Line -->
+		<line>
+			<name>Arterial</name>
+			<type/>
+			<side>left</side>
+			<site>radial</site>  <!-- one of: radial, femoral -->
+			<invasive_pressure>Y</invasive_pressure>
+		</line>
+
+		<!-- Central Venous Line -->
+		<line>
+			<name>Central Venous</name>
+			<type/>
+			<side>left</side>
+			<site>subclavian</site>
+			<invasive_pressure>Y</invasive_pressure>
+		</line>
+
+		<!-- Arterial Line -->
+		<line>
+			<name>Arterial</name>
+			<type/>
+			<side>right</side>
+			<site>femoral</site>
+			<invasive_pressure>Y</invasive_pressure>
+		</line>
+
+		<!--
+			Disposable devices
+		-->
+		<disposable_devices>
+			<dd_chest_tube>
+				<name>Chest Tube</name>
+				<chest_tube_count_left>3</chest_tube_count_left>
+				<chest_tube_count_right>0</chest_tube_count_right>
+			</dd_chest_tube>
+		</disposable_devices>
+
+		<!--
+			Blood products
+		-->
+		<blood_product>
+			<name>Fresh Frozen Plasma (FFP)</name>
+			<num_units_used_in_or>0</num_units_used_in_or>
+			<num_units_ordered>2</num_units_ordered>
+			<status>typed</status>
+			<keep_on_hand>N</keep_on_hand>
+		</blood_product>
+
+		<blood_product>
+			<name>Platelets (PLT)</name>
+			<num_units_used_in_or>0</num_units_used_in_or>
+			<num_units_ordered>1</num_units_ordered>
+			<status>typed + cross</status>
+			<keep_on_hand>N</keep_on_hand>
+		</blood_product>
+
+		<!--
+			Medication orders (repeat for each drug)
+		-->
+		<medication_order>
+			<drug_name>Nicardipine</drug_name>
+			<dose>0.1 mg/mL</dose>
+			<route>IV</route>
+			<rate>20 mL/hr</rate>
+			<frequency>12 hours</frequency>
+			<ordered_by>D. VADER</ordered_by>  <!-- Name of physician -->
+			<date_time_of_order>1993-11-23T08:12:00Z</date_time_of_order>  <!-- Note T separater, Z suffix -> UTC -->
+		</medication_order>
+	</or_icu_transport_report>
+
+	<!--
+		Ventilator
+	-->
+	<ventilator>
+		<manufacturer>Acme Vent</manufacturer>
+		<model>Bestvent</model>
+
+		<setting>
+			<id>ETT</id>  <!-- Endotrachel tube size, dimensionless (gauge) -->
+			<units/>
+			<value>8.5</value>
+		</setting>
+
+		<setting>
+			<id>Mode</id>
+			<units/>
+			<value>volume control</value>  <!-- one of: pressure control, volume control, SIMV pressure, SIMV volume -->
+		</setting>
+
+		<setting>
+			<id>Rate</id>
+			<units>BPM</units>
+			<value>10</value>
+		</setting>
+
+		<setting>
+			<id>Inspiration Time</id>
+			<units>seconds</units>
+			<value>2</value>
+		</setting>
+
+		<setting>
+			<id>Tidal Vol</id>
+			<units>mL</units>
+			<value>800</value>
+		</setting>
+
+		<setting>
+			<id>PEEP</id>
+			<units>cm H2O</units>
+			<value>5</value>
+		</setting>
+
+		<setting>
+			<id>FiO2</id>
+			<units>%</units>
+			<value>70</value>
+		</setting>
+	</ventilator>
+
+	<!--
+		Multiparameter monitor
+	-->
+	<multiparam_monitor>
+		<manufacturer>Acme Multi</manufacturer>
+		<model>Bestmulti</model>
+
+		<alarm_limit>
+			<id>Heart Rate</id>
+			<units>BPM</units>
+			<high_value>180</high_value>
+			<low_value>25</low_value>
+		</alarm_limit>
+		
+		<alarm_limit>
+			<id>Respiratory Rate</id>
+			<units>BPM</units>
+			<high_value>25</high_value>
+			<low_value>5</low_value>
+		</alarm_limit>
+		
+		<measurement>
+			<id>Heart Rate</id>
+			<units>BPM</units>
+			<value>75</value>
+		</measurement>
+
+		<measurement>
+			<id>SpO2</id>
+			<units>%</units>
+			<value>97</value>
+		</measurement>
+
+		<measurement>
+			<id>Respiratory Rate</id>
+			<units>BPM</units>
+			<value>12</value>
+		</measurement>
+
+		<measurement>
+			<id>ETCO2</id>
+			<units>%</units>
+			<value>5.5</value>
+		</measurement>
+	</multiparam_monitor>
+
+	<!--
+		Infusion pump
+	-->
+	<infusion_pump>
+		<manufacturer>Acme Pump</manufacturer>
+		<model>Bestpump</model>
+
+		<drug>
+			<name>Morphine Sulfate</name>
+			<route>IV</route>
+		</drug>
+
+		<setting>
+			<id>Concentration</id>
+			<units>mg/mL</units>
+			<value>1</value>
+		</setting>
+
+		<setting>
+			<id>VTBI</id>
+			<units>mL</units>
+			<value>24</value>
+		</setting>
+
+		<setting>
+			<id>Rate</id>
+			<units>mL/hr</units>
+			<value>1</value>
+		</setting>
+
+		<setting>
+			<id>Duration</id>
+			<units>hours</units>
+			<value>24</value>
+		</setting>
+
+		<setting>
+			<id>Percent Complete</id>
+			<units>%</units>
+			<value>25</value>
+		</setting>
+	</infusion_pump>
+</patientTransfer>
+

@@ -1,0 +1,103 @@
+
+<!--
+trasport report always present
+may or may not be on a ventilaror
+may or may not be on a monitor
+may have none, one, or more infusion pumps
+-->
+<!ELEMENT patientTransfer (or_icu_transport_report, ventilator?, multiparam_monitor?, infusion_pump*)>
+
+<!--
+patient always present
+may have none, one, or more disposable_devices
+may have none, one, or more line
+may have none, one, or more blood_product
+may have none, one, or more medication_order
+--> 
+ <!ELEMENT or_icu_transport_report (patient, line*,disposable_devices*, blood_product*,medication_order*)>
+
+<!--
+name always present
+birthTime always present
+weight always present
+height always present
+mrn always present
+may have none, one, or more allergy
+location always present
+status always present
+surgeon always present
+anesthesiologist always present
+type_of_surgery always present
+-->
+  <!ELEMENT patient (patient_name, birthTime,weight, height,mrn,allergy*,location,status,surgeon,anesthesiologist,type_of_surgery)>
+
+<!--
+family always present
+given always present
+-->
+ <!ELEMENT patient_name (family,given)>
+ <!ELEMENT family (#PCDATA)>  
+ <!ELEMENT given (#PCDATA)>  
+<!--
+'use' may or may not be present
+-->
+<!ATTLIST patient_name 	use CDATA #IMPLIED > 
+
+ <!ELEMENT birthTime EMPTY>
+ <!ATTLIST birthTime value CDATA #REQUIRED  > 
+ <!ELEMENT weight (#PCDATA)>	
+ <!ELEMENT height (#PCDATA)>	
+ <!ELEMENT mrn (#PCDATA)>	
+ <!ELEMENT allergy (#PCDATA)>	
+ <!ELEMENT location (#PCDATA)>	
+ <!ELEMENT status (#PCDATA)>	
+ <!ELEMENT surgeon (#PCDATA)>	
+ <!ELEMENT anesthesiologist (#PCDATA)>	
+ <!ELEMENT type_of_surgery (#PCDATA)>	
+   
+ <!ELEMENT line (name,type,side,site,invasive_pressure)>     
+ <!ELEMENT name (#PCDATA)> 
+ <!ELEMENT type ANY>		
+ <!ELEMENT side (#PCDATA)>		
+ <!ELEMENT site (#PCDATA)>		
+ <!ELEMENT invasive_pressure (#PCDATA)>			
+   
+ <!ELEMENT disposable_devices (dd_chest_tube*)>    
+ <!ELEMENT dd_chest_tube (name,chest_tube_count_left,chest_tube_count_right)>    
+ <!ELEMENT chest_tube_count_left (#PCDATA)>		
+ <!ELEMENT chest_tube_count_right (#PCDATA)>  
+   
+ <!ELEMENT blood_product (name,num_units_used_in_or,num_units_ordered,status,keep_on_hand)>  
+ <!ELEMENT num_units_used_in_or (#PCDATA)>		
+ <!ELEMENT num_units_ordered (#PCDATA)>  
+ <!ELEMENT keep_on_hand (#PCDATA)>  
+ 
+ <!ELEMENT medication_order (drug_name,dose,route,rate,frequency,ordered_by,date_time_of_order)>  
+ <!ELEMENT drug_name (#PCDATA)>		
+ <!ELEMENT dose (#PCDATA)>  
+ <!ELEMENT route (#PCDATA)>  
+ <!ELEMENT rate (#PCDATA)>  
+ <!ELEMENT frequency (#PCDATA)>  
+ <!ELEMENT ordered_by (#PCDATA)>  
+ <!ELEMENT date_time_of_order (#PCDATA)>
+ 
+ <!ELEMENT ventilator (manufacturer,model,setting*)>  
+ <!ELEMENT manufacturer (#PCDATA)>		
+ <!ELEMENT model (#PCDATA)>  
+ 
+ <!ELEMENT setting (id,units,value)> 
+ <!ELEMENT id (#PCDATA)>		
+ <!ELEMENT units (#PCDATA)>  
+ <!ELEMENT value (#PCDATA)>  
+ 
+ <!ELEMENT multiparam_monitor (manufacturer,model,alarm_limit*,measurement*)>  
+ 
+ <!ELEMENT alarm_limit (id,units,high_value,low_value)> 
+ <!ELEMENT high_value (#PCDATA)>  
+ <!ELEMENT low_value (#PCDATA)>  
+ 
+ <!ELEMENT measurement (id,units,value)> 
+ 
+ <!ELEMENT infusion_pump (manufacturer,model,drug,setting*)>  
+ 
+  <!ELEMENT drug (name,route)> 
