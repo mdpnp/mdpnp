@@ -1,0 +1,47 @@
+Adult/ICU
+Abciximab	9mg	250mL	0.036mg/mL	mL/hr		1	1	1	17	
+DOPAmine	400mg	250mL	1.6mg/mL	mcg/min		50	160	240
+DOPAmine	200mg	250mL	0.8mg/mL	mcg/min		50	160	240
+Epinephrine	8mg	250mL	0.032mg/mL	mcg/min		0.5	1	15
+Epinephrine	2mg	250mL	0.008mg/mL	mcg/min		0.5	1	15
+Lepirudin	100mg	100mL	1mg/mL	mg/kg/hr		0.15	0.15	0.24
+Lepirudin	250mg	250mL	1mg/mL	mg/kg/hr		0.15	0.15	0.24
+Morphine	500mg	50mL	10mg/mL	mg/hr		5	5	10
+Morphine	50mg	50mL	1mg/mL	mg/hr		1	2.5	10						
+Morphine Sulfate	50mg	50mL	1mg/mL	mg/hr		1	2.5	10			
+Anesthesia/OR
+Esmolol	5000mg	250mL	20mg/mL	mg/min		1	2	12	21
+Esmolol	20mg	1mL	20mg/mL	mg/min		1	2	12	21
+Esmolol	2500mg	250mL	10mg/mL	mg/min		1	2	12	21
+Vancomycin	1000mg	250mL	4mg/mL	mg/hr		1000	2000	2000	2000
+Blood Products
+Albumin 25%			mL/hr	mL/hr
+Albumin 5%			mL/hr	mL/hr
+ATG			mL/hr	mL/hr
+Clotting Factors			mL/hr	mL/hr
+Cryopercipitate			mL/hr	mL/hr
+Dextran 40			mL/hr	mL/hr
+Fresh Frozen Plasma			mL/hr	mL/hr
+Hespan			mL/hr	mL/hr
+Immune globulin			mL/hr	mL/hr
+IVIG			mL/hr	mL/hr
+Platelets			mL/hr	mL/hr
+Red Blood Cells			mL/hr	mL/hr
+Code/Emergency
+Dopamine	200mg	250mL	0.8mg/mL	mcg/min		50	200	1000		235mL
+Lidocaine	2g	250mL	0.008g/mL	mg/min		1	1	4		235mL
+Phenylephrine	20mg	250mL	0.08mg/mL	mcg/min		10	50	1000
+General Care/Adult
+Abciximab	9mg	250mL	0.036mg/mL	mL/hr		1	1	1	17
+Intermediate Care
+Abciximab	9mg	250mL	0.036mg/mL	mL/hr		1	1	1	17
+Obstetrics
+Nafcillin	1g	50mL	0.02g/mL	g/hr		0.5	1	1
+Vancomycin	1000mg	100mL	10mg/mL	mg/hr		500	1000	1000	1000
+Oncology/Inpatient
+Argatroban	100mg	100mL	1mg/mL	mcg/kg/min		0.5	1	10		
+Palliative Care
+Morphine	2500mg	50mL	50mg/mL	mg/hr		25	25	50
+Morphine	500mg	50mL	10mg/mL	mg/hr		5	5	10
+Pediatrics
+Amiodarone	900mg	150mL	6mg/mL	mg/min		0.5	1	1	

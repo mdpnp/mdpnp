@@ -1,0 +1,11 @@
+apply plugin: 'java'
+defaultTasks 'build'
+
+sourceCompatibility = JAVA_VERSION_SOURCE
+targetCompatibility = JAVA_VERSION_CLASSES
+
+version = '0.1'
+group = 'org.mdpnp'
+
+dependencies {
+}
