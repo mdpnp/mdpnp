@@ -1,3 +1,6 @@
+#ifndef _DIM_BASE_TYPES_IDL_
+#define _DIM_BASE_TYPES_IDL_
+
 /**
  * @file    dim_base_types.h
  * @author  WMS
@@ -17,12 +20,10 @@
  * conceptual model
  */
 //=============================================================================
-//@copy #pragma once
-#ifndef  DIM_BASE_TYPES_H_
-#define  DIM_BASE_TYPES_H_
+//@copy-c #pragma once
 
-#include  <dim_base_defs.idl>
-
+#include <org/mdpnp/types/denormalized/dim_base_defs.idl>
+//#include "dim_base_defs.idl"
 //=============================================================================
 /**
  * Integer and bit string data types
@@ -47,6 +48,11 @@
  * The following integer data types and bit string data types are used:
  */
 
+module org {
+	module mdpnp {
+			module types {
+				module denormalized {
+
 typedef char CHARSTRING;
 typedef octet INTU8;
 typedef octet INTI8;
@@ -60,15 +66,15 @@ typedef INTU32 BITS32;
 
 typedef double FLOATType;
 
-#if 1
+//#if 1
 typedef INTU8 OCTETSTRING;
-#else
-struct OCTETSTRING
-{
-  INTU16  length;    
-  INTU8   value[1];
-};
-#endif
+//#else
+//struct OCTETSTRING
+//{
+//  INTU16  length;    
+//  INTU8   value[1];
+//}; //@top-level false
+//#endif
 
 
 //#define STRING_T string
@@ -132,7 +138,7 @@ struct GLBHANDLE
 {
   MdsContext context_id;
   DIMHANDLE  dimhandle;
-};
+}; //@top-level false
 
 /**
  * Managed OID as a type for complete global object identification.
@@ -141,7 +147,7 @@ struct ManagedObjectId
 {
   OIDType   m_obj_class;
   GLBHANDLE m_obj_inst;
-};
+}; //@top-level false
 
 /**
  * Example: A medical device may interface with further medical devices (i.e.,
@@ -200,7 +206,7 @@ struct TTYPE
 {
   NomPartition partition;
   OIDType code;
-};
+}; //@top-level false
 
 //=============================================================================
 /**
@@ -246,7 +252,7 @@ struct AbsoluteTime
   INTU8 minute;
   INTU8 second;
   INTU8 sec_fractions;  /// hundredths of second
-};
+}; //@top-level false
 
 //=============================================================================
 /**
@@ -259,7 +265,7 @@ struct Date
   INTU8 year;
   INTU8 month;
   INTU8 day;
-};
+}; //@top-level false
 
 //=============================================================================
 /**
@@ -300,7 +306,7 @@ struct SystemModel
 {
   CHARSTRING manufacturer[MAXSTRSIZE_LABEL];
   CHARSTRING model_number[MAXSTRSIZE_LABEL];
-};
+}; //@top-level false
 
 //=============================================================================
 /**
@@ -318,7 +324,7 @@ struct ProdSpecEntry
   INTU16 spec_type;	  /// @see ProdSpecTypeVals
   PrivateOID  component_id;
   CHARSTRING prod_spec[MAXSTRSIZE_LABEL];
-};
+}; //@top-level false
 
 enum ProdSpecTypeVals
 {
@@ -335,7 +341,7 @@ struct ProductionSpec
 {
   INTU16  count;
   ProdSpecEntry value[MAX_PRODSPECENTRIES];
-};
+}; //@top-level false
 
 //=============================================================================
 /**
@@ -349,7 +355,7 @@ struct AVAType
   OIDType  attribute_id;
   INTU16   length;
   INTU16   attribute_val;
-};
+}; //@top-level false
 
 //=============================================================================
 /**
@@ -361,7 +367,7 @@ struct AttributeList
   INTU16  count;
   INTU16  length;
   AVAType value[1];
-};
+}; //@top-level false
 
 //=============================================================================
 /**
@@ -429,7 +435,7 @@ struct StringSpec
 {
   INTU16 str_max_len;
   StringFlags str_flags;
-};
+}; //@top-level false
 
 //=============================================================================
 /**
@@ -443,7 +449,7 @@ struct Locale
   INTU32  country;
   CharSet charset;
   StringSpec str_spec;
-};
+}; //@top-level false
 
 //=============================================================================
 /**
@@ -468,7 +474,7 @@ struct CurLimAlVal
 {
   FLOATType lower;
   FLOATType upper;
-};
+}; //@top-level false
 
 //=============================================================================
 /**
@@ -484,7 +490,7 @@ struct DIMT_Top
   /// Define ID of Name Binding attribute, e.g., DIMHANDLE.
   /// IDs come from the object-oriented nomenclature partition.
   OIDType  name_binding_id;
-};
+}; //@top-level false
 
 //=============================================================================
 /**
@@ -506,7 +512,7 @@ struct DIMT_VMO
 
   /// Text representation of type ID.
   CHARSTRING label_string[MAXSTRSIZE_LABEL];
-};
+}; //@top-level false
 
 //=============================================================================
 /**
@@ -549,5 +555,8 @@ enum MeasurementStatusBits
   /// metric supports alarming, and alarms are turned off
   ms_msmt_state_al_inhibited = 0x8000 // 15
 };
-
-#endif
+};
+};
+};
+};
+#endif /* _DIM_BASE_TYPES_IDL_ */

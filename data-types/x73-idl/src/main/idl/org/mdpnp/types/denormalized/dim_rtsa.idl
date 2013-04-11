@@ -1,3 +1,6 @@
+#ifndef  DIM_RTSA_H_
+#define  DIM_RTSA_H_
+
 /**
  * @file    dim_rtsa.idl
  * @author  WMS
@@ -10,12 +13,15 @@
  * DocBox Inc, www.docboxinc.com. All rights reserved.
  */
 //=============================================================================
-//@copy #pragma once
-#ifndef  DIM_RTSA_H_
-#define  DIM_RTSA_H_
+//@copy-c #pragma once
 
-#include <dim_base_types.idl>
 
+#include <org/mdpnp/types/denormalized/dim_base_types.idl>
+//#include "dim_base_types.idl"
+module org {
+	module mdpnp {
+			module types {
+				module denormalized {
 //=============================================================================
 /**
  * Sample Array Object
@@ -48,5 +54,8 @@ struct DIMT_RealTimeSA
   AbsoluteTime absolute_timestamp;
 
 };
-
+};
+};
+};
+};
 #endif // DIM_RTSA_H_

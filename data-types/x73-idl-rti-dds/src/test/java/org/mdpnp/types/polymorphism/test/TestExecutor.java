@@ -1,4 +1,4 @@
-package org.mdpnp.qmdi.types.polymorphism.test;
+package org.mdpnp.types.polymorphism.test;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

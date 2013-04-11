@@ -52,7 +52,6 @@ Accuracy	MDC_ATTR_NU_ACCUR_MSMT	FLOAT-Type	O
 
 module org {
 	module mdpnp {
-		module qmdi {
 			module types {
 				module polymorphism {
 					typedef unsigned short INTU16;
@@ -128,7 +127,6 @@ module org {
 					}; 
 				};
 			};
-		};
 	};
 };
-#endif
+#endif /* _POLYMORPHISM_IDL_ */

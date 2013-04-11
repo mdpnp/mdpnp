@@ -1,4 +1,4 @@
-package org.mdpnp.qmdi.types.polymorphism.test;
+package org.mdpnp.types.polymorphism.test;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -11,14 +11,14 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.mdpnp.qmdi.types.polymorphism.AttributeValueAssertion;
-import org.mdpnp.qmdi.types.polymorphism.Bar;
-import org.mdpnp.qmdi.types.polymorphism.DIMT_VMO;
-import org.mdpnp.qmdi.types.polymorphism.DIMT_VMODataReader;
-import org.mdpnp.qmdi.types.polymorphism.DIMT_VMODataWriter;
-import org.mdpnp.qmdi.types.polymorphism.DIMT_VMOTypeSupport;
-import org.mdpnp.qmdi.types.polymorphism.ExtObjRelationEntry;
-import org.mdpnp.qmdi.types.polymorphism.Foo;
+import org.mdpnp.types.polymorphism.AttributeValueAssertion;
+import org.mdpnp.types.polymorphism.Bar;
+import org.mdpnp.types.polymorphism.DIMT_VMO;
+import org.mdpnp.types.polymorphism.DIMT_VMODataReader;
+import org.mdpnp.types.polymorphism.DIMT_VMODataWriter;
+import org.mdpnp.types.polymorphism.DIMT_VMOTypeSupport;
+import org.mdpnp.types.polymorphism.ExtObjRelationEntry;
+import org.mdpnp.types.polymorphism.Foo;
 import org.mdpnp.rti.dds.DDS;
 
 import com.rti.dds.domain.DomainParticipant;

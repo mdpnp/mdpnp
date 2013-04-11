@@ -1,13 +1,16 @@
+#ifndef  DIM_NUOBS_VALUE_H_
+#define  DIM_NUOBS_VALUE_H_
+
 /**
  * @file    dim_nu_obs_value.idl
  * @author  WMS
  * @brief   Define objects for nu obs value.
  */
 //=============================================================================
-#ifndef  DIM_NUOBS_VALUE_H_
-#define  DIM_NUOBS_VALUE_H_
 
-#include <dim_base_types.idl>
+
+#include <org/mdpnp/types/denormalized/dim_base_types.idl>
+//#include "dim_base_types.idl"
 
 //=============================================================================
 /*
@@ -23,6 +26,11 @@
  * values in a single Numeric (or other Metric) object can be indicated in
  * special structure attribute in the Metric object.
  */
+
+module org {
+	module mdpnp {
+			module types {
+				module denormalized {
 
 /**
  * Numeric Observed Value
@@ -63,5 +71,8 @@ struct DIMT_NumericObsVal
   AbsoluteTime absolute_timestamp;
 
 };
-
+};
+};
+};
+};
 #endif

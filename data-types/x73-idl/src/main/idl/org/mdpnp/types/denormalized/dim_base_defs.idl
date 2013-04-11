@@ -1,11 +1,17 @@
+#ifndef _DIM_BASE_DEFS_IDL_
+#define _DIM_BASE_DEFS_IDL_
+
 /**
  * @file    dim_base_defs.h
  * @author  WMS
  * @brief   Base IDL definitions for ICE DDS.
  */
 //=============================================================================
-#ifndef DIM_BASE_DEFS_H_
-#define DIM_BASE_DEFS_H_
+
+module org {
+	module mdpnp {
+			module types {
+				module denormalized {
 
 /**
  * The following constant definitions will be available in the generated code
@@ -40,5 +46,8 @@ const long MAX_SEQUENCE_SIZE    = 1000;
 const long MAX_SITE_LIST_ENTRIES  = 10;
 const long MAX_STEP_WIDTH_ENTRIES  = 10;
 const long MAX_VMO_SOURCE_ENTRIES = 10;
-
-#endif
+};
+};
+};
+};
+#endif /* _DIM_BASE_DEFS_IDL_ */
