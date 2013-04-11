@@ -36,6 +36,9 @@ subprojects {
             println "No access to ICE_IC01 infrastructure community artifacts"
         }
 
+        // Repository for external snapshot libs hosted by mdpnp (unavailable in any other repo)
+        maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-snapshot-local' }
+        
         // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
         maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-release-local' }
 

@@ -1,0 +1,44 @@
+/**
+ * @file    dim_base_defs.h
+ * @author  WMS
+ * @brief   Base IDL definitions for ICE DDS.
+ */
+//=============================================================================
+#ifndef DIM_BASE_DEFS_H_
+#define DIM_BASE_DEFS_H_
+
+/**
+ * The following constant definitions will be available in the generated code
+ * as macros. If you use #define in an IDL file, the value will be substituited
+ * by a preprocessor before generating the code and this symbol won't be
+ * available in the program.
+ *
+ * Constants defined for use in sizing character strings include space for
+ * null terminator byte.
+ */
+const long MAXARRAYSIZE_SAOBSVAL = 4000; /// assume 4-byte sample values
+const long MAXSTRSIZE_LABEL     = 64;   /// Size includes null terminator byte
+const long MAXSTRSIZE_LABEL_LG  = 128;
+const long MAXSTRSIZE_LABEL_SM  = 32;
+const long MAXSTRSIZE_LABEL_XL  = 256;
+const long MAXSTRSIZE_LABEL_XS  = 16;
+const long MAXSTRSIZE_OBS_VALUE = 32;
+const long MAXSTRSIZE_TIMESTAMP = 32;
+const long MAXSTRSIZE_UDI = 16;
+const long MAX_ALERT_CAPAB_LIST_ENTRIES = 10;
+const long MAX_ALERT_LIST_ENTRIES  = 10;
+const long MAX_COMPOUND_NUOBSVALS  = 10;
+const long MAX_DEV_ALARM_LIST_ENTRIES   = 10;
+const long MAX_LIMIT_SPEC_LIST_ENTRIES  = 10;
+const long MAX_METRIC_CALIBRATION_ENTRIES = 10;
+const long MAX_OID_ENUM_MSMT_RANGE = 1;
+const long MAX_PRODSPECENTRIES  = 1;
+const long MAX_PROFILES_PER_DEVICE = 100;
+const long MAX_SAFILTERSPECS = 4;
+const long MAX_SEL_ITEM_OP_ENTRIES = 10;
+const long MAX_SEQUENCE_SIZE    = 1000;
+const long MAX_SITE_LIST_ENTRIES  = 10;
+const long MAX_STEP_WIDTH_ENTRIES  = 10;
+const long MAX_VMO_SOURCE_ENTRIES = 10;
+
+#endif
