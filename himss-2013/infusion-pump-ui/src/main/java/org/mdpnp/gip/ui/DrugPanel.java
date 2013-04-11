@@ -25,8 +25,8 @@ import org.mdpnp.gip.ui.values.VolumeValue;
 
 @SuppressWarnings("serial")
 public class DrugPanel extends javax.swing.JPanel implements DrugListener, PatientListener {
-	private final DefaultComboBoxModel<DrugEntry> drugEntryModel = new DefaultComboBoxModel<DrugEntry>();
-	private final JComboBox<DrugEntry> drugName = new JComboBox<DrugEntry>(drugEntryModel);
+	private final DefaultComboBoxModel drugEntryModel = new DefaultComboBoxModel();
+	private final JComboBox drugName = new JComboBox(drugEntryModel);
 	private final ValueField<MassUnits> massField = new ValueField<MassUnits>();
 	private final ValueField<VolumeUnits> volumeField = new ValueField<VolumeUnits>();
 	private final JLabel concentration = new JLabel("---");

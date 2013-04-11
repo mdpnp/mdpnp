@@ -209,7 +209,7 @@ public class GIPPanel extends JPanel {
 	
 	private static void addTitledBorder(JComponent comp, String text) {
 //		comp.setBorder(BorderFactory.createTitledBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED), text));
-		TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(comp.getForeground(), 1, false), text, TitledBorder.LEFT, TitledBorder.TOP);
+		TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(comp.getForeground(), 1/*, false*/), text, TitledBorder.LEFT, TitledBorder.TOP);
 //		System.out.println("border opaque:"+border.isBorderOpaque());
 		comp.setBorder(border);
 	}

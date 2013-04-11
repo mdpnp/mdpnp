@@ -14,7 +14,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFrame;
-import javax.swing.Painter;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
@@ -75,17 +74,18 @@ public class GenericInfusionPumpApp {
 		
 		UIManager.put("ComboBox[Enabled].background", Color.white);
 		UIManager.put("TabbedPane:TabbedPaneTab[Enabled].textForeground", darkBlue);
-		Painter<?> noPainter = new Painter<Object>() {
-			@Override
-			public void paint(Graphics2D g, Object object, int width, int height) {
-				
-			}
-		};
+		// JRE 1.7 feature
+//		Painter noPainter = new Painter() {
+//			@Override
+//			public void paint(Graphics2D g, Object object, int width, int height) {
+//				
+//			}
+//		};
 
-		UIManager.put("TabbedPane:TabbedPaneTabArea[Enabled].backgroundPainter", noPainter);
-		UIManager.put("TabbedPane:TabbedPaneTabArea[Enabled+MouseOver].backgroundPainter", noPainter);
-		UIManager.put("TabbedPane:TabbedPaneTabArea[Enabled+Pressed].backgroundPainter", noPainter);
-		UIManager.put("TabbedPane:TabbedPaneTabArea[Disabled].backgroundPainter", noPainter);
+//		UIManager.put("TabbedPane:TabbedPaneTabArea[Enabled].backgroundPainter", noPainter);
+//		UIManager.put("TabbedPane:TabbedPaneTabArea[Enabled+MouseOver].backgroundPainter", noPainter);
+//		UIManager.put("TabbedPane:TabbedPaneTabArea[Enabled+Pressed].backgroundPainter", noPainter);
+//		UIManager.put("TabbedPane:TabbedPaneTabArea[Disabled].backgroundPainter", noPainter);
 
 		UIManager.put("TabbedPane:TabbedPaneTab[Enabled].contentMargins", new Insets(0,5,0,5));
 		

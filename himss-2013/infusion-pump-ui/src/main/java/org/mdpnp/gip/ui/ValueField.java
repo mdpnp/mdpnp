@@ -32,7 +32,7 @@ import org.mdpnp.gip.ui.values.ValueListener;
 @SuppressWarnings("serial")
 public class ValueField<U extends Units> extends javax.swing.JPanel implements ValueListener<U> {
 	private final JSpinner spinner = new JSpinner();
-	private final JComboBox<U> units = new JComboBox<U>();
+	private final JComboBox units = new JComboBox();
 	private Value<U> model;
 	
 	public void setModel(Value<U> model) {
@@ -41,10 +41,10 @@ public class ValueField<U extends Units> extends javax.swing.JPanel implements V
 		}
 		this.model = model;
 		if(null != this.model) {
-			units.setModel(new DefaultComboBoxModel<U>(this.model.getAcceptableUnits()));
+			units.setModel(new DefaultComboBoxModel(this.model.getAcceptableUnits()));
 			this.model.addListener(this);
 		} else {
-			units.setModel(new DefaultComboBoxModel<U>());
+			units.setModel(new DefaultComboBoxModel());
 		}
 		update();
 	}

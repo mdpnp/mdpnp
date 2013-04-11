@@ -5,8 +5,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.StandardProtocolFamily;
-import java.net.StandardSocketOptions;
+//import java.net.StandardProtocolFamily;
+//import java.net.StandardSocketOptions;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.util.ArrayList;
@@ -58,16 +58,19 @@ public class MulticastWrapper implements Wrapper, GatewayListener /*, NetworkCon
 
 		NetworkInterface iface = defaultNetworkInterface();
 		System.out.println(iface);
-		datagramChannel = DatagramChannel.open(StandardProtocolFamily.INET)
-		.setOption(StandardSocketOptions.SO_REUSEADDR, true)
-		.bind(new InetSocketAddress(5000))
-		.setOption(StandardSocketOptions.IP_MULTICAST_IF, iface);
-		datagramChannel.configureBlocking(false);
+		datagramChannel = DatagramChannel.open();
+//		datagramChannel.
+		// JRE 1.7 .. not sure we're ready to upgrade
+//		StandardProtocolFamily.INET)
+//		.setOption(StandardSocketOptions.SO_REUSEADDR, true)
+//		datagramChannel.bind(new InetSocketAddress(5000));
+//		.setOption(StandardSocketOptions.IP_MULTICAST_IF, iface);
+//		datagramChannel.configureBlocking(false);
 //		datagramChannel.connect(new InetSocketAddress(address, 5000));
 //		MembershipKey key = datagramChannel.join(address, iface);
 		/*selectionKey = networkLoop.register(this, datagramChannel);*/
 		
-		gateway.addListener(this);
+//		gateway.addListener(this);
 	}
 
 	@Override

@@ -32,8 +32,9 @@ public class PatientPanel extends JPanel implements PatientListener {
 	}
 		private PatientModel patient;
 		private final JTextField idField = new JTextField("1", 6);
-		private final DefaultComboBoxModel<CareArea> careAreaModel = new DefaultComboBoxModel<CareArea>();
-		private final JComboBox<CareArea> careAreaBox = new JComboBox<CareArea>(careAreaModel);
+		//
+		private final DefaultComboBoxModel careAreaModel = new DefaultComboBoxModel();
+		private final JComboBox careAreaBox = new JComboBox(careAreaModel);
 		private final ValueField<MassUnits> weightField = new ValueField<MassUnits>();
 		private final ValueField<LengthUnits> heightField = new ValueField<LengthUnits>();
 		private final JLabel bsa;
