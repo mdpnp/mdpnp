@@ -1,0 +1,25 @@
+###############################################################################
+# Note:
+# - You must invoke the make command from the root directory of this project.
+#
+# - To enable debugging information, set the Makefile variable 'DEBUG' to '1'.
+# Example:
+#   make -f make/Makefile.i86Linux DEBUG=1
+###############################################################################
+
+# Comment out this variable if NOT using MySQL in your application
+#RDB=MYSQL
+
+# Define required Make variables. The common make file will use them to define
+# build process rules for this application.
+ARCH=i86Linux
+
+CXX = g++
+#CXXFLAGS = -m32 -std=c++0x 
+CXXFLAGS = -m32 -Wno-deprecated
+CXXLD = g++
+CXXLDFLAGS = -m32 -static-libgcc
+SYSLIBS := -ldl -lnsl -lm -lpthread -lrt -L/usr/local/lib/libboost_thread.so.1.51.0
+
+include make/Makefile.common
+
