@@ -1,13 +1,15 @@
 package org.mdpnp.devices.philips.intellivue.data;
 
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.mdpnp.devices.io.util.Bits;
 
-public enum PatientBSAFormula implements EnumMessage<PatientBSAFormula> {
-	BSA_FORMULA_UNSPEC,
-	BSA_FORMULA_BOYD,
-	BSA_FORMULA_DUBOIS;
+public enum PatientBSAFormula implements EnumMessage<PatientBSAFormula>, OrdinalEnum.IntType {
+	BSA_FORMULA_UNSPEC(0),
+	BSA_FORMULA_BOYD(1),
+	BSA_FORMULA_DUBOIS(2);
 	
 	public void format(java.nio.ByteBuffer bb) {
 		Bits.putUnsignedShort(bb, asInt());
@@ -18,29 +20,19 @@ public enum PatientBSAFormula implements EnumMessage<PatientBSAFormula> {
 		return PatientBSAFormula.valueOf(Bits.getUnsignedShort(bb));
 	}
 	
+	private final int x;
+	
+	private PatientBSAFormula(final int x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Integer, PatientBSAFormula> map = OrdinalEnum.buildInt(PatientBSAFormula.class);
+	
 	public static PatientBSAFormula valueOf(int x) {
-		switch(x) {
-		case 0:
-			return BSA_FORMULA_UNSPEC;
-		case 1:
-			return BSA_FORMULA_BOYD;
-		case 2:
-			return BSA_FORMULA_DUBOIS;
-		default:
-			return null;
-		}
+		return map.get(x);
 	}
 	
 	public int asInt() {
-		switch(this) {
-		case BSA_FORMULA_UNSPEC:
-			return 0;
-		case BSA_FORMULA_BOYD:
-			return 1;
-		case BSA_FORMULA_DUBOIS:
-			return 2;
-		default:
-			throw new IllegalArgumentException("Unknown PatientBSAFormula:"+this);
-		}
+		return x;
 	}
 }

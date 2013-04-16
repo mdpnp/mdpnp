@@ -1,13 +1,17 @@
 package org.mdpnp.devices.philips.intellivue.data;
 
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
+
+
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.mdpnp.devices.io.util.Bits;
 
-public enum LineFrequency implements EnumMessage<LineFrequency> {
-	LINE_F_UNSPEC,
-	LINE_F_50HZ,
-	LINE_F_60HZ;
+public enum LineFrequency implements EnumMessage<LineFrequency>, OrdinalEnum.IntType {
+	LINE_F_UNSPEC(0),
+	LINE_F_50HZ(1),
+	LINE_F_60HZ(2);
 	@Override
 	public LineFrequency parse(ByteBuffer bb) {
 		return LineFrequency.valueOf(Bits.getUnsignedShort(bb));
@@ -18,30 +22,19 @@ public enum LineFrequency implements EnumMessage<LineFrequency> {
 	    Bits.putUnsignedShort(bb, asInt());
 	}
 	
+	private final int x;
+	
+	private LineFrequency(int x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Integer, LineFrequency> map = OrdinalEnum.buildInt(LineFrequency.class);
+	
 	public static LineFrequency valueOf(int x) {
-		switch(x) {
-		case 0:
-			return LINE_F_UNSPEC;
-		case 1:
-			return LINE_F_50HZ;
-		case 2:
-			return LINE_F_60HZ;
-		default:
-			return null;
-		}
-		
+	    return map.get(x);
 	}
 	
 	public int asInt() {
-		switch(this) {
-		case LINE_F_UNSPEC:
-			return 0;
-		case LINE_F_50HZ:
-			return 1;
-		case LINE_F_60HZ:
-			return 2;
-		default:
-			throw new IllegalArgumentException("Unknown LineFrequency:"+this);
-		}
+		return x;
 	}
 }

@@ -1,38 +1,28 @@
 package org.mdpnp.devices.philips.intellivue.dataexport;
 
-public enum RemoteOperation {
-	Invoke,
-	Result,
-	Error,
-	LinkedResult;
+import java.util.Map;
+
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
+
+public enum RemoteOperation implements OrdinalEnum.IntType {
+	Invoke(1),
+	Result(2),
+	Error(3),
+	LinkedResult(5);
+	
+	private final int x;
+	
+	private RemoteOperation(final int x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Integer, RemoteOperation> map = OrdinalEnum.buildInt(RemoteOperation.class);
 	
 	public static final RemoteOperation valueOf(int x) {
-		switch(x) {
-		case 1:
-			return RemoteOperation.Invoke;
-		case 2:
-			return RemoteOperation.Result;
-		case 3:
-			return RemoteOperation.Error;
-		case 5:
-			return RemoteOperation.LinkedResult;
-		default:
-			throw new IllegalArgumentException("Unknown RemoteOperation:"+x);
-		}
+		return map.get(x);
 	}
 	
 	public final int asInt() {
-		switch(this) {
-		case Invoke:
-			return 1;
-		case Result:
-			return 2;
-		case Error:
-			return 3;
-		case LinkedResult:
-			return 5;
-		default:
-			throw new IllegalArgumentException("Unknown RemoteOperation:"+this);
-		}
+	    return x;
 	}
 }

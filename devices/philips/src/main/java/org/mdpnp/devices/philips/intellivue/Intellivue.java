@@ -486,7 +486,7 @@ public class Intellivue implements NetworkConnection {
 		if(numerics != null) {
 			Attribute<TextIdList> ati = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_POLL_NU_PRIO_LIST, TextIdList.class);
 			for(Label l : numerics) {
-				ati.getValue().addTextId(l.aslong());
+				ati.getValue().addTextId(l.asLong());
 			}
 			set.add(ModifyOperator.Replace, ati);
 		}
@@ -495,7 +495,7 @@ public class Intellivue implements NetworkConnection {
 		if(realtimeSampleArrays != null) {
 			Attribute<TextIdList> ati = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_POLL_RTSA_PRIO_LIST, TextIdList.class);
 			for(Label l : realtimeSampleArrays) {
-				ati.getValue().addTextId(l.aslong());
+				ati.getValue().addTextId(l.asLong());
 			}
 			set.add(ModifyOperator.Replace, ati);
 		}

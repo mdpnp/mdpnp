@@ -7,7 +7,7 @@ import org.mdpnp.devices.io.util.Bits;
 public class MetricSpecification implements Value {
 	private final RelativeTime updatePeriod = new RelativeTime();
 	private MetricCategory category;
-	private MetricAccess access;
+	private MetricAccess access = new MetricAccess();
 	private final MetricStructure structure = new MetricStructure();
 	private int relevance;
 	
@@ -20,7 +20,7 @@ public class MetricSpecification implements Value {
 	public void parse(ByteBuffer bb) {
 		updatePeriod.parse(bb);
 		category = MetricCategory.valueOf(Bits.getUnsignedShort(bb));
-		access = MetricAccess.valueOf(Bits.getUnsignedShort(bb));
+		access.parse(bb);
 		structure.parse(bb);
 		relevance = Bits.getUnsignedShort(bb);
 	}
@@ -29,7 +29,7 @@ public class MetricSpecification implements Value {
 	public void format(ByteBuffer bb) {
 		updatePeriod.format(bb);
 		Bits.putUnsignedShort(bb, category.asInt());
-		Bits.putUnsignedShort(bb, access.asInt());
+		access.format(bb);
 		structure.format(bb);
 		Bits.putUnsignedShort(bb, relevance);
 	}

@@ -1,9 +1,10 @@
 package org.mdpnp.devices.philips.intellivue.data;
 
-import java.util.HashMap;
 import java.util.Map;
 
-public enum MetricCategory {
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
+
+public enum MetricCategory implements OrdinalEnum.IntType {
 	/**
 	 * not specified
 	 */
@@ -52,14 +53,8 @@ public enum MetricCategory {
 	
 	private final int x;
 	
-	private static final Map<Integer, MetricCategory> map = new HashMap<Integer, MetricCategory>();
-	
-	static {
-	    for(MetricCategory mc : values()) {
-	        map.put(mc.asInt(), mc);
-	    }
-	}
-	
+	private static final Map<Integer, MetricCategory> map = OrdinalEnum.buildInt(MetricCategory.class);
+		
 	private MetricCategory(int x) {
 	    this.x = x;
     }
@@ -70,9 +65,5 @@ public enum MetricCategory {
 	
 	public int asInt() {
 	    return x;
-	}
-	
-	public static void main(String[] args) {
-	    System.out.println(valueOf(129));
 	}
 }

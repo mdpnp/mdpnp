@@ -1,43 +1,29 @@
 package org.mdpnp.devices.philips.intellivue.dataexport.error;
 
-public enum ErrorStatus {
-	AccessDenied,
-	NoSuchAttribute,
-	InvalidAttributeValue,
-	InvalidOperation,
-	InvalidOperator;
+import java.util.Map;
+
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
+
+public enum ErrorStatus implements OrdinalEnum.IntType {
+	AccessDenied(2),
+	NoSuchAttribute(5),
+	InvalidAttributeValue(6),
+	InvalidOperation(24),
+	InvalidOperator(25);
+	
+	private final int x;
+	
+	private ErrorStatus(final int x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Integer, ErrorStatus> map = OrdinalEnum.buildInt(ErrorStatus.class);
 	
 	public static final ErrorStatus valueOf(int x) {
-		switch(x) {
-		case 2:
-			return AccessDenied;
-		case 5:
-			return NoSuchAttribute;
-		case 6:
-			return InvalidAttributeValue;
-		case 24:
-			return InvalidOperation;
-		case 25:
-			return InvalidOperator;
-		default:
-			throw new IllegalArgumentException("Unknown error status:"+x);
-		}
+		return map.get(x);
 	}
 	
 	public final int asInt() {
-		switch(this) {
-		case AccessDenied:
-			return 2;
-		case NoSuchAttribute:
-			return 5;
-		case InvalidAttributeValue:
-			return 6;
-		case InvalidOperation:
-			return 24;
-		case InvalidOperator:
-			return 25;
-		default:
-			throw new IllegalArgumentException("Unknown error status:"+this);
-		}
+		return x;
 	}
 }

@@ -1,53 +1,32 @@
 package org.mdpnp.devices.philips.intellivue.data;
 
-public enum ProductionSpecificationType {
-	UNSPECIFIED,
-	SERIAL_NUMBER,
-	PART_NUMBER,
-	HW_REVISION,
-	SW_REVISION,
-	FW_REVISION,
-	PROTOCOL_REVISION;
+import java.util.Map;
+
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
+
+public enum ProductionSpecificationType implements OrdinalEnum.IntType {
+	UNSPECIFIED(0),
+	SERIAL_NUMBER(1),
+	PART_NUMBER(2),
+	HW_REVISION(3),
+	SW_REVISION(4),
+	FW_REVISION(5),
+	PROTOCOL_REVISION(6),
+	;
+	
+	private final int x;
+	
+	private ProductionSpecificationType(final int x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Integer, ProductionSpecificationType> map = OrdinalEnum.buildInt(ProductionSpecificationType.class);
 	
 	public static ProductionSpecificationType valueOf(int x) {
-		switch(x) {
-		case 0:
-			return UNSPECIFIED;
-		case 1:
-			return SERIAL_NUMBER;
-		case 2:
-			return PART_NUMBER;
-		case 3:
-			return HW_REVISION;
-		case 4:
-			return SW_REVISION;
-		case 5:
-			return FW_REVISION;
-		case 6:
-			return PROTOCOL_REVISION;
-		default:
-			return null;
-		}
+		return map.get(x);
 	}
 	
 	public int asInt() {
-		switch(this) {
-		case UNSPECIFIED:
-			return 0;
-		case SERIAL_NUMBER:
-			return 1;
-		case PART_NUMBER:
-			return 2;
-		case HW_REVISION:
-			return 3;
-		case SW_REVISION:
-			return 4;
-		case FW_REVISION:
-			return 5;
-		case PROTOCOL_REVISION:
-			return 6;
-		default:
-			throw new IllegalArgumentException("Unknown ProductionSpecificationType:"+this);
-		}
+		return x;
 	}
 }

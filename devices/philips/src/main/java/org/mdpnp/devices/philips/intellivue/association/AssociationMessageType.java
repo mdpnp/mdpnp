@@ -1,67 +1,53 @@
 package org.mdpnp.devices.philips.intellivue.association;
 
-public enum AssociationMessageType {
+import java.util.Map;
+
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
+
+public enum AssociationMessageType implements OrdinalEnum.ShortType {
 	/**
 	 * Association Request
 	 */
-	Connect,
+	Connect(0x0D),
 	/**
 	 * Association Response
 	 */
-	Accept,
+	Accept(0x0E),
 	/**
 	 * Refused Response
 	 */
-	Refuse,
+	Refuse(0x0C),
 	/**
 	 * Disconnect Request
 	 */
-	Finish,
+	Finish(0x09),
 	/**
 	 * Disconnect Response
 	 */
-	Disconnect,
+	Disconnect(0x0A),
 	/**
 	 * Abort Request
 	 */
-	Abort;
+	Abort(0x19);
+	
+	private final short x;
+	
+	// for convenience
+    private AssociationMessageType(int x) {
+        this( (short) x);
+    }
+	
+	private AssociationMessageType(short x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Short, AssociationMessageType> map = OrdinalEnum.buildShort(AssociationMessageType.class);
 	
 	public final short asShort() {
-		switch(this) {
-		case Connect:
-			return 0x0D;
-		case Accept:
-			return 0x0E;
-		case Refuse:
-			return 0x0C;
-		case Finish:
-			return 0x09;
-		case Disconnect:
-			return 0x0A;
-		case Abort:
-			return 0x19;
-		default:
-			throw new IllegalArgumentException("Unknown SessionHeaderType:"+this);
-		}
+	    return x;
 	}
 	
 	public static final AssociationMessageType valueOf(short x) {
-		switch(x) {
-		case 0x0D:
-			return Connect;
-		case 0x0E:
-			return Accept;
-		case 0x0C:
-			return Refuse;
-		case 0x09:
-			return Finish;
-		case 0x0A:
-			return Disconnect;
-		case 0x19:
-			return Abort;
-		default:
-			throw new IllegalArgumentException("Unknown SessionHeaderType:"+x);
-		
-		}
+		return map.get(x);
 	}
 }

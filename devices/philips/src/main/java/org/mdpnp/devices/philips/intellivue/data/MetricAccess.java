@@ -1,53 +1,70 @@
 package org.mdpnp.devices.philips.intellivue.data;
 
-public enum MetricAccess {
-	/**
-	 * The intermitted availability bit is set, if the observed values not always
-     * available (e.g. only if a measurement is explicitly started).
-	 */
-	AVAIL_INTERMITTEND,
-	/**
-	 * observed value is updated periodically
-	 */
-	UPD_PERIODIC,
-	/**
-	 * observed value is updated episodically (exactly one update mode (UPD_) must
-     * be set
-	 */
-	UPD_EPISODIC,
-	/**
-	 * indicates that the measurement is non continuous (this is
-     * different from the update mode)
-	 */
-	MSMT_NONCONTINUOUS;
+import java.nio.ByteBuffer;
+
+import org.mdpnp.devices.io.util.Bits;
+import org.mdpnp.devices.philips.intellivue.Message;
+
+public class MetricAccess implements Message {
+    
+    private static final int AVAIL_INTERMITTENT = 0x8000;
+    private static final int UPD_PERIODIC = 0x4000;
+    private static final int UPD_EPISODIC = 0x2000;
+    private static final int MSMT_NONCONTINUOUS = 0x1000;
+    private static final int ACC_EVREP = 0x0800;
+    private static final int ACC_GET = 0x0400;
+    private static final int ACC_SCAN = 0x0200;
+    private static final int GEN_OPT_SYNC = 0x0080;
+    private static final int SC_OPT_NORMAL = 0x0020;
+    private static final int SC_OPT_EXTENSIVE = 0x0010;
+    private static final int SC_OPT_LONG_PD_AVAIL = 0x0008;
+    private static final int SC_OPT_CONFIRM = 0x0004;
 	
-	public final static MetricAccess valueOf(int x) {
-		switch(x) {
-		case 0x8000:
-			return AVAIL_INTERMITTEND;
-		case 0x4000:
-			return UPD_PERIODIC;
-		case 0x2000:
-			return UPD_EPISODIC;
-		case 0x1000:
-			return MSMT_NONCONTINUOUS;
-		default:
-			return null;
-		}
-	}
-	
-	public int asInt() {
-		switch(this) {
-		case AVAIL_INTERMITTEND:
-			return 0x8000;
-		case UPD_PERIODIC:
-			return 0x4000;
-		case UPD_EPISODIC:
-			return 0x2000;
-		case MSMT_NONCONTINUOUS:
-			return 0x1000;
-		default:
-			throw new IllegalArgumentException("Unknown MetricAccess:"+this);
-		}
-	}
+    private int value;
+    
+    public boolean isAvailIntermittent() {
+        return 0 != (AVAIL_INTERMITTENT & value);
+    }
+    public boolean isUpdPeriodic() {
+        return 0 != (UPD_PERIODIC & value);
+    }
+    public boolean isUpdEpisodic() {
+        return 0 != (UPD_EPISODIC & value);
+    }
+    public boolean isMsmtNoncontinuous() {
+        return 0 != (MSMT_NONCONTINUOUS & value);
+    }
+    public boolean isAccEvRep() {
+        return 0 != (ACC_EVREP & value);
+    }
+    public boolean isAccGet() {
+        return 0 != (ACC_GET & value);
+    }
+    public boolean isAccScan() {
+        return 0 != (ACC_SCAN & value);
+    }
+    public boolean isGenOptSync() {
+        return 0 != (GEN_OPT_SYNC & value);
+    }
+    public boolean isScOptNormal() {
+        return 0 != (SC_OPT_NORMAL & value);
+    }
+    public boolean isScOptExtensive() {
+        return 0 != (SC_OPT_EXTENSIVE & value);
+    }
+    public boolean isScOptLongPdAvail() {
+        return 0 != (SC_OPT_LONG_PD_AVAIL & value);
+    }
+    public boolean isScOptConfirm() {
+        return 0 != (SC_OPT_CONFIRM & value);
+    }
+    
+    @Override
+    public void parse(ByteBuffer bb) {
+        value = Bits.getUnsignedShort(bb);
+    }
+    @Override
+    public void format(ByteBuffer bb) {
+        Bits.putUnsignedShort(bb, value);
+    }
 }

@@ -1,23 +1,25 @@
 package org.mdpnp.devices.philips.intellivue.data;
 
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.mdpnp.devices.io.util.Bits;
 
 
-public enum SimpleColor implements EnumMessage<SimpleColor> {
-	Black,
-	Red,
-	Green,
-	Yellow,
-	Blue,
-	Magenta,
-	Cyan,
-	White,
-	Pink,
-	Orange,
-	LightGreen,
-	LightRed,;
+public enum SimpleColor implements EnumMessage<SimpleColor>, OrdinalEnum.IntType {
+	Black(0),
+	Red(1),
+	Green(2),
+	Yellow(3),
+	Blue(4),
+	Magenta(5),
+	Cyan(6),
+	White(7),
+	Pink(20),
+	Orange(35),
+	LightGreen(50),
+	LightRed(65),;
 	
 	@Override
 	public void format(ByteBuffer bb) {
@@ -28,66 +30,21 @@ public enum SimpleColor implements EnumMessage<SimpleColor> {
 	public SimpleColor parse(ByteBuffer bb) {
 		return SimpleColor.valueOf(Bits.getUnsignedShort(bb));
 	}
+	
+	private final int x;
+	
+	private SimpleColor(final int x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Integer, SimpleColor> map = OrdinalEnum.buildInt(SimpleColor.class);
+	
 	public static final SimpleColor valueOf(int x) {
-		switch(x) {
-		case 0:
-			return Black;
-		case 1:
-			return Red;
-		case 2:
-			return Green;
-		case 3:
-			return Yellow;
-		case 4:
-			return Blue;
-		case 5:
-			return Magenta;
-		case 6:
-			return Cyan;
-		case 7:
-			return White;
-		case 20:
-			return Pink;
-		case 35:
-			return Orange;
-		case 50:
-			return LightGreen;
-		case 65:
-			return LightRed;
-		default:
-			return null;
-		}
+	    return map.get(x);
 	}
 	
 	public int asInt() {
-		switch(this) {
-		case Black:
-			return 0;
-		case Red:
-			return 1;
-		case Green:
-			return 2;
-		case Yellow:
-			return 3;
-		case Blue:
-			return 4;
-		case Magenta:
-			return 5;
-		case Cyan:
-			return 6;
-		case White:
-			return 7;
-		case Pink:
-			return 20;
-		case Orange:
-			return 35;
-		case LightGreen:
-			return 50;
-		case LightRed:
-			return 65;
-		default:
-			throw new IllegalArgumentException("Unknown SimpleColor:"+this);
-		}
+	    return x;
 	}
 
 }

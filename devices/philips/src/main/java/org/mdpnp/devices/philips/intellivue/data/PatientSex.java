@@ -1,14 +1,15 @@
 package org.mdpnp.devices.philips.intellivue.data;
-
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.mdpnp.devices.io.util.Bits;
 
-public enum PatientSex implements EnumMessage<PatientSex> {
-	SEX_UNKNOWN,
-	MALE,
-	FEMALE,
-	SEX_UNSPECIFIED;
+public enum PatientSex implements EnumMessage<PatientSex>, OrdinalEnum.IntType {
+	SEX_UNKNOWN(0),
+	MALE(1),
+	FEMALE(2),
+	SEX_UNSPECIFIED(9);
 	
 	@Override
 	public void format(ByteBuffer bb) {
@@ -20,33 +21,19 @@ public enum PatientSex implements EnumMessage<PatientSex> {
 		return PatientSex.valueOf(Bits.getUnsignedShort(bb));
 	}
 	
+	private final int x;
+	
+	private PatientSex(final int x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Integer, PatientSex> map = OrdinalEnum.buildInt(PatientSex.class);
+	
 	public static PatientSex valueOf(int x) {
-		switch(x) {
-		case 0:
-			return SEX_UNKNOWN;
-		case 1:
-			return MALE;
-		case 2:
-			return FEMALE;
-		case 9:
-			return SEX_UNSPECIFIED;
-		default:
-			return null;
-		}
+		return map.get(x);
 	}
 	
 	public int asInt() {
-		switch(this) {
-		case SEX_UNKNOWN:
-			return 0;
-		case MALE:
-			return 1;
-		case FEMALE:
-			return 2;
-		case SEX_UNSPECIFIED:
-			return 9;
-		default:
-			throw new IllegalArgumentException("Unknown PatientSex:"+this);
-		}
+		return x;
 	}
 }

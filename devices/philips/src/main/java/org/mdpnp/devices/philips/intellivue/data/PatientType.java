@@ -1,14 +1,15 @@
 package org.mdpnp.devices.philips.intellivue.data;
-
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.mdpnp.devices.io.util.Bits;
 
-public enum PatientType implements EnumMessage<PatientType> {
-	PAT_TYPE_UNSPECIFIED,
-	ADULT,
-	PEDIATRIC,
-	NEONATAL;
+public enum PatientType implements EnumMessage<PatientType>, OrdinalEnum.IntType {
+	PAT_TYPE_UNSPECIFIED(0),
+	ADULT(1),
+	PEDIATRIC(2),
+	NEONATAL(3);
 	
 	@Override
 	public void format(ByteBuffer bb) {
@@ -19,33 +20,20 @@ public enum PatientType implements EnumMessage<PatientType> {
 		return PatientType.valueOf(Bits.getUnsignedShort(bb));
 	};
 	
+	
+	private final int x;
+	
+	private PatientType(final int x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Integer, PatientType> map = OrdinalEnum.buildInt(PatientType.class);
+	
 	public static PatientType valueOf(int x) {
-		switch(x) {
-		case 0:
-			return PAT_TYPE_UNSPECIFIED;
-		case 1:
-			return ADULT;
-		case 2:
-			return PEDIATRIC;
-		case 3:
-			return NEONATAL;
-		default:
-			return null;
-		}
+		return map.get(x);
 	}
 	
 	public final int asInt() {
-		switch(this) {
-		case PAT_TYPE_UNSPECIFIED:
-			return 0;
-		case ADULT:
-			return 1;
-		case PEDIATRIC:
-			return 2;
-		case NEONATAL:
-			return 3;
-		default:
-			throw new IllegalArgumentException("Unknown PatientType:"+this);
-		}
+		return x;
 	}
 }

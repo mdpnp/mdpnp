@@ -1,13 +1,15 @@
 package org.mdpnp.devices.philips.intellivue.data;
 
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.mdpnp.devices.io.util.Bits;
 
-public enum MDSStatus implements EnumMessage<MDSStatus> {
-	Disconnected,
-	Unassociated,
-	Operating;
+public enum MDSStatus implements EnumMessage<MDSStatus>, OrdinalEnum.IntType {
+	Disconnected(0),
+	Unassociated(1),
+	Operating(6);
 	
 	@Override
 	public MDSStatus parse(ByteBuffer bb) {
@@ -19,29 +21,19 @@ public enum MDSStatus implements EnumMessage<MDSStatus> {
 		Bits.putUnsignedShort(bb, asInt());
 	}
 	
+	private final int x;
+	
+	private MDSStatus(int x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Integer, MDSStatus> map = OrdinalEnum.buildInt(MDSStatus.class);
+	
 	public static MDSStatus valueOf(int x) {
-		switch(x) {
-		case 0:
-			return Disconnected;
-		case 1:
-			return Unassociated;
-		case 6:
-			return Operating;
-		default:
-			return null;
-		}
+		return map.get(x);
 	}
 	
 	public int asInt() {
-		switch(this) {
-		case Disconnected:
-			return 0;
-		case Unassociated:
-			return 1;
-		case Operating:
-			return 6;
-		default:
-			throw new IllegalArgumentException("Unknown MDSStatus:"+this);
-		}
+	    return x;
 	}
 }

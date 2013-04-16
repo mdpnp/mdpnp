@@ -1,49 +1,32 @@
 package org.mdpnp.devices.philips.intellivue.data;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 import org.mdpnp.devices.io.util.Bits;
 
 
-public enum ApplicationArea implements EnumMessage<ApplicationArea> {
-	AREA_UNSPEC,
-	AREA_OPERATING_ROOM,
-	AREA_INTENSIVE_CARE,
-	AREA_NEONATAL_INTENSIVE_CARE,
-	AREA_CARDIOLOGY_CARE;
+public enum ApplicationArea implements EnumMessage<ApplicationArea>, OrdinalEnum.IntType {
+	AREA_UNSPEC(0),
+	AREA_OPERATING_ROOM(1),
+	AREA_INTENSIVE_CARE(2),
+	AREA_NEONATAL_INTENSIVE_CARE(3),
+	AREA_CARDIOLOGY_CARE(4);
+	
+	private final int x;
+	private final static Map<Integer, ApplicationArea> map = OrdinalEnum.buildInt(ApplicationArea.class);
+	
+	private ApplicationArea(int x) {
+	    this.x = x;
+    }
 	
 	public static ApplicationArea valueOf(int x) {
-		switch(x) {
-		case 0:
-			return AREA_UNSPEC;
-		case 1:
-			return AREA_OPERATING_ROOM;
-		case 2:
-			return AREA_INTENSIVE_CARE;
-		case 3:
-			return AREA_NEONATAL_INTENSIVE_CARE;
-		case 4:
-			return AREA_CARDIOLOGY_CARE;
-		default:
-			return null;
-		}
+	    return map.get(x);
 	}
 	
 	public int asInt() {
-		switch(this) {
-		case AREA_UNSPEC:
-			return 0;
-		case AREA_OPERATING_ROOM:
-			return 1;
-		case AREA_INTENSIVE_CARE:
-			return 2;
-		case AREA_NEONATAL_INTENSIVE_CARE:
-			return 3;
-		case AREA_CARDIOLOGY_CARE:
-			return 4;
-		default:
-			throw new IllegalArgumentException("Unknown ApplicationArea:"+this);
-		}
+	    return x;
 	}
 
 	@Override

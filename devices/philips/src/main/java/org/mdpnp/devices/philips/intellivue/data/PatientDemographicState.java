@@ -1,14 +1,15 @@
 package org.mdpnp.devices.philips.intellivue.data;
-
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.mdpnp.devices.io.util.Bits;
 
-public enum PatientDemographicState implements EnumMessage<PatientDemographicState> {
-	EMPTY,
-	PRE_ADMITTED,
-	ADMITTED,
-	DISCHARGED;
+public enum PatientDemographicState implements EnumMessage<PatientDemographicState>, OrdinalEnum.IntType {
+	EMPTY(0),
+	PRE_ADMITTED(1),
+	ADMITTED(2),
+	DISCHARGED(8);
 	
 	@Override
 	public void format(ByteBuffer bb) {
@@ -19,34 +20,18 @@ public enum PatientDemographicState implements EnumMessage<PatientDemographicSta
 		return PatientDemographicState.valueOf(Bits.getUnsignedShort(bb));
 	}
 	
+	private final int x;
+	private PatientDemographicState(final int x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Integer, PatientDemographicState> map = OrdinalEnum.buildInt(PatientDemographicState.class);
+	
 	public static PatientDemographicState valueOf(int x) {
-		switch(x) {
-		case 0:
-			return EMPTY;
-		case 1:
-			return PRE_ADMITTED;
-		case 2:
-			return ADMITTED;
-		case 8:
-			return DISCHARGED;
-		default:
-			return null;
-		}
+	    return map.get(x);
 	}
 	
 	public final int asInt() {
-		switch(this) {
-		case EMPTY:
-			return 0;
-		case PRE_ADMITTED:
-			return 1;
-		case ADMITTED:
-			return 2;
-		case DISCHARGED:
-			return 8;
-		default:
-			throw new IllegalArgumentException("Unknown PatientDemographicState:"+this);
-				
-		}
+	    return x;
 	}
 }

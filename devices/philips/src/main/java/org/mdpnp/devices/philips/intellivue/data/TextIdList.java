@@ -21,7 +21,7 @@ public class TextIdList implements Value {
 	
 	public boolean containsAll(Label[] labels) {
 		for(Label l : labels) {
-			if(!contains(l.aslong())) {
+			if(!contains(l.asLong())) {
 				return false;
 			}
 		}

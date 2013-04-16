@@ -1,34 +1,31 @@
 package org.mdpnp.devices.philips.intellivue.dataexport;
 
-public enum RemoteOperationLinkedState {
-	First,
-	NotFirstNotLast,
-	Last;
+import java.util.Map;
+
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
+
+public enum RemoteOperationLinkedState implements OrdinalEnum.ShortType {
+	First(1),
+	NotFirstNotLast(2),
+	Last(3);
+	
+	private final short x;
+	
+	private RemoteOperationLinkedState(final int x) {
+	    this((short)x);
+    }
+	
+	private RemoteOperationLinkedState(final short x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Short, RemoteOperationLinkedState> map = OrdinalEnum.buildShort(RemoteOperationLinkedState.class);
 	
 	public static final RemoteOperationLinkedState valueOf(short x) {
-		switch(x) {
-		case 1:
-			return First;
-		case 2:
-			return NotFirstNotLast;
-		case 3:
-			return Last;
-		default:
-			throw new IllegalArgumentException("Unknown RemoteOperationLinkedState:"+x);
-		}
+		return map.get(x);
 	}
 	
 	public final short asShort() {
-		switch(this) {
-		case First:
-			return 1;
-		case NotFirstNotLast:
-			return 2;
-		case Last:
-			return 3;
-		default:
-			throw new IllegalArgumentException("Unknown RemoteOperationLinkedState:"+this);
-			
-		}
+		return x;
 	}
 }

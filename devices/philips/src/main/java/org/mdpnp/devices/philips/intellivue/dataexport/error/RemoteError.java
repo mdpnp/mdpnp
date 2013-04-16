@@ -1,68 +1,34 @@
 package org.mdpnp.devices.philips.intellivue.dataexport.error;
 
-public enum RemoteError {
-	NoSuchObjectClass,
-	NoSuchObjectInstance,
-	AccessDenied,
-	GetListError,
-	SetListError,
-	NoSuchAction,
-	ProcessingFailure,
-	InvalidArgumentValue,
-	InvalidScope,
-	InvalidObjectInstance;
+import java.util.Map;
+
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
+
+public enum RemoteError implements OrdinalEnum.IntType {
+	NoSuchObjectClass(0),
+	NoSuchObjectInstance(1),
+	AccessDenied(2),
+	GetListError(7),
+	SetListError(8),
+	NoSuchAction(9),
+	ProcessingFailure(10),
+	InvalidArgumentValue(15),
+	InvalidScope(16),
+	InvalidObjectInstance(17);
+	
+	private final int x;
+	
+	private RemoteError(final int x) {
+	    this.x = x;
+    }
+	
+	private static final Map<Integer, RemoteError> map = OrdinalEnum.buildInt(RemoteError.class);
 	
 	public static final RemoteError valueOf(int x) {
-		switch(x) {
-		case 0:
-			return NoSuchObjectClass;
-		case 1:
-			return NoSuchObjectInstance;
-		case 2:
-			return AccessDenied;
-		case 7:
-			return GetListError;
-		case 8:
-			return SetListError;
-		case 9:
-			return NoSuchAction;
-		case 10:
-			return ProcessingFailure;
-		case 15:
-			return InvalidArgumentValue;
-		case 16:
-			return InvalidScope;
-		case 17:
-			return InvalidObjectInstance;
-		default:
-			throw new IllegalArgumentException("Unknown error value:"+x);
-		}
+		return map.get(x);
 	}
 	public final int asInt() {
-		switch(this) {
-		case NoSuchObjectClass:
-			return 0;
-		case NoSuchObjectInstance:
-			return 1;
-		case AccessDenied:
-			return 2;
-		case GetListError:
-			return 7;
-		case SetListError:
-			return 8;
-		case NoSuchAction:
-			return 9;
-		case ProcessingFailure:
-			return 10;
-		case InvalidArgumentValue:
-			return 15;
-		case InvalidScope:
-			return 16;
-		case InvalidObjectInstance:
-			return 17;
-		default:
-			throw new IllegalArgumentException("Unknown error value:"+this);
-		}
+		return x;
 	}
 
 }

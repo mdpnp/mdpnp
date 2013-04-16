@@ -1,13 +1,17 @@
 package org.mdpnp.devices.philips.intellivue.data;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
+
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
 import org.mdpnp.devices.io.util.Bits;
 
-public enum MetricModality implements EnumMessage<MetricModality> {
-	MANUAL,
-	APERIODIC,
-	VERIFIED;
+// ought this be a bitfield and not an enum?
+public enum MetricModality implements EnumMessage<MetricModality>, OrdinalEnum.IntType {
+	MANUAL(0x4000),
+	APERIODIC(0x2000),
+	VERIFIED(0x1000);
 	
 	@Override
 	public MetricModality parse(ByteBuffer bb) {
@@ -18,29 +22,19 @@ public enum MetricModality implements EnumMessage<MetricModality> {
 		Bits.putUnsignedShort(bb, asInt());
 	}
 	
+	private final int x;
+	
+	private MetricModality(int x) {
+	    this.x = x;
+	}
+	
+	private static final Map<Integer, MetricModality> map = OrdinalEnum.buildInt(MetricModality.class);
+	
 	public static final MetricModality valueOf(int x) {
-		switch(x) {
-		case 0x4000:
-			return MANUAL;
-		case 0x2000:
-			return APERIODIC;
-		case 0x1000:
-			return VERIFIED;
-		default:
-			return null;
-		}
+	    return map.get(x);
 	}
 	
 	public int asInt() {
-		switch(this) {
-		case MANUAL:
-			return 0x4000;
-		case APERIODIC:
-			return 0x2000;
-		case VERIFIED:
-			return 0x1000;
-		default:
-			throw new IllegalArgumentException("Unknown MetricModality:"+this);
-		}
+	    return x;
 	}
 }
