@@ -1,6 +1,7 @@
 package org.mdpnp.transport;
 
 import org.mdpnp.comms.Gateway;
+import org.mdpnp.rti.dds.DDS;
 import org.mdpnp.transport.dds.rti.DDSWrapper;
 import org.mdpnp.transport.jgroups.JGroupsWrapper;
 import org.mdpnp.transport.mcast.MulticastWrapper;
@@ -16,7 +17,7 @@ public class WrapperFactory {
         MULTICAST
     }
     
-    private static WrapperType type = WrapperType.JGROUPS;
+    private static WrapperType type = WrapperType.RTI_DDS;
     
     static {
         String s = System.getProperty("org.mdpnp.transport.WrapperFactory.type");
