@@ -7,3 +7,6 @@ generated
 .gradle
 gradle.properties
 .settings/
+.project
+.classpath
+.externalToolBuilders/
