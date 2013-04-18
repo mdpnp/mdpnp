@@ -5,7 +5,7 @@
  * which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/gpl.html
  ******************************************************************************/
-package org.mdpnp.devices.gui.waveform;
+package org.mdpnp.devices.math;
 
 
 
