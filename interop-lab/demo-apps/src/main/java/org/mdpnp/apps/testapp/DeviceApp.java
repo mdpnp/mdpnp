@@ -33,7 +33,7 @@ import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
 import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
 import org.mdpnp.devices.philips.intellivue.DemoMP70;
 import org.mdpnp.devices.simulation.SimulatedBloodPressureImpl;
-import org.mdpnp.devices.simulation.SimulatedPulseOximeterImpl;
+import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.webcam.WebcamImpl;
 import org.mdpnp.transport.GetConnected;
 
@@ -79,7 +79,7 @@ public class DeviceApp {
 			new DemoRadical7(gateway);
 			break;
 		case PO_Simulator:
-			new SimulatedPulseOximeterImpl(gateway);
+			new SimPulseOximeter(gateway);
 			break;
 		case PhilipsMP70:
 //			Class.forName("org.mdpnp.devices.impl.intellivue.PhilipsIntellivueMP70Impl").getConstructor(new Class<?>[] {Gateway.class}).newInstance(gateway);

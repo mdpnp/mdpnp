@@ -13,6 +13,7 @@ dependencies {
 	compile project(':devices:masimo')
 	compile project(':devices:nellcor')
 	compile project(':devices:nonin')
+    compile project(':devices:simulated')
     
     compile group: 'org.jogamp.jogl', name: 'jogl-all-main', version: '2.0-rc11'
     compile group: 'org.jogamp.gluegen', name: 'gluegen-rt-main', version: '2.0-rc11'

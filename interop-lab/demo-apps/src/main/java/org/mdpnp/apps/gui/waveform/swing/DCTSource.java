@@ -15,7 +15,7 @@ import javax.swing.table.TableModel;
 
 import org.mdpnp.apps.gui.waveform.WaveformSource;
 import org.mdpnp.apps.gui.waveform.WaveformSourceListener;
-import org.mdpnp.devices.gui.waveform.DCT;
+import org.mdpnp.devices.math.DCT;
 
 public final class DCTSource implements WaveformSource, WaveformSourceListener, TableModel {
 	private double[] sourceData;

@@ -35,7 +35,7 @@ import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
 import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
 import org.mdpnp.devices.philips.intellivue.DemoMP70;
 import org.mdpnp.devices.simulation.SimulatedBloodPressureImpl;
-import org.mdpnp.devices.simulation.SimulatedPulseOximeterImpl;
+import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.webcam.WebcamImpl;
 import org.mdpnp.transport.Adapter;
 import org.mdpnp.transport.GetConnected;
@@ -73,7 +73,7 @@ public class DeviceAdapter {
 		case MasimoRadical7:
 			return new DemoRadical7(deviceGateway);
 		case PO_Simulator:
-			return new SimulatedPulseOximeterImpl(deviceGateway);
+			return new SimPulseOximeter(deviceGateway);
 		case NBP_Simulator:
 			return new SimulatedBloodPressureImpl(deviceGateway);
 		case PhilipsMP70:
