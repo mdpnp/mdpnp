@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 
 import org.mdpnp.comms.Gateway;
 import org.mdpnp.comms.IdentifiableUpdate;
@@ -34,8 +35,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public abstract class AbstractDevice implements Device {
-	protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+public abstract class AbstractDevice implements Device, ThreadFactory {
+    protected final ThreadGroup threadGroup;
+	protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(this);
 
 	private static final Logger log = LoggerFactory.getLogger(AbstractDevice.class);
 	protected final Gateway gateway;
@@ -102,8 +104,22 @@ public abstract class AbstractDevice implements Device {
 		updates.put(u.getIdentifier(), u);
 	}
 	
+	@Override
+	public Thread newThread(Runnable r) {
+	    return new Thread(threadGroup, r);
+	}
+	
 	public AbstractDevice(Gateway gateway) {
 		this.gateway = gateway;
+		threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "AbstractDevice") {
+    		  @Override
+    		public void uncaughtException(Thread t, Throwable e) {
+    		    super.uncaughtException(t, e);
+    		    log.error("Thrown by " + t.toString(), e);
+    		    e.printStackTrace();
+    		}  
+		};
+		threadGroup.setDaemon(true);
 		add(nameUpdate);
 		add(guidUpdate);
 		try {
