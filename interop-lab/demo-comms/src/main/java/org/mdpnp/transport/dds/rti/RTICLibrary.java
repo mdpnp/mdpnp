@@ -18,6 +18,9 @@ import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.ptr.ShortByReference;
 
 public interface RTICLibrary extends Library {
+    
+    
+    
 	public static final int DDS_TYPECODE_MEMBER_ID_INVALID = 0x7FFFFFFF;
 	
 	public class DDS_Listener extends Structure {
@@ -32,10 +35,11 @@ public interface RTICLibrary extends Library {
 		public int buffer_initial_size = 0;
 		public int buffer_max_size = 65536;
 		public int buffer_max_size_increment = 1024;
+		public byte buffer_check_size = 0;
 		
 		@Override
 		protected List<?> getFieldOrder() {
-			return Arrays.asList(new String[] {"buffer_initial_size", "buffer_max_size", "buffer_max_size_increment"});
+			return Arrays.asList("buffer_initial_size", "buffer_max_size", "buffer_max_size_increment", "buffer_check_size");
 		}
 		
 		public DDS_DynamicDataProperty_t() {
@@ -117,7 +121,10 @@ public interface RTICLibrary extends Library {
 		public interface DDS_DataWriterListener_InstanceReplacedCallback extends Callback {
 			void on_instance_replaced(Pointer listener_data, Pointer writer, Pointer handle);
 		}
-		public DDS_Listener dds_listener;
+		public interface DDS_DataWriterListener_OnApplicationAcknowledgmentCallback extends Callback {
+            void on_instance_replaced(Pointer listener_data, Pointer writer, Pointer handle);
+        }
+		public DDS_Listener as_listener;
 		public DDS_DataWriterListener_OfferedDeadlineMissedCallback on_offered_deadline_missed;
 		public DDS_DataWriterListener_OfferedIncompatibleQosCallback on_offered_incompatible_qos;
 		public DDS_DataWriterListener_LivelinessLostCallback on_liveliness_lost;
@@ -129,12 +136,13 @@ public interface RTICLibrary extends Library {
 		public DDS_DataWriterListener_DataReturnCallback on_data_return;
 		public DDS_DataWriterListener_SampleRemovedCallback on_sample_removed;
 		public DDS_DataWriterListener_InstanceReplacedCallback on_instance_replaced;
+		public DDS_DataWriterListener_OnApplicationAcknowledgmentCallback on_application_acknowledgment;
 		
 		@Override
 		protected List<?> getFieldOrder() {
-			return Arrays.asList(new String[] {"dds_listener", "on_offered_deadline_missed", "on_offered_incompatible_qos", "on_liveliness_lost",
+			return Arrays.asList("as_listener", "on_offered_deadline_missed", "on_offered_incompatible_qos", "on_liveliness_lost",
 					"on_publication_matched","on_reliable_writer_cache_changed","on_reliable_reader_activity_changed","on_destination_unreachable",
-					"on_data_request","on_data_return","on_sample_removed","on_instance_replaced"});
+					"on_data_request","on_data_return","on_sample_removed","on_instance_replaced", "on_application_acknowledgment");
 		}
 	}
 
@@ -440,12 +448,71 @@ public interface RTICLibrary extends Library {
     	public int d;
     	public int e;
     	public int f;
+    	
 		@Override
 		protected List<?> getFieldOrder() {
 			return Arrays.asList(new String[] {"a", "b", "c", "d",
 					"e","f"});
 		}
     }
+    public class DDS_Cookie_t extends Structure {
+        public DDS_Cookie_t() {
+            super();
+            write();
+        }
+        public DDS_Cookie_t(Pointer p) {
+            super(p);
+        }
+        public DDS_OctetSequence value = new DDS_OctetSequence();
+        @Override
+        protected List<?> getFieldOrder() {
+            return Arrays.asList("value");
+        }
+    }
+    public class DDS_SampleIdentity_t extends Structure {
+        public DDS_SampleIdentity_t() {
+        }
+        public DDS_SampleIdentity_t(Pointer p) {
+            super(p);
+        }
+        public DDS_GUID_t writer_guid;
+        public DDS_SequenceNumber_t sequence_number;
+        @Override
+        protected List<?> getFieldOrder() {
+            return Arrays.asList("writer_guid", "sequence_number");
+        }
+    }
+    public class DDS_AckResponseData_t extends Structure {
+        public DDS_AckResponseData_t() {
+        }
+        public DDS_AckResponseData_t(Pointer p) {
+            super(p);
+        }
+        public DDS_OctetSequence value;
+        @Override
+        protected List<?> getFieldOrder() {
+            return Arrays.asList("value");
+        }
+    }
+    
+    public class DDS_AcknowledgmentInfo extends Structure {
+        public DDS_AcknowledgmentInfo() {
+        }
+        public DDS_AcknowledgmentInfo(Pointer p) {
+            super(p);
+        }
+        public DDS_InstanceHandle_t subscription_handle;
+        public DDS_SampleIdentity_t sample_identity;
+        public DDS_Cookie_t cookie;
+        public byte valid_response_data;
+        public DDS_AckResponseData_t response_data;
+        
+        @Override
+        protected List<?> getFieldOrder() {
+            return Arrays.asList("subscription_handle", "sample_identity", "cookie", "valid_response_data", "response_data");
+        }
+    }
+    
     public class DDS_LivelinessChangedStatus extends Structure {
     	public DDS_LivelinessChangedStatus() {
 		}
@@ -494,20 +561,23 @@ public interface RTICLibrary extends Library {
 		    public long publication_virtual_sequence_number;
 		    public DDS_GUID_t original_publication_virtual_guid;
 		    public long original_publication_virtual_sequence_number;
-		    
+		    public DDS_GUID_t related_original_publication_virtual_guid;
+		    public long related_original_publication_virtual_sequence_number;
 			@Override
 			protected List<?> getFieldOrder() {
-				return Arrays.asList(new String[] {"sample_state", "view_state", "instance_state", "source_timestamp",
+				return Arrays.asList("sample_state", "view_state", "instance_state", "source_timestamp",
 						"instance_handle","publication_handle","disposed_generation_count","no_writers_generation_count",
 						"sample_rank","generation_rank","absolute_generation_rank","valid_data","reception_timestamp","publication_sequence_number","reception_sequence_number",
-						"publication_virtual_guid","publication_virtual_sequence_number","original_publication_virtual_guid","original_publication_virtual_sequence_number"});
+						"publication_virtual_guid","publication_virtual_sequence_number","original_publication_virtual_guid","original_publication_virtual_sequence_number",
+						"related_original_publication_virtual_guid","related_original_publication_virtual_sequence_number");
 			}
 
 	}
 	
 	public static final String NDDS_C_LIB_NAME = "nddsc";
+	
 	Library CORE_INSTANCE = (Library) Native.loadLibrary("nddscore", Library.class);
-//	RTICLibrary INSTANCE = (RTICLibrary) Native.loadLibrary("nddscd", RTICLibrary.class);
+//	RTICLibrary INSTANCE = (RTICLibrary) Native.loadLibrary(NDDS_C_LIB_NAME, RTICLibrary.class);
 	
 	RTICLibrary INSTANCE = new RTICLibraryDirect();
 	
@@ -871,13 +941,19 @@ public interface RTICLibrary extends Library {
     public static final int DDS_BEST_EFFORT_RELIABILITY_QOS = 0;
     public static final int DDS_RELIABLE_RELIABILITY_QOS = 1;
 
+    public static final int DDS_PROTOCOL_ACKNOWLEDGMENT_MODE = 0;
+    public static final int DDS_APPLICATION_AUTO_ACKNOWLEDGMENT_MODE = 1;
+    public static final int DDS_APPLICATION_ORDERED_ACKNOWLEDGMENT_MODE = 2;
+    public static final int DDS_APPLICATION_EXPLICIT_ACKNOWLEDGMENT_MODE = 3;
+
     public class DDS_ReliabilityQosPolicy extends Structure {
     	public int kind = DDS_RELIABLE_RELIABILITY_QOS;
     	public DDS_Duration_t max_blocking_time = new DDS_Duration_t(0, 100000000);
+    	public int acknowledgment_kind = DDS_PROTOCOL_ACKNOWLEDGMENT_MODE;
     	
 		@Override
 		protected List<?> getFieldOrder() {
-			return Arrays.asList(new String[] {"kind", "max_blocking_time"});
+			return Arrays.asList(new String[] {"kind", "max_blocking_time", "acknowledgment_kind"});
 		}
     	
     	public DDS_ReliabilityQosPolicy() {
@@ -887,10 +963,11 @@ public interface RTICLibrary extends Library {
     	public DDS_ReliabilityQosPolicy(Pointer p) {
     		super(p);
     	}
-    	public DDS_ReliabilityQosPolicy(short kind, DDS_Duration_t max_blocking_time) {
+    	public DDS_ReliabilityQosPolicy(short kind, DDS_Duration_t max_blocking_time, int acknowledgment_kind) {
     		super();
     		this.kind = kind;
     		this.max_blocking_time = max_blocking_time;
+    		this.acknowledgment_kind = acknowledgment_kind;
     		write();
     	}
     }
@@ -1100,6 +1177,26 @@ public interface RTICLibrary extends Library {
     }
     public static final DDS_ReaderDataLifecycleQosPolicy DDS_READER_DATA_LIFECYCLE_QOS_POLICY_DEFAULT = new DDS_ReaderDataLifecycleQosPolicy( );
     
+    public static final int DDS_DISALLOW_TYPE_COERCION = 0;
+    public static final int DDS_ALLOW_TYPE_COERCION = 1;
+
+    
+    public class DDS_TypeConsistencyEnforcementQosPolicy extends Structure {
+        public DDS_TypeConsistencyEnforcementQosPolicy() {
+            super();
+            write();
+        }
+        public DDS_TypeConsistencyEnforcementQosPolicy(Pointer p) {
+            super(p);
+        }
+        public int kind = DDS_ALLOW_TYPE_COERCION;
+        @Override
+        protected List<?> getFieldOrder() {
+            return Arrays.asList("kind");
+        }
+    }
+    
+    
     public class DDS_DataReaderResourceLimitsQosPolicy extends Structure {
         public int max_remote_writers = -1;
         public int max_remote_writers_per_instance = -1;
@@ -1124,15 +1221,16 @@ public interface RTICLibrary extends Library {
         public int initial_remote_virtual_writers_per_instance = 2;
         public int max_remote_writers_per_sample = 3;
         public int max_query_condition_filters = 4;
+        public int max_app_ack_response_length = 0;
         
 		@Override
 		protected List<?> getFieldOrder() {
-			return Arrays.asList(new String[] {"max_remote_writers", "max_remote_writers_per_instance", "max_samples_per_remote_writer", "max_infos",
+			return Arrays.asList("max_remote_writers", "max_remote_writers_per_instance", "max_samples_per_remote_writer", "max_infos",
 					"initial_remote_writers","initial_remote_writers_per_instance","initial_infos","initial_outstanding_reads",
 					"max_outstanding_reads","max_samples_per_read","disable_fragmentation_support","max_fragmented_samples",
 					"initial_fragmented_samples","max_fragmented_samples_per_remote_writer","max_fragments_per_sample","dynamically_allocate_fragmented_samples",
 					"max_total_instances","max_remote_virtual_writers","initial_remote_virtual_writers","max_remote_virtual_writers_per_instance",
-					"initial_remote_virtual_writers_per_instance","max_remote_writers_per_sample","max_query_condition_filters"});
+					"initial_remote_virtual_writers_per_instance","max_remote_writers_per_sample","max_query_condition_filters", "max_app_ack_response_length");
 		}
         
         public DDS_DataReaderResourceLimitsQosPolicy() {
@@ -1153,10 +1251,14 @@ public interface RTICLibrary extends Library {
         public DDS_Duration_t nack_period = new DDS_Duration_t(5, 0);
         public int receive_window_size = 256;
         public DDS_Duration_t round_trip_time = new DDS_Duration_t(0, 0);
+        public DDS_Duration_t app_ack_period = new DDS_Duration_t(5, 0);
+        public DDS_Duration_t min_app_ack_response_keep_duration = new DDS_Duration_t(0,0);
+        public int samples_per_app_ack = 1;
         
 		@Override
 		protected List<?> getFieldOrder() {
-			return Arrays.asList(new String[] {"min_heartbeat_response_delay","max_heartbeat_response_delay","heartbeat_suppression_duration","nack_period","receive_window_size","round_trip_time"});
+			return Arrays.asList(new String[] {"min_heartbeat_response_delay","max_heartbeat_response_delay","heartbeat_suppression_duration","nack_period","receive_window_size","round_trip_time",
+			        "app_ack_period", "min_app_ack_response_keep_duration", "samples_per_app_ack"});
 		}
         
         public DDS_RtpsReliableReaderProtocol_t() {
@@ -1209,7 +1311,7 @@ public interface RTICLibrary extends Library {
 	public static final DDS_DataReaderProtocolQosPolicy DDS_DATA_READER_PROTOCOL_QOS_POLICY_DEFAULT = new DDS_DataReaderProtocolQosPolicy();
 	
 	public class DDS_TransportSelectionQosPolicy extends Structure {
-		public DDS_Sequence enabled_transports = new DDS_Sequence();
+		public DDS_StringSequence enabled_transports = new DDS_StringSequence();
 		
 		@Override
 		protected List<?> getFieldOrder() {
@@ -1302,12 +1404,13 @@ public interface RTICLibrary extends Library {
 	public static final DDS_PropertyQosPolicy DDS_PROPERTY_QOS_POLICY_DEFAULT = new DDS_PropertyQosPolicy();
 	
 	public class DDS_AvailabilityQosPolicy extends Structure {
+	    public byte enable_required_subscriptions;
 		public DDS_Duration_t max_data_availability_waiting_time = new DDS_Duration_t(0xffffffff, 0);
 		public DDS_Duration_t max_endpoint_availabilty_waiting_time = new DDS_Duration_t(0xffffffff, 0);
 		public DDS_Sequence required_matched_endpoint_groups = new DDS_Sequence();
 		@Override
 		protected List<?> getFieldOrder() {
-			return Arrays.asList(new String[] {"max_data_availability_waiting_time","max_endpoint_availabilty_waiting_time","required_matched_endpoint_groups"});
+			return Arrays.asList(new String[] {"enable_required_subscriptions", "max_data_availability_waiting_time","max_endpoint_availabilty_waiting_time","required_matched_endpoint_groups"});
 		}
 		public DDS_AvailabilityQosPolicy() {
 			super();
@@ -1567,11 +1670,13 @@ public interface RTICLibrary extends Library {
 	    public byte autoregister_instances = 0;
 	    public int initial_virtual_writers = 1;
 	    public int max_virtual_writers = -1;
+	    public int max_remote_readers = -1;
+	    public int max_app_ack_remote_readers = -1;
 		@Override
 		protected List<?> getFieldOrder() {
 			return Arrays.asList(new String[] {"initial_concurrent_blocking_threads","max_concurrent_blocking_threads","max_remote_reader_filters",
 					"initial_batches","max_batches","cookie_max_length","instance_replacement","replace_empty_instances","autoregister_instances",
-					"initial_virtual_writers","max_virtual_writers"});
+					"initial_virtual_writers","max_virtual_writers", "max_remote_readers", "max_app_ack_remote_readers"});
 		}
 	    public DDS_DataWriterResourceLimitsQosPolicy() {
 	    	super();
@@ -1708,7 +1813,8 @@ public interface RTICLibrary extends Library {
 		public DDS_UserDataQosPolicy user_data = new DDS_UserDataQosPolicy();
 		public DDS_OwnershipQosPolicy ownership = new DDS_OwnershipQosPolicy();
 		public DDS_TimeBasedFilterQosPolicy time_based_filter = new DDS_TimeBasedFilterQosPolicy();
-		public DDS_ReaderDataLifecycleQosPolicy reader_data_lifecycle = new DDS_ReaderDataLifecycleQosPolicy();;
+		public DDS_ReaderDataLifecycleQosPolicy reader_data_lifecycle = new DDS_ReaderDataLifecycleQosPolicy();
+		public DDS_TypeConsistencyEnforcementQosPolicy type_consistency = new DDS_TypeConsistencyEnforcementQosPolicy();
 		public DDS_DataReaderResourceLimitsQosPolicy reader_resource_limits = new DDS_DataReaderResourceLimitsQosPolicy();
 		public DDS_DataReaderProtocolQosPolicy protocol = new DDS_DataReaderProtocolQosPolicy();
 		public DDS_TransportSelectionQosPolicy transport_selection = new DDS_TransportSelectionQosPolicy();
@@ -1724,7 +1830,7 @@ public interface RTICLibrary extends Library {
 		@Override
 		protected List<?> getFieldOrder() {
 			return Arrays.asList(new String[] {"durability","deadline","latency_budget","liveliness","reliability","destination_order","history","resource_limits","user_data",
-					"ownership","time_based_filter","reader_data_lifecycle","reader_resource_limits","protocol","transport_selection","unicast","multicast","encapsulation","property",
+					"ownership","time_based_filter","reader_data_lifecycle","type_consistency","reader_resource_limits","protocol","transport_selection","unicast","multicast","encapsulation","property",
 					"service","availability","subscription_name","type_support"});
 		}
 		
@@ -1769,6 +1875,7 @@ public interface RTICLibrary extends Library {
 		public DDS_ServiceQosPolicy service = new DDS_ServiceQosPolicy();
 		public DDS_BatchQosPolicy batch = new DDS_BatchQosPolicy();
 		public DDS_MultiChannelQosPolicy multi_channel = new DDS_MultiChannelQosPolicy();
+		public DDS_AvailabilityQosPolicy availability = new DDS_AvailabilityQosPolicy();
 		public DDS_EntityNameQosPolicy publication_name = new DDS_EntityNameQosPolicy();
 		public DDS_TypeSupportQosPolicy type_support = new DDS_TypeSupportQosPolicy();
 
@@ -1776,7 +1883,7 @@ public interface RTICLibrary extends Library {
 		protected List<?> getFieldOrder() {
 			return Arrays.asList(new String[] {"durability","durability_service","deadline","latency_budget","liveliness","reliability","destination_order","history","resource_limits",
 					"transport_priority","lifespan","user_data","ownership","ownership_strength","writer_data_lifecycle","writer_resource_limits","protocol","transport_selection","unicast",
-					"encapsulation","publish_mode","property","service","batch","multi_channel","publication_name","type_support"});
+					"encapsulation","publish_mode","property","service","batch","multi_channel","availability","publication_name","type_support"});
 		}
 		public DDS_DataWriterQos() {
 			super();
@@ -1967,6 +2074,10 @@ public interface RTICLibrary extends Library {
 	    public byte default_partition_matches_all = 0;
 	    public byte allow_no_partitions = 0;
 	    public int type_code_max_serialized_length = 2048;
+	    public int type_object_max_serialized_length = 3072;
+	    public int serialized_type_object_dynamic_allocation_threshold = 3072;
+	    public int type_object_max_deserialized_length = -1;
+	    public int deserialized_type_object_dynamic_allocation_threshold = 4096;
 	    public int contentfilter_property_max_length = 256;
 	    public int channel_seq_max_length = 32;
 	    public int channel_filter_expression_max_length = 256;
@@ -1995,6 +2106,8 @@ public interface RTICLibrary extends Library {
 					"participant_user_data_max_length","inter_participant_data_max_length","topic_data_max_length","publisher_group_data_max_length",
 					"subscriber_group_data_max_length","writer_user_data_max_length","reader_user_data_max_length","max_partitions",
 					"max_partition_cumulative_characters","default_partition_matches_all","allow_no_partitions","type_code_max_serialized_length",
+					"type_object_max_serialized_length","serialized_type_object_dynamic_allocation_threshold",
+					"type_object_max_deserialized_length", "deserialized_type_object_dynamic_allocation_threshold",
 					"contentfilter_property_max_length","channel_seq_max_length","channel_filter_expression_max_length",
 					"participant_property_list_max_length","participant_property_string_max_length","writer_property_list_max_length",
 					"writer_property_string_max_length","reader_property_list_max_length","reader_property_string_max_length",
@@ -2095,10 +2208,17 @@ public interface RTICLibrary extends Library {
         public int initial_outstanding_reads = 2;
         public int max_outstanding_reads = -1;
         public int max_samples_per_read = 1024;
+        public byte disable_fragmentation_support = 0;
+        public int max_fragmented_samples = 1024;
+        public int initial_fragmented_samples = 4;
+        public int max_fragmented_samples_per_remote_writer = 256;
+        public int max_fragments_per_sample = 512;
+        public byte dynamically_allocate_fragmented_samples = 1;
         
 		@Override
 		protected List<?> getFieldOrder() {
-			return Arrays.asList(new String[] {"initial_samples","max_samples","initial_infos","max_infos","initial_outstanding_reads","max_outstanding_reads","max_samples_per_read"});
+			return Arrays.asList(new String[] {"initial_samples","max_samples","initial_infos","max_infos","initial_outstanding_reads","max_outstanding_reads","max_samples_per_read",
+			        "disable_fragmentation_support","max_fragmented_samples","initial_fragmented_samples","max_fragmented_samples_per_remote_writer","max_fragments_per_sample","dynamically_allocate_fragmented_samples"});
 		}
         
         public DDS_BuiltinTopicReaderResourceLimits_t() {
@@ -2149,17 +2269,14 @@ public interface RTICLibrary extends Library {
         public int builtin_discovery_plugins;
         public DDS_RtpsReliableReaderProtocol_t participant_message_reader = new DDS_RtpsReliableReaderProtocol_t();
         public DDS_RtpsReliableWriterProtocol_t participant_message_writer = new DDS_RtpsReliableWriterProtocol_t();
-        public DDS_DiscoveryBuiltinReaderFragmentationResourceLimits_t
-            publication_reader_fragmentation_resource_limits = new DDS_DiscoveryBuiltinReaderFragmentationResourceLimits_t();
-        public DDS_DiscoveryBuiltinReaderFragmentationResourceLimits_t
-            subscription_reader_fragmentation_resource_limits = new DDS_DiscoveryBuiltinReaderFragmentationResourceLimits_t();
+        public DDS_PublishModeQosPolicy publication_writer_publish_mode = new DDS_PublishModeQosPolicy();
+        public DDS_PublishModeQosPolicy subscription_writer_publish_mode = new DDS_PublishModeQosPolicy();
+        public DDS_AsynchronousPublisherQosPolicy asynchronous_publisher = new DDS_AsynchronousPublisherQosPolicy();
         public byte sedp_rely_on_spdp_only;
         public DDS_LatencyBudgetQosPolicy publication_writer_latency_budget = new DDS_LatencyBudgetQosPolicy();
         public byte publication_writer_push_on_write;
-        public DDS_PublishModeQosPolicy publication_writer_publish_mode = new DDS_PublishModeQosPolicy();
         public DDS_LatencyBudgetQosPolicy subscription_writer_latency_budget = new DDS_LatencyBudgetQosPolicy();
         public byte subscription_writer_push_on_write;
-        public DDS_PublishModeQosPolicy subscription_writer_publish_mode = new DDS_PublishModeQosPolicy();
         public DDS_RtpsReliableWriterProtocol_t participant_state_writer = new DDS_RtpsReliableWriterProtocol_t();
         public DDS_LatencyBudgetQosPolicy participant_state_writer_latency_budget = new DDS_LatencyBudgetQosPolicy();
         public byte participant_state_writer_push_on_write;
@@ -2168,7 +2285,6 @@ public interface RTICLibrary extends Library {
         public DDS_DiscoveryBuiltinReaderFragmentationResourceLimits_t
             participant_proxy_reader_fragmentation_resource_limits = new DDS_DiscoveryBuiltinReaderFragmentationResourceLimits_t();
         public int plugin_promiscuity_kind;
-        
 		@Override
 		protected List<?> getFieldOrder() {
 			return Arrays.asList(new String[] {"participant_liveliness_lease_duration","participant_liveliness_assert_period","remote_participant_purge_kind",
@@ -2176,13 +2292,16 @@ public interface RTICLibrary extends Library {
 					"max_initial_participant_announcement_period","participant_reader_resource_limits","publication_reader","publication_reader_resource_limits",
 					"subscription_reader","subscription_reader_resource_limits","publication_writer","publication_writer_data_lifecycle",
 					"subscription_writer","subscription_writer_data_lifecycle",
-					"endpoint_plugin_redundancy_level","builtin_discovery_plugins","participant_message_reader","participant_message_writer",
-					"publication_reader_fragmentation_resource_limits","subscription_reader_fragmentation_resource_limits","sedp_rely_on_spdp_only",
-					"publication_writer_latency_budget","publication_writer_push_on_write","publication_writer_publish_mode",
-					"subscription_writer_latency_budget","subscription_writer_push_on_write","subscription_writer_publish_mode",
+					"endpoint_plugin_redundancy_level","builtin_discovery_plugins",
+					"participant_message_reader","participant_message_writer",
+					"publication_writer_publish_mode","subscription_writer_publish_mode","asynchronous_publisher",
+					"sedp_rely_on_spdp_only",
+					"publication_writer_latency_budget","publication_writer_push_on_write",
+					"subscription_writer_latency_budget","subscription_writer_push_on_write",
 					"participant_state_writer","participant_state_writer_latency_budget","participant_state_writer_push_on_write",
 					"participant_state_writer_publish_mode","participant_proxy_reader","participant_proxy_reader_fragmentation_resource_limits",
-					"plugin_promiscuity_kind"});
+					"plugin_promiscuity_kind"
+			});
 		}
         
         public DDS_DiscoveryConfigQosPolicy() {
@@ -2190,8 +2309,63 @@ public interface RTICLibrary extends Library {
         	write();
 		}
     }
-        
-	
+    public class DDS_UserObjectSettings_t extends Structure {
+        public DDS_UserObjectSettings_t() {
+            super();
+            write();
+        }
+        public DDS_UserObjectSettings_t(Pointer p) {
+            super(p);
+        }
+        public int size;
+        public int alignment;
+        @Override
+        protected List<?> getFieldOrder() {
+            return Arrays.asList("size", "alignment");
+        }
+    }
+	public class DDS_UserObjectQosPolicy extends Structure {
+	    public DDS_UserObjectQosPolicy() {
+	        super();
+	        write();
+        }
+	    public DDS_UserObjectQosPolicy(Pointer p) {
+            super(p);
+        }
+	    public DDS_UserObjectSettings_t participant_user_object = new DDS_UserObjectSettings_t();
+	    public DDS_UserObjectSettings_t topic_user_object = new DDS_UserObjectSettings_t();
+	    public DDS_UserObjectSettings_t content_filtered_topic_user_object = new DDS_UserObjectSettings_t();
+	    public DDS_UserObjectSettings_t publisher_user_object = new DDS_UserObjectSettings_t();
+	    public DDS_UserObjectSettings_t data_writer_user_object = new DDS_UserObjectSettings_t();
+	    public DDS_UserObjectSettings_t subscriber_user_object = new DDS_UserObjectSettings_t();
+	    public DDS_UserObjectSettings_t data_reader_user_object = new DDS_UserObjectSettings_t();
+	    public DDS_UserObjectSettings_t read_condition_user_object = new DDS_UserObjectSettings_t();
+	    public DDS_UserObjectSettings_t query_condition_user_object = new DDS_UserObjectSettings_t();
+	    public DDS_UserObjectSettings_t index_condition_user_object = new DDS_UserObjectSettings_t();
+	    public DDS_UserObjectSettings_t flow_controller_user_object = new DDS_UserObjectSettings_t();
+	    
+	    @Override
+	    protected List<?> getFieldOrder() {
+    	      return Arrays.asList("participant_user_object","topic_user_object","content_filtered_topic_user_object",
+    	              "publisher_user_object","data_writer_user_object","subscriber_user_object","data_reader_user_object",
+    	              "read_condition_user_object","query_condition_user_object","index_condition_user_object","flow_controller_user_object");
+	    }
+	}
+    public class DDS_DomainParticipantProtocolQosPolicy extends Structure {
+        public DDS_DomainParticipantProtocolQosPolicy() {
+            super();
+            write();
+        }
+        public DDS_DomainParticipantProtocolQosPolicy(Pointer p) {
+            super(p);
+        }
+        public byte vendor_specific_entity;
+        @Override
+        protected List<?> getFieldOrder() {
+            return Arrays.asList("vendor_specific_entity");
+        }
+    }
+    
 	public class DDS_DomainParticipantQos extends Structure {
 		public DDS_UserDataQosPolicy user_data = new DDS_UserDataQosPolicy();
 		public DDS_EntityFactoryQosPolicy entity_factory = new DDS_EntityFactoryQosPolicy();
@@ -2204,15 +2378,18 @@ public interface RTICLibrary extends Library {
 		public DDS_ReceiverPoolQosPolicy receiver_pool = new DDS_ReceiverPoolQosPolicy();
 		public DDS_DatabaseQosPolicy database = new DDS_DatabaseQosPolicy();
 		public DDS_DiscoveryConfigQosPolicy discovery_config = new DDS_DiscoveryConfigQosPolicy();
+		public DDS_ExclusiveAreaQosPolicy exclusive_area = new DDS_ExclusiveAreaQosPolicy();
 		public DDS_PropertyQosPolicy property = new DDS_PropertyQosPolicy();
 		public DDS_EntityNameQosPolicy participant_name = new DDS_EntityNameQosPolicy();
 		public DDS_TransportMulticastMappingQosPolicy multicast_mapping = new DDS_TransportMulticastMappingQosPolicy();
+		public DDS_UserObjectQosPolicy user_object = new DDS_UserObjectQosPolicy();
+		public DDS_DomainParticipantProtocolQosPolicy protocol = new DDS_DomainParticipantProtocolQosPolicy();
 		public DDS_TypeSupportQosPolicy type_support = new DDS_TypeSupportQosPolicy();
 		
 		@Override
 		protected List<?> getFieldOrder() {
 			return Arrays.asList(new String[] {"user_data","entity_factory","wire_protocol","transport_builtin","default_unicast","discovery","resource_limits",
-					"event","receiver_pool","database","discovery_config","property","participant_name","multicast_mapping","type_support"});
+					"event","receiver_pool","database","discovery_config","exclusive_area", "property","participant_name","multicast_mapping","user_object", "protocol", "type_support"});
 		}
 		
 		public DDS_DomainParticipantQos() {
@@ -2242,7 +2419,7 @@ public interface RTICLibrary extends Library {
     };
 
     public class DDS_PartitionQosPolicy extends Structure {
-    	public DDS_Sequence name = new DDS_Sequence();
+    	public DDS_StringSequence name = new DDS_StringSequence();
 		@Override
 		protected List<?> getFieldOrder() {
 			return Arrays.asList(new String[] {"name"});
