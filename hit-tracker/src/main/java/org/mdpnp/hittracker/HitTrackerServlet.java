@@ -110,7 +110,7 @@ public class HitTrackerServlet extends HttpServlet {
 		
 		try {
 			conn = dataSource.getConnection();
-			ps = conn.prepareStatement("select date_format(tm, '%c/%e/%Y') as dt, query_string, count(*) as cnt from hits group by dt, query_string order by dt desc, query_string asc");
+			ps = conn.prepareStatement("select date_format(DATE(tm), '%c/%e/%Y') as dt, count(distinct remote_addr) as cnt_unique from hits group by DATE(tm) order by DATE(tm) desc;");
 			
 			if(ps.execute()) {
 				resp.setContentType("text/plain");
