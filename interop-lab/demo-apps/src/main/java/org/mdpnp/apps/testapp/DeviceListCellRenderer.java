@@ -38,7 +38,6 @@ public class DeviceListCellRenderer extends DefaultListCellRenderer {
 			if(di != null && c instanceof JLabel) {
 				((JLabel)c).setIcon(di);
 			}
-//			System.out.println("component is a " + c.getClass());
 		} else {
 			c.setForeground(Color.red);
 		}

@@ -19,6 +19,5 @@ public class SuspendableOutputStream extends java.io.FilterOutputStream {
 	public void write(int b) throws IOException {
 		in.suspended();
 		super.write(b);
-//		System.out.println("wrote " + Integer.toHexString(b));
 	}
 }

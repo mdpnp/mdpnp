@@ -357,7 +357,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 				if(imageButtonDown && Strategy.NoSynchronization.equals(Strategy.valueOf(strategiesGroup.getSelection().getActionCommand()))) {
 					noSync();
 				}
-				System.out.println(imageButtonDown);
+				log.info(""+imageButtonDown);
 			}
 		});	
 //		JPanel content = demoPanel.getContent();
@@ -450,11 +450,9 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 		for(int i = 0; i < values.length; i++) {
 			double x = first_sample+i*msPerSample;
 			double y = values[i].doubleValue();
-//			System.err.println(""+x+","+y);
 			rtRegression.newPoint(x, y);
 			
 		}
-//		System.err.println("slope:"+rtRegression.getRegressedSlope());
 	}
 	
 	private Number frequencyIMV, frequencyIPPV;
@@ -548,7 +546,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 		} else if(update instanceof TextUpdate) {
 			TextUpdate tu = (TextUpdate) update;
 			if(Ventilator.START_INSPIRATORY_CYCLE.equals(i)) {
-//				System.out.println("START_INSPIRATORY_CYCLE");
+				log.trace("START_INSPIRATORY_CYCLE");
 				Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
 				TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
 				
@@ -571,7 +569,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 			} else if(Ventilator.FREQUENCY_IPPV.equals(i)) {
 				frequencyIPPV = value;
 				period = (long)( 60000.0 / frequencyIPPV.doubleValue() );
-				System.out.println("FrequencyIPPV="+frequencyIPPV+" period="+period);
+				log.info("FrequencyIPPV="+frequencyIPPV+" period="+period);
 			
 			} else if(Ventilator.INSPIRATORY_TIME.equals(i)) {
 				inspiratoryTime = (long) (1000.0 * value.doubleValue());

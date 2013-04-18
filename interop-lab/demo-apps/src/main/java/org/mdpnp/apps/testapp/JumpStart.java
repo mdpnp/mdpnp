@@ -26,10 +26,6 @@ public class JumpStart {
 //				while(true) {
 //					Thread[] t = new Thread[Thread.currentThread().getThreadGroup().activeCount()*2];
 //					int n = Thread.currentThread().getThreadGroup().enumerate(t, true);
-//					for(int i = 0; i < n; i++) {
-//						System.out.println(t[i].getId() + " " + t[i]);
-//					}
-//					System.out.println();
 //					try {
 //						Thread.sleep(2000L);
 //					} catch (InterruptedException e) {

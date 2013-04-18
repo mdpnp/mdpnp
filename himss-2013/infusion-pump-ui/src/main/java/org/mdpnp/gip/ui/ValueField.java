@@ -54,7 +54,6 @@ public class ValueField<U extends Units> extends javax.swing.JPanel implements V
 		editorTextField.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-//				System.out.println(e);
 				super.mouseClicked(e);
 			}
 		});

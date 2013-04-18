@@ -165,7 +165,6 @@ public class RTMedibus extends Medibus {
 		transmittedDataStreams[1] = 0 != (0x02 & syncByte);
 		transmittedDataStreams[2] = 0 != (0x04 & syncByte);
 		transmittedDataStreams[3] = 0 != (0x08 & syncByte);
-//		System.out.println("Received sync byte");
 	}
 	
 	public void receiveSyncCommand(int command, int argument) {
@@ -181,7 +180,7 @@ public class RTMedibus extends Medibus {
 			dataStreamEnabled[offset+1] = 0 != (0x02 & argument);
 			dataStreamEnabled[offset+2] = 0 != (0x04 & argument);
 			dataStreamEnabled[offset+3] = 0 != (0x08 & argument);
-			System.out.println("dataStreamEnabled:"+Arrays.toString(dataStreamEnabled));
+			log.debug("dataStreamEnabled:"+Arrays.toString(dataStreamEnabled));
 			break;
 		case SC_TX_DATASTREAM_9_12:
 			offset += 4;
@@ -191,7 +190,7 @@ public class RTMedibus extends Medibus {
 			transmittedDataStreams[offset+1] = 0 != (0x02 & argument);
 			transmittedDataStreams[offset+2] = 0 != (0x04 & argument);
 			transmittedDataStreams[offset+3] = 0 != (0x08 & argument);
-			System.out.println("transmittedDataStreams:"+Arrays.toString(transmittedDataStreams));
+			log.debug("transmittedDataStreams:"+Arrays.toString(transmittedDataStreams));
 			break;
 		case SC_START_CYCLE:
 			if(0 != (0x01 & argument)) {
@@ -201,7 +200,7 @@ public class RTMedibus extends Medibus {
 			}
 			break;
 		case SC_CORRUPT_DATA:
-			System.out.println("Corrupt data record received");
+		    log.warn("Corrupt data record received");
 			break;
 		}
 		
@@ -241,14 +240,13 @@ public class RTMedibus extends Medibus {
 	}
 	
 	public void receiveDataValue(RTDataConfig config, int multiplier, int streamIndex, Object realtimeData, int data) {
-		System.out.println("Received(" + Medibus.toString(realtimeData) + "):"+data);
+		log.debug("Received(" + Medibus.toString(realtimeData) + "):"+data);
 	}
 	
 	public boolean receiveFast() throws IOException {
 		int leading = 0;
 		while(true) {
 			leading = fastIn.read();
-//			System.out.println("READ R/T BYTE " + leading + " " + Integer.toHexString(leading));
 			if(leading < 0) {
 				return false;
 			}
@@ -264,7 +262,7 @@ public class RTMedibus extends Medibus {
 					receiveSyncCommand(leading, fastIn.read());
 					break;
 				default:
-					System.err.println("Unknown r/t byte:"+Integer.toHexString(leading));
+					log.warn("Unknown r/t byte:"+Integer.toHexString(leading));
 				}
 			}
 		}

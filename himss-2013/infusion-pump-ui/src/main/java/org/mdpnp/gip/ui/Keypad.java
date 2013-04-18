@@ -66,22 +66,16 @@ public class Keypad extends javax.swing.JComponent {
 	
 	@Override
 	protected void processMouseEvent(MouseEvent e) {
-//		System.out.println(e);
 		super.processMouseEvent(e);
 	}
 	
 	private static final JButton createButton(String txt) {
 		JButton button = new JButton(txt);
-//		button.set
-//		button.setFont(button.getFont().deriveFont(36));
 		return button;
 	}
 	private static final JButton createButton(Icon ico) {
 		JButton button = new JButton();
 		button.setIcon(ico);
-
-//		button.set
-//		button.setFont(button.getFont().deriveFont(36));
 		return button;
 	}
 

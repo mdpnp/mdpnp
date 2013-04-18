@@ -2,7 +2,6 @@ package org.mdpnp.gip.ui;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -17,12 +16,15 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class GenericInfusionPumpApp {
 	public final static Color darkBlue = new Color(51, 0, 101);
 	public final static Color lightBlue = new Color(1, 153, 203);
 	
 //	private static final boolean MDCF = true;
-	
+	private static final Logger log = LoggerFactory.getLogger(GenericInfusionPumpApp.class);
 	public static void main(String[] args) throws IOException {
 		try {
 		    for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -124,7 +126,6 @@ public class GenericInfusionPumpApp {
 //				@Override
 //				public void run() {
 //					mdcfAdapter.disconnectFromNetworkController();
-//					System.out.println("Disconnected from network controller");
 //				}
 //				
 //			}));
@@ -152,7 +153,7 @@ public class GenericInfusionPumpApp {
 				timer.shutdown();
 				try {
 					timer.awaitTermination(5, TimeUnit.SECONDS);
-					System.out.println("TIMER IS SHUTDOWN");
+					log.info("TIMER IS SHUTDOWN");
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}

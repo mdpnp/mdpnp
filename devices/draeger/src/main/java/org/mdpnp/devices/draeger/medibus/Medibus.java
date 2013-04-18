@@ -404,21 +404,21 @@ public class Medibus {
 		}
 	}
 	protected void receiveMeasuredData(Data[] data, int n) {
-		System.out.println("Measured Data");
+		log.debug("Measured Data");
 		for(int i = 0; i < n; i++) {
-			System.out.println("\t"+data[i]);
+		    log.debug("\t"+data[i]);
 		}
 	}
 	protected void receiveLowAlarmLimits(Data[] data, int n) {
-		System.out.println("Low Alarm Limits");
+	    log.debug("Low Alarm Limits");
 		for(int i = 0; i < n; i++) {
-			System.out.println("\t"+data[i]);
+		    log.debug("\t"+data[i]);
 		}
 	}
 	protected void receiveHighAlarmLimits(Data[] data, int n) {
-		System.out.println("High Alarm Limits");
+	    log.debug("High Alarm Limits");
 		for(int i = 0; i < n; i++) {
-			System.out.println("\t"+data[i]);
+		    log.debug("\t"+data[i]);
 		}
 	}
 	
@@ -458,15 +458,14 @@ public class Medibus {
 			}
 			
 			alarms[i].alarmPhrase = new String(response, 15*i+3, 12);
-//			System.out.println(alarms[i]);
 		}
 		receiveAlarms(alarms);
 	}
 	
 	protected void receiveAlarms(Alarm[] alarms) {
-		System.out.println("Alarms");
+	    log.debug("Alarms");
 		for(int i = 0; i < alarms.length; i++) {
-			System.out.println("\t"+alarms[i]);
+		    log.debug("\t"+alarms[i]);
 		}
 		
 	}
@@ -503,10 +502,10 @@ public class Medibus {
 				cal.set(Calendar.YEAR, 1900 + Integer.parseInt(m.group(3)));
 				receiveDateTime(cal.getTime());
 			} else {
-				System.err.println("Received a bad date:"+s);
+				log.warn("Received a bad date:"+s);
 			}
 		} else {
-			System.err.println("Received a bad time:" + s);
+			log.warn("Received a bad time:" + s);
 		}
 	}
 	protected void receiveDateTime(Date date) {
@@ -550,15 +549,14 @@ public class Medibus {
 			off+=length;
 			// ETX
 			off++;
-//			System.out.println(d);
 		}
 		receiveTextMessage(data, i);
 	}
 	protected void receiveTextMessage(Data[] data, int n) {
-		System.out.println("Text Messages");
+	    log.debug("Text Messages");
 		for(int i = 0; i < n; i++) {
 			Data d = data[i];
-			System.out.println("\t"+d);
+			log.debug("\t"+d);
 		}
 	}
 	

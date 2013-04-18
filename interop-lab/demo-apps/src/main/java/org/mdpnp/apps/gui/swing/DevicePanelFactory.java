@@ -94,7 +94,6 @@ public class DevicePanelFactory {
 			return panels;
 		}
 		_findPanel(clazz, panels, new HashSet<Class<?>>());
-//		System.out.println("There are " + panels.size() + " panels");
 		return panels;
 	}
 }

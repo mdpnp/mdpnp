@@ -11,6 +11,8 @@ import org.mdpnp.devices.philips.intellivue.dataexport.DataExportAction;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportMessage;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.ActionResult;
 import org.mdpnp.devices.philips.intellivue.util.Util;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ActionResultImpl implements ActionResult {
 	protected final ManagedObjectIdentifier managedObject = new ManagedObjectIdentifier();
@@ -19,6 +21,8 @@ public class ActionResultImpl implements ActionResult {
 	protected DataExportMessage message;
 	protected DataExportAction action;
 	
+	private static final Logger log = LoggerFactory.getLogger(ActionResultImpl.class);
+	
 	@Override
 	public void parse(ByteBuffer bb) {
 		managedObject.parse(bb);
@@ -26,7 +30,7 @@ public class ActionResultImpl implements ActionResult {
 		int length = Bits.getUnsignedShort(bb);
 		action = ActionFactory.buildAction(actionType, false);
 		if(null == action) {
-			System.err.println("Unknown action type:"+actionType);
+			log.warn("Unknown action type:"+actionType);
 			
 			bb.position(bb.position()+length);
 		} else {
@@ -42,7 +46,7 @@ public class ActionResultImpl implements ActionResult {
 		actionType = OIDType.parse(bb);
 		int length = Bits.getUnsignedShort(bb);
 		if(null == action) {
-			System.err.println("Unknown action type:"+actionType);
+			log.warn("Unknown action type:"+actionType);
 			bb.position(bb.position()+length);
 		} else {
 			action.parseMore(bb);

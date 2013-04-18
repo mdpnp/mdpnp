@@ -195,7 +195,6 @@ public class Intellivue implements NetworkConnection {
 				if(lastKeepAliveSentInvokeId >= 0) {
 					if(lastKeepAliveSentInvokeId>=0) {
 						if(lastKeepAliveSentInvokeId != lastKeepAliveRecvInvokeId) {
-//							System.err.println("Last sent invoke="+lastKeepAliveSentInvokeId + " recv invoke="+lastKeepAliveRecvInvokeId);
 							log.error("lastKeepAliveSentInvokeId="+lastKeepAliveSentInvokeId+" != lastKeepAliveRecvInvokeId="+lastKeepAliveSentInvokeId);
 							log.error("NOT FAILING ON MISMATCHED KEEPALIVES");
 //							try {

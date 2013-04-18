@@ -63,7 +63,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 				log.debug(text.toString());
 				return;
 			} else {
-			    System.out.println("Orphaned Measure:"+name+"="+value);
+			    log.warn("Orphaned Measure:"+name+"="+value);
 			}
 			
 		}
@@ -79,7 +79,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 				gateway.update(DemoBernoulli.this, waveform);
 				log.debug(waveform.toString());
 			} else {
-			    System.out.println("Orphaned Measure:"+name+"="+Arrays.toString(n));
+			    log.warn("Orphaned Measure:"+name+"="+Arrays.toString(n));
 			}
 		}
 		@Override

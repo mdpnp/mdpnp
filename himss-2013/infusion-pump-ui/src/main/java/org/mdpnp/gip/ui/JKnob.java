@@ -157,7 +157,6 @@ public class JKnob
 
     @Override
     protected void processMouseEvent(MouseEvent e) {
-//    	System.out.println(e);
     	switch(e.getID()) {
     	case MouseEvent.MOUSE_PRESSED:
     		Point mouseLoc = e.getPoint();
@@ -172,7 +171,6 @@ public class JKnob
     
     @Override
     protected void processMouseMotionEvent(MouseEvent e) {
-//    	System.out.println(e);
     	switch(e.getID()) {
     	case MouseEvent.MOUSE_DRAGGED:
     	case MouseEvent.MOUSE_MOVED:

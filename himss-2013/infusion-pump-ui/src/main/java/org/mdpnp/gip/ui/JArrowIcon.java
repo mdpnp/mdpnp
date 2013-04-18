@@ -32,7 +32,6 @@ public class JArrowIcon implements Icon {
 	
 	@Override
 	public void paintIcon(Component c, Graphics g, int x_, int y_) {
-//		System.out.println(x_+","+y_+" "+c.getForeground() + " " + c);
 		int x = size.width / 2 + x_;
 		int y0 = size.height;
 		int y1 = y_;

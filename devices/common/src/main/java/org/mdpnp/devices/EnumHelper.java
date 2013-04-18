@@ -8,8 +8,11 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class EnumHelper {
-	
+	private static final Logger log = LoggerFactory.getLogger(EnumHelper.class);
 	public static final <T extends Enum<T>> Map<Byte, T> build(Class<T> cls, String resourceName) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException, IOException {
 		Map<Byte, T> fromByte = new HashMap<Byte, T>();
 		Field byteField = cls.getDeclaredField("b");
@@ -39,7 +42,7 @@ public class EnumHelper {
 				if(arr.length > 2) {
 					unitField.set(t, Unit.valueOf(arr[2]));
 				} else {
-					System.err.println("Warning, no units for " + t);
+					log.warn("no units for " + t);
 				}
 			}
 		}

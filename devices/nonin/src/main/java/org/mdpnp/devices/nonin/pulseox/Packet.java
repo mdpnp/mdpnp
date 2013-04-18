@@ -7,10 +7,15 @@
  ******************************************************************************/
 package org.mdpnp.devices.nonin.pulseox;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 
 public class Packet {
 	
+    private final Logger log = LoggerFactory.getLogger(Packet.class);
+    
 	public Packet() {
 		for(int i = 0; i < status.length; i++) {
 			status[i] = new Status();
@@ -177,9 +182,7 @@ public class Packet {
 	}
 	
 	public boolean setFrame(byte[] b, int off) {
-//		System.out.println("\t\tRead Frame " + (i/FRAME_LENGTH));
 		if(!status[currentFrame].set(b[off+0]).isHighBitSet()) {
-//			System.err.println(Util.bytesString(b, off, FRAME_LENGTH));
 			throw new IllegalArgumentException("High bit not set ");
 		}
 		if(status[currentFrame].isSync()) {
@@ -190,7 +193,7 @@ public class Packet {
 		setvar(b[off+3]);
 
 		if(!validChecksum(b, off)) {
-			System.err.println("Frame="+currentFrame+" "/*+Util.bytesString(b, off, FRAME_LENGTH)*/);
+			log.warn("Frame="+currentFrame+" "/*+Util.bytesString(b, off, FRAME_LENGTH)*/);
 			throw new IllegalArgumentException("In frame=" + currentFrame + " Invalid checksum");
 		}
 		currentFrame=(++currentFrame==FRAMES?0:currentFrame);

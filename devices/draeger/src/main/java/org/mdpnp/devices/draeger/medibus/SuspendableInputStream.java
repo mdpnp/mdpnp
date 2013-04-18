@@ -18,7 +18,6 @@ public class SuspendableInputStream extends java.io.FilterInputStream {
 	public int read() throws IOException {
 		while(true) {
 			int r = super.read();
-//			System.out.println("read " + Integer.toHexString(r));
 			if(r == resume) {
 				resume();
 			} else if(r == suspend) {

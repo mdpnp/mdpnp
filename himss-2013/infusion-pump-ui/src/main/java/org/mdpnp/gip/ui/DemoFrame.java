@@ -147,12 +147,11 @@ public class DemoFrame extends JFrame {
 //						DemoFrame.this.setUndecorated(true);
 //						DemoFrame.this.setExtendedState(Frame.MAXIMIZED_BOTH | DemoFrame.this.getExtendedState());
 ////						gd[screenDevice].setFullScreenWindow(DemoFrame.this);
-//						System.out.println("Full screen on display " + screenDevice);				
+			
 //					} else {
 //						DemoFrame.this.setExtendedState(Frame.NORMAL);
 //						DemoFrame.this.setSize(size);
 //						DemoFrame.this.setUndecorated(false);
-//						System.out.println("No longer full screen");
 //					}
 //					DemoFrame.this.setVisible(true);
 ////					DemoFrame.this.requestFocus();

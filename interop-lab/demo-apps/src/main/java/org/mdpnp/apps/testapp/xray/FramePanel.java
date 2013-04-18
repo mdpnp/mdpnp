@@ -53,7 +53,7 @@ public class FramePanel extends ImagePanel implements Runnable {
 		}
 		if(exposureTime > 0L) {
 			freezeBy = System.currentTimeMillis() + exposureTime;
-			System.out.println("will freeze:"+freezeBy);
+			log.info("will freeze:"+freezeBy);
 			state = State.Freezing;
 			notifyAll();
 		} else {
@@ -141,7 +141,7 @@ public class FramePanel extends ImagePanel implements Runnable {
 			
 //			renderCameraImage = image.getBufferedImage();
 			renderCameraImage = new BufferedImage(image.width(), image.height(), BufferedImage.TYPE_INT_ARGB);
-			System.out.println(renderCameraImage.getColorModel());
+			log.info(""+renderCameraImage.getColorModel());
 			renderCameraGraphics = renderCameraImage.createGraphics();
 			renderCameraGraphics.setColor(new Color(1.0f, 1.0f, 1.0f, 1.0f));
 			renderCameraGraphics.fillRect(0, 0, image.width(), image.height());
@@ -183,7 +183,7 @@ public class FramePanel extends ImagePanel implements Runnable {
 				
 				synchronized (this) {
 					if(State.Freezing.equals(state) && System.currentTimeMillis() >= freezeBy) {
-						System.out.println("frozen:"+System.currentTimeMillis());
+						log.info("frozen:"+System.currentTimeMillis());
 						state = State.Frozen;
 					}
 					while(State.Frozen.equals(state)) {

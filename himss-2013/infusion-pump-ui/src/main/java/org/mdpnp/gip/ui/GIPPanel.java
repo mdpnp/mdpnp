@@ -43,7 +43,6 @@ public class GIPPanel extends JPanel {
 		super.processComponentEvent(e);
 		switch(e.getID()) {
 		case ComponentEvent.COMPONENT_RESIZED:
-//			System.out.println("I GOT RESIZED");
 //			Dimension size = getSize();
 //			double img_width = ice_cubes.getImage().getWidth(this);
 //			double img_height = ice_cubes.getImage().getHeight(this);
@@ -93,13 +92,10 @@ public class GIPPanel extends JPanel {
 		@Override
 		protected void processHierarchyEvent(HierarchyEvent e) {
 			super.processHierarchyEvent(e);
-//			System.out.println("FOOTER HIERARCHY EVENT " + e);
 			if ((HierarchyEvent.SHOWING_CHANGED & e.getChangeFlags()) != 0) {
 				if(isShowing()) {
-//					System.out.println("SHOW ME THE COMPONENT");
 					this.timeFuture = executor.scheduleAtFixedRate(this, 1000L - (System.currentTimeMillis() % 1000L) + 10L, 1000L, TimeUnit.MILLISECONDS);
 				} else {
-//					System.out.println("HIDE ME THE COMPONENT");
 					this.timeFuture.cancel(false);
 				}
 		    }
@@ -107,15 +103,12 @@ public class GIPPanel extends JPanel {
 		
 		@Override
 		protected void processComponentEvent(ComponentEvent e) {
-//			System.out.println("FOOTER COMPONENT EVENT " + e);
 			super.processComponentEvent(e);
 			switch(e.getID()) {
 			case ComponentEvent.COMPONENT_SHOWN:
-//				System.out.println("SHOW ME THE COMPONENT");
 				this.timeFuture = executor.scheduleAtFixedRate(this, 1000L - (System.currentTimeMillis() % 1000L) + 10L, 1000L, TimeUnit.MILLISECONDS);
 				break;
 			case ComponentEvent.COMPONENT_HIDDEN:
-//				System.out.println("HIDE ME THE COMPONENT");
 				this.timeFuture.cancel(false);
 				break;
 			}
@@ -210,7 +203,6 @@ public class GIPPanel extends JPanel {
 	private static void addTitledBorder(JComponent comp, String text) {
 //		comp.setBorder(BorderFactory.createTitledBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED), text));
 		TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(comp.getForeground(), 1/*, false*/), text, TitledBorder.LEFT, TitledBorder.TOP);
-//		System.out.println("border opaque:"+border.isBorderOpaque());
 		comp.setBorder(border);
 	}
 //	private final ImageIcon ice_cubes = new ImageIcon(GIPPanel.class.getResource("gradient.png"));
@@ -221,7 +213,6 @@ public class GIPPanel extends JPanel {
 		
 //		g.drawImage(ice_cubes.getImage(), 0, 0, getWidth(), getHeight(), img_src_x1, img_src_y1, img_src_x2, img_src_y2, null);
 //		g.drawImage(mdpnp.getImage(), 0, 0, null);
-//		System.out.println(""+img_src_x1+","+img_src_y1+"  "+img_src_x2+","+img_src_y2);
 		super.paintComponent(g);
 		
 //		super.paintComponent(g);

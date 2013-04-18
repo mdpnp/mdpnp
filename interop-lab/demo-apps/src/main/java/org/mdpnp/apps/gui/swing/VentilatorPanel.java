@@ -307,12 +307,10 @@ public class VentilatorPanel extends DevicePanel {
 //		}
 		if(Ventilator.FLOW_INSP_EXP.equals(n.getIdentifier())) {
 			WaveformUpdate wu = (WaveformUpdate) n;
-//				System.out.println("WaveformUpdate:"+wu);
 			flowWave.applyUpdate(wu);
 			
 		} else if(Ventilator.AIRWAY_PRESSURE.equals(n.getIdentifier())) {
 			WaveformUpdate wu = (WaveformUpdate) n;
-//		System.out.println("WaveformUpdate:"+wu);
 			pressureWave.applyUpdate(wu);
 //			log.trace(wu.toString());
 		} else if(ConnectedDevice.STATE.equals(n.getIdentifier())) {

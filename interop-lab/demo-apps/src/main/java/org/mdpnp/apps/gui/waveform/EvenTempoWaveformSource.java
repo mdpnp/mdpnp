@@ -84,14 +84,11 @@ public class EvenTempoWaveformSource extends AbstractNestedWaveformSource implem
 					countBigTime.newPoint(countSinceLastGap);
 					countSinceLastGap = 0;
 					sleepInterval = (long) (bigTimeIntervals.getAverage() / countBigTime.getAverage());
-//					System.out.println("BIG INTERVAL:"+interval+ " COUNT:"+ this.realCount+ " SLEEP:"+sleepInterval+" " + timeIntervals);
-//					System.out.println("Sleep Interval:"+sleepInterval);
 					catchup();
 					synchronized(this) {
 						this.notify();
 					}
 				} else {
-//					System.out.println("SML INTERVAL:"+interval+ " COUNT:"+this.realCount+" SLEEP:"+sleepInterval+" " + timeIntervals);
 					if(sleepInterval <= 0L) {
 						catchup();
 					}

@@ -5,10 +5,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class NoninPulseOx {
 	
 	private final InputStream in;
 	private final OutputStream out;
+	private final Logger log = LoggerFactory.getLogger(NoninPulseOx.class);
 	
 	public NoninPulseOx(InputStream in, OutputStream out) {
 		this.in = in;
@@ -264,7 +268,6 @@ public class NoninPulseOx {
 	}
 	
 	protected synchronized void recvOperation(byte opCode, byte[] source, int off, int len) {
-//		System.out.println("Operation " + Integer.toHexString(0xFF&opCode) + " " + Util.bytesString(source, off, len));
 		Operation op = new Operation();
 		op.opCode = opCode;
 		op.msg = new byte[len];
@@ -276,7 +279,7 @@ public class NoninPulseOx {
 	
 	protected void frameError(String msg) {
 		if(readyFlag) {
-			System.err.println("frameError:"+msg);
+			log.error("frameError:"+msg);
 		}
 	}
 

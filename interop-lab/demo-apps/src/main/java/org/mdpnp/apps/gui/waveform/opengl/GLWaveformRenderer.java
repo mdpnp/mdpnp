@@ -227,7 +227,6 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
 				}
 				buffer.put(2*i, i).put(2*i+1,y);
 			}
-//			System.out.println("count="+last+",max="+max);
 		}
 		
 		

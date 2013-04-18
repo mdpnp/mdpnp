@@ -7,6 +7,8 @@ import org.mdpnp.devices.philips.intellivue.dataexport.CommandType;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportLinkedResult;
 import org.mdpnp.devices.philips.intellivue.dataexport.RemoteOperationLinkedState;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.CommandFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DataExportLinkedResultImpl extends DataExportResultImpl implements DataExportLinkedResult {
 	private RemoteOperationLinkedState state;
@@ -24,7 +26,7 @@ public class DataExportLinkedResultImpl extends DataExportResultImpl implements 
 	public static final int peekInvokeId(ByteBuffer bb) {
 		return 0xFFFF & bb.getShort(bb.position() + 2);
 	}
-
+	private static final Logger log = LoggerFactory.getLogger(DataExportLinkedResultImpl.class);
 	@Override
 	public void parse(ByteBuffer bb) {
 		state = RemoteOperationLinkedState.valueOf(Bits.getUnsignedByte(bb));
@@ -35,7 +37,7 @@ public class DataExportLinkedResultImpl extends DataExportResultImpl implements 
 		int length = Bits.getUnsignedShort(bb);
 		if(commandType == null) {
 			// TODO error ish
-			System.err.println("Unrecognized command type " + cmdType);
+			log.warn("Unrecognized command type " + cmdType);
 			bb.position(bb.position() + length);
 		} else {
 			switch(state) {

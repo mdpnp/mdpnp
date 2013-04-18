@@ -105,7 +105,6 @@ public abstract class AbstractGetConnected implements GatewayListener {
 			}
 		}
 		try {
-	//		System.err.println("connectTo="+connectTo+" deviceType="+deviceType+" serialPorts="+serialPorts+" deviceState="+deviceState);
 			if(null == connectTo && !closing && deviceType != null && (isFixedAddress() || serialPorts != null || !ConnectedDevice.ConnectionType.Serial.equals(deviceType)) && ConnectedDevice.State.Disconnected.equals(deviceState)) {
 				switch(deviceType) {
 				case Network:

@@ -261,7 +261,6 @@ public class PulseOximeterPanel extends DevicePanel {
 		}
 		if(PulseOximeter.PLETH.equals(n.getIdentifier())) {
 			WaveformUpdate wu = (WaveformUpdate) n;
-//				System.out.println("WaveformUpdate:"+wu);
 			plethWave.applyUpdate(wu);
 		} else if(ConnectedDevice.STATE.equals(n.getIdentifier())) {
 			connectedState = (State) ((EnumerationUpdate)n).getValue();

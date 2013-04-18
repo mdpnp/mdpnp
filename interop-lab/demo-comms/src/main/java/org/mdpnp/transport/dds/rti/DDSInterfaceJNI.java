@@ -439,7 +439,6 @@ public class DDSInterfaceJNI {
 				}
 			}
 			Pointer strdup = RTICLibrary.INSTANCE.DDS_String_dup((String)o);
-//			System.out.println(o);
 			checkReturnCode(RTICLibrary.INSTANCE.DDS_DynamicData_set_string(dd, null, member_id, strdup));
 		} else if(RTICLibrary.DDS_TK_LONGLONG==kind) {
 			if(o instanceof Date) {
@@ -494,7 +493,6 @@ public class DDSInterfaceJNI {
 				RTICLibrary.DDS_Sequence seq = writeOctetSequence;
 				arrayToSequence( b, seq);
 				log.trace("Converting " + b.length + " bytes to octet_sequence for " + name);
-//				System.err.println( ((byte[])o).length);
 				checkReturnCode(RTICLibrary.INSTANCE.DDS_DynamicData_set_octet_seq(dd, null, member_id, seq.getPointer()));
 			}
 		}
@@ -641,7 +639,6 @@ public class DDSInterfaceJNI {
 			
 			}
 		}
-//		System.err.println(iface + " " + getters.getSparse());
 		return tc_comp;
 	}
 	
@@ -651,7 +648,6 @@ public class DDSInterfaceJNI {
 		for(DDSInterfaceJNI.Getter m : populateGetters(update.getClass()).getGetters()) {
 			Object o = m.get(update);
 			if(null != o) {
-//				System.out.println("set:"+m.getName()+" member_id:"+m.getMemberId() +" index:"+m.getIndex());
 				set(m.getName(), dds_update, o, m.getMemberId(), m.getKind(), m.getTypeCode());
 			}
 		}
@@ -796,7 +792,6 @@ public class DDSInterfaceJNI {
 		if(null != get) {
 			return get;
 		}
-//		System.out.println("populateGetters: " + iface + "  " + piface.getClazz());
 		get = new GetterPopulation();
 		get.setSparse(piface.getPersistent().sparse());
 		

@@ -185,11 +185,9 @@ public class DemoPanel extends JPanel implements Runnable {
 		super.processComponentEvent(e);
 		switch(e.getID()) {
 		case ComponentEvent.COMPONENT_SHOWN:
-			System.out.println("SHOW ME THE COMPONENT");
 			this.timeFuture = executor.scheduleAtFixedRate(this, 1000L - (System.currentTimeMillis() % 1000L) + 10L, 1000L, TimeUnit.MILLISECONDS);
 			break;
 		case ComponentEvent.COMPONENT_HIDDEN:
-			System.out.println("HIDE ME THE COMPONENT");
 			this.timeFuture.cancel(false);
 			break;
 		case ComponentEvent.COMPONENT_RESIZED:
@@ -220,7 +218,6 @@ public class DemoPanel extends JPanel implements Runnable {
 		
 		g.drawImage(ice_cubes.getImage(), 0, 0, getWidth(), getHeight(), img_src_x1, img_src_y1, img_src_x2, img_src_y2, null);
 //		g.drawImage(mdpnp.getImage(), 0, 0, null);
-//		System.out.println(""+img_src_x1+","+img_src_y1+"  "+img_src_x2+","+img_src_y2);
 		super.paintComponent(g);
 		
 //		super.paintComponent(g);

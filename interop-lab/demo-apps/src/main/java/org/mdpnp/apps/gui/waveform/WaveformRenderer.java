@@ -80,8 +80,6 @@ public class WaveformRenderer {
 			return;
 		}
 		
-//		System.out.println(source.getCount()+" ");
-		
 		WaveformCanvas.Extent extent = canvas.getExtent();
 
 		int first = lastCount;
@@ -163,8 +161,7 @@ public class WaveformRenderer {
 		}
 		lastCount = last;
 //		lastCount = source.getCount();
-		
-//		System.out.println("Render time:" + (System.currentTimeMillis() - start) + "ms  count=" + source.getCount());
+
 	}
 	
 }

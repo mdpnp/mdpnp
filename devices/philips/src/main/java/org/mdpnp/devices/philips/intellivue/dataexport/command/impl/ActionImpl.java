@@ -8,11 +8,13 @@ import org.mdpnp.devices.philips.intellivue.data.OIDType;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportAction;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.Action;
 import org.mdpnp.devices.philips.intellivue.util.Util;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ActionImpl  extends ActionResultImpl implements Action {
 	private long scope;
 
-	
+	private static final Logger log = LoggerFactory.getLogger(ActionImpl.class);
 	
 	@Override
 	public void parse(ByteBuffer bb) {
@@ -22,7 +24,7 @@ public class ActionImpl  extends ActionResultImpl implements Action {
 		int length = Bits.getUnsignedShort(bb);
 		action = ActionFactory.buildAction(actionType, true);
 		if(null == action) {
-			System.err.println("Unknown action type:"+actionType);
+			log.warn("Unknown action type:"+actionType);
 			
 			bb.position(bb.position()+length);
 		} else {

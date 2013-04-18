@@ -96,7 +96,6 @@ public class Float extends Number implements Value {
 	@Override
 	public void format(ByteBuffer bb) {
 		MantissaExponent me = mantissa(flt);
-//		System.out.println("flt="+flt+" exp="+me.getExponent()+" mantissa="+me.getMantissa());
 		bb.put(me.getExponent());
 		bb.put((byte) (0xFF&(me.getMantissa()>>16)));
 		bb.put((byte) (0xFF&(me.getMantissa()>>8)));

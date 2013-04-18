@@ -76,6 +76,8 @@ import org.mdpnp.devices.philips.intellivue.data.VariableLabel;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.EventReport;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.SetResult;
 import org.mdpnp.devices.philips.intellivue.dataexport.event.MdsCreateEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DemoMP70 extends AbstractConnectedDevice {
 	private class MyIntellivue extends Intellivue {
@@ -107,7 +109,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 				nuTask.setInterval(CONTINUOUS_POLL_INTERVAL);
 				networkLoop.add(nuTask);
 			} else {
-				System.err.println("Numerics priority list does not contain all of our requested labels:"+ati);
+				log.warn("Numerics priority list does not contain all of our requested labels:"+ati);
 			}
 			
 			ati = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_POLL_RTSA_PRIO_LIST, TextIdList.class);
@@ -123,7 +125,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 				saTask.setInterval(CONTINUOUS_POLL_INTERVAL);
 				networkLoop.add(saTask);
 			} else {
-				System.err.println("SampleArray priority list does not contain all requested labels:"+ati);
+				log.warn("SampleArray priority list does not contain all requested labels:"+ati);
 			}
 		}
 		@SuppressWarnings("unused")
@@ -141,8 +143,8 @@ public class DemoMP70 extends AbstractConnectedDevice {
 				
 				
 				if(createEvent.getAttributes().get(ps)) {
-					System.out.println("ProductionSpecification");
-					System.out.println(ps.getValue());
+					log.info("ProductionSpecification");
+					log.info(""+ps.getValue());
 					VariableLabel vl = ps.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER, ComponentId.ID_COMP_PRODUCT);
 					if(null != vl) {
 						guidUpdate.setValue(vl.getString());
@@ -224,8 +226,8 @@ public class DemoMP70 extends AbstractConnectedDevice {
 			for(SingleContextPoll sop : result.getPollInfoList()) {
 				for(ObservationPoll op : sop.getPollInfo()) {
 					if(op.getAttributes().get(prodSpec)) {
-						System.out.println("ProductionSpecification");
-						System.out.println(prodSpec.getValue());
+						log.info("ProductionSpecification");
+						log.info(""+prodSpec.getValue());
 						VariableLabel vlabel = prodSpec.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER, ComponentId.ID_COMP_PRODUCT);
 						if(vlabel != null) {
 							guidUpdate.setValue(vlabel.getString());
@@ -260,7 +262,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 		@Override
 		protected void handle(ExtendedPollDataResult result) {
 			log.debug("ExtendedPollDataResult");
-			System.out.println(lineWrap(result.toString()));
+			log.debug(lineWrap(result.toString()));
 			for(SingleContextPoll sop : result.getPollInfoList()) {
 				for(ObservationPoll op : sop.getPollInfo()) {
 					int handle = op.getHandle().getHandle();
@@ -351,11 +353,11 @@ public class DemoMP70 extends AbstractConnectedDevice {
 			short[] bytes = v.getValue();
 			ObservedValue ov = ObservedValue.valueOf(v.getPhysioId().getType());
 			if(null == ov) {
-				System.err.println("No ObservedValue for " + v.getPhysioId().getType());
+				log.warn("No ObservedValue for " + v.getPhysioId().getType());
 			} else {
 				MyWaveform w = waveformUpdates.get(ov);
 				if(null == w) {
-					System.err.println("No waveform for " + ov);
+					log.warn("No waveform for " + ov);
 				} else {
 					getByHandle(handle).add(w);
 //					Integer cnt = w.getCount();
@@ -363,13 +365,13 @@ public class DemoMP70 extends AbstractConnectedDevice {
 					if(values != null) {
 						Integer cnt = values.length;
 						if(null == cnt) {
-							System.err.println("null count for " + ov + " " + w);
+							log.warn("null count for " + ov + " " + w);
 						} else {
 							for(int i = 0; i < cnt; i++) {	
 								w.applyValue(i, bytes);
 							}
-							System.out.println(Arrays.toString(bytes));
-							System.out.println(Arrays.toString(values));
+							log.debug(Arrays.toString(bytes));
+							log.debug(Arrays.toString(values));
 							gateway.update(DemoMP70.this, w);
 						}
 					}
@@ -461,6 +463,8 @@ public class DemoMP70 extends AbstractConnectedDevice {
 //	private final Gateway gateway;
 	private final MyIntellivue myIntellivue;
 	
+	private static final Logger log = LoggerFactory.getLogger(DemoMP70.class);
+	
 	public DemoMP70(Gateway gateway) throws IOException {
 		super(gateway);
 		myIntellivue = new MyIntellivue();
@@ -535,7 +539,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 				mask[i] = significantBits >= Byte.SIZE ? 0xFF : createMask(significantBits);
 				significantBits-=Byte.SIZE;
 			}
-			System.out.println("Mask:"+Arrays.toString(mask) + " Shift:"+Arrays.toString(shift) + " sampleSize="+sampleSize + " sigBits="+this.significantBits);
+			log.debug("Mask:"+Arrays.toString(mask) + " Shift:"+Arrays.toString(shift) + " sampleSize="+sampleSize + " sigBits="+this.significantBits);
 		}
 		@Override
 		public short getSampleSize() {

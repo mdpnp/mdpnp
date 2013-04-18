@@ -32,6 +32,8 @@ import org.mdpnp.apps.testapp.DemoPanel;
 import org.mdpnp.devices.draeger.medibus.RTMedibus;
 import org.mdpnp.devices.draeger.medibus.types.Command;
 import org.mdpnp.devices.draeger.medibus.types.RealtimeData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import purejavacomm.CommPortIdentifier;
 import purejavacomm.NoSuchPortException;
@@ -166,7 +168,7 @@ public class MedibusTestGUI extends DemoPanel {
 		serialPort = null;
 	}
 	
-	
+	private final Logger log = LoggerFactory.getLogger(MedibusTestGUI.class);
 	private void buildMyMedibus() throws IOException, InterruptedException, NoSuchPortException, PortInUseException, UnsupportedCommOperationException {
 		destroyMyMedibus();
 		
@@ -236,7 +238,7 @@ public class MedibusTestGUI extends DemoPanel {
 						e.printStackTrace();
 					}
 				}
-				System.err.println("Medibus slow processing completed");
+				log.info("Medibus slow processing completed");
 			}
 		});
 		slowThread.setDaemon(true);
@@ -252,7 +254,7 @@ public class MedibusTestGUI extends DemoPanel {
 						e.printStackTrace();
 					}
 				}
-				System.err.println("Medibus fast processing completed");
+				log.info("Medibus fast processing completed");
 			}
 		});
 		fastThread.setDaemon(true);
@@ -478,8 +480,6 @@ public class MedibusTestGUI extends DemoPanel {
 	
 	
 	public static void main(final String[] args) throws InvocationTargetException, InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
-//		UIManager.setLookAndFeel("");
-//		System.out.println(Arrays.toString(UIManager.getAuxiliaryLookAndFeels()));
 		UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
 
 		final DemoFrame frame = new DemoFrame(MedibusTestGUI.class.getName());

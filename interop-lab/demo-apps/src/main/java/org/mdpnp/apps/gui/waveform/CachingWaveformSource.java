@@ -7,6 +7,9 @@
  ******************************************************************************/
 package org.mdpnp.apps.gui.waveform;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class CachingWaveformSource extends AbstractNestedWaveformSource {
 	
@@ -101,7 +104,7 @@ public class CachingWaveformSource extends AbstractNestedWaveformSource {
 	private static final int decr(int x, int max) {
 		return --x<0?(max-1):x;
 	}
-	
+	private final Logger log = LoggerFactory.getLogger(CachingWaveformSource.class);
 	@Override
 	public void waveform(WaveformSource source) {
 		int sourceCount = source.getCount();
@@ -132,19 +135,16 @@ public class CachingWaveformSource extends AbstractNestedWaveformSource {
 //				if(this.nextCacheCount >= this.sampleCache.length || this.nextCacheCount < 0) {
 //					this.nextCacheCount = 0;
 //				}
-				System.out.println("Adjusted sample array to " + this.sampleCache.length + " to accomodate " + fixedTimeDomain + "ms domain at resolution " + resolution);
+				log.info("Adjusted sample array to " + this.sampleCache.length + " to accomodate " + fixedTimeDomain + "ms domain at resolution " + resolution);
 			}
 		}
 		
 		// Indicating there is no cursor, just a bunch of new data
 		if(sourceCount < 0) {
-//			System.out.print("Write cache @" + nextCacheCount +":");
 			for(int i = 0; i < sourceMax; i++) {
 				sampleCache[postIncrCacheCount()] = source.getValue(i);
 				fireWaveform();
 			}
-//			System.out.println(Arrays.toString(sampleCache));
-			
 			
 		} else {
 			if(lastSourceCount < 0) {

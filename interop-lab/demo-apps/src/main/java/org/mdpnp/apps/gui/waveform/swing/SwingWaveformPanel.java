@@ -466,7 +466,6 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 //		long t = System.currentTimeMillis();
 //		int c = source.getCount();
 //		int v = source.getValue(c);
-//		System.out.println(t + "\t" + c  + "\t" + v);
 		if(extent == null) {
 			extent = new ExtentImpl(getSize());
 		}

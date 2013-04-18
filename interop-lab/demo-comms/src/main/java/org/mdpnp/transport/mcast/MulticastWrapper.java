@@ -57,7 +57,7 @@ public class MulticastWrapper implements Wrapper, GatewayListener /*, NetworkCon
 //		this.address = address;
 
 		NetworkInterface iface = defaultNetworkInterface();
-		System.out.println(iface);
+
 		datagramChannel = DatagramChannel.open();
 //		datagramChannel.
 		// JRE 1.7 .. not sure we're ready to upgrade
@@ -90,14 +90,9 @@ public class MulticastWrapper implements Wrapper, GatewayListener /*, NetworkCon
 //		Object o;
 //		try {
 //			o = ois.readObject();
-//			System.out.println(o);
 //		} catch (ClassNotFoundException e) {
 //			e.printStackTrace();
 //		}
-//		System.out.println(new String(inBuffer.array(), 0, inBuffer.position()));
-//		System.out.println("IN:"+inBuffer);
-		
-
 	}
 
 //	@Override
@@ -105,7 +100,6 @@ public class MulticastWrapper implements Wrapper, GatewayListener /*, NetworkCon
 		synchronized(outQueue) {
 			if(!outQueue.isEmpty()) {
 				IdentifiableUpdate<?> update = outQueue.remove(0);
-				System.out.println(DDSInterface.findPersistent(update.getClass()).getClazz());
 //				out.reset();
 //				oos.writeObject(update);
 				
@@ -113,7 +107,6 @@ public class MulticastWrapper implements Wrapper, GatewayListener /*, NetworkCon
 //				outBuffer.clear();
 //				outBuffer.put("HELLO WORLD".getBytes());
 //				outBuffer.flip();
-//				System.out.println("OUT:"+outBuffer);
 //				datagramChannel.send(ByteBuffer.wrap(out.toByteArray()), new InetSocketAddress(address, PORT));
 			}
 			if(outQueue.isEmpty()) {

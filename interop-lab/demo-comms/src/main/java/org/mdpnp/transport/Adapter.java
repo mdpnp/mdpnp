@@ -40,7 +40,6 @@ public class Adapter {
 
 		externalGateway.update(externalListener, announceArriveUpdate);
 		log.trace("ANNOUNCE_ARRIVE " + source);
-//		System.out.println("ANNOUNCED ARRIVAL " + announceArriveUpdate);
 	}
 	
 	public String getSource() {
@@ -106,7 +105,7 @@ public class Adapter {
 					e.printStackTrace();
 				}
 				if( (System.currentTimeMillis()-start) >= 5000L) {
-					System.err.println("Unable to depart the system cleanly");
+					log.warn("Unable to depart the system cleanly");
 					break;
 				}
 			}

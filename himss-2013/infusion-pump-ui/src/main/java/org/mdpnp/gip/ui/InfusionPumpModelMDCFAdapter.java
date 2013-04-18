@@ -44,7 +44,6 @@ public class InfusionPumpModelMDCFAdapter /*extends InfusionPump*/ {
 		percentComplete = 0f;
 
 		String s = super.buildMessage();
-		System.out.println(s);
 		return s;
 	}
 	*/

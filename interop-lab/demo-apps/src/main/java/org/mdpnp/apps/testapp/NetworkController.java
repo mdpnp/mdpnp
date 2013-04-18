@@ -85,7 +85,6 @@ public class NetworkController {
 			@Override
 			public void update(IdentifiableUpdate<?> update) {
 				if(Device.GET_AVAILABLE_IDENTIFIERS.equals(update.getIdentifier())) {
-//					System.out.println("MY PRECIOUS IDENTIFIERS:"+update);
 					String source = update.getSource();
 					if(!panels.containsKey(source)) {
 						List<org.mdpnp.apps.gui.swing.DevicePanel> panelsForThisDevice = new ArrayList<org.mdpnp.apps.gui.swing.DevicePanel>();
@@ -95,7 +94,6 @@ public class NetworkController {
 							
 							panelsForThisDevice.add(panel);
 							
-//							System.out.println("BUILT A DISPLAY PANEL:"+panel);
 							try {
 								SwingUtilities.invokeAndWait(new Runnable() {
 									public void run() {
@@ -113,14 +111,12 @@ public class NetworkController {
 						panels.put(source, panelsForThisDevice);
 					}
 				} else if(Association.ACKNOWLEDGE_ARRIVE.equals(update.getIdentifier())) {
-//					System.out.println("ACK ARRIVE");
 					MutableTextUpdate tu = new MutableTextUpdateImpl(Device.REQUEST_AVAILABLE_IDENTIFIERS, "");
 					tu.setTarget(update.getTarget());
 					tu.setValue("");
 					tu.setSource(update.getSource());
 					gateway.update(gatewayListener, tu);
 				} else if(Association.ACKNOWLEDGE_DEPART.equals(update.getIdentifier())) {
-//					System.out.println("ACK DEPART");
 					String target = update.getTarget();
 					final List<org.mdpnp.apps.gui.swing.DevicePanel> panelsForThisDevice = panels.get(target);
 					if(null != panelsForThisDevice) {

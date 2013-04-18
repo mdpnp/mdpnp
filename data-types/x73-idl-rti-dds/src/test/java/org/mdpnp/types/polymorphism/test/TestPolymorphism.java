@@ -168,81 +168,66 @@ public class TestPolymorphism implements DataReaderListener, DataWriterListener 
 	@Override
 	public void on_liveliness_changed(DataReader arg0,
 			LivelinessChangedStatus arg1) {
-//		System.err.println("on_liveliness_changed:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_requested_deadline_missed(DataReader arg0,
 			RequestedDeadlineMissedStatus arg1) {
-//		System.err.println("on_requested_deadline_missed:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_requested_incompatible_qos(DataReader arg0,
 			RequestedIncompatibleQosStatus arg1) {
-//		System.err.println("on_requested_incompatible_qos:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_sample_lost(DataReader arg0, SampleLostStatus arg1) {
-//		System.err.println("on_sample_lost:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_sample_rejected(DataReader arg0, SampleRejectedStatus arg1) {
-//		System.err.println("on_sample_rejected:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_subscription_matched(DataReader arg0,
 			SubscriptionMatchedStatus arg1) {
-		
-//		System.err.println("on_subscription_matched:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_application_acknowledgment(DataWriter arg0,
 			AcknowledgmentInfo arg1) {
-//		System.err.println("on_application_acknowledgment:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public Object on_data_request(DataWriter arg0, Cookie_t arg1) {
-//		System.err.println("on_data_request:"+arg0+"\t"+arg1);
 		return null;
 	}
 
 	@Override
 	public void on_data_return(DataWriter arg0, Object arg1, Cookie_t arg2) {
-//		System.err.println("on_data_return:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_destination_unreachable(DataWriter arg0,
 			InstanceHandle_t arg1, Locator_t arg2) {
-//		System.err.println("on_destination_unreachable:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_instance_replaced(DataWriter arg0, InstanceHandle_t arg1) {
-//		System.err.println("on_instance_replaced:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_liveliness_lost(DataWriter arg0, LivelinessLostStatus arg1) {
-//		System.err.println("on_liveliness_lost:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_offered_deadline_missed(DataWriter arg0,
 			OfferedDeadlineMissedStatus arg1) {
-//		System.err.println("on_offered_deadline_missed:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_offered_incompatible_qos(DataWriter arg0,
 			OfferedIncompatibleQosStatus arg1) {
-//		System.err.println("on_offered_incompatible_qos:"+arg0+"\t"+arg1);
 	}
 
 	private static final List<Class<?>> listExtObjTypes(DIMT_VMO vmo) {
@@ -262,7 +247,6 @@ public class TestPolymorphism implements DataReaderListener, DataWriterListener 
 	@Override
 	public void on_publication_matched(final DataWriter arg0,
 			PublicationMatchedStatus arg1) {
-//		System.err.println("on_publication_matched:"+arg0+"\t"+arg1);
 		if(arg1.current_count_change>0) {
 			TestExecutor.get().execute(new Runnable() {
 				public void run() {
@@ -313,18 +297,15 @@ public class TestPolymorphism implements DataReaderListener, DataWriterListener 
 	@Override
 	public void on_reliable_reader_activity_changed(DataWriter arg0,
 			ReliableReaderActivityChangedStatus arg1) {
-//		System.err.println("on_reliable_reader_activity_changed:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_reliable_writer_cache_changed(DataWriter arg0,
 			ReliableWriterCacheChangedStatus arg1) {
-//		System.err.println("on_reliable_writer_cache_changed:"+arg0+"\t"+arg1);
 	}
 
 	@Override
 	public void on_sample_removed(DataWriter arg0, Cookie_t arg1) {
-//		System.err.println("on_sample_removed:"+arg0+"\t"+arg1);
 	}
 
 }

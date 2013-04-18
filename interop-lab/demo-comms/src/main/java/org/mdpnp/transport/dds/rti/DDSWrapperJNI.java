@@ -170,34 +170,24 @@ public class DDSWrapperJNI implements Wrapper /*implements RTICLibrary.DDS_DataR
 				// Currently set_listener(NULL) deadlocks .. must change on_data_available threading
 	//			DDSInterface.checkReturnCode(RTICLibrary.INSTANCE.DDS_DataReader_set_listener(reader, Pointer.NULL, RTICLibrary.DDS_STATUS_MASK_NONE));
 				gateway.removeListener(this);
-	//			System.err.println("EH1");
 				
 				// Currently DataReader_delete_contained_entities deadlocks .. must change on_data_available threading
 				// TODO this may be fixed ... must test
 	//			DDSInterface.checkReturnCode(RTICLibrary.INSTANCE.DDS_DataReader_delete_contained_entities(reader));
 				
-	//			System.err.println("EH2");
 				DDSInterface.checkReturnCode(RTICLibrary.INSTANCE.DDS_Subscriber_delete_datareader(subscriber, this.reader));
-	//			System.err.println("EH3");
 	//			DDSInterface.checkReturnCode(RTICLibrary.INSTANCE.DDS_DomainParticipant_delete_datareader(domainParticipant, this.reader));
 				
 				DDSInterface.checkReturnCode(RTICLibrary.INSTANCE.DDS_Publisher_delete_datawriter(publisher, this.writer));
-	//			System.err.println("EH4");
 	//			DDSInterface.checkReturnCode(RTICLibrary.INSTANCE.DDS_DomainParticipant_delete_datawriter(domainParticipant, this.writer));
 				DDSInterface.checkReturnCode(RTICLibrary.INSTANCE.DDS_DomainParticipant_delete_topic(domainParticipant, topic));
-	//			System.err.println("EH5");
 				DDSInterface.checkReturnCode(RTICLibrary.INSTANCE.DDS_DynamicDataTypeSupport_unregister_type(typeSupport, domainParticipant, RTICLibrary.INSTANCE.DDS_String_dup(typeCodeName)));
-	//			System.err.println("EH6");
 				DDSInterface.checkReturnCode(RTICLibrary.INSTANCE.DDS_DynamicDataTypeSupport_delete_data(typeSupport, read_data));
 				
 				DDSInterface.checkReturnCode(RTICLibrary.INSTANCE.DDS_DynamicDataTypeSupport_delete_data(typeSupport, write_data));
-	//			System.err.println("EH7");
 				RTICLibrary.INSTANCE.DDS_DynamicDataTypeSupport_delete(typeSupport);
-	//			System.err.println("EH8");
 				Pointer factory = RTICLibrary.INSTANCE.DDS_TypeCodeFactory_get_instance();
-	//			System.err.println("EH9");
 				RTICLibrary.INSTANCE.DDS_TypeCodeFactory_delete_tc(factory, typeCode, exception);
-	//			System.err.println("EH10");
 				DDSInterface.checkException(exception);
 	//			DDSInterface.checkReturnCode(RTICLibrary.INSTANCE.DDS_DomainParticipant_delete_contentfilteredtopic(domainParticipant, content_filtered_topic));
 			} finally {
@@ -270,7 +260,8 @@ public class DDSWrapperJNI implements Wrapper /*implements RTICLibrary.DDS_DataR
 		public void on_liveliness_changed(Pointer listener_data,
 				Pointer reader, Pointer status) {
 			RTICLibrary.DDS_LivelinessChangedStatus liveliness = new RTICLibrary.DDS_LivelinessChangedStatus(status);
-			System.out.println("alive_count="+liveliness.alive_count+",alive_count_change="+liveliness.alive_count_change+",not_alive_count="+liveliness.not_alive_count+",not_alive_count_change="+liveliness.not_alive_count_change);
+			
+			log.debug("alive_count="+liveliness.alive_count+",alive_count_change="+liveliness.alive_count_change+",not_alive_count="+liveliness.not_alive_count+",not_alive_count_change="+liveliness.not_alive_count_change);
 
 			
 		}
@@ -278,7 +269,7 @@ public class DDSWrapperJNI implements Wrapper /*implements RTICLibrary.DDS_DataR
 		@Override
 		public void on_liveliness_lost(Pointer listener_data, Pointer writer,
 				Pointer status) {
-			System.out.println("writer liveliness_lost called");
+			log.debug("writer liveliness_lost called");
 			
 		}
 	}

@@ -442,7 +442,6 @@ public class EngineerConsole extends JPanel implements GatewayListener {
 //					    }
 //					}
 //				}
-//				System.out.println("VisualChannel:"+ msgText);
 //			} catch (Exception e) {
 //				// TODO Auto-generated catch block
 //				e.printStackTrace();

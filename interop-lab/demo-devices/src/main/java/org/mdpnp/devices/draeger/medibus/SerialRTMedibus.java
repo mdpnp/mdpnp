@@ -10,6 +10,8 @@ import java.util.Map;
 
 import org.mdpnp.devices.draeger.medibus.types.Command;
 import org.mdpnp.devices.draeger.medibus.types.RealtimeData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import purejavacomm.CommPortIdentifier;
 import purejavacomm.NoSuchPortException;
@@ -98,7 +100,7 @@ public class SerialRTMedibus  {
 	private static final Command[] slowRequests = new Command[] {Command.ReqDeviceSetting, Command.ReqMeasuredDataCP1};
 	
 	protected boolean connected = false;
-	
+	private final Logger log = LoggerFactory.getLogger(SerialRTMedibus.class);
 	public void connect(String port) throws NoSuchPortException, PortInUseException, UnsupportedCommOperationException, IOException {
 		CommPortIdentifier portid = CommPortIdentifier.getPortIdentifier(port);
 		PureJavaSerialPort serialPort = (PureJavaSerialPort) portid.open("ICE", 10000);
@@ -119,7 +121,7 @@ public class SerialRTMedibus  {
 						e.printStackTrace();
 					}
 				}
-				System.err.println("Medibus slow processing completed");
+				log.info("Medibus slow processing completed");
 			}
 		});
 		slowThread.setDaemon(true);
@@ -135,7 +137,7 @@ public class SerialRTMedibus  {
 						e.printStackTrace();
 					}
 				}
-				System.err.println("Medibus fast processing completed");
+				log.info("Medibus fast processing completed");
 			}
 		});
 		fastThread.setDaemon(true);
@@ -157,7 +159,7 @@ public class SerialRTMedibus  {
 						}
 					}
 				}
-				System.err.println("Medibus slow polling completed");
+				log.info("Medibus slow polling completed");
 			}
 		});
 		pollThread.setDaemon(true);

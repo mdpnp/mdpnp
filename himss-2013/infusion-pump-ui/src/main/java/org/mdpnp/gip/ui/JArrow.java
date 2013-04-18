@@ -36,7 +36,6 @@ public class JArrow extends JComponent {
 	protected void paintComponent(Graphics g) {
 //		super.paintComponent(g);
 		getSize(size);
-		System.out.println(size+"\t"+getForeground());
 				
 		int x = size.width / 2;
 		int y0 = size.height;

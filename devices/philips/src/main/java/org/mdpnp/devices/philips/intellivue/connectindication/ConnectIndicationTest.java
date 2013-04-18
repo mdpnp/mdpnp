@@ -57,10 +57,7 @@ public class ConnectIndicationTest {
 					file.getChannel().write(bb);
 					bb.reset();
 					file.close();
-//					while(bb.hasRemaining()) {
-//						System.out.print(Integer.toHexString(0xFF&bb.get())+ " ");
-//					}
-//					System.out.println();
+
 					
 					bb.reset();
 					System.out.println(Util.dump(bb, 100));
@@ -70,10 +67,7 @@ public class ConnectIndicationTest {
 						callback.beacon(ci);
 					}
 					System.out.print(addr+" "+ci);
-//					
-//					while(bb.hasRemaining()) {
-//						System.out.print(Integer.toHexString(0xFF&bb.get())+ " ");
-//					}
+
 					bb.clear();
 					System.out.println();
 				}

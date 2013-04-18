@@ -96,7 +96,7 @@ public class SimulatedPulseOximeterImpl extends IntellivueAcceptor {
 					values[i*sampleSizeBytes + 0] = (short) (0xFFFF & (pl>>Byte.SIZE));
 					values[i*sampleSizeBytes + 1] = (short) (0xFFFF & pl);
 				}
-				System.out.println("SampleSize:"+plethSpec.getValue().getSampleSize()+" "+Arrays.toString(realSamples));
+				log.debug("SampleSize:"+plethSpec.getValue().getSampleSize()+" "+Arrays.toString(realSamples));
 				
 				if(count == 0) {
 	//				offset = offsetRandom.nextInt(pleth.length);
@@ -313,15 +313,12 @@ public class SimulatedPulseOximeterImpl extends IntellivueAcceptor {
 //		
 //		ePollResult.setPolledAttributeGroup(AttributeId.NOM_ATTR_GRP_METRIC_VAL_OBS.asOid());
 //		
-//		System.out.println(der);
-//		
 //		ByteBuffer bb = ByteBuffer.allocate(5000);
 //		der.format(bb);
 //		bb.flip();
 //		
 //		DataExportResult der1 = new DataExportResultImpl();
 //		der1.parse(bb);
-//		System.out.println(der1);
 	}
 
 }

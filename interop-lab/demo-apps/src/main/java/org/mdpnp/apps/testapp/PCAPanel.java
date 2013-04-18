@@ -475,7 +475,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		
 		// TODO DO NOT INCLUDE THIS
 		if(null != n && n.doubleValue() <= 5.0) {
-			System.err.println("Ignoring " + identifier + " " + n + " " + device);
+			log.warn("Ignoring " + identifier + " " + n + " " + device);
 			return;
 		}
 		

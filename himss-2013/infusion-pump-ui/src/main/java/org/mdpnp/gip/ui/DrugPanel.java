@@ -22,6 +22,8 @@ import org.mdpnp.gip.ui.units.Units;
 import org.mdpnp.gip.ui.units.VolumeUnits;
 import org.mdpnp.gip.ui.values.MassValue;
 import org.mdpnp.gip.ui.values.VolumeValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("serial")
 public class DrugPanel extends javax.swing.JPanel implements DrugListener, PatientListener {
@@ -65,7 +67,7 @@ public class DrugPanel extends javax.swing.JPanel implements DrugListener, Patie
 		doseModes.put("mcg/kg/hr", RatioUnitsFactory.mcgPerKgPerHour);
 		doseModes.put("g/hr", RatioUnitsFactory.gPerHour);
 	}
-	
+	private final Logger log = LoggerFactory.getLogger(DrugPanel.class);
 	public DrugPanel() {
 		super(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.BASELINE, GridBagConstraints.NONE, new Insets(5,5,5,5), 5, 5);
@@ -85,7 +87,7 @@ public class DrugPanel extends javax.swing.JPanel implements DrugListener, Patie
 						m.setUnits(mu);
 						m.setValue(de.getAmount());
 					} else {
-						System.err.println("Invalid units " + mu + " for mass");
+						log.warn("Invalid units " + mu + " for mass");
 						m.setValue(null);
 					}
 					
@@ -94,7 +96,7 @@ public class DrugPanel extends javax.swing.JPanel implements DrugListener, Patie
 						v.setUnits(vu);
 						v.setValue(de.getDiluent());
 					} else {
-						System.err.println("Invalid units " + vu + " for volume");
+						log.warn("Invalid units " + vu + " for volume");
 						v.setValue(null);
 					}
 					

@@ -252,7 +252,7 @@ public class DeviceAdapter {
 					killAdapter();
 				}
 			}));
-			System.out.println("Type quit<enter> to exit");
+			System.err.println("Type quit<enter> to exit");
 
 			getConnected.connect();
 

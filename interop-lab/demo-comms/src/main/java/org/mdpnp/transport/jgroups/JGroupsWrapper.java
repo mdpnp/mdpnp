@@ -27,6 +27,8 @@ import org.mdpnp.comms.Gateway;
 import org.mdpnp.comms.GatewayListener;
 import org.mdpnp.comms.IdentifiableUpdate;
 import org.mdpnp.transport.Wrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JGroupsWrapper implements GatewayListener, Receiver, Wrapper {
 	private final Gateway gateway;
@@ -119,7 +121,6 @@ public class JGroupsWrapper implements GatewayListener, Receiver, Wrapper {
 	@Override
 	public void receive(Message msg) {
 		IdentifiableUpdate<?> update = (IdentifiableUpdate<?>) msg.getObject();
-//		System.err.println("RECV:"+update);
 		gateway.update(this, update);
 	}
 	@Override

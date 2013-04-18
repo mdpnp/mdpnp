@@ -36,6 +36,8 @@ import org.mdpnp.devices.simulation.SimulatedBloodPressureImpl;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.webcam.WebcamImpl;
 import org.mdpnp.transport.GetConnected;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DeviceApp {
 
@@ -110,7 +112,7 @@ public class DeviceApp {
 
 		return true;
 	}
-	
+	private static final Logger log = LoggerFactory.getLogger(DeviceApp.class);
 	public static void main(String[] args) throws IOException, TooManyListenersException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException, InstantiationException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException {
 		System.setProperty("java.net.preferIPv4Stack","true"); 
 		Gateway gateway = new Gateway();
@@ -129,13 +131,13 @@ public class DeviceApp {
 				if(Device.NAME.equals(update.getIdentifier())) {
 					frame.setTitle( ((TextUpdate)update).getValue() );
 				} else if(Demographics.FIRST_NAME.equals(update.getIdentifier())) {
-					System.out.println("FIRST NAME:"+((TextUpdate)update).getValue());					
+					log.info("FIRST NAME:"+((TextUpdate)update).getValue());					
 				} else if(Demographics.LAST_NAME.equals(update.getIdentifier())) {
-					System.out.println("LAST NAME:"+((TextUpdate)update).getValue());
+				    log.info("LAST NAME:"+((TextUpdate)update).getValue());
 				} else if(Demographics.PATIENT_ID.equals(update.getIdentifier())) {
-					System.out.println("PATIENT_ID:"+((TextUpdate)update).getValue());
+				    log.info("PATIENT_ID:"+((TextUpdate)update).getValue());
 				} else {
-//					System.out.println(update);
+//					log.info(update);
 				}
 			}
 			

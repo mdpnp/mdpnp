@@ -162,7 +162,7 @@ public class AssociationProtocolImpl implements AssociationProtocol {
 		AssociationMessage message = buildMessage(getType());
 		
 		if(null == message) {
-			System.err.println("Unimplemented message type:"+getType());
+			log.warn("Unimplemented message type:"+getType());
 		} else {
 			message.advancePastPresentationHeader(bb);
 			message.parse(bb);

@@ -24,9 +24,14 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ASCIIFieldDelegate implements Runnable {
 	private final Object target;
 	private final LineInfo[] lineInfo;	
+	
+	private static final Logger log = LoggerFactory.getLogger(ASCIIFieldDelegate.class);
 	
 	private Class<?> componentType(Class<?> cls) {
 		if(cls.isArray()) {
@@ -63,7 +68,7 @@ public class ASCIIFieldDelegate implements Runnable {
 				} else if(Date.class.equals(type)) {
 					f.setDateFormat(new SimpleDateFormat(line));
 				} else {
-					System.err.println("Not parsing:"+line);
+					log.warn("Not parsing:"+line);
 				}
 			} else if(line.startsWith("\t")) {
 				line = line.substring(1, line.length());
@@ -241,7 +246,7 @@ public class ASCIIFieldDelegate implements Runnable {
 				} else if(Date.class.equals(fieldType)) {
 					return dateFormat.parse(val);
 				} else {
-					System.err.println("Unsupported field type:"+fieldType);
+					log.warn("Unsupported field type:"+fieldType);
 					return null;
 				}
 			}
@@ -267,7 +272,6 @@ public class ASCIIFieldDelegate implements Runnable {
 		
 		public boolean parseLine(String line, Object target) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 			Matcher m;
-			System.err.println(line);
 			if( (m=pattern.matcher(line)).matches()) {
 				for(int i = 0; i < fields.size(); i++) {
 					try {
@@ -296,7 +300,6 @@ public class ASCIIFieldDelegate implements Runnable {
 				if(null != fireMethod) {
 					try {
 						if(fireMethod.getParameterTypes().length == 1) {
-						    System.err.println(fireMethod+"\t"+target);
 							fireMethod.invoke(target, target);
 						} else if(fireMethod.getParameterTypes().length == 0) {
 							fireMethod.invoke(target);
@@ -335,7 +338,7 @@ public class ASCIIFieldDelegate implements Runnable {
 		try {
 			while(null != (line = reader.readLine())) {
 				if(!parseLine(line)) {
-					System.out.println("Unknown line:"+line);
+					log.info("Unknown line:"+line);
 				}
 			}
 			
