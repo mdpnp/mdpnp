@@ -1,15 +1,10 @@
 apply plugin: 'java'
 defaultTasks 'build'
 
-version = '0.1'
-group = 'org.mdpnp.devices'
-
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
 dependencies { 
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
   compile project(':devices:common')
-  runtime group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.2'
-  testCompile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
 }

@@ -7,8 +7,13 @@ ext {
     JAVA_VERSION_CLASSES = 1.6
 }
 
+group 'org.mdpnp'
+version '0.0.2'
+
 subprojects {
     
+    group 'org.mdpnp'
+    version '0.0.2'
     
     repositories {
         // Virtual repository of all remote repositories

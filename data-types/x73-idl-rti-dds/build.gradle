@@ -8,9 +8,6 @@ defaultTasks 'build'
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
-// early alpha
-version = 0.1
-
 // configuration for code generation
 configurations { rtiddsgen }
 

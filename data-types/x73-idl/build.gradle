@@ -2,10 +2,6 @@ apply plugin: 'maven'
 
 defaultTasks 'build'
 
-// early alpha
-version = 0.1
-group = 'org.mdpnp'
-
 task build(type: Zip) { 
   baseName = project.name
   from 'src/main/idl'

@@ -4,9 +4,6 @@ defaultTasks 'build'
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
-version = '0.1'
-group = 'org.mdpnp'
-
 dependencies {
   compile group: 'org.apache.cxf', name: 'cxf-bundle', version: '2.7.1'
   
