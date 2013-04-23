@@ -3,6 +3,7 @@ package org.mdpnp.transport.dds.rti;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -361,9 +362,20 @@ public class DDSWrapper implements Wrapper /*implements RTICLibrary.DDS_DataRead
 	private final RTICLibrary.DDS_PublisherQos publisherQos = new RTICLibrary.DDS_PublisherQos();
 	
 	private final DDSInterface wrapperDDS = new DDSInterface();
-	
+	private final Logger log = LoggerFactory.getLogger(DDSWrapper.class);
 	@SuppressWarnings("unchecked")
     private DDSWrapper(Pointer domainParticipant, int domainId, Role role, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	    
+	    String domainIdStr=System.getProperty("DDS_WRAPPER_DOMAIN_ID"); 
+	    if(null != domainIdStr) {
+	        try {
+	            domainId = Integer.parseInt(domainIdStr);
+	            log.info("Using DDS_WRAPPER_DOMAIN_ID="+domainId);
+	        } catch (NumberFormatException nfe) {
+	            log.warn(nfe.getMessage(), nfe);
+	        }
+	    }
+	    
 //		this.role = role;
 		//		this.gateway = gateway;
 		if(null == domainParticipant) {
