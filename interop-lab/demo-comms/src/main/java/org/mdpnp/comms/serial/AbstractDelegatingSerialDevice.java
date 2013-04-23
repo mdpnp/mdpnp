@@ -12,6 +12,9 @@ public abstract class AbstractDelegatingSerialDevice<T> extends AbstractSerialDe
 	public AbstractDelegatingSerialDevice(Gateway gateway) {
 		super(gateway);
 	}
+	public AbstractDelegatingSerialDevice(Gateway gateway, SerialSocket serialSocket) {
+	    super(gateway, serialSocket);
+    }
 	private InputStream  inputStream;
 	private OutputStream outputStream;
 	private T delegate;
@@ -30,16 +33,37 @@ public abstract class AbstractDelegatingSerialDevice<T> extends AbstractSerialDe
 	protected abstract T buildDelegate(InputStream in, OutputStream out);
 	protected abstract boolean delegateReceive(T delegate) throws IOException;
 	
+	@Override
+	protected boolean doInitCommands(OutputStream outputStream) throws IOException {
+	    log.trace("doInitCommands outputStream="+outputStream);
+	    setOutputStream(outputStream);
+	    return true;
+	}
+	
 	protected synchronized T getDelegate() {
-		while(null == delegate && (inputStream == null || outputStream == null)) {
+	    return getDelegate(true);
+	}
+	
+	// just a failsafe
+	private static final long MAX_GET_DELEGATE_WAIT_TIME = 20000L;
+	
+	protected synchronized T getDelegate(boolean build) {
+	    long giveup = System.currentTimeMillis() + MAX_GET_DELEGATE_WAIT_TIME;
+	    
+		while(build && null == delegate && (inputStream == null || outputStream == null)) {
 			try {
 				log.trace("waiting, inputStream="+inputStream+", outputStream="+outputStream);
-				wait();
+				long now = System.currentTimeMillis();
+				if(now >= giveup) {
+				    throw new IllegalStateException("Exceeded maximum time (" + MAX_GET_DELEGATE_WAIT_TIME + "ms awaiting calls to doInitCommands and process inputStream="+inputStream+" and outputStream=" + outputStream);
+				} else {
+				    wait(giveup - now);
+				}
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+			    log.error(e.getMessage(), e);
 			}
 		}
-		if(null == delegate) {
+		if(build && null == delegate) {
 			delegate = buildDelegate(inputStream, outputStream);
 		}
 		return delegate;
