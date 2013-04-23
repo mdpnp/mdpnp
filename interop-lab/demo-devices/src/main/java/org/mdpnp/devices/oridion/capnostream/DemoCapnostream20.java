@@ -75,7 +75,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 	public DemoCapnostream20(Gateway gateway) {
 		super(gateway);
 		nameUpdate.setValue("Capnostream20");
-		add(co2, rr, fastStatus, slowStatus, co2ActiveAlarms, spo2ActiveAlarms, extendedCO2Status, capnostreamUnits);
+		add(co2, rr, etco2, fastStatus, slowStatus, co2ActiveAlarms, spo2ActiveAlarms, extendedCO2Status, capnostreamUnits);
 	}
 	
 	public DemoCapnostream20(Gateway gateway, SerialSocket serialSocket) {
@@ -109,6 +109,11 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 //		    if(DemoCapnostream20.this.spo2.setValue(spo2==0xFF?null:spo2)) {
 //		        updates.add(DemoCapnostream20.this.spo2);
 //            }
+		    
+		    if(DemoCapnostream20.this.extendedCO2Status.setValue(extendedCO2Status)) {
+                updates.add(DemoCapnostream20.this.extendedCO2Status);
+            }
+		    
             if(DemoCapnostream20.this.rr.setValue(respiratoryRate==0xFF?null:respiratoryRate)) {
                 updates.add(DemoCapnostream20.this.rr);
             }
@@ -127,9 +132,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             if(DemoCapnostream20.this.spo2ActiveAlarms.setValue(SpO2ActiveAlarms)) {
                 updates.add(DemoCapnostream20.this.spo2ActiveAlarms);
             }
-            if(DemoCapnostream20.this.extendedCO2Status.setValue(extendedCO2Status)) {
-                updates.add(DemoCapnostream20.this.extendedCO2Status);
-            }
+            
             if(DemoCapnostream20.this.capnostreamUnits.setValue(units)) {
                 updates.add(DemoCapnostream20.this.capnostreamUnits);
             }
