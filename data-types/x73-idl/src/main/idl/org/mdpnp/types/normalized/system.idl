@@ -1,0 +1,59 @@
+#ifndef _SYSTEM_IDL_
+#define _SYSTEM_IDL_
+
+#include <org/mdpnp/types/normalized/types.idl>
+#include <org/mdpnp/types/normalized/medical.idl>
+
+module org {
+  module mdpnp {
+    module types {
+      module normalized {
+      
+        valuetype Clock : Top {
+        
+        };
+      
+        valuetype Battery : Top {
+        
+        };
+        
+        valuetype Log : Top {
+        
+        };
+        
+        valuetype EventLog : Log { 
+        
+        };
+      
+        valuetype VirtualMedicalSystem : Top {
+          
+        };
+        
+        valuetype MedicalDataSystem : VirtualMedicalSystem {
+          public sequence<Log> logs;
+          public sequence<Battery> batteries;
+          public sequence<Clock, 1> clock;
+          public sequence<VirtualMedicalDevice> virtualMedicalDevices;
+        };
+        
+        valuetype SimpleMDS : MedicalDataSystem {
+        
+        };
+        
+        valuetype HydraMDS : MedicalDataSystem {
+        
+        };
+        
+        valuetype CompositeSingleBedMDS : MedicalDataSystem {
+        
+        };
+        
+        valuetype CompositeMultiBedMDS : MedicalDataSystem {
+        
+        };
+      };
+    };
+  };
+};
+
+#endif

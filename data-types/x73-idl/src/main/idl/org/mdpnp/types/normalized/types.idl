@@ -1,0 +1,130 @@
+#ifndef _TYPES_IDL_
+#define _TYPES_IDL_
+
+module org {
+  module mdpnp {
+    module types {
+      module normalized {
+        typedef octet INTU8;
+        typedef unsigned short INTU16;
+        typedef unsigned long INTU32;
+        typedef INTU16 OIDType;
+        typedef INTU16 PrivateOid;
+        typedef INTU16 HANDLE;
+        typedef INTU16 InstNumber;
+        typedef INTU16 MsmtPrinciple;
+        
+        enum MsmtPrincipleBits {
+        	msp_other = 0x1,
+        	msp_chemical = 0x2,
+        	msp_electrical = 0x4,
+        	msp_impedance = 0x8,
+        	msp_nuclear = 0x10,
+        	msp_optical = 0x20,
+        	msp_thermal = 0x40,
+        	msp_biological = 0x80,
+        	msp_mechanical = 0x100,
+        	msp_acoustical = 0x200,
+        	msp_manual = 0x8000
+        };
+        
+        enum NomPartition {
+        	nom_part_unspec = 0,
+        	nom_part_obj = 1,
+        	nom_part_metric = 2,
+        	nom_part_alert = 3,
+        	nom_part_dim = 4,
+        	nom_partvattr = 5, 
+        	nom_part_pgrp = 6, 
+        	nom_part_sites = 7, 
+        	nom_part_infrastruct = 8, 
+        	nom_part_fef = 9,
+        	nom_part_ecg_extn = 10, 
+        	nom_part_ext_nom = 256,
+        	nom_part_priv = 1024
+        };
+        
+        struct TYPE {
+            NomPartition partition;
+            OIDType code;
+        }; //@top-level false
+        
+        typedef INTU32 RelativeTime;
+      
+      	valuetype AbsoluteTime {
+      		public INTU8 century;
+      		public INTU8 year;
+      		public INTU8 month;
+      		public INTU8 day;
+      		public INTU8 hour;
+      		public INTU8 minute;
+      		public INTU8 second;
+      		public INTU8 sec_fractions;
+      	}; //@top-level false
+      	
+
+      	enum MetricCategory {
+      		mcat_unspec = 0,
+      		auto_measurement = 1,
+      		manual_measurement = 2,
+      		auto_setting = 3,
+      		manual_setting = 4,
+      		auto_calculation = 5,
+      		manual_calculation = 6
+      	}; //@top-level false
+      	
+      	enum MetricAccess {
+      		avail_intermittent = 0,
+      		upd_periodic = 1,
+      	    upd_episodic = 2,
+      	    msmt_noncontinuous = 3,
+      		acc_evrep = 4,
+      		acc_get = 5,
+      		acc_scan = 6,
+      		gen_opt_sync = 8,
+      		sc_opt_normal = 10,
+      		sc_opt_extensive = 11,
+      		sc_opt_long_pd_avail = 12,
+      		sc_opt_confirm = 13
+      	}; //@top-level false
+
+      	enum MetricStructure_ {
+      		simple = 0,
+      		compound = 1,
+      		complex = 2
+      	}; //@top-level false
+      	
+      	enum MetricRelevance {
+      	    rv_unspec = 0,
+      	    rv_internal = 1,
+      	    rv_store_only = 2,
+      	    rv_no_recording = 3,
+      	    rv_phys_ev_ind = 4,
+      	    rv_btb_metric = 5,
+      	    rv_app_specific = 8,
+      	    rv_service = 9
+      	}; //@top-level false
+      	
+      	struct MetricStructure {
+      		MetricStructure_ ms_struct;
+      		INTU8 ms_comp_no;
+      	}; //@top-level false
+      	
+		valuetype MetricSpecification {
+		     public RelativeTime update_period;
+		     public MetricCategory category;
+		     public MetricAccess access;
+		     public MetricStructure structure;
+		     public MetricRelevance relevance;
+		}; //@top-level true
+        
+        valuetype Top {
+        	public OIDType clazz;
+        	public OIDType name_binding;
+        }; //@top-level false
+      };
+    };
+  };
+};
+
+#endif

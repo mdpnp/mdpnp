@@ -1,0 +1,236 @@
+#ifndef _MEDICAL_IDL_
+#define _MEDICAL_IDL_
+
+/*************
+Elements of a numeric
+**** TOP 
+Class	MDC_ATTR_CLASS	OIDType	???
+Name-Binding	MDC_ATTR_NAME_BINDING	OIDType	???
+**** VMO
+Type	MDC_ATTR_ID_TYPE	TYPE	M	Static
+Handle	MDC_ATTR_ID_HANDLE	HANDLE	M	Static
+Label-String	MDC_ATTR_ID_LABEL_STRING	OCTET STRING	O	Dynamic
+Ext-Obj-Relations	MDC_ATTR_EXT_OBJ_RELATION	ExtObjRelationList	O	???
+**** Metric
+Metric-Specification	MDC_ATTR_METRIC_SPECN	MetricSpec	M	Static
+Max-Delay-Time	MDC_ATTR_DELAY_TIME_MAX	RelativeTime	O	Static
+Metric-Status	MDC_ATTR_METRIC_STAT	MetricStatus	O	Dynamic
+Measurement-Status	MDC_ATTR_MSMT_STAT	MeasurementStatus	O	Dynamic
+Metric-Id-Partition	MDC_ATTR_METRIC_ID_PART	NomPartition	O	Observed
+Metric-Id	MDC_ATTR_ID_PHYSIO	OIDType	O	Dynamic
+Metric-Id-Ext	MDC_ATTR_ID_MSMT_EXT	ExtNomenRef	O	Dynamic
+Unit-Code	MDC_ATTR_UNIT_CODE	OIDType	O	Dynamic
+Unit-LabelString	MDC_ATTR_UNIT_LABEL_STRING	OCTET STRING	O	Dynamic
+Vmo-Source-List	MDC_ATTR_VMO_LIST_SRC	VmoSourceList	O	Dynamic
+Metric-Source-List	MDC_ATTR_METRIC_LIST_SRC	MetricSourceList	O	Dynamic
+Msmt-Site-List	MDC_ATTR_SITE_LIST_MSMT	SiteList	O	Dynamic
+Msmt-Site-List-Ext	MDC_ATTR_SITE_LIST_MSMT_EXT	SiteListExt	O	???
+Body-Site-List	MDC_ATTR_SITE_LIST_BODY	SiteList	O	Dynamic
+Body-Site-List-Ext	MDC_ATTR_SITE_LIST_BODY_EXT	SiteListExt	O	???
+Metric-Calibration	MDC_ATTR_METRIC_CALIB	MetricCalibration	O	Dynamic
+Color	MDC_ATTR_COLOR	SimpleColour	O	Dynamic
+Measure-Mode	MDC_ATTR_MODE_MSMT	PrivateOid	O	Dynamic
+Measure-Period	MDC_ATTR_TIME_PD_MSMT	MetricMeasure	O	Dynamic
+Averaging-Period	MDC_ATTR_TIME_PD_AVG	MetricMeasure	O	Dynamic
+Start-Time	MDC_ATTR_TIME_START	AbsoluteTime	O	Dynamic
+Stop-Time	MDC_ATTR_TIME_STOP	AbsoluteTime	O	Dynamic
+Metric-Info-LabelString	MDC_ATTR_METRIC_INFO_LABEL_STRING	OCTET STRING	O	Dynamic
+Substance	MDC_ATTR_ID_SUBSTANCE	ExtNomenRef	O	Dynamic
+Substance-Label-String	MDC_ATTR_ID_SUBSTANCE_LABEL_STRING	OCTET string	Dynamic
+***** Numeric
+Nu-Observed-Value	MDC_ATTR_NU_VAL_OBS	NuObsValue	C	Observed
+Compound-Nu-Observed-Value	MDC_ATTR_NU_CMPD_VAL_OBS	NuObsValueCmp	C	Observed
+Absolute-Time-Stamp	MDC_ATTR_TIME_STAMP_ABS	AbsoluteTime	O	Observed
+Relative-Time-Stamp	MDC_ATTR_TIME_STAMP_REL	RelativeTime	O	Observed
+HiRes-Time-Stamp	MDC_ATTR_TIME_STAMP_REL_HI_RES	HighResRelativeTime	O	Observed
+Nu-Measure-Range	MDC_ATTR_NU_RANGE_MSMT	AbsoluteRange	O	Dynamic
+Nu-Physiological-Range	MDC_ATTR_NU_RANGE_PHYSIO	AbsoluteRange	O	Dynamic
+Nu-Measure-Resolution	MDC_ATTR_NU_MSMT_RES	FLOAT-Type	O	Dynamic
+Display-Resolution	MDC_ATTR_DISP_RES	DispResolution	O	Dynamic
+Accuracy	MDC_ATTR_NU_ACCUR_MSMT	FLOAT-Type	O	Dynamic
+**************/
+
+#include <org/mdpnp/types/normalized/types.idl>
+
+module org {
+  module mdpnp {
+    module types {
+      module normalized {
+		valuetype VirtualMedicalObject : Top {
+			/* Static Attributes */
+			public TYPE type;
+			public HANDLE handle;
+		};
+
+        valuetype Metric : VirtualMedicalObject {
+        	/* static attributes */
+        	public MetricSpecification metric_specification;
+        	public RelativeTime max_delay_time;
+        };
+      
+        valuetype Channel : VirtualMedicalObject {
+            /* static attributes */
+            public OIDType parameter_group;
+            public INTU16 physical_channel_no;
+            public MsmtPrinciple measurement_principle;
+            
+            /* containment */
+            public sequence<Metric> metrics; 
+        };
+      
+        valuetype VirtualMedicalDevice : VirtualMedicalObject {
+        	/* Static attributes */
+        	public OIDType parameter_group;
+        	public InstNumber instance_number;
+        	public INTU32 compatibility_id;
+        	public MsmtPrinciple measurement_principle;
+        	 
+        
+        	/* containment */
+        	public sequence<Channel> channels;
+        }; //@top-level true
+        
+		valuetype Numeric : Metric {
+			/* no static attributes */
+		};
+		
+		valuetype SampleArray : Metric {
+		};
+		
+		valuetype TimeSA : SampleArray {
+		
+		};
+		
+		valuetype DistributionSA : SampleArray {
+		
+		};
+		
+		valuetype RealTimeSA : SampleArray {
+		
+		};
+		
+		valuetype Enumeration : Metric {
+		
+		};
+      
+      /*
+      
+        typedef octet INTU8;
+        typedef unsigned short INTU16;
+        typedef unsigned long INTU32;
+        typedef INTU32 ObjectId;
+        typedef INTU32 AttributeId;
+        
+        valuetype Attr {
+        	public ObjectId object_id; //@key
+        	public AttributeId attribute_id; //@key
+        }; //@top-level false
+  
+        valuetype RelativeTime : Attr {
+            public INTU32 value; 
+        }; //@top-level true
+      
+      	valuetype AbsoluteTime : Attr {
+      		public INTU8 century;
+      		public INTU8 year;
+      		public INTU8 month;
+      		public INTU8 day;
+      		public INTU8 hour;
+      		public INTU8 minute;
+      		public INTU8 second;
+      		public INTU8 sec_fractions;
+      	}; //@top-level true
+      	
+
+      	enum MetricCategory {
+      		mcat_unspec = 0,
+      		auto_measurement = 1,
+      		manual_measurement = 2,
+      		auto_setting = 3,
+      		manual_setting = 4,
+      		auto_calculation = 5,
+      		manual_calculation = 6
+      	}; //@top-level false
+      	
+      	enum MetricAccess {
+      		avail_intermittent = 0,
+      		upd_periodic = 1,
+      	    upd_episodic = 2,
+      	    msmt_noncontinuous = 3,
+      		acc_evrep = 4,
+      		acc_get = 5,
+      		acc_scan = 6,
+      		gen_opt_sync = 8,
+      		sc_opt_normal = 10,
+      		sc_opt_extensive = 11,
+      		sc_opt_long_pd_avail = 12,
+      		sc_opt_confirm = 13
+      	}; //@top-level false
+
+      	enum MetricStructure_ {
+      		simple = 0,
+      		compound = 1,
+      		complex = 2
+      	}; //@top-level false
+      	
+      	enum MetricRelevance {
+      	    rv_unspec = 0,
+      	    rv_internal = 1,
+      	    rv_store_only = 2,
+      	    rv_no_recording = 3,
+      	    rv_phys_ev_ind = 4,
+      	    rv_btb_metric = 5,
+      	    rv_app_specific = 8,
+      	    rv_service = 9
+      	}; //@top-level false
+      	
+      	struct MetricStructure {
+      		MetricStructure_ ms_struct;
+      		INTU8 ms_comp_no;
+      	}; //@top-level false
+      	
+		valuetype MetricSpecification : Attr {
+		     public RelativeTime update_period;
+		     public MetricCategory category;
+		     public MetricAccess access;
+		     public MetricStructure structure;
+		     public MetricRelevance relevance;
+		}; //@top-level true
+		
+		enum MetricStatus_ {
+			metric_off = 0,
+			metric_not_ready = 1,
+			metric_standby = 2,
+			metric_transduc_discon = 8,
+			metric_hw_discon = 9
+		}; //@top-level false
+		
+		valuetype MetricStatus : Attr {
+			public MetricStatus_ value;
+		}; //@top-level true
+		
+		enum MeasurementStatus_ {
+		    invalid = 0,
+		    questionable = 1,
+		    not_available = 2,
+		    calibration_ongoing = 3,
+		    test_data = 4,
+		    demo_data = 5,
+		    validated_data = 8,
+		    early_indication = 9,
+		    msmt_ongoing = 10,
+		    msmt_state_in_alarm = 14,
+		    msmt_state_al_inhibited = 15
+		}; //@top-level false
+		
+		valuetype MeasurementStatus : Attr {
+		    public MeasurementStatus_ value;
+		}; //@top-level true
+		
+		*/
+      };
+    };
+  };
+};
+
+#endif
