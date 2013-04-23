@@ -414,11 +414,12 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 	}
 	@Override
 	protected void process(InputStream inputStream) throws IOException {
-	    
-        final RTMedibus rtMedibus = getDelegate();
+	   
         Thread t = new Thread(new Runnable() {
             public void run() {
                 try {
+                    // Will block until the delegate is available
+                    final RTMedibus rtMedibus = getDelegate();
                     rtMedibus.receiveFast();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -429,6 +430,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         t.start();
         log.trace("spawned a fast data processor");
 
+        // really the RTMedibus thread will block until
+        // the super.process populates an InputStream to allow
+        // building of the delegate
         super.process(inputStream);
 	    
 	}
