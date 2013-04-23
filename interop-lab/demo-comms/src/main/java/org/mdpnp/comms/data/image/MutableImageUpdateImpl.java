@@ -5,8 +5,6 @@ import org.mdpnp.comms.Persistent;
 
 @SuppressWarnings("serial")
 public class MutableImageUpdateImpl extends MutableIdentifiableUpdateImpl<Image> implements MutableImageUpdate {
-
-	private Image identifier;
 	private byte[] raster;
 	private int width, height;
 	
@@ -14,7 +12,7 @@ public class MutableImageUpdateImpl extends MutableIdentifiableUpdateImpl<Image>
 	}
 	
 	public MutableImageUpdateImpl(Image identifier) {
-		this.identifier = identifier;
+		super(identifier);
 	}
 	
 	@Override
@@ -33,32 +31,51 @@ public class MutableImageUpdateImpl extends MutableIdentifiableUpdateImpl<Image>
 	}
 
 	@Override
-	@Persistent(key = true)
-	public Image getIdentifier() {
-		return identifier;
+	public boolean setWidth(int width) {
+	    if(width == this.width) {
+	        return false;
+	    } else {
+    		this.width = width;
+    		return true;
+	    }
 	}
 
 	@Override
-	public void setIdentifier(Image i) {
-		this.identifier = i;
+	public boolean setHeight(int height) {
+	    if(height == this.height) {
+	        return false;
+	    } else {
+	        this.height = height;
+	        return true;
+	    }
 	}
 
 	@Override
-	public void setWidth(int width) {
-		this.width = width;
-	}
-
-	@Override
-	public void setHeight(int height) {
-		this.height = height;
-	}
-
-	@Override
-	public void setRaster(byte[] raster) {
-		this.raster = raster;
+	public boolean setRaster(byte[] raster) {
+	    if(null == raster) {
+	        if(null == this.raster) {
+	            return false;
+	        } else {
+	            this.raster = raster;
+	            return true;
+	        }
+	    } else {
+	        if(null == this.raster) {
+	            this.raster = raster;
+	            return true;
+	        } else {
+	            // check reference equality only
+	            if(raster == this.raster) {
+	                return false;
+	            } else {
+	                this.raster = raster;
+	                return true;
+	            }
+	        }
+	    }
 	}
 	@Override
 	public String toString() {
-		return "[identifier="+identifier+",source="+getSource()+",target="+getTarget()+",width="+width+",height="+height+",raster.length="+raster.length+"]";
+		return "[identifier="+getIdentifier()+",source="+getSource()+",target="+getTarget()+",width="+width+",height="+height+",raster.length="+raster.length+"]";
 	}
 }

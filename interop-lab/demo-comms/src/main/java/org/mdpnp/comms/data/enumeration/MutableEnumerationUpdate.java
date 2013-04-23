@@ -10,5 +10,5 @@ package org.mdpnp.comms.data.enumeration;
 import org.mdpnp.comms.MutableIdentifiableUpdate;
 
 public interface MutableEnumerationUpdate extends EnumerationUpdate, MutableIdentifiableUpdate<Enumeration> {
-	void setValue(Enum<?> e);
+	boolean setValue(Enum<?> e);
 }

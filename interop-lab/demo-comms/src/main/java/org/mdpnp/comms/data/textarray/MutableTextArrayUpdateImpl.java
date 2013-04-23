@@ -13,23 +13,11 @@ import org.mdpnp.comms.MutableIdentifiableUpdateImpl;
 
 @SuppressWarnings("serial")
 public class MutableTextArrayUpdateImpl extends MutableIdentifiableUpdateImpl<TextArray> implements MutableTextArrayUpdate {
-	private TextArray textArray;
-	
 	public MutableTextArrayUpdateImpl() {
 	}
 	
 	public MutableTextArrayUpdateImpl(TextArray textArray) {
-		this.textArray = textArray;
-	}
-	
-	@Override
-	public TextArray getIdentifier() {
-		return textArray;
-	}
-	
-	@Override
-	public void setIdentifier(TextArray textArray) {
-		this.textArray = textArray;
+	    super(textArray);
 	}
 	
 	private String[] value;
@@ -39,8 +27,28 @@ public class MutableTextArrayUpdateImpl extends MutableIdentifiableUpdateImpl<Te
 	}
 
 	@Override
-	public void setValue(String[] value) {
-		this.value = value;
+	public boolean setValue(String[] value) {
+	    if(null == value) {
+	        if(null == this.value) {
+	            return false;
+	        } else {
+	            this.value = value;
+	            return true;
+	        }
+	    } else {
+	        if(null == this.value) {
+	            this.value = value;
+	            return true;
+	        } else {
+	            // reference equality check only
+	            if(value == this.value) {
+	                return false;
+	            } else {
+	                this.value = value;
+	                return true;
+	            }
+	        }
+	    }
 	}
 	@Override
 	public String toString() {

@@ -13,8 +13,6 @@ import org.mdpnp.comms.MutableIdentifiableUpdateImpl;
 
 @SuppressWarnings("serial")
 public class MutableNumericUpdateImpl extends MutableIdentifiableUpdateImpl<Numeric> implements MutableNumericUpdate {
-
-	private Numeric numeric;
 	private Number value;
 	private Date updateTime;
 	
@@ -22,7 +20,7 @@ public class MutableNumericUpdateImpl extends MutableIdentifiableUpdateImpl<Nume
 	}
 	
 	public MutableNumericUpdateImpl(Numeric numeric) {
-		this.numeric = numeric;
+	    super(numeric);
 	}
 	
 	public MutableNumericUpdateImpl(Numeric numeric, Number value, Date updateTime) {
@@ -31,15 +29,7 @@ public class MutableNumericUpdateImpl extends MutableIdentifiableUpdateImpl<Nume
 		this.updateTime = updateTime;
 	}
 	
-	@Override
-	public Numeric getIdentifier() {
-		return numeric;
-	}
-	
-	@Override
-	public void setIdentifier(Numeric numeric) {
-		this.numeric = numeric;
-	}
+
 	
 	@Override
 	public Date getUpdateTime() {
@@ -52,19 +42,59 @@ public class MutableNumericUpdateImpl extends MutableIdentifiableUpdateImpl<Nume
 	}
 
 	@Override
-	public void setValue(Number n) {
-		this.value = n;
+	public boolean setValue(Number n) {
+	    if(null == n) {
+	        if(null == this.value) {
+	            return false;
+	        } else {
+	            this.value = n;
+	            return true;
+	        }
+	    } else {
+	        if(null == this.value) {
+	            this.value = n;
+	            return true;
+	        } else {
+	            if(this.value.equals(n)) {
+	                return false;
+	            } else {
+	                this.value = n;
+	                return true;
+	            }
+	        }
+	    }
 	}
 
 	@Override
-	public void setUpdateTime(Date dt) {
-		this.updateTime = dt;
+	public boolean setUpdateTime(Date dt) {
+	    if(null == dt) {
+	        if(null == this.updateTime) {
+	            return false;
+	        } else {
+	            this.updateTime = dt;
+	            return true;
+	        }
+	    } else {
+	        if(null == this.updateTime) {
+	            this.updateTime = dt;
+	            return true;
+	        } else {
+	            // reference equality check
+	            if(dt == this.updateTime) {
+	                return false;
+	            } else {
+	                this.updateTime = dt;
+	                return true;
+	            }
+	        }
+	    }
 	}
 
 	@Override
-	public void set(Number m, Date dt) {
-		setValue(m);
-		setUpdateTime(dt);
+	public boolean set(Number m, Date dt) {
+		boolean b = setValue(m);
+		b |= setUpdateTime(dt);
+		return b;
 	}
 	@Override
 	public String toString() {

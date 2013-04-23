@@ -18,24 +18,13 @@ public class MutableWaveformUpdateImpl extends MutableIdentifiableUpdateImpl<Wav
 //	private Integer count;
 	private Date timestamp;
 	private Double millisecondsPerSample;
-	private Waveform waveform;
 	private Number[] values;
 	
 	public MutableWaveformUpdateImpl() {
 	}
 	
 	public MutableWaveformUpdateImpl(Waveform waveform) {
-		this.waveform = waveform;
-	}
-	
-	@Override
-	public Waveform getIdentifier() {
-		return waveform;
-	}
-	
-	@Override
-	public void setIdentifier(Waveform waveform) {
-		this.waveform = waveform;
+	    super(waveform);
 	}
 	
 	@Override

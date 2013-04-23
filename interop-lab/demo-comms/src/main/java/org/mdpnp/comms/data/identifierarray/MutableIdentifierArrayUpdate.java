@@ -11,5 +11,5 @@ import org.mdpnp.comms.Identifier;
 import org.mdpnp.comms.MutableIdentifiableUpdate;
 
 public interface MutableIdentifierArrayUpdate extends IdentifierArrayUpdate, MutableIdentifiableUpdate<IdentifierArray> {
-	void setValue(Identifier[] identifiers);
+	boolean setValue(Identifier[] identifiers);
 }

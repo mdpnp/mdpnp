@@ -12,14 +12,13 @@ import org.mdpnp.comms.MutableIdentifiableUpdateImpl;
 @SuppressWarnings("serial")
 public class MutableEnumerationUpdateImpl extends MutableIdentifiableUpdateImpl<Enumeration> implements MutableEnumerationUpdate {
 
-	private Enumeration enumeration;
 	private Enum<?> value;
 	
 	public MutableEnumerationUpdateImpl() {
 	}
 	
 	public MutableEnumerationUpdateImpl(Enumeration enumeration) {
-		this.enumeration = enumeration;
+		super(enumeration);
 	}
 	
 	@Override
@@ -28,18 +27,27 @@ public class MutableEnumerationUpdateImpl extends MutableIdentifiableUpdateImpl<
 	}
 
 	@Override
-	public Enumeration getIdentifier() {
-		return enumeration;
-	}
-	
-	@Override
-	public void setIdentifier(Enumeration enumeration) {
-		this.enumeration = enumeration;
-	}
-
-	@Override
-	public void setValue(Enum<?> e) {
-		this.value = e;
+	public boolean setValue(Enum<?> e) {
+	    if(null == e) {
+	        if(null == this.value) {
+	            return false;
+	        } else {
+	            this.value = e;
+	            return true;
+	        }
+	    } else {
+	        if(null == this.value) {
+	            this.value = e;
+	            return true;
+	        } else {
+	            if(e.equals(this.value)) {
+	                return false;
+	            } else {
+	                this.value = e;
+	                return true;
+	            }
+	        }
+	    }
 	}
 	@Override
 	public String toString() {

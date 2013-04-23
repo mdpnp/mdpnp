@@ -15,33 +15,43 @@ import org.mdpnp.comms.MutableIdentifiableUpdateImpl;
 @SuppressWarnings("serial")
 public class MutableIdentifierArrayUpdateImpl extends MutableIdentifiableUpdateImpl<IdentifierArray> implements MutableIdentifierArrayUpdate {
 	private Identifier[] value;
-	private IdentifierArray identifierArray;
 	
 	public MutableIdentifierArrayUpdateImpl() {
 	}
 	
 	public MutableIdentifierArrayUpdateImpl(IdentifierArray identifierArray) {
-		this.identifierArray = identifierArray;
+		super(identifierArray);
 	}
 	
 	@Override
 	public Identifier[] getValue() {
 		return value;
 	}
-
-	@Override
-	public IdentifierArray getIdentifier() {
-		return identifierArray;
-	}
-
-	@Override
-	public void setIdentifier(IdentifierArray identifierArray) {
-		this.identifierArray = identifierArray;
-	}
 	
 	@Override
-	public void setValue(Identifier[] value) {
-		this.value = value;
+	public boolean setValue(Identifier[] value) {
+	    if(null == value) {
+	        if(null == this.value) {
+	            return false;
+	        } else {
+	            this.value = value;
+	            return true;
+	        }
+	    } else {
+	        if(null == this.value) {
+	            this.value = value;
+	            return true;
+	        } else {
+	            // check for the same reference only
+	            // want to ensure postcondition getIdentifier() == value
+	            if(value == this.value) {
+	                return false;
+	            } else {
+	                this.value = value;
+	                return true;
+	            }
+	        }
+	    }
 	}
 	@Override
 	public String toString() {

@@ -12,18 +12,17 @@ import org.mdpnp.comms.MutableIdentifiableUpdateImpl;
 @SuppressWarnings("serial")
 public class MutableTextUpdateImpl extends MutableIdentifiableUpdateImpl<Text> implements MutableTextUpdate {
 	private String value;
-	private Text text;
 	
 	public MutableTextUpdateImpl() {
 		
 	}
 	
 	public MutableTextUpdateImpl(Text text) {
-		this.text = text;
+	    super(text);
 	}
 	
 	public MutableTextUpdateImpl(Text text, String value) {
-		this.text = text;
+	    super(text);
 		this.value = value;
 	}
 
@@ -31,16 +30,6 @@ public class MutableTextUpdateImpl extends MutableIdentifiableUpdateImpl<Text> i
 	@Override
 	public String getValue() {
 		return value;
-	}
-
-	@Override
-	public Text getIdentifier() {
-		return text;
-	}
-	
-	@Override
-	public void setIdentifier(Text text) {
-		this.text = text;
 	}
 
 	@Override

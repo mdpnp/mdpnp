@@ -12,7 +12,7 @@ import java.util.Date;
 import org.mdpnp.comms.MutableIdentifiableUpdate;
 
 public interface MutableNumericUpdate extends NumericUpdate, MutableIdentifiableUpdate<Numeric> {
-	void setValue(Number n);
-	void setUpdateTime(Date dt);
-	void set(Number m, Date dt);
+	boolean setValue(Number n);
+	boolean setUpdateTime(Date dt);
+	boolean set(Number m, Date dt);
 }

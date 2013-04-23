@@ -8,7 +8,7 @@
 package org.mdpnp.comms;
 
 public interface MutableIdentifiableUpdate<T extends Identifier> extends IdentifiableUpdate<T> {
-	void setSource(String src);
-	void setTarget(String tgt);
-	void setIdentifier(T i);
+	boolean setSource(String src);
+	boolean setTarget(String tgt);
+	boolean setIdentifier(T i);
 }

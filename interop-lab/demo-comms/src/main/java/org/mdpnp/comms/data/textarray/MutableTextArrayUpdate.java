@@ -10,5 +10,5 @@ package org.mdpnp.comms.data.textarray;
 import org.mdpnp.comms.MutableIdentifiableUpdate;
 
 public interface MutableTextArrayUpdate extends TextArrayUpdate, MutableIdentifiableUpdate<TextArray> {
-	void setValue(String[] value);
+	boolean setValue(String[] value);
 }
