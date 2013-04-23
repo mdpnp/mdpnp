@@ -43,7 +43,7 @@ public class Capnostream {
 	protected static final Map<Integer, CO2Units> co2Mapping = new HashMap<Integer, CO2Units>();
 	protected static final Map<Integer, PatientType> patMapping = new HashMap<Integer, PatientType>();
 
-	public static class FastStatus {
+	public static final class FastStatus {
 		public static final int INVALID_CO2_VALUE = 0x01;
 		public static final int INITIALIZATION = 0x02;
 		public static final int OCCLUSION_IN_GAS_INPUT_LINE = 0x04;
@@ -52,7 +52,42 @@ public class Capnostream {
 		public static final int PURGING_IN_PROGRESS = 0x20;
 		public static final int FILTER_LINE_NOT_CONNECTED = 0x40;
 		public static final int CO2_MALFUNCTION = 0x80;
+		
+		public static StringBuilder fastStatus(int fastStatus, StringBuilder builder) {
+	        builder.delete(0, builder.length());
+	        if(0 != (INVALID_CO2_VALUE & fastStatus)) {
+	            builder.append("INVALID_CO2_VALUE, ");
+	        }
+	        if(0 != (INITIALIZATION & fastStatus)) {
+                builder.append("INITIALIZATION, ");
+            }
+	        if(0 != (OCCLUSION_IN_GAS_INPUT_LINE & fastStatus)) {
+                builder.append("OCCLUSION_IN_GAS_INPUT_LINE, ");
+            }
+	        if(0 != (END_OF_BREATH_INDICATION & fastStatus)) {
+                builder.append("END_OF_BREATH_INDICATION, ");
+            }
+	        if(0 != (SFM_IN_PROGRESS & fastStatus)) {
+                builder.append("SFM_IN_PROGRESS, ");
+            }
+	        if(0 != (PURGING_IN_PROGRESS & fastStatus)) {
+                builder.append("PURGING_IN_PROGRESS, ");
+            }
+	        if(0 != (FILTER_LINE_NOT_CONNECTED & fastStatus)) {
+                builder.append("FILTER_LINE_NOT_CONNECTED, ");
+            }
+	        if(0 != (CO2_MALFUNCTION & fastStatus)) {
+                builder.append("CO2_MALFUNCTION, ");
+            }
+	        
+	        if(builder.length() > 1) {
+	            builder.delete(builder.length() - 2, builder.length());
+	        }
+	        return builder;
+	    }
 	}
+	
+	
 
 	public static class SlowStatus {
 		public static final int PATIENT_TYPE = 0x01;
@@ -359,10 +394,14 @@ public class Capnostream {
 	}
 
 	public boolean receiveNumerics(long date, int etCO2, int FiCO2,
-			int respiratoryRate, int spo2, int pulserate) {
+            int respiratoryRate, int spo2, int pulserate, int slowStatus,
+            int CO2ActiveAlarms, int SpO2ActiveAlarms, int noBreathPeriodSeconds, int etCo2AlarmHigh, int etCo2AlarmLow, int rrAlarmHigh, int rrAlarmLow, int fico2AlarmHigh, int spo2AlarmHigh, int spo2AlarmLow, int pulseAlarmHigh, int pulseAlarmLow, CO2Units units, int extendedCO2Status) {
 		for (CapnostreamListener listener : listeners) {
-			listener.numerics(date, etCO2, FiCO2, respiratoryRate, spo2,
-					pulserate);
+			listener.numerics(date, etCO2, FiCO2, respiratoryRate, spo2, pulserate,
+	                slowStatus, CO2ActiveAlarms, SpO2ActiveAlarms, noBreathPeriodSeconds,
+	                etCo2AlarmHigh, etCo2AlarmLow, rrAlarmHigh, rrAlarmLow,
+	                fico2AlarmHigh, spo2AlarmHigh, spo2AlarmLow, pulseAlarmHigh,
+	                pulseAlarmLow, units, extendedCO2Status);
 		}
 		return true;
 	}
@@ -374,8 +413,29 @@ public class Capnostream {
 		int rr = 0xFF & payload[6];
 		int spo2 = 0xFF & payload[7];
 		int pulse = 0xFF & payload[8];
+		
+		int slowStatus = 0xFF & payload[9];
+		int co2ActiveAlarms = 0xFF & payload[13];
+		int spo2ActiveAlarms = 0xFF & payload[14];
+		int noBreathPeriodSeconds = 0xFF & payload[15];
+		int etCo2AlarmHigh = 0xFF & payload[16];
+		int etCo2AlarmLow = 0xFF & payload[17];
+		int rrAlarmHigh = 0xFF & payload[18];
+        int rrAlarmLow = 0xFF & payload[19];
+        int fico2AlarmHigh = 0xFF & payload[20];
+        int spo2AlarmHigh = 0xFF & payload[21];
+        int spo2AlarmLow = 0xFF & payload[22];
+        int pulseAlarmHigh = 0xFF & payload[23];
+        int pulseAlarmLow = 0xFF & payload[24];
+        CO2Units units = CO2Units.fromInt(0xFF & payload[25]);
+		int extendedCO2Status = 0xFF & payload[26];
+		
 		// TODO there is more stuff here
-		return receiveNumerics(dt, etco2, fico2, rr, spo2, pulse);
+		return receiveNumerics(dt, etco2, fico2, rr, spo2, pulse,
+		        slowStatus, co2ActiveAlarms, spo2ActiveAlarms, noBreathPeriodSeconds,
+		        etCo2AlarmHigh, etCo2AlarmLow, rrAlarmHigh, rrAlarmLow,
+		        fico2AlarmHigh, spo2AlarmHigh, spo2AlarmLow, pulseAlarmHigh,
+		        pulseAlarmLow, units, extendedCO2Status);
 	}
 
 	public boolean receiveCO2Wave(byte[] payload, int length) {

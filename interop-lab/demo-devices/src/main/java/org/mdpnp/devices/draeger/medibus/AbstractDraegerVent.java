@@ -32,6 +32,7 @@ import org.mdpnp.comms.data.waveform.Waveform;
 import org.mdpnp.comms.nomenclature.Device;
 import org.mdpnp.comms.nomenclature.PulseOximeter;
 import org.mdpnp.comms.nomenclature.Ventilator;
+import org.mdpnp.comms.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.comms.serial.AbstractSerialDevice;
 import org.mdpnp.comms.serial.SerialSocket;
 import org.mdpnp.devices.draeger.medibus.Medibus.Alarm;
@@ -42,7 +43,7 @@ import org.mdpnp.devices.draeger.medibus.types.RealtimeData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractDraegerVent extends AbstractSerialDevice {
+public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice<RTMedibus> {
 
 	private static final Logger log = LoggerFactory.getLogger(AbstractDraegerVent.class);
 	
@@ -171,7 +172,7 @@ public abstract class AbstractDraegerVent extends AbstractSerialDevice {
 		if(Command.ReqDeviceId.equals(cmd)) {
 			// Repeat ourselves
 			try {
-				rtMedibus.sendCommand(Command.ReqDeviceId, REQUEST_TIMEOUT);
+				getDelegate().sendCommand(Command.ReqDeviceId, REQUEST_TIMEOUT);
 			} catch (IOException e) {
 				log.error("", e);
 			}
@@ -245,12 +246,13 @@ public abstract class AbstractDraegerVent extends AbstractSerialDevice {
 				try {
 					if( (System.currentTimeMillis()-lastRealtime) >= getMaximumQuietTime() ) {
 						log.warn(""+(System.currentTimeMillis()-lastRealtime) +"ms since realtime data, requesting anew");
-						if(!rtMedibus.enableRealtime(REQUEST_TIMEOUT, RealtimeData.AirwayPressure, RealtimeData.FlowInspExp, RealtimeData.ExpiratoryCO2mmHg, RealtimeData.O2InspExp)) {
+						
+						if(!getDelegate().enableRealtime(REQUEST_TIMEOUT, RealtimeData.AirwayPressure, RealtimeData.FlowInspExp, RealtimeData.ExpiratoryCO2mmHg, RealtimeData.O2InspExp)) {
 							log.debug("timed out waiting to issue enableRealtime");
 						}
 					}
 					
-					RTMedibus medibus = AbstractDraegerVent.this.rtMedibus;
+					RTMedibus medibus = AbstractDraegerVent.this.getDelegate();
 					for(Command c : REQUEST_COMMANDS) {
 						if(!medibus.sendCommand(c, REQUEST_TIMEOUT)) {
 							log.debug("polling thread timed out sending request " + c);
@@ -271,7 +273,7 @@ public abstract class AbstractDraegerVent extends AbstractSerialDevice {
 		stopRequestSlowData();
 		RTMedibus medibus = null;
 		synchronized(this) {
-			medibus = this.rtMedibus;
+			medibus = getDelegate(false);
 		}
 		if(null != medibus) {
 			try {
@@ -335,39 +337,21 @@ public abstract class AbstractDraegerVent extends AbstractSerialDevice {
 	}
 	
 	public AbstractDraegerVent(Gateway gateway, SerialSocket serialSocket) {
-		super(gateway, serialSocket);
-		loadMap();
+        super(gateway, serialSocket);
+        loadMap();
+    }
+
+	@Override
+	protected RTMedibus buildDelegate(InputStream in, OutputStream out) {
+	    log.trace("Creating an RTMedibus");
+	    return new MyRTMedibus(in, out);
+	}
+	
+	@Override
+	protected boolean delegateReceive(RTMedibus delegate) throws IOException {
+	    return delegate.receive();
 	}
 
-	private InputStream  inputStream;
-	private OutputStream outputStream;
-	private RTMedibus rtMedibus;
-	
-	protected synchronized void setOutputStream(OutputStream outputStream) {
-		this.outputStream = outputStream;
-		notifyAll();
-	}
-	
-	protected synchronized void setInputStream(InputStream inputStream) {
-		this.inputStream = inputStream;
-		notifyAll();
-	}
-	
-	protected synchronized RTMedibus getMedibus() {
-		while(null == rtMedibus && (inputStream == null || outputStream == null)) {
-			try {
-				log.trace("waiting, inputStream="+inputStream+", outputStream="+outputStream);
-				wait();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		if(null == rtMedibus) {
-			log.trace("Creating an RTMedibus");
-			rtMedibus = new MyRTMedibus(inputStream, outputStream);
-		}
-		return rtMedibus;
-	}
 	private boolean gotDeviceId = false;
 	protected synchronized void receiveDeviceId(String guid, String name) {
 		log.trace("receiveDeviceId:guid="+guid+", name="+name);
@@ -387,9 +371,9 @@ public abstract class AbstractDraegerVent extends AbstractSerialDevice {
 	
 	@Override
 	protected boolean doInitCommands(OutputStream outputStream) throws IOException {
-		log.trace("doInitCommands outputStream="+outputStream);
-		setOutputStream(outputStream);
-		RTMedibus rtMedibus = getMedibus();
+		super.doInitCommands(outputStream);
+		RTMedibus rtMedibus = getDelegate();
+		
 		long now = System.currentTimeMillis();
 		long giveup = now + getConnectInterval();
 		
@@ -430,33 +414,23 @@ public abstract class AbstractDraegerVent extends AbstractSerialDevice {
 	}
 	@Override
 	protected void process(InputStream inputStream) throws IOException {
-		log.trace("process inputStream="+inputStream);
-		try {
-			setInputStream(inputStream);
-			final RTMedibus rtMedibus = getMedibus();
-			Thread t = new Thread(new Runnable() {
-				public void run() {
-					try {
-						rtMedibus.receiveFast();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}, "Medibus FAST data");
-			t.setDaemon(true);
-			t.start();
-			log.trace("spawned a fast data processor");
-			
-			boolean keepGoing = true;
-			while(keepGoing) {
-				keepGoing = rtMedibus.receive();
-			}
-		} finally {
-			this.inputStream = null;
-			this.outputStream = null;
-			this.rtMedibus = null;
-			log.trace("process ends");
-		}
+	    
+        final RTMedibus rtMedibus = getDelegate();
+        Thread t = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    rtMedibus.receiveFast();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, "Medibus FAST data");
+        t.setDaemon(true);
+        t.start();
+        log.trace("spawned a fast data processor");
+
+        super.process(inputStream);
+	    
 	}
 
 }

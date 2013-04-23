@@ -10,17 +10,27 @@ package org.mdpnp.devices.oridion.capnostream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.mdpnp.comms.Gateway;
+import org.mdpnp.comms.IdentifiableUpdate;
+import org.mdpnp.comms.data.enumeration.Enumeration;
+import org.mdpnp.comms.data.enumeration.EnumerationImpl;
+import org.mdpnp.comms.data.enumeration.MutableEnumerationUpdate;
+import org.mdpnp.comms.data.enumeration.MutableEnumerationUpdateImpl;
 import org.mdpnp.comms.data.numeric.MutableNumericUpdate;
 import org.mdpnp.comms.data.numeric.MutableNumericUpdateImpl;
+import org.mdpnp.comms.data.numeric.Numeric;
+import org.mdpnp.comms.data.numeric.NumericImpl;
 import org.mdpnp.comms.data.waveform.MutableWaveformUpdate;
 import org.mdpnp.comms.data.waveform.MutableWaveformUpdateImpl;
 import org.mdpnp.comms.nomenclature.Capnograph;
 import org.mdpnp.comms.nomenclature.Ventilator;
 import org.mdpnp.comms.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.comms.serial.SerialProvider;
+import org.mdpnp.comms.serial.SerialSocket;
 import org.mdpnp.comms.serial.SerialSocket.DataBits;
 import org.mdpnp.comms.serial.SerialSocket.Parity;
 import org.mdpnp.comms.serial.SerialSocket.StopBits;
@@ -30,9 +40,16 @@ import org.slf4j.LoggerFactory;
 
 public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostream> {
 
+    public static final Numeric FAST_STATUS = new NumericImpl(DemoCapnostream20.class, "FAST_STATUS");
+    public static final Numeric SLOW_STATUS = new NumericImpl(DemoCapnostream20.class, "SLOW_STATUS");
+    public static final Numeric CO2_ACTIVE_ALARMS = new NumericImpl(DemoCapnostream20.class, "FAST_STATUS");
+    public static final Numeric SPO2_ACTIVE_ALARMS = new NumericImpl(DemoCapnostream20.class, "FAST_STATUS");
+    public static final Enumeration CAPNOSTREAM_UNITS = new EnumerationImpl(DemoCapnostream20.class, "CAPNOSTREAM_UNITS");
+    public static final Numeric EXTENDED_CO2_STATUS = new NumericImpl(DemoCapnostream20.class, "EXTENDED_CO2_STATUS");
+    
 	@Override
 	protected long getMaximumQuietTime() {
-		return 5000L;
+		return 6000L;
 	}
 	
 	@Override
@@ -43,15 +60,29 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 	protected final MutableWaveformUpdate co2 = new MutableWaveformUpdateImpl(Capnograph.CAPNOGRAPH);
 //	protected final MutableNumericUpdate spo2 = new MutableNumericUpdateImpl(PulseOximeter.SPO2);
 //	protected final MutableNumericUpdate pulserate = new MutableNumericUpdateImpl(PulseOximeter.PULSE);
-//	protected final MutableNumericUpdate rr = new MutableNumericUpdateImpl(Capnograph.AIRWAY_RESPIRATORY_RATE);
+
 	protected final MutableNumericUpdate rr = new MutableNumericUpdateImpl(Ventilator.RESPIRATORY_RATE);
 	protected final MutableNumericUpdate etco2 = new MutableNumericUpdateImpl(Ventilator.END_TIDAL_CO2_MMHG);
+	protected final MutableNumericUpdate fastStatus = new MutableNumericUpdateImpl(DemoCapnostream20.FAST_STATUS);
+	protected final MutableNumericUpdate slowStatus = new MutableNumericUpdateImpl(DemoCapnostream20.SLOW_STATUS);
+	protected final MutableNumericUpdate co2ActiveAlarms = new MutableNumericUpdateImpl(DemoCapnostream20.CO2_ACTIVE_ALARMS);
+	protected final MutableNumericUpdate spo2ActiveAlarms = new MutableNumericUpdateImpl(DemoCapnostream20.SPO2_ACTIVE_ALARMS);
+	protected final MutableNumericUpdate extendedCO2Status = new MutableNumericUpdateImpl(DemoCapnostream20.EXTENDED_CO2_STATUS);
+	protected final MutableEnumerationUpdate capnostreamUnits = new MutableEnumerationUpdateImpl(DemoCapnostream20.CAPNOSTREAM_UNITS);
+	
+
 	
 	public DemoCapnostream20(Gateway gateway) {
 		super(gateway);
 		nameUpdate.setValue("Capnostream20");
-		add(co2, rr);
+		add(co2, rr, fastStatus, slowStatus, co2ActiveAlarms, spo2ActiveAlarms, extendedCO2Status, capnostreamUnits);
 	}
+	
+	public DemoCapnostream20(Gateway gateway, SerialSocket serialSocket) {
+        super(gateway, serialSocket);
+        nameUpdate.setValue("Capnostream20");
+        add(co2, rr, etco2, fastStatus, slowStatus, co2ActiveAlarms, spo2ActiveAlarms, extendedCO2Status, capnostreamUnits);
+    }
 	
 	private static final int BUFFER_SAMPLES = 10;
 	private final Number[] realtimeBuffer = new Number[BUFFER_SAMPLES];
@@ -65,26 +96,62 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 			super(in, out);
 		}
 		
+		private List<IdentifiableUpdate<?>> updates = new ArrayList<IdentifiableUpdate<?>>();
+		
 		@Override
-		public boolean receiveNumerics(long date, int etCO2, int FiCO2,
-				int respiratoryRate, int spo2, int pulserate) {
-//			Capnostream20Impl.this.spo2.setValue(spo2==0xFF?null:spo2);
-			DemoCapnostream20.this.rr.setValue(respiratoryRate==0xFF?null:respiratoryRate);
-//			Capnostream20Impl.this.pulserate.setValue(pulserate==0xFF?null:pulserate);
-			DemoCapnostream20.this.etco2.setValue(etCO2==0xFF?null:etCO2);
-			gateway.update(DemoCapnostream20.this, DemoCapnostream20.this.rr, DemoCapnostream20.this.etco2);
-			return true;
+		public boolean receiveNumerics(long date, int etCO2, int FiCO2, int respiratoryRate, int spo2, int pulserate,
+		        int slowStatus, int CO2ActiveAlarms, int SpO2ActiveAlarms, int noBreathPeriodSeconds,
+		        int etCo2AlarmHigh, int etCo2AlarmLow, int rrAlarmHigh, int rrAlarmLow, int fico2AlarmHigh,
+		        int spo2AlarmHigh, int spo2AlarmLow, int pulseAlarmHigh, int pulseAlarmLow, CO2Units units,
+		        int extendedCO2Status) {
+		    
+		    updates.clear();
+//		    if(DemoCapnostream20.this.spo2.setValue(spo2==0xFF?null:spo2)) {
+//		        updates.add(DemoCapnostream20.this.spo2);
+//            }
+            if(DemoCapnostream20.this.rr.setValue(respiratoryRate==0xFF?null:respiratoryRate)) {
+                updates.add(DemoCapnostream20.this.rr);
+            }
+//            if(DemoCapnostream20.this.pulserate.setValue(pulserate==0xFF?null:pulserate)) {
+//                updates.add(DemoCapnostream20.this.pulserate);
+//            }
+            if(DemoCapnostream20.this.etco2.setValue(etCO2==0xFF?null:etCO2)) {
+                updates.add(DemoCapnostream20.this.etco2);
+            }
+            if(DemoCapnostream20.this.slowStatus.setValue(slowStatus)) {
+                updates.add(DemoCapnostream20.this.slowStatus);
+            }
+            if(DemoCapnostream20.this.co2ActiveAlarms.setValue(CO2ActiveAlarms)) {
+                updates.add(DemoCapnostream20.this.co2ActiveAlarms);
+            }
+            if(DemoCapnostream20.this.spo2ActiveAlarms.setValue(SpO2ActiveAlarms)) {
+                updates.add(DemoCapnostream20.this.spo2ActiveAlarms);
+            }
+            if(DemoCapnostream20.this.extendedCO2Status.setValue(extendedCO2Status)) {
+                updates.add(DemoCapnostream20.this.extendedCO2Status);
+            }
+            if(DemoCapnostream20.this.capnostreamUnits.setValue(units)) {
+                updates.add(DemoCapnostream20.this.capnostreamUnits);
+            }
+            
+            gateway.update(DemoCapnostream20.this, updates);
+            return true;
 		}
 		
 		@Override
 		public boolean receiveCO2Wave(int messageNumber, double co2, int status) {
 			realtimeBuffer[realtimeBufferCount++] = co2;
+			
+			if(DemoCapnostream20.this.fastStatus.setValue(status)) {
+	            gateway.update(DemoCapnostream20.this, DemoCapnostream20.this.fastStatus);    
+			}
+			
+			
 			if(realtimeBufferCount==realtimeBuffer.length) {
 				realtimeBufferCount = 0;
 				date.setTime(System.currentTimeMillis());
 				DemoCapnostream20.this.co2.setValues(realtimeBuffer);
 				DemoCapnostream20.this.co2.setTimestamp(date);
-					// interval is in microseconds
 				DemoCapnostream20.this.co2.setMillisecondsPerSample(50.0);
 //				log.trace("CO2:"+Arrays.toString(realtimeBuffer));
 				gateway.update(DemoCapnostream20.this, DemoCapnostream20.this.co2);
@@ -108,7 +175,8 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 	@Override
 	protected boolean doInitCommands(OutputStream outputStream)
 			throws IOException {
-		setOutputStream(outputStream);
+	    super.doInitCommands(outputStream);
+
 		long giveup = System.currentTimeMillis() + 10000L;
 		
 		while(System.currentTimeMillis() < giveup && !connected) {
@@ -127,7 +195,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
 	@Override
 	public void disconnect() {
-		Capnostream capnostream = getDelegate();
+		Capnostream capnostream = getDelegate(false);
 
 		if(null != capnostream) {
 			try {
