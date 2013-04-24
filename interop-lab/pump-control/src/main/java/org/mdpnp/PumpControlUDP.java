@@ -13,18 +13,18 @@ public class PumpControlUDP {
 			args = new String[] {"recv", "224.0.0.15", "10250", "C:\\pump_control_1.txt"};
 		}
 		if("recv".equals(args[0])) {
-			recv(args[1], Integer.parseInt(args[2]), args[3]);
+			recv(true, args[1], Integer.parseInt(args[2]), args[3]);
 		} else if("send".equals(args[0])) {
-			System.out.println("acknowledged:"+send(args[1], Integer.parseInt(args[2]), args[3]));
+			System.out.println("acknowledged:"+send(true, args[1], Integer.parseInt(args[2]), args[3]));
 		}
 	}
 	protected static boolean acknowledged = false;
 	
 	public static synchronized boolean send(String content) throws UnknownHostException, IOException {
-		return send("224.0.0.15", 10250, content);
+		return send(false, "224.0.0.15", 10250, content);
 	}
 	
-	public static boolean send(final String ip, final int port, String content) throws UnknownHostException, IOException {
+	public static boolean send(boolean cmdline, final String ip, final int port, String content) throws UnknownHostException, IOException {
 		acknowledged = false;
 		Thread t = new Thread(new Runnable() {
 
@@ -56,7 +56,9 @@ public class PumpControlUDP {
 		MulticastSocket s = new MulticastSocket(port);
 		s.joinGroup(group);
 
-		System.out.println("Sending to " + group + ":"+port + "  " + content);
+		if(cmdline) {
+		    System.out.println("Sending to " + group + ":"+port + "  " + content.replaceAll("\\n", "\\\\n"));
+		}
 		
 	    DatagramPacket data = new DatagramPacket(
 	            content.getBytes(), content.length(), group, port);
@@ -75,14 +77,16 @@ public class PumpControlUDP {
 	}
 	private static boolean running = true;
 	
-	public static void recv(String ip, int port, String filename) throws IOException {
+	public static void recv(boolean cmdline, String ip, int port, String filename) throws IOException {
 		InetAddress group = InetAddress.getByName(ip);
 		MulticastSocket insock = new MulticastSocket(port);
 		MulticastSocket outsock = new MulticastSocket(port+1);
 		
 		insock.joinGroup(group);
 		outsock.joinGroup(group);
-		System.out.println("Listening on " + group + ":"+port + ", writing to " + filename);
+		if(cmdline) {
+		    System.out.println("Listening on " + group + ":"+port + ", writing to " + filename);
+		}
 		
 		byte[] buffer = new byte[10*1024];
         DatagramPacket data = new DatagramPacket(buffer, buffer.length);
@@ -92,16 +96,22 @@ public class PumpControlUDP {
 		while(running) {
 			insock.receive(data);
 			if(port == data.getPort()) {
-				System.out.println("Received from " + data.getSocketAddress() + ", writing...");
+			    if(cmdline) {
+			        System.out.println("Received from " + data.getSocketAddress() + ", writing...");
+			    }
 				FileOutputStream fos = new FileOutputStream(filename);
 				fos.write(data.getData(), data.getOffset(), data.getLength());
 				fos.flush();
 				fos.close();
-				System.out.write(data.getData(), data.getOffset(), data.getLength());
-				System.out.println();
-				System.out.println("Done");
+				if(cmdline) {
+    				System.out.write(data.getData(), data.getOffset(), data.getLength());
+    				System.out.println();
+    				System.out.println("Done");
+				}
 				outsock.send(outdata);
-				System.out.println("Sent acknowledgement");
+				if(cmdline) {
+				    System.out.println("Sent acknowledgement");
+				}
 			}
 			
 		}
