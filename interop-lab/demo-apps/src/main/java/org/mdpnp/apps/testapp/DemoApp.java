@@ -19,7 +19,6 @@ import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 import org.mdpnp.comms.Gateway;
 import org.mdpnp.comms.nomenclature.PulseOximeter;
 import org.mdpnp.comms.nomenclature.Ventilator;
-import org.mdpnp.rti.dds.DDS;
 import org.mdpnp.transport.Device;
 import org.mdpnp.transport.NetworkController;
 import org.slf4j.Logger;

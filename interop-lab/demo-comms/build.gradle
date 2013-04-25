@@ -13,7 +13,9 @@ dependencies {
   compile group: 'com.sparetimelabs', name: 'purejavacomm', version: '0.0.16'
   
   // For system communication via RTI DDS
-  compile group: 'org.mdpnp.rti.dds', name: 'nddsjava-rt', version: '5.0', changing: true
+  if(project.hasProperty('ICE_IC01_USER') && project.hasProperty('ICE_IC01_PASSWORD')) {
+      compile group: 'org.mdpnp.rti.dds', name: 'nddsjava-rt', version: '5.0', changing: true
+  }
 
   // For system communication via JGroups
   compile group: 'org.jgroups', name: 'jgroups', version: '3.3.0.CR1'

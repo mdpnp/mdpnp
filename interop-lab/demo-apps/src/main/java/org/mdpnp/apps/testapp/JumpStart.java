@@ -34,9 +34,8 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
-import org.jfree.util.Log;
-import org.mdpnp.rti.dds.DDS;
 import org.mdpnp.transport.WrapperFactory;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JumpStart {
@@ -284,7 +283,7 @@ public class JumpStart {
 	}
 	
 	
-	
+	private static final Logger log = LoggerFactory.getLogger(JumpStart.class);
 	public static void main(String[] args) throws Exception {
 //		System.err.println(LoggerFactory.getILoggerFactory().toString());
 	    System.setProperty("java.net.preferIPv4Stack","true");
@@ -368,9 +367,13 @@ public class JumpStart {
 		    WrapperFactory.setType(conf.getTransport());
 		    switch(conf.getTransport()) {
 		    case RTI_DDS:
-		        if(!DDS.init()) {
-		            Log.warn("Unable to initialize RTI DDS, falling back to JGroups transport");
-		            WrapperFactory.setType(WrapperFactory.WrapperType.JGROUPS);
+		        try {
+        	        if(!(Boolean)Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init").invoke(null)) {
+        	            throw new Exception();
+        	        }
+		        } catch (Throwable t) {
+		            log.warn("Unable to initialize RTI DDS, falling back to JGroups transport");
+                    WrapperFactory.setType(WrapperFactory.WrapperType.JGROUPS);
 		        }
 		        break;
 		        

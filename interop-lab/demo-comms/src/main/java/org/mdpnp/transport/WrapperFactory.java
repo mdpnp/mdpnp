@@ -1,7 +1,6 @@
 package org.mdpnp.transport;
 
 import org.mdpnp.comms.Gateway;
-import org.mdpnp.rti.dds.DDS;
 import org.mdpnp.transport.dds.rti.DDSWrapper;
 import org.mdpnp.transport.jgroups.JGroupsWrapper;
 import org.mdpnp.transport.mcast.MulticastWrapper;
