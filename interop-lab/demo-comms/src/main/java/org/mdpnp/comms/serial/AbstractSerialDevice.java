@@ -138,15 +138,18 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 			switch(getState()){
 			case Disconnected:
 			case Disconnecting:
+			    log.trace("nothing to do getState()="+getState());
 				return;
 			case Connecting:
 				canceledConnect = true;
 				serialProvider.cancelConnect();
+				log.trace("canceled connecting");
 				return;
 			case Connected:
 			case Negotiating:
+			    log.trace("getState()="+getState()+" entering Disconnecting");
 				stateMachine.transitionWhenLegal(State.Disconnecting);
-
+				log.trace("closing the AbstractSerialDevice");
 				close();
 				break;
 			}
