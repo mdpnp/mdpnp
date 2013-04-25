@@ -104,9 +104,11 @@ public abstract class AbstractDevice implements Device, ThreadFactory {
 		updates.put(u.getIdentifier(), u);
 	}
 	
+	private int threadOrdinal = 0;
+	
 	@Override
 	public Thread newThread(Runnable r) {
-	    return new Thread(threadGroup, r);
+	    return new Thread(threadGroup, r, "AbstractDevice-"+(++threadOrdinal));
 	}
 	
 	public AbstractDevice(Gateway gateway) {
@@ -114,9 +116,8 @@ public abstract class AbstractDevice implements Device, ThreadFactory {
 		threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "AbstractDevice") {
     		  @Override
     		public void uncaughtException(Thread t, Throwable e) {
-    		    super.uncaughtException(t, e);
     		    log.error("Thrown by " + t.toString(), e);
-    		    e.printStackTrace();
+    		    super.uncaughtException(t, e);
     		}  
 		};
 		threadGroup.setDaemon(true);
