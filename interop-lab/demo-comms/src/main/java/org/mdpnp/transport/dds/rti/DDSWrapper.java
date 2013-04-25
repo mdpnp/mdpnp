@@ -19,6 +19,7 @@ import org.mdpnp.comms.data.text.TextUpdate;
 import org.mdpnp.comms.data.textarray.TextArrayUpdate;
 import org.mdpnp.comms.data.waveform.WaveformUpdate;
 import org.mdpnp.devices.io.util.StateMachine;
+import org.mdpnp.rti.dds.DDS;
 import org.mdpnp.transport.Wrapper;
 import org.mdpnp.transport.dds.rti.RTICLibrary.DDS_DataReaderListener.DDS_DataReaderListener_LivelinessChangedCallback;
 import org.mdpnp.transport.dds.rti.RTICLibrary.DDS_DataWriterListener.DDS_DataWriterListener_LivelinessLostCallback;
@@ -548,7 +549,7 @@ public class DDSWrapper implements Wrapper /*implements RTICLibrary.DDS_DataRead
 //		RTICLibrary.INSTANCE.NDDS_Config_Logger_set_verbosity(logger, RTICLibrary.NDDS_CONFIG_LOG_VERBOSITY_STATUS_ALL);
 //		RTICLibrary.INSTANCE.NDDS_Config_Logger_set_print_format(logger, RTICLibrary.NDDS_CONFIG_LOG_PRINT_FORMAT_MAXIMAL);
 		
-//		DDS.init();
+		DDS.init();
 		
 //		DomainParticipantQos qos1 = new DomainParticipantQos();
 //		DomainParticipantFactory.get_instance().get_default_participant_qos(qos1);

@@ -9,6 +9,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Arrays;
 import java.util.TimeZone;
 
 import javax.swing.JFrame;
@@ -21,6 +22,8 @@ import org.mdpnp.comms.nomenclature.Ventilator;
 import org.mdpnp.rti.dds.DDS;
 import org.mdpnp.transport.Device;
 import org.mdpnp.transport.NetworkController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DemoApp {
 	
@@ -60,12 +63,24 @@ public class DemoApp {
 		panel.getBack().setVisible(false);
 	}
 	
+	private static final Logger log = LoggerFactory.getLogger(DemoApp.class);
+	
 	public static final void main(String[] args) throws Exception {
-		if(!DDS.init()) {
-			throw new RuntimeException("Unable to setup DDS");
-		}
+//		if(!DDS.init()) {
+//			throw new RuntimeException("Unable to setup DDS");
+//		}
 		UIManager.setLookAndFeel(new MDPnPLookAndFeel());
 
+		int domainId = 0;
+        
+        try {
+            domainId = Integer.parseInt(args[0]);
+            args = Arrays.copyOfRange(args, 1, args.length);
+            log.info("Using domainId="+domainId);
+        } catch (Throwable t) {
+            
+        }
+		
 		
 //				Pointer logger = RTICLibrary.INSTANCE.NDDS_Config_Logger_get_instance();
 //		RTICLibrary.INSTANCE.NDDS_Config_Logger_set_verbosity(logger, RTICLibrary.NDDS_CONFIG_LOG_VERBOSITY_STATUS_ALL);
@@ -74,7 +89,7 @@ public class DemoApp {
 		// This could prove confusing
 		TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
 		final Gateway gateway = new Gateway();
-		final NetworkController nc = new NetworkController(0, gateway);
+		final NetworkController nc = new NetworkController(domainId, gateway);
 		final VitalsModel vitalsModel = new VitalsModel();
 //		vitalsModel.addInterest(PulseOximeter.PULSE);
 		vitalsModel.addInterest(Ventilator.END_TIDAL_CO2_MMHG);
@@ -233,6 +248,7 @@ public class DemoApp {
 		
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(640,480);
+		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 		nc.solicit();
 	}

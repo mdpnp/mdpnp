@@ -46,8 +46,17 @@ public class VersionedDeviceAdapter {
 	
 	protected static final Logger log = LoggerFactory.getLogger(VersionedDeviceAdapter.class);
 	
-	public static void main(final String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
+		int domainId = 0;
 		
+	    try {
+	        domainId = Integer.parseInt(args[0]);
+	        args = Arrays.copyOfRange(args, 1, args.length);
+	        log.info("Using domainId="+domainId);
+	    } catch (Throwable t) {
+	        
+	    }
+	    
 		
 		log.trace("startProgram("+Arrays.toString(args)+")");
 		if(args.length < 1) {
@@ -61,8 +70,6 @@ public class VersionedDeviceAdapter {
 			SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
 			log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
 		}
-		
-		final int domainId = 0;
 		
 		deviceGateway.addListener(new GatewayListener() {
 

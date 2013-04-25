@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Collection;
 
 import javax.swing.JFrame;
@@ -44,18 +45,18 @@ import org.slf4j.LoggerFactory;
 
 public class DeviceAdapter {
 	public enum Type {
-		Symbiq,
+	    PO_Simulator,
+        NBP_Simulator,
+        Bernoulli,
 		Nonin,
-		NellcorN595,
-		MasimoRadical7,
 		PhilipsMP70,
 		DragerApollo,
 		DragerEvitaXL,
-		Bernoulli,
-		PO_Simulator,
-		NBP_Simulator,
+		Capnostream20,
+		NellcorN595,
+	    MasimoRadical7,
 		Webcam,
-		Capnostream20
+		Symbiq,
 	} 
 	
 	private static JFrame frame;
@@ -110,9 +111,17 @@ public class DeviceAdapter {
 	private static final Logger log = LoggerFactory.getLogger(DeviceAdapter.class);
 	private static Adapter adapter;
 	
-	public static void main(final String[] args) throws Exception {
-		final int domainId = 0;
-		
+	public static void main(String[] args) throws Exception {
+	    int domainId = 0;
+	        
+        try {
+            domainId = Integer.parseInt(args[0]);
+            args = Arrays.copyOfRange(args, 1, args.length);
+            log.info("Using domainId="+domainId);
+        } catch (Throwable t) {
+            
+        }
+        
 		boolean gui = true;
 		Type type;
 		
@@ -150,18 +159,18 @@ public class DeviceAdapter {
 				}
 				
 			});
-			
+			final String[] _args = args;
 			getConnected = new GetConnected(null, deviceGateway) {
 				@Override
 				protected void abortConnect() {
 				}
 				@Override
 				protected String addressFromUser() {
-					return args.length > 1 ? args[1] : null;
+					return _args.length > 1 ? _args[1] : null;
 				}
 				@Override
 				protected String addressFromUserList(String[] list) {
-					return args.length > 1 ? args[1] : null;
+					return _args.length > 1 ? _args[1] : null;
 				}
 				@Override
 				protected boolean isFixedAddress() {
@@ -205,7 +214,7 @@ public class DeviceAdapter {
 				};
 			};
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	
+			frame.setLocationRelativeTo(null);
 			frame.setSize(320, 480);
 			frame.setVisible(true);
 
