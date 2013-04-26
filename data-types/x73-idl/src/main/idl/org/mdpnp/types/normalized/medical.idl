@@ -56,61 +56,64 @@ module org {
   module mdpnp {
     module types {
       module normalized {
-		valuetype VirtualMedicalObject : Top {
+		struct VirtualMedicalObject : Top {
 			/* Static Attributes */
-			public TYPE type;
-			public HANDLE handle;
+			TYPE type;
+			HANDLE handle;
 		};
 
-        valuetype Metric : VirtualMedicalObject {
+        struct Metric : VirtualMedicalObject {
         	/* static attributes */
-        	public MetricSpecification metric_specification;
-        	public RelativeTime max_delay_time;
+        	MetricSpecification metric_specification;
+        	RelativeTime max_delay_time;
         };
       
-        valuetype Channel : VirtualMedicalObject {
+        struct Channel : VirtualMedicalObject {
             /* static attributes */
-            public OIDType parameter_group;
-            public INTU16 physical_channel_no;
-            public MsmtPrinciple measurement_principle;
+            OIDType parameter_group;
+            INTU16 physical_channel_no;
+            MsmtPrinciple measurement_principle;
             
             /* containment */
-            public sequence<Metric> metrics; 
+            sequence<Metric> metrics; 
         };
       
-        valuetype VirtualMedicalDevice : VirtualMedicalObject {
+        struct VirtualMedicalDevice : VirtualMedicalObject {
         	/* Static attributes */
-        	public OIDType parameter_group;
-        	public InstNumber instance_number;
-        	public INTU32 compatibility_id;
-        	public MsmtPrinciple measurement_principle;
+        	OIDType parameter_group;
+        	InstNumber instance_number;
+        	INTU32 compatibility_id;
+        	MsmtPrinciple measurement_principle;
         	 
         
         	/* containment */
-        	public sequence<Channel> channels;
+        	sequence<Channel> channels;
         }; //@top-level true
         
-		valuetype Numeric : Metric {
+		struct Numeric : Metric {
 			/* no static attributes */
+			long foo;
 		};
 		
-		valuetype SampleArray : Metric {
+		struct SampleArray : Metric {
+			long foo;
 		};
 		
-		valuetype TimeSA : SampleArray {
-		
-		};
-		
-		valuetype DistributionSA : SampleArray {
-		
-		};
-		
-		valuetype RealTimeSA : SampleArray {
+		struct TimeSA : SampleArray {
+			long foo;
 		
 		};
 		
-		valuetype Enumeration : Metric {
+		struct DistributionSA : SampleArray {
+			long foo;
+		};
 		
+		struct RealTimeSA : SampleArray {
+			long foo;
+		};
+		
+		struct Enumeration : Metric {
+			long foo;
 		};
       
       /*

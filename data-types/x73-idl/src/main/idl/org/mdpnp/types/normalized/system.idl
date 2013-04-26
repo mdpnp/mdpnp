@@ -9,47 +9,47 @@ module org {
     module types {
       module normalized {
       
-        valuetype Clock : Top {
-        
+        struct Clock : Top {
+        	long foo;
         };
       
-        valuetype Battery : Top {
-        
+        struct Battery : Top {
+        	long foo;
         };
         
-        valuetype Log : Top {
-        
+        struct Log : Top {
+        	long foo;
         };
         
-        valuetype EventLog : Log { 
-        
+        struct EventLog : Log { 
+        	long foo;
         };
       
-        valuetype VirtualMedicalSystem : Top {
-          
+        struct VirtualMedicalSystem : Top {
+          	long foo;
         };
         
-        valuetype MedicalDataSystem : VirtualMedicalSystem {
-          public sequence<Log> logs;
-          public sequence<Battery> batteries;
-          public sequence<Clock, 1> clock;
-          public sequence<VirtualMedicalDevice> virtualMedicalDevices;
+        struct MedicalDataSystem : VirtualMedicalSystem {
+          sequence<Log> logs;
+          sequence<Battery> batteries;
+          sequence<Clock, 1> clock;
+          sequence<VirtualMedicalDevice> virtualMedicalDevices;
         };
         
-        valuetype SimpleMDS : MedicalDataSystem {
-        
+        struct SimpleMDS : MedicalDataSystem {
+        	long foo;
         };
         
-        valuetype HydraMDS : MedicalDataSystem {
-        
+        struct HydraMDS : MedicalDataSystem {
+        	long foo;
         };
         
-        valuetype CompositeSingleBedMDS : MedicalDataSystem {
-        
+        struct CompositeSingleBedMDS : MedicalDataSystem {
+        	long foo;
         };
         
-        valuetype CompositeMultiBedMDS : MedicalDataSystem {
-        
+        struct CompositeMultiBedMDS : MedicalDataSystem {
+        	long foo;
         };
       };
     };
