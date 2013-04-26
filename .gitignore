@@ -10,3 +10,4 @@ gradle.properties
 .project
 .classpath
 .externalToolBuilders/
+.JumpStartSettings
