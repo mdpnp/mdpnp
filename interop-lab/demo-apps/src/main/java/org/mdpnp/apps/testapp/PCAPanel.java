@@ -30,13 +30,18 @@ import org.mdpnp.apps.testapp.VitalsModel.MyDevice;
 import org.mdpnp.apps.testapp.VitalsModel.Vitals;
 import org.mdpnp.apps.testapp.VitalsModel.VitalsListener;
 import org.mdpnp.comms.Gateway;
+import org.mdpnp.comms.GatewayListener;
+import org.mdpnp.comms.IdentifiableUpdate;
 import org.mdpnp.comms.Identifier;
 import org.mdpnp.comms.data.identifierarray.MutableIdentifierArrayUpdate;
 import org.mdpnp.comms.data.identifierarray.MutableIdentifierArrayUpdateImpl;
 import org.mdpnp.comms.data.numeric.Numeric;
+import org.mdpnp.comms.data.numeric.NumericUpdate;
 import org.mdpnp.comms.nomenclature.Device;
 import org.mdpnp.comms.nomenclature.PulseOximeter;
 import org.mdpnp.comms.nomenclature.Ventilator;
+import org.mdpnp.devices.oridion.capnostream.Capnostream;
+import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +58,10 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	    		  90.0, 100.0, 0.0, 100.0)
 	};
 	
+	private static final Identifier[] REQUEST_IDENTIFIERS = new Identifier[] {Ventilator.RESPIRATORY_RATE, PulseOximeter.PULSE, Ventilator.END_TIDAL_CO2_MMHG, PulseOximeter.SPO2/*, Capnograph.AIRWAY_RESPIRATORY_RATE*/,
+            DemoCapnostream20.FAST_STATUS, DemoCapnostream20.CAPNOSTREAM_UNITS, DemoCapnostream20.CO2_ACTIVE_ALARMS, DemoCapnostream20.EXTENDED_CO2_STATUS,
+            DemoCapnostream20.SLOW_STATUS};
+	
 	private final JList list;
 	
 	private final JTextArea pump = new JTextArea(" ") {
@@ -67,6 +76,8 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		};
 	};
 
+	protected final StringBuilder fastStatusBuilder = new StringBuilder();
+	
 	private static class VitalsRenderer extends JPanel implements ListCellRenderer {
 
 		private final JLabel name = new JLabel(" ");
@@ -123,9 +134,12 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		}
 		
 	}
+	private final Gateway gateway;
+	
 	
 	public PCAPanel(VitalsModel model, Gateway gateway) {
 		super();
+		this.gateway = gateway;
 		setLayout(new BorderLayout());
 		
 
@@ -140,7 +154,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		
 		// Requests data from existing devices
 		MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
-		miau.setValue(new Identifier[] {Ventilator.RESPIRATORY_RATE, PulseOximeter.PULSE, Ventilator.END_TIDAL_CO2_MMHG, PulseOximeter.SPO2/*, Capnograph.AIRWAY_RESPIRATORY_RATE*/});
+		miau.setValue(REQUEST_IDENTIFIERS);
 		
 		for(int i = 0; i < model.getSize(); i++) {
 			Vitals device = (Vitals) model.getElementAt(i);
@@ -210,6 +224,41 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		warnings.setLineWrap(true);
 		warnings.setWrapStyleWord(true);
 		
+		gateway.addListener(new GatewayListener() {
+            
+            @Override
+            public void update(IdentifiableUpdate<?> update) {
+                if(DemoCapnostream20.FAST_STATUS.equals(update.getIdentifier()) ||
+                   DemoCapnostream20.CAPNOSTREAM_UNITS.equals(update.getIdentifier()) ||
+                   DemoCapnostream20.CO2_ACTIVE_ALARMS.equals(update.getIdentifier()) || 
+                   DemoCapnostream20.EXTENDED_CO2_STATUS.equals(update.getIdentifier()) || 
+                   DemoCapnostream20.SLOW_STATUS.equals(update.getIdentifier())) {
+                    log.trace(update.toString());
+                    if(DemoCapnostream20.EXTENDED_CO2_STATUS.equals(update.getIdentifier())) {
+                        NumericUpdate nu = (NumericUpdate) update;
+                        Number v = nu.getValue();
+                        if(v != null) {
+                            fastStatusBuilder.delete(0, fastStatusBuilder.length());
+                            if(0 != (Capnostream.ExtendedCO2Status.CHECK_CALIBRATION & v.intValue())) {
+                                fastStatusBuilder.append("CHECK_CALIBRATION ");
+                            } else if(0 != (Capnostream.ExtendedCO2Status.CHECK_FLOW & v.intValue())) {
+                                fastStatusBuilder.append("CHECK_FLOW ");
+                            } else if(0 != (Capnostream.ExtendedCO2Status.PUMP_OFF & v.intValue())) {
+                                fastStatusBuilder.append("PUMP_OFF ");
+                            } else if(0 != (Capnostream.ExtendedCO2Status.BATTERY_LOW & v.intValue())) {
+                                fastStatusBuilder.append("BATTERY_LOW ");
+                            }
+                            reflectState();
+                        }
+                    }
+                    
+//                    NumericUpdate nu = (NumericUpdate) update;
+//                    Capnostream.FastStatus.fastStatus(nu.getValue().intValue(), fastStatusBuilder);
+//                    reflectState();
+                }
+            }
+        });
+		
 	}
 	private String resetCommand = "Start, 100\n";
 
@@ -232,6 +281,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 				try { 
 					Class<?> cls = Class.forName("org.mdpnp.PumpControlUDP");
 					Method send = cls.getMethod("send", String.class);
+					log.debug("Sending Pump command " + command.replaceAll("\\n", "\\\\n"));
 					if(!(Boolean)send.invoke(null, command)) {
 						log.error("No response to UDP pump command");
 						if(null != parent) {
@@ -395,7 +445,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 
 	
 	public void reflectState() {
-		String[] advisories = new String[vitals.length];
+		String[] advisories = new String[vitals.length+1];
 		
 		String time = timeFormat.format(new Date());
 		boolean anyAdvisory = false;
@@ -419,6 +469,11 @@ public class PCAPanel extends JPanel implements VitalsListener {
 				countOutOfRange++;
 				outOfRange.append(advisories[i]);
 			}
+		}
+		
+		if(fastStatusBuilder.length() > 0) {
+		    anyAdvisory = true;
+		    advisories[advisories.length - 1] = "- CO2 Status: "+fastStatusBuilder.toString()+"\n"; 
 		}
 		
 		
@@ -517,5 +572,12 @@ public class PCAPanel extends JPanel implements VitalsListener {
 
 	@Override
 	public void deviceAdded(MyDevice device) {
+	 // Requests data from existing devices
+        MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
+        miau.setValue(REQUEST_IDENTIFIERS);
+
+        miau.setTarget(device.getSource());
+        miau.setSource("*");
+        gateway.update(miau);
 	}	
 }
