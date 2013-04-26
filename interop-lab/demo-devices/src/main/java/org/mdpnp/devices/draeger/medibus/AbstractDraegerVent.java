@@ -279,12 +279,14 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 			try {
 				if(!medibus.sendCommand(Command.StopComm, 1000L)) {
 					log.trace("timed out waiting to send StopComm");
+				} else {
+				    log.trace("sent StopComm");
 				}
 			} catch (IOException e) {
 				log.error(e.getMessage(), e);
 			}
 		} else {
-			log.trace("rtMedibus was already null in disconnect");
+			log.debug("rtMedibus was already null in disconnect");
 		}
 		super.disconnect();
 	}
@@ -322,12 +324,18 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 		if(null != requestSlowData) {
 			requestSlowData.cancel(false);
 			requestSlowData = null;
+			log.trace("Canceled slow data request task");
+		} else {
+		    log.trace("Slow data request already canceled");
 		}
 	}
 	
 	private synchronized void startRequestSlowData() {
 		if(null == requestSlowData) {
 			requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 2000L, 500L, TimeUnit.MILLISECONDS);
+			log.trace("Scheduled slow data request task");
+		} else {
+		    log.trace("Slow data request already scheduled");
 		}
 	}
 	
