@@ -1,6 +1,9 @@
 package org.mdpnp.x73.prototype;
 
 import org.mdpnp.rti.dds.DDS;
+import org.mdpnp.types.normalized.NuObsValue;
+import org.mdpnp.types.normalized.NuObsValueTypeCode;
+import org.mdpnp.types.normalized.NuObsValueTypeSupport;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
@@ -19,6 +22,9 @@ public class Prototype {
                 DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, 
                 null,
                 StatusKind.STATUS_MASK_NONE);
+	   
+	   participant.register_type(NuObsValueTypeSupport.get_type_name(), NuObsValueTypeSupport.get_instance(), null);
+	   
         try {
 			Thread.sleep(2000L);
 		} catch (InterruptedException e) {

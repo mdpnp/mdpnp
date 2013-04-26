@@ -252,10 +252,10 @@ public class TestPolymorphism implements DataReaderListener, DataWriterListener 
 				public void run() {
 					DIMT_VMO vmo = (DIMT_VMO) DIMT_VMO.create();
 					
-					vmo.class_id = 5;
+//					vmo.class_id = 5;
 					vmo.dimhandle = 15;
 					vmo.label_string = "JEFF LABEL";
-					vmo.name_binding_id = 20;
+//					vmo.name_binding_id = 20;
 					vmo.object_type.code = 44;
 					vmo.object_type.partition = 66;
 					{

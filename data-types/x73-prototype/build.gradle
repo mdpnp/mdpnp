@@ -7,4 +7,5 @@ targetCompatibility = JAVA_VERSION_CLASSES
 dependencies { 
   compile project(':data-types:x73-idl-rti-dds')
   testCompile project(':data-types:x73-idl-rti-dds')
+  compile project(':devices:common')
 }
