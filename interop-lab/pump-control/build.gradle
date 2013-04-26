@@ -1,2 +1,5 @@
 apply plugin: 'java'
+apply plugin: 'application'
 defaultTasks 'build'
+
+mainClassName = 'org.mdpnp.PumpControlUDP'
