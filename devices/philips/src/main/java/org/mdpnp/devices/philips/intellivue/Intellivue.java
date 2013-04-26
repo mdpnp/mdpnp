@@ -172,9 +172,11 @@ public class Intellivue implements NetworkConnection {
 		if(null == message) {
 			return;
 		}
-		if(log.isDebugEnabled()) {
+		
+
+		if(log.isTraceEnabled()) {
 			time.setTime(System.currentTimeMillis());
-			log.debug("In Message("+simpleDateformat.format(time)+"):\n"+lineWrap(message.toString()));
+			log.trace("In Message("+simpleDateformat.format(time)+"):\n"+lineWrap(message.toString()));
 		}
 		if(message instanceof DataExportMessage) {
 			handle((DataExportMessage)message);
@@ -791,11 +793,11 @@ public class Intellivue implements NetworkConnection {
 		if(associated != null) {
 			int cnt = channel.send(outBuffer, associated);
 			
-			if(cnt > 0 && log.isDebugEnabled()) {
+			if(cnt > 0 && log.isTraceEnabled()) {
 				outBuffer.reset();
 				time.setTime(System.currentTimeMillis());
-				log.debug("To " + associated + " at " + simpleDateformat.format(time));
-				log.debug(Util.dump(outBuffer, 20));
+				log.trace("To " + associated + " at " + simpleDateformat.format(time));
+				log.trace(Util.dump(outBuffer, 20));
 			}
 			return cnt;
 		} else {
@@ -837,9 +839,9 @@ public class Intellivue implements NetworkConnection {
 		if(null == associated) {
 			return false;
 		}
-		if(log.isDebugEnabled()) {
+		if(log.isTraceEnabled()) {
 			time.setTime(System.currentTimeMillis());
-			log.debug("Out Message(" + simpleDateformat.format(time) + "):\n"+lineWrap(message.toString()));
+			log.trace("Out Message(" + simpleDateformat.format(time) + "):\n"+lineWrap(message.toString()));
 		}
 		
 		// Try to write the datagram, if unavailable then set interestOps
@@ -877,10 +879,10 @@ public class Intellivue implements NetworkConnection {
 			SocketAddress sockaddr = channel.receive(inBuffer);
 			inBuffer.flip();
 			if(inBuffer.hasRemaining()) {
-				if(log.isDebugEnabled()) { 
+				if(log.isTraceEnabled()) { 
 					time.setTime(System.currentTimeMillis());
-					log.debug("From " + getRemoteAddress(channel) + " on " + channel.socket().getLocalAddress() + " at " + simpleDateformat.format(time));
-					log.debug(Util.dump(inBuffer, 20));
+					log.trace("From " + getRemoteAddress(channel) + " on " + channel.socket().getLocalAddress() + " at " + simpleDateformat.format(time));
+					log.trace(Util.dump(inBuffer, 20));
 				}
 				handle(sockaddr, protocol.parse(inBuffer), sk);
 			}
