@@ -53,43 +53,43 @@ public class JGroupsWrapper implements GatewayListener, Receiver, Wrapper {
 
                                               InetAddress.getByName("192.168.1.5"))*/)
 
-                .addProtocol(new PING())
+//                .addProtocol(new PING())
 
-                .addProtocol(new MERGE2())
+//                .addProtocol(new MERGE2())
 
-                .addProtocol(new FD_SOCK())
+//                .addProtocol(new FD_SOCK())
 
-                .addProtocol(new FD_ALL().setValue("timeout", 12000)
+//                .addProtocol(new FD_ALL().setValue("timeout", 12000)
+//
+//                                         .setValue("interval", 3000))
 
-                                         .setValue("interval", 3000))
+//                .addProtocol(new VERIFY_SUSPECT())
 
-                .addProtocol(new VERIFY_SUSPECT())
+//                .addProtocol(new BARRIER())
 
-                .addProtocol(new BARRIER())
+//                .addProtocol(new NAKACK2())
 
-                .addProtocol(new NAKACK2())
+//                .addProtocol(new UNICAST2())
 
-                .addProtocol(new UNICAST2())
+//                .addProtocol(new STABLE())
 
-                .addProtocol(new STABLE())
+//                .addProtocol(new GMS())
 
-                .addProtocol(new GMS())
+//                .addProtocol(new UFC())
 
-                .addProtocol(new UFC())
-
-                .addProtocol(new MFC())
+//                .addProtocol(new MFC())
 
                 .addProtocol(new FRAG2().setValue("frag_size", 1024)); 
 
-        stack.init();    
+        stack.init();   
         return stack;
 	}
 	
 	public JGroupsWrapper(Role role, Gateway gateway) throws Exception {
 		this.gateway = gateway;
-		outChannel = new JChannel(false);
+		outChannel = new JChannel(true);
 		
-		inChannel = new JChannel(false);
+		inChannel = new JChannel(true);
 		
 		stack(inChannel);
 		stack(outChannel);
