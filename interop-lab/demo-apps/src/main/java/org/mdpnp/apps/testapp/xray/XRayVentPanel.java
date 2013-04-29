@@ -78,8 +78,8 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 //	private JLabel dFlow, dPressure;
 	
 	public enum Strategy { 
-		NoSynchronization,
-		DeadReckoning
+		Manual,
+		Automatic
 	}
 	
 	public enum TargetTime {
@@ -354,7 +354,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				imageButtonDown = imageButton.getModel().isPressed();
-				if(imageButtonDown && Strategy.NoSynchronization.equals(Strategy.valueOf(strategiesGroup.getSelection().getActionCommand()))) {
+				if(imageButtonDown && Strategy.Manual.equals(Strategy.valueOf(strategiesGroup.getSelection().getActionCommand()))) {
 					noSync();
 				}
 				log.info(""+imageButtonDown);
@@ -500,12 +500,15 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
         
 	}
 	
-	private final void deadReckoning(TargetTime targetTime) {
-		long period = 0L;
+	private final void autoSync(TargetTime targetTime) {
 		
 		switch(targetTime) {
 		case EndExpiration:
-			executor.schedule(freezeCallable, period-50L, TimeUnit.MILLISECONDS);
+		    // JP Apr 29, 2013
+		    // Luckily this works quickly enough to respond to *this* start breath
+		    // event.  A more robust implementation would probably trigger just before
+		    // the *next* start breath ... or a timeout of (this.period-50L) on the following line
+			executor.schedule(freezeCallable, 0L, TimeUnit.MILLISECONDS);
 			break;
 		case EndInspiration:
 			executor.schedule(freezeCallable, inspiratoryTime-50L, TimeUnit.MILLISECONDS);
@@ -551,10 +554,10 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 				TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
 				
 				switch(strategy) {
-				case DeadReckoning:
-					deadReckoning(targetTime);
+				case Automatic:
+					autoSync(targetTime);
 					break;
-				case NoSynchronization:
+				case Manual:
 					break;
 				}
 			}
