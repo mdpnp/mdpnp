@@ -11,6 +11,8 @@ import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -27,6 +30,10 @@ import org.mdpnp.comms.IdentifiableUpdate;
 import org.mdpnp.comms.Identifier;
 import org.mdpnp.comms.data.enumeration.EnumerationUpdate;
 import org.mdpnp.comms.data.numeric.NumericUpdate;
+import org.mdpnp.comms.data.text.MutableTextUpdate;
+import org.mdpnp.comms.data.text.MutableTextUpdateImpl;
+import org.mdpnp.comms.data.text.TextImpl;
+import org.mdpnp.comms.data.text.TextUpdate;
 import org.mdpnp.comms.nomenclature.BloodPressure;
 import org.mdpnp.comms.nomenclature.ConnectedDevice;
 import org.mdpnp.comms.nomenclature.NoninvasiveBloodPressure;
@@ -40,14 +47,17 @@ public class BloodPressurePanel extends DevicePanel {
 	private JPanel systolicPanel, diastolicPanel, pulsePanel;
 	private JLabel time;
 	private JLabel nextInflation;
+	private JButton inflate = new JButton("Inflate"); 
 //	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	public void setName(String name) {
 		this.nameLabel.setText(name);
 	}
 	public void setGuid(String guid) {
-		
+		this.guid = guid;
 	}
+	private String guid; 
+	
 	
 	protected void buildComponents() {
 		systolicLabel = new JLabel("mmHg");
@@ -93,11 +103,28 @@ public class BloodPressurePanel extends DevicePanel {
 		upper.add(nextInflation);
 		setLayout(new BorderLayout());
 		add(upper, BorderLayout.CENTER);
-		add(time = new JLabel(""), BorderLayout.SOUTH);
+		
+		JPanel lower = new JPanel(new GridLayout(1, 2));
+		
+		lower.add(inflate);
+		lower.add(time = new JLabel(""));
+		
 		time.setHorizontalAlignment(JLabel.RIGHT);
+		add(lower, BorderLayout.SOUTH);
+		
 		
 		add(nameLabel = new JLabel("NAME"), BorderLayout.NORTH);
 		nameLabel.setHorizontalAlignment(JLabel.RIGHT);
+		
+		inflate.addActionListener(new ActionListener() {
+		    @Override
+		    public void actionPerformed(ActionEvent e) {
+		        MutableTextUpdate mtu = new MutableTextUpdateImpl(NoninvasiveBloodPressure.REQUEST_NIBP, guid);
+		        mtu.setSource("*");
+		        mtu.setTarget(guid);
+		        gateway.update(BloodPressurePanel.this, mtu);
+		    }
+		});
 		
 	}
 	

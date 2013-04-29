@@ -10,8 +10,10 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.comms.Gateway;
+import org.mdpnp.comms.IdentifiableUpdate;
 import org.mdpnp.comms.Identifier;
 import org.mdpnp.comms.MutableIdentifiableUpdate;
 import org.mdpnp.comms.connected.AbstractConnectedDevice;
@@ -24,6 +26,7 @@ import org.mdpnp.comms.data.text.Text;
 import org.mdpnp.comms.data.waveform.MutableWaveformUpdate;
 import org.mdpnp.comms.data.waveform.MutableWaveformUpdateImpl;
 import org.mdpnp.comms.data.waveform.Waveform;
+import org.mdpnp.comms.nomenclature.NoninvasiveBloodPressure;
 import org.mdpnp.comms.nomenclature.PulseOximeter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -237,7 +240,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 	}
 	private Socket socket;
 	
-	private String host;
+	protected String host;
 	private int port;
 	private Thread currentThread;
 	
@@ -348,5 +351,28 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 			
 		}
 		
+	}
+	
+	private final Runnable nibpRequest = new Runnable() {
+	    public void run() {
+	        int port = 2050;
+	        try {
+	            String host = DemoBernoulli.this.host;
+	            String bid = guidUpdate.getValue();
+	            if(null != host && bid != null && !"".equals(bid)) {
+	                Bernoulli.sendCommand(DemoBernoulli.this.host, port, guidUpdate.getValue(), Bernoulli.CMD_REQUEST_NIBP);
+	            }
+            } catch (IOException e) {
+                log.error("Error requesting NIBP", e);
+            }
+	    }
+	};
+	
+	@Override
+	public void update(IdentifiableUpdate<?> command) {
+	    if(NoninvasiveBloodPressure.REQUEST_NIBP.equals(command.getIdentifier())) {
+	        executor.schedule(nibpRequest, 0L, TimeUnit.MILLISECONDS);
+	    }
+	    super.update(command);
 	}
 }

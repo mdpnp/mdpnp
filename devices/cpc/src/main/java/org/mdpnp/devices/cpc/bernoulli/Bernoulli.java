@@ -3,6 +3,8 @@ package org.mdpnp.devices.cpc.bernoulli;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -35,6 +37,37 @@ public class Bernoulli implements ContentHandler, ErrorHandler {
 	}
 	
 	public static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	
+	public final static String CMD_REQUEST_NIBP = "*NIBP";
+	
+	/**
+	 * Send command a command
+	 * @param out to write command
+	 * @param in to read response
+	 * @param bid bed identifier
+	 * @param cmd command identifier
+	 * @return true if success
+	 * @throws IOException
+	 */
+	public static boolean sendCommand(OutputStream out, InputStream in, String bid, String cmd) throws IOException {
+	    byte[] bytes = ("<?xml version=\"1.0\" encoding=\"utf-8\"?><cpc><device bid=\""+bid+"\"><cmd>"+cmd+"</cmd></device></cpc>").getBytes("UTF-8");
+	    out.write(bytes);
+	    out.flush();
+        int ret = in.read();
+        return 80 == ret;
+	}
+	
+	public static boolean sendCommand(Socket sock, String bid, String cmd) throws IOException {
+        return sendCommand(sock.getOutputStream(), sock.getInputStream(), bid, cmd);
+    }
+	
+	public static boolean sendCommand(String host, int port, String bid, String cmd) throws IOException {
+	    Socket sock = new Socket(host, port);
+	    boolean returnValue = sendCommand(sock, bid, cmd);
+	    sock.close();
+	    return returnValue;
+	}
+	
 	
 	public static void sendSubscription(OutputStream out) throws IOException {
 		byte[] bytes = ("<cpc seq=\"1\" datetime=\""+dateFormat.format(new Date())+"\" version=\"Not for patient use!\" type=\"GUI\" bid=\"UniqueIdForGui\" conntype=\"subscriber\"><device bid=\"*\"/></cpc>").getBytes("UTF-8"); 
