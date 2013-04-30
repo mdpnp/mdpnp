@@ -3,7 +3,13 @@
  * @author  WMS
  * @brief   Define objects for the metric numeric obs value attribute group.
  *
- * @note   This uses custom directives specific to rtiddsgen, the RTI code
+ * @note    As much as possible this adheres to the ISO/IEEE 11073
+ * nomenenclature and domain information model specification referenced below.
+ * This may define non-conforming common objects, and, if so, adds the prefix
+ * ICE_ to their names, and/or explains them with articulate, concise,
+ * meaningful and heartfelt comments.
+ *
+ * @note    This uses custom directives specific to rtiddsgen, the RTI code
  * generator. Custom directives start with //@. Some structures declared in
  * this file use the directive
  *
@@ -29,8 +35,9 @@
  * @see MDC_ATTR_GRP_METRIC_VAL_OBS, 11073-10201, Table 7.12.
  */
 //=============================================================================
-#ifndef  DIM_ATTRGRP_OBSVAL_NU_H_
-#define  DIM_ATTRGRP_OBSVAL_NU_H_
+
+// Uncomment this to make available ICE non-conformant timestamp
+#define ICE_NONCONFORMANT_TIMESTAMP_AVAILABLE
 
 /**
  * The following constant definitions will be available in the generated code
@@ -155,46 +162,50 @@ typedef INTU32 RelativeTime;
  */
 struct AbsoluteTime
 {
-  INTU8 century;  /// Zero-based. For year 1993, century = 19 (not 20)
-  INTU8 year;     /// For 1993, year = 93
-  INTU8 month;    /// 1 - 12
-  INTU8 day;      /// 1 - 31
-  INTU8 hour;
+  INTU8 century;  /// Zero-based.
+  INTU8 year;
+  INTU8 month;    /// 1-based
+  INTU8 day;      /// 1-based
+  INTU8 hour;     /// 24-hour representation
   INTU8 minute;
   INTU8 second;
   INTU8 sec_fractions;  /// hundredths of second
 }; //@top-level false
 
+#ifdef ICE_NONCONFORMANT_TIMESTAMP_AVAILABLE
 //=============================================================================
+/**
+ * ICE time representation.
+ *
+ * The ICE information model specifies time 
+ */
+
 /**
  * ICE Absolute Time
  */
-struct Time_t
+struct ICE_Time_t
 {
   INTI32  sec;
   INTU32  nanosec;
 }; //@top-level false
 
-typedef Time_t ICE_AbsoluteTime;
+typedef ICE_Time_t ICE_AbsoluteTime;
 
 //=============================================================================
 /**
  * ICE Relative Time
  */
-struct Duration_t
+struct ICE_Duration_t
 {
   INTI32  sec;
   INTU32  nanosec;
 }; //@top-level false
 
-typedef Duration_t ICE_RelativeTime;
+typedef ICE_Duration_t ICE_RelativeTime;
+
+#endif  // ICE_NONCONFORMANT_TIMESTAMP_AVAILABLE
 
 //=============================================================================
-/**
- * MetricStatus and MeasurementStatus are used in several medical package objs.
- * Maybe define these in a separate file?
- */
-
 /**
  * Metric-Status
  * @see MetricStatusBits
@@ -235,9 +246,9 @@ enum MeasurementStatusBits
   ms_msmt_state_al_inhibited = 0x8000  /// 15
 };  //@top-level false  // NOLINT
 
-
 /**
  * Enumerations for non-bit string values.
+ * @see NomPartition
  */
 enum NomPartition
 {
@@ -292,9 +303,9 @@ struct NuObsValue
  * Metric observed value group, numeric object class attributes
  * MDC_ATTR_GRP_METRIC_VAL_OBS (2051)
  *
- * @note   The prefix DTI = Data Type Interface. We intend to associate this
- * data type with a DDS Topic. Create its name by replacing prefix DTI with
- * TOPIC.
+ * @note   The prefix DTI = Data Type Interface. Objects with prefix DTI_
+ * are intended to associate with a DDS Topic. Construct its name by replacing
+ * prefix DTI_ with TOPIC_.
  *
  */
 struct DTI_MDC_ATTR_GRP_METRIC_VAL_OBS_Numeric
@@ -309,7 +320,11 @@ struct DTI_MDC_ATTR_GRP_METRIC_VAL_OBS_Numeric
   NomPartition metric_id_partition;
 
   /// Time of observation.
+#ifdef ICE_NONCONFORMANT_TIMESTAMP_AVAILABLE
   ICE_AbsoluteTime absolute_timestamp;
+#else
+  AbsoluteTime absolute_timestamp;
+#endif
 
   /// The represented measurement value(s).
   /// This implements the general case. Use compound numeric for both multiple
@@ -318,4 +333,3 @@ struct DTI_MDC_ATTR_GRP_METRIC_VAL_OBS_Numeric
 
 }; //@top-level true
 
-#endif
