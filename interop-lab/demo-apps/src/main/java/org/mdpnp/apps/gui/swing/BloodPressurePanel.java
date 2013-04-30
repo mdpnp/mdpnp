@@ -121,7 +121,8 @@ public class BloodPressurePanel extends DevicePanel {
 		    public void actionPerformed(ActionEvent e) {
 		        MutableTextUpdate mtu = new MutableTextUpdateImpl(NoninvasiveBloodPressure.REQUEST_NIBP, guid);
 		        mtu.setSource("*");
-		        mtu.setTarget(guid);
+		        mtu.setTarget(BloodPressurePanel.this.source);
+		        
 		        gateway.update(BloodPressurePanel.this, mtu);
 		    }
 		});
