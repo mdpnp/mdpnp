@@ -48,13 +48,13 @@ import org.slf4j.LoggerFactory;
 public class PCAPanel extends JPanel implements VitalsListener {
 	// TODO BOOKMARK HERE!
 	private static final Vital[] vitals = new Vital[] {
-		new Vital("end tidal CO2", "mmHg", Ventilator.END_TIDAL_CO2_MMHG,
+		new Vital("end tidal CO\u2082", "mmHg", Ventilator.END_TIDAL_CO2_MMHG,
 				  25.0, 45.0, 1.0, 100.0),
 		new Vital("respiratory rate", "bpm", Ventilator.RESPIRATORY_RATE,
 				  8.0, 100.0, 1.0, 200.0),
 	    new Vital("heart rate", "bpm", PulseOximeter.PULSE,
 	    		  50.0, 120.0, 20.0, 200.0),
-	    new Vital("SpO2", "%", PulseOximeter.SPO2,
+	    new Vital("SpO\u2082", "%", PulseOximeter.SPO2,
 	    		  90.0, 100.0, 0.0, 100.0)
 	};
 	
@@ -109,7 +109,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 			String name = v.getIdentifier().getField().getName();
 			String units = "";
 			if("SPO2".equals(name)) {
-				name = "SpO2";
+				name = "SpO\u2082";
 				units = "%";
 			} else if("RESPIRATORY_RATE".equals(name)) {
 				name = "Respiratory Rate";
@@ -118,7 +118,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 				name = "Heart Rate";
 				units = "bpm";
 			} else if("END_TIDAL_CO2_MMHG".equals(name)) {
-				name = "etCO2";
+				name = "etCO\u2082";
 				units = "mmHg";
 			}
 			this.name.setText(name);
@@ -473,7 +473,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		
 		if(fastStatusBuilder.length() > 0) {
 		    anyAdvisory = true;
-		    advisories[advisories.length - 1] = "- CO2 Status: "+fastStatusBuilder.toString()+"\n"; 
+		    advisories[advisories.length - 1] = "- CO\u2082 Status: "+fastStatusBuilder.toString()+"\n"; 
 		}
 		
 		
@@ -498,7 +498,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		}
 //		if(null != rr && null != etco2 && != pulse && (rr.doubleValue() <= ADV_RR_MIN && rr.doubleValue()  && (etco2.doubleValue() <= ADV_ETCO2_MIN || etco2.doubleValue() >= ADV_ETCO2_MAX)) {
 //			// Stop on contingent rule
-//			stop("Stopped - Respiratory rate below limit ("+ rr+" bpm) and EtCO2 out of range ("+etco2+"mmHg)");
+//			stop("Stopped - Respiratory rate below limit ("+ rr+" bpm) and EtCO\u2082 out of range ("+etco2+"mmHg)");
 //		} 
 		
 		
@@ -506,7 +506,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 //		else if(null != rr && rr.doubleValue() <= 6.0) {
 //			stop("Stopped - Respiratory rate below critical limit ("+ rr+" bpm)");
 //		} else if(null != etco2 && (etco2.doubleValue() <= 20.0 || etco2.doubleValue() >= 70)) {
-//			stop("Stopped - EtCO2 outside critical range ("+ etco2+"mmHg)");
+//			stop("Stopped - EtCO\u2082 outside critical range ("+ etco2+"mmHg)");
 //		}
 		
 		// Advisory processing

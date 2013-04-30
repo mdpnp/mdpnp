@@ -12,7 +12,7 @@ import org.mdpnp.comms.Identifier;
 public interface UnitCode extends Identifier {
 	UnitCode PERCENT = new UnitCodeImpl(UnitCode.class, "PERCENT", "Percent", "%");
 	UnitCode BEATS_PER_MINUTE = new UnitCodeImpl(UnitCode.class, "BEATS_PER_MINUTE", "Beats Per Minute", "BPM");
-	UnitCode SAT_PERIPHERAL_OXYGEN = new UnitCodeImpl(UnitCode.class, "SAT_PERIPHERAL_OXYGEN", "Saturation of peripheral oxygen", "SpO2");
+	UnitCode SAT_OXYGEN_PULSE_OXIMETRY = new UnitCodeImpl(UnitCode.class, "SAT_OXYGEN_PULSE_OXIMETRY", "Saturation of oxygen from pulse oximetry", "SpO\u2082");
 	UnitCode NONE = new UnitCodeImpl(UnitCode.class, "NONE", "", "");
 	UnitCode MM_HG = new UnitCodeImpl(UnitCode.class, "MM_HG", "millimeters of mercury", "mmHg");
 	UnitCode MILLISECONDS = new UnitCodeImpl(UnitCode.class, "MILLISECONDS", "milliseconds", "ms");

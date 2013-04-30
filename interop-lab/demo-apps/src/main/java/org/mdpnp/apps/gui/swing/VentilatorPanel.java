@@ -65,7 +65,7 @@ public class VentilatorPanel extends DevicePanel {
 //		percent_oxygenBounds = new JPanel();
 //		percent_oxygenBounds.setOpaque(false);
 //		percent_oxygenBounds.setLayout(new GridLayout(1, 1));
-//		percent_oxygenBounds.add(percent_oxygenLabel = new JLabel("%O2"));
+//		percent_oxygenBounds.add(percent_oxygenLabel = new JLabel("%O\u2082"));
 //
 //		
 //		percent_oxygenPanel = new JPanel();
@@ -158,7 +158,7 @@ public class VentilatorPanel extends DevicePanel {
 		headers.setOpaque(false);
 		headers.add(nameLabel = new JLabel("NAME"));
 		headers.add(guidLabel = new JLabel("GUID"));
-		headers.add(etco2 = new JLabel("ETCO2"));
+		headers.add(etco2 = new JLabel("etCO\u2082"));
 		add(headers, BorderLayout.NORTH);
 	
 		nameLabel.setHorizontalAlignment(JLabel.RIGHT);
