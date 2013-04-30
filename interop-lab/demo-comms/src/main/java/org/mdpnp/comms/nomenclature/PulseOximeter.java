@@ -17,13 +17,13 @@ import org.mdpnp.comms.data.waveform.WaveformImpl;
 
 public interface PulseOximeter extends Device {
 	Numeric PULSE = new NumericImpl(PulseOximeter.class, "PULSE", UnitCode.BEATS_PER_MINUTE, null);
-	Numeric SPO2  = new NumericImpl(PulseOximeter.class, "SPO2" , UnitCode.SAT_PERIPHERAL_OXYGEN, null);
+	Numeric SPO2  = new NumericImpl(PulseOximeter.class, "SPO2" , UnitCode.SAT_OXYGEN_PULSE_OXIMETRY, null);
 	
 	Numeric PULSE_LOWER = new NumericImpl(PulseOximeter.class, "PULSE_LOWER", UnitCode.BEATS_PER_MINUTE, null);
 	Numeric PULSE_UPPER = new NumericImpl(PulseOximeter.class, "PULSE_UPPER", UnitCode.BEATS_PER_MINUTE, null);
 	
-	Numeric SPO2_LOWER = new NumericImpl(PulseOximeter.class, "SPO2_LOWER", UnitCode.SAT_PERIPHERAL_OXYGEN, null);
-	Numeric SPO2_UPPER = new NumericImpl(PulseOximeter.class, "SPO2_UPPER", UnitCode.SAT_PERIPHERAL_OXYGEN, null);
+	Numeric SPO2_LOWER = new NumericImpl(PulseOximeter.class, "SPO2_LOWER", UnitCode.SAT_OXYGEN_PULSE_OXIMETRY, null);
+	Numeric SPO2_UPPER = new NumericImpl(PulseOximeter.class, "SPO2_UPPER", UnitCode.SAT_OXYGEN_PULSE_OXIMETRY, null);
 	
 	Waveform PLETH = new WaveformImpl(PulseOximeter.class,  "PLETH", UnitCode.NONE);
 	

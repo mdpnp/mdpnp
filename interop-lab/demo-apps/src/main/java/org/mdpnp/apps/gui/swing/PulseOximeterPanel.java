@@ -83,7 +83,7 @@ public class PulseOximeterPanel extends DevicePanel {
 		spo2Bounds.setLayout(new GridLayout(3, 1));
 		spo2Bounds.add(spo2Up = new JLabel("--"));
 		spo2Bounds.add(spo2Low = new JLabel("--"));
-		spo2Bounds.add(spo2Label = new JLabel("%SpO2"));
+		spo2Bounds.add(spo2Label = new JLabel("%SpO\u2082"));
 		spo2Up.setVisible(false);
 		spo2Low.setVisible(false);
 		
