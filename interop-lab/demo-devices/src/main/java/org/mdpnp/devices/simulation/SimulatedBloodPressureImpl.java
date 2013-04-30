@@ -10,6 +10,7 @@ package org.mdpnp.devices.simulation;
 import java.util.Random;
 
 import org.mdpnp.comms.Gateway;
+import org.mdpnp.comms.IdentifiableUpdate;
 import org.mdpnp.comms.data.enumeration.MutableEnumerationUpdate;
 import org.mdpnp.comms.data.enumeration.MutableEnumerationUpdateImpl;
 import org.mdpnp.comms.data.numeric.MutableNumericUpdate;
@@ -29,6 +30,14 @@ public class SimulatedBloodPressureImpl extends AbstractSimulatedConnectedDevice
 	private final MutableNumericUpdate rrUpdate = new MutableNumericUpdateImpl(Ventilator.RESPIRATORY_RATE);
 	
 	private final Random random = new Random();
+	
+	@Override
+	public void update(IdentifiableUpdate<?> command) {
+	    if(NoninvasiveBloodPressure.REQUEST_NIBP.equals(command.getIdentifier())) {
+	        doInflate();
+	    }
+	    super.update(command);
+	}
 	
 	protected void simulateReading(int systolic, int diastolic, int pulserate) {
 		inflationUpdate.setValue(null);
