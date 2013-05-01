@@ -8,12 +8,12 @@ ext {
 }
 
 group 'org.mdpnp'
-version '0.0.4'
+version '0.0.5-SNAPSHOT'
 
 subprojects {
     
     group 'org.mdpnp'
-    version '0.0.4'
+    version '0.0.5-SNAPSHOT'
     
     repositories {
         // Virtual repository of all remote repositories
