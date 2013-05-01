@@ -18,11 +18,13 @@ import org.mdpnp.comms.nomenclature.ConnectedDevice.ConnectionType;
 import org.mdpnp.comms.serial.SerialProviderFactory;
 import org.mdpnp.messaging.BindingFactory;
 import org.mdpnp.messaging.BindingFactory.BindingType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Configuration {
     enum Application {
-        DemoApp,
-        DeviceAdapter;
+        ICE_Supervisor,
+        ICE_Device_Interface;
     }
     
     public enum DeviceType {
@@ -111,6 +113,9 @@ public class Configuration {
         
         bw.flush();
     }
+    
+    private final static Logger log = LoggerFactory.getLogger(Configuration.class);
+    
     public static Configuration read(InputStream is) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(is, "ASCII"));
         
@@ -125,15 +130,34 @@ public class Configuration {
         while(null != (line = br.readLine())) {
             String[] v = line.split("\t");
             if("application".equals(v[0])) {
-                app = Application.valueOf(v[1]);
+                try {
+                    app = Application.valueOf(v[1]);
+                } catch (IllegalArgumentException iae) {
+                    app = null;
+                    log.warn("Ignoring unknown application type:"+v[1]);
+                }
             } else if("binding".equals(v[0])) {
-                binding = BindingFactory.BindingType.valueOf(v[1]);
+                try {
+                    binding = BindingFactory.BindingType.valueOf(v[1]);
+                } catch (IllegalArgumentException iae) {
+                    binding = null;
+                    log.warn("Ignoring unknown binding type:"+v[1]);
+                }
             } else if("bindingSettings".equals(v[0])) {
                 bindingSettings = v[1];
             } else if("deviceType".equals(v[0])) {
-                deviceType = DeviceType.valueOf(v[1]);
+                try {
+                    deviceType = DeviceType.valueOf(v[1]);
+                } catch (IllegalArgumentException iae) {
+                    deviceType = null;
+                    log.warn("Ignoring unknown devicetype:"+v[1]);
+                }
             } else if("address".equals(v[0])) {
-                address = v[1];
+                if(v.length > 1) {
+                    address = v[1];
+                } else {
+                    address = null;
+                }
             }
         }
         
@@ -158,7 +182,7 @@ public class Configuration {
         out.println("BindingOptions is an optional string configuring the selected Binding");
         out.println();
         
-        out.println("if Application is " + Application.DeviceAdapter.name() + " then DeviceType may be one of:");
+        out.println("if Application is " + Application.ICE_Device_Interface.name() + " then DeviceType may be one of:");
         for(DeviceType d : DeviceType.values()) {
             out.println("\t"+(ConnectionType.Serial.equals(d.getConnectionType())?"*":"")+d.name());
         }
@@ -192,7 +216,7 @@ public class Configuration {
             return null;
         }
         
-        if(Application.DeviceAdapter.equals(app)) {
+        if(Application.ICE_Device_Interface.equals(app)) {
             litr = args.listIterator();
             while(litr.hasNext()) {
                 try {

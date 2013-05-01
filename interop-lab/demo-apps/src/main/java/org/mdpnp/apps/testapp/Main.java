@@ -86,10 +86,10 @@ public class Main {
 		    }
 
 			switch(runConf.getApplication()) {
-			case DeviceAdapter:
+			case ICE_Device_Interface:
 			    DeviceAdapter.start(runConf.getDeviceType(), binding, bindingSettings, runConf.getAddress(), !cmdline);
 				break;
-			case DemoApp:
+			case ICE_Supervisor:
 			    DemoApp.start(binding, bindingSettings);
 			    break;
 			}

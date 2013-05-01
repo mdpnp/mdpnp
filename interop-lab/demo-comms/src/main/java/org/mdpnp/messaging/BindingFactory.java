@@ -11,8 +11,17 @@ public class BindingFactory {
     }
     
     public enum BindingType {
-        RTI_DDS,
-        JGROUPS
+        RTI_DDS("Domain Id:"),
+        JGROUPS("Multicast Addr:");
+        
+        private final String settingsDescription;
+        
+        private BindingType(String settingsDescription) {
+            this.settingsDescription = settingsDescription;
+        }
+        public String getSettingsDescription() {
+            return settingsDescription;
+        }
     }
     
     private static BindingType type = BindingType.RTI_DDS;
