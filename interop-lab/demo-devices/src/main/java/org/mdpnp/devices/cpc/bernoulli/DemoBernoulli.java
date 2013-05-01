@@ -17,6 +17,7 @@ import org.mdpnp.comms.IdentifiableUpdate;
 import org.mdpnp.comms.Identifier;
 import org.mdpnp.comms.MutableIdentifiableUpdate;
 import org.mdpnp.comms.connected.AbstractConnectedDevice;
+import org.mdpnp.comms.connected.TimeAwareInputStream;
 import org.mdpnp.comms.data.numeric.MutableNumericUpdate;
 import org.mdpnp.comms.data.numeric.MutableNumericUpdateImpl;
 import org.mdpnp.comms.data.numeric.Numeric;
@@ -135,6 +136,13 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 		} catch(Exception e) {
 			throw new RuntimeException(e);
 		}
+		if(MAX_QUIET_TIME>0L) {
+            executor.scheduleAtFixedRate(new Runnable() {
+                public void run() {
+                    watchdog();
+                }
+            }, 0L, MAX_QUIET_TIME, TimeUnit.MILLISECONDS);
+        }
 	}
 	
 	private final MyBernoulli myBernoulli = new MyBernoulli();
@@ -179,6 +187,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 
 	}
 	private long previousAttempt = 0L;
+	private TimeAwareInputStream tais;
 	
 	@Override
 	public void run() {
@@ -216,7 +225,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 			
 			
 			
-			myBernoulli.process(socket.getInputStream());
+			myBernoulli.process(tais = new TimeAwareInputStream(socket.getInputStream()));
 		} catch (UnknownHostException e) {
 			log.error(e.getMessage(), e);
 		} catch (IOException e) {
@@ -244,8 +253,22 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 	private int port;
 	private Thread currentThread;
 	
-
-
+	private static final long MAX_QUIET_TIME = 4000L;
+	
+	protected void watchdog() {
+        TimeAwareInputStream tais = this.tais;
+        if(null != tais) {
+            long quietTime = System.currentTimeMillis() - tais.getLastReadTime();
+            if(quietTime > MAX_QUIET_TIME) {
+                if(State.Connected.equals(getState())) {
+                    log.warn("WATCHDOG - closing after " + quietTime + "ms quiet time (exceeds " + MAX_QUIET_TIME+")");
+                    // close should cause the processing thread to end... which will spawn a connect on its exit
+                    close();
+                }
+            }
+        }
+        
+    }
 
 
 	@Override

@@ -7,7 +7,6 @@
  ******************************************************************************/
 package org.mdpnp.comms.serial;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.comms.Gateway;
 import org.mdpnp.comms.connected.AbstractConnectedDevice;
+import org.mdpnp.comms.connected.TimeAwareInputStream;
 import org.mdpnp.comms.data.textarray.MutableTextArrayUpdate;
 import org.mdpnp.comms.data.textarray.MutableTextArrayUpdateImpl;
 import org.mdpnp.comms.nomenclature.SerialDevice;
@@ -37,43 +37,6 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 	
 	private static final Logger log = LoggerFactory.getLogger(AbstractSerialDevice.class);
 
-	private static class TimeAwareInputStream extends FilterInputStream {
-		private long lastRead = 0L;
-		
-		protected TimeAwareInputStream(InputStream in) {
-			super(in);
-		}
-		
-		@Override
-		public int read() throws IOException {
-			int r = super.read();
-			if(r >= 0) {
-				lastRead = System.currentTimeMillis();
-			}
-			return r;
-		}
-		
-		@Override
-		public int read(byte[] b) throws IOException {
-			int n = in.read(b);
-			if(n >= 0) {
-				lastRead = System.currentTimeMillis();
-			}
-			return n;
-		}
-		public int read(byte[] b, int off, int len) throws IOException {
-			int n = in.read(b, off, len);
-			if(n >= 0) {
-				lastRead = System.currentTimeMillis();
-			}
-			return n;
-		};
-		public long getLastReadTime() {
-			return lastRead;
-		}
-		
-	}
-	
 	private class Watchdog implements Runnable {
 
 		@Override
