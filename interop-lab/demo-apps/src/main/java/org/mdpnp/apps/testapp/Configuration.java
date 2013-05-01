@@ -50,26 +50,26 @@ public class Configuration {
     } 
     
     private final Application application;
-    private final BindingFactory.BindingType transport;
-    private final String transportSettings;
+    private final BindingFactory.BindingType binding;
+    private final String bindingSettings;
     private final DeviceType deviceType;
     private final String address;
     
-    public Configuration(Application application, BindingFactory.BindingType transport, String transportSettings, DeviceType deviceType, String address) {
+    public Configuration(Application application, BindingFactory.BindingType binding, String bindingSettings, DeviceType deviceType, String address) {
         this.application = application;
-        this.transport = transport;
-        this.transportSettings = transportSettings;
+        this.binding = binding;
+        this.bindingSettings = bindingSettings;
         this.deviceType = deviceType;
         this.address = address;
     }
     public Application getApplication() {
         return application;
     }
-    public BindingFactory.BindingType getTransport() {
-        return transport;
+    public BindingFactory.BindingType getBinding() {
+        return binding;
     }
-    public String getTransportSettings() {
-        return transportSettings;
+    public String getBindingSettings() {
+        return bindingSettings;
     }
     public DeviceType getDeviceType() {
         return deviceType;
@@ -84,15 +84,15 @@ public class Configuration {
         bw.write(application.name());
         bw.write("\n");
         
-        bw.write("transport");
+        bw.write("binding");
         bw.write("\t");
-        bw.write(transport.name());
+        bw.write(binding.name());
         bw.write("\n");
         
-        if(null != transportSettings) {
-	        bw.write("transportSettings");
+        if(null != bindingSettings) {
+	        bw.write("bindingSettings");
 	        bw.write("\t");
-	        bw.write(transportSettings);
+	        bw.write(bindingSettings);
 	        bw.write("\n");
         }
         if(null != deviceType) {
@@ -117,8 +117,8 @@ public class Configuration {
         String line = null;
         
         Application app = null;
-        BindingFactory.BindingType transport = null;
-        String transportSettings = null;
+        BindingFactory.BindingType binding = null;
+        String bindingSettings = null;
         DeviceType deviceType = null;
         String address = null;
         
@@ -126,10 +126,10 @@ public class Configuration {
             String[] v = line.split("\t");
             if("application".equals(v[0])) {
                 app = Application.valueOf(v[1]);
-            } else if("transport".equals(v[0])) {
-                transport = BindingFactory.BindingType.valueOf(v[1]);
-            } else if("transportSettings".equals(v[0])) {
-                transportSettings = v[1];
+            } else if("binding".equals(v[0])) {
+                binding = BindingFactory.BindingType.valueOf(v[1]);
+            } else if("bindingSettings".equals(v[0])) {
+                bindingSettings = v[1];
             } else if("deviceType".equals(v[0])) {
                 deviceType = DeviceType.valueOf(v[1]);
             } else if("address".equals(v[0])) {
@@ -137,11 +137,11 @@ public class Configuration {
             }
         }
         
-        return new Configuration(app, transport, transportSettings, deviceType, address);
+        return new Configuration(app, binding, bindingSettings, deviceType, address);
     }
     
     public static void help(Class<?> launchClass, PrintStream out) {
-        out.println(launchClass.getName() + " [Application] [Messaging[=MessagingOptions]] [DeviceType[=DeviceAddress]]");
+        out.println(launchClass.getName() + " [Application] [Binding[=BindingSettings]] [DeviceType[=DeviceAddress]]");
         out.println();
         out.println("For interactive graphical interface specify no command line options");
         out.println();
@@ -155,7 +155,7 @@ public class Configuration {
             out.println("\t"+w.name());
         }
         
-        out.println("MessagingOptions is an optional string configuring the selected Messaging");
+        out.println("BindingOptions is an optional string configuring the selected Binding");
         out.println();
         
         out.println("if Application is " + Application.DeviceAdapter.name() + " then DeviceType may be one of:");
@@ -172,8 +172,8 @@ public class Configuration {
     
     public static Configuration read(String[] args_) {
         Application app = null;
-        BindingFactory.BindingType transport = null;
-        String transportSettings = null;
+        BindingFactory.BindingType binding = null;
+        String bindingSettings = null;
         DeviceType deviceType = null;
         String address = null;
         
@@ -215,10 +215,10 @@ public class Configuration {
             try {
                 String x = litr.next();
                 String[] y = x.split("\\=");
-                transport = BindingFactory.BindingType.valueOf(y[0]);
+                binding = BindingFactory.BindingType.valueOf(y[0]);
                 litr.remove();
                 if(y.length > 1) {
-                    transportSettings = y[1];
+                    bindingSettings = y[1];
                 }
                 break;
             } catch (IllegalArgumentException iae) {
@@ -226,6 +226,6 @@ public class Configuration {
             }
         }
        
-        return new Configuration(app, transport, transportSettings, deviceType, address);
+        return new Configuration(app, binding, bindingSettings, deviceType, address);
     }
 }

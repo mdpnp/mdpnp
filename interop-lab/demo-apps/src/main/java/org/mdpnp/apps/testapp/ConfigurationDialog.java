@@ -21,13 +21,16 @@ import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.apps.testapp.Configuration.Application;
 import org.mdpnp.comms.serial.SerialProviderFactory;
 import org.mdpnp.messaging.BindingFactory;
+import org.mdpnp.messaging.BindingFactory.BindingType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConfigurationDialog extends JDialog {
     private final JComboBox applications = new JComboBox(Application.values());
-    private final JComboBox transports = new JComboBox(BindingFactory.BindingType.values());
+    private final JComboBox bindings = new JComboBox(BindingFactory.BindingType.values());
     private final JButton start = new JButton("Start");
     private final JButton quit = new JButton("Quit");
-    private final JTextField transportSettings = new JTextField("0", 2);
+    private final JTextField bindingSettings = new JTextField("0", 2);
     private boolean quitPressed = true;
     private final JComboBox deviceType = new JComboBox(DeviceType.values());
     private final JLabel deviceTypeLabel = new JLabel("Device Type:");
@@ -38,41 +41,22 @@ public class ConfigurationDialog extends JDialog {
     private final CardLayout addressCards = new CardLayout();
     private final JPanel addressPanel = new JPanel(addressCards);
     
-    protected void setApplication(Application app) {
-        switch(app) {
-        case DeviceAdapter:
-            deviceType.setVisible(true);
-            deviceTypeLabel.setVisible(true);
-            addressLabel.setVisible(true);
-            addressPanel.setVisible(true);
-
-            start.setText("Start " + deviceType.getSelectedItem());
-            break;
-        default:
-            deviceType.setVisible(false);
-            deviceTypeLabel.setVisible(false);
-            addressLabel.setVisible(false);
-            addressPanel.setVisible(false);
-            start.setText("Start " + app);
-            break;
-        }
-        pack();
-    }
-    
     protected void setTransport(BindingFactory.BindingType transport) {
         switch(transport) {
         case RTI_DDS:
-            transportSettings.setVisible(true);
+            bindingSettings.setVisible(true);
             break;
         default:
-            transportSettings.setVisible(false);
+            bindingSettings.setVisible(false);
         }
         pack();
     }
     
-    protected void setDeviceType(DeviceType deviceType) {
-        switch((Configuration.Application)applications.getSelectedItem()) {
+    protected void set(Application app, DeviceType deviceType) {
+        switch(app) {
         case DeviceAdapter:
+            this.deviceType.setVisible(true);
+            deviceTypeLabel.setVisible(true);
             start.setText("Start " +deviceType);
             switch(deviceType.getConnectionType()) {
             case Serial:
@@ -93,19 +77,39 @@ public class ConfigurationDialog extends JDialog {
                 addressLabel.setVisible(false);
                 addressPanel.setVisible(false);
             }
-            pack();
             break;
         case DemoApp:
+            this.deviceType.setVisible(false);
+            deviceTypeLabel.setVisible(false);
             addressLabel.setVisible(false);
             addressPanel.setVisible(false);
+            start.setText("Start " + app);
             break;
         }
-        
+        pack();        
     }
     
+    private final static Logger log = LoggerFactory.getLogger(ConfigurationDialog.class);
+    
+    private static boolean ddsInit() {
+        try {
+            if((Boolean)Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init").invoke(null)) {
+                return true;                
+            } else {
+                throw new Exception("Unable to init");
+            }
+        } catch (Throwable t) {
+            log.warn("Unable to initialize RTI DDS, removing the option", t);
+        }
+        return false;
+    }
     
     public ConfigurationDialog(Configuration conf) {
         super( (JDialog)null, true);
+        
+        if(!ddsInit()) {
+            bindings.removeItem(BindingType.RTI_DDS);
+        }
         
         if(null != conf) {
             if(null != conf.getApplication()) {
@@ -114,11 +118,11 @@ public class ConfigurationDialog extends JDialog {
             if(null != conf.getDeviceType()) {
                 deviceType.setSelectedItem(conf.getDeviceType());
             } 
-            if(null != conf.getTransport()) {
-                transports.setSelectedItem(conf.getTransport());
+            if(null != conf.getBinding()) {
+                bindings.setSelectedItem(conf.getBinding());
             }
-            if(null != conf.getTransportSettings()) {
-                transportSettings.setText(conf.getTransportSettings());
+            if(null != conf.getBindingSettings()) {
+                bindingSettings.setText(conf.getBindingSettings());
             }
             if(null != conf.getApplication() && null != conf.getAddress()) {
                 switch(conf.getApplication()) {
@@ -148,7 +152,7 @@ public class ConfigurationDialog extends JDialog {
         setLocationRelativeTo(null);
         setLayout(new GridBagLayout());
         
-        transportSettings.setHorizontalAlignment(SwingConstants.RIGHT);
+        bindingSettings.setHorizontalAlignment(SwingConstants.RIGHT);
         
         GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(2,0,2,0), 2, 2);
         
@@ -165,11 +169,11 @@ public class ConfigurationDialog extends JDialog {
         
         gbc.gridy = 2;
         gbc.gridx = 0;
-        getContentPane().add(new JLabel("Transport:"), gbc);
+        getContentPane().add(new JLabel("Binding:"), gbc);
         gbc.gridx++;
-        getContentPane().add(transports, gbc);
+        getContentPane().add(bindings, gbc);
         gbc.gridx++;
-        getContentPane().add(transportSettings, gbc);
+        getContentPane().add(bindingSettings, gbc);
 
         addressPanel.add(address, "address");
         
@@ -212,13 +216,13 @@ public class ConfigurationDialog extends JDialog {
             @Override
             public void itemStateChanged(ItemEvent e) {
                 if(e.getStateChange()==ItemEvent.SELECTED) {
-                    setApplication((Application)e.getItem());
+                    set((Application)e.getItem(), (DeviceType)deviceType.getSelectedItem());
                 }
             }
             
         });
         
-        transports.addItemListener(new ItemListener() {
+        bindings.addItemListener(new ItemListener() {
            @Override
             public void itemStateChanged(ItemEvent e) {
                if(e.getStateChange()==ItemEvent.SELECTED) {
@@ -231,13 +235,13 @@ public class ConfigurationDialog extends JDialog {
            @Override
             public void itemStateChanged(ItemEvent e) {
                if(e.getStateChange()==ItemEvent.SELECTED) {
-                   setDeviceType((DeviceType)e.getItem());
+                   set((Application)applications.getSelectedItem(),(DeviceType)e.getItem());
                }
             } 
         });
-        setApplication((Application)applications.getSelectedItem());
-        setTransport((BindingFactory.BindingType)transports.getSelectedItem());
-        setDeviceType((DeviceType)deviceType.getSelectedItem());
+
+        setTransport((BindingFactory.BindingType)bindings.getSelectedItem());
+        set((Application)applications.getSelectedItem(), (DeviceType)deviceType.getSelectedItem());
     }
     public Configuration showDialog() {
         pack();
@@ -256,6 +260,6 @@ public class ConfigurationDialog extends JDialog {
             }
             
         }
-        return quitPressed ? null : new Configuration((Application)applications.getSelectedItem(), (BindingFactory.BindingType)transports.getSelectedItem(), transportSettings.getText(), (DeviceType) deviceType.getSelectedItem(), address);
+        return quitPressed ? null : new Configuration((Application)applications.getSelectedItem(), (BindingFactory.BindingType)bindings.getSelectedItem(), bindingSettings.getText(), (DeviceType) deviceType.getSelectedItem(), address);
     }
 }

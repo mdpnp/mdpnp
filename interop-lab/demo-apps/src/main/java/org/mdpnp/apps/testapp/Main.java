@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
+import org.mdpnp.messaging.Binding;
 import org.mdpnp.messaging.BindingFactory;
+import org.mdpnp.messaging.BindingFactory.BindingType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +36,7 @@ public class Main {
 		if(!cmdline) {
 		    ConfigurationDialog d = new ConfigurationDialog(conf);
 		    conf = d.showDialog();
+		    d.dispose();
 		} else {
 		    // fall through to allow configuration via a file
 		}
@@ -49,27 +52,31 @@ public class Main {
 		        fos.close();
 		    }
 		    
-		    BindingFactory.setType(conf.getTransport());
-		    switch(conf.getTransport()) {
+		    
+		    BindingType binding = conf.getBinding();
+		    String bindingSettings = conf.getBindingSettings();
+		    
+		    switch(binding) {
 		    case RTI_DDS:
 		        try {
         	        if(!(Boolean)Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init").invoke(null)) {
-        	            throw new Exception();
+        	            throw new Exception("Unable to init");
         	        }
 		        } catch (Throwable t) {
-		            log.warn("Unable to initialize RTI DDS, falling back to JGroups transport");
-		            BindingFactory.setType(BindingFactory.BindingType.JGROUPS);
+		            log.warn("Unable to initialize RTI DDS, falling back to JGroups transport", t);
+		            binding = BindingType.JGROUPS;
+		            bindingSettings = "";
 		        }
 		        break;
 		        
 		    }
-		    String address = "";
+
 			switch(conf.getApplication()) {
 			case DeviceAdapter:
-			    DeviceAdapter.start(conf.getDeviceType(), conf.getTransport(), conf.getTransportSettings(), address, !cmdline);
+			    DeviceAdapter.start(conf.getDeviceType(), binding, bindingSettings, conf.getAddress(), !cmdline);
 				break;
 			case DemoApp:
-			    DemoApp.start(conf.getTransport(), conf.getTransportSettings());
+			    DemoApp.start(binding, bindingSettings);
 			    break;
 			}
 		} else if(cmdline) {
