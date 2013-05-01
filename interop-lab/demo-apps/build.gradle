@@ -5,9 +5,9 @@ defaultTasks 'build'
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
-mainClassName = "org.mdpnp.apps.testapp.JumpStart"
+mainClassName = "org.mdpnp.apps.testapp.Main"
 
-//manifest.mainAttributes("Main-Class" : "org.mdpnp.apps.testapp.JumpStart")
+//manifest.mainAttributes("Main-Class" : "org.mdpnp.apps.testapp.Main")
 
 //jar {
     //from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
