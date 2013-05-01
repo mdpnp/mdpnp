@@ -304,18 +304,22 @@ public class Capnostream {
 
 	public void sendString(Command command, String s, boolean unicode,
 			int max_length) throws IOException {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < max_length; i++) {
+		StringBuilder sb = new StringBuilder(s);
+		if(sb.length() > max_length) {
+		    sb.delete(max_length, sb.length());
+		}
+		
+		for (int i = sb.length(); i < max_length; i++) {
 			sb.append(" ");
 		}
 		byte[] s_bytes = sb.toString().getBytes(unicode ? "UTF-16" : "ASCII");
 
-		byte[] bytes = s.getBytes(unicode ? "UTF-16" : "ASCII");
-		if (bytes.length > ((unicode ? 2 : 1) * max_length)) {
-			throw new IllegalArgumentException(command.toString()
-					+ " string too long:" + s);
-		}
-		System.arraycopy(bytes, 0, s_bytes, 0, bytes.length);
+//		byte[] bytes = s.getBytes(unicode ? "UTF-16" : "ASCII");
+//		if (bytes.length > ((unicode ? 2 : 1) * max_length)) {
+//			throw new IllegalArgumentException(command.toString()
+//					+ " string too long:" + s);
+//		}
+//		System.arraycopy(bytes, 0, s_bytes, 0, bytes.length);
 		sendCommand(command, s_bytes, s_bytes.length);
 	}
 
