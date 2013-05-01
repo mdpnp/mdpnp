@@ -18,6 +18,8 @@ import org.mdpnp.comms.Identifier;
 import org.mdpnp.comms.MutableIdentifiableUpdate;
 import org.mdpnp.comms.connected.AbstractConnectedDevice;
 import org.mdpnp.comms.connected.TimeAwareInputStream;
+import org.mdpnp.comms.data.enumeration.MutableEnumerationUpdate;
+import org.mdpnp.comms.data.enumeration.MutableEnumerationUpdateImpl;
 import org.mdpnp.comms.data.numeric.MutableNumericUpdate;
 import org.mdpnp.comms.data.numeric.MutableNumericUpdateImpl;
 import org.mdpnp.comms.data.numeric.Numeric;
@@ -43,15 +45,55 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 		public MyBernoulli() {
 			
 		}
+		
+		private String priorLocation, priorStatus;
+		
+		@Override
+		public void location(String location) {
+		    if(null == priorLocation || !priorLocation.equals(location)) {
+		        log.info("location="+location);
+		        priorLocation = location;
+		    }
+		    
+		}
+		
+		@Override
+		public void status(String status) {
+		    if(null == priorStatus || !priorStatus.equals(status)) {
+		        log.info("status="+status);
+		        priorStatus = status;
+		    }
+		    if("UP".equals(status)) {
+		        inited = true;
+		    } else {
+		        inited = false;
+		        close();
+		    }
+		}
+		
 		@Override
 		public void startDocument() throws SAXException {
 			super.startDocument();
-			inited = true;
 		}
+		private final MutableEnumerationUpdate cLock = new MutableEnumerationUpdateImpl(PulseOximeter.C_LOCK);
 		protected void measurement(String name, String value) {
+		    if("SPO2_C_LOCK".equals(name)) {
+		        if("ON".equals(value)) {
+		            cLock.setValue(PulseOximeter.CLock.On);
+		            gateway.update(DemoBernoulli.this, cLock);
+		        } else if("OFF".equals(value)) {
+		            cLock.setValue(PulseOximeter.CLock.Off);
+                    gateway.update(DemoBernoulli.this, cLock);
+		        } else {
+		            log.warn("Unknown SPO2_C_LOCK value:"+value);
+		        }
+		        return;
+		    }
+		    
+		    
 			MutableNumericUpdate numeric = numerics.get(name);
 			MutableTextUpdate text = texts.get(name);
-			
+			 
 			if(null != numeric) {
 				try {
 					numeric.setValue(Double.parseDouble(value));
@@ -59,12 +101,12 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 					numeric.setValue(null);
 				}
 				gateway.update(DemoBernoulli.this, numeric);
-				log.debug(numeric.toString());
+				log.trace(numeric.toString());
 				return;
 			} else if(null != text) {
 				text.setValue(value);
 				gateway.update(DemoBernoulli.this, text);
-				log.debug(text.toString());
+				log.trace(text.toString());
 				return;
 			} else {
 			    log.warn("Orphaned Measure:"+name+"="+value);
@@ -81,7 +123,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 				// TODO ugly and not correct
 				waveform.setTimestamp(new Date());
 				gateway.update(DemoBernoulli.this, waveform);
-				log.debug(waveform.toString());
+				log.trace(waveform.toString());
 			} else {
 			    log.warn("Orphaned Measure:"+name+"="+Arrays.toString(n));
 			}
@@ -330,7 +372,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 				log.trace("invoking sendSubscription");
 				
 				long now = System.currentTimeMillis();
-				long giveup = now + 2000L;
+				long giveup = now + MAX_QUIET_TIME;
 				
 				Bernoulli.sendSubscription(outputStream);
 				
@@ -341,7 +383,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 							break;
 						}
 						try {
-							wait(500L);
+							wait(1000L);
 						} catch (InterruptedException e) {
 							log.error("", e);
 						}
@@ -383,7 +425,13 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 	            String host = DemoBernoulli.this.host;
 	            String bid = guidUpdate.getValue();
 	            if(null != host && bid != null && !"".equals(bid)) {
-	                Bernoulli.sendCommand(DemoBernoulli.this.host, port, guidUpdate.getValue(), Bernoulli.CMD_REQUEST_NIBP);
+	                if(Bernoulli.sendCommand(DemoBernoulli.this.host, port, guidUpdate.getValue(), Bernoulli.CMD_REQUEST_NIBP)) {
+	                    log.debug("Successfully requested NIBP");
+	                } else {
+	                    log.error("Failed to request NIBP");
+	                }
+	            } else {
+	                log.warn("Insufficient info to request NIBP host="+host+" bid="+bid);
 	            }
             } catch (IOException e) {
                 log.error("Error requesting NIBP", e);

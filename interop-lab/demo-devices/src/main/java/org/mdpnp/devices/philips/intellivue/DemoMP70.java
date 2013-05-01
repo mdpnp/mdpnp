@@ -34,11 +34,11 @@ import org.mdpnp.comms.data.text.TextUpdate;
 import org.mdpnp.comms.data.waveform.MutableWaveformUpdate;
 import org.mdpnp.comms.data.waveform.MutableWaveformUpdateImpl;
 import org.mdpnp.comms.data.waveform.Waveform;
-import org.mdpnp.comms.nomenclature.BloodPressure;
 import org.mdpnp.comms.nomenclature.ConnectedDevice;
 import org.mdpnp.comms.nomenclature.Demographics;
 import org.mdpnp.comms.nomenclature.Device;
 import org.mdpnp.comms.nomenclature.ElectroCardioGram;
+import org.mdpnp.comms.nomenclature.NoninvasiveBloodPressure;
 import org.mdpnp.comms.nomenclature.PulseOximeter;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataResult;
 import org.mdpnp.devices.philips.intellivue.action.ObservationPoll;
@@ -429,9 +429,9 @@ public class DemoMP70 extends AbstractConnectedDevice {
 	private void configureData() {
 		add(ObservedValue.NOM_PULS_OXIM_SAT_O2, PulseOximeter.SPO2, Label.NLS_NOM_PULS_OXIM_SAT_O2);
 		add(ObservedValue.NOM_PLETH_PULS_RATE, PulseOximeter.PULSE, Label.NLS_NOM_PULS_OXIM_PULS_RATE);
-		add(ObservedValue.NOM_PRESS_BLD_NONINV_DIA, BloodPressure.DIASTOLIC, Label.NLS_NOM_PRESS_BLD_NONINV);
-		add(ObservedValue.NOM_PRESS_BLD_NONINV_SYS, BloodPressure.SYSTOLIC, Label.NLS_NOM_PRESS_BLD_NONINV);
-		add(ObservedValue.NOM_PRESS_BLD_NONINV_PULS_RATE, BloodPressure.PULSE, Label.NLS_NOM_PRESS_BLD_NONINV_PULS_RATE);
+		add(ObservedValue.NOM_PRESS_BLD_NONINV_DIA, NoninvasiveBloodPressure.DIASTOLIC, Label.NLS_NOM_PRESS_BLD_NONINV);
+		add(ObservedValue.NOM_PRESS_BLD_NONINV_SYS, NoninvasiveBloodPressure.SYSTOLIC, Label.NLS_NOM_PRESS_BLD_NONINV);
+		add(ObservedValue.NOM_PRESS_BLD_NONINV_PULS_RATE, NoninvasiveBloodPressure.PULSE, Label.NLS_NOM_PRESS_BLD_NONINV_PULS_RATE);
 		
 
 		add(ObservedValue.NOM_PLETH, PulseOximeter.PLETH, Label.NLS_NOM_PULS_OXIM_PLETH);

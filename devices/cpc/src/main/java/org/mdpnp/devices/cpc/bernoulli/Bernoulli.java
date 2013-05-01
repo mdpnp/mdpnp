@@ -195,6 +195,14 @@ public class Bernoulli implements ContentHandler, ErrorHandler {
 		
 	}
 
+	public void status(String status) {
+	    
+	}
+	
+	public void location(String location) {
+	    
+	}
+	
 	@Override
 	public void setDocumentLocator(Locator locator) {
 //		log.trace("setDocumentLocator("+locator+")");
@@ -229,6 +237,7 @@ public class Bernoulli implements ContentHandler, ErrorHandler {
 	@SuppressWarnings("unused")
 	private String currentCpcUpdateSequence = null;
 	private Map<String, String> measurementGroup = new HashMap<String, String>();
+	private boolean statusOn, locationOn;
 	
 	protected void setting(String name, String value) {
 		measurement(name, value);
@@ -282,7 +291,11 @@ public class Bernoulli implements ContentHandler, ErrorHandler {
 	@Override
 	public void startElement(String uri, String localName, String qName,
 			Attributes atts) throws SAXException {
-		if("cpc".equals(qName)) {
+	    if("measurements".equals(qName)) {
+	        
+	    } else if("cpcs".equals(qName)) {
+	    } else if("settings".equals(qName)) {
+	    } else if("cpc".equals(qName)) {
 			currentCpcUpdateSequence = atts.getValue("seq");
 		} else if("device".equals(qName)) {
 			currentDeviceSequence = atts.getValue("seq");
@@ -299,12 +312,25 @@ public class Bernoulli implements ContentHandler, ErrorHandler {
 			currentMeasurementGroup = atts.getValue("name");
 		} else if("alarms".equals(qName)) {
 			// TODO alarms
-		} else {
-			log.debug("Unknown startElement("+uri+","+localName+","+qName+","+atts+")");
+		} else if("status".equals(qName)) {
+		    statusOn = true;
+		} else if("location".equals(qName)) {
+		    locationOn = true;
+		}else {
+			log.debug("Unknown startElement("+uri+","+localName+","+qName+","+attributes(atts)+")");
 		}
 //		log.trace("startElement("+uri+","+localName+","+qName+","+atts+")");
 	}
 
+	private static final String attributes(Attributes atts) {
+	    StringBuilder sb = new StringBuilder("{");
+	    for(int i = 0; i < atts.getLength(); i++) {
+	        sb.append(atts.getQName(i)).append("=").append(atts.getValue(i));
+	    }
+	    sb.append("}");
+	    return sb.toString();
+	}
+	
 	@Override
 	public void endElement(String uri, String localName, String qName)
 			throws SAXException {
@@ -322,6 +348,12 @@ public class Bernoulli implements ContentHandler, ErrorHandler {
 			currentMeasurementGroup = null;
 		} else if("alarms".equals(qName)) {
 			// TODO alarms
+	    } else if("status".equals(qName)) {
+	        statusOn = false;
+	    } else if("location".equals(qName)) {
+	        locationOn = false;
+	    } else if("settings".equals(qName)) {
+	    } else if("measurements".equals(qName)) {
 		} else {
 			log.debug("No context for endElement("+uri+","+localName+","+qName+")");
 		}
@@ -339,6 +371,10 @@ public class Bernoulli implements ContentHandler, ErrorHandler {
 			} else {
 				measurement(currentMeasurement, new String(ch, start, length));
 			}
+		} else if(statusOn) {
+		    status(new String(ch, start, length).intern());
+		} else if(locationOn) {
+		    location(new String(ch, start, length).intern());
 		} else {
 			log.debug("No context for characters:"+new String(ch, start, length));
 		}

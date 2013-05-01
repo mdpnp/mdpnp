@@ -32,9 +32,6 @@ import org.mdpnp.comms.data.enumeration.EnumerationUpdate;
 import org.mdpnp.comms.data.numeric.NumericUpdate;
 import org.mdpnp.comms.data.text.MutableTextUpdate;
 import org.mdpnp.comms.data.text.MutableTextUpdateImpl;
-import org.mdpnp.comms.data.text.TextImpl;
-import org.mdpnp.comms.data.text.TextUpdate;
-import org.mdpnp.comms.nomenclature.BloodPressure;
 import org.mdpnp.comms.nomenclature.ConnectedDevice;
 import org.mdpnp.comms.nomenclature.NoninvasiveBloodPressure;
 import org.mdpnp.comms.nomenclature.NoninvasiveBloodPressure.NBPState;
@@ -173,7 +170,7 @@ public class BloodPressurePanel extends DevicePanel {
 	@Override
 	public Collection<Identifier> requiredIdentifiedUpdates() {
 		List<Identifier> identifiers = new ArrayList<Identifier>();
-		identifiers.addAll(Arrays.asList(new Identifier[] {ConnectedDevice.STATE, ConnectedDevice.CONNECTION_INFO, NoninvasiveBloodPressure.STATE, BloodPressure.DIASTOLIC, BloodPressure.SYSTOLIC, BloodPressure.PULSE}));
+		identifiers.addAll(Arrays.asList(new Identifier[] {ConnectedDevice.STATE, ConnectedDevice.CONNECTION_INFO, NoninvasiveBloodPressure.STATE, NoninvasiveBloodPressure.DIASTOLIC, NoninvasiveBloodPressure.SYSTOLIC, NoninvasiveBloodPressure.PULSE}));
 		identifiers.addAll(super.requiredIdentifiedUpdates());
 		return identifiers;
 	}
@@ -189,16 +186,16 @@ public class BloodPressurePanel extends DevicePanel {
 	}
 	
 	public static boolean supported(Set<Identifier> identifiers) {
-		return identifiers.contains(BloodPressure.SYSTOLIC); 
+		return identifiers.contains(NoninvasiveBloodPressure.SYSTOLIC); 
 	}
 	
 	@Override
 	protected void doUpdate(IdentifiableUpdate<?> update) {
-		if(BloodPressure.SYSTOLIC.equals(update.getIdentifier())) {
+		if(NoninvasiveBloodPressure.SYSTOLIC.equals(update.getIdentifier())) {
 			setInt( ((NumericUpdate)update).getValue(), this.systolic, "---");
-		} else if(BloodPressure.DIASTOLIC.equals(update.getIdentifier())) {
+		} else if(NoninvasiveBloodPressure.DIASTOLIC.equals(update.getIdentifier())) {
 			setInt( ((NumericUpdate)update).getValue(), this.diastolic, "---");
-		} else if(BloodPressure.PULSE.equals(update.getIdentifier())) {
+		} else if(NoninvasiveBloodPressure.PULSE.equals(update.getIdentifier())) {
 			setInt( ((NumericUpdate)update).getValue(), this.pulse, "---");
 		} else if(NoninvasiveBloodPressure.INFLATION_PRESSURE.equals(update.getIdentifier())) {
 			setInt( ((NumericUpdate)update).getValue(), this.systolic, "---");

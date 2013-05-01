@@ -15,11 +15,16 @@ import org.mdpnp.comms.data.numeric.UnitCode;
 import org.mdpnp.comms.data.text.Text;
 import org.mdpnp.comms.data.text.TextImpl;
 
-public interface NoninvasiveBloodPressure extends BloodPressure {
+public interface NoninvasiveBloodPressure {
 	Numeric NEXT_INFLATION_TIME_REMAINING = new NumericImpl(NoninvasiveBloodPressure.class, "NEXT_INFLATION_TIME_REMAINING", UnitCode.MILLISECONDS, null);
 	Numeric INFLATION_PRESSURE = new NumericImpl(NoninvasiveBloodPressure.class, "INFLATION_PRESSURE", UnitCode.MM_HG, null);
 	Enumeration STATE = new EnumerationImpl(NoninvasiveBloodPressure.class, "STATE");
 	Text REQUEST_NIBP = new TextImpl(NoninvasiveBloodPressure.class, "REQUEST_NIBP");
+	
+    Numeric SYSTOLIC = new NumericImpl(NoninvasiveBloodPressure.class, "SYSTOLIC", UnitCode.MM_HG, null);
+    Numeric DIASTOLIC = new NumericImpl(NoninvasiveBloodPressure.class, "DIASTOLIC", UnitCode.MM_HG, null);
+    Numeric PULSE = new NumericImpl(NoninvasiveBloodPressure.class, "PULSE", UnitCode.BEATS_PER_MINUTE, null);
+    Numeric MEAN = new NumericImpl(NoninvasiveBloodPressure.class, "MEAN", UnitCode.MM_HG, null);
 	
 	enum NBPState {
 		Inflating,
