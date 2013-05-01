@@ -142,8 +142,6 @@ public class ConfigurationDialog extends JDialog {
                         }
                     }                    
                 }
-                this.address.setText(conf.getAddress());
-                this.serialPorts.setSelectedItem(conf.getAddress());
             }
         }
         
@@ -243,10 +241,17 @@ public class ConfigurationDialog extends JDialog {
         setTransport((BindingFactory.BindingType)bindings.getSelectedItem());
         set((Application)applications.getSelectedItem(), (DeviceType)deviceType.getSelectedItem());
     }
+    
+    private Configuration lastConf;
+    
+    public Configuration getLastConfiguration() {
+        return lastConf;
+    }
+    
     public Configuration showDialog() {
         pack();
         setVisible(true);
-        dispose();
+        
         String address = null;
         switch((Application)applications.getSelectedItem()) {
         case DeviceAdapter:
@@ -260,6 +265,9 @@ public class ConfigurationDialog extends JDialog {
             }
             
         }
-        return quitPressed ? null : new Configuration((Application)applications.getSelectedItem(), (BindingFactory.BindingType)bindings.getSelectedItem(), bindingSettings.getText(), (DeviceType) deviceType.getSelectedItem(), address);
+        lastConf = new Configuration((Application)applications.getSelectedItem(), (BindingFactory.BindingType)bindings.getSelectedItem(), bindingSettings.getText(), (DeviceType) deviceType.getSelectedItem(), address);
+
+        dispose();
+        return quitPressed ? null : lastConf;
     }
 }
