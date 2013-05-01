@@ -43,7 +43,9 @@ dependencies {
   runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-windows-i586'
   runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-windows-amd64'
   
-  runtime group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.2'
+//  runtime group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.2'
+  runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.2'
+  runtime group: 'log4j', name: 'log4j', version: '1.2.17'
   runtime project(':interop-lab:pump-control')
   
   compile group: 'org.jfree', name:'jfreechart', version: '1.0.14'
