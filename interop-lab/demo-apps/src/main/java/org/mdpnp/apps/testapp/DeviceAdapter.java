@@ -266,9 +266,14 @@ public class DeviceAdapter {
 			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 				public void run() {
 					killAdapter();
+					synchronized(DeviceAdapter.class) {
+					    interrupted = true;
+					    DeviceAdapter.class.notifyAll();
+					}
+					        
 				}
 			}));
-			System.err.println("Type quit<enter> to exit");
+//			System.err.println("Type quit<enter> to exit");
 
 			getConnected.connect();
 
@@ -276,20 +281,26 @@ public class DeviceAdapter {
 	        miau.setValue(new Identifier[] {Device.NAME, Device.GUID, Device.ICON});
 	        deviceGateway.update(miau);
 			
-			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-			String line = null;
-			while(!"quit".equals(line)) {
-				line = br.readLine();
-			}
+//			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+//			String line = null;
+//			while(!"quit".equals(line)) {
+//				line = br.readLine();
+//			}
+	        synchronized(DeviceAdapter.class) {
+	            while(!interrupted) {
+	                DeviceAdapter.class.wait();
+	            }
+	        }
 			int n = Thread.activeCount() + 10;
 			Thread[] threads = new Thread[n];
 			n = Thread.enumerate(threads);
 			for(int i = 0; i < n; i++) {
 			    if(threads[i].isAlive() && !threads[i].isDaemon() && !Thread.currentThread().equals(threads[i])) {
-			        System.err.println("Non-Daemon thread would block exit: "+threads[i].getName());
+			        log.warn("Non-Daemon thread would block exit: "+threads[i].getName());
 			    }
 			}
 			System.exit(0);
 		}
 	}
+	private static boolean interrupted = false;
 }
