@@ -1,4 +1,4 @@
-package org.mdpnp.transport.dds.rti;
+package org.mdpnp.messaging.dds.rti;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -15,7 +15,7 @@ import org.mdpnp.comms.IdentifiableUpdate;
 import org.mdpnp.comms.Identifier;
 import org.mdpnp.comms.MutableIdentifiableUpdate;
 import org.mdpnp.comms.Persistent;
-import org.mdpnp.transport.dds.rti.RTICLibrary.DDS_Sequence;
+import org.mdpnp.messaging.dds.rti.RTICLibrary.DDS_Sequence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

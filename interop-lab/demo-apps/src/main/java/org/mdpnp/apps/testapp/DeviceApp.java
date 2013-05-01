@@ -35,7 +35,7 @@ import org.mdpnp.devices.philips.intellivue.DemoMP70;
 import org.mdpnp.devices.simulation.SimulatedBloodPressureImpl;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.webcam.WebcamImpl;
-import org.mdpnp.transport.GetConnected;
+import org.mdpnp.messaging.GetConnected;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

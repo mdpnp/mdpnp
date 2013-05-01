@@ -108,7 +108,9 @@ public abstract class AbstractDevice implements Device, ThreadFactory {
 	
 	@Override
 	public Thread newThread(Runnable r) {
-	    return new Thread(threadGroup, r, "AbstractDevice-"+(++threadOrdinal));
+	    Thread t = new Thread(threadGroup, r, "AbstractDevice-"+(++threadOrdinal));
+	    t.setDaemon(true);
+	    return t;
 	}
 	
 	public AbstractDevice(Gateway gateway) {

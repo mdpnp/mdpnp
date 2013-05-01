@@ -1,4 +1,4 @@
-package org.mdpnp.transport;
+package org.mdpnp.messaging;
 
 import java.awt.BasicStroke;
 import java.awt.Color;

@@ -25,7 +25,7 @@ import org.mdpnp.comms.nomenclature.Association;
 import org.mdpnp.comms.nomenclature.ConnectedDevice;
 import org.mdpnp.comms.nomenclature.Device;
 import org.mdpnp.comms.nomenclature.ConnectedDevice.State;
-import org.mdpnp.transport.DeviceIcon;
+import org.mdpnp.messaging.DeviceIcon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,4 +1,4 @@
-package org.mdpnp.transport.dds.rti;
+package org.mdpnp.messaging.dds.rti;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;

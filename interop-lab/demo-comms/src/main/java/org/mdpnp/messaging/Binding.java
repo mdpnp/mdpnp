@@ -1,7 +1,7 @@
-package org.mdpnp.transport;
+package org.mdpnp.messaging;
 
 
-public interface Wrapper {
+public interface Binding {
     void tearDown();
     
     String DEVICE_PARTITION = "DEV";

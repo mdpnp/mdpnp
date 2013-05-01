@@ -1,4 +1,4 @@
-package org.mdpnp.transport.jgroups;
+package org.mdpnp.messaging.jgroups;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -8,29 +8,15 @@ import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.Receiver;
 import org.jgroups.View;
-import org.jgroups.protocols.BARRIER;
-import org.jgroups.protocols.FD_ALL;
-import org.jgroups.protocols.FD_SOCK;
 import org.jgroups.protocols.FRAG2;
-import org.jgroups.protocols.MERGE2;
-import org.jgroups.protocols.MFC;
-import org.jgroups.protocols.PING;
 import org.jgroups.protocols.UDP;
-import org.jgroups.protocols.UFC;
-import org.jgroups.protocols.UNICAST2;
-import org.jgroups.protocols.VERIFY_SUSPECT;
-import org.jgroups.protocols.pbcast.GMS;
-import org.jgroups.protocols.pbcast.NAKACK2;
-import org.jgroups.protocols.pbcast.STABLE;
 import org.jgroups.stack.ProtocolStack;
 import org.mdpnp.comms.Gateway;
 import org.mdpnp.comms.GatewayListener;
 import org.mdpnp.comms.IdentifiableUpdate;
-import org.mdpnp.transport.Wrapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.mdpnp.messaging.Binding;
 
-public class JGroupsWrapper implements GatewayListener, Receiver, Wrapper {
+public class JGroupsBinding implements GatewayListener, Receiver, Binding {
 	private final Gateway gateway;
 //	private final Role role;
 	private final JChannel outChannel, inChannel;
@@ -85,7 +71,7 @@ public class JGroupsWrapper implements GatewayListener, Receiver, Wrapper {
         return stack;
 	}
 	
-	public JGroupsWrapper(Role role, Gateway gateway) throws Exception {
+	public JGroupsBinding(Role role, Gateway gateway) throws Exception {
 		this.gateway = gateway;
 		outChannel = new JChannel(true);
 		

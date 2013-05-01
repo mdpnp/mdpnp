@@ -1,9 +1,8 @@
-package org.mdpnp.transport.dds.rti;
+package org.mdpnp.messaging.dds.rti;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,9 +18,9 @@ import org.mdpnp.comms.data.text.TextUpdate;
 import org.mdpnp.comms.data.textarray.TextArrayUpdate;
 import org.mdpnp.comms.data.waveform.WaveformUpdate;
 import org.mdpnp.devices.io.util.StateMachine;
-import org.mdpnp.transport.Wrapper;
-import org.mdpnp.transport.dds.rti.RTICLibrary.DDS_DataReaderListener.DDS_DataReaderListener_LivelinessChangedCallback;
-import org.mdpnp.transport.dds.rti.RTICLibrary.DDS_DataWriterListener.DDS_DataWriterListener_LivelinessLostCallback;
+import org.mdpnp.messaging.Binding;
+import org.mdpnp.messaging.dds.rti.RTICLibrary.DDS_DataReaderListener.DDS_DataReaderListener_LivelinessChangedCallback;
+import org.mdpnp.messaging.dds.rti.RTICLibrary.DDS_DataWriterListener.DDS_DataWriterListener_LivelinessLostCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,7 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
-public class DDSWrapper implements Wrapper /*implements RTICLibrary.DDS_DataReaderListener.DDS_DataReaderListener_LivelinessChangedCallback*/ {
+public class DDSBinding implements Binding /*implements RTICLibrary.DDS_DataReaderListener.DDS_DataReaderListener_LivelinessChangedCallback*/ {
 	
 	private final boolean ownedParticipant;
 	private final Pointer domainParticipant;
@@ -41,7 +40,7 @@ public class DDSWrapper implements Wrapper /*implements RTICLibrary.DDS_DataRead
 		private final Class<?> mutableUpdateImplClass;
 		private final Constructor<?> mutableConstructor;
 		private final MutableIdentifiableUpdate<?> mutableUpdate;
-		private static final Logger log = LoggerFactory.getLogger(DDSWrapper.DataHandler.class);
+		private static final Logger log = LoggerFactory.getLogger(DDSBinding.DataHandler.class);
 		private final Pointer typeCode;
 		private final Pointer topic;
 		private final Pointer reader, writer;
@@ -334,15 +333,15 @@ public class DDSWrapper implements Wrapper /*implements RTICLibrary.DDS_DataRead
 		}
 	}
 
-	public DDSWrapper(int domainId, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	public DDSBinding(int domainId, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		this(null, domainId, Role.Promiscuous, gateway);
 	}
 	
-	public DDSWrapper(int domainId, Role role, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	public DDSBinding(int domainId, Role role, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		this(null, domainId, role, gateway);
 	}
 	
-	public DDSWrapper(Pointer domainParticipant, Role role, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	public DDSBinding(Pointer domainParticipant, Role role, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		this(domainParticipant, RTICLibrary.INSTANCE.DDS_DomainParticipant_get_domain_id(domainParticipant), role, gateway);
 	}
 	
@@ -362,9 +361,9 @@ public class DDSWrapper implements Wrapper /*implements RTICLibrary.DDS_DataRead
 	private final RTICLibrary.DDS_PublisherQos publisherQos = new RTICLibrary.DDS_PublisherQos();
 	
 	private final DDSInterface wrapperDDS = new DDSInterface();
-	private final Logger log = LoggerFactory.getLogger(DDSWrapper.class);
+	private final Logger log = LoggerFactory.getLogger(DDSBinding.class);
 	@SuppressWarnings("unchecked")
-    private DDSWrapper(Pointer domainParticipant, int domainId, Role role, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    private DDSBinding(Pointer domainParticipant, int domainId, Role role, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 	    
 	    String domainIdStr=System.getProperty("DDS_WRAPPER_DOMAIN_ID"); 
 	    if(null != domainIdStr) {
@@ -374,6 +373,8 @@ public class DDSWrapper implements Wrapper /*implements RTICLibrary.DDS_DataRead
 	        } catch (NumberFormatException nfe) {
 	            log.warn(nfe.getMessage(), nfe);
 	        }
+	    } else {
+	        log.info("Using domainId = " + domainId);
 	    }
 	    
 //		this.role = role;
@@ -563,7 +564,7 @@ public class DDSWrapper implements Wrapper /*implements RTICLibrary.DDS_DataRead
 		
 		
 		
-		DDSWrapper wrapper1 = new DDSWrapper(0, Role.Promiscuous, gateway1);
+		DDSBinding wrapper1 = new DDSBinding(0, Role.Promiscuous, gateway1);
 //		DDSWrapper wrapper2 = new DDSWrapper(0, Role.Device, gateway2);
 		
 		GatewayListener listener1 = new MyGatewayListener("GW1");

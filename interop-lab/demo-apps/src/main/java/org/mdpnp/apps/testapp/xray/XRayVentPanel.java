@@ -58,9 +58,9 @@ import org.mdpnp.comms.nomenclature.Device;
 import org.mdpnp.comms.nomenclature.Ventilator;
 import org.mdpnp.comms.nomenclature.ConnectedDevice.State;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
-import org.mdpnp.transport.GetConnected;
-import org.mdpnp.transport.MutableDevice;
-import org.mdpnp.transport.NetworkController.AcceptedDevices;
+import org.mdpnp.messaging.GetConnected;
+import org.mdpnp.messaging.MutableDevice;
+import org.mdpnp.messaging.NetworkController.AcceptedDevices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

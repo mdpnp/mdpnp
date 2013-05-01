@@ -1,9 +1,10 @@
-package org.mdpnp.transport;
+package org.mdpnp.messaging;
 
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.comms.Gateway;
@@ -13,13 +14,11 @@ import org.mdpnp.comms.MutableIdentifiableUpdate;
 import org.mdpnp.comms.data.text.MutableTextUpdate;
 import org.mdpnp.comms.data.text.MutableTextUpdateImpl;
 import org.mdpnp.comms.nomenclature.Association;
-import org.mdpnp.transport.Wrapper.Role;
+import org.mdpnp.messaging.BindingFactory.BindingType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-//import org.mdpnp.transport.jgroups.JGroupsWrapper;
-//import org.mdpnp.transport.jgroups.JGroupsWrapper.Role;
 
-public class Adapter {
+public class Adapter implements ThreadFactory {
 	private final MutableTextUpdate announceArriveUpdate = new MutableTextUpdateImpl(Association.ANNOUNCE_ARRIVE);
 	private final MutableTextUpdate announceDepartUpdate = new MutableTextUpdateImpl(Association.ANNOUNCE_DEPART);
 	
@@ -48,7 +47,7 @@ public class Adapter {
 	
 	private final String source = UUID.randomUUID().toString();
 	private final Gateway deviceGateway, externalGateway;
-	private Wrapper wrapper;
+	private Binding binding;
 	private final GatewayListener deviceListener, externalListener;
 //	private final GetConnected getConnected;
 	
@@ -56,7 +55,7 @@ public class Adapter {
 	
 	private final ScheduledFuture<?> heartbeat;
 	
-	public Adapter(int domainId, Gateway deviceGateway, Gateway externalGateway) throws Exception {
+	public Adapter(Gateway deviceGateway, Gateway externalGateway, BindingType type, String settings) throws Exception {
 		this.deviceGateway = deviceGateway;
 		this.externalGateway = externalGateway;
 		this.deviceListener = new GatewayListener() {
@@ -73,7 +72,7 @@ public class Adapter {
 		};
 		externalGateway.addListener(externalListener);
 		deviceGateway.addListener(deviceListener);
-		this.wrapper = WrapperFactory.createWrapper(externalGateway, Role.Device);
+		this.binding = BindingFactory.createBinding(type, externalGateway, Binding.Role.Device, settings);
 //		this.getConnected = new GetConnected(null, deviceGateway);
 
 		announceArrive();
@@ -116,14 +115,14 @@ public class Adapter {
 //		getConnected.disconnect();
 		deviceGateway.removeListener(deviceListener);
 		externalGateway.removeListener(externalListener);
-		Wrapper  wrapper = this.wrapper;
-		if(null != wrapper) {
-			wrapper.tearDown();
+		Binding  binding = this.binding;
+		if(null != binding) {
+			binding.tearDown();
 		}
 		
 
 	}
-	private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+	private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(this);
 
 	public void deviceUpdate(final IdentifiableUpdate<?> update) {
 		((MutableIdentifiableUpdate<?>)update).setSource(source);
@@ -171,5 +170,12 @@ public class Adapter {
 			deviceGateway.update(deviceListener, update);
 		}
 	}
+
+    @Override
+    public Thread newThread(Runnable r) {
+        Thread t = new Thread(r, Adapter.class.getName());
+        t.setDaemon(true);
+        return t;
+    }
 	
 }

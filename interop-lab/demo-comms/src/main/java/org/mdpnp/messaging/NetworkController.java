@@ -1,4 +1,4 @@
-package org.mdpnp.transport;
+package org.mdpnp.messaging;
 
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
@@ -35,7 +35,8 @@ import org.mdpnp.comms.data.textarray.MutableTextArrayUpdate;
 import org.mdpnp.comms.data.textarray.MutableTextArrayUpdateImpl;
 import org.mdpnp.comms.nomenclature.Association;
 import org.mdpnp.comms.nomenclature.ConnectedDevice.State;
-import org.mdpnp.transport.Wrapper.Role;
+import org.mdpnp.messaging.Binding.Role;
+import org.mdpnp.messaging.BindingFactory.BindingType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -245,13 +246,13 @@ public class NetworkController implements GatewayListener {
 	}
 
 	private final Gateway gateway;
-	private final Wrapper wrapper;
+	private final Binding binding;
 
-	public NetworkController(int domainId, Gateway gateway)
+	public NetworkController(Gateway gateway, BindingType type, String settings)
 			throws Exception {
 		this.gateway = gateway;
 		gateway.addListener(this);
-		this.wrapper = WrapperFactory.createWrapper(gateway, Role.Controller);
+		this.binding = BindingFactory.createBinding(type, gateway, Role.Controller, settings);
 
 		executor.scheduleAtFixedRate(new Runnable() {
 			public void run() {
@@ -276,7 +277,7 @@ public class NetworkController implements GatewayListener {
 	public void tearDown() {
 		gateway.removeListener(this);
 //		wrapper.disconnect();
-		wrapper.tearDown();
+		binding.tearDown();
 	}
 
 	@Override

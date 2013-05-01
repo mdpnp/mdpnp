@@ -1,4 +1,4 @@
-package org.mdpnp.transport.dds.rti;
+package org.mdpnp.messaging.dds.rti;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -18,9 +18,9 @@ import org.mdpnp.comms.data.text.TextUpdate;
 import org.mdpnp.comms.data.textarray.TextArrayUpdate;
 import org.mdpnp.comms.data.waveform.WaveformUpdate;
 import org.mdpnp.devices.io.util.StateMachine;
-import org.mdpnp.transport.Wrapper;
-import org.mdpnp.transport.dds.rti.RTICLibrary.DDS_DataReaderListener.DDS_DataReaderListener_LivelinessChangedCallback;
-import org.mdpnp.transport.dds.rti.RTICLibrary.DDS_DataWriterListener.DDS_DataWriterListener_LivelinessLostCallback;
+import org.mdpnp.messaging.Binding;
+import org.mdpnp.messaging.dds.rti.RTICLibrary.DDS_DataReaderListener.DDS_DataReaderListener_LivelinessChangedCallback;
+import org.mdpnp.messaging.dds.rti.RTICLibrary.DDS_DataWriterListener.DDS_DataWriterListener_LivelinessLostCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,7 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
-public class DDSWrapperJNI implements Wrapper /*implements RTICLibrary.DDS_DataReaderListener.DDS_DataReaderListener_LivelinessChangedCallback*/ {
+public class DDSBindingJNI implements Binding /*implements RTICLibrary.DDS_DataReaderListener.DDS_DataReaderListener_LivelinessChangedCallback*/ {
 
 	
 	private final Pointer domainParticipant = Pointer.NULL, subscriber = Pointer.NULL, publisher = Pointer.NULL;
@@ -44,7 +44,7 @@ public class DDSWrapperJNI implements Wrapper /*implements RTICLibrary.DDS_DataR
 		private final Class<?> mutableUpdateImplClass;
 		private final Constructor<?> mutableConstructor;
 		private final MutableIdentifiableUpdate<?> mutableUpdate;
-		private static final Logger log = LoggerFactory.getLogger(DDSWrapperJNI.DataHandler.class);
+		private static final Logger log = LoggerFactory.getLogger(DDSBindingJNI.DataHandler.class);
 		private final Pointer typeCode;
 		private final Pointer topic;
 		private final Pointer reader, writer;
@@ -274,8 +274,8 @@ public class DDSWrapperJNI implements Wrapper /*implements RTICLibrary.DDS_DataR
 		}
 	}
 
-	public DDSWrapperJNI(int domainId, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		this(domainId, Wrapper.Role.Promiscuous, gateway);
+	public DDSBindingJNI(int domainId, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		this(domainId, Binding.Role.Promiscuous, gateway);
 	}
 	
 	private final List<DataHandler> handlers = new ArrayList<DataHandler>();
@@ -297,7 +297,7 @@ public class DDSWrapperJNI implements Wrapper /*implements RTICLibrary.DDS_DataR
 	private native void destroy(long nativePointer);
 	
 	@SuppressWarnings("unchecked")
-    public DDSWrapperJNI(int domainId, Role role, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    public DDSBindingJNI(int domainId, Role role, Gateway gateway) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		Runtime.getRuntime().loadLibrary("ddswrapper");
 		// TODO this is not well thought out
 		this.nativePeer = init(domainId, role.getSendPartitions()[0]);
@@ -353,7 +353,7 @@ public class DDSWrapperJNI implements Wrapper /*implements RTICLibrary.DDS_DataR
 		
 		
 		
-		DDSWrapperJNI wrapper1 = new DDSWrapperJNI(0, Role.Promiscuous, gateway1);
+		DDSBindingJNI wrapper1 = new DDSBindingJNI(0, Role.Promiscuous, gateway1);
 //		DDSWrapper wrapper2 = new DDSWrapper(0, Role.Device, gateway2);
 		
 		MyGatewayListener listener1 = new MyGatewayListener("GW1");

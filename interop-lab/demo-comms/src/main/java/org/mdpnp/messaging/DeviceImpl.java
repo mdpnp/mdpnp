@@ -1,4 +1,4 @@
-package org.mdpnp.transport;
+package org.mdpnp.messaging;
 
 import org.mdpnp.comms.nomenclature.ConnectedDevice;
 import org.mdpnp.comms.nomenclature.ConnectedDevice.State;

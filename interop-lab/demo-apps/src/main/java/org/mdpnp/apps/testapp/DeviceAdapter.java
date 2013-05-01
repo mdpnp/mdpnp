@@ -15,17 +15,24 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import org.mdpnp.apps.gui.swing.DevicePanelFactory;
+import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.comms.Gateway;
 import org.mdpnp.comms.GatewayListener;
 import org.mdpnp.comms.IdentifiableUpdate;
+import org.mdpnp.comms.Identifier;
 import org.mdpnp.comms.data.enumeration.EnumerationUpdate;
 import org.mdpnp.comms.data.identifierarray.IdentifierArrayUpdate;
+import org.mdpnp.comms.data.identifierarray.MutableIdentifierArrayUpdate;
+import org.mdpnp.comms.data.identifierarray.MutableIdentifierArrayUpdateImpl;
 import org.mdpnp.comms.data.text.MutableTextUpdate;
 import org.mdpnp.comms.data.text.MutableTextUpdateImpl;
 import org.mdpnp.comms.data.text.TextUpdate;
 import org.mdpnp.comms.nomenclature.Association;
 import org.mdpnp.comms.nomenclature.ConnectedDevice;
+import org.mdpnp.comms.nomenclature.ConnectedDevice.ConnectionType;
 import org.mdpnp.comms.nomenclature.Device;
+import org.mdpnp.comms.serial.SerialProviderFactory;
+import org.mdpnp.comms.serial.TCPSerialProvider;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
 import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
@@ -38,26 +45,14 @@ import org.mdpnp.devices.philips.intellivue.DemoMP70;
 import org.mdpnp.devices.simulation.SimulatedBloodPressureImpl;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.webcam.WebcamImpl;
-import org.mdpnp.transport.Adapter;
-import org.mdpnp.transport.GetConnected;
+import org.mdpnp.messaging.Adapter;
+import org.mdpnp.messaging.GetConnected;
+import org.mdpnp.messaging.BindingFactory.BindingType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DeviceAdapter {
-	public enum Type {
-	    PO_Simulator,
-        NBP_Simulator,
-        Bernoulli,
-		Nonin,
-		PhilipsMP70,
-		DragerApollo,
-		DragerEvitaXL,
-		Capnostream20,
-		NellcorN595,
-	    MasimoRadical7,
-		Webcam,
-		Symbiq,
-	} 
+	
 	
 	private static JFrame frame;
 	private static GetConnected getConnected;
@@ -65,7 +60,7 @@ public class DeviceAdapter {
 	
 	private static boolean panelized;
 	
-	public static final Device buildDevice(Type type, Gateway deviceGateway) throws NoSuchFieldException, SecurityException, IOException {
+	public static final Device buildDevice(DeviceType type, Gateway deviceGateway) throws NoSuchFieldException, SecurityException, IOException {
 		switch(type) {
 		case Nonin:
 			return new DemoPulseOx(deviceGateway);
@@ -111,28 +106,20 @@ public class DeviceAdapter {
 	private static final Logger log = LoggerFactory.getLogger(DeviceAdapter.class);
 	private static Adapter adapter;
 	
-	public static void main(String[] args) throws Exception {
-	    int domainId = 0;
-	        
-        try {
-            domainId = Integer.parseInt(args[0]);
-            args = Arrays.copyOfRange(args, 1, args.length);
-            log.info("Using domainId="+domainId);
-        } catch (Throwable t) {
-            
-        }
-        
-		boolean gui = true;
-		Type type;
+	public static void start(DeviceType type, BindingType bindingType, String settings, final String address, boolean gui) throws Exception {
 		
 		final Gateway deviceGateway = new Gateway();
 		final Gateway externalGateway = new Gateway();
 		
 		GatewayListener bootstrapListener = null;
 		
-		if(args.length > 0) {
-			type = Type.valueOf(args[0]);
-			gui = false;
+		
+		if(null!=address && address.contains(":")) {
+            SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
+            log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
+        }
+		
+		if(!gui) {
 			frame = null;
 			
 			deviceGateway.addListener(bootstrapListener = new GatewayListener() {
@@ -159,18 +146,18 @@ public class DeviceAdapter {
 				}
 				
 			});
-			final String[] _args = args;
+
 			getConnected = new GetConnected(null, deviceGateway) {
 				@Override
 				protected void abortConnect() {
 				}
 				@Override
 				protected String addressFromUser() {
-					return _args.length > 1 ? _args[1] : null;
+					return address;
 				}
 				@Override
 				protected String addressFromUserList(String[] list) {
-					return _args.length > 1 ? _args[1] : null;
+					return address;
 				}
 				@Override
 				protected boolean isFixedAddress() {
@@ -218,12 +205,29 @@ public class DeviceAdapter {
 			frame.setSize(320, 480);
 			frame.setVisible(true);
 
-			getConnected = new GetConnected(frame, deviceGateway);
-			
-			if(null == (type = (Type) JOptionPane.showInputDialog(frame, "Choose a device to adapt", "Device", JOptionPane.QUESTION_MESSAGE, null, Type.values(), null))) {
-				frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
-				return;
+			if(null == address) {
+			    getConnected = new GetConnected(frame, deviceGateway);
+			} else {
+			    getConnected = new GetConnected(frame, deviceGateway) {
+			      @Override
+			        protected String addressFromUser() {
+			            return address;
+			        }  
+			      @Override
+			        protected String addressFromUserList(String[] list) {
+			            return address;
+			        }
+			      @Override
+			        protected boolean isFixedAddress() {
+			            return true;
+			        }
+			    };
 			}
+			
+//			if(null == (type = (Type) JOptionPane.showInputDialog(frame, "Choose a device to adapt", "Device", JOptionPane.QUESTION_MESSAGE, null, Type.values(), null))) {
+//				frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+//				return;
+//			}
 		}
 		
 		
@@ -231,8 +235,7 @@ public class DeviceAdapter {
 		Device device = buildDevice(type, deviceGateway);
 
 			
-		
-		adapter = new Adapter(domainId, deviceGateway, externalGateway);
+		adapter = new Adapter(deviceGateway, externalGateway, bindingType, settings);
 		
 		if(gui) {
 			getConnected.connect();
@@ -250,6 +253,10 @@ public class DeviceAdapter {
 					killAdapter();
 				}
 			}));
+			MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
+	        miau.setValue(new Identifier[] {Device.NAME, Device.GUID, Device.ICON});
+	        deviceGateway.update(bootstrapListener, miau);
+	        
 			MutableTextUpdate tu = new MutableTextUpdateImpl(Device.REQUEST_AVAILABLE_IDENTIFIERS);
 			tu.setTarget(adapter.getSource());
 			// This request will drive GUI creation
@@ -265,18 +272,24 @@ public class DeviceAdapter {
 
 			getConnected.connect();
 
+			MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
+	        miau.setValue(new Identifier[] {Device.NAME, Device.GUID, Device.ICON});
+	        deviceGateway.update(miau);
+			
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			String line = null;
 			while(!"quit".equals(line)) {
 				line = br.readLine();
 			}
+			int n = Thread.activeCount() + 10;
+			Thread[] threads = new Thread[n];
+			n = Thread.enumerate(threads);
+			for(int i = 0; i < n; i++) {
+			    if(threads[i].isAlive() && !threads[i].isDaemon() && !Thread.currentThread().equals(threads[i])) {
+			        System.err.println("Non-Daemon thread would block exit: "+threads[i].getName());
+			    }
+			}
+			System.exit(0);
 		}
-		
-		
-		
-		
-		
-		
 	}
-	
 }

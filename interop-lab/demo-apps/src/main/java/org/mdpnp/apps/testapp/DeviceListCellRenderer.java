@@ -9,8 +9,8 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 
 import org.mdpnp.comms.nomenclature.ConnectedDevice.State;
-import org.mdpnp.transport.Device;
-import org.mdpnp.transport.DeviceIcon;
+import org.mdpnp.messaging.Device;
+import org.mdpnp.messaging.DeviceIcon;
 
 public class DeviceListCellRenderer extends DefaultListCellRenderer {
 	@Override

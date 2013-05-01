@@ -25,7 +25,7 @@ import org.mdpnp.comms.data.text.MutableTextUpdateImpl;
 import org.mdpnp.comms.data.text.TextUpdate;
 import org.mdpnp.comms.data.textarray.TextArrayUpdate;
 import org.mdpnp.comms.nomenclature.ConnectedDevice;
-import org.mdpnp.transport.DeviceIcon;
+import org.mdpnp.messaging.DeviceIcon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
