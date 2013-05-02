@@ -3,7 +3,6 @@ package org.mdpnp.apps.testapp;
 import java.awt.CardLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,12 +23,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
-import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.apps.testapp.Configuration.Application;
+import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.comms.serial.SerialProviderFactory;
 import org.mdpnp.messaging.BindingFactory;
-import org.mdpnp.messaging.GetConnected;
 import org.mdpnp.messaging.BindingFactory.BindingType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +50,6 @@ public class ConfigurationDialog extends JDialog {
     private final CardLayout addressCards = new CardLayout();
     private final JPanel addressPanel = new JPanel(addressCards);
     private final JLabel bindingSettingsLabel = new JLabel("Settings:");
-    private final JPanel bindingSettingsPanel = new JPanel();
     
     protected void setTransport(BindingFactory.BindingType transport) {
         switch(transport) {
@@ -62,13 +60,19 @@ public class ConfigurationDialog extends JDialog {
             break;
         case JGROUPS:
             bindingSettings.setVisible(true);
-            bindingSettings.setColumns(18);
+            bindingSettings.setColumns(15);
             bindingSettingsLabel.setText(transport.getSettingsDescription());
             break;
         default:
             bindingSettings.setVisible(false);
         }
-        pack();
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                pack();
+                setLocationRelativeTo(null);
+            }
+        });
+        
     }
     
     protected void set(Application app, DeviceType deviceType) {
@@ -108,7 +112,12 @@ public class ConfigurationDialog extends JDialog {
             start.setText("Start " + app);
             break;
         }
-        pack();        
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                pack();
+                setLocationRelativeTo(null);
+            }
+        });  
     }
     
     private final static Logger log = LoggerFactory.getLogger(ConfigurationDialog.class);
@@ -188,7 +197,7 @@ public class ConfigurationDialog extends JDialog {
         
         
         setTitle("MD PnP Demo Apps");
-        setLocationRelativeTo(null);
+        
         setLayout(new GridBagLayout());
         
         bindingSettings.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -245,11 +254,14 @@ public class ConfigurationDialog extends JDialog {
         gbc.gridy++;
         gbc.gridx = 0;
         addLabel(new JLabel("Binding:"), gbc);
-        bindingSettingsPanel.add(bindings);
-        bindingSettingsPanel.add(bindingSettingsLabel);
-        bindingSettingsPanel.add(bindingSettings);
         gbc.gridx++;
-        addOption(bindingSettingsPanel, gbc);
+        addOption(bindings, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        addLabel(bindingSettingsLabel, gbc);
+        gbc.gridx++;
+        addOption(bindingSettings, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
@@ -316,6 +328,7 @@ public class ConfigurationDialog extends JDialog {
     
     public Configuration showDialog() {
         pack();
+        setLocationRelativeTo(null);
         setVisible(true);
         
         String address = null;
