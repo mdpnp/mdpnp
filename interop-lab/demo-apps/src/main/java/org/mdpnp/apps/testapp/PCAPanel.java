@@ -268,14 +268,18 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	
 	private static final void sendPumpCommand(final String command, final JComponent parent) {
 		lastPumpCommand = command;
-		try {
-			FileOutputStream fos = new FileOutputStream("C:\\pump_control_1");
-			fos.write(command.getBytes("ASCII"));
-			fos.flush();
-			fos.close();
-		} catch (Throwable t) {
-			log.error("PUMP COMMAND BY FILE FAILED", t);
-		}
+		
+		// removed by JP May 2, 2013
+		// We rarely run this software colocated with the software intended to detect this file
+		// all this does 99% of the time is create litter in the file system
+//		try {
+//			FileOutputStream fos = new FileOutputStream("C:\\pump_control_1");
+//			fos.write(command.getBytes("ASCII"));
+//			fos.flush();
+//			fos.close();
+//		} catch (Throwable t) {
+//			log.error("PUMP COMMAND BY FILE FAILED", t);
+//		}
 		Thread t = new Thread(new Runnable() {
 			public void run() { 
 				try { 
