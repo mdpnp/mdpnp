@@ -1,5 +1,11 @@
 defaultTasks 'build'
 
+// builds a gradle wrapper 
+// http://www.gradle.org/docs/current/userguide/gradle_wrapper.html
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.4'
+}
+
 // I don't want to apply the java plug-in to all 
 // subprojects
 ext {
