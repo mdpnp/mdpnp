@@ -20,7 +20,11 @@ dependencies {
   compile project(':interop-lab:demo-guis-jogl')
   
   runtime project(':interop-lab:demo-purejavacomm')
-  runtime project(':interop-lab:demo-rtidds')
+  
+  if(project.hasProperty('ICE_IC01_USER') && project.hasProperty('ICE_IC01_PASSWORD')) {
+    runtime project(':interop-lab:demo-rtidds')
+  }
+  
   runtime project(':interop-lab:demo-jgroups')
   
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
