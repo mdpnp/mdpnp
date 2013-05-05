@@ -7,7 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
-import org.mdpnp.comms.nomenclature.InfusionPump;
+import org.mdpnp.nomenclature.InfusionPump;
 
 public interface SimulatedInfusionPump extends InfusionPump {
 

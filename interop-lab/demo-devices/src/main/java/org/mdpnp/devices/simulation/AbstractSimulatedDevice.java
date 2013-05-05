@@ -9,8 +9,8 @@ package org.mdpnp.devices.simulation;
 
 import java.util.UUID;
 
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.device.AbstractDevice;
+import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.messaging.Gateway;
 
 public abstract class AbstractSimulatedDevice extends AbstractDevice implements SimulatedDevice {
 	public AbstractSimulatedDevice(Gateway gateway) {

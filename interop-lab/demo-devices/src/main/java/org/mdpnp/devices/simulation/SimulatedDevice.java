@@ -7,7 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
-import org.mdpnp.comms.nomenclature.Device;
+import org.mdpnp.nomenclature.Device;
 
 public interface SimulatedDevice extends Device {
 

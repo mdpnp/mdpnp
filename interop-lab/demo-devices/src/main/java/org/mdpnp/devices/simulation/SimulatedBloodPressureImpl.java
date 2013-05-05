@@ -9,14 +9,14 @@ package org.mdpnp.devices.simulation;
 
 import java.util.Random;
 
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.IdentifiableUpdate;
-import org.mdpnp.comms.data.enumeration.MutableEnumerationUpdate;
-import org.mdpnp.comms.data.enumeration.MutableEnumerationUpdateImpl;
-import org.mdpnp.comms.data.numeric.MutableNumericUpdate;
-import org.mdpnp.comms.data.numeric.MutableNumericUpdateImpl;
-import org.mdpnp.comms.nomenclature.NoninvasiveBloodPressure;
-import org.mdpnp.comms.nomenclature.Ventilator;
+import org.mdpnp.data.IdentifiableUpdate;
+import org.mdpnp.data.enumeration.MutableEnumerationUpdate;
+import org.mdpnp.data.enumeration.MutableEnumerationUpdateImpl;
+import org.mdpnp.data.numeric.MutableNumericUpdate;
+import org.mdpnp.data.numeric.MutableNumericUpdateImpl;
+import org.mdpnp.messaging.Gateway;
+import org.mdpnp.nomenclature.NoninvasiveBloodPressure;
+import org.mdpnp.nomenclature.Ventilator;
 
 public class SimulatedBloodPressureImpl extends AbstractSimulatedConnectedDevice implements SimulatedBloodPressure, Runnable {
 	private final MutableNumericUpdate systolicUpdate = new MutableNumericUpdateImpl(SYSTOLIC);

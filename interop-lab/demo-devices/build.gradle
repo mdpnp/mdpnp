@@ -5,7 +5,8 @@ sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
 dependencies {
-	compile project(':interop-lab:demo-comms')
+    compile project(':interop-lab:demo-datamodel')
+    compile project(':interop-lab:demo-messaging')
 	compile project(':devices:philips')
 	compile project(':devices:oridion')
 	compile project(':devices:draeger')
@@ -14,10 +15,5 @@ dependencies {
 	compile project(':devices:nellcor')
 	compile project(':devices:nonin')
     compile project(':devices:simulated')
-    
-    compile group: 'org.jogamp.jogl', name: 'jogl-all-main', version: '2.0-rc11'
-    compile group: 'org.jogamp.gluegen', name: 'gluegen-rt-main', version: '2.0-rc11'
-    compile group: 'com.googlecode.javacpp', name: 'javacpp', version: '0.4'
-    compile group: 'com.googlecode.javacv', name: 'javacv', version: '0.4'
-    compile group: 'javax.media', name: 'jmf', version: '2.1.1e'
+
 }

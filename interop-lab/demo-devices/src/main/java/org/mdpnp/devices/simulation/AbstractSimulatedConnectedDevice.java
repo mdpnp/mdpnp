@@ -9,8 +9,8 @@ package org.mdpnp.devices.simulation;
 
 import java.util.UUID;
 
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.connected.AbstractConnectedDevice;
+import org.mdpnp.devices.connected.AbstractConnectedDevice;
+import org.mdpnp.messaging.Gateway;
 
 public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice implements SimulatedConnectedDevice {
 	protected Throwable t;

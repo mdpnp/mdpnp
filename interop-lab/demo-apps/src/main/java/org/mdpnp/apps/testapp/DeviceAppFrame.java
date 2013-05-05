@@ -15,15 +15,15 @@ import java.util.Collection;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import org.mdpnp.apps.gui.swing.DevicePanel;
-import org.mdpnp.apps.gui.swing.DevicePanelFactory;
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.GatewayListener;
-import org.mdpnp.comms.IdentifiableUpdate;
-import org.mdpnp.comms.data.identifierarray.IdentifierArrayUpdate;
-import org.mdpnp.comms.data.text.MutableTextUpdate;
-import org.mdpnp.comms.data.text.MutableTextUpdateImpl;
-import org.mdpnp.comms.nomenclature.Device;
+import org.mdpnp.data.IdentifiableUpdate;
+import org.mdpnp.data.identifierarray.IdentifierArrayUpdate;
+import org.mdpnp.data.text.MutableTextUpdate;
+import org.mdpnp.data.text.MutableTextUpdateImpl;
+import org.mdpnp.guis.swing.DevicePanel;
+import org.mdpnp.guis.swing.DevicePanelFactory;
+import org.mdpnp.messaging.Gateway;
+import org.mdpnp.messaging.GatewayListener;
+import org.mdpnp.nomenclature.Device;
 
 @SuppressWarnings("serial")
 public class DeviceAppFrame extends javax.swing.JFrame implements GatewayListener {

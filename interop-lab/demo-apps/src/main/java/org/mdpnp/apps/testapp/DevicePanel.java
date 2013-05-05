@@ -10,14 +10,14 @@ import java.util.Collection;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import org.mdpnp.apps.gui.swing.DevicePanelFactory;
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.GatewayListener;
-import org.mdpnp.comms.IdentifiableUpdate;
-import org.mdpnp.comms.data.identifierarray.IdentifierArrayUpdate;
-import org.mdpnp.comms.data.text.MutableTextUpdate;
-import org.mdpnp.comms.data.text.MutableTextUpdateImpl;
-import org.mdpnp.comms.nomenclature.Device;
+import org.mdpnp.data.IdentifiableUpdate;
+import org.mdpnp.data.identifierarray.IdentifierArrayUpdate;
+import org.mdpnp.data.text.MutableTextUpdate;
+import org.mdpnp.data.text.MutableTextUpdateImpl;
+import org.mdpnp.guis.swing.DevicePanelFactory;
+import org.mdpnp.messaging.Gateway;
+import org.mdpnp.messaging.GatewayListener;
+import org.mdpnp.nomenclature.Device;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,8 +56,8 @@ public class DevicePanel extends JPanel implements GatewayListener {
 		};
 		for(int i = 0; i < getComponentCount(); i++) {
 			Component c  = getComponent(i);
-			if(c instanceof org.mdpnp.apps.gui.swing.DevicePanel) {
-				((org.mdpnp.apps.gui.swing.DevicePanel)c).destroy();
+			if(c instanceof org.mdpnp.guis.swing.DevicePanel) {
+				((org.mdpnp.guis.swing.DevicePanel)c).destroy();
 			}
 		}
 		if(SwingUtilities.isEventDispatchThread()) {
@@ -92,9 +92,9 @@ public class DevicePanel extends JPanel implements GatewayListener {
 			if(0 == getComponentCount() && Device.GET_AVAILABLE_IDENTIFIERS.equals(update.getIdentifier())) {
 				log.debug("GET_AVAILABLE_IDENTIFIERS .. building panels for " + source);
 				
-				final Collection<org.mdpnp.apps.gui.swing.DevicePanel> panels = DevicePanelFactory.findPanel( (IdentifierArrayUpdate) update, gateway, source);
+				final Collection<org.mdpnp.guis.swing.DevicePanel> panels = DevicePanelFactory.findPanel( (IdentifierArrayUpdate) update, gateway, source);
 				log.debug("Found " + panels.size() + " panels for " + source);
-				for(org.mdpnp.apps.gui.swing.DevicePanel panel : panels) {
+				for(org.mdpnp.guis.swing.DevicePanel panel : panels) {
 					DemoPanel.setChildrenOpaque(panel, true);
 					panel.setBackground(Color.black);
 					panel.setForeground(Color.green);
@@ -102,7 +102,7 @@ public class DevicePanel extends JPanel implements GatewayListener {
 				Runnable r = new Runnable() {
 					public void run() {
 						setLayout(new GridLayout(panels.size(), 1));
-						for(org.mdpnp.apps.gui.swing.DevicePanel panel : panels) {
+						for(org.mdpnp.guis.swing.DevicePanel panel : panels) {
 							
 							add(panel);
 						}

@@ -1,0 +1,45 @@
+defaultTasks 'build'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.3'
+    }
+}
+
+apply plugin: 'android'
+
+//evaluationDependsOn(':interop-lab:demo-guis')
+//evaluationDependsOn(':interop-lab:demo-devices')
+//evaluationDependsOn(':interop-lab:demo-datamodel')
+//evaluationDependsOn(':interop-lab:demo-messaging')
+//evaluationDependsOn(':interop-lab:demo-nomenclature')
+//evaluationDependsOn(':devices:nonin')
+
+
+
+android {
+    compileSdkVersion 10
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            res.srcDirs = ['res']
+        }
+    }
+    
+}
+
+
+
+dependencies {
+        compile group: 'org.slf4j', name: 'slf4j-android', version: '1.6.1-RC1'
+        compile(project(':interop-lab:demo-guis')) {
+            exclude group: 'org.slf4j'
+        }
+        compile(project(':interop-lab:demo-devices')) {
+            exclude group: 'org.slf4j'
+        }
+}

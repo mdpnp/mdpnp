@@ -7,7 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
-import org.mdpnp.comms.nomenclature.NoninvasiveBloodPressure;
+import org.mdpnp.nomenclature.NoninvasiveBloodPressure;
 
 public interface SimulatedBloodPressure extends NoninvasiveBloodPressure, SimulatedConnectedDevice {
 	void doSimulate(int systolic, int diastolic, int pulserate);

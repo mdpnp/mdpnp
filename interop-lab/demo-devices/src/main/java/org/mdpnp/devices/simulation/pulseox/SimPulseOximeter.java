@@ -9,13 +9,13 @@ package org.mdpnp.devices.simulation.pulseox;
 
 import java.util.Date;
 
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.data.numeric.MutableNumericUpdate;
-import org.mdpnp.comms.data.numeric.MutableNumericUpdateImpl;
-import org.mdpnp.comms.data.waveform.MutableWaveformUpdate;
-import org.mdpnp.comms.data.waveform.MutableWaveformUpdateImpl;
-import org.mdpnp.comms.nomenclature.PulseOximeter;
+import org.mdpnp.data.numeric.MutableNumericUpdate;
+import org.mdpnp.data.numeric.MutableNumericUpdateImpl;
+import org.mdpnp.data.waveform.MutableWaveformUpdate;
+import org.mdpnp.data.waveform.MutableWaveformUpdateImpl;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.messaging.Gateway;
+import org.mdpnp.nomenclature.PulseOximeter;
 
 public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
 	protected final MutableNumericUpdate pulseUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE);

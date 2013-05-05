@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="hello">Hello World, AndroidPulseOxActivity!</string>
+    <string name="app_name">MD PnP</string>
+    <string name="searchForDevices">Search For Devices</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_pulse_ox">PulseOxActivity</string>
+    <string name="spo2">%SpO2</string>
+    <string name="bpm">BPM</string>
+    <color name="redTextColor">#00FF00</color>
+    <string name="no_value">----</string>
+    <color name="bgColor">#000000</color>
+    <string name="initial_connect_state">Disconnected</string>
+    <string name="initial_device_name">--- Awaiting Name ---</string>
+    <string name="initial_device_guid">--- Awaiting GUID ---</string>
+    <color name="greenTextColor">#00FF00</color>
+    <color name="yellowTextColor">#FFFF00</color>
+
+</resources>

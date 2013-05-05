@@ -16,14 +16,11 @@ import java.util.TooManyListenersException;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.GatewayListener;
-import org.mdpnp.comms.IdentifiableUpdate;
-import org.mdpnp.comms.data.text.MutableTextUpdate;
-import org.mdpnp.comms.data.text.MutableTextUpdateImpl;
-import org.mdpnp.comms.data.text.TextUpdate;
-import org.mdpnp.comms.nomenclature.Demographics;
-import org.mdpnp.comms.nomenclature.Device;
+import org.mdpnp.data.IdentifiableUpdate;
+import org.mdpnp.data.text.MutableTextUpdate;
+import org.mdpnp.data.text.MutableTextUpdateImpl;
+import org.mdpnp.data.text.TextUpdate;
+import org.mdpnp.devices.connected.GetConnected;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
 import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
@@ -34,8 +31,10 @@ import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
 import org.mdpnp.devices.philips.intellivue.DemoMP70;
 import org.mdpnp.devices.simulation.SimulatedBloodPressureImpl;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
-import org.mdpnp.devices.webcam.WebcamImpl;
-import org.mdpnp.messaging.GetConnected;
+import org.mdpnp.messaging.Gateway;
+import org.mdpnp.messaging.GatewayListener;
+import org.mdpnp.nomenclature.Demographics;
+import org.mdpnp.nomenclature.Device;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,9 +98,6 @@ public class DeviceApp {
 			break;
 		case NBP_Simulator:
 			new SimulatedBloodPressureImpl(gateway);
-			break;
-		case Webcam:
-			new WebcamImpl(gateway);
 			break;
 		case Capnostream20:
 			new DemoCapnostream20(gateway);

@@ -1,7 +1,7 @@
 package org.mdpnp.devices.hospira.symbiq;
 
-import org.mdpnp.comms.Gateway;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.messaging.Gateway;
 
 public class DemoSymbiq extends AbstractSimulatedConnectedDevice {
 

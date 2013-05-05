@@ -11,19 +11,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.data.enumeration.Enumeration;
-import org.mdpnp.comms.data.enumeration.EnumerationImpl;
-import org.mdpnp.comms.data.enumeration.MutableEnumerationUpdate;
-import org.mdpnp.comms.data.enumeration.MutableEnumerationUpdateImpl;
-import org.mdpnp.comms.data.numeric.MutableNumericUpdate;
-import org.mdpnp.comms.data.numeric.MutableNumericUpdateImpl;
-import org.mdpnp.comms.data.numeric.Numeric;
-import org.mdpnp.comms.data.numeric.NumericImpl;
-import org.mdpnp.comms.data.waveform.MutableWaveformUpdate;
-import org.mdpnp.comms.data.waveform.MutableWaveformUpdateImpl;
-import org.mdpnp.comms.nomenclature.PulseOximeter;
-import org.mdpnp.comms.serial.AbstractDelegatingSerialDevice;
+import org.mdpnp.data.enumeration.Enumeration;
+import org.mdpnp.data.enumeration.EnumerationImpl;
+import org.mdpnp.data.enumeration.MutableEnumerationUpdate;
+import org.mdpnp.data.enumeration.MutableEnumerationUpdateImpl;
+import org.mdpnp.data.numeric.MutableNumericUpdate;
+import org.mdpnp.data.numeric.MutableNumericUpdateImpl;
+import org.mdpnp.data.numeric.Numeric;
+import org.mdpnp.data.numeric.NumericImpl;
+import org.mdpnp.data.waveform.MutableWaveformUpdate;
+import org.mdpnp.data.waveform.MutableWaveformUpdateImpl;
+import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
+import org.mdpnp.messaging.Gateway;
+import org.mdpnp.nomenclature.PulseOximeter;
 
 public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 

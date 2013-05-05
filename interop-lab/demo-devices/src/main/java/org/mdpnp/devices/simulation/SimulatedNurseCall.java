@@ -7,7 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
-import org.mdpnp.comms.nomenclature.NurseCall;
+import org.mdpnp.nomenclature.NurseCall;
 
 public interface SimulatedNurseCall extends NurseCall {
 

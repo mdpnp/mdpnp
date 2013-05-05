@@ -7,7 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
-import org.mdpnp.comms.nomenclature.ConnectedDevice;
+import org.mdpnp.nomenclature.ConnectedDevice;
 
 public interface SimulatedConnectedDevice extends ConnectedDevice, SimulatedDevice {
 //	void simulateConnect();

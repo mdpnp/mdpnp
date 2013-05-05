@@ -27,7 +27,8 @@ import javax.swing.SwingUtilities;
 
 import org.mdpnp.apps.testapp.Configuration.Application;
 import org.mdpnp.apps.testapp.Configuration.DeviceType;
-import org.mdpnp.comms.serial.SerialProviderFactory;
+import org.mdpnp.devices.serial.SerialProviderFactory;
+import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.mdpnp.messaging.BindingFactory;
 import org.mdpnp.messaging.BindingFactory.BindingType;
 import org.slf4j.Logger;
@@ -90,7 +91,13 @@ public class ConfigurationDialog extends JDialog {
                     serialPorts = new JComboBox(SerialProviderFactory.getDefaultProvider().getPortNames().toArray());
                     addressPanel.add(serialPorts, "serial");
                 }
-                addressCards.show(addressPanel, "serial");
+                if(SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
+                    addressCards.show(addressPanel, "address");
+                    addressLabel.setText("IP/Port:");
+                } else {
+                    addressCards.show(addressPanel, "serial");
+                }
+                
                 break;
             case Network:
                 addressLabel.setVisible(true);
@@ -188,6 +195,7 @@ public class ConfigurationDialog extends JDialog {
                                 addressPanel.add(serialPorts, "serial");
                             }
                             this.serialPorts.setSelectedItem(conf.getAddress());
+                            this.address.setText(conf.getAddress());
                             break;
                         }
                     }                    
@@ -339,7 +347,11 @@ public class ConfigurationDialog extends JDialog {
                 address = this.address.getText();
                 break;
             case Serial:
-                address = this.serialPorts.getSelectedItem().toString();
+                if(SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
+                    address = this.address.getText();
+                } else {
+                    address = this.serialPorts.getSelectedItem().toString();
+                }
                 break;
             }
             

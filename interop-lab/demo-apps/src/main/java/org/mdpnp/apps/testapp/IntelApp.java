@@ -7,23 +7,23 @@ import java.util.Collection;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-import org.mdpnp.apps.gui.swing.DevicePanelFactory;
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.GatewayListener;
-import org.mdpnp.comms.IdentifiableUpdate;
-import org.mdpnp.comms.Identifier;
-import org.mdpnp.comms.data.enumeration.EnumerationUpdate;
-import org.mdpnp.comms.data.identifierarray.IdentifierArrayUpdate;
-import org.mdpnp.comms.data.identifierarray.MutableIdentifierArrayUpdate;
-import org.mdpnp.comms.data.identifierarray.MutableIdentifierArrayUpdateImpl;
-import org.mdpnp.comms.data.text.MutableTextUpdate;
-import org.mdpnp.comms.data.text.MutableTextUpdateImpl;
-import org.mdpnp.comms.data.textarray.TextArrayUpdate;
-import org.mdpnp.comms.nomenclature.ConnectedDevice;
-import org.mdpnp.comms.nomenclature.Device;
-import org.mdpnp.comms.nomenclature.SerialDevice;
-import org.mdpnp.comms.nomenclature.ConnectedDevice.ConnectionType;
+import org.mdpnp.data.IdentifiableUpdate;
+import org.mdpnp.data.Identifier;
+import org.mdpnp.data.enumeration.EnumerationUpdate;
+import org.mdpnp.data.identifierarray.IdentifierArrayUpdate;
+import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdate;
+import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdateImpl;
+import org.mdpnp.data.text.MutableTextUpdate;
+import org.mdpnp.data.text.MutableTextUpdateImpl;
+import org.mdpnp.data.textarray.TextArrayUpdate;
 import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
+import org.mdpnp.guis.swing.DevicePanelFactory;
+import org.mdpnp.messaging.Gateway;
+import org.mdpnp.messaging.GatewayListener;
+import org.mdpnp.nomenclature.ConnectedDevice;
+import org.mdpnp.nomenclature.Device;
+import org.mdpnp.nomenclature.SerialDevice;
+import org.mdpnp.nomenclature.ConnectedDevice.ConnectionType;
 
 import com.jeffplourde.util.Arrays;
 
@@ -46,7 +46,7 @@ public class IntelApp {
 			public void update(IdentifiableUpdate<?> update) {
 				if(Device.GET_AVAILABLE_IDENTIFIERS.equals(update.getIdentifier())) {
 					IdentifierArrayUpdate tau = (IdentifierArrayUpdate) update;
-					Collection<org.mdpnp.apps.gui.swing.DevicePanel> panels = DevicePanelFactory.findPanel((IdentifierArrayUpdate)update, gateway, update.getSource());
+					Collection<org.mdpnp.guis.swing.DevicePanel> panels = DevicePanelFactory.findPanel((IdentifierArrayUpdate)update, gateway, update.getSource());
 					frame.getContentPane().add(panels.iterator().next(), BorderLayout.CENTER);
 					frame.setVisible(true);
 					

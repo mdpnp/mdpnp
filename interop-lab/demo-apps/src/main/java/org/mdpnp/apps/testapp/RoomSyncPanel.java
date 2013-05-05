@@ -7,7 +7,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
 
-import org.mdpnp.comms.Gateway;
+import org.mdpnp.messaging.Gateway;
 
 import com.jeffplourde.util.gui.table.XTable;
 import com.jeffplourde.util.model.table.SortedTableModelImpl;

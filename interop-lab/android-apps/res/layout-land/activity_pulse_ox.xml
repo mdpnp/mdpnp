@@ -1,0 +1,97 @@
+<RelativeLayout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bgColor"
+    android:gravity="center" >
+
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:gravity="center"
+        android:text="@string/initial_device_name"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/greenTextColor"
+        android:textSize="@dimen/LABEL_TEXT" />
+
+    <TextView
+        android:id="@+id/guid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/name"
+        android:gravity="center"
+        android:text="@string/initial_device_guid"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/greenTextColor"
+        android:textSize="@dimen/LABEL_TEXT" />
+
+  
+
+    <TextView
+        android:id="@+id/spo2Label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/guid"
+        android:gravity="bottom"
+        android:layout_alignBaseline="@+id/spo2"
+        android:layout_alignParentRight="true"
+        android:text="@string/spo2"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/greenTextColor"
+        android:textSize="@dimen/LABEL_TEXT" />
+    <TextView
+        android:id="@+id/spo2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/guid"
+        android:layout_toLeftOf="@id/spo2Label"
+        android:gravity="right"
+        android:text="@string/no_value"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/greenTextColor"
+        android:textSize="@dimen/LARGE_TEXT" />
+    <TextView
+        android:id="@+id/heart_rateLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/spo2"
+        android:layout_alignBaseline="@+id/heart_rate"
+        android:layout_alignParentRight="true"
+        android:text="@string/bpm"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/greenTextColor"
+        android:textSize="@dimen/LABEL_TEXT" />
+    <TextView
+        android:id="@+id/heart_rate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/spo2"
+        android:layout_toLeftOf="@id/heart_rateLabel"
+        android:gravity="right"
+        android:text="@string/no_value"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/greenTextColor"
+        android:textSize="@dimen/LARGE_TEXT" />
+
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:text="@string/initial_connect_state"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="@color/greenTextColor" />
+
+    <org.mdpnp.android.pulseox.GLWaveformView
+        android:id="@+id/waveform"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/status"
+        android:layout_below="@id/guid"
+        android:layout_toLeftOf="@id/spo2" />
+
+</RelativeLayout>

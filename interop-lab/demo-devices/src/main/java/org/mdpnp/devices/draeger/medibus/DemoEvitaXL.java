@@ -1,11 +1,11 @@
 package org.mdpnp.devices.draeger.medibus;
 
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.serial.SerialProvider;
-import org.mdpnp.comms.serial.SerialSocket;
-import org.mdpnp.comms.serial.SerialSocket.DataBits;
-import org.mdpnp.comms.serial.SerialSocket.Parity;
-import org.mdpnp.comms.serial.SerialSocket.StopBits;
+import org.mdpnp.devices.serial.SerialProvider;
+import org.mdpnp.devices.serial.SerialSocket;
+import org.mdpnp.devices.serial.SerialSocket.DataBits;
+import org.mdpnp.devices.serial.SerialSocket.Parity;
+import org.mdpnp.devices.serial.SerialSocket.StopBits;
+import org.mdpnp.messaging.Gateway;
 
 public class DemoEvitaXL extends AbstractDraegerVent {
 

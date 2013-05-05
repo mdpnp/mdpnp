@@ -7,7 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
-import org.mdpnp.comms.Gateway;
+import org.mdpnp.messaging.Gateway;
 
 
 public class SimulatedNurseCallImpl extends AbstractSimulatedDevice implements SimulatedNurseCall {

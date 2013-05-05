@@ -15,12 +15,12 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.nomenclature.PulseOximeter;
-import org.mdpnp.comms.nomenclature.Ventilator;
 import org.mdpnp.messaging.Device;
+import org.mdpnp.messaging.Gateway;
 import org.mdpnp.messaging.NetworkController;
 import org.mdpnp.messaging.BindingFactory.BindingType;
+import org.mdpnp.nomenclature.PulseOximeter;
+import org.mdpnp.nomenclature.Ventilator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

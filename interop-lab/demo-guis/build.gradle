@@ -1,0 +1,20 @@
+apply plugin: 'java'
+defaultTasks 'build'
+
+sourceCompatibility = JAVA_VERSION_SOURCE
+targetCompatibility = JAVA_VERSION_CLASSES
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+}
+dependencies {
+  // There are some math utilities lurking in here
+  compile project(':devices:common')
+  compile project(':interop-lab:demo-datamodel')
+  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+}

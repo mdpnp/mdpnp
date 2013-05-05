@@ -11,13 +11,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.data.numeric.MutableNumericUpdate;
-import org.mdpnp.comms.data.numeric.MutableNumericUpdateImpl;
-import org.mdpnp.comms.nomenclature.PulseOximeter;
-import org.mdpnp.comms.serial.AbstractSerialDevice;
-import org.mdpnp.comms.serial.SerialProvider;
-import org.mdpnp.comms.serial.SerialSocket;
+import org.mdpnp.data.numeric.MutableNumericUpdate;
+import org.mdpnp.data.numeric.MutableNumericUpdateImpl;
+import org.mdpnp.devices.serial.AbstractSerialDevice;
+import org.mdpnp.devices.serial.SerialProvider;
+import org.mdpnp.devices.serial.SerialSocket;
+import org.mdpnp.messaging.Gateway;
+import org.mdpnp.nomenclature.PulseOximeter;
 
 public class DemoRadical7 extends AbstractSerialDevice {
 	private final MutableNumericUpdate pulseUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE);

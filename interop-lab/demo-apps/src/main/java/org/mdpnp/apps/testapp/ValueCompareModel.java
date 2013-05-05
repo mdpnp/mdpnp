@@ -10,22 +10,22 @@ import java.util.Set;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.GatewayListener;
-import org.mdpnp.comms.IdentifiableUpdate;
-import org.mdpnp.comms.Identifier;
-import org.mdpnp.comms.data.enumeration.EnumerationUpdate;
-import org.mdpnp.comms.data.identifierarray.IdentifierArrayUpdate;
-import org.mdpnp.comms.data.identifierarray.MutableIdentifierArrayUpdate;
-import org.mdpnp.comms.data.identifierarray.MutableIdentifierArrayUpdateImpl;
-import org.mdpnp.comms.data.image.ImageUpdate;
-import org.mdpnp.comms.data.numeric.NumericUpdate;
-import org.mdpnp.comms.data.text.MutableTextUpdate;
-import org.mdpnp.comms.data.text.MutableTextUpdateImpl;
-import org.mdpnp.comms.data.text.TextUpdate;
-import org.mdpnp.comms.data.textarray.TextArrayUpdate;
-import org.mdpnp.comms.nomenclature.ConnectedDevice;
+import org.mdpnp.data.IdentifiableUpdate;
+import org.mdpnp.data.Identifier;
+import org.mdpnp.data.enumeration.EnumerationUpdate;
+import org.mdpnp.data.identifierarray.IdentifierArrayUpdate;
+import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdate;
+import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdateImpl;
+import org.mdpnp.data.image.ImageUpdate;
+import org.mdpnp.data.numeric.NumericUpdate;
+import org.mdpnp.data.text.MutableTextUpdate;
+import org.mdpnp.data.text.MutableTextUpdateImpl;
+import org.mdpnp.data.text.TextUpdate;
+import org.mdpnp.data.textarray.TextArrayUpdate;
 import org.mdpnp.messaging.DeviceIcon;
+import org.mdpnp.messaging.Gateway;
+import org.mdpnp.messaging.GatewayListener;
+import org.mdpnp.nomenclature.ConnectedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +62,7 @@ public class ValueCompareModel extends AbstractTableModel implements TableModel,
 	public ValueCompareModel(Gateway gateway) {
 		this.gateway = gateway;
 		gateway.addListener(this);
-		gateway.update(this, new MutableTextUpdateImpl(org.mdpnp.comms.nomenclature.Association.REQUEST_DISSEMINATE));
+		gateway.update(this, new MutableTextUpdateImpl(org.mdpnp.nomenclature.Association.REQUEST_DISSEMINATE));
 	}
 
 	@Override
@@ -139,14 +139,14 @@ public class ValueCompareModel extends AbstractTableModel implements TableModel,
 			Col c = new Col();
 			c.source = source;
 			sources.add(c);
-			MutableTextUpdate mtu = new MutableTextUpdateImpl(org.mdpnp.comms.nomenclature.Device.REQUEST_AVAILABLE_IDENTIFIERS);
+			MutableTextUpdate mtu = new MutableTextUpdateImpl(org.mdpnp.nomenclature.Device.REQUEST_AVAILABLE_IDENTIFIERS);
 			mtu.setValue("");
 			mtu.setTarget(source);
 			mtu.setSource("*");
 			gateway.update(this, mtu);
 			
-			MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(org.mdpnp.comms.nomenclature.Device.REQUEST_IDENTIFIED_UPDATES);
-			miau.setValue(new Identifier[] {org.mdpnp.comms.nomenclature.Device.NAME, org.mdpnp.comms.nomenclature.Device.ICON});
+			MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(org.mdpnp.nomenclature.Device.REQUEST_IDENTIFIED_UPDATES);
+			miau.setValue(new Identifier[] {org.mdpnp.nomenclature.Device.NAME, org.mdpnp.nomenclature.Device.ICON});
 			miau.setTarget(source);
 			miau.setSource("*");
 			gateway.update(this, miau);
@@ -208,15 +208,15 @@ public class ValueCompareModel extends AbstractTableModel implements TableModel,
 			return;
 		}
 		
-		if(org.mdpnp.comms.nomenclature.Device.GET_AVAILABLE_IDENTIFIERS.equals(ident)) {
-			MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl( org.mdpnp.comms.nomenclature.Device.REQUEST_IDENTIFIED_UPDATES );
+		if(org.mdpnp.nomenclature.Device.GET_AVAILABLE_IDENTIFIERS.equals(ident)) {
+			MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl( org.mdpnp.nomenclature.Device.REQUEST_IDENTIFIED_UPDATES );
 			miau.setTarget(source);
 			miau.setSource("*");
 			miau.setValue(((IdentifierArrayUpdate)update).getValue());
 			gateway.update(this, miau);
 		}
 		
-		if(org.mdpnp.comms.nomenclature.ConnectedDevice.STATE.equals(ident)) {
+		if(org.mdpnp.nomenclature.ConnectedDevice.STATE.equals(ident)) {
 			int idx = indexOfSource(update.getSource());
 			if(idx >= 0) {
 				Col c = sources.get(idx);
@@ -240,8 +240,8 @@ public class ValueCompareModel extends AbstractTableModel implements TableModel,
 			
 		}
 		
-		if(org.mdpnp.comms.nomenclature.Association.class.equals(ident.getField().getDeclaringClass())) {
-			if(org.mdpnp.comms.nomenclature.Association.DISSEMINATE.equals(ident)) {
+		if(org.mdpnp.nomenclature.Association.class.equals(ident.getField().getDeclaringClass())) {
+			if(org.mdpnp.nomenclature.Association.DISSEMINATE.equals(ident)) {
 				log.trace("Handling a disseminate");
 				Set<String> nolongervalid = new HashSet<String>();
 				for(Col c : sources) {
@@ -258,8 +258,8 @@ public class ValueCompareModel extends AbstractTableModel implements TableModel,
 			} 
 			return;
 		}		
-		if(org.mdpnp.comms.nomenclature.Device.class.equals(ident.getField().getDeclaringClass())) {
-			if(org.mdpnp.comms.nomenclature.Device.NAME.equals(ident)) {
+		if(org.mdpnp.nomenclature.Device.class.equals(ident.getField().getDeclaringClass())) {
+			if(org.mdpnp.nomenclature.Device.NAME.equals(ident)) {
 				int idx = indexOfSource(update.getSource());
 				if(idx >= 0) {
 					String name = ((TextUpdate)update).getValue();
@@ -270,7 +270,7 @@ public class ValueCompareModel extends AbstractTableModel implements TableModel,
 				} else {
 					log.trace("Received name for unknown source " + update.getSource());
 				}
-			} else if(org.mdpnp.comms.nomenclature.Device.ICON.equals(ident)) {
+			} else if(org.mdpnp.nomenclature.Device.ICON.equals(ident)) {
 				int idx = indexOfSource(update.getSource());
 				if(idx >= 0) {
 					sources.get(idx).icon = new DeviceIcon((ImageUpdate) update);
@@ -281,7 +281,7 @@ public class ValueCompareModel extends AbstractTableModel implements TableModel,
 			}
 			return;
 		}
-		if(org.mdpnp.comms.nomenclature.ConnectedDevice.class.equals(ident.getField().getDeclaringClass())) {
+		if(org.mdpnp.nomenclature.ConnectedDevice.class.equals(ident.getField().getDeclaringClass())) {
 			return;
 		}	
 		Object value = null;

@@ -1,6 +1,7 @@
 *~
 build
 bin
+gen
 .DS_Store
 generated
 .jnilib
@@ -8,6 +9,8 @@ generated
 gradle.properties
 .settings/
 .project
+.ecpproperties
 .classpath
 .externalToolBuilders/
 .JumpStartSettings
+local.properties

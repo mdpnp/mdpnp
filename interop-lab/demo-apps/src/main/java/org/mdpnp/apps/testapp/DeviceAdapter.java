@@ -14,25 +14,17 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import org.mdpnp.apps.gui.swing.DevicePanelFactory;
 import org.mdpnp.apps.testapp.Configuration.DeviceType;
-import org.mdpnp.comms.Gateway;
-import org.mdpnp.comms.GatewayListener;
-import org.mdpnp.comms.IdentifiableUpdate;
-import org.mdpnp.comms.Identifier;
-import org.mdpnp.comms.data.enumeration.EnumerationUpdate;
-import org.mdpnp.comms.data.identifierarray.IdentifierArrayUpdate;
-import org.mdpnp.comms.data.identifierarray.MutableIdentifierArrayUpdate;
-import org.mdpnp.comms.data.identifierarray.MutableIdentifierArrayUpdateImpl;
-import org.mdpnp.comms.data.text.MutableTextUpdate;
-import org.mdpnp.comms.data.text.MutableTextUpdateImpl;
-import org.mdpnp.comms.data.text.TextUpdate;
-import org.mdpnp.comms.nomenclature.Association;
-import org.mdpnp.comms.nomenclature.ConnectedDevice;
-import org.mdpnp.comms.nomenclature.ConnectedDevice.ConnectionType;
-import org.mdpnp.comms.nomenclature.Device;
-import org.mdpnp.comms.serial.SerialProviderFactory;
-import org.mdpnp.comms.serial.TCPSerialProvider;
+import org.mdpnp.data.IdentifiableUpdate;
+import org.mdpnp.data.Identifier;
+import org.mdpnp.data.enumeration.EnumerationUpdate;
+import org.mdpnp.data.identifierarray.IdentifierArrayUpdate;
+import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdate;
+import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdateImpl;
+import org.mdpnp.data.text.MutableTextUpdate;
+import org.mdpnp.data.text.MutableTextUpdateImpl;
+import org.mdpnp.data.text.TextUpdate;
+import org.mdpnp.devices.connected.GetConnected;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
 import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
@@ -42,12 +34,19 @@ import org.mdpnp.devices.nellcor.pulseox.DemoN595;
 import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
 import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
 import org.mdpnp.devices.philips.intellivue.DemoMP70;
+import org.mdpnp.devices.serial.SerialProviderFactory;
+import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.mdpnp.devices.simulation.SimulatedBloodPressureImpl;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
-import org.mdpnp.devices.webcam.WebcamImpl;
+import org.mdpnp.guis.swing.DevicePanelFactory;
 import org.mdpnp.messaging.Adapter;
-import org.mdpnp.messaging.GetConnected;
+import org.mdpnp.messaging.Gateway;
+import org.mdpnp.messaging.GatewayListener;
 import org.mdpnp.messaging.BindingFactory.BindingType;
+import org.mdpnp.nomenclature.Association;
+import org.mdpnp.nomenclature.ConnectedDevice;
+import org.mdpnp.nomenclature.Device;
+import org.mdpnp.nomenclature.ConnectedDevice.ConnectionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +55,7 @@ public class DeviceAdapter {
 	
 	private static JFrame frame;
 	private static GetConnected getConnected;
-	private static Collection<org.mdpnp.apps.gui.swing.DevicePanel> panels;
+	private static Collection<org.mdpnp.guis.swing.DevicePanel> panels;
 	
 	private static boolean panelized;
 	
@@ -80,8 +79,6 @@ public class DeviceAdapter {
 			return new DemoEvitaXL(deviceGateway);
 		case Bernoulli:
 			return new DemoBernoulli(deviceGateway);
-		case Webcam:
-			return new WebcamImpl(deviceGateway);
 		case Capnostream20:
 			return new DemoCapnostream20(deviceGateway);
 		case Symbiq:
@@ -180,7 +177,7 @@ public class DeviceAdapter {
 								public void run() {
 									frame.getContentPane().removeAll();
 									frame.getContentPane().setLayout(new GridLayout(panels.size(), 1));
-									for(org.mdpnp.apps.gui.swing.DevicePanel panel : panels) {
+									for(org.mdpnp.guis.swing.DevicePanel panel : panels) {
 										frame.getContentPane().add(panel);
 									}
 									frame.getContentPane().validate();

@@ -13,11 +13,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.mdpnp.comms.nomenclature.ConnectedDevice;
-import org.mdpnp.comms.nomenclature.ConnectedDevice.ConnectionType;
-import org.mdpnp.comms.serial.SerialProviderFactory;
+import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.messaging.BindingFactory;
 import org.mdpnp.messaging.BindingFactory.BindingType;
+import org.mdpnp.nomenclature.ConnectedDevice;
+import org.mdpnp.nomenclature.ConnectedDevice.ConnectionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +38,6 @@ public class Configuration {
         Capnostream20(ConnectionType.Serial),
         NellcorN595(ConnectionType.Serial),
         MasimoRadical7(ConnectionType.Serial),
-        Webcam(ConnectionType.Camera),
         Symbiq(ConnectionType.Simulated);
         
         private final ConnectedDevice.ConnectionType connectionType;
