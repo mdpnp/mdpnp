@@ -1,0 +1,15 @@
+apply plugin: 'java'
+apply plugin: 'war'
+
+defaultTasks 'build'
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+dependencies {
+	compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+	compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
+	compile group: 'org.slf4j', name: 'slf4j-jdk14', version: '1.7.5'
+}

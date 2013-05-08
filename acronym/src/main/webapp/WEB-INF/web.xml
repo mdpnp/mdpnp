@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
+  <display-name>acronym</display-name>
+  <servlet>
+    <servlet-name>Acronym</servlet-name>
+    <servlet-class>org.mdpnp.acronym.AcronymServlet</servlet-class>
+    
+  </servlet>
+    <servlet>
+    <servlet-name>AddAcronym</servlet-name>
+    <servlet-class>org.mdpnp.acronym.AddAcronymServlet</servlet-class>
+    
+  </servlet>
+      <servlet>
+    <servlet-name>DeleteAcronym</servlet-name>
+    <servlet-class>org.mdpnp.acronym.DeleteAcronymServlet</servlet-class>
+    
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>Acronym</servlet-name>
+    <url-pattern>/acronym</url-pattern>
+  </servlet-mapping>
+    <servlet-mapping>
+    <servlet-name>Acronym</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+    <servlet-mapping>
+    <servlet-name>AddAcronym</servlet-name>
+    <url-pattern>/add-acronym</url-pattern>
+  </servlet-mapping>
+      <servlet-mapping>
+    <servlet-name>DeleteAcronym</servlet-name>
+    <url-pattern>/delete-acronym</url-pattern>
+  </servlet-mapping>
+</web-app>
