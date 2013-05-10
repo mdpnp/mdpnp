@@ -1,0 +1,67 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+		.important {
+			font-weight: bold;
+		}
+		.notice {
+			margin:20px;
+			padding:10px;
+			width:100px;
+			float:right;
+			background-color:#E3EDBB;
+		}
+		.dialog {
+			background-color: #EEEEEE;
+			border: 1px solid black;
+		}
+	</ui:style>
+	<g:FlowPanel>
+	<g:Label text='Edit User Profile' ui:field='header' styleName='heading'/>
+	<g:HTMLPanel styleName='{style.notice}'>
+		This information will be used for administrative purposes only and will not be shared with the public.<br/><br/>
+		All fields are mandatory.
+		
+	</g:HTMLPanel>	
+	<g:Grid styleName='{style.dialog}'>
+	<g:row>
+	   <g:customCell><g:Label text="Email:"/></g:customCell>
+	   <g:customCell><g:Label ui:field="emailEditor"/></g:customCell>
+	</g:row>
+	<g:row>
+	   <g:customCell><g:Label text='Title:'/></g:customCell>
+	   <g:customCell><g:TextBox ui:field='titleEditor'/></g:customCell>
+	</g:row>
+	<g:row>
+	   <g:customCell><g:Label text='Given Name:'/></g:customCell>
+	   <g:customCell><g:TextBox ui:field='givenNameEditor'/></g:customCell>
+	</g:row>	
+	<g:row>
+	   <g:customCell><g:Label text='Family Name:'/></g:customCell>
+	   <g:customCell><g:TextBox ui:field='familyNameEditor'/></g:customCell>
+	</g:row>	
+	<g:row>
+	   <g:customCell><g:Label text='Company:'/></g:customCell>
+	   <g:customCell><g:TextBox ui:field='companyEditor'/></g:customCell>
+	</g:row>	
+	<g:row>
+	   <g:customCell><g:Label text='Job Title:'/></g:customCell>
+	   <g:customCell><g:TextBox ui:field='jobTitleEditor'/></g:customCell>
+	</g:row>	
+	<g:row>
+	   <g:customCell><g:Label text='Years in Field:'/></g:customCell>
+	   <g:customCell><g:TextBox ui:field='yearsInFieldEditor'/></g:customCell>
+	</g:row>	
+	<g:row>
+	   <g:customCell><g:Label text='Phone Number:'/></g:customCell>
+	   <g:customCell><g:TextBox ui:field='phoneNumberEditor'/></g:customCell>
+	</g:row>	
+	<g:row>
+	   <g:cell></g:cell>
+	   <g:customCell><g:Button text='Save' ui:field='saveButton'/>	</g:customCell>
+	</g:row>		
+	</g:Grid>
+		
+	</g:FlowPanel>
+</ui:UiBinder> 

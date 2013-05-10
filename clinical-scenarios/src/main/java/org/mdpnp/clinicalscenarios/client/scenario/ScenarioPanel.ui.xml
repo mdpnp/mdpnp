@@ -1,0 +1,138 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+		.important {
+			font-weight: bold;
+			font-size:16pt;
+		}
+		.clickable:hover {
+			cursor:hand;
+		}
+		.rightAligned {
+			float:right;
+			right: 0px;
+		}
+		.verywide {
+			width:98%;
+		}
+		.givemespace {
+			margin:10px;
+		}
+		.fineprint {
+			font-size: 6pt;
+		}
+		.withborder {
+			border: 1px solid black;
+		}
+	</ui:style>
+	<g:DockPanel>
+	<g:Dock direction="NORTH" size="100px">
+		
+	<g:FlowPanel><g:TextBox text='Scenario Title' ui:field='titleEditor' styleName='clickable scenarioTitle' visibleLength='50' maxLength='100'/><!-- <g:TextBox text="" ui:field='titleTextBox' visibleLength='75' maxLength='75' visible='false'/>--><g:Label ui:field='status'/></g:FlowPanel>
+	</g:Dock>
+	<g:Dock direction="CENTER" size="400px">
+	<g:TabPanel ui:field="tabPanel">
+	<g:Tab text="Background">
+		<g:FlowPanel>
+		<g:HTML><span style="font-size:16pt;">Background Info</span>
+		<ul>
+	     	<li>Do not include protected health information</li>
+	     	<li>Omit actual names of individuals or institutions</li>
+	     	<li>Keep the information relevant</li>
+	     	<li>Avoid redundant scenarios</li>
+	     	</ul>
+	     <br/>
+	     
+	     </g:HTML>
+		  <g:FlowPanel>
+		  <g:InlineLabel text="Current State:"/><g:Anchor ui:field='currentStateExample' styleName='{style.rightAligned}' href='#' text='Example'/>
+		  </g:FlowPanel>
+		  
+		  <g:TextArea ui:field="currentStateEditor" visibleLines="10" characterWidth="80" styleName='{style.verywide}'/>
+		   <g:FlowPanel>
+		  <g:InlineLabel text="Proposed State:"/><g:Anchor ui:field='proposedStateExample' styleName='{style.rightAligned}' href='#' text='Example'/></g:FlowPanel>
+		  <g:TextArea ui:field="proposedStateEditor" visibleLines="10" characterWidth="80" styleName='{style.verywide}'/>
+		</g:FlowPanel>
+	</g:Tab>
+	<g:Tab text="Hazards">
+	  <g:FlowPanel>
+	  	 <g:HTML><span style="font-size:16pt;">Current State Hazards</span><br/>
+	     </g:HTML>
+
+	  	<g:FlexTable ui:field='hazardsTable'></g:FlexTable>
+	  </g:FlowPanel>
+	</g:Tab>
+	<g:Tab text="Environments">
+	  <g:FlowPanel>
+	  
+	  <g:HTML><span style="font-size:16pt;">Clinicians &amp; Clinical Environments</span><br/>
+
+	     
+	     </g:HTML>
+	    <g:Label text='Clinicians Involved:'/>
+	    <g:FlexTable ui:field='cliniciansTable' styleName='{style.withborder}'/>
+	    <g:Anchor text='Add New...' href='#' ui:field='addNewClinician'/>
+	    <g:HTML>&nbsp;</g:HTML>
+	    <g:Label text='Clinical Environments:'/>
+	    <g:FlexTable ui:field='environmentsTable' styleName='{style.withborder}'/>
+	    <g:Anchor text='Add New...' href='#' ui:field='addNewEnvironment'/>
+	  </g:FlowPanel>
+	</g:Tab>
+	<g:Tab text="Equipment">
+	  <g:FlowPanel>
+	  	<g:HTML><span style="font-size:16pt;">Equipment Utilized</span><br/>
+	     </g:HTML>
+	  	<g:FlexTable ui:field='equipmentTable'></g:FlexTable>
+	  </g:FlowPanel>
+	</g:Tab>
+	<g:Tab text='Proposed Solution'>
+	  <g:FlowPanel>
+	     <g:HTML><span style="font-size:16pt;">Proposed Solution</span><br/>
+	     A specific solution implementing the Proposed State<br/>
+	     <br/>
+	     
+	     </g:HTML>
+	     <g:FlowPanel>
+	  	 <g:InlineLabel text='Clinical processes required for new system:'/><g:Anchor ui:field='clinicalProcessesExample' styleName='{style.rightAligned}' href='#' text='Example'/>
+	  	 </g:FlowPanel>
+	  	 <g:TextArea ui:field='clinicalProcesses' visibleLines='10' characterWidth='80' styleName='{style.verywide}'/>
+	  	 <g:FlowPanel>
+	  	 <g:InlineLabel text='Algorithm Description'/><g:Anchor ui:field='algorithmDescriptionExample' styleName='{style.rightAligned}' href='#' text='Example'/>
+	  	 </g:FlowPanel>
+	  	 <g:TextArea ui:field='algorithmDescription' visibleLines='10' characterWidth='80' styleName='{style.verywide}'/>
+	  	 
+	  	 <!-- <g:Label text='Improvements for the process:'/><g:TextArea visibleLines='10' characterWidth='80'/>  -->
+	  </g:FlowPanel>
+	</g:Tab>
+	<g:Tab text="Benefits &amp; Risks">
+	  <g:FlowPanel>
+	    <g:HTML><span style="font-size:16pt;">Benefits &amp; Risks</span><br/>
+	     <br/>
+	     
+	     </g:HTML>
+	     <g:FlowPanel>
+	  	 <g:InlineLabel text='Benefits:'/><g:Anchor ui:field='benefitsExample' styleName='{style.rightAligned}' href='#' text='Example'/>
+	  	 </g:FlowPanel>
+	  	<g:TextArea ui:field='benefits' visibleLines='10' characterWidth='80' styleName='{style.verywide}'/>
+	  	<g:FlowPanel>
+	  	 <g:InlineLabel text='Risks:'/><g:Anchor ui:field='risksExample' styleName='{style.rightAligned}' href='#' text='Example'/>
+	  	 </g:FlowPanel>
+	  	<g:TextArea ui:field='risks' visibleLines='10' characterWidth='80' styleName='{style.verywide}'/>
+	  </g:FlowPanel>
+	</g:Tab>
+	<!-- 
+	<g:Tab text="Test Cases">
+	  <g:FlowPanel>
+	    <g:HTML><h2>Test Cases</h2></g:HTML>
+	    <g:FlexTable ui:field='testCasesTable'/>
+	  </g:FlowPanel>
+	</g:Tab>
+	-->
+	</g:TabPanel>
+	</g:Dock>
+	<g:Dock direction="SOUTH" size="100px">
+	<g:FlowPanel><g:Button text='Submit for Approval' styleName='{style.givemespace}'/><g:Button text='Save For Later' styleName='{style.givemespace}'/></g:FlowPanel>
+	</g:Dock>
+	</g:DockPanel>
+</ui:UiBinder> 

@@ -14,3 +14,12 @@ gradle.properties
 .externalToolBuilders/
 .JumpStartSettings
 local.properties
+.apt_generated/
+.factorypath
+.gwt/
+gwt-unitCache/
+appengine-generated/
+lib/
+deploy/
+classes/
+clinical_scenarios/

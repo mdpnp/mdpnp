@@ -1,0 +1,24 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+		.important {
+			margin: 10px 0 10px;
+		}
+		.notimportant {
+			font-size:8pt;
+		}
+	</ui:style>
+	<g:FlowPanel>
+		<g:Label text='Basic Search' ui:field='header' styleName='heading'/>
+
+		<g:TextBox ui:field='searchQuery' text='Enter keywords'/>
+		
+		<g:Button text='Search' ui:field='submitButton'/>
+		<g:Label text='Please Enter Keywords' styleName='{style.notimportant}'/>
+		<g:FlexTable ui:field='searchResult'/>
+		
+		<g:Button text='Create New Scenario' ui:field='createNew' styleName='{style.important}'/>
+		<g:Label text='Please Sign In to create new scenarios' ui:field='pleaseSignIn' visible='false' styleName='{style.important}'/>
+	</g:FlowPanel>
+</ui:UiBinder> 
