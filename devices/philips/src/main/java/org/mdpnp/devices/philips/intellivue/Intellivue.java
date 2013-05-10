@@ -688,8 +688,20 @@ public class Intellivue implements NetworkConnection {
 		obj.addClass(ObjectClass.NOM_MOC_VMS_MDS, 1);
 		obj.addClass(ObjectClass.NOM_MOC_VMO_METRIC_NU, 0xC9);
 		obj.addClass(ObjectClass.NOM_MOC_VMO_METRIC_SA_RT, 0x3C);
+		obj.addClass(ObjectClass.NOM_MOC_VMO_METRIC_ENUM, 0x10);
 		obj.addClass(ObjectClass.NOM_MOC_PT_DEMOG, 1);
 		obj.addClass(ObjectClass.NOM_MOC_VMO_AL_MON, 1);
+		
+		obj.addClass(ObjectClass.NOM_MOC_SCAN, 1);
+		obj.addClass(ObjectClass.NOM_MOC_SCAN_CFG, 1);
+		obj.addClass(ObjectClass.NOM_MOC_SCAN_CFG_EPI, 1);
+		obj.addClass(ObjectClass.NOM_MOC_SCAN_CFG_PERI, 1);
+		obj.addClass(ObjectClass.NOM_MOC_SCAN_CFG_PERI_FAST, 1);
+		
+		obj.addClass(ObjectClass.NOM_MOC_SCAN_UCFG, 1);
+		obj.addClass(ObjectClass.NOM_MOC_SCAN_UCFG_ALSTAT, 1);
+		obj.addClass(ObjectClass.NOM_MOC_SCAN_UCFG_CTXT, 1);
+		
 
 		send(req);
 
