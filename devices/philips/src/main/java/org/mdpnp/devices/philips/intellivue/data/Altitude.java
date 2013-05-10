@@ -15,5 +15,9 @@ public class Altitude implements Value {
 	public void format(ByteBuffer bb) {
 		bb.putShort(altitude);
 	}
-
+	
+	@Override
+	public java.lang.String toString() {
+	    return Short.toString(altitude);
+	}
 }

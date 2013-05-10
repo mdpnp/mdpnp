@@ -518,6 +518,9 @@ public class Intellivue implements NetworkConnection {
 				send(message);
 			}
 		}
+		if(log.isTraceEnabled()) {
+		    log.trace(eventReport.toString());
+		}
 	}
 	
 	@SuppressWarnings("incomplete-switch")

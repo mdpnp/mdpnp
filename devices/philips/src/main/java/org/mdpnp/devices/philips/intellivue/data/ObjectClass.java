@@ -12,19 +12,78 @@ public enum ObjectClass implements OrdinalEnum.IntType {
      */
     NOM_MOC_VMO(1),
 
+    NOM_MOC_VMO_METRIC_ENUM(5),
+    
     /**
      * Numeric
      * Hex: 0x06
      * Dec: 6
      */
     NOM_MOC_VMO_METRIC_NU(6),
-
     /**
      * RealtimeSampleArray
      * Hex: 0x09
      * Dec: 9
      */
     NOM_MOC_VMO_METRIC_SA_RT(9),
+    /**
+     * Scanner
+     * Hex: 0x10
+     * Dec: 16
+     */
+    NOM_MOC_SCAN(16),
+    
+    /**
+     * Configurable Scanner
+     * Hex: 0x11
+     * Dec: 17
+     */
+    NOM_MOC_SCAN_CFG(17),
+    
+    /**
+     * Episodic Configurable Scanner
+     * Hex: 0x12
+     * Dec: 18
+     */
+    NOM_MOC_SCAN_CFG_EPI(18),
+    /**
+     * Periodic Configurable Scanner
+     * Hex: 0x13
+     * Dec: 19
+     */
+    NOM_MOC_SCAN_CFG_PERI(19),
+    /**
+     * Fast Periodic Configurable Scanner
+     * Hex: 0x14
+     * Dec: 20
+     */
+    NOM_MOC_SCAN_CFG_PERI_FAST(20),
+    /**
+     * Unconfigurable Scanner
+     * Hex: 0x15
+     * Dec: 21
+     */
+    NOM_MOC_SCAN_UCFG(21),
+    /**
+     * Context Scanner
+     * Hex: 0x17
+     * Dec: 23
+     */
+    NOM_MOC_SCAN_UCFG_CTXT(23),
+    /**
+     * Alert Scanner
+     * Hex: 0x16
+     * Dec: 22
+     */
+    NOM_MOC_SCAN_UCFG_ALSTAT(22),
+    /**
+     * Operating Scanner
+     * Hex: 0x1A
+     * Dec: 24
+     */
+    NOM_SCAN_UCFG_OP(24),
+
+    
 
     /**
      * MDS

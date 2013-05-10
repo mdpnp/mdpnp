@@ -233,7 +233,9 @@ public class AttributeFactory {
 	@SuppressWarnings("unchecked")
     public static final <T extends EnumMessage<T>> Attribute<?> getAttribute(OIDType oid) {
 		Class<?> valueType = valueType(oid);
-		if(valueType.isEnum()) {
+		if(null == valueType) {
+		    return null;
+		} else if(valueType.isEnum()) {
 			return getEnumAttribute(oid, (Class<T>)valueType);
 		} else {
 			return getAttribute(oid, ((Class<Value>)valueType(oid)));

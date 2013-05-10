@@ -9,6 +9,7 @@ import java.util.Map;
 import org.mdpnp.devices.philips.intellivue.Formatable;
 import org.mdpnp.devices.philips.intellivue.Parseable;
 import org.mdpnp.devices.philips.intellivue.attribute.Attribute;
+import org.mdpnp.devices.philips.intellivue.attribute.AttributeFactory;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
 public class AttributeValueList implements Parseable, Formatable, Util.PrefixLengthShort.Builder<Attribute<?>> {
@@ -149,10 +150,20 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
 	public java.lang.String toString() {
 		StringBuilder sb = new StringBuilder("{");
 		for(Attribute<?> a : list) {
-//			Attribute a = AttributeFactory.getAttribute(ava.getOid());
 			if(null == a) {
 				sb.append(a).append(",");
 			} else {
+			    if(a instanceof AttributeValueAssertion) {
+			        Class<?> cls = AttributeFactory.valueType(a.getOid());
+			        if(!ByteArray.class.equals(cls)) {
+    			        Attribute<?> _a = AttributeFactory.getAttribute(a.getOid());
+    			        if(null != _a) {
+    			            if(get(_a)) {
+    			                a = _a;
+    			            }
+    			        }
+			        }
+			    }
 				sb.append(AttributeId.valueOf(a.getOid().getType()));
 				sb.append("=").append(a);
 				sb.append(",");
