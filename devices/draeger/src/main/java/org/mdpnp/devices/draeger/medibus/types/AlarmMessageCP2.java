@@ -4,6 +4,9 @@ import java.util.Map;
 
 import org.mdpnp.devices.EnumHelper;
 
+/**
+ * Alarm Messages of Code Page 2
+ */
 public enum AlarmMessageCP2 {
 	InspN2OHigh,
 	ExpHalothaneExceedsHighLimit,

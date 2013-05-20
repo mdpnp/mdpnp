@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.mdpnp.devices.ASCIIByte;
 import org.mdpnp.devices.draeger.medibus.types.AlarmMessageCP1;
 import org.mdpnp.devices.draeger.medibus.types.AlarmMessageCP2;
 import org.mdpnp.devices.draeger.medibus.types.Command;
@@ -24,6 +25,34 @@ import org.mdpnp.devices.draeger.medibus.types.TextMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/**
+ * NOT FOR HUMAN USE
+ * 
+ * Experimental implementation of Draeger Medibus protocol for blocking I/O.
+ * This API gives the caller a simple way to emit protocol commands and receive 
+ * protocol responses.  Out of scope is the particular semantics of the protocol.
+ * 
+ * It is the responsibility of the caller to create a connection to a Draeger
+ * device using a serial port connection or otherwise.  Once that connection is
+ * established the relevant InputStream and OutputStream should be passed to the 
+ * constructor.
+ * 
+ * See the Interoperability Lab demo-devices for an example of how this class can be
+ * bound to a physical connection (RS-232) and an example of driving the protocol
+ * through its semantics.
+ * 
+ * sendXXX(...) methods are provided for users of this API to emit commands and receiveXXX(...)
+ * methods should be overridden to act on the receipt of response messages.
+ * 
+ * Consumers of this API should designate a thread to repeatedly run the receive() method
+ * as long as the receive() call returns true.  When receive() returns false processing has
+ * stopped and the connection is no longer viable.  
+ * 
+ * 
+ * @author jplourde
+ *
+ */
 public class Medibus {
 	private static final Logger log = LoggerFactory.getLogger(Medibus.class);
 	
@@ -33,11 +62,23 @@ public class Medibus {
 	protected final InputStream slowIn, fastIn;
 	protected final OutputStream out;
 	
+	
+	/**
+	 * When a consumer of this API has established a connection to a Draeger device
+	 * they may use this constructor to create a Medibus instance for composing messages
+	 * to send to the device as well as for parsing received messages.
+	 * @param in Source of data from Draeger device
+	 * @param out Destination of data bound for Draeger device
+	 */
 	public Medibus(InputStream in, OutputStream out) {
-		// Software flow control can probably be handled elsewhere
+	    // TODO why buffer this actually?
 		InputStream bis = new BufferedInputStream(in);
+		
+		// Implementing software flow control doesn't seem to be necessary
 //		bis =  new SuspendableInputStream(ASCIIByte.DC1, ASCIIByte.DC3, bis);
 		
+		// partition the slow and fast data
+		// fast data have the high order bit set and slow data do not
 		InputStreamPartition isp = new InputStreamPartition(new InputStreamPartition.Filter[] {
 				new InputStreamPartition.Filter() {
 
@@ -117,20 +158,53 @@ public class Medibus {
 		sendASCIIHex(out, b);
 	}
 	
+	/**
+	 * Send a command with no arguments and no timeout
+	 * @param commandCode the commandCode to send
+	 * @return true if the command was sent
+	 * @throws IOException
+	 */
 	public boolean sendCommand(Command commandCode) throws IOException {
 		return sendCommand(commandCode, 0L);
 	}
 	
+	/**
+	 * Send a command with no arguments and the specified timeout
+	 * @param commandCode the commandCode to send
+	 * @param timeout timeout in milliseconds
+	 * @return true if the command was sent
+	 * @throws IOException
+	 */
 	public boolean sendCommand(Command commandCode, long timeout) throws IOException {
 		return sendCommand(commandCode, null, timeout);
 	}
 	
+	/**
+	 * Send a command with the specified arguments and no timeout
+	 * @param commandCode the commandCode to send
+	 * @param argument argument to accompany the command
+	 * @return true if the command was sent
+	 * @throws IOException
+	 */
 	public synchronized boolean sendCommand(Object commandCode, byte[] argument) throws IOException {
 		return sendCommand(commandCode, argument, 0);
 	}
 	
 	private Object unacknowledgedCommand;
 	
+	
+	/**
+	 * Send a Medibus command with the specified argument and the specified timeout.
+	 * 
+	 * The semantics of the timeout need work.  Currently it represents the maximum amount
+	 * of time to await an acknowledgment of the prior command.
+	 * 
+	 * @param commandCode instance of types.Command or a Byte indicating a command code 
+	 * @param argument Arguments for the command cannot exceed 251 bytes
+	 * @param timeout in milliseconds, the maximum time to wait for a response or 0L to wait forever
+	 * @return true if the command was sent
+	 * @throws IOException
+	 */
 	public synchronized boolean sendCommand(Object commandCode, byte[] argument, long timeout) throws IOException {
 		if(timeout < 0) {
 			log.trace("sendCommand received a negative timeout " + timeout);
@@ -203,6 +277,16 @@ public class Medibus {
 		return true;
 	}
 	
+	/**
+	 * Sends a response to an inbound command
+	 * 
+	 * This is called automatically for any command that does not require a special
+	 * response payload
+	 * 
+	 * @param command
+	 * @param response
+	 * @throws IOException
+	 */
 	public synchronized void sendResponse(Object command, byte[] response) throws IOException {
 //		if(!stateMachine.transitionWhenLegal(State.SendingResponse, 2000L)) {
 //			throw new RuntimeException("Timed out trying to send response " + getState());
@@ -250,7 +334,12 @@ public class Medibus {
 		}
 		
 	}
-	
+	/**
+	 * Sends the ConfigureResponse command with the specified dataTypes
+	 * as arguments.  
+	 * @param dataTypes
+	 * @throws IOException
+	 */
 	public void configureDataResponse(DataType... dataTypes) throws IOException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		for(DataType dt : dataTypes) {
@@ -657,7 +746,15 @@ public class Medibus {
 			}
 		}
 	}
-	
+	protected String getIdNumber() {
+	    return "0161";
+	}
+	protected String getName() {
+	    return "ICE";
+	}
+	protected String getRevision() {
+	    return "04.03";
+	}
 	protected void receiveCommand(Object cmdCode, byte[] argument, int len) throws IOException {
 		if(cmdCode instanceof Command) {
 			switch((Command)cmdCode) {
@@ -674,7 +771,7 @@ public class Medibus {
 				sendResponse(cmdCode, null);
 				break;
 			case ReqDeviceId:
-				sendDeviceIdentification("0161", "ICE", "04.03");
+				sendDeviceIdentification(getIdNumber(), getName(), getRevision());
 				break;
 	
 			

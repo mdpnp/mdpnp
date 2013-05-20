@@ -4,6 +4,11 @@ import java.util.Map;
 
 import org.mdpnp.devices.EnumHelper;
 
+/**
+ * 
+ * @author jplourde
+ *
+ */
 public enum DataType {
 	AlarmLimitsCP1,
 	AlarmsCP1,
