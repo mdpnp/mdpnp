@@ -1,5 +1,10 @@
-package org.mdpnp.devices.draeger.medibus;
+package org.mdpnp.devices;
 
+/**
+ * Some useful bytes named from the ASCII character set. 
+ * @author jplourde
+ *
+ */
 public class ASCIIByte {
 	/**
 	 * suspend data transmission
@@ -31,7 +36,13 @@ public class ASCIIByte {
 	 */
 	public static final byte SOH = 0x01;
 	
+	/**
+	 * ASCII Negative Acknowledgment
+	 */
 	public static final byte NAK = 0x15;
 	
+	/**
+	 * ASCII End of Text
+	 */
 	public static final byte ETX = 0x03;
 }

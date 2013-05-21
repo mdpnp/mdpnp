@@ -4,6 +4,11 @@ import java.util.Map;
 
 import org.mdpnp.devices.EnumHelper;
 
+/**
+ * Alarm messages of Codepage 1
+ * @author jplourde
+ *
+ */
 public enum AlarmMessageCP1 {
 	AirwayPressureExceedsHighLimit,
 	MinuteVolumeBelowLowLimit,
@@ -118,11 +123,22 @@ public enum AlarmMessageCP1 {
 		
 	}
 	
+	/**
+	 * Returns the CodePage1 Alarm messages associated with the specified byte
+	 * @param b byte
+	 * @return alarm message
+	 */
 	public static final AlarmMessageCP1 fromByte(byte b) {
 		return fromByte.get(b);
 	
 	}
 	
+	/**
+	 * If byte b is recognized as an AlarmMessage from CodePage1 then return that AlarmMessage. 
+	 * Otherwise returns Byte b
+	 * @param b byte
+	 * @return alarm message or Byte
+	 */
 	public static final Object fromByteIf(byte b) {
 		if(fromByte.containsKey(b)) {
 			return fromByte.get(b);
@@ -131,6 +147,10 @@ public enum AlarmMessageCP1 {
 		}
 	}
 	
+	/**
+	 * The byte associated with this CodePage1 AlarmMessage
+	 * @return byte
+	 */
 	public final java.lang.Byte toByte() {
 		return b;
 	}

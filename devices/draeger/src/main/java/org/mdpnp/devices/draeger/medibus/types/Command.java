@@ -4,6 +4,12 @@ import java.util.Map;
 
 import org.mdpnp.devices.EnumHelper;
 
+
+/**
+ * Available Medibus commands
+ * @author jplourde
+ *
+ */
 public enum Command {
 	NoOperation,
 	InitializeComm,
