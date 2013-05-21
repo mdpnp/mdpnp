@@ -2,6 +2,9 @@ package mdpnp;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -28,7 +31,7 @@ import javax.swing.event.DocumentListener;
 public class QRBasicForm extends JFrame{
 	
 	private int FILE_DEFAULT_SIZE = 125;
-	private int FORM_WIDTH = 450;
+	private int FORM_WIDTH = 520; //450;
 	private int FORM_HEIGHT = 250;
 	
     public QRBasicForm() {
@@ -53,39 +56,43 @@ public class QRBasicForm extends JFrame{
 
     
     //size of the image file
-    JLabel labelQRWidth= new JLabel("Image Width  px:");
-    JTextField tfWidth= new JTextField(String.valueOf(FILE_DEFAULT_SIZE),3);
-    JLabel labelQRHeight= new JLabel("Image Height  px:");
-    JTextField tfHeight= new JTextField(String.valueOf(FILE_DEFAULT_SIZE),3);
+    JLabel labelQRWidth= new JLabel("Image Width px:");
+    JTextField tfWidth= new JTextField(String.valueOf(FILE_DEFAULT_SIZE),7);
+    JLabel labelQRHeight= new JLabel("Image Height px:");
+    JTextField tfHeight= new JTextField(String.valueOf(FILE_DEFAULT_SIZE),7);
 
     
     //button
     JButton buttonGenerate = new JButton("Generate QR file");
-    
-    //extra row for custom message
-    JLabel jlDone = new JLabel();
       
     private void init(){
-    	/**
-    	 * TODO Use gridBagLayout to align components.
-    	 * Right now it has a quick-and-dirty approach of using panel on a JFrame
-    	 * and disabling the resizing ability.
-    	 * The correct approach should be using a gridBagLayout to display
-    	 * component beautifully for different platforms/screens...
-    	 */
-    	FlowLayout layout = new FlowLayout();
-    	layout.setAlignment(FlowLayout.LEFT);
-		getContentPane().setLayout(layout);
-		
+
+    	JPanel panel = new JPanel();
+    	panel.setLayout(new GridBagLayout());
+    	//GridBagConstraints gridConst = new GridBagConstraints();
+    	Insets myInsets = new Insets(2, 5, 2, 5);
+     	GridBagConstraints gridConst = 
+    			new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, myInsets, 0, 0);
+
 		//file chooser
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 			
-		//QR File Name
-		JPanel panel1 = new JPanel();
-		panel1.add(labelQRName);
-		panel1.add(tfFileName);
-		panel1.add(jcExt);	
-		getContentPane().add(panel1);
+		//1st row: QR File Name + extension (combo)
+		gridConst.insets = myInsets;
+		gridConst.fill = GridBagConstraints.HORIZONTAL;
+		gridConst.gridx = 0;
+		gridConst.gridy = 0;
+		panel.add(labelQRName, gridConst);
+		
+		gridConst.gridx = 1;
+		gridConst.gridy = 0;
+		gridConst.gridwidth = 2;
+		panel.add(tfFileName, gridConst);
+		
+		gridConst.gridx = 3;
+		gridConst.gridy = 0;
+		gridConst.gridwidth = 1;
+		panel.add(jcExt, gridConst);
 
 		/**
 		 * Listener for the file_name text field
@@ -103,7 +110,6 @@ public class QRBasicForm extends JFrame{
 
 				  //will disable the "Generate QR" button if we have no file_name or qr_link
 				  public void checkText() {
-					jlDone.setText("");
 					if(tfFileName.getText().trim().equals("") || tflink.getText().trim().equals(""))
 						buttonGenerate.setEnabled(false);						
 					else
@@ -112,20 +118,26 @@ public class QRBasicForm extends JFrame{
 		});
 		
 		
-	    //QR Info
-		JPanel panel2 = new JPanel();
-		panel2.add(labelQRInfo);
-//		panel2.add(tflink);
+	    //2nd row QR Info (text area)
 		//Scroll panel for the test area
 		JScrollPane areaScrollPane = new JScrollPane(tflink);
 		areaScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-		areaScrollPane.setPreferredSize(new Dimension(335, 50));
-		panel2.add(areaScrollPane);
-		tflink.setAutoscrolls(true);
+//		areaScrollPane.setAutoscrolls(false); //If I only wanted vertical scrollbar 
+
+		//these two are ignored w/ autoscroll=true  
 		tflink.setLineWrap(true);
 		tflink.setWrapStyleWord(true);
 		
-		getContentPane().add(panel2);
+		gridConst.gridx = 0;
+		gridConst.gridy = 1;
+		gridConst.anchor = GridBagConstraints.FIRST_LINE_START;
+		panel.add(labelQRInfo, gridConst);
+		
+		gridConst.gridx = 1;
+		gridConst.gridy = 1;
+		gridConst.gridwidth = 3;
+		panel.add(areaScrollPane, gridConst);
+
 		
 		/**
 		 * Listener for the QR link (information)
@@ -143,7 +155,6 @@ public class QRBasicForm extends JFrame{
 
 				  //will disable the "Generate QR" button if we have no file_name or qr_link
 				  public void checkText() {
-					jlDone.setText("");
 					if(tfFileName.getText().trim().equals("") ||tflink.getText().trim().equals(""))
 						buttonGenerate.setEnabled(false);						
 					else
@@ -151,16 +162,34 @@ public class QRBasicForm extends JFrame{
 				     }
 		});
 		
-	    //Size
-		JPanel panel3 = new JPanel();
-		panel3.add(labelQRWidth);
-		panel3.add(tfWidth);
-		panel3.add(labelQRHeight);
-		panel3.add(tfHeight);
+	    //3rd row Size text areas (and labels)
+		gridConst.anchor = GridBagConstraints.LINE_END;
+		gridConst.gridwidth = 1;
+		gridConst.gridx = 0;
+		gridConst.gridy = 2;
+		panel.add(labelQRWidth, gridConst);
+		
+		gridConst.gridx = 1;
+		gridConst.gridy = 2;
+		panel.add(tfWidth, gridConst);
+		
+		gridConst.gridx = 2;
+		gridConst.gridy = 2;
+		gridConst.anchor = GridBagConstraints.LINE_END;
+		panel.add(labelQRHeight, gridConst);
+		
+		gridConst.gridx = 3;
+		gridConst.gridy = 2;
+		panel.add(tfHeight, gridConst);
+		getContentPane().add(panel);
+		
+		//4th Row: Generate button
+		gridConst.gridx = 1;
+		gridConst.gridy = 3;
+		gridConst.gridwidth = 2;
+		panel.add(buttonGenerate, gridConst);
 
-	    
-	    //button
-		panel3.add(buttonGenerate);
+		
 		/**
 		 * Action listener for the GEnerate QR Button
 		 */
@@ -188,23 +217,16 @@ public class QRBasicForm extends JFrame{
 					
 					qrGen.generateQR();
 					
-					//Optional line to clarify
-					jlDone.setText("Created : "+path +"\\" +tfFileName.getText()+"."+jcExt.getSelectedItem());
 				}
 
 			}
 		});
 	    
-	    getContentPane().add(panel3);
-	    
-	    //extra
-	    JPanel panel4 = new JPanel();	    
-	    panel4.add(jlDone);
-	    getContentPane().add(panel4);
-	    
+		getContentPane().add(panel);
 	    setSize(FORM_WIDTH,FORM_HEIGHT);
+	    setMinimumSize(new Dimension(FORM_WIDTH,FORM_HEIGHT));
 	    setVisible(true);
-	    setResizable(false);
+	    setResizable(true);
 	    this.setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 	/**
