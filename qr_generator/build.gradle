@@ -1,0 +1,21 @@
+// diego@mdpnp.porg
+//// Build inspired by http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'maven'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+	//qrgen
+    //compile group: 'net.glxn', name: 'qrgen', version: '1.2'
+   compile 'net.glxn:qrgen:1.2'
+   //ZXing
+   //compile ('com.google.zxing:core:2.1')
+   //compile ('com.google.zxing:javase:2.1')
+
+}
+
