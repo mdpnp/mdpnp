@@ -26,7 +26,7 @@ import net.glxn.qrgen.image.ImageType;
  */
 public class QRGenerator {
 
- private int FILE_DEFAULT_SIZE = 125;//image default size
+ private int FILE_DEFAULT_SIZE = 125;//image default size (in pixels)
 	
  private String sPath ="./output"; //default output path
  private String qrName; //image file name
