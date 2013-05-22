@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -137,7 +138,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 		JPanel textPanel = new JPanel(new BorderLayout());
 		JLabel text = new JLabel();
 		
-		text.setText("X-Ray / Ventilator Synchronization");
+		text.setText("Sources");
 		text.setFont(text.getFont().deriveFont(FONT_SIZE));
 		textPanel.add(text, BorderLayout.NORTH);
 		deviceList = new JList(devices);
@@ -245,7 +246,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
         gbc.gridy++;
         gbc.gridwidth = 1;
         
-        JLabel strategyLabel = new JLabel("Sync Strategy");
+        JLabel strategyLabel = new JLabel("Synchronization Strategy");
         strategyLabel.setFont(strategyLabel.getFont().deriveFont(FONT_SIZE));
         strategyLabel.setHorizontalAlignment(SwingConstants.LEFT);
         strategyLabel.setHorizontalTextPosition(SwingConstants.LEFT);
@@ -253,7 +254,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
         
         gbc.gridx = 1;
         
-        JLabel targetTimeLabel = new JLabel("Target Time");
+        JLabel targetTimeLabel = new JLabel("Phase of Ventilation");
         targetTimeLabel.setFont(targetTimeLabel.getFont().deriveFont(FONT_SIZE));
         targetTimeLabel.setHorizontalAlignment(SwingConstants.LEFT);
         targetTimeLabel.setHorizontalTextPosition(SwingConstants.LEFT);
@@ -391,7 +392,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 	
 	public void start() {
 		if(!started) {
-			demoPanel.getBedLabel().setText("Device Integration Demo");
+			demoPanel.getBedLabel().setText("X-Ray / Ventilator Synchronization");
 			demoPanel.getPatientLabel().setText("");
 			demoPanel.getPatientLabel().setFont(Font.decode("courier-bold-20"));
 			demoPanel.getPatientLabel().setVerticalAlignment(SwingConstants.TOP);
@@ -572,7 +573,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 			} else if(Ventilator.FREQUENCY_IPPV.equals(i)) {
 				frequencyIPPV = value;
 				period = (long)( 60000.0 / frequencyIPPV.doubleValue() );
-				log.info("FrequencyIPPV="+frequencyIPPV+" period="+period);
+				log.debug("FrequencyIPPV="+frequencyIPPV+" period="+period);
 			
 			} else if(Ventilator.INSPIRATORY_TIME.equals(i)) {
 				inspiratoryTime = (long) (1000.0 * value.doubleValue());

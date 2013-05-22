@@ -116,18 +116,33 @@ public class DemoApp {
 		panel.getContent().add(mainMenuPanel, "main");
 		ol.show(panel.getContent(), "main");
 		
-		RoomSyncPanel roomSyncPanel = new RoomSyncPanel(gateway);
-		panel.getContent().add(roomSyncPanel, "roomsync");
+		String s = System.getProperty("NOROOMSYNC");
+		RoomSyncPanel _roomSyncPanel = null;
+		if(null == s || !"true".equals(s)) {
+    		_roomSyncPanel = new RoomSyncPanel(gateway);
+    		panel.getContent().add(_roomSyncPanel, "roomsync");
+		}
+		final RoomSyncPanel roomSyncPanel = _roomSyncPanel;
 		
 		final DevicePanel devicePanel = new DevicePanel();
 		panel.getContent().add(devicePanel, "devicepanel");
 		
-		final PCAPanel pcaPanel = new PCAPanel(vitalsModel, gateway);
-		panel.getContent().add(pcaPanel, "pca");
+		s = System.getProperty("NOPCA");
+		PCAPanel _pcaPanel = null;
+		if(null == s || !"true".equals(s)) {
+		    _pcaPanel = new PCAPanel(vitalsModel, gateway);
+		    panel.getContent().add(_pcaPanel, "pca");
+		}
+		final PCAPanel pcaPanel = _pcaPanel;
 		
 //		final Gateway xray_gateway = new Gateway();
 //		final ApolloImpl xray_device = new ApolloImpl(xray_gateway);
-		final XRayVentPanel xrayVentPanel = new XRayVentPanel(gateway, panel, nc.getAcceptedDevices());
+		
+		
+		s = System.getProperty("NOXRAYVENT");
+		XRayVentPanel _xrayVentPanel = null;
+		if(null == s || !"true".equals(s)) {
+		    _xrayVentPanel = new XRayVentPanel(gateway, panel, nc.getAcceptedDevices());
 //		final GetConnected getConnected = new GetConnected(frame, xray_gateway) {
 //			@Override
 //			protected void abortConnect() {
@@ -136,8 +151,9 @@ public class DemoApp {
 //		};
 //		
 //		
-		panel.getContent().add(xrayVentPanel, "xray");
-		
+		    panel.getContent().add(_xrayVentPanel, "xray");
+		}
+		final XRayVentPanel xrayVentPanel = _xrayVentPanel;
 //		final EngineerConsole engineerConsole = new EngineerConsole(gateway);
 //		panel.getContent().add(engineerConsole, "biomed");
 		
@@ -179,14 +195,14 @@ public class DemoApp {
 				int idx = mainMenuPanel.getAppList().locationToIndex(e.getPoint());
 				if(idx >= 0) {
 					Object o = mainMenuPanel.getAppList().getModel().getElementAt(idx);
-					if("Data Fusion".equals(o)) {
+					if("Data Fusion".equals(o) && null != roomSyncPanel) {
 						setGoBack("main", null);
 						ol.show(panel.getContent(), "roomsync");
-					} else if("Infusion Safety".equals(o)) {
+					} else if("Infusion Safety".equals(o) && null != pcaPanel) {
 						setGoBack("main", null);
 						pcaPanel.reset();
 						ol.show(panel.getContent(), "pca");
-					} else if("X-Ray Ventilator Sync".equals(o)) {
+					} else if("X-Ray Ventilator Sync".equals(o) && null != xrayVentPanel) {
 						setGoBack("main", new Runnable() {
 							public void run() {
 							    xrayVentPanel.stop();
