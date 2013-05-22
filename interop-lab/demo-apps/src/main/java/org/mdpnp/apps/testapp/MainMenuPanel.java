@@ -5,6 +5,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
@@ -25,13 +27,30 @@ public class MainMenuPanel extends JPanel {
 	private final JList deviceList;
 	private final JButton biomedConsole;
 	
+	private static final boolean isTrue(String property) {
+	    String s = System.getProperty(property);
+	    if(null != s && "true".equals(s)) {
+	        return true;
+	    } else {
+	        return false;
+	    }
+	}
 
 	public MainMenuPanel() {
 		super(new GridLayout(1,2));
 		
 		setOpaque(false);
-		
-		appList = new JList(new String[] {"Infusion Safety", "Data Fusion", "X-Ray Ventilator Sync"});
+		List<String> names = new ArrayList<String>();
+		if(!isTrue("NOPCA")) {
+		    names.add("Infusion Safety");
+		}
+		if(!isTrue("NOXRAYVENT")) {
+		    names.add("X-Ray Ventilator Sync");
+		}
+		if(!isTrue("NOROOMSYNC")) {
+		    names.add("Data Fusion");
+		}
+		appList = new JList(names.toArray(new String[0]));
 		deviceList = new JList();
 		appList.setFont(Font.decode("verdana-30"));
 		deviceList.setFont(Font.decode("verdana-30"));

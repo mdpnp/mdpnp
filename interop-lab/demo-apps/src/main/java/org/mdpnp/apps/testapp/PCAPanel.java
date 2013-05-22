@@ -55,7 +55,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	    new Vital("heart rate", "bpm", PulseOximeter.PULSE,
 	    		  50.0, 120.0, 20.0, 200.0),
 	    new Vital("SpO\u2082", "%", PulseOximeter.SPO2,
-	    		  90.0, 100.0, 0.0, 100.0)
+	    		  90.0, 100.0, 80.0, 100.0)
 	};
 	
 	private static final Identifier[] REQUEST_IDENTIFIERS = new Identifier[] {Ventilator.RESPIRATORY_RATE, PulseOximeter.PULSE, Ventilator.END_TIDAL_CO2_MMHG, PulseOximeter.SPO2/*, Capnograph.AIRWAY_RESPIRATORY_RATE*/,
@@ -260,7 +260,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
         });
 		
 	}
-	private String resetCommand = "Start, 100\n";
+	private String resetCommand = "Start, 10\n";
 
 	private static final Logger log = LoggerFactory.getLogger(PCAPanel.class);
 	
