@@ -82,7 +82,7 @@ public class QRGenerator {
 	 ByteArrayOutputStream out;
 	 if(this.width != FILE_DEFAULT_SIZE ||  this.height!=FILE_DEFAULT_SIZE)
 		 out =  QRCode.from(qrInfo).to(imageType).withSize(width, height).stream();
-	 //XXX width and height my be different, for the image file, but the QR Code is always square
+	 //XXX width and height my be different for the image file, but the QR Code is always square
 	 else
 		 out = QRCode.from(qrInfo).to(imageType).stream();
 	 //QRCode.from("Hello World").withSize(250, 250).file();
