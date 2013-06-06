@@ -1,6 +1,7 @@
 /** Add css rules here for your application. */
 body {
 	padding:10px;
+	background-color: AntiqueWhite /*#FAEBD7*/;
 }
 
 /** Example rules used by the template application (remove for your app) */
@@ -54,4 +55,11 @@ h1 {
 	font-size: 20pt;
 	margin-top: 20px;
 	margin-bottom: 20px;
+}
+
+p.welcomeText{
+	width:900px;
+	text-align:justify;
+	text-justify:inter-word;
+/* 	background-color:yellow; */
 }
