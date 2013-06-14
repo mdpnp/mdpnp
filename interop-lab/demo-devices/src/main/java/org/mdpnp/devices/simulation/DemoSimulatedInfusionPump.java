@@ -7,9 +7,13 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
-import org.mdpnp.nomenclature.ConnectedDevice;
 
-public interface SimulatedConnectedDevice extends ConnectedDevice, SimulatedDevice {
-//	void simulateConnect();
-//	void simulateDisconnect();
+
+public class DemoSimulatedInfusionPump extends AbstractSimulatedDevice {
+	
+
+	public DemoSimulatedInfusionPump(int domainId) {
+		super(domainId);
+		deviceIdentity.model = "Simulated Infusion Pump";
+	}
 }

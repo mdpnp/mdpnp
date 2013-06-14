@@ -12,15 +12,11 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-import org.mdpnp.devices.connected.AbstractGetConnected;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.messaging.GatewayListener;
-
-public class GetConnected extends AbstractGetConnected implements GatewayListener {
+public class GetConnected extends AbstractGetConnected {
 	private final JFrame frame;
 	
-	public GetConnected(JFrame frame, Gateway gateway) {
-		super(gateway);
+	public GetConnected(JFrame frame, int domainId, String universal_device_identifier) {
+		super(domainId, universal_device_identifier);
 		this.frame = frame;
 	}
 	

@@ -9,7 +9,8 @@ public class BindingFactory {
     
     public enum BindingType {
         RTI_DDS("Domain Id:", "org.mdpnp.messaging.dds.rti.DDSBinding"),
-        JGROUPS("Multicast Addr:", "org.mdpnp.messaging.jgroups.JGroupsBinding");
+        JGROUPS("Multicast Addr:", "org.mdpnp.messaging.jgroups.JGroupsBinding"),
+        NONE(null, "");
         
         private final String settingsDescription;
         private final Class<? extends Binding> bindingClass;
@@ -58,7 +59,12 @@ public class BindingFactory {
     
     public static final Binding createBinding(BindingType type, Gateway gateway, Binding.Role role, String settings) {
         try {
-            return type.getBindingClass().getConstructor(String.class, Role.class, Gateway.class).newInstance(settings, role, gateway);
+            Class<? extends Binding> cls = type.getBindingClass();
+            if(null != cls) {
+                return cls.getConstructor(String.class, Role.class, Gateway.class).newInstance(settings, role, gateway);
+            } else {
+                return null;
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

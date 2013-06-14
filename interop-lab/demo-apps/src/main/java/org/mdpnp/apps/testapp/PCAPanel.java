@@ -45,22 +45,24 @@ import org.mdpnp.nomenclature.Ventilator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.subscription.Subscriber;
+
 public class PCAPanel extends JPanel implements VitalsListener {
 	// TODO BOOKMARK HERE!
 	private static final Vital[] vitals = new Vital[] {
 		new Vital("end tidal CO\u2082", "mmHg", Ventilator.END_TIDAL_CO2_MMHG,
-				  25.0, 45.0, 1.0, 100.0),
+				  15.0, 45.0, 1.0, 100.0),
 		new Vital("respiratory rate", "bpm", Ventilator.RESPIRATORY_RATE,
 				  8.0, 100.0, 1.0, 200.0),
 	    new Vital("heart rate", "bpm", PulseOximeter.PULSE,
 	    		  50.0, 120.0, 20.0, 200.0),
 	    new Vital("SpO\u2082", "%", PulseOximeter.SPO2,
-	    		  90.0, 100.0, 80.0, 100.0)
+	    		  90.0, 101.0, 80.0, 101.0)
 	};
 	
-	private static final Identifier[] REQUEST_IDENTIFIERS = new Identifier[] {Ventilator.RESPIRATORY_RATE, PulseOximeter.PULSE, Ventilator.END_TIDAL_CO2_MMHG, PulseOximeter.SPO2/*, Capnograph.AIRWAY_RESPIRATORY_RATE*/,
-            DemoCapnostream20.FAST_STATUS, DemoCapnostream20.CAPNOSTREAM_UNITS, DemoCapnostream20.CO2_ACTIVE_ALARMS, DemoCapnostream20.EXTENDED_CO2_STATUS,
-            DemoCapnostream20.SLOW_STATUS};
+//	private static final Identifier[] REQUEST_IDENTIFIERS = new Identifier[] {Ventilator.RESPIRATORY_RATE, PulseOximeter.PULSE, Ventilator.END_TIDAL_CO2_MMHG, PulseOximeter.SPO2/*, Capnograph.AIRWAY_RESPIRATORY_RATE*/,
+//            DemoCapnostream20.FAST_STATUS, DemoCapnostream20.CAPNOSTREAM_UNITS, DemoCapnostream20.CO2_ACTIVE_ALARMS, DemoCapnostream20.EXTENDED_CO2_STATUS,
+//            DemoCapnostream20.SLOW_STATUS};
 	
 	private final JList list;
 	
@@ -134,12 +136,12 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		}
 		
 	}
-	private final Gateway gateway;
+	private final Subscriber subscriber;
 	
 	
-	public PCAPanel(VitalsModel model, Gateway gateway) {
+	public PCAPanel(VitalsModel model, Subscriber subscriber) {
 		super();
-		this.gateway = gateway;
+		this.subscriber = subscriber;
 		setLayout(new BorderLayout());
 		
 
@@ -154,7 +156,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		
 		// Requests data from existing devices
 		MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
-		miau.setValue(REQUEST_IDENTIFIERS);
+//		miau.setValue(REQUEST_IDENTIFIERS);
 		
 		for(int i = 0; i < model.getSize(); i++) {
 			Vitals device = (Vitals) model.getElementAt(i);
@@ -228,34 +230,34 @@ public class PCAPanel extends JPanel implements VitalsListener {
             
             @Override
             public void update(IdentifiableUpdate<?> update) {
-                if(DemoCapnostream20.FAST_STATUS.equals(update.getIdentifier()) ||
-                   DemoCapnostream20.CAPNOSTREAM_UNITS.equals(update.getIdentifier()) ||
-                   DemoCapnostream20.CO2_ACTIVE_ALARMS.equals(update.getIdentifier()) || 
-                   DemoCapnostream20.EXTENDED_CO2_STATUS.equals(update.getIdentifier()) || 
-                   DemoCapnostream20.SLOW_STATUS.equals(update.getIdentifier())) {
-                    log.trace(update.toString());
-                    if(DemoCapnostream20.EXTENDED_CO2_STATUS.equals(update.getIdentifier())) {
-                        NumericUpdate nu = (NumericUpdate) update;
-                        Number v = nu.getValue();
-                        if(v != null) {
-                            fastStatusBuilder.delete(0, fastStatusBuilder.length());
-                            if(0 != (Capnostream.ExtendedCO2Status.CHECK_CALIBRATION & v.intValue())) {
-                                fastStatusBuilder.append("CHECK_CALIBRATION ");
-                            } else if(0 != (Capnostream.ExtendedCO2Status.CHECK_FLOW & v.intValue())) {
-                                fastStatusBuilder.append("CHECK_FLOW ");
-                            } else if(0 != (Capnostream.ExtendedCO2Status.PUMP_OFF & v.intValue())) {
-                                fastStatusBuilder.append("PUMP_OFF ");
-                            } else if(0 != (Capnostream.ExtendedCO2Status.BATTERY_LOW & v.intValue())) {
-                                fastStatusBuilder.append("BATTERY_LOW ");
-                            }
-                            reflectState();
-                        }
-                    }
-                    
-//                    NumericUpdate nu = (NumericUpdate) update;
-//                    Capnostream.FastStatus.fastStatus(nu.getValue().intValue(), fastStatusBuilder);
-//                    reflectState();
-                }
+//                if(DemoCapnostream20.FAST_STATUS.equals(update.getIdentifier()) ||
+//                   DemoCapnostream20.CAPNOSTREAM_UNITS.equals(update.getIdentifier()) ||
+//                   DemoCapnostream20.CO2_ACTIVE_ALARMS.equals(update.getIdentifier()) || 
+//                   DemoCapnostream20.EXTENDED_CO2_STATUS.equals(update.getIdentifier()) || 
+//                   DemoCapnostream20.SLOW_STATUS.equals(update.getIdentifier())) {
+//                    log.trace(update.toString());
+//                    if(DemoCapnostream20.EXTENDED_CO2_STATUS.equals(update.getIdentifier())) {
+//                        NumericUpdate nu = (NumericUpdate) update;
+//                        Number v = nu.getValue();
+//                        if(v != null) {
+//                            fastStatusBuilder.delete(0, fastStatusBuilder.length());
+//                            if(0 != (Capnostream.ExtendedCO2Status.CHECK_CALIBRATION & v.intValue())) {
+//                                fastStatusBuilder.append("CHECK_CALIBRATION ");
+//                            } else if(0 != (Capnostream.ExtendedCO2Status.CHECK_FLOW & v.intValue())) {
+//                                fastStatusBuilder.append("CHECK_FLOW ");
+//                            } else if(0 != (Capnostream.ExtendedCO2Status.PUMP_OFF & v.intValue())) {
+//                                fastStatusBuilder.append("PUMP_OFF ");
+//                            } else if(0 != (Capnostream.ExtendedCO2Status.BATTERY_LOW & v.intValue())) {
+//                                fastStatusBuilder.append("BATTERY_LOW ");
+//                            }
+//                            reflectState();
+//                        }
+//                    }
+//                    
+////                    NumericUpdate nu = (NumericUpdate) update;
+////                    Capnostream.FastStatus.fastStatus(nu.getValue().intValue(), fastStatusBuilder);
+////                    reflectState();
+//                }
             }
         });
 		
@@ -577,11 +579,11 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	@Override
 	public void deviceAdded(MyDevice device) {
 	 // Requests data from existing devices
-        MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
-        miau.setValue(REQUEST_IDENTIFIERS);
+//        MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
+//        miau.setValue(REQUEST_IDENTIFIERS);
 
-        miau.setTarget(device.getSource());
-        miau.setSource("*");
-        gateway.update(miau);
+//        miau.setTarget(device.getSource());
+//        miau.setSource("*");
+//        gateway.update(miau);
 	}	
 }

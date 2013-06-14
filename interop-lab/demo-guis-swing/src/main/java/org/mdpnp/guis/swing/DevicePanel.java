@@ -11,52 +11,36 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Image;
-import java.awt.image.BufferedImage;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
-import java.util.Arrays;
-import java.util.Collection;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdate;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdateImpl;
-import org.mdpnp.data.image.ImageUpdate;
-import org.mdpnp.data.text.TextUpdate;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.messaging.GatewayListener;
-import org.mdpnp.nomenclature.Device;
+import com.rti.dds.subscription.Subscriber;
 
 @SuppressWarnings("serial")
-public abstract class DevicePanel extends JPanel implements GatewayListener {
-//	protected Device device;
+public abstract class DevicePanel extends JPanel {
+    protected final Subscriber subscriber;
+    protected final String udi;
 	
-	protected Gateway gateway;
-	protected String source;
-	
-	public DevicePanel(Gateway gateway, String source) {
+	public DevicePanel(Subscriber subscriber, String udi) {
 		super();
-		this.gateway = gateway;
-		this.source = source;
+		this.subscriber = subscriber;
+		this.udi = udi;
 		setOpaque(false);
 		
 	}
 	
-	public void registerAndRequestRequiredIdentifiedUpdates() {
-		gateway.addListener(this);
-		MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
-		miau.setValue(requiredIdentifiedUpdates().toArray(new Identifier[0]));
-		miau.setTarget(source);
-		gateway.update(this, miau);
-	}
-	
-	public Collection<Identifier> requiredIdentifiedUpdates() {
-		return Arrays.asList(new Identifier[] {Device.NAME, Device.GUID, Device.ICON});
-	}
+//	public void registerAndRequestRequiredIdentifiedUpdates() {
+//		gateway.addListener(this);
+//		MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
+//		miau.setValue(requiredIdentifiedUpdates().toArray(new Identifier[0]));
+//		miau.setTarget(source);
+//		gateway.update(this, miau);
+//	}
+//	
+//	public Collection<Identifier> requiredIdentifiedUpdates() {
+//		return Arrays.asList(new Identifier[] {Device.NAME, Device.GUID, Device.ICON});
+//	}
 	
 	
 	private static void setBackground(Container c, Color bg) {
@@ -100,37 +84,37 @@ public abstract class DevicePanel extends JPanel implements GatewayListener {
 	public abstract void setIcon(Image image);
 	
 	public void destroy() {
-		gateway.removeListener(this);
+//		gateway.removeListener(this);
 	}
 	
-	@Override
-	public void update(IdentifiableUpdate<?> update) {
-		if(source == null || source.equals(update.getSource())) {
-			if(Device.NAME.equals(update.getIdentifier())) {
-				setName( ((TextUpdate)update).getValue());
-			} else if(Device.GUID.equals(update.getIdentifier())) {
-				setGuid( ((TextUpdate)update).getValue());
-			} else if(Device.ICON.equals(update.getIdentifier())) {
-				ImageUpdate imageUpdate = (ImageUpdate) update;
-				int width = imageUpdate.getWidth();
-				int height = imageUpdate.getHeight();
-				BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-				byte[] raster = imageUpdate.getRaster();
-				IntBuffer ib = ByteBuffer.wrap(raster).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
-				for(int y = 0; y < height; y++) {
-					for(int x = 0; x < width; x++) {
-						bi.setRGB(x, y, ib.get());
-					}
-				}
-				setIcon(bi);
-			}
-			doUpdate(update);
-		}
-	}
+//	@Override
+//	public void update(IdentifiableUpdate<?> update) {
+//		if(source == null || source.equals(update.getSource())) {
+//			if(Device.NAME.equals(update.getIdentifier())) {
+//				setName( ((TextUpdate)update).getValue());
+//			} else if(Device.GUID.equals(update.getIdentifier())) {
+//				setGuid( ((TextUpdate)update).getValue());
+//			} else if(Device.ICON.equals(update.getIdentifier())) {
+//				ImageUpdate imageUpdate = (ImageUpdate) update;
+//				int width = imageUpdate.getWidth();
+//				int height = imageUpdate.getHeight();
+//				BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+//				byte[] raster = imageUpdate.getRaster();
+//				IntBuffer ib = ByteBuffer.wrap(raster).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
+//				for(int y = 0; y < height; y++) {
+//					for(int x = 0; x < width; x++) {
+//						bi.setRGB(x, y, ib.get());
+//					}
+//				}
+//				setIcon(bi);
+//			}
+//			doUpdate(update);
+//		}
+//	}
 	
-	protected void doUpdate(IdentifiableUpdate<?> update) {
-		
-	}
+//	protected void doUpdate(IdentifiableUpdate<?> update) {
+//		
+//	}
 	
 }
 

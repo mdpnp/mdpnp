@@ -7,53 +7,36 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
+import ice.Numeric;
+
 import java.util.Random;
 
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.enumeration.MutableEnumerationUpdate;
-import org.mdpnp.data.enumeration.MutableEnumerationUpdateImpl;
-import org.mdpnp.data.numeric.MutableNumericUpdate;
-import org.mdpnp.data.numeric.MutableNumericUpdateImpl;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.nomenclature.NoninvasiveBloodPressure;
-import org.mdpnp.nomenclature.Ventilator;
+public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice implements Runnable {
+    
+    private final InstanceHolder<Numeric> systolic, diastolic, pulse, inflation, respiratoryRate, nextInflationTime, state;
+    // TODO needs to subscribe to an objective state for triggering a NIBP
+    
 
-public class SimulatedBloodPressureImpl extends AbstractSimulatedConnectedDevice implements SimulatedBloodPressure, Runnable {
-	private final MutableNumericUpdate systolicUpdate = new MutableNumericUpdateImpl(SYSTOLIC);
-	private final MutableNumericUpdate diastolicUpdate = new MutableNumericUpdateImpl(DIASTOLIC);
-	private final MutableNumericUpdate pulseUpdate = new MutableNumericUpdateImpl(PULSE);
-	private final MutableNumericUpdate inflationUpdate = new MutableNumericUpdateImpl(INFLATION_PRESSURE);
-	private final MutableNumericUpdate nextInflationUpdate = new MutableNumericUpdateImpl(NEXT_INFLATION_TIME_REMAINING);
-	private final MutableEnumerationUpdate stateUpdate = new MutableEnumerationUpdateImpl(NoninvasiveBloodPressure.STATE);
-	
-	// TODO this is temporary (as are we all)
-	private final MutableNumericUpdate rrUpdate = new MutableNumericUpdateImpl(Ventilator.RESPIRATORY_RATE);
-	
 	private final Random random = new Random();
 	
-	@Override
-	public void update(IdentifiableUpdate<?> command) {
-	    if(NoninvasiveBloodPressure.REQUEST_NIBP.equals(command.getIdentifier())) {
-	        doInflate();
-	    }
-	    super.update(command);
-	}
+//	@Override
+//	public void update(IdentifiableUpdate<?> command) {
+//	    if(NoninvasiveBloodPressure.REQUEST_NIBP.equals(command.getIdentifier())) {
+//	        doInflate();
+//	    }
+//	    super.update(command);
+//	}
 	
 	protected void simulateReading(int systolic, int diastolic, int pulserate) {
-		inflationUpdate.setValue(null);
-		systolicUpdate.setValue(null);
-		diastolicUpdate.setValue(null);
-		pulseUpdate.setValue(null);
-		
-		gateway.update(this, inflationUpdate, systolicUpdate, diastolicUpdate, pulseUpdate, stateUpdate, rrUpdate);
 				
+	    numericSample(state, ice.MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS.VALUE);
+	    
 		int tgtInflation = systolic + 30;
 		int inflation = 0;
 		
 		while(inflation < tgtInflation) {
-			inflationUpdate.setValue(inflation);
+		    numericSample(this.inflation, inflation);
 
-			gateway.update(this, inflationUpdate);
 			inflation += random.nextInt(10)+1;
 			try {
 				Thread.sleep(250L);
@@ -62,15 +45,17 @@ public class SimulatedBloodPressureImpl extends AbstractSimulatedConnectedDevice
 			}			
 		}
 		
-		synchronized(this) {
-			stateUpdate.setValue(NBPState.Deflating);
-		}
+//		synchronized(this) {
+		    
+//			stateUpdate.setValue(NBPState.Deflating);
+//		}
 
-		gateway.update(this, stateUpdate);
+//		gateway.update(this, stateUpdate);
+		numericSample(state, ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE);
 		
 		while(inflation > 0) {
-			inflationUpdate.setValue(inflation);
-			gateway.update(this, inflationUpdate);
+		    numericSample(this.inflation, inflation);
+
 			inflation -= random.nextInt(10)+1;
 			try {
 				Thread.sleep(500L);
@@ -78,20 +63,21 @@ public class SimulatedBloodPressureImpl extends AbstractSimulatedConnectedDevice
 				e.printStackTrace();
 			}
 		}
-		inflationUpdate.setValue(inflation);
+		numericSample(this.inflation, inflation);
 
-		synchronized(this) {
-			stateUpdate.setValue(NBPState.Waiting);
-
-		}
-
-		gateway.update(this, inflationUpdate, stateUpdate);
+		numericSample(state, ice.MDC_EVT_STAT_OFF.VALUE);
+//		synchronized(this) {
+//			stateUpdate.setValue(NBPState.Waiting);
+//
+//		}
+//
+//		gateway.update(this, inflationUpdate, stateUpdate);
+		numericSample(this.systolic, systolic);
+		numericSample(this.diastolic, diastolic);
+		numericSample(this.pulse, pulserate);
 		
-		systolicUpdate.setValue(systolic);
-		diastolicUpdate.setValue(diastolic);
-		pulseUpdate.setValue(pulserate);
-		
-		gateway.update(this, systolicUpdate, diastolicUpdate, pulseUpdate, rrUpdate);
+		// TODO this is just for testing!
+		numericSample(this.respiratoryRate, 12);
 	}
 
 	protected void simulateRandomReading() {
@@ -119,8 +105,10 @@ public class SimulatedBloodPressureImpl extends AbstractSimulatedConnectedDevice
 					while(diff > 0) {
 						try {
 							this.wait(Math.max(1, Math.min(diff, nextRoundMinute)));
-							nextInflationUpdate.setValue(getNextInflationTimeRemaining());
-							gateway.update(this, nextInflationUpdate, stateUpdate);
+							numericSample(this.nextInflationTime, getNextInflationTimeRemaining());
+//							nextInflationUpdate.setValue(getNextInflationTimeRemaining());
+//							gateway.update(this, nextInflationUpdate, stateUpdate);
+							numericSample(this.state, ice.MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS.VALUE);
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
@@ -128,11 +116,11 @@ public class SimulatedBloodPressureImpl extends AbstractSimulatedConnectedDevice
 						diff = nextInflation - now;
 						nextRoundMinute = diff % WAITING_NOTIFY_INTERVAL;
 					}
-					stateUpdate.setValue(NBPState.Inflating);
+//					stateUpdate.setValue(NBPState.Inflating);
 				}
-				
-				nextInflationUpdate.setValue(getNextInflationTimeRemaining());
-				gateway.update(this, nextInflationUpdate, stateUpdate);
+				numericSample(this.nextInflationTime, getNextInflationTimeRemaining());
+//				nextInflationUpdate.setValue(getNextInflationTimeRemaining());
+//				gateway.update(this, nextInflationUpdate, stateUpdate);
 				
 				int[] singleOverride = this.singleOverride;
 				this.singleOverride = null;
@@ -149,12 +137,14 @@ public class SimulatedBloodPressureImpl extends AbstractSimulatedConnectedDevice
 			} finally {
 				long now = System.currentTimeMillis();
 				synchronized(this) {
-					stateUpdate.setValue(NBPState.Waiting);
+				    numericSample(this.state, ice.MDC_EVT_STAT_OFF.VALUE);
+//					stateUpdate.setValue(NBPState.Waiting);
 					this.nextInflation = now + INTERVAL;
 					this.notifyAll();
 				}
-				nextInflationUpdate.setValue(nextInflation);
-				gateway.update(this, nextInflationUpdate, stateUpdate);
+				numericSample(this.nextInflationTime, (float)(long) nextInflation);
+//				nextInflationUpdate.setValue(nextInflation);
+//				gateway.update(this, nextInflationUpdate, stateUpdate);
 			}
 		}
 	}
@@ -163,21 +153,21 @@ public class SimulatedBloodPressureImpl extends AbstractSimulatedConnectedDevice
 	
 	private Thread t;
 	
-	public SimulatedBloodPressureImpl(Gateway gateway) {
-		super(gateway);
-		nameUpdate.setValue("NIBP (Simulated)");
-		stateUpdate.setValue(NBPState.Waiting);
-//		add(nameUpdate);
-//		add(guidUpdate);
-		add(stateUpdate);
-		add(systolicUpdate);
-		add(diastolicUpdate);
-		add(nextInflationUpdate);
-		add(inflationUpdate);
-		add(pulseUpdate);
+	public DemoSimulatedBloodPressure(int domainId) {
+		super(domainId);
+		deviceIdentity.model = "NIBP (Simulated)";
+		deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 		
-		rrUpdate.setValue(12);
-		add(rrUpdate);
+		state = createNumericInstance(ice.MDC_PRESS_CUFF.VALUE);
+		systolic = createNumericInstance(ice.MDC_PRESS_CUFF_SYS.VALUE);
+		diastolic = createNumericInstance(ice.MDC_PRESS_CUFF_DIA.VALUE);
+		nextInflationTime = createNumericInstance(ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE);
+		inflation = createNumericInstance(ice.MDC_PRESS_CUFF_INFLATION.VALUE);
+		pulse = createNumericInstance(ice.MDC_PULS_RATE_NON_INV.VALUE);
+		respiratoryRate = createNumericInstance(ice.MDC_RESP_RATE.VALUE);
+		
+		numericSample(state, ice.MDC_EVT_STAT_OFF.VALUE);
+		numericSample(respiratoryRate, 12);
 	}
 	
 	@Override
@@ -219,13 +209,11 @@ public class SimulatedBloodPressureImpl extends AbstractSimulatedConnectedDevice
 		return null == nextInflation ? null : (nextInflation - System.currentTimeMillis());
 	}
 
-	@Override
 	public synchronized void doInflate() {
 		this.nextInflation = 0L;
 		this.notifyAll();
 	}
 
-	@Override
 	public synchronized void doSimulate(int systolic, int diastolic, int pulserate) {
 		this.singleOverride = new int[] { systolic, diastolic, pulserate };
 		this.nextInflation = 0L;

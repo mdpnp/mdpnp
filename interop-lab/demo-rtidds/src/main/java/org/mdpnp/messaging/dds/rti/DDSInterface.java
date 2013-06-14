@@ -59,7 +59,7 @@ public class DDSInterface {
 		}
 		writeDoubleSequence.read();
 	}
-
+	
 	public final void arrayToSequence(byte[] bytes, RTICLibrary.DDS_Sequence seq) {
 		if (0 == RTICLibrary.INSTANCE.DDS_OctetSeq_initialize(seq.getPointer())) {
 			throw new RuntimeException("Unable to initialize sequence");

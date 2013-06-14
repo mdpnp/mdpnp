@@ -4,16 +4,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.mdpnp.messaging.Gateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class AbstractDelegatingSerialDevice<T> extends AbstractSerialDevice {
-	public AbstractDelegatingSerialDevice(Gateway gateway) {
-		super(gateway);
+	public AbstractDelegatingSerialDevice(int domainId) {
+		super(domainId);
 	}
-	public AbstractDelegatingSerialDevice(Gateway gateway, SerialSocket serialSocket) {
-	    super(gateway, serialSocket);
+	public AbstractDelegatingSerialDevice(int domainId, SerialSocket serialSocket) {
+	    super(domainId, serialSocket);
     }
 	private InputStream  inputStream;
 	private OutputStream outputStream;

@@ -1,5 +1,7 @@
 package org.mdpnp.apps.testapp;
 
+import ice.DeviceIdentity;
+
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -15,14 +17,13 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
-import org.mdpnp.messaging.Device;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.messaging.NetworkController;
-import org.mdpnp.messaging.BindingFactory.BindingType;
-import org.mdpnp.nomenclature.PulseOximeter;
-import org.mdpnp.nomenclature.Ventilator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.subscription.Subscriber;
 
 public class DemoApp {
 	
@@ -64,7 +65,7 @@ public class DemoApp {
 	
 	private static final Logger log = LoggerFactory.getLogger(DemoApp.class);
 	
-	public static final void start(BindingType type, String settings) throws Exception {
+	public static final void start(int domainId) throws Exception {
 		UIManager.setLookAndFeel(new MDPnPLookAndFeel());
 
 
@@ -76,17 +77,16 @@ public class DemoApp {
 		
 		// This could prove confusing
 		TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
-		final Gateway gateway = new Gateway();
-		final NetworkController nc = new NetworkController(gateway, type, settings);
-		final VitalsModel vitalsModel = new VitalsModel();
+//		final Gateway gateway = new Gateway();
+		final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		final DeviceIdentityListModel nc = new DeviceIdentityListModel(subscriber);
+//		final VitalsModel vitalsModel = new VitalsModel();
+//		vitalsModel.addInterest(Ventilator.END_TIDAL_CO2_MMHG);
+//		vitalsModel.addInterest(Ventilator.RESPIRATORY_RATE);
+//		vitalsModel.addInterest(PulseOximeter.SPO2);
 //		vitalsModel.addInterest(PulseOximeter.PULSE);
-		vitalsModel.addInterest(Ventilator.END_TIDAL_CO2_MMHG);
-//		vitalsModel.addInterest(Ventilator.EXP_CO2_MMHG);
-		vitalsModel.addInterest(Ventilator.RESPIRATORY_RATE);
-		vitalsModel.addInterest(PulseOximeter.SPO2);
-		vitalsModel.addInterest(PulseOximeter.PULSE);
-//		vitalsModel.addInterest(Capnograph.AIRWAY_RESPIRATORY_RATE);
-		gateway.addListener(vitalsModel);
+//		gateway.addListener(vitalsModel);
 		
 		final DemoFrame frame = new DemoFrame("Integrated Clinical Environment");
 		panel = new DemoPanel();
@@ -119,7 +119,7 @@ public class DemoApp {
 		String s = System.getProperty("NOROOMSYNC");
 		RoomSyncPanel _roomSyncPanel = null;
 		if(null == s || !"true".equals(s)) {
-    		_roomSyncPanel = new RoomSyncPanel(gateway);
+    		_roomSyncPanel = new RoomSyncPanel(subscriber);
     		panel.getContent().add(_roomSyncPanel, "roomsync");
 		}
 		final RoomSyncPanel roomSyncPanel = _roomSyncPanel;
@@ -130,8 +130,8 @@ public class DemoApp {
 		s = System.getProperty("NOPCA");
 		PCAPanel _pcaPanel = null;
 		if(null == s || !"true".equals(s)) {
-		    _pcaPanel = new PCAPanel(vitalsModel, gateway);
-		    panel.getContent().add(_pcaPanel, "pca");
+//		    _pcaPanel = new PCAPanel(vitalsModel, gateway);
+//		    panel.getContent().add(_pcaPanel, "pca");
 		}
 		final PCAPanel pcaPanel = _pcaPanel;
 		
@@ -140,9 +140,9 @@ public class DemoApp {
 		
 		
 		s = System.getProperty("NOXRAYVENT");
-		XRayVentPanel _xrayVentPanel = null;
+//		XRayVentPanel _xrayVentPanel = null;
 		if(null == s || !"true".equals(s)) {
-		    _xrayVentPanel = new XRayVentPanel(gateway, panel, nc.getAcceptedDevices());
+//		    _xrayVentPanel = new XRayVentPanel(gateway, panel, nc);
 //		final GetConnected getConnected = new GetConnected(frame, xray_gateway) {
 //			@Override
 //			protected void abortConnect() {
@@ -151,18 +151,18 @@ public class DemoApp {
 //		};
 //		
 //		
-		    panel.getContent().add(_xrayVentPanel, "xray");
+//		    panel.getContent().add(_xrayVentPanel, "xray");
 		}
-		final XRayVentPanel xrayVentPanel = _xrayVentPanel;
+//		final XRayVentPanel xrayVentPanel = _xrayVentPanel;
 //		final EngineerConsole engineerConsole = new EngineerConsole(gateway);
 //		panel.getContent().add(engineerConsole, "biomed");
 		
-		mainMenuPanel.getBiomedConsole().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				nc.solicit();
-			}
-		});
+//		mainMenuPanel.getBiomedConsole().addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				nc.solicit();
+//			}
+//		});
 		
 //		mainMenuPanel.getBiomedConsole().addActionListener(new ActionListener() {
 //
@@ -187,7 +187,7 @@ public class DemoApp {
 		});
 		
 		
-		mainMenuPanel.getDeviceList().setModel(nc.getAcceptedDevices());
+		mainMenuPanel.getDeviceList().setModel(nc);
 		
 		mainMenuPanel.getAppList().addMouseListener(new MouseAdapter() {
 			@Override
@@ -195,24 +195,24 @@ public class DemoApp {
 				int idx = mainMenuPanel.getAppList().locationToIndex(e.getPoint());
 				if(idx >= 0) {
 					Object o = mainMenuPanel.getAppList().getModel().getElementAt(idx);
-					if("Data Fusion".equals(o) && null != roomSyncPanel) {
-						setGoBack("main", null);
-						ol.show(panel.getContent(), "roomsync");
-					} else if("Infusion Safety".equals(o) && null != pcaPanel) {
-						setGoBack("main", null);
-						pcaPanel.reset();
-						ol.show(panel.getContent(), "pca");
-					} else if("X-Ray Ventilator Sync".equals(o) && null != xrayVentPanel) {
-						setGoBack("main", new Runnable() {
-							public void run() {
-							    xrayVentPanel.stop();
-//								getConnected.disconnect();
-							}
-						});
-						ol.show(panel.getContent(), "xray");
-						xrayVentPanel.start();
-//						getConnected.connect();
-					}
+//					if("Data Fusion".equals(o) && null != roomSyncPanel) {
+//						setGoBack("main", null);
+//						ol.show(panel.getContent(), "roomsync");
+//					} else if("Infusion Safety".equals(o) && null != pcaPanel) {
+//						setGoBack("main", null);
+//						pcaPanel.reset();
+//						ol.show(panel.getContent(), "pca");
+//					} else if("X-Ray Ventilator Sync".equals(o) && null != xrayVentPanel) {
+//						setGoBack("main", new Runnable() {
+//							public void run() {
+//							    xrayVentPanel.stop();
+////								getConnected.disconnect();
+//							}
+//						});
+//						ol.show(panel.getContent(), "xray");
+//						xrayVentPanel.start();
+////						getConnected.connect();
+//					}
 				}
 				super.mouseClicked(e);
 			}
@@ -222,8 +222,8 @@ public class DemoApp {
 			public void mouseClicked(MouseEvent e) {
 				int idx  = mainMenuPanel.getDeviceList().locationToIndex(e.getPoint());
 				if(idx>=0) {
-					Device o = (Device) mainMenuPanel.getDeviceList().getModel().getElementAt(idx);
-					devicePanel.setModel(gateway, o.getSource());
+				    DeviceIdentity di = (DeviceIdentity) mainMenuPanel.getDeviceList().getModel().getElementAt(idx);
+				    devicePanel.setModel(subscriber, di);
 					setGoBack("main", null);
 					ol.show(panel.getContent(), "devicepanel");
 				}
@@ -254,6 +254,6 @@ public class DemoApp {
 		frame.setSize(640,480);
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
-		nc.solicit();
+//		nc.solicit();
 	}
 }

@@ -7,6 +7,12 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import ice.NumericDataReader;
+import ice.NumericSeq;
+import ice.NumericTypeSupport;
+import ice.SampleArrayDataReader;
+import ice.SampleArraySeq;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
@@ -16,11 +22,7 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 import javax.media.opengl.GLAutoDrawable;
@@ -29,27 +31,40 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.enumeration.EnumerationUpdate;
-import org.mdpnp.data.numeric.Numeric;
-import org.mdpnp.data.numeric.NumericUpdate;
-import org.mdpnp.data.text.TextUpdate;
-import org.mdpnp.data.waveform.WaveformUpdate;
-import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
 import org.mdpnp.guis.waveform.NumericUpdateWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.GLWaveformPanel;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.nomenclature.ConnectedDevice;
-import org.mdpnp.nomenclature.PulseOximeter;
-import org.mdpnp.nomenclature.ConnectedDevice.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jogamp.opengl.util.FPSAnimator;
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.infrastructure.Condition;
+import com.rti.dds.infrastructure.ConditionSeq;
+import com.rti.dds.infrastructure.Duration_t;
+import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.StringSeq;
+import com.rti.dds.infrastructure.WaitSet;
+import com.rti.dds.subscription.DataReader;
+import com.rti.dds.subscription.DataReaderListener;
+import com.rti.dds.subscription.InstanceStateKind;
+import com.rti.dds.subscription.LivelinessChangedStatus;
+import com.rti.dds.subscription.QueryCondition;
+import com.rti.dds.subscription.RequestedDeadlineMissedStatus;
+import com.rti.dds.subscription.RequestedIncompatibleQosStatus;
+import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleLostStatus;
+import com.rti.dds.subscription.SampleRejectedStatus;
+import com.rti.dds.subscription.SampleStateKind;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriptionMatchedStatus;
+import com.rti.dds.subscription.ViewStateKind;
+import com.rti.dds.topic.TopicDescription;
 
 @SuppressWarnings("serial")
 public class PulseOximeterPanel extends DevicePanel {
@@ -180,10 +195,15 @@ public class PulseOximeterPanel extends DevicePanel {
 	}
 	
 	
-
+	private final QueryCondition numericCondition;
+	private final QueryCondition sampleArrayCondition;
+	private final NumericDataReader numericDataReader;
+	private final SampleArrayDataReader sampleArrayDataReader;
+	private final WaitSet waitSet;
+	
 	private boolean built = false;
-	public PulseOximeterPanel(Gateway gateway, String source) {
-		super(gateway, source);
+	public PulseOximeterPanel(Subscriber subscriber, String udi) {
+		super(subscriber, udi);
 		buildComponents();
 		plethPanel.setSource(plethWave);
 		
@@ -192,23 +212,59 @@ public class PulseOximeterPanel extends DevicePanel {
 		
 		built = true;
 		
-		registerAndRequestRequiredIdentifiedUpdates();
-
+		waitSet = new WaitSet();
+		
+		StringSeq udis = new StringSeq();
+        udis.add("'"+udi+"'");
+		
+		TopicDescription topic = subscriber.get_participant().lookup_topicdescription(ice.NumericTopic.VALUE);
+		if(null == topic) {
+		    ice.NumericTypeSupport.register_type(subscriber.get_participant(), NumericTypeSupport.get_type_name());
+		    topic = subscriber.get_participant().create_topic(ice.NumericTopic.VALUE, ice.NumericTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		}
+		
+		numericDataReader = (NumericDataReader) subscriber.create_datareader(topic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		numericCondition = numericDataReader.create_querycondition(SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "universal_device_identifier = %0", udis);
+		waitSet.attach_condition(numericCondition);
+		
+		topic = subscriber.get_participant().lookup_topicdescription(ice.SampleArrayTopic.VALUE);
+		if(null == topic) {
+		    ice.SampleArrayTypeSupport.register_type(subscriber.get_participant(), ice.SampleArrayTypeSupport.get_type_name());
+		    topic = subscriber.get_participant().create_topic(ice.SampleArrayTopic.VALUE, ice.SampleArrayTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		}
+		sampleArrayDataReader = (SampleArrayDataReader) subscriber.create_datareader(topic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		sampleArrayCondition = sampleArrayDataReader.create_querycondition(SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "universal_device_identifier = %0", udis);
+		waitSet.attach_condition(sampleArrayCondition);
+//		registerAndRequestRequiredIdentifiedUpdates();
+		// TODO this requires abstraction but for now is an experiment
+		Thread t = new Thread(new Runnable() {
+		    public void run() {
+		        Duration_t timeout = new Duration_t(Duration_t.DURATION_INFINITE_SEC, Duration_t.DURATION_INFINITE_NSEC);
+		        while(true) {
+		            waitForIt(timeout);
+		        }
+		    }
+		});
+		t.setName("PulseOximeterPanel data handler");
+		t.setDaemon(true);
+		t.start();
 	}
 	
-	@Override
-	public Collection<Identifier> requiredIdentifiedUpdates() {
-		List<Identifier> ids = new ArrayList<Identifier>(super.requiredIdentifiedUpdates());
-		ids.addAll(Arrays.asList(new Identifier[] {ConnectedDevice.STATE, ConnectedDevice.CONNECTION_INFO, PulseOximeter.PULSE, PulseOximeter.SPO2, PulseOximeter.PLETH}));
-		return ids;
-	}
+//	@Override
+//	public Collection<Identifier> requiredIdentifiedUpdates() {
+//		List<Identifier> ids = new ArrayList<Identifier>(super.requiredIdentifiedUpdates());
+//		ids.addAll(Arrays.asList(new Identifier[] {ConnectedDevice.STATE, ConnectedDevice.CONNECTION_INFO, PulseOximeter.PULSE, PulseOximeter.SPO2, PulseOximeter.PLETH}));
+//		return ids;
+//	}
 	
 	private final WaveformUpdateWaveformSource plethWave = new WaveformUpdateWaveformSource();
 	private final NumericUpdateWaveformSource pulseWave = new NumericUpdateWaveformSource(333L);
 	
 
-	private ConnectedDevice.State connectedState;
+//	private ConnectedDevice.State connectedState;
 	private String connectionInfo;
+	
+	
 	
 	@Override
 	public void destroy() {
@@ -228,72 +284,78 @@ public class PulseOximeterPanel extends DevicePanel {
 		super.destroy();
 	}
 	
-	private final void setInt(IdentifiableUpdate<?> nu, Numeric numeric, JLabel label, String def) {
-		if(numeric.equals(nu.getIdentifier())) {
-			
-			setInt(((NumericUpdate)nu).getValue(), label, def);
-			if(!label.isVisible()) {
-				label.setVisible(true);
-			}
-		}
-	}
+//	private final void setInt(IdentifiableUpdate<?> nu, Numeric numeric, JLabel label, String def) {
+//		if(numeric.equals(nu.getIdentifier())) {
+//			
+//			setInt(((NumericUpdate)nu).getValue(), label, def);
+//			if(!label.isVisible()) {
+//				label.setVisible(true);
+//			}
+//		}
+//	}
+	private final void setInt(ice.Numeric sample, int name, JLabel label, String def) {
+	    if(sample.name == name && udi.equals(sample.universal_device_identifier)) {
+            setInt(sample.value, label, def);
+            if(!label.isVisible()) {
+                label.setVisible(true);
+            }
+        }
+    }
 	
 	
+//	@Override
+//	protected void doUpdate(IdentifiableUpdate<?> n) {
+//		if(!built) {
+//			return;
+//		}
+//		if(null == n) {
+//			log.warn("null update ");
+//			return;
+//		}
+//		setInt(n, PulseOximeter.PULSE, this.heartrate, "---");
+//		setInt(n, PulseOximeter.SPO2, this.spo2, "---");
+//		setInt(n, PulseOximeter.PULSE_LOWER, this.heartrateLow, "--");
+//		setInt(n, PulseOximeter.PULSE_UPPER, this.heartrateUp, "--");
+//		setInt(n, PulseOximeter.SPO2_LOWER, this.spo2Low, "--");
+//		setInt(n, PulseOximeter.SPO2_UPPER, this.spo2Up, "--");
+//		if(PulseOximeter.PULSE.equals(n.getIdentifier())) {
+//			Date date = ((NumericUpdate)n).getUpdateTime();
+//			this.time.setText(null == date ? "---" : dateFormat.format(date));
+//		}
+//
+//		if(ConnectedDevice.STATE.equals(n.getIdentifier())) {
+//			connectedState = (State) ((EnumerationUpdate)n).getValue();
+//			connected.setText(""+connectedState+(null==connectionInfo?"":(" ("+connectionInfo+")")));
+//			plethWave.reset();
+//			pulseWave.reset();
+//		} else if(ConnectedDevice.CONNECTION_INFO.equals(n.getIdentifier())) {
+//			connectionInfo = ((TextUpdate)n).getValue();
+//			connected.setText(""+connectedState+(null==connectionInfo?"":(" ("+connectionInfo+")")));
+//		} else if(DemoPulseOx.OUT_OF_TRACK.equals(n.getIdentifier())) {
+//			EnumerationUpdate eu = (EnumerationUpdate) n;
+//			
+//			DemoPulseOx.Bool bool = (DemoPulseOx.Bool) eu.getValue();
+//			if(null == bool) {
+//				log.warn("Received null OUT_OF_TRACK");
+//				return;
+//			} else {
+//				switch(bool) {
+//				case False:
+//					plethPanel.setOutOfTrack(false);
+//					break;
+//				case True:
+//					plethPanel.setOutOfTrack(true);
+//					break;
+//				}
+//			}
+//		}
+//	}
+//	public static boolean supported(Set<Identifier> identifiers) {
+//		return identifiers.contains(PulseOximeter.SPO2);
+//	}
 	
-	@Override
-	protected void doUpdate(IdentifiableUpdate<?> n) {
-		if(!built) {
-			return;
-		}
-		if(null == n) {
-			log.warn("null update ");
-			return;
-		}
-		setInt(n, PulseOximeter.PULSE, this.heartrate, "---");
-		setInt(n, PulseOximeter.SPO2, this.spo2, "---");
-		setInt(n, PulseOximeter.PULSE_LOWER, this.heartrateLow, "--");
-		setInt(n, PulseOximeter.PULSE_UPPER, this.heartrateUp, "--");
-		setInt(n, PulseOximeter.SPO2_LOWER, this.spo2Low, "--");
-		setInt(n, PulseOximeter.SPO2_UPPER, this.spo2Up, "--");
-		if(PulseOximeter.PULSE.equals(n.getIdentifier())) {
-			Date date = ((NumericUpdate)n).getUpdateTime();
-			this.time.setText(null == date ? "---" : dateFormat.format(date));
-		}
-		if(PulseOximeter.PLETH.equals(n.getIdentifier())) {
-			WaveformUpdate wu = (WaveformUpdate) n;
-			plethWave.applyUpdate(wu);
-		} else if(ConnectedDevice.STATE.equals(n.getIdentifier())) {
-			connectedState = (State) ((EnumerationUpdate)n).getValue();
-			connected.setText(""+connectedState+(null==connectionInfo?"":(" ("+connectionInfo+")")));
-			plethWave.reset();
-			pulseWave.reset();
-		} else if(ConnectedDevice.CONNECTION_INFO.equals(n.getIdentifier())) {
-			connectionInfo = ((TextUpdate)n).getValue();
-			connected.setText(""+connectedState+(null==connectionInfo?"":(" ("+connectionInfo+")")));
-		} else if(PulseOximeter.PULSE.equals(n.getIdentifier())) {
-			NumericUpdate nu = (NumericUpdate) n;
-			pulseWave.applyUpdate(nu);
-		} else if(DemoPulseOx.OUT_OF_TRACK.equals(n.getIdentifier())) {
-			EnumerationUpdate eu = (EnumerationUpdate) n;
-			
-			DemoPulseOx.Bool bool = (DemoPulseOx.Bool) eu.getValue();
-			if(null == bool) {
-				log.warn("Received null OUT_OF_TRACK");
-				return;
-			} else {
-				switch(bool) {
-				case False:
-					plethPanel.setOutOfTrack(false);
-					break;
-				case True:
-					plethPanel.setOutOfTrack(true);
-					break;
-				}
-			}
-		}
-	}
-	public static boolean supported(Set<Identifier> identifiers) {
-		return identifiers.contains(PulseOximeter.SPO2);
+	public static boolean supported(Set<Integer> names) {
+	    return names.contains(ice.MDC_PULS_OXIM_SAT_O2.VALUE);
 	}
 	private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
 	@Override
@@ -303,5 +365,52 @@ public class PulseOximeterPanel extends DevicePanel {
 			nameLabel.setOpaque(false);
 			nameLabel.setIcon(new ImageIcon(image));
 		}
+	}
+
+	
+	private final ConditionSeq condSeq = new ConditionSeq();
+	private final NumericSeq nu_data_seq = new NumericSeq();
+	private final SampleArraySeq sa_data_seq = new SampleArraySeq();
+	private final SampleInfoSeq info_seq = new SampleInfoSeq();
+	
+	public void waitForIt(Duration_t timeout) {
+	    condSeq.clear();
+	    try {
+	        waitSet.wait(condSeq, timeout);
+	        for(Object o : condSeq) {
+	            if(numericCondition.equals(o)) {
+	                try {
+    	                numericDataReader.take_w_condition(nu_data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, numericCondition);
+    	                for(int i = 0; i < info_seq.size(); i++) {
+    	                    if( ((SampleInfo)info_seq.get(i)).valid_data) {
+    	                        ice.Numeric n = (ice.Numeric) nu_data_seq.get(i);
+    //                            System.out.println("DATA:"+n);
+                                setInt(n, ice.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
+                                setInt(n, ice.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
+                                if(ice.MDC_PULS_OXIM_PULS_RATE.VALUE == n.name) {
+                                    pulseWave.applyUpdate(n);
+                                }
+    	                    }
+    	                }
+	                } finally {
+	                    numericDataReader.return_loan(nu_data_seq, info_seq);
+	                }
+	            } else if(sampleArrayCondition.equals(o)) {
+	                try {
+    	                sampleArrayDataReader.take_w_condition(sa_data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, sampleArrayCondition);
+    	                for(int i = 0; i < info_seq.size(); i++) {
+    	                    if( ((SampleInfo)info_seq.get(i)).valid_data) {
+    	                        ice.SampleArray sa = (ice.SampleArray) sa_data_seq.get(i);
+    	                        plethWave.applyUpdate(sa);
+    	                    }
+    	                }
+	                } finally {
+	                    sampleArrayDataReader.return_loan(sa_data_seq, info_seq);
+	                }
+	            }
+	        }
+	    } catch (RETCODE_TIMEOUT to) {
+	        
+	    }
 	}
 }

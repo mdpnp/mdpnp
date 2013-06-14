@@ -23,7 +23,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -41,6 +40,7 @@ import javax.swing.event.ChangeListener;
 
 import org.mdpnp.apps.testapp.DemoFrame;
 import org.mdpnp.apps.testapp.DemoPanel;
+import org.mdpnp.apps.testapp.DeviceIdentityListModel;
 import org.mdpnp.apps.testapp.DeviceListCellRenderer;
 import org.mdpnp.data.IdentifiableUpdate;
 import org.mdpnp.data.Identifier;
@@ -50,18 +50,16 @@ import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdateImpl;
 import org.mdpnp.data.numeric.NumericUpdate;
 import org.mdpnp.data.text.TextUpdate;
 import org.mdpnp.data.waveform.WaveformUpdate;
-import org.mdpnp.devices.connected.GetConnected;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 import org.mdpnp.messaging.Gateway;
 import org.mdpnp.messaging.GatewayListener;
 import org.mdpnp.messaging.MutableDevice;
-import org.mdpnp.messaging.NetworkController.AcceptedDevices;
 import org.mdpnp.nomenclature.ConnectedDevice;
+import org.mdpnp.nomenclature.ConnectedDevice.State;
 import org.mdpnp.nomenclature.Device;
 import org.mdpnp.nomenclature.Ventilator;
-import org.mdpnp.nomenclature.ConnectedDevice.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,7 +130,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 	}
 	
 //	private static final Font RADIO_FONT = Font.decode("verdana-20");
-	protected JPanel buildXRay(final AcceptedDevices devices) {
+	protected JPanel buildXRay(final DeviceIdentityListModel devices) {
 		JPanel panel = new JPanel(new GridLayout(2,2));
 		
 		JPanel textPanel = new JPanel(new BorderLayout());
@@ -291,8 +289,8 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 	private boolean imageButtonDown = false;
 //	private Clip shutterClip;
 	
-	private AcceptedDevices devices;
-	public XRayVentPanel(Gateway gateway, DemoPanel demoPanel, AcceptedDevices devices) {
+	private DeviceIdentityListModel devices;
+	public XRayVentPanel(Gateway gateway, DemoPanel demoPanel, DeviceIdentityListModel devices) {
 		super(new BorderLayout());
 //		try {
 //			shutterClip = Manager.createPlayer(new MediaLocator(JeffGUI.class.getResource("shutter.mp3")));
@@ -409,7 +407,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 		Loader.load(opencv_objdetect.class);
 		
 		final Gateway gateway = new Gateway();
-		final Device device = new DemoApollo(gateway);
+//		final Device device = new DemoApollo(gateway);
 		final DemoFrame frame = new DemoFrame("X-Ray Ventilator Synchronization");
 		frame.getContentPane().setLayout(new BorderLayout());
 		
@@ -423,20 +421,20 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 		
 		demoPanel.getContent().setLayout(new BorderLayout());
 //		demoPanel.setLayout(new BorderLayout());
-		final XRayVentPanel xrayVentPanel = new XRayVentPanel(gateway, demoPanel, new AcceptedDevices());
+		final XRayVentPanel xrayVentPanel = new XRayVentPanel(gateway, demoPanel, null);
 		demoPanel.getContent().add(xrayVentPanel, BorderLayout.CENTER);
 		frame.setSize(640,480);
 		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		final GetConnected getConnected = new GetConnected(frame, gateway);
+//		final GetConnected getConnected = new GetConnected(frame, gateway);
 		xrayVentPanel.start();
-		getConnected.connect();
+//		getConnected.connect();
 		
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
 			    xrayVentPanel.stop();
-				getConnected.disconnect();
+//				getConnected.disconnect();
 			}
 		});
 		
@@ -542,7 +540,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 //					dFlow.setBackground(Color.white);
 //				}
 //				dFlow.setText(Double.toString(slope));
-				wuws.applyUpdate(wu);
+//				wuws.applyUpdate(wu);
 			} else if(Ventilator.AIRWAY_PRESSURE.equals(i)) {
 //				regressionUpdate("pressure:", wu, airwayPressure);
 //				dPressure.setText(Double.toString(airwayPressure.getRegressedSlope()));

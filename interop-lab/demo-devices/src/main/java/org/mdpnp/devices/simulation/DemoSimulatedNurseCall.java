@@ -7,8 +7,17 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
-import org.mdpnp.nomenclature.InfusionPump;
 
-public interface SimulatedInfusionPump extends InfusionPump {
+
+public class DemoSimulatedNurseCall extends AbstractSimulatedDevice {
+
+	
+	public DemoSimulatedNurseCall(int domainId) {
+		super(domainId);
+		deviceIdentity.model = "Simulated Nurse Call";
+		deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+	}
+	
+	
 
 }

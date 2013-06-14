@@ -1,4 +1,4 @@
-package org.mdpnp.messaging;
+package org.mdpnp.apps.testapp;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -14,8 +14,6 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 
 import javax.swing.ImageIcon;
-
-import org.mdpnp.data.image.ImageUpdate;
 
 @SuppressWarnings("serial")
 public class DeviceIcon extends ImageIcon {
@@ -34,36 +32,37 @@ public class DeviceIcon extends ImageIcon {
 		super(WHITE_SQUARE);
 	}
 	
-	public void setImage(ImageUpdate imageUpdate) {
-		int width = imageUpdate.getWidth();
-		int height = imageUpdate.getHeight();
-		byte[] raster = imageUpdate.getRaster();
-		
-		if(raster != null) {
-			BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-			IntBuffer ib = ByteBuffer.wrap(raster).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
-			for(int y = 0; y < height; y++) {
-				for(int x = 0; x < width; x++) {
-					bi.setRGB(x, y, ib.get());
-				}
-			}
-			BufferedImage after = new BufferedImage(3*width/4+1, 3*height/4+1, BufferedImage.TYPE_INT_ARGB);
-			java.awt.geom.AffineTransform at = new java.awt.geom.AffineTransform();
-			at.scale(0.75, 0.75);
-			
-			AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
-			after = scaleOp.filter(bi, after);
-			setImage(after);
-//			setImage(bi.getScaledInstance(63, 63, Image.SCALE_SMOOTH));
-		} else {
-			setImage(WHITE_SQUARE);
-		}
-	}
-
-	public DeviceIcon(ImageUpdate imageUpdate) {
-		super();
-		setImage(imageUpdate);
-	}
+   public void setImage(ice.Image image) {
+        int width = image.width;
+        int height = image.height;
+        byte[] raster = new byte[image.raster.size()];
+        image.raster.toArrayByte(raster);
+        
+        if(raster != null) {
+            BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            IntBuffer ib = ByteBuffer.wrap(raster).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
+            for(int y = 0; y < height; y++) {
+                for(int x = 0; x < width; x++) {
+                    bi.setRGB(x, y, ib.get());
+                }
+            }
+            BufferedImage after = new BufferedImage(3*width/4+1, 3*height/4+1, BufferedImage.TYPE_INT_ARGB);
+            java.awt.geom.AffineTransform at = new java.awt.geom.AffineTransform();
+            at.scale(0.75, 0.75);
+            
+            AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+            after = scaleOp.filter(bi, after);
+            setImage(after);
+//	          setImage(bi.getScaledInstance(63, 63, Image.SCALE_SMOOTH));
+        } else {
+            setImage(WHITE_SQUARE);
+        }
+    }
+	
+   public DeviceIcon(ice.Image image) {
+        super();
+        setImage(image);
+    }
 	public DeviceIcon(Image image) {
 		super(image);
 	}

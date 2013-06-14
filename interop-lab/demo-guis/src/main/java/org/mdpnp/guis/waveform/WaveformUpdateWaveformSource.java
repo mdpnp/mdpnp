@@ -7,15 +7,14 @@
  ******************************************************************************/
 package org.mdpnp.guis.waveform;
 
-import org.mdpnp.data.waveform.WaveformUpdate;
-
 public class WaveformUpdateWaveformSource extends AbstractWaveformSource {
-	private WaveformUpdate lastUpdate;
+    private final ice.SampleArray lastUpdate = new ice.SampleArray();
 	
-	public void applyUpdate(WaveformUpdate update) {
-		this.lastUpdate = update;
+	public void applyUpdate(ice.SampleArray update) {
+	    this.lastUpdate.copy_from(update);
 		fireWaveform();
 	}
+	
 	
 	public void reset() {
 		fireReset();
@@ -23,26 +22,28 @@ public class WaveformUpdateWaveformSource extends AbstractWaveformSource {
 	
 	@Override
 	public int getValue(int x) {
-		if(null == lastUpdate) {
-			return 0; 
-		} else {
-			Number[] values = lastUpdate.getValues();
-			if(null == values) {
-				return 0;
-			} else {
-				Number value = values[x];
-				if(null == value) {
-					return 0;
-				} else {
-					return value.intValue();
-				}
-			}
-		}
+	    return (int) lastUpdate.values.getFloat(x);
+//		if(null == lastUpdate) {
+//			return 0; 
+//		} else {
+//			float[] values = lastUpdate.values.toArrayFloat(arg0)
+//			if(null == values) {
+//				return 0;
+//			} else {
+//				Number value = values[x];
+//				if(null == value) {
+//					return 0;
+//				} else {
+//					return value.intValue();
+//				}
+//			}
+//		}
 	}
 
 	@Override
 	public int getMax() {
-		return null == lastUpdate.getValues() ? 0 : lastUpdate.getValues().length;
+	    return lastUpdate.values.size();
+//		return null == lastUpdate.getValues() ? 0 : lastUpdate.getValues().length;
 	}
 	
 	@Override
@@ -52,6 +53,7 @@ public class WaveformUpdateWaveformSource extends AbstractWaveformSource {
 
 	@Override
 	public double getMillisecondsPerSample() {
-		return lastUpdate.getMillisecondsPerSample();
+	    return lastUpdate.millisecondsPerSample;
+//		return lastUpdate.getMillisecondsPerSample();
 	}
 }

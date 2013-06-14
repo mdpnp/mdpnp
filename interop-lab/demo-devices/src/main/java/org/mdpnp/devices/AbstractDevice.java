@@ -7,6 +7,16 @@
  ******************************************************************************/
 package org.mdpnp.devices;
 
+import ice.DeviceIdentity;
+import ice.DeviceIdentityDataWriter;
+import ice.DeviceIdentityTypeSupport;
+import ice.Numeric;
+import ice.NumericDataWriter;
+import ice.NumericTypeSupport;
+import ice.SampleArray;
+import ice.SampleArrayDataWriter;
+import ice.SampleArrayTypeSupport;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -14,68 +24,131 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.identifierarray.IdentifierArrayUpdate;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdate;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdateImpl;
-import org.mdpnp.data.image.MutableImageUpdate;
-import org.mdpnp.data.image.MutableImageUpdateImpl;
-import org.mdpnp.data.text.MutableTextUpdate;
-import org.mdpnp.data.text.MutableTextUpdateImpl;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.messaging.GatewayListener;
-import org.mdpnp.nomenclature.Device;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.topic.Topic;
 
-public abstract class AbstractDevice implements GatewayListener, ThreadFactory {
+
+public abstract class AbstractDevice implements /*GatewayListener,*/ ThreadFactory {
     protected final ThreadGroup threadGroup;
 	protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(this);
 
 	private static final Logger log = LoggerFactory.getLogger(AbstractDevice.class);
-	protected final Gateway gateway;
-	protected final Map<Identifier, IdentifiableUpdate<?>> updates = new HashMap<Identifier, IdentifiableUpdate<?>>();
-	protected final MutableTextUpdate nameUpdate = new MutableTextUpdateImpl(Device.NAME);
-	protected final MutableTextUpdate guidUpdate = new MutableTextUpdateImpl(Device.GUID);
-	protected final MutableImageUpdate iconUpdate = new MutableImageUpdateImpl(Device.ICON);
 	
+	protected final DomainParticipant domainParticipant;
+	protected final Publisher publisher;
+	protected final Subscriber subscriber;
+	protected final Topic deviceIdentityTopic;
+	protected final DeviceIdentityDataWriter deviceIdentityWriter;
+	protected final DeviceIdentity deviceIdentity;
+	protected InstanceHandle_t deviceIdentityHandle;
 	
+	protected final Topic numericTopic;
+	protected final NumericDataWriter numericDataWriter;
+	
+	protected final Topic sampleArrayTopic;
+	protected final SampleArrayDataWriter sampleArrayDataWriter;
+	
+	public Subscriber getSubscriber() {
+	    return subscriber;
+	}
+	
+	protected static class InstanceHolder<T> {
+	    public T data;
+	    public InstanceHandle_t handle;
+	    
+	    public InstanceHolder() {
+	        
+	    }
+	    
+	    public InstanceHolder(T t, InstanceHandle_t handle) {
+	        this.data = t;
+	        this.handle = handle;
+	    }
+	}
+	
+	public DeviceIdentity getDeviceIdentity() {
+	    return deviceIdentity;
+	}
+	
+	public DomainParticipant getParticipant() {
+	    return domainParticipant;
+	}
+	
+	protected InstanceHolder<Numeric> createNumericInstance(int name) {
+	    InstanceHolder<Numeric> holder = new InstanceHolder<Numeric>();
+	    holder.data = new Numeric();
+	    holder.data.universal_device_identifier = deviceIdentity.universal_device_identifier;
+	    holder.data.name = name;
+	    holder.handle = numericDataWriter.register_instance(holder.data);
+	    return holder;
+	}
+	
+	protected InstanceHolder<SampleArray> createSampleArrayInstance(int name) {
+	    InstanceHolder<SampleArray> holder = new InstanceHolder<SampleArray>();
+        holder.data = new SampleArray();
+        holder.data.universal_device_identifier = deviceIdentity.universal_device_identifier;
+        holder.data.name = name;
+        holder.handle = sampleArrayDataWriter.register_instance(holder.data);
+        return holder;
+	}
+	
+	protected void numericSample(InstanceHolder<Numeric> holder, float newValue) {
+	    holder.data.value = newValue;
+	    numericDataWriter.write(holder.data, holder.handle);
+	}
+	
+	protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, int msPerSample) {
+	    holder.data.values.clear();
+        for(Number n : newValues) {
+            holder.data.values.addFloat(n.floatValue());
+        }
+        holder.data.millisecondsPerSample = msPerSample;
+        
+        sampleArrayDataWriter.write(holder.data, holder.handle);
+	}
 	
 	protected String iconResourceName() {
 		return null;
 	}
 	
-	protected boolean iconUpdateFromResource(MutableImageUpdate iconUpdate, String iconResourceName) throws IOException {
+	protected boolean iconFromResource(DeviceIdentity di, String iconResourceName) throws IOException {
 		if(null != iconResourceName) {
 			try {
+			    
 				Method read = Class.forName("javax.imageio.ImageIO").getMethod("read", URL.class);
 				Object bi = read.invoke(null, getClass().getResource(iconResourceName));
 //				BufferedImage bi = ImageIO.read(getClass().getResource(iconResourceName));
 				Class<?> bufferedImage = Class.forName("java.awt.image.BufferedImage");
-				int width = (Integer) bufferedImage.getMethod("getWidth").invoke(bi);
+				di.icon.width = (Integer) bufferedImage.getMethod("getWidth").invoke(bi);
 //				int width = bi.getWidth();
-				int height = (Integer) bufferedImage.getMethod("getHeight").invoke(bi);
+				di.icon.height = (Integer) bufferedImage.getMethod("getHeight").invoke(bi);
+				
 //				int height = bi.getHeight();
 				Method getRGB = bufferedImage.getMethod("getRGB", int.class, int.class);
-				iconUpdate.setWidth(width);
-				iconUpdate.setHeight(height);
-				byte[] raster = new byte[width * height * 4];
+
+				byte[] raster = new byte[di.icon.width * di.icon.height * 4];
+				log.trace("Image w="+di.icon.width+" h="+di.icon.height + " raster.length="+raster.length);
 				IntBuffer bb = ByteBuffer.wrap(raster).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
-				for(int y = 0; y < height; y++) {
-					for(int x = 0; x < width; x++) {
+				for(int y = 0; y < di.icon.height; y++) {
+					for(int x = 0; x < di.icon.width; x++) {
 						bb.put((Integer) getRGB.invoke(bi, x, y));
 //						bb.put(bi.getRGB(x, y));
 					}
 				}
-				iconUpdate.setRaster(raster);
+				di.icon.raster.clear();
+				di.icon.raster.addAllByte(raster);
 				return true;
 			} catch (InvocationTargetException e) {
 				if(e.getCause() instanceof IOException) {
@@ -91,20 +164,6 @@ public abstract class AbstractDevice implements GatewayListener, ThreadFactory {
 
 	}
 	
-	protected boolean prepareIconUpdate(MutableImageUpdate iconUpdate) throws IOException {
-		return iconUpdateFromResource(iconUpdate, iconResourceName());
-	}
-	
-	protected void add(IdentifiableUpdate<?>... uu) {
-		for(IdentifiableUpdate<?> u : uu) {
-			add(u);
-		}
-	}
-	
-	protected void add(IdentifiableUpdate<?> u) {
-		updates.put(u.getIdentifier(), u);
-	}
-	
 	private int threadOrdinal = 0;
 	
 	@Override
@@ -114,8 +173,38 @@ public abstract class AbstractDevice implements GatewayListener, ThreadFactory {
 	    return t;
 	}
 	
-	public AbstractDevice(Gateway gateway) {
-		this.gateway = gateway;
+	public AbstractDevice(int domainId) {
+	    domainParticipant = DomainParticipantFactory.get_instance().create_participant(domainId, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        publisher = domainParticipant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        subscriber = domainParticipant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        
+        DeviceIdentityTypeSupport.register_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
+        deviceIdentityTopic = domainParticipant.create_topic(ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceIdentityWriter = (DeviceIdentityDataWriter) publisher.create_datawriter(deviceIdentityTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        if(null == deviceIdentityWriter) {
+            throw new RuntimeException("deviceIdentityWriter not created");
+        }
+        deviceIdentity = new DeviceIdentity();
+        try {
+            iconFromResource(deviceIdentity, iconResourceName());
+        } catch (IOException e1) {
+            log.warn("",e1);
+        }
+        
+        NumericTypeSupport.register_type(domainParticipant, NumericTypeSupport.get_type_name());
+        numericTopic = domainParticipant.create_topic(ice.NumericTopic.VALUE, NumericTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        numericDataWriter = (NumericDataWriter) publisher.create_datawriter(numericTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        if(null == numericDataWriter) {
+            throw new RuntimeException("numericDataWriter not created");
+        }
+        
+        SampleArrayTypeSupport.register_type(domainParticipant, SampleArrayTypeSupport.get_type_name());
+        sampleArrayTopic = domainParticipant.create_topic(ice.SampleArrayTopic.VALUE, SampleArrayTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        sampleArrayDataWriter = (SampleArrayDataWriter) publisher.create_datawriter(sampleArrayTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        if(null == sampleArrayDataWriter) {
+            throw new RuntimeException("sampleArrayDataWriter not created");
+        }
+        
 		threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "AbstractDevice") {
     		  @Override
     		public void uncaughtException(Thread t, Throwable e) {
@@ -124,39 +213,5 @@ public abstract class AbstractDevice implements GatewayListener, ThreadFactory {
     		}  
 		};
 		threadGroup.setDaemon(true);
-		add(nameUpdate);
-		add(guidUpdate);
-		try {
-			if(prepareIconUpdate(iconUpdate)) {
-				add(iconUpdate);
-			}
-		} catch(IOException ioe) {
-			log.error("Unable to prepareIcon", ioe);
-		}
-		gateway.addListener(this);
 	}
-	
-	protected IdentifiableUpdate<?> get(Identifier identifier) {
-		return updates.get(identifier);		
-	}
-	
-	@Override
-	public void update(IdentifiableUpdate<?> command) {
-		if(Device.REQUEST_IDENTIFIED_UPDATES.equals(command.getIdentifier())) {
-			IdentifierArrayUpdate upds = (IdentifierArrayUpdate)command;
-			for(Identifier i : upds.getValue()) {
-				
-				IdentifiableUpdate<?> iu = get(i);
-				if(null != iu) {
-//					log.trace("REQUEST_IDENTIFIED_UPDATES:"+i+" " + iu);
-					gateway.update(this, iu);
-				}
-			}
-		} else if(Device.REQUEST_AVAILABLE_IDENTIFIERS.equals(command.getIdentifier())) {
-			MutableIdentifierArrayUpdate upds = new MutableIdentifierArrayUpdateImpl(Device.GET_AVAILABLE_IDENTIFIERS);
-			upds.setValue(this.updates.keySet().toArray(new Identifier[0]));
-			gateway.update(this, upds);
-		}
-	}
-	
 }

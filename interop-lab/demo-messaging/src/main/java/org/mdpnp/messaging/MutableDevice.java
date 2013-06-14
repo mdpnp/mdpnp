@@ -1,5 +1,6 @@
 package org.mdpnp.messaging;
 
+import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.nomenclature.ConnectedDevice;
 
 public interface MutableDevice extends Device {

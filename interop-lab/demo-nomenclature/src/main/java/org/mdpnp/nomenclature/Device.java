@@ -16,7 +16,7 @@ import org.mdpnp.data.numeric.NumericImpl;
 import org.mdpnp.data.text.Text;
 import org.mdpnp.data.text.TextImpl;
 
-public interface Device {
+public interface Device {    
 	Text NAME = new TextImpl(Device.class, "NAME");
 	Text GUID = new TextImpl(Device.class, "GUID");
 	Image ICON = new ImageImpl(Device.class, "ICON");

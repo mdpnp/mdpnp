@@ -29,7 +29,7 @@ import org.mdpnp.nomenclature.ConnectedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ValueCompareModel extends AbstractTableModel implements TableModel, GatewayListener {
+public class ValueCompareModel extends AbstractTableModel implements TableModel {
 //	private final DDSNetworkController.AcceptedDevices acceptedDevices;
 	
 	private static final Logger log = LoggerFactory.getLogger(ValueCompareModel.class);
@@ -53,11 +53,11 @@ public class ValueCompareModel extends AbstractTableModel implements TableModel,
 	}
 	
 	private final List<Row> rows = new ArrayList<Row>();
-	private final Map<Identifier, Row> mapRows = new HashMap<Identifier, Row>();
+//	private final Map<Identifier, Row> mapRows = new HashMap<Identifier, Row>();
 	
 	public static final int FIXED_COLUMNS = 2;
 
-	private final Gateway gateway;
+//	private final Gateway gateway;
 	
 	public ValueCompareModel(Gateway gateway) {
 		this.gateway = gateway;
