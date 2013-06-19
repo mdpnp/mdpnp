@@ -50,6 +50,8 @@ public class AbsoluteTime implements Value {
 			BCD.put(bb, (short)calendar.get(Calendar.HOUR_OF_DAY));
 			BCD.put(bb, (short)calendar.get(Calendar.MINUTE));
 			BCD.put(bb, (short)calendar.get(Calendar.SECOND));
+	        // per spec sec_fractions is ignored
+            // TODO that is probably Philips-specific!!!
 			BCD.put(bb, (short)0); // sec_fractions
 		} else {
 		    Bits.putUnsignedInt(bb, 0xFFFFFFFFL);
@@ -87,6 +89,7 @@ public class AbsoluteTime implements Value {
 			calendar.set(Calendar.MINUTE, minute);
 			calendar.set(Calendar.SECOND, second);
 			// per spec sec_fractions is ignored
+			// TODO that is probably Philips-specific!!!
 			date.setTime(calendar.getTimeInMillis());
 		}
 	}
