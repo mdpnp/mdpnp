@@ -7,9 +7,11 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import ice.Numeric;
 import ice.NumericDataReader;
 import ice.NumericSeq;
 import ice.NumericTypeSupport;
+import ice.SampleArray;
 import ice.SampleArrayDataReader;
 import ice.SampleArraySeq;
 
@@ -28,9 +30,11 @@ import java.util.Set;
 import javax.media.opengl.GLAutoDrawable;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.guis.waveform.NumericUpdateWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
@@ -70,27 +74,15 @@ import com.rti.dds.topic.TopicDescription;
 public class PulseOximeterPanel extends DevicePanel {
 	
 	
-	private JLabel spo2, heartrate, spo2Label, heartrateLabel, nameLabel, guidLabel;
+	private JLabel spo2, heartrate, spo2Label, heartrateLabel;
 	private JLabel spo2Low, spo2Up, heartrateLow, heartrateUp;
 	private JPanel spo2Bounds, heartrateBounds;
 	private JPanel spo2Panel, heartratePanel;
 	private WaveformPanel pulsePanel;
 	private WaveformPanel plethPanel;
-	private JLabel time, connected;
+	private JLabel time;
 	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
-	public void setName(String name) {
-		if(built && name != null) {
-			this.nameLabel.setText(name);
-		}
-	}
-	
-	public void setGuid(String guid) {
-		if(built && guid != null) {
-			this.guidLabel.setText(guid);
-		}
-	}
-
 	
 	protected void buildComponents() {
 		spo2Bounds = new JPanel();
@@ -158,28 +150,9 @@ public class PulseOximeterPanel extends DevicePanel {
 		
 		setLayout(new BorderLayout());
 		add(upper, BorderLayout.CENTER);
+
+		add(time = new JLabel("TIME"), BorderLayout.SOUTH);
 		
-		JPanel lower = new JPanel();
-		lower.setOpaque(false);
-		lower.setLayout(new GridLayout(2, 1));
-		
-		
-		lower.add(time = new JLabel("TIME"));
-		time.setHorizontalAlignment(JLabel.RIGHT);
-		lower.add(connected = new JLabel("ConnectState"));
-		connected.setHorizontalAlignment(JLabel.RIGHT);
-		add(lower, BorderLayout.SOUTH);
-		
-		
-		JPanel headers = new JPanel();
-		headers.setLayout(new GridLayout(2,1));
-		headers.setOpaque(false);
-		headers.add(nameLabel = new JLabel("NAME"));
-		headers.add(guidLabel = new JLabel("GUID"));
-		add(headers, BorderLayout.NORTH);
-	
-		nameLabel.setHorizontalAlignment(JLabel.RIGHT);
-		guidLabel.setHorizontalAlignment(JLabel.RIGHT);
 		if(plethPanel instanceof GLWaveformPanel) {
 			((GLWaveformPanel)plethPanel).setAnimator(new FPSAnimator((GLAutoDrawable) plethPanel, FPSAnimator.DEFAULT_FRAMES_PER_INTERVAL));
 			((GLWaveformPanel)plethPanel).getAnimator().start();
@@ -193,78 +166,18 @@ public class PulseOximeterPanel extends DevicePanel {
 		setForeground(Color.green);
 		setBackground(Color.black);
 	}
-	
-	
-	private final QueryCondition numericCondition;
-	private final QueryCondition sampleArrayCondition;
-	private final NumericDataReader numericDataReader;
-	private final SampleArrayDataReader sampleArrayDataReader;
-	private final WaitSet waitSet;
-	
-	private boolean built = false;
-	public PulseOximeterPanel(Subscriber subscriber, String udi) {
-		super(subscriber, udi);
+
+	public PulseOximeterPanel() {
 		buildComponents();
 		plethPanel.setSource(plethWave);
 		
 		pulsePanel.setSource(pulseWave);
 		pulsePanel.cachingSource().setFixedTimeDomain(120000L);
 		
-		built = true;
-		
-		waitSet = new WaitSet();
-		
-		StringSeq udis = new StringSeq();
-        udis.add("'"+udi+"'");
-		
-		TopicDescription topic = subscriber.get_participant().lookup_topicdescription(ice.NumericTopic.VALUE);
-		if(null == topic) {
-		    ice.NumericTypeSupport.register_type(subscriber.get_participant(), NumericTypeSupport.get_type_name());
-		    topic = subscriber.get_participant().create_topic(ice.NumericTopic.VALUE, ice.NumericTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-		}
-		
-		numericDataReader = (NumericDataReader) subscriber.create_datareader(topic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-		numericCondition = numericDataReader.create_querycondition(SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "universal_device_identifier = %0", udis);
-		waitSet.attach_condition(numericCondition);
-		
-		topic = subscriber.get_participant().lookup_topicdescription(ice.SampleArrayTopic.VALUE);
-		if(null == topic) {
-		    ice.SampleArrayTypeSupport.register_type(subscriber.get_participant(), ice.SampleArrayTypeSupport.get_type_name());
-		    topic = subscriber.get_participant().create_topic(ice.SampleArrayTopic.VALUE, ice.SampleArrayTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-		}
-		sampleArrayDataReader = (SampleArrayDataReader) subscriber.create_datareader(topic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-		sampleArrayCondition = sampleArrayDataReader.create_querycondition(SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "universal_device_identifier = %0", udis);
-		waitSet.attach_condition(sampleArrayCondition);
-//		registerAndRequestRequiredIdentifiedUpdates();
-		// TODO this requires abstraction but for now is an experiment
-		Thread t = new Thread(new Runnable() {
-		    public void run() {
-		        Duration_t timeout = new Duration_t(Duration_t.DURATION_INFINITE_SEC, Duration_t.DURATION_INFINITE_NSEC);
-		        while(true) {
-		            waitForIt(timeout);
-		        }
-		    }
-		});
-		t.setName("PulseOximeterPanel data handler");
-		t.setDaemon(true);
-		t.start();
 	}
-	
-//	@Override
-//	public Collection<Identifier> requiredIdentifiedUpdates() {
-//		List<Identifier> ids = new ArrayList<Identifier>(super.requiredIdentifiedUpdates());
-//		ids.addAll(Arrays.asList(new Identifier[] {ConnectedDevice.STATE, ConnectedDevice.CONNECTION_INFO, PulseOximeter.PULSE, PulseOximeter.SPO2, PulseOximeter.PLETH}));
-//		return ids;
-//	}
 	
 	private final WaveformUpdateWaveformSource plethWave = new WaveformUpdateWaveformSource();
 	private final NumericUpdateWaveformSource pulseWave = new NumericUpdateWaveformSource(333L);
-	
-
-//	private ConnectedDevice.State connectedState;
-	private String connectionInfo;
-	
-	
 	
 	@Override
 	public void destroy() {
@@ -283,134 +196,27 @@ public class PulseOximeterPanel extends DevicePanel {
 
 		super.destroy();
 	}
-	
-//	private final void setInt(IdentifiableUpdate<?> nu, Numeric numeric, JLabel label, String def) {
-//		if(numeric.equals(nu.getIdentifier())) {
-//			
-//			setInt(((NumericUpdate)nu).getValue(), label, def);
-//			if(!label.isVisible()) {
-//				label.setVisible(true);
-//			}
-//		}
-//	}
-	private final void setInt(ice.Numeric sample, int name, JLabel label, String def) {
-	    if(sample.name == name && udi.equals(sample.universal_device_identifier)) {
-            setInt(sample.value, label, def);
-            if(!label.isVisible()) {
-                label.setVisible(true);
-            }
-        }
-    }
-	
-	
-//	@Override
-//	protected void doUpdate(IdentifiableUpdate<?> n) {
-//		if(!built) {
-//			return;
-//		}
-//		if(null == n) {
-//			log.warn("null update ");
-//			return;
-//		}
-//		setInt(n, PulseOximeter.PULSE, this.heartrate, "---");
-//		setInt(n, PulseOximeter.SPO2, this.spo2, "---");
-//		setInt(n, PulseOximeter.PULSE_LOWER, this.heartrateLow, "--");
-//		setInt(n, PulseOximeter.PULSE_UPPER, this.heartrateUp, "--");
-//		setInt(n, PulseOximeter.SPO2_LOWER, this.spo2Low, "--");
-//		setInt(n, PulseOximeter.SPO2_UPPER, this.spo2Up, "--");
-//		if(PulseOximeter.PULSE.equals(n.getIdentifier())) {
-//			Date date = ((NumericUpdate)n).getUpdateTime();
-//			this.time.setText(null == date ? "---" : dateFormat.format(date));
-//		}
-//
-//		if(ConnectedDevice.STATE.equals(n.getIdentifier())) {
-//			connectedState = (State) ((EnumerationUpdate)n).getValue();
-//			connected.setText(""+connectedState+(null==connectionInfo?"":(" ("+connectionInfo+")")));
-//			plethWave.reset();
-//			pulseWave.reset();
-//		} else if(ConnectedDevice.CONNECTION_INFO.equals(n.getIdentifier())) {
-//			connectionInfo = ((TextUpdate)n).getValue();
-//			connected.setText(""+connectedState+(null==connectionInfo?"":(" ("+connectionInfo+")")));
-//		} else if(DemoPulseOx.OUT_OF_TRACK.equals(n.getIdentifier())) {
-//			EnumerationUpdate eu = (EnumerationUpdate) n;
-//			
-//			DemoPulseOx.Bool bool = (DemoPulseOx.Bool) eu.getValue();
-//			if(null == bool) {
-//				log.warn("Received null OUT_OF_TRACK");
-//				return;
-//			} else {
-//				switch(bool) {
-//				case False:
-//					plethPanel.setOutOfTrack(false);
-//					break;
-//				case True:
-//					plethPanel.setOutOfTrack(true);
-//					break;
-//				}
-//			}
-//		}
-//	}
-//	public static boolean supported(Set<Identifier> identifiers) {
-//		return identifiers.contains(PulseOximeter.SPO2);
-//	}
-	
-	public static boolean supported(Set<Integer> names) {
-	    return names.contains(ice.MDC_PULS_OXIM_SAT_O2.VALUE);
-	}
-	private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
-	@Override
-	public void setIcon(Image image) {
-		log.trace("setIcon");
-		if(built && null != image) {
-			nameLabel.setOpaque(false);
-			nameLabel.setIcon(new ImageIcon(image));
-		}
-	}
+
 
 	
-	private final ConditionSeq condSeq = new ConditionSeq();
-	private final NumericSeq nu_data_seq = new NumericSeq();
-	private final SampleArraySeq sa_data_seq = new SampleArraySeq();
-	private final SampleInfoSeq info_seq = new SampleInfoSeq();
-	
-	public void waitForIt(Duration_t timeout) {
-	    condSeq.clear();
-	    try {
-	        waitSet.wait(condSeq, timeout);
-	        for(Object o : condSeq) {
-	            if(numericCondition.equals(o)) {
-	                try {
-    	                numericDataReader.take_w_condition(nu_data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, numericCondition);
-    	                for(int i = 0; i < info_seq.size(); i++) {
-    	                    if( ((SampleInfo)info_seq.get(i)).valid_data) {
-    	                        ice.Numeric n = (ice.Numeric) nu_data_seq.get(i);
-    //                            System.out.println("DATA:"+n);
-                                setInt(n, ice.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
-                                setInt(n, ice.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
-                                if(ice.MDC_PULS_OXIM_PULS_RATE.VALUE == n.name) {
-                                    pulseWave.applyUpdate(n);
-                                }
-    	                    }
-    	                }
-	                } finally {
-	                    numericDataReader.return_loan(nu_data_seq, info_seq);
-	                }
-	            } else if(sampleArrayCondition.equals(o)) {
-	                try {
-    	                sampleArrayDataReader.take_w_condition(sa_data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, sampleArrayCondition);
-    	                for(int i = 0; i < info_seq.size(); i++) {
-    	                    if( ((SampleInfo)info_seq.get(i)).valid_data) {
-    	                        ice.SampleArray sa = (ice.SampleArray) sa_data_seq.get(i);
-    	                        plethWave.applyUpdate(sa);
-    	                    }
-    	                }
-	                } finally {
-	                    sampleArrayDataReader.return_loan(sa_data_seq, info_seq);
-	                }
-	            }
-	        }
-	    } catch (RETCODE_TIMEOUT to) {
-	        
-	    }
+	public static boolean supported(Set<Integer> names) {
+	    return names.contains(ice.MDC_PULS_OXIM_SAT_O2.VALUE) &&
+	           names.contains(ice.MDC_PULS_OXIM_PULS_RATE.VALUE) && 
+	           names.contains(ice.MDC_PULS_OXIM_PLETH.VALUE);
 	}
+	private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
+
+    @Override
+    public void numeric(Numeric numeric, SampleInfo sampleInfo) {
+        setInt(numeric, ice.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
+        setInt(numeric, ice.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
+        if(ice.MDC_PULS_OXIM_PULS_RATE.VALUE == numeric.name) {
+            pulseWave.applyUpdate(numeric);
+        }
+    }
+
+    @Override
+    public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
+        plethWave.applyUpdate(sampleArray);
+    }
 }

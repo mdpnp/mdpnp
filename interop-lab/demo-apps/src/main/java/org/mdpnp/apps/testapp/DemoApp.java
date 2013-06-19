@@ -17,6 +17,8 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
+import org.mdpnp.devices.EventLoop;
+import org.mdpnp.devices.EventLoopHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +71,8 @@ public class DemoApp {
 		UIManager.setLookAndFeel(new MDPnPLookAndFeel());
 
 
-		
+		final EventLoop eventLoop = new EventLoop();
+		final EventLoopHandler handler = new EventLoopHandler(eventLoop);
 		
 //				Pointer logger = RTICLibrary.INSTANCE.NDDS_Config_Logger_get_instance();
 //		RTICLibrary.INSTANCE.NDDS_Config_Logger_set_verbosity(logger, RTICLibrary.NDDS_CONFIG_LOG_VERBOSITY_STATUS_ALL);
@@ -80,13 +83,16 @@ public class DemoApp {
 //		final Gateway gateway = new Gateway();
 		final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-		final DeviceIdentityListModel nc = new DeviceIdentityListModel(subscriber);
+		final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop);
 //		final VitalsModel vitalsModel = new VitalsModel();
 //		vitalsModel.addInterest(Ventilator.END_TIDAL_CO2_MMHG);
 //		vitalsModel.addInterest(Ventilator.RESPIRATORY_RATE);
 //		vitalsModel.addInterest(PulseOximeter.SPO2);
 //		vitalsModel.addInterest(PulseOximeter.PULSE);
 //		gateway.addListener(vitalsModel);
+		
+		
+		
 		
 		final DemoFrame frame = new DemoFrame("Integrated Clinical Environment");
 		panel = new DemoPanel();
@@ -99,6 +105,11 @@ public class DemoApp {
 					goBackAction = null;
 				}
 				nc.tearDown();
+				try {
+                    handler.shutdown();
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
 				super.windowClosing(e);
 			}
 		});
@@ -222,8 +233,8 @@ public class DemoApp {
 			public void mouseClicked(MouseEvent e) {
 				int idx  = mainMenuPanel.getDeviceList().locationToIndex(e.getPoint());
 				if(idx>=0) {
-				    DeviceIdentity di = (DeviceIdentity) mainMenuPanel.getDeviceList().getModel().getElementAt(idx);
-				    devicePanel.setModel(subscriber, di);
+				    Device device = (Device) mainMenuPanel.getDeviceList().getModel().getElementAt(idx);
+				    devicePanel.setModel(subscriber, device.getDeviceIdentity(), eventLoop);
 					setGoBack("main", null);
 					ol.show(panel.getContent(), "devicepanel");
 				}

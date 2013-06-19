@@ -7,6 +7,9 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import ice.Numeric;
+import ice.SampleArray;
+
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -25,36 +28,20 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.enumeration.EnumerationUpdate;
-import org.mdpnp.data.numeric.NumericUpdate;
-import org.mdpnp.data.text.MutableTextUpdate;
-import org.mdpnp.data.text.MutableTextUpdateImpl;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.nomenclature.ConnectedDevice;
-import org.mdpnp.nomenclature.NoninvasiveBloodPressure;
-import org.mdpnp.nomenclature.NoninvasiveBloodPressure.NBPState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
 public class BloodPressurePanel extends DevicePanel {
 	
-	private JLabel systolicLabel, diastolicLabel, pulseLabel, nameLabel;
+	private JLabel systolicLabel, diastolicLabel, pulseLabel;
 	private JLabel systolic, diastolic, pulse;
 	private JPanel systolicPanel, diastolicPanel, pulsePanel;
 	private JLabel time;
 	private JLabel nextInflation;
-	private JButton inflate = new JButton("Inflate"); 
-//	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-	
-	public void setName(String name) {
-		this.nameLabel.setText(name);
-	}
-	public void setGuid(String guid) {
-		this.guid = guid;
-	}
-	private String guid; 
-	
+//	private JButton inflate = new JButton("Inflate"); 
 	
 	protected void buildComponents() {
 		systolicLabel = new JLabel("mmHg");
@@ -100,29 +87,20 @@ public class BloodPressurePanel extends DevicePanel {
 		upper.add(nextInflation);
 		setLayout(new BorderLayout());
 		add(upper, BorderLayout.CENTER);
-		
-		JPanel lower = new JPanel(new GridLayout(1, 2));
-		
-		lower.add(inflate);
-		lower.add(time = new JLabel(""));
-		
+				
+		add(time = new JLabel(""), BorderLayout.SOUTH);
 		time.setHorizontalAlignment(JLabel.RIGHT);
-		add(lower, BorderLayout.SOUTH);
 		
-		
-		add(nameLabel = new JLabel("NAME"), BorderLayout.NORTH);
-		nameLabel.setHorizontalAlignment(JLabel.RIGHT);
-		
-		inflate.addActionListener(new ActionListener() {
-		    @Override
-		    public void actionPerformed(ActionEvent e) {
-		        MutableTextUpdate mtu = new MutableTextUpdateImpl(NoninvasiveBloodPressure.REQUEST_NIBP, guid);
-		        mtu.setSource("*");
-		        mtu.setTarget(BloodPressurePanel.this.source);
-		        
-		        gateway.update(BloodPressurePanel.this, mtu);
-		    }
-		});
+//		inflate.addActionListener(new ActionListener() {
+//		    @Override
+//		    public void actionPerformed(ActionEvent e) {
+//		        MutableTextUpdate mtu = new MutableTextUpdateImpl(NoninvasiveBloodPressure.REQUEST_NIBP, guid);
+//		        mtu.setSource("*");
+//		        mtu.setTarget(BloodPressurePanel.this.source);
+//		        
+//		        gateway.update(BloodPressurePanel.this, mtu);
+//		    }
+//		});
 		
 	}
 	
@@ -167,60 +145,123 @@ public class BloodPressurePanel extends DevicePanel {
 		super.processComponentEvent(e);
 	}
 	
-	@Override
-	public Collection<Identifier> requiredIdentifiedUpdates() {
-		List<Identifier> identifiers = new ArrayList<Identifier>();
-		identifiers.addAll(Arrays.asList(new Identifier[] {ConnectedDevice.STATE, ConnectedDevice.CONNECTION_INFO, NoninvasiveBloodPressure.STATE, NoninvasiveBloodPressure.DIASTOLIC, NoninvasiveBloodPressure.SYSTOLIC, NoninvasiveBloodPressure.PULSE}));
-		identifiers.addAll(super.requiredIdentifiedUpdates());
-		return identifiers;
-	}
-	
-	
-	public BloodPressurePanel(Gateway gateway, String source) {
-		super(gateway, source);
+	public BloodPressurePanel() {
 		buildComponents();
 		enableEvents(ComponentEvent.COMPONENT_RESIZED);
+	}
 
-		registerAndRequestRequiredIdentifiedUpdates();
-		
-	}
-	
-	public static boolean supported(Set<Identifier> identifiers) {
-		return identifiers.contains(NoninvasiveBloodPressure.SYSTOLIC); 
-	}
-	
-	@Override
-	protected void doUpdate(IdentifiableUpdate<?> update) {
-		if(NoninvasiveBloodPressure.SYSTOLIC.equals(update.getIdentifier())) {
-			setInt( ((NumericUpdate)update).getValue(), this.systolic, "---");
-		} else if(NoninvasiveBloodPressure.DIASTOLIC.equals(update.getIdentifier())) {
-			setInt( ((NumericUpdate)update).getValue(), this.diastolic, "---");
-		} else if(NoninvasiveBloodPressure.PULSE.equals(update.getIdentifier())) {
-			setInt( ((NumericUpdate)update).getValue(), this.pulse, "---");
-		} else if(NoninvasiveBloodPressure.INFLATION_PRESSURE.equals(update.getIdentifier())) {
-			setInt( ((NumericUpdate)update).getValue(), this.systolic, "---");
-		} else if(NoninvasiveBloodPressure.STATE.equals(update.getIdentifier())) {
-			NoninvasiveBloodPressure.NBPState state = (NBPState) ((EnumerationUpdate)update).getValue();
-			switch(state) {
-			case Inflating:
-			case Deflating:
-				this.nextInflation.setText(state.toString());
-				break;
-			case Waiting:
-			default:
-			}
-		} else if(NoninvasiveBloodPressure.NEXT_INFLATION_TIME_REMAINING.equals(update.getIdentifier())) {
-			NumericUpdate nu = (NumericUpdate)update;
-			Long nextInflation = null == nu.getValue() ? null : nu.getValue().longValue();
-			if(null != nextInflation) {
-				long seconds = (nextInflation % 60000L / 1000L);
-				this.nextInflation.setText((int)Math.floor(1.0 * nextInflation / 60000.0) + ":" + (seconds<10?"0":"") + seconds + " MIN");
-			}
-		}
-	}
-	@Override
-	public void setIcon(Image image) {
-		// TODO Auto-generated method stub
-		
-	}
+	   
+    public static boolean supported(Set<Integer> names) {
+        return names.contains(ice.MDC_PRESS_CUFF.VALUE);
+    }
+//	
+//	@Override
+//	protected void doUpdate(IdentifiableUpdate<?> update) {
+//		} else if(NoninvasiveBloodPressure.STATE.equals(update.getIdentifier())) {
+//			NoninvasiveBloodPressure.NBPState state = (NBPState) ((EnumerationUpdate)update).getValue();
+//			switch(state) {
+//			case Inflating:
+//			case Deflating:
+//				this.nextInflation.setText(state.toString());
+//				break;
+//			case Waiting:
+//			default:
+//			}
+//		} else if(NoninvasiveBloodPressure.NEXT_INFLATION_TIME_REMAINING.equals(update.getIdentifier())) {
+//			NumericUpdate nu = (NumericUpdate)update;
+//			Long nextInflation = null == nu.getValue() ? null : nu.getValue().longValue();
+//			if(null != nextInflation) {
+//				long seconds = (nextInflation % 60000L / 1000L);
+//				this.nextInflation.setText((int)Math.floor(1.0 * nextInflation / 60000.0) + ":" + (seconds<10?"0":"") + seconds + " MIN");
+//			}
+//		}
+//	}
+
+
+    enum State {
+        Inflating,
+        Deflating,
+        Waiting,
+        Uninited
+    }
+    
+    private State state = State.Uninited;
+    
+    private final Numeric systolicN = new Numeric();
+    private final Numeric diastolicN = new Numeric();
+    private final Numeric pulseN = new Numeric();
+    private final Numeric inflationN = new Numeric();
+    private final Numeric nextInflationN = new Numeric();
+    
+    private static final Logger log = LoggerFactory.getLogger(BloodPressurePanel.class);
+    @Override
+    public void numeric(Numeric numeric, SampleInfo sampleInfo) {
+        log.debug("N:"+numeric);
+        switch(numeric.name) {
+        case ice.MDC_PRESS_CUFF.VALUE:
+            switch((int)numeric.value) {
+            case ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE:
+                state = State.Deflating;
+                break;
+            case ice.MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS.VALUE:
+                this.state = State.Inflating;
+                break;
+            case ice.MDC_EVT_STAT_OFF.VALUE:
+                this.state = State.Waiting;
+                break;
+            }
+            break;
+        case ice.MDC_PRESS_CUFF_SYS.VALUE:
+            systolicN.copy_from(numeric);
+            break;
+        case ice.MDC_PRESS_CUFF_DIA.VALUE:
+            diastolicN.copy_from(numeric);
+            break;
+        case ice.MDC_PULS_RATE_NON_INV.VALUE:
+            pulseN.copy_from(numeric);
+            break;
+        case ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE:
+            nextInflationN.copy_from(numeric);
+            break;
+        case ice.MDC_PRESS_CUFF_INFLATION.VALUE:
+            inflationN.copy_from(numeric);
+            break;
+        }
+        log.debug("State:"+state);
+        
+        switch(state) {
+        case Inflating:
+            nextInflation.setText("Inflating...");
+            systolic.setText(Integer.toString((int)inflationN.value));
+            diastolic.setText("");
+            pulse.setText("");
+            break;
+        case Deflating:
+            nextInflation.setText("Deflating...");
+            systolic.setText(Integer.toString((int)inflationN.value));
+            diastolic.setText("");
+            pulse.setText("");
+            break;
+        case Waiting:
+            long  seconds = ((long)nextInflationN.value % 60000L / 1000L);
+            this.nextInflation.setText((int)Math.floor(1.0 * nextInflationN.value / 60000.0) + ":" + (seconds<10?"0":"") + seconds + " MIN");
+            systolic.setText(Integer.toString((int)systolicN.value));
+            diastolic.setText(Integer.toString((int)diastolicN.value));
+            pulse.setText(Integer.toString((int)pulseN.value));
+            break;
+        case Uninited:
+            nextInflation.setText("");
+            systolic.setText("");
+            diastolic.setText("");
+            pulse.setText("");
+            break;
+        }
+    }
+
+
+    @Override
+    public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
+        
+    }
+
 }

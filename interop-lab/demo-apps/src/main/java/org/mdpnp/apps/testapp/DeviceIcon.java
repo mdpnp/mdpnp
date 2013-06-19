@@ -38,6 +38,10 @@ public class DeviceIcon extends ImageIcon {
         byte[] raster = new byte[image.raster.size()];
         image.raster.toArrayByte(raster);
         
+        if(raster.length < (width * height * 4)) {
+            throw new IllegalArgumentException("the specified image is " + width + "x" + height + " and only " + raster.length + " bytes");
+        }
+        
         if(raster != null) {
             BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             IntBuffer ib = ByteBuffer.wrap(raster).order(ByteOrder.BIG_ENDIAN).asIntBuffer();

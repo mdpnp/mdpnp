@@ -10,38 +10,18 @@ package org.mdpnp.guis.swing;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Image;
 
+import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 
-import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
-public abstract class DevicePanel extends JPanel {
-    protected final Subscriber subscriber;
-    protected final String udi;
-	
-	public DevicePanel(Subscriber subscriber, String udi) {
-		super();
-		this.subscriber = subscriber;
-		this.udi = udi;
+public abstract class DevicePanel extends JComponent {
+    
+	public DevicePanel() {
 		setOpaque(false);
-		
 	}
-	
-//	public void registerAndRequestRequiredIdentifiedUpdates() {
-//		gateway.addListener(this);
-//		MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
-//		miau.setValue(requiredIdentifiedUpdates().toArray(new Identifier[0]));
-//		miau.setTarget(source);
-//		gateway.update(this, miau);
-//	}
-//	
-//	public Collection<Identifier> requiredIdentifiedUpdates() {
-//		return Arrays.asList(new Identifier[] {Device.NAME, Device.GUID, Device.ICON});
-//	}
-	
 	
 	private static void setBackground(Container c, Color bg) {
 		for(Component comp : c.getComponents()) {
@@ -68,6 +48,15 @@ public abstract class DevicePanel extends JPanel {
 		setInt(null == n ? null : n.intValue(), label, alt);
 	}
 	
+   protected final void setInt(ice.Numeric sample, int name, JLabel label, String def) {
+        if(sample.name == name) {
+            setInt(sample.value, label, def);
+            if(!label.isVisible()) {
+                label.setVisible(true);
+            }
+        }
+    }
+	
 	@Override
 	public void setForeground(Color fg) {
 		super.setForeground(fg);
@@ -79,42 +68,13 @@ public abstract class DevicePanel extends JPanel {
 		setBackground(this, bg);
 	}
 	
-	public abstract void setName(String name);
-	public abstract void setGuid(String name);
-	public abstract void setIcon(Image image);
+//	public abstract deviceIdentity(DeviceIdentity di);
+//	public abstract deviceConnectivity(DeviceConnectivity dc);
+	public abstract void numeric(ice.Numeric numeric, SampleInfo sampleInfo);
+	public abstract void sampleArray(ice.SampleArray sampleArray, SampleInfo sampleInfo);
 	
 	public void destroy() {
-//		gateway.removeListener(this);
 	}
-	
-//	@Override
-//	public void update(IdentifiableUpdate<?> update) {
-//		if(source == null || source.equals(update.getSource())) {
-//			if(Device.NAME.equals(update.getIdentifier())) {
-//				setName( ((TextUpdate)update).getValue());
-//			} else if(Device.GUID.equals(update.getIdentifier())) {
-//				setGuid( ((TextUpdate)update).getValue());
-//			} else if(Device.ICON.equals(update.getIdentifier())) {
-//				ImageUpdate imageUpdate = (ImageUpdate) update;
-//				int width = imageUpdate.getWidth();
-//				int height = imageUpdate.getHeight();
-//				BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-//				byte[] raster = imageUpdate.getRaster();
-//				IntBuffer ib = ByteBuffer.wrap(raster).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
-//				for(int y = 0; y < height; y++) {
-//					for(int x = 0; x < width; x++) {
-//						bi.setRGB(x, y, ib.get());
-//					}
-//				}
-//				setIcon(bi);
-//			}
-//			doUpdate(update);
-//		}
-//	}
-	
-//	protected void doUpdate(IdentifiableUpdate<?> update) {
-//		
-//	}
 	
 }
 

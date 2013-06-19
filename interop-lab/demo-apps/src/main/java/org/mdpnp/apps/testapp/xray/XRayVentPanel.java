@@ -40,7 +40,7 @@ import javax.swing.event.ChangeListener;
 
 import org.mdpnp.apps.testapp.DemoFrame;
 import org.mdpnp.apps.testapp.DemoPanel;
-import org.mdpnp.apps.testapp.DeviceIdentityListModel;
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.DeviceListCellRenderer;
 import org.mdpnp.data.IdentifiableUpdate;
 import org.mdpnp.data.Identifier;
@@ -130,7 +130,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 	}
 	
 //	private static final Font RADIO_FONT = Font.decode("verdana-20");
-	protected JPanel buildXRay(final DeviceIdentityListModel devices) {
+	protected JPanel buildXRay(final DeviceListModel devices) {
 		JPanel panel = new JPanel(new GridLayout(2,2));
 		
 		JPanel textPanel = new JPanel(new BorderLayout());
@@ -289,8 +289,8 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 	private boolean imageButtonDown = false;
 //	private Clip shutterClip;
 	
-	private DeviceIdentityListModel devices;
-	public XRayVentPanel(Gateway gateway, DemoPanel demoPanel, DeviceIdentityListModel devices) {
+	private DeviceListModel devices;
+	public XRayVentPanel(Gateway gateway, DemoPanel demoPanel, DeviceListModel devices) {
 		super(new BorderLayout());
 //		try {
 //			shutterClip = Manager.createPlayer(new MediaLocator(JeffGUI.class.getResource("shutter.mp3")));

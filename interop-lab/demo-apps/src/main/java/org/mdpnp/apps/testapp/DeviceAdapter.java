@@ -11,6 +11,8 @@ import javax.swing.JFrame;
 
 import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.EventLoop;
+import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.connected.GetConnected;
 import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
 import org.mdpnp.devices.serial.SerialProviderFactory;
@@ -18,6 +20,7 @@ import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.mdpnp.devices.simulation.DemoSimulatedBloodPressure;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
+import org.mdpnp.guis.swing.DeviceMonitor;
 import org.mdpnp.guis.swing.DevicePanelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +30,7 @@ public class DeviceAdapter {
 	
 	private static JFrame frame;
 	private static GetConnected getConnected;
-	private static Collection<org.mdpnp.guis.swing.DevicePanel> panels;
+//	private static Collection<org.mdpnp.guis.swing.DevicePanel> panels;
 	
 	public static final AbstractDevice buildDevice(DeviceType type, int domainId) throws NoSuchFieldException, SecurityException, IOException {
 		switch(type) {
@@ -77,7 +80,9 @@ public class DeviceAdapter {
             SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
             log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
         }
-		
+		final EventLoop eventLoop = new EventLoop();
+		EventLoopHandler handler = new EventLoopHandler(eventLoop);
+
 		AbstractDevice device = buildDevice(type, domainId);
 		
 		if(!gui) {
@@ -102,7 +107,9 @@ public class DeviceAdapter {
 			};
 		} else {
 		 // find the appropriate GUI representations for this device
-            panels = DevicePanelFactory.findPanel(device);
+		    CompositeDevicePanel cdp = new CompositeDevicePanel();
+		    final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getParticipant(), device.getDeviceIdentity().universal_device_identifier, cdp, eventLoop);
+//            panels = DevicePanelFactory.findPanel(
 //            panels = new ArrayList<DevicePane>
             
 		    frame = new JFrame("Adapter");
@@ -110,6 +117,7 @@ public class DeviceAdapter {
             frame.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
+                    deviceMonitor.shutdown();
                     killAdapter();
                     super.windowClosing(e);
                 }
@@ -117,10 +125,12 @@ public class DeviceAdapter {
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setLocationRelativeTo(null);
             frame.setSize(320, 480);
-            frame.getContentPane().setLayout(new GridLayout(panels.size(), 1));
-            for(org.mdpnp.guis.swing.DevicePanel panel : panels) {
-                frame.getContentPane().add(panel);
-            }
+            frame.getContentPane().setLayout(new BorderLayout());
+            frame.getContentPane().add(cdp, BorderLayout.CENTER);
+//            frame.getContentPane().setLayout(new GridLayout(panels.size(), 1));
+//            for(org.mdpnp.guis.swing.DevicePanel panel : panels) {
+//                frame.getContentPane().add(panel);
+//            }
 //            frame.getContentPane().setLayout(new BorderLayout());
 //            frame.getContentPane().add(new CompositeDevicePanel(device.getParticipant(), device.getDeviceIdentity().universal_device_identifier), BorderLayout.CENTER);
             
