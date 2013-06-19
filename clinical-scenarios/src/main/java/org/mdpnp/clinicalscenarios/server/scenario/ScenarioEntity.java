@@ -8,6 +8,7 @@ import java.util.List;
 import com.google.appengine.api.datastore.QueryResultIterator;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Index;
 import com.googlecode.objectify.annotation.OnSave;
 //import java.util.logging.Logger;
 
@@ -18,12 +19,18 @@ public class ScenarioEntity implements java.io.Serializable {
 	@Id
 	private Long id;
 	
-	private String title;
+	private String title; //title of the scenario
+	@Index
+	private String status; //status of the scenario (modified, submitted, ect...)
+	@Index
+	private String submitter;//creator or submitter of the scenario
+	//TODO submitter should probably be a valueProxy of type UserInfo @Embebed UserInfo
 	
 	private BackgroundValue background = new BackgroundValue();
 //	private Hazards hazards = new Hazards();
 //	private Environments environments = new Environments();
-//	private Equipment equipment = new Equipment();
+	private Equipment equipment = new Equipment();
+	private List<EquipmentEntry> equipmentList = new ArrayList<EquipmentEntry>();//XXX
 	private ProposedSolutionValue proposedSolution = new ProposedSolutionValue();
 	private BenefitsAndRisksValue benefitsAndRisks = new BenefitsAndRisksValue();
 
@@ -43,14 +50,14 @@ public class ScenarioEntity implements java.io.Serializable {
 //        this.environments = environments;
 //    }
 //
-//    public Equipment getEquipment() {
-//        return equipment;
-//    }
-//
-//    public void setEquipment(Equipment equipment) {
-//        this.equipment = equipment;
-//    }
-//
+    public Equipment getEquipment() {
+        return equipment;
+    }
+
+    public void setEquipment(Equipment equipment) {
+        this.equipment = equipment;
+    }
+
     public ProposedSolutionValue getProposedSolution() {
         return proposedSolution;
     }
@@ -66,6 +73,17 @@ public class ScenarioEntity implements java.io.Serializable {
     public void setBenefitsAndRisks(BenefitsAndRisksValue benefitsAndRisks) {
         this.benefitsAndRisks = benefitsAndRisks;
     }
+    
+    //XXX
+    public List<EquipmentEntry> getEquipmentList(){
+    	return equipmentList;
+    }
+    
+    public void setEquipmentList(List<EquipmentEntry> equipmentList){
+    	this.equipmentList = equipmentList;
+    }
+    //XXX
+    
     protected int version = 1;
 	
 	@OnSave
@@ -105,6 +123,8 @@ public class ScenarioEntity implements java.io.Serializable {
 		
 	public static ScenarioEntity create() {
 	    ScenarioEntity s = new ScenarioEntity();
+	    s.setStatus("0");
+	    s.setSubmitter("currentUSer");
         ofy().save().entity(s).now();
         return s;
 	}
@@ -152,5 +172,21 @@ public class ScenarioEntity implements java.io.Serializable {
 	}
 	protected int getVersion() {
 		return version;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public String getSubmitter() {
+		return submitter;
+	}
+
+	public void setSubmitter(String submitter) {
+		this.submitter = submitter;
 	}
 }

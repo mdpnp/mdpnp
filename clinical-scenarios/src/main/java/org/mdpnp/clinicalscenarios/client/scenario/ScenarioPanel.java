@@ -41,8 +41,7 @@ import com.google.web.bindery.requestfactory.shared.WriteOperation;
 
 public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
-	private static ScenarioPanelUiBinder uiBinder = GWT
-			.create(ScenarioPanelUiBinder.class);
+	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 
 	interface Driver extends RequestFactoryEditorDriver<ScenarioProxy, ScenarioPanel> {
 		
@@ -72,6 +71,35 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		  }
 	private static final String[] hazardExpected = new String[] {"Expected", "Unexpected", "Unknown"};
 	private static final String[] hazardSeverity = new String[] {"Mild", "Moderate", "Severe", "Life Threatening", "Fatal", "Unknown"};
+	
+	//XXX Do I need this. Do Clean up
+	private static  enum ScenarioStatus {
+		unsubmitted(0), //created and modified, but not yet submitted
+		submitted(1), //submitted for approval, not yet revised nor approved 
+		approved(2), //revised and approved
+		rejected(3); //revised but not approved. Rejected for revision
+		
+		private int currentStatus;
+		
+		ScenarioStatus(int currentStatus) {
+			this.currentStatus = currentStatus;
+		}
+	    public int getCurrentStatus()
+	    {
+	    	return currentStatus;
+	    }
+	     
+	    public static ScenarioStatus getValue(int i)
+	    {
+	        for (ScenarioStatus scn : ScenarioStatus.values())
+	        {
+	            if (scn.getCurrentStatus() == i)
+	                return scn;
+	        }
+	        throw new IllegalArgumentException("Invalid scenario status: " + i);
+	    }
+	}
+	//////////////////////////////
 	
 	private static final ListBox buildListBox(String[] strings) {
 		ListBox box = new ListBox();
@@ -132,10 +160,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		hazardsTable.setText(0,  3, "Severity");
 		
 		hazardsTable.insertRow(1);
-		hazardsTable.setHTML(1, 0, "<div style=\"font-size: 8pt;\">Make sure to point out if this risk results in death, is life threatening, requires inpatient hospitalization or prolongation of existing hospitalization, results in persistent or significant disability/incapacity, is a congenital anomaly/birth defect</div>");
-		hazardsTable.setHTML(1, 1, "<div style=\"font-size: 8pt;\">Determine which factors are contributing to the risk described above. Examples may be a clinician, a specific device, or an aspect of the clinical envirnomnet etc.</div>");
-		hazardsTable.setHTML(1,  2, "<div style=\"width:250px; font-size:8pt;\">Unexpected: Risk is not consistent with the any of risks known (from a manual, label, protocol, instructions, brochure, etc) in the Current State. If the above documents are not required or available, the risk is unexpected if specificity or severity is not consistent with the risk information described in the protocol or it is more severe to the specified risk. Example, Hepatic necrosis would be unexpected (by virtue of greater severity) if the investigator brochure only referred to elevated hepatic enzymes or hepatitis. Similarly, cerebral vasculitis would be unexpected (by virtue of greater specificity) if the investigator brochure only listed cerebral vascular accidents.</div>");
-		hazardsTable.setHTML(1,  3, "<div style=\"width:250px; font-size:8pt;\"><ul><li>Mild: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li><li>Moderate: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li><li>Severe: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li><li>Life Threatening: Immediate risk of deat, life threatening or disabling</li><li>Fatal: Causes death of the patient</li></ul></div>");
+		hazardsTable.setHTML(1, 0, "<div style=\"font-size: 8pt; width:350px;\">Make sure to point out if this risk results in death, is life threatening, requires inpatient hospitalization or prolongation of existing hospitalization, results in persistent or significant disability/incapacity, is a congenital anomaly/birth defect</div>");
+		hazardsTable.setHTML(1, 1, "<div style=\"font-size: 8pt; width:350px;\">Determine which factors are contributing to the risk described above. Examples may be a clinician, a specific device, or an aspect of the clinical envirnomnet etc.</div>");
+		hazardsTable.setHTML(1,  2, "<div style=\"width:350px; font-size:8pt;\">Unexpected: Risk is not consistent with the any of risks known (from a manual, label, protocol, instructions, brochure, etc) in the Current State. If the above documents are not required or available, the risk is unexpected if specificity or severity is not consistent with the risk information described in the protocol or it is more severe to the specified risk. Example, Hepatic necrosis would be unexpected (by virtue of greater severity) if the investigator brochure only referred to elevated hepatic enzymes or hepatitis. Similarly, cerebral vasculitis would be unexpected (by virtue of greater specificity) if the investigator brochure only listed cerebral vascular accidents.</div>");
+		hazardsTable.setHTML(1,  3, "<div style=\"width:350px; font-size:8pt;\"><ul><li>Mild: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li><li>Moderate: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li><li>Severe: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li><li>Life Threatening: Immediate risk of deat, life threatening or disabling</li><li>Fatal: Causes death of the patient</li></ul></div>");
 		{
 			
 			hazardsTable.insertRow(2);
@@ -193,7 +221,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 //				logger.info("BEFORE:"+currentScenario.getTitle());
 //				logger.info("isChanged:"+rc.isChanged());
 				logger.info("LOCAL|currentState:"+currentScenario.getBackground().getCurrentState()+" proposedState:"+currentScenario.getBackground().getProposedState());
-				
+						
 				rc.persist().using(currentScenario).with(driver.getPaths()).to(new Receiver<ScenarioProxy>() {
 
 					@Override
@@ -235,8 +263,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 		ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
 		if(null == currentScenario) {
-		    context.create().with("background", "benefitsAndRisks",/* "environments", "equipment", "hazards", */"proposedSolution").to(new Receiver<ScenarioProxy>() {
+		    context.create().with("background", "benefitsAndRisks",/* "environments", "equipment", "hazards",*/ "proposedSolution").to(new Receiver<ScenarioProxy>() {
 
+		    	
                 @Override
                 public void onSuccess(ScenarioProxy response) {
                     logger.info(""+response.getBackground());
@@ -249,6 +278,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
                 }
 		        
 		    }).fire();
+
 		} else {
 		    currentScenario = context.edit(currentScenario); 
             driver.edit(currentScenario, context);
@@ -278,7 +308,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	FlexTable hazardsTable;
 	
 	@UiField
-	@Ignore
 	FlexTable equipmentTable;
 
 	@UiField
@@ -573,4 +602,20 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	@UiField
 	@Path(value="proposedSolution.algorithm")
 	TextArea algorithmDescription;
+	
+	@UiField
+	Button submitButton;
+	
+	@UiField
+	Button saveButton;
+	
+	@UiHandler("submitButton")
+	public void onClickSubmit(ClickEvent clickEvent) {
+		int i = 0 ;//dummy		
+	}
+	
+	@UiHandler("saveButton")
+	public void onClickSave(ClickEvent clickEvent) {
+		int i = 0 ;//dummy		
+	}
 }

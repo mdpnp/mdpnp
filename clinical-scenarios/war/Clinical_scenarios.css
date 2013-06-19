@@ -1,7 +1,7 @@
 /** Add css rules here for your application. */
 body {
 	padding:10px;
-	background-color: AntiqueWhite /*#FAEBD7*/;
+	background-color: AntiqueWhite #FAEBD7;
 }
 
 /** Example rules used by the template application (remove for your app) */
@@ -56,10 +56,25 @@ h1 {
 	margin-top: 20px;
 	margin-bottom: 20px;
 }
-
+/*
 p.welcomeText{
 	width:900px;
 	text-align:justify;
 	text-justify:inter-word;
-/* 	background-color:yellow; */
+	background-color:AntiqueWhite;
+}*/
+
+/* users list table header row */
+.userListHeader {
+  background-color: #2062B8;
+  color: white;
+  font-style: italic;
+  text-align: center;
+}
+
+.tableHeader {
+    background-color: #2062B8;
+ 	color: white;
+  	font-style: italic;
+  	text-align: center;
 }

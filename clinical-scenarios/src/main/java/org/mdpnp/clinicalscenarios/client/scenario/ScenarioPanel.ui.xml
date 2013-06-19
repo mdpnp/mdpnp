@@ -132,7 +132,10 @@
 	</g:TabPanel>
 	</g:Dock>
 	<g:Dock direction="SOUTH" size="100px">
-	<g:FlowPanel><g:Button text='Submit for Approval' styleName='{style.givemespace}'/><g:Button text='Save For Later' styleName='{style.givemespace}'/></g:FlowPanel>
+	<g:FlowPanel>
+	    <g:Button text='Submit for Approval' ui:field='submitButton' styleName='{style.givemespace}'/>
+	    <g:Button text='Save For Later' ui:field='saveButton' styleName='{style.givemespace}'/>
+	</g:FlowPanel>
 	</g:Dock>
 	</g:DockPanel>
 </ui:UiBinder> 

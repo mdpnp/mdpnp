@@ -5,6 +5,8 @@ import org.mdpnp.clinicalscenarios.client.scenario.ScenarioProxy;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioRequestFactory;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioSearchPanel;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioSearchPanel.SearchHandler;
+import org.mdpnp.clinicalscenarios.client.tag.TagRequestFactory;
+import org.mdpnp.clinicalscenarios.client.tag.TagsManagementPanel;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoBanner;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoBanner.NewUserHandler;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoPanel;
@@ -17,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
@@ -27,12 +30,14 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 
 	private final UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
 	private final ScenarioRequestFactory scenarioRequestFactory = GWT.create(ScenarioRequestFactory.class);
+	private final TagRequestFactory tagRequestFactory = GWT.create(TagRequestFactory.class);
 	private ScenarioPanel scenarioPanel;
 	private UserInfoBanner userInfoBanner;
 	private UserInfoPanel userInfoPanel;
 	private UserInfoSearchPanel userInfoSearchPanel;
 	private ScenarioSearchPanel scenarioSearchPanel;
 	private ScenarioSearchPanel scenarioListPanel;
+	private TagsManagementPanel tagsManagementPanel;
 	private Home homePanel = new Home();
 	private DockPanel wholeApp = new DockPanel();
 	private DeckPanel contents = new DeckPanel();
@@ -54,6 +59,8 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		final EventBus eventBus = new SimpleEventBus();
 		scenarioRequestFactory.initialize(eventBus);
 		userInfoRequestFactory.initialize(eventBus);
+		tagRequestFactory.initialize(eventBus);
+		
 		scenarioPanel = new ScenarioPanel(scenarioRequestFactory);
 		scenarioSearchPanel = new ScenarioSearchPanel(scenarioRequestFactory);
 		scenarioSearchPanel.setSearchHandler(this);
@@ -61,6 +68,9 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		scenarioListPanel.setSearchHandler(this);
 		userInfoSearchPanel = new UserInfoSearchPanel(userInfoRequestFactory);
 		userInfoBanner = new UserInfoBanner(userInfoRequestFactory, this);
+		tagsManagementPanel = new TagsManagementPanel(tagRequestFactory);
+
+
 		wholeApp.add(userInfoBanner, DockPanel.NORTH);
 		wholeApp.add(contents, DockPanel.CENTER);
 		
@@ -119,6 +129,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		contents.add(scenarioSearchPanel);
 		contents.add(scenarioListPanel);
 		contents.add(userInfoPanel);
+		contents.add(tagsManagementPanel);
 
 		userInfoBanner.getListUsers().setScheduledCommand(new Command() {
 
@@ -127,6 +138,15 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 				showWidget(userInfoSearchPanel);
 			}
 			
+		});
+		
+		userInfoBanner.getListTags().setScheduledCommand(new Command() {
+			
+			@Override
+			public void execute() {
+				showWidget(tagsManagementPanel);
+				
+			}
 		});
 		showWidget(homePanel);
 		

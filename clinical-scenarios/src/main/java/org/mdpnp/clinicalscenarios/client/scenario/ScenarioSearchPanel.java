@@ -94,6 +94,10 @@ public class ScenarioSearchPanel extends Composite {
 				int i = 1;
 				searchResult.insertRow(0);
 				searchResult.setText(0, 0, "Title");
+				searchResult.setText(0, 1, "Submitter");
+				searchResult.setText(0, 2, "State");
+				searchResult.getRowFormatter().addStyleName(0, "userListHeader"); //TODO Style this table
+				
 				for(final ScenarioProxy sp : response) {
 					Label lbl = new Label();
 					lbl.setStyleName("clickable");
@@ -109,10 +113,14 @@ public class ScenarioSearchPanel extends Composite {
 						
 					});
 					String title = sp.getTitle();
-					title = null == title || "".equals(title) ? "<none>" : title;
+					title = null == title || "".equals(title) ? "<none>" : title;//XXX title.trim() ??
 					lbl.setText(title);
 					searchResult.insertRow(i);
-					searchResult.setWidget(i++, 0, lbl);
+					searchResult.setWidget(i, 0, lbl);
+					searchResult.setWidget(i, 1, new Label(sp.getSubmitter()));
+					searchResult.setWidget(i++, 2, new Label(sp.getStatus()));
+					
+					
 				}
 			}
 			@Override

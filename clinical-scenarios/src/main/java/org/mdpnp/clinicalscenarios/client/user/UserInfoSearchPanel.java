@@ -26,7 +26,7 @@ public class UserInfoSearchPanel extends Composite {
 	
 	private static final String[] headers = new String[] {
 		"Email", "Title", "Given Name", "Family Name", "Company",
-		"Job Title", "Years In Field", "Phone Number"};
+		"Job Title", "Years In Field", "Phone Number", "Admin Status"};
 
 	
 	
@@ -35,12 +35,14 @@ public class UserInfoSearchPanel extends Composite {
 		UserInfoRequest uir = userInfoRequestFactory.userInfoRequest();
 		
 		list.insertRow(0);
+		list.getRowFormatter().addStyleName(0, "userListHeader"); //TODO Style this table
+		
 		for(int j = 0; j < headers.length; j++) {
 			
 			list.setText(0, j, headers[j]);
 		}
 		
-		
+		 
 		uir.findAllUserInfo().to(new Receiver<List<UserInfoProxy>>() {
 			@Override
 			public void onSuccess(List<UserInfoProxy> response) {
@@ -56,6 +58,7 @@ public class UserInfoSearchPanel extends Composite {
 					list.setText(1 + i, 5, u.getJobTitle());
 					list.setText(1 + i, 6, u.getYearsInField());
 					list.setText(1 + i, 7, u.getPhoneNumber());
+					list.setText(1 + i, 8, String.valueOf(u.getAdmin()));
 				}
 				
 			}
