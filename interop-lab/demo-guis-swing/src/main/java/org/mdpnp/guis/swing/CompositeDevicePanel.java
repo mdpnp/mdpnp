@@ -7,7 +7,10 @@ import ice.SampleArray;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -29,7 +32,10 @@ import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
 public class CompositeDevicePanel extends JComponent implements DeviceMonitorListener {
-   private final JLabel description = new JLabel("FUNK");
+   private final JLabel manufacturer = new JLabel("MANUFACTURER");
+   private final JLabel model = new JLabel("MODEL");
+   private final JLabel serial_number = new JLabel("SERIAL#");
+   
    private final JLabel connectionState = new JLabel("CONN");
    private final JLabel universal_device_identifier = new JLabel("UDI");
    private final JLabel icon = new JLabel("ICON");
@@ -46,18 +52,51 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
         super();
         setLayout(new BorderLayout());
         JComponent header = new JPanel();
-        header.setLayout(new GridLayout(2,2));
-        header.add(description);
-        header.add(connectionState);
-        header.add(universal_device_identifier);
-        header.add(icon);
+        header.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.BASELINE,GridBagConstraints.BOTH, new Insets(1,1,1,1), 1,1);
+        
+        header.add(new JLabel("Manufacturer"), gbc);
+        gbc.gridx++;
+        header.add(manufacturer, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx--;
+        header.add(new JLabel("Model"), gbc);
+        gbc.gridx++;
+        header.add(model, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx--;
+        header.add(new JLabel("Serial Number"), gbc);
+        gbc.gridx++;
+        header.add(serial_number, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx--;
+        header.add(new JLabel("Universal Device Id"), gbc);
+        gbc.gridx++;
+        header.add(universal_device_identifier, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx--;
+        header.add(new JLabel("Connection State"), gbc);
+        gbc.gridx++;
+        header.add(connectionState, gbc);
+        
+        gbc.gridy++;
+        gbc.gridheight = gbc.gridy;
+        gbc.gridy = 0;
+        gbc.gridx = 2;
+        header.add(icon, gbc);
         add(header, BorderLayout.NORTH);
         add(data, BorderLayout.CENTER);
     }
 
     @Override
     public void deviceIdentity(DeviceIdentity di, SampleInfo sampleInfo) {
-        description.setText(di.manufacturer + " " + di.model);
+        manufacturer.setText(di.manufacturer);
+        model.setText(di.model);
+        serial_number.setText(di.serial_number);
         universal_device_identifier.setText(di.universal_device_identifier);
         icon.setText("");
         icon.setIcon(new ImageIcon(IconUtil.image(di.icon)));

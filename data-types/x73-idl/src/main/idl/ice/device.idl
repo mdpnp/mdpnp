@@ -10,6 +10,7 @@ module ice {
     string<256> universal_device_identifier; //@key
     string<128> manufacturer;
     string<128> model;
+    string<128> serial_number;
     Image icon;
   };
   const string DeviceIdentityTopic = "ice::DeviceIdentity";
@@ -66,7 +67,13 @@ module ice {
   const long MDC_RESP_RATE             = 20490;
   const long MDC_CO2_RESP_RATE         = 20522;
   const long MDC_CONC_AWAY_CO2         = 20628;
+  const long MDC_VENT_CONC_AWAY_O2     = 20648;
   const long MDC_AWAY_CO2_EXP          = 20660;
+  const long MDC_FLOW_AWAY             = 20692;
+  const long MDC_PRESS_AWAY            = 20720;
+  const long MDC_TIME_PD_APNEA         = 20784;
+  const long MDC_VENT_TIME_PD_PPV      = 21344;
+  const long MDC_FLOW_O2_CONSUMP       = 21348;
   const long MDC_TEMP_BLD              = 57364;
 
   
@@ -84,6 +91,8 @@ module ice {
   const long MDC_ECG_LEAD_A_VF = 65544;
   const long MDC_ECG_LEAD_A_VL = 65545;
   const long MDC_ECG_LEAD_A_VR = 65546;
+  const long MDC_TIME_PD_INSPIRATORY = 65547;
+  const long MDC_TIME_MSEC_SINCE_EPOCH = 65548;
   
   
   

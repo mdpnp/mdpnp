@@ -124,7 +124,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 		protected void device(String bid, String make, String model) {
 			super.device(bid, make, model);
 			
-			// TODO something with the bed identifier!
+			deviceIdentity.serial_number = null == bid?null:bid.replaceAll("\\_", " ");
 			deviceIdentity.manufacturer = null == make?null:make.replaceAll("\\_", " ");
 			deviceIdentity.model = null==model?null:model.replaceAll("\\_", " "); 
 			deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);

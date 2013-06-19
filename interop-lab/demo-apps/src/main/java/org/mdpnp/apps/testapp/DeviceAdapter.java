@@ -15,6 +15,9 @@ import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.connected.GetConnected;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
+import org.mdpnp.devices.draeger.medibus.DemoApollo;
+import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
+import org.mdpnp.devices.hospira.symbiq.DemoSymbiq;
 import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
@@ -47,16 +50,16 @@ public class DeviceAdapter {
 			return new DemoSimulatedBloodPressure(domainId);
 //		case PhilipsMP70:
 //			return new DemoMP70(null);
-//		case DragerApollo:
-//			return new DemoApollo(null);
-//		case DragerEvitaXL:
-//			return new DemoEvitaXL(null);
+		case DragerApollo:
+			return new DemoApollo(domainId);
+		case DragerEvitaXL:
+			return new DemoEvitaXL(domainId);
 		case Bernoulli:
 			return new DemoBernoulli(domainId);
 //		case Capnostream20:
 //			return new DemoCapnostream20(null);
-//		case Symbiq:
-//			return new DemoSymbiq(null);
+		case Symbiq:
+			return new DemoSymbiq(domainId);
 		default:
 			throw new RuntimeException("Unknown type:"+type);
 		}
@@ -125,7 +128,7 @@ public class DeviceAdapter {
             });
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setLocationRelativeTo(null);
-            frame.setSize(320, 480);
+            frame.setSize(640, 480);
             frame.getContentPane().setLayout(new BorderLayout());
             frame.getContentPane().add(cdp, BorderLayout.CENTER);
 //            frame.getContentPane().setLayout(new GridLayout(panels.size(), 1));

@@ -47,30 +47,11 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
 	private static final Logger log = LoggerFactory.getLogger(AbstractDraegerVent.class);
 	
-	protected void add(Enum<?> e, Identifier i) {
-		MutableIdentifiableUpdate<?> miu = null;
-		if(i instanceof Text) {
-			miu = new MutableTextUpdateImpl((Text) i);
-		} else if(i instanceof Numeric) {
-			miu = new MutableNumericUpdateImpl((Numeric) i);
-		} else if(i instanceof Enumeration) {
-			miu = new MutableEnumerationUpdateImpl((Enumeration) i);
-		} else if(i instanceof IdentifierArray) {
-			miu = new MutableIdentifierArrayUpdateImpl((IdentifierArray) i);
-		} else if(i instanceof TextArray) {
-			miu = new MutableTextArrayUpdateImpl((TextArray) i);
-		} else if(i instanceof Waveform) {
-			miu = new MutableWaveformUpdateImpl((Waveform) i);
-		}
-		if(null != miu) {
-			updates.put(e, miu);
-			add(miu);
-		}
-	}
+	protected  Map<Enum<?>, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Enum<?>, InstanceHolder<ice.Numeric>>();
+	protected  Map<Enum<?>, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Enum<?>, InstanceHolder<ice.SampleArray>>();
 	
-	protected  Map<Enum<?>, MutableIdentifiableUpdate<?>> updates = new HashMap<Enum<?>, MutableIdentifiableUpdate<?>>();
-	protected final MutableTextUpdate startInspiratoryCycleUpdate = new MutableTextUpdateImpl(Ventilator.START_INSPIRATORY_CYCLE);
-	protected final MutableNumericUpdate timeUpdate = new MutableNumericUpdateImpl(Device.TIME_MSEC_SINCE_EPOCH);
+	protected final InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate;// = new MutableTextUpdateImpl(Ventilator.START_INSPIRATORY_CYCLE);
+	protected final InstanceHolder<ice.Numeric> timeUpdate; // = new MutableNumericUpdateImpl(Device.TIME_MSEC_SINCE_EPOCH);
 	
 	protected MutableIdentifiableUpdate<?> getUpdate(Object code) {
 		if(code instanceof Enum<?>) {
@@ -297,7 +278,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 			String line = null;
 			// TODO this is a kluge until nomenclature ideas are more mature
 			String draegerPrefix = MeasuredDataCP1.class.getPackage().getName()+".";
-			String prefix = PulseOximeter.class.getPackage().getName()+".";
+			String prefix = ice.Numeric.class.getPackage().getName()+".";
 
 			
 			while(null != (line = br.readLine())) {
@@ -307,8 +288,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 					String c[] = v[0].split("\\.");
 					@SuppressWarnings({ "unchecked", "rawtypes" })
                     Enum<?> draeger = (Enum<?>) Enum.valueOf( (Class<? extends Enum>)Class.forName(draegerPrefix+c[0]), c[1]);
-					c = v[1].split("\\.");
-					Identifier i = (Identifier) Class.forName(prefix+c[0]).getField(c[1]).get(null);
+					int tag = Class.forName(prefix+v[1]).getField("VALUE").getInt(null);
 					log.trace("Adding " + draeger + " mapped to " + i);
 					add(draeger, i);
 				}
@@ -339,13 +319,13 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 		}
 	}
 	
-	public AbstractDraegerVent(Gateway gateway) {
-		super(gateway);
+	public AbstractDraegerVent(int domainId) {
+		super(domainId);
 		loadMap();
 	}
 	
-	public AbstractDraegerVent(Gateway gateway, SerialSocket serialSocket) {
-        super(gateway, serialSocket);
+	public AbstractDraegerVent(int domainId, SerialSocket serialSocket) {
+        super(domainId, serialSocket);
         loadMap();
     }
 
@@ -363,13 +343,19 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 	private boolean gotDeviceId = false;
 	protected synchronized void receiveDeviceId(String guid, String name) {
 		log.trace("receiveDeviceId:guid="+guid+", name="+name);
+		
+		boolean writeIt = false;
 		if(null!=guid) {
-			guidUpdate.setValue(guid);
-			gateway.update(this, guidUpdate);
+		    deviceIdentity.serial_number = guid;
+		    writeIt = true;
+		    
 		}
 		if(null!=name) {
-			nameUpdate.setValue("Draeger " + name);
-			gateway.update(this, nameUpdate);
+		    deviceIdentity.model = "Draeger " + name;
+		    writeIt = true;
+		}
+		if(writeIt) {
+		    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 		}
 		gotDeviceId = true;
 		notifyAll();
