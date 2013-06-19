@@ -11,23 +11,6 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.MutableIdentifiableUpdate;
-import org.mdpnp.data.enumeration.Enumeration;
-import org.mdpnp.data.enumeration.MutableEnumerationUpdateImpl;
-import org.mdpnp.data.identifierarray.IdentifierArray;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdateImpl;
-import org.mdpnp.data.numeric.MutableNumericUpdate;
-import org.mdpnp.data.numeric.MutableNumericUpdateImpl;
-import org.mdpnp.data.numeric.Numeric;
-import org.mdpnp.data.text.MutableTextUpdate;
-import org.mdpnp.data.text.MutableTextUpdateImpl;
-import org.mdpnp.data.text.Text;
-import org.mdpnp.data.textarray.MutableTextArrayUpdateImpl;
-import org.mdpnp.data.textarray.TextArray;
-import org.mdpnp.data.waveform.MutableWaveformUpdate;
-import org.mdpnp.data.waveform.MutableWaveformUpdateImpl;
-import org.mdpnp.data.waveform.Waveform;
 import org.mdpnp.devices.draeger.medibus.Medibus.Alarm;
 import org.mdpnp.devices.draeger.medibus.Medibus.Data;
 import org.mdpnp.devices.draeger.medibus.types.Command;
@@ -36,10 +19,7 @@ import org.mdpnp.devices.draeger.medibus.types.RealtimeData;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.AbstractSerialDevice;
 import org.mdpnp.devices.serial.SerialSocket;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.nomenclature.Device;
-import org.mdpnp.nomenclature.PulseOximeter;
-import org.mdpnp.nomenclature.Ventilator;
+import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,11 +33,11 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 	protected final InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate;// = new MutableTextUpdateImpl(Ventilator.START_INSPIRATORY_CYCLE);
 	protected final InstanceHolder<ice.Numeric> timeUpdate; // = new MutableNumericUpdateImpl(Device.TIME_MSEC_SINCE_EPOCH);
 	
-	protected MutableIdentifiableUpdate<?> getUpdate(Object code) {
+	protected InstanceHolder<ice.Numeric> getNumericUpdate(Object code) {
 		if(code instanceof Enum<?>) {
-			MutableIdentifiableUpdate<?> miu = updates.get(code);
+			InstanceHolder<ice.Numeric> miu = numericUpdates.get(code);
 			if(null == miu) {
-//				log.trace("No update for enum code="+code+" class="+code.getClass().getName());
+				log.trace("No update for enum code="+code+" class="+code.getClass().getName());
 			}
 			return miu;
 		} else {
@@ -65,28 +45,41 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 			return null;
 		}
 	}
+	   protected InstanceHolder<ice.SampleArray> getSampleArrayUpdate(Object code) {
+	        if(code instanceof Enum<?>) {
+	            InstanceHolder<ice.SampleArray> miu = sampleArrayUpdates.get(code);
+	            if(null == miu) {
+	              log.trace("No update for enum code="+code+" class="+code.getClass().getName());
+	            }
+	            return miu;
+	        } else {
+	            log.trace("No update for code="+code+" class="+code.getClass().getName());
+	            return null;
+	        }
+	    }
 	
-	protected void populateUpdate(MutableIdentifiableUpdate<?> update, Object value) {
-		if(update instanceof MutableTextUpdate) {
-			((MutableTextUpdate)update).setValue(null==value?null:value.toString());
-		} else if(update instanceof MutableNumericUpdate) {
-			try {
-				// TODO There are weird number formats in medibus .. this will need enhancement
-				if(value instanceof Number) {
-					((MutableNumericUpdate)update).setValue((Number) value);	
-				} else {
-					String s = null == value ? null : value.toString().trim();
-					((MutableNumericUpdate)update).setValue(null==s?(Number)null:(Number)Double.parseDouble(s));
+	protected void populateUpdate(InstanceHolder<ice.Numeric> update, Object value) {
+		try {
+			// TODO There are weird number formats in medibus .. this will need enhancement
+			if(value instanceof Number) {
+			    
+				update.data.value = ((Number) value).floatValue();	
+			} else {
+				String s = null == value ? null : value.toString().trim();
+				if(null != s) {
+				    update.data.value = Float.parseFloat(s);
 				}
-				
-			} catch(NumberFormatException nfe) {
-				((MutableNumericUpdate)update).setValue(null);
 			}
+			
+		} catch(NumberFormatException nfe) {
+		    log.trace("Invalid number:"+value);
+//			((MutableNumericUpdate)update).setValue(null);
 		}
 	}
 	
 	protected void processStartInspCycle() {
-		gateway.update(this, startInspiratoryCycleUpdate);
+	    // TODO This should not be triggered as a numeric; it's a bad idea
+	    numericSample(startInspiratoryCycleUpdate, 0);
 	}
 	
 	private static final int BUFFER_SAMPLES = 10;
@@ -105,17 +98,20 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 		if(realtimeBufferCount[streamIndex]==realtimeBuffer[streamIndex].length) {
 			realtimeBufferCount[streamIndex] = 0;
 			// flush
-			MutableIdentifiableUpdate<?> miu = getUpdate(code);
-			if(null != miu && miu instanceof MutableWaveformUpdate) {
+			InstanceHolder<ice.SampleArray> miu = getSampleArrayUpdate(code);
+			if(null != miu) {
 				date.setTime(System.currentTimeMillis());
-				MutableWaveformUpdate mwu = (MutableWaveformUpdate) miu;
-				mwu.setValues(realtimeBuffer[streamIndex]);
-				mwu.setTimestamp(date);
+				miu.data.values.clear();
+				for(Number n : realtimeBuffer[streamIndex]) {
+				    miu.data.values.addFloat(n.floatValue());
+				}
+//				mwu.setValues(realtimeBuffer[streamIndex]);
+//				mwu.setTimestamp(date);
 				// interval is in microseconds
-				mwu.setMillisecondsPerSample(1.0 * config.interval * multiplier / 1000.0);
-				gateway.update(this, mwu);
+				miu.data.millisecondsPerSample = (int) (1.0 * config.interval * multiplier / 1000.0); 
+				sampleArrayDataWriter.write(miu.data, miu.handle);
 			} else {
-				log.warn("for "+ code + " did not get expected WaveformUpdate type, identifier=" + (null == miu ? "null":miu.getIdentifier()));
+				log.warn("for "+ code + " did not get expected WaveformUpdate type, identifier=" + (null == miu ? "null":miu.data.name));
 			}
 			
 			
@@ -123,10 +119,10 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 	}
 	
 	protected void process(Object code, Object data) {
-		MutableIdentifiableUpdate<?> miu = getUpdate(code);
+		InstanceHolder<ice.Numeric> miu = getNumericUpdate(code);
 		if(null != miu) {
 			populateUpdate(miu, data);
-			gateway.update(this, miu);
+			numericDataWriter.write(miu.data, miu.handle);
 		}
 	}
 	
@@ -145,8 +141,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 	}
 	
 	protected void process(Date date) {
-		timeUpdate.setValue(date.getTime());
-		gateway.update(this, timeUpdate);
+	    // TODO Don't do this
+	    numericSample(timeUpdate, date.getTime());
 	}
 	
 	protected void processCorrupt(Object cmd) {
@@ -223,7 +219,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 	};
 	private class RequestSlowData implements Runnable {
 		public void run() {
-			if(State.Connected.equals(getState())) {
+			if(ice.ConnectionState.Connected.equals(getState())) {
 				try {
 					if( (System.currentTimeMillis()-lastRealtime) >= getMaximumQuietTime() ) {
 						log.warn(""+(System.currentTimeMillis()-lastRealtime) +"ms since realtime data, requesting anew");
@@ -273,6 +269,14 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 	}
 	
 	private void loadMap() {
+        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
+        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+        
+        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
+        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
+        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+        
 		try {
 			BufferedReader br = new BufferedReader(new InputStreamReader(AbstractDraegerVent.class.getResourceAsStream("draeger.map")));
 			String line = null;
@@ -285,12 +289,22 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 				line = line.trim();
 				if('#'!=line.charAt(0)) {
 					String v[] = line.split("\t");
-					String c[] = v[0].split("\\.");
-					@SuppressWarnings({ "unchecked", "rawtypes" })
-                    Enum<?> draeger = (Enum<?>) Enum.valueOf( (Class<? extends Enum>)Class.forName(draegerPrefix+c[0]), c[1]);
-					int tag = Class.forName(prefix+v[1]).getField("VALUE").getInt(null);
-					log.trace("Adding " + draeger + " mapped to " + i);
-					add(draeger, i);
+					
+					if(v.length < 3) {
+					    log.debug("Bad line:"+line);
+					} else {
+    					String c[] = v[0].split("\\.");
+    					@SuppressWarnings({ "unchecked", "rawtypes" })
+                        Enum<?> draeger = (Enum<?>) Enum.valueOf( (Class<? extends Enum>)Class.forName(draegerPrefix+c[0]), c[1]);
+    					int tag = Class.forName(prefix+v[1]).getField("VALUE").getInt(null);
+    					log.trace("Adding " + draeger + " mapped to " + tag);
+    					v[2] = v[2].trim();
+    					if("W".equals(v[2])) {
+    					    sampleArrayUpdates.put(draeger, createSampleArrayInstance(tag));
+    					} else if ("N".equals(v[2])) {
+    					    numericUpdates.put(draeger, createNumericInstance(tag));
+    					}
+					}
 				}
 			}
 		} catch(Exception e) {
@@ -322,11 +336,15 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 	public AbstractDraegerVent(int domainId) {
 		super(domainId);
 		loadMap();
+		timeUpdate = createNumericInstance(ice.MDC_TIME_MSEC_SINCE_EPOCH.VALUE);
+		startInspiratoryCycleUpdate = createNumericInstance(ice.MDC_TIME_PD_INSPIRATORY.VALUE);
 	}
 	
 	public AbstractDraegerVent(int domainId, SerialSocket serialSocket) {
         super(domainId, serialSocket);
         loadMap();
+        timeUpdate = createNumericInstance(ice.MDC_TIME_MSEC_SINCE_EPOCH.VALUE);
+        startInspiratoryCycleUpdate = createNumericInstance(ice.MDC_TIME_PD_INSPIRATORY.VALUE);
     }
 
 	@Override

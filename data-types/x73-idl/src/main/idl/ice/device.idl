@@ -93,6 +93,7 @@ module ice {
   const long MDC_ECG_LEAD_A_VR = 65546;
   const long MDC_TIME_PD_INSPIRATORY = 65547;
   const long MDC_TIME_MSEC_SINCE_EPOCH = 65548;
+  const long MDC_CAPNOGRAPH = 65549;
   
   
   

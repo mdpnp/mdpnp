@@ -3,7 +3,7 @@ RealtimeData.FlowInspExp	MDC_FLOW_AWAY	W
 #RealtimeData.O2InspExp	MDC_FLOW_O2_CONSUMP	W
 RealtimeData.ExpiratoryCO2mmHg	MDC_VENT_CONC_AWAY_O2	W
 Setting.ApneaTime	MDC_TIME_PD_APNEA	N
-MeasuredDataCP1.PulseRate	MDC_PULS_OXIM_PULS	N
+MeasuredDataCP1.PulseRate	MDC_PULS_OXIM_PULS_RATE	N
 Setting.InspiratoryTime	MDC_TIME_PD_INSPIRATORY	N
 Setting.FrequencyIPPV	MDC_VENT_TIME_PD_PPV	N
 #Setting.IntermittentPEEP	Ventilator.INTERMITTENT_PEEP

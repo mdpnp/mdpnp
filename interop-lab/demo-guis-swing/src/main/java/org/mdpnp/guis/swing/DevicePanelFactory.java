@@ -22,7 +22,8 @@ public class DevicePanelFactory {
 	public static final Class[] PANELS = new Class[] {
 	    PulseOximeterPanel.class,
 	    BloodPressurePanel.class,
-	    ElectroCardioGramPanel.class
+	    ElectroCardioGramPanel.class,
+	    VentilatorPanel.class
 	};
 	
 	public static final Method[] PANEL_SUPPORTED = new Method[PANELS.length];
