@@ -154,30 +154,23 @@ public class BloodPressurePanel extends DevicePanel {
     public static boolean supported(Set<Integer> names) {
         return names.contains(ice.MDC_PRESS_CUFF.VALUE);
     }
-//	
-//	@Override
-//	protected void doUpdate(IdentifiableUpdate<?> update) {
-//		} else if(NoninvasiveBloodPressure.STATE.equals(update.getIdentifier())) {
-//			NoninvasiveBloodPressure.NBPState state = (NBPState) ((EnumerationUpdate)update).getValue();
-//			switch(state) {
-//			case Inflating:
-//			case Deflating:
-//				this.nextInflation.setText(state.toString());
-//				break;
-//			case Waiting:
-//			default:
-//			}
-//		} else if(NoninvasiveBloodPressure.NEXT_INFLATION_TIME_REMAINING.equals(update.getIdentifier())) {
-//			NumericUpdate nu = (NumericUpdate)update;
-//			Long nextInflation = null == nu.getValue() ? null : nu.getValue().longValue();
-//			if(null != nextInflation) {
-//				long seconds = (nextInflation % 60000L / 1000L);
-//				this.nextInflation.setText((int)Math.floor(1.0 * nextInflation / 60000.0) + ":" + (seconds<10?"0":"") + seconds + " MIN");
-//			}
-//		}
-//	}
 
-
+    // TODO manage state better
+    /* jplourde June 19, 2013
+     * The "entire" blood pressure state is constructed incrementally
+     * through calls to numeric(Numeric,SampleInfo)
+     * 
+     * I need the "entire" blood pressure state to render a meaningful GUI
+     * 
+     * so the end result is storing state here.
+     * 
+     * An alternative would be to give this component visibility "down" "into"
+     * the associated DataReader to get relevant instances on-demand and the
+     * DataReader can manage state per the QoS parameters.
+     * 
+     *
+     */
+    
     enum State {
         Inflating,
         Deflating,

@@ -68,12 +68,6 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
         connectionState.setText(dc.state.name());
     }
 
-    // TODO this should matter eventually for updating new panels with extant information
-    // should really be pushed down to DDS somehow
-    private Numeric lastNumeric;
-    private SampleArray lastSampleArray;
-    
-    
     private void replaceDataPanels() {
         
         synchronized(dataComponents) {

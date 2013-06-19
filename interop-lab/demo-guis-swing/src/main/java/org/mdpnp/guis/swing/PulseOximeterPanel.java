@@ -217,6 +217,11 @@ public class PulseOximeterPanel extends DevicePanel {
 
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
-        plethWave.applyUpdate(sampleArray);
+        switch(sampleArray.name) {
+        case ice.MDC_PULS_OXIM_PLETH.VALUE:
+            plethWave.applyUpdate(sampleArray);
+            break;
+        }
+        
     }
 }

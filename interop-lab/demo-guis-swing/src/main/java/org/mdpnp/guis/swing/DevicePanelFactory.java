@@ -21,7 +21,8 @@ public class DevicePanelFactory {
 	
 	public static final Class[] PANELS = new Class[] {
 	    PulseOximeterPanel.class,
-	    BloodPressurePanel.class
+	    BloodPressurePanel.class,
+	    ElectroCardioGramPanel.class
 	};
 	
 	public static final Method[] PANEL_SUPPORTED = new Method[PANELS.length];
@@ -59,14 +60,7 @@ public class DevicePanelFactory {
             }
 	    }
 	    
-	    if(PulseOximeterPanel.supported(tags)) {
-	        panels.add(new PulseOximeterPanel());
-	    }
-	    
-	    if(BloodPressurePanel.supported(tags)) {
-	        panels.add(new BloodPressurePanel());
-	    }
-	    
-	    return panels;
+	    panels.clear();
+	    panels.addAll(newPanels);
 	}
 }

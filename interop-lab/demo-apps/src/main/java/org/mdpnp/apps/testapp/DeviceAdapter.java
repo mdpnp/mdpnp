@@ -14,6 +14,7 @@ import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.connected.GetConnected;
+import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
@@ -50,8 +51,8 @@ public class DeviceAdapter {
 //			return new DemoApollo(null);
 //		case DragerEvitaXL:
 //			return new DemoEvitaXL(null);
-//		case Bernoulli:
-//			return new DemoBernoulli(null);
+		case Bernoulli:
+			return new DemoBernoulli(domainId);
 //		case Capnostream20:
 //			return new DemoCapnostream20(null);
 //		case Symbiq:

@@ -108,7 +108,7 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
 							numericSample(this.nextInflationTime, getNextInflationTimeRemaining());
 //							nextInflationUpdate.setValue(getNextInflationTimeRemaining());
 //							gateway.update(this, nextInflationUpdate, stateUpdate);
-							numericSample(this.state, ice.MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS.VALUE);
+//							numericSample(this.state, ice.MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS.VALUE);
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}

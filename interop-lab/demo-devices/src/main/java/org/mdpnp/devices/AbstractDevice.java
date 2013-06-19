@@ -64,7 +64,7 @@ public abstract class AbstractDevice implements /*GatewayListener,*/ ThreadFacto
 	    return subscriber;
 	}
 	
-	protected static class InstanceHolder<T> {
+	public static class InstanceHolder<T> {
 	    public T data;
 	    public InstanceHandle_t handle;
 	    
@@ -75,6 +75,11 @@ public abstract class AbstractDevice implements /*GatewayListener,*/ ThreadFacto
 	    public InstanceHolder(T t, InstanceHandle_t handle) {
 	        this.data = t;
 	        this.handle = handle;
+	    }
+	    
+	    @Override
+	    public String toString() {
+	        return "[data="+data+",handle="+handle+"]";
 	    }
 	}
 	
@@ -87,6 +92,10 @@ public abstract class AbstractDevice implements /*GatewayListener,*/ ThreadFacto
 	}
 	
 	protected InstanceHolder<Numeric> createNumericInstance(int name) {
+	    if(deviceIdentity == null || deviceIdentity.universal_device_identifier == null || "".equals(deviceIdentity.universal_device_identifier)) {
+	        throw new IllegalStateException("Please populate deviceIdentity.universal_device_identifier before calling createNumericInstance");
+	    }
+	    
 	    InstanceHolder<Numeric> holder = new InstanceHolder<Numeric>();
 	    holder.data = new Numeric();
 	    holder.data.universal_device_identifier = deviceIdentity.universal_device_identifier;
@@ -96,6 +105,10 @@ public abstract class AbstractDevice implements /*GatewayListener,*/ ThreadFacto
 	}
 	
 	protected InstanceHolder<SampleArray> createSampleArrayInstance(int name) {
+	    if(deviceIdentity == null || deviceIdentity.universal_device_identifier == null || "".equals(deviceIdentity.universal_device_identifier)) {
+            throw new IllegalStateException("Please populate deviceIdentity.universal_device_identifier before calling createSampleArrayInstance");
+        }
+        
 	    InstanceHolder<SampleArray> holder = new InstanceHolder<SampleArray>();
         holder.data = new SampleArray();
         holder.data.universal_device_identifier = deviceIdentity.universal_device_identifier;
