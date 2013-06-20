@@ -20,9 +20,9 @@ include 'interop-lab:pump-control'
 
 // Omits android projects is android sdk is not available
 if(hasProperty('sdk.dir') || null != System.getenv().get("ANDROID_HOME")) {
-  include 'interop-lab:android-apps'
+//  include 'interop-lab:android-apps'
 } else {
-  println 'Not building android projects'
+//  println 'Not building android projects'
 }
 
 // Omits RTI DDS dependent projects where RTI DDS is unavailable

@@ -40,6 +40,7 @@ import javax.swing.event.ChangeListener;
 
 import org.mdpnp.apps.testapp.DemoFrame;
 import org.mdpnp.apps.testapp.DemoPanel;
+import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.DeviceListCellRenderer;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
@@ -52,9 +53,8 @@ import com.googlecode.javacpp.Loader;
 import com.googlecode.javacv.cpp.opencv_objdetect;
 import com.jeffplourde.util.math.RTRegression;
 
-public class XRayVentPanel extends JPanel implements GatewayListener {
+public class XRayVentPanel extends JPanel {
 	private FramePanel cameraPanel;
-	private final Gateway gateway;
 
 	private SwingWaveformPanel waveformPanel;
 	private WaveformUpdateWaveformSource wuws;
@@ -133,7 +133,8 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 			public void mouseClicked(MouseEvent e) {
 				int idx  = deviceList.locationToIndex(e.getPoint());
 				if(idx>=0) {
-					MutableDevice o = (MutableDevice) devices.getElementAt(idx);
+					Device o = (Device) devices.getElementAt(idx);
+					o.getDeviceIdentity()
 					changeSource(o.getSource());
 				}
 				super.mouseClicked(e);
@@ -275,7 +276,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 //	private Clip shutterClip;
 	
 	private DeviceListModel devices;
-	public XRayVentPanel(Gateway gateway, DemoPanel demoPanel, DeviceListModel devices) {
+	public XRayVentPanel(DemoPanel demoPanel, DeviceListModel devices) {
 		super(new BorderLayout());
 //		try {
 //			shutterClip = Manager.createPlayer(new MediaLocator(JeffGUI.class.getResource("shutter.mp3")));
@@ -296,7 +297,6 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 //		}
 		this.devices = devices;
         this.demoPanel = demoPanel;
-		this.gateway = gateway;
 		
 		
 	        
@@ -369,7 +369,6 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 		if(started) {
 			started = false;
 			cameraPanel.stop();
-			gateway.removeListener(this);
 		}
 	}
 	
@@ -382,58 +381,15 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 			demoPanel.getPatientLabel().setVerticalTextPosition(SwingConstants.TOP);
 			started = true;
 			cameraPanel.start();
-			gateway.addListener(this);
 		}
 	}
 	
-	
-	
-	public static void main(String[] args) {
-		Loader.load(opencv_objdetect.class);
+	private static final void regressionUpdate(String name, ice.SampleArray wu, RTRegression rtRegression) {
+		double first_sample = System.currentTimeMillis() - startOfTime - wu.values.size() * wu.millisecondsPerSample;
 		
-		final Gateway gateway = new Gateway();
-//		final Device device = new DemoApollo(gateway);
-		final DemoFrame frame = new DemoFrame("X-Ray Ventilator Synchronization");
-		frame.getContentPane().setLayout(new BorderLayout());
-		
-		
-		DemoPanel demoPanel = new DemoPanel();
-//		demoPanel = new JPanel();
-		
-		demoPanel.getBack().setVisible(false);
-
-		frame.getContentPane().add(demoPanel, BorderLayout.CENTER);
-		
-		demoPanel.getContent().setLayout(new BorderLayout());
-//		demoPanel.setLayout(new BorderLayout());
-		final XRayVentPanel xrayVentPanel = new XRayVentPanel(gateway, demoPanel, null);
-		demoPanel.getContent().add(xrayVentPanel, BorderLayout.CENTER);
-		frame.setSize(640,480);
-		frame.setVisible(true);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//		final GetConnected getConnected = new GetConnected(frame, gateway);
-		xrayVentPanel.start();
-//		getConnected.connect();
-		
-		frame.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-			    xrayVentPanel.stop();
-//				getConnected.disconnect();
-			}
-		});
-		
-		
-	}
-	
-	private static final void regressionUpdate(String name, WaveformUpdate wu, RTRegression rtRegression) {
-		final Number[] values = wu.getValues();
-		double msPerSample = wu.getMillisecondsPerSample();
-		double first_sample = System.currentTimeMillis() - startOfTime - values.length * msPerSample;
-		
-		for(int i = 0; i < values.length; i++) {
-			double x = first_sample+i*msPerSample;
-			double y = values[i].doubleValue();
+		for(int i = 0; i < wu.values.size(); i++) {
+			double x = first_sample+i*wu.millisecondsPerSample;
+			double y = wu.values.getFloat(i);
 			rtRegression.newPoint(x, y);
 			
 		}
@@ -564,10 +520,10 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 		} else if(update instanceof EnumerationUpdate) {
 			EnumerationUpdate eu = (EnumerationUpdate) update;
 			if(ConnectedDevice.STATE.equals(i)) {
-				ConnectedDevice.State state = (State) eu.getValue();
+				ice.ConnectionState state = (ice.ConnectionState) eu.getValue();
 				demoPanel.getPatientLabel().setText(state.toString());
-				switch(state) {
-				case Connected:
+				switch(state.ordinal()) {
+				case ice.ConnectionState._Connected:
 					demoPanel.getPatientLabel().setForeground(normalGreen);
 					break;
 				default:

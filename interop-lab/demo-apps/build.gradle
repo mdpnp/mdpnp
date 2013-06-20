@@ -7,6 +7,15 @@ targetCompatibility = JAVA_VERSION_CLASSES
 
 mainClassName = "org.mdpnp.apps.testapp.Main"
 
+sourceSets {
+    main {
+        java {
+            exclude '**/XRayVentPanel*'
+            exclude '**/PCAPanel*'
+            exclude '**/VitalsModel*'
+        }
+    }
+}
 //manifest.mainAttributes("Main-Class" : "org.mdpnp.apps.testapp.Main")
 
 //jar {

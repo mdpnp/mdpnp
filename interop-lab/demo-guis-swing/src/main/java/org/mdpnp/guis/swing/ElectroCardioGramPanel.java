@@ -25,12 +25,12 @@ public class ElectroCardioGramPanel extends DevicePanel {
 	private final SwingWaveformPanel[] panel;
 	
 	private final static int[] ECG_WAVEFORMS = new int[] {
-	    ice.MDC_ECG_LEAD_I.VALUE,
-	    ice.MDC_ECG_LEAD_II.VALUE,
-	    ice.MDC_ECG_LEAD_III.VALUE,
-//	    ice.MDC_ECG_LEAD_A_VF.VALUE,
-//	    ice.MDC_ECG_LEAD_A_VL.VALUE,
-//	    ice.MDC_ECG_LEAD_A_VR.VALUE,
+	    ice.MDC_ECG_ELEC_POTL_I.VALUE,
+	    ice.MDC_ECG_ELEC_POTL_II.VALUE,
+	    ice.MDC_ECG_ELEC_POTL_III.VALUE,
+	    ice.MDC_ECG_ELEC_POTL_AVF.VALUE,
+	    ice.MDC_ECG_ELEC_POTL_AVL.VALUE,
+	    ice.MDC_ECG_ELEC_POTL_AVR.VALUE,
 	};
 	
 	private final Map<Integer, WaveformUpdateWaveformSource> panelMap = new HashMap<Integer, WaveformUpdateWaveformSource>();

@@ -29,19 +29,8 @@ import javax.swing.ListCellRenderer;
 import org.mdpnp.apps.testapp.VitalsModel.MyDevice;
 import org.mdpnp.apps.testapp.VitalsModel.Vitals;
 import org.mdpnp.apps.testapp.VitalsModel.VitalsListener;
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdate;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdateImpl;
-import org.mdpnp.data.numeric.Numeric;
-import org.mdpnp.data.numeric.NumericUpdate;
 import org.mdpnp.devices.oridion.capnostream.Capnostream;
 import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.messaging.GatewayListener;
-import org.mdpnp.nomenclature.Device;
-import org.mdpnp.nomenclature.PulseOximeter;
-import org.mdpnp.nomenclature.Ventilator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -391,7 +380,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	private static class Vital {
 		private final String name;
 		private final String units;
-		private final Numeric numeric;
+		private final ice.Numeric numeric;
 		private final Double advisory_minimum;
 		private final Double advisory_maximum;
 		private final Double critical_minimum;
@@ -409,7 +398,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		public String getName() {
 			return name;
 		}
-		public Numeric getNumeric() {
+		public ice.Numeric getNumeric() {
 			return numeric;
 		}
 		public Double getAdvisory_maximum() {
@@ -433,7 +422,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		public void setLastSource(MyDevice lastSource) {
 			this.lastSource = lastSource;
 		}
-		public Vital (String name, String units, Numeric numeric, Double advisory_minimum, Double advisory_maximum, Double critical_minimum, Double critical_maximum) {
+		public Vital (String name, String units, ice.Numeric numeric, Double advisory_minimum, Double advisory_maximum, Double critical_minimum, Double critical_maximum) {
 			this.name = name;
 			this.units = units;
 			this.numeric = numeric;

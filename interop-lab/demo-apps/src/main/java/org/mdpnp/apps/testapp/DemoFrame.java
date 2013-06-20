@@ -167,8 +167,8 @@ public class DemoFrame extends JFrame {
 		final DevicePanel devicePanel = new DevicePanel();
 		panel.getContent().add(devicePanel, "devicepanel");
 		
-		final PCAPanel pcaPanel = new PCAPanel(null, null);
-		panel.getContent().add(pcaPanel, "pca");
+//		final PCAPanel pcaPanel = new PCAPanel(null, null);
+//		panel.getContent().add(pcaPanel, "pca");
 		
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(640,480);

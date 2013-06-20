@@ -16,7 +16,7 @@ import java.util.TimeZone;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
 
-import org.mdpnp.apps.testapp.xray.XRayVentPanel;
+//import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
 import org.slf4j.Logger;
@@ -131,12 +131,12 @@ public class DemoApp {
 		panel.getContent().add(devicePanel, "devicepanel");
 		
 		String s = System.getProperty("NOPCA");
-		PCAPanel _pcaPanel = null;
-		if(null == s || !"true".equals(s)) {
+//		PCAPanel _pcaPanel = null;
+//		if(null == s || !"true".equals(s)) {
 //		    _pcaPanel = new PCAPanel(vitalsModel, gateway);
 //		    panel.getContent().add(_pcaPanel, "pca");
-		}
-		final PCAPanel pcaPanel = _pcaPanel;
+//		}
+//		final PCAPanel pcaPanel = _pcaPanel;
 		
 //		final Gateway xray_gateway = new Gateway();
 //		final ApolloImpl xray_device = new ApolloImpl(xray_gateway);

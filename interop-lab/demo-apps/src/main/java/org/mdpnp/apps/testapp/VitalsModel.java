@@ -10,37 +10,22 @@ import java.util.Set;
 import javax.swing.AbstractListModel;
 import javax.swing.ListModel;
 
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.enumeration.EnumerationUpdate;
-import org.mdpnp.data.image.ImageUpdate;
-import org.mdpnp.data.numeric.Numeric;
-import org.mdpnp.data.numeric.NumericUpdate;
-import org.mdpnp.data.text.TextUpdate;
-import org.mdpnp.data.textarray.TextArrayUpdate;
-import org.mdpnp.data.waveform.Waveform;
-import org.mdpnp.data.waveform.WaveformUpdate;
-import org.mdpnp.messaging.DeviceIcon;
-import org.mdpnp.messaging.GatewayListener;
-import org.mdpnp.nomenclature.Association;
-import org.mdpnp.nomenclature.ConnectedDevice;
-import org.mdpnp.nomenclature.Device;
-import org.mdpnp.nomenclature.ConnectedDevice.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VitalsModel extends AbstractListModel implements ListModel, GatewayListener {
-	private final Set<Identifier> interest = new HashSet<Identifier>();
+public class VitalsModel extends AbstractListModel implements ListModel {
+	private final Set<Integer> numericInterest = new HashSet<Integer>();
+	private final Set<Integer> sampleArrayInterest = new HashSet<Integer>();
 	
-	public void addInterest(Numeric i) {
-		interest.add(i);
+	public void addNumericInterest(Integer i) {
+		numericInterest.add(i);
 	}
-	public void addInterest(Waveform i) {
-		interest.add(i);
+	public void addInterest(Integer i) {
+		sampleArrayInterest.add(i);
 	}
 	private static final Logger log = LoggerFactory.getLogger(VitalsModel.class);
 	public interface VitalsListener {
-		void update(Identifier identifier, Number n, MyDevice device);
+		void update(ice.Numeric n, MyDevice device);
 		void deviceRemoved(MyDevice device);
 		void deviceAdded(MyDevice device);
 	}
@@ -81,10 +66,10 @@ public class VitalsModel extends AbstractListModel implements ListModel, Gateway
 	
 	public static final class Vitals {
 		private final MyDevice device;
-		private final Identifier identifier;
+		private final Integer identifier;
 		
 		private Number number;
-		public Vitals(MyDevice device, Identifier identifier) {
+		public Vitals(MyDevice device, Integer identifier) {
 			this.device = device;
 			this.identifier = identifier;
 		}
@@ -97,7 +82,7 @@ public class VitalsModel extends AbstractListModel implements ListModel, Gateway
 		public Number getNumber() {
 			return number;
 		}
-		public Identifier getIdentifier() {
+		public Integer getIdentifier() {
 			return identifier;
 		}
 	}
