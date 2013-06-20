@@ -47,6 +47,20 @@ module ice {
   const string DeviceConnectivityTopic = "ice::DeviceConnectivity";
   const string DeviceConnectivityObjectiveTopic = "ice::DeviceConnectivityObjective";
   
+  // From the ECG Measurement partition
+  const long MDC_ECG_ELEC_POTL_I       =  1598;
+  const long MDC_ECG_ELEC_POTL_II      =  1599;
+  const long MDC_ECG_ELEC_POTL_AVR     =  1600;
+  const long MDC_ECG_ELEC_POTL_AVL     =  1601;
+  const long MDC_ECG_ELEC_POTL_AVF     =  1602;
+  const long MDC_ECG_ELEC_POTL_V1      =  1604;
+  const long MDC_ECG_ELEC_POTL_V2      =  1605;
+  const long MDC_ECG_ELEC_POTL_V4      =  1606;
+  const long MDC_ECG_ELEC_POTL_V5      =  1607;
+  const long MDC_ECG_ELEC_POTL_V6      =  1608;
+  const long MDC_ECG_ELEC_POTL_III     =  1616;
+  const long MDC_ECG_ELEC_POTL_V3      =  1637;
+  
   const long MDC_PULS_RATE             = 18442;
   const long MDC_PULS_RATE_NON_INV     = 18474;
   const long MDC_BLD_PULS_RATE_INV     = 18450;
@@ -85,12 +99,6 @@ module ice {
   const long MDC_HR_ECG_MODE = 65538;
   const long MDC_RR_APNEA = 65539;
   const long MDC_SPO2_C_LOCK = 65540;
-  const long MDC_ECG_LEAD_I = 65541;
-  const long MDC_ECG_LEAD_II = 65542;
-  const long MDC_ECG_LEAD_III = 65543;
-  const long MDC_ECG_LEAD_A_VF = 65544;
-  const long MDC_ECG_LEAD_A_VL = 65545;
-  const long MDC_ECG_LEAD_A_VR = 65546;
   const long MDC_TIME_PD_INSPIRATORY = 65547;
   const long MDC_TIME_MSEC_SINCE_EPOCH = 65548;
   const long MDC_CAPNOGRAPH = 65549;
