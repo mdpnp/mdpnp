@@ -18,7 +18,11 @@ import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
 import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
 import org.mdpnp.devices.hospira.symbiq.DemoSymbiq;
+import org.mdpnp.devices.masimo.radical.DemoRadical7;
+import org.mdpnp.devices.nellcor.pulseox.DemoN595;
 import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
+import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
+import org.mdpnp.devices.philips.intellivue.DemoMP70;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.mdpnp.devices.simulation.DemoSimulatedBloodPressure;
@@ -40,24 +44,24 @@ public class DeviceAdapter {
 		switch(type) {
 		case Nonin:
 			return new DemoPulseOx(domainId);
-//		case NellcorN595:
-//			return new DemoN595(null);
-//		case MasimoRadical7:
-//			return new DemoRadical7(null);
+		case NellcorN595:
+			return new DemoN595(domainId);
+		case MasimoRadical7:
+			return new DemoRadical7(domainId);
 		case PO_Simulator:
 			return new SimPulseOximeter(domainId);
 		case NBP_Simulator:
 			return new DemoSimulatedBloodPressure(domainId);
-//		case PhilipsMP70:
-//			return new DemoMP70(null);
+		case PhilipsMP70:
+			return new DemoMP70(domainId);
 		case DragerApollo:
 			return new DemoApollo(domainId);
 		case DragerEvitaXL:
 			return new DemoEvitaXL(domainId);
 		case Bernoulli:
 			return new DemoBernoulli(domainId);
-//		case Capnostream20:
-//			return new DemoCapnostream20(null);
+		case Capnostream20:
+			return new DemoCapnostream20(domainId);
 		case Symbiq:
 			return new DemoSymbiq(domainId);
 		default:

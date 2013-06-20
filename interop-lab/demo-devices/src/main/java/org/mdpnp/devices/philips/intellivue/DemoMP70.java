@@ -465,14 +465,14 @@ public class DemoMP70 extends AbstractConnectedDevice {
 	
 	private static final Logger log = LoggerFactory.getLogger(DemoMP70.class);
 	
-	public DemoMP70(Gateway gateway) throws IOException {
-		super(gateway);
+	public DemoMP70(int domainId) throws IOException {
+		super(domainId);
 		myIntellivue = new MyIntellivue();
 		configureData();
 	}
 	
-	public DemoMP70(Gateway gateway, NetworkLoop loop) {
-		super(gateway);
+	public DemoMP70(int domainId, NetworkLoop loop) {
+		super(domainId);
 		myIntellivue = new MyIntellivue(loop);
 		configureData();
 	}

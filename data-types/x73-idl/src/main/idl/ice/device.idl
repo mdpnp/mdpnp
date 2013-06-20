@@ -95,7 +95,13 @@ module ice {
   const long MDC_TIME_MSEC_SINCE_EPOCH = 65548;
   const long MDC_CAPNOGRAPH = 65549;
   
-  
+  module oridion {
+    const long MDC_FAST_STATUS = 66000; 
+    const long MDC_SLOW_STATUS = 66001;
+    const long MDC_CO2_ACTIVE_ALARMS = 66002;
+    const long MDC_SPO2_ACTIVE_ALARMS = 66003;
+    const long MDC_EXTENDED_CO2_STATUS = 66004;
+  };
   
   
   const long MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP = 6250;
