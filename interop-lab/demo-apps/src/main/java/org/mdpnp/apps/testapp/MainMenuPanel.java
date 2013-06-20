@@ -47,9 +47,7 @@ public class MainMenuPanel extends JPanel {
 		if(!isTrue("NOXRAYVENT")) {
 		    names.add("X-Ray Ventilator Sync");
 		}
-		if(!isTrue("NOROOMSYNC")) {
-		    names.add("Data Fusion");
-		}
+
 		appList = new JList(names.toArray(new String[0]));
 		deviceList = new JList();
 		appList.setFont(Font.decode("verdana-30"));

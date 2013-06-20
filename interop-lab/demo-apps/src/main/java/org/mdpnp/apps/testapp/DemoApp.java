@@ -126,19 +126,11 @@ public class DemoApp {
 		final MainMenuPanel mainMenuPanel = new MainMenuPanel();
 		panel.getContent().add(mainMenuPanel, "main");
 		ol.show(panel.getContent(), "main");
-		
-		String s = System.getProperty("NOROOMSYNC");
-		RoomSyncPanel _roomSyncPanel = null;
-		if(null == s || !"true".equals(s)) {
-    		_roomSyncPanel = new RoomSyncPanel(subscriber);
-    		panel.getContent().add(_roomSyncPanel, "roomsync");
-		}
-		final RoomSyncPanel roomSyncPanel = _roomSyncPanel;
-		
+				
 		final DevicePanel devicePanel = new DevicePanel();
 		panel.getContent().add(devicePanel, "devicepanel");
 		
-		s = System.getProperty("NOPCA");
+		String s = System.getProperty("NOPCA");
 		PCAPanel _pcaPanel = null;
 		if(null == s || !"true".equals(s)) {
 //		    _pcaPanel = new PCAPanel(vitalsModel, gateway);
