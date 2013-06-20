@@ -1,4 +1,4 @@
-package mdpnp;
+package org.mdpnp;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
