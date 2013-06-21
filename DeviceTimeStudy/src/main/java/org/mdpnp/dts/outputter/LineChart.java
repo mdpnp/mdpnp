@@ -9,12 +9,14 @@ import javax.swing.JFrame;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.ui.ApplicationFrame;
 
 
 /**
@@ -23,7 +25,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
  * This class uses the JFreechart to implement a linear chart with categorical data
  *
  */
-public class LineChart extends JFrame{
+public class LineChart extends ApplicationFrame/*JFrame*/{
 	
 	
 	//default serial version ID
@@ -49,7 +51,12 @@ public class LineChart extends JFrame{
     
     public void printLineChart(String chartTitle, String typeLabel, String valuesLabel){
         //final CategoryDataset dataset = createDataset();
+
+    }
+    
+    public void print(String chartTitle, String typeLabel, String  valuesLabel){
         final JFreeChart chart = createChart(dataset, chartTitle, typeLabel, valuesLabel);
+        CategoryAxis ca = new CategoryAxis();
         final ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new Dimension(500, 270));
         setContentPane(chartPanel);

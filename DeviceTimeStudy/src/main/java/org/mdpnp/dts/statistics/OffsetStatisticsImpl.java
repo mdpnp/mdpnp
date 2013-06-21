@@ -3,6 +3,8 @@ package org.mdpnp.dts.statistics;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.mdpnp.dts.utils.UtilsDTS;
+
 /**
  * 
  * @author dalonso@mdpnp.org
@@ -10,10 +12,18 @@ import java.util.List;
  * These would be offset average and Standard deviation for the regular (basic) case, 
  *  the "New Minute" case (clock doesn't display seconds, and we assume we just change to this minute XX:00)
  *  the "New Minute Eve" case (clock doesn't display seconds, and we assume is about to change to the next minute XX:59)
+ *  XXX Offsets are calculated always in MILISECONDS, for consistency w/ Date.getTime() 
+ *  
+ * XXX Note about the Standard Deviation:
+ * The standard deviation is equal to the square root of the variance.
+ * The following formula is valid only if the N values we use in our calculations form the complete population.
+ * If the values instead were a random sample drawn from some larger parent population, then we would have divided by (N - 1) 
+ * instead of N in the denominator of the last formula, and then the quantity thus obtained would be called the sample standard deviation.
  *
  */
 public class OffsetStatisticsImpl implements OffsetStatistics {
 	
+	//
 	private List<Long> offsetList; //regular offset list
 	private List<Long> offsetNewMinute; //list of offset considering new minute (XX:00)
 	private List<Long> offsetNewMinuteEve; //list of offset considering new minute eve (XX:59)
@@ -43,6 +53,10 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 	}
 	
 //getters and setters
+	/**
+	 * Returns the amount of items studied 
+	 * NOTE: this number should be the same for the three different time scenarios
+	 */
 	public int getCount() {
 		return offsetList.size();
 	}
@@ -68,6 +82,7 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 		return totalOffsetNewMinuteEve/offsetNewMinuteEve.size();
 	}
 
+
 	/**
 	 * Returns the regular standard deviation
 	 */
@@ -77,7 +92,7 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 		for(Long l : offsetList){
 			total+= Math.pow(l-avg, 2);
 		}
-		return Math.sqrt(total);
+		return Math.sqrt(total/getCount());
 	}
 	
 	/**
@@ -89,7 +104,7 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 		for(Long l : offsetNewMinute){
 			total+= Math.pow(l-avg, 2);
 		}
-		return Math.sqrt(total);
+		return Math.sqrt(total/getCount());
 	}
 	
 	/**
@@ -101,7 +116,7 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 		for(Long l : offsetNewMinuteEve){
 			total+= Math.pow(l-avg, 2);
 		}
-		return Math.sqrt(total);
+		return Math.sqrt(total/getCount());
 	}
 
 	/**
@@ -178,6 +193,32 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 		totalOffsetNewMinuteEve += offset;
 		maxOffsetNewMinuteEve = maxOffsetNewMinuteEve>offset? maxOffsetNewMinuteEve : offset;
 		minOffsetNewMinuteEve = minOffsetNewMinuteEve<offset? minOffsetNewMinuteEve : offset;		
+	}
+	
+	/**
+	 * Calculates the offset between two dates and adds it to the proper offset list structures
+	 * @param date1
+	 * @param date2
+	 * @param displaysSeconds
+	 */
+	public void addOffset(String cameraTime, String MedDeviceTime, boolean displaysSeconds){
+		//1. Calculate offset between dates
+		long offset = UtilsDTS.getOffsetFromDates(cameraTime, MedDeviceTime);
+		addOffset(offset);
+		//2. a) if the M.device displays seconds, offset is the same for the 3 scenarios
+		if(displaysSeconds){
+			addOffsetNewMinute(offset);
+			addOffsetNewMinuteEve(offset);
+		}else{
+			//2. b) if not, we need to calculate the offset for the new Minute & New Minute Eve scenarios
+			String newMinuteScn = UtilsDTS.getNewMinuteDate(MedDeviceTime);
+			offset = UtilsDTS.getOffsetFromDates(cameraTime, newMinuteScn);
+			addOffsetNewMinute(offset);
+			
+			String newMinuteEveScn = UtilsDTS.getNewMinuteEveDate(MedDeviceTime);
+			offset = UtilsDTS.getOffsetFromDates(cameraTime, newMinuteEveScn);
+			addOffsetNewMinuteEve(offset);			
+		}		
 	}
 
 }

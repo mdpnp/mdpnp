@@ -32,10 +32,14 @@ public class Reader {
 	private int linesReaded = 0;
 	
 	//TODO Consider: create here vs dependency injection for these attributes
+	// actually should be a FIXME
 	private List<DTSdata> dataList = new ArrayList<DTSdata>();	
 	private Hashtable byDeviceType = new Hashtable<>();//data by device type
 	private Hashtable byConnection = new Hashtable<>();//data by Networked / Standalone
 	private Hashtable byThresholdRange = new Hashtable<>();//data by threshold
+	private Hashtable hospitalsByCategory = new Hashtable<>();//Each hospital by Threshold category
+	//HT Key:name of hospital, Val: another HT categories
+	//sub HT Categories Key: threshold categories, val Object to calculate statistics
 	
 	//cons 
 	public Reader(){
@@ -101,6 +105,10 @@ public class Reader {
 	
 	public Hashtable getByThresholdRange() {
 		return byThresholdRange;
+	}
+	
+	public Hashtable getHospitalsByCategory() {
+		return hospitalsByCategory;
 	}
 
 //	public int geLinesReaded(){
@@ -196,7 +204,9 @@ public class Reader {
 						  dataList.add(data);						  
 						  loadByDeviceType(byDeviceType, data);
 						  loadByConnection(data);
-						  genericLoad(byThresholdRange, data.getThresholdCase(), data.getAbsDeviceOffasetAsLong());//by  Threshold
+						  genericLoad(byThresholdRange, data.getThresholdCategory(), data.getAbsDeviceOffasetAsLong());//by  Threshold
+						  //hospitals by category
+						  loadHospitalsByCategory(data);
 							  
 						  
 					  }catch(Exception e){
@@ -263,6 +273,40 @@ public class Reader {
 			  OffsetStatisticsImpl x = new OffsetStatisticsImpl();
 			  x.addOffset(offset);
 			  ht.put(criteria, x);
+		}
+	}
+	
+	private void loadHospitalsByCategory(DTSdata data){
+		String insitutuionKey = data.getInstitution();
+		String thresholdKey = data.getThresholdCategory();
+		//1. Check if we already added this hospital to the structure
+		if(hospitalsByCategory.containsKey(insitutuionKey)){
+			Hashtable htThresholds =  (Hashtable) hospitalsByCategory.get(insitutuionKey);
+			//2. Check if the threshold has been added
+			if(htThresholds.containsKey(thresholdKey)){
+				//update threshold category
+				OffsetStatisticsImpl x = (OffsetStatisticsImpl)htThresholds.get(thresholdKey);
+				x.addOffset(data.getAbsDeviceOffasetAsLong());
+				htThresholds.put(thresholdKey, x);
+			}else{
+				//add new threshold category
+				OffsetStatisticsImpl x = new OffsetStatisticsImpl();
+				x.addOffset(data.getAbsDeviceOffasetAsLong());
+				htThresholds.put(thresholdKey, x);
+			}
+			//
+			hospitalsByCategory.put(insitutuionKey, htThresholds);
+			
+		}else{
+			//new Hospital
+			//create structure for statistics
+			OffsetStatisticsImpl x = new OffsetStatisticsImpl();
+			x.addOffset(data.getAbsDeviceOffasetAsLong());
+			//create structure for threshold statistics by hospital
+			Hashtable htThresholds = new Hashtable<>();
+			htThresholds.put(thresholdKey, x);
+			//add structure to the hospital
+			hospitalsByCategory.put(insitutuionKey, htThresholds);
 		}
 	}
 

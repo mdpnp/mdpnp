@@ -22,33 +22,33 @@ public interface OffsetStatistics {
 	public double getAvgOffset();
 	
 	/**
-	 * Returns the average offset of the devices, considering new minute (XX:00) 
+	 * Returns the average offset of the devices (in miliseconds), considering new minute (XX:00) 
 	 * for those that don't display seconds
 	 * @return
 	 */
 	public double getAvgOffset_newMinute();
 	
 	/**
-	 * Returns the avg offset of the devices, considering that those who don't display 
+	 * Returns the avg offset of the devices (in miliseconds), considering that those who don't display 
 	 * seconds are in the 'new minute eve' (XX:59)
 	 * @return
 	 */
 	public double getAvgOffset_NewMinuteEve();
 	
 	/**
-	 * Returns the standard deviation of the offsets
+	 * Returns the standard deviation of the offsets (in miliseconds)
 	 * @return
 	 */
 	public double getStdDev();
 	
 	/**
-	 * Returns the minimal offset in miliseconds
+	 * Returns the minimal offset (in miliseconds)
 	 * @return
 	 */
 	public long getMinOffset();
 	
 	/**
-	 * Returns the maximal offset in miliseconds
+	 * Returns the maximal offset (in miliseconds)
 	 * @return
 	 */
 	public long getMaxOffset();

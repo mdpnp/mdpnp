@@ -20,6 +20,8 @@ public class UtilsDTS {
 	 */
 	public static final String DEFAULT_TIME_MASK = "HH:mm:ss";
 	
+	public static SimpleDateFormat sdf = new SimpleDateFormat(DEFAULT_TIME_MASK);
+	
 	/**
 	 * Parses a string date with the given format (mask) into miliseconds 
 	 * @param sDate
@@ -92,7 +94,50 @@ public class UtilsDTS {
 //	  	  return new String(hours+" hours, "+mins+" min. "+secs+" secs.");
 	  	 return outTime+mins+" min. "+secs+" secs.";
 		}
+
+	/**
+	 * Returns the offset of two dates as long in miliseconds.
+	 * 1. Parse string into dates
+	 * 2. Check which date is higher (older) and subtract them to obtain the offset
+ 	 * @param arg1 Date1 
+	 * @param arg2 Date2
+	 * 
+	 */
+	public static long getOffsetFromDates(String arg1, String arg2){
+		
+		long miliSec =0;
+		try{
+			Date date1 = sdf.parse(arg1);
+			Date date2 = sdf.parse(arg2);
+			if(date1.compareTo(date2) > 0){
+				miliSec = date1.getTime() - date2.getTime();
+			}else{
+				miliSec = date2.getTime() - date1.getTime();
+			}
+			return miliSec;
+		}catch(Exception e){
+			e.printStackTrace();
+			return miliSec;//XXX Not best practice
+		}
+	}
 	
+	/**
+	 * Returns a date with the New Minute Scenario mask
+	 * @param date as "HH:mm:ss"
+	 * @return date as string as "HH:mm:00" 
+	 */
+	public static String getNewMinuteDate(String date){
+		return date.substring(0, 6)+"00";	
+	}
+	
+	/**
+	 * Returns a date with the New Minute Eve Scenario mask
+	 * @param date as "HH:mm:ss"
+	 * @return date as string as "HH:mm:59" 
+	 */
+	public static String getNewMinuteEveDate(String date){
+		return date.substring(0, 6)+"59";	
+	}
 	
 	/**
 	 * NumberFormatter for more pretty printing
@@ -113,5 +158,6 @@ public class UtilsDTS {
             return null;
         }
     };
+    
 
 }
