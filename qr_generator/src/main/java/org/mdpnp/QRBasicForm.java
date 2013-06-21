@@ -1,4 +1,4 @@
-package mdpnp;
+package org.mdpnp;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
