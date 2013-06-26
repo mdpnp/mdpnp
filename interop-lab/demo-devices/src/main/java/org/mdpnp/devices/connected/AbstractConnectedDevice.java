@@ -108,8 +108,14 @@ public abstract class AbstractConnectedDevice extends AbstractDevice implements 
 	
 	
 	protected void setConnectionInfo(String connectionInfo) {
-	    deviceConnectivity.info = connectionInfo;
-		deviceConnectivityWriter.write(deviceConnectivity, InstanceHandle_t.HANDLE_NIL);
+	    if(null == connectionInfo) {
+	        // TODO work on nullity semantics
+	        log.warn("Attempt to set connectionInfo null");
+	        deviceConnectivity.info = "";
+	    } else {
+	        deviceConnectivity.info = connectionInfo;
+	    }
+        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
 	}
 
 	protected long getConnectInterval() {
