@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.subscription.Subscriber;
 
@@ -81,7 +82,10 @@ public class DemoApp {
 		// This could prove confusing
 		TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
 //		final Gateway gateway = new Gateway();
-		final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		final DomainParticipantQos pQos = new DomainParticipantQos(); 
+		DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
+		pQos.participant_name.name = "DemoApp ICE_Supervisor";
+		final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null, StatusKind.STATUS_MASK_NONE);
 		final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop);
 //		final VitalsModel vitalsModel = new VitalsModel();

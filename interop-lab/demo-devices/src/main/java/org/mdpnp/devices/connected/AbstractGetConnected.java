@@ -18,6 +18,7 @@ import java.util.Arrays;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.StatusKind;
@@ -49,7 +50,10 @@ public abstract class AbstractGetConnected extends DataReaderAdapter {
 	private Topic deviceConnectivityObjectiveTopic;
 	
 	public AbstractGetConnected(int domainId, String universal_device_identifier) {
-	    participant = DomainParticipantFactory.get_instance().create_participant(domainId, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+	    DomainParticipantQos pQos = new DomainParticipantQos();
+	    DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
+	    pQos.participant_name.name = "AbstractGetConnected " + universal_device_identifier;
+	    participant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null, StatusKind.STATUS_MASK_NONE);
 	    subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 	    publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 	    deviceConnectivity = (DeviceConnectivity) DeviceConnectivity.create();
