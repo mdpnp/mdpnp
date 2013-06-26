@@ -39,7 +39,7 @@ public class InputStreamPartition implements Runnable {
 	
 	private final static Logger log = LoggerFactory.getLogger(InputStreamPartition.class);
 	
-	private static final int CAPACITY = 8192 * 4;
+	private static final int CAPACITY = 8192 * 16;
 	private class PartitionedInputStream extends java.io.InputStream {
 
 		private final int idx;
@@ -63,6 +63,7 @@ public class InputStreamPartition implements Runnable {
 				}
 				// TODO this won't actually pass through a -1
 				int b = 0xFF & buffers[idx][nextRead[idx]++];
+//				log.trace("from buffers["+idx+"] copying from src=" + nextRead[idx] + " to buffers["+idx+"] dst=0 sizeof="+(nextWrite[idx]-nextRead[idx]));
 				System.arraycopy(buffers[idx], nextRead[idx], buffers[idx], 0, nextWrite[idx]-nextRead[idx]);
 				nextWrite[idx] -= nextRead[idx];
 				nextRead[idx] = 0;
@@ -132,6 +133,19 @@ public class InputStreamPartition implements Runnable {
 			for(int i = 0; i < filters.length; i++) {
 				if(filters[i].passes(onebyte[0])) {
 					synchronized(buffers[i]) {
+					    long giveup = System.currentTimeMillis() + 5000L;
+					    while(nextWrite[i] >= buffers[i].length) {
+					        if(System.currentTimeMillis()>=giveup) {
+					            throw new IllegalStateException("Refusing to overflow buffer that is not being drained");
+					        }
+					        log.warn("Buffer full (nextWrite["+i+"]="+nextWrite[i]+" and buffer["+i+"].length="+buffers[i].length+"; clumsily hoping someone drains the buffer");
+					        try {
+					            buffers[i].notify();
+					            buffers[i].wait(200);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+					    }
 						buffers[i][nextWrite[i]++] = (byte) onebyte[0];
 						buffers[i].notify();
 					}

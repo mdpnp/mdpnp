@@ -94,6 +94,10 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 	private final Date date = new Date();
 	protected void processRealtime(RTMedibus.RTDataConfig config, int multiplier, int streamIndex, Object code, int value) {
 		lastRealtime = System.currentTimeMillis();
+		if(streamIndex >= realtimeBuffer.length) {
+		    log.warn("Invalid realtime streamIndex="+streamIndex);
+		    return;
+		}
 		realtimeBuffer[streamIndex][realtimeBufferCount[streamIndex]++] = value;
 		if(realtimeBufferCount[streamIndex]==realtimeBuffer[streamIndex].length) {
 			realtimeBufferCount[streamIndex] = 0;
