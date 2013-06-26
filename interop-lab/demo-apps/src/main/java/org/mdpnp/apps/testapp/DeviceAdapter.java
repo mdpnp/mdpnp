@@ -14,6 +14,7 @@ import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.connected.GetConnected;
+import org.mdpnp.devices.connected.GetConnectedToFixedAddress;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
 import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
@@ -93,27 +94,7 @@ public class DeviceAdapter {
 
 		AbstractDevice device = buildDevice(type, domainId);
 		
-		if(!gui) {
-			frame = null;
-
-			getConnected = new GetConnected(frame, domainId, device.getDeviceIdentity().universal_device_identifier) {
-				@Override
-				protected void abortConnect() {
-				}
-				@Override
-				protected String addressFromUser() {
-					return address;
-				}
-				@Override
-				protected String addressFromUserList(String[] list) {
-					return address;
-				}
-				@Override
-				protected boolean isFixedAddress() {
-					return true;
-				}
-			};
-		} else {
+		if(gui) {
 		 // find the appropriate GUI representations for this device
 		    CompositeDevicePanel cdp = new CompositeDevicePanel();
 		    final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getParticipant(), device.getDeviceIdentity().universal_device_identifier, cdp, eventLoop);
@@ -150,20 +131,7 @@ public class DeviceAdapter {
 		if(null == address) {
 		    getConnected = new GetConnected(frame, domainId, device.getDeviceIdentity().universal_device_identifier);
 		} else {
-		    getConnected = new GetConnected(frame, domainId, device.getDeviceIdentity().universal_device_identifier) {
-		      @Override
-		        protected String addressFromUser() {
-		            return address;
-		        }  
-		      @Override
-		        protected String addressFromUserList(String[] list) {
-		            return address;
-		        }
-		      @Override
-		        protected boolean isFixedAddress() {
-		            return true;
-		        }
-		    };
+		    getConnected = new GetConnectedToFixedAddress(frame, domainId, device.getDeviceIdentity().universal_device_identifier, address);
 		}
 		
 		if(gui) {
