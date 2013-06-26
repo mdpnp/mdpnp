@@ -108,10 +108,10 @@ public class XRayVentPanel extends JPanel {
 
 		log.trace("new source is " + source);
 		this.source = source;
-		MutableIdentifierArrayUpdate ia = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
-		ia.setTarget(source);
-		ia.setValue(new Identifier[] {ConnectedDevice.STATE} );
-		gateway.update(this, ia);
+//		MutableIdentifierArrayUpdate ia = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
+//		ia.setTarget(source);
+//		ia.setValue(new Identifier[] {ConnectedDevice.STATE} );
+//		gateway.update(this, ia);
 	}
 	
 //	private static final Font RADIO_FONT = Font.decode("verdana-20");
@@ -134,8 +134,7 @@ public class XRayVentPanel extends JPanel {
 				int idx  = deviceList.locationToIndex(e.getPoint());
 				if(idx>=0) {
 					Device o = (Device) devices.getElementAt(idx);
-					o.getDeviceIdentity()
-					changeSource(o.getSource());
+					changeSource(o.getDeviceIdentity().universal_device_identifier);
 				}
 				super.mouseClicked(e);
 			}
@@ -458,81 +457,81 @@ public class XRayVentPanel extends JPanel {
 	
 	private String source;
 	
-	@Override
-	public void update(IdentifiableUpdate<?> update) {
-		if(update == null || update.getSource()==null) {
-			return;
-		}
-		if(null == source || !source.equals(update.getSource())) {
-			return;
-		}
-		Identifier i = update.getIdentifier();
-		if(update instanceof WaveformUpdate) {
-			WaveformUpdate wu = (WaveformUpdate) update;
-			if(Ventilator.FLOW_INSP_EXP.equals(i)) {
-//				regressionUpdate("flow:",wu, flow);
-//				double slope = flow.getRegressedSlope();
+//	@Override
+//	public void update(IdentifiableUpdate<?> update) {
+//		if(update == null || update.getSource()==null) {
+//			return;
+//		}
+//		if(null == source || !source.equals(update.getSource())) {
+//			return;
+//		}
+//		Identifier i = update.getIdentifier();
+//		if(update instanceof WaveformUpdate) {
+//			WaveformUpdate wu = (WaveformUpdate) update;
+//			if(Ventilator.FLOW_INSP_EXP.equals(i)) {
+////				regressionUpdate("flow:",wu, flow);
+////				double slope = flow.getRegressedSlope();
+////				
+////				if(slope < 0) {
+////					dFlow.setBackground(Color.green);
+////				} else if(Double.compare(slope, 0.0)==0) {
+////					dFlow.setBackground(Color.red);
+////				} else {
+////					dFlow.setBackground(Color.white);
+////				}
+////				dFlow.setText(Double.toString(slope));
+////				wuws.applyUpdate(wu);
+//			} else if(Ventilator.AIRWAY_PRESSURE.equals(i)) {
+////				regressionUpdate("pressure:", wu, airwayPressure);
+////				dPressure.setText(Double.toString(airwayPressure.getRegressedSlope()));
+//			}
+//		} else if(update instanceof TextUpdate) {
+//			TextUpdate tu = (TextUpdate) update;
+//			if(Ventilator.START_INSPIRATORY_CYCLE.equals(i)) {
+//				log.trace("START_INSPIRATORY_CYCLE");
+//				Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
+//				TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
 //				
-//				if(slope < 0) {
-//					dFlow.setBackground(Color.green);
-//				} else if(Double.compare(slope, 0.0)==0) {
-//					dFlow.setBackground(Color.red);
-//				} else {
-//					dFlow.setBackground(Color.white);
+//				switch(strategy) {
+//				case Automatic:
+//					autoSync(targetTime);
+//					break;
+//				case Manual:
+//					break;
 //				}
-//				dFlow.setText(Double.toString(slope));
-//				wuws.applyUpdate(wu);
-			} else if(Ventilator.AIRWAY_PRESSURE.equals(i)) {
-//				regressionUpdate("pressure:", wu, airwayPressure);
-//				dPressure.setText(Double.toString(airwayPressure.getRegressedSlope()));
-			}
-		} else if(update instanceof TextUpdate) {
-			TextUpdate tu = (TextUpdate) update;
-			if(Ventilator.START_INSPIRATORY_CYCLE.equals(i)) {
-				log.trace("START_INSPIRATORY_CYCLE");
-				Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
-				TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
-				
-				switch(strategy) {
-				case Automatic:
-					autoSync(targetTime);
-					break;
-				case Manual:
-					break;
-				}
-			}
-		} else if(update instanceof NumericUpdate) {
-			NumericUpdate nu = (NumericUpdate) update;
-			Number value = nu.getValue();
-			if(null == value) {
-				return;
-			}
-			if(Ventilator.FREQUENCY_IMV.equals(i)) {
-				frequencyIMV = value;
-			} else if(Ventilator.FREQUENCY_IPPV.equals(i)) {
-				frequencyIPPV = value;
-				period = (long)( 60000.0 / frequencyIPPV.doubleValue() );
-				log.debug("FrequencyIPPV="+frequencyIPPV+" period="+period);
-			
-			} else if(Ventilator.INSPIRATORY_TIME.equals(i)) {
-				inspiratoryTime = (long) (1000.0 * value.doubleValue());
-			}
-		} else if(update instanceof EnumerationUpdate) {
-			EnumerationUpdate eu = (EnumerationUpdate) update;
-			if(ConnectedDevice.STATE.equals(i)) {
-				ice.ConnectionState state = (ice.ConnectionState) eu.getValue();
-				demoPanel.getPatientLabel().setText(state.toString());
-				switch(state.ordinal()) {
-				case ice.ConnectionState._Connected:
-					demoPanel.getPatientLabel().setForeground(normalGreen);
-					break;
-				default:
-					demoPanel.getPatientLabel().setForeground(alertPink);
-					break;
-				}
-			}
-		}
-	}
+//			}
+//		} else if(update instanceof NumericUpdate) {
+//			NumericUpdate nu = (NumericUpdate) update;
+//			Number value = nu.getValue();
+//			if(null == value) {
+//				return;
+//			}
+//			if(Ventilator.FREQUENCY_IMV.equals(i)) {
+//				frequencyIMV = value;
+//			} else if(Ventilator.FREQUENCY_IPPV.equals(i)) {
+//				frequencyIPPV = value;
+//				period = (long)( 60000.0 / frequencyIPPV.doubleValue() );
+//				log.debug("FrequencyIPPV="+frequencyIPPV+" period="+period);
+//			
+//			} else if(Ventilator.INSPIRATORY_TIME.equals(i)) {
+//				inspiratoryTime = (long) (1000.0 * value.doubleValue());
+//			}
+//		} else if(update instanceof EnumerationUpdate) {
+//			EnumerationUpdate eu = (EnumerationUpdate) update;
+//			if(ConnectedDevice.STATE.equals(i)) {
+//				ice.ConnectionState state = (ice.ConnectionState) eu.getValue();
+//				demoPanel.getPatientLabel().setText(state.toString());
+//				switch(state.ordinal()) {
+//				case ice.ConnectionState._Connected:
+//					demoPanel.getPatientLabel().setForeground(normalGreen);
+//					break;
+//				default:
+//					demoPanel.getPatientLabel().setForeground(alertPink);
+//					break;
+//				}
+//			}
+//		}
+//	}
 	private static final Color alertPink = new Color(200, 20, 0);
 	private static final Color normalGreen = new Color(20, 200, 20);
 }
