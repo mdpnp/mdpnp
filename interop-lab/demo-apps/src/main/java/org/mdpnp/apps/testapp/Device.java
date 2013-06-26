@@ -1,7 +1,10 @@
 package org.mdpnp.apps.testapp;
 
+import java.lang.ref.SoftReference;
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.swing.ListModel;
 
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
@@ -12,8 +15,27 @@ public class Device {
     private final DeviceIdentity deviceIdentity = new DeviceIdentity();
     private DeviceConnectivity deviceConnectivity;
     
+    private SoftReference<DeviceIcon> realIcon;
+    
     public Device() {
         
+    }
+    
+    public DeviceIcon getIcon() {
+        DeviceIcon di = null;
+        if(null != realIcon) {
+            di = realIcon.get();
+        }
+        if(null == di) {
+            di = new DeviceIcon(deviceIdentity.icon);
+            realIcon = new SoftReference<DeviceIcon>(di);
+        }
+        return di;
+    }
+    
+    public String getMakeAndModel() {
+        // TODO cache this
+        return deviceIdentity.manufacturer + " " + deviceIdentity.model;
     }
     
     public Device(DeviceIdentity di) {

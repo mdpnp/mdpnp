@@ -42,7 +42,7 @@ public class DeviceIcon extends ImageIcon {
             throw new IllegalArgumentException("the specified image is " + width + "x" + height + " and only " + raster.length + " bytes");
         }
         
-        if(raster != null) {
+        if(raster != null && width > 0 && height > 0) {
             BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             IntBuffer ib = ByteBuffer.wrap(raster).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
             for(int y = 0; y < height; y++) {

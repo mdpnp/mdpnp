@@ -317,6 +317,24 @@ public class DeviceListModel extends AbstractListModel<Device> {
         return -1;
 	}
 	
+	/**
+	 * Not re-entrant.  Call from same EventLoop thread
+	 * @param udi
+	 * @return
+	 */
+	public Device getByUniversalDeviceIdentifier(String udi) {
+	    // TODO keep hashed
+	    if(null == udi) {
+	        return null;
+	    }
+	    for(Device d : contents) {
+	        if(udi.equals(d.getDeviceIdentity().universal_device_identifier)) {
+	            return d;
+	        }
+	    }
+	    return null;
+	}
+	
 	protected void added(InstanceHandle_t handle, DeviceIdentity di) {
 	    int idx = indexOf(handle);
 	    DeviceIdentity existent = null;

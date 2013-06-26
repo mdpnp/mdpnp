@@ -16,8 +16,6 @@ import javax.swing.ListModel;
 
 public class DeviceListCellRenderer extends DefaultListCellRenderer {
     
-    private final Map<Device, SoftReference<DeviceIcon>> _iconCache = new HashMap<Device, SoftReference<DeviceIcon>>();
-    
 	@Override
 	public Component getListCellRendererComponent(JList list,
 			Object value, int index, boolean isSelected,
@@ -31,15 +29,7 @@ public class DeviceListCellRenderer extends DefaultListCellRenderer {
 		
 		
 		if(null != device) {
-		    DeviceIcon di = null;
-		    SoftReference<DeviceIcon> sr = _iconCache.get(device);
-		    if(null != sr) {
-		        di = sr.get();
-		    }
-		    if(null == di) {
-		        di = new DeviceIcon(device.getDeviceIdentity().icon);
-		        _iconCache.put(device, new SoftReference<DeviceIcon>(di));
-		    }
+		    DeviceIcon di = device.getIcon();
 		    ListModel m = list.getModel();
 		    if(m instanceof DeviceListModel) {
 		        DeviceListModel dilm = (DeviceListModel) m;
