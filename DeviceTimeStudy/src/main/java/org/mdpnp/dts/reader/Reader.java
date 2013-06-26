@@ -162,9 +162,11 @@ public class Reader {
 						  data.setCameraErrorMargin(st.nextToken().trim());
 						  data.setPictureTaken(st.nextToken().trim());
 						  data.setDeviceTimeDisplayed(st.nextToken().trim());
-						  data.setDisplaysSeconds(Boolean.parseBoolean(st.nextToken().trim()));
+//						  data.setDisplaysSeconds(Boolean.parseBoolean(st.nextToken().trim()));//FIXME: input is Yes or no
+						  data.setDisplaysSeconds(parseYesNo(st.nextToken().trim()));
 						  data.setDeviceErrorMargin(st.nextToken().trim());
-						  data.setCurrentlyOnDST(Boolean.parseBoolean(st.nextToken().trim()));
+//						  data.setCurrentlyOnDST(Boolean.parseBoolean(st.nextToken().trim()));
+						  data.setCurrentlyOnDST(parseYesNo(st.nextToken().trim()));
 						  data.setDeviceTimeCorrectedForDST(st.nextToken().trim());
 						  data.setDeviceTime(st.nextToken().trim());
 						  data.setEXIFTime(st.nextToken().trim());
@@ -248,11 +250,13 @@ public class Reader {
 	private void loadByConnection(DTSdata data){
 		if(byConnection.containsKey(data.getConnection())){
 			OffsetStatisticsImpl x = (OffsetStatisticsImpl)byConnection.get(data.getConnection());
-			x.addOffset(data.getAbsDeviceOffasetAsLong());
+//			x.addOffset(data.getAbsDeviceOffasetAsLong());
+			x.addOffset(data.getCorrectedEXIFTime(), data.getDeviceTime(), data.isDisplaysSeconds());
 			byConnection.put(data.getConnection(), x);		
 		}else{
 			  OffsetStatisticsImpl x = new OffsetStatisticsImpl();
-			  x.addOffset(data.getAbsDeviceOffasetAsLong());
+//			  x.addOffset(data.getAbsDeviceOffasetAsLong());
+			  x.addOffset(data.getCorrectedEXIFTime(), data.getDeviceTime(), data.isDisplaysSeconds());
 			  byConnection.put(data.getConnection(), x);
 		}
 		
@@ -308,6 +312,13 @@ public class Reader {
 			//add structure to the hospital
 			hospitalsByCategory.put(insitutuionKey, htThresholds);
 		}
+	}
+	
+	private boolean parseYesNo(String text){
+		if(text.toLowerCase().trim().equals("yes"))
+			return true;
+		else
+			return false;
 	}
 
 }

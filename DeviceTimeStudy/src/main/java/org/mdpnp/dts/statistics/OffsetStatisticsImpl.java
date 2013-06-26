@@ -65,21 +65,31 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 	 * Returns the regular average
 	 */
 	public double getAvgOffset() {
-		return totalOffset/offsetList.size();
+		if(offsetList.size()>0)
+			return totalOffset/offsetList.size();
+		else
+			return 0;
 	}
 
 	/**
 	 * Returns the offset average for the "New Minute" scenario
 	 */
 	public double getAvgOffset_newMinute() {
-		return totalOffsetNewMinute/offsetNewMinute.size();
+		if (offsetNewMinute.size() >0)
+			return totalOffsetNewMinute/offsetNewMinute.size();
+		else
+			return 0;
 	}
 
 	/**
 	 * Returns the offset average for the "New minute Eve" Scenario
 	 */
 	public double getAvgOffset_NewMinuteEve() {
-		return totalOffsetNewMinuteEve/offsetNewMinuteEve.size();
+		if(offsetNewMinuteEve.size() >0)
+			return totalOffsetNewMinuteEve/offsetNewMinuteEve.size();
+		else
+			return 0;
+			
 	}
 
 
@@ -87,6 +97,8 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 	 * Returns the regular standard deviation
 	 */
 	public double getStdDev() {
+		if(getCount()==0)
+			return 0;
 		long total = 0;
 		double avg = getAvgOffset();
 		for(Long l : offsetList){
@@ -99,6 +111,8 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 	 * Returns the standard deviation for the "New Minute" scenario
 	 */
 	public double getStdDevNewMinute() {
+		if(getCount()==0)
+			return 0;
 		long total = 0;
 		double avg = getAvgOffset_newMinute();
 		for(Long l : offsetNewMinute){
@@ -111,6 +125,8 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 	 * Returns the standard deviation for the "New Minute Eve" scenario
 	 */
 	public double getStdDevNewMinuteEve() {
+		if(getCount()==0)
+			return 0;
 		long total = 0;
 		double avg = getAvgOffset_NewMinuteEve();
 		for(Long l : offsetNewMinuteEve){

@@ -52,6 +52,30 @@ public class BarChart extends ApplicationFrame{
 	 */
 	public void printMultipleBarChart(String chartTitle, String categoryLabel, String valuesLabel){
 		final JFreeChart chart = createChart(dataset, chartTitle, categoryLabel, valuesLabel);
+		final ChartPanel chartPanel = new ChartPanel(chart, false);
+		chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
+		setContentPane(chartPanel); 
+	  }
+	
+	public void printMultipleBarChartTimeAxis(String chartTitle, String categoryLabel, String valuesLabel){
+		final JFreeChart chart = createChart(dataset, chartTitle, categoryLabel, valuesLabel);
+		
+        //Change Y axis display info to pretty printed time
+        CategoryPlot plot = (CategoryPlot) chart.getPlot();        
+        NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+        rangeAxis.setNumberFormatOverride(UtilsDTS.milisecTimeFomatter);
+        
+        //display info in the bars
+        CategoryItemRenderer categoryrenderer = plot.getRenderer();
+        categoryrenderer.setBasePositiveItemLabelPosition(new ItemLabelPosition(ItemLabelAnchor.OUTSIDE12,TextAnchor.HALF_ASCENT_CENTER));
+        for(int i=0; i< dataset.getRowCount();i++){
+            //NOTE for StandardCategoryItemLabelGenerator: {X}refers to the info displayed in the dataset. {0} rowKey {1} columnKey {2} value. 
+            categoryrenderer.setSeriesItemLabelGenerator(i, new StandardCategoryItemLabelGenerator("{2}",UtilsDTS.milisecTimeFomatter));
+            categoryrenderer.setSeriesItemLabelsVisible(i,true);
+        }
+        chart.getCategoryPlot().setRenderer(categoryrenderer);
+        
+        //add chart to the panel
 		final ChartPanel chartPanel = new ChartPanel(chart);
 		chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
 		setContentPane(chartPanel); 
@@ -178,35 +202,35 @@ public class BarChart extends ApplicationFrame{
 	            valuesLabel,                  // range axis label
 	            dataset,                  // data
 	            PlotOrientation.VERTICAL, // the plot orientation
-	            false,                    // include legend
+	            true,                    // include legend
 	            true,
 	            false
 	        );
 
-	        chart.setBackgroundPaint(Color.lightGray);
+	        chart.setBackgroundPaint(new Color(0xBBBBDD));
 
-	        // get a reference to the plot for further customisation...
+	        // get a reference to the plot for further customization...
 	        final CategoryPlot plot = chart.getCategoryPlot();
 	        plot.setNoDataMessage("NO DATA!");
 
-	        final CategoryItemRenderer renderer = new CustomRenderer(
-	            new Paint[] {Color.red, Color.blue, Color.green,
-	                Color.yellow, Color.orange, Color.cyan,
-	                Color.magenta, Color.blue}
-	        );
-//	        renderer.setLabelGenerator(new StandardCategoryLabelGenerator());
-	        renderer.setItemLabelsVisible(true);
-	        final ItemLabelPosition p = new ItemLabelPosition(
-	            ItemLabelAnchor.CENTER, TextAnchor.CENTER, TextAnchor.CENTER, 45.0
-	        );
-	        renderer.setPositiveItemLabelPosition(p);
-	        plot.setRenderer(renderer);
-
-	        // change the margin at the top of the range axis...
-	        final ValueAxis rangeAxis = plot.getRangeAxis();
-	        rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
-	        rangeAxis.setLowerMargin(0.15);
-	        rangeAxis.setUpperMargin(0.15);
+//	        final CategoryItemRenderer renderer = new CustomRenderer(
+//	            new Paint[] {Color.red, Color.blue, Color.green,
+//	                Color.yellow, Color.orange, Color.cyan,
+//	                Color.magenta, Color.blue}
+//	        );
+////	        renderer.setLabelGenerator(new StandardCategoryLabelGenerator());
+//	        renderer.setItemLabelsVisible(true);
+//	        final ItemLabelPosition p = new ItemLabelPosition(
+//	            ItemLabelAnchor.CENTER, TextAnchor.CENTER, TextAnchor.CENTER, 45.0
+//	        );
+//	        renderer.setPositiveItemLabelPosition(p);
+//	        plot.setRenderer(renderer);
+//
+//	        // change the margin at the top of the range axis...
+//	        final ValueAxis rangeAxis = plot.getRangeAxis();
+//	        rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+//	        rangeAxis.setLowerMargin(0.15);
+//	        rangeAxis.setUpperMargin(0.15);
 
 	        return chart;
 

@@ -77,13 +77,13 @@ public class Main {
 //		System.out.println("*********************");
 //		
 //		//Statistics by connection type: Networked Vs. Stand-Alone
-//		printStatsByConnectionType();
+		printStatsByConnectionType();
 //		
 //		//statistics by threshold Type
 //		printStatsByThreshold();
 		
 		//statistics for each hospital by threshold range
-		printStatsForHospitalByThreshold();
+//		printStatsForHospitalByThreshold();
                
 		endDateCalc = new Date();		
 		System.out.println("Done!!");
@@ -98,6 +98,8 @@ public class Main {
 	 * prints statistics charts according to the device type
 	 */
 	private static void printStatsByDeviceType(){
+		final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+		
 		List<String> auxSortedList = new ArrayList<String>(byDeviceType.keySet());
 		Collections.sort(auxSortedList);
 		for(String key : auxSortedList){
@@ -106,8 +108,18 @@ public class Main {
 					" STD Dev "+UtilsDTS.getTimeFrom(Math.round(value.getStdDev())) +
 					" max Offset "+UtilsDTS.getTimeFrom(Math.round(value.getMaxOffset())));
 			//populate data set
-			//TODO feed dataset to LineChart and draw graphics
+			//TODO feed dataset to LineChart and draw graphics values, Series, Category
+			
+			dataset.addValue(Math.round(value.getAvgOffset()), key, "Avg Offset");
+			dataset.addValue(Math.round(value.getStdDev()), key, "STD Dev");
 		}
+		
+		final BarChart barChart = new BarChart("Devices by Type");
+		barChart.setDataset(dataset);
+		barChart.printMultipleBarChartTimeAxis("Devices by Type", "", "");
+		barChart.pack();
+        RefineryUtilities.centerFrameOnScreen(barChart);
+        barChart.setVisible(true);
 	}
 	
 	/**
@@ -118,6 +130,7 @@ public class Main {
 		final DefaultCategoryDataset datasetNumDevices = new DefaultCategoryDataset();
 		final DefaultCategoryDataset datasetAvgOffset = new DefaultCategoryDataset();
 		final DefaultCategoryDataset datasetStdDev = new DefaultCategoryDataset();
+		final DefaultCategoryDataset datasetTriplet = new DefaultCategoryDataset();
 		
 		List<String> auxConnSortedList = new ArrayList<String>(byConnection.keySet());
 		Collections.sort(auxConnSortedList);
@@ -133,6 +146,14 @@ public class Main {
 			datasetNumDevices.addValue(value.getCount(), key, "# of devices");
 			datasetAvgOffset.addValue(value.getAvgOffset(), key, "Avg Offset");
 			datasetStdDev.addValue(value.getStdDev(), key, "STD Dev");
+			
+			datasetTriplet.addValue(value.getAvgOffset(), "regular Offset", key);
+			datasetTriplet.addValue(value.getAvgOffset_newMinute(), "New Minute Scenario Offset", key);
+			datasetTriplet.addValue(value.getAvgOffset_NewMinuteEve(), "New Minute Eve Scenario", key);
+			
+//			datasetTriplet.addValue(value.getAvgOffset(), key, "regular Offset");
+//			datasetTriplet.addValue(value.getAvgOffset_newMinute(), key, "New Minute Scenario Offset");
+//			datasetTriplet.addValue(value.getAvgOffset_NewMinuteEve(), key, "New Minute Eve Scenario");
 			
 		}
         
@@ -158,6 +179,16 @@ public class Main {
         RefineryUtilities.positionFrameRandomly(barChartStd);
 //        RefineryUtilities.centerFrameOnScreen(barChart);
         barChartStd.setVisible(true);
+        
+        //Triplets
+        final BarChart barChartTriplet = new BarChart("Networked Vs. Standalone");
+        barChartTriplet.setDataset(datasetTriplet);
+//        barChartStd.print2BarChartTimeYAxis("Networked Vs. Standalone", "Type", "Offset Time");
+        barChartTriplet.printMultipleBarChartTimeAxis("Networked Vs. Standalone", "Type", "Offset Time");
+        barChartTriplet.pack();
+        RefineryUtilities.positionFrameRandomly(barChartTriplet);
+//        RefineryUtilities.centerFrameOnScreen(barChart);
+        barChartTriplet.setVisible(true);
         
 	}
 	
@@ -188,7 +219,7 @@ public class Main {
 		final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 		//dataset.addValue(value, seriesi=hospital, typej=threshol cat);
 		
-		//poulate data set
+		//populate data set
 		List<String> hospitalSortedList = new ArrayList<String>(hospitalsByCategory.keySet());
 		Collections.sort(hospitalSortedList);
 		Collections.reverse(hospitalSortedList);
@@ -212,7 +243,7 @@ public class Main {
 				if(htThresholds.containsKey(thresholdKey)){
 					OffsetStatisticsImpl data = (OffsetStatisticsImpl)htThresholds.get(thresholdKey);
 					dataset.addValue(data.getCount(), insitutuionKey, thresholdKey);
-					System.out.println("dataset.addValue("+data.getCount()+", "+insitutuionKey+", "+thresholdKey+");");
+					//System.out.println("dataset.addValue("+data.getCount()+", "+insitutuionKey+", "+thresholdKey+");");//test purpose only
 				}
 			}
 		}
