@@ -11,4 +11,9 @@ public interface HazardsEntryProxy extends ValueProxy {
     void setDescription(String description);
     String getFactors();
     void setFactors(String factors);
+    
+	String getExpected();
+	void setExpected(String expected);
+	String getSeverity();
+	void setSeverity(String severity);
 }

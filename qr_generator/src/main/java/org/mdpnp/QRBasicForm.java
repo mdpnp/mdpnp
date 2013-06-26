@@ -1,4 +1,4 @@
-package mdpnp;
+package org.mdpnp;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -136,6 +136,7 @@ public class QRBasicForm extends JFrame{
 		gridConst.gridx = 1;
 		gridConst.gridy = 1;
 		gridConst.gridwidth = 3;
+		gridConst.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(areaScrollPane, gridConst);
 
 		
@@ -163,6 +164,7 @@ public class QRBasicForm extends JFrame{
 		});
 		
 	    //3rd row Size text areas (and labels)
+		gridConst.fill = GridBagConstraints.CENTER;
 		gridConst.anchor = GridBagConstraints.LINE_END;
 		gridConst.gridwidth = 1;
 		gridConst.gridx = 0;
@@ -184,6 +186,8 @@ public class QRBasicForm extends JFrame{
 		getContentPane().add(panel);
 		
 		//4th Row: Generate button
+		gridConst.fill = GridBagConstraints.HORIZONTAL;
+		gridConst.insets = new Insets(5, 5, 2, 5);
 		gridConst.gridx = 1;
 		gridConst.gridy = 3;
 		gridConst.gridwidth = 2;

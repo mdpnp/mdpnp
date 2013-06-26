@@ -1,5 +1,7 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
+import java.util.List;
+
 import org.mdpnp.clinicalscenarios.server.scenario.ScenarioEntity;
 import org.mdpnp.clinicalscenarios.server.scenario.ScenarioLocator;
 
@@ -15,9 +17,16 @@ public interface ScenarioProxy extends EntityProxy {
 	BackgroundProxy getBackground();
 //	HazardsProxy getHazards();
 //	EnvironmentsProxy getEnvironments();
-//	EquipmentProxy getEquipment();
+	EquipmentProxy getEquipment();
 	ProposedSolutionProxy getProposedSolution();
 	BenefitsAndRisksProxy getBenefitsAndRisks();
+	List<EquipmentEntryProxy> getEquipmentList();//XXX
+	
+	//
+	public String getSubmitter();
+	public String getStatus();
+	public void setSubmitter(String submitter);
+	public void setStatus(String status);
 	
 	
 }

@@ -16,4 +16,5 @@ public interface ScenarioRequest extends RequestContext {
 	InstanceRequest<ScenarioProxy, Void> remove();
 	Request<List<ScenarioProxy>> searchByKeywords(String keywords);
 	Request<ScenarioProxy> create();
+	
 }

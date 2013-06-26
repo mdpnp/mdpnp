@@ -35,8 +35,13 @@ public class UserInfoBanner extends Composite {
 	private MenuItem listUsers = new MenuItem("List Users", NOOP);
 	private MenuItem basicSearch = new MenuItem("Basic Search", NOOP);
 	private MenuItem advancedSearch = new MenuItem("Advanced Search", NOOP);
+	private MenuItem listTags = new MenuItem("List Tags", NOOP);//list the tags
 	
 	private UserInfoProxy userInfo;
+	
+	public MenuItem getListTags(){
+		return listTags;
+	}
 	
 	public MenuItem getListUsers() {
 		return listUsers;
@@ -92,6 +97,7 @@ public class UserInfoBanner extends Composite {
 					if(response.getAdmin()) {
 						username.addItem(list);
 						username.addItem(listUsers);
+						username.addItem(listTags);//add tag search
 					}
 					MenuBar logoutMenu = new MenuBar(true);
 					
