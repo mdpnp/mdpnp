@@ -1,19 +1,25 @@
 package org.mdpnp.dts.launcher;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 
+import javax.print.DocFlavor.READER;
+
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 import org.jfree.ui.RefineryUtilities;
+import org.mdpnp.dts.charts.BarChart;
+import org.mdpnp.dts.charts.LineChart;
+import org.mdpnp.dts.charts.PieChart;
 import org.mdpnp.dts.data.DTSdata;
-import org.mdpnp.dts.outputter.BarChart;
-import org.mdpnp.dts.outputter.LineChart;
-import org.mdpnp.dts.outputter.PieChart;
-import org.mdpnp.dts.reader.Reader;
+import org.mdpnp.dts.io.DTSFileWriter;
+import org.mdpnp.dts.io.Reader;
 import org.mdpnp.dts.statistics.OffsetStatisticsImpl;
 import org.mdpnp.dts.utils.UtilsDTS;
 
@@ -35,6 +41,8 @@ public class Main {
 	
 	static int totalLinesRead = 0;//useful lines, Headers don't count
 	
+	static String path ="C:\\Users\\da792\\Documents\\Device Time Study Package\\Diego\\";
+	
 	/**
 	 * @param args
 	 */
@@ -44,8 +52,8 @@ public class Main {
 		Date initDateCalc, endDateCalc;// dates for performance control
 		
 		//TODO path and file name shoud be read from args parameter
-		String sFilename = "testData1.csv";
-		sFilename = "DST_rawData.csv";
+		String sFilename = "testData1.csv"; //test purposes
+		sFilename = "DST_rawData.csv";//overwrite RAW_DATA
 		/**
 		 * 1 Create reader object (org.mdpnp.dts.reader.Reader) and read data file.
 		 * This will populate our structures for statistics (we get this info via Reader getter methods).
@@ -57,7 +65,8 @@ public class Main {
 		 * 
 		 */
 		
-		Reader myReader = new Reader("C:\\Users\\da792\\Documents\\Device Time Study Package\\Diego", sFilename, Reader.SEP_PIPE, 5);
+		//Reader myReader = new Reader("C:\\Users\\da792\\Documents\\Device Time Study Package\\Diego", sFilename, Reader.SEP_PIPE, 5);
+		Reader myReader = new Reader(path, sFilename, Reader.SEP_PIPE, 5);
 		initDate = new Date();
 		myReader.readFile();
 		endDate = new Date();
@@ -77,13 +86,16 @@ public class Main {
 //		System.out.println("*********************");
 //		
 //		//Statistics by connection type: Networked Vs. Stand-Alone
-		printStatsByConnectionType();
+//		printStatsByConnectionType();
+		writeStatsByConnectionType(path, "byConnection.csv");
 //		
 //		//statistics by threshold Type
 //		printStatsByThreshold();
 		
 		//statistics for each hospital by threshold range
-//		printStatsForHospitalByThreshold();
+		printStatsForHospitalByThreshold();
+//		writeStatsForHospitalByThreshold();//write to file
+		writeStatsForHospitalByThreshold(path, "dataForHospitalByThreshold.csv");
                
 		endDateCalc = new Date();		
 		System.out.println("Done!!");
@@ -148,8 +160,8 @@ public class Main {
 			datasetStdDev.addValue(value.getStdDev(), key, "STD Dev");
 			
 			datasetTriplet.addValue(value.getAvgOffset(), "regular Offset", key);
-			datasetTriplet.addValue(value.getAvgOffset_newMinute(), "New Minute Scenario Offset", key);
-			datasetTriplet.addValue(value.getAvgOffset_NewMinuteEve(), "New Minute Eve Scenario", key);
+			datasetTriplet.addValue(value.getAvgOffsetNewMinute(), "New Minute Scenario Offset", key);
+			datasetTriplet.addValue(value.getAvgOffsetNewMinuteEve(), "New Minute Eve Scenario", key);
 			
 //			datasetTriplet.addValue(value.getAvgOffset(), key, "regular Offset");
 //			datasetTriplet.addValue(value.getAvgOffset_newMinute(), key, "New Minute Scenario Offset");
@@ -192,6 +204,35 @@ public class Main {
         
 	}
 	
+	private static void writeStatsByConnectionType(String pathName, String fileName){
+		DTSFileWriter fileWriter = new DTSFileWriter(pathName, fileName);
+		
+		List<String> auxConnSortedList = new ArrayList<String>(byConnection.keySet());
+		Collections.sort(auxConnSortedList);
+		String row ="";
+		String sep = Reader.SEP_PIPE;
+		
+		fileWriter.addRow(""+sep+"regular Offset"+sep+"New Minute Scenario Offset"+sep+"New Minute Eve Scenario");
+		
+		for(String key : auxConnSortedList){
+			OffsetStatisticsImpl value = (OffsetStatisticsImpl)byConnection.get(key);
+//			row=key+sep+UtilsDTS.getTimeFrom(Math.round(value.getAvgOffset()))
+//					+sep+UtilsDTS.getTimeFrom(Math.round(value.getAvgOffset_newMinute()))
+//					+sep+UtilsDTS.getTimeFrom(Math.round(value.getAvgOffset_NewMinuteEve()));
+			
+			row=key+" Avg Offset"+sep+UtilsDTS.parseDateToStringFormat(Math.round(value.getAvgOffset()))
+			+sep+ UtilsDTS.parseDateToStringFormat(Math.round(value.getAvgOffsetNewMinute()))
+			+sep+ UtilsDTS.parseDateToStringFormat(Math.round(value.getAvgOffsetNewMinuteEve()));			
+			fileWriter.addRow(row);
+			
+			row=key+" STD Dev"+sep+UtilsDTS.parseDateToStringFormat(Math.round(value.getStdDev()))
+			+sep+ UtilsDTS.parseDateToStringFormat(Math.round(value.getStdDevNewMinute()))
+			+sep+ UtilsDTS.parseDateToStringFormat(Math.round(value.getStdDevNewMinuteEve()));			
+			fileWriter.addRow(row);
+		}
+		fileWriter.close();
+	}
+	
 	/**
 	 * prints statistics by threshold range
 	 */
@@ -213,8 +254,7 @@ public class Main {
 	}
 	
 	
-	private static void printStatsForHospitalByThreshold(){
-		
+	private static void printStatsForHospitalByThreshold(){		
 		// create the dataset
 		final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 		//dataset.addValue(value, seriesi=hospital, typej=threshol cat);
@@ -244,6 +284,7 @@ public class Main {
 					OffsetStatisticsImpl data = (OffsetStatisticsImpl)htThresholds.get(thresholdKey);
 					dataset.addValue(data.getCount(), insitutuionKey, thresholdKey);
 					//System.out.println("dataset.addValue("+data.getCount()+", "+insitutuionKey+", "+thresholdKey+");");//test purpose only
+					
 				}
 			}
 		}
@@ -256,6 +297,93 @@ public class Main {
 		RefineryUtilities.centerFrameOnScreen(lineChart);
 		lineChart.setVisible(true);
 
+	}
+	
+	/**
+	 * Writes the information into a CSV file
+	 */
+	private static void writeStatsForHospitalByThreshold(){
+		//Add capability to write data into a file
+		FileWriter fw = null;
+		BufferedWriter bw = null;
+		String outputFileName = "dataForHospitalByThreshold.csv";
+		//Writer
+		File file = new File(path+outputFileName);
+		try{
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+			
+			fw = new FileWriter(file.getAbsoluteFile());
+			bw = new BufferedWriter(fw);
+			
+			List<String> hospitalSortedList = new ArrayList<String>(hospitalsByCategory.keySet());
+			Collections.sort(hospitalSortedList);
+			
+			//print columns headers
+			String outputrow = ""+Reader.SEP_PIPE;
+			for(String s : DTSdata.thresholdCategories){
+				outputrow += s+Reader.SEP_PIPE;
+			}
+			bw.write(outputrow+"\n");	
+			
+			
+			for(String insitutuionKey : hospitalSortedList){//Series Key
+				Hashtable htThresholds =  (Hashtable) hospitalsByCategory.get(insitutuionKey);
+				String[] thresholds = DTSdata.thresholdCategories;
+				outputrow =  insitutuionKey+Reader.SEP_PIPE;
+				for(String thresholdKey : thresholds){//Categories Key
+					if(htThresholds.containsKey(thresholdKey)){
+						OffsetStatisticsImpl data = (OffsetStatisticsImpl)htThresholds.get(thresholdKey);
+						outputrow += data.getCount()+Reader.SEP_PIPE; //column 'thresholdKey'
+						
+					}else{
+						outputrow += "0"+Reader.SEP_PIPE;
+					}
+				}
+				//add row to file
+				bw.write(outputrow+"\n");	
+			}
+			
+			bw.flush();
+			bw.close();
+			fw.close();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	private static void writeStatsForHospitalByThreshold(String pathName, String fileName){
+		DTSFileWriter fileWriter = new DTSFileWriter(pathName, fileName);
+		
+		List<String> hospitalSortedList = new ArrayList<String>(hospitalsByCategory.keySet());
+		Collections.sort(hospitalSortedList);
+		
+		//print columns headers
+		String outputrow = ""+Reader.SEP_PIPE;
+		for(String s : DTSdata.thresholdCategories){
+			outputrow += s+Reader.SEP_PIPE;
+		}	
+		fileWriter.addRow(outputrow);
+		
+		
+		for(String insitutuionKey : hospitalSortedList){//Series Key
+			Hashtable htThresholds =  (Hashtable) hospitalsByCategory.get(insitutuionKey);
+			String[] thresholds = DTSdata.thresholdCategories;
+			outputrow =  insitutuionKey+Reader.SEP_PIPE;
+			for(String thresholdKey : thresholds){//Categories Key
+				if(htThresholds.containsKey(thresholdKey)){
+					OffsetStatisticsImpl data = (OffsetStatisticsImpl)htThresholds.get(thresholdKey);
+					outputrow += data.getCount()+Reader.SEP_PIPE; //column 'thresholdKey'
+					
+				}else{
+					outputrow += "0"+Reader.SEP_PIPE;
+				}
+			}
+			//add row to file
+			fileWriter.addRow(outputrow);
+		}
+		fileWriter.close();
 	}
 
 }

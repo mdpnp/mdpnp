@@ -1,4 +1,4 @@
-package org.mdpnp.dts.reader;
+package org.mdpnp.dts.io;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -15,13 +15,15 @@ import org.mdpnp.dts.statistics.OffsetStatisticsImpl;
 /**
  * 
  * @author dalonso@mdpnp.org
+ * <p>
  * This class is basically the reader of the data file.
- * We populate our data structures as we read each row, and these structures will be 
- * inquired for statistics (or other data) later 
+ * Is in charge of populating our data structures as we read each row, and these structures will be 
+ * inquired for statistics (or other data) later. 
  *
  */
 public class Reader {
 	
+	public static final String SEP_COMMA = ","; //column/token separator COMMA
 	public static final String SEP_PIPE = "|"; //column/token separator PIPE
 	public static final int DEFAULT_SKIPPED_LINES =5; //default header lines
  	
@@ -31,8 +33,8 @@ public class Reader {
 	private int skippedLines;//skips the first number of indicated lines when reading a file (Header lines)
 	private int linesReaded = 0;
 	
-	//TODO Consider: create here vs dependency injection for these attributes
-	// actually should be a FIXME
+	//TODO Consider: create these structures here vs dependency injection for the attributes
+	// actually should be a FIXME ?
 	private List<DTSdata> dataList = new ArrayList<DTSdata>();	
 	private Hashtable byDeviceType = new Hashtable<>();//data by device type
 	private Hashtable byConnection = new Hashtable<>();//data by Networked / Standalone
@@ -161,11 +163,9 @@ public class Reader {
 						  data.setCameraOffset(st.nextToken().trim());
 						  data.setCameraErrorMargin(st.nextToken().trim());
 						  data.setPictureTaken(st.nextToken().trim());
-						  data.setDeviceTimeDisplayed(st.nextToken().trim());
-//						  data.setDisplaysSeconds(Boolean.parseBoolean(st.nextToken().trim()));//FIXME: input is Yes or no
+						  data.setDeviceTimeDisplayed(st.nextToken().trim());					
 						  data.setDisplaysSeconds(parseYesNo(st.nextToken().trim()));
 						  data.setDeviceErrorMargin(st.nextToken().trim());
-//						  data.setCurrentlyOnDST(Boolean.parseBoolean(st.nextToken().trim()));
 						  data.setCurrentlyOnDST(parseYesNo(st.nextToken().trim()));
 						  data.setDeviceTimeCorrectedForDST(st.nextToken().trim());
 						  data.setDeviceTime(st.nextToken().trim());
@@ -258,8 +258,7 @@ public class Reader {
 //			  x.addOffset(data.getAbsDeviceOffasetAsLong());
 			  x.addOffset(data.getCorrectedEXIFTime(), data.getDeviceTime(), data.isDisplaysSeconds());
 			  byConnection.put(data.getConnection(), x);
-		}
-		
+		}		
 	}
 	
 	/**
@@ -280,6 +279,10 @@ public class Reader {
 		}
 	}
 	
+	/**
+	 * Loads offset data in the structure for threshold statistics per hospital.
+	 * @param data
+	 */
 	private void loadHospitalsByCategory(DTSdata data){
 		String insitutuionKey = data.getInstitution();
 		String thresholdKey = data.getThresholdCategory();
@@ -288,12 +291,12 @@ public class Reader {
 			Hashtable htThresholds =  (Hashtable) hospitalsByCategory.get(insitutuionKey);
 			//2. Check if the threshold has been added
 			if(htThresholds.containsKey(thresholdKey)){
-				//update threshold category
+				//YES: update threshold category
 				OffsetStatisticsImpl x = (OffsetStatisticsImpl)htThresholds.get(thresholdKey);
 				x.addOffset(data.getAbsDeviceOffasetAsLong());
 				htThresholds.put(thresholdKey, x);
 			}else{
-				//add new threshold category
+				//NO: add new threshold category
 				OffsetStatisticsImpl x = new OffsetStatisticsImpl();
 				x.addOffset(data.getAbsDeviceOffasetAsLong());
 				htThresholds.put(thresholdKey, x);
@@ -302,7 +305,7 @@ public class Reader {
 			hospitalsByCategory.put(insitutuionKey, htThresholds);
 			
 		}else{
-			//new Hospital
+			//New Hospital
 			//create structure for statistics
 			OffsetStatisticsImpl x = new OffsetStatisticsImpl();
 			x.addOffset(data.getAbsDeviceOffasetAsLong());
@@ -314,6 +317,11 @@ public class Reader {
 		}
 	}
 	
+	/**
+	 * Parses a 'yes/no' string and converts it into a boolean
+	 * @param text
+	 * @return
+	 */
 	private boolean parseYesNo(String text){
 		if(text.toLowerCase().trim().equals("yes"))
 			return true;

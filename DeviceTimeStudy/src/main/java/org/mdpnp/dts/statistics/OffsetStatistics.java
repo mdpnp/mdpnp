@@ -3,7 +3,7 @@ package org.mdpnp.dts.statistics;
 /**
  * 
  * @author dalonso@mdpnp.org
- * 
+ * <p>
  * Interface to define the statistics we need to get from our offsets
  *
  */
@@ -26,14 +26,14 @@ public interface OffsetStatistics {
 	 * for those that don't display seconds
 	 * @return
 	 */
-	public double getAvgOffset_newMinute();
+	public double getAvgOffsetNewMinute();
 	
 	/**
 	 * Returns the avg offset of the devices (in miliseconds), considering that those who don't display 
 	 * seconds are in the 'new minute eve' (XX:59)
 	 * @return
 	 */
-	public double getAvgOffset_NewMinuteEve();
+	public double getAvgOffsetNewMinuteEve();
 	
 	/**
 	 * Returns the standard deviation of the offsets (in miliseconds)
