@@ -10,6 +10,7 @@ import java.util.StringTokenizer;
 /**
  * 
  * @author dalonso@mdpnp.org
+ * <p>
  *	This class has utility functions for the project, such as format conversions,
  *	pretty printing of times, etc.
  */
@@ -59,6 +60,22 @@ public class UtilsDTS {
 			e.printStackTrace();
 			return 0;
 		}
+	}
+	
+	/**
+	 * Parses a date in miliseconds into a String format
+	 * @param milis
+	 * @return
+	 */
+	public static String parseDateToStringFormat(long milis){
+//		Date date = new Date(milis);
+//		return sdf.format(date);
+	  long secs = milis / 1000;
+	  int hours = (int)secs / 3600;    
+	  secs = secs % 3600;
+	  int mins = (int)secs / 60;
+	  secs = secs % 60;
+	  return new String(hours+":"+mins+":"+secs);
 	}
 
 	/**

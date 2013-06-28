@@ -5,23 +5,22 @@ import org.mdpnp.dts.utils.UtilsDTS;
 /**
  * 
  * @author dalonso@mdpnp.org
- *
- *This class represents a row of raw data in the excel sheet
+ *<p>
+ * This class represents a row of raw data in the excel sheet.
  */
 public class DTSdata {
 	
 	//Name of the different thresholds we can have for the offsets
-	//Version 1
+	//Version 1: names as displayed in the excel sheet
 //	public static String[] thresholdCategories ={"Offset less than 2 sec",
 //		"Offset more than 2 sec", "Offset more than 1 min", "Offset more than 5 min", "Offset more than 10 min",
 //		"Offset more than 15 min", "Offset more than 30 min", "Offset more than 1 hour", "Offset more than 2 hours"};
 	
-	//version 2
+	//Version 2: shorter names that can be used as categories names in the charts 
 	public static String[] thresholdCategories ={"< 2 sec.",
 		"[2s. - 1m.)", "[1m. - 5m.)", "[5m - 10m.)", "[10m. - 15m.)",
 		"[15m. - 30m.)", "[30m. - 1h.)", "[1h. - 2h.)", ">= 2 hours"};
 	
-//	public static String[] thresholdCategories ={"1", "2", "3", "4", "5", "6", "7", "8", "9"};
 	
 	//fields (as in Clock Study_Consolidated Data_v6_13Apr2013.xlsx)
 	private int number; //ID number of the device assigned by MDPnP
@@ -31,17 +30,17 @@ public class DTSdata {
 	private String deviceType; //Type of Device
 	private String specification; //Device Manufacturer and Model number
 	private String connection; //Is it connected to a network or stand-alone?
-	//values Stand-Alone or Networked
+		//values Stand-Alone or Networked
     private String syncTime; //Does it sync its time over the network?
-    //valuies yes-No-Unknown
+    	//values yes-No-Unknown
     private String bioMedChanged; //Is is changed by Biomeds twice a year for DST change?
-    //values yes-No-autosync
+    	//values yes-No-autosync
     private String pictureTaken;//"What device was used to capture the picture? 
     	//Camera/ iPhone/ Android"
     private String sNTP_referenceTime; //The actual  NTP reference time as displayed in picture captured by Camera/ iPhone/ Android before each reading.
     private String referenceEXIF; //The NTP reference time from the picture EXIF INFO/ Properties.
     private String cameraOffset; //Calculated Difference between Camera/ iPhone/ Android and NTP reference time.
-    //(calculated as sNTP_referenceTime minus referenceEXIF fields)
+    	//(calculated as sNTP_referenceTime minus referenceEXIF fields)
     private String cameraErrorMargin; //Assume: Camera Error Margin: 1sec for Andriod/ iPhone & 2sec for Camera
     private String datePictureTaken; //The date on which picture was taken
     private String deviceTimeDisplayed; //The time displayed on the device
@@ -55,6 +54,7 @@ public class DTSdata {
     private String deviceOffset; //Calculate Device Offset = Corrected EXIF time (MINUS) Device Time
     private String absDeviceOffset; //Take absolute values of Device Offset (Convert Negative Values into Positive)
     private String offsetSign; //Note the Offset Sign of the Device Offset (Positive Offset or Negative Offset or No Offset)
+   
     private boolean thresholdGT_2sec; //displays seconds, threshold is greater than 2 seconds
     private boolean thresholdGT_1min; //displays minutes, threshold is greater than ONE minute
     private boolean thresholdGT_5min; //displays minutes, threshold is greater than FIVE minutes
@@ -64,6 +64,8 @@ public class DTSdata {
     private boolean thresholdGT_1Hour; //displays minutes, threshold is greater than ONE HOUR
     private boolean thresholdGT_2Hour; //displays minutes, threshold is greater than TWO Hours
     private String threshold;//actual threshold value
+    
+    //TODO Could be desiderable to have a Threshold_0Sec range too, for devices that don't show offset.
     
     //cons
     public DTSdata(){
@@ -355,17 +357,19 @@ public class DTSdata {
 	//other auxiliary functions
 	
 	/**
+	 * @deprecated
 	 * Returns the device offset (signed) as a long (miliseconds)
-	 * @return
-	 */
+	 * @return offset in miliseconds
+	 * 
+	 */	
 	public long getDeviceOffasetAsLong(){		
 //		return UtilsDTS.parseDateFormatToLong(this.deviceOffset, null);
 		return UtilsDTS.parseDateFormatToLong(this.deviceOffset);
 	}
 	
 	/**
-	 * Retuns the unsigned device offset as a long (miliseconds)
-	 * @return
+	 * Returns the unsigned device offset as a long (miliseconds)
+	 * @return offset in miliseconds
 	 */
 	public long getAbsDeviceOffasetAsLong(){		
 //		return UtilsDTS.parseDateFormatToLong(this.deviceOffset, null);
@@ -374,7 +378,7 @@ public class DTSdata {
 
 	/**
 	 * Returns a String that displays the case of the offset duration / threshold
-	 * @return
+	 * @return Threshold for this offset
 	 */
 	public String getThresholdCategory(){
 		if(!thresholdGT_2sec) return thresholdCategories[0]; //"Offset less than 2 sec";
