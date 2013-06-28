@@ -5,6 +5,7 @@ import org.mdpnp.clinicalscenarios.client.scenario.ScenarioProxy;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioRequestFactory;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioSearchPanel;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioSearchPanel.SearchHandler;
+import org.mdpnp.clinicalscenarios.client.tag.TagProxy;
 import org.mdpnp.clinicalscenarios.client.tag.TagRequestFactory;
 import org.mdpnp.clinicalscenarios.client.tag.TagsManagementPanel;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoBanner;
@@ -31,6 +32,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 	private final UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
 	private final ScenarioRequestFactory scenarioRequestFactory = GWT.create(ScenarioRequestFactory.class);
 	private final TagRequestFactory tagRequestFactory = GWT.create(TagRequestFactory.class);
+	
 	private ScenarioPanel scenarioPanel;
 	private UserInfoBanner userInfoBanner;
 	private UserInfoPanel userInfoPanel;
@@ -68,7 +70,16 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		scenarioListPanel.setSearchHandler(this);
 		userInfoSearchPanel = new UserInfoSearchPanel(userInfoRequestFactory);
 		userInfoBanner = new UserInfoBanner(userInfoRequestFactory, this);
-		tagsManagementPanel = new TagsManagementPanel(tagRequestFactory);
+		tagsManagementPanel = new TagsManagementPanel(tagRequestFactory);//XXX Tags
+		tagsManagementPanel.setSaveHandler(new TagsManagementPanel.SaveHandler(){
+
+			@Override
+			public void onSave(TagProxy tagProxy) {
+				tagsManagementPanel.setCurrentTag(tagProxy);
+				
+			}
+			
+		});
 
 
 		wholeApp.add(userInfoBanner, DockPanel.NORTH);
