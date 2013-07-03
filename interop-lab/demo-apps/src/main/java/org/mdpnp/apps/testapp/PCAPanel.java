@@ -9,7 +9,6 @@ import java.awt.GridLayout;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -31,9 +30,6 @@ import javax.swing.ListCellRenderer;
 
 import org.mdpnp.apps.testapp.VitalsModel.Vitals;
 import org.mdpnp.apps.testapp.VitalsModel.VitalsListener;
-import org.mdpnp.devices.oridion.capnostream.Capnostream;
-import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
-import org.mdpnp.guis.swing.IconUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,6 +142,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		setLayout(new BorderLayout());
 		
 
+
 		
 		// Reset before we can get callbacks
 		reset();
@@ -250,7 +247,10 @@ public class PCAPanel extends JPanel implements VitalsListener {
 //                }
 //            }
 //        });
-		
+		for(Vital v : vitals) {
+		    model.addNumericInterest(v.numeric);
+
+		}
 	}
 	private String resetCommand = "Start, 10\n";
 
@@ -574,4 +574,9 @@ public class PCAPanel extends JPanel implements VitalsListener {
 //        miau.setSource("*");
 //        gateway.update(miau);
 	}	
+	
+	@Override
+	public void deviceChanged(Device device) {
+	    
+	}
 }

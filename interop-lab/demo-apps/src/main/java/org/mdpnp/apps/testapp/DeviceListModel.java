@@ -42,6 +42,8 @@ import com.rti.dds.topic.TopicDescription;
 
 import static org.mdpnp.devices.TopicUtil.lookupOrCreateTopic;
 
+
+
 public class DeviceListModel extends AbstractListModel<Device> {
 
 	private static final Logger log = LoggerFactory
@@ -172,7 +174,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                                 fireIntervalAdded(this, 0, 0);
                             } else {
                                 current.getDeviceIdentity().copy_from(di);
-                                fireContentsChanged(this, cur_idx, cur_idx);
+                                fireContentsChanged(DeviceListModel.this, cur_idx, cur_idx);
                             }
                         }
                         break;
@@ -181,7 +183,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         log.trace("InstanceState:"+si.instance_state);
                         if(cur_idx >= 0) {
                             Device device = contents.remove(cur_idx);
-                            fireIntervalRemoved(this, cur_idx, cur_idx);
+                            fireIntervalRemoved(DeviceListModel.this, cur_idx, cur_idx);
                         }
                         break;
                     }
@@ -349,16 +351,23 @@ public class DeviceListModel extends AbstractListModel<Device> {
 	        fireIntervalAdded(this, 0, 0);
 	    }
 	}
+	
+	private Device lastRemoved;
+	// NOT REENTRANT AT ALL... BE CAREFUL ... SINGLE THREAD FOR NOW
 	protected void removed(InstanceHandle_t handle) {
 	    int idx = indexOf(handle);
 	    
 	    log.debug("Removing idx="+idx);
 	    
         if(idx >= 0) {
-            contents.remove(idx);
+            lastRemoved = contents.remove(idx);
             fireIntervalRemoved(this, idx, idx);
+            lastRemoved = null;
         }
 	}
+	public Device getLastRemoved() {
+        return lastRemoved;
+    }
 	
 	public void tearDown() {
 //	    subscriber.delete_datareader(reader);

@@ -88,7 +88,7 @@ public class DemoApp {
 		final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null, StatusKind.STATUS_MASK_NONE);
 		final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop);
-//		final VitalsModel vitalsModel = new VitalsModel();
+		final VitalsModel vitalsModel = new VitalsModel(subscriber, nc, eventLoop);
 //		vitalsModel.addInterest(Ventilator.END_TIDAL_CO2_MMHG);
 //		vitalsModel.addInterest(Ventilator.RESPIRATORY_RATE);
 //		vitalsModel.addInterest(PulseOximeter.SPO2);
@@ -135,12 +135,12 @@ public class DemoApp {
 		panel.getContent().add(devicePanel, "devicepanel");
 		
 		String s = System.getProperty("NOPCA");
-//		PCAPanel _pcaPanel = null;
-//		if(null == s || !"true".equals(s)) {
-//		    _pcaPanel = new PCAPanel(vitalsModel, gateway);
-//		    panel.getContent().add(_pcaPanel, "pca");
-//		}
-//		final PCAPanel pcaPanel = _pcaPanel;
+		PCAPanel _pcaPanel = null;
+		if(null == s || !"true".equals(s)) {
+		    _pcaPanel = new PCAPanel(vitalsModel, subscriber);
+		    panel.getContent().add(_pcaPanel, "pca");
+		}
+		final PCAPanel pcaPanel = _pcaPanel;
 		
 //		final Gateway xray_gateway = new Gateway();
 //		final ApolloImpl xray_device = new ApolloImpl(xray_gateway);
@@ -202,24 +202,24 @@ public class DemoApp {
 				int idx = mainMenuPanel.getAppList().locationToIndex(e.getPoint());
 				if(idx >= 0) {
 					Object o = mainMenuPanel.getAppList().getModel().getElementAt(idx);
-//					if("Data Fusion".equals(o) && null != roomSyncPanel) {
-//						setGoBack("main", null);
-//						ol.show(panel.getContent(), "roomsync");
-//					} else if("Infusion Safety".equals(o) && null != pcaPanel) {
-//						setGoBack("main", null);
-//						pcaPanel.reset();
-//						ol.show(panel.getContent(), "pca");
-//					} else if("X-Ray Ventilator Sync".equals(o) && null != xrayVentPanel) {
-//						setGoBack("main", new Runnable() {
-//							public void run() {
-//							    xrayVentPanel.stop();
-////								getConnected.disconnect();
-//							}
-//						});
-//						ol.show(panel.getContent(), "xray");
-//						xrayVentPanel.start();
-////						getConnected.connect();
-//					}
+					/*if("Data Fusion".equals(o) && null != roomSyncPanel) {
+						setGoBack("main", null);
+						ol.show(panel.getContent(), "roomsync");
+					} else*/ if("Infusion Safety".equals(o) && null != pcaPanel) {
+						setGoBack("main", null);
+						pcaPanel.reset();
+						ol.show(panel.getContent(), "pca");
+					} /*else if("X-Ray Ventilator Sync".equals(o) && null != xrayVentPanel) {
+						setGoBack("main", new Runnable() {
+							public void run() {
+							    xrayVentPanel.stop();
+//								getConnected.disconnect();
+							}
+						});
+						ol.show(panel.getContent(), "xray");
+						xrayVentPanel.start();
+//						getConnected.connect();
+					}*/
 				}
 				super.mouseClicked(e);
 			}
