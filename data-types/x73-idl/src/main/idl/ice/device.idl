@@ -102,6 +102,7 @@ module ice {
   const long MDC_TIME_PD_INSPIRATORY = 65547;
   const long MDC_TIME_MSEC_SINCE_EPOCH = 65548;
   const long MDC_CAPNOGRAPH = 65549;
+  const long MDC_START_OF_BREATH = 65550;
   
   module oridion {
     const long MDC_FAST_STATUS = 66000; 

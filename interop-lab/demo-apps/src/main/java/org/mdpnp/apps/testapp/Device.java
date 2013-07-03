@@ -1,16 +1,18 @@
 package org.mdpnp.apps.testapp;
 
-import java.lang.ref.SoftReference;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.swing.ListModel;
-
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
-import ice.Numeric;
-import ice.SampleArray;
 
+import java.lang.ref.SoftReference;
+
+/**
+ * Convenience class for storing DeviceIdentity and DeviceConnectivity instances
+ * DeviceIdentity is required, DeviceConnectivity is only relevant for "connected" devices
+ * and may be null.  A softreference to a DeviceIcon constructed from the DeviceIdentity raster
+ * is also maintained (and reconstructed on demand). 
+ * @author jplourde
+ *
+ */
 public class Device {
     private final DeviceIdentity deviceIdentity = new DeviceIdentity();
     private DeviceConnectivity deviceConnectivity;

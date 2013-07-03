@@ -1,18 +1,16 @@
 package org.mdpnp.apps.testapp;
 
+import static org.mdpnp.devices.TopicUtil.lookupOrCreateTopic;
 import ice.DeviceConnectivity;
 import ice.DeviceConnectivityDataReader;
 import ice.DeviceConnectivitySeq;
 import ice.DeviceConnectivityTypeSupport;
 import ice.DeviceIdentity;
 import ice.DeviceIdentityDataReader;
-import ice.DeviceIdentitySeq;
 import ice.DeviceIdentityTypeSupport;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.AbstractListModel;
 import javax.swing.ListModel;
@@ -39,8 +37,6 @@ import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.TopicDescription;
-
-import static org.mdpnp.devices.TopicUtil.lookupOrCreateTopic;
 
 
 

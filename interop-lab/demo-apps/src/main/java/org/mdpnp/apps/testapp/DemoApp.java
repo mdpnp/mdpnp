@@ -16,6 +16,7 @@ import java.util.TimeZone;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
 
+import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 //import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
@@ -89,14 +90,6 @@ public class DemoApp {
 		final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop);
 		final VitalsModel vitalsModel = new VitalsModel(subscriber, nc, eventLoop);
-//		vitalsModel.addInterest(Ventilator.END_TIDAL_CO2_MMHG);
-//		vitalsModel.addInterest(Ventilator.RESPIRATORY_RATE);
-//		vitalsModel.addInterest(PulseOximeter.SPO2);
-//		vitalsModel.addInterest(PulseOximeter.PULSE);
-//		gateway.addListener(vitalsModel);
-		
-		
-		
 		
 		final DemoFrame frame = new DemoFrame("Integrated Clinical Environment");
 		panel = new DemoPanel();
@@ -142,45 +135,14 @@ public class DemoApp {
 		}
 		final PCAPanel pcaPanel = _pcaPanel;
 		
-//		final Gateway xray_gateway = new Gateway();
-//		final ApolloImpl xray_device = new ApolloImpl(xray_gateway);
-		
-		
 		s = System.getProperty("NOXRAYVENT");
-//		XRayVentPanel _xrayVentPanel = null;
+		XRayVentPanel _xrayVentPanel = null;
 		if(null == s || !"true".equals(s)) {
-//		    _xrayVentPanel = new XRayVentPanel(gateway, panel, nc);
-//		final GetConnected getConnected = new GetConnected(frame, xray_gateway) {
-//			@Override
-//			protected void abortConnect() {
-//				goback();
-//			}
-//		};
-//		
-//		
-//		    panel.getContent().add(_xrayVentPanel, "xray");
+		    _xrayVentPanel = new XRayVentPanel(panel, nc, subscriber, eventLoop);
+		    panel.getContent().add(_xrayVentPanel, "xray");
 		}
-//		final XRayVentPanel xrayVentPanel = _xrayVentPanel;
-//		final EngineerConsole engineerConsole = new EngineerConsole(gateway);
-//		panel.getContent().add(engineerConsole, "biomed");
+		final XRayVentPanel xrayVentPanel = _xrayVentPanel;
 		
-//		mainMenuPanel.getBiomedConsole().addActionListener(new ActionListener() {
-//			@Override
-//			public void actionPerformed(ActionEvent e) {
-//				nc.solicit();
-//			}
-//		});
-		
-//		mainMenuPanel.getBiomedConsole().addActionListener(new ActionListener() {
-//
-//			@Override
-//			public void actionPerformed(ActionEvent e) {
-//
-//					setGoBack("main");
-//					ol.show(panel.getContent(), "biomed");
-//			}
-//			
-//		});
 		
 		panel.getBack().setVisible(false);
 		
@@ -209,17 +171,15 @@ public class DemoApp {
 						setGoBack("main", null);
 						pcaPanel.reset();
 						ol.show(panel.getContent(), "pca");
-					} /*else if("X-Ray Ventilator Sync".equals(o) && null != xrayVentPanel) {
+					} else if("X-Ray Ventilator Sync".equals(o) && null != xrayVentPanel) {
 						setGoBack("main", new Runnable() {
 							public void run() {
 							    xrayVentPanel.stop();
-//								getConnected.disconnect();
 							}
 						});
 						ol.show(panel.getContent(), "xray");
 						xrayVentPanel.start();
-//						getConnected.connect();
-					}*/
+					}
 				}
 				super.mouseClicked(e);
 			}

@@ -48,12 +48,19 @@ public class DeviceMonitor {
     private final EventLoop eventLoop;
     private static final Logger log = LoggerFactory.getLogger(DeviceMonitor.class);
     
+    private final String udi;
+    
     private final Condition c(Condition c) {
         conditions.add(c);
         return c;
     }
     
+    public String getUniversalDeviceIdentifier() {
+        return udi;
+    }
+    
     public DeviceMonitor(DomainParticipant participant, String udi, final DeviceMonitorListener listener, final EventLoop eventLoop) {
+        this.udi = udi;
         final StringSeq identity = new StringSeq();
         identity.add("'"+udi+"'");
         

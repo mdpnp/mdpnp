@@ -15,6 +15,13 @@ import java.nio.IntBuffer;
 
 import javax.swing.ImageIcon;
 
+/**
+ * Encodes raw image raster data from ice.Image as an ImageIcon
+ * suitable for use in Swing.  Also reflects connectivity state
+ * when applicable
+ * @author jplourde
+ *
+ */
 @SuppressWarnings("serial")
 public class DeviceIcon extends ImageIcon {
 	

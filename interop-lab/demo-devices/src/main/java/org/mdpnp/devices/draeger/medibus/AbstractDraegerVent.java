@@ -341,14 +341,14 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 		super(domainId);
 		loadMap();
 		timeUpdate = createNumericInstance(ice.MDC_TIME_MSEC_SINCE_EPOCH.VALUE);
-		startInspiratoryCycleUpdate = createNumericInstance(ice.MDC_TIME_PD_INSPIRATORY.VALUE);
+		startInspiratoryCycleUpdate = createNumericInstance(ice.MDC_START_OF_BREATH.VALUE);
 	}
 	
 	public AbstractDraegerVent(int domainId, SerialSocket serialSocket) {
         super(domainId, serialSocket);
         loadMap();
         timeUpdate = createNumericInstance(ice.MDC_TIME_MSEC_SINCE_EPOCH.VALUE);
-        startInspiratoryCycleUpdate = createNumericInstance(ice.MDC_TIME_PD_INSPIRATORY.VALUE);
+        startInspiratoryCycleUpdate = createNumericInstance(ice.MDC_START_OF_BREATH.VALUE);
     }
 
 	@Override

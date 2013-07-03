@@ -58,9 +58,8 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
                             SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
                             if(sampleInfo.valid_data) {
                                 Numeric n = (Numeric) num_seq.get(i);
-                                log.trace("VitalsModel interested in: " + n);
+//                                log.trace("VitalsModel interested in: " + n);
                                 updateNumeric(n);
-//                                listener.update(n, deviceModel.getByUniversalDeviceIdentifier(n.universal_device_identifier));
                                 
                             }
                         }
@@ -96,7 +95,6 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
                             if(sampleInfo.valid_data) {
                                 ice.SampleArray sa = (ice.SampleArray) sa_seq.get(i);
                                 // TODO report SampleArray changes to listener
-//                                listener.update(sa, deviceModel.getByUniversalDeviceIdentifier(sa.universal_device_identifier));
                             }
                         }
                         sampleArrayDataReader.return_loan(sa_seq, info_seq);
@@ -180,6 +178,10 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
 		return vitals.get(index);
 	}
 
+	/**
+	 * Reflect changes in a device for every associated vital
+	 * @param device
+	 */
 	public void fireDeviceChanged(Device device) {
 		for(int i = 0; i < vitals.size(); i++) {
 			if(vitals.get(i).getDevice().equals(device)) {
@@ -191,29 +193,33 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
 		}
 	}
 	
-	public boolean removeDevice(Device device) {
-		for(int i = 0; i < vitals.size(); i++) {
-			if(vitals.get(i).getDevice().equals(device)) {
-				log.debug("removed " + vitals.get(i).getIdentifier() + " " + device.getMakeAndModel());
-				vitals.remove(i);
-				fireIntervalRemoved(this, 0, 1);
-				fireContentsChanged(this, 0, vitals.size()-1);
-				if(listener != null) {
-					listener.deviceRemoved(device);
-				}
-				return true;
-			}
-		}
-		return false;
+	/**
+	 * 
+	 * @param device
+	 * @return
+	 */
+	public void removeDevice(Device device) {
+	    boolean goAgain = true;
+	    
+	    while(goAgain) {
+	        goAgain = false;
+    		for(int i = 0; i < vitals.size(); i++) {
+    			if(vitals.get(i).getDevice().equals(device)) {
+    				log.debug("removed " + vitals.get(i).getIdentifier() + " " + device.getMakeAndModel());
+    				vitals.remove(i);
+    				fireIntervalRemoved(this, 0, 1);
+    				fireContentsChanged(this, 0, vitals.size()-1);
+    				goAgain = true;
+    			}
+    		}
+	    }
+        if(listener != null) {
+            listener.deviceRemoved(device);
+        }
 	}
     @Override
     public void intervalAdded(ListDataEvent e) {
-//        for(int idx = e.getIndex0(); idx <= e.getIndex1(); idx++) {
-//            Device d = ((DeviceListModel)e.getSource()).getElementAt(idx);
-//            if(listener != null) {
-//                listener.deviceAdded(d);
-//            }
-//        }
+
     }
     @Override
     public void intervalRemoved(ListDataEvent e) {
@@ -229,22 +235,6 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
         }
     }
 	
-//	private static Number fromUpdate(IdentifiableUpdate<?> update) {
-//		if(update instanceof NumericUpdate) {
-//			return ((NumericUpdate)update).getValue();
-//		} else if(update instanceof WaveformUpdate) {
-//			Number[] values = ((WaveformUpdate)update).getValues();
-//			if(null == values || values.length == 0) {
-//				return null;
-//			} else {
-//				return values[values.length - 1];
-//			}
-//		} else {
-//			return null;
-//		}
-//	}
-	
-    
     protected void updateNumeric(ice.Numeric n) {
       Vitals v = null;
       for(int i = 0; i < vitals.size(); i++) {
@@ -277,85 +267,4 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
           log.warn("Numeric from unknown Device:" + n.universal_device_identifier);
       }
     }
-    
-//	@Override
-//	public void update(IdentifiableUpdate<?> update) {
-//		if(null==update) {
-//			return;
-//		}
-//		String source = update.getSource();
-//		if(null == source || "*".equals(source)) {
-//			return;
-//		}
-//		MyDevice device = devices.get(source);
-//		if(device == null) {
-//			device = new MyDevice(source);
-//			devices.put(source, device);
-//			
-//		}
-//		
-//		if(Association.DISSEMINATE.equals(update.getIdentifier())) {
-//			Set<String> sources = new HashSet<String>();
-//			for(String d : devices.keySet()) {
-//				sources.add(d);
-//			}
-//			log.debug("Existing:"+sources.toString());
-//			for(String s : ((TextArrayUpdate)update).getValue()) {
-//				sources.remove(s);
-//			}
-//			log.debug("To Remove:"+sources.toString());
-//			for(String s : sources) {
-//				MyDevice d = devices.get(s);
-//				while(removeDevice(d)) {
-//					
-//				}
-//				devices.remove(s);
-//			}
-//		} else if(interest.contains(update.getIdentifier())) {
-//			Vitals v = null;
-//			for(int i = 0; i < vitals.size(); i++) {
-//				v = vitals.get(i);
-//				if(v.getDevice().getSource().equals(source) && v.getIdentifier().equals(update.getIdentifier())) {
-//					v.setNumber(fromUpdate(update));
-//					
-//					if(listener != null) {
-//						listener.update(update.getIdentifier(), v.getNumber(), device);
-//					}
-//					fireContentsChanged(this, i, i);
-//					return;
-//				}
-//			}
-//			int i = vitals.size();
-//			v = new Vitals(device, update.getIdentifier());
-//			v.setNumber(fromUpdate(update));
-//			vitals.add(v);
-//			fireIntervalAdded(this, 0, 0);
-//			fireContentsChanged(this, 0, vitals.size()-1);
-//			if(listener != null) {
-//				listener.deviceAdded(device);
-//			}
-//		} else if(Device.ICON.equals(update.getIdentifier())) {
-//			device.getDeviceIcon().setImage((ImageUpdate) update);
-//			fireDeviceChanged(device);
-//		} else if(Device.NAME.equals(update.getIdentifier())) {
-//			device.setName(((TextUpdate)update).getValue());
-//			fireDeviceChanged(device);
-//		} else if(ConnectedDevice.STATE.equals(update.getIdentifier())) {
-//			ConnectedDevice.State state = (State) ((EnumerationUpdate)update).getValue();
-//			if(null != state) {
-//				switch(state) {
-//				case Connected:
-//					device.getDeviceIcon().setConnected(true);
-//					break;
-//				default:
-//					device.getDeviceIcon().setConnected(false);
-//					break;
-//				}
-//			} else {
-//				device.getDeviceIcon().setConnected(false);
-//			}
-//			fireDeviceChanged(device);
-//		}
-//	}
-
 }

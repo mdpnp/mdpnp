@@ -417,8 +417,15 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		public Device getLastSource() {
 			return lastSource;
 		}
-		public void setLastSource(Device lastSource) {
-			this.lastSource = lastSource;
+		public void set(ice.Numeric n, Device lastSource) {
+		    this.lastSource = lastSource;
+		    this.value.copy_from(n);
+		}
+		public boolean isSet() {
+            return lastSource != null;
+        }
+		public void unset() {
+		    this.lastSource = null;
 		}
 		public Vital (String name, String units, Integer numeric, Double advisory_minimum, Double advisory_maximum, Double critical_minimum, Double critical_maximum) {
 			this.name = name;
@@ -448,7 +455,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		
 		for(int i = 0; i < vitals.length; i++) {
 			ice.Numeric value = vitals[i].getValue();
-			if(null == value) {
+			if(!vitals[i].isSet()) {
 				anyAdvisory = true;
 				advisories[i] = "- no source of " + vitals[i].getName() + "\r\n";
 			} else if(vitals[i].getAdvisory_minimum() != null && value.value <= vitals[i].getAdvisory_minimum()) {
@@ -478,12 +485,12 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		} else {
 			for(Vital v : vitals) {
 				ice.Numeric value = v.getValue();
-				if(null != value) {
+				if(v.isSet()) {
 					if(v.getCritical_minimum() != null && value.value <= v.getCritical_minimum()) {
-						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue() + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
+						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue().value + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
 						break;
 					} else if(v.getCritical_maximum() != null && value.value >= v.getCritical_maximum()) {
-						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue() + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
+						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue().value + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
 						break;
 					}
 				}
@@ -533,8 +540,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 					if(v.getLastSource() != null && v.getValue() != null && !v.getLastSource().equals(device.getDeviceIdentity().universal_device_identifier) && null == n) {
 						
 					} else {
-					    v.getValue().copy_from(n);
-						v.setLastSource(device);
+					    v.set(n, device);
 						stateChanged = true;
 					}
 				}
@@ -552,9 +558,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		if(device != null) {
 			for(Vital v : vitals) {
 				if(device.equals(v.getLastSource())) {
-				    // TODO revisit nullity and its implications
-				    v.getValue().value = Float.NaN;
-					v.setLastSource(null);
+				    v.unset();
 					stateChanged = true;
 				}
 			}
@@ -566,13 +570,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 
 	@Override
 	public void deviceAdded(Device device) {
-	 // Requests data from existing devices
-//        MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
-//        miau.setValue(REQUEST_IDENTIFIERS);
 
-//        miau.setTarget(device.getSource());
-//        miau.setSource("*");
-//        gateway.update(miau);
 	}	
 	
 	@Override
