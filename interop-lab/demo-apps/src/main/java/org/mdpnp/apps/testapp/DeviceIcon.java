@@ -15,6 +15,9 @@ import java.nio.IntBuffer;
 
 import javax.swing.ImageIcon;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Encodes raw image raster data from ice.Image as an ImageIcon
  * suitable for use in Swing.  Also reflects connectivity state
@@ -24,7 +27,7 @@ import javax.swing.ImageIcon;
  */
 @SuppressWarnings("serial")
 public class DeviceIcon extends ImageIcon {
-	
+    private static final Logger log = LoggerFactory.getLogger(DeviceIcon.class);
 	
 	private static final BufferedImage WHITE_SQUARE = new BufferedImage(96, 96, BufferedImage.TYPE_4BYTE_ABGR);
 	static {
@@ -38,6 +41,11 @@ public class DeviceIcon extends ImageIcon {
 	public DeviceIcon() {
 		super(WHITE_SQUARE);
 	}
+
+	
+   public boolean isBlank() {
+       return WHITE_SQUARE.equals(getImage());
+   }
 	
    public void setImage(ice.Image image) {
         int width = image.width;
@@ -64,8 +72,10 @@ public class DeviceIcon extends ImageIcon {
             AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
             after = scaleOp.filter(bi, after);
             setImage(after);
+            log.debug("New image is width="+width+", height="+height);
 //	          setImage(bi.getScaledInstance(63, 63, Image.SCALE_SMOOTH));
         } else {
+            log.warn("width="+width+", height="+height+(raster==null?", raster is null":"")+", using WHITE_SQUARE");
             setImage(WHITE_SQUARE);
         }
     }

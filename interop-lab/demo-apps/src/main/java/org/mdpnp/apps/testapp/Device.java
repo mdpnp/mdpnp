@@ -5,6 +5,10 @@ import ice.DeviceIdentity;
 
 import java.lang.ref.SoftReference;
 
+import org.jfree.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Convenience class for storing DeviceIdentity and DeviceConnectivity instances
  * DeviceIdentity is required, DeviceConnectivity is only relevant for "connected" devices
@@ -19,6 +23,8 @@ public class Device {
     
     private SoftReference<DeviceIcon> realIcon;
     
+    private final static Logger log = LoggerFactory.getLogger(Device.class);
+    
     public Device() {
         
     }
@@ -28,10 +34,17 @@ public class Device {
         if(null != realIcon) {
             di = realIcon.get();
         }
+        
+        if(di != null && di.isBlank() && deviceIdentity.icon.raster != null && deviceIdentity.icon.width > 0 && deviceIdentity.icon.height > 0) {
+            di = null;
+            log.debug("Constructing a new Icon with new ice.Image data");
+        }
+        
         if(null == di) {
             di = new DeviceIcon(deviceIdentity.icon);
             realIcon = new SoftReference<DeviceIcon>(di);
         }
+        
         return di;
     }
     

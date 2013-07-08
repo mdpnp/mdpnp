@@ -7,6 +7,7 @@ import ice.DeviceConnectivitySeq;
 import ice.DeviceConnectivityTypeSupport;
 import ice.DeviceIdentity;
 import ice.DeviceIdentityDataReader;
+import ice.DeviceIdentitySeq;
 import ice.DeviceIdentityTypeSupport;
 
 import java.util.ArrayList;
@@ -135,7 +136,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
 		reader = (DeviceIdentityDataReader) subscriber.create_datareader(topic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		connReader = (DeviceConnectivityDataReader) subscriber.create_datareader(connTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
-//		final DeviceIdentitySeq data_seq = new DeviceIdentitySeq();
+		final DeviceIdentitySeq data_seq = new DeviceIdentitySeq();
 		final SampleInfoSeq info_seq = new SampleInfoSeq();
 		
 		StatusCondition status = reader.get_statuscondition();
@@ -146,45 +147,50 @@ public class DeviceListModel extends AbstractListModel<Device> {
             @Override
             public void conditionChanged(Condition condition) {
                 ice.DeviceIdentityDataReader reader = (DeviceIdentityDataReader) ((StatusCondition)condition).get_entity();
-                DeviceIdentity di = new DeviceIdentity();
-                SampleInfo si = new SampleInfo();
                 try {
-                    reader.read_next_sample(di, si);
-                    Device current = null;
-                    int cur_idx = -1;
-                    
-                    for(int i = 0; i < contents.size(); i++) {
-                        if(si.instance_handle.equals(reader.lookup_instance(contents.get(i).getDeviceIdentity()))) {
-                            current = contents.get(i);
-                            cur_idx = i;
-                            break;
-                        } 
-                    }
-                    
-                    switch(si.instance_state) {
-                    case InstanceStateKind.ALIVE_INSTANCE_STATE:
-                        if(si.valid_data) {
-                            if(null == current) {
-                                Device device = new Device(di);
-                                contents.add(0, device);
-                                fireIntervalAdded(this, 0, 0);
-                            } else {
-                                current.getDeviceIdentity().copy_from(di);
-                                fireContentsChanged(DeviceListModel.this, cur_idx, cur_idx);
+                    reader.read(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                    for(int i = 0; i < data_seq.size(); i++) {
+                        DeviceIdentity di = (DeviceIdentity) data_seq.get(i);
+                        SampleInfo si = (SampleInfo) info_seq.get(i);
+                        
+                        Device current = null;
+                        int cur_idx = -1;
+                        
+                        for(int j = 0; j < contents.size(); j++) {
+                            if(si.instance_handle.equals(reader.lookup_instance(contents.get(j).getDeviceIdentity()))) {
+                                current = contents.get(j);
+                                cur_idx = j;
+                                break;
+                            } 
+                        }
+                        
+                        switch(si.instance_state) {
+                        case InstanceStateKind.ALIVE_INSTANCE_STATE:
+                            if(si.valid_data) {
+                                if(null == current) {
+                                    Device device = new Device(di);
+                                    contents.add(0, device);
+                                    fireIntervalAdded(this, 0, 0);
+                                } else {
+                                    current.getDeviceIdentity().copy_from(di);
+                                    fireContentsChanged(DeviceListModel.this, cur_idx, cur_idx);
+                                }
                             }
+                            break;
+                        case InstanceStateKind.NOT_ALIVE_DISPOSED_INSTANCE_STATE:
+                        case InstanceStateKind.NOT_ALIVE_NO_WRITERS_INSTANCE_STATE:
+                            log.trace("InstanceState:"+si.instance_state);
+                            if(cur_idx >= 0) {
+                                Device device = contents.remove(cur_idx);
+                                fireIntervalRemoved(DeviceListModel.this, cur_idx, cur_idx);
+                            }
+                            break;
                         }
-                        break;
-                    case InstanceStateKind.NOT_ALIVE_DISPOSED_INSTANCE_STATE:
-                    case InstanceStateKind.NOT_ALIVE_NO_WRITERS_INSTANCE_STATE:
-                        log.trace("InstanceState:"+si.instance_state);
-                        if(cur_idx >= 0) {
-                            Device device = contents.remove(cur_idx);
-                            fireIntervalRemoved(DeviceListModel.this, cur_idx, cur_idx);
-                        }
-                        break;
                     }
                 } catch (RETCODE_NO_DATA noData) {
                     
+                } finally {
+                    reader.return_loan(data_seq, info_seq);
                 }
                 
             }
