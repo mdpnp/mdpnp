@@ -4,7 +4,9 @@ import static org.mdpnp.clinicalscenarios.server.OfyService.ofy;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
 
+
 public class TagLocator extends Locator<Tag, Long>  {
+
 
 	@Override
 	public Tag create(Class<? extends Tag> clazz) {

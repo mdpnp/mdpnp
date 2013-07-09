@@ -7,7 +7,8 @@ import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.ServiceName;
 
-@ServiceName("org.mdpnp.clinicalscenarios.server.user.Tag")
+
+@ServiceName("org.mdpnp.clinicalscenarios.server.tag.Tag")
 public interface TagRequest extends RequestContext {	
 	Request<List<TagProxy>> findAll();
 	Request<TagProxy> create();
@@ -15,3 +16,4 @@ public interface TagRequest extends RequestContext {
 	InstanceRequest<TagProxy, Void> remove();
 
 }
+

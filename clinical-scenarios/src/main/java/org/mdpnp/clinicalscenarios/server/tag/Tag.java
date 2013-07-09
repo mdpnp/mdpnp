@@ -5,14 +5,10 @@ import static org.mdpnp.clinicalscenarios.server.OfyService.ofy;
 import java.io.Serializable;
 import java.util.List;
 
-import org.mdpnp.clinicalscenarios.server.user.UserInfo;
-
-import com.google.appengine.api.users.User;
-import com.google.appengine.api.users.UserService;
-import com.google.appengine.api.users.UserServiceFactory;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
+import com.googlecode.objectify.annotation.OnSave;
 
 /**
  * 
@@ -22,6 +18,7 @@ import com.googlecode.objectify.annotation.Index;
  * the clincial scenarios 
  *
  */
+@SuppressWarnings("serial")
 @Entity
 public class Tag implements Serializable {
 	
@@ -33,6 +30,8 @@ public class Tag implements Serializable {
 	private String name; // name (identifier) of the tag
 	
 	private String description; //description associated to the tag
+	
+	//TODO Add auditing info?  creation date/ user and modification date/user
 	
 	//cons
 	public Tag(){};
@@ -75,6 +74,13 @@ public class Tag implements Serializable {
 		this.version = version;
 	}
 	
+	
+	public static Tag create() {
+	    Tag t = new Tag();
+        ofy().save().entity(t).now();
+        return t;
+	}
+	
 	/**
 	 * Persist / save the item
 	 * @return
@@ -83,6 +89,10 @@ public class Tag implements Serializable {
 	    ofy().save().entity(this).now();
 	    return this;
 	}
+	@OnSave
+	void onPersist() {
+	    version++;
+	}
 	
 	/**
 	 * Find all tags
@@ -90,38 +100,14 @@ public class Tag implements Serializable {
 	 */
 	public static List<Tag> findAll() {
 		
-	    return ofy().load().type(Tag.class).list();//XXX is this ok? argument of Type? do I need to id the user?
-	    /**
-	     * 	UserService userService = UserServiceFactory.getUserService();
-		User user = userService.getCurrentUser();
-		
-		UserInfo ui = null;
-		
-		if(null == user) {
-			// Create a non-persisted temporary object
-			// client will find a null userid and null email and 
-			// know to only examine login and logout urls
-			ui = new UserInfo();
-		} else {
-		    ui = ofy().load().type(UserInfo.class).id(user.getUserId()).now();
-
-			if(null == ui) {
-				// This user is authenticated but we do not have any information about them
-				ui = new UserInfo();
-				ui.setUserId(user.getUserId());
-				ui.setEmail(user.getEmail());
-				ofy().save().entity(ui).now();
-			} else {
-				// This is an authenticated user that we know
-			}
-		}
-		ui.setAdmin(userService.isUserLoggedIn() && userService.isUserAdmin());
-		ui.setLoginURL(userService.createLoginURL(url));
-		ui.setLogoutURL(userService.createLogoutURL(url));
-		
-		return ui;
-	     */
-	    
+	    return ofy().load().type(Tag.class).list();	    
+	}
+	
+	/**
+	 * removes the current tag
+	 */
+	public void remove() {
+	    ofy().delete().entity(this).now();
 	}
 	
 

@@ -2,12 +2,6 @@ package org.mdpnp.clinicalscenarios.client.tag;
 
 import java.util.List;
 
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -25,6 +19,14 @@ import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriv
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 
+/**
+ * 
+ * @author dalonso@mdpnp.org <p>
+ * Tags management panel <p>
+ * XXX As Jeff pointed, we might have a problem w/ this list of items when the list is really long. 
+ * We should look for a way of using ListEditor instead
+ *
+ */
 public class TagsManagementPanel extends Composite implements Editor<TagProxy>{
 
 	private static TagManagementPanelUiBinder uiBinder = GWT.create(TagManagementPanelUiBinder.class);
@@ -49,7 +51,8 @@ public class TagsManagementPanel extends Composite implements Editor<TagProxy>{
 	
 	private static final String[] headers = new String[] {"Name", "Description"};
 	
-	public TagsManagementPanel(TagRequestFactory tagRequestFactory) {
+	public TagsManagementPanel(final TagRequestFactory tagRequestFactory) {
+		this.tagRequestFactory = tagRequestFactory;
 		initWidget(uiBinder.createAndBindUi(this));
 		TagRequest taReq = tagRequestFactory.tagRequest();
 		driver.initialize(tagRequestFactory, this);
@@ -63,20 +66,24 @@ public class TagsManagementPanel extends Composite implements Editor<TagProxy>{
 		}
 		
 
+		/**
+		 * Populate the list w/ all the values
+		 */
 		taReq.findAll().to(new Receiver<List<TagProxy>>() {
 			@Override
 			public void onSuccess(List<TagProxy> response) {
 				
 				for(int i = 0; i < response.size(); i++) {
+					final int row = i;//current row
 					list.insertRow(i + 1);
-					TagProxy u = response.get(i);
-//					list.setText(1 + i, 0, u.getName());
-//					list.setText(1 + i, 1, u.getDescription());
-					TextBox tName = new TextBox();
-					tName.setText(u.getName());
-					TextBox tDescription = new TextBox();
-					tDescription.setText(u.getDescription());
-					tDescription.setWidth("200");
+					final TagProxy tagProxy = response.get(i);
+					final TextBox tName = new TextBox();
+					tName.setText(tagProxy.getName());
+					final TextBox tDescription = new TextBox();
+					tDescription.setText(tagProxy.getDescription());
+					tName.setMaxLength(25);// max length of text
+					tDescription.setWidth("600px");
+					tDescription.setMaxLength(100);// Max length of thex 100 car
 					list.setWidget(1 + i, 0, tName);
 					list.setWidget(1 + i, 1, tDescription);
 					
@@ -84,15 +91,65 @@ public class TagsManagementPanel extends Composite implements Editor<TagProxy>{
 					Button bDelete = new Button(); bDelete.setText("Delete");//delete tag Button
 					list.setWidget(1 + i, 3, bUpdate);
 					list.setWidget(1 + i, 4, bDelete);
-	
+					
+					/**
+					 * Add a click handler for the update button
+					 */
+					bUpdate.addClickHandler(new ClickHandler() {
+										
+						@Override
+						public void onClick(ClickEvent event) {						
+							TagRequest request = tagRequestFactory.tagRequest();
+							TagProxy mutableTagProxy = request.edit(tagProxy);
+							mutableTagProxy.setName(tName.getText());
+							mutableTagProxy.setDescription(tDescription.getText());
+							
+							request.persist().using(mutableTagProxy).fire(new Receiver<TagProxy>() {
 
+								@Override
+								public void onSuccess(TagProxy response) {
+//									Window.alert("Successfully saved the modified Tag");
+								}
+								@Override
+								public void onFailure(ServerFailure error) {
+//									Window.alert("Failed to save the modified tag "+error.getMessage());
+									super.onFailure(error);
+								}
+								
+							});
+						}
+					});
+					
+					/**
+					 * Add click handler form he delete button
+					 */
+					bDelete.addClickHandler(new ClickHandler() {
+						
+						@Override
+						public void onClick(ClickEvent event) {
+							TagRequest request = tagRequestFactory.tagRequest();
+							TagProxy mutableTagProxy = request.edit(tagProxy);
+
+							//XXX clean hee a little bit and get rid of this alerts
+							request.remove().using(mutableTagProxy).fire(/*new Receiver() {
+								@Override
+								public void onSuccess(Object response) {
+									Window.alert("Successfully deleted the modified Tag");									
+								}	
+							}*/);
+
+							list.removeRow(row);
+						}
+					});
+	
 				}
 				
-			}
+			}//on success
+			
 			@Override
 			public void onFailure(ServerFailure error) {
 				super.onFailure(error);
-				Window.alert(error.getMessage());
+//				Window.alert(error.getMessage());
 			}
 		}).fire();
 	}
@@ -110,6 +167,7 @@ public class TagsManagementPanel extends Composite implements Editor<TagProxy>{
 		this.currentTag = currentTag;
 		
 	}
+	
 
 
 
@@ -124,57 +182,81 @@ public class TagsManagementPanel extends Composite implements Editor<TagProxy>{
 	
 	@UiHandler("addNewTag")
 	void onANTClick(ClickEvent click) {
-		final int rows = list.getRowCount();
-		list.insertRow(rows);
-		TextBox tName = new TextBox();
-		tName.setMaxLength(25);//max length of text
-		TextBox tDescription = new TextBox();	
-		tDescription.setWidth("600px");
-		tDescription.setMaxLength(100);//Max length of thex 100 car
-		Button bUpdate = new Button(); bUpdate.setText("Update");//update tag Button
-		Button bDelete = new Button(); bDelete.setText("Delete");//delete tag Button
-		
-		list.setWidget(rows, 0, tName);
-		list.setWidget(rows, 1, tDescription);
-		list.setWidget(rows, 3, bUpdate);
-		list.setWidget(rows, 4, bDelete);
-		
-		bUpdate.addClickHandler(new ClickHandler() {
+		tagRequestFactory.tagRequest().create().fire(new Receiver<TagProxy>() {
+
+			@Override
+			public void onFailure(ServerFailure error) {
+//				Window.alert("Failed to create Tag ... " + error.getMessage());
+				super.onFailure(error);
+			}
 			
 			@Override
-			public void onClick(ClickEvent event) {
-				//on click, save the appropiate TAG
-//				Key tagKey = KeyFactory.createKey("TagList", "D");
-//				Entity myTag = new Entity("Tag", tagKey);
-//				myTag.setProperty("name", currentTag.getName());
-//				myTag.setProperty("description", currentTag.getDescription());
-//				
-//				DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-//				datastore.put(myTag);
-//				
-				TagRequest tagRequest = (TagRequest)driver.flush();				
-				tagRequest.persist().using(currentTag).with(driver.getPaths()).to(new Receiver<TagProxy>() {
+			public void onSuccess(final TagProxy response) {
+//				Window.alert("Successfully created a Tag... building UI components etc...");
+				final int rows = list.getRowCount();
+				list.insertRow(rows);
+				final TextBox tName = new TextBox();
+				tName.setMaxLength(25);//max length of text
+				final TextBox tDescription = new TextBox();	
+				tDescription.setWidth("600px");
+				tDescription.setMaxLength(100);//Max length of thex 100 car
+				Button bUpdate = new Button(); bUpdate.setText("Update");//update tag Button
+				Button bDelete = new Button(); bDelete.setText("Delete");//delete tag Button
+				
+				list.setWidget(rows, 0, tName);
+				list.setWidget(rows, 1, tDescription);
+				list.setWidget(rows, 3, bUpdate);
+				list.setWidget(rows, 4, bDelete);
 
+				/**
+				 * Add a click handler for the update button
+				 */
+				bUpdate.addClickHandler(new ClickHandler() {
+									
 					@Override
-					public void onSuccess(TagProxy response) {
-						// TODO Auto-generated method stub
-						//XXX see how its done in user info panel
-//						scenarioRequestFactory.getEventBus().fireEvent(new EntityProxyChange<ScenarioProxy>(response, WriteOperation.UPDATE));
-//						setCurrentScenario(response);
-//						
-						saveHandler.onSave(response);
+					public void onClick(ClickEvent event) {						
+						TagRequest request = tagRequestFactory.tagRequest();
+						TagProxy mutableTagProxy = request.edit(response);
+						mutableTagProxy.setName(tName.getText());
+						mutableTagProxy.setDescription(tDescription.getText());
+						
+						request.persist().using(mutableTagProxy).fire(new Receiver<TagProxy>() {
+
+							@Override
+							public void onSuccess(TagProxy response) {
+//								Window.alert("Successfully saved the modified Tag");
+							}
+							@Override
+							public void onFailure(ServerFailure error) {
+//								Window.alert("Failed to save the modified tag "+error.getMessage());
+								super.onFailure(error);
+							}
+							
+						});
 					}
+				});
+				
+				/**
+				 * Add click handler form he delete button
+				 */
+				bDelete.addClickHandler(new ClickHandler() {
 					
 					@Override
-					public void onFailure(ServerFailure error) {
-						super.onFailure(error);
-						Window.alert(error.getMessage());
+					public void onClick(ClickEvent event) {
+						TagRequest request = tagRequestFactory.tagRequest();
+						TagProxy mutableTagProxy = request.edit(response);
+					
+						request.remove().using(mutableTagProxy).fire();
+						list.removeRow(rows);
 					}
-				}).fire();
-	
+				});
 			}
+			
 		});
-	
+		
+
 	}
+	
+	//----------------------------------------------
 
 }
