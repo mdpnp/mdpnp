@@ -41,6 +41,7 @@ import com.rti.dds.topic.TopicDescription;
 
 
 
+@SuppressWarnings("serial")
 public class DeviceListModel extends AbstractListModel<Device> {
 
 	private static final Logger log = LoggerFactory
@@ -48,7 +49,6 @@ public class DeviceListModel extends AbstractListModel<Device> {
 	
 	private final List<Device> contents = new ArrayList<Device>();
 	
-	@SuppressWarnings("serial")
 	public static class DeviceIdentityTableModel extends AbstractTableModel implements
 			ListDataListener {
 		@SuppressWarnings("rawtypes")
@@ -140,7 +140,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
 		final SampleInfoSeq info_seq = new SampleInfoSeq();
 		
 		StatusCondition status = reader.get_statuscondition();
-		status.set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
+		status.set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS | StatusKind.LIVELINESS_LOST_STATUS);
 		
 		eventLoop.addHandler(status, new EventLoop.ConditionHandler() {
 
@@ -148,7 +148,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
             public void conditionChanged(Condition condition) {
                 ice.DeviceIdentityDataReader reader = (DeviceIdentityDataReader) ((StatusCondition)condition).get_entity();
                 try {
-                    reader.read(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                    reader.read(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
                     for(int i = 0; i < data_seq.size(); i++) {
                         DeviceIdentity di = (DeviceIdentity) data_seq.get(i);
                         SampleInfo si = (SampleInfo) info_seq.get(i);
@@ -168,10 +168,12 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         case InstanceStateKind.ALIVE_INSTANCE_STATE:
                             if(si.valid_data) {
                                 if(null == current) {
+                                    log.trace("New alive Device instance");
                                     Device device = new Device(di);
                                     contents.add(0, device);
                                     fireIntervalAdded(this, 0, 0);
                                 } else {
+                                    log.trace("Update to existing Device instance");
                                     current.getDeviceIdentity().copy_from(di);
                                     fireContentsChanged(DeviceListModel.this, cur_idx, cur_idx);
                                 }
@@ -179,10 +181,13 @@ public class DeviceListModel extends AbstractListModel<Device> {
                             break;
                         case InstanceStateKind.NOT_ALIVE_DISPOSED_INSTANCE_STATE:
                         case InstanceStateKind.NOT_ALIVE_NO_WRITERS_INSTANCE_STATE:
-                            log.trace("InstanceState:"+si.instance_state);
+                            
                             if(cur_idx >= 0) {
+                                log.trace("Found Device not alive InstanceState:"+si.instance_state);
                                 Device device = contents.remove(cur_idx);
                                 fireIntervalRemoved(DeviceListModel.this, cur_idx, cur_idx);
+                            } else {
+                                log.trace("Not found Device not alive InstanceState:"+si.instance_state+" DeviceIdentity:"+di);
                             }
                             break;
                         }
