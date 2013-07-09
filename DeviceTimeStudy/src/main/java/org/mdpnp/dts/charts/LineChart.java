@@ -1,4 +1,4 @@
-package org.mdpnp.dts.outputter;
+package org.mdpnp.dts.charts;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -22,6 +22,7 @@ import org.jfree.ui.ApplicationFrame;
 /**
  * 
  * @author dalonso@mdpnp.org
+ * <p>
  * This class uses the JFreechart to implement a linear chart with categorical data
  *
  */

@@ -1,4 +1,4 @@
-package org.mdpnp.dts.outputter;
+package org.mdpnp.dts.charts;
 
 import java.awt.Color;
 import java.awt.GradientPaint;
@@ -24,6 +24,7 @@ import org.mdpnp.dts.utils.UtilsDTS;
 /**
  * 
  * @author dalonso@mdpnp.org
+ * <p>
  * This class implements Bar Chart Graphics with the JFreechart Library
  *
  */

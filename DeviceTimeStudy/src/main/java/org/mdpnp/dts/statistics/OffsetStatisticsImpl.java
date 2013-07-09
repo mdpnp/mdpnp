@@ -6,14 +6,15 @@ import java.util.List;
 import org.mdpnp.dts.utils.UtilsDTS;
 
 /**
- * 
  * @author dalonso@mdpnp.org
- * Implements basic functionality to get statistics of the offsets.
+ * <p>
+ * Implements basic functionality to get statistics of the offsets.<p>
  * These would be offset average and Standard deviation for the regular (basic) case, 
  *  the "New Minute" case (clock doesn't display seconds, and we assume we just change to this minute XX:00)
  *  the "New Minute Eve" case (clock doesn't display seconds, and we assume is about to change to the next minute XX:59)
+ *  <p>
  *  XXX Offsets are calculated always in MILISECONDS, for consistency w/ Date.getTime() 
- *  
+ * <p>
  * XXX Note about the Standard Deviation:
  * The standard deviation is equal to the square root of the variance.
  * The following formula is valid only if the N values we use in our calculations form the complete population.
@@ -54,7 +55,7 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 	
 //getters and setters
 	/**
-	 * Returns the amount of items studied 
+	 * Returns the amount of items studied. 
 	 * NOTE: this number should be the same for the three different time scenarios
 	 */
 	public int getCount() {
@@ -74,7 +75,7 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 	/**
 	 * Returns the offset average for the "New Minute" scenario
 	 */
-	public double getAvgOffset_newMinute() {
+	public double getAvgOffsetNewMinute() {
 		if (offsetNewMinute.size() >0)
 			return totalOffsetNewMinute/offsetNewMinute.size();
 		else
@@ -84,7 +85,7 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 	/**
 	 * Returns the offset average for the "New minute Eve" Scenario
 	 */
-	public double getAvgOffset_NewMinuteEve() {
+	public double getAvgOffsetNewMinuteEve() {
 		if(offsetNewMinuteEve.size() >0)
 			return totalOffsetNewMinuteEve/offsetNewMinuteEve.size();
 		else
@@ -114,7 +115,7 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 		if(getCount()==0)
 			return 0;
 		long total = 0;
-		double avg = getAvgOffset_newMinute();
+		double avg = getAvgOffsetNewMinute();
 		for(Long l : offsetNewMinute){
 			total+= Math.pow(l-avg, 2);
 		}
@@ -128,7 +129,7 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 		if(getCount()==0)
 			return 0;
 		long total = 0;
-		double avg = getAvgOffset_NewMinuteEve();
+		double avg = getAvgOffsetNewMinuteEve();
 		for(Long l : offsetNewMinuteEve){
 			total+= Math.pow(l-avg, 2);
 		}
@@ -212,7 +213,8 @@ public class OffsetStatisticsImpl implements OffsetStatistics {
 	}
 	
 	/**
-	 * Calculates the offset between two dates and adds it to the proper offset list structures
+	 * Calculates the offset between two dates and adds it to the proper offset list structures. <p>
+	 * If (NOT displaysSeconds) it calculates and adds the offsets for 'New Minute' and 'New Minute Eve' scenarios.
 	 * @param date1
 	 * @param date2
 	 * @param displaysSeconds
