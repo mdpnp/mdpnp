@@ -445,16 +445,20 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 
     @Override
     public void numeric(Numeric n, SampleInfo sampleInfo) {
+        long previousPeriod = this.period;
         switch(n.name) {
         case ice.MDC_TIME_PD_INSPIRATORY.VALUE:
             inspiratoryTime = (long) (1000.0 * n.value);
             break;
         case ice.MDC_VENT_TIME_PD_PPV.VALUE:
+            
             period = (long)( 60000.0 / n.value );
-            log.debug("FrequencyIPPV="+n.value+" period="+period);
+            if(period != previousPeriod) {
+                log.debug("FrequencyIPPV="+n.value+" period="+period);
+            }
             break;
         case ice.MDC_START_OF_BREATH.VALUE:
-          log.trace("START_INSPIRATORY_CYCLE");
+//          log.trace("START_INSPIRATORY_CYCLE");
           Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
           TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
           
