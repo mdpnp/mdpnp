@@ -41,6 +41,7 @@ public class Main {
 	
 	static int totalLinesRead = 0;//useful lines, Headers don't count
 	
+	//FIXME path should be read from properties file or console args 
 	static String path ="C:\\Users\\da792\\Documents\\Device Time Study Package\\Diego\\";
 	
 	/**
@@ -52,8 +53,8 @@ public class Main {
 		Date initDateCalc, endDateCalc;// dates for performance control
 		
 		//TODO path and file name shoud be read from args parameter
-		String sFilename = "testData1.csv"; //test purposes
-		sFilename = "DST_rawData.csv";//overwrite RAW_DATA
+//		String sFilename = "testData1.csv"; //test purposes
+		String sFilename = "DST_rawData.csv";//overwrite RAW_DATA
 		/**
 		 * 1 Create reader object (org.mdpnp.dts.reader.Reader) and read data file.
 		 * This will populate our structures for statistics (we get this info via Reader getter methods).
@@ -83,6 +84,7 @@ public class Main {
 		//GENERATE THE CHARTS
 		//Statistics by Device Type
 //		printStatsByDeviceType();
+		writeStatsByDeviceType(path, "byDeviceType.csv");
 //		System.out.println("*********************");
 //		
 //		//Statistics by connection type: Networked Vs. Stand-Alone
@@ -132,6 +134,32 @@ public class Main {
 		barChart.pack();
         RefineryUtilities.centerFrameOnScreen(barChart);
         barChart.setVisible(true);
+	}
+	
+	/**
+	 * prints statistics to file
+	 * @param pathName
+	 * @param fileName
+	 */
+	private static void writeStatsByDeviceType(String pathName, String fileName){
+		DTSFileWriter fileWriter = new DTSFileWriter(pathName, fileName);
+		String sep = Reader.SEP_PIPE;
+		
+		//fisrt row is columns header
+		fileWriter.addRow(""+sep+"Count"+sep+"Avg. Offset"+sep+"STD Dev."+sep+"Max. Offset"+sep+"Min. Offset");
+		
+		List<String> auxSortedList = new ArrayList<String>(byDeviceType.keySet());
+		Collections.sort(auxSortedList);
+		for(String key : auxSortedList){
+			OffsetStatisticsImpl value = (OffsetStatisticsImpl)byDeviceType.get(key);
+			String row = key+sep+value.getCount()
+					+sep+UtilsDTS.parseDateToStringFormat(Math.round(value.getAvgOffset()))
+					+sep+UtilsDTS.parseDateToStringFormat(Math.round(value.getStdDev()))
+					+sep+UtilsDTS.parseDateToStringFormat(Math.round(value.getMaxOffset()))
+					+sep+UtilsDTS.parseDateToStringFormat(Math.round(value.getMinOffset()));
+			fileWriter.addRow(row);
+		}
+		fileWriter.close();
 	}
 	
 	/**
