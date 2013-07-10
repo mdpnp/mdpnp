@@ -24,7 +24,7 @@ public class BuildInfo {
             while (resources.hasMoreElements()) {
                 try {
                   Manifest manifest = new Manifest(resources.nextElement().openStream());
-                  manifest.write(System.out);
+//                  manifest.write(System.out);
                   // check that this is your manifest and do what you need or get the next one
                   Attributes mainAttrs = manifest.getMainAttributes();
                   if("demo-apps".equals(mainAttrs.getValue("Implementation-Title"))) {

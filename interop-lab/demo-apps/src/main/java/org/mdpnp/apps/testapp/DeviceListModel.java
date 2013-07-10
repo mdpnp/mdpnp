@@ -95,7 +95,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
 	        for(int i = 0; i < info_seq.size(); i++) {
 	            SampleInfo si = (SampleInfo) info_seq.get(i);
 	            DeviceConnectivity dc = (DeviceConnectivity) data_seq.get(i);
-	            log.trace("SampleInfo="+fieldsToStringSilent(si)+" DeviceConnectivity="+dc);
+//	            log.trace("SampleInfo="+fieldsToStringSilent(si)+" DeviceConnectivity="+dc);
     	        if(si.valid_data) {
     	            keyHolder.copy_from(data_seq.get(i));
     	            anySamples = true;
@@ -171,7 +171,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         DeviceConnectivity di = (DeviceConnectivity) conn_seq.get(i);
                         SampleInfo si = (SampleInfo) info_seq.get(i);
                         
-                        log.trace("SampleInfo="+fieldsToStringSilent(si)+" DeviceConnectivity="+di);
+//                        log.trace("SampleInfo="+fieldsToStringSilent(si)+" DeviceConnectivity="+di);
                         
                         Device current = get(di.universal_device_identifier, cur_idx, false);
         
@@ -207,11 +207,11 @@ public class DeviceListModel extends AbstractListModel<Device> {
                     for(int i = 0; i < data_seq.size(); i++) {
                         DeviceIdentity di = (DeviceIdentity) data_seq.get(i);
                         SampleInfo si = (SampleInfo) info_seq.get(i);
-                        log.trace("SampleInfo="+fieldsToStringSilent(si)+" DeviceIdentity="+di);
+//                        log.trace("SampleInfo="+fieldsToStringSilent(si)+" DeviceIdentity="+di);
                         Device current = get(si.instance_handle, cur_idx, true, null);
         
                         if(si.valid_data) {
-                            log.trace("Sample for existing device "+di.universal_device_identifier+" was " +current.getDeviceIdentity() + " will be " + di);
+//                            log.trace("Sample for existing device "+di.universal_device_identifier+" was " +current.getDeviceIdentity() + " will be " + di);
                             current.getDeviceIdentity().copy_from(di);
                             fireContentsChanged(DeviceListModel.this, cur_idx[0], cur_idx[0]);
                         }
@@ -249,7 +249,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         DeviceIdentity di = (DeviceIdentity) data_seq.get(i);
                         SampleInfo si = (SampleInfo) info_seq.get(i);
     
-                        log.trace("SampleInfo="+fieldsToStringSilent(si)+" DeviceIdentity="+di);
+//                        log.trace("SampleInfo="+fieldsToStringSilent(si)+" DeviceIdentity="+di);
                         lastHandle = si.instance_handle;
                         
                         Device current = get(lastHandle, cur_idx, false, keyHolder);

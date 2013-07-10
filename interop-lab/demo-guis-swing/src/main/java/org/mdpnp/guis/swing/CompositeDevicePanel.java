@@ -158,6 +158,12 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
         }
 //        log.trace(sampleArray.toString());
     }
+    
+    public void reset() {
+        knownIdentifiers.clear();
+        dataComponents.clear();
+        replaceDataPanels();
+    }
 
     @Override
     public void addNumeric(int name) {

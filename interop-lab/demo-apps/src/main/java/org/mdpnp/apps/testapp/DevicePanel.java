@@ -40,6 +40,7 @@ public class DevicePanel extends JPanel {
 		super.processComponentEvent(e);
 		switch(e.getID()) {
 		case ComponentEvent.COMPONENT_HIDDEN:
+		    log.debug("Component hidden");
 			setModel(null, null, null);
 			break;
 		}
@@ -49,13 +50,18 @@ public class DevicePanel extends JPanel {
 	
 	public void setModel(Subscriber subscriber, DeviceIdentity deviceIdentity, EventLoop eventLoop) {
 	    if(null != deviceMonitor) {
+	        log.debug("DeviceMonitor.shutdown");
 	        deviceMonitor.shutdown();
 	        deviceMonitor = null;
 	    }
 
 	    if(null != subscriber && null != deviceIdentity) {
+	        log.debug("DeviceMonitor ctor");
 	        deviceMonitor = new DeviceMonitor(subscriber.get_participant(), deviceIdentity.universal_device_identifier, cdp, eventLoop);
+	    } else {
+	        cdp.reset();
 	    }
+	    
 	}
 
 

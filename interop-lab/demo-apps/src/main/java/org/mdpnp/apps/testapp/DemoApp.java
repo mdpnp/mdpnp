@@ -204,7 +204,12 @@ public class DemoApp {
 				if(idx>=0) {
 				    Device device = (Device) mainMenuPanel.getDeviceList().getModel().getElementAt(idx);
 				    devicePanel.setModel(subscriber, device.getDeviceIdentity(), eventLoop);
-					setGoBack("main", null);
+					setGoBack("main", new Runnable() {
+					    public void run() {
+					        
+					        devicePanel.setModel(null, null, null);
+					    }
+					});
 					ol.show(panel.getContent(), "devicepanel");
 				}
 				super.mouseClicked(e);

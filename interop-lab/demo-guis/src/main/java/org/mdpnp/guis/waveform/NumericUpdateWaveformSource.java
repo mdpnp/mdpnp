@@ -16,8 +16,8 @@ public class NumericUpdateWaveformSource extends AbstractWaveformSource {
 	}
 	
 	@Override
-	public int getValue(int x) {
-	    return (int) lastUpdate.value;
+	public float getValue(int x) {
+	    return lastUpdate.value;
 //		return null == lastUpdate.getValue() ? 0 : lastUpdate.getValue().intValue();
 	}
 

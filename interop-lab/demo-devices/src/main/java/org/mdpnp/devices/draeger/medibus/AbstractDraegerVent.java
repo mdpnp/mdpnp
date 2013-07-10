@@ -92,7 +92,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 	private long lastRealtime;
 	
 	private final Date date = new Date();
-	protected void processRealtime(RTMedibus.RTDataConfig config, int multiplier, int streamIndex, Object code, int value) {
+	protected void processRealtime(RTMedibus.RTDataConfig config, int multiplier, int streamIndex, Object code, double value) {
 		lastRealtime = System.currentTimeMillis();
 		if(streamIndex >= realtimeBuffer.length) {
 		    log.warn("Invalid realtime streamIndex="+streamIndex);
@@ -192,7 +192,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 			processCorrupt(priorCommand);
 		}
 		@Override
-		public void receiveDataValue(RTMedibus.RTDataConfig config, int multiplier, int streamIndex, Object realtimeData, int data) {
+		public void receiveDataValue(RTMedibus.RTDataConfig config, int multiplier, int streamIndex, Object realtimeData, double data) {
 			processRealtime(config, multiplier, streamIndex, realtimeData, data);
 		}
 		@Override

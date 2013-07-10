@@ -21,8 +21,8 @@ public class WaveformUpdateWaveformSource extends AbstractWaveformSource {
 	}
 	
 	@Override
-	public int getValue(int x) {
-	    return (int) lastUpdate.values.getFloat(x);
+	public float getValue(int x) {
+	    return lastUpdate.values.getFloat(x);
 //		if(null == lastUpdate) {
 //			return 0; 
 //		} else {

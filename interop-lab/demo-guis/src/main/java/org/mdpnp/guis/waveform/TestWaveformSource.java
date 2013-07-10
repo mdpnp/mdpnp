@@ -26,9 +26,9 @@ public class TestWaveformSource implements WaveformSource, Runnable {
 	private double scale = 25.0;
 	
 	@Override
-	public int getValue(int x) {
+	public float getValue(int x) {
 		double d = (1.0 * x / MAX) * MAX_X;
-		return (int) (scale * Math.cos(OFFSETS[offset] + d));
+		return (float) (scale * Math.cos(OFFSETS[offset] + d));
 	}
 
 	@Override
