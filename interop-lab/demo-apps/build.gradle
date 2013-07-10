@@ -13,6 +13,24 @@ mainClassName = "org.mdpnp.apps.testapp.Main"
     //from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 //}
 
+Date buildTimeAndDate = new Date()
+ext {
+    buildDate = new java.text.SimpleDateFormat('dd-MMM-yyyy').format(buildTimeAndDate)
+    buildTime = new java.text.SimpleDateFormat('hh:mm aa').format(buildTimeAndDate)
+}
+
+if (project.plugins.findPlugin('java')) {
+    jar {
+        manifest {
+            attributes("Built-By": System.properties['user.name'], "Created-By": System.properties['java.version'] + " (" + System.properties['java.vendor'] + " " + System.getProperty("java.vm.version") + ")",
+                "Implementation-Title": project.name, "Implementation-Version": project.version, "Build-Date": buildDate, "Build-Time": buildTime,
+                "Specification-Title": project.name, "Specification-Version": project.version, "Implementation-Vendor": project.group,
+                "Specification-Vendor": project.group)
+        }
+    }
+}
+
+
 dependencies {
   compile project(':interop-lab:demo-devices')
   compile project(':interop-lab:demo-guis')

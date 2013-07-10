@@ -41,6 +41,7 @@ public class DemoPanel extends JPanel implements Runnable {
 	private final JLabel status = new JLabel("  ");
 	private final JButton back = new JButton("Back");
 	private final JLabel time = new JLabel("HH:mm:ss");
+	private final JLabel version = new JLabel(" ");
 	
 	private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 	
@@ -137,6 +138,10 @@ public class DemoPanel extends JPanel implements Runnable {
 		time.setForeground(darkBlue);
 		time.setOpaque(false);
 		time.setFont(Font.decode("verdana-15"));
+		version.setForeground(darkBlue);
+		version.setOpaque(false);
+		version.setFont(Font.decode("Courier-10"));
+		footer.add(version, BorderLayout.SOUTH);
 		revalidate();
 //		SpaceFillLabel.attachResizeFontToFill(footer, time, status);
 		
@@ -212,6 +217,9 @@ public class DemoPanel extends JPanel implements Runnable {
 	}
 	
 
+	public JLabel getVersion() {
+        return version;
+    }
 	
 	@Override
 	protected void paintComponent(Graphics g) {

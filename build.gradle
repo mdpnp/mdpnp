@@ -20,7 +20,7 @@ subprojects {
     
     group 'org.mdpnp'
     version '0.0.6-SNAPSHOT'
-    
+      
     repositories {
         // Virtual repository of all remote repositories
         // used in the mdpnp project

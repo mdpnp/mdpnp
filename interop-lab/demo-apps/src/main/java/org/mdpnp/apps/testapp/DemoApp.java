@@ -94,6 +94,14 @@ public class DemoApp {
 		final DemoFrame frame = new DemoFrame("Integrated Clinical Environment");
 		panel = new DemoPanel();
 		
+		String version = BuildInfo.getVersion();
+		
+		if(null == version) {
+		    panel.getVersion().setText("Development Version");
+		} else {
+		    panel.getVersion().setText("v"+version+" built:"+BuildInfo.getDate()+" "+BuildInfo.getTime());
+		}
+		
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
