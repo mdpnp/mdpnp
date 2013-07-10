@@ -12,6 +12,7 @@ mainClassName = "org.mdpnp.apps.testapp.Main"
 //jar {
     //from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 //}
+def String BUILD_NUMBER = "$System.env.BUILD_NUMBER"
 
 Date buildTimeAndDate = new Date()
 ext {
@@ -25,7 +26,7 @@ if (project.plugins.findPlugin('java')) {
             attributes("Built-By": System.properties['user.name'], "Created-By": System.properties['java.version'] + " (" + System.properties['java.vendor'] + " " + System.getProperty("java.vm.version") + ")",
                 "Implementation-Title": project.name, "Implementation-Version": project.version, "Build-Date": buildDate, "Build-Time": buildTime,
                 "Specification-Title": project.name, "Specification-Version": project.version, "Implementation-Vendor": project.group,
-                "Specification-Vendor": project.group)
+                "Specification-Vendor": project.group, "Build-Number": BUILD_NUMBER)
         }
     }
 }

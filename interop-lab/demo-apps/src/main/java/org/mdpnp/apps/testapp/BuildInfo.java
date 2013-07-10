@@ -31,7 +31,7 @@ public class BuildInfo {
                       _version = mainAttrs.getValue("Implementation-Version");
                       _date = mainAttrs.getValue("Build-Date");
                       _time = mainAttrs.getValue("Build-Time");
-                      _build = "";
+                      _build = mainAttrs.getValue("Build-Number");
                       break;
                   }
                   

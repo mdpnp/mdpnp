@@ -47,10 +47,13 @@ public class Device {
         
         return di;
     }
-    
+
     public String getMakeAndModel() {
-        // TODO cache this
-        return deviceIdentity.manufacturer + " " + deviceIdentity.model;
+        if(deviceIdentity.manufacturer.equals(deviceIdentity.model)) {
+            return deviceIdentity.model;
+        } else {
+            return deviceIdentity.manufacturer + " " + deviceIdentity.model;
+        }
     }
     
     public Device(DeviceIdentity di) {
