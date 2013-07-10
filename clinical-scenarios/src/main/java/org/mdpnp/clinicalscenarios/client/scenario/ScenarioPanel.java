@@ -72,7 +72,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static final String[] hazardExpected = new String[] {"Expected", "Unexpected", "Unknown"};
 	private static final String[] hazardSeverity = new String[] {"Mild", "Moderate", "Severe", "Life Threatening", "Fatal", "Unknown"};
 	
-	//XXX Do I need this. Do Clean up
+	//XXX Do I need this?  Clean up!!
 	private static  enum ScenarioStatus {
 		unsubmitted(0), //created and modified, but not yet submitted
 		submitted(1), //submitted for approval, not yet revised nor approved 
