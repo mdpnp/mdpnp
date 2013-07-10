@@ -19,6 +19,10 @@ public class EventLoopHandler implements Runnable, ConditionHandler {
     private static final Logger log = LoggerFactory.getLogger(EventLoopHandler.class);
     
     public EventLoopHandler(EventLoop eventLoop) {
+        this(eventLoop, Thread.currentThread().getThreadGroup());
+    }
+    
+    public EventLoopHandler(EventLoop eventLoop, ThreadGroup group) {
         this.eventLoop = eventLoop;
         
         thread = new Thread(this, "EventLoopHandler");

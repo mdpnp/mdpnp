@@ -44,6 +44,7 @@ import com.rti.dds.topic.Topic;
 public abstract class AbstractDevice implements /*GatewayListener,*/ ThreadFactory {
     protected final ThreadGroup threadGroup;
 	protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(this);
+	protected final EventLoop eventLoop;
 
 	private static final Logger log = LoggerFactory.getLogger(AbstractDevice.class);
 	
@@ -230,5 +231,9 @@ public abstract class AbstractDevice implements /*GatewayListener,*/ ThreadFacto
     		}  
 		};
 		threadGroup.setDaemon(true);
+		
+		eventLoop = new EventLoop();
+		// TODO there is no tearDown for the AbstractDevice
+		EventLoopHandler handler = new EventLoopHandler(eventLoop, threadGroup);
 	}
 }

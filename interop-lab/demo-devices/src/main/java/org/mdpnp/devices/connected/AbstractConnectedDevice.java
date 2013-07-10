@@ -16,31 +16,24 @@ import ice.DeviceConnectivityObjectiveTypeSupport;
 import ice.DeviceConnectivityTopic;
 import ice.DeviceConnectivityTypeSupport;
 
-import java.util.Arrays;
-
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.io.util.StateMachine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.StatusCondition;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.DataReader;
-import com.rti.dds.subscription.DataReaderListener;
-import com.rti.dds.subscription.LivelinessChangedStatus;
-import com.rti.dds.subscription.RequestedDeadlineMissedStatus;
-import com.rti.dds.subscription.RequestedIncompatibleQosStatus;
 import com.rti.dds.subscription.SampleInfo;
-import com.rti.dds.subscription.SampleLostStatus;
-import com.rti.dds.subscription.SampleRejectedStatus;
 import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.SubscriptionMatchedStatus;
 import com.rti.dds.topic.Topic;
 
-public abstract class AbstractConnectedDevice extends AbstractDevice implements DataReaderListener {
+public abstract class AbstractConnectedDevice extends AbstractDevice {
     protected final DeviceConnectivity deviceConnectivity;
     protected final Topic deviceConnectivityTopic;
     protected InstanceHandle_t deviceConnectivityHandle;
@@ -80,7 +73,39 @@ public abstract class AbstractConnectedDevice extends AbstractDevice implements 
 		DeviceConnectivityObjectiveTypeSupport.register_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
 		deviceConnectivityObjectiveTopic = domainParticipant.create_topic(DeviceConnectivityObjectiveTopic.VALUE, DeviceConnectivityObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		// TODO Implementing on the inbound DDS thread for convenience
-		deviceConnectivityObjectiveReader = (DeviceConnectivityObjectiveDataReader) subscriber.create_datareader(deviceConnectivityObjectiveTopic, Subscriber.DATAREADER_QOS_DEFAULT, this, StatusKind.DATA_AVAILABLE_STATUS);
+		deviceConnectivityObjectiveReader = (DeviceConnectivityObjectiveDataReader) subscriber.create_datareader(deviceConnectivityObjectiveTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		
+		deviceConnectivityObjectiveReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
+		
+		final DeviceConnectivityObjective dco = new DeviceConnectivityObjective();
+        final SampleInfo si = new SampleInfo();
+        
+		eventLoop.addHandler(deviceConnectivityObjectiveReader.get_statuscondition(), new EventLoop.ConditionHandler() {
+
+            @Override
+            public void conditionChanged(Condition condition) {
+                DeviceConnectivityObjectiveDataReader reader = (DeviceConnectivityObjectiveDataReader) ((StatusCondition)condition).get_entity();
+                
+                try {
+                    reader.read_next_sample(dco, si);
+                    // TODO reimplement as a content filter or monitor a single instance .. i dunno
+                    if(deviceIdentity.universal_device_identifier.equals(dco.universal_device_identifier)) {
+                    
+                        if(dco.connected) {
+                            log.info("Issuing connect for " + deviceIdentity.universal_device_identifier + " to " + dco.target);
+                            connect(dco.target);
+                            
+                        } else {
+                            log.info("Issuing disconnect for " + deviceIdentity.universal_device_identifier);
+                            disconnect();
+                        }
+                    }
+                } catch (RETCODE_NO_DATA noData) {
+                    
+                }
+            }
+		    
+		});
 	}
 	
 	protected abstract void connect(String str);
@@ -123,58 +148,4 @@ public abstract class AbstractConnectedDevice extends AbstractDevice implements 
 	protected long getConnectInterval() {
 		return 20000L;
 	}
-    @Override
-    public void on_data_available(DataReader arg0) {
-        DeviceConnectivityObjectiveDataReader reader = (DeviceConnectivityObjectiveDataReader) arg0;
-        DeviceConnectivityObjective dco = new DeviceConnectivityObjective();
-        SampleInfo si = new SampleInfo();
-        try {
-            reader.read_next_sample(dco, si);
-            // TODO reimplement as a content filter or monitor a single instance .. i dunno
-            if(deviceIdentity.universal_device_identifier.equals(dco.universal_device_identifier)) {
-            
-                if(dco.connected) {
-                    log.info("Issuing connect for " + deviceIdentity.universal_device_identifier + " to " + dco.target);
-                    connect(dco.target);
-                    
-                } else {
-                    log.info("Issuing disconnect for " + deviceIdentity.universal_device_identifier);
-                    disconnect();
-                }
-            }
-        } catch (RETCODE_NO_DATA noData) {
-            
-        }
-        
-    }
-    @Override
-    public void on_liveliness_changed(DataReader arg0, LivelinessChangedStatus arg1) {
-        // TODO Auto-generated method stub
-        
-    }
-    @Override
-    public void on_requested_deadline_missed(DataReader arg0, RequestedDeadlineMissedStatus arg1) {
-        // TODO Auto-generated method stub
-        
-    }
-    @Override
-    public void on_requested_incompatible_qos(DataReader arg0, RequestedIncompatibleQosStatus arg1) {
-        // TODO Auto-generated method stub
-        
-    }
-    @Override
-    public void on_sample_lost(DataReader arg0, SampleLostStatus arg1) {
-        // TODO Auto-generated method stub
-        
-    }
-    @Override
-    public void on_sample_rejected(DataReader arg0, SampleRejectedStatus arg1) {
-        // TODO Auto-generated method stub
-        
-    }
-    @Override
-    public void on_subscription_matched(DataReader arg0, SubscriptionMatchedStatus arg1) {
-        // TODO Auto-generated method stub
-        
-    }
 }
