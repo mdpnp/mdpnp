@@ -351,6 +351,10 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 //	private RTRegression flow = new RTRegressionImpl(10);
 	private boolean started = false;
 	public void stop() {
+	    if(null != deviceMonitor) {
+	        deviceMonitor.shutdown();
+	        deviceMonitor = null;
+	    }
 		if(started) {
 			started = false;
 			cameraPanel.stop();

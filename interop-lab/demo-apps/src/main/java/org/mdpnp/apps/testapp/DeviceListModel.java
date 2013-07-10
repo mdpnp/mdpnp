@@ -284,7 +284,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                                 log.trace("alive with no samples device " + keyHolder[0].universal_device_identifier);
                                 
                             }
-                        }
+                        } 
     
 //                    }
                 } finally {

@@ -168,8 +168,13 @@ public class DemoApp {
 						setGoBack("main", null);
 						ol.show(panel.getContent(), "roomsync");
 					} else*/ if("Infusion Safety".equals(o) && null != pcaPanel) {
-						setGoBack("main", null);
-						pcaPanel.reset();
+						setGoBack("main", new Runnable() {
+						    public void run() {
+						        // TODO these apps need a lifecycle defined
+						        pcaPanel.setActive(false);
+						    }
+						});
+						pcaPanel.setActive(true);
 						ol.show(panel.getContent(), "pca");
 					} else if("X-Ray Ventilator Sync".equals(o) && null != xrayVentPanel) {
 						setGoBack("main", new Runnable() {

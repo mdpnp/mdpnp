@@ -137,6 +137,14 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	}
 	private final Subscriber subscriber;
 	
+	private boolean  active;
+	
+	public void setActive(boolean active) {
+	    if(active && !this.active) {
+	        reset();
+	    }
+	    this.active = active;
+	}
 	
 	public PCAPanel(VitalsModel model, Subscriber subscriber) {
 		super();
@@ -480,23 +488,24 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		
 		
 		// Pump stopping rules
+		if(active) {
 		
-		
-		if(countOutOfRange >= 2) {
-			stop("Stopped\r\n" + outOfRange.toString() + "at " + time + "\r\nnurse alerted");
-		} else {
-			for(Vital v : vitals) {
-				ice.Numeric value = v.getValue();
-				if(v.isSet()) {
-					if(v.getCritical_minimum() != null && value.value <= v.getCritical_minimum()) {
-						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue().value + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
-						break;
-					} else if(v.getCritical_maximum() != null && value.value >= v.getCritical_maximum()) {
-						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue().value + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
-						break;
-					}
-				}
-			}
+    		if(countOutOfRange >= 2) {
+    			stop("Stopped\r\n" + outOfRange.toString() + "at " + time + "\r\nnurse alerted");
+    		} else {
+    			for(Vital v : vitals) {
+    				ice.Numeric value = v.getValue();
+    				if(v.isSet()) {
+    					if(v.getCritical_minimum() != null && value.value <= v.getCritical_minimum()) {
+    						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue().value + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
+    						break;
+    					} else if(v.getCritical_maximum() != null && value.value >= v.getCritical_maximum()) {
+    						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue().value + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
+    						break;
+    					}
+    				}
+    			}
+    		}
 		}
 //		if(null != rr && null != etco2 && != pulse && (rr.doubleValue() <= ADV_RR_MIN && rr.doubleValue()  && (etco2.doubleValue() <= ADV_ETCO2_MIN || etco2.doubleValue() >= ADV_ETCO2_MAX)) {
 //			// Stop on contingent rule
