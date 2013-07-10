@@ -124,10 +124,20 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 		protected void device(String bid, String make, String model) {
 			super.device(bid, make, model);
 			
-			deviceIdentity.serial_number = null == bid?null:bid.replaceAll("\\_", " ");
-			deviceIdentity.manufacturer = null == make?null:make.replaceAll("\\_", " ");
-			deviceIdentity.model = null==model?null:model.replaceAll("\\_", " "); 
-			deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+			bid= null == bid?"":bid.replaceAll("\\_", " ");
+			make = null == make?"":make.replaceAll("\\_", " ");
+			model = null==model?"":model.replaceAll("\\_", " ");
+			
+			
+			// In DDS world continually republishing the same sample is JUST NOISE
+			if(!bid.equals(deviceIdentity.serial_number) ||
+			   !make.equals(deviceIdentity.manufacturer) ||
+			   !model.equals(deviceIdentity.model)) {
+			    deviceIdentity.serial_number = bid;
+			    deviceIdentity.manufacturer = make;
+			    deviceIdentity.model = model;
+			    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+			}
 		}
 	}
 	

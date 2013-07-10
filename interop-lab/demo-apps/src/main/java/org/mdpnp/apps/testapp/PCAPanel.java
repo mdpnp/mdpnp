@@ -38,9 +38,9 @@ import com.rti.dds.subscription.Subscriber;
 public class PCAPanel extends JPanel implements VitalsListener {
 	// TODO BOOKMARK HERE!
 	private static final Vital[] vitals = new Vital[] {
-		new Vital("end tidal CO\u2082", "mmHg", ice.MDC_CONC_AWAY_CO2.VALUE, //Ventilator.END_TIDAL_CO2_MMHG,
+		new Vital("end tidal CO\u2082", "mmHg", ice.MDC_AWAY_CO2_EXP.VALUE, //Ventilator.END_TIDAL_CO2_MMHG,
 				  15.0, 45.0, 1.0, 100.0),
-		new Vital("respiratory rate", "bpm", ice.MDC_CO2_RESP_RATE.VALUE, //  Ventilator.RESPIRATORY_RATE,
+		new Vital("respiratory rate", "bpm", ice.MDC_RESP_RATE.VALUE, //  Ventilator.RESPIRATORY_RATE,
 				  8.0, 100.0, 1.0, 200.0),
 	    new Vital("heart rate", "bpm", ice.MDC_PULS_OXIM_PULS_RATE.VALUE, // PulseOximeter.PULSE,
 	    		  50.0, 120.0, 20.0, 200.0),
@@ -105,6 +105,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
                 units = "%";
                 break;
 			case ice.MDC_CO2_RESP_RATE.VALUE:
+			case ice.MDC_RESP_RATE.VALUE:
 			    name = "Respiratory Rate";
                 units = "bpm";
                 break;
@@ -113,6 +114,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
                 units = "bpm";
                 break;
 			case ice.MDC_CONC_AWAY_CO2.VALUE:
+			case ice.MDC_AWAY_CO2_EXP.VALUE:
 			    name = "etCO\u2082";
                 units = "mmHg";
                 break;
@@ -460,12 +462,12 @@ public class PCAPanel extends JPanel implements VitalsListener {
 				advisories[i] = "- no source of " + vitals[i].getName() + "\r\n";
 			} else if(vitals[i].getAdvisory_minimum() != null && value.value <= vitals[i].getAdvisory_minimum()) {
 				anyAdvisory = true;
-				advisories[i] = "- low " + vitals[i].getName() + " " + value + " " + vitals[i].getUnits() + "\r\n";
+				advisories[i] = "- low " + vitals[i].getName() + " " + value.value + " " + vitals[i].getUnits() + "\r\n";
 				countOutOfRange++;
 				outOfRange.append(advisories[i]);
 			} else if(vitals[i].getAdvisory_maximum() != null && value.value >= vitals[i].getAdvisory_maximum()) {
 				anyAdvisory = true;
-				advisories[i] = "- high " + vitals[i].getName() + " " + value + " " + vitals[i].getUnits() + "\r\n";
+				advisories[i] = "- high " + vitals[i].getName() + " " + value.value + " " + vitals[i].getUnits() + "\r\n";
 				countOutOfRange++;
 				outOfRange.append(advisories[i]);
 			}
@@ -529,10 +531,10 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		boolean stateChanged = false;
 		
 		// TODO DO NOT INCLUDE THIS
-		if(null != n && n.value <= 5.0f) {
-			log.warn("Ignoring " + n.name + " " + n + " " + device);
-			return;
-		}
+//		if(null != n && n.value <= 5.0f) {
+//			log.warn("Ignoring " + n.name + " " + n.value + " " + device.getDeviceIdentity().universal_device_identifier);
+//			return;
+//		}
 		
 		for(Vital v : vitals) {
 			if(v.getNumeric().equals(n.name)) {

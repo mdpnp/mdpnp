@@ -111,11 +111,13 @@ public abstract class AbstractConnectedDevice extends AbstractDevice implements 
 	    if(null == connectionInfo) {
 	        // TODO work on nullity semantics
 	        log.warn("Attempt to set connectionInfo null");
-	        deviceConnectivity.info = "";
-	    } else {
-	        deviceConnectivity.info = connectionInfo;
+	        connectionInfo = "";
 	    }
-        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+	    if(!connectionInfo.equals(deviceConnectivity.info)) {
+	        deviceConnectivity.info = connectionInfo;
+	        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+	    }
+        
 	}
 
 	protected long getConnectInterval() {

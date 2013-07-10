@@ -104,7 +104,7 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
 
     @Override
     public void deviceConnectivity(DeviceConnectivity dc, SampleInfo sampleInfo) {
-        connectionState.setText(dc.state.name());
+        connectionState.setText(dc.state.name() + (!"".equals(dc.info)?(" ("+dc.info+")"):""));
     }
 
     private void replaceDataPanels() {

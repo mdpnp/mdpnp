@@ -58,7 +58,7 @@
 				<liveliness>
 					<kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
 					<lease_duration>
-						<sec>1</sec>
+						<sec>2</sec>
 						<nanosec>0</nanosec>
 					</lease_duration>
 				</liveliness>

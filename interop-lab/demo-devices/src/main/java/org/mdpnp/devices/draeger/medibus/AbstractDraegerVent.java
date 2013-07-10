@@ -275,6 +275,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 	private void loadMap() {
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
+        deviceIdentity.manufacturer = "Draeger";
+        deviceIdentity.model = "???";
         deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
         
         deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
@@ -373,7 +375,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 		    
 		}
 		if(null!=name) {
-		    deviceIdentity.model = "Draeger " + name;
+		    deviceIdentity.model = name;
 		    writeIt = true;
 		}
 		if(writeIt) {

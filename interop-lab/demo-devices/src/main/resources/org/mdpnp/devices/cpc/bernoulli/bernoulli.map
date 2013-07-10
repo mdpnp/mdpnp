@@ -17,7 +17,8 @@ P1	MDC_PRESS_BLD	W
 #P2_DIAS	InvasiveBloodPressure.DIASTOLIC2
 #P2_MEAN	InvasiveBloodPressure.MEAN2
 #P2	InvasiveBloodPressure.PRESSURE2
-ECG	MDC_ECG_LEAD_I	W
+# The following just isn't right
+ECG	MDC_ECG_ELEC_POTL_I	W
 PLETH	MDC_PULS_OXIM_PLETH	W
 T1	MDC_TEMP_BLD	N
 #T2	Temperature.TEMP2
