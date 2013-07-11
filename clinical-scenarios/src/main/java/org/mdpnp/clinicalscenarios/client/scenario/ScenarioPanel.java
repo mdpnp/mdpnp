@@ -1,6 +1,5 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
@@ -30,8 +29,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.SuggestOracle;
-import com.google.gwt.user.client.ui.TabBar.Tab;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -143,11 +140,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	}
 	
 	/**
-	 * Prints/drwas the Equipment tab table.
-	 * @param isNew indicates if we are drawing a new/empty table os we are going to
-	 *  populate it with data from the scenario
+	 * Prints/draws the Equipment tab table.
+	 * @param isEmptyEquipList indicates if we are drawing a new/empty table or we are going to
+	 *  populate it with data from the scenario.
 	 */
-	private final void buildEquipmentTable(boolean isNew) {
+	private final void buildEquipmentTable(boolean isEmptyEquipList) {
 		equipmentTable.removeAllRows();//clear rows to draw again
 		//HEADERS
 		equipmentTable.insertRow(0);
@@ -156,8 +153,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		equipmentTable.setText(0, EQUIPMENT_MODEL_COL, "Model");
 		equipmentTable.setText(0, EQUIPMENT_ROSSETAID_COL, "Rosetta ID");
 
-		
-		{if(isNew || currentScenario==null || 
+		///XXX Do we really need the static block now?
+		{if(isEmptyEquipList || currentScenario==null || 
 				currentScenario.getEquipment().getEntries()==null || currentScenario.getEquipment().getEntries().isEmpty()){
 			//the table will have no elements, either because we have anew scenario or because the current one
 			// has no elements on its equipment list
@@ -250,19 +247,15 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	private Logger logger = Logger.getLogger(ScenarioPanel.class.getName());
 	
-	
-	
 	/**
-	 * Saves or persist a Scenario
-	 * <p> 1- The TextArea fields are asociated automativcally w/ the corresponding attributes in the Scenario object
-	 * <p> 2- save the list of equipment
+	 * Checks if we need to persist the equipment list. <p>
+	 * It deletes all rows of the list of equipment associate with the current scenario and 
+	 * adds all the data that is in the table.
+	 * @param rc ScenarioRequest
 	 */
-	private void save(){
-		status.setText("SAVING");			
-		ScenarioRequest rc = (ScenarioRequest) driver.flush();
-			
-		//SAVE THE LIST OF EQUIPMENT
-		currentScenario.getEquipment().getEntries().clear();//clear equipment list entries 
+	private void checkEquipmentListForPersistence(ScenarioRequest rc){
+		//TODO Although is not called with a null currentScenario, but we should be careful and check it
+		currentScenario.getEquipment().getEntries().clear();//clear equipment list entries. We will re-populate 
 		for(int i = 0; i < equipmentTable.getRowCount(); i++) {
 			
 			Widget wDevType = equipmentTable.getWidget(i, 0);//getWidget row column		
@@ -272,27 +265,54 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			EquipmentEntryProxy eep = rc.create(EquipmentEntryProxy.class);
 			
 			boolean isAdding = false;
+			String text = null;
 			
+			//check if at least one of the textboxes has non-empty data
 			if(wDevType instanceof TextBox) {
-				eep.setDeviceType(((TextBox)wDevType).getText().trim()); isAdding=true;}
+				text = ((TextBox)wDevType).getText().trim();
+				if(!text.equals(""))
+					{eep.setDeviceType(text); isAdding=true;}
+			}
 			if(wManu instanceof TextBox) {
-				eep.setManufacturer(((TextBox)wManu).getText().trim()); isAdding=true;}
+				text = ((TextBox)wManu).getText().trim();
+				if(!text.equals(""))
+				{eep.setManufacturer(text); isAdding=true;}
+			}
 			if(wModel instanceof TextBox) {
-				eep.setModel(((TextBox)wModel).getText().trim()); isAdding=true;}
+				text = ((TextBox)wModel).getText().trim();
+				if(!text.equals(""))
+				{eep.setModel(text); isAdding=true;}
+			}
 			if(wRoss instanceof TextBox) {
-				eep.setRosettaId(((TextBox)wRoss).getText().trim()); isAdding=true;}					
+				text = ((TextBox)wRoss).getText().trim();
+				if(!text.equals(""))
+				{eep.setRosettaId(text); isAdding=true;}		
+			}
 			
-			//FIXME This is not really adding. No only consider just texboxes, careful w/ the items we already have.
 			if(isAdding)
 				currentScenario.getEquipment().getEntries().add(eep);
 		}
-		
-//		List l = currentScenario.getEquipment().getEntries();
+	}
+	
+	/**
+	 * Saves or persist a Scenario
+	 * <p> 1- The TextArea fields are associated automatically w/ the corresponding attributes in the Scenario object
+	 * <p> 2- save the list of equipment
+	 * <p> Persist the scenario entity with all its associated values
+	 */
+	private void save(){
+		status.setText("SAVING");			
+		ScenarioRequest rc = (ScenarioRequest) driver.flush();
+			
+		//SAVE THE LIST OF EQUIPMENT
+		checkEquipmentListForPersistence(rc);
+
+		//persist scenario entity
 		rc.persist().using(currentScenario).with(driver.getPaths()).with("equipment").to(new Receiver<ScenarioProxy>() {
 
 			@Override
 			public void onSuccess(ScenarioProxy response) {
-			    logger.info("RESPONSE|currentState:"+response.getBackground().getCurrentState()+" proposedState:"+response.getBackground().getProposedState());
+//			    logger.info("RESPONSE|currentState:"+response.getBackground().getCurrentState()+" proposedState:"+response.getBackground().getProposedState());
 				status.setText("SAVED");
 				scenarioRequestFactory.getEventBus().fireEvent(new EntityProxyChange<ScenarioProxy>(response, WriteOperation.UPDATE));
 //				logger.info("DURING:"+response.getTitle());
@@ -314,75 +334,23 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		initWidget(uiBinder.createAndBindUi(this));
 		this.scenarioRequestFactory = scenarioRequestFactory;
 		driver.initialize(scenarioRequestFactory, this);
+		
+		//XXX ? Will this need to go as the buildEquipmentTable()
 		buildHazardsTable();
-//		buildEquipmentTable();//DAG
 		buildCliniciansTable();
 		buildEnvironmentsTable();
 //		buildTestCasesTable();
 
+		//Handler to save the entity when something changes in the data fields
 		ChangeHandler saveOnChange = new ChangeHandler() {
-
 			@Override
 			public void onChange(ChangeEvent event) {
-				status.setText("SAVING");			
-				ScenarioRequest rc = (ScenarioRequest) driver.flush();
-				
-				logger.info("getPaths:"+Arrays.toString(driver.getPaths()));
-				logger.info("LOCAL|currentState:"+currentScenario.getBackground().getCurrentState()+" proposedState:"+currentScenario.getBackground().getProposedState());
-				
-				currentScenario.getEquipment().getEntries().clear();//clear equipment list entries 
-				for(int i = 0; i < equipmentTable.getRowCount(); i++) {
-					
-					Widget wDevType = equipmentTable.getWidget(i, 0);//getWidget row column		
-					Widget wManu = equipmentTable.getWidget(i, 1);//getWidget row column		
-					Widget wModel = equipmentTable.getWidget(i, 2);//getWidget row column		
-					Widget wRoss = equipmentTable.getWidget(i, 3);//getWidget row column		
-					EquipmentEntryProxy eep = rc.create(EquipmentEntryProxy.class);
-					
-					boolean isAdding = false;
-					
-					if(wDevType instanceof TextBox) {
-						eep.setDeviceType(((TextBox)wDevType).getText().trim()); isAdding=true;}
-					if(wManu instanceof TextBox) {
-						eep.setManufacturer(((TextBox)wManu).getText().trim()); isAdding=true;}
-					if(wModel instanceof TextBox) {
-						eep.setModel(((TextBox)wModel).getText().trim()); isAdding=true;}
-					if(wRoss instanceof TextBox) {
-						eep.setRosettaId(((TextBox)wRoss).getText().trim()); isAdding=true;}					
-					
-					//FIXME This is not really adding. No only consider just texboxes, careful w/ the items we already have.
-					//Means not persisting EMPTY lists/items/rows
-					if(isAdding)
-						currentScenario.getEquipment().getEntries().add(eep);
-				}
-				
-//				List l = currentScenario.getEquipment().getEntries();
-				rc.persist().using(currentScenario).with(driver.getPaths()).with("equipment").to(new Receiver<ScenarioProxy>() {
-
-					@Override
-					public void onSuccess(ScenarioProxy response) {
-					    logger.info("RESPONSE|currentState:"+response.getBackground().getCurrentState()+" proposedState:"+response.getBackground().getProposedState());
-						status.setText("SAVED");
-						scenarioRequestFactory.getEventBus().fireEvent(new EntityProxyChange<ScenarioProxy>(response, WriteOperation.UPDATE));
-//						logger.info("DURING:"+response.getTitle());
-						setCurrentScenario(response);
-//						logger.info("AFTER:"+currentScenario.getTitle());
-					}
-					
-					@Override
-					public void onFailure(ServerFailure error) {
-						super.onFailure(error);
-						Window.alert(error.getMessage());
-					}
-					
-				}).fire();
-
-			}
-			
+				save();
+			}			
 		};
 		
 
-
+		//associate handlers and value entities
 		titleEditor.addChangeHandler(saveOnChange);
 		proposedStateEditor.addChangeHandler(saveOnChange);
 		currentStateEditor.addChangeHandler(saveOnChange);
@@ -391,28 +359,25 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		clinicalProcesses.addChangeHandler(saveOnChange);
 		algorithmDescription.addChangeHandler(saveOnChange);
 		
-		//DAG
+		//Listener for when the tabs are clicked (user moves to a different tab)
 		tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {			
 			@Override
 			public void onSelection(SelectionEvent<Integer> event) {
-//				Window.alert("selected panel");
-
-				if(currentScenario!= null && 
-//						!currentScenario.getEquipment().getEntries().isEmpty())
-						isPersitEquipment()){
+				if(currentScenario!= null /*&& isPersitEquipment()*/){					 
 					save();
 //					Window.alert("persisted "+equipmentTable.getRowCount()+" row");
 				}
-//				buildEquipmentTable();
 			}
 		});
 		
-	
+		//select first tab
 		tabPanel.selectTab(0);
 	}
 
 	/**
+	 * @deprecated this is a crummy method!
 	 * indicates if we need to persist our equipment list
+	 * <p> If we have at least one row of data
 	 * @return
 	 */
 	private boolean isPersitEquipment(){
@@ -454,17 +419,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
                     logger.info(""+response.getBackground());
                     ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
                     ScenarioProxy currentScenario = context.edit(response); 
-                    driver.edit(currentScenario, context);
-//                  logger.info("Driver:"+driver);
-                    //DAG Empty equipment list (CLEAN data from the new BEAN to clean the form)
-//                    currentScenario.getEquipment().getEntries().clear(); delayed
-                    
+                    driver.edit(currentScenario, context);                    
                     ScenarioPanel.this.currentScenario = currentScenario;
                 }
 		        
 		    }).fire();
-//		    tabPanel.selectTab(0);
-		    buildEquipmentTable(true);//DAG new scn. No equipment list
+		    
+		    buildEquipmentTable(true);//new scn. No equipment list
 
 		} else {
 		    currentScenario = context.edit(currentScenario); 
@@ -472,8 +433,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
             this.currentScenario = currentScenario;
             buildEquipmentTable(false);//
 		}
-
-//		buildEquipmentTable();//DAG
 
 	}
 	
@@ -689,7 +648,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 	}
 	
-	//when clicking in AddNeww Equipment
+	//When clicking in "AddNew Equipment" anchor
 	@UiHandler("addNewEquipment")
 	void onANTClick(ClickEvent click) {
 		final int rows = equipmentTable.getRowCount();
@@ -697,6 +656,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		for(int j = 0; j < 4; j++) {//add four text boxes
 			equipmentTable.setWidget(rows, j, new TextBox());
 		}
+		//add delete button
 		Button deleteButton = new Button("Delete");
 		equipmentTable.setWidget(rows, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
 
@@ -708,6 +668,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			}
 		});
 	}
+	
 	private final EnvironmentSuggestOracle environmentSuggestOracle = new EnvironmentSuggestOracle();
 	
 	@UiHandler("addNewClinician")
@@ -826,7 +787,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("submitButton")
 	public void onClickSubmit(ClickEvent clickEvent) {
-		int i = 0 ;//dummy		
+		int i = 0 ;//dummy	, just to put a freaking breakpoint 	
 	}
 	
 	@UiHandler("saveButton")
