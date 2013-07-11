@@ -1,7 +1,7 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
-import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
@@ -13,6 +13,8 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -27,8 +29,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.SuggestOracle;
-import com.google.gwt.user.client.ui.TabBar.Tab;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -40,7 +40,22 @@ import com.google.web.bindery.requestfactory.shared.ServerFailure;
 import com.google.web.bindery.requestfactory.shared.WriteOperation;
 
 public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
-
+	
+	//equipment tab panel
+	private static final int EQUIPMENT_DEVICETYPE_COL = 0;
+	private static final int EQUIPMENT_MANUFACTURER_COL = 1;
+	private static final int EQUIPMENT_MODEL_COL = 2;
+	private static final int EQUIPMENT_ROSSETAID_COL = 3;
+	private static final int EQUIPMENT_DElETEBUTTON_COL = 4;
+	
+	//hazards tab panel
+	private static final int HAZARDS_DESCRIPTION_COL = 0;
+	private static final int HAZARDS_FACTORS_COL = 1;
+	private static final int HAZARDS_EXPECTED_COL = 2;
+	private static final int HAZARDS_SEVERITY_COL = 3;
+	private static final int HAZARDS_DELETEBUTTON_COL = 5;
+	
+	
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 
 	interface Driver extends RequestFactoryEditorDriver<ScenarioProxy, ScenarioPanel> {
@@ -70,7 +85,30 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		    }
 		  }
 	private static final String[] hazardExpected = new String[] {"Expected", "Unexpected", "Unknown"};
+	/**
+	 * Returns the associated index or a word of the hazardExpected array
+	 * @param word
+	 * @return
+	 */
+	private int getHazardExpectedIndex(String word){
+		for(int i=0; i<hazardExpected.length; i++){
+			if(word.equals(hazardExpected[i])) return i;
+		}
+		return -1;	
+	}
+	
 	private static final String[] hazardSeverity = new String[] {"Mild", "Moderate", "Severe", "Life Threatening", "Fatal", "Unknown"};
+	/**
+	 * Returns the associated index or a word of the hazardSeverity array
+	 * @param word
+	 * @return
+	 */
+	private int getHazardSeverityIndex(String word){
+		for(int i=0; i<hazardSeverity.length; i++){
+			if(word.equals(hazardSeverity[i])) return i;
+		}
+		return -1;	
+	}
 	
 	//XXX Do I need this?  Clean up!!
 	private static  enum ScenarioStatus {
@@ -132,62 +170,107 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 	}
 	
-	private final void buildEquipmentTable() {
+	/**
+	 * Prints/draws the Equipment tab table.
+	 * @param isDrawNew indicates if we are drawing a new/empty table or we are going to
+	 *  populate it with data from the scenario.
+	 */
+	private final void buildEquipmentTable(boolean isDrawNew) {
+		equipmentTable.removeAllRows();//clear rows to draw again
+		//HEADERS
 		equipmentTable.insertRow(0);
-		equipmentTable.setText(0, 0, "Device Type");
-		equipmentTable.setText(0, 1, "Manufacturer");
-		equipmentTable.setText(0, 2, "Model");
-		equipmentTable.setText(0, 3, "Rosetta ID");
+		equipmentTable.setText(0, EQUIPMENT_DEVICETYPE_COL, "Device Type");
+		equipmentTable.setText(0, EQUIPMENT_MANUFACTURER_COL, "Manufacturer");
+		equipmentTable.setText(0, EQUIPMENT_MODEL_COL, "Model");
+		equipmentTable.setText(0, EQUIPMENT_ROSSETAID_COL, "Rosetta ID");
 
-		
-		{
+		///XXX Do we really need the static block now?
+		{if(isDrawNew || currentScenario==null || //FIXME  actually currentScenario.getEquipment().getEntries() should NEVER be null, because is always created as empty list
+				currentScenario.getEquipment().getEntries()==null || currentScenario.getEquipment().getEntries().isEmpty()){
+			//the table will have no elements, either because we have anew scenario or because the current one
+			// has no elements on its equipment list
 			for(int i = 0; i < 1; i++) {
 				equipmentTable.insertRow(i + 1);
-				for(int j = 0; j < 4; j++) {
+				for(int j = 0; j < 4; j++) {//add four textboxes for data
 					equipmentTable.setWidget(i+1, j, new TextBox());
 				}
+				//add button to delete current row 
+				Button deleteButton = new Button("Delete");
+				equipmentTable.setWidget(i+1, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
+				final int row = i+1;
+				//click handler that deletes the current row
+				deleteButton.addClickHandler(new ClickHandler() {	
+					@Override
+					public void onClick(ClickEvent event) {
+						equipmentTable.removeRow(row);
+					}
+				});				
 			}
-			equipmentTable.insertRow(2);
-			equipmentTable.setWidget(2, 0, new Anchor("Add New...", "#"));
+		
+		}else{
+			//populate the table w/ the data from the equipment list of the scenario
+			List<?> eqEntries = currentScenario.getEquipment().getEntries();
+			for(int i=0; i<eqEntries.size();i++){
+				final int row = i+1;
+				equipmentTable.insertRow(row);
+				EquipmentEntryProxy eep = (EquipmentEntryProxy) eqEntries.get(i);
+				TextBox dtTextbox = new TextBox(); dtTextbox.setText(eep.getDeviceType());
+				equipmentTable.setWidget(row, EQUIPMENT_DEVICETYPE_COL, dtTextbox);
+				TextBox manufTextBox = new TextBox(); manufTextBox.setText(eep.getManufacturer());
+				equipmentTable.setWidget(row, EQUIPMENT_MANUFACTURER_COL, manufTextBox);
+				TextBox modelTextBox = new TextBox(); modelTextBox.setText(eep.getModel());
+				equipmentTable.setWidget(row, EQUIPMENT_MODEL_COL, modelTextBox);
+				TextBox rossTextBox = new TextBox(); rossTextBox.setText(eep.getRosettaId());
+				equipmentTable.setWidget(i+1, EQUIPMENT_ROSSETAID_COL, rossTextBox);
+				Button deleteButton = new Button("Delete");
+				equipmentTable.setWidget(row, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
+				
+				//add click handler to the delete button
+				deleteButton.addClickHandler(new ClickHandler() {				
+					@Override
+					public void onClick(ClickEvent event) {
+						equipmentTable.removeRow(row);
+					}
+				});
+			}			
+		}
+		
 		}
 	}
 	
-	private final void buildHazardsTable() {
+	/**
+	 * print / draws the hazards table
+	 */
+	private final void buildHazardsTable(boolean isDrawNew) {
+		
+		hazardsTable.removeAllRows();//clear and re-populate
+		
+		//headers
 		hazardsTable.insertRow(0);
-		hazardsTable.setText(0, 0, "Description");
-		hazardsTable.setText(0, 1, "Factors");
-		hazardsTable.setText(0,  2, "Expected");
-		hazardsTable.setText(0,  3, "Severity");
+		hazardsTable.setText(0, HAZARDS_DESCRIPTION_COL, "Description");
+		hazardsTable.setText(0, HAZARDS_FACTORS_COL, "Factors");
+		hazardsTable.setText(0,  HAZARDS_EXPECTED_COL, "Expected Risk");
+		hazardsTable.setText(0,  HAZARDS_SEVERITY_COL, "Severity");
 		
+		//description
 		hazardsTable.insertRow(1);
-		hazardsTable.setHTML(1, 0, "<div style=\"font-size: 8pt; width:350px;\">Make sure to point out if this risk results in death, is life threatening, requires inpatient hospitalization or prolongation of existing hospitalization, results in persistent or significant disability/incapacity, is a congenital anomaly/birth defect</div>");
-		hazardsTable.setHTML(1, 1, "<div style=\"font-size: 8pt; width:350px;\">Determine which factors are contributing to the risk described above. Examples may be a clinician, a specific device, or an aspect of the clinical envirnomnet etc.</div>");
-		hazardsTable.setHTML(1,  2, "<div style=\"width:350px; font-size:8pt;\">Unexpected: Risk is not consistent with the any of risks known (from a manual, label, protocol, instructions, brochure, etc) in the Current State. If the above documents are not required or available, the risk is unexpected if specificity or severity is not consistent with the risk information described in the protocol or it is more severe to the specified risk. Example, Hepatic necrosis would be unexpected (by virtue of greater severity) if the investigator brochure only referred to elevated hepatic enzymes or hepatitis. Similarly, cerebral vasculitis would be unexpected (by virtue of greater specificity) if the investigator brochure only listed cerebral vascular accidents.</div>");
-		hazardsTable.setHTML(1,  3, "<div style=\"width:350px; font-size:8pt;\"><ul><li>Mild: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li><li>Moderate: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li><li>Severe: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li><li>Life Threatening: Immediate risk of deat, life threatening or disabling</li><li>Fatal: Causes death of the patient</li></ul></div>");
-		{
-			
-			hazardsTable.insertRow(2);
-			final TextArea hazardDescription = new TextArea();
-			hazardDescription.setVisibleLines(10);
-			hazardDescription.setCharacterWidth(40);
-			
-			final TextArea hazardFactors = new TextArea();
-			hazardFactors.setVisibleLines(10);
-			hazardFactors.setCharacterWidth(40);
-			
-			hazardsTable.setWidget(2, 0, hazardDescription);
-			hazardsTable.setWidget(2, 1, hazardFactors);
-			hazardsTable.setWidget(2, 2, buildListBox(hazardExpected));
-			hazardsTable.setWidget(2, 3, buildListBox(hazardSeverity));
-			
-			
-		}
-		
+		hazardsTable.setHTML(1, HAZARDS_DESCRIPTION_COL, "<div style=\"font-size: 8pt; width:350px;\">Make sure to point out if this risk results in death, is life threatening, requires inpatient hospitalization or prolongation of existing hospitalization, results in persistent or significant disability/incapacity, is a congenital anomaly/birth defect</div>");
+		hazardsTable.setHTML(1, HAZARDS_FACTORS_COL, "<div style=\"font-size: 8pt; width:350px;\">Determine which factors are contributing to the risk described below. Examples may be a clinician, a specific device, or an aspect of the clinical envirnomnet etc.</div>");
+		hazardsTable.setHTML(1,  HAZARDS_EXPECTED_COL, "<div style=\"width:350px; font-size:8pt;\">Unexpected: Risk is not consistent with the any of risks known (from a manual, label, protocol, instructions, brochure, etc) in the Current State. If the above documents are not required or available, the risk is unexpected if specificity or severity is not consistent with the risk information described in the protocol or it is more severe to the specified risk. Example, Hepatic necrosis would be unexpected (by virtue of greater severity) if the investigator brochure only referred to elevated hepatic enzymes or hepatitis. Similarly, cerebral vasculitis would be unexpected (by virtue of greater specificity) if the investigator brochure only listed cerebral vascular accidents.</div>");
+		hazardsTable.setHTML(1,  HAZARDS_SEVERITY_COL, "<div style=\"width:350px; font-size:8pt;\"><ul><li><b>Mild</b>: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li><li><b>Moderate</b>: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li><li><b>Severe</b>: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li><li><b>Life Threatening</b>: Immediate risk of deat, life threatening or disabling</li><li><b>Fatal</b>: Causes death of the patient</li></ul></div>");
 
-		{
-			hazardsTable.insertRow(3);
-			hazardsTable.setWidget(3, 0, new Anchor("Add New...", "#"));
-			
+		//table data
+		if(isDrawNew || currentScenario==null || currentScenario.getHazards()==null ||
+				currentScenario.getHazards().getEntries()==null || currentScenario.getHazards().getEntries().isEmpty())
+			//XXX currentScenario.getHazards() should never be null, nor its entries
+			addNewHazardTableRow();
+		else{
+			//populate the table
+			List hazards = currentScenario.getHazards().getEntries();
+			for(int i=0;i<hazards.size();i++){
+				HazardsEntryProxy hep = (HazardsEntryProxy) hazards.get(i);
+				addNewHazardTableRow(hep.getDescription(), hep.getFactors(), hep.getExpected(), hep.getSeverity());
+			}
 		}
 		
 		
@@ -195,56 +278,164 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	private Logger logger = Logger.getLogger(ScenarioPanel.class.getName());
 	
+	/**
+	 * Checks if we need to persist the equipment list. <p>
+	 * It deletes all rows of the list of equipment associate with the current scenario and 
+	 * adds all the data that is in the table.
+	 * @param rc ScenarioRequest
+	 */
+	private void checkEquipmentListForPersistence(ScenarioRequest rc){
+		if(currentScenario!=null){
+			currentScenario.getEquipment().getEntries().clear();//clear equipment list entries. We will re-populate 
+			for(int i = 0; i < equipmentTable.getRowCount(); i++) {
+				
+				Widget wDevType = equipmentTable.getWidget(i, EQUIPMENT_DEVICETYPE_COL);//getWidget row column		
+				Widget wManu = equipmentTable.getWidget(i, EQUIPMENT_MANUFACTURER_COL);//getWidget row column		
+				Widget wModel = equipmentTable.getWidget(i, EQUIPMENT_MODEL_COL);//getWidget row column		
+				Widget wRoss = equipmentTable.getWidget(i, EQUIPMENT_ROSSETAID_COL);//getWidget row column		
+				EquipmentEntryProxy eep = rc.create(EquipmentEntryProxy.class);
+				
+				boolean isAdding = false;
+				String text = null;
+				
+				//check if at least one of the textboxes has non-empty data
+				if(wDevType instanceof TextBox) {
+					text = ((TextBox)wDevType).getText().trim();
+					if(!text.equals(""))
+						{eep.setDeviceType(text); isAdding=true;}
+				}
+				if(wManu instanceof TextBox) {
+					text = ((TextBox)wManu).getText().trim();
+					if(!text.equals(""))
+					{eep.setManufacturer(text); isAdding=true;}
+				}
+				if(wModel instanceof TextBox) {
+					text = ((TextBox)wModel).getText().trim();
+					if(!text.equals(""))
+					{eep.setModel(text); isAdding=true;}
+				}
+				if(wRoss instanceof TextBox) {
+					text = ((TextBox)wRoss).getText().trim();
+					if(!text.equals(""))
+					{eep.setRosettaId(text); isAdding=true;}		
+				}
+				
+				if(isAdding)
+					currentScenario.getEquipment().getEntries().add(eep);
+			}
+		}
+	}
+	
+	/**
+	 * Checks if we need to persist the hazards list <p>
+	 * @param rc ScenarioRequest
+	 */
+	private void checkHazardsListForPersistence(ScenarioRequest rc){
+		if(currentScenario!=null && currentScenario.getHazards()!=null){//FIXME  && currentScenario.getHazards()!=null has to go
+			currentScenario.getHazards().getEntries().clear();//clean and re-populate
+			for(int i =2; i<hazardsTable.getRowCount();i++){
+				
+				Widget wDescription = hazardsTable.getWidget(i, HAZARDS_DESCRIPTION_COL);	
+				Widget wFactor = hazardsTable.getWidget(i, HAZARDS_FACTORS_COL);	
+				Widget wExpected = hazardsTable.getWidget(i, HAZARDS_EXPECTED_COL);		
+				Widget wSeverity = hazardsTable.getWidget(i, HAZARDS_SEVERITY_COL);	
+				HazardsEntryProxy hep = rc.create(HazardsEntryProxy.class);
+				
+				boolean isAdding = false;
+				String text = null;
+				
+				//check for non-empty data 
+				//We assume that makes no sense having no text for DEscription/factor and trying to persist
+				// values for risk/severity (there would be no hazard identification) 
+				if(wDescription instanceof TextArea){
+					text = ((TextArea) wDescription).getText().trim();
+					if(text != null){hep.setDescription(text); isAdding=true;}
+				}
+				if(wFactor instanceof TextArea){
+					text = ((TextArea) wFactor).getText().trim();
+					if(text != null){hep.setFactors(text); isAdding =true;}
+				}
+				
+				if(isAdding){
+					if(wExpected instanceof ListBox){
+						int val = ((ListBox) wExpected).getSelectedIndex();
+						text = hazardExpected[val];
+						hep.setExpected(text);
+					}
+					if(wSeverity instanceof ListBox){
+						int val = ((ListBox) wSeverity).getSelectedIndex();
+						text = hazardSeverity[val];
+						hep.setExpected(text);
+					}
+					//add values to the list
+					currentScenario.getHazards().getEntries().add(hep);
+				}
+			}
+			
+		}
+	}
+	
+	/**
+	 * Saves or persist a Scenario
+	 * <p> 1- The TextArea fields are associated automatically w/ the corresponding attributes in the Scenario object
+	 * <p> 2- Save the list of equipment
+	 * <p> 3- Save the list of hazards
+	 * <p> Persist the scenario entity with all its associated values
+	 */
+	private void save(){
+		status.setText("SAVING");			
+		ScenarioRequest rc = (ScenarioRequest) driver.flush();
+			
+		//Save equipment list
+		checkEquipmentListForPersistence(rc);
+		//Save hazards list
+		checkHazardsListForPersistence(rc);
+				
+
+		//persist scenario entity
+		rc.persist().using(currentScenario).with(driver.getPaths()).with("equipment"/*, "hazards"*/).to(new Receiver<ScenarioProxy>() {
+
+			@Override
+			public void onSuccess(ScenarioProxy response) {
+//			    logger.info("RESPONSE|currentState:"+response.getBackground().getCurrentState()+" proposedState:"+response.getBackground().getProposedState());
+				status.setText("SAVED");
+				scenarioRequestFactory.getEventBus().fireEvent(new EntityProxyChange<ScenarioProxy>(response, WriteOperation.UPDATE));
+//				logger.info("DURING:"+response.getTitle());
+				setCurrentScenario(response);
+//				logger.info("AFTER:"+currentScenario.getTitle());
+			}
+			
+			@Override
+			public void onFailure(ServerFailure error) {
+				super.onFailure(error);
+				Window.alert(error.getMessage());
+			}
+			
+		}).fire();
+		
+	}
+	
 	public ScenarioPanel(final ScenarioRequestFactory scenarioRequestFactory) {
 		initWidget(uiBinder.createAndBindUi(this));
 		this.scenarioRequestFactory = scenarioRequestFactory;
 		driver.initialize(scenarioRequestFactory, this);
-		buildHazardsTable();
-		buildEquipmentTable();
+		
+		//XXX ? Will this need to go as the buildEquipmentTable()
+//		buildHazardsTable();
 		buildCliniciansTable();
 		buildEnvironmentsTable();
 //		buildTestCasesTable();
 
+		//Handler to save the entity when something changes in the data fields
 		ChangeHandler saveOnChange = new ChangeHandler() {
-
 			@Override
 			public void onChange(ChangeEvent event) {
-				status.setText("SAVING");
-
-//				logger.info(Arrays.toString(driver.getPaths()));
-//				logger.info("Dirty:"+driver.isDirty());
-//				
-				ScenarioRequest rc = (ScenarioRequest) driver.flush();
-				logger.info("getPaths:"+Arrays.toString(driver.getPaths()));
-//				logger.info("Editor flush errors:"+driver.getErrors());
-				
-//				logger.info("BEFORE:"+currentScenario.getTitle());
-//				logger.info("isChanged:"+rc.isChanged());
-				logger.info("LOCAL|currentState:"+currentScenario.getBackground().getCurrentState()+" proposedState:"+currentScenario.getBackground().getProposedState());
-						
-				rc.persist().using(currentScenario).with(driver.getPaths()).to(new Receiver<ScenarioProxy>() {
-
-					@Override
-					public void onSuccess(ScenarioProxy response) {
-					    logger.info("RESPONSE|currentState:"+response.getBackground().getCurrentState()+" proposedState:"+response.getBackground().getProposedState());
-						status.setText("SAVED");
-						scenarioRequestFactory.getEventBus().fireEvent(new EntityProxyChange<ScenarioProxy>(response, WriteOperation.UPDATE));
-//						logger.info("DURING:"+response.getTitle());
-						setCurrentScenario(response);
-//						logger.info("AFTER:"+currentScenario.getTitle());
-					}
-					@Override
-					public void onFailure(ServerFailure error) {
-						super.onFailure(error);
-						Window.alert(error.getMessage());
-					}
-					
-				}).fire();
-
-			}
-			
+				save();
+			}			
 		};
+		
 
+		//associate handlers and value entities
 		titleEditor.addChangeHandler(saveOnChange);
 		proposedStateEditor.addChangeHandler(saveOnChange);
 		currentStateEditor.addChangeHandler(saveOnChange);
@@ -253,38 +444,93 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		clinicalProcesses.addChangeHandler(saveOnChange);
 		algorithmDescription.addChangeHandler(saveOnChange);
 		
-	
+		//Listener for when the tabs are clicked (user moves to a different tab)
+		tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {			
+			@Override
+			public void onSelection(SelectionEvent<Integer> event) {
+				if(currentScenario!= null /*&& isPersitEquipment()*/){					 
+					save();
+//					Window.alert("persisted "+equipmentTable.getRowCount()+" row");
+				}
+			}
+		});
+		
+		//select first tab
 		tabPanel.selectTab(0);
 	}
 
+	/**
+	 * @deprecated this is a crummy method!
+	 * indicates if we need to persist our equipment list
+	 * <p> If we have at least one row of data
+	 * @return
+	 */
+	private boolean isPersitEquipment(){
+		if (equipmentTable.getRowCount()<2)
+			return false;//we dont even have one row of data
+		Widget wDevType = equipmentTable.getWidget(1, 0);//getWidget row column		
+		Widget wManu = equipmentTable.getWidget(1, 1);//getWidget row column		
+		Widget wModel = equipmentTable.getWidget(1, 2);//getWidget row column		
+		Widget wRoss = equipmentTable.getWidget(1, 3);//getWidget row column	
+		ScenarioRequest rc = (ScenarioRequest) driver.flush();
+		EquipmentEntryProxy eep = rc.create(EquipmentEntryProxy.class);
+		
+		boolean isWorthAdding = false;
+		
+		if(wDevType instanceof TextBox) {
+			isWorthAdding |= !((TextBox)wDevType).getText().trim().equals(""); }
+		if(wManu instanceof TextBox) {
+			isWorthAdding |= !((TextBox)wManu).getText().trim().equals("");}
+		if(wModel instanceof TextBox) {
+			isWorthAdding |= !((TextBox)wModel).getText().trim().equals("");}
+		if(wRoss instanceof TextBox) {
+			isWorthAdding |= !((TextBox)wRoss).getText().trim().equals(""); }	
+		
+		return isWorthAdding;
+		
+	}
+	
+	
 	private ScenarioProxy currentScenario;
 	
 	public void setCurrentScenario(ScenarioProxy currentScenario) {
 		
 		ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
 		if(null == currentScenario) {
-		    context.create().with("background", "benefitsAndRisks",/* "environments", "equipment", "hazards",*/ "proposedSolution").to(new Receiver<ScenarioProxy>() {
-
-		    	
+		    context.create()
+		    .with("background", "benefitsAndRisks", /*"environments",*/ "equipment", /*"hazards",*/ "proposedSolution")
+//		    .with("hazards")
+		    .to(new Receiver<ScenarioProxy>() {
+	    	
                 @Override
                 public void onSuccess(ScenarioProxy response) {
                     logger.info(""+response.getBackground());
                     ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
                     ScenarioProxy currentScenario = context.edit(response); 
-                    driver.edit(currentScenario, context);
-//                  logger.info("Driver:"+driver);
-                    
+                    driver.edit(currentScenario, context);                    
                     ScenarioPanel.this.currentScenario = currentScenario;
+//                    DAG Debug only
+//                    Window.alert("Created scenario request Success");
+//                    if(currentScenario!= null && currentScenario.getEquipment()!=null)
+//                    	Window.alert("equimpent list size "+currentScenario.getEquipment().getEntries().size());
+//                    if(currentScenario!= null && currentScenario.getHazards()!=null)
+//                    	Window.alert("hazards list size "+currentScenario.getHazards().getEntries().size());
+//                    else
+//                    	Window.alert("hazards list NULL");
                 }
 		        
 		    }).fire();
+		    
+		    buildEquipmentTable(true);//new scn. No equipment list
+		    buildHazardsTable(true);
 
 		} else {
 		    currentScenario = context.edit(currentScenario); 
             driver.edit(currentScenario, context);
             this.currentScenario = currentScenario;
+            buildEquipmentTable(false);//
+            buildHazardsTable(false);
 		}
-		
 
 	}
 	
@@ -349,6 +595,15 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	@UiField
 	@Ignore
 	Anchor addNewEnvironment;
+	
+	@UiField
+	@Ignore
+	Anchor addNewEquipment;//adds a new empty equipment row
+	
+	@UiField
+	@Ignore
+	Anchor addNewHazard;//adds a new empty hazards row
+	
 	
 	private static class ClinicianSuggestOracle extends MultiWordSuggestOracle {
 		private static String[] values = new String[] {
@@ -494,6 +749,111 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		}
 		
 	}
+	
+	//-----------------------------------------
+	//ANCHORS 
+	//-----------------------------------------
+	//When clicking in "AddNew Equipment" anchor
+	@UiHandler("addNewEquipment")
+	void onAddNewEqClick(ClickEvent click) {
+		final int rows = equipmentTable.getRowCount();
+		equipmentTable.insertRow(rows);
+		for(int j = 0; j < 4; j++) {//add four text boxes
+			equipmentTable.setWidget(rows, j, new TextBox());
+		}
+		//add delete button
+		Button deleteButton = new Button("Delete");
+		equipmentTable.setWidget(rows, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
+
+		//click handler that deletes the current row
+		deleteButton.addClickHandler(new ClickHandler() {	
+			@Override
+			public void onClick(ClickEvent event) {
+				equipmentTable.removeRow(rows);
+			}
+		});
+	}
+	
+	//When clicking in "AddNew Equipment" anchor
+	@UiHandler("addNewHazard")
+	void onAddNewHazardClick(ClickEvent click) {
+		addNewHazardTableRow();
+	}
+	
+	/**
+	 * Adds a new empty row to the hazards table
+	 */
+	private void addNewHazardTableRow(){
+		final int row = hazardsTable.getRowCount();
+		hazardsTable.insertRow(row);
+		final TextArea hazardDescription = new TextArea();
+		hazardDescription.setVisibleLines(10);
+		hazardDescription.setCharacterWidth(40);
+		
+		final TextArea hazardFactors = new TextArea();
+		hazardFactors.setVisibleLines(10);
+		hazardFactors.setCharacterWidth(40);
+		
+		hazardsTable.setWidget(row, HAZARDS_DESCRIPTION_COL, hazardDescription);
+		hazardsTable.setWidget(row, HAZARDS_FACTORS_COL, hazardFactors);
+		hazardsTable.setWidget(row, HAZARDS_EXPECTED_COL, buildListBox(hazardExpected));
+		hazardsTable.setWidget(row, HAZARDS_SEVERITY_COL, buildListBox(hazardSeverity));
+		
+		Button deleteButton = new Button("Delete");
+		hazardsTable.setWidget(row, HAZARDS_DELETEBUTTON_COL, deleteButton);
+		deleteButton.addClickHandler(new ClickHandler() {				
+			@Override
+			public void onClick(ClickEvent event) {
+				hazardsTable.removeRow(row);
+				
+			}
+		});
+	}
+	
+	/**
+	 * Adds a new empty row to the hazards table
+	 * @param description
+	 * @param factors
+	 * @param expected
+	 * @param severity
+	 */
+	private void addNewHazardTableRow(String description, String factors, String expected, String severity){
+		final int row = hazardsTable.getRowCount();
+		hazardsTable.insertRow(row);
+		final TextArea hazardDescription = new TextArea();
+		hazardDescription.setText(description);
+		hazardDescription.setVisibleLines(10);
+		hazardDescription.setCharacterWidth(40);
+		
+		final TextArea hazardFactors = new TextArea();
+		hazardFactors.setText(factors);
+		hazardFactors.setVisibleLines(10);
+		hazardFactors.setCharacterWidth(40);
+		
+		final ListBox hazardsExpected = buildListBox(hazardExpected);
+		int indexExpected = getHazardExpectedIndex(expected);
+		hazardsExpected.setSelectedIndex(indexExpected);
+		
+		final ListBox hazardsSeverity = buildListBox(hazardSeverity);
+		int indexSeverity = getHazardSeverityIndex(severity);
+		hazardsSeverity.setSelectedIndex(indexSeverity);
+		
+		hazardsTable.setWidget(row, HAZARDS_DESCRIPTION_COL, hazardDescription);
+		hazardsTable.setWidget(row, HAZARDS_FACTORS_COL, hazardFactors);
+		hazardsTable.setWidget(row, HAZARDS_EXPECTED_COL, hazardsExpected);
+		hazardsTable.setWidget(row, HAZARDS_SEVERITY_COL, hazardsSeverity);
+		
+		Button deleteButton = new Button("Delete");
+		hazardsTable.setWidget(row, HAZARDS_DELETEBUTTON_COL, deleteButton);
+		deleteButton.addClickHandler(new ClickHandler() {				
+			@Override
+			public void onClick(ClickEvent event) {
+				hazardsTable.removeRow(row);
+				
+			}
+		});
+	}
+	
 	private final EnvironmentSuggestOracle environmentSuggestOracle = new EnvironmentSuggestOracle();
 	
 	@UiHandler("addNewClinician")
@@ -515,6 +875,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			
 		});
 	}
+	
 	@UiHandler("addNewEnvironment")
 	void onANEClick(ClickEvent click) {
 		final int rows = environmentsTable.getRowCount();
@@ -611,11 +972,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("submitButton")
 	public void onClickSubmit(ClickEvent clickEvent) {
-		int i = 0 ;//dummy		
+		int i = 0 ;//dummy	, just to put a freaking breakpoint 	
 	}
 	
 	@UiHandler("saveButton")
 	public void onClickSave(ClickEvent clickEvent) {
-		int i = 0 ;//dummy		
+		save();//persist our entities!!	
 	}
 }

@@ -9,6 +9,7 @@ import com.googlecode.objectify.annotation.Embed;
 @Embed
 public class Equipment implements java.io.Serializable {
     private List<EquipmentEntry> entries = new ArrayList<EquipmentEntry>();
+    
     public List<EquipmentEntry> getEntries() {
         return entries;
     }

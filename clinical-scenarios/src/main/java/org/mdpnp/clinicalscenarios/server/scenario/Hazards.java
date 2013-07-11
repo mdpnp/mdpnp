@@ -18,4 +18,6 @@ public class Hazards implements java.io.Serializable {
         this.entries = entries;
     }
     
+    
+    
 }

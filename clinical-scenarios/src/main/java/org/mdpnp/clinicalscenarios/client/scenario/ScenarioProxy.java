@@ -15,12 +15,13 @@ public interface ScenarioProxy extends EntityProxy {
 	void setTitle(String title);
 	
 	BackgroundProxy getBackground();
-//	HazardsProxy getHazards();
-//	EnvironmentsProxy getEnvironments();
+	HazardsProxy getHazards();
 	EquipmentProxy getEquipment();
 	ProposedSolutionProxy getProposedSolution();
 	BenefitsAndRisksProxy getBenefitsAndRisks();
-	List<EquipmentEntryProxy> getEquipmentList();//XXX
+
+	//	DAG
+	EnvironmentsProxy getEnvironments();
 	
 	//
 	public String getSubmitter();

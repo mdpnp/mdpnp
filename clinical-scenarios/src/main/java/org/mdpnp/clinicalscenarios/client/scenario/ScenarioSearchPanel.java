@@ -84,9 +84,13 @@ public class ScenarioSearchPanel extends Composite {
 		}
 	}
 	
+	/**
+	 * Basic search or listAll
+	 * @param text
+	 */
 	public void doSearch(final String text) {
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
-		scenarioRequest.searchByKeywords(text).with("background", "benefitsAndRisks",/* "environments", "equipment", "hazards", */"proposedSolution").to(new Receiver<List<ScenarioProxy>>() {
+		scenarioRequest.searchByKeywords(text).with("background", "benefitsAndRisks",/* "environments",*/ "equipment",/* "hazards", */"proposedSolution").to(new Receiver<List<ScenarioProxy>>() {
 
 			@Override
 			public void onSuccess(List<ScenarioProxy> response) {
