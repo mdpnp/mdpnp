@@ -130,20 +130,21 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
     }
 
     private void replaceDataPanels() {
+        final Collection<DevicePanel> _dataComponents = new ArrayList<DevicePanel>();
         
         synchronized(dataComponents) {
+            // Be aware GL Panels utilize invokeAndWait!
             DevicePanelFactory.resolvePanels(knownIdentifiers, dataComponents);
             log.debug("dataComponents:"+dataComponents);
+            _dataComponents.addAll(dataComponents);
         }
         
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 data.removeAll();
-                synchronized(dataComponents) {
-                    data.setLayout(new GridLayout(dataComponents.size(), 1));
-                    for(DevicePanel p : dataComponents) {
-                        data.add(p);
-                    }
+                data.setLayout(new GridLayout(_dataComponents.size(), 1));
+                for(DevicePanel p : _dataComponents) {
+                    data.add(p);
                 }
             }
         }); 
