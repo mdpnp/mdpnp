@@ -32,8 +32,8 @@ public class Capnostream {
 		this.outputStream = new BufferedOutputStream(os);
 	}
 
-	private byte[] inBuffer = new byte[1024];
-	private byte[] outBuffer = new byte[1024];
+	private byte[] inBuffer = new byte[2048];
+	private byte[] outBuffer = new byte[2048];
 
 	protected static final Map<Integer, Command> cmdMapping = new HashMap<Integer, Command>();
 	protected static final Map<Integer, Response> resMapping = new HashMap<Integer, Response>();
@@ -434,6 +434,8 @@ public class Capnostream {
         CO2Units units = CO2Units.fromInt(0xFF & payload[25]);
 		int extendedCO2Status = 0xFF & payload[26];
 		
+		
+		
 		// TODO there is more stuff here
 		return receiveNumerics(dt, etco2, fico2, rr, spo2, pulse,
 		        slowStatus, co2ActiveAlarms, spo2ActiveAlarms, noBreathPeriodSeconds,
@@ -481,11 +483,13 @@ public class Capnostream {
 
 	public boolean receiveMessage() throws IOException {
 		int length = inputStream.read();
+		int my_checksum = 0xFF & length;
 		if (length < 0) {
 			return false;
 		}
 
 		int code = inputStream.read();
+		my_checksum ^= 0xFF & code;
 		if (code < 0) {
 			return false;
 		}
@@ -508,12 +512,20 @@ public class Capnostream {
 			}
 		}
 
+		for(int i = 0; i < length; i++) {
+		    my_checksum ^= 0xFF & inBuffer[i];
+		}
+		
 		int checksum = inputStream.read();
-		// TODO Check the checksum
+		
 		if (checksum < 0) {
 			return false;
 		}
 
+		if(checksum != my_checksum) {
+		    log.warn("Failed checksum check expected:"+my_checksum+" but received "+checksum+" data are ignored");
+		}
+		
 		return receiveMessage(response, inBuffer, read_length);
 	}
 
