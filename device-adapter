@@ -10,7 +10,7 @@
 ### END INIT INFO
 #
 export NAME=device-adapter
-export DEVICE_SETTINGS=`cat /home/ubuntu/device.this`
+export DEVICE_SETTINGS="`cat /home/ubuntu/device.this`"
 export ADAPTER_OPTS="ICE_Device_Interface $DEVICE_SETTINGS"
 export ADAPTER_DIR=/home/ubuntu/demo-apps-0.1.0/bin/
 export ADAPTER_SCR=demo-apps
