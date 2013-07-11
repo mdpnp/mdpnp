@@ -145,7 +145,6 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
                         data.add(p);
                     }
                 }
-                data.revalidate();
             }
         }); 
     }

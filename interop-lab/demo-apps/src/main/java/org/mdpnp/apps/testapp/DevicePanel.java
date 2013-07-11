@@ -4,19 +4,13 @@ import ice.DeviceIdentity;
 
 import java.awt.AWTEvent;
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.GridLayout;
 import java.awt.event.ComponentEvent;
-import java.util.Collection;
 
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
 import org.mdpnp.guis.swing.DeviceMonitor;
-import org.mdpnp.guis.swing.DevicePanelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
