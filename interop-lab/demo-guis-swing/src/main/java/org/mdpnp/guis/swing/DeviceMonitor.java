@@ -1,18 +1,14 @@
 package org.mdpnp.guis.swing;
 
 import static org.mdpnp.devices.TopicUtil.lookupOrCreateTopic;
-import ice.DeviceConnectivity;
 import ice.DeviceConnectivityDataReader;
 import ice.DeviceConnectivitySeq;
 import ice.DeviceConnectivityTypeSupport;
-import ice.DeviceIdentity;
 import ice.DeviceIdentityDataReader;
 import ice.DeviceIdentitySeq;
-import ice.Numeric;
 import ice.NumericDataReader;
 import ice.NumericSeq;
 import ice.NumericTypeSupport;
-import ice.SampleArray;
 import ice.SampleArrayDataReader;
 import ice.SampleArraySeq;
 import ice.SampleArrayTypeSupport;
@@ -34,7 +30,6 @@ import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.QueryCondition;
 import com.rti.dds.subscription.ReadCondition;
-import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
@@ -95,13 +90,7 @@ public class DeviceMonitor {
                 try {
                     for(;;) {
                         idReader.read_w_condition(id_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
-                        for(int i = 0; i < info_seq.size(); i++) {
-                            SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
-                            if(sampleInfo.valid_data) {
-                                DeviceIdentity di = (DeviceIdentity) id_seq.get(i);
-                                listener.deviceIdentity(di, sampleInfo);
-                            }
-                        }
+                        listener.deviceIdentity(idReader, id_seq, info_seq);
                         idReader.return_loan(id_seq, info_seq);
                     }
                 } catch (RETCODE_NO_DATA noData) {
@@ -120,13 +109,7 @@ public class DeviceMonitor {
                 try {
                     for(;;) {
                         connReader.read_w_condition(conn_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
-                        for(int i = 0; i < info_seq.size(); i++) {
-                            SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
-                            if(sampleInfo.valid_data) {
-                                DeviceConnectivity dc = (DeviceConnectivity) conn_seq.get(i);
-                                listener.deviceConnectivity(dc, sampleInfo);
-                            }
-                        }
+                        listener.deviceConnectivity(connReader, conn_seq, info_seq);
                         connReader.return_loan(conn_seq, info_seq);
                     }
                     
@@ -146,17 +129,7 @@ public class DeviceMonitor {
                 try {
                     for(;;) {
                         numReader.read_w_condition(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
-                        for(int i = 0; i < info_seq.size(); i++) {
-                            SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
-                            if(sampleInfo.valid_data) {
-                                Numeric n = (Numeric) num_seq.get(i);
-                                listener.numeric(n, sampleInfo);
-                            } else {
-                                Numeric n = (Numeric) Numeric.create();
-                                numReader.get_key_value(n, sampleInfo.instance_handle);
-                                log.debug("No valid_data:"+n);
-                            }
-                        }
+                        listener.numeric(numReader, num_seq, info_seq);
                         numReader.return_loan(num_seq, info_seq);
                     }
                 } catch (RETCODE_NO_DATA noData) {
@@ -176,13 +149,7 @@ public class DeviceMonitor {
                 try {
                     for(;;) {
                         saReader.read_w_condition(sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
-                        for(int i = 0; i < info_seq.size(); i++) {
-                            SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
-                            if(sampleInfo.valid_data) {
-                                SampleArray sa = (SampleArray) sa_seq.get(i);
-                                listener.sampleArray(sa, sampleInfo);
-                            }
-                        }
+                        listener.sampleArray(saReader, sa_seq, info_seq);
                         saReader.return_loan(sa_seq, info_seq);
                     }
                 } catch (RETCODE_NO_DATA noData) {

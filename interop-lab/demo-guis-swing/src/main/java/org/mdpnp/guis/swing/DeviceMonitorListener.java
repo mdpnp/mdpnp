@@ -1,19 +1,14 @@
 package org.mdpnp.guis.swing;
 
-import com.rti.dds.subscription.SampleInfo;
-
-import ice.DeviceConnectivity;
-import ice.DeviceIdentity;
-import ice.Numeric;
-import ice.SampleArray;
+import com.rti.dds.subscription.SampleInfoSeq;
 
 public interface DeviceMonitorListener {
-    void deviceIdentity(DeviceIdentity di, SampleInfo sampleInfo);
-    void deviceConnectivity(DeviceConnectivity dc, SampleInfo sampleInfo);
-    void numeric(Numeric n, SampleInfo sampleInfo);
-    void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo);
-    void addNumeric(int name);
-    void removeNumeric(int name);
-    void addSampleArray(int name);
-    void removeSampleArray(int name);
+    void deviceIdentity(ice.DeviceIdentityDataReader reader, ice.DeviceIdentitySeq di, SampleInfoSeq sampleInfo);
+    void deviceConnectivity(ice.DeviceConnectivityDataReader reader, ice.DeviceConnectivitySeq dc, SampleInfoSeq sampleInfo);
+    void numeric(ice.NumericDataReader reader, ice.NumericSeq n, SampleInfoSeq sampleInfo);
+    void sampleArray(ice.SampleArrayDataReader reader, ice.SampleArraySeq sampleArray, SampleInfoSeq sampleInfo);
+//    void addNumeric(int name);
+//    void removeNumeric(int name);
+//    void addSampleArray(int name);
+//    void removeSampleArray(int name);
 }

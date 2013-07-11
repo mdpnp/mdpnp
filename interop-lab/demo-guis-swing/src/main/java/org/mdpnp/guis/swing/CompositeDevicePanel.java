@@ -28,7 +28,9 @@ import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.Duration_t;
+import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
 
 @SuppressWarnings("serial")
 public class CompositeDevicePanel extends JComponent implements DeviceMonitorListener {
@@ -91,20 +93,40 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
         add(header, BorderLayout.NORTH);
         add(data, BorderLayout.CENTER);
     }
-
+    private final Set<InstanceHandle_t> seenInstances = new HashSet<InstanceHandle_t>();
     @Override
-    public void deviceIdentity(DeviceIdentity di, SampleInfo sampleInfo) {
-        manufacturer.setText(di.manufacturer);
-        model.setText(di.model);
-        serial_number.setText(di.serial_number);
-        universal_device_identifier.setText(di.universal_device_identifier);
-        icon.setText("");
-        icon.setIcon(new ImageIcon(IconUtil.image(di.icon)));
+    public void deviceIdentity(ice.DeviceIdentityDataReader reader, ice.DeviceIdentitySeq di_seq, SampleInfoSeq info_seq) {
+        // TODO really a History QoS with keep last of 1 is better but trying to be compatible with various QoS settings for now
+        seenInstances.clear();
+        for(int i = info_seq.size() - 1; i >= 0; i--) {
+            SampleInfo si = (SampleInfo) info_seq.get(i);
+            if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
+                seenInstances.add(si.instance_handle);
+                DeviceIdentity di = (DeviceIdentity) di_seq.get(i);
+                manufacturer.setText(di.manufacturer);
+                model.setText(di.model);
+                serial_number.setText(di.serial_number);
+                universal_device_identifier.setText(di.universal_device_identifier);
+                icon.setText("");
+                icon.setIcon(new ImageIcon(IconUtil.image(di.icon)));
+            }
+        }
+
     }
 
+    
+    
     @Override
-    public void deviceConnectivity(DeviceConnectivity dc, SampleInfo sampleInfo) {
-        connectionState.setText(dc.state.name() + (!"".equals(dc.info)?(" ("+dc.info+")"):""));
+    public void deviceConnectivity(ice.DeviceConnectivityDataReader reader, ice.DeviceConnectivitySeq dc_seq, SampleInfoSeq info_seq) {
+        seenInstances.clear();
+        for(int i = info_seq.size() - 1; i >= 0; i--) {
+            SampleInfo si = (SampleInfo) info_seq.get(i);
+            if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
+                seenInstances.add(si.instance_handle);
+                DeviceConnectivity dc = (DeviceConnectivity) dc_seq.get(i);
+                connectionState.setText(dc.state.name() + (!"".equals(dc.info)?(" ("+dc.info+")"):""));
+            }
+        }
     }
 
     private void replaceDataPanels() {
@@ -129,33 +151,51 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
     }
     
     @Override
-    public void numeric(Numeric n, SampleInfo sampleInfo) {
-        if(!knownIdentifiers.contains(n.name)) {
-            // avoid reboxing ... also tells us if something is new
-            knownIdentifiers.add(n.name);
-            log.trace("New numeric, new set:"+knownIdentifiers);
-            replaceDataPanels();
-        }
-        synchronized(dataComponents) {
-            for(DevicePanel d : dataComponents) {
-                d.numeric(n, sampleInfo);
+    public void numeric(ice.NumericDataReader reader, ice.NumericSeq nu_seq, SampleInfoSeq info_seq) {
+        seenInstances.clear();
+        for(int i = info_seq.size() - 1; i >= 0; i--) {
+            SampleInfo si = (SampleInfo) info_seq.get(i);
+            if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
+                seenInstances.add(si.instance_handle);
+                ice.Numeric n = (Numeric) nu_seq.get(i);
+                if(!knownIdentifiers.contains(n.name)) {
+                    // avoid reboxing ... also tells us if something is new
+                    knownIdentifiers.add(n.name);
+                    log.trace("New numeric, new set:"+knownIdentifiers);
+                    replaceDataPanels();
+                }
+                synchronized(dataComponents) {
+                    for(DevicePanel d : dataComponents) {
+                        d.numeric(n, si);
+                    }
+                }
             }
         }
+
 //        log.trace(n.toString());
     }
 
     @Override
-    public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
-        if(!knownIdentifiers.contains(sampleArray.name)) {
-            knownIdentifiers.add(sampleArray.name);
-            log.trace("New SampleArray, new set:"+knownIdentifiers);
-            replaceDataPanels();
-        }
-        synchronized(dataComponents) {
-            for(DevicePanel d : dataComponents) {
-                d.sampleArray(sampleArray, sampleInfo);
+    public void sampleArray(ice.SampleArrayDataReader reader, ice.SampleArraySeq sa_seq, SampleInfoSeq info_seq) {
+        seenInstances.clear();
+        for(int i = info_seq.size() - 1; i >= 0; i--) {
+            SampleInfo si = (SampleInfo) info_seq.get(i);
+            if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
+                seenInstances.add(si.instance_handle);
+                ice.SampleArray sampleArray = (SampleArray) sa_seq.get(i);
+                if(!knownIdentifiers.contains(sampleArray.name)) {
+                    knownIdentifiers.add(sampleArray.name);
+                    log.trace("New SampleArray, new set:"+knownIdentifiers);
+                    replaceDataPanels();
+                }
+                synchronized(dataComponents) {
+                    for(DevicePanel d : dataComponents) {
+                        d.sampleArray(sampleArray, si);
+                    }
+                }
             }
         }
+
 //        log.trace(sampleArray.toString());
     }
     
@@ -163,29 +203,5 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
         knownIdentifiers.clear();
         dataComponents.clear();
         replaceDataPanels();
-    }
-
-    @Override
-    public void addNumeric(int name) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public void removeNumeric(int name) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public void addSampleArray(int name) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public void removeSampleArray(int name) {
-        // TODO Auto-generated method stub
-        
     }
 }

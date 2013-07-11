@@ -41,11 +41,11 @@ public class EventLoop  {
             for(Mutation m : mutations) {
                 
                 if(m.isAdd()) {
-                    log.debug("Handling an add mutation for " + m.getCondition());
+//                    log.debug("Handling an add mutation for " + m.getCondition());
                     conditionHandlers.put(m.getCondition(), m.getConditionHandler());
                     waitSet.attach_condition(m.getCondition());
                 } else {
-                    log.debug("Handling a remove mutation for " + m.getCondition());
+//                    log.debug("Handling a remove mutation for " + m.getCondition());
                     conditionHandlers.remove(m.getCondition());
                     waitSet.detach_condition(m.getCondition());
                 }
@@ -129,12 +129,12 @@ public class EventLoop  {
     public void addHandler(Condition condition, ConditionHandler conditionHandler) {
         Mutation m = new Mutation(true, condition, conditionHandler);
         synchronized(queuedMutations) {
-            log.debug("Queue add condition:"+condition);
+//            log.debug("Queue add condition:"+condition);
             queuedMutations.add(m);
             mutate.set_trigger_value(true);
         }
         m.await();
-        log.debug("addHandler complete for " + condition);
+//        log.debug("addHandler complete for " + condition);
     }
     
     public void removeHandler(Condition condition) {
@@ -145,7 +145,7 @@ public class EventLoop  {
             mutate.set_trigger_value(true);
         }
         m.await();
-        log.debug("removeHandler complete for " + condition);
+//        log.debug("removeHandler complete for " + condition);
     }
     
 }

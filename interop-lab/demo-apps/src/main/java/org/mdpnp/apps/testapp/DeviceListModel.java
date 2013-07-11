@@ -166,7 +166,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
             while(true) {
                 try {
                     reader.read(conn_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
-                    log.trace("read for dataAvailable(DeviceConnectivityDataReader");
+//                    log.trace("read for dataAvailable(DeviceConnectivityDataReader");
                     for(int i = 0; i < conn_seq.size(); i++) {
                         DeviceConnectivity di = (DeviceConnectivity) conn_seq.get(i);
                         SampleInfo si = (SampleInfo) info_seq.get(i);
@@ -178,7 +178,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         
                         if(si.valid_data) {
                             if(null != current) {
-                                log.trace("Sample connectivity for existing device "+di.universal_device_identifier);
+//                                log.trace("Sample connectivity for existing device "+di.universal_device_identifier);
                                 current.setDeviceConnectivity(di);
                                 fireContentsChanged(DeviceListModel.this, cur_idx[0], cur_idx[0]);
                             } else {
@@ -203,7 +203,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
             while(true) {
                 try {
                     reader.read(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
-                    log.trace("read for dataAvailable(DeviceIdentityDataReader)...");
+//                    log.trace("read for dataAvailable(DeviceIdentityDataReader)...");
                     for(int i = 0; i < data_seq.size(); i++) {
                         DeviceIdentity di = (DeviceIdentity) data_seq.get(i);
                         SampleInfo si = (SampleInfo) info_seq.get(i);
