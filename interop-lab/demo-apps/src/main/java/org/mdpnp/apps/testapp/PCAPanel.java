@@ -35,6 +35,8 @@ import org.mdpnp.devices.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 
 public class PCAPanel extends JPanel implements VitalsListener {
@@ -99,9 +101,9 @@ public class PCAPanel extends JPanel implements VitalsListener {
 				int index, boolean isSelected, boolean cellHasFocus) {
 			VitalsModel.Vitals v = (Vitals) val;
 			// strongly thinking about making these identifiers into strings
-			String name = Integer.toString(v.getIdentifier());
+			String name = Integer.toString(v.getNumeric().name);
 			String units = "";
-			switch(v.getIdentifier()) {
+			switch(v.getNumeric().name) {
 			case ice.MDC_PULS_OXIM_SAT_O2.VALUE:
 			    name = "SpO\u2082";
                 units = "%";
@@ -123,11 +125,9 @@ public class PCAPanel extends JPanel implements VitalsListener {
 			}
 
 			this.name.setText(name);
-			if(v.getNumber() == null) {
-				value.setText("<unavailable>");
-			} else {
-				value.setText(""+v.getNumber()+" "+units);
-			}
+			
+			value.setText(""+v.getNumeric().value+" "+units);
+
 			DeviceIcon di = v.getDevice().getIcon();
 			if(null != di) {
 			    icon.setIcon(new ImageIcon(di.getImage()));
@@ -539,16 +539,21 @@ public class PCAPanel extends JPanel implements VitalsListener {
 			normal("");
 		}
 	}
+	
+	private final static Date date(Time_t t) {
+	    return new Date(t.sec * 1000L + t.nanosec / 1000000L);
+	}
+	
 	private static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
 	@Override
-	public void update(ice.Numeric n, Device device) {
+	public void update(ice.Numeric n, SampleInfo sampleInfo, Device device) {
 		boolean stateChanged = false;
 		
 		// TODO DO NOT INCLUDE THIS
-//		if(null != n && n.value <= 5.0f) {
-//			log.warn("Ignoring " + n.name + " " + n.value + " " + device.getDeviceIdentity().universal_device_identifier);
-//			return;
-//		}
+		if(null != n && n.value <= 5.0f) {
+			log.warn("Ignoring " + n.name + " " + n.value + " " + device.getDeviceIdentity().universal_device_identifier);
+			return;
+		}
 		
 		for(Vital v : vitals) {
 			if(v.getNumeric().equals(n.name)) {

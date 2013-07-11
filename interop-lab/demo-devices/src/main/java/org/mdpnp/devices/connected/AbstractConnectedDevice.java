@@ -11,6 +11,7 @@ import ice.DeviceConnectivity;
 import ice.DeviceConnectivityDataWriter;
 import ice.DeviceConnectivityObjective;
 import ice.DeviceConnectivityObjectiveDataReader;
+import ice.DeviceConnectivityObjectiveSeq;
 import ice.DeviceConnectivityObjectiveTopic;
 import ice.DeviceConnectivityObjectiveTypeSupport;
 import ice.DeviceConnectivityTopic;
@@ -26,11 +27,17 @@ import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusCondition;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.InstanceStateKind;
+import com.rti.dds.subscription.ReadCondition;
 import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 
 public abstract class AbstractConnectedDevice extends AbstractDevice {
@@ -72,34 +79,37 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 		deviceConnectivityObjective = (DeviceConnectivityObjective) DeviceConnectivityObjective.create();
 		DeviceConnectivityObjectiveTypeSupport.register_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
 		deviceConnectivityObjectiveTopic = domainParticipant.create_topic(DeviceConnectivityObjectiveTopic.VALUE, DeviceConnectivityObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-		// TODO Implementing on the inbound DDS thread for convenience
 		deviceConnectivityObjectiveReader = (DeviceConnectivityObjectiveDataReader) subscriber.create_datareader(deviceConnectivityObjectiveTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+
+		final ReadCondition rc = deviceConnectivityObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
 		
-		deviceConnectivityObjectiveReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
-		
-		final DeviceConnectivityObjective dco = new DeviceConnectivityObjective();
-        final SampleInfo si = new SampleInfo();
+        final DeviceConnectivityObjectiveSeq data_seq = new DeviceConnectivityObjectiveSeq();
+        final SampleInfoSeq info_seq = new SampleInfoSeq();
         
-		eventLoop.addHandler(deviceConnectivityObjectiveReader.get_statuscondition(), new EventLoop.ConditionHandler() {
+		eventLoop.addHandler(rc, new EventLoop.ConditionHandler() {
 
             @Override
             public void conditionChanged(Condition condition) {
-                DeviceConnectivityObjectiveDataReader reader = (DeviceConnectivityObjectiveDataReader) ((StatusCondition)condition).get_entity();
-                
                 try {
-                    reader.read_next_sample(dco, si);
-                    // TODO reimplement as a content filter or monitor a single instance .. i dunno
-                    if(deviceIdentity.universal_device_identifier.equals(dco.universal_device_identifier)) {
-                    
-                        if(dco.connected) {
-                            log.info("Issuing connect for " + deviceIdentity.universal_device_identifier + " to " + dco.target);
-                            connect(dco.target);
+                    deviceConnectivityObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, rc);
+                    for(int i = 0; i < info_seq.size(); i++) {
+                        SampleInfo si = (SampleInfo) info_seq.get(i);
+                        if(si.valid_data) {
+                            DeviceConnectivityObjective dco = (DeviceConnectivityObjective) data_seq.get(i);
+                            if(deviceIdentity.universal_device_identifier.equals(dco.universal_device_identifier)) {
                             
-                        } else {
-                            log.info("Issuing disconnect for " + deviceIdentity.universal_device_identifier);
-                            disconnect();
+                                if(dco.connected) {
+                                    log.info("Issuing connect for " + deviceIdentity.universal_device_identifier + " to " + dco.target);
+                                    connect(dco.target);
+                                    
+                                } else {
+                                    log.info("Issuing disconnect for " + deviceIdentity.universal_device_identifier);
+                                    disconnect();
+                                }
+                            }
                         }
                     }
+                    deviceConnectivityObjectiveReader.return_loan(data_seq, info_seq);
                 } catch (RETCODE_NO_DATA noData) {
                     
                 }

@@ -12,11 +12,13 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
+import org.mdpnp.devices.EventLoop;
+
 public class GetConnected extends AbstractGetConnected {
 	private final JFrame frame;
 	
-	public GetConnected(JFrame frame, int domainId, String universal_device_identifier) {
-		super(domainId, universal_device_identifier);
+	public GetConnected(JFrame frame, int domainId, String universal_device_identifier, EventLoop eventLoop) {
+		super(domainId, universal_device_identifier, eventLoop);
 		this.frame = frame;
 	}
 	

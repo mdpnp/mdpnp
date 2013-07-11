@@ -55,7 +55,7 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
                         if (sampleInfo.valid_data) {
                             Numeric n = (Numeric) num_seq.get(i);
                             // log.trace("VitalsModel interested in: " + n);
-                            updateNumeric(n);
+                            updateNumeric(n, sampleInfo);
 
                         }
                     }
@@ -120,7 +120,7 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
     private static final Logger log = LoggerFactory.getLogger(VitalsModel.class);
 
     public interface VitalsListener {
-        void update(ice.Numeric n, Device device);
+        void update(ice.Numeric n, SampleInfo sampleInfo, Device device);
 
         void deviceRemoved(Device device);
 
@@ -179,30 +179,21 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
     
     public static final class Vitals {
         private final Device device;
-        private final Integer identifier;
+        private final ice.Numeric numeric;
 
-        private Number number;
-
-        public Vitals(Device device, Integer identifier) {
+        public Vitals(Device device, ice.Numeric numeric) {
             this.device = device;
-            this.identifier = identifier;
+            this.numeric = new ice.Numeric(numeric);
         }
 
         public Device getDevice() {
             return device;
         }
 
-        public void setNumber(Number number) {
-            this.number = number;
+        public ice.Numeric getNumeric() {
+            return numeric;
         }
 
-        public Number getNumber() {
-            return number;
-        }
-
-        public Integer getIdentifier() {
-            return identifier;
-        }
     }
 
     private final List<Vitals> vitals = new ArrayList<Vitals>();
@@ -245,7 +236,7 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
             goAgain = false;
             for (int i = 0; i < vitals.size(); i++) {
                 if (vitals.get(i).getDevice().equals(device)) {
-                    log.debug("removed " + vitals.get(i).getIdentifier() + " " + device.getMakeAndModel());
+                    log.debug("removed " + vitals.get(i).getNumeric().name + " " + device.getMakeAndModel());
                     vitals.remove(i);
                     fireIntervalRemoved(this, 0, 1);
                     fireContentsChanged(this, 0, vitals.size() - 1);
@@ -278,17 +269,17 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
         }
     }
 
-    protected void updateNumeric(ice.Numeric n) {
+    protected void updateNumeric(ice.Numeric n, SampleInfo sampleInfo) {
         Vitals v = null;
         for (int i = 0; i < vitals.size(); i++) {
             v = vitals.get(i);
+            if(n.universal_device_identifier.equals(v.getNumeric().universal_device_identifier) &&
+               n.name == v.getNumeric().name) {
             // This vital already known from this device!
-            if (v.getDevice().getDeviceIdentity().universal_device_identifier.equals(n.universal_device_identifier)
-                    && v.getIdentifier().equals(n.name)) {
-                v.setNumber(n.value);
+                v.getNumeric().copy_from(n);
 
                 if (listener != null) {
-                    listener.update(n, v.getDevice());
+                    listener.update(v.getNumeric(), sampleInfo, v.getDevice());
                 }
                 fireContentsChanged(this, i, i);
                 return;
@@ -297,12 +288,10 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
         // New vital/device combination
         Device device = deviceModel.getByUniversalDeviceIdentifier(n.universal_device_identifier);
         if (null != device) {
-            int i = vitals.size();
-            v = new Vitals(device, n.name);
-            v.setNumber(n.value);
+            v = new Vitals(device, n);
+//            System.out.println("Added new Vitals for " + n.name + " " + n.universal_device_identifier);
             vitals.add(0, v);
             fireIntervalAdded(this, 0, 0);
-            fireContentsChanged(this, 0, vitals.size() - 1);
             if (listener != null) {
                 listener.deviceAdded(device);
             }

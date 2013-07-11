@@ -129,9 +129,9 @@ public class DeviceAdapter {
 			
 
 		if(null == address) {
-		    getConnected = new GetConnected(frame, domainId, device.getDeviceIdentity().universal_device_identifier);
+		    getConnected = new GetConnected(frame, domainId, device.getDeviceIdentity().universal_device_identifier, eventLoop);
 		} else {
-		    getConnected = new GetConnectedToFixedAddress(frame, domainId, device.getDeviceIdentity().universal_device_identifier, address);
+		    getConnected = new GetConnectedToFixedAddress(frame, domainId, device.getDeviceIdentity().universal_device_identifier, address, eventLoop);
 		}
 		
 		if(gui) {

@@ -12,44 +12,55 @@ import ice.DeviceConnectivityDataReader;
 import ice.DeviceConnectivityObjective;
 import ice.DeviceConnectivityObjectiveDataWriter;
 import ice.DeviceConnectivityObjectiveTypeSupport;
+import ice.DeviceConnectivitySeq;
 import ice.DeviceConnectivityTypeSupport;
 
 import java.util.Arrays;
 
+import org.mdpnp.devices.EventLoop;
+
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantQos;
+import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.DataReaderAdapter;
 import com.rti.dds.subscription.DataReaderListener;
+import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.LivelinessChangedStatus;
+import com.rti.dds.subscription.QueryCondition;
 import com.rti.dds.subscription.RequestedDeadlineMissedStatus;
 import com.rti.dds.subscription.RequestedIncompatibleQosStatus;
 import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleLostStatus;
 import com.rti.dds.subscription.SampleRejectedStatus;
+import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriptionMatchedStatus;
+import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 
-public abstract class AbstractGetConnected extends DataReaderAdapter {
+public abstract class AbstractGetConnected {
 	private boolean closing = false;
 
-	private DomainParticipant participant;
-	private Subscriber subscriber;
-	private Publisher publisher;
-	private DeviceConnectivity deviceConnectivity;
-	private DeviceConnectivityObjective deviceConnectivityObjective;
-	private DeviceConnectivityDataReader deviceConnectivityReader;
-	private DeviceConnectivityObjectiveDataWriter deviceConnectivityObjectiveWriter;
-	private Topic deviceConnectivityTopic;
-	private Topic deviceConnectivityObjectiveTopic;
+	private final DomainParticipant participant;
+	private final Subscriber subscriber;
+	private final Publisher publisher;
+	private final DeviceConnectivity deviceConnectivity;
+	private final DeviceConnectivityObjective deviceConnectivityObjective;
+	private final DeviceConnectivityDataReader deviceConnectivityReader;
+	private final DeviceConnectivityObjectiveDataWriter deviceConnectivityObjectiveWriter;
+	private final Topic deviceConnectivityTopic;
+	private final Topic deviceConnectivityObjectiveTopic;
 	
-	public AbstractGetConnected(int domainId, String universal_device_identifier) {
+	public AbstractGetConnected(int domainId, String universal_device_identifier, EventLoop eventLoop) {
 	    DomainParticipantQos pQos = new DomainParticipantQos();
 	    DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
 	    pQos.participant_name.name = "AbstractGetConnected " + universal_device_identifier;
@@ -63,12 +74,45 @@ public abstract class AbstractGetConnected extends DataReaderAdapter {
 	    deviceConnectivityObjectiveTopic = participant.create_topic(ice.DeviceConnectivityObjectiveTopic.VALUE, ice.DeviceConnectivityObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 	    deviceConnectivityObjectiveWriter = (DeviceConnectivityObjectiveDataWriter) publisher.create_datawriter(deviceConnectivityObjectiveTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 	    
+        DeviceConnectivityTypeSupport.register_type(participant, DeviceConnectivityTypeSupport.get_type_name());
+        deviceConnectivityTopic = participant.create_topic(ice.DeviceConnectivityTopic.VALUE, ice.DeviceConnectivityTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceConnectivityReader = (DeviceConnectivityDataReader) subscriber.create_datareader(deviceConnectivityTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        StringSeq udis = new StringSeq();
+        udis.add("'"+universal_device_identifier+"'");
+        final QueryCondition qc = deviceConnectivityReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "universal_device_identifier MATCH %0",  udis);
+        eventLoop.addHandler(qc, new EventLoop.ConditionHandler() {
+            SampleInfoSeq info_seq = new SampleInfoSeq();
+            DeviceConnectivitySeq data_seq = new DeviceConnectivitySeq();
+            @Override
+            public void conditionChanged(Condition condition) {
+                
+                try {
+                    deviceConnectivityReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, qc);
+                    for(int i = 0; i < data_seq.size(); i++) {
+                        SampleInfo si = (SampleInfo) info_seq.get(i);
+                        if(si.valid_data) {
+                            DeviceConnectivity dc = (DeviceConnectivity) data_seq.get(i);
+                            deviceConnectivity.copy_from(dc);
+                            synchronized(AbstractGetConnected.this) {
+                                deviceConnectivityReceived = true;
+                                AbstractGetConnected.this.notifyAll();
+                            }
+                        }
+                    }
+                    
+                    deviceConnectivityReader.return_loan(data_seq, info_seq);
+                } catch(RETCODE_NO_DATA noData) {
+                    
+                }
+            }
+        });
+        
 	}
 	
+	private boolean deviceConnectivityReceived = false;
+	
 	public void connect() {
-	       DeviceConnectivityTypeSupport.register_type(participant, DeviceConnectivityTypeSupport.get_type_name());
-	       deviceConnectivityTopic = participant.create_topic(ice.DeviceConnectivityTopic.VALUE, ice.DeviceConnectivityTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-	       deviceConnectivityReader = (DeviceConnectivityDataReader) subscriber.create_datareader(deviceConnectivityTopic, Subscriber.DATAREADER_QOS_DEFAULT, this, StatusKind.DATA_AVAILABLE_STATUS);
+	    issueConnect();
 	}
 	
 	public void disconnect() {
@@ -108,6 +152,7 @@ public abstract class AbstractGetConnected extends DataReaderAdapter {
 	private boolean issuingConnect;
 	
 	private void issueConnect() {
+	    long giveup = System.currentTimeMillis() + 10000L;
 		synchronized(this) {
 			if(issuingConnect) {
 				return;
@@ -115,8 +160,21 @@ public abstract class AbstractGetConnected extends DataReaderAdapter {
 				issuingConnect = true;
 				notifyAll();
 			}
+			long now = System.currentTimeMillis();
+			while(!deviceConnectivityReceived && now < giveup) {
+			    try {
+                    wait(500L);
+                } catch (InterruptedException e) {
+                }
+			    now = System.currentTimeMillis();
+			}
+			if(now >= giveup) {
+			    throw new IllegalStateException("No DeviceConnectivity received within 10 seconds");
+			}
+			
 		}
 		try {
+		    System.out.println(deviceConnectivity.state);
 			if("".equals(deviceConnectivityObjective.target) && !closing && deviceConnectivity.type != null && (isFixedAddress() || !deviceConnectivity.valid_targets.isEmpty() || !ice.ConnectionType.Serial.equals(deviceConnectivity.type)) && ice.ConnectionState.Disconnected.equals(deviceConnectivity.state)) {
 			    if(ice.ConnectionType.Network.equals(deviceConnectivity.type)) {
 					deviceConnectivityObjective.target = addressFromUser();
@@ -135,6 +193,9 @@ public abstract class AbstractGetConnected extends DataReaderAdapter {
 				}
 			    deviceConnectivityObjective.connected = true;
 			    deviceConnectivityObjectiveWriter.write(deviceConnectivityObjective, InstanceHandle_t.HANDLE_NIL);
+			} else {
+			    System.out.println();
+			    // SO SCREWED
 			}
 		} finally {
 			synchronized(this) {
@@ -144,21 +205,4 @@ public abstract class AbstractGetConnected extends DataReaderAdapter {
 		}
 		
 	}
-
-    @Override
-    public void on_data_available(DataReader arg0) {
-        DeviceConnectivityDataReader reader = (DeviceConnectivityDataReader) arg0;
-        SampleInfo si = new SampleInfo();
-        try {
-            reader.read_next_sample(deviceConnectivity, si);
-            if(si.valid_data && deviceConnectivityObjective.universal_device_identifier.equals(deviceConnectivity.universal_device_identifier)) {
-                issueConnect();
-            }
-        } catch(RETCODE_NO_DATA noData) {
-            
-        }
-        
-    }
-
-
 }
