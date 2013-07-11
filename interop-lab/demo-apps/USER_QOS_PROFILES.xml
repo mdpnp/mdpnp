@@ -90,7 +90,7 @@
 				<history>
 				    <!--  samples kept in the writer ... see durability -->
 					<kind>KEEP_LAST_HISTORY_QOS</kind>
-					<depth>10</depth>
+					<depth>1</depth>
 					<refilter>DDS_NONE_REFILTER_QOS</refilter>
 				</history>
 				<!-- UDI is typical in the instance key so instances are owned exclusively by one publisher (device) -->
@@ -130,7 +130,7 @@
 				<history>
 					<kind>KEEP_LAST_HISTORY_QOS</kind>
 					<!--  samples kept in the writer ... see durability -->
-					<depth>10</depth>
+					<depth>1</depth>
 					<refilter>DDS_NONE_REFILTER_QOS</refilter>
 				</history>
 				<!-- UDI is typical in the instance key so instances are owned exclusively by one publisher (device) -->

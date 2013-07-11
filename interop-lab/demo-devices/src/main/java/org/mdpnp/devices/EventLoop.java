@@ -140,7 +140,7 @@ public class EventLoop  {
     public void removeHandler(Condition condition) {
         Mutation m = new Mutation(false, condition, null);
         synchronized(queuedMutations) {
-            log.debug("Queue remove condition:"+condition);
+//            log.debug("Queue remove condition:"+condition);
             queuedMutations.add(m);
             mutate.set_trigger_value(true);
         }

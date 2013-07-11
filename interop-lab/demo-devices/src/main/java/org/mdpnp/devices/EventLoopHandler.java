@@ -36,11 +36,23 @@ public class EventLoopHandler implements Runnable, ConditionHandler {
     public void run() {
         ConditionSeq condSeq = new ConditionSeq();
         Duration_t dur = new Duration_t(Duration_t.DURATION_INFINITY_SEC, Duration_t.DURATION_INFINITY_NSEC);
-        log.debug("EventLoopHandler begins");
-        while(keepGoing) {
-            eventLoop.waitAndHandle(condSeq, dur);
+        
+        try {
+            log.debug("EventLoopHandler begins");
+            while(keepGoing) {
+                try {
+                    eventLoop.waitAndHandle(condSeq, dur);
+                } catch (Throwable t) {
+                    log.error("Unexpected in ConditionHandler", t);
+                }
+            }
+        } finally {
+            if(keepGoing) {
+                log.error("EventLoopHandler ends prematurely");
+            } else {
+                log.debug("EventLoopHandler ends");
+            }
         }
-        log.debug("EventLoopHandler ends");
     }
     
     public void shutdown() throws InterruptedException {
