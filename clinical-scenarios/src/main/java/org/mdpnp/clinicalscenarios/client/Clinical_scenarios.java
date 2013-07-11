@@ -70,6 +70,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		scenarioListPanel.setSearchHandler(this);
 		userInfoSearchPanel = new UserInfoSearchPanel(userInfoRequestFactory);
 		userInfoBanner = new UserInfoBanner(userInfoRequestFactory, this);
+		
 		tagsManagementPanel = new TagsManagementPanel(tagRequestFactory);//XXX Tags
 		tagsManagementPanel.setSaveHandler(new TagsManagementPanel.SaveHandler(){
 
@@ -168,7 +169,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 	@Override
 	public void onNewUser(UserInfoProxy userInfo) {
 		userInfoPanel.setUserInfo(userInfo);
-		showWidget(userInfoPanel);
+		showWidget(userInfoPanel);		
 	}
 
 	@Override

@@ -46,15 +46,16 @@
 	     
 	     </g:HTML>
 		  <g:FlowPanel>
-		  <g:InlineLabel text="Current State:"/><g:Anchor ui:field='currentStateExample' styleName='{style.rightAligned}' href='#' text='Example'/>
+		    <g:InlineLabel text="Current State:"/><g:Anchor ui:field='currentStateExample' styleName='{style.rightAligned}' href='#' text='Example'/>
 		  </g:FlowPanel>
 		  
 		  <g:TextArea ui:field="currentStateEditor" visibleLines="10" characterWidth="80" styleName='{style.verywide}'/>
-		   <g:FlowPanel>
-		  <g:InlineLabel text="Proposed State:"/><g:Anchor ui:field='proposedStateExample' styleName='{style.rightAligned}' href='#' text='Example'/></g:FlowPanel>
-		  <g:TextArea ui:field="proposedStateEditor" visibleLines="10" characterWidth="80" styleName='{style.verywide}'/>
-		</g:FlowPanel>
+		  <g:FlowPanel>
+		    <g:InlineLabel text="Proposed State:"/><g:Anchor ui:field='proposedStateExample' styleName='{style.rightAligned}' href='#' text='Example'/></g:FlowPanel>
+		    <g:TextArea ui:field="proposedStateEditor" visibleLines="10" characterWidth="80" styleName='{style.verywide}'/>
+		  </g:FlowPanel>
 	</g:Tab>
+	
 	<g:Tab text="Hazards">
 	  <g:FlowPanel>
 	  	 <g:HTML><span style="font-size:16pt;">Current State Hazards</span><br/>
@@ -63,12 +64,12 @@
 	  	<g:FlexTable ui:field='hazardsTable'></g:FlexTable>
 	  </g:FlowPanel>
 	</g:Tab>
+	
 	<g:Tab text="Environments">
 	  <g:FlowPanel>
 	  
 	  <g:HTML><span style="font-size:16pt;">Clinicians &amp; Clinical Environments</span><br/>
 
-	     
 	     </g:HTML>
 	    <g:Label text='Clinicians Involved:'/>
 	    <g:FlexTable ui:field='cliniciansTable' styleName='{style.withborder}'/>
@@ -79,13 +80,17 @@
 	    <g:Anchor text='Add New...' href='#' ui:field='addNewEnvironment'/>
 	  </g:FlowPanel>
 	</g:Tab>
+	
 	<g:Tab text="Equipment">
 	  <g:FlowPanel>
 	  	<g:HTML><span style="font-size:16pt;">Equipment Utilized</span><br/>
 	     </g:HTML>
 	  	<g:FlexTable ui:field='equipmentTable'></g:FlexTable>
+	  	<g:Anchor text='Add New...' href='#' ui:field='addNewEquipment'/>
 	  </g:FlowPanel>
 	</g:Tab>
+	
+	
 	<g:Tab text='Proposed Solution'>
 	  <g:FlowPanel>
 	     <g:HTML><span style="font-size:16pt;">Proposed Solution</span><br/>
@@ -105,6 +110,7 @@
 	  	 <!-- <g:Label text='Improvements for the process:'/><g:TextArea visibleLines='10' characterWidth='80'/>  -->
 	  </g:FlowPanel>
 	</g:Tab>
+	
 	<g:Tab text="Benefits &amp; Risks">
 	  <g:FlowPanel>
 	    <g:HTML><span style="font-size:16pt;">Benefits &amp; Risks</span><br/>
@@ -121,6 +127,7 @@
 	  	<g:TextArea ui:field='risks' visibleLines='10' characterWidth='80' styleName='{style.verywide}'/>
 	  </g:FlowPanel>
 	</g:Tab>
+	
 	<!-- 
 	<g:Tab text="Test Cases">
 	  <g:FlowPanel>
@@ -131,6 +138,7 @@
 	-->
 	</g:TabPanel>
 	</g:Dock>
+	
 	<g:Dock direction="SOUTH" size="100px">
 	<g:FlowPanel>
 	    <g:Button text='Submit for Approval' ui:field='submitButton' styleName='{style.givemespace}'/>

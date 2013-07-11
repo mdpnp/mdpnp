@@ -20,7 +20,7 @@ public interface ScenarioProxy extends EntityProxy {
 	EquipmentProxy getEquipment();
 	ProposedSolutionProxy getProposedSolution();
 	BenefitsAndRisksProxy getBenefitsAndRisks();
-	List<EquipmentEntryProxy> getEquipmentList();//XXX
+//	List<EquipmentEntryProxy> getEquipmentList();//XXX delete
 	
 	//
 	public String getSubmitter();

@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.appengine.api.datastore.QueryResultIterator;
+import com.google.appengine.api.users.User;
+import com.google.appengine.api.users.UserService;
+import com.google.appengine.api.users.UserServiceFactory;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
@@ -30,9 +33,13 @@ public class ScenarioEntity implements java.io.Serializable {
 //	private Hazards hazards = new Hazards();
 //	private Environments environments = new Environments();
 	private Equipment equipment = new Equipment();
-	private List<EquipmentEntry> equipmentList = new ArrayList<EquipmentEntry>();//XXX
+//	private List<EquipmentEntry> equipmentList = new ArrayList<EquipmentEntry>();//XXX
 	private ProposedSolutionValue proposedSolution = new ProposedSolutionValue();
 	private BenefitsAndRisksValue benefitsAndRisks = new BenefitsAndRisksValue();
+	
+	//to ID the current user
+    final static UserService userService = UserServiceFactory.getUserService();
+    final static User user = userService.getCurrentUser();
 
 //	public Hazards getHazards() {
 //        return hazards;
@@ -74,15 +81,15 @@ public class ScenarioEntity implements java.io.Serializable {
         this.benefitsAndRisks = benefitsAndRisks;
     }
     
-    //XXX
-    public List<EquipmentEntry> getEquipmentList(){
-    	return equipmentList;
-    }
-    
-    public void setEquipmentList(List<EquipmentEntry> equipmentList){
-    	this.equipmentList = equipmentList;
-    }
-    //XXX
+//    //XXX
+//    public List<EquipmentEntry> getEquipmentList(){
+//    	return equipmentList;
+//    }
+//    
+//    public void setEquipmentList(List<EquipmentEntry> equipmentList){
+//    	this.equipmentList = equipmentList;
+//    }
+//    //XXX
     
     protected int version = 1;
 	
@@ -123,8 +130,8 @@ public class ScenarioEntity implements java.io.Serializable {
 		
 	public static ScenarioEntity create() {
 	    ScenarioEntity s = new ScenarioEntity();
-	    s.setStatus("0");
-	    s.setSubmitter("currentUSer");
+//	    s.setStatus("0");//XXX By default, pending of submission
+	    s.setSubmitter(user.getEmail());
         ofy().save().entity(s).now();
         return s;
 	}
@@ -162,6 +169,7 @@ public class ScenarioEntity implements java.io.Serializable {
 	public static List<ScenarioEntity> findAllScenarios() {
 	    return ofy().load().type(ScenarioEntity.class).list();
 	}
+	
 //	private static Logger logger = Logger.getLogger(Scenario.class.getName());
 	public ScenarioEntity persist() {
 	    ofy().save().entity(this).now();

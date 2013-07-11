@@ -3,7 +3,7 @@ package org.mdpnp.clinicalscenarios.server.scenario;
 import com.googlecode.objectify.annotation.Embed;
 
 @SuppressWarnings("serial")
-//@Embed
+@Embed
 public class EquipmentEntry implements java.io.Serializable {
     private String deviceType;
     private String manufacturer;
