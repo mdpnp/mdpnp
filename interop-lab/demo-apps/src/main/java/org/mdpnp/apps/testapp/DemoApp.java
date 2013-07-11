@@ -89,7 +89,7 @@ public class DemoApp {
 		final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null, StatusKind.STATUS_MASK_NONE);
 		final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop);
-		final VitalsModel vitalsModel = new VitalsModel(subscriber, nc, eventLoop);
+		
 		
 		final DemoFrame frame = new DemoFrame("Integrated Clinical Environment");
 		panel = new DemoPanel();
@@ -138,7 +138,7 @@ public class DemoApp {
 		String s = System.getProperty("NOPCA");
 		PCAPanel _pcaPanel = null;
 		if(null == s || !"true".equals(s)) {
-		    _pcaPanel = new PCAPanel(vitalsModel, subscriber);
+		    _pcaPanel = new PCAPanel(nc, subscriber, eventLoop);
 		    panel.getContent().add(_pcaPanel, "pca");
 		}
 		final PCAPanel pcaPanel = _pcaPanel;

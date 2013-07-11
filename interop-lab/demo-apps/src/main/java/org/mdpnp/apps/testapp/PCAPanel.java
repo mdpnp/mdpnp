@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -30,6 +31,7 @@ import javax.swing.ListCellRenderer;
 
 import org.mdpnp.apps.testapp.VitalsModel.Vitals;
 import org.mdpnp.apps.testapp.VitalsModel.VitalsListener;
+import org.mdpnp.devices.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,31 +138,38 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		
 	}
 	private final Subscriber subscriber;
+	private final DeviceListModel deviceListModel;
+	private final EventLoop eventLoop;
+	private VitalsModel vitalsModel;
 	
 	private boolean  active;
 	
 	public void setActive(boolean active) {
-	    if(active && !this.active) {
-	        reset();
+	    if(active ^ this.active) {
+	        if(active) {
+	            reset();
+	            vitalsModel = new VitalsModel(subscriber, deviceListModel, eventLoop);
+	            vitalsModel.setListener(this);
+	            list.setModel(vitalsModel);
+	            for(Vital v : vitals) {
+	                vitalsModel.addNumericInterest(v.numeric);
+	            }
+	        } else {
+	            list.setModel(new DefaultListModel());
+	            vitalsModel.setListener(null);
+	            vitalsModel.tearDown();
+	            vitalsModel = null;
+	        }
 	    }
 	    this.active = active;
 	}
 	
-	public PCAPanel(VitalsModel model, Subscriber subscriber) {
-		super();
+	public PCAPanel(DeviceListModel model, Subscriber subscriber, EventLoop eventLoop) {
+		super(new BorderLayout());
 		this.subscriber = subscriber;
-		setLayout(new BorderLayout());
-		
+		this.deviceListModel = model;
+		this.eventLoop = eventLoop;
 
-
-		
-		// Reset before we can get callbacks
-		reset();
-		
-		
-		if(model != null) {
-			model.setListener(this);
-		}
 		
 		JPanel header  = new JPanel(new GridLayout(1,2, 10, 10));
 		JPanel panel = new JPanel(new GridLayout(1,2,10,10));
@@ -172,8 +181,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		header.add(l=new JLabel("Infusion Status (Symbiq)"));
 		l.setFont(l.getFont().deriveFont(20f));
 
-		list = null == model ? new JList() : new JList(model);
-		
+		list = new JList();
 		
 		
 		panel.add(new JScrollPane(list), BorderLayout.CENTER);
@@ -257,10 +265,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 //                }
 //            }
 //        });
-		for(Vital v : vitals) {
-		    model.addNumericInterest(v.numeric);
 
-		}
 	}
 	private String resetCommand = "Start, 10\n";
 

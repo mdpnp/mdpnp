@@ -139,10 +139,12 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
     private final ice.SampleArrayDataReader sampleArrayDataReader;
     private final DeviceListModel deviceModel;
     private final EventLoop eventLoop;
+    private final Subscriber subscriber;
 
     public VitalsModel(Subscriber subscriber, DeviceListModel deviceModel, EventLoop eventLoop) {
         this.deviceModel = deviceModel;
         this.eventLoop = eventLoop;
+        this.subscriber = subscriber;
 
         TopicDescription numericTopic = lookupOrCreateTopic(subscriber.get_participant(), ice.NumericTopic.VALUE,
                 ice.NumericTypeSupport.class);
@@ -158,6 +160,23 @@ public class VitalsModel extends AbstractListModel implements ListModel, ListDat
 
     }
 
+    public void tearDown() {
+        for(QueryCondition qc : numericInterest) {
+            eventLoop.removeHandler(qc);
+            numericDataReader.delete_readcondition(qc);
+        }
+        numericInterest.clear();
+        for(QueryCondition qc : sampleArrayInterest) {
+            eventLoop.removeHandler(qc);
+            sampleArrayDataReader.delete_readcondition(qc);
+        }
+        sampleArrayInterest.clear();
+        numericDataReader.delete_contained_entities();
+        sampleArrayDataReader.delete_contained_entities();
+        subscriber.delete_datareader(numericDataReader);
+        subscriber.delete_datareader(sampleArrayDataReader);
+    }
+    
     public static final class Vitals {
         private final Device device;
         private final Integer identifier;
