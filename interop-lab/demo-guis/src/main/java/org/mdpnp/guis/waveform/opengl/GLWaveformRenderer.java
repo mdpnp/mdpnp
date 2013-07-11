@@ -62,7 +62,8 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
 
 	protected FloatBuffer buffer; 
 	
-	protected int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE, minX = 0,
+	protected float minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
+	protected int minX = 0,
 			maxX = 1, curX = 1, maxCurX;
 	protected int x_gap = 0;
 
@@ -189,7 +190,7 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
 			if(curX >= 0) {
 				
 				while(x != curX) {
-					int y = source.getValue(x);
+					float y = source.getValue(x);
 					if(y < minY) {
 						minY = Math.min(y, minY);
 						x = 0;
@@ -218,7 +219,7 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
 		} else {
 //			buffer.position(0);
 			for(int i = 0; i < maxX; i++) {
-				int y = source.getValue(i);
+				float y = source.getValue(i);
 				if(y<minY) {
 					minY = y;
 				}

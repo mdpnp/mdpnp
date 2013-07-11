@@ -113,10 +113,11 @@ public class NellcorN595 extends ASCIIFieldDelegate {
 			return null;
 		}
 	}
-	public static final String ROOT_NAME = "Nellcor N-595";
+	public static final String MANUFACTURER_NAME = "Nellcor";
+	public static final String MODEL_NAME = "";
 	@SuppressWarnings("unused")
 	private static final String applyRoot(String val) {
-		return ROOT_NAME + " " + val;
+		return MODEL_NAME + " " + val;
 	}
 	public Integer getHeartRate() {
 		return heartRate;

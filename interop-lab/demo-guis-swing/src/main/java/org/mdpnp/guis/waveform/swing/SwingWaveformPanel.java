@@ -358,7 +358,8 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 	@Override
 	protected synchronized void processComponentEvent(ComponentEvent e) {
 		super.processComponentEvent(e);
-		if(e.getID() == ComponentEvent.COMPONENT_RESIZED) {
+		if(e.getID() == ComponentEvent.COMPONENT_RESIZED || 
+		   e.getID() == ComponentEvent.COMPONENT_SHOWN) {
 			Dimension d = e.getComponent().getSize();
 			extent = new ExtentImpl(d);
 			int width = (int) d.getWidth();

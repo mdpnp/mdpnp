@@ -23,3 +23,6 @@ lib/
 deploy/
 classes/
 clinical_scenarios/
+*.pro.user*
+*build-*Release/
+*build-*Debug/

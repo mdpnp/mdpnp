@@ -1,5 +1,10 @@
 package org.mdpnp.apps.testapp.xray;
 
+import ice.DeviceConnectivity;
+import ice.DeviceIdentity;
+import ice.Numeric;
+import ice.SampleArray;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -12,21 +17,17 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.text.NumberFormat;
 import java.util.Dictionary;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -38,45 +39,34 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
-import org.mdpnp.apps.testapp.DemoFrame;
 import org.mdpnp.apps.testapp.DemoPanel;
+import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListCellRenderer;
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.enumeration.EnumerationUpdate;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdate;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdateImpl;
-import org.mdpnp.data.numeric.NumericUpdate;
-import org.mdpnp.data.text.TextUpdate;
-import org.mdpnp.data.waveform.WaveformUpdate;
-import org.mdpnp.devices.connected.GetConnected;
-import org.mdpnp.devices.draeger.medibus.DemoApollo;
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.devices.EventLoop;
+import org.mdpnp.guis.swing.DeviceMonitor;
+import org.mdpnp.guis.swing.DeviceMonitorListener;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.messaging.GatewayListener;
-import org.mdpnp.messaging.MutableDevice;
-import org.mdpnp.messaging.NetworkController.AcceptedDevices;
-import org.mdpnp.nomenclature.ConnectedDevice;
-import org.mdpnp.nomenclature.Device;
-import org.mdpnp.nomenclature.Ventilator;
-import org.mdpnp.nomenclature.ConnectedDevice.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.googlecode.javacpp.Loader;
-import com.googlecode.javacv.cpp.opencv_objdetect;
 import com.jeffplourde.util.math.RTRegression;
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.Subscriber;
 
-public class XRayVentPanel extends JPanel implements GatewayListener {
+public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 	private FramePanel cameraPanel;
-	private final Gateway gateway;
 
 	private SwingWaveformPanel waveformPanel;
 	private WaveformUpdateWaveformSource wuws;
 	private JList deviceList;
-//	private JLabel dFlow, dPressure;
 	
 	public enum Strategy { 
 		Manual,
@@ -88,7 +78,6 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 		EndExpiration
 	}
 
-//	private final DemoPanel demoPanel;
 	private final DemoPanel demoPanel;
 	private final static long startOfTime = System.currentTimeMillis();
 	
@@ -121,18 +110,24 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 	}
 	private static final Logger log = LoggerFactory.getLogger(XRayVentPanel.class);
 	
-	public void changeSource(String source) {
-
+	private DeviceMonitor deviceMonitor;
+	
+	public void changeSource(String source, DomainParticipant participant, EventLoop eventLoop) {
+	    if(null != deviceMonitor) {
+	        if(deviceMonitor.getUniversalDeviceIdentifier().equals(source)) {
+	            return;
+	        } else {
+	            deviceMonitor.shutdown();
+	            deviceMonitor = null;
+	        }
+	    }
+	    
+        deviceMonitor = new DeviceMonitor(participant, source, XRayVentPanel.this, eventLoop);
 		log.trace("new source is " + source);
-		this.source = source;
-		MutableIdentifierArrayUpdate ia = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
-		ia.setTarget(source);
-		ia.setValue(new Identifier[] {ConnectedDevice.STATE} );
-		gateway.update(this, ia);
 	}
 	
 //	private static final Font RADIO_FONT = Font.decode("verdana-20");
-	protected JPanel buildXRay(final AcceptedDevices devices) {
+	protected JPanel buildXRay(final DeviceListModel devices, final Subscriber subscriber, final EventLoop eventLoop) {
 		JPanel panel = new JPanel(new GridLayout(2,2));
 		
 		JPanel textPanel = new JPanel(new BorderLayout());
@@ -145,25 +140,19 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 		deviceList.setCellRenderer(new DeviceListCellRenderer());
 		textPanel.add(new JScrollPane(deviceList), BorderLayout.CENTER);
 		panel.add(textPanel);
-		deviceList.addMouseListener(new MouseAdapter() {
+		
+		deviceList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
-			public void mouseClicked(MouseEvent e) {
-				int idx  = deviceList.locationToIndex(e.getPoint());
-				if(idx>=0) {
-					MutableDevice o = (MutableDevice) devices.getElementAt(idx);
-					changeSource(o.getSource());
-				}
-				super.mouseClicked(e);
+			public void valueChanged(ListSelectionEvent e) {
+			    int idx = deviceList.getSelectedIndex();
+			    if(idx >= 0) {
+			        Device device = devices.getElementAt(idx);
+			        if(null != device) {
+			            changeSource(device.getDeviceIdentity().universal_device_identifier, subscriber.get_participant(), eventLoop);
+			        }
+			    }
 			}
 		});
-//		
-//		deviceList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-//			@Override
-//			public void valueChanged(ListSelectionEvent e) {
-//				changeSource(devices.getElementAt(e.getFirstIndex()).getSource());
-//				
-//			}
-//		});
 		
 //		final Border border = new BevelBorder(BevelBorder.LOWERED, DemoPanel.lightBlue, DemoPanel.darkBlue);
 		final Border border = new LineBorder(DemoPanel.darkBlue, 2); 
@@ -291,29 +280,12 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 	private boolean imageButtonDown = false;
 //	private Clip shutterClip;
 	
-	private AcceptedDevices devices;
-	public XRayVentPanel(Gateway gateway, DemoPanel demoPanel, AcceptedDevices devices) {
+	private DeviceListModel devices;
+	public XRayVentPanel(DemoPanel demoPanel, DeviceListModel devices, Subscriber subscriber, EventLoop eventLoop) {
 		super(new BorderLayout());
-//		try {
-//			shutterClip = Manager.createPlayer(new MediaLocator(JeffGUI.class.getResource("shutter.mp3")));
-//			player.start();
-//			shutterClip = AudioSystem.getClip();
-//			AudioInputStream inputStream = AudioSystem.getAudioInputStream(JeffGUI.class.getResourceAsStream("camera-click.wav"));
-//			AudioInputStream mp3Stream = AudioSystem.getAudioInputStream(new AudioFormat(AudioFormat.MPEGLAYER3).getEncoding(), inputStream);
-//	        shutterClip.open(inputStream);
-//		} catch (LineUnavailableException e1) {
-			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		} catch (UnsupportedAudioFileException e1) {
-			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
+
 		this.devices = devices;
         this.demoPanel = demoPanel;
-		this.gateway = gateway;
 		
 		
 	        
@@ -371,7 +343,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 //		demoPanel.getPatientLabel().setVerticalAlignment(SwingConstants.TOP);
 //		demoPanel.getPatientLabel().setVerticalTextPosition(SwingConstants.TOP);
 //		content.add(buildIntro(), INTRO);
-		add(buildXRay(devices), BorderLayout.CENTER);
+		add(buildXRay(devices, subscriber, eventLoop), BorderLayout.CENTER);
 //		panelLayout.show(content, XRAY);
         DemoPanel.setChildrenOpaque(this, false);
 //        demoPanel.setOpaque(true);
@@ -383,10 +355,13 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 //	private RTRegression flow = new RTRegressionImpl(10);
 	private boolean started = false;
 	public void stop() {
+	    if(null != deviceMonitor) {
+	        deviceMonitor.shutdown();
+	        deviceMonitor = null;
+	    }
 		if(started) {
 			started = false;
 			cameraPanel.stop();
-			gateway.removeListener(this);
 		}
 	}
 	
@@ -399,64 +374,20 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 			demoPanel.getPatientLabel().setVerticalTextPosition(SwingConstants.TOP);
 			started = true;
 			cameraPanel.start();
-			gateway.addListener(this);
 		}
 	}
 	
-	
-	
-	public static void main(String[] args) {
-		Loader.load(opencv_objdetect.class);
+	private static final void regressionUpdate(String name, ice.SampleArray wu, RTRegression rtRegression) {
+		double first_sample = System.currentTimeMillis() - startOfTime - wu.values.size() * wu.millisecondsPerSample;
 		
-		final Gateway gateway = new Gateway();
-		final Device device = new DemoApollo(gateway);
-		final DemoFrame frame = new DemoFrame("X-Ray Ventilator Synchronization");
-		frame.getContentPane().setLayout(new BorderLayout());
-		
-		
-		DemoPanel demoPanel = new DemoPanel();
-//		demoPanel = new JPanel();
-		
-		demoPanel.getBack().setVisible(false);
-
-		frame.getContentPane().add(demoPanel, BorderLayout.CENTER);
-		
-		demoPanel.getContent().setLayout(new BorderLayout());
-//		demoPanel.setLayout(new BorderLayout());
-		final XRayVentPanel xrayVentPanel = new XRayVentPanel(gateway, demoPanel, new AcceptedDevices());
-		demoPanel.getContent().add(xrayVentPanel, BorderLayout.CENTER);
-		frame.setSize(640,480);
-		frame.setVisible(true);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		final GetConnected getConnected = new GetConnected(frame, gateway);
-		xrayVentPanel.start();
-		getConnected.connect();
-		
-		frame.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-			    xrayVentPanel.stop();
-				getConnected.disconnect();
-			}
-		});
-		
-		
-	}
-	
-	private static final void regressionUpdate(String name, WaveformUpdate wu, RTRegression rtRegression) {
-		final Number[] values = wu.getValues();
-		double msPerSample = wu.getMillisecondsPerSample();
-		double first_sample = System.currentTimeMillis() - startOfTime - values.length * msPerSample;
-		
-		for(int i = 0; i < values.length; i++) {
-			double x = first_sample+i*msPerSample;
-			double y = values[i].doubleValue();
+		for(int i = 0; i < wu.values.size(); i++) {
+			double x = first_sample+i*wu.millisecondsPerSample;
+			double y = wu.values.getFloat(i);
 			rtRegression.newPoint(x, y);
 			
 		}
 	}
 	
-	private Number frequencyIMV, frequencyIPPV;
 	private long inspiratoryTime;
 	private long period;
 	protected ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
@@ -466,10 +397,6 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 		public Void call() throws Exception {
 			if(imageButtonDown) {
 				cameraPanel.freeze(exposureTime.getValue());
-//				AudioInputStream inputStream = AudioSystem.getAudioInputStream(JeffGUI.class.getResourceAsStream("camera-click.wav"));
-//				AudioInputStream mp3Stream = AudioSystem.getAudioInputStream(new AudioFormat(AudioFormat.MPEGLAYER3).getEncoding(), inputStream);
-//		        shutterClip.open(inputStream);
-//				shutterClip.start();
 			}
 			return null;
 		}
@@ -479,25 +406,7 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 	
 	private final void noSync() {
 		cameraPanel.freeze(exposureTime.getValue());
-//		AudioInputStream inputStream;
-//		try {
-//			inputStream = AudioSystem.getAudioInputStream(JeffGUI.class.getResourceAsStream("camera-click.wav"));
-//			shutterClip.open(inputStream);
-//		shutterClip.stop();
-//		shutterClip.setFramePosition(0);
-//			shutterClip.start();
-//		} catch (UnsupportedAudioFileException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-////		AudioInputStream mp3Stream = AudioSystem.getAudioInputStream(new AudioFormat(AudioFormat.MPEGLAYER3).getEncoding(), inputStream);
-// catch (LineUnavailableException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+
         
 	}
 	
@@ -517,83 +426,89 @@ public class XRayVentPanel extends JPanel implements GatewayListener {
 		}
 	}
 	
-	private String source;
-	
-	@Override
-	public void update(IdentifiableUpdate<?> update) {
-		if(update == null || update.getSource()==null) {
-			return;
-		}
-		if(null == source || !source.equals(update.getSource())) {
-			return;
-		}
-		Identifier i = update.getIdentifier();
-		if(update instanceof WaveformUpdate) {
-			WaveformUpdate wu = (WaveformUpdate) update;
-			if(Ventilator.FLOW_INSP_EXP.equals(i)) {
-//				regressionUpdate("flow:",wu, flow);
-//				double slope = flow.getRegressedSlope();
-//				
-//				if(slope < 0) {
-//					dFlow.setBackground(Color.green);
-//				} else if(Double.compare(slope, 0.0)==0) {
-//					dFlow.setBackground(Color.red);
-//				} else {
-//					dFlow.setBackground(Color.white);
-//				}
-//				dFlow.setText(Double.toString(slope));
-				wuws.applyUpdate(wu);
-			} else if(Ventilator.AIRWAY_PRESSURE.equals(i)) {
-//				regressionUpdate("pressure:", wu, airwayPressure);
-//				dPressure.setText(Double.toString(airwayPressure.getRegressedSlope()));
-			}
-		} else if(update instanceof TextUpdate) {
-			TextUpdate tu = (TextUpdate) update;
-			if(Ventilator.START_INSPIRATORY_CYCLE.equals(i)) {
-				log.trace("START_INSPIRATORY_CYCLE");
-				Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
-				TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
-				
-				switch(strategy) {
-				case Automatic:
-					autoSync(targetTime);
-					break;
-				case Manual:
-					break;
-				}
-			}
-		} else if(update instanceof NumericUpdate) {
-			NumericUpdate nu = (NumericUpdate) update;
-			Number value = nu.getValue();
-			if(null == value) {
-				return;
-			}
-			if(Ventilator.FREQUENCY_IMV.equals(i)) {
-				frequencyIMV = value;
-			} else if(Ventilator.FREQUENCY_IPPV.equals(i)) {
-				frequencyIPPV = value;
-				period = (long)( 60000.0 / frequencyIPPV.doubleValue() );
-				log.debug("FrequencyIPPV="+frequencyIPPV+" period="+period);
-			
-			} else if(Ventilator.INSPIRATORY_TIME.equals(i)) {
-				inspiratoryTime = (long) (1000.0 * value.doubleValue());
-			}
-		} else if(update instanceof EnumerationUpdate) {
-			EnumerationUpdate eu = (EnumerationUpdate) update;
-			if(ConnectedDevice.STATE.equals(i)) {
-				ConnectedDevice.State state = (State) eu.getValue();
-				demoPanel.getPatientLabel().setText(state.toString());
-				switch(state) {
-				case Connected:
-					demoPanel.getPatientLabel().setForeground(normalGreen);
-					break;
-				default:
-					demoPanel.getPatientLabel().setForeground(alertPink);
-					break;
-				}
-			}
-		}
-	}
 	private static final Color alertPink = new Color(200, 20, 0);
 	private static final Color normalGreen = new Color(20, 200, 20);
+    @Override
+    public void deviceIdentity(ice.DeviceIdentityDataReader reader, ice.DeviceIdentitySeq di_seq, SampleInfoSeq info_seq) {
+    }
+    private final Set<InstanceHandle_t> seenInstances = new HashSet<InstanceHandle_t>();
+    @Override
+    public void deviceConnectivity(ice.DeviceConnectivityDataReader reader, ice.DeviceConnectivitySeq dc_seq, SampleInfoSeq info_seq) {
+        seenInstances.clear();
+        for(int i = info_seq.size() - 1; i >= 0; i--) {
+            SampleInfo si = (SampleInfo) info_seq.get(i);
+            if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
+                seenInstances.add(si.instance_handle);
+                DeviceConnectivity dc = (DeviceConnectivity) dc_seq.get(i);
+                demoPanel.getPatientLabel().setText(dc.state.name());
+                switch(dc.state.value()) {
+                case ice.ConnectionState._Connected:
+                    demoPanel.getPatientLabel().setForeground(normalGreen);
+                    break;
+                default:
+                    demoPanel.getPatientLabel().setForeground(alertPink);
+                    break;
+                }
+            }
+        }
+
+    }
+
+    @Override
+    public void numeric(ice.NumericDataReader reader, ice.NumericSeq nu_seq, SampleInfoSeq info_seq) {
+        seenInstances.clear();
+        for(int i = info_seq.size() - 1; i >= 0; i--) {
+            SampleInfo si = (SampleInfo) info_seq.get(i);
+            
+            if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
+                seenInstances.add(si.instance_handle);
+                ice.Numeric n = (Numeric) nu_seq.get(i);
+                long previousPeriod = this.period;
+                switch(n.name) {
+                case ice.MDC_TIME_PD_INSPIRATORY.VALUE:
+                    inspiratoryTime = (long) (1000.0 * n.value);
+                    break;
+                case ice.MDC_VENT_TIME_PD_PPV.VALUE:
+                    
+                    period = (long)( 60000.0 / n.value );
+                    if(period != previousPeriod) {
+                        log.debug("FrequencyIPPV="+n.value+" period="+period);
+                    }
+                    break;
+                case ice.MDC_START_OF_BREATH.VALUE:
+//                  log.trace("START_INSPIRATORY_CYCLE");
+                  Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
+                  TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
+                  
+                  switch(strategy) {
+                  case Automatic:
+                      autoSync(targetTime);
+                      break;
+                  case Manual:
+                      break;
+                  }
+                  break;
+                }
+            }
+        }
+    }
+
+    @Override
+    public void sampleArray(ice.SampleArrayDataReader redaer, ice.SampleArraySeq sa_seq, SampleInfoSeq info_seq) {
+        seenInstances.clear();
+        for(int i = info_seq.size() - 1; i >= 0; i--) {
+            SampleInfo si = (SampleInfo) info_seq.get(i);
+            if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
+                seenInstances.add(si.instance_handle);
+                ice.SampleArray sa = (SampleArray) sa_seq.get(i);
+                switch(sa.name) {
+                case ice.MDC_FLOW_AWAY.VALUE:
+                    wuws.applyUpdate(sa);
+                    break;
+                }
+            }
+        }
+
+    }
+
 }

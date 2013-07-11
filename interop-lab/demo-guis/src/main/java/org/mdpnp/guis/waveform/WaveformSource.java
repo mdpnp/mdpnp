@@ -22,7 +22,7 @@ public interface WaveformSource {
 	 * @param x
 	 * @return
 	 */
-	int getValue(int x);
+	float getValue(int x);
 	
 	/**
 	 * The maximum extent of the waveform domain

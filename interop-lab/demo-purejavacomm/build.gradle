@@ -4,6 +4,14 @@ defaultTasks 'build'
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
+//configurations.all {
+//    resolutionStrategy {
+//        failOnVersionConflict()
+        // Force purejavacomm to use JNA 4.0.0
+//        force 'net.java.dev.jna:jna:4.0.0'
+//    }
+//}
+
 dependencies {
   compile project(':interop-lab:demo-devices')
   

@@ -1,30 +1,20 @@
 package org.mdpnp.apps.testapp;
 
+import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 import java.util.Collection;
 
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 
 import org.mdpnp.apps.testapp.Configuration.DeviceType;
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.enumeration.EnumerationUpdate;
-import org.mdpnp.data.identifierarray.IdentifierArrayUpdate;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdate;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdateImpl;
-import org.mdpnp.data.text.MutableTextUpdate;
-import org.mdpnp.data.text.MutableTextUpdateImpl;
-import org.mdpnp.data.text.TextUpdate;
+import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.EventLoop;
+import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.connected.GetConnected;
+import org.mdpnp.devices.connected.GetConnectedToFixedAddress;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
 import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
@@ -36,17 +26,11 @@ import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
 import org.mdpnp.devices.philips.intellivue.DemoMP70;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
-import org.mdpnp.devices.simulation.SimulatedBloodPressureImpl;
+import org.mdpnp.devices.simulation.DemoSimulatedBloodPressure;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
+import org.mdpnp.guis.swing.CompositeDevicePanel;
+import org.mdpnp.guis.swing.DeviceMonitor;
 import org.mdpnp.guis.swing.DevicePanelFactory;
-import org.mdpnp.messaging.Adapter;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.messaging.GatewayListener;
-import org.mdpnp.messaging.BindingFactory.BindingType;
-import org.mdpnp.nomenclature.Association;
-import org.mdpnp.nomenclature.ConnectedDevice;
-import org.mdpnp.nomenclature.Device;
-import org.mdpnp.nomenclature.ConnectedDevice.ConnectionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,45 +39,43 @@ public class DeviceAdapter {
 	
 	private static JFrame frame;
 	private static GetConnected getConnected;
-	private static Collection<org.mdpnp.guis.swing.DevicePanel> panels;
+//	private static Collection<org.mdpnp.guis.swing.DevicePanel> panels;
 	
-	private static boolean panelized;
-	
-	public static final Device buildDevice(DeviceType type, Gateway deviceGateway) throws NoSuchFieldException, SecurityException, IOException {
+	public static final AbstractDevice buildDevice(DeviceType type, int domainId) throws NoSuchFieldException, SecurityException, IOException {
 		switch(type) {
 		case Nonin:
-			return new DemoPulseOx(deviceGateway);
+			return new DemoPulseOx(domainId);
 		case NellcorN595:
-			return new DemoN595(deviceGateway);
+			return new DemoN595(domainId);
 		case MasimoRadical7:
-			return new DemoRadical7(deviceGateway);
+			return new DemoRadical7(domainId);
 		case PO_Simulator:
-			return new SimPulseOximeter(deviceGateway);
+			return new SimPulseOximeter(domainId);
 		case NBP_Simulator:
-			return new SimulatedBloodPressureImpl(deviceGateway);
+			return new DemoSimulatedBloodPressure(domainId);
 		case PhilipsMP70:
-			return new DemoMP70(deviceGateway);
+			return new DemoMP70(domainId);
 		case DragerApollo:
-			return new DemoApollo(deviceGateway);
+			return new DemoApollo(domainId);
 		case DragerEvitaXL:
-			return new DemoEvitaXL(deviceGateway);
+			return new DemoEvitaXL(domainId);
 		case Bernoulli:
-			return new DemoBernoulli(deviceGateway);
+			return new DemoBernoulli(domainId);
 		case Capnostream20:
-			return new DemoCapnostream20(deviceGateway);
+			return new DemoCapnostream20(domainId);
 		case Symbiq:
-			return new DemoSymbiq(deviceGateway);
+			return new DemoSymbiq(domainId);
 		default:
 			throw new RuntimeException("Unknown type:"+type);
 		}
 	}
 	
 	private static synchronized void killAdapter() {
-		if(adapter != null) {
-			adapter.depart();
-			adapter.tearDown();
-			adapter = null;
-		}
+//		if(adapter != null) {
+//			adapter.depart();
+//			adapter.tearDown();
+//			adapter = null;
+//		}
 		if(getConnected!=null) {
 			getConnected.disconnect();
 			getConnected = null;
@@ -101,138 +83,56 @@ public class DeviceAdapter {
 	}
 	
 	private static final Logger log = LoggerFactory.getLogger(DeviceAdapter.class);
-	private static Adapter adapter;
 	
-	public static void start(DeviceType type, BindingType bindingType, String settings, final String address, boolean gui) throws Exception {
-		
-		final Gateway deviceGateway = new Gateway();
-		final Gateway externalGateway = new Gateway();
-		
-		GatewayListener bootstrapListener = null;
-		
-		
+	public static void start(DeviceType type, int domainId, final String address, boolean gui) throws Exception {
 		if(null!=address && address.contains(":")) {
             SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
             log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
         }
+		final EventLoop eventLoop = new EventLoop();
+		EventLoopHandler handler = new EventLoopHandler(eventLoop);
+
+		AbstractDevice device = buildDevice(type, domainId);
 		
-		if(!gui) {
-			frame = null;
-			
-			deviceGateway.addListener(bootstrapListener = new GatewayListener() {
-
-				@Override
-				public void update(IdentifiableUpdate<?> update) {
-					if(Device.GUID.equals(update.getIdentifier())) {
-						log.debug("GUID:"+((TextUpdate)update).getValue());
-					} else if(Device.NAME.equals(update.getIdentifier())) {
-						log.debug("NAME:"+((TextUpdate)update).getValue());
-					} else if(ConnectedDevice.STATE.equals(update.getIdentifier())) {
-						log.debug("(Connection) STATE:"+((EnumerationUpdate)update).getValue());
-					} else if(ConnectedDevice.CONNECTION_INFO.equals(update.getIdentifier())) {
-						log.debug("CONNECTION_INFO:"+((TextUpdate)update).getValue());
-					} else if(Association.ANNOUNCE_ARRIVE.equals(update.getIdentifier())) {
-						log.debug("Announcing arrival...");
-					} else if(Association.ACKNOWLEDGE_ARRIVE.equals(update.getIdentifier())) {
-						log.debug("Arrival acknowledged");
-					} else if(Association.ANNOUNCE_DEPART.equals(update.getIdentifier())) {
-						log.debug("Announcing departure...");
-					} else if(Association.ACKNOWLEDGE_DEPART.equals(update.getIdentifier())) {
-						log.debug("Departure acknowledged");
-					}
-				}
-				
-			});
-
-			getConnected = new GetConnected(null, deviceGateway) {
-				@Override
-				protected void abortConnect() {
-				}
-				@Override
-				protected String addressFromUser() {
-					return address;
-				}
-				@Override
-				protected String addressFromUserList(String[] list) {
-					return address;
-				}
-				@Override
-				protected boolean isFixedAddress() {
-					return true;
-				}
-			};
-		} else {
-			// Add a listener that will build GUI components
-			deviceGateway.addListener(bootstrapListener = new GatewayListener() {
-				
-				@Override
-				public void update(IdentifiableUpdate<?> update) {
-					if(!panelized && Device.GET_AVAILABLE_IDENTIFIERS.equals(update.getIdentifier())) {
-						panelized = true;
-						// find the appropriate GUI representations for this device
-						panels = DevicePanelFactory.findPanel((IdentifierArrayUpdate)update, deviceGateway, update.getSource());
-						
-						try {
-							SwingUtilities.invokeAndWait(new Runnable() {
-								public void run() {
-									frame.getContentPane().removeAll();
-									frame.getContentPane().setLayout(new GridLayout(panels.size(), 1));
-									for(org.mdpnp.guis.swing.DevicePanel panel : panels) {
-										frame.getContentPane().add(panel);
-									}
-									frame.getContentPane().validate();
-								}
-							});
-						} catch (InvocationTargetException e) {
-							e.printStackTrace();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-				}
-				
-			});
-			frame = new JFrame("Adapter") {
-				public void dispose() {
-					killAdapter();
-				};
-			};
-			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.setLocationRelativeTo(null);
-			frame.setSize(320, 480);
-			frame.setVisible(true);
-
-			if(null == address) {
-			    getConnected = new GetConnected(frame, deviceGateway);
-			} else {
-			    getConnected = new GetConnected(frame, deviceGateway) {
-			      @Override
-			        protected String addressFromUser() {
-			            return address;
-			        }  
-			      @Override
-			        protected String addressFromUserList(String[] list) {
-			            return address;
-			        }
-			      @Override
-			        protected boolean isFixedAddress() {
-			            return true;
-			        }
-			    };
-			}
-			
-//			if(null == (type = (Type) JOptionPane.showInputDialog(frame, "Choose a device to adapt", "Device", JOptionPane.QUESTION_MESSAGE, null, Type.values(), null))) {
-//				frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
-//				return;
-//			}
+		if(gui) {
+		 // find the appropriate GUI representations for this device
+		    CompositeDevicePanel cdp = new CompositeDevicePanel();
+		    final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getParticipant(), device.getDeviceIdentity().universal_device_identifier, cdp, eventLoop);
+//            panels = DevicePanelFactory.findPanel(
+//            panels = new ArrayList<DevicePane>
+            
+		    frame = new JFrame("Adapter");
+		    
+            frame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    deviceMonitor.shutdown();
+                    killAdapter();
+                    super.windowClosing(e);
+                }
+            });
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setLocationRelativeTo(null);
+            frame.setSize(640, 480);
+            frame.getContentPane().setLayout(new BorderLayout());
+            frame.getContentPane().add(cdp, BorderLayout.CENTER);
+//            frame.getContentPane().setLayout(new GridLayout(panels.size(), 1));
+//            for(org.mdpnp.guis.swing.DevicePanel panel : panels) {
+//                frame.getContentPane().add(panel);
+//            }
+//            frame.getContentPane().setLayout(new BorderLayout());
+//            frame.getContentPane().add(new CompositeDevicePanel(device.getParticipant(), device.getDeviceIdentity().universal_device_identifier), BorderLayout.CENTER);
+            
+            frame.getContentPane().validate();
+            frame.setVisible(true);
 		}
-		
-		
-		
-		Device device = buildDevice(type, deviceGateway);
-
 			
-		adapter = new Adapter(deviceGateway, externalGateway, bindingType, settings);
+
+		if(null == address) {
+		    getConnected = new GetConnected(frame, domainId, device.getDeviceIdentity().universal_device_identifier, eventLoop);
+		} else {
+		    getConnected = new GetConnectedToFixedAddress(frame, domainId, device.getDeviceIdentity().universal_device_identifier, address, eventLoop);
+		}
 		
 		if(gui) {
 			getConnected.connect();
@@ -250,14 +150,14 @@ public class DeviceAdapter {
 					killAdapter();
 				}
 			}));
-			MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
-	        miau.setValue(new Identifier[] {Device.NAME, Device.GUID, Device.ICON});
-	        deviceGateway.update(bootstrapListener, miau);
-	        
-			MutableTextUpdate tu = new MutableTextUpdateImpl(Device.REQUEST_AVAILABLE_IDENTIFIERS);
-			tu.setTarget(adapter.getSource());
-			// This request will drive GUI creation
-			deviceGateway.update(bootstrapListener, tu);
+//			MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
+//	        miau.setValue(new Identifier[] {Device.NAME, Device.GUID, Device.ICON});
+//	        deviceGateway.update(bootstrapListener, miau);
+//	        
+//			MutableTextUpdate tu = new MutableTextUpdateImpl(Device.REQUEST_AVAILABLE_IDENTIFIERS);
+//			tu.setTarget(adapter.getSource());
+//			// This request will drive GUI creation
+//			deviceGateway.update(bootstrapListener, tu);
 			
 		} else {
 			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -274,9 +174,9 @@ public class DeviceAdapter {
 
 			getConnected.connect();
 
-			MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
-	        miau.setValue(new Identifier[] {Device.NAME, Device.GUID, Device.ICON});
-	        deviceGateway.update(miau);
+//			MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
+//	        miau.setValue(new Identifier[] {Device.NAME, Device.GUID, Device.ICON});
+//	        deviceGateway.update(miau);
 			
 //			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 //			String line = null;

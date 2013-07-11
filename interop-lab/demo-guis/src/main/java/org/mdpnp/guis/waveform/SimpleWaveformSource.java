@@ -20,7 +20,7 @@ public class SimpleWaveformSource implements WaveformSource, Runnable {
 	private final Collection<WaveformSourceListener> listeners = new java.util.concurrent.CopyOnWriteArrayList<WaveformSourceListener>();
 	
 	@Override
-	public int getValue(int x) {
+	public float getValue(int x) {
 		return x % 2;
 	}
 

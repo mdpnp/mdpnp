@@ -7,30 +7,26 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation.pulseox;
 
-import java.util.Date;
+import ice.MDC_PULS_OXIM_PLETH;
+import ice.MDC_PULS_OXIM_PULS_RATE;
+import ice.MDC_PULS_OXIM_SAT_O2;
+import ice.Numeric;
+import ice.SampleArray;
 
-import org.mdpnp.data.numeric.MutableNumericUpdate;
-import org.mdpnp.data.numeric.MutableNumericUpdateImpl;
-import org.mdpnp.data.waveform.MutableWaveformUpdate;
-import org.mdpnp.data.waveform.MutableWaveformUpdateImpl;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.nomenclature.PulseOximeter;
 
 public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
-	protected final MutableNumericUpdate pulseUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE);
-	protected final MutableNumericUpdate spo2Update = new MutableNumericUpdateImpl(PulseOximeter.SPO2);
-	protected final MutableWaveformUpdate plethUpdate = new MutableWaveformUpdateImpl(PulseOximeter.PLETH);
+    
+    protected final InstanceHolder<Numeric> pulse;
+    protected final InstanceHolder<Numeric> SpO2;
+    protected final InstanceHolder<SampleArray> pleth;
 	
 	private class MySimulatedPulseOximeter extends SimulatedPulseOximeter {
 	    @Override
 	    protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, double msPerSample) {
-	        myDate.setTime(timestamp);
-            pulseUpdate.set(heartRate, myDate);
-            spo2Update.set(SpO2, myDate);
-            plethUpdate.setValues(plethValues);
-            plethUpdate.setMillisecondsPerSample(msPerSample);
-            gateway.update(SimPulseOximeter.this, spo2Update, pulseUpdate, plethUpdate);
+	        numericSample(pulse, heartRate);
+	        numericSample(SimPulseOximeter.this.SpO2, SpO2);
+	        sampleArraySample(pleth, plethValues, (int) msPerSample);
 	    }
 	}
 	
@@ -49,20 +45,19 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
 		super.disconnect();
 	}
 	
-	public SimPulseOximeter(Gateway gateway) {
-		super(gateway);
-		add(plethUpdate);
-		add(spo2Update);
-		add(pulseUpdate);
-		nameUpdate.setValue("Pulse Ox (Simulated)");
-
+	public SimPulseOximeter(int domainId) {
+		super(domainId);
+		
+		pulse = createNumericInstance(MDC_PULS_OXIM_PULS_RATE.VALUE);
+		SpO2 = createNumericInstance(MDC_PULS_OXIM_SAT_O2.VALUE);
+		pleth = createSampleArrayInstance(MDC_PULS_OXIM_PLETH.VALUE);
+		
+		deviceIdentity.model = "Pulse Ox (Simulated)";
+		deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 	}
 	
 	@Override
 	protected String iconResourceName() {
 		return "pulseox.png";
 	}
-		
-	protected final Date myDate = new Date();
-	
 }

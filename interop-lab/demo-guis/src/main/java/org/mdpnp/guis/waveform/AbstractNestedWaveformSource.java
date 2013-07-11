@@ -38,7 +38,7 @@ public abstract class AbstractNestedWaveformSource extends AbstractWaveformSourc
 		}
 	};
 	@Override
-	public int getValue(int x) {
+	public float getValue(int x) {
 		return null  == source ? 0 : source.getValue(x);
 	}
 

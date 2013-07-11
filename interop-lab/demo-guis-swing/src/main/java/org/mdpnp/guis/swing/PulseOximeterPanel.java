@@ -7,6 +7,14 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import ice.Numeric;
+import ice.NumericDataReader;
+import ice.NumericSeq;
+import ice.NumericTypeSupport;
+import ice.SampleArray;
+import ice.SampleArrayDataReader;
+import ice.SampleArraySeq;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
@@ -16,66 +24,65 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.enumeration.EnumerationUpdate;
-import org.mdpnp.data.numeric.Numeric;
-import org.mdpnp.data.numeric.NumericUpdate;
-import org.mdpnp.data.text.TextUpdate;
-import org.mdpnp.data.waveform.WaveformUpdate;
-import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.guis.waveform.NumericUpdateWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.GLWaveformPanel;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.nomenclature.ConnectedDevice;
-import org.mdpnp.nomenclature.PulseOximeter;
-import org.mdpnp.nomenclature.ConnectedDevice.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jogamp.opengl.util.FPSAnimator;
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.infrastructure.Condition;
+import com.rti.dds.infrastructure.ConditionSeq;
+import com.rti.dds.infrastructure.Duration_t;
+import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.StringSeq;
+import com.rti.dds.infrastructure.WaitSet;
+import com.rti.dds.subscription.DataReader;
+import com.rti.dds.subscription.DataReaderListener;
+import com.rti.dds.subscription.InstanceStateKind;
+import com.rti.dds.subscription.LivelinessChangedStatus;
+import com.rti.dds.subscription.QueryCondition;
+import com.rti.dds.subscription.RequestedDeadlineMissedStatus;
+import com.rti.dds.subscription.RequestedIncompatibleQosStatus;
+import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleLostStatus;
+import com.rti.dds.subscription.SampleRejectedStatus;
+import com.rti.dds.subscription.SampleStateKind;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriptionMatchedStatus;
+import com.rti.dds.subscription.ViewStateKind;
+import com.rti.dds.topic.TopicDescription;
 
 @SuppressWarnings("serial")
 public class PulseOximeterPanel extends DevicePanel {
 	
 	
-	private JLabel spo2, heartrate, spo2Label, heartrateLabel, nameLabel, guidLabel;
+	private JLabel spo2, heartrate, spo2Label, heartrateLabel;
 	private JLabel spo2Low, spo2Up, heartrateLow, heartrateUp;
 	private JPanel spo2Bounds, heartrateBounds;
 	private JPanel spo2Panel, heartratePanel;
 	private WaveformPanel pulsePanel;
 	private WaveformPanel plethPanel;
-	private JLabel time, connected;
+	private JLabel time;
 	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
-	public void setName(String name) {
-		if(built && name != null) {
-			this.nameLabel.setText(name);
-		}
-	}
-	
-	public void setGuid(String guid) {
-		if(built && guid != null) {
-			this.guidLabel.setText(guid);
-		}
-	}
-
 	
 	protected void buildComponents() {
 		spo2Bounds = new JPanel();
@@ -143,28 +150,9 @@ public class PulseOximeterPanel extends DevicePanel {
 		
 		setLayout(new BorderLayout());
 		add(upper, BorderLayout.CENTER);
+
+		add(time = new JLabel("TIME"), BorderLayout.SOUTH);
 		
-		JPanel lower = new JPanel();
-		lower.setOpaque(false);
-		lower.setLayout(new GridLayout(2, 1));
-		
-		
-		lower.add(time = new JLabel("TIME"));
-		time.setHorizontalAlignment(JLabel.RIGHT);
-		lower.add(connected = new JLabel("ConnectState"));
-		connected.setHorizontalAlignment(JLabel.RIGHT);
-		add(lower, BorderLayout.SOUTH);
-		
-		
-		JPanel headers = new JPanel();
-		headers.setLayout(new GridLayout(2,1));
-		headers.setOpaque(false);
-		headers.add(nameLabel = new JLabel("NAME"));
-		headers.add(guidLabel = new JLabel("GUID"));
-		add(headers, BorderLayout.NORTH);
-	
-		nameLabel.setHorizontalAlignment(JLabel.RIGHT);
-		guidLabel.setHorizontalAlignment(JLabel.RIGHT);
 		if(plethPanel instanceof GLWaveformPanel) {
 			((GLWaveformPanel)plethPanel).setAnimator(new FPSAnimator((GLAutoDrawable) plethPanel, FPSAnimator.DEFAULT_FRAMES_PER_INTERVAL));
 			((GLWaveformPanel)plethPanel).getAnimator().start();
@@ -178,37 +166,18 @@ public class PulseOximeterPanel extends DevicePanel {
 		setForeground(Color.green);
 		setBackground(Color.black);
 	}
-	
-	
 
-	private boolean built = false;
-	public PulseOximeterPanel(Gateway gateway, String source) {
-		super(gateway, source);
+	public PulseOximeterPanel() {
 		buildComponents();
 		plethPanel.setSource(plethWave);
 		
 		pulsePanel.setSource(pulseWave);
 		pulsePanel.cachingSource().setFixedTimeDomain(120000L);
 		
-		built = true;
-		
-		registerAndRequestRequiredIdentifiedUpdates();
-
-	}
-	
-	@Override
-	public Collection<Identifier> requiredIdentifiedUpdates() {
-		List<Identifier> ids = new ArrayList<Identifier>(super.requiredIdentifiedUpdates());
-		ids.addAll(Arrays.asList(new Identifier[] {ConnectedDevice.STATE, ConnectedDevice.CONNECTION_INFO, PulseOximeter.PULSE, PulseOximeter.SPO2, PulseOximeter.PLETH}));
-		return ids;
 	}
 	
 	private final WaveformUpdateWaveformSource plethWave = new WaveformUpdateWaveformSource();
 	private final NumericUpdateWaveformSource pulseWave = new NumericUpdateWaveformSource(333L);
-	
-
-	private ConnectedDevice.State connectedState;
-	private String connectionInfo;
 	
 	@Override
 	public void destroy() {
@@ -227,81 +196,32 @@ public class PulseOximeterPanel extends DevicePanel {
 
 		super.destroy();
 	}
+
+
 	
-	private final void setInt(IdentifiableUpdate<?> nu, Numeric numeric, JLabel label, String def) {
-		if(numeric.equals(nu.getIdentifier())) {
-			
-			setInt(((NumericUpdate)nu).getValue(), label, def);
-			if(!label.isVisible()) {
-				label.setVisible(true);
-			}
-		}
-	}
-	
-	
-	
-	@Override
-	protected void doUpdate(IdentifiableUpdate<?> n) {
-		if(!built) {
-			return;
-		}
-		if(null == n) {
-			log.warn("null update ");
-			return;
-		}
-		setInt(n, PulseOximeter.PULSE, this.heartrate, "---");
-		setInt(n, PulseOximeter.SPO2, this.spo2, "---");
-		setInt(n, PulseOximeter.PULSE_LOWER, this.heartrateLow, "--");
-		setInt(n, PulseOximeter.PULSE_UPPER, this.heartrateUp, "--");
-		setInt(n, PulseOximeter.SPO2_LOWER, this.spo2Low, "--");
-		setInt(n, PulseOximeter.SPO2_UPPER, this.spo2Up, "--");
-		if(PulseOximeter.PULSE.equals(n.getIdentifier())) {
-			Date date = ((NumericUpdate)n).getUpdateTime();
-			this.time.setText(null == date ? "---" : dateFormat.format(date));
-		}
-		if(PulseOximeter.PLETH.equals(n.getIdentifier())) {
-			WaveformUpdate wu = (WaveformUpdate) n;
-			plethWave.applyUpdate(wu);
-		} else if(ConnectedDevice.STATE.equals(n.getIdentifier())) {
-			connectedState = (State) ((EnumerationUpdate)n).getValue();
-			connected.setText(""+connectedState+(null==connectionInfo?"":(" ("+connectionInfo+")")));
-			plethWave.reset();
-			pulseWave.reset();
-		} else if(ConnectedDevice.CONNECTION_INFO.equals(n.getIdentifier())) {
-			connectionInfo = ((TextUpdate)n).getValue();
-			connected.setText(""+connectedState+(null==connectionInfo?"":(" ("+connectionInfo+")")));
-		} else if(PulseOximeter.PULSE.equals(n.getIdentifier())) {
-			NumericUpdate nu = (NumericUpdate) n;
-			pulseWave.applyUpdate(nu);
-		} else if(DemoPulseOx.OUT_OF_TRACK.equals(n.getIdentifier())) {
-			EnumerationUpdate eu = (EnumerationUpdate) n;
-			
-			DemoPulseOx.Bool bool = (DemoPulseOx.Bool) eu.getValue();
-			if(null == bool) {
-				log.warn("Received null OUT_OF_TRACK");
-				return;
-			} else {
-				switch(bool) {
-				case False:
-					plethPanel.setOutOfTrack(false);
-					break;
-				case True:
-					plethPanel.setOutOfTrack(true);
-					break;
-				}
-			}
-		}
-	}
-	public static boolean supported(Set<Identifier> identifiers) {
-		return identifiers.contains(PulseOximeter.SPO2);
+	public static boolean supported(Set<Integer> names) {
+	    return names.contains(ice.MDC_PULS_OXIM_SAT_O2.VALUE) &&
+	           names.contains(ice.MDC_PULS_OXIM_PULS_RATE.VALUE) && 
+	           names.contains(ice.MDC_PULS_OXIM_PLETH.VALUE);
 	}
 	private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
-	@Override
-	public void setIcon(Image image) {
-		log.trace("setIcon");
-		if(built && null != image) {
-			nameLabel.setOpaque(false);
-			nameLabel.setIcon(new ImageIcon(image));
-		}
-	}
+
+    @Override
+    public void numeric(Numeric numeric, SampleInfo sampleInfo) {
+        setInt(numeric, ice.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
+        setInt(numeric, ice.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
+        if(ice.MDC_PULS_OXIM_PULS_RATE.VALUE == numeric.name) {
+            pulseWave.applyUpdate(numeric);
+        }
+    }
+
+    @Override
+    public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
+        switch(sampleArray.name) {
+        case ice.MDC_PULS_OXIM_PLETH.VALUE:
+            plethWave.applyUpdate(sampleArray);
+            break;
+        }
+        
+    }
 }

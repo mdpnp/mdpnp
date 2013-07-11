@@ -32,8 +32,8 @@ public class Capnostream {
 		this.outputStream = new BufferedOutputStream(os);
 	}
 
-	private byte[] inBuffer = new byte[1024];
-	private byte[] outBuffer = new byte[1024];
+	private byte[] inBuffer = new byte[2048];
+	private byte[] outBuffer = new byte[2048];
 
 	protected static final Map<Integer, Command> cmdMapping = new HashMap<Integer, Command>();
 	protected static final Map<Integer, Response> resMapping = new HashMap<Integer, Response>();
@@ -410,12 +410,29 @@ public class Capnostream {
 		return true;
 	}
 
+	private int priorRespiratoryRate = -1;
+	
 	public boolean receiveNumerics(byte[] payload, int length) {
+	    if(length < 27) {
+	        log.warn("Insufficient length for Numerics payload; ignoring");
+	        return true;
+	    }
 		long dt = 1000L * getUnsignedInt(payload, 0);
 		int etco2 = 0xFF & payload[4];
 		int fico2 = 0xFF & payload[5];
 		int rr = 0xFF & payload[6];
 		int spo2 = 0xFF & payload[7];
+		
+		// TODO Report this behavior to Oridion
+		if(priorRespiratoryRate == spo2) {
+		    log.warn("Prior Respiratory Rate == SpO2, " + rr + "==" + spo2 + " ignoring this potentially spurious SpO2");
+		    spo2 = 0xFF;
+		    byte[] subpayload = new byte[length];
+		    System.arraycopy(payload, 0, subpayload, 0, length);
+		    log.warn("This numerics payload seems to be offset:"+Arrays.toString(subpayload));
+		    return true;
+		}
+		
 		int pulse = 0xFF & payload[8];
 		
 		int slowStatus = 0xFF & payload[9];
@@ -433,6 +450,8 @@ public class Capnostream {
         int pulseAlarmLow = 0xFF & payload[24];
         CO2Units units = CO2Units.fromInt(0xFF & payload[25]);
 		int extendedCO2Status = 0xFF & payload[26];
+		
+		priorRespiratoryRate = rr;
 		
 		// TODO there is more stuff here
 		return receiveNumerics(dt, etco2, fico2, rr, spo2, pulse,
@@ -481,11 +500,13 @@ public class Capnostream {
 
 	public boolean receiveMessage() throws IOException {
 		int length = inputStream.read();
+		int my_checksum = 0xFF & length;
 		if (length < 0) {
 			return false;
 		}
 
 		int code = inputStream.read();
+		my_checksum ^= code;
 		if (code < 0) {
 			return false;
 		}
@@ -508,12 +529,27 @@ public class Capnostream {
 			}
 		}
 
+		for(int i = 0; i < length; i++) {
+		    my_checksum ^= (0xFF & inBuffer[i]);
+		}
+		
 		int checksum = inputStream.read();
-		// TODO Check the checksum
+		
+		if(Response.CO2Wave.equals(response) && checksum == 0 && my_checksum != 0) {
+		    // Not likely to be a valid checksum value
+		    // Empirically some CO2 wave messages seem to be padded with an extra mysterious 0
+		    checksum = inputStream.read();
+		}
+		
 		if (checksum < 0) {
 			return false;
 		}
 
+		if(checksum != my_checksum) {
+		    log.warn("Failed checksum check expected:"+my_checksum+" but received "+checksum+" data are ignored for msg type:"+response+" after read_length=" + read_length + " length="+length+" bytes");
+		    return true;
+		}
+		
 		return receiveMessage(response, inBuffer, read_length);
 	}
 
@@ -521,14 +557,14 @@ public class Capnostream {
 		int b = 0;
 
 		while (true) {
-			b = 0;
+			b = inputStream.read();
 			while (b != MergeBytesInputStream.HEADER) {
-				b = inputStream.read();
 				if (b == MergeBytesInputStream.EOF) {
 					log.trace("received EOF instead of cmd header");
 					return false;
 				}
-				// log.trace("Received:"+Integer.toHexString(b));
+				log.trace("Received Between Messages:"+Integer.toHexString(b));
+				b = inputStream.read();
 			}
 			if (!receiveMessage()) {
 				return false;

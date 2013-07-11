@@ -15,7 +15,7 @@ public class CachingWaveformSource extends AbstractNestedWaveformSource {
 	
 	
 	
-	private int[] sampleCache = new int[100];
+	private float[] sampleCache = new float[100];
 	
 	private int nextCacheCount = 0;
 	private int lastSourceCount = -1;
@@ -34,7 +34,7 @@ public class CachingWaveformSource extends AbstractNestedWaveformSource {
 	
 	public void setCacheSize(int samples) {
 		this.fixedTimeDomain = null;
-		sampleCache = new int[samples];
+		sampleCache = new float[samples];
 	}
 	
 	public void setFixedTimeDomain(long fixedTimeDomain) {
@@ -55,8 +55,8 @@ public class CachingWaveformSource extends AbstractNestedWaveformSource {
 	
 	
 	@Override
-	public int getValue(int x) {
-		int[] sampleCache = this.sampleCache;
+	public float getValue(int x) {
+		float[] sampleCache = this.sampleCache;
 		// I don't want to waste a lot of cycles on synchronization
 		if(x<sampleCache.length) {
 			return sampleCache[x];
@@ -118,8 +118,8 @@ public class CachingWaveformSource extends AbstractNestedWaveformSource {
 			double resolution = source.getMillisecondsPerSample();
 			int samples = (int) (fixedTimeDomain / resolution);
 			if(samples != sampleCache.length) {
-				int[] oldSampleCache = this.sampleCache;
-				this.sampleCache = new int[samples];
+				float[] oldSampleCache = this.sampleCache;
+				this.sampleCache = new float[samples];
 //				Log.d(CachingWaveformSource.class.getName(), "NEW sampleCache");
 				int n = Math.min(oldSampleCache.length, sampleCache.length);
 				System.arraycopy(oldSampleCache, oldSampleCache.length - n, sampleCache, sampleCache.length - n, n);

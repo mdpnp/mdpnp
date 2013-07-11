@@ -1,0 +1,43 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          device-adapter
+# Required-Start:    
+# Required-Stop:     
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Connect to a device
+# Description:       Connect to a device
+### END INIT INFO
+#
+export NAME=device-adapter
+export DEVICE_SETTINGS=`cat /home/ubuntu/device.this`
+export ADAPTER_OPTS="ICE_Device_Interface 0 $DEVICE_SETTINGS"
+export ADAPTER_DIR=/home/ubuntu/demo-apps-0.0.6-SNAPSHOT/bin/
+export ADAPTER_SCR=demo-apps
+export PIDFILE=/var/run/$NAME.pid
+export DEMO_APPS_OPTS="-Dlog4j.configuration=file:$ADAPTER_DIR/../../log4j.properties"
+export JAVA_HOME=/home/ubuntu/jdk1.7.0_25
+
+case "$1" in
+    start)
+	echo -n "Starting $NAME: $ADAPTER_DIR/$ADAPTER_SCR $ADAPTER_OPTS"
+	start-stop-daemon --background --make-pidfile --chuid ubuntu --chdir $ADAPTER_DIR/../../ --exec $ADAPTER_DIR/$ADAPTER_SCR  --start --pidfile $PIDFILE -- $ADAPTER_OPTS 
+	echo "."
+	;;
+    stop)
+	echo -n "Stopping $NAME: pid at $PIDFILE"
+	start-stop-daemon --stop --chdir $ADAPTER_DIR/../../ --chuid ubuntu --signal 2 --oknodo --pidfile $PIDFILE 
+	echo "."
+	;;
+    restart)
+	$0 stop
+	$0 start
+	;;
+    *)
+	echo "Usage: /etc/init.d/device-adapter {start|stop|restart}"
+	exit 1
+	;;
+esac
+
+exit 0
+
