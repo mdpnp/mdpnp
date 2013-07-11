@@ -62,6 +62,7 @@
 	     </g:HTML>
 
 	  	<g:FlexTable ui:field='hazardsTable'></g:FlexTable>
+	  	<g:Anchor text='Add New...' href='#' ui:field='addNewHazard'/>
 	  </g:FlowPanel>
 	</g:Tab>
 	

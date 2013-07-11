@@ -28,12 +28,18 @@ public class ScenarioEntity implements java.io.Serializable {
 	@Index
 	private String submitter;//creator or submitter of the scenario
 	//TODO submitter should probably be a valueProxy of type UserInfo @Embebed UserInfo
+		  
+    protected int version = 1;
+	
+	@OnSave
+	void onPersist() {
+	    version++;
+	}
 	
 	private BackgroundValue background = new BackgroundValue();
-//	private Hazards hazards = new Hazards();
-//	private Environments environments = new Environments();
+	private Hazards hazards = new Hazards();
+	private Environments environments = new Environments();
 	private Equipment equipment = new Equipment();
-//	private List<EquipmentEntry> equipmentList = new ArrayList<EquipmentEntry>();//XXX
 	private ProposedSolutionValue proposedSolution = new ProposedSolutionValue();
 	private BenefitsAndRisksValue benefitsAndRisks = new BenefitsAndRisksValue();
 	
@@ -41,22 +47,22 @@ public class ScenarioEntity implements java.io.Serializable {
     final static UserService userService = UserServiceFactory.getUserService();
     final static User user = userService.getCurrentUser();
 
-//	public Hazards getHazards() {
-//        return hazards;
-//    }
-//
-//    public void setHazards(Hazards hazards) {
-//        this.hazards = hazards;
-//    }
+	public Hazards getHazards() {
+        return hazards;
+    }
 
-//    public Environments getEnvironments() {
-//        return environments;
-//    }
-//
-//    public void setEnvironments(Environments environments) {
-//        this.environments = environments;
-//    }
-//
+    public void setHazards(Hazards hazards) {
+        this.hazards = hazards;
+    }
+
+    public Environments getEnvironments() {
+        return environments;
+    }
+
+    public void setEnvironments(Environments environments) {
+        this.environments = environments;
+    }
+
     public Equipment getEquipment() {
         return equipment;
     }
@@ -80,24 +86,7 @@ public class ScenarioEntity implements java.io.Serializable {
     public void setBenefitsAndRisks(BenefitsAndRisksValue benefitsAndRisks) {
         this.benefitsAndRisks = benefitsAndRisks;
     }
-    
-//    //XXX
-//    public List<EquipmentEntry> getEquipmentList(){
-//    	return equipmentList;
-//    }
-//    
-//    public void setEquipmentList(List<EquipmentEntry> equipmentList){
-//    	this.equipmentList = equipmentList;
-//    }
-//    //XXX
-    
-    protected int version = 1;
-	
-	@OnSave
-	void onPersist() {
-	    version++;
-	}
-	
+    	
 	public Long getId() {
 		return id;
 	}
@@ -112,6 +101,7 @@ public class ScenarioEntity implements java.io.Serializable {
 	public void setTitle(String title) {
 		this.title = title;
 	}
+	
 	@Override
 	public String toString() {
 		return id + " == " + title;
