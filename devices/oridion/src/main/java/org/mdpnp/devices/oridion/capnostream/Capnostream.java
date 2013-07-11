@@ -524,6 +524,7 @@ public class Capnostream {
 
 		if(checksum != my_checksum) {
 		    log.warn("Failed checksum check expected:"+my_checksum+" but received "+checksum+" data are ignored");
+		    return true;
 		}
 		
 		return receiveMessage(response, inBuffer, read_length);
