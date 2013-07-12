@@ -1,0 +1,5 @@
+struct DeviceIdentity {
+  octet universal_device_identifier[64]; //@key
+    string<128> manufacturer;
+    string<128> model;
+};

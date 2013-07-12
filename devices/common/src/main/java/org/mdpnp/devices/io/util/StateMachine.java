@@ -3,7 +3,7 @@ package org.mdpnp.devices.io.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StateMachine<T extends Enum<?>> {
+public class StateMachine<T> {
 	
 	private final T[][] legalTransitions;
 	private T state;

@@ -7,93 +7,61 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
-
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.identifierarray.IdentifierArrayUpdate;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.nomenclature.Device;
 
 public class DevicePanelFactory {
 	private DevicePanelFactory() {}
 	
-	private static void _findPanel(Class<? extends Device> clazz, Collection<DevicePanel> panels, Set<Class<?>> handled) {
-		if(null != clazz) {
-			try {
-				if(Device.class.isAssignableFrom(clazz)) {
-					// we have a device!
-					// Do we have a gui panel?
-					String pkg = DevicePanel.class.getPackage().getName();
-					Class<?> guiCls;
-					guiCls = Class.forName(pkg+"."+clazz.getSimpleName() + "Panel");
-					if(DevicePanel.class.isAssignableFrom(guiCls) && !handled.contains(guiCls)) {
-						Constructor<?> ctor = guiCls.getConstructor(new Class<?>[0]);
-						panels.add((DevicePanel) ctor.newInstance());
-						handled.add(guiCls);
-					}
-				}
+	public static final Class[] PANELS = new Class[] {
+	    PulseOximeterPanel.class,
+	    BloodPressurePanel.class,
+	    ElectroCardioGramPanel.class,
+	    VentilatorPanel.class
+	};
+	
+	public static final Method[] PANEL_SUPPORTED = new Method[PANELS.length];
+	static {
+	    for(int i = 0; i < PANELS.length; i++) {
+	        try {
+                PANEL_SUPPORTED[i] = PANELS[i].getDeclaredMethod("supported", Set.class);
+            } catch (Exception e) {
+                throw new ExceptionInInitializerError(e);
+            }
+	    }
+	}
+	
 
-			} catch (ClassNotFoundException e) {
-	//			e.printStackTrace();
-			} catch (NoSuchMethodException e) {
-	//			e.printStackTrace();
-			} catch (SecurityException e) {
-	//			e.printStackTrace();
-			} catch (InstantiationException e) {
-	//			e.printStackTrace();
-			} catch (IllegalAccessException e) {
-	//			e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-	//			e.printStackTrace();
-			} catch (InvocationTargetException e) {
-	//			e.printStackTrace();
-			} finally {
-				
-			}
-			_findPanel((Class<? extends Device>) clazz.getSuperclass(), panels, handled);
-			for(Class<?> cls : clazz.getInterfaces()) {
-				_findPanel((Class<? extends Device>) cls, panels, handled);
-			}
-		}
-	}
-	
-	
-	
-	public static Collection<DevicePanel> findPanel(IdentifierArrayUpdate iau, Gateway gateway, String source) {
-		Collection<DevicePanel> panels = new ArrayList<DevicePanel>();
-		Set<Identifier> identifiers = new HashSet<Identifier>();
-		identifiers.addAll(Arrays.asList(iau.getValue()));
-		
-		if(ElectroCardioGramPanel.supported(identifiers)) {
-			panels.add(new ElectroCardioGramPanel(gateway, source));
-		}
-		if(PulseOximeterPanel.supported(identifiers)) {
-			panels.add(new PulseOximeterPanel(gateway, source));
-		}
-		if(BloodPressurePanel.supported(identifiers)) {
-			panels.add(new BloodPressurePanel(gateway, source));
-		}
-		if(VentilatorPanel.supported(identifiers)) {
-			panels.add(new VentilatorPanel(gateway, source));
-		}
-		if(WebcamPanel.supported(identifiers)) {
-			panels.add(new WebcamPanel(gateway, source));
-		}
-		return panels;
-	}
-	
-	public static Collection<DevicePanel> findPanel(Class<? extends Device> clazz) {
-		Collection<DevicePanel> panels = new ArrayList<DevicePanel>();
-		if(null == clazz) {
-			return panels;
-		}
-		_findPanel(clazz, panels, new HashSet<Class<?>>());
-		return panels;
+	public static void resolvePanels(Set<Integer> tags, Collection<DevicePanel> panels) {
+	    Map<Class, DevicePanel> byClass = new HashMap<Class, DevicePanel>();
+	    Collection<DevicePanel> newPanels = new ArrayList<DevicePanel>();
+	    
+	    for(DevicePanel p : panels) {
+	        byClass.put(p.getClass(), p);
+	    }
+	    
+	    for(int i = 0; i < PANELS.length; i++) {
+	        try {
+                if((Boolean)PANEL_SUPPORTED[i].invoke(null, tags)) {
+                    if(byClass.containsKey(PANELS[i])) {
+                        newPanels.add(byClass.get(PANELS[i]));
+                        byClass.remove(PANELS[i]);
+                    } else {
+                        newPanels.add((DevicePanel)PANELS[i].getConstructor().newInstance());
+                    }
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+	    }
+	    
+	    panels.clear();
+	    panels.addAll(newPanels);
 	}
 }

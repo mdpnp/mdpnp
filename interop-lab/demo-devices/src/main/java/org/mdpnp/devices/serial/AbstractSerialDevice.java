@@ -12,20 +12,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
-import org.mdpnp.data.textarray.MutableTextArrayUpdate;
-import org.mdpnp.data.textarray.MutableTextArrayUpdateImpl;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.connected.TimeAwareInputStream;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.nomenclature.SerialDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public abstract class AbstractSerialDevice extends AbstractConnectedDevice implements SerialDevice, Runnable {
-
-	protected final MutableTextArrayUpdate serialPortsUpdate = new MutableTextArrayUpdateImpl(SerialDevice.SERIAL_PORTS);
-	
+public abstract class AbstractSerialDevice extends AbstractConnectedDevice implements Runnable {
 	protected abstract boolean doInitCommands(OutputStream outputStream) throws IOException;
 	protected abstract void process(InputStream inputStream) throws IOException;
 
@@ -46,20 +39,17 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 		
 	}
 	
-	public AbstractSerialDevice(Gateway gateway) {
-		super(gateway);
+	public AbstractSerialDevice(int domainId) {
+		super(domainId);
 		long maxQuietTime = getMaximumQuietTime();
 		if(maxQuietTime>0L) {
 			executor.scheduleAtFixedRate(new Watchdog(), 0L, getMaximumQuietTime(), TimeUnit.MILLISECONDS);
 		}
-		serialPortsUpdate.setValue(getSerialProvider().getPortNames().toArray(new String[0]));
-		add(serialPortsUpdate);
-		
-		
+		deviceConnectivity.valid_targets.addAll(getSerialProvider().getPortNames());
 	}
 	
-	public AbstractSerialDevice(Gateway gateway, SerialSocket sock) {
-		super(gateway);
+	public AbstractSerialDevice(int domainId, SerialSocket sock) {
+		super(domainId);
 		long maxQuietTime = getMaximumQuietTime();
 		if(maxQuietTime>0L) {
 			executor.scheduleAtFixedRate(new Watchdog(), 0L, getMaximumQuietTime(), TimeUnit.MILLISECONDS);
@@ -97,25 +87,20 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 	@Override
 	public void disconnect() {
 		log.trace("disconnect requested");
-		synchronized(stateMachine) {
-			switch(getState()){
-			case Disconnected:
-			case Disconnecting:
-			    log.trace("nothing to do getState()="+getState());
-				return;
-			case Connecting:
-				canceledConnect = true;
-				serialProvider.cancelConnect();
-				log.trace("canceled connecting");
-				return;
-			case Connected:
-			case Negotiating:
-			    log.trace("getState()="+getState()+" entering Disconnecting");
-				stateMachine.transitionWhenLegal(State.Disconnecting);
-				log.trace("closing the AbstractSerialDevice");
-				close();
-				break;
-			}
+		ice.ConnectionState state = getState();
+		if(ice.ConnectionState.Disconnected.equals(state) ||
+		   ice.ConnectionState.Disconnecting.equals(state)) {
+		    log.trace("nothing to do getState()="+state);
+		} else if(ice.ConnectionState.Connecting.equals(state)) {
+			canceledConnect = true;
+			serialProvider.cancelConnect();
+			log.trace("canceled connecting");
+		} else if(ice.ConnectionState.Connected.equals(state) ||
+		          ice.ConnectionState.Negotiating.equals(state)) {
+		    log.trace("getState()="+getState()+" entering Disconnecting");
+			stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnecting);
+			log.trace("closing the AbstractSerialDevice");
+			close();
 		}
 	}
 	private void close() {
@@ -145,20 +130,19 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 		log.trace("connect requested to " + portIdentifier);
 		synchronized(this) {
 			this.portIdentifier = portIdentifier;
-
-			switch(getState()) {
-			case Connected:
-			case Negotiating:
-			case Connecting:
-				return;
-			case Disconnected:
-			case Disconnecting:
-				stateMachine.transitionWhenLegal(State.Connecting);
-				break;
+			ice.ConnectionState state = getState();
+			if(ice.ConnectionState.Connected.equals(state) ||
+			   ice.ConnectionState.Negotiating.equals(state) ||
+			   ice.ConnectionState.Connecting.equals(state)) {
+			} else if(ice.ConnectionState.Disconnected.equals(state) ||
+			          ice.ConnectionState.Disconnecting.equals(state)) {
+				stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting);
+				
+	            currentThread = new Thread(this, "AbstractSerialDevice Processing");
+	            currentThread.setDaemon(true);
+	            currentThread.start();
 			}
-			currentThread = new Thread(this, "AbstractSerialDevice Processing");
-			currentThread.setDaemon(true);
-			currentThread.start();
+
 		}
 	}
 	
@@ -193,7 +177,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 				return;
 			} else {
 				this.socket = socket;
-				if(!stateMachine.transitionIfLegal(State.Negotiating)) {
+				if(!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating)) {
 					throw new IllegalStateException("Cannot begin negotiating from " + getState());
 				}
 			}
@@ -212,20 +196,17 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 			log.error("processing thread ends with IOException", e);
 		} finally {
 			log.info(Thread.currentThread().getName() + " (" + Thread.currentThread().getId() + ")  ends");
-			State priorState = getState();
+			ice.ConnectionState priorState = getState();
 			close();
-			stateMachine.transitionIfLegal(State.Disconnected);
-			switch(priorState) {
-			case Connecting:
-				if(canceledConnect) {
-					return;
-				}
-			case Connected:
-			case Negotiating:
+			stateMachine.transitionIfLegal(ice.ConnectionState.Disconnected);
+			if(ice.ConnectionState.Connecting.equals(priorState) && canceledConnect) {
+			    return;
+			}
+			if(ice.ConnectionState.Connecting.equals(priorState) ||
+			   ice.ConnectionState.Connected.equals(priorState) ||
+			   ice.ConnectionState.Negotiating.equals(priorState)) {
 				log.trace("process thread died unexpectedly, trying to reconnect");
 				connect(portIdentifier);
-				break;
-			default:
 			}
 		}
 
@@ -250,10 +231,10 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 				log.trace(Thread.currentThread().getName() + " ("+ Thread.currentThread().getId() + ") ends");
 				if(inited) {
 					log.trace("doInitCommands returns true");
-					stateMachine.transitionIfLegal(State.Connected);
+					stateMachine.transitionIfLegal(ice.ConnectionState.Connected);
 				} else {
 					log.trace("doInitCommands returns false");
-					if(State.Negotiating.equals(getState())) {
+					if(ice.ConnectionState.Negotiating.equals(getState())) {
 						log.trace("canceling negotation via close()");
 						close();
 					}
@@ -269,7 +250,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 		if(null != tais) {
 			long quietTime = System.currentTimeMillis() - timeAwareInputStream.getLastReadTime();
 			if(quietTime > getMaximumQuietTime()) {
-				if(State.Connected.equals(getState())) {
+				if(ice.ConnectionState.Connected.equals(getState())) {
 					log.warn("WATCHDOG - disconnecting after " + quietTime + "ms quiet time (exceeds " + getMaximumQuietTime()+")");
 					disconnect();
 					connect(portIdentifier);
@@ -285,7 +266,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 
 	
 	@Override
-	protected ConnectionType getConnectionType() {
-		return ConnectionType.Serial;
+	protected ice.ConnectionType getConnectionType() {
+		return ice.ConnectionType.Serial;
 	}
 }

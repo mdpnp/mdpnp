@@ -11,23 +11,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.mdpnp.data.numeric.MutableNumericUpdate;
-import org.mdpnp.data.numeric.MutableNumericUpdateImpl;
 import org.mdpnp.devices.serial.AbstractSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.nomenclature.PulseOximeter;
+import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 
 public class DemoN595 extends AbstractSerialDevice {
-	private final MutableNumericUpdate pulseUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE);
-	private final MutableNumericUpdate spo2Update = new MutableNumericUpdateImpl(PulseOximeter.SPO2);
-	private final MutableNumericUpdate pulseUpperUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE_UPPER);
-	private final MutableNumericUpdate pulseLowerUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE_LOWER);
-	private final MutableNumericUpdate spo2UpperUpdate = new MutableNumericUpdateImpl(PulseOximeter.SPO2_UPPER);
-	private final MutableNumericUpdate spo2LowerUpdate = new MutableNumericUpdateImpl(PulseOximeter.SPO2_LOWER);
+    private final InstanceHolder<ice.Numeric> pulseUpdate;
+    private final InstanceHolder<ice.Numeric> spo2Update;
+    
+//	private final MutableNumericUpdate pulseUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE);
+//	private final MutableNumericUpdate spo2Update = new MutableNumericUpdateImpl(PulseOximeter.SPO2);
+//	private final MutableNumericUpdate pulseUpperUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE_UPPER);
+//	private final MutableNumericUpdate pulseLowerUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE_LOWER);
+//	private final MutableNumericUpdate spo2UpperUpdate = new MutableNumericUpdateImpl(PulseOximeter.SPO2_UPPER);
+//	private final MutableNumericUpdate spo2LowerUpdate = new MutableNumericUpdateImpl(PulseOximeter.SPO2_LOWER);
 	
 	private class MyNellcorN595 extends NellcorN595 {
 		public MyNellcorN595() throws NoSuchFieldException, SecurityException, IOException {
@@ -36,17 +36,16 @@ public class DemoN595 extends AbstractSerialDevice {
 		
 		@Override
 		public void firePulseOximeter() {
-			pulseUpdate.set(getHeartRate(), getTimestamp());
-			spo2Update.set(getSpO2(), getTimestamp());
-			gateway.update(pulseUpdate, spo2Update);
+		    numericSample(pulseUpdate, getHeartRate());
+		    numericSample(spo2Update, getSpO2());
 		}
 		@Override
 		public void fireAlarmPulseOximeter() {
-			pulseLowerUpdate.set(getPRLower(), getTimestamp());
-			pulseUpperUpdate.set(getPRUpper(), getTimestamp());
-			spo2LowerUpdate.set(getSpO2Lower(), getTimestamp());
-			spo2UpperUpdate.set(getSpO2Upper(), getTimestamp());
-			gateway.update(pulseLowerUpdate, pulseUpperUpdate, spo2LowerUpdate, spo2UpperUpdate);
+//			pulseLowerUpdate.set(getPRLower(), getTimestamp());
+//			pulseUpperUpdate.set(getPRUpper(), getTimestamp());
+//			spo2LowerUpdate.set(getSpO2Lower(), getTimestamp());
+//			spo2UpperUpdate.set(getSpO2Upper(), getTimestamp());
+//			gateway.update(pulseLowerUpdate, pulseUpperUpdate, spo2LowerUpdate, spo2UpperUpdate);
 		}
 		@Override
 		public void fireDevice() {
@@ -54,15 +53,15 @@ public class DemoN595 extends AbstractSerialDevice {
 				inited = true;
 				this.notifyAll();
 			}
-			gateway.update(nameUpdate, guidUpdate);
+			deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 		}
 		@Override
 		protected void setName(String name) {
-			nameUpdate.setValue(name);
+		    deviceIdentity.model = name;
 		}
 		@Override
 		protected void setGuid(String guid) {
-			guidUpdate.setValue(guid);
+		    deviceIdentity.serial_number = guid;
 		}
 	}
 
@@ -99,11 +98,22 @@ public class DemoN595 extends AbstractSerialDevice {
 	
 	
 	
-	public DemoN595(Gateway gateway) throws NoSuchFieldException, SecurityException, IOException {
-		super(gateway);
-		add(pulseUpdate, spo2Update, pulseLowerUpdate, pulseUpperUpdate, spo2LowerUpdate, spo2UpperUpdate);
+	public DemoN595(int domainId) throws NoSuchFieldException, SecurityException, IOException {
+		super(domainId);
+        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        deviceIdentity.manufacturer = NellcorN595.MANUFACTURER_NAME;
+        deviceIdentity.model = NellcorN595.MODEL_NAME;
+        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
+        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+        
+        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
+        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
+        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+		
+        spo2Update = createNumericInstance(ice.MDC_PULS_OXIM_SAT_O2.VALUE);
+        pulseUpdate = createNumericInstance(ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
+        
 		this.fieldDelegate = new MyNellcorN595();
-		nameUpdate.setValue(NellcorN595.ROOT_NAME);
 	}
 
 	@Override

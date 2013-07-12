@@ -1,23 +1,24 @@
 package org.mdpnp.guis.waveform;
 
-import org.mdpnp.data.numeric.NumericUpdate;
+import ice.Numeric;
 
 public class NumericUpdateWaveformSource extends AbstractWaveformSource {
-	private NumericUpdate lastUpdate;
+    private final ice.Numeric lastUpdate = new ice.Numeric();
 	private final double millisecondsPerSample;
 	
 	public NumericUpdateWaveformSource(double millisecondsPerSample) {
 		this.millisecondsPerSample = millisecondsPerSample;
 	}
 		
-	public void applyUpdate(NumericUpdate update) {
-		this.lastUpdate = update;
+	public void applyUpdate(ice.Numeric update) {
+		this.lastUpdate.copy_from(update);
 		fireWaveform();
 	}
 	
 	@Override
-	public int getValue(int x) {
-		return null == lastUpdate.getValue() ? 0 : lastUpdate.getValue().intValue();
+	public float getValue(int x) {
+	    return lastUpdate.value;
+//		return null == lastUpdate.getValue() ? 0 : lastUpdate.getValue().intValue();
 	}
 
 	@Override

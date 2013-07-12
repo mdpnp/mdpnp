@@ -4,9 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
-import org.mdpnp.messaging.Binding;
-import org.mdpnp.messaging.BindingFactory;
-import org.mdpnp.messaging.BindingFactory.BindingType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,33 +60,16 @@ public class Main {
 		}
 		
 		if(null != runConf) {
-
-		    
-		    
-		    BindingType binding = runConf.getBinding();
-		    String bindingSettings = runConf.getBindingSettings();
-		    
-		    switch(binding) {
-		    case RTI_DDS:
-		        try {
-        	        if(!(Boolean)Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init").invoke(null)) {
-        	            throw new Exception("Unable to init");
-        	        }
-		        } catch (Throwable t) {
-		            log.warn("Unable to initialize RTI DDS, falling back to JGroups transport", t);
-		            binding = BindingType.JGROUPS;
-		            bindingSettings = "";
-		        }
-		        break;
-		        
-		    }
+		    if(!(Boolean)Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init").invoke(null)) {
+                throw new Exception("Unable to init");
+            }
 
 			switch(runConf.getApplication()) {
 			case ICE_Device_Interface:
-			    DeviceAdapter.start(runConf.getDeviceType(), binding, bindingSettings, runConf.getAddress(), !cmdline);
+			    DeviceAdapter.start(runConf.getDeviceType(), runConf.getDomainId(), runConf.getAddress(), !cmdline);
 				break;
 			case ICE_Supervisor:
-			    DemoApp.start(binding, bindingSettings);
+			    DemoApp.start(runConf.getDomainId());
 			    break;
 			}
 		} else if(cmdline) {

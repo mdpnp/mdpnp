@@ -5,15 +5,14 @@ import org.mdpnp.devices.serial.SerialSocket;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
-import org.mdpnp.messaging.Gateway;
 
 public class DemoEvitaXL extends AbstractDraegerVent {
 
-	public DemoEvitaXL(Gateway gateway) {
-		super(gateway);
+	public DemoEvitaXL(int domainId) {
+		super(domainId);
 	}
-	public DemoEvitaXL(Gateway gateway, SerialSocket socket) {
-		super(gateway, socket);
+	public DemoEvitaXL(int domainId, SerialSocket socket) {
+		super(domainId, socket);
 	}
 	
 	@Override

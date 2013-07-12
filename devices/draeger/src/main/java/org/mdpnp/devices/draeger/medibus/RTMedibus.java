@@ -232,14 +232,14 @@ public class RTMedibus extends Medibus {
 		int binval = (first & 0x3F) | ((second & 0x3F) << 6);
 		if(this.lastTransmitted != null && idx < this.lastTransmitted.length) { 
 			RTDataConfig c = lastTransmitted[idx].rtDataConfig;
-			receiveDataValue(c, lastTransmitted[idx].multiplier, idx, c.realtimeData, (int)Math.round((1.0 * binval / c.maxbin) * (c.max - c.min) + c.min));
+			receiveDataValue(c, lastTransmitted[idx].multiplier, idx, c.realtimeData, (1.0 * binval / c.maxbin) * (c.max - c.min) + c.min);
 		} else {
 			receiveDataValue(null, 1, idx, (byte)idx, binval);
 		}
 		
 	}
 	
-	public void receiveDataValue(RTDataConfig config, int multiplier, int streamIndex, Object realtimeData, int data) {
+	public void receiveDataValue(RTDataConfig config, int multiplier, int streamIndex, Object realtimeData, double data) {
 		log.debug("Received(" + Medibus.toString(realtimeData) + "):"+data);
 	}
 	

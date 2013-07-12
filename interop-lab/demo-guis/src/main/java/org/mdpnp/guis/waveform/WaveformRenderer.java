@@ -20,7 +20,7 @@ public class WaveformRenderer {
 	
 	private int lastCount = -1;
 	private WaveformCanvas.Extent extent;
-	private int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+	private float minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
 	
 	private static final int incr(int x, int max) {
 		return ++x>=max?0:x;
@@ -43,10 +43,12 @@ public class WaveformRenderer {
 		return scaleX(x, 0, max, minX, maxX);
 	}
 	
-	private final int scaleY(int y, int minY0, int maxY0) {
+	private final int scaleY(float y, float minY0, float maxY0) {
 		int minY1 = extent.getMinY();
 		int maxY1 = extent.getMaxY();
-		return scaleX(y, minY0, maxY0, minY1, maxY1);
+		
+		float f = 1.0f * (y - minY0) / (maxY0 - minY0);
+		return (int)(minY1 + f * (maxY1 - minY1));
 	}
 	
 	
@@ -113,12 +115,12 @@ public class WaveformRenderer {
 			while(x != last) {
 				int x1 = incr(x, max);
 				// TODO gain some efficiencies here
-				int y = source.getValue(x);
-				int y1 = source.getValue(x1);
+				float y = source.getValue(x);
+				float y1 = source.getValue(x1);
 	
 				if(continuousRescale && x == (max-1)) {
-					minY = Integer.MAX_VALUE;
-					maxY = Integer.MIN_VALUE;
+					minY = Float.MAX_VALUE;
+					maxY = Float.MIN_VALUE;
 				}
 				if(y1 < minY || y < minY) {
 					minY = Math.min(y, y1);
@@ -144,8 +146,8 @@ public class WaveformRenderer {
 					
 //					int[] prevColor = canvas.getColor();
 					for(WaveformSource cs : otherSources) {
-						int _y = cs.getValue(x);
-						int _y1 = cs.getValue(x1);
+						float _y = cs.getValue(x);
+						float _y1 = cs.getValue(x1);
 //						canvas.setColor(cs.r, cs.g, cs.b, cs.a);
 						canvas.drawSecondaryLine(scaleX(x, max), scaleY(_y, minY, maxY), scaleX(x1, max), scaleY(_y1, minY, maxY));
 					}

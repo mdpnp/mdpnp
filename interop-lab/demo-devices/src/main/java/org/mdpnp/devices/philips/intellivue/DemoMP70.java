@@ -18,20 +18,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.identifierarray.IdentifierArrayUpdate;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdate;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdateImpl;
-import org.mdpnp.data.numeric.MutableNumericUpdate;
-import org.mdpnp.data.numeric.MutableNumericUpdateImpl;
-import org.mdpnp.data.numeric.Numeric;
-import org.mdpnp.data.text.MutableTextUpdate;
-import org.mdpnp.data.text.MutableTextUpdateImpl;
-import org.mdpnp.data.text.TextUpdate;
-import org.mdpnp.data.waveform.MutableWaveformUpdate;
-import org.mdpnp.data.waveform.MutableWaveformUpdateImpl;
-import org.mdpnp.data.waveform.Waveform;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataResult;
 import org.mdpnp.devices.philips.intellivue.action.ObservationPoll;
@@ -69,15 +55,11 @@ import org.mdpnp.devices.philips.intellivue.data.VariableLabel;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.EventReport;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.SetResult;
 import org.mdpnp.devices.philips.intellivue.dataexport.event.MdsCreateEvent;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.nomenclature.ConnectedDevice;
-import org.mdpnp.nomenclature.Demographics;
-import org.mdpnp.nomenclature.Device;
-import org.mdpnp.nomenclature.ElectroCardioGram;
-import org.mdpnp.nomenclature.NoninvasiveBloodPressure;
-import org.mdpnp.nomenclature.PulseOximeter;
+import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rti.dds.infrastructure.InstanceHandle_t;
 
 public class DemoMP70 extends AbstractConnectedDevice {
 	private class MyIntellivue extends Intellivue {
@@ -91,7 +73,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 		protected void transientDisassociation(InetAddress lastRemote,
 				int prefixLength) {
 			super.transientDisassociation(lastRemote, prefixLength);
-			state(State.Connecting, "Re-establishing");
+			state(ice.ConnectionState.Connecting, "Re-establishing");
 		}
 		@Override
 		protected void handle(SetResult result, boolean confirmed) {
@@ -129,7 +111,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 			}
 		}
 		@SuppressWarnings("unused")
-        private String manufacturer, modelNumber;
+//        private String manufacturer, modelNumber;
 		@Override
 		protected void handle(EventReport eventReport, boolean confirm) {
 			super.handle(eventReport, confirm);
@@ -147,19 +129,22 @@ public class DemoMP70 extends AbstractConnectedDevice {
 					log.info(""+ps.getValue());
 					VariableLabel vl = ps.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER, ComponentId.ID_COMP_PRODUCT);
 					if(null != vl) {
-						guidUpdate.setValue(vl.getString());
-						gateway.update(DemoMP70.this, guidUpdate);
+					    deviceIdentity.serial_number = vl.getString();
+						deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 					}
 				}
 				
 				
 //				String name = "";
 				if(createEvent.getAttributes().get(asm)) {
-					manufacturer = asm.getValue().getManufacturer().getString();
+					deviceIdentity.manufacturer = asm.getValue().getManufacturer().getString();
+					deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 //					name = name + asm.getValue().getManufacturer().getString() + " " + asm.getValue().getModelNumber() + " ";
 				}
 				if(createEvent.getAttributes().get(as)) {
-					modelNumber = asm.getValue().getModelNumber().getString();
+				    deviceIdentity.model = asm.getValue().getModelNumber().getString();
+				    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+//					modelNumber = asm.getValue().getModelNumber().getString();
 //					name = name + as.getValue().getString() + " ";
 				}
 
@@ -172,7 +157,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 //					gateway.update(PhilipsIntellivueMP70Impl.this, nameUpdate);
 //				}
 				
-				state(State.Connected, null);
+				state(ice.ConnectionState.Connected, null);
 				requestSinglePoll(ObjectClass.NOM_MOC_VMS_MDS, AttributeId.NOM_ATTR_GRP_SYS_PROD);
 				TaskQueue.Task<Object> nuTask = new TaskQueue.TaskImpl<Object>() {
 					@Override
@@ -199,25 +184,25 @@ public class DemoMP70 extends AbstractConnectedDevice {
 		}
 		@Override
 		protected synchronized void handle(SocketAddress sockaddr, AssociationRefuse message) {
-			state(State.Disconnected, "refused");
+			state(ice.ConnectionState.Disconnected, "refused");
 			super.handle(sockaddr, message);
 		}
 		
 		@Override
 		protected synchronized void handle(SocketAddress sockaddr, AssociationAbort message) {
-			state(State.Disconnected, "aborted");
+			state(ice.ConnectionState.Disconnected, "aborted");
 			super.handle(sockaddr, message);
 		}
 		
 		@Override
 		protected synchronized void handle(SocketAddress sockaddr, AssociationDisconnect message) {
-			state(State.Disconnected, "disconnected");
+			state(ice.ConnectionState.Disconnected, "disconnected");
 			super.handle(sockaddr, message);
 		}
 		
 		@Override
 		protected void handle(SocketAddress sockaddr, AssociationAccept message) {
-			state(State.Negotiating, "accepted");
+			state(ice.ConnectionState.Negotiating, "accepted");
 			super.handle(sockaddr, message);
 		}
 		@Override
@@ -230,29 +215,29 @@ public class DemoMP70 extends AbstractConnectedDevice {
 						log.info(""+prodSpec.getValue());
 						VariableLabel vlabel = prodSpec.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER, ComponentId.ID_COMP_PRODUCT);
 						if(vlabel != null) {
-							guidUpdate.setValue(vlabel.getString());
-							gateway.update(DemoMP70.this, guidUpdate);
+						    deviceIdentity.serial_number = vlabel.getString();
+							deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 						}
 						vlabel = prodSpec.getValue().getByComponentId(ProductionSpecificationType.PART_NUMBER, ComponentId.ID_COMP_PRODUCT);
 						if(vlabel != null) {
-							nameUpdate.setValue(manufacturer + " " + vlabel.getString());
-							gateway.update(DemoMP70.this, nameUpdate);
+//							nameUpdate.setValue(manufacturer + " " + vlabel.getString());
+//							gateway.update(DemoMP70.this, nameUpdate);
 						}
 					}
 					if(op.getAttributes().get(firstName)) {
-						if(firstNameUpdate.setValue(firstName.getValue().getString())) {
-							gateway.update(DemoMP70.this, firstNameUpdate);
-						}
+//						if(firstNameUpdate.setValue(firstName.getValue().getString())) {
+//							gateway.update(DemoMP70.this, firstNameUpdate);
+//						}
 					}
 					if(op.getAttributes().get(lastName)) {
-						if(lastNameUpdate.setValue(lastName.getValue().getString())) {
-							gateway.update(DemoMP70.this, lastNameUpdate);
-						}
+//						if(lastNameUpdate.setValue(lastName.getValue().getString())) {
+//							gateway.update(DemoMP70.this, lastNameUpdate);
+//						}
 					}
 					if(op.getAttributes().get(patientId)) {
-						if(patientIdUpdate.setValue(patientId.getValue().getString())) {
-							gateway.update(DemoMP70.this, patientIdUpdate);
-						}
+//						if(patientIdUpdate.setValue(patientId.getValue().getString())) {
+//							gateway.update(DemoMP70.this, patientIdUpdate);
+//						}
 					}
 				}
 			}
@@ -341,10 +326,9 @@ public class DemoMP70 extends AbstractConnectedDevice {
 //			log.debug(observed.toString());
 			ObservedValue ov = ObservedValue.valueOf(observed.getPhysioId().getType());
 			if(null != ov) {
-				MutableNumericUpdate mnu = numericUpdates.get(ov);
+				InstanceHolder<ice.Numeric> mnu = numericUpdates.get(ov);
 				if(null != mnu) {
-					mnu.setValue(observed.getValue());
-					gateway.update(DemoMP70.this, mnu);
+					numericSample(mnu, observed.getValue().floatValue());
 				}
 			}
 			
@@ -361,20 +345,21 @@ public class DemoMP70 extends AbstractConnectedDevice {
 				} else {
 					getByHandle(handle).add(w);
 //					Integer cnt = w.getCount();
-					Number[] values = w.getValues();
-					if(values != null) {
-						Integer cnt = values.length;
-						if(null == cnt) {
-							log.warn("null count for " + ov + " " + w);
-						} else {
+//					Number[] values = w.getValues();
+//					if(values != null) {
+//						Integer cnt = values.length;
+//						if(null == cnt) {
+//							log.warn("null count for " + ov + " " + w);
+//						} else {
+					        int cnt = w.holder.data.values.size();
 							for(int i = 0; i < cnt; i++) {	
 								w.applyValue(i, bytes);
 							}
 							log.debug(Arrays.toString(bytes));
-							log.debug(Arrays.toString(values));
-							gateway.update(DemoMP70.this, w);
-						}
-					}
+//							log.debug(Arrays.toString(values));
+							sampleArrayDataWriter.write(w.holder.data, w.holder.handle);
+//						}
+//					}
 				}
 			}
 		}
@@ -387,7 +372,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 			
 				w.setSampleSize(sampleSize);
 				w.setSignificantBits(significantBits);
-				w.setValues(new Number[cnt]);
+				w.holder.data.values.setSize(cnt);
 //				w.setCount(cnt);
 //				if(w.getValues().length < cnt) {
 //					int[] newpleth = new int[cnt];
@@ -398,7 +383,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 		}
 		protected void handle(int handle, RelativeTime period) {
 			for(MyWaveform w : getByHandle(handle)) {
-				w.setMillisecondsPerSample((double)period.toMilliseconds());
+			    w.holder.data.millisecondsPerSample = (int) period.toMilliseconds();
 			}
 		}
 	}
@@ -406,19 +391,13 @@ public class DemoMP70 extends AbstractConnectedDevice {
 	
 //	private final Map<Identifier, IdentifiableUpdate> updates = new HashMap<Identifier, IdentifiableUpdate>();
 	
-	private void add(ObservedValue ov, Waveform w, Label l) {
-		MyWaveform myw = new MyWaveformImpl(w);
-//		updates.put(w, myw);
-		add(myw);
-		waveformUpdates.put(ov, myw);
+	private void addSampleArray(ObservedValue ov, int tag, Label l) {
+		waveformUpdates.put(ov, new MyWaveform(createSampleArrayInstance(tag)));
 		waveformLabels.put(ov, l);
 	}
 	
-	private void add(ObservedValue ov, Numeric n, Label l) {
-		MutableNumericUpdate mnu = new MutableNumericUpdateImpl(n);
-//		updates.put(n, mnu);
-		add(mnu);
-		numericUpdates.put(ov, mnu);
+	private void addNumeric(ObservedValue ov, int tag, Label l) {
+		numericUpdates.put(ov, createNumericInstance(tag));
 		numericLabels.put(ov, l);
 	}
 	
@@ -427,36 +406,36 @@ public class DemoMP70 extends AbstractConnectedDevice {
 //	}
 	
 	private void configureData() {
-		add(ObservedValue.NOM_PULS_OXIM_SAT_O2, PulseOximeter.SPO2, Label.NLS_NOM_PULS_OXIM_SAT_O2);
-		add(ObservedValue.NOM_PLETH_PULS_RATE, PulseOximeter.PULSE, Label.NLS_NOM_PULS_OXIM_PULS_RATE);
-		add(ObservedValue.NOM_PRESS_BLD_NONINV_DIA, NoninvasiveBloodPressure.DIASTOLIC, Label.NLS_NOM_PRESS_BLD_NONINV);
-		add(ObservedValue.NOM_PRESS_BLD_NONINV_SYS, NoninvasiveBloodPressure.SYSTOLIC, Label.NLS_NOM_PRESS_BLD_NONINV);
-		add(ObservedValue.NOM_PRESS_BLD_NONINV_PULS_RATE, NoninvasiveBloodPressure.PULSE, Label.NLS_NOM_PRESS_BLD_NONINV_PULS_RATE);
+		addNumeric(ObservedValue.NOM_PULS_OXIM_SAT_O2, ice.MDC_PULS_OXIM_SAT_O2.VALUE, Label.NLS_NOM_PULS_OXIM_SAT_O2);
+		addNumeric(ObservedValue.NOM_PLETH_PULS_RATE, ice.MDC_PULS_OXIM_PULS_RATE.VALUE, Label.NLS_NOM_PULS_OXIM_PULS_RATE);
+		addNumeric(ObservedValue.NOM_PRESS_BLD_NONINV_DIA, ice.MDC_PRESS_CUFF_DIA.VALUE, Label.NLS_NOM_PRESS_BLD_NONINV);
+		addNumeric(ObservedValue.NOM_PRESS_BLD_NONINV_SYS, ice.MDC_PRESS_CUFF_SYS.VALUE, Label.NLS_NOM_PRESS_BLD_NONINV);
+		addNumeric(ObservedValue.NOM_PRESS_BLD_NONINV_PULS_RATE, ice.MDC_PULS_RATE_NON_INV.VALUE, Label.NLS_NOM_PRESS_BLD_NONINV_PULS_RATE);
 		
 
-		add(ObservedValue.NOM_PLETH, PulseOximeter.PLETH, Label.NLS_NOM_PULS_OXIM_PLETH);
-		add(ObservedValue.NOM_ECG_ELEC_POTL_I, ElectroCardioGram.I, Label.NLS_NOM_ECG_ELEC_POTL_I);
-		add(ObservedValue.NOM_ECG_ELEC_POTL_II, ElectroCardioGram.II, Label.NLS_NOM_ECG_ELEC_POTL_II);
-		add(ObservedValue.NOM_ECG_ELEC_POTL_III, ElectroCardioGram.III, Label.NLS_NOM_ECG_ELEC_POTL_III);
-		add(ObservedValue.NOM_ECG_ELEC_POTL_AVF, ElectroCardioGram.A_VF, Label.NLS_NOM_ECG_ELEC_POTL_AVF);
-		add(ObservedValue.NOM_ECG_ELEC_POTL_AVL, ElectroCardioGram.A_VL, Label.NLS_NOM_ECG_ELEC_POTL_AVL);
-		add(ObservedValue.NOM_ECG_ELEC_POTL_AVR, ElectroCardioGram.A_VR, Label.NLS_NOM_ECG_ELEC_POTL_AVR);
-		add(ObservedValue.NOM_ECG_ELEC_POTL_V2, ElectroCardioGram.V2, Label.NLS_NOM_ECG_ELEC_POTL_V2);
-		add(ObservedValue.NOM_ECG_ELEC_POTL_V5, ElectroCardioGram.V5, Label.NLS_NOM_ECG_ELEC_POTL_V5);
+		addSampleArray(ObservedValue.NOM_PLETH, ice.MDC_PULS_OXIM_PLETH.VALUE, Label.NLS_NOM_PULS_OXIM_PLETH);
+		addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_I, ice.MDC_ECG_ELEC_POTL_I.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_I);
+		addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_II, ice.MDC_ECG_ELEC_POTL_II.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_II);
+		addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_III, ice.MDC_ECG_ELEC_POTL_III.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_III);
+		addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_AVF, ice.MDC_ECG_ELEC_POTL_AVF.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_AVF);
+		addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_AVL, ice.MDC_ECG_ELEC_POTL_AVL.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_AVL);
+		addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_AVR, ice.MDC_ECG_ELEC_POTL_AVR.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_AVR);
+		addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_V2, ice.MDC_ECG_ELEC_POTL_V2.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_V2);
+		addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_V5, ice.MDC_ECG_ELEC_POTL_V5.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_V5);
 		
-		stateUpdate.setValue(ConnectedDevice.State.Disconnected);
-		connectionTypeUpdate.setValue(ConnectionType.Network);
-		
-		add(stateUpdate);
-		add(connectionInfoUpdate);
-		add(connectionTypeUpdate);
-		add(guidUpdate);
-		add(nameUpdate);
-		add(firstNameUpdate);
-		add(lastNameUpdate);
-		add(patientIdUpdate);
-		
-		gateway.addListener(this);
+//		stateUpdate.setValue(ConnectedDevice.State.Disconnected);
+//		connectionTypeUpdate.setValue(ConnectionType.Network);
+//		
+//		add(stateUpdate);
+//		add(connectionInfoUpdate);
+//		add(connectionTypeUpdate);
+//		add(guidUpdate);
+//		add(nameUpdate);
+//		add(firstNameUpdate);
+//		add(lastNameUpdate);
+//		add(patientIdUpdate);
+//		
+//		gateway.addListener(this);
 		
 	}
 	
@@ -465,14 +444,32 @@ public class DemoMP70 extends AbstractConnectedDevice {
 	
 	private static final Logger log = LoggerFactory.getLogger(DemoMP70.class);
 	
-	public DemoMP70(Gateway gateway) throws IOException {
-		super(gateway);
+	public DemoMP70(int domainId) throws IOException {
+		super(domainId);
+	    deviceIdentity.manufacturer = "Philips";
+        deviceIdentity.model = "MP70";
+        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
+        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+        
+        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
+        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
+        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
 		myIntellivue = new MyIntellivue();
 		configureData();
 	}
 	
-	public DemoMP70(Gateway gateway, NetworkLoop loop) {
-		super(gateway);
+	public DemoMP70(int domainId, NetworkLoop loop) {
+		super(domainId);
+	    deviceIdentity.manufacturer = "Philips";
+        deviceIdentity.model = "MP70";
+        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
+        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+        
+        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
+        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
+        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
 		myIntellivue = new MyIntellivue(loop);
 		configureData();
 	}
@@ -481,39 +478,40 @@ public class DemoMP70 extends AbstractConnectedDevice {
 //	private final MutableTextUpdate connectionInfoUpdate = new MutableTextUpdateImpl(ConnectedDevice.CONNECTION_INFO);
 //	private final MutableEnumerationUpdate connectionTypeUpdate = new MutableEnumerationUpdateImpl(ConnectedDevice.CONNECTION_TYPE);
 
-	protected final MutableTextUpdate firstNameUpdate = new MutableTextUpdateImpl(Demographics.FIRST_NAME);
-	protected final MutableTextUpdate lastNameUpdate = new MutableTextUpdateImpl(Demographics.LAST_NAME);
-	protected final MutableTextUpdate patientIdUpdate = new MutableTextUpdateImpl(Demographics.PATIENT_ID);
+//	protected final MutableTextUpdate firstNameUpdate = new MutableTextUpdateImpl(Demographics.FIRST_NAME);
+//	protected final MutableTextUpdate lastNameUpdate = new MutableTextUpdateImpl(Demographics.LAST_NAME);
+//	protected final MutableTextUpdate patientIdUpdate = new MutableTextUpdateImpl(Demographics.PATIENT_ID);
 	
-	protected interface MyWaveform extends MutableWaveformUpdate {
-		void applyValue(int sampleNumber, short[] values);
-		short getSampleSize();
-		void setSampleSize(short s);
-		short getSignificantBits();
-		void setSignificantBits(short s);
-	}
+//	protected interface MyWaveform {
+//		void applyValue(int sampleNumber, short[] values);
+//		short getSampleSize();
+//		void setSampleSize(short s);
+//		short getSignificantBits();
+//		void setSignificantBits(short s);
+//	}
 	
 	@SuppressWarnings("serial")
-    protected static class MyWaveformImpl extends MutableWaveformUpdateImpl implements MyWaveform {
+    protected static class MyWaveform {
 //		private int[] values = new int[0];
 //		private int count = 0, maxCount = 0;
 //		private double msPerSample = 1.0;
 		private short sampleSize, significantBits;
-
-		public MyWaveformImpl(Waveform waveform) {
-			super(waveform);
+		private final InstanceHolder<ice.SampleArray> holder;
+		
+		public MyWaveform(InstanceHolder<ice.SampleArray> holder) {
+		    this.holder = holder;
 		}
 		
 				
 		private int[] mask = new int[0];
 		private int[] shift = new int[0];
-		@Override
+
 		public void applyValue(int sampleNumber, short[] values) {
 			int value = 0;
 			for(int i = 0; i < sampleSize; i++) {
 				value |= (mask[i] & values[sampleNumber*sampleSize + i]) << shift[i];
 			}
-			getValues()[sampleNumber] = value;
+			holder.data.values.setFloat(sampleNumber, value);
 //			setValue(sampleNumber, value);
 //			applyValue(value);
 //			applyValue((0x0F00 & (values[2*sampleNumber] << 8)) | (0xFF & values[2*sampleNumber+1]));
@@ -541,20 +539,17 @@ public class DemoMP70 extends AbstractConnectedDevice {
 			}
 			log.debug("Mask:"+Arrays.toString(mask) + " Shift:"+Arrays.toString(shift) + " sampleSize="+sampleSize + " sigBits="+this.significantBits);
 		}
-		@Override
+
 		public short getSampleSize() {
 			return sampleSize;
 		}
-		@Override
 		public short getSignificantBits() {
 			return significantBits;
 		}
-		@Override
 		public void setSampleSize(short s) {
 			this.sampleSize = (short)(s / Byte.SIZE);
 			buildMaskAndShift();
 		}
-		@Override
 		public void setSignificantBits(short s) {
 			this.significantBits = s;
 			buildMaskAndShift();
@@ -568,9 +563,9 @@ public class DemoMP70 extends AbstractConnectedDevice {
 				String [] hosts = myIntellivue.listenForConnectIndication();
 				
 				if(null == hosts) {
-					state(State.Disconnected, "no broadcast addresses");
+					state(ice.ConnectionState.Disconnected, "no broadcast addresses");
 				} else {
-					state(State.Connecting, "listening  on " + Arrays.toString(hosts));
+					state(ice.ConnectionState.Connecting, "listening  on " + Arrays.toString(hosts));
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -589,7 +584,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 				InetAddress addr = InetAddress.getByName(address);
 				
 				myIntellivue.connect(addr, -1, port);
-				state(State.Connecting, "trying " + address + ":"+port);
+				state(ice.ConnectionState.Connecting, "trying " + address + ":"+port);
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -599,7 +594,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 		
 	}
 	
-	protected final void state(State state, String connectionInfo) {
+	protected final void state(ice.ConnectionState state, String connectionInfo) {
 		if(!stateMachine.transitionWhenLegal(state, 5000L)) {
 			throw new RuntimeException("timed out changing state");
 		}
@@ -640,7 +635,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 
 	protected final Map<ObservedValue, Label> waveformLabels = new HashMap<ObservedValue, Label>();
 	protected final Map<ObservedValue, Label> numericLabels = new HashMap<ObservedValue, Label>();
-	protected final Map<ObservedValue, MutableNumericUpdate> numericUpdates = new HashMap<ObservedValue, MutableNumericUpdate>();
+	protected final Map<ObservedValue, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<ObservedValue, InstanceHolder<ice.Numeric>>();
 	protected final Map<ObservedValue, MyWaveform> waveformUpdates = new HashMap<ObservedValue, MyWaveform>();
 	
 	
@@ -661,7 +656,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 
 	public void disconnect() {
 		try {
-			state(State.Disconnecting, "disassociating");
+			state(ice.ConnectionState.Disconnecting, "disassociating");
 		} catch (RuntimeException re) {
 			// TODO make this temporary
 			re.printStackTrace();
@@ -684,30 +679,30 @@ public class DemoMP70 extends AbstractConnectedDevice {
 //		return updates.get(identifier);
 //	}
 
-	@Override
-	public void update(IdentifiableUpdate<?> command) {
-		if(Device.REQUEST_IDENTIFIED_UPDATES.equals(command.getIdentifier())) {
-			IdentifierArrayUpdate iau = (IdentifierArrayUpdate) command;
-			for(Identifier i : iau.getValue()) {
-				IdentifiableUpdate<?> iu = get(i);
-				if(null != iu) {
-					gateway.update(DemoMP70.this, iu);
-				}
-			}
-		} else if(ConnectedDevice.CONNECT_TO.equals(command.getIdentifier())) {
-			connect( ((TextUpdate)command).getValue());
-		} else if(ConnectedDevice.DISCONNECT.equals(command.getIdentifier())) {
-			disconnect();
-		} else if(Device.REQUEST_AVAILABLE_IDENTIFIERS.equals(command.getIdentifier())) {
-			MutableIdentifierArrayUpdate upds = new MutableIdentifierArrayUpdateImpl(Device.GET_AVAILABLE_IDENTIFIERS);
-			upds.setValue(this.updates.keySet().toArray(new Identifier[0]));
-			gateway.update(DemoMP70.this, upds);
-		}
-	}
+//	@Override
+//	public void update(IdentifiableUpdate<?> command) {
+//		if(Device.REQUEST_IDENTIFIED_UPDATES.equals(command.getIdentifier())) {
+//			IdentifierArrayUpdate iau = (IdentifierArrayUpdate) command;
+//			for(Identifier i : iau.getValue()) {
+//				IdentifiableUpdate<?> iu = get(i);
+//				if(null != iu) {
+//					gateway.update(DemoMP70.this, iu);
+//				}
+//			}
+//		} else if(ConnectedDevice.CONNECT_TO.equals(command.getIdentifier())) {
+//			connect( ((TextUpdate)command).getValue());
+//		} else if(ConnectedDevice.DISCONNECT.equals(command.getIdentifier())) {
+//			disconnect();
+//		} else if(Device.REQUEST_AVAILABLE_IDENTIFIERS.equals(command.getIdentifier())) {
+//			MutableIdentifierArrayUpdate upds = new MutableIdentifierArrayUpdateImpl(Device.GET_AVAILABLE_IDENTIFIERS);
+//			upds.setValue(this.updates.keySet().toArray(new Identifier[0]));
+//			gateway.update(DemoMP70.this, upds);
+//		}
+//	}
 
 	@Override
-	protected ConnectionType getConnectionType() {
-		return ConnectionType.Network;
+	protected ice.ConnectionType getConnectionType() {
+		return ice.ConnectionType.Network;
 	}
 	@Override
 	protected String iconResourceName() {

@@ -11,19 +11,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.mdpnp.data.numeric.MutableNumericUpdate;
-import org.mdpnp.data.numeric.MutableNumericUpdateImpl;
 import org.mdpnp.devices.serial.AbstractSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.nomenclature.PulseOximeter;
+import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 
 public class DemoRadical7 extends AbstractSerialDevice {
-	private final MutableNumericUpdate pulseUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE);
-	private final MutableNumericUpdate spo2Update = new MutableNumericUpdateImpl(PulseOximeter.SPO2);
+    private final InstanceHolder<ice.Numeric> pulseUpdate;
+    private final InstanceHolder<ice.Numeric> spo2Update;
 
-	private static final String NAME = "Masimo Radical-7";
+
+	private static final String MANUFACTURER_NAME = "Masimo";
+	private static final String MODEL_NAME = "Radical-7";
 	
 
 	private volatile boolean inited;
@@ -36,14 +35,13 @@ public class DemoRadical7 extends AbstractSerialDevice {
 		@Override
 		public void firePulseOximeter() {
 			super.firePulseOximeter();
-			pulseUpdate.set(getHeartRate(), getTimestamp());
-			spo2Update.set(getSpO2(), getTimestamp());
+			numericSample(pulseUpdate, getHeartRate());
+			numericSample(spo2Update, getSpO2());
 			String guid = getUniqueId();
-			if(guid != null && !guid.equals(guidUpdate.getValue())) {
-				guidUpdate.setValue(guid);
-				gateway.update(guidUpdate);
+			if(guid != null && !guid.equals(deviceIdentity.serial_number)) {
+				deviceIdentity.serial_number = guid;
+				deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 			}
-			gateway.update(pulseUpdate, spo2Update);
 		}
 	}
 	
@@ -84,13 +82,22 @@ public class DemoRadical7 extends AbstractSerialDevice {
 		serialProvider.setDefaultSerialSettings(9600, SerialSocket.DataBits.Eight, SerialSocket.Parity.None, SerialSocket.StopBits.One);
 		return serialProvider;
 	}
-	public DemoRadical7(Gateway gateway) throws NoSuchFieldException, SecurityException, IOException {
-		super(gateway);
+	public DemoRadical7(int domainId) throws NoSuchFieldException, SecurityException, IOException {
+		super(domainId);
+        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        deviceIdentity.manufacturer = MANUFACTURER_NAME;
+        deviceIdentity.model = MODEL_NAME;
+        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
+        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+        
+        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
+        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
+        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+        
 		this.fieldDelegate = new MyMasimoRadical7();
-		nameUpdate.setValue(NAME);
-		guidUpdate.setValue(null);
-		add(spo2Update);
-		add(pulseUpdate);
+
+		spo2Update = createNumericInstance(ice.MDC_PULS_OXIM_SAT_O2.VALUE);
+		pulseUpdate = createNumericInstance(ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
 	}
 	
 

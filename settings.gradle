@@ -11,14 +11,8 @@ include 'devices:masimo'
 include 'devices:nellcor'
 include 'devices:simulated'
 
-include 'interop-lab:demo-datamodel'
-include 'interop-lab:demo-messaging'
-include 'interop-lab:demo-devices'
 include 'interop-lab:demo-purejavacomm'
 
-include 'interop-lab:demo-jgroups'
-include 'interop-lab:demo-nomenclature'
-include 'interop-lab:demo-apps'
 include 'interop-lab:demo-guis'
 include 'interop-lab:demo-guis-swing'
 include 'interop-lab:demo-guis-jogl'
@@ -26,16 +20,17 @@ include 'interop-lab:pump-control'
 
 // Omits android projects is android sdk is not available
 if(hasProperty('sdk.dir') || null != System.getenv().get("ANDROID_HOME")) {
-  include 'interop-lab:android-apps'
+//  include 'interop-lab:android-apps'
 } else {
-  println 'Not building android projects'
+//  println 'Not building android projects'
 }
 
 // Omits RTI DDS dependent projects where RTI DDS is unavailable
 if(hasProperty('ICE_IC01_USER') && hasProperty('ICE_IC01_PASSWORD')) { 
-  include 'interop-lab:demo-rtidds'
   include 'data-types:x73-idl-rti-dds'
   include 'data-types:x73-prototype'
+  include 'interop-lab:demo-devices'
+  include 'interop-lab:demo-apps'
 }
 
 include 'himss-2013:docsubmit'

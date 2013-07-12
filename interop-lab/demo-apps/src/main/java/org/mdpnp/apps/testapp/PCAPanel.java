@@ -1,5 +1,7 @@
 package org.mdpnp.apps.testapp;
 
+import ice.Numeric;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -7,7 +9,6 @@ import java.awt.GridLayout;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -16,6 +17,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -26,41 +29,32 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ListCellRenderer;
 
-import org.mdpnp.apps.testapp.VitalsModel.MyDevice;
 import org.mdpnp.apps.testapp.VitalsModel.Vitals;
 import org.mdpnp.apps.testapp.VitalsModel.VitalsListener;
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdate;
-import org.mdpnp.data.identifierarray.MutableIdentifierArrayUpdateImpl;
-import org.mdpnp.data.numeric.Numeric;
-import org.mdpnp.data.numeric.NumericUpdate;
-import org.mdpnp.devices.oridion.capnostream.Capnostream;
-import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.messaging.GatewayListener;
-import org.mdpnp.nomenclature.Device;
-import org.mdpnp.nomenclature.PulseOximeter;
-import org.mdpnp.nomenclature.Ventilator;
+import org.mdpnp.devices.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.Subscriber;
 
 public class PCAPanel extends JPanel implements VitalsListener {
 	// TODO BOOKMARK HERE!
 	private static final Vital[] vitals = new Vital[] {
-		new Vital("end tidal CO\u2082", "mmHg", Ventilator.END_TIDAL_CO2_MMHG,
-				  25.0, 45.0, 1.0, 100.0),
-		new Vital("respiratory rate", "bpm", Ventilator.RESPIRATORY_RATE,
+		new Vital("end tidal CO\u2082", "mmHg", ice.MDC_AWAY_CO2_EXP.VALUE, //Ventilator.END_TIDAL_CO2_MMHG,
+				  15.0, 45.0, 1.0, 100.0),
+		new Vital("respiratory rate", "bpm", ice.MDC_RESP_RATE.VALUE, //  Ventilator.RESPIRATORY_RATE,
 				  8.0, 100.0, 1.0, 200.0),
-	    new Vital("heart rate", "bpm", PulseOximeter.PULSE,
+	    new Vital("heart rate", "bpm", ice.MDC_PULS_OXIM_PULS_RATE.VALUE, // PulseOximeter.PULSE,
 	    		  50.0, 120.0, 20.0, 200.0),
-	    new Vital("SpO\u2082", "%", PulseOximeter.SPO2,
-	    		  90.0, 100.0, 80.0, 100.0)
+	    new Vital("SpO\u2082", "%", ice.MDC_PULS_OXIM_SAT_O2.VALUE, // PulseOximeter.SPO2,
+	    		  90.0, 101.0, 80.0, 101.0)
 	};
 	
-	private static final Identifier[] REQUEST_IDENTIFIERS = new Identifier[] {Ventilator.RESPIRATORY_RATE, PulseOximeter.PULSE, Ventilator.END_TIDAL_CO2_MMHG, PulseOximeter.SPO2/*, Capnograph.AIRWAY_RESPIRATORY_RATE*/,
-            DemoCapnostream20.FAST_STATUS, DemoCapnostream20.CAPNOSTREAM_UNITS, DemoCapnostream20.CO2_ACTIVE_ALARMS, DemoCapnostream20.EXTENDED_CO2_STATUS,
-            DemoCapnostream20.SLOW_STATUS};
+//	private static final Identifier[] REQUEST_IDENTIFIERS = new Identifier[] {Ventilator.RESPIRATORY_RATE, PulseOximeter.PULSE, Ventilator.END_TIDAL_CO2_MMHG, PulseOximeter.SPO2/*, Capnograph.AIRWAY_RESPIRATORY_RATE*/,
+//            DemoCapnostream20.FAST_STATUS, DemoCapnostream20.CAPNOSTREAM_UNITS, DemoCapnostream20.CO2_ACTIVE_ALARMS, DemoCapnostream20.EXTENDED_CO2_STATUS,
+//            DemoCapnostream20.SLOW_STATUS};
 	
 	private final JList list;
 	
@@ -106,62 +100,76 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		public Component getListCellRendererComponent(JList list, Object val,
 				int index, boolean isSelected, boolean cellHasFocus) {
 			VitalsModel.Vitals v = (Vitals) val;
-			String name = v.getIdentifier().getField().getName();
+			// strongly thinking about making these identifiers into strings
+			String name = Integer.toString(v.getNumeric().name);
 			String units = "";
-			if("SPO2".equals(name)) {
-				name = "SpO\u2082";
-				units = "%";
-			} else if("RESPIRATORY_RATE".equals(name)) {
-				name = "Respiratory Rate";
-				units = "bpm";
-			} else if("PULSE".equals(name)) {
-				name = "Heart Rate";
-				units = "bpm";
-			} else if("END_TIDAL_CO2_MMHG".equals(name)) {
-				name = "etCO\u2082";
-				units = "mmHg";
+			switch(v.getNumeric().name) {
+			case ice.MDC_PULS_OXIM_SAT_O2.VALUE:
+			    name = "SpO\u2082";
+                units = "%";
+                break;
+			case ice.MDC_CO2_RESP_RATE.VALUE:
+			case ice.MDC_RESP_RATE.VALUE:
+			    name = "Respiratory Rate";
+                units = "bpm";
+                break;
+			case ice.MDC_PULS_OXIM_PULS_RATE.VALUE:
+			    name = "Heart Rate";
+                units = "bpm";
+                break;
+			case ice.MDC_CONC_AWAY_CO2.VALUE:
+			case ice.MDC_AWAY_CO2_EXP.VALUE:
+			    name = "etCO\u2082";
+                units = "mmHg";
+                break;
 			}
+
 			this.name.setText(name);
-			if(v.getNumber() == null) {
-				value.setText("<unavailable>");
-			} else {
-				value.setText(""+v.getNumber()+" "+units);
-			}
 			
-			icon.setIcon(v.getDevice().getDeviceIcon());
-			deviceName.setText(v.getDevice().getName());
+			value.setText(""+v.getNumeric().value+" "+units);
+
+			DeviceIcon di = v.getDevice().getIcon();
+			if(null != di) {
+			    icon.setIcon(new ImageIcon(di.getImage()));
+			}
+			deviceName.setText(v.getDevice().getMakeAndModel());
 			return this;
 		}
 		
 	}
-	private final Gateway gateway;
+	private final Subscriber subscriber;
+	private final DeviceListModel deviceListModel;
+	private final EventLoop eventLoop;
+	private VitalsModel vitalsModel;
 	
+	private boolean  active;
 	
-	public PCAPanel(VitalsModel model, Gateway gateway) {
-		super();
-		this.gateway = gateway;
-		setLayout(new BorderLayout());
-		
+	public void setActive(boolean active) {
+	    if(active ^ this.active) {
+	        if(active) {
+	            reset();
+	            vitalsModel = new VitalsModel(subscriber, deviceListModel, eventLoop);
+	            vitalsModel.setListener(this);
+	            list.setModel(vitalsModel);
+	            for(Vital v : vitals) {
+	                vitalsModel.addNumericInterest(v.numeric);
+	            }
+	        } else {
+	            list.setModel(new DefaultListModel());
+	            vitalsModel.setListener(null);
+	            vitalsModel.tearDown();
+	            vitalsModel = null;
+	        }
+	    }
+	    this.active = active;
+	}
+	
+	public PCAPanel(DeviceListModel model, Subscriber subscriber, EventLoop eventLoop) {
+		super(new BorderLayout());
+		this.subscriber = subscriber;
+		this.deviceListModel = model;
+		this.eventLoop = eventLoop;
 
-		
-		// Reset before we can get callbacks
-		reset();
-		
-		
-		if(model != null) {
-			model.setListener(this);
-		}
-		
-		// Requests data from existing devices
-		MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
-		miau.setValue(REQUEST_IDENTIFIERS);
-		
-		for(int i = 0; i < model.getSize(); i++) {
-			Vitals device = (Vitals) model.getElementAt(i);
-			miau.setTarget(device.getDevice().getSource());
-			miau.setSource("*");
-			gateway.update(miau);
-		}
 		
 		JPanel header  = new JPanel(new GridLayout(1,2, 10, 10));
 		JPanel panel = new JPanel(new GridLayout(1,2,10,10));
@@ -173,8 +181,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		header.add(l=new JLabel("Infusion Status (Symbiq)"));
 		l.setFont(l.getFont().deriveFont(20f));
 
-		list = null == model ? new JList() : new JList(model);
-		
+		list = new JList();
 		
 		
 		panel.add(new JScrollPane(list), BorderLayout.CENTER);
@@ -224,41 +231,41 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		warnings.setLineWrap(true);
 		warnings.setWrapStyleWord(true);
 		
-		gateway.addListener(new GatewayListener() {
-            
-            @Override
-            public void update(IdentifiableUpdate<?> update) {
-                if(DemoCapnostream20.FAST_STATUS.equals(update.getIdentifier()) ||
-                   DemoCapnostream20.CAPNOSTREAM_UNITS.equals(update.getIdentifier()) ||
-                   DemoCapnostream20.CO2_ACTIVE_ALARMS.equals(update.getIdentifier()) || 
-                   DemoCapnostream20.EXTENDED_CO2_STATUS.equals(update.getIdentifier()) || 
-                   DemoCapnostream20.SLOW_STATUS.equals(update.getIdentifier())) {
-                    log.trace(update.toString());
-                    if(DemoCapnostream20.EXTENDED_CO2_STATUS.equals(update.getIdentifier())) {
-                        NumericUpdate nu = (NumericUpdate) update;
-                        Number v = nu.getValue();
-                        if(v != null) {
-                            fastStatusBuilder.delete(0, fastStatusBuilder.length());
-                            if(0 != (Capnostream.ExtendedCO2Status.CHECK_CALIBRATION & v.intValue())) {
-                                fastStatusBuilder.append("CHECK_CALIBRATION ");
-                            } else if(0 != (Capnostream.ExtendedCO2Status.CHECK_FLOW & v.intValue())) {
-                                fastStatusBuilder.append("CHECK_FLOW ");
-                            } else if(0 != (Capnostream.ExtendedCO2Status.PUMP_OFF & v.intValue())) {
-                                fastStatusBuilder.append("PUMP_OFF ");
-                            } else if(0 != (Capnostream.ExtendedCO2Status.BATTERY_LOW & v.intValue())) {
-                                fastStatusBuilder.append("BATTERY_LOW ");
-                            }
-                            reflectState();
-                        }
-                    }
-                    
-//                    NumericUpdate nu = (NumericUpdate) update;
-//                    Capnostream.FastStatus.fastStatus(nu.getValue().intValue(), fastStatusBuilder);
-//                    reflectState();
-                }
-            }
-        });
-		
+//		gateway.addListener(new GatewayListener() {
+//            
+//            @Override
+//            public void update(IdentifiableUpdate<?> update) {
+//                if(DemoCapnostream20.FAST_STATUS.equals(update.getIdentifier()) ||
+//                   DemoCapnostream20.CAPNOSTREAM_UNITS.equals(update.getIdentifier()) ||
+//                   DemoCapnostream20.CO2_ACTIVE_ALARMS.equals(update.getIdentifier()) || 
+//                   DemoCapnostream20.EXTENDED_CO2_STATUS.equals(update.getIdentifier()) || 
+//                   DemoCapnostream20.SLOW_STATUS.equals(update.getIdentifier())) {
+//                    log.trace(update.toString());
+//                    if(DemoCapnostream20.EXTENDED_CO2_STATUS.equals(update.getIdentifier())) {
+//                        NumericUpdate nu = (NumericUpdate) update;
+//                        Number v = nu.getValue();
+//                        if(v != null) {
+//                            fastStatusBuilder.delete(0, fastStatusBuilder.length());
+//                            if(0 != (Capnostream.ExtendedCO2Status.CHECK_CALIBRATION & v.intValue())) {
+//                                fastStatusBuilder.append("CHECK_CALIBRATION ");
+//                            } else if(0 != (Capnostream.ExtendedCO2Status.CHECK_FLOW & v.intValue())) {
+//                                fastStatusBuilder.append("CHECK_FLOW ");
+//                            } else if(0 != (Capnostream.ExtendedCO2Status.PUMP_OFF & v.intValue())) {
+//                                fastStatusBuilder.append("PUMP_OFF ");
+//                            } else if(0 != (Capnostream.ExtendedCO2Status.BATTERY_LOW & v.intValue())) {
+//                                fastStatusBuilder.append("BATTERY_LOW ");
+//                            }
+//                            reflectState();
+//                        }
+//                    }
+//                    
+////                    NumericUpdate nu = (NumericUpdate) update;
+////                    Capnostream.FastStatus.fastStatus(nu.getValue().intValue(), fastStatusBuilder);
+////                    reflectState();
+//                }
+//            }
+//        });
+
 	}
 	private String resetCommand = "Start, 10\n";
 
@@ -389,25 +396,22 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	private static class Vital {
 		private final String name;
 		private final String units;
-		private final Numeric numeric;
+		private final Integer numeric;
 		private final Double advisory_minimum;
 		private final Double advisory_maximum;
 		private final Double critical_minimum;
 		private final Double critical_maximum;
 		
-		private MyDevice lastSource;
-		private Number value;
+		private Device lastSource;
+		private ice.Numeric value = (Numeric) ice.Numeric.create();
 		
-		public Number getValue() {
+		public ice.Numeric getValue() {
 			return value;
-		}
-		public void setValue(Number value) {
-			this.value = value;
 		}
 		public String getName() {
 			return name;
 		}
-		public Numeric getNumeric() {
+		public Integer getNumeric() {
 			return numeric;
 		}
 		public Double getAdvisory_maximum() {
@@ -425,13 +429,20 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		public String getUnits() {
 			return units;
 		}
-		public MyDevice getLastSource() {
+		public Device getLastSource() {
 			return lastSource;
 		}
-		public void setLastSource(MyDevice lastSource) {
-			this.lastSource = lastSource;
+		public void set(ice.Numeric n, Device lastSource) {
+		    this.lastSource = lastSource;
+		    this.value.copy_from(n);
 		}
-		public Vital (String name, String units, Numeric numeric, Double advisory_minimum, Double advisory_maximum, Double critical_minimum, Double critical_maximum) {
+		public boolean isSet() {
+            return lastSource != null;
+        }
+		public void unset() {
+		    this.lastSource = null;
+		}
+		public Vital (String name, String units, Integer numeric, Double advisory_minimum, Double advisory_maximum, Double critical_minimum, Double critical_maximum) {
 			this.name = name;
 			this.units = units;
 			this.numeric = numeric;
@@ -458,18 +469,18 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		StringBuilder outOfRange = new StringBuilder();
 		
 		for(int i = 0; i < vitals.length; i++) {
-			Number value = vitals[i].getValue();
-			if(null == value) {
+			ice.Numeric value = vitals[i].getValue();
+			if(!vitals[i].isSet()) {
 				anyAdvisory = true;
 				advisories[i] = "- no source of " + vitals[i].getName() + "\r\n";
-			} else if(vitals[i].getAdvisory_minimum() != null && value.doubleValue() <= vitals[i].getAdvisory_minimum()) {
+			} else if(vitals[i].getAdvisory_minimum() != null && value.value <= vitals[i].getAdvisory_minimum()) {
 				anyAdvisory = true;
-				advisories[i] = "- low " + vitals[i].getName() + " " + value + " " + vitals[i].getUnits() + "\r\n";
+				advisories[i] = "- low " + vitals[i].getName() + " " + value.value + " " + vitals[i].getUnits() + "\r\n";
 				countOutOfRange++;
 				outOfRange.append(advisories[i]);
-			} else if(vitals[i].getAdvisory_maximum() != null && value.doubleValue() >= vitals[i].getAdvisory_maximum()) {
+			} else if(vitals[i].getAdvisory_maximum() != null && value.value >= vitals[i].getAdvisory_maximum()) {
 				anyAdvisory = true;
-				advisories[i] = "- high " + vitals[i].getName() + " " + value + " " + vitals[i].getUnits() + "\r\n";
+				advisories[i] = "- high " + vitals[i].getName() + " " + value.value + " " + vitals[i].getUnits() + "\r\n";
 				countOutOfRange++;
 				outOfRange.append(advisories[i]);
 			}
@@ -482,23 +493,24 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		
 		
 		// Pump stopping rules
+		if(active) {
 		
-		
-		if(countOutOfRange >= 2) {
-			stop("Stopped\r\n" + outOfRange.toString() + "at " + time + "\r\nnurse alerted");
-		} else {
-			for(Vital v : vitals) {
-				Number value = v.getValue();
-				if(null != value) {
-					if(v.getCritical_minimum() != null && value.doubleValue() <= v.getCritical_minimum()) {
-						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue() + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
-						break;
-					} else if(v.getCritical_maximum() != null && value.doubleValue() >= v.getCritical_maximum()) {
-						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue() + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
-						break;
-					}
-				}
-			}
+    		if(countOutOfRange >= 2) {
+    			stop("Stopped\r\n" + outOfRange.toString() + "at " + time + "\r\nnurse alerted");
+    		} else {
+    			for(Vital v : vitals) {
+    				ice.Numeric value = v.getValue();
+    				if(v.isSet()) {
+    					if(v.getCritical_minimum() != null && value.value <= v.getCritical_minimum()) {
+    						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue().value + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
+    						break;
+    					} else if(v.getCritical_maximum() != null && value.value >= v.getCritical_maximum()) {
+    						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue().value + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
+    						break;
+    					}
+    				}
+    			}
+    		}
 		}
 //		if(null != rr && null != etco2 && != pulse && (rr.doubleValue() <= ADV_RR_MIN && rr.doubleValue()  && (etco2.doubleValue() <= ADV_ETCO2_MIN || etco2.doubleValue() >= ADV_ETCO2_MAX)) {
 //			// Stop on contingent rule
@@ -527,25 +539,29 @@ public class PCAPanel extends JPanel implements VitalsListener {
 			normal("");
 		}
 	}
+	
+	private final static Date date(Time_t t) {
+	    return new Date(t.sec * 1000L + t.nanosec / 1000000L);
+	}
+	
 	private static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
 	@Override
-	public void update(Identifier identifier, Number n, MyDevice device) {
+	public void update(ice.Numeric n, SampleInfo sampleInfo, Device device) {
 		boolean stateChanged = false;
 		
 		// TODO DO NOT INCLUDE THIS
-		if(null != n && n.doubleValue() <= 5.0) {
-			log.warn("Ignoring " + identifier + " " + n + " " + device);
+		if(null != n && n.value <= 5.0f) {
+			log.warn("Ignoring " + n.name + " " + n.value + " " + device.getDeviceIdentity().universal_device_identifier);
 			return;
 		}
 		
 		for(Vital v : vitals) {
-			if(v.getNumeric().equals(identifier)) {
-				if(!equal(v.getValue(), n)) {
-					if(v.getLastSource() != null && v.getValue() != null && !v.getLastSource().equals(device.getSource()) && null == n) {
+			if(v.getNumeric().equals(n.name)) {
+				if(!equal(v.getValue().value, n.value)) {
+					if(v.getLastSource() != null && v.getValue() != null && !v.getLastSource().equals(device.getDeviceIdentity().universal_device_identifier) && null == n) {
 						
 					} else {
-						v.setValue(null == n ? null : n.doubleValue());
-						v.setLastSource(device);
+					    v.set(n, device);
 						stateChanged = true;
 					}
 				}
@@ -558,13 +574,12 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	}
 
 	@Override
-	public void deviceRemoved(MyDevice device) {
+	public void deviceRemoved(Device device) {
 		boolean stateChanged = false;
 		if(device != null) {
 			for(Vital v : vitals) {
 				if(device.equals(v.getLastSource())) {
-					v.setValue(null);
-					v.setLastSource(null);
+				    v.unset();
 					stateChanged = true;
 				}
 			}
@@ -575,13 +590,12 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	}
 
 	@Override
-	public void deviceAdded(MyDevice device) {
-	 // Requests data from existing devices
-        MutableIdentifierArrayUpdate miau = new MutableIdentifierArrayUpdateImpl(Device.REQUEST_IDENTIFIED_UPDATES);
-        miau.setValue(REQUEST_IDENTIFIERS);
+	public void deviceAdded(Device device) {
 
-        miau.setTarget(device.getSource());
-        miau.setSource("*");
-        gateway.update(miau);
 	}	
+	
+	@Override
+	public void deviceChanged(Device device) {
+	    
+	}
 }

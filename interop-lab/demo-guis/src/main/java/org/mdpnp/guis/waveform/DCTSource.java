@@ -57,8 +57,8 @@ public class DCTSource implements WaveformSource, WaveformSourceListener {
 	}
 	
 	@Override
-	public int getValue(int x) {
-		return x >= data.length ? 0 : (int) data[x];
+	public float getValue(int x) {
+		return (float)( x >= data.length ? 0 : data[x] );
 	}
 
 	@Override

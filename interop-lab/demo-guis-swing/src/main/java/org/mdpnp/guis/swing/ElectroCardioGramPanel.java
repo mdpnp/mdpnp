@@ -7,59 +7,49 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import ice.Numeric;
+import ice.SampleArray;
+
 import java.awt.GridLayout;
-import java.awt.Image;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.Identifier;
-import org.mdpnp.data.waveform.MutableWaveformUpdate;
-import org.mdpnp.data.waveform.MutableWaveformUpdateImpl;
-import org.mdpnp.data.waveform.Waveform;
-import org.mdpnp.data.waveform.WaveformUpdate;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.nomenclature.ElectroCardioGram;
+
+import com.rti.dds.subscription.SampleInfo;
 
 public class ElectroCardioGramPanel extends DevicePanel {
 
 	private final SwingWaveformPanel[] panel;
 	
-	private final static Waveform[] ECG_WAVEFORMS = new Waveform[] {
-		ElectroCardioGram.I,
-		ElectroCardioGram.II,
-		ElectroCardioGram.III,
-		ElectroCardioGram.A_VF,
-		ElectroCardioGram.A_VL,
-		ElectroCardioGram.A_VR
+	private final static int[] ECG_WAVEFORMS = new int[] {
+	    ice.MDC_ECG_ELEC_POTL_I.VALUE,
+	    ice.MDC_ECG_ELEC_POTL_II.VALUE,
+	    ice.MDC_ECG_ELEC_POTL_III.VALUE,
+	    ice.MDC_ECG_ELEC_POTL_AVF.VALUE,
+	    ice.MDC_ECG_ELEC_POTL_AVL.VALUE,
+	    ice.MDC_ECG_ELEC_POTL_AVR.VALUE,
 	};
-	private final MutableWaveformUpdate waveformUpdate[] = new MutableWaveformUpdate[ECG_WAVEFORMS.length];
-	private final Map<Waveform, WaveformUpdateWaveformSource> panelMap = new HashMap<Waveform, WaveformUpdateWaveformSource>();
-	public ElectroCardioGramPanel(Gateway gateway, String source) {
-		super(gateway, source);
+	
+	private final Map<Integer, WaveformUpdateWaveformSource> panelMap = new HashMap<Integer, WaveformUpdateWaveformSource>();
+	public ElectroCardioGramPanel() {
+		super();
 		setLayout(new GridLayout(ECG_WAVEFORMS.length, 1));
 		panel = new SwingWaveformPanel[ECG_WAVEFORMS.length];
 		for(int i = 0; i < panel.length; i++) {
-			waveformUpdate[i] = new MutableWaveformUpdateImpl(ECG_WAVEFORMS[i]);
 			add(panel[i] = new SwingWaveformPanel());
 			WaveformUpdateWaveformSource wuws = new WaveformUpdateWaveformSource();
 			panel[i].setSource(wuws);
 			panelMap.put(ECG_WAVEFORMS[i], wuws);
 			
 		}
-		
-		registerAndRequestRequiredIdentifiedUpdates();
 	}
 	
-	public static boolean supported(Set<Identifier> identifiers) {
-		for(Waveform w : ECG_WAVEFORMS) {
+	
+	public static boolean supported(Set<Integer> identifiers) {
+		for(int w : ECG_WAVEFORMS) {
 			if(identifiers.contains(w)) {
 				return true;
 			}
@@ -68,33 +58,15 @@ public class ElectroCardioGramPanel extends DevicePanel {
 	}
 	
 	@Override
-	public void setName(String name) {
-		
+	public void numeric(Numeric numeric, SampleInfo sampleInfo) {
+	    
 	}
-
 	@Override
-	public void setGuid(String name) {
-		
-	}
-	
-	@Override
-	protected void doUpdate(IdentifiableUpdate<?> update) {
-		WaveformUpdateWaveformSource wuws = panelMap.get(update.getIdentifier());
-		if(null != wuws) {
-			wuws.applyUpdate((WaveformUpdate) update);
-		}
-	}
-
-	@Override
-	public void setIcon(Image image) {
-		
-	}
-	
-	@Override
-	public Collection<Identifier> requiredIdentifiedUpdates() {
-		List<Identifier> ids = new ArrayList<Identifier>(super.requiredIdentifiedUpdates());
-		ids.addAll(Arrays.asList(ECG_WAVEFORMS));
-		return ids;
+	public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
+	    WaveformUpdateWaveformSource wuws = panelMap.get(sampleArray.name);
+        if(null != wuws) {
+            wuws.applyUpdate(sampleArray);
+        }
 	}
 
 }

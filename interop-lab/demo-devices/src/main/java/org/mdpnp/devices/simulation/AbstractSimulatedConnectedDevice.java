@@ -7,17 +7,17 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
-import java.util.UUID;
-
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
-import org.mdpnp.messaging.Gateway;
 
-public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice implements SimulatedConnectedDevice {
+public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice {
 	protected Throwable t;
 	
-	public AbstractSimulatedConnectedDevice(Gateway gateway) {
-		super(gateway);
-		guidUpdate.setValue(UUID.randomUUID().toString());
+	public AbstractSimulatedConnectedDevice(int domainId) {
+		super(domainId);
+		AbstractSimulatedDevice.randomUDI(deviceIdentity);
+		deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
+	    deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
+	    deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
 	}
 	
 	public Throwable getLastError() {
@@ -26,45 +26,41 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
 
 	@Override
 	public void connect(String str) {
-		switch(getState()) {
-		case Connected:
-		case Connecting:
-		case Negotiating:
-			return;
-		default:
-		}
-		if(!stateMachine.transitionWhenLegal(State.Connecting, 1000L)) {
-			throw new RuntimeException("Unable to enter Connecting State");
-		}
-		if(!stateMachine.transitionWhenLegal(State.Negotiating, 1000L)) {
-			throw new RuntimeException("Unable to enter Negotiating State");
-		}
-		if(!stateMachine.transitionWhenLegal(State.Connected, 1000L)) {
-			throw new RuntimeException("Unable to enter Connected State");
-		}		
+	    ice.ConnectionState state = getState();
+	    if(ice.ConnectionState.Connected.equals(state) ||
+	       ice.ConnectionState.Connecting.equals(state) ||
+	       ice.ConnectionState.Negotiating.equals(state)) {
+	    } else {
+    		if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting, 1000L)) {
+    			throw new RuntimeException("Unable to enter Connecting State");
+    		}
+    		if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Negotiating, 1000L)) {
+    			throw new RuntimeException("Unable to enter Negotiating State");
+    		}
+    		if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Connected, 1000L)) {
+    			throw new RuntimeException("Unable to enter Connected State");
+    		}
+	    }
 	}
 
 	@Override
 	public void disconnect() {
-		switch(getState()) {
-		case Disconnected:
-		case Disconnecting:
-			return;
-		default:
-			break;
-		}
-		if(!stateMachine.transitionWhenLegal(State.Disconnecting, 1000L)) {
-			throw new RuntimeException("Unable to enter Disconnecting State");
-		}
-		if(!stateMachine.transitionWhenLegal(State.Disconnected, 1000L)) {
-			throw new RuntimeException("Unable to enter Disconnected State");
-		}
-
+	    ice.ConnectionState state = getState();
+	    if(ice.ConnectionState.Disconnected.equals(state) ||
+	       ice.ConnectionState.Disconnecting.equals(state)) {
+	    } else {
+    		if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnecting, 1000L)) {
+    			throw new RuntimeException("Unable to enter Disconnecting State");
+    		}
+    		if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnected, 1000L)) {
+    			throw new RuntimeException("Unable to enter Disconnected State");
+    		}
+	    }
 	}
 	
 	@Override
-	protected ConnectionType getConnectionType() {
-		return ConnectionType.Simulated;
+	protected ice.ConnectionType getConnectionType() {
+		return ice.ConnectionType.Simulated;
 	}
 	
 	public String getConnectionInfo() {
