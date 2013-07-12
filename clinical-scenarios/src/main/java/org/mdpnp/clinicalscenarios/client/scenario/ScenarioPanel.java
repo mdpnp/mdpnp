@@ -287,12 +287,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private void checkEquipmentListForPersistence(ScenarioRequest rc){
 		if(currentScenario!=null){
 			currentScenario.getEquipment().getEntries().clear();//clear equipment list entries. We will re-populate 
-			for(int i = 0; i < equipmentTable.getRowCount(); i++) {
+			for(int row = 1; row < equipmentTable.getRowCount(); row++) {//Row 0 is HEADERS
 				
-				Widget wDevType = equipmentTable.getWidget(i, EQUIPMENT_DEVICETYPE_COL);//getWidget row column		
-				Widget wManu = equipmentTable.getWidget(i, EQUIPMENT_MANUFACTURER_COL);//getWidget row column		
-				Widget wModel = equipmentTable.getWidget(i, EQUIPMENT_MODEL_COL);//getWidget row column		
-				Widget wRoss = equipmentTable.getWidget(i, EQUIPMENT_ROSSETAID_COL);//getWidget row column		
+				Widget wDevType = equipmentTable.getWidget(row, EQUIPMENT_DEVICETYPE_COL);//getWidget row column		
+				Widget wManu = equipmentTable.getWidget(row, EQUIPMENT_MANUFACTURER_COL);//getWidget row column		
+				Widget wModel = equipmentTable.getWidget(row, EQUIPMENT_MODEL_COL);//getWidget row column		
+				Widget wRoss = equipmentTable.getWidget(row, EQUIPMENT_ROSSETAID_COL);//getWidget row column		
 				EquipmentEntryProxy eep = rc.create(EquipmentEntryProxy.class);
 				
 				boolean isAdding = false;
@@ -333,12 +333,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private void checkHazardsListForPersistence(ScenarioRequest rc){
 		if(currentScenario!=null && currentScenario.getHazards()!=null){//FIXME  && currentScenario.getHazards()!=null has to go
 			currentScenario.getHazards().getEntries().clear();//clean and re-populate
-			for(int i =2; i<hazardsTable.getRowCount();i++){
+			for(int row =2; row<hazardsTable.getRowCount();row++){//row 0 headers; row 1 description
 				
-				Widget wDescription = hazardsTable.getWidget(i, HAZARDS_DESCRIPTION_COL);	
-				Widget wFactor = hazardsTable.getWidget(i, HAZARDS_FACTORS_COL);	
-				Widget wExpected = hazardsTable.getWidget(i, HAZARDS_EXPECTED_COL);		
-				Widget wSeverity = hazardsTable.getWidget(i, HAZARDS_SEVERITY_COL);	
+				Widget wDescription = hazardsTable.getWidget(row, HAZARDS_DESCRIPTION_COL);	
+				Widget wFactor = hazardsTable.getWidget(row, HAZARDS_FACTORS_COL);	
+				Widget wExpected = hazardsTable.getWidget(row, HAZARDS_EXPECTED_COL);		
+				Widget wSeverity = hazardsTable.getWidget(row, HAZARDS_SEVERITY_COL);	
 				HazardsEntryProxy hep = rc.create(HazardsEntryProxy.class);
 				
 				boolean isAdding = false;
@@ -349,11 +349,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				// values for risk/severity (there would be no hazard identification) 
 				if(wDescription instanceof TextArea){
 					text = ((TextArea) wDescription).getText().trim();
-					if(text != null){hep.setDescription(text); isAdding=true;}
+					if(!text.equals("")){hep.setDescription(text); isAdding=true;}
 				}
 				if(wFactor instanceof TextArea){
 					text = ((TextArea) wFactor).getText().trim();
-					if(text != null){hep.setFactors(text); isAdding =true;}
+					if(!text.equals("")){hep.setFactors(text); isAdding =true;}
 				}
 				
 				if(isAdding){
@@ -365,7 +365,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					if(wSeverity instanceof ListBox){
 						int val = ((ListBox) wSeverity).getSelectedIndex();
 						text = hazardSeverity[val];
-						hep.setExpected(text);
+						hep.setSeverity(text);
 					}
 					//add values to the list
 					currentScenario.getHazards().getEntries().add(hep);
@@ -393,7 +393,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				
 
 		//persist scenario entity
-		rc.persist().using(currentScenario).with(driver.getPaths()).with("equipment"/*, "hazards"*/).to(new Receiver<ScenarioProxy>() {
+		rc.persist().using(currentScenario).with(driver.getPaths()).with("equipment", "hazards").to(new Receiver<ScenarioProxy>() {
 
 			@Override
 			public void onSuccess(ScenarioProxy response) {
@@ -498,7 +498,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
 		if(null == currentScenario) {
 		    context.create()
-		    .with("background", "benefitsAndRisks", /*"environments",*/ "equipment", /*"hazards",*/ "proposedSolution")
+		    .with("background", "benefitsAndRisks", /*"environments",*/ "equipment", "hazards", "proposedSolution")
 //		    .with("hazards")
 		    .to(new Receiver<ScenarioProxy>() {
 	    	
@@ -509,14 +509,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
                     ScenarioProxy currentScenario = context.edit(response); 
                     driver.edit(currentScenario, context);                    
                     ScenarioPanel.this.currentScenario = currentScenario;
-//                    DAG Debug only
-//                    Window.alert("Created scenario request Success");
-//                    if(currentScenario!= null && currentScenario.getEquipment()!=null)
-//                    	Window.alert("equimpent list size "+currentScenario.getEquipment().getEntries().size());
-//                    if(currentScenario!= null && currentScenario.getHazards()!=null)
-//                    	Window.alert("hazards list size "+currentScenario.getHazards().getEntries().size());
-//                    else
-//                    	Window.alert("hazards list NULL");
+                    
                 }
 		        
 		    }).fire();
