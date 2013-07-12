@@ -165,9 +165,11 @@ public class ScenarioEntity implements java.io.Serializable {
 	    ofy().save().entity(this).now();
 	    return this;
 	}
+	
 	public void remove() {
 	    ofy().delete().entity(this).now();
 	}
+	
 	protected int getVersion() {
 		return version;
 	}
