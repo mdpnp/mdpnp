@@ -137,7 +137,7 @@ public class ScenarioSearchPanel extends Composite {
 					searchResult.setWidget(row, SCN_SUBMITTER_COL, new Label(sp.getSubmitter()));
 					searchResult.setWidget(row, SCN_STATUS_COL, new Label(sp.getStatus()));
 					
-					//TODO check if the user is superuser to allow delete scn
+					//TODO check if the user is superuser to allow delete scn?
 					final int rowDel = row;
 					Button deleteButton = new Button("Delete");
 					deleteButton.addClickHandler(new ClickHandler() {
@@ -156,9 +156,18 @@ public class ScenarioSearchPanel extends Composite {
 						}
 					});
 					searchResult.setWidget(row, SCN_DELETEBUTTON_COL, deleteButton);
+					
+					//style table rows
+					if(sp.getStatus()!=null)
+					if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_SUBMITTED))
+						searchResult.getRowFormatter().addStyleName(row, "submittedScn");
+					else
+						searchResult.getRowFormatter().addStyleName(row, "unsubmittedScn");
 			        
-			        //increase row number
-					row+=1;				
+			        //increase row number (the FOR loop is not increasing our row index variable, which is also final)
+					row+=1;	
+					
+
 				}
 			}
 			@Override

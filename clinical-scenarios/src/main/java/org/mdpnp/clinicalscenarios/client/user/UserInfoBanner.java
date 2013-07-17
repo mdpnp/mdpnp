@@ -28,7 +28,7 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getBasicSearch() {
 		return basicSearch;
 	}
-	private MenuItem editProfile = new MenuItem("Edit User Profile", NOOP);
+	private MenuItem editProfile = new MenuItem("Edit User Profile", NOOP);//Constructs a new menu item that fires a command when it is selected.
 	private MenuItem signOut = new MenuItem("Sign Out", NOOP);
 	private MenuBar search = new MenuBar(true);
 	private MenuItem list = new MenuItem("List Scenarios", NOOP);
@@ -63,6 +63,7 @@ public class UserInfoBanner extends Composite {
 		void onNewUser(UserInfoProxy userInfo);
 		void onAnyUser(UserInfoProxy userInfo);
 	}
+	
 	public UserInfoBanner(final UserInfoRequestFactory userInfoRequestFactory, final NewUserHandler newUserHandler) {
 		
 		initWidget(uiBinder.createAndBindUi(this));
