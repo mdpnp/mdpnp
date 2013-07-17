@@ -91,7 +91,7 @@ public class DemoApp {
 		final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop);
 		
 		
-		final DemoFrame frame = new DemoFrame("Integrated Clinical Environment");
+		final DemoFrame frame = new DemoFrame("ICE Supervisor");
 		panel = new DemoPanel();
 		
 		String version = BuildInfo.getVersion();

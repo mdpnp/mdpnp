@@ -4,10 +4,15 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Collection;
 
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.devices.AbstractDevice;
@@ -101,7 +106,7 @@ public class DeviceAdapter {
 //            panels = DevicePanelFactory.findPanel(
 //            panels = new ArrayList<DevicePane>
             
-		    frame = new JFrame("Adapter");
+		    frame = new JFrame("ICE Device Adapter - "+type);
 		    
             frame.addWindowListener(new WindowAdapter() {
                 @Override
@@ -115,6 +120,28 @@ public class DeviceAdapter {
             frame.setLocationRelativeTo(null);
             frame.setSize(640, 480);
             frame.getContentPane().setLayout(new BorderLayout());
+            JTextArea descriptionText = new JTextArea();
+            descriptionText.setEditable(false);
+            descriptionText.setLineWrap(true);
+            descriptionText.setWrapStyleWord(true);
+            InputStream is = ConfigurationDialog.class.getResourceAsStream("device-adapter");
+            if(null != is) {
+                try {
+                
+                    BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                    StringBuffer sb = new StringBuffer();
+                    String line = null;
+                    while(null != (line = br.readLine())) {
+                        sb.append(line).append("\n");
+                    }
+                    br.close();
+                    descriptionText.setText(sb.toString().replaceAll("\\%\\%DEVICE\\_TYPE\\%\\%", type.toString()));
+                } catch (IOException e) {
+                    log.error("Error getting window text", e);
+                }
+            }
+            
+            frame.getContentPane().add(new JScrollPane(descriptionText), BorderLayout.NORTH);
             frame.getContentPane().add(cdp, BorderLayout.CENTER);
 //            frame.getContentPane().setLayout(new GridLayout(panels.size(), 1));
 //            for(org.mdpnp.guis.swing.DevicePanel panel : panels) {
