@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.oridion.capnostream.Capnostream.Command;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
@@ -34,7 +36,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     
 	@Override
 	protected long getMaximumQuietTime() {
-		return 6000L;
+		return 2000L;
 	}
 	
 	@Override
@@ -108,7 +110,6 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 	private static final int BUFFER_SAMPLES = 10;
 	private final Number[] realtimeBuffer = new Number[BUFFER_SAMPLES];
 	private int realtimeBufferCount = 0;
-	private final Date date = new Date();
 	
 	protected volatile boolean connected = false;
 	
@@ -179,12 +180,21 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 			return true;
 		}
 		
+		
+		@Override
+		public boolean receiveDeviceIdSoftwareVersion(String softwareVersion,
+		        Date softwareReleaseDate, PulseOximetry pulseOximetry, String revision, String serial_number) {
+		    deviceIdentity.serial_number = serial_number;
+		    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+		    return true;
+
+		}
 		@Override
 		public boolean receiveDeviceIdSoftwareVersion(String s) {
-			log.debug(s);
-			connected = true;
-			return true;
+		    connected = true;
+		    return super.receiveDeviceIdSoftwareVersion(s);
 		}
+
 	}
 
 	private final Logger log = LoggerFactory.getLogger(DemoCapnostream20.class);
@@ -192,12 +202,16 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 	protected Capnostream buildDelegate(InputStream in, OutputStream out) {
 		return new MyCapnostream(in, out);
 	}
+	
+	private ScheduledFuture<?> linkIsActive;
 	@Override
 	protected boolean doInitCommands(OutputStream outputStream)
 			throws IOException {
 	    super.doInitCommands(outputStream);
 
 		long giveup = System.currentTimeMillis() + 10000L;
+		
+		connected = false;
 		
 		while(System.currentTimeMillis() < giveup && !connected) {
 			getDelegate().sendCommand(Command.EnableComm);
@@ -207,10 +221,25 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 				e.printStackTrace();
 			}
 		}
+		
+		
+		getDelegate().sendCommand(Command.LinkIsActive);
 		getDelegate().sendHostMonitoringId("ICE");
 		
 		// JP ... need to test this 
-		getDelegate().sendCommand(Command.LinkIsActive);
+		linkIsActive = executor.scheduleAtFixedRate(new Runnable() {
+		    public void run() {
+		        try {
+		            
+		            getDelegate().sendCommand(Command.LinkIsActive);
+//		            getDelegate().sendHostMonitoringId("ICE");
+//		            log.debug("Sent host id and command");
+                } catch (IOException e) {
+                    log.error("Error sending link is active message", e);
+                }
+		    }
+		}, 5000L, 5000L, TimeUnit.MILLISECONDS);
+		
 		
 		getDelegate().sendCommand(Command.StartRTComm);
 		return connected;
@@ -218,10 +247,16 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
 	@Override
 	public void disconnect() {
+	    if(null != linkIsActive) { 
+	        linkIsActive.cancel(false);
+	        linkIsActive = null;
+	    }
+	    
 		Capnostream capnostream = getDelegate(false);
 
 		if(null != capnostream) {
 			try {
+			    capnostream.sendCommand(Command.StopRTComm);
 				capnostream.sendCommand(Command.DisableComm);
 			} catch (IOException e) {
 				log.error(e.getMessage(), e);
