@@ -378,7 +378,8 @@ int sio_OpenComport(const char *portname, const int baudrate)
       break;
     }
 
-    new_port_settings.c_cflag = baudr | CS8 | CLOCAL | CREAD;
+    new_port_settings.c_cflag = CS8 | CLOCAL | CREAD;
+    cfsetspeed(&new_port_settings, baudr);
     new_port_settings.c_iflag = IGNPAR;
     new_port_settings.c_cc[VMIN] = 0;   // block until n bytes are received
     new_port_settings.c_cc[VTIME] = 10;  // block until a timer expires (n * 100 mSec)
