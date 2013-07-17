@@ -9,11 +9,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -264,25 +270,29 @@ public class Capnostream {
 		}
 	}
 
-	public void sendConfigurableSetup(SetupItem si, int value)
-			throws IOException {
-		int length;
+   public void sendConfigurableSetup(SetupItem si, int value)
+            throws IOException {
+        int length;
 
-		switch (si) {
-		case SpMetHigh:
-		case SpMetLow:
-			length = 2;
-			outBuffer[0] = (byte) (0xFF & (value << 8));
-			outBuffer[1] = (byte) (0xFF & value);
-			break;
-		default:
-			length = 1;
-			outBuffer[0] = (byte) value;
-			break;
-		}
+        switch (si) {
+        case SpMetHigh:
+        case SpMetLow:
+            length = 3;
+            outBuffer[0] = (byte) (0xFF & si.getCode());
+            outBuffer[1] = (byte) (0xFF & (value << 8));
+            outBuffer[2] = (byte) (0xFF & value);
 
-		sendCommand(Command.ConfigurableSetup, outBuffer, length);
-	}
+            break;
+
+        default:
+            length = 2;
+            outBuffer[0] = (byte) (0xFF & si.getCode());
+            outBuffer[1] = (byte) (0xFF & value);
+            break;
+        }
+
+        sendCommand(Command.ConfigurableSetup, outBuffer, length);
+    }
 
 	public void sendStartLongTrendConfigurableDownload(DataItem di)
 			throws IOException {
@@ -461,6 +471,15 @@ public class Capnostream {
 		        pulseAlarmLow, units, extendedCO2Status);
 	}
 
+	public boolean receiveProtocolRevision(byte[] payload, int length) {
+	    return receiveProtocolRevision((char) payload[0], (int)payload[1]);
+	}
+	
+	public boolean receiveProtocolRevision(char revisionAsChar, int revisionAsInt) {
+	    log.debug("revisionAsChar="+revisionAsChar+", revisionAsInt="+revisionAsInt);
+	    return true;
+	}
+	
 	public boolean receiveCO2Wave(byte[] payload, int length) {
 		return receiveCO2Wave(payload[0], co2(payload, 1), payload[3]);
 	}
@@ -469,6 +488,8 @@ public class Capnostream {
 
 		if (response instanceof Response) {
 			switch ((Response) response) {
+			case ProtocolRevision:
+			    return receiveProtocolRevision(payload, length);
 			case CO2Wave:
 				return receiveCO2Wave(payload, length);
 			case DeviceIdSoftwareVersion:
@@ -484,11 +505,56 @@ public class Capnostream {
 		return true;
 	}
 
+	protected enum PulseOximetry {
+	    Masimo,
+	    Nellcor
+	}
+	
+	public static void main(String[] args) {
+	    Capnostream c = new Capnostream(null, null);
+	    c.receiveDeviceIdSoftwareVersion("V45.67 02/24/2008 B355987654  ");
+	}
+	
+	public boolean receiveDeviceIdSoftwareVersion(String softwareMajorVersion, String softwareMinorVersion, 
+	        Date softwareReleaseDate, PulseOximetry pulseOximetry, String revision, String number) {
+	    log.debug("softwareMajorVersion="+softwareMajorVersion+", softwareMinorVersion="+softwareMinorVersion+
+	            ", softwareReleaseDate="+softwareReleaseDate+", pulseOximetry="+pulseOximetry+", revision="+
+	            revision+", number="+number);
+	    return true;
+	}
+	private static final Pattern deviceIdSoftwareVersionPattern = Pattern.compile("V(\\d{2})\\.(\\d{2}) (\\d{2}\\/\\d{2}\\/\\d{4}) (.{2})(.{2})(.{6})  ");
+	private static final DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 	public boolean receiveDeviceIdSoftwareVersion(String s) {
+	    
 		log.debug("DeviceIdSoftwareVersion:" + s);
-		for (CapnostreamListener listener : listeners) {
-			listener.deviceIdSoftwareVersion(s);
+		Matcher m = deviceIdSoftwareVersionPattern.matcher(s);
+		if(m.matches()) {
+		    if(m.groupCount()>=6) {
+		        try {
+    		        String softwareMajorVersion = m.group(1);
+    		        String softwareMinorVersion = m.group(2);
+    		        Date softwareReleaseDate;
+                
+                    softwareReleaseDate = dateFormat.parse(m.group(3));
+
+    		        String po = m.group(4);
+    		        PulseOximetry pulseOximetry = "B2".equals(po)?PulseOximetry.Nellcor:("B3".equals(po)?PulseOximetry.Masimo:null);
+    		        String revision = m.group(5);
+    		        String number = m.group(6);
+    		        for (CapnostreamListener listener : listeners) {
+    		            listener.deviceIdSoftwareVersion(softwareMajorVersion, softwareMinorVersion, softwareReleaseDate, pulseOximetry, revision, number);
+    		        }
+    		        receiveDeviceIdSoftwareVersion(softwareMajorVersion, softwareMinorVersion, softwareReleaseDate, pulseOximetry, revision, number);
+    		        
+                } catch (ParseException e) {
+                    log.error("", e);
+                }
+		    } else {
+		        log.warn("Insufficient matching groups");
+		    }
 		}
+		
+		
 		return true;
 	}
 

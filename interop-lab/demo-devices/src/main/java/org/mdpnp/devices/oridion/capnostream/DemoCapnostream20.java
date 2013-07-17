@@ -209,6 +209,9 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 		}
 		getDelegate().sendHostMonitoringId("ICE");
 		
+		// JP ... need to test this 
+		getDelegate().sendCommand(Command.LinkIsActive);
+		
 		getDelegate().sendCommand(Command.StartRTComm);
 		return connected;
 	}

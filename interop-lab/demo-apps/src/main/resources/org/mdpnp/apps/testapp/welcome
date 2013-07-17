@@ -8,14 +8,5 @@ The Supervisor is the host for clinical apps.  Launching this component will als
 ICE_Device_Interface
 The Device Interface allows you to connect devices to the ICE Supervisor.  Don't worry if you have no devices as several simulated devices are available.
 
-
-Also select a Binding:
-
-RTI_DDS
-DDS (Data Distribution Service) is an open standard for publish/subscribe middleware put forth by the OMG (Object Management Group).  Selecting this option, if available, will allow you to use an implementation of this standard furnished by Realtime Innovations (RTI).  You can also specify the DDS domain_id to use if you are an advanced user.
-
-JGROUPS
-JGroups is a open source for reliable multicast.  It is not a full publish/subscribe middleware but it can emulate much of the same behaviors and is very lightweight.
-
-
 If you selected ICE_Device_Interface you will further be asked which device you would like to connect.  If the device is connected via a serial port please select that port under "Address".  If the device is connected on the network type it's address in the provided text field.
+
