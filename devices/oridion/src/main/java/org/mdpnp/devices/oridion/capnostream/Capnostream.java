@@ -434,7 +434,7 @@ public class Capnostream {
 		int spo2 = 0xFF & payload[7];
 		
 		// TODO Report this behavior to Oridion
-		if(priorRespiratoryRate == spo2) {
+		if(priorRespiratoryRate != 255 && priorRespiratoryRate == spo2) {
 		    log.warn("Prior Respiratory Rate == SpO2, " + rr + "==" + spo2 + " ignoring this potentially spurious SpO2");
 		    spo2 = 0xFF;
 		    byte[] subpayload = new byte[length];
@@ -515,43 +515,58 @@ public class Capnostream {
 	    c.receiveDeviceIdSoftwareVersion("V45.67 02/24/2008 B355987654  ");
 	}
 	
-	public boolean receiveDeviceIdSoftwareVersion(String softwareMajorVersion, String softwareMinorVersion, 
+	public boolean receiveDeviceIdSoftwareVersion(String softwareVersion, 
 	        Date softwareReleaseDate, PulseOximetry pulseOximetry, String revision, String number) {
-	    log.debug("softwareMajorVersion="+softwareMajorVersion+", softwareMinorVersion="+softwareMinorVersion+
+	    log.debug("softwareVersion="+softwareVersion+
 	            ", softwareReleaseDate="+softwareReleaseDate+", pulseOximetry="+pulseOximetry+", revision="+
 	            revision+", number="+number);
 	    return true;
 	}
-	private static final Pattern deviceIdSoftwareVersionPattern = Pattern.compile("V(\\d{2})\\.(\\d{2}) (\\d{2}\\/\\d{2}\\/\\d{4}) (.{2})(.{2})(.{6})  ");
+	private static final Pattern deviceIdSoftwareVersionPattern = Pattern.compile("^V(.{5}) (.{10}) (.{2})(.{2})(.{6})  $");
 	private static final DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 	public boolean receiveDeviceIdSoftwareVersion(String s) {
 	    
 		log.debug("DeviceIdSoftwareVersion:" + s);
 		Matcher m = deviceIdSoftwareVersionPattern.matcher(s);
 		if(m.matches()) {
-		    if(m.groupCount()>=6) {
-		        try {
-    		        String softwareMajorVersion = m.group(1);
-    		        String softwareMinorVersion = m.group(2);
-    		        Date softwareReleaseDate;
-                
-                    softwareReleaseDate = dateFormat.parse(m.group(3));
+		    if(m.groupCount()>=5) {
+		        String softwareVersion = m.group(1);
+		        Date softwareReleaseDate;
 
-    		        String po = m.group(4);
-    		        PulseOximetry pulseOximetry = "B2".equals(po)?PulseOximetry.Nellcor:("B3".equals(po)?PulseOximetry.Masimo:null);
-    		        String revision = m.group(5);
-    		        String number = m.group(6);
-    		        for (CapnostreamListener listener : listeners) {
-    		            listener.deviceIdSoftwareVersion(softwareMajorVersion, softwareMinorVersion, softwareReleaseDate, pulseOximetry, revision, number);
-    		        }
-    		        receiveDeviceIdSoftwareVersion(softwareMajorVersion, softwareMinorVersion, softwareReleaseDate, pulseOximetry, revision, number);
+		        String date = m.group(2).trim();
+		        if(null != date && !"".equals(date)) {
+		            try {
+                        softwareReleaseDate = dateFormat.parse(date);
+                    } catch (ParseException e) {
+                        log.error("Error parsing date:"+date, e);
+                        softwareReleaseDate = null;
+                    }
+		        } else {
+		            softwareReleaseDate = null;
+		        }
+		        String po = m.group(3);
+		        PulseOximetry pulseOximetry = null;
+		        if("B5".equals(po)) {
+		            pulseOximetry = PulseOximetry.Masimo;
+		        } else if("B2".equals(po)) {
+		            pulseOximetry = PulseOximetry.Nellcor;
+		        } else if("B3".equals(po)) {
+		            pulseOximetry = PulseOximetry.Masimo;
+		        } else {
+		            log.warn("Unknown serial number prefix:"+po);
+		        }
+		        String revision = m.group(4);
+		        String serial_number = po + revision + m.group(5);
+		        for (CapnostreamListener listener : listeners) {
+		            listener.deviceIdSoftwareVersion(softwareVersion, softwareReleaseDate, pulseOximetry, revision, serial_number);
+		        }
+		        receiveDeviceIdSoftwareVersion(softwareVersion, softwareReleaseDate, pulseOximetry, revision, serial_number);
     		        
-                } catch (ParseException e) {
-                    log.error("", e);
-                }
 		    } else {
-		        log.warn("Insufficient matching groups");
+		        log.warn("Insufficient matching groups:"+s);
 		    }
+		} else {
+		    log.warn("Device ID and Software revision doesn't match expected regex:"+s);
 		}
 		
 		

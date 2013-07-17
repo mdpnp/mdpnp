@@ -6,7 +6,7 @@ import org.mdpnp.devices.oridion.capnostream.Capnostream.CO2Units;
 import org.mdpnp.devices.oridion.capnostream.Capnostream.PulseOximetry;
 
 public interface CapnostreamListener {
-	void deviceIdSoftwareVersion(String softwareMajorVersion, String softwareMinorVersion, 
+	void deviceIdSoftwareVersion(String softwareVersion, 
             Date softwareReleaseDate, PulseOximetry pulseOximetry, String revision, String number);
 	void numerics(long date, int etCO2, int FiCO2,
             int respiratoryRate, int spo2, int pulserate, int slowStatus,
