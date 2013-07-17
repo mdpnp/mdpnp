@@ -55,6 +55,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static final int HAZARDS_SEVERITY_COL = 3;
 	private static final int HAZARDS_DELETEBUTTON_COL = 5;
 	
+	//clinicians table
+	private static final int CLINICIANS_TYPE_COL = 0;
+	private static final int CLINICIANS_DELETEBUTTON_COL = 1;
+	
+	//environments table
+	private static final int ENVIRONMENT_TYPE_COL = 0;
+	private static final int ENVIRONMENT_DELETEBUTTON_COL = 1;
+	
 	
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 
@@ -162,11 +170,45 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 //		}
 //	}
 	
-	private final void buildCliniciansTable() {
+	/**
+	 * Print/draws the clinicians table
+	 * @param isDrawNew indicates if we are drawing a new/empty table or we are going to
+	 *  populate it with data from an existing scenario.
+	 */
+	private final void buildCliniciansTable(boolean isDrawNew) {
+		cliniciansTable.removeAllRows();
+		//XXX currentScenario.getEnvironments() and the clinicians list should never be null
+		if(isDrawNew || currentScenario==null || currentScenario.getEnvironments()==null
+				|| currentScenario.getEnvironments().getCliniciansInvolved().isEmpty()){
+			addNewClinicianRow("");			
+		}else{
+			List<String> clinicians =currentScenario.getEnvironments().getCliniciansInvolved();
+			for(int i=0; i<clinicians.size(); i++){
+				String text = clinicians.get(i);
+				addNewClinicianRow(text);
+			}
+		}
 		
 	}
 	
-	private final void buildEnvironmentsTable() {
+	/**
+	 * Print/draws the environments table
+	 * @param isDrawNew indicates if we are drawing a new/empty table or we are going to
+	 *  populate it with data from an existing scenario.
+	 */
+	private final void buildEnvironmentsTable(boolean isDrawNew) {
+		environmentsTable.removeAllRows();
+		//XXX currentScenario.getEnvironments() and the environments list should never be null
+		if(isDrawNew || currentScenario==null || currentScenario.getEnvironments()==null
+				|| currentScenario.getEnvironments().getClinicalEnvironments().isEmpty()){
+			addNewEnvironmentRow("");
+		}else{
+			List<String> environments = currentScenario.getEnvironments().getClinicalEnvironments();
+			for(int i =0; i<environments.size(); i++){
+				String text = environments.get(i);
+				addNewEnvironmentRow(text);
+			}
+		}
 		
 	}
 	
@@ -287,12 +329,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private void checkEquipmentListForPersistence(ScenarioRequest rc){
 		if(currentScenario!=null){
 			currentScenario.getEquipment().getEntries().clear();//clear equipment list entries. We will re-populate 
-			for(int i = 0; i < equipmentTable.getRowCount(); i++) {
+			for(int row = 1; row < equipmentTable.getRowCount(); row++) {//Row 0 is HEADERS
 				
-				Widget wDevType = equipmentTable.getWidget(i, EQUIPMENT_DEVICETYPE_COL);//getWidget row column		
-				Widget wManu = equipmentTable.getWidget(i, EQUIPMENT_MANUFACTURER_COL);//getWidget row column		
-				Widget wModel = equipmentTable.getWidget(i, EQUIPMENT_MODEL_COL);//getWidget row column		
-				Widget wRoss = equipmentTable.getWidget(i, EQUIPMENT_ROSSETAID_COL);//getWidget row column		
+				Widget wDevType = equipmentTable.getWidget(row, EQUIPMENT_DEVICETYPE_COL);//getWidget row column		
+				Widget wManu = equipmentTable.getWidget(row, EQUIPMENT_MANUFACTURER_COL);//getWidget row column		
+				Widget wModel = equipmentTable.getWidget(row, EQUIPMENT_MODEL_COL);//getWidget row column		
+				Widget wRoss = equipmentTable.getWidget(row, EQUIPMENT_ROSSETAID_COL);//getWidget row column		
 				EquipmentEntryProxy eep = rc.create(EquipmentEntryProxy.class);
 				
 				boolean isAdding = false;
@@ -333,12 +375,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private void checkHazardsListForPersistence(ScenarioRequest rc){
 		if(currentScenario!=null && currentScenario.getHazards()!=null){//FIXME  && currentScenario.getHazards()!=null has to go
 			currentScenario.getHazards().getEntries().clear();//clean and re-populate
-			for(int i =2; i<hazardsTable.getRowCount();i++){
+			for(int row =2; row<hazardsTable.getRowCount();row++){//row 0 headers; row 1 description
 				
-				Widget wDescription = hazardsTable.getWidget(i, HAZARDS_DESCRIPTION_COL);	
-				Widget wFactor = hazardsTable.getWidget(i, HAZARDS_FACTORS_COL);	
-				Widget wExpected = hazardsTable.getWidget(i, HAZARDS_EXPECTED_COL);		
-				Widget wSeverity = hazardsTable.getWidget(i, HAZARDS_SEVERITY_COL);	
+				Widget wDescription = hazardsTable.getWidget(row, HAZARDS_DESCRIPTION_COL);	
+				Widget wFactor = hazardsTable.getWidget(row, HAZARDS_FACTORS_COL);	
+				Widget wExpected = hazardsTable.getWidget(row, HAZARDS_EXPECTED_COL);		
+				Widget wSeverity = hazardsTable.getWidget(row, HAZARDS_SEVERITY_COL);	
 				HazardsEntryProxy hep = rc.create(HazardsEntryProxy.class);
 				
 				boolean isAdding = false;
@@ -349,11 +391,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				// values for risk/severity (there would be no hazard identification) 
 				if(wDescription instanceof TextArea){
 					text = ((TextArea) wDescription).getText().trim();
-					if(text != null){hep.setDescription(text); isAdding=true;}
+					if(!text.equals("")){hep.setDescription(text); isAdding=true;}
 				}
 				if(wFactor instanceof TextArea){
 					text = ((TextArea) wFactor).getText().trim();
-					if(text != null){hep.setFactors(text); isAdding =true;}
+					if(!text.equals("")){hep.setFactors(text); isAdding =true;}
 				}
 				
 				if(isAdding){
@@ -365,7 +407,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					if(wSeverity instanceof ListBox){
 						int val = ((ListBox) wSeverity).getSelectedIndex();
 						text = hazardSeverity[val];
-						hep.setExpected(text);
+						hep.setSeverity(text);
 					}
 					//add values to the list
 					currentScenario.getHazards().getEntries().add(hep);
@@ -376,10 +418,52 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	}
 	
 	/**
+	 * Checks if we need to persist the clinicians list
+	 * @param scn
+	 */
+	private void checkCliniciansListForPersistence(/*ScenarioRequest scn*/){
+		if(currentScenario!=null && currentScenario.getEnvironments()!= null){
+			currentScenario.getEnvironments().getCliniciansInvolved().clear();
+			//delete the list and repopulate w/ data from the table
+//			List clinicians = currentScenario.getEnvironments().getCliniciansInvolved();
+			for(int row=0; row<cliniciansTable.getRowCount();row++){
+				Widget wClinician = cliniciansTable.getWidget(row, CLINICIANS_TYPE_COL);
+				if(wClinician instanceof SuggestBox){
+					String text = ((SuggestBox) wClinician).getText().trim();
+					if(!text.equals(""))
+						currentScenario.getEnvironments().getCliniciansInvolved().add(text);
+				}
+			}
+		}
+		
+	}
+	
+	/**
+	 * Checks if we need to persist the environments list
+	 */
+	private void checkEnvironmentsListForPersistence(){
+		if(currentScenario!=null && currentScenario.getEnvironments()!= null){
+			currentScenario.getEnvironments().getClinicalEnvironments().clear();
+			//delete the list and re-populate w/ data from the table
+			for(int row=0; row<environmentsTable.getRowCount();row++){
+				Widget wEnvironment = environmentsTable.getWidget(row, ENVIRONMENT_TYPE_COL);
+				if(wEnvironment instanceof SuggestBox){
+					String text = ((SuggestBox) wEnvironment).getText().trim();
+					if(!text.equals(""))
+						currentScenario.getEnvironments().getClinicalEnvironments().add(text);
+				}
+			}
+		}
+		
+	}
+	
+	/**
 	 * Saves or persist a Scenario
-	 * <p> 1- The TextArea fields are associated automatically w/ the corresponding attributes in the Scenario object
+	 * <p> 1- The TextArea fields are associated automatically w/ the corresponding attributes in the Scenario object 
+	 * (Background, proposed solution and Benefits & risks)
 	 * <p> 2- Save the list of equipment
 	 * <p> 3- Save the list of hazards
+	 * <p> 4- Save Clinicians and Environment List
 	 * <p> Persist the scenario entity with all its associated values
 	 */
 	private void save(){
@@ -390,10 +474,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		checkEquipmentListForPersistence(rc);
 		//Save hazards list
 		checkHazardsListForPersistence(rc);
-				
+		//save clinicians list
+		checkCliniciansListForPersistence();
+		//save environments
+		checkEnvironmentsListForPersistence();				
 
 		//persist scenario entity
-		rc.persist().using(currentScenario).with(driver.getPaths()).with("equipment"/*, "hazards"*/).to(new Receiver<ScenarioProxy>() {
+		rc.persist().using(currentScenario).with(driver.getPaths()).with("equipment", "hazards", "environments").to(new Receiver<ScenarioProxy>() {
 
 			@Override
 			public void onSuccess(ScenarioProxy response) {
@@ -422,8 +509,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 		//XXX ? Will this need to go as the buildEquipmentTable()
 //		buildHazardsTable();
-		buildCliniciansTable();
-		buildEnvironmentsTable();
+//		buildCliniciansTable();
+//		buildEnvironmentsTable();
 //		buildTestCasesTable();
 
 		//Handler to save the entity when something changes in the data fields
@@ -498,8 +585,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
 		if(null == currentScenario) {
 		    context.create()
-		    .with("background", "benefitsAndRisks", /*"environments",*/ "equipment", /*"hazards",*/ "proposedSolution")
-//		    .with("hazards")
+		    .with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
 		    .to(new Receiver<ScenarioProxy>() {
 	    	
                 @Override
@@ -509,27 +595,28 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
                     ScenarioProxy currentScenario = context.edit(response); 
                     driver.edit(currentScenario, context);                    
                     ScenarioPanel.this.currentScenario = currentScenario;
-//                    DAG Debug only
-//                    Window.alert("Created scenario request Success");
-//                    if(currentScenario!= null && currentScenario.getEquipment()!=null)
-//                    	Window.alert("equimpent list size "+currentScenario.getEquipment().getEntries().size());
-//                    if(currentScenario!= null && currentScenario.getHazards()!=null)
-//                    	Window.alert("hazards list size "+currentScenario.getHazards().getEntries().size());
-//                    else
-//                    	Window.alert("hazards list NULL");
+                    
+                    //after the Entity has been succesfully created, we populate the widgets w/ the entity info and draw it
+        		    buildEquipmentTable(true);//new scn. No equipment list
+        		    buildHazardsTable(true);
+        			buildCliniciansTable(true);
+        			buildEnvironmentsTable(true);
+                    
                 }
 		        
 		    }).fire();
 		    
-		    buildEquipmentTable(true);//new scn. No equipment list
-		    buildHazardsTable(true);
+//		    buildEquipmentTable(true);//new scn. No equipment list
+//		    buildHazardsTable(true);
 
 		} else {
 		    currentScenario = context.edit(currentScenario); 
             driver.edit(currentScenario, context);
             this.currentScenario = currentScenario;
-            buildEquipmentTable(false);//
+            buildEquipmentTable(false);
             buildHazardsTable(false);
+    		buildCliniciansTable(false);
+    		buildEnvironmentsTable(false);
 		}
 
 	}
@@ -862,18 +949,66 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		cliniciansTable.insertRow(rows);
 		final SuggestBox sb = new SuggestBox(clinicianSuggestOracle);
 		sb.setStyleName("wideSuggest");
-		cliniciansTable.setWidget(rows, 0, sb);
+		cliniciansTable.setWidget(rows, CLINICIANS_TYPE_COL, sb);
+		
+		//to suggest a clinician when typing in the box
 		sb.addKeyUpHandler(new KeyUpHandler() {
-
 			@Override
 			public void onKeyUp(KeyUpEvent event) {
 				if(event.getNativeKeyCode()==KeyCodes.KEY_ENTER) {
 					Label lbl = new Label(sb.getText());
 					cliniciansTable.setWidget(rows, 0, lbl);
 				}
-			}
-			
+			}			
 		});
+		
+		//to delete this entry
+		Button deleteButton = new Button("Delete");
+		deleteButton.addClickHandler(new ClickHandler() {
+			
+			@Override
+			public void onClick(ClickEvent event) {
+				cliniciansTable.removeRow(rows);
+				
+			}
+		});
+		cliniciansTable.setWidget(rows, CLINICIANS_DELETEBUTTON_COL, deleteButton);
+	}
+	
+	/**
+	 * Adds a new clinician to the clinicians table
+	 * @param clinician name/type of clinician
+	 */
+	private void addNewClinicianRow(String clinician) {
+		final int rows = cliniciansTable.getRowCount();
+		cliniciansTable.insertRow(rows);
+		final SuggestBox sb = new SuggestBox(clinicianSuggestOracle);
+		sb.setText(clinician);
+		sb.setStyleName("wideSuggest");
+		cliniciansTable.setWidget(rows, CLINICIANS_TYPE_COL, sb);
+		
+		//to suggest a clinician when typing in the box
+		sb.addKeyUpHandler(new KeyUpHandler() {
+			@Override
+			public void onKeyUp(KeyUpEvent event) {
+				if(event.getNativeKeyCode()==KeyCodes.KEY_ENTER) {
+					Label lbl = new Label(sb.getText());
+					cliniciansTable.setWidget(rows, 0, lbl);
+				}
+			}			
+		});
+		
+		//to delete this entry
+		Button deleteButton = new Button("Delete");
+		deleteButton.addClickHandler(new ClickHandler() {
+			
+			@Override
+			public void onClick(ClickEvent event) {
+				cliniciansTable.removeRow(rows);
+				
+			}
+		});
+		cliniciansTable.setWidget(rows, CLINICIANS_DELETEBUTTON_COL, deleteButton);
 	}
 	
 	@UiHandler("addNewEnvironment")
@@ -882,7 +1017,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		environmentsTable.insertRow(rows);
 		final SuggestBox sb = new SuggestBox(environmentSuggestOracle);
 		sb.setStyleName("wideSuggest");
-		environmentsTable.setWidget(rows, 0, sb);
+		environmentsTable.setWidget(rows, ENVIRONMENT_TYPE_COL, sb);
+		
+		//to suggest a new environment when typing
 		sb.addKeyUpHandler(new KeyUpHandler() {
 
 			@Override
@@ -894,6 +1031,56 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			}
 			
 		});
+		
+		//to delete this entry
+		Button deleteButton = new Button("Delete");
+		deleteButton.addClickHandler(new ClickHandler() {
+			
+			@Override
+			public void onClick(ClickEvent event) {
+				cliniciansTable.removeRow(rows);
+				
+			}
+		});
+		environmentsTable.setWidget(rows, ENVIRONMENT_DELETEBUTTON_COL, deleteButton);
+	}
+	
+	/**
+	 * Adds a new row to the environment table
+	 * @param environment name of the clinical environment
+	 */
+	private void addNewEnvironmentRow(String environment) {
+		final int rows = environmentsTable.getRowCount();
+		environmentsTable.insertRow(rows);
+		final SuggestBox sb = new SuggestBox(environmentSuggestOracle);
+		sb.setText(environment);
+		sb.setStyleName("wideSuggest");
+		environmentsTable.setWidget(rows, ENVIRONMENT_TYPE_COL, sb);
+		
+		//to suggest a new environment when typing
+		sb.addKeyUpHandler(new KeyUpHandler() {
+
+			@Override
+			public void onKeyUp(KeyUpEvent event) {
+				if(event.getNativeKeyCode()==KeyCodes.KEY_ENTER) {
+					Label lbl = new Label(sb.getText());
+					environmentsTable.setWidget(rows, 0, lbl);
+				}
+			}
+			
+		});
+		
+		//to delete this entry
+		Button deleteButton = new Button("Delete");
+		deleteButton.addClickHandler(new ClickHandler() {
+			
+			@Override
+			public void onClick(ClickEvent event) {
+				cliniciansTable.removeRow(rows);
+				
+			}
+		});
+		environmentsTable.setWidget(rows, ENVIRONMENT_DELETEBUTTON_COL, deleteButton);
 	}
 	
 	@UiHandler("currentStateExample")
@@ -973,6 +1160,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	@UiHandler("submitButton")
 	public void onClickSubmit(ClickEvent clickEvent) {
 		int i = 0 ;//dummy	, just to put a freaking breakpoint 	
+		//TODO This option should be available (and button enabled only) if SCB is pending of submission or has been rejected
 	}
 	
 	@UiHandler("saveButton")

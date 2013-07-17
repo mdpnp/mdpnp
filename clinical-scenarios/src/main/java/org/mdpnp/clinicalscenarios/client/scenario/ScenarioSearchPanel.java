@@ -3,8 +3,12 @@ package org.mdpnp.clinicalscenarios.client.scenario;
 import java.util.List;
 
 import org.mdpnp.clinicalscenarios.client.user.UserInfoProxy;
+import org.mdpnp.clinicalscenarios.client.user.UserInfoRequestFactory;
 import org.mdpnp.clinicalscenarios.server.user.UserInfo;
 
+import com.google.appengine.api.users.User;
+import com.google.appengine.api.users.UserService;
+import com.google.appengine.api.users.UserServiceFactory;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -25,7 +29,12 @@ import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 
 public class ScenarioSearchPanel extends Composite {
-
+	
+	private static int SCN_TITLE_COL = 0;
+	private static int SCN_SUBMITTER_COL = 1;
+	private static int SCN_STATUS_COL = 2;
+	private static int SCN_DELETEBUTTON_COL = 4;
+	
 	private static ScenarioSearchPanelUiBinder uiBinder = GWT
 			.create(ScenarioSearchPanelUiBinder.class);
 
@@ -90,19 +99,22 @@ public class ScenarioSearchPanel extends Composite {
 	 */
 	public void doSearch(final String text) {
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
-		scenarioRequest.searchByKeywords(text).with("background", "benefitsAndRisks",/* "environments",*/ "equipment",/* "hazards", */"proposedSolution").to(new Receiver<List<ScenarioProxy>>() {
+		scenarioRequest.searchByKeywords(text).with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution").to(new Receiver<List<ScenarioProxy>>() {
 
 			@Override
 			public void onSuccess(List<ScenarioProxy> response) {
 			    searchResult.removeAllRows();
-				int i = 1;
+//				int i = 1;
+				//HEADER
 				searchResult.insertRow(0);
-				searchResult.setText(0, 0, "Title");
-				searchResult.setText(0, 1, "Submitter");
-				searchResult.setText(0, 2, "State");
+				searchResult.setText(0, SCN_TITLE_COL, "Title");
+				searchResult.setText(0, SCN_SUBMITTER_COL, "Submitter");
+				searchResult.setText(0, SCN_STATUS_COL, "State");
 				searchResult.getRowFormatter().addStyleName(0, "userListHeader"); //TODO Style this table
 				
+				int row =1;
 				for(final ScenarioProxy sp : response) {
+					
 					Label lbl = new Label();
 					lbl.setStyleName("clickable");
 					lbl.addClickHandler(new ClickHandler() {
@@ -118,13 +130,35 @@ public class ScenarioSearchPanel extends Composite {
 					});
 					String title = sp.getTitle();
 					title = null == title || "".equals(title) ? "<none>" : title;//XXX title.trim() ??
+					final String auxTitle = title;
 					lbl.setText(title);
-					searchResult.insertRow(i);
-					searchResult.setWidget(i, 0, lbl);
-					searchResult.setWidget(i, 1, new Label(sp.getSubmitter()));
-					searchResult.setWidget(i++, 2, new Label(sp.getStatus()));
+					searchResult.insertRow(row);
+					searchResult.setWidget(row, SCN_TITLE_COL, lbl);
+					searchResult.setWidget(row, SCN_SUBMITTER_COL, new Label(sp.getSubmitter()));
+					searchResult.setWidget(row, SCN_STATUS_COL, new Label(sp.getStatus()));
 					
-					
+					//TODO check if the user is superuser to allow delete scn
+					final int rowDel = row;
+					Button deleteButton = new Button("Delete");
+					deleteButton.addClickHandler(new ClickHandler() {
+							
+						@Override
+						public void onClick(ClickEvent event) {
+							//TODO Add a validation, so the user is asked if (s)he is sure about deleting the scn
+							boolean delete = Window.confirm("Are you sure you want to delete scenario \""+auxTitle+"\"?");
+							if(delete){
+								searchResult.removeRow(rowDel);
+								//delete the entity too (or delete entity and redraw
+								ScenarioRequest req = scenarioRequestFactory.scenarioRequest();
+								ScenarioProxy mutableProxy = req.edit(sp);
+								req.remove().using(mutableProxy).fire();
+							}
+						}
+					});
+					searchResult.setWidget(row, SCN_DELETEBUTTON_COL, deleteButton);
+			        
+			        //increase row number
+					row+=1;				
 				}
 			}
 			@Override
