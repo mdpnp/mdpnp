@@ -109,9 +109,11 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
                             }
                         }
                     }
-                    deviceConnectivityObjectiveReader.return_loan(data_seq, info_seq);
+                    
                 } catch (RETCODE_NO_DATA noData) {
                     
+                } finally {
+                    deviceConnectivityObjectiveReader.return_loan(data_seq, info_seq);
                 }
             }
 		    
