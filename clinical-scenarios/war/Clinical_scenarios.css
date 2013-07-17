@@ -78,3 +78,13 @@ p.welcomeText{
   	font-style: italic;
   	text-align: center;
 }
+
+.submittedScn {
+	color: red;
+	font-weight:bold;
+}
+
+/* .unsubmittedScn { */
+/* 	color: black; */
+/* 	font-weight:normal; */
+/* } */

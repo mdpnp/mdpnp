@@ -19,6 +19,12 @@ import com.googlecode.objectify.annotation.OnSave;
 @SuppressWarnings("serial")
 @Entity
 public class ScenarioEntity implements java.io.Serializable {
+	
+	private final static String SCN_STATUS_UNSUBMITTED = 	"unsubmitted";//created and/or modified, but not yet submitted for approval
+	private final static String SCN_STATUS_SUBMITTED = 		"submitted"; //submitted for approval, not yet revised nor approved 
+	private final static String SCN_STATUS_APPROVED = 		"approved"; //revised and approved
+	private final static String SCN_STATUS_REJECTED = 		"rejected"; //revised but not approved. Rejected for revision 
+	
 	@Id
 	private Long id;
 	
@@ -120,7 +126,7 @@ public class ScenarioEntity implements java.io.Serializable {
 		
 	public static ScenarioEntity create() {
 	    ScenarioEntity s = new ScenarioEntity();
-//	    s.setStatus("0");//XXX By default, pending of submission
+	    s.setStatus(SCN_STATUS_UNSUBMITTED);//XXX By default, pending of submission
 	    s.setSubmitter(user.getEmail());
         ofy().save().entity(s).now();
         return s;
@@ -189,4 +195,12 @@ public class ScenarioEntity implements java.io.Serializable {
 	public void setSubmitter(String submitter) {
 		this.submitter = submitter;
 	}
+	
+	//DAG option discarded
+//	public ScenarioEntity submittScenario() {
+//		this.status = SCN_STATUS_SUBMITTED;
+//	    ofy().save().entity(this).now();
+//	    return this;
+//	}
+	
 }

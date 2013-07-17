@@ -63,6 +63,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static final int ENVIRONMENT_TYPE_COL = 0;
 	private static final int ENVIRONMENT_DELETEBUTTON_COL = 1;
 	
+	//scenario status
+	public final static String SCN_STATUS_UNSUBMITTED = 	"unsubmitted";//created and/or modified, but not yet submitted for approval
+	public final static String SCN_STATUS_SUBMITTED = 		"submitted"; //submitted for approval, not yet revised nor approved 
+	public final static String SCN_STATUS_APPROVED = 		"approved"; //revised and approved
+	public final static String SCN_STATUS_REJECTED = 		"rejected"; //revised but not approved. Rejected for revision 
 	
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 
@@ -119,7 +124,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	}
 	
 	//XXX Do I need this?  Clean up!!
-	private static  enum ScenarioStatus {
+	public static  enum ScenarioStatus {
 		unsubmitted(0), //created and modified, but not yet submitted
 		submitted(1), //submitted for approval, not yet revised nor approved 
 		approved(2), //revised and approved
@@ -1159,8 +1164,24 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("submitButton")
 	public void onClickSubmit(ClickEvent clickEvent) {
-		int i = 0 ;//dummy	, just to put a freaking breakpoint 	
-		//TODO This option should be available (and button enabled only) if SCB is pending of submission or has been rejected
+		if(currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_UNSUBMITTED) ||
+				currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_REJECTED) ){
+			ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+			currentScenario.setStatus(SCN_STATUS_SUBMITTED);
+			scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(new Receiver<ScenarioProxy>() {
+
+				@Override
+				public void onSuccess(ScenarioProxy response) {
+//					Window.alert("Status changed");
+					
+				}
+				
+				public void onFailure(ServerFailure error) {
+					super.onFailure(error);
+				}
+			});
+		}
+
 	}
 	
 	@UiHandler("saveButton")
