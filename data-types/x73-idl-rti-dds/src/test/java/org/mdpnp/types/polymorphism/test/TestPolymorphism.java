@@ -84,9 +84,9 @@ public class TestPolymorphism implements DataReaderListener, DataWriterListener 
 		subscriberTopic = subscriberParticipant.create_topic("FOOBAR", DIMT_VMOTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		assertNotNull("subscriber topic null", subscriberTopic);
 		
-		dataReader = (DIMT_VMODataReader) subscriberParticipant.create_datareader(subscriberTopic, Subscriber.DATAREADER_QOS_DEFAULT, this, StatusKind.STATUS_MASK_ALL);
+		dataReader = (DIMT_VMODataReader) subscriberParticipant.create_datareader(subscriberTopic, Subscriber.DATAREADER_QOS_DEFAULT, this, StatusKind.DATA_AVAILABLE_STATUS);
 		assertNotNull("data reader null", dataReader);
-		dataWriter = (DIMT_VMODataWriter) publisherParticipant.create_datawriter(publisherTopic, Publisher.DATAWRITER_QOS_DEFAULT, this, StatusKind.STATUS_MASK_ALL);
+		dataWriter = (DIMT_VMODataWriter) publisherParticipant.create_datawriter(publisherTopic, Publisher.DATAWRITER_QOS_DEFAULT, this, StatusKind.PUBLICATION_MATCHED_STATUS);
 		assertNotNull("data writer null", dataWriter);
 	}
 

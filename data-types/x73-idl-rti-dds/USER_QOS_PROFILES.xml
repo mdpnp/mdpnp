@@ -1,6 +1,7 @@
 <dds>
 	<qos_library name="UDPv4TransportLibrary">
 		<qos_profile name="DefaultProfile" is_default_qos="true">
+		    <!-- 
 			<participant_qos>
 				<discovery>
 					<accept_unknown_peers>true</accept_unknown_peers>
@@ -14,6 +15,7 @@
 					</mask>
 				</transport_builtin>
 			</participant_qos>
+			-->
 		</qos_profile>
 	</qos_library>
 </dds>
