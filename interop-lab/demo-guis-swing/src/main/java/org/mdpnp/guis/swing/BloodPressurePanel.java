@@ -189,7 +189,7 @@ public class BloodPressurePanel extends DevicePanel {
     private static final Logger log = LoggerFactory.getLogger(BloodPressurePanel.class);
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
-        log.debug("N:"+numeric);
+//        log.debug("N:"+numeric);
         switch(numeric.name) {
         case ice.MDC_PRESS_CUFF.VALUE:
             switch((int)numeric.value) {
@@ -220,7 +220,7 @@ public class BloodPressurePanel extends DevicePanel {
             inflationN.copy_from(numeric);
             break;
         }
-        log.debug("State:"+state);
+//        log.debug("State:"+state);
         
         switch(state) {
         case Inflating:

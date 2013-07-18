@@ -23,6 +23,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.mdpnp.guis.waveform.WaveformPanel;
+import org.mdpnp.guis.waveform.WaveformPanelFactory;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 import org.slf4j.Logger;
@@ -34,18 +36,25 @@ public class VentilatorPanel extends DevicePanel {
 //	private JLabel percent_oxygen, peep, percent_oxygenLabel, peepLabel, nameLabel, guidLabel;
 //	private JPanel percent_oxygenPanel, peepPanel, percent_oxygenBounds, peepBounds;
 //	private JPanel percent_oxygenPanel, peepPanel, percent_oxygenBounds, peepBounds;
-	private SwingWaveformPanel flowPanel, pressurePanel, co2Panel; // , pulsePanel;
+	private WaveformPanel flowPanel, pressurePanel, co2Panel; // , pulsePanel;
 	private JLabel etco2;
 	private JLabel time; 
 	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		
+	
+	@Override
+	public void destroy() {
+	    flowPanel.stop();
+        pressurePanel.stop();
+        co2Panel.stop();
+	    super.destroy();
+	}
 	protected void buildComponents() {
-		flowPanel = new SwingWaveformPanel();
-		pressurePanel = new SwingWaveformPanel();
-		co2Panel = new SwingWaveformPanel();
-		flowPanel.setOpaque(false);
-		pressurePanel.setOpaque(false);
-		co2Panel.setOpaque(false);
+	    WaveformPanelFactory fact = new WaveformPanelFactory();
+		flowPanel = fact.createWaveformPanel();
+		pressurePanel = fact.createWaveformPanel();
+		co2Panel = fact.createWaveformPanel();
+
 //		pulsePanel = new WaveformPanel();
 		
 //		pulsePanel.setOpaque(false);
@@ -65,13 +74,13 @@ public class VentilatorPanel extends DevicePanel {
 //		upper.add(pulsePanel, gbc);
 		
 //		gbc.gridx = 1;
-		upper.add(flowPanel, gbc);
+		upper.add(flowPanel.asComponent(), gbc);
 		
 		gbc.gridy = 1;
-		upper.add(pressurePanel, gbc);
+		upper.add(pressurePanel.asComponent(), gbc);
 		
 		gbc.gridy = 2;
-		upper.add(co2Panel, gbc);
+		upper.add(co2Panel.asComponent(), gbc);
 		
 //		gbc.weightx = 0.1;
 //		gbc.gridheight = 1;
@@ -93,7 +102,9 @@ public class VentilatorPanel extends DevicePanel {
 		add(etco2 = new JLabel("etCO\u2082"), BorderLayout.NORTH);
 
 		etco2.setHorizontalAlignment(JLabel.RIGHT);
-		
+		flowPanel.start();
+        pressurePanel.start();
+        co2Panel.start();
 	}
 	
 	

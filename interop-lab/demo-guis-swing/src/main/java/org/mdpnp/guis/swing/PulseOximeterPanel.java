@@ -153,15 +153,8 @@ public class PulseOximeterPanel extends DevicePanel {
 
 		add(time = new JLabel("TIME"), BorderLayout.SOUTH);
 		
-		if(plethPanel instanceof GLWaveformPanel) {
-			((GLWaveformPanel)plethPanel).setAnimator(new FPSAnimator((GLAutoDrawable) plethPanel, FPSAnimator.DEFAULT_FRAMES_PER_INTERVAL));
-			((GLWaveformPanel)plethPanel).getAnimator().start();
-		}
-		
-		if(pulsePanel instanceof GLWaveformPanel) {
-			((GLWaveformPanel)pulsePanel).setAnimator(new FPSAnimator((GLAutoDrawable) pulsePanel, FPSAnimator.DEFAULT_FRAMES_PER_INTERVAL));
-			((GLWaveformPanel)pulsePanel).getAnimator().start();
-		}
+		plethPanel.start();
+		pulsePanel.start();
 		
 		setForeground(Color.green);
 		setBackground(Color.black);
@@ -181,19 +174,8 @@ public class PulseOximeterPanel extends DevicePanel {
 	
 	@Override
 	public void destroy() {
-		if(plethPanel instanceof GLWaveformPanel) {
-			GLWaveformPanel plethPanel = (GLWaveformPanel) this.plethPanel;
-			plethPanel.getAnimator().stop();
-			plethPanel.getAnimator().remove(plethPanel);
-		}
-
-		if(pulsePanel instanceof GLWaveformPanel) {
-			GLWaveformPanel pulsePanel = (GLWaveformPanel) this.pulsePanel;
-			pulsePanel.getAnimator().stop();
-			pulsePanel.getAnimator().remove(pulsePanel);			
-		}
-		
-
+	    plethPanel.stop();
+	    pulsePanel.stop();
 		super.destroy();
 	}
 

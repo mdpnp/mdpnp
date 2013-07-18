@@ -141,11 +141,13 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
         
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+                data.setVisible(false);
                 data.removeAll();
                 data.setLayout(new GridLayout(_dataComponents.size(), 1));
                 for(DevicePanel p : _dataComponents) {
                     data.add(p);
                 }
+                data.setVisible(true);
             }
         }); 
     }
