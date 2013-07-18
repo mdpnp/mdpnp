@@ -61,6 +61,11 @@ public class DevicePanelFactory {
             }
 	    }
 	    
+	    for(DevicePanel p : byClass.values()) {
+	        p.destroy();
+	    }
+	    byClass.clear();
+	    
 	    panels.clear();
 	    panels.addAll(newPanels);
 	}

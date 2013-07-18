@@ -512,4 +512,14 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 	public void setOutOfTrack(boolean outOfTrack) {
 		// TODO implement this in the WaveformCanvas
 	}
+	@Override
+	public void start() {
+	    // TODO Auto-generated method stub
+	    
+	}
+	@Override
+	public void stop() {
+	    // TODO Auto-generated method stub
+	    
+	}
 }

@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.mdpnp.guis.waveform.WaveformPanel;
+import org.mdpnp.guis.waveform.WaveformPanelFactory;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 
@@ -22,7 +24,7 @@ import com.rti.dds.subscription.SampleInfo;
 
 public class ElectroCardioGramPanel extends DevicePanel {
 
-	private final SwingWaveformPanel[] panel;
+	private final WaveformPanel[] panel;
 	
 	private final static int[] ECG_WAVEFORMS = new int[] {
 	    ice.MDC_ECG_ELEC_POTL_I.VALUE,
@@ -37,17 +39,24 @@ public class ElectroCardioGramPanel extends DevicePanel {
 	public ElectroCardioGramPanel() {
 		super();
 		setLayout(new GridLayout(ECG_WAVEFORMS.length, 1));
-		panel = new SwingWaveformPanel[ECG_WAVEFORMS.length];
+		WaveformPanelFactory fact = new WaveformPanelFactory();
+		panel = new WaveformPanel[ECG_WAVEFORMS.length];
 		for(int i = 0; i < panel.length; i++) {
-			add(panel[i] = new SwingWaveformPanel());
+			add((panel[i] = fact.createWaveformPanel()).asComponent());
 			WaveformUpdateWaveformSource wuws = new WaveformUpdateWaveformSource();
 			panel[i].setSource(wuws);
 			panelMap.put(ECG_WAVEFORMS[i], wuws);
-			
+			panel[i].start();
 		}
 	}
 	
-	
+	@Override
+	public void destroy() {
+	    for(WaveformPanel wp : panel) {
+	        wp.stop();
+	    }
+	    super.destroy();
+	}
 	public static boolean supported(Set<Integer> identifiers) {
 		for(int w : ECG_WAVEFORMS) {
 			if(identifiers.contains(w)) {

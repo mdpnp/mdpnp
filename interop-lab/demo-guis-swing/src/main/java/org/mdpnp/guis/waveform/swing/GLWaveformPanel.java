@@ -9,6 +9,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import javax.media.opengl.GLAutoDrawable;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -32,6 +33,8 @@ import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformSource;
 import org.mdpnp.guis.waveform.WaveformSourceListener;
 import org.mdpnp.guis.waveform.opengl.GLWaveformRenderer;
+
+import com.jogamp.opengl.util.FPSAnimator;
 
 @SuppressWarnings("serial")
 public class GLWaveformPanel extends GLPanel implements WaveformPanel {
@@ -329,5 +332,16 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
 	@Override
 	public void setOutOfTrack(boolean outOfTrack) {
 		renderer.setOutOfTrack(outOfTrack);
+	}
+	
+	@Override
+	public void start() {
+	    setAnimator(new FPSAnimator((GLAutoDrawable) this, FPSAnimator.DEFAULT_FRAMES_PER_INTERVAL));
+        getAnimator().start();   
+	}
+	@Override
+	public void stop() {
+        getAnimator().stop();
+        getAnimator().remove(this);    
 	}
 }

@@ -6,4 +6,6 @@ public interface WaveformPanel {
 	CachingWaveformSource cachingSource();
 	EvenTempoWaveformSource evenTempoSource();
 	void setOutOfTrack(boolean outOfTrack);
+	void start();
+	void stop();
 }
