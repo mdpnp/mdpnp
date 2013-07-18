@@ -39,6 +39,7 @@ public class DevicePanelFactory {
 	
 
 	public static void resolvePanels(Set<Integer> tags, Collection<DevicePanel> panels) {
+	    // TODO call destroy as appropriate
 	    Map<Class, DevicePanel> byClass = new HashMap<Class, DevicePanel>();
 	    Collection<DevicePanel> newPanels = new ArrayList<DevicePanel>();
 	    
