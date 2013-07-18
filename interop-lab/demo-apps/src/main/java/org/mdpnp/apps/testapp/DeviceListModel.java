@@ -30,8 +30,11 @@ import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusCondition;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.subscription.InstanceStateKind;
+import com.rti.dds.subscription.LivelinessChangedStatus;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleLostStatus;
+import com.rti.dds.subscription.SampleRejectedStatus;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
@@ -237,11 +240,61 @@ public class DeviceListModel extends AbstractListModel<Device> {
         }
     }
    
-    
+	
+	private final void sampleLost(ice.DeviceIdentityDataReader reader) {
+	    SampleLostStatus sls = new SampleLostStatus();
+	    reader.get_sample_lost_status(sls);
+	    log.debug("SampleLost:"+sls);
+	}
+	
+	private final void sampleRejected(ice.DeviceIdentityDataReader reader) {
+	    SampleRejectedStatus srs = new SampleRejectedStatus();
+	    reader.get_sample_rejected_status(srs);
+	    log.debug("SampleRejected:"+srs);
+	}
+	
+    private final void livelinessChanged(ice.DeviceIdentityDataReader reader) {
+        LivelinessChangedStatus change_status = new LivelinessChangedStatus();
+        reader.get_liveliness_changed_status(change_status);
+        log.trace("liveliness changed:"+ change_status);
+        // A DataWriter has moved from not alive to alive
+        // I cannot figure out how to detect the relevant instance state change in on data available
+        if(change_status.alive_count_change > 0 && change_status.not_alive_count_change < 0) {
+            log.trace("A DataWriter has regained liveliness, iterate instances");
+            InstanceHandle_t lastHandle = InstanceHandle_t.HANDLE_NIL;
+
+            for(;;) {
+                try {
+                    reader.read_next_instance(data_seq, info_seq, 1, lastHandle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                    for(int i = 0; i < data_seq.size(); i++) {
+                        SampleInfo si = (SampleInfo) info_seq.get(i);
+                        ice.DeviceIdentity di = (DeviceIdentity) data_seq.get(i);
+                        if(!si.valid_data) {
+                            // Populate at least the key fields for debug messages
+                            di = new DeviceIdentity();
+                            reader.get_key_value(di, si.instance_handle);
+                        }
+                        log.trace("DeviceIdentity:"+di);
+                        if(change_status.last_publication_handle.equals(si.publication_handle)) {
+                            log.info("Resurrected:"+di);
+                            add(si.instance_handle, di);
+                        } 
+                        lastHandle = si.instance_handle;
+                        
+                    }
+                } catch(RETCODE_NO_DATA noData) {
+                    break;
+                } finally {
+                    reader.return_loan(data_seq, info_seq);
+                }
+            }
+        }
+    }
    
 	private final void dataAvailable(ice.DeviceIdentityDataReader reader) {
         try {
-            reader.read(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+            log.trace("dataAvailable");
+            reader.read(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
             for(int i = 0; i < data_seq.size(); i++) {
                 DeviceIdentity di = (DeviceIdentity) data_seq.get(i);
                 SampleInfo si = (SampleInfo) info_seq.get(i);
@@ -268,11 +321,11 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         remove(si.instance_handle);
                         
                         // Take samples for the instance out of the reader ...
-                        DeviceIdentitySeq temp_data_seq = new DeviceIdentitySeq();
-                        SampleInfoSeq temp_info_seq = new SampleInfoSeq();
-                        reader.take_instance(temp_data_seq, temp_info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, si.instance_handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
-                        log.trace("Took " + temp_info_seq.size() + " samples from the reader");
-                        reader.return_loan(temp_data_seq, temp_info_seq);
+//                        DeviceIdentitySeq temp_data_seq = new DeviceIdentitySeq();
+//                        SampleInfoSeq temp_info_seq = new SampleInfoSeq();
+//                        reader.take_instance(temp_data_seq, temp_info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, si.instance_handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+//                        log.trace("Took " + temp_info_seq.size() + " samples from the reader");
+//                        reader.return_loan(temp_data_seq, temp_info_seq);
                     } else if(0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & si.instance_state)) {
                         
                         if(si.valid_data) {
@@ -307,15 +360,26 @@ public class DeviceListModel extends AbstractListModel<Device> {
 		reader = (DeviceIdentityDataReader) subscriber.create_datareader(topic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		connReader = (DeviceConnectivityDataReader) subscriber.create_datareader(connTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
-		reader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
+		reader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS | StatusKind.LIVELINESS_CHANGED_STATUS | StatusKind.SAMPLE_LOST_STATUS | StatusKind.SAMPLE_REJECTED_STATUS);
 		connReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
 		
 		eventLoop.addHandler(reader.get_statuscondition(), new EventLoop.ConditionHandler() {
 	            @Override
 	            public void conditionChanged(Condition condition) {
 	                ice.DeviceIdentityDataReader reader = (DeviceIdentityDataReader) ((StatusCondition)condition).get_entity();
-
-	                dataAvailable(reader);
+	                int status_changes = reader.get_status_changes();
+	                if(0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
+	                    dataAvailable(reader);
+	                }
+	                if(0 != (status_changes & StatusKind.LIVELINESS_CHANGED_STATUS)) {
+	                    livelinessChanged(reader);
+	                }
+	                if(0 != (status_changes & StatusKind.SAMPLE_LOST_STATUS)) {
+	                    sampleLost(reader);
+	                }
+	                if(0 != (status_changes & StatusKind.SAMPLE_REJECTED_STATUS)) {
+	                    sampleRejected(reader);
+	                }
 	            }
 	            
 	        });
