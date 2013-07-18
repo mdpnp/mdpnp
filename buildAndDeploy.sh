@@ -1,6 +1,9 @@
+PARCEL=demo-apps-0.1.1-SNAPSHOT
+TARGETS=`cat targets | sed '/^\s*#/d'`
+
 ./gradlew :interop-lab:demo-apps:distZip
-export PARCEL=demo-apps-0.1.0
-for TARGET in $(cat targets)
+
+for TARGET in $TARGETS
 do
   echo Shipping bundle to $TARGET
   scp interop-lab/demo-apps/build/distributions/$PARCEL.zip ubuntu@$TARGET: > $TARGET.scp.out &
@@ -9,7 +12,7 @@ done
 echo Awaiting shipment completion
 wait
 
-for TARGET in $(cat targets)
+for TARGET in $TARGETS
 do
   echo Decompressing to $TARGET
   ssh ubuntu@$TARGET unzip $PARCEL.zip > $TARGET.unzip.out &
@@ -17,7 +20,7 @@ done
 echo Awaiting decompression
 wait
   
-for TARGET in $(cat targets)
+for TARGET in $TARGETS
 do
   echo Copying more files to $TARGET
   scp interop-lab/demo-apps/src/main/resources/USER_QOS_PROFILES.xml ubuntu@$TARGET:
