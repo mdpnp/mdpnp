@@ -84,6 +84,12 @@ p.welcomeText{
 	font-weight:bold;
 }
 
+/* A selected row from a table*/
+.selectedRow{
+	background-color:#316AC5;
+	color: #FFFFFF;
+}
+
 /* .unsubmittedScn { */
 /* 	color: black; */
 /* 	font-weight:normal; */

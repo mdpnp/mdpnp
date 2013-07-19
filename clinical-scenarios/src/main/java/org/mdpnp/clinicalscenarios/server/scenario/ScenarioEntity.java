@@ -9,6 +9,7 @@ import com.google.appengine.api.datastore.QueryResultIterator;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
+import com.google.gwt.user.client.Window;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
@@ -28,6 +29,7 @@ public class ScenarioEntity implements java.io.Serializable {
 	@Id
 	private Long id;
 	
+	//XXX @ Index Shouldn't we index the title if we are going to base our basic search on it?
 	private String title; //title of the scenario
 	@Index
 	private String status; //status of the scenario (modified, submitted, ect...)
@@ -49,9 +51,8 @@ public class ScenarioEntity implements java.io.Serializable {
 	private ProposedSolutionValue proposedSolution = new ProposedSolutionValue();
 	private BenefitsAndRisksValue benefitsAndRisks = new BenefitsAndRisksValue();
 	
-	//to ID the current user
-    final static UserService userService = UserServiceFactory.getUserService();
-    final static User user = userService.getCurrentUser();
+
+
 
 	public Hazards getHazards() {
         return hazards;
@@ -126,7 +127,10 @@ public class ScenarioEntity implements java.io.Serializable {
 		
 	public static ScenarioEntity create() {
 	    ScenarioEntity s = new ScenarioEntity();
-	    s.setStatus(SCN_STATUS_UNSUBMITTED);//XXX By default, pending of submission
+	    s.setStatus(SCN_STATUS_UNSUBMITTED);//By default, pending of submission
+		//to ID the current user
+	    UserService userService = UserServiceFactory.getUserService();
+	    User user = userService.getCurrentUser();//final? What happens when we change the user?
 	    s.setSubmitter(user.getEmail());
         ofy().save().entity(s).now();
         return s;
@@ -160,6 +164,21 @@ public class ScenarioEntity implements java.io.Serializable {
 			}
 		}
 		return matchingScenarios;
+	}
+	
+	/**
+	 * List Scn by status type 
+	 * @param status status type
+	 * @return
+	 */
+	public static List<ScenarioEntity> searchByStatus(String status){
+		List<ScenarioEntity> listScn = ofy().load().type(ScenarioEntity.class).filter("status", status).list();
+		return listScn;
+	}
+	
+	public static List<ScenarioEntity> searchScnBySubmitter(String submitter){
+		List<ScenarioEntity> listScn = ofy().load().type(ScenarioEntity.class).filter("submitter", submitter).list();
+		return listScn;
 	}
 	
 	public static List<ScenarioEntity> findAllScenarios() {
