@@ -2,6 +2,7 @@ apply plugin: 'java'
 apply plugin: 'application'
 defaultTasks 'build'
 
+
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
@@ -40,15 +41,7 @@ dependencies {
   
   runtime project(':interop-lab:demo-purejavacomm')
   
-//  if(project.hasProperty('ICE_IC01_USER') && project.hasProperty('ICE_IC01_PASSWORD')) {
-//    runtime project(':interop-lab:demo-rtidds')
-//  }
-  
-//  runtime project(':interop-lab:demo-jgroups')
-  
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
-
-//  runtime group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.2'
   runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.2'
   runtime group: 'log4j', name: 'log4j', version: '1.2.17'
   runtime project(':interop-lab:pump-control')
@@ -57,12 +50,74 @@ dependencies {
   compile group: 'org.jfree', name:'jfreechart', version: '1.0.14'
   compile group: 'com.jeffplourde', name: 'Utility', version: '0.0.1'
   
+  // RTI DDS Runtime components
+  if (osName.contains("windows")) {
+      if(osArch.contains("all")) {
+          distZip.classifier = 'windows-all'
+      } else if(osArch.contains("64")) {
+          distZip.classifier = 'windows-64'
+      } else {
+          distZip.classifier = 'windows-32'
+      }
+      
+      if(osArch.contains("all") || osArch.contains("64")) {
+          runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32amd64'
+          runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'windows-x86_64'
+          runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-windows-amd64'
+          runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-windows-amd64'
+          
+      } 
+      if(osArch.contains("all") || !osArch.contains("64")) {
+          runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32x86'
+          runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'windows-x86'
+          runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-windows-i586'
+          runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-windows-i586'
+      }
+  } else if(osName.contains('mac')) {
+      runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'darwin'
+      runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'macosx-x86_64'
+      runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-macosx-universal'
+      runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-macosx-universal'
+      distZip.classifier = 'mac'
+  } else {
+      
+      if(osArch.contains("arm")) {
+          distZip.classifier = 'linux-arm'
+      } else if(osArch.contains("all")) {
+          distZip.classifier = 'linux-all'
+      } else if(osArch.contains("64")) {
+          distZip.classifier = 'linux-64'
+      } else {
+          distZip.classifier = 'linux-32'
+      }
+      
+      if(osArch.contains("arm")) {
+          runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxarm'
+          runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'android-arm'
+          runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-android-armv6'
+          runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-android-armv6'
+      } else {
+          if(osArch.contains("all") || osArch.contains("64")) {
+              runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxamd64'
+              runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'linux-x86_64'
+              runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-linux-amd64'
+              runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-linux-amd64'
+          }
+          if(osArch.contains("all") || !osArch.contains("64")) {
+              runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxi386'
+              runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'linux-x86'
+              runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-linux-i586'
+              runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-linux-i586'
+          }
+      }
+      
+  }
+  
+  // Java CV (Requires OpenCV) 
   compile group: 'com.googlecode.javacpp', name: 'javacpp', version: '0.5'
   compile group: 'com.googlecode.javacv', name: 'javacv', version: '0.5'
-  runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'macosx-x86_64'
-  runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'android-arm'
-  runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'linux-x86'
-  runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'linux-x86_64'
-  runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'windows-x86'
-  runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'windows-x86_64'
 }
+
+println "building " + distZip.classifier
+
+

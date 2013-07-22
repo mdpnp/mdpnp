@@ -3,7 +3,7 @@ defaultTasks 'build'
 // builds a gradle wrapper 
 // http://www.gradle.org/docs/current/userguide/gradle_wrapper.html
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.4'
+    gradleVersion = '1.6'
 }
 
 // I don't want to apply the java plug-in to all 
@@ -16,11 +16,29 @@ ext {
 group 'org.mdpnp'
 version '0.1.1-SNAPSHOT'
 
+
+
 subprojects {
     
+    
+
+    ext.osName = project.hasProperty('OS_NAME') ? OS_NAME : System.properties['os.name'].toLowerCase()
+    ext.osArch = project.hasProperty('OS_ARCH') ? OS_ARCH : System.properties['os.arch'].toLowerCase()
+        
     group 'org.mdpnp'
     version '0.1.1-SNAPSHOT'
-      
+    buildscript {
+        repositories {
+            // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
+            maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-release-local' }
+            
+            ivy {  artifactPattern 'http://gradle-macappbundle.googlecode.com/files/[module]-[revision].[ext]' }
+            
+            ivy {  artifactPattern 'http://gradle-launch4j.googlecode.com/files/[module]-[revision].[ext]' }
+        }
+        
+        
+    }
     repositories {
         // Virtual repository of all remote repositories
         // used in the mdpnp project
@@ -33,19 +51,6 @@ subprojects {
                 }
             }
             url 'http://arvi.mgh.harvard.edu:8080/artifactory/remote-repos' }
-
-        // Repository for RTI artifacts available to members of the infrastructure community ICE_IC01
-        if(project.hasProperty('ICE_IC01_USER') && project.hasProperty('ICE_IC01_PASSWORD')) {
-            maven {
-                credentials {
-                    username ICE_IC01_USER
-                    password ICE_IC01_PASSWORD
-                }
-                url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-rti-infrastructure-community'
-            }
-        } else {
-            println "No access to ICE_IC01 infrastructure community artifacts"
-        }
 
         // Repository for external snapshot libs hosted by mdpnp (unavailable in any other repo)
         maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-snapshot-local' }

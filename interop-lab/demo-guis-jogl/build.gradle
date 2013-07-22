@@ -12,19 +12,4 @@ dependencies {
   compile group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11'
   compile group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11'
 
-  
-  runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-macosx-universal'
-  runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-android-armv6'
-  runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-linux-i586'
-  runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-linux-amd64'
-  runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-windows-i586'
-  runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-windows-amd64'
-  
-  runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-macosx-universal'
-  runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-android-armv6'
-  runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-linux-i586'
-  runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-linux-amd64'
-  runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-windows-i586'
-  runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-windows-amd64'
-  
 }
