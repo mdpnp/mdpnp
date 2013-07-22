@@ -12,10 +12,10 @@
 	<g:FlowPanel>
 		<g:Label text='Basic Search' ui:field='header' styleName='heading'/>
 
-		<g:TextBox ui:field='searchQuery' text='Enter keywords'/>
-		
+		<g:TextBox ui:field='searchQuery' text='Enter keywords'/>		
 		<g:Button text='Search' ui:field='submitButton'/>
-		<g:Label text='Please Enter Keywords' styleName='{style.notimportant}'/>
+		<g:Label text='Please Enter Keywords' ui:field='pleaseEnterKeywords' styleName='{style.notimportant}'/>
+
 		<g:FlexTable ui:field='searchResult'/>
 		
 		<g:Button text='Create New Scenario' ui:field='createNew' styleName='{style.important}'/>

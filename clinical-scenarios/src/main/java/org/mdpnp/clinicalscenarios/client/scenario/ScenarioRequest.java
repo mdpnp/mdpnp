@@ -17,4 +17,6 @@ public interface ScenarioRequest extends RequestContext {
 	Request<List<ScenarioProxy>> searchByKeywords(String keywords);
 	Request<ScenarioProxy> create();
 	
+	Request<List<ScenarioProxy>> searchByStatus(String status);
+	Request<List<ScenarioProxy>> searchScnBySubmitter(String submitter);
 }

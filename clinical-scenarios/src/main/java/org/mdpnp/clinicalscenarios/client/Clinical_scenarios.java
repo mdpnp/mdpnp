@@ -64,6 +64,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		tagRequestFactory.initialize(eventBus);
 		
 		scenarioPanel = new ScenarioPanel(scenarioRequestFactory);
+		
 		scenarioSearchPanel = new ScenarioSearchPanel(scenarioRequestFactory);
 		scenarioSearchPanel.setSearchHandler(this);
 		scenarioListPanel = new ScenarioSearchPanel(scenarioRequestFactory);
@@ -71,15 +72,12 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoSearchPanel = new UserInfoSearchPanel(userInfoRequestFactory);
 		userInfoBanner = new UserInfoBanner(userInfoRequestFactory, this);
 		
-		tagsManagementPanel = new TagsManagementPanel(tagRequestFactory);//XXX Tags
+		tagsManagementPanel = new TagsManagementPanel(tagRequestFactory);// Tags
 		tagsManagementPanel.setSaveHandler(new TagsManagementPanel.SaveHandler(){
-
 			@Override
 			public void onSave(TagProxy tagProxy) {
 				tagsManagementPanel.setCurrentTag(tagProxy);
-				
-			}
-			
+			}			
 		});
 
 
@@ -103,8 +101,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			
 		});
 		contents.add(userInfoPanel);
-		
-		
+				
 		userInfoBanner.getEditProfile().setScheduledCommand(new Command() {
 
 			@Override
@@ -126,18 +123,72 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		});
 		scenarioListPanel.getSearchQuery().setText("");
 		scenarioListPanel.getSearchQuery().setVisible(false);
-		scenarioListPanel.getHeader().setText("List Scenarios");
+		scenarioListPanel.getPleaseEnterKeywords().setVisible(false);
+		scenarioListPanel.getHeader().setText("Scenario List");
 		scenarioListPanel.getSubmitButton().setVisible(false);
 		
-		userInfoBanner.getList().setScheduledCommand(new Command() {
+//		userInfoBanner.getList().setScheduledCommand(new Command() {
 
+//			@Override
+//			public void execute() {
+//				scenarioListPanel.doSearch("");
+//				showWidget(scenarioListPanel);
+//			}
+//			
+//		});
+		
+		//command to list all scn
+		userInfoBanner.getListAllScenarios().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
+//				showWidget(userInfoSearchPanel);
 				scenarioListPanel.doSearch("");
 				showWidget(scenarioListPanel);
 			}
-			
 		});
+		
+		//commands to list scn by status
+		userInfoBanner.getListScnSubmitted().setScheduledCommand(new Command(){
+			@Override
+			public void execute() {
+//				showWidget(userInfoSearchPanel);
+				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_SUBMITTED);
+				showWidget(scenarioListPanel);
+			}
+		});
+		userInfoBanner.getListScnUnsubmitted().setScheduledCommand(new Command(){
+			@Override
+			public void execute() {
+//				showWidget(userInfoSearchPanel);
+				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_UNSUBMITTED);
+				showWidget(scenarioListPanel);
+			}
+		});
+		userInfoBanner.getListScnApproved().setScheduledCommand(new Command(){
+			@Override
+			public void execute() {
+//				showWidget(userInfoSearchPanel);
+				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
+				showWidget(scenarioListPanel);
+			}
+		});
+		userInfoBanner.getListScnRejected().setScheduledCommand(new Command(){
+			@Override
+			public void execute() {
+//				showWidget(userInfoSearchPanel);
+				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_REJECTED);
+				showWidget(scenarioListPanel);
+			}
+		});
+		userInfoBanner.getListMyScn().setScheduledCommand(new Command(){
+			@Override
+			public void execute() {
+//				showWidget(userInfoSearchPanel);
+				scenarioListPanel.listScnBySubmitter(userInfoBanner.getUserEmail());
+				showWidget(scenarioListPanel);
+			}
+		});
+		
 		contents.add(scenarioSearchPanel);
 		contents.add(scenarioListPanel);
 		contents.add(userInfoPanel);
