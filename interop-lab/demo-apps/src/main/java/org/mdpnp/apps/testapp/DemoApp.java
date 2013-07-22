@@ -93,6 +93,14 @@ public class DemoApp {
 		
 		final DemoFrame frame = new DemoFrame("ICE Supervisor");
 		panel = new DemoPanel();
+		switch(domainId) {
+		case 3:
+		    panel.getBedLabel().setText("Operating Room "+domainId);
+		    break;
+		default:
+		    panel.getBedLabel().setText("Intensive Care " + domainId);
+		    break;
+		}
 		
 		String version = BuildInfo.getVersion();
 		

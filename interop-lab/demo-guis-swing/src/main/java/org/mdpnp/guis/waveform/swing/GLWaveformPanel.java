@@ -286,7 +286,8 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
 				dataFrame2.setVisible(true);
 			}
 		});
-		
+		JMenuItem aboutPanel = new JMenuItem(GLWaveformPanel.class.getSimpleName());
+		this.popup.add(aboutPanel);
 //		
 		
 

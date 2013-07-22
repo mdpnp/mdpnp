@@ -331,7 +331,8 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 				dataFrame2.setVisible(true);
 			}
 		});
-		
+		JMenuItem aboutPanel = new JMenuItem(SwingWaveformPanel.class.getSimpleName());
+		this.popup.add(aboutPanel);
 //		
 		
 		setSource(source);
