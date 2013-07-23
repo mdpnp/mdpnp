@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.oridion.capnostream.Capnostream.Command;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
@@ -59,8 +60,8 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 	
 
 	
-	public DemoCapnostream20(int domainId) {
-		super(domainId);
+	public DemoCapnostream20(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 		deviceIdentity.manufacturer = "Oridion";
 		deviceIdentity.model = "Capnostream20";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
@@ -83,8 +84,8 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         extendedCO2Status = createNumericInstance(ice.oridion.MDC_EXTENDED_CO2_STATUS.VALUE);
 	}
 	
-	public DemoCapnostream20(int domainId, SerialSocket serialSocket) {
-        super(domainId, serialSocket);
+	public DemoCapnostream20(int domainId, EventLoop eventLoop, SerialSocket serialSocket) {
+        super(domainId, eventLoop, serialSocket);
         deviceIdentity.manufacturer = "Oridion";
         deviceIdentity.model = "Capnostream20";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);

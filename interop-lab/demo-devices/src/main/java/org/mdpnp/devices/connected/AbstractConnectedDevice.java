@@ -50,6 +50,7 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 	protected final DeviceConnectivityObjectiveDataReader deviceConnectivityObjectiveReader;
 //	protected final InstanceHandle_t deviceConnectivityObjectiveHandle;
 	protected final Topic deviceConnectivityObjectiveTopic;
+	private final ReadCondition rc;
     
 	protected final StateMachine<ice.ConnectionState> stateMachine = new StateMachine<ice.ConnectionState>(legalTransitions, ice.ConnectionState.Disconnected) {
 		@Override
@@ -62,8 +63,28 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 	
 	private static final Logger log = LoggerFactory.getLogger(AbstractConnectedDevice.class);
 	
-	public AbstractConnectedDevice(int domainId) {
-		super(domainId);
+	@Override
+	public void shutdown() {
+	    eventLoop.removeHandler(rc);
+	    deviceConnectivityObjectiveReader.delete_readcondition(rc);
+	    subscriber.delete_datareader(deviceConnectivityObjectiveReader);
+	    domainParticipant.delete_topic(deviceConnectivityObjectiveTopic);
+	    DeviceConnectivityObjectiveTypeSupport.unregister_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
+	    
+	    
+	    if(null != deviceConnectivityHandle) {
+	        deviceConnectivityWriter.dispose(deviceConnectivity, deviceConnectivityHandle);
+	        deviceConnectivityHandle = null;
+	    }
+	    publisher.delete_datawriter(deviceConnectivityWriter);
+	    domainParticipant.delete_topic(deviceConnectivityTopic);
+	    DeviceConnectivityTypeSupport.unregister_type(domainParticipant, DeviceConnectivityTypeSupport.get_type_name());
+	    super.shutdown();
+	}
+	
+	
+	public AbstractConnectedDevice(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 		DeviceConnectivityTypeSupport.register_type(domainParticipant, DeviceConnectivityTypeSupport.get_type_name());
 		deviceConnectivityTopic = domainParticipant.create_topic(DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		deviceConnectivityWriter = (DeviceConnectivityDataWriter) publisher.create_datawriter(deviceConnectivityTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
@@ -81,7 +102,7 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 		deviceConnectivityObjectiveTopic = domainParticipant.create_topic(DeviceConnectivityObjectiveTopic.VALUE, DeviceConnectivityObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		deviceConnectivityObjectiveReader = (DeviceConnectivityObjectiveDataReader) subscriber.create_datareader(deviceConnectivityObjectiveTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
-		final ReadCondition rc = deviceConnectivityObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+		rc = deviceConnectivityObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
 		
         final DeviceConnectivityObjectiveSeq data_seq = new DeviceConnectivityObjectiveSeq();
         final SampleInfoSeq info_seq = new SampleInfoSeq();

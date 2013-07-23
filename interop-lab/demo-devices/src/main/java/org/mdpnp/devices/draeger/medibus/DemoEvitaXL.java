@@ -1,5 +1,6 @@
 package org.mdpnp.devices.draeger.medibus;
 
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
@@ -8,11 +9,11 @@ import org.mdpnp.devices.serial.SerialSocket.StopBits;
 
 public class DemoEvitaXL extends AbstractDraegerVent {
 
-	public DemoEvitaXL(int domainId) {
-		super(domainId);
+	public DemoEvitaXL(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 	}
-	public DemoEvitaXL(int domainId, SerialSocket socket) {
-		super(domainId, socket);
+	public DemoEvitaXL(int domainId, EventLoop eventLoop, SerialSocket socket) {
+		super(domainId, eventLoop, socket);
 	}
 	
 	@Override

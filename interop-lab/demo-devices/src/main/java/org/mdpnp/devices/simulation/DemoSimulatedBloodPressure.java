@@ -11,6 +11,8 @@ import ice.Numeric;
 
 import java.util.Random;
 
+import org.mdpnp.devices.EventLoop;
+
 public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice implements Runnable {
     
     private final InstanceHolder<Numeric> systolic, diastolic, pulse, inflation, respiratoryRate, nextInflationTime, state;
@@ -153,8 +155,8 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
 	
 	private Thread t;
 	
-	public DemoSimulatedBloodPressure(int domainId) {
-		super(domainId);
+	public DemoSimulatedBloodPressure(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 		deviceIdentity.model = "NIBP (Simulated)";
 		deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 		

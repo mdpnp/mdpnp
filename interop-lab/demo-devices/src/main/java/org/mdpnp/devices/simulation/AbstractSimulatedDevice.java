@@ -13,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +29,8 @@ public abstract class AbstractSimulatedDevice extends AbstractDevice {
         log.debug("Created Random UDI:"+di.universal_device_identifier);
     }
     
-	public AbstractSimulatedDevice(int domainId) {
-		super(domainId);
+	public AbstractSimulatedDevice(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 		randomUDI(deviceIdentity);
 		deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
 	}

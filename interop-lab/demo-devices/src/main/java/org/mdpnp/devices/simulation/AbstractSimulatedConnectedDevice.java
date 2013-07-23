@@ -7,13 +7,14 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 
 public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice {
 	protected Throwable t;
 	
-	public AbstractSimulatedConnectedDevice(int domainId) {
-		super(domainId);
+	public AbstractSimulatedConnectedDevice(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 		AbstractSimulatedDevice.randomUDI(deviceIdentity);
 		deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
 	    deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);

@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.connected.TimeAwareInputStream;
 import org.slf4j.Logger;
@@ -39,8 +40,8 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 		
 	}
 	
-	public AbstractSerialDevice(int domainId) {
-		super(domainId);
+	public AbstractSerialDevice(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 		long maxQuietTime = getMaximumQuietTime();
 		if(maxQuietTime>0L) {
 			executor.scheduleAtFixedRate(new Watchdog(), 0L, getMaximumQuietTime(), TimeUnit.MILLISECONDS);
@@ -48,8 +49,8 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 		deviceConnectivity.valid_targets.addAll(getSerialProvider().getPortNames());
 	}
 	
-	public AbstractSerialDevice(int domainId, SerialSocket sock) {
-		super(domainId);
+	public AbstractSerialDevice(int domainId, EventLoop eventLoop, SerialSocket sock) {
+		super(domainId, eventLoop);
 		long maxQuietTime = getMaximumQuietTime();
 		if(maxQuietTime>0L) {
 			executor.scheduleAtFixedRate(new Watchdog(), 0L, getMaximumQuietTime(), TimeUnit.MILLISECONDS);
@@ -268,5 +269,11 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 	@Override
 	protected ice.ConnectionType getConnectionType() {
 		return ice.ConnectionType.Serial;
+	}
+	
+	@Override
+	public void shutdown() {
+	    close();
+	    super.shutdown();
 	}
 }

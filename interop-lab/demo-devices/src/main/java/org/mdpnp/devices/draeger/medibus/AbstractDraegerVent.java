@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.draeger.medibus.Medibus.Alarm;
 import org.mdpnp.devices.draeger.medibus.Medibus.Data;
 import org.mdpnp.devices.draeger.medibus.types.Command;
@@ -339,15 +340,15 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 		}
 	}
 	
-	public AbstractDraegerVent(int domainId) {
-		super(domainId);
+	public AbstractDraegerVent(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 		loadMap();
 		timeUpdate = createNumericInstance(ice.MDC_TIME_MSEC_SINCE_EPOCH.VALUE);
 		startInspiratoryCycleUpdate = createNumericInstance(ice.MDC_START_OF_BREATH.VALUE);
 	}
 	
-	public AbstractDraegerVent(int domainId, SerialSocket serialSocket) {
-        super(domainId, serialSocket);
+	public AbstractDraegerVent(int domainId, EventLoop eventLoop, SerialSocket serialSocket) {
+        super(domainId, eventLoop, serialSocket);
         loadMap();
         timeUpdate = createNumericInstance(ice.MDC_TIME_MSEC_SINCE_EPOCH.VALUE);
         startInspiratoryCycleUpdate = createNumericInstance(ice.MDC_START_OF_BREATH.VALUE);

@@ -13,9 +13,12 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.TimeZone;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
+import javax.swing.DefaultComboBoxModel;
 
+import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 //import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 import org.mdpnp.devices.EventLoop;
@@ -69,7 +72,7 @@ public class DemoApp {
 	
 	private static final Logger log = LoggerFactory.getLogger(DemoApp.class);
 	
-	public static final void start(int domainId) throws Exception {
+	public static final void start(final int domainId) throws Exception {
 		UIManager.setLookAndFeel(new MDPnPLookAndFeel());
 
 
@@ -92,6 +95,7 @@ public class DemoApp {
 		
 		
 		final DemoFrame frame = new DemoFrame("ICE Supervisor");
+		frame.setIconImage(ImageIO.read(DemoApp.class.getResource("icon.png")));
 		panel = new DemoPanel();
 		switch(domainId) {
 		case 3:
@@ -169,6 +173,39 @@ public class DemoApp {
 				goback();
 			}
 			
+		});
+		
+		mainMenuPanel.getSpawnDeviceAdapter().addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ConfigurationDialog dia = new ConfigurationDialog();
+                dia.getApplications().setModel(new DefaultComboBoxModel(new Configuration.Application[] {Configuration.Application.ICE_Device_Interface}));
+                dia.set(Configuration.Application.ICE_Device_Interface, Configuration.DeviceType.PO_Simulator);
+                dia.remove(dia.getDomainId());
+                dia.remove(dia.getDomainIdLabel());
+                dia.remove(dia.getWelcomeScroll());
+                dia.getQuit().setText("Close");
+                dia.pack();
+                dia.setLocationRelativeTo(panel);
+                final Configuration c = dia.showDialog();
+                if(null != c) {
+                    Thread t = new Thread(new Runnable() {
+                        public void run() {
+                            try {
+                                DeviceAdapter da = new DeviceAdapter();
+                                da.start(c.getDeviceType(), domainId, c.getAddress(), true, false);
+                                log.info("DeviceAdapter ended");
+                            } catch (Exception e) {
+                                log.error("Error in spawned DeviceAdapter", e);
+                            }
+                        }
+                    });
+                    t.setDaemon(true);
+                    t.start();
+                }
+            }
+		    
 		});
 		
 		

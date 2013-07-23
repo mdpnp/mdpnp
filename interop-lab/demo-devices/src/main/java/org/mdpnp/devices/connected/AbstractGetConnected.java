@@ -59,8 +59,27 @@ public abstract class AbstractGetConnected {
 	private final DeviceConnectivityObjectiveDataWriter deviceConnectivityObjectiveWriter;
 	private final Topic deviceConnectivityTopic;
 	private final Topic deviceConnectivityObjectiveTopic;
+	private final QueryCondition qc;
+	
+	private final EventLoop eventLoop;
+	
+	public void shutdown() {
+	    eventLoop.removeHandler(qc);
+	    deviceConnectivityReader.delete_readcondition(qc);
+	    subscriber.delete_datareader(deviceConnectivityReader);
+	    participant.delete_topic(deviceConnectivityTopic);
+	    DeviceConnectivityTypeSupport.unregister_type(participant, DeviceConnectivityTypeSupport.get_type_name());
+	    
+	    publisher.delete_datawriter(deviceConnectivityObjectiveWriter);
+	    participant.delete_topic(deviceConnectivityObjectiveTopic);
+	    DeviceConnectivityObjectiveTypeSupport.unregister_type(participant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
+	    participant.delete_publisher(publisher);
+	    participant.delete_subscriber(subscriber);
+	    DomainParticipantFactory.get_instance().delete_participant(participant);
+	}
 	
 	public AbstractGetConnected(int domainId, String universal_device_identifier, EventLoop eventLoop) {
+	    this.eventLoop = eventLoop;
 	    DomainParticipantQos pQos = new DomainParticipantQos();
 	    DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
 	    pQos.participant_name.name = "AbstractGetConnected " + universal_device_identifier;
@@ -79,7 +98,7 @@ public abstract class AbstractGetConnected {
         deviceConnectivityReader = (DeviceConnectivityDataReader) subscriber.create_datareader(deviceConnectivityTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         StringSeq udis = new StringSeq();
         udis.add("'"+universal_device_identifier+"'");
-        final QueryCondition qc = deviceConnectivityReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "universal_device_identifier MATCH %0",  udis);
+        qc = deviceConnectivityReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "universal_device_identifier MATCH %0",  udis);
         eventLoop.addHandler(qc, new EventLoop.ConditionHandler() {
             SampleInfoSeq info_seq = new SampleInfoSeq();
             DeviceConnectivitySeq data_seq = new DeviceConnectivitySeq();

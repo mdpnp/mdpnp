@@ -13,6 +13,7 @@ import ice.MDC_PULS_OXIM_SAT_O2;
 import ice.Numeric;
 import ice.SampleArray;
 
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 
 public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
@@ -45,8 +46,8 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
 		super.disconnect();
 	}
 	
-	public SimPulseOximeter(int domainId) {
-		super(domainId);
+	public SimPulseOximeter(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 		
 		pulse = createNumericInstance(MDC_PULS_OXIM_PULS_RATE.VALUE);
 		SpO2 = createNumericInstance(MDC_PULS_OXIM_SAT_O2.VALUE);

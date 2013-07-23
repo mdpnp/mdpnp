@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 
 import org.mdpnp.devices.AbstractDevice.InstanceHolder;
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.connected.TimeAwareInputStream;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
@@ -153,8 +154,8 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 	    log.trace("Added Numeric:"+name+" tag="+tagName);
 	}
 	
-	public DemoBernoulli(int domainId) {
-		super(domainId);
+	public DemoBernoulli(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 		
 		// Random UDI is for the device module 
 		// this allows the module to exist within the ICE in a disconnected state
@@ -356,6 +357,12 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 
 
 	private static final Logger log = LoggerFactory.getLogger(DemoBernoulli.class);
+	
+	@Override
+	public void shutdown() {
+	    close();
+	    super.shutdown();
+	}
 	
 	private void close() {
 		log.trace("close");

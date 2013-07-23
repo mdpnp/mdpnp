@@ -1,5 +1,6 @@
 package org.mdpnp.devices.draeger.medibus;
 
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
@@ -8,12 +9,12 @@ import org.mdpnp.devices.serial.SerialSocket.StopBits;
 
 public class DemoApollo extends AbstractDraegerVent {
 
-	public DemoApollo(int domainId) {
-		super(domainId);
+	public DemoApollo(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 	}
 	
-	public DemoApollo(int domainId,  SerialSocket socket) {
-		super(domainId, socket);
+	public DemoApollo(int domainId, EventLoop eventLoop, SerialSocket socket) {
+		super(domainId, eventLoop, socket);
 	}
 	
 	@Override

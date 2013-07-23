@@ -1,12 +1,13 @@
 package org.mdpnp.devices.hospira.symbiq;
 
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 
 public class DemoSymbiq extends AbstractSimulatedConnectedDevice {
 
-	public DemoSymbiq(int domainId) {
-		super(domainId);
+	public DemoSymbiq(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 		AbstractSimulatedDevice.randomUDI(deviceIdentity);
 		deviceIdentity.manufacturer = "Hospira";
 		deviceIdentity.model = "Symbiq";

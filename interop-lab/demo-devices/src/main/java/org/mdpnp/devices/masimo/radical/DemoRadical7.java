@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.serial.AbstractSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket;
@@ -82,8 +83,8 @@ public class DemoRadical7 extends AbstractSerialDevice {
 		serialProvider.setDefaultSerialSettings(9600, SerialSocket.DataBits.Eight, SerialSocket.Parity.None, SerialSocket.StopBits.One);
 		return serialProvider;
 	}
-	public DemoRadical7(int domainId) throws NoSuchFieldException, SecurityException, IOException {
-		super(domainId);
+	public DemoRadical7(int domainId, EventLoop eventLoop) throws NoSuchFieldException, SecurityException, IOException {
+		super(domainId, eventLoop);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = MANUFACTURER_NAME;
         deviceIdentity.model = MODEL_NAME;

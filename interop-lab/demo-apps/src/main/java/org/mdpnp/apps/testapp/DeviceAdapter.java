@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collection;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -42,40 +43,50 @@ import org.slf4j.LoggerFactory;
 public class DeviceAdapter {
 	
 	
-	private static JFrame frame;
-	private static GetConnected getConnected;
+	private JFrame frame;
+	private GetConnected getConnected;
+	private AbstractDevice device;
+	private EventLoopHandler handler;
+	
+	public JFrame getFrame() {
+        return frame;
+    }
+	public GetConnected getGetConnected() {
+        return getConnected;
+    }
+	
 //	private static Collection<org.mdpnp.guis.swing.DevicePanel> panels;
 	
-	public static final AbstractDevice buildDevice(DeviceType type, int domainId) throws NoSuchFieldException, SecurityException, IOException {
+	public static final AbstractDevice buildDevice(DeviceType type, int domainId, EventLoop eventLoop) throws NoSuchFieldException, SecurityException, IOException {
 		switch(type) {
 		case Nonin:
-			return new DemoPulseOx(domainId);
+			return new DemoPulseOx(domainId, eventLoop);
 		case NellcorN595:
-			return new DemoN595(domainId);
+			return new DemoN595(domainId, eventLoop);
 		case MasimoRadical7:
-			return new DemoRadical7(domainId);
+			return new DemoRadical7(domainId, eventLoop);
 		case PO_Simulator:
-			return new SimPulseOximeter(domainId);
+			return new SimPulseOximeter(domainId, eventLoop);
 		case NBP_Simulator:
-			return new DemoSimulatedBloodPressure(domainId);
+			return new DemoSimulatedBloodPressure(domainId, eventLoop);
 		case PhilipsMP70:
-			return new DemoMP70(domainId);
+			return new DemoMP70(domainId, eventLoop);
 		case DragerApollo:
-			return new DemoApollo(domainId);
+			return new DemoApollo(domainId, eventLoop);
 		case DragerEvitaXL:
-			return new DemoEvitaXL(domainId);
+			return new DemoEvitaXL(domainId, eventLoop);
 		case Bernoulli:
-			return new DemoBernoulli(domainId);
+			return new DemoBernoulli(domainId, eventLoop);
 		case Capnostream20:
-			return new DemoCapnostream20(domainId);
+			return new DemoCapnostream20(domainId, eventLoop);
 		case Symbiq:
-			return new DemoSymbiq(domainId);
+			return new DemoSymbiq(domainId, eventLoop);
 		default:
 			throw new RuntimeException("Unknown type:"+type);
 		}
 	}
 	
-	private static synchronized void killAdapter() {
+	private synchronized void killAdapter() {
 //		if(adapter != null) {
 //			adapter.depart();
 //			adapter.tearDown();
@@ -83,40 +94,64 @@ public class DeviceAdapter {
 //		}
 		if(getConnected!=null) {
 			getConnected.disconnect();
+			getConnected.shutdown();
 			getConnected = null;
+		}
+		if(device!=null) {
+		    device.shutdown();
+		    device = null;
+		}
+		if(handler!= null) {
+		    try {
+                handler.shutdown();
+                handler = null;
+            } catch (InterruptedException e) {
+                log.error("Interrupted in handler.shutdown", e);
+            }
 		}
 	}
 	
 	private static final Logger log = LoggerFactory.getLogger(DeviceAdapter.class);
 	
-	public static void start(DeviceType type, int domainId, final String address, boolean gui) throws Exception {
+	public void start(DeviceType type, int domainId, final String address, boolean gui) throws Exception {
+	    start(type, domainId, address, gui, true);
+	}
+	
+	public void start(DeviceType type, int domainId, final String address, boolean gui, boolean exit) throws Exception {
 		if(null!=address && address.contains(":")) {
             SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
             log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
         }
 		final EventLoop eventLoop = new EventLoop();
-		EventLoopHandler handler = new EventLoopHandler(eventLoop);
 
-		AbstractDevice device = buildDevice(type, domainId);
+		handler = new EventLoopHandler(eventLoop);
+
+		device = buildDevice(type, domainId, eventLoop);
 		
 		if(gui) {
 		 // find the appropriate GUI representations for this device
-		    CompositeDevicePanel cdp = new CompositeDevicePanel();
+		    final CompositeDevicePanel cdp = new CompositeDevicePanel();
 		    final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getParticipant(), device.getDeviceIdentity().universal_device_identifier, cdp, eventLoop);
 //            panels = DevicePanelFactory.findPanel(
 //            panels = new ArrayList<DevicePane>
             
 		    frame = new JFrame("ICE Device Adapter - "+type);
-		    
+		    frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
             frame.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
-                    deviceMonitor.shutdown();
-                    killAdapter();
+                    new Thread(new Runnable() {
+                        public void run() {
+                            deviceMonitor.shutdown();
+                            cdp.reset();
+                            killAdapter();
+                            
+                        }
+                    }).start();
                     super.windowClosing(e);
                 }
             });
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setDefaultCloseOperation(exit?JFrame.EXIT_ON_CLOSE:JFrame.DISPOSE_ON_CLOSE);
             frame.setLocationRelativeTo(null);
             frame.setSize(640, 480);
             frame.getContentPane().setLayout(new BorderLayout());
@@ -210,9 +245,9 @@ public class DeviceAdapter {
 //			while(!"quit".equals(line)) {
 //				line = br.readLine();
 //			}
-	        synchronized(DeviceAdapter.class) {
+	        synchronized(this) {
 	            while(!interrupted) {
-	                DeviceAdapter.class.wait();
+	                wait();
 	            }
 	        }
 			int n = Thread.activeCount() + 10;
@@ -223,8 +258,10 @@ public class DeviceAdapter {
 			        log.warn("Non-Daemon thread would block exit: "+threads[i].getName());
 			    }
 			}
-			System.exit(0);
+			if(exit) {
+			    System.exit(0);
+			}
 		}
 	}
-	private static boolean interrupted = false;
+	private boolean interrupted = false;
 }

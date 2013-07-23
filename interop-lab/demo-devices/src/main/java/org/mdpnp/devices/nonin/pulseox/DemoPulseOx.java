@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
@@ -51,8 +52,8 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 //    public static final Numeric FIRMWARE_REVISION = new NumericImpl(DemoPulseOx.class, "FIRMWARE_REVISION");
 //    
     
-	public DemoPulseOx(int domainId) {
-		super(domainId);
+	public DemoPulseOx(int domainId, EventLoop eventLoop) {
+		super(domainId, eventLoop);
 		
 		AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Nonin";

@@ -41,7 +41,7 @@ import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.topic.Topic;
 
 
-public abstract class AbstractDevice implements /*GatewayListener,*/ ThreadFactory {
+public abstract class AbstractDevice implements ThreadFactory {
     protected final ThreadGroup threadGroup;
 	protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(this);
 	protected final EventLoop eventLoop;
@@ -188,7 +188,30 @@ public abstract class AbstractDevice implements /*GatewayListener,*/ ThreadFacto
 	    return t;
 	}
 	
-	public AbstractDevice(int domainId) {
+	
+	public void shutdown() {
+	    publisher.delete_datawriter(sampleArrayDataWriter);
+	    domainParticipant.delete_topic(sampleArrayTopic);
+	    SampleArrayTypeSupport.unregister_type(domainParticipant, SampleArrayTypeSupport.get_type_name());
+	    
+	    publisher.delete_datawriter(numericDataWriter);
+	    domainParticipant.delete_topic(numericTopic);
+	    NumericTypeSupport.unregister_type(domainParticipant, NumericTypeSupport.get_type_name());
+	    
+	    publisher.delete_datawriter(deviceIdentityWriter);
+	    domainParticipant.delete_topic(deviceIdentityTopic);
+	    DeviceIdentityTypeSupport.unregister_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
+	    
+	    domainParticipant.delete_publisher(publisher);
+	    domainParticipant.delete_subscriber(subscriber);
+
+	    DomainParticipantFactory.get_instance().delete_participant(domainParticipant);
+	    
+	    executor.shutdown();
+	    log.info("AbstractDevice shutdown complete");
+	}
+	
+	public AbstractDevice(int domainId, EventLoop eventLoop) {
         DomainParticipantQos pQos = new DomainParticipantQos();
         DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
         pQos.participant_name.name = "AbstractDevice";
@@ -231,9 +254,6 @@ public abstract class AbstractDevice implements /*GatewayListener,*/ ThreadFacto
     		}  
 		};
 		threadGroup.setDaemon(true);
-		
-		eventLoop = new EventLoop();
-		// TODO there is no tearDown for the AbstractDevice
-		EventLoopHandler handler = new EventLoopHandler(eventLoop, threadGroup);
+		this.eventLoop = eventLoop;
 	}
 }

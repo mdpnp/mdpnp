@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 public class ConfigurationDialog extends JDialog {
     private final JTextArea welcomeText = new JTextArea(8, 50);
+    private final JScrollPane welcomeScroll = new JScrollPane(welcomeText);
     private final JComboBox applications = new JComboBox(Application.values());
     private final JButton start = new JButton("Start");
     private final JButton quit = new JButton("Quit");
@@ -49,7 +50,23 @@ public class ConfigurationDialog extends JDialog {
     private final JPanel addressPanel = new JPanel(addressCards);
     private final JLabel domainIdLabel = new JLabel("Domain Id:");
     
+    public JComboBox getApplications() {
+        return applications;
+    }
+    public JTextField getDomainId() {
+        return domainId;
+    }
     
+    public JLabel getDomainIdLabel() {
+        return domainIdLabel;
+    }
+    
+    public JButton getQuit() {
+        return quit;
+    }
+    public JScrollPane getWelcomeScroll() {
+        return welcomeScroll;
+    }
     protected void set(Application app, DeviceType deviceType) {
         switch(app) {
         case ICE_Device_Interface:
@@ -133,6 +150,10 @@ public class ConfigurationDialog extends JDialog {
         addWithAnchor(c, gbc, GridBagConstraints.WEST, GridBagConstraints.NONE);
     }
     
+    public ConfigurationDialog() {
+        this(null);
+    }
+    
     public ConfigurationDialog(Configuration conf) {
         super( (JDialog)null, true);
         
@@ -195,7 +216,7 @@ public class ConfigurationDialog extends JDialog {
                 welcomeText.setWrapStyleWord(true);
                 welcomeText.setEditable(false);
                 welcomeText.setText(sb.toString());
-                addWithAnchor(new JScrollPane(welcomeText),  gbc, GridBagConstraints.CENTER, GridBagConstraints.BOTH);
+                addWithAnchor(welcomeScroll,  gbc, GridBagConstraints.CENTER, GridBagConstraints.BOTH);
                 gbc.gridwidth = 1;
                 gbc.gridheight = 1;
                 gbc.gridy+=4;

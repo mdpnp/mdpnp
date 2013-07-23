@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.serial.AbstractSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
@@ -98,8 +99,8 @@ public class DemoN595 extends AbstractSerialDevice {
 	
 	
 	
-	public DemoN595(int domainId) throws NoSuchFieldException, SecurityException, IOException {
-		super(domainId);
+	public DemoN595(int domainId, EventLoop eventLoop) throws NoSuchFieldException, SecurityException, IOException {
+		super(domainId, eventLoop);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = NellcorN595.MANUFACTURER_NAME;
         deviceIdentity.model = NellcorN595.MODEL_NAME;

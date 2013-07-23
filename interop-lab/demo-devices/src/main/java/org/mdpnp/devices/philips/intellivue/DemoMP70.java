@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataResult;
 import org.mdpnp.devices.philips.intellivue.action.ObservationPoll;
@@ -444,8 +445,8 @@ public class DemoMP70 extends AbstractConnectedDevice {
 	
 	private static final Logger log = LoggerFactory.getLogger(DemoMP70.class);
 	
-	public DemoMP70(int domainId) throws IOException {
-		super(domainId);
+	public DemoMP70(int domainId, EventLoop eventLoop) throws IOException {
+		super(domainId, eventLoop);
 	    deviceIdentity.manufacturer = "Philips";
         deviceIdentity.model = "MP70";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
@@ -459,8 +460,8 @@ public class DemoMP70 extends AbstractConnectedDevice {
 		configureData();
 	}
 	
-	public DemoMP70(int domainId, NetworkLoop loop) {
-		super(domainId);
+	public DemoMP70(int domainId, EventLoop eventLoop, NetworkLoop loop) {
+		super(domainId, eventLoop);
 	    deviceIdentity.manufacturer = "Philips";
         deviceIdentity.model = "MP70";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
