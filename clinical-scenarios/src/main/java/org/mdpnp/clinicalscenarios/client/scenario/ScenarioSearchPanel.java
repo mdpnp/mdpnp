@@ -119,6 +119,13 @@ public class ScenarioSearchPanel extends Composite {
 		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
 		.to(listScnReceiver).fire();
 	}	
+	
+	public void findAllScn(){
+		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
+		scenarioRequest.findAllScenarios()
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.to(listScnReceiver).fire();
+	}
 
 
 	/**
@@ -192,7 +199,8 @@ public class ScenarioSearchPanel extends Composite {
 				//call my own methods, which  will call ScenarioRequest w a sort option / method
 				Collections.sort(response, new ScenarioTitleComparator());
 				drawScenariosListTable(response);
-				
+				//TODO About comparator, on another click,  change to a different comparator w/ the opposite sorting criteria?
+				// this way we can sort on the inverse order on a second click
 			}
 		});
 	    
