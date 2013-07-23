@@ -25,7 +25,7 @@ public class MainMenuPanel extends JPanel {
 	private static final Logger log = LoggerFactory.getLogger(MainMenuPanel.class);
 	private final JList appList;
 	private final JList deviceList;
-//	private final JButton biomedConsole;
+	private final JButton spawnDeviceAdapter;
 	
 	private static final boolean isTrue(String property) {
 	    String s = System.getProperty(property);
@@ -80,9 +80,9 @@ public class MainMenuPanel extends JPanel {
 		rightPanel.add(new JLabel("Connected Devices"), BorderLayout.NORTH);
 		rightPanel.add(new JScrollPane(deviceList), BorderLayout.CENTER);
 		rightPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-//		biomedConsole = new JButton("Force Discovery"); 
+		spawnDeviceAdapter = new JButton("Start an ICE Device Adapter..."); 
 		
-//		rightPanel.add(biomedConsole, BorderLayout.SOUTH);
+		rightPanel.add(spawnDeviceAdapter, BorderLayout.SOUTH);
 		add(leftPanel);
 		add(rightPanel);
 		
@@ -95,7 +95,7 @@ public class MainMenuPanel extends JPanel {
 	public JList getDeviceList() {
 		return deviceList;
 	}
-//	public JButton getBiomedConsole() {
-//		return biomedConsole;
-//	}
+	public JButton getSpawnDeviceAdapter() {
+		return spawnDeviceAdapter;
+	}
 }
