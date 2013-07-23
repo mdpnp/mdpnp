@@ -1,11 +1,8 @@
 package org.mdpnp.android.pulseox;
 
-import org.mdpnp.data.IdentifiableUpdate;
-import org.mdpnp.data.text.TextUpdate;
-import org.mdpnp.data.waveform.WaveformUpdate;
-import org.mdpnp.data.numeric.NumericUpdate;
-import org.mdpnp.data.enumeration.EnumerationUpdate;
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.EventLoop;
+import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.connected.AbstractGetConnected;
 import org.mdpnp.devices.masimo.radical.DemoRadical7;
 import org.mdpnp.devices.nellcor.pulseox.DemoN595;
@@ -14,11 +11,6 @@ import org.mdpnp.devices.nonin.pulseox.DemoPulseOx.Bool;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
-import org.mdpnp.messaging.Gateway;
-import org.mdpnp.messaging.GatewayListener;
-import org.mdpnp.nomenclature.ConnectedDevice;
-import org.mdpnp.nomenclature.Device;
-import org.mdpnp.nomenclature.PulseOximeter;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
@@ -32,8 +24,11 @@ public class PulseOxActivity extends Activity implements GatewayListener {
 	private WaveformRepresentation wave;
 	private TextView heartRate, spo2, state, name, guid;
 	private BluetoothDevice device;
+	private EventLoop eventLoop;
+	private EventLoopHandler eventLoopHandler;
+	private DeviceMonitor deviceMonitor;
 	
-	private Gateway gateway; // = new Gateway();
+//	private Gateway gateway; // = new Gateway();
 	
 	private WaveformUpdateWaveformSource wuws; // = new WaveformUpdateWaveformSource();
 	
@@ -46,28 +41,33 @@ public class PulseOxActivity extends Activity implements GatewayListener {
 	protected void onStart() {
 		super.onStart();
 		debug("*** onStart ***");
-		gateway.addListener(this);
-		getConnected = new GetConnected(null==device?"":device.getAddress(), gateway);
+		int domainId = 0;
+//		gateway.addListener(this);
+		eventLoop = new EventLoop();
+		eventLoopHandler = new EventLoopHandler(eventLoop);
+		
 		if(null == pulseox) {
 			if(null == device) {
-				pulseox = new SimPulseOximeter(gateway);
+				pulseox = new SimPulseOximeter(domainId);
 			} else if(device.getName().startsWith("Nellcor")) {
 				try {
-					pulseox = new DemoN595(gateway);
+					pulseox = new DemoN595(domainId);
 				} catch (Exception e) {
 					Log.e(PulseOxActivity.class.getName(), "Unable to construct", e);
 				}
 			} else if(device.getName().startsWith("Masimo")) {
 				try {
-					pulseox = new DemoRadical7(gateway);
+					pulseox = new DemoRadical7(domainId);
 				} catch (Exception e) {
 					Log.e(PulseOxActivity.class.getName(), "Unable to construct", e);
 				}
 			} else {
-				pulseox = new DemoPulseOx(gateway);
+				pulseox = new DemoPulseOx(domainId);
 			}
 			
 		}
+		getConnected = new GetConnected(domainId, pulseox.getDeviceIdentity().universal_device_identifier, null==device?"":device.getAddress(), eventLoop);
+		
 		wave.setSource(wuws);
 	}
 	@Override
@@ -94,11 +94,11 @@ public class PulseOxActivity extends Activity implements GatewayListener {
 		// Thing here is that as part of connecting a pairing dialog may
 		// be presented and trigger this onPause... so we must allow a continuation of
 		// the pairing process across onPause/onResume
-		ConnectedDevice.State state = this.lastState;
+		ice.ConnectionState state = this.lastState;
 		if(state != null) {
-			switch(state) {
-			case Connected:
-			case Negotiating:
+			switch(state.ordinal()) {
+			case ice.ConnectionState._Connected:
+			case ice.ConnectionState._Negotiating:
 				getConnected.disconnect();
 				break;
 			default:
@@ -110,8 +110,8 @@ public class PulseOxActivity extends Activity implements GatewayListener {
 	private static class GetConnected extends AbstractGetConnected {
 		private final String address;
 		
-		GetConnected(String address, Gateway gateway) {
-			super(gateway);
+		GetConnected(int domainId, String universal_device_identifier, String address, EventLoop eventLoop) {
+			super(domainId, universal_device_identifier, eventLoop);
 			this.address = address;
 		}
 		
@@ -153,7 +153,7 @@ public class PulseOxActivity extends Activity implements GatewayListener {
 
 		this.device = null;
 		this.wuws = null;
-		this.gateway = null;
+//		this.gateway = null;
 	}
 	
 	@Override
@@ -173,7 +173,7 @@ public class PulseOxActivity extends Activity implements GatewayListener {
     public void onCreate(Bundle savedInstanceState) {
 		debug("*** onCreate ***");
         super.onCreate(savedInstanceState);
-        gateway = new Gateway();
+//        gateway = new Gateway();
         wuws = new WaveformUpdateWaveformSource();
         
         SerialProviderFactory.setDefaultProvider(new BluetoothSerialProvider());
@@ -198,7 +198,6 @@ public class PulseOxActivity extends Activity implements GatewayListener {
         	}
         } else {
         	this.device = (BluetoothDevice) lnci;
-
         }
     }
 
@@ -222,7 +221,7 @@ public class PulseOxActivity extends Activity implements GatewayListener {
 
 	private String noValue;
 	
-	private ConnectedDevice.State lastState;
+	private ice.ConnectionState lastState;
 	private String lastConnectionInfo;
 	
 	private void doStateAndConnectionInfo() {

@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.UUID;
 
-import org.mdpnp.messaging.Gateway;
+//import org.mdpnp.messaging.Gateway;
 import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
 
 import android.app.Activity;
@@ -25,7 +25,7 @@ public class AndroidPulseOxActivity extends Activity {
 	private static final int REQUEST_ENABLE_BT = 1;
 	private static final int REQUEST_DISCOVERABLE = 2;
 	
-	private static final Gateway gateway = new Gateway();
+//	private static final Gateway gateway = new Gateway();
 	
 	private void doBlue2() {
 		BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();
@@ -77,7 +77,7 @@ public class AndroidPulseOxActivity extends Activity {
 		
 		try {
 			BluetoothSocket socket = device.createRfcommSocketToServiceRecord(uuid);
-			DemoPulseOx pulseox = new DemoPulseOx(gateway);
+			DemoPulseOx pulseox = new DemoPulseOx(0);
 //			pulseox.addListener(new PulseOximeterListener() {
 //				public void pulseOximeter(final PulseOximeter po) {
 //					runOnUiThread(new Runnable() {
