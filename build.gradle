@@ -35,6 +35,8 @@ subprojects {
             ivy {  artifactPattern 'http://gradle-macappbundle.googlecode.com/files/[module]-[revision].[ext]' }
             
             ivy {  artifactPattern 'http://gradle-launch4j.googlecode.com/files/[module]-[revision].[ext]' }
+            
+            mavenCentral()
         }
         
         
