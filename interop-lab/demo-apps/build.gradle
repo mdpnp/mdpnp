@@ -1,18 +1,37 @@
 apply plugin: 'java'
 apply plugin: 'application'
+apply plugin: 'macAppBundle'
+apply plugin: 'launch4j'
 defaultTasks 'build'
 
+macAppBundle {
+    mainClassName = "org.mdpnp.apps.testapp.Main"
+    icon = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns"
+    appName = "MDPnP Demo Apps " + project.version
+    volumeName = "MDPnP Demo Apps " + project.version
+    backgroundImage = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/mdpnp.png"
+}
+
+launch4j {
+    mainClassName = "org.mdpnp.apps.testapp.Main"
+    icon = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.ico"
+    launch4jCmd = '/Users/jplourde/Downloads/launch4j/launch4j'
+    customProcName = true
+    maxHeapSize = 128
+}
+
+buildscript {
+    dependencies {
+        classpath 'edu.sc.seis:gradle-macappbundle:1.0.8'
+        classpath 'edu.sc.seis:gradle-launch4j:1.0.5'
+    }
+}
 
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
 mainClassName = "org.mdpnp.apps.testapp.Main"
 
-//manifest.mainAttributes("Main-Class" : "org.mdpnp.apps.testapp.Main")
-
-//jar {
-    //from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-//}
 def String BUILD_NUMBER = "$System.env.BUILD_NUMBER"
 
 Date buildTimeAndDate = new Date()
@@ -21,17 +40,9 @@ ext {
     buildTime = new java.text.SimpleDateFormat('hh:mm aa').format(buildTimeAndDate)
 }
 
-if (project.plugins.findPlugin('java')) {
-    jar {
-        manifest {
-            attributes("Built-By": System.properties['user.name'], "Created-By": System.properties['java.version'] + " (" + System.properties['java.vendor'] + " " + System.getProperty("java.vm.version") + ")",
-                "Implementation-Title": project.name, "Implementation-Version": project.version, "Build-Date": buildDate, "Build-Time": buildTime,
-                "Specification-Title": project.name, "Specification-Version": project.version, "Implementation-Vendor": project.group,
-                "Specification-Vendor": project.group, "Build-Number": BUILD_NUMBER)
-        }
-    }
-}
+manifest.mainAttributes("Main-Class" : "org.mdpnp.apps.testapp.Main")
 
+def JOGL_version = '2.0.2'
 
 dependencies {
   compile project(':interop-lab:demo-devices')
@@ -63,21 +74,21 @@ dependencies {
       if(osArch.contains("all") || osArch.contains("64")) {
           runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32amd64'
           runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'windows-x86_64'
-          runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-windows-amd64'
-          runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-windows-amd64'
+          runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-windows-amd64'
+          runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-windows-amd64'
           
       } 
       if(osArch.contains("all") || !osArch.contains("64")) {
           runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32x86'
           runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'windows-x86'
-          runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-windows-i586'
-          runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-windows-i586'
+          runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-windows-i586'
+          runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-windows-i586'
       }
   } else if(osName.contains('mac')) {
       runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'darwin'
       runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'macosx-x86_64'
-      runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-macosx-universal'
-      runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-macosx-universal'
+      runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-macosx-universal'
+      runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-macosx-universal'
       distZip.classifier = 'mac'
   } else {
       
@@ -94,20 +105,20 @@ dependencies {
       if(osArch.contains("arm")) {
           runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxarm'
           runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'android-arm'
-          runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-android-armv6'
-          runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-android-armv6'
+          runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-android-armv6'
+          runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-android-armv6'
       } else {
           if(osArch.contains("all") || osArch.contains("64")) {
               runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxamd64'
               runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'linux-x86_64'
-              runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-linux-amd64'
-              runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-linux-amd64'
+              runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-linux-amd64'
+              runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-linux-amd64'
           }
           if(osArch.contains("all") || !osArch.contains("64")) {
               runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxi386'
               runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'linux-x86'
-              runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11', classifier: 'natives-linux-i586'
-              runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11', classifier: 'natives-linux-i586'
+              runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-linux-i586'
+              runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-linux-i586'
           }
       }
       
@@ -116,8 +127,15 @@ dependencies {
   // Java CV (Requires OpenCV) 
   compile group: 'com.googlecode.javacpp', name: 'javacpp', version: '0.5'
   compile group: 'com.googlecode.javacv', name: 'javacv', version: '0.5'
+  compile group: 'org.xeustechnologies', name: 'jcl-core', version: '2.3'
 }
 
-println "building " + distZip.classifier
+jar {
+    manifest {
+            attributes("Main-Class": 'org.mdpnp.apps.testapp.Main', "Built-By": System.properties['user.name'], "Created-By": System.properties['java.version'] + " (" + System.properties['java.vendor'] + " " + System.getProperty("java.vm.version") + ")",
+                "Implementation-Title": project.name, "Implementation-Version": project.version, "Build-Date": buildDate, "Build-Time": buildTime,
+                "Specification-Title": project.name, "Specification-Version": project.version, "Implementation-Vendor": project.group,
+                "Specification-Vendor": project.group, "Build-Number": BUILD_NUMBER)
 
-
+    }
+}

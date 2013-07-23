@@ -4,12 +4,15 @@ defaultTasks 'build'
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
+def JOGL_version = '2.0.2'
+
 dependencies {
   compile project(':interop-lab:demo-guis')
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
   
   compile group: 'javax.media', name: 'jmf', version: '2.1.1e'
-  compile group: 'org.jogamp.jogl', name: 'jogl-all', version: '2.0-rc11'
-  compile group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: '2.0-rc11'
+  
+  compile group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version
+  compile group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version
 
 }
