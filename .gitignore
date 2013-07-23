@@ -26,3 +26,5 @@ clinical_scenarios/
 *.pro.user*
 *build-*Release/
 *build-*Debug/
+*.jar
+hs_err*
