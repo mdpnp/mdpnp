@@ -33,7 +33,7 @@ public class UserInfoBanner extends Composite {
 	private MenuItem editProfile = new MenuItem("Edit User Profile", NOOP);//Constructs a new menu item that fires a command when it is selected.
 	private MenuItem signOut = new MenuItem("Sign Out", NOOP);
 	private MenuBar search = new MenuBar(true);
-	private MenuItem listMyScn = new MenuItem("List Scenarios", NOOP);
+
 	private MenuItem listUsers = new MenuItem("List Users", NOOP);
 	private MenuItem basicSearch = new MenuItem("Basic Search", NOOP);
 	private MenuItem advancedSearch = new MenuItem("Advanced Search", NOOP);
@@ -46,7 +46,11 @@ public class UserInfoBanner extends Composite {
 	private MenuItem scnUnsubmited = new MenuItem(ScenarioPanel.SCN_STATUS_UNSUBMITTED, NOOP);
 	private MenuItem scnSubmited = new MenuItem(ScenarioPanel.SCN_STATUS_SUBMITTED, NOOP);
 	private MenuItem scnApproved= new MenuItem(ScenarioPanel.SCN_STATUS_APPROVED, NOOP);
-	private MenuItem scnRejected = new MenuItem(ScenarioPanel.SCN_STATUS_REJECTED, NOOP);
+//	private MenuItem scnRejected = new MenuItem(ScenarioPanel.SCN_STATUS_REJECTED, NOOP); XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission 
+	
+	private MenuItem listMyScn = new MenuItem("My Scenarios", NOOP);//List Scn for registered users
+	private MenuItem listApprvScn = new MenuItem("All approved Scenarios", NOOP);//list of Approved Scn for Anonymous/registered users
+	private MenuItem createNewScn = new MenuItem("Create new Scenario", NOOP);//XXX DAG alloe to create new from the tab bar?
 	
 	private UserInfoProxy userInfo;
 	
@@ -73,6 +77,10 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getListMyScn() {
 		return listMyScn;
 	}
+	public MenuItem getlistApprvScn(){
+		return listApprvScn;
+	}
+	
 	
 	public MenuItem getListAllScenarios(){
 		return listAllScn;
@@ -91,9 +99,10 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getListScnApproved(){
 		return scnApproved;
 	}
-	public MenuItem getListScnRejected(){
-		return scnRejected;
-	}
+//	XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
+//	public MenuItem getListScnRejected(){
+//		return scnRejected;
+//	}
 	public String getUserEmail(){
 		return this.userEmail;
 	}
@@ -134,9 +143,12 @@ public class UserInfoBanner extends Composite {
 						}
 						
 					});
+					username.addItem(listApprvScn);
+					//TODO The lsit Scn capability should change to MenuBar w/ more features
 					username.addItem(signIn);
+					
 				} else {
-					if(response.getAdmin()) {
+					if(response.getAdmin()) {//ADMIN
 //						username.addItem(list);
 						/**
 						 * List scenarios
@@ -151,16 +163,24 @@ public class UserInfoBanner extends Composite {
 						listScenarios.addItem(listAllScn);
 						listScnByStatus.setTitle("List Scenarios by Status");
 						listScnByStatus.addItem(scnUnsubmited);
+						scnUnsubmited.setTitle("Scenarios pending of submission");
 						listScnByStatus.addItem(scnSubmited);
+						scnSubmited.setTitle("Scenarios pendig of revision and approval");
 						listScnByStatus.addItem(scnApproved);
-						listScnByStatus.addItem(scnRejected);
+						scnApproved.setTitle("List all approved scenarios");
+//						listScnByStatus.addItem(scnRejected);XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
 						listScenarios.addItem("List Scenarios by Status", listScnByStatus);
 						username.addItem("List Scenarios", listScenarios);
 						
 						username.addItem(listUsers);
 						username.addItem(listTags);//add tag search
-					}else{
-						username.addItem(listMyScn);
+					}else{//registered user (NOT ADMIN)
+						listScenarios.setTitle("List Scenarios");
+						listScenarios.addItem(listMyScn);
+						listMyScn.setTitle("All scenarios created by this user");
+						listScenarios.addItem(listApprvScn);
+						listApprvScn.setTitle("All approved scenarios");
+						username.addItem("List Scenarios", listScenarios);
 					}
 					MenuBar logoutMenu = new MenuBar(true);
 					

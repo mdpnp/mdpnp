@@ -142,7 +142,8 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			@Override
 			public void execute() {
 //				showWidget(userInfoSearchPanel);
-				scenarioListPanel.doSearch("");
+//				scenarioListPanel.doSearch("");
+				scenarioListPanel.findAllScn();
 				showWidget(scenarioListPanel);
 			}
 		});
@@ -172,19 +173,28 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 				showWidget(scenarioListPanel);
 			}
 		});
-		userInfoBanner.getListScnRejected().setScheduledCommand(new Command(){
-			@Override
-			public void execute() {
-//				showWidget(userInfoSearchPanel);
-				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_REJECTED);
-				showWidget(scenarioListPanel);
-			}
-		});
+		//XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
+//		userInfoBanner.getListScnRejected().setScheduledCommand(new Command(){
+//			@Override
+//			public void execute() {
+////				showWidget(userInfoSearchPanel);
+//				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_REJECTED);
+//				showWidget(scenarioListPanel);
+//			}
+//		});
 		userInfoBanner.getListMyScn().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
 //				showWidget(userInfoSearchPanel);
 				scenarioListPanel.listScnBySubmitter(userInfoBanner.getUserEmail());
+				showWidget(scenarioListPanel);
+			}
+		});
+		userInfoBanner.getlistApprvScn().setScheduledCommand(new Command() {
+			
+			@Override
+			public void execute() {
+				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 				showWidget(scenarioListPanel);
 			}
 		});

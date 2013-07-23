@@ -79,7 +79,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
 	
-	private boolean isScenarioAlterable = true;//indicates if we can modify the info of the scn
+//	private boolean isScenarioAlterable = true;//indicates if we can modify the info of the scn
+	private enum UserRole {Administrator, RegisteredUser, AnonymousUser}
+	private UserRole userRole;
+	
 	private String userEmail;
 
 
@@ -456,7 +459,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 */
 	private void save(){
 		if (currentScenario.getStatus().equals(SCN_STATUS_APPROVED)) return;//Don't change Approved Scenarios
-		if(!isScenarioAlterable) return;//Anonimous users can't modify the Scn information
+		if (currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED) && userRole!=UserRole.Administrator) return;//Don't change submitted
+//		if(!isScenarioAlterable) return;//Anonymous users can't modify the Scn information
+		if(userRole==UserRole.AnonymousUser) return;//Anonymous users can't modify the Scn information
 		
 		status.setText("SAVING");			
 		ScenarioRequest rc = (ScenarioRequest) driver.flush();
@@ -553,7 +558,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 						//Anonymous user
 						saveButton.setVisible(false);//can't save on demand
 						submitButton.setVisible(false);//can't submit the scn
-						isScenarioAlterable = false; //can't modify the Scn
+//						isScenarioAlterable = false; //can't modify the Scn
+						userRole = UserRole.AnonymousUser;
 						algorithmDescription.setEnabled(false);
 						clinicalProcesses.setEnabled(false);
 						risks.setEnabled(false);
@@ -561,6 +567,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 						titleEditor.setEnabled(false);
 						currentStateEditor.setEnabled(false);
 						proposedStateEditor.setEnabled(false);
+					}else{
+						if(response.getAdmin()) 
+							userRole = UserRole.Administrator;
+						else
+							userRole = UserRole.RegisteredUser;
 					}
 					
 				}
@@ -616,6 +627,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
     		buildCliniciansTable(false);
     		buildEnvironmentsTable(false);
     		
+    		//buttons
     		//you can't submit an scn that is already approved
     		if(currentScenario.getStatus()!=null){//FIXME this line shouldn't be necessary w/ the proper data in the GAE
     		if(currentScenario.getStatus().equals(SCN_STATUS_APPROVED))
@@ -966,18 +978,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		final SuggestBox sb = new SuggestBox(clinicianSuggestOracle);
 		sb.setStyleName("wideSuggest");
 		cliniciansTable.setWidget(rows, CLINICIANS_TYPE_COL, sb);
-		
-		//to suggest a clinician when typing in the box
-		sb.addKeyUpHandler(new KeyUpHandler() {
-			@Override
-			public void onKeyUp(KeyUpEvent event) {
-				if(event.getNativeKeyCode()==KeyCodes.KEY_ENTER) {
-					Label lbl = new Label(sb.getText());
-					cliniciansTable.setWidget(rows, 0, lbl);
-				}
-			}			
-		});
-		
+			
 		//to delete this entry
 		Button deleteButton = new Button("Delete");
 		deleteButton.addClickHandler(new ClickHandler() {
@@ -1002,18 +1003,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		sb.setText(clinician);
 		sb.setStyleName("wideSuggest");
 		cliniciansTable.setWidget(rows, CLINICIANS_TYPE_COL, sb);
-		
-		//to suggest a clinician when typing in the box
-		sb.addKeyUpHandler(new KeyUpHandler() {
-			@Override
-			public void onKeyUp(KeyUpEvent event) {
-				if(event.getNativeKeyCode()==KeyCodes.KEY_ENTER) {
-					Label lbl = new Label(sb.getText());
-					cliniciansTable.setWidget(rows, 0, lbl);
-				}
-			}			
-		});
-		
+				
 		//to delete this entry
 		Button deleteButton = new Button("Delete");
 		deleteButton.addClickHandler(new ClickHandler() {
@@ -1034,27 +1024,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		final SuggestBox sb = new SuggestBox(environmentSuggestOracle);
 		sb.setStyleName("wideSuggest");
 		environmentsTable.setWidget(rows, ENVIRONMENT_TYPE_COL, sb);
-		
-		//to suggest a new environment when typing
-		sb.addKeyUpHandler(new KeyUpHandler() {
-
-			@Override
-			public void onKeyUp(KeyUpEvent event) {
-				if(event.getNativeKeyCode()==KeyCodes.KEY_ENTER) {
-					Label lbl = new Label(sb.getText());
-					environmentsTable.setWidget(rows, 0, lbl);
-				}
-			}
 			
-		});
-		
 		//to delete this entry
 		Button deleteButton = new Button("Delete");
 		deleteButton.addClickHandler(new ClickHandler() {
 			
 			@Override
 			public void onClick(ClickEvent event) {
-				cliniciansTable.removeRow(rows);
+				environmentsTable.removeRow(rows);
 				
 			}
 		});
@@ -1072,27 +1049,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		sb.setText(environment);
 		sb.setStyleName("wideSuggest");
 		environmentsTable.setWidget(rows, ENVIRONMENT_TYPE_COL, sb);
-		
-		//to suggest a new environment when typing
-		sb.addKeyUpHandler(new KeyUpHandler() {
-
-			@Override
-			public void onKeyUp(KeyUpEvent event) {
-				if(event.getNativeKeyCode()==KeyCodes.KEY_ENTER) {
-					Label lbl = new Label(sb.getText());
-					environmentsTable.setWidget(rows, 0, lbl);
-				}
-			}
 			
-		});
-		
 		//to delete this entry
 		Button deleteButton = new Button("Delete");
 		deleteButton.addClickHandler(new ClickHandler() {
 			
 			@Override
 			public void onClick(ClickEvent event) {
-				cliniciansTable.removeRow(rows);
+				environmentsTable.removeRow(rows);
 				
 			}
 		});
@@ -1204,7 +1168,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("approveScnButton")
 	public void onClickApproveScn(ClickEvent clickEvent) {
-		//TODO Should redirect to a screen where you can email the submiter?
+		//TODO Should redirect to a screen where you can email the submitter?
 		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
 		currentScenario.setStatus(SCN_STATUS_APPROVED);
 		boolean confirm = Window.confirm("Are you sure you want to APPROVE this scenario?");
@@ -1230,7 +1194,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	public void onClickRejectScn(ClickEvent clickEvent) {
 		//TODO Should redirect to a screen where you can email the submiter?
 		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
-		currentScenario.setStatus(SCN_STATUS_REJECTED);
+//		currentScenario.setStatus(SCN_STATUS_REJECTED);//XXX 07/22/13 diego@mdpnp.org, rejected Scn = pending of submission
+		currentScenario.setStatus(SCN_STATUS_UNSUBMITTED);
 		boolean confirm = Window.confirm("Are you sure you want to REJECT this scenario?");
 		if(confirm)
 		scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(new Receiver<ScenarioProxy>() {
