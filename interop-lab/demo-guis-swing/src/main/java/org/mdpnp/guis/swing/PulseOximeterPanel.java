@@ -174,6 +174,8 @@ public class PulseOximeterPanel extends DevicePanel {
 	
 	@Override
 	public void destroy() {
+	    plethPanel.setSource(null);
+	    pulsePanel.setSource(null);
 	    plethPanel.stop();
 	    pulsePanel.stop();
 		super.destroy();

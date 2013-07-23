@@ -203,7 +203,6 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
     
     public void reset() {
         knownIdentifiers.clear();
-        dataComponents.clear();
         replaceDataPanels();
     }
 }
