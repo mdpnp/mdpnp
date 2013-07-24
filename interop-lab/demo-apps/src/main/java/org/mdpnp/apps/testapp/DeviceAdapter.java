@@ -1,14 +1,12 @@
 package org.mdpnp.apps.testapp;
 
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Collection;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -33,10 +31,11 @@ import org.mdpnp.devices.philips.intellivue.DemoMP70;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.mdpnp.devices.simulation.DemoSimulatedBloodPressure;
+import org.mdpnp.devices.simulation.co2.SimCapnometer;
+import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
 import org.mdpnp.guis.swing.DeviceMonitor;
-import org.mdpnp.guis.swing.DevicePanelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,6 +80,10 @@ public class DeviceAdapter {
 			return new DemoCapnostream20(domainId, eventLoop);
 		case Symbiq:
 			return new DemoSymbiq(domainId, eventLoop);
+		case ECG_Simulator:
+		    return new SimElectroCardioGram(domainId, eventLoop);
+		case CO2_Simulator:
+		    return new SimCapnometer(domainId, eventLoop);
 		default:
 			throw new RuntimeException("Unknown type:"+type);
 		}

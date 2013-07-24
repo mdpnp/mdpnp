@@ -15,7 +15,7 @@ import org.mdpnp.devices.EventLoop;
 
 public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice implements Runnable {
     
-    private final InstanceHolder<Numeric> systolic, diastolic, pulse, inflation, respiratoryRate, nextInflationTime, state;
+    private final InstanceHolder<Numeric> systolic, diastolic, pulse, inflation, nextInflationTime, state;
     // TODO needs to subscribe to an objective state for triggering a NIBP
     
 
@@ -77,9 +77,6 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
 		numericSample(this.systolic, systolic);
 		numericSample(this.diastolic, diastolic);
 		numericSample(this.pulse, pulserate);
-		
-		// TODO this is just for testing!
-		numericSample(this.respiratoryRate, 12);
 	}
 
 	protected void simulateRandomReading() {
@@ -165,11 +162,11 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
 		diastolic = createNumericInstance(ice.MDC_PRESS_CUFF_DIA.VALUE);
 		nextInflationTime = createNumericInstance(ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE);
 		inflation = createNumericInstance(ice.MDC_PRESS_CUFF_INFLATION.VALUE);
-		pulse = createNumericInstance(ice.MDC_PULS_RATE_NON_INV.VALUE);
-		respiratoryRate = createNumericInstance(ice.MDC_RESP_RATE.VALUE);
+		// TODO temporarily more interesting
+		pulse = createNumericInstance(ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
+//		pulse = createNumericInstance(ice.MDC_PULS_RATE_NON_INV.VALUE);
 		
 		numericSample(state, ice.MDC_EVT_STAT_OFF.VALUE);
-		numericSample(respiratoryRate, 12);
 	}
 	
 	@Override

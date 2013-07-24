@@ -18,6 +18,7 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -223,6 +224,12 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 			
 			@Override
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                 WaveformSource source = SwingWaveformPanel.this.source;
+                    if(null == source) {
+                        sampleRate.setText("");
+                    } else {
+                        sampleRate.setText(""+source.getMillisecondsPerSample()+" ms/sample");
+                    }
 				if(null == cachingSource()) {
 					cacheItem.setVisible(false);
 				} else {
@@ -333,12 +340,15 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 		});
 		JMenuItem aboutPanel = new JMenuItem(SwingWaveformPanel.class.getSimpleName());
 		this.popup.add(aboutPanel);
-//		
+		this.popup.add(sampleRate);
+
 		
 		setSource(source);
 		enableEvents(ComponentEvent.COMPONENT_RESIZED | MouseEvent.MOUSE_PRESSED | MouseEvent.MOUSE_RELEASED);
 		
 	}
+	
+	private final JMenuItem sampleRate = new JMenuItem();
 	
 	private Image image;
 	
@@ -465,6 +475,7 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 	private WaveformRenderer.Rect rect = new WaveformRenderer.Rect();
 	@Override
 	public void waveform(WaveformSource source) {
+	    
 //		long t = System.currentTimeMillis();
 //		int c = source.getCount();
 //		int v = source.getValue(c);
