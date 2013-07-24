@@ -22,7 +22,7 @@ if(MAC == localOsName) {
 launch4j {
     mainClassName = "org.mdpnp.apps.testapp.Main"
     icon = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.ico"
-    launch4jCmd = '/Users/jplourde/Downloads/launch4j/launch4j'
+    launch4jCmd = "$buildDir/launch4j-install/launch4j/launch4j"
     customProcName = true
     maxHeapSize = 128
 }
@@ -33,6 +33,37 @@ buildscript {
         classpath 'edu.sc.seis:gradle-launch4j:1.0.5'
     }
 }
+
+def launch4jPath = 'http://downloads.sourceforge.net/project/launch4j/launch4j-3/3.1.0-beta1/'
+def launch4jName = ''
+switch(localOsName) {
+    case WINDOWS:
+    launch4jName = 'launch4j-3.1.0-beta1-win32.zip'
+    break
+    case MAC:
+    launch4jName = 'launch4j-3.1.0-beta1-macosx-x86-10.8.tgz'
+    break
+    case LINUX:
+    launch4jName = 'launch4j-3.1.0-beta1-linux.zip'
+    break
+}
+
+
+task downloadLaunch4j {
+    outputs.file "$buildDir/"+launch4jName
+    doLast {
+        def f = file("$buildDir/"+launch4jName)
+        println 'Downloading ' + launch4jPath + launch4jName
+        new URL(launch4jPath+launch4jName).withInputStream{ i -> f.withOutputStream{ it << i }}
+    }
+}
+
+task explodeLaunch4j(dependsOn: downloadLaunch4j, type: Copy) {
+    from launch4jName.endsWith("tgz") ? tarTree("$buildDir/"+launch4jName) : zipTree("$buildDir/"+launch4jName)
+    into "$buildDir/launch4j-install/"
+}
+
+createExe.dependsOn(explodeLaunch4j)
 
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
