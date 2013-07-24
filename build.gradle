@@ -6,25 +6,47 @@ task wrapper(type: Wrapper) {
     gradleVersion = '1.6'
 }
 
-// I don't want to apply the java plug-in to all 
-// subprojects
 ext {
     JAVA_VERSION_SOURCE = 1.6
     JAVA_VERSION_CLASSES = 1.6
+    WINDOWS = 1
+    MAC = 2
+    LINUX = 3
+    X86 = 1
+    X64 = 2
+    ARM = 3
+    ARMHF = 4
+    ALL = 5
 }
 
+def fromOsName(name) {
+    name = name.toLowerCase()
+    if(name.contains("windows")) return WINDOWS
+    if(name.contains("mac")) return MAC
+    if(name.contains("linux")) return LINUX
+    if(name.contains("all")) return ALL
+    null
+}
+
+def fromOsArch(arch) {
+    arch = arch.toLowerCase()
+    if(arch.contains("64")) return X64
+    if(arch.contains("armhf")) return ARMHF
+    if(arch.contains("arm")) return ARM
+    if(arch.contains("all")) return ALL
+    X86
+}
+
+ext {
+    localOsName = fromOsName(System.properties['os.name'])
+    localOsArch = fromOsArch(System.properties['os.arch'])
+    targetOsName = project.hasProperty('OS_NAME') ? fromOsName(OS_NAME) : localOsName
+    targetOsArch = project.hasProperty('OS_ARCH') ? fromOsArch(OS_ARCH) : localOsArch 
+}
 group 'org.mdpnp'
 version '0.1.1-SNAPSHOT'
 
-
-
 subprojects {
-    
-    
-
-    ext.osName = project.hasProperty('OS_NAME') ? OS_NAME : System.properties['os.name'].toLowerCase()
-    ext.osArch = project.hasProperty('OS_ARCH') ? OS_ARCH : System.properties['os.arch'].toLowerCase()
-        
     group 'org.mdpnp'
     version '0.1.1-SNAPSHOT'
     buildscript {

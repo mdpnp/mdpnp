@@ -35,12 +35,39 @@ dependencies {
 
   compile group: 'org.mdpnp.rti.dds', name: 'nddsjava-rt', version: '5.0'
   
-  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'darwin'
-  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxamd64'
-  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxarm'
-  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxi386'
-  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32amd64'
-  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32x86'  
+  switch(localOsName) {
+      case MAC:
+          testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'darwin'
+          break
+      case WINDOWS:
+          switch(localOsArch) {
+              case X64:
+                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32amd64'
+                  break
+              case X86:
+                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32x86'
+                  break
+          }
+      case LINUX:
+          switch(localOsArch) {
+              case X64:
+                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxamd64'
+                  break
+              case X86:
+                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxi386'
+                  break
+              case ARM:
+              case ARMHF:
+                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxarm'
+                  break
+          }
+  }
+  
+  
+  
+  
+  
+    
   
   compile project(':data-types:x73-idl')
   testCompile group: 'junit', name: 'junit', version: '4.11'
