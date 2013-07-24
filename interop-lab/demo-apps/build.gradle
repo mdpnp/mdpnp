@@ -9,12 +9,14 @@ defaultTasks 'build'
 
 println WINDOWS
 
-macAppBundle {
-    mainClassName = "org.mdpnp.apps.testapp.Main"
-    icon = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns"
-    appName = "MDPnP Demo Apps " + project.version
-    volumeName = "MDPnP Demo Apps " + project.version
-    backgroundImage = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/mdpnp.png"
+if(MAC == localOsName) {
+    macAppBundle {
+        mainClassName = "org.mdpnp.apps.testapp.Main"
+        icon = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns"
+        appName = "MDPnP Demo Apps " + project.version
+        volumeName = "MDPnP Demo Apps " + project.version
+        backgroundImage = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/mdpnp.png"
+    }
 }
 
 launch4j {
