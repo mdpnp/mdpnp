@@ -5,11 +5,14 @@
 			width:900px;
 			text-align:justify;
 			text-justify:inter-word;
-			background-color:AntiqueWhite; 
-}
+		background-color:AntiqueWhite; 
+<!-- 			background-color: #87CEFA; -->
+		}
+
 	</ui:style>
-	<g:FlowPanel>
-	<g:HTMLPanel styleName='{style.welcomeText}'>
+	<g:FlowPanel ui:field='homeFlowPanel' >
+	<g:HTMLPanel>
+<!-- 	    <g:HTMLPanel styleName='{style.welcomeText}'> -->
 	<br/>
 	<h2>Welcome to the Clinical Scenario Repository.</h2>  
 	<!-- <p>The Clinical Scenario Repository is hosted by the <g:Anchor href="http://www.mdpnp.org/">MD PnP</g:Anchor>  Team.</p>  -->

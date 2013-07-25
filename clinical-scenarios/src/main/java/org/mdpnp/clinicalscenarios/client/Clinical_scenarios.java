@@ -126,6 +126,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		scenarioListPanel.getPleaseEnterKeywords().setVisible(false);
 		scenarioListPanel.getHeader().setText("Scenario List");
 		scenarioListPanel.getSubmitButton().setVisible(false);
+
 		
 //		userInfoBanner.getList().setScheduledCommand(new Command() {
 
@@ -185,7 +186,6 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getListMyScn().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
-//				showWidget(userInfoSearchPanel);
 				scenarioListPanel.listScnBySubmitter(userInfoBanner.getUserEmail());
 				showWidget(scenarioListPanel);
 			}
@@ -196,6 +196,14 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			public void execute() {
 				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 				showWidget(scenarioListPanel);
+			}
+		});
+		userInfoBanner.getCreateNewScenario().setScheduledCommand(new Command() {
+			
+			@Override
+			public void execute() {
+				scenarioPanel.setCurrentScenario(null);
+				showWidget(scenarioPanel);
 			}
 		});
 		

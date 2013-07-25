@@ -9,9 +9,26 @@ import org.mdpnp.clinicalscenarios.client.scenario.ScenarioProxy;
  * 
  */
 public class ScenarioTitleComparator implements Comparator<ScenarioProxy> {
+	
+	private boolean reverserOrder;
+	
+	/**
+	 * Toggle comparison order
+	 */
+	public void switchOrder(){
+		reverserOrder = !reverserOrder;
+	}
 
 	 //compare by Title ascending (lexicographically)
-	  public int compare(ScenarioProxy scn1, ScenarioProxy scn2) {
+	public int compare(ScenarioProxy scn1, ScenarioProxy scn2) {
+		if(reverserOrder)
+			return (-1 * doCompare(scn1, scn2));
+		else
+			return doCompare(scn1, scn2);
+	}
+	 
+	//compare by Title ascending (lexicographically)
+	  public int doCompare(ScenarioProxy scn1, ScenarioProxy scn2) {
 		  //in case any of the Scn had no tilte:
 		  if(scn1.getTitle()==null || scn1.getTitle().trim().equals("")) return 1;
 		  if(scn2.getTitle()==null || scn2.getTitle().trim().equals("")) return -1;

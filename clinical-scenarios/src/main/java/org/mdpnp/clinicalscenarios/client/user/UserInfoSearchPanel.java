@@ -30,7 +30,10 @@ public class UserInfoSearchPanel extends Composite {
 	private static final int PHONE_NUMBER_COL = 7;
 	private static final int ADMIN_STATUS_COL = 8;
 	
-	private boolean reverseOrder;
+	private static final String STYLE_TABLEROWOTHER = "tableRowOther";
+
+	
+//	private boolean reverseOrder;
 	private UserComparator comparator = new UserComparator("email", false);
 
 	private static UserInfoSearchPanelUiBinder uiBinder = GWT
@@ -42,6 +45,9 @@ public class UserInfoSearchPanel extends Composite {
 
 	@UiField
 	FlexTable list;
+	
+	@UiField
+	Label userLabel;
 	
 	private static final String[] headers = new String[] {
 		"Email", "Title", "Given Name", "Family Name", "Company",
@@ -58,42 +64,9 @@ public class UserInfoSearchPanel extends Composite {
 			
 			@Override
 			public void onSuccess(final List<UserInfoProxy> response) {
-				drawUsersList(response);
-//				for(int j = 0; j < headers.length; j++) {
-//					final int col = j;
-//					Label propLabel = new Label(headers[j]);
-//					propLabel.setStyleName("clickable");//TODO "Cliclacke" to a constant?
-//					final UserComparator comparator = new UserComparator("");
-//					list.setWidget(0, j, propLabel);
-//					propLabel.addClickHandler(new ClickHandler() {
-//						
-//						@Override
-//						public void onClick(ClickEvent event) {
-//							comparator.setPersonProperty(getUserInfoProperty(headers[col]));
-//							Collections.sort(response, comparator);
-//							comparator.switcReverseOrder();
-//							//							
-//						}
-//					});
-//					
-////					list.setText(0, j, headers[j]);
-//				}
-//				
-//				for(int i = 0; i < response.size(); i++) {
-//					list.insertRow(i + 1);
-//					UserInfoProxy u = response.get(i);
-//					list.setText(1 + i, EMAIL_COL, u.getEmail());
-//					list.setText(1 + i, TITLE_COL, u.getTitle());
-//					list.setText(1 + i, GIVEN_NAME_COL, u.getGivenName());
-//					list.setText(1 + i, FAMILY_NAME_COL, u.getFamilyName());
-//					list.setText(1 + i, COMPANY_COL, u.getCompany());
-//					list.setText(1 + i, JOB_TITLE_COL, u.getJobTitle());
-//					list.setText(1 + i, YEARS_IN_FIELD_COL, u.getYearsInField());
-//					list.setText(1 + i, PHONE_NUMBER_COL, u.getPhoneNumber());
-//					list.setText(1 + i, ADMIN_STATUS_COL, String.valueOf(u.getAdmin()));
-//				}
-				
+				drawUsersList(response);			
 			}
+			
 			@Override
 			public void onFailure(ServerFailure error) {
 				super.onFailure(error);
@@ -122,7 +95,7 @@ public class UserInfoSearchPanel extends Composite {
 				@Override
 				public void onClick(ClickEvent event) {
 					//UserComparator comparator = new UserComparator("", reverseOrder);
-					comparator.setPersonProperty(getUserInfoProperty(headers[col]));
+					setUserComparatorProperty(headers[col]);
 					Collections.sort(response, comparator);
 					comparator.switcReverseOrder();
 //					reverseOrder = !reverseOrder;
@@ -146,6 +119,8 @@ public class UserInfoSearchPanel extends Composite {
 			list.setText(1 + i, YEARS_IN_FIELD_COL, u.getYearsInField());
 			list.setText(1 + i, PHONE_NUMBER_COL, u.getPhoneNumber());
 			list.setText(1 + i, ADMIN_STATUS_COL, String.valueOf(u.getAdmin()));
+			if(i%2==0)
+				list.getRowFormatter().addStyleName(i+1, STYLE_TABLEROWOTHER);
 		}
 	}
 	
@@ -165,6 +140,19 @@ public class UserInfoSearchPanel extends Composite {
 		if(prop.equalsIgnoreCase(headers[ADMIN_STATUS_COL])) return "admin";
 		
 		return "email";
+	}
+	
+	private void setUserComparatorProperty(String prop){
+		if(prop.equalsIgnoreCase(headers[EMAIL_COL])) comparator.setProperty("email");
+		else if(prop.equalsIgnoreCase(headers[TITLE_COL])) comparator.setProperty("title");
+		else if(prop.equalsIgnoreCase(headers[GIVEN_NAME_COL])) comparator.setProperty("givenName");
+		else if(prop.equalsIgnoreCase(headers[FAMILY_NAME_COL])) comparator.setProperty("familyName");
+		else if(prop.equalsIgnoreCase(headers[COMPANY_COL])) comparator.setProperty("company");
+		else if(prop.equalsIgnoreCase(headers[JOB_TITLE_COL])) comparator.setProperty("jobTitle");
+		else if(prop.equalsIgnoreCase(headers[YEARS_IN_FIELD_COL])) comparator.setProperty("yearsInField");
+		else if(prop.equalsIgnoreCase(headers[PHONE_NUMBER_COL])) comparator.setProperty("phoneNumber");
+		else if(prop.equalsIgnoreCase(headers[ADMIN_STATUS_COL])) comparator.setProperty("admin");
+		else  comparator.setProperty("email");//DEFAULT
 	}
 
 }

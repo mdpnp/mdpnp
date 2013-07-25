@@ -19,4 +19,5 @@ public interface ScenarioRequest extends RequestContext {
 	
 	Request<List<ScenarioProxy>> searchByStatus(String status);
 	Request<List<ScenarioProxy>> searchScnBySubmitter(String submitter);
+	InstanceRequest<ScenarioProxy, ScenarioProxy> persistWithNotification(String toWho, String subject, String messageText);
 }
