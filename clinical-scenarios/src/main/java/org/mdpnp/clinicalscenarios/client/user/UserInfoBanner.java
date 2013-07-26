@@ -49,8 +49,8 @@ public class UserInfoBanner extends Composite {
 //	private MenuItem scnRejected = new MenuItem(ScenarioPanel.SCN_STATUS_REJECTED, NOOP); XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission 
 	
 	private MenuItem listMyScn = new MenuItem("My Scenarios", NOOP);//List Scn for registered users
-	private MenuItem listApprvScn = new MenuItem("All approved Scenarios", NOOP);//list of Approved Scn for Anonymous/registered users
-	private MenuItem createNewScn = new MenuItem("Create new Scenario", NOOP);//XXX DAG alloe to create new from the tab bar?
+	private MenuItem listApprvScn = new MenuItem("All Approved Scenarios", NOOP);//list of Approved Scn for Anonymous/registered users
+	private MenuItem createNewScn = new MenuItem("Create New", NOOP);
 	
 	private UserInfoProxy userInfo;
 	
@@ -99,6 +99,9 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getListScnApproved(){
 		return scnApproved;
 	}
+	public MenuItem getCreateNewScenario(){
+		return createNewScn;
+	}
 //	XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
 //	public MenuItem getListScnRejected(){
 //		return scnRejected;
@@ -133,7 +136,7 @@ public class UserInfoBanner extends Composite {
 				
 				username.addItem("Search Scenarios", search);
 				
-				
+
 				if(null == response.getEmail()) {
 					MenuItem signIn = new MenuItem("Sign In", new Command() {
 
@@ -144,7 +147,6 @@ public class UserInfoBanner extends Composite {
 						
 					});
 					username.addItem(listApprvScn);
-					//TODO The lsit Scn capability should change to MenuBar w/ more features
 					username.addItem(signIn);
 					
 				} else {
@@ -158,6 +160,7 @@ public class UserInfoBanner extends Composite {
 						 * 		- submitted
 						 * 		- approved
 						 * 		- rejected
+						 * + Create New Scn
 						 */
 						listScenarios.setTitle("List Scenarios");
 						listScenarios.addItem(listAllScn);
@@ -170,6 +173,8 @@ public class UserInfoBanner extends Composite {
 						scnApproved.setTitle("List all approved scenarios");
 //						listScnByStatus.addItem(scnRejected);XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
 						listScenarios.addItem("List Scenarios by Status", listScnByStatus);
+						createNewScn.setTitle("Create New Scenario");
+						listScenarios.addItem(createNewScn);
 						username.addItem("List Scenarios", listScenarios);
 						
 						username.addItem(listUsers);
@@ -179,9 +184,12 @@ public class UserInfoBanner extends Composite {
 						listScenarios.addItem(listMyScn);
 						listMyScn.setTitle("All scenarios created by this user");
 						listScenarios.addItem(listApprvScn);
-						listApprvScn.setTitle("All approved scenarios");
+						listApprvScn.setTitle("All Approved Scenarios");
+						listScenarios.addItem(createNewScn);
+						createNewScn.setTitle("Create New Scenario");
 						username.addItem("List Scenarios", listScenarios);
 					}
+					
 					MenuBar logoutMenu = new MenuBar(true);
 					
 					

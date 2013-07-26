@@ -1,7 +1,17 @@
 /** Add css rules here for your application. */
-body {
+
+html{
+/* 	background-image: -webkit-linear-gradient(bottom, #FFFFFF 0%, #BAE6EF 100%); */
+/* 	background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #FFFFFF), color-stop(10, #BAE6EF)); */
+/* 	background: -webkit-linear-gradient(top, cyan, white); */
+}
+
+.body {
 	padding:10px;
-	background-color: AntiqueWhite #FAEBD7;
+/* 	background-color: AntiqueWhite #FAEBD7; */
+	background-color:#DDFFFF;
+/* 	background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #FFFFFF), color-stop(10, #BAE6EF));*/
+/* 	background: -webkit-linear-gradient(top, #BAE6EF, #FFFFFF); */
 }
 
 /** Example rules used by the template application (remove for your app) */
@@ -12,6 +22,11 @@ h1 {
   margin: 40px 0px 70px;
   text-align: center;
 }
+
+.bla{
+	background-color:#e0ffff;
+}
+
 .heading {
   font-size: 1.5em;
   font-weight: bold;
@@ -50,19 +65,22 @@ h1 {
 .clickable {
 	cursor:pointer;
 }
+.clickable:hover {
+	background-color:#8FBC8F; /*DarkSeaGreen*/
+}
 
 .scenarioTitle {
 	font-size: 20pt;
 	margin-top: 20px;
 	margin-bottom: 20px;
 }
-/*
-p.welcomeText{
-	width:900px;
-	text-align:justify;
-	text-justify:inter-word;
-	background-color:AntiqueWhite;
-}*/
+
+.welcomeText{
+		width:900px;
+		text-align:justify;
+		text-justify:inter-word;
+		background-color: #F5FFFA;/*MintCream*/
+}
 
 /* users list table header row */
 .userListHeader {
@@ -88,6 +106,10 @@ p.welcomeText{
 .selectedRow{
 	background-color:#316AC5;
 	color: #FFFFFF;
+}
+
+.tableRowOther{
+	background-color:#EEFFFF;
 }
 
 /* .unsubmittedScn { */

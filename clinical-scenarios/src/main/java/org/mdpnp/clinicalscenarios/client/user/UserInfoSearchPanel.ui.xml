@@ -9,6 +9,7 @@
 		}
 	</ui:style>
 	<g:FlowPanel>
+	<g:Label text='Users' ui:field='userLabel' styleName='heading'/>
 	<g:FlexTable ui:field='list'/>
 	</g:FlowPanel>
 </ui:UiBinder> 

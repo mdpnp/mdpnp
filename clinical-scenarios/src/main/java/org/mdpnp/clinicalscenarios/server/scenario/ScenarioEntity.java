@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
+import org.mdpnp.clinicalscenarios.server.mailservice.RepositoryMailService;
 
 import com.google.appengine.api.datastore.QueryResultIterator;
 import com.google.appengine.api.users.User;
@@ -127,15 +128,19 @@ public class ScenarioEntity implements java.io.Serializable {
         this.background = background;
     }
 		
-	public static ScenarioEntity create() {
-	    ScenarioEntity s = new ScenarioEntity();
-	    s.setStatus(ScenarioPanel.SCN_STATUS_UNSUBMITTED);//By default, pending of submission
-		//to ID the current user
-	    UserService userService = UserServiceFactory.getUserService();
-	    User user = userService.getCurrentUser();//final? What happens when we change the user?
-	    s.setSubmitter(user.getEmail());
-        ofy().save().entity(s).now();
-        return s;
+	public static ScenarioEntity create() /*throws Exception*/ {
+		try{
+		    ScenarioEntity s = new ScenarioEntity();
+		    s.setStatus(ScenarioPanel.SCN_STATUS_UNSUBMITTED);//By default, pending of submission
+			//to ID the current user
+		    UserService userService = UserServiceFactory.getUserService();
+		    User user = userService.getCurrentUser();
+		    s.setSubmitter(user.getEmail());
+	        ofy().save().entity(s).now();
+	        return s;
+		}catch(Exception e){
+			return null;
+		}
 	}
 	
 	public static List<Long> findAllIds() {
@@ -262,5 +267,23 @@ public class ScenarioEntity implements java.io.Serializable {
 //	    ofy().save().entity(this).now();
 //	    return this;
 //	}
+	
+	/**
+	 * Enhanced persistence functionality to include capability to send methods
+	 * @param toWho
+	 * @param subject
+	 * @param messageText
+	 * @return
+	 */
+	public ScenarioEntity persistWithNotification(String toWho, String subject, String messageText){
+		RepositoryMailService mailservice = new RepositoryMailService(toWho, subject, messageText);
+		try{
+			mailservice.send();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		ofy().save().entity(this).now();
+		return this;
+	}
 	
 }

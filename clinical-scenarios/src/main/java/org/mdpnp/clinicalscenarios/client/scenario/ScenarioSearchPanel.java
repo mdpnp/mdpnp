@@ -7,6 +7,7 @@ import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioStatusComp
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioSubmitterComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioTitleComparator;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoProxy;
+import org.mdpnp.clinicalscenarios.client.user.UserInfoRequest;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequestFactory;
 import org.mdpnp.clinicalscenarios.server.user.UserInfo;
 
@@ -31,6 +32,8 @@ import com.google.gwt.user.client.ui.SourcesTableEvents;
 import com.google.gwt.user.client.ui.TableListener;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 
@@ -42,10 +45,23 @@ public class ScenarioSearchPanel extends Composite {
 	private static int SCN_STATUS_COL = 2;
 	private static int SCN_DELETEBUTTON_COL = 4;
 	
-	//TODO add style names as constants too
+	private ScenarioTitleComparator scnTitleComparator = new ScenarioTitleComparator();
+	private ScenarioSubmitterComparator scnSubmitterComparator = new ScenarioSubmitterComparator();
+	private ScenarioStatusComparator scnStatusComparator = new ScenarioStatusComparator();
 	
-	private static ScenarioSearchPanelUiBinder uiBinder = GWT
-			.create(ScenarioSearchPanelUiBinder.class);
+	//TODO add style names as constants too
+	private final static String STYLE_SELECTEDROW = "selectedRow";
+	private final static String STYLE_CLICKABLE = "clickable";
+	private final static String STYLE_SUBMITTEDSCN =  "submittedScn";
+	private final static String STYLE_UNSUBMITTEDSCN =  "unsubmittedScn";
+	
+	private static final String STYLE_TABLEROWOTHER = "tableRowOther";
+	
+	private static ScenarioSearchPanelUiBinder uiBinder = GWT.create(ScenarioSearchPanelUiBinder.class);
+	
+	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
+	private enum UserRole {Administrator, RegisteredUser, AnonymousUser}
+	private UserRole userRole;
 
 	interface ScenarioSearchPanelUiBinder extends
 			UiBinder<Widget, ScenarioSearchPanel> {
@@ -54,6 +70,30 @@ public class ScenarioSearchPanel extends Composite {
 	public ScenarioSearchPanel(ScenarioRequestFactory scenarioRequestFactory) {
 		initWidget(uiBinder.createAndBindUi(this));
 		this.scenarioRequestFactory = scenarioRequestFactory;
+		
+		//check user role
+		if(userInfoRequestFactory != null){
+			final EventBus eventBus = new SimpleEventBus();
+			userInfoRequestFactory.initialize(eventBus);
+		
+		UserInfoRequest userInfoRequest = userInfoRequestFactory.userInfoRequest();
+		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).to(new Receiver<UserInfoProxy>() {
+			@Override
+			public void onSuccess(UserInfoProxy response) {
+				if(response.getEmail()==null ||response.getEmail().trim().equals("") ){
+					//Anonymous user
+					userRole = UserRole.AnonymousUser;//can't modify the Scn
+					
+				}else{
+					if(response.getAdmin()) 
+						userRole = UserRole.Administrator;
+					else
+						userRole = UserRole.RegisteredUser;
+				}
+			}
+
+	
+		}).fire();}
 	}
 	@UiField
 	TextBox searchQuery;
@@ -99,6 +139,11 @@ public class ScenarioSearchPanel extends Composite {
 	public Label getPleaseEnterKeywords(){
 		return pleaseEnterKeywords;
 	}
+	
+	public Button getCreateNewScnButton(){
+		return createNew;
+	}
+	
 	public void setUserInfo(UserInfoProxy ui) {
 		if(null == ui || null == ui.getEmail()) {
 			pleaseSignIn.setVisible(true);
@@ -171,33 +216,36 @@ public class ScenarioSearchPanel extends Composite {
 	/**
 	 * Draws the scenario list table
 	 */
+	@SuppressWarnings("deprecation")
 	private void drawScenariosListTable(final List<ScenarioProxy> response){
 	    searchResult.removeAllRows();
+	    
 	    /**
 	     * Add table listener for when rows are clicked
 	     */
-	    searchResult.addTableListener(new TableListener() {
+	  /*  searchResult.addTableListener(new TableListener() {
 			//XXX Shall we keep the table listener, use clickHandler instead or not worring at all about highlighting table rows??
 			@Override
-//			@Deprecated
+			@Deprecated
 			public
 			void onCellClicked(SourcesTableEvents sender, int row, int cell) {
 //				searchResult.getRowFormatter().removeStyleName(row, "selectedRow");
 				for(int i=1; i<searchResult.getRowCount();i++)
-					searchResult.getRowFormatter().removeStyleName(i, "selectedRow");
-				searchResult.getRowFormatter().addStyleName(row, "selectedRow");
+					searchResult.getRowFormatter().removeStyleName(i, STYLE_SELECTEDROW);
+				searchResult.getRowFormatter().addStyleName(row, STYLE_SELECTEDROW);
 				
 			}
-		});
+		});*/
 	    
 		//HEADER
 	    Label lbl_title = new Label("Title");
-	    lbl_title.setStyleName("clickable");//TODO "Cliclacke" to a constant?
+	    lbl_title.setStyleName(STYLE_CLICKABLE);
 	    lbl_title.addClickHandler(new ClickHandler() {//clicking the title, we sort by title			
 			@Override
 			public void onClick(ClickEvent event) {
 				//call my own methods, which  will call ScenarioRequest w a sort option / method
-				Collections.sort(response, new ScenarioTitleComparator());
+				Collections.sort(response, scnTitleComparator);
+				scnTitleComparator.switchOrder();
 				drawScenariosListTable(response);
 				//TODO About comparator, on another click,  change to a different comparator w/ the opposite sorting criteria?
 				// this way we can sort on the inverse order on a second click
@@ -205,21 +253,23 @@ public class ScenarioSearchPanel extends Composite {
 		});
 	    
 	    Label lbl_submitter = new Label("Submitter");
-	    lbl_submitter.addStyleName("clickable");
+	    lbl_submitter.addStyleName(STYLE_CLICKABLE);
 	    lbl_submitter.addClickHandler(new ClickHandler() {			
 			@Override
 			public void onClick(ClickEvent event) {//clicking the submitter, we sort by submitter
-				Collections.sort(response, new ScenarioSubmitterComparator());//sort list of scn
+				Collections.sort(response, scnSubmitterComparator);//sort list of scn
+				scnSubmitterComparator.switchOrder();
 				drawScenariosListTable(response);				
 			}
 		});
 	    
 	    Label lbl_status = new Label("Status");
-	    lbl_status.addStyleName("clickable");
+	    lbl_status.addStyleName(STYLE_CLICKABLE);
 	    lbl_status.addClickHandler(new ClickHandler() {			
 			@Override
 			public void onClick(ClickEvent event) {//on click we sort by status
-				Collections.sort(response, new ScenarioStatusComparator());//sort list of scn
+				Collections.sort(response, scnStatusComparator);//sort list of scn
+				scnStatusComparator.switchOrder();
 				drawScenariosListTable(response);					
 			}
 		});
@@ -234,7 +284,7 @@ public class ScenarioSearchPanel extends Composite {
 		for(final ScenarioProxy sp : response) {
 			
 			Label lbl = new Label();
-			lbl.setStyleName("clickable");
+			lbl.setStyleName(STYLE_CLICKABLE);
 			lbl.addClickHandler(new ClickHandler() {
 
 				@Override
@@ -273,16 +323,19 @@ public class ScenarioSearchPanel extends Composite {
 					}
 				}
 			});
-			searchResult.setWidget(row, SCN_DELETEBUTTON_COL, deleteButton);
+			if(userRole==userRole.Administrator)//Only Admins should be able to delete Scn
+				searchResult.setWidget(row, SCN_DELETEBUTTON_COL, deleteButton);
 			
 			//style table rows
 			if(sp.getStatus()!=null)
 			if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_SUBMITTED))
-				searchResult.getRowFormatter().addStyleName(row, "submittedScn");
+				searchResult.getRowFormatter().addStyleName(row, STYLE_SUBMITTEDSCN);
 			else
-				searchResult.getRowFormatter().addStyleName(row, "unsubmittedScn");
+				searchResult.getRowFormatter().addStyleName(row, STYLE_UNSUBMITTEDSCN);
 	        
 	        //increase row number (the FOR loop is not increasing our row index variable, which is also final)
+			if(row%2==0)
+				searchResult.getRowFormatter().addStyleName(row, STYLE_TABLEROWOTHER);
 			row+=1;	
 			
 
@@ -313,7 +366,9 @@ public class ScenarioSearchPanel extends Composite {
 	@UiHandler("createNew")
 	public void onClickNew(ClickEvent clickEvent) {
 		
-		if(null != searchHandler) {
+		if(userRole==UserRole.AnonymousUser){
+			Window.alert("Please, Log In to create new Clinical Scenarios");
+		}else if(null != searchHandler) {
 			searchHandler.onSearchResult(null);
 		}
 		
