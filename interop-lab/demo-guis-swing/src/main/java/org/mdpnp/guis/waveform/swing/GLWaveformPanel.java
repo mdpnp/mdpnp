@@ -8,9 +8,9 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.InvocationTargetException;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.swing.JCheckBoxMenuItem;
+import javax.media.opengl.GLAnimatorControl;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -18,6 +18,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
@@ -28,21 +29,18 @@ import javax.swing.table.TableModel;
 import org.mdpnp.guis.opengl.jogl.GLPanel;
 import org.mdpnp.guis.waveform.CachingWaveformSource;
 import org.mdpnp.guis.waveform.EvenTempoWaveformSource;
-import org.mdpnp.guis.waveform.NestedWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformSource;
 import org.mdpnp.guis.waveform.WaveformSourceListener;
 import org.mdpnp.guis.waveform.opengl.GLWaveformRenderer;
-
-import com.jogamp.opengl.util.FPSAnimator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("serial")
 public class GLWaveformPanel extends GLPanel implements WaveformPanel {
 	private final GLWaveformRenderer renderer;
-	private boolean dct = false;
-	private SwingDCTSource dct_source;
 	private final JPopupMenu popup;
-	private JFrame dataFrame, coeffFrame, dataFrame2, cacheFrame;
+	private JFrame dataFrame, cacheFrame;
 	
 	private final static class WaveformSourceTableModel extends AbstractTableModel implements TableModel, WaveformSourceListener {
 		private final WaveformSource source;
@@ -94,8 +92,6 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
 
 		@Override
 		public void reset(WaveformSource source) {
-			// TODO Auto-generated method stub
-			
 		}
 	}
 
@@ -103,36 +99,13 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
 		this(new GLWaveformRenderer());
 	}
 	
-//	private static final GLWaveformRenderer.Color color(Color c) {
-//		if(null == c) {
-//			return new GLWaveformRenderer.Color(1.0f, 1.0f, 1.0f, 0.0f);
-//		} else {
-//			return new GLWaveformRenderer.Color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f);
-//		}
-//	}
-//	
-//	@Override
-//	public void setBackground(Color c) {
-//		super.setBackground(c); 
-//		renderer.setBackground(color(c));
-//	}
-//	
-//	@Override
-//	public void setForeground(Color c) {
-//		super.setForeground(c);
-//		renderer.setForeground(color(c));
-//	}
-	
+	private final JMenuItem sampleRate = new JMenuItem();
 	
 	public GLWaveformPanel(GLWaveformRenderer renderer) {
 		super(renderer);
-		
 
 		enableEvents(ComponentEvent.COMPONENT_RESIZED | MouseEvent.MOUSE_PRESSED | MouseEvent.MOUSE_RELEASED);
 		this.renderer = renderer;
-		
-//		setBackground(getBackground());
-//		setForeground(getForeground());
 		
 		this.popup = new JPopupMenu("Options");
 		final JMenuItem cacheItem = new JMenuItem("Set Time Domain");
@@ -178,6 +151,12 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
 			
 			@Override
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                WaveformSource source = getRenderer().getSource();
+                if(null == source) {
+                    sampleRate.setText("");
+                } else {
+                    sampleRate.setText(""+source.getMillisecondsPerSample()+" ms/sample");
+                }
 				if(null == getRenderer().cachingSource()) {
 					cacheItem.setVisible(false);
 				} else {
@@ -196,84 +175,18 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
 			}
 		});
 		
-		final JMenuItem dctItm = new JCheckBoxMenuItem("Enable DCT");
-		dctItm.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if(dct ^ dctItm.isSelected()) {
-					dct = dctItm.isSelected();
-					WaveformSource src = getRenderer().getSource();
-					while(src instanceof NestedWaveformSource) {
-						src = ((NestedWaveformSource)src).getTarget();
-					}
-					setSource(null);
-					setSource(src);
-				}
-				
-				
-			}
-			
-		});
-		this.popup.add(dctItm);
-		JMenuItem coeff = new JMenuItem("Control Coefficients");
-		coeff.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if(null == coeffFrame) {
-					coeffFrame = new JFrame("Coefficient Control");
-					coeffFrame.getContentPane().setLayout(new BorderLayout());
-					final JLabel valueLabel = new JLabel(Integer.toString(dct_source.getMaxCoeff()));
-					
-					final JSlider slider = new JSlider();
-					slider.setMaximum(dct_source.getMax());
-					slider.setValue(dct_source.getMaxCoeff());
-					slider.addChangeListener(new ChangeListener() {
-
-						@Override
-						public void stateChanged(ChangeEvent arg0) {
-							dct_source.setMaxCoeff(slider.getValue());
-							valueLabel.setText(Integer.toString(slider.getValue()));
-						}
-						
-					});
-					coeffFrame.getContentPane().add(slider, BorderLayout.CENTER);
-					coeffFrame.getContentPane().add(valueLabel, BorderLayout.SOUTH);
-					coeffFrame.setSize(640, 480);
-					
-				}
-				coeffFrame.setLocationRelativeTo(GLWaveformPanel.this);
-				coeffFrame.setVisible(true);
-			}
-		});
-		this.popup.add(coeff);
-		JMenuItem data = new JMenuItem("Show Data");
-		this.popup.add(data);
-		data.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				if(null == dataFrame) {
-					dataFrame = new JFrame("Waveform Data");
-					JTable table = new JTable(dct_source);
-					dataFrame.getContentPane().add(new JScrollPane(table));
-					dataFrame.setSize(640, 480);
-				}
-				dataFrame.setLocationRelativeTo(GLWaveformPanel.this);
-				dataFrame.setVisible(true);
-			}
-		});
 		JMenuItem realdata = new JMenuItem("Show Real Data");
 		this.popup.add(realdata);
 		realdata.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				if(null == dataFrame2) {
-					dataFrame2 = new JFrame("Waveform Data");
-					dataFrame2.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+				if(null == dataFrame) {
+					dataFrame = new JFrame("Waveform Data");
+					dataFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 					final JTable table = new JTable(new WaveformSourceTableModel(getRenderer().getSource()));
-					dataFrame2.getContentPane().add(new JScrollPane(table));
-					dataFrame2.setSize(640, 480);
-					dataFrame2.addWindowListener(new WindowAdapter() {
+					dataFrame.getContentPane().add(new JScrollPane(table));
+					dataFrame.setSize(640, 480);
+					dataFrame.addWindowListener(new WindowAdapter() {
 						@Override
 						public void windowClosing(WindowEvent e) {
 							getRenderer().getSource().removeListener((WaveformSourceListener) table.getModel());
@@ -282,15 +195,13 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
 						}
 					});
 				}
-				dataFrame2.setLocationRelativeTo(GLWaveformPanel.this);
-				dataFrame2.setVisible(true);
+				dataFrame.setLocationRelativeTo(GLWaveformPanel.this);
+				dataFrame.setVisible(true);
 			}
 		});
 		JMenuItem aboutPanel = new JMenuItem(GLWaveformPanel.class.getSimpleName());
 		this.popup.add(aboutPanel);
-//		
-		
-
+		this.popup.add(sampleRate);
 	}
 	
 	@Override
@@ -337,12 +248,31 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
 	
 	@Override
 	public void start() {
-	    setAnimator(new FPSAnimator((GLAutoDrawable) this, FPSAnimator.DEFAULT_FRAMES_PER_INTERVAL));
-        getAnimator().start();   
+	    GLAnimatorControl singleton = AnimatorSingleton.getInstance();
+	    singleton.add(this);
 	}
 	@Override
 	public void stop() {
-        getAnimator().stop();
-        getAnimator().remove(this);    
+	    final GLAnimatorControl singleton = getAnimator();
+	    try {
+	        // Making this call from the AWT thread because AWTAnimatorImpl seems to prefer it
+	        Runnable r = new Runnable() {
+                public void run() {
+                    singleton.remove(GLWaveformPanel.this);
+                }
+            };
+            if(SwingUtilities.isEventDispatchThread()) {
+                r.run();
+            } else {
+                SwingUtilities.invokeAndWait(r);
+            }
+        } catch (InvocationTargetException e) {
+            log.error("Error removing from animator", e);
+        } catch (InterruptedException e) {
+            log.error("Error removing from animator", e);
+        }
+	    
+        AnimatorSingleton.releaseInstance(singleton);
 	}
+	protected final static Logger log = LoggerFactory.getLogger(GLWaveformPanel.class);
 }

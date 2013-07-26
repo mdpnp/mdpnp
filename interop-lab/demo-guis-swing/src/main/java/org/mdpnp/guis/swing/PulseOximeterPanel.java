@@ -8,67 +8,30 @@
 package org.mdpnp.guis.swing;
 
 import ice.Numeric;
-import ice.NumericDataReader;
-import ice.NumericSeq;
-import ice.NumericTypeSupport;
 import ice.SampleArray;
-import ice.SampleArrayDataReader;
-import ice.SampleArraySeq;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Image;
 import java.awt.Insets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Set;
 
-import javax.media.opengl.GLAutoDrawable;
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.guis.waveform.NumericUpdateWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
-import org.mdpnp.guis.waveform.swing.GLWaveformPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jogamp.opengl.util.FPSAnimator;
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.infrastructure.Condition;
-import com.rti.dds.infrastructure.ConditionSeq;
-import com.rti.dds.infrastructure.Duration_t;
-import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
-import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
-import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.infrastructure.StringSeq;
-import com.rti.dds.infrastructure.WaitSet;
-import com.rti.dds.subscription.DataReader;
-import com.rti.dds.subscription.DataReaderListener;
-import com.rti.dds.subscription.InstanceStateKind;
-import com.rti.dds.subscription.LivelinessChangedStatus;
-import com.rti.dds.subscription.QueryCondition;
-import com.rti.dds.subscription.RequestedDeadlineMissedStatus;
-import com.rti.dds.subscription.RequestedIncompatibleQosStatus;
 import com.rti.dds.subscription.SampleInfo;
-import com.rti.dds.subscription.SampleInfoSeq;
-import com.rti.dds.subscription.SampleLostStatus;
-import com.rti.dds.subscription.SampleRejectedStatus;
-import com.rti.dds.subscription.SampleStateKind;
-import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.SubscriptionMatchedStatus;
-import com.rti.dds.subscription.ViewStateKind;
-import com.rti.dds.topic.TopicDescription;
 
 @SuppressWarnings("serial")
 public class PulseOximeterPanel extends DevicePanel {

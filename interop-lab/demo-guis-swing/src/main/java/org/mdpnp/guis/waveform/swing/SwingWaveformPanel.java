@@ -18,13 +18,11 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -42,7 +40,6 @@ import javax.swing.table.TableModel;
 import org.mdpnp.guis.waveform.AbstractNestedWaveformSource;
 import org.mdpnp.guis.waveform.CachingWaveformSource;
 import org.mdpnp.guis.waveform.EvenTempoWaveformSource;
-import org.mdpnp.guis.waveform.NestedWaveformSource;
 import org.mdpnp.guis.waveform.TestWaveformSource;
 import org.mdpnp.guis.waveform.WaveformCanvas;
 import org.mdpnp.guis.waveform.WaveformPanel;
@@ -50,12 +47,10 @@ import org.mdpnp.guis.waveform.WaveformRenderer;
 import org.mdpnp.guis.waveform.WaveformSource;
 import org.mdpnp.guis.waveform.WaveformSourceListener;
 
+@SuppressWarnings("serial")
 public class SwingWaveformPanel extends javax.swing.JComponent implements WaveformCanvas, WaveformSourceListener, WaveformPanel {
-	private boolean dct = false;
-	
 	private WaveformRenderer renderer;
 	private WaveformSource source;
-	private SwingDCTSource dct_source;
 	private Graphics graphics;
 	private Extent extent;
 	private final JPopupMenu popup;
@@ -69,7 +64,7 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 		return AbstractNestedWaveformSource.source(CachingWaveformSource.class, this.source);
 	}
 	
-	private final static class WaveformSourceTableModel extends AbstractTableModel implements TableModel, WaveformSourceListener {
+    private final static class WaveformSourceTableModel extends AbstractTableModel implements TableModel, WaveformSourceListener {
 		private final WaveformSource source;
 		
 		public WaveformSourceTableModel(WaveformSource source) {
@@ -119,8 +114,6 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 
 		@Override
 		public void reset(WaveformSource source) {
-			// TODO Auto-generated method stub
-			
 		}
 	}
 	
@@ -132,22 +125,15 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 
 	public void setRawSource(WaveformSource source) {
 		if(null != this.source) {
-			this.source.removeListener(dct_source);
 			this.source.removeListener(this);
 		}
 		this.source = source;
 		if(null != this.source) {
 			this.source.addListener(this);
 			this.renderer = new WaveformRenderer(this.source);
-			if(dct) {
-				this.dct_source = new SwingDCTSource(this.source);
-				this.renderer.addOtherSource(255, 0, 0, 255, dct_source);
-			}
 		} else {
 			this.renderer = null;
-			this.dct_source = null;
 		}
-		
 	}
 	
 	private boolean evenTempo = true;
@@ -177,7 +163,7 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 		this(null);
 	}
 	
-	private JFrame dataFrame, coeffFrame, dataFrame2, cacheFrame;
+	private JFrame dataFrame, cacheFrame;
 	
 	public SwingWaveformPanel(WaveformSource source) {
 		this.popup = new JPopupMenu("Options");
@@ -247,85 +233,19 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 				
 			}
 		});
-		
-		final JMenuItem dctItm = new JCheckBoxMenuItem("Enable DCT");
-		dctItm.addActionListener(new ActionListener() {
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if(dct ^ dctItm.isSelected()) {
-					dct = dctItm.isSelected();
-					WaveformSource src = SwingWaveformPanel.this.source;
-					while(src instanceof NestedWaveformSource) {
-						src = ((NestedWaveformSource)src).getTarget();
-					}
-					setSource(null);
-					setSource(src);
-				}
-				
-				
-			}
-			
-		});
-		this.popup.add(dctItm);
-		JMenuItem coeff = new JMenuItem("Control Coefficients");
-		coeff.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if(null == coeffFrame) {
-					coeffFrame = new JFrame("Coefficient Control");
-					coeffFrame.getContentPane().setLayout(new BorderLayout());
-					final JLabel valueLabel = new JLabel(Integer.toString(dct_source.getMaxCoeff()));
-					
-					final JSlider slider = new JSlider();
-					slider.setMaximum(dct_source.getMax());
-					slider.setValue(dct_source.getMaxCoeff());
-					slider.addChangeListener(new ChangeListener() {
-
-						@Override
-						public void stateChanged(ChangeEvent arg0) {
-							dct_source.setMaxCoeff(slider.getValue());
-							valueLabel.setText(Integer.toString(slider.getValue()));
-						}
-						
-					});
-					coeffFrame.getContentPane().add(slider, BorderLayout.CENTER);
-					coeffFrame.getContentPane().add(valueLabel, BorderLayout.SOUTH);
-					coeffFrame.setSize(640, 480);
-					
-				}
-				coeffFrame.setLocationRelativeTo(SwingWaveformPanel.this);
-				coeffFrame.setVisible(true);
-			}
-		});
-		this.popup.add(coeff);
-		JMenuItem data = new JMenuItem("Show Data");
-		this.popup.add(data);
-		data.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				if(null == dataFrame) {
-					dataFrame = new JFrame("Waveform Data");
-					JTable table = new JTable(dct_source);
-					dataFrame.getContentPane().add(new JScrollPane(table));
-					dataFrame.setSize(640, 480);
-				}
-				dataFrame.setLocationRelativeTo(SwingWaveformPanel.this);
-				dataFrame.setVisible(true);
-			}
-		});
 		JMenuItem realdata = new JMenuItem("Show Real Data");
 		this.popup.add(realdata);
 		realdata.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				if(null == dataFrame2) {
-					dataFrame2 = new JFrame("Waveform Data");
-					dataFrame2.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+				if(null == dataFrame) {
+					dataFrame = new JFrame("Waveform Data");
+					dataFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 					final JTable table = new JTable(new WaveformSourceTableModel(SwingWaveformPanel.this.source));
-					dataFrame2.getContentPane().add(new JScrollPane(table));
-					dataFrame2.setSize(640, 480);
-					dataFrame2.addWindowListener(new WindowAdapter() {
+					dataFrame.getContentPane().add(new JScrollPane(table));
+					dataFrame.setSize(640, 480);
+					dataFrame.addWindowListener(new WindowAdapter() {
 						@Override
 						public void windowClosing(WindowEvent e) {
 							SwingWaveformPanel.this.source.removeListener((WaveformSourceListener) table.getModel());
@@ -334,8 +254,8 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 						}
 					});
 				}
-				dataFrame2.setLocationRelativeTo(SwingWaveformPanel.this);
-				dataFrame2.setVisible(true);
+				dataFrame.setLocationRelativeTo(SwingWaveformPanel.this);
+				dataFrame.setVisible(true);
 			}
 		});
 		JMenuItem aboutPanel = new JMenuItem(SwingWaveformPanel.class.getSimpleName());
@@ -384,44 +304,21 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 				((Graphics2D) this.graphics).setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 				((Graphics2D) this.graphics).setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 			}
-			
-//			if(isOpaque()) {
-				this.graphics.setColor(getBackground());
-//			} else {
-//				this.graphics.setColor(TRANSPARENT);
-//			}
-			
+
+			this.graphics.setColor(getBackground());
 			this.graphics.fillRect(0, 0, width, height);
 		}
 		
 	}
 	
-	@Override
-	public void setOpaque(boolean isOpaque) {
-		super.setOpaque(isOpaque);
-//		if(isOpaque()) {
-//			this.graphics.setColor(getBackground());
-//		} else {
-//			this.graphics.setColor(TRANSPARENT);
-//		}
-//		Dimension d = getSize();
-//		int width = (int) d.getWidth();
-//		int height = (int) d.getHeight();
-//		this.graphics.fillRect(0, 0, width, height);
-	}
+
 	
 	@Override
 	public void paintComponent(Graphics g) {
-
-//		super.paint(g);
-//		this.graphics = g;
 		if(extent == null) {
 			extent = new ExtentImpl(getSize());
 		}
-//		WaveformRenderer renderer = this.renderer;
-//		if(null != renderer && null != graphics) {
-//			renderer.render(this);
-//		}
+
 		if(null != image) {
 			int width = extent.getMaxX() - extent.getMinX();
 			int height = extent.getMaxY() - extent.getMinY();
@@ -444,15 +341,10 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 		graphics.setColor(getForeground());
 		graphics.drawLine(x0, height - y0, x1, height - y1);
 	}
-	private static final Color TRANSPARENT = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+
 	@Override
 	public synchronized void clearRect(int x, int y, int width, int height) {
-//		if(isOpaque()) {
-			graphics.setColor(getBackground());
-//		} else {
-////			graphics.setPaintMode();
-//			graphics.setColor(TRANSPARENT);
-//		}
+	    graphics.setColor(getBackground());
 		graphics.fillRect(x, y, width, height);
 	}
 
@@ -475,10 +367,6 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 	private WaveformRenderer.Rect rect = new WaveformRenderer.Rect();
 	@Override
 	public void waveform(WaveformSource source) {
-	    
-//		long t = System.currentTimeMillis();
-//		int c = source.getCount();
-//		int v = source.getValue(c);
 		if(extent == null) {
 			extent = new ExtentImpl(getSize());
 		}
@@ -491,30 +379,12 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 
 	@Override
 	public void reset(WaveformSource source) {
-		// TODO Auto-generated method stub
-		
 	}
+	
 	public WaveformRenderer getRenderer() {
 		return renderer;
 	}
-//	public void setColor(int[] x) {
-//		setColor(x[0], x[1], x[2], x[3]);
-//	}
-//	
-//	@Override
-//	public void setColor(int r, int g, int b, int a) {
-//		graphics.setColor(new Color(r, g, b, a));
-//	}
-//	@Override
-//	public int[] getColor() {
-//		int[] c = new int[4];
-//		Color color = graphics.getColor();
-//		c[0] = color.getRed();
-//		c[1] = color.getGreen();
-//		c[2] = color.getBlue();
-//		c[3] = color.getAlpha();
-//		return c;
-//	}
+
 	@Override
 	public Component asComponent() {
 		return this;
@@ -522,16 +392,11 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 
 	@Override
 	public void setOutOfTrack(boolean outOfTrack) {
-		// TODO implement this in the WaveformCanvas
 	}
 	@Override
 	public void start() {
-	    // TODO Auto-generated method stub
-	    
 	}
 	@Override
 	public void stop() {
-	    // TODO Auto-generated method stub
-	    
 	}
 }
