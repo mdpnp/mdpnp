@@ -41,7 +41,7 @@ public class SimulatedCapnometer {
 	    
 	}
 	
-	protected static final long UPDATE_PERIOD = 250L;
+	protected static final long UPDATE_PERIOD = 100L;
 	protected static final double MILLISECONDS_PER_SAMPLE = 50;
 	protected static final int SAMPLES_PER_UPDATE = (int) Math.floor(UPDATE_PERIOD/MILLISECONDS_PER_SAMPLE);
 	

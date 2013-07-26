@@ -73,7 +73,7 @@ public class SimulatedPulseOximeter {
 		}
 	}
 	
-    protected static final long UPDATE_PERIOD = 160L;
+    protected static final long UPDATE_PERIOD = 80L;
     protected static final double MILLISECONDS_PER_SAMPLE = 13.333333333;
     protected static final int SAMPLES_PER_UPDATE = (int) Math.floor(UPDATE_PERIOD/MILLISECONDS_PER_SAMPLE);
 	
