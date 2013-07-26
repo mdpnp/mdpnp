@@ -11,12 +11,14 @@ import ice.DeviceIdentitySeq;
 import ice.DeviceIdentityTypeSupport;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.swing.AbstractListModel;
+import javax.swing.SwingUtilities;
 
 import org.mdpnp.devices.EventLoop;
 import org.slf4j.Logger;
@@ -112,7 +114,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
         }        
     }
     
-    private final void add(InstanceHandle_t handle, Device d) {
+    private final void add(final InstanceHandle_t handle, final Device d) {
         if(d == null) {
             throw new IllegalArgumentException("Tried to add a null device");
         }
@@ -124,45 +126,101 @@ public class DeviceListModel extends AbstractListModel<Device> {
         } else if(contentsByHandle.containsKey(handle)) {
             log.warn("Ignored attempt to re-add instance_handle="+handle);
         } else {
-            contents.add(0, d);
-            contentsByUDI.put(d.getDeviceIdentity().universal_device_identifier, d);
-            contentsByHandle.put(handle, d);
-            contentsByIdx.clear();
-            for(int i = 0; i < contents.size(); i++) {
-                contentsByIdx.put(contents.get(i), i);
+            try {
+                SwingUtilities.invokeAndWait(new Runnable() {
+                    public void run() {
+                        contents.add(0, d);
+                        contentsByUDI.put(d.getDeviceIdentity().universal_device_identifier, d);
+                        // The incoming instance handle is borrowed and will be returned
+                        // so we need to make a copy
+                        contentsByHandle.put(new InstanceHandle_t(handle), d);
+                        log.trace("Added handle="+handle+" and hashCode="+handle.hashCode());
+                        contentsByIdx.clear();
+                        for(int i = 0; i < contents.size(); i++) {
+                            contentsByIdx.put(contents.get(i), i);
+                        }
+                        fireIntervalAdded(this, 0, 0);
+                    }
+                });
+            } catch (InvocationTargetException e) {
+                log.error("added", e);
+            } catch (InterruptedException e) {
+                log.error("added", e);
             }
-            fireIntervalAdded(this, 0, 0);
         }
     }
     
-    private final void remove(InstanceHandle_t handle) {
+    private final void remove(final InstanceHandle_t handle) {
         if(null == handle) {
             throw new IllegalArgumentException("Tried to remove a null handle");
         }
         if(contentsByHandle.containsKey(handle)) {
-            Device device = contentsByHandle.get(handle);
+            final Device device = contentsByHandle.get(handle);
             if(contentsByUDI.containsKey(device.getDeviceIdentity().universal_device_identifier)) {
                 contentsByUDI.remove(device.getDeviceIdentity().universal_device_identifier);
             } else {
                 log.warn("No UDI="+device.getDeviceIdentity().universal_device_identifier);
             }
             if(contentsByIdx.containsKey(device)) {
-                int idx = contentsByIdx.get(device);
-                contents.remove(idx);
-                contentsByIdx.clear();
-                for(int i = 0; i < contents.size(); i++) {
-                    contentsByIdx.put(contents.get(i), i);
+                
+                final int idx = contentsByIdx.get(device);
+                try {
+                    // Cheap way to synchronize
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        public void run() {
+                            contents.remove(idx);
+                            contentsByIdx.clear();
+                            for(int i = 0; i < contents.size(); i++) {
+                                contentsByIdx.put(contents.get(i), i);
+                            }
+                            lastRemoved = device;
+                            fireIntervalRemoved(this, idx, idx);
+//                        fireIntervalRemoved(this, contents.size(), contents.size());
+//                        fireContentsChanged(this, 0, contents.size() - 1);
+                            log.warn("Removed index="+idx);
+                            lastRemoved = null;                        
+                        }
+                    });
+                } catch (InvocationTargetException e) {
+                    log.error("adding", e);
+                } catch (InterruptedException e) {
+                    log.error("adding", e);
                 }
-                lastRemoved = device;
-                fireIntervalRemoved(this, idx, idx);
-                lastRemoved = null;
+
             } else {
                 log.warn("No index for handle="+handle);
             }
             contentsByHandle.remove(handle);
+            log.info("Removed handle="+handle);
         } else {
-            log.warn("Tried to remove non-existent handle="+handle);
+            log.warn("Tried to remove non-existent handle="+handle+ " w/hashCode="+handle.hashCode()+" "+contentsByHandle.get(handle));
+            for(InstanceHandle_t h : contentsByHandle.keySet()) {
+                log.warn(h + " " + h.equals(handle) + " " + h.hashCode() + " " + handle.hashCode());
+            }
         }
+    }
+    public static void main(String[] args) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        InstanceHandle_t handle = new InstanceHandle_t();
+        Field isValid = InstanceHandle_t.class.getDeclaredField("is_valid");
+        isValid.setAccessible(true);
+        isValid.setBoolean(handle, true);
+        Field length = InstanceHandle_t.class.getDeclaredField("_length");
+        length.setAccessible(true);
+        length.setInt(handle, 16);
+        
+        byte[] theBytes = new byte[16];
+        for(int i = 0; i < theBytes.length; i++) {
+            theBytes[i] = (byte) i; 
+        }
+        Field value = InstanceHandle_t.class.getDeclaredField("_value");
+        value.setAccessible(true);
+        value.set(handle, theBytes);
+        System.out.println(handle);
+        InstanceHandle_t handle2 = new InstanceHandle_t(handle);
+        Map<InstanceHandle_t, Integer> map = new HashMap<InstanceHandle_t, Integer>();
+        map.put(handle, 10);
+        System.out.println(map.containsKey(handle2));
+        
     }
     
 	private static final Logger log = LoggerFactory
@@ -309,7 +367,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                 
                 if(0 != (ViewStateKind.NEW_VIEW_STATE & si.view_state)) {
                     if(si.valid_data) {
-                        log.trace("View state is new, adding device " + di.universal_device_identifier);
+                        log.trace("View state is new, adding device " + di.universal_device_identifier + " with handle " + si.instance_handle + " w/hashCode="+si.instance_handle.hashCode());
                         add(si.instance_handle, di);
                     } else {
                         log.trace("View state is new, but no valid_data, adding device " + di.universal_device_identifier);
