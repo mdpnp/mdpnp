@@ -248,29 +248,48 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
 	
 	@Override
 	public void start() {
-	    GLAnimatorControl singleton = AnimatorSingleton.getInstance();
-	    singleton.add(this);
+	    final GLAnimatorControl singleton = AnimatorSingleton.getInstance();
+        // Making this call from the AWT thread because AWTAnimatorImpl seems to prefer it
+        Runnable r = new Runnable() {
+            public void run() {
+                singleton.add(GLWaveformPanel.this);
+            }
+        };
+        if(SwingUtilities.isEventDispatchThread()) {
+            r.run();
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(r);
+            } catch (InvocationTargetException e) {
+                log.error("adding to animator", e);
+            } catch (InterruptedException e) {
+                log.error("adding to animator", e);
+            }
+        }
+	    
 	}
 	@Override
 	public void stop() {
 	    final GLAnimatorControl singleton = getAnimator();
-	    try {
-	        // Making this call from the AWT thread because AWTAnimatorImpl seems to prefer it
-	        Runnable r = new Runnable() {
-                public void run() {
-                    singleton.remove(GLWaveformPanel.this);
-                }
-            };
-            if(SwingUtilities.isEventDispatchThread()) {
-                r.run();
-            } else {
-                SwingUtilities.invokeAndWait(r);
+
+        // Making this call from the AWT thread because AWTAnimatorImpl seems to prefer it
+        Runnable r = new Runnable() {
+            public void run() {
+                singleton.remove(GLWaveformPanel.this);
             }
-        } catch (InvocationTargetException e) {
-            log.error("Error removing from animator", e);
-        } catch (InterruptedException e) {
-            log.error("Error removing from animator", e);
+        };
+        if(SwingUtilities.isEventDispatchThread()) {
+            r.run();
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(r);
+            } catch (InvocationTargetException e) {
+                log.error("Error removing from animator", e);
+            } catch (InterruptedException e) {
+                log.error("Error removing from animator", e);
+            }                    
         }
+
 	    
         AnimatorSingleton.releaseInstance(singleton);
 	}
