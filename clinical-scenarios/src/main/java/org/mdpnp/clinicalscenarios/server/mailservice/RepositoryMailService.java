@@ -1,6 +1,5 @@
 package org.mdpnp.clinicalscenarios.server.mailservice;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -13,17 +12,16 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
-import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
-
 public class RepositoryMailService {
-	   String host = "smtp.google.com";
-	   String to = "md.pnp.team@gmail.com";
-	   String from = "md.pnp.team@gmail.com";
-	   String subject = "Clinical Repository submission";
-	   String messageText = "Your scenario has been accepted";
-	   boolean sessionDebug = false;
+	
+	String host = "smtp.google.com";
+	String to = "md.pnp.team@gmail.com";
+	String from = "md.pnp.team@gmail.com";
+	String subject = "Clinical Repository submission";
+	String messageText = "Your scenario has been revised";
+	boolean sessionDebug = false;
 	   
-	   private Logger logger = Logger.getLogger(RepositoryMailService.class.getName());
+	private Logger logger = Logger.getLogger(RepositoryMailService.class.getName());
 	   
 	public RepositoryMailService(String to, String subject, String messageText){
 		this.to = to;
@@ -81,17 +79,8 @@ public class RepositoryMailService {
 	
 			// Hand the message to the default transport service for delivery.
 			Transport.send(msg);
-			logger.info("Email sent to"+to+" w/ subject "+subject+" MSG "+messageText);
+//			logger.info("Email sent to"+to+" w/ subject "+subject+" MSG "+messageText);
 		
-
-        
-//            Message msg = new MimeMessage(session);
-//            msg.setFrom(new InternetAddress("admin@example.com", "Example.com Admin"));
-//            msg.addRecipient(Message.RecipientType.TO,
-//                             new InternetAddress("user@example.com", "Mr. User"));
-//            msg.setSubject("Your Example.com account has been activated");
-//            msg.setText(msgBody);
-//            Transport.send(msg);
     
         } catch (AddressException e) {
             // ...

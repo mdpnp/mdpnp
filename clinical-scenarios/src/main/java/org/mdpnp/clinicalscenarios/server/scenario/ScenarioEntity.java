@@ -3,6 +3,7 @@ package org.mdpnp.clinicalscenarios.server.scenario;
 import static org.mdpnp.clinicalscenarios.server.OfyService.ofy;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
@@ -18,6 +19,7 @@ import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
 import com.googlecode.objectify.annotation.OnSave;
 //import java.util.logging.Logger;
+
 
 
 @SuppressWarnings("serial")
@@ -172,7 +174,8 @@ public class ScenarioEntity implements java.io.Serializable {
 		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
 		
-		String str = keywords.toUpperCase();
+		String str = keywords.toUpperCase(); //String comparison in UPPERCASE ******
+		//TODO Declare a keyword separator (WHITESPACE) and tokenize elements to use several Keywords
 		try{
 
 		for(ScenarioEntity s : scenarios) {
@@ -183,20 +186,20 @@ public class ScenarioEntity implements java.io.Serializable {
 				matchingScenarios.add(s);
 			}else{
 				//2- Check background
-				String currentState = s.getBackground().getCurrentState()==null ? "" : s.getBackground().getCurrentState();
-				String proposedState = s.getBackground().getProposedState()==null ? "" : s.getBackground().getProposedState();
+				String currentState = s.getBackground().getCurrentState()==null ? "" : s.getBackground().getCurrentState().toUpperCase();
+				String proposedState = s.getBackground().getProposedState()==null ? "" : s.getBackground().getProposedState().toUpperCase();
 				if(currentState.toUpperCase().contains(str) || proposedState.toUpperCase().contains(str)){
 					matchingScenarios.add(s);
 				}else{
 					//3- Check Benefits and risks
-					String benefits = s.getBenefitsAndRisks().getBenefits()==null ? "" : s.getBenefitsAndRisks().getBenefits();
-					String risks = s.getBenefitsAndRisks().getRisks()==null ? "" : s.getBenefitsAndRisks().getRisks();
+					String benefits = s.getBenefitsAndRisks().getBenefits()==null ? "" : s.getBenefitsAndRisks().getBenefits().toUpperCase();
+					String risks = s.getBenefitsAndRisks().getRisks()==null ? "" : s.getBenefitsAndRisks().getRisks().toUpperCase();
 					if(benefits.toUpperCase().contains(str) || risks.toUpperCase().contains(str)){
 						matchingScenarios.add(s);
 					}else{
 						//4- check Proposed Solution
-						String algorithm = s.getProposedSolution().getAlgorithm()==null ? "" : s.getProposedSolution().getAlgorithm();
-						String process = s.getProposedSolution().getProcess()==null ? "" : s.getProposedSolution().getProcess();
+						String algorithm = s.getProposedSolution().getAlgorithm()==null ? "" : s.getProposedSolution().getAlgorithm().toUpperCase();
+						String process = s.getProposedSolution().getProcess()==null ? "" : s.getProposedSolution().getProcess().toUpperCase();
 						if(algorithm.toUpperCase().contains(str) || process.toUpperCase().contains(str))
 							matchingScenarios.add(s);
 					}
@@ -211,6 +214,125 @@ public class ScenarioEntity implements java.io.Serializable {
 		}
 		return matchingScenarios;
 	}
+	
+	/**
+	 * Searches for scenarios that have any of the keywords in the associated field
+	 * @param sBackground keywords in background
+	 * @param sProposed keywords in proposed state
+	 * @return
+	 */
+	public static List<ScenarioEntity> searchByFilter_OrBehavior(String sBackground, String sProposed,
+			String sProcess, String sAlgorithm, String sBenefits, String sRisks) {
+		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
+		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
+
+		String sTitle = null;
+//		String sBackground = keywords.containsKey("background")? ((String)keywords.get("background")).toUpperCase():null;
+//		String sProposed = keywords.containsKey("proposed")? ((String)keywords.get("proposed")).toUpperCase():null;
+		try{
+
+		for(ScenarioEntity s : scenarios) {
+			//1- Check title
+			if(sTitle!=null && s.getTitle()!=null && s.getTitle().toUpperCase().contains(sTitle)) {
+				matchingScenarios.add(s);
+			}else if (sBackground!=null && s.getBackground().getCurrentState()!=null && s.getBackground().getCurrentState().toUpperCase().contains(sBackground.toUpperCase())){
+				matchingScenarios.add(s);
+			}else if(sProposed!=null && s.getBackground().getProposedState()!=null && s.getBackground().getProposedState().toUpperCase().contains(sProposed.toUpperCase())){
+				matchingScenarios.add(s);
+			}
+			
+			//TODO Complete this method w/ the search in the other fields
+			
+//			{
+//				//2- Check background
+//				String currentState = s.getBackground().getCurrentState()==null ? "" : s.getBackground().getCurrentState();
+//				String proposedState = s.getBackground().getProposedState()==null ? "" : s.getBackground().getProposedState();
+//				if(currentState.toUpperCase().contains(str) || proposedState.toUpperCase().contains(str)){
+//					matchingScenarios.add(s);
+//				}else{
+//					//3- Check Benefits and risks
+//					String benefits = s.getBenefitsAndRisks().getBenefits()==null ? "" : s.getBenefitsAndRisks().getBenefits();
+//					String risks = s.getBenefitsAndRisks().getRisks()==null ? "" : s.getBenefitsAndRisks().getRisks();
+//					if(benefits.toUpperCase().contains(str) || risks.toUpperCase().contains(str)){
+//						matchingScenarios.add(s);
+//					}else{
+//						//4- check Proposed Solution
+//						String algorithm = s.getProposedSolution().getAlgorithm()==null ? "" : s.getProposedSolution().getAlgorithm();
+//						String process = s.getProposedSolution().getProcess()==null ? "" : s.getProposedSolution().getProcess();
+//						if(algorithm.toUpperCase().contains(str) || process.toUpperCase().contains(str))
+//							matchingScenarios.add(s);
+//					}
+//				}
+//				
+//			}
+
+		}
+		
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return matchingScenarios;
+		
+	}
+	
+	/**
+	 * Searches for scenarios that have all the provided keywords in the appropriate field 
+	 * @param sBackground
+	 * @param sProposed
+	 * @return
+	 */
+	public static List<ScenarioEntity> searchByFilter_AndBehavior(String sBackground, String sProposed,
+			String sProcess, String sAlgorithm, String sBenefits, String sRisks) {
+		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
+		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
+
+		String sTitle = null;
+//		String sBackground = keywords.containsKey("background")? ((String)keywords.get("background")).toUpperCase():null;
+//		String sProposed = keywords.containsKey("proposed")? ((String)keywords.get("proposed")).toUpperCase():null;
+		try{
+//TODO Convertir este codigo en hermosos IF anidados para conseguir la operacion AND
+		for(ScenarioEntity s : scenarios) {
+			//1- Check title
+			if(sTitle!=null && s.getTitle()!=null && s.getTitle().toUpperCase().contains(sTitle)) {
+				matchingScenarios.add(s);
+			}else if (sBackground!=null && s.getBackground().getCurrentState()!=null && s.getBackground().getCurrentState().toUpperCase().contains(sBackground.toUpperCase())){
+				matchingScenarios.add(s);
+			}else if(sProposed!=null && s.getBackground().getProposedState()!=null && s.getBackground().getProposedState().toUpperCase().contains(sProposed.toUpperCase())){
+				matchingScenarios.add(s);
+			}
+			
+//			{
+//				//2- Check background
+//				String currentState = s.getBackground().getCurrentState()==null ? "" : s.getBackground().getCurrentState();
+//				String proposedState = s.getBackground().getProposedState()==null ? "" : s.getBackground().getProposedState();
+//				if(currentState.toUpperCase().contains(str) || proposedState.toUpperCase().contains(str)){
+//					matchingScenarios.add(s);
+//				}else{
+//					//3- Check Benefits and risks
+//					String benefits = s.getBenefitsAndRisks().getBenefits()==null ? "" : s.getBenefitsAndRisks().getBenefits();
+//					String risks = s.getBenefitsAndRisks().getRisks()==null ? "" : s.getBenefitsAndRisks().getRisks();
+//					if(benefits.toUpperCase().contains(str) || risks.toUpperCase().contains(str)){
+//						matchingScenarios.add(s);
+//					}else{
+//						//4- check Proposed Solution
+//						String algorithm = s.getProposedSolution().getAlgorithm()==null ? "" : s.getProposedSolution().getAlgorithm();
+//						String process = s.getProposedSolution().getProcess()==null ? "" : s.getProposedSolution().getProcess();
+//						if(algorithm.toUpperCase().contains(str) || process.toUpperCase().contains(str))
+//							matchingScenarios.add(s);
+//					}
+//				}
+//				
+//			}
+
+		}
+		
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return matchingScenarios;
+		
+	}
+	
 	
 	/**
 	 * List Scn by status type 

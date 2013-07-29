@@ -30,6 +30,9 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getBasicSearch() {
 		return basicSearch;
 	}
+	public MenuItem getAdvancedSearch(){
+		return advancedSearch;
+	}
 	private MenuItem editProfile = new MenuItem("Edit User Profile", NOOP);//Constructs a new menu item that fires a command when it is selected.
 	private MenuItem signOut = new MenuItem("Sign Out", NOOP);
 	private MenuBar search = new MenuBar(true);
