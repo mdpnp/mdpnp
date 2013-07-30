@@ -90,19 +90,35 @@ public class DeviceAdapter {
         }
     }
 
+    long start() {
+        return System.currentTimeMillis();
+    }
+    
+    long stop(String s, long tm) {
+        log.trace(s + " took " + (System.currentTimeMillis() - tm) + "ms");
+        return start();
+    }
+    
     private synchronized void killAdapter() {
+        long tm = start();
         if (getConnected != null) {
             getConnected.disconnect();
+            tm = stop("getConnected.disconnect", tm);
             getConnected.shutdown();
+            stop("getConnected.shutdown", tm);
             getConnected = null;
         }
+        tm = start();
         if (device != null) {
             device.shutdown();
+            stop("device.shutdown", tm);
             device = null;
         }
+        tm = start();
         if (handler != null) {
             try {
                 handler.shutdown();
+                stop("handler.shutdown", tm);
                 handler = null;
             } catch (InterruptedException e) {
                 log.error("Interrupted in handler.shutdown", e);
@@ -134,14 +150,11 @@ public class DeviceAdapter {
                 }
             }));
 
-            // find the appropriate GUI representations for this device
             final CompositeDevicePanel cdp = new CompositeDevicePanel();
             final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getParticipant(),
                     device.getDeviceIdentity().universal_device_identifier, cdp, eventLoop);
-            // panels = DevicePanelFactory.findPanel(
-            // panels = new ArrayList<DevicePane>
 
-            frame = new JFrame("ICE Device Adapter - " + type);
+            frame = new DemoFrame("ICE Device Adapter - " + type);
             frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
             frame.addWindowListener(new WindowAdapter() {
                 @Override

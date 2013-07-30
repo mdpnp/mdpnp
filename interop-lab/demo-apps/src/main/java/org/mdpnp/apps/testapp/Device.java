@@ -23,7 +23,7 @@ public class Device {
     
     private SoftReference<DeviceIcon> realIcon;
     
-    private final static int SHORT_UDI_LENGTH = 10;
+    private final static int SHORT_UDI_LENGTH = 20;
     
     private final static Logger log = LoggerFactory.getLogger(Device.class);
     

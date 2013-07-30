@@ -36,6 +36,11 @@ public class DemoFrame extends JFrame {
 						return true;
 					}
 					break;
+				case KeyEvent.VK_W:
+				    if(e.isMetaDown()) {
+				        dispatchEvent(new WindowEvent(DemoFrame.this, WindowEvent.WINDOW_CLOSING));
+				        return true;
+				    }
 				}
 				break;
 			}

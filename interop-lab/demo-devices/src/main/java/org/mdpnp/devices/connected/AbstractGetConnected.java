@@ -75,6 +75,8 @@ public abstract class AbstractGetConnected {
 	    DeviceConnectivityObjectiveTypeSupport.unregister_type(participant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
 	    participant.delete_publisher(publisher);
 	    participant.delete_subscriber(subscriber);
+	    
+	    participant.delete_contained_entities();
 	    DomainParticipantFactory.get_instance().delete_participant(participant);
 	}
 	

@@ -131,23 +131,28 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
         synchronized(dataComponents) {
             dataComponents.clear();
         }
-        try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-                public void run() {
-                    DevicePanelFactory.resolvePanels(knownIdentifiers, data);
-                    data.setLayout(new GridLayout(data.getComponentCount(), 1));
-                    synchronized(dataComponents) {
-                        for(int i = 0; i < data.getComponentCount(); i++) {
-                            dataComponents.add((DevicePanel) data.getComponent(i));
-                        }
+        Runnable r = new Runnable() {
+            public void run() {
+                DevicePanelFactory.resolvePanels(knownIdentifiers, data);
+                data.setLayout(new GridLayout(data.getComponentCount(), 1));
+                synchronized(dataComponents) {
+                    for(int i = 0; i < data.getComponentCount(); i++) {
+                        dataComponents.add((DevicePanel) data.getComponent(i));
                     }
                 }
-            });
-        } catch (InvocationTargetException e) {
-            log.error("error adding panels", e);
-        } catch (InterruptedException e) {
-            log.error("error adding panels", e);
-        } 
+            }
+        };
+        if(SwingUtilities.isEventDispatchThread()) {
+            r.run();
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(r);
+            } catch (InvocationTargetException e) {
+                log.error("error adding panels", e);
+            } catch (InterruptedException e) {
+                log.error("error adding panels", e);
+            }
+        }
     }
     
     @Override
