@@ -54,7 +54,7 @@ public class PulseOximeterPanel extends DevicePanel {
 		spo2Bounds.setLayout(new GridLayout(3, 1));
 		spo2Bounds.add(spo2Up = new JLabel("--"));
 		spo2Bounds.add(spo2Low = new JLabel("--"));
-		spo2Bounds.add(spo2Label = new JLabel("%SpO\u2082"));
+		spo2Bounds.add(spo2Label = new JLabel("%"));
 		spo2Up.setVisible(false);
 		spo2Low.setVisible(false);
 		
@@ -62,6 +62,7 @@ public class PulseOximeterPanel extends DevicePanel {
 		spo2Panel = new JPanel();
 		spo2Panel.setOpaque(false);
 		spo2Panel.setLayout(new BorderLayout());
+		spo2Panel.add(new JLabel("SpO\u2082"), BorderLayout.NORTH);
 		spo2Panel.add(spo2 = new JLabel("----"), BorderLayout.CENTER);
 		spo2.setHorizontalAlignment(JLabel.RIGHT);
 		
@@ -80,6 +81,7 @@ public class PulseOximeterPanel extends DevicePanel {
 		heartratePanel = new JPanel();
 		heartratePanel.setOpaque(false);
 		heartratePanel.setLayout(new BorderLayout());
+		heartratePanel.add(new JLabel("Pulse Rate"), BorderLayout.NORTH);
 		heartratePanel.add(heartrate = new JLabel("----"), BorderLayout.CENTER);
 		heartrate.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		heartrate.setHorizontalAlignment(JLabel.RIGHT);

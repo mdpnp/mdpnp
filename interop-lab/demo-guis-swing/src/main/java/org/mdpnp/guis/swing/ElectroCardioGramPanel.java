@@ -34,7 +34,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
 
 	private final WaveformPanel[] panel;
 	private final Date date = new Date();
-	private final JLabel time = new JLabel(" ");
+	private final JLabel time = new JLabel(" "), heartRate = new JLabel(" "), respiratoryRate = new JLabel(" ");
 	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	private final static int[] ECG_WAVEFORMS = new int[] {
@@ -59,8 +59,8 @@ public class ElectroCardioGramPanel extends DevicePanel {
 	public ElectroCardioGramPanel() {
 		super(new BorderLayout());
 		add(label("Last Sample: ", time, BorderLayout.WEST), BorderLayout.SOUTH);
+		
 		JPanel waves = new JPanel(new GridLayout(ECG_WAVEFORMS.length, 1));
- 
 		WaveformPanelFactory fact = new WaveformPanelFactory();
 		panel = new WaveformPanel[ECG_WAVEFORMS.length];
 		for(int i = 0; i < panel.length; i++) {
@@ -71,6 +71,16 @@ public class ElectroCardioGramPanel extends DevicePanel {
 			panel[i].start();
 		}
 		add(waves, BorderLayout.CENTER);
+		
+		JPanel numerics = new JPanel(new GridLayout(2, 1));
+		SpaceFillLabel.attachResizeFontToFill(this, heartRate, respiratoryRate);
+		JPanel t;
+		numerics.add(t = label("Heart Rate", heartRate));
+		t.add(new JLabel("BPM"), BorderLayout.EAST);
+		numerics.add(t = label("RespiratoryRate", respiratoryRate));
+		t.add(new JLabel("BPM"), BorderLayout.EAST);
+		add(numerics, BorderLayout.EAST);
+		
 		setForeground(Color.green);
 		setBackground(Color.black);
 		setOpaque(true);
@@ -95,7 +105,14 @@ public class ElectroCardioGramPanel extends DevicePanel {
 	
 	@Override
 	public void numeric(Numeric numeric, SampleInfo sampleInfo) {
-	    
+	    switch(numeric.name) {
+	    case ice.MDC_RESP_RATE.VALUE:
+	        respiratoryRate.setText(Integer.toString((int)numeric.value));
+	        break;
+	    case ice.MDC_PULS_OXIM_PULS_RATE.VALUE:
+	        heartRate.setText(Integer.toString((int)numeric.value));
+	        break;
+	    }
 	}
 	@Override
 	public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {

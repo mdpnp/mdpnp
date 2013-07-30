@@ -5,7 +5,6 @@ import ice.SampleArray;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -25,9 +24,8 @@ import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
 public class VentilatorPanel extends DevicePanel {
-	private WaveformPanel flowPanel, pressurePanel, co2Panel; // , pulsePanel;
-	private JLabel etco2;
-	private JLabel time; 
+	private WaveformPanel flowPanel, pressurePanel, co2Panel;
+	private final JLabel time = new JLabel(" "), respiratoryRate = new JLabel(" "), endTidalCO2 = new JLabel(" ");
 	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		
 	@Override
@@ -43,69 +41,49 @@ public class VentilatorPanel extends DevicePanel {
 		pressurePanel = fact.createWaveformPanel();
 		co2Panel = fact.createWaveformPanel();
 		
-		JPanel upper = new JPanel(new GridLayout(3,1));
-		upper.setOpaque(false);
+		JPanel waves = new JPanel(new GridLayout(3,1));
+		waves.setOpaque(false);
 		
-		upper.add(label("Flow", flowPanel.asComponent()));
-		upper.add(label("Pressure", pressurePanel.asComponent()));
-		upper.add(label("CO\u2082", co2Panel.asComponent()));
+		waves.add(label("Flow", flowPanel.asComponent()));
+		waves.add(label("Pressure", pressurePanel.asComponent()));
+		waves.add(label("CO\u2082", co2Panel.asComponent()));
 		
-		setLayout(new BorderLayout());
-		add(upper, BorderLayout.CENTER);
+		add(waves, BorderLayout.CENTER);
 		
-		add(label("Last Sample: ", time = new JLabel("TIME"), BorderLayout.WEST), BorderLayout.SOUTH);
+		add(label("Last Sample: ", time, BorderLayout.WEST), BorderLayout.SOUTH);
 		
-		add(etco2 = new JLabel("etCO\u2082"), BorderLayout.NORTH);
+		SpaceFillLabel.attachResizeFontToFill(this, endTidalCO2, respiratoryRate);
+		
+        JPanel numerics = new JPanel(new GridLayout(2, 1));
+        SpaceFillLabel.attachResizeFontToFill(this, endTidalCO2, respiratoryRate);
+        JPanel t;
+        numerics.add(t = label("etCO\u2082", endTidalCO2));
+        t.add(new JLabel(" "), BorderLayout.EAST);
+        numerics.add(t = label("RespiratoryRate", respiratoryRate));
+        t.add(new JLabel("BPM"), BorderLayout.EAST);
+        add(numerics, BorderLayout.EAST);
+		
+        add(numerics, BorderLayout.EAST);
 
-		etco2.setHorizontalAlignment(JLabel.RIGHT);
-		
+        flowPanel.setSource(flowWave);
+        pressurePanel.setSource(pressureWave);
+        co2Panel.setSource(etco2Wave);
+        
         flowPanel.start();
         pressurePanel.start();
         co2Panel.start();
+        
+        
+        setForeground(Color.green);
+        setBackground(Color.black);
+        setOpaque(true);
 
-	}
-	
-	
-	protected static float maxFontSize(JLabel label) {
-		Font labelFont = label.getFont();
-		String labelText = label.getText();
-
-		int stringWidth = label.getFontMetrics(labelFont).stringWidth(labelText);
-		int stringHeight = label.getFontMetrics(labelFont).getHeight();
-		int componentWidth = label.getWidth();
-		int componentHeight = label.getHeight();
-
-		// Find out how much the font can grow in width.
-		double widthRatio = (double)componentWidth / (double)stringWidth;
-		double heightRatio = 1.0 * componentHeight / stringHeight;
-
-		double smallerRatio = Math.min(widthRatio, heightRatio) - 0.5f;
-		
-		return (float) (labelFont.getSize2D() * smallerRatio);
-	}
-	
-	protected static void resizeFontToFill(JLabel... label) {
-		float fontSize = Float.MAX_VALUE;
-		
-		for(JLabel l : label) {
-			fontSize = Math.min(fontSize, maxFontSize(l));
-		}
-		
-		for(JLabel l : label) {
-			l.setFont(l.getFont().deriveFont(fontSize));
-		}
-	}
-	
+	}	
 
 	public VentilatorPanel() {
-		super();
+		super(new BorderLayout());
 		buildComponents();
-		flowPanel.setSource(flowWave);
-		pressurePanel.setSource(pressureWave);
-		co2Panel.setSource(etco2Wave);
-		setForeground(Color.green);
-		setBackground(Color.black);
-		setOpaque(true);
+
 	}
 		
 	private final WaveformUpdateWaveformSource flowWave = new WaveformUpdateWaveformSource();
@@ -123,7 +101,14 @@ public class VentilatorPanel extends DevicePanel {
 
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
-        // TODO handle end tidal CO2
+        switch(numeric.name) {
+        case ice.MDC_RESP_RATE.VALUE:
+            respiratoryRate.setText(Integer.toString((int)numeric.value));
+            break;
+        case ice.MDC_AWAY_CO2_EXP.VALUE:
+            endTidalCO2.setText(Integer.toString((int)numeric.value));
+            break;
+        }
     }
 
     private final Date date = new Date();
