@@ -8,8 +8,6 @@ import org.mdpnp.clinicalscenarios.client.user.UserInfoProxy;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequest;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequestFactory;
 
-import sun.swing.BakedArrayList;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -79,7 +77,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
 	
-//	private boolean isScenarioAlterable = true;//indicates if we can modify the info of the scn
 	private enum UserRole {Administrator, RegisteredUser, AnonymousUser}
 	private UserRole userRole;
 	
@@ -534,9 +531,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 		//select first tab
 		tabPanel.selectTab(0);
-		manageScnStatus = tabPanel.getWidget(APPRV_SCN_TAB_POS);
-
-//		tabPanel.getTabBar().setTabEnabled(APPRV_SCN_TAB_POS, false);//Feedback tab
+		manageScnStatus = tabPanel.getWidget(APPRV_SCN_TAB_POS);//get feedback (reject/approve Scn widget)
 		
 		//check user role
 		if(userInfoRequestFactory != null){
@@ -561,7 +556,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 						//Anonymous user
 						saveButton.setVisible(false);//can't save on demand
 						submitButton.setVisible(false);//can't submit the scn
-//						isScenarioAlterable = false; //can't modify the Scn
 						userRole = UserRole.AnonymousUser;
 						algorithmDescription.setEnabled(false);
 						clinicalProcesses.setEnabled(false);
@@ -620,7 +614,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 //	        			//Remove Feedback tab because Scn state will be 'unsubmitted'
 	        			if(tabPanel.getWidgetCount() > APPRV_SCN_TAB_POS){
 	        				tabPanel.remove(APPRV_SCN_TAB_POS);
-	        				tabPanel.selectTab(0); //DANGER DANGER DANGER
+	        				tabPanel.selectTab(0);
 	        			}
 
 	                }
@@ -1151,6 +1145,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
 	}
+	
 //	@UiField
 //	FlexTable testCasesTable;
 	
@@ -1338,10 +1333,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		text = ((SuggestBox)widget).getText().trim();
 		if(!text.equals(""))
 			return false;
-			
-		
-		
+
+		//if not, means the scenario has no meaningful info
 		return true;
 	}
+	
+
 	
 }

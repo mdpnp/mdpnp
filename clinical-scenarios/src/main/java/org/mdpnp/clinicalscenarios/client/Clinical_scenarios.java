@@ -117,15 +117,34 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 
 			@Override
 			public void execute() {
+				scenarioSearchPanel.hideNavigationButtons();
+				scenarioSearchPanel.hideAdvancedSearch();
+				scenarioSearchPanel.showBasicSearch();
 				showWidget(scenarioSearchPanel);
 			}
 			
 		});
-		scenarioListPanel.getSearchQuery().setText("");
-		scenarioListPanel.getSearchQuery().setVisible(false);
-		scenarioListPanel.getPleaseEnterKeywords().setVisible(false);
+//		scenarioListPanel.getSearchQuery().setText("");
+//		scenarioListPanel.getSearchQuery().setVisible(false);
+//		scenarioListPanel.getPleaseEnterKeywords().setVisible(false);
 		scenarioListPanel.getHeader().setText("Scenario List");
-		scenarioListPanel.getSubmitButton().setVisible(false);
+//		scenarioListPanel.getSubmitButton().setVisible(false);
+		scenarioSearchPanel.hideNavigationButtons();
+		scenarioListPanel.hideBasicSearch();
+		scenarioListPanel.hideAdvancedSearch();
+		
+		
+		userInfoBanner.getAdvancedSearch().setScheduledCommand(new Command() {
+			
+			@Override
+			public void execute() {
+				scenarioSearchPanel.hideNavigationButtons();
+				scenarioSearchPanel.hideBasicSearch();
+				scenarioSearchPanel.showAdvancedSearch();
+				showWidget(scenarioSearchPanel);	
+				
+			}
+		});
 
 		
 //		userInfoBanner.getList().setScheduledCommand(new Command() {

@@ -112,6 +112,12 @@ h1 {
 	background-color:#EEFFFF;
 }
 
+.gwt-SuggestBox{}
+.gwt-SuggestBoxPopup{ border : 2px solid #C3d9FF; background-color:#e8eef7;}
+.gwt-SuggestBoxPopup .item {}
+.gwt-SuggestBoxPopup .item-selected { background-color:#c3d9FF;}
+
+
 /* .unsubmittedScn { */
 /* 	color: black; */
 /* 	font-weight:normal; */
