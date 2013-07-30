@@ -6,15 +6,14 @@ import ice.Numeric;
 import ice.SampleArray;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
@@ -26,8 +25,6 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
@@ -92,6 +89,8 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
         add(header, BorderLayout.NORTH);
         add(data, BorderLayout.CENTER);
     }
+
+    
     private final Set<InstanceHandle_t> seenInstances = new HashSet<InstanceHandle_t>();
     @Override
     public void deviceIdentity(ice.DeviceIdentityDataReader reader, ice.DeviceIdentitySeq di_seq, SampleInfoSeq info_seq) {
@@ -127,30 +126,28 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
             }
         }
     }
-
+    
     private void replaceDataPanels() {
-        final Collection<DevicePanel> _dataComponents = new ArrayList<DevicePanel>();
-        
         synchronized(dataComponents) {
-            // Be aware GL Panels utilize invokeAndWait!
-            DevicePanelFactory.resolvePanels(knownIdentifiers, dataComponents);
-            log.debug("dataComponents:"+dataComponents);
-            _dataComponents.addAll(dataComponents);
+            dataComponents.clear();
         }
-        
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                data.setVisible(false);
-                data.removeAll();
-                data.setLayout(new GridLayout(_dataComponents.size(), 1));
-                for(DevicePanel p : _dataComponents) {
-                    data.add(p);
+        try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                public void run() {
+                    DevicePanelFactory.resolvePanels(knownIdentifiers, data);
+                    data.setLayout(new GridLayout(data.getComponentCount(), 1));
+                    synchronized(dataComponents) {
+                        for(int i = 0; i < data.getComponentCount(); i++) {
+                            dataComponents.add((DevicePanel) data.getComponent(i));
+                        }
+                    }
                 }
-                
-                data.setVisible(true);
-                data.revalidate();
-            }
-        }); 
+            });
+        } catch (InvocationTargetException e) {
+            log.error("error adding panels", e);
+        } catch (InterruptedException e) {
+            log.error("error adding panels", e);
+        } 
     }
     
     @Override
@@ -198,8 +195,6 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
                 }
             }
         }
-
-//        log.trace(sampleArray.toString());
     }
     
     public void reset() {

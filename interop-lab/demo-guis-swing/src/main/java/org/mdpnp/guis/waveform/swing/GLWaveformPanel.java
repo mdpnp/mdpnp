@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -23,8 +22,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
 
 import org.mdpnp.guis.opengl.jogl.GLPanel;
 import org.mdpnp.guis.waveform.CachingWaveformSource;
@@ -42,69 +39,16 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
 	private final JPopupMenu popup;
 	private JFrame dataFrame, cacheFrame;
 	
-	private final static class WaveformSourceTableModel extends AbstractTableModel implements TableModel, WaveformSourceListener {
-		private final WaveformSource source;
-		
-		public WaveformSourceTableModel(WaveformSource source) {
-			this.source = source;
-		}
-
-		@Override
-		public void waveform(WaveformSource source) {
-			fireTableDataChanged();
-		}
-
-		@Override
-		public Class<?> getColumnClass(int columnIndex) {
-			return Integer.class;
-		}
-		
-		@Override
-		public int getColumnCount() {
-			return 2;
-		}
-		@Override
-		public String getColumnName(int column) {
-			switch(column) {
-			case 0:
-				return "Index";
-			case 1:
-				return "Value";
-			default:
-				return null;
-			}
-		}
-		@Override
-		public int getRowCount() {
-			return source.getMax();
-		}
-		@Override
-		public Object getValueAt(int rowIndex, int columnIndex) {
-			switch(columnIndex) {
-			case 0:
-				return rowIndex;
-			case 1:
-				return source.getValue(rowIndex);
-			default:
-				return null;
-			}
-		}
-
-		@Override
-		public void reset(WaveformSource source) {
-		}
-	}
-
 	public GLWaveformPanel() {
 		this(new GLWaveformRenderer());
 	}
 	
 	private final JMenuItem sampleRate = new JMenuItem();
-	
+
 	public GLWaveformPanel(GLWaveformRenderer renderer) {
 		super(renderer);
 
-		enableEvents(ComponentEvent.COMPONENT_RESIZED | MouseEvent.MOUSE_PRESSED | MouseEvent.MOUSE_RELEASED);
+		enableEvents(MouseEvent.MOUSE_PRESSED | MouseEvent.MOUSE_RELEASED);
 		this.renderer = renderer;
 		
 		this.popup = new JPopupMenu("Options");

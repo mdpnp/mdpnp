@@ -116,10 +116,7 @@ public class PulseOximeterPanel extends DevicePanel {
 		add(upper, BorderLayout.CENTER);
 
 		add(time = new JLabel("TIME"), BorderLayout.SOUTH);
-		
-		plethPanel.start();
-		pulsePanel.start();
-		
+			
 		setForeground(Color.green);
 		setBackground(Color.black);
 	}
@@ -133,6 +130,8 @@ public class PulseOximeterPanel extends DevicePanel {
 		pulsePanel.setSource(pulseWave);
 		pulsePanel.cachingSource().setFixedTimeDomain(120000L);
 		
+		plethPanel.start();
+        pulsePanel.start();
 	}
 	
 	private final WaveformUpdateWaveformSource plethWave = new WaveformUpdateWaveformSource();
@@ -146,15 +145,14 @@ public class PulseOximeterPanel extends DevicePanel {
 	    pulsePanel.stop();
 		super.destroy();
 	}
-
-
 	
 	public static boolean supported(Set<Integer> names) {
 	    return names.contains(ice.MDC_PULS_OXIM_SAT_O2.VALUE) &&
 	           names.contains(ice.MDC_PULS_OXIM_PULS_RATE.VALUE) && 
 	           names.contains(ice.MDC_PULS_OXIM_PLETH.VALUE);
 	}
-	private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
+	@SuppressWarnings("unused")
+    private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
 	private final Date date = new Date();
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {

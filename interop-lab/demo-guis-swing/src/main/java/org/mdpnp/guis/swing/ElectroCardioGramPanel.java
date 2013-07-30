@@ -28,6 +28,7 @@ import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 
 import com.rti.dds.subscription.SampleInfo;
 
+@SuppressWarnings("serial")
 public class ElectroCardioGramPanel extends DevicePanel {
 
 	private final WaveformPanel[] panel;
@@ -47,18 +48,20 @@ public class ElectroCardioGramPanel extends DevicePanel {
 	private final Map<Integer, WaveformUpdateWaveformSource> panelMap = new HashMap<Integer, WaveformUpdateWaveformSource>();
 	public ElectroCardioGramPanel() {
 		super(new BorderLayout());
+		add(time, BorderLayout.SOUTH);
 		JPanel waves = new JPanel(new GridLayout(ECG_WAVEFORMS.length, 1));
+ 
 		WaveformPanelFactory fact = new WaveformPanelFactory();
 		panel = new WaveformPanel[ECG_WAVEFORMS.length];
 		for(int i = 0; i < panel.length; i++) {
-			waves.add((panel[i] = fact.createWaveformPanel()).asComponent());
+			waves.add((panel[i] = fact.createWaveformPanel()).asComponent()/*, gbc*/);
 			WaveformUpdateWaveformSource wuws = new WaveformUpdateWaveformSource();
 			panel[i].setSource(wuws);
 			panelMap.put(ECG_WAVEFORMS[i], wuws);
 			panel[i].start();
 		}
 		add(waves, BorderLayout.CENTER);
-		add(time, BorderLayout.SOUTH);
+		
 	}
 	
 	@Override
@@ -68,6 +71,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
 	    }
 	    super.destroy();
 	}
+	
 	public static boolean supported(Set<Integer> identifiers) {
 		for(int w : ECG_WAVEFORMS) {
 			if(identifiers.contains(w)) {

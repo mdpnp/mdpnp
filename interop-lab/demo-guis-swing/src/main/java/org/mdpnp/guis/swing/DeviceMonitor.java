@@ -89,9 +89,12 @@ public class DeviceMonitor {
             public void conditionChanged(Condition condition) {
                 try {
                     for(;;) {
-                        idReader.read_w_condition(id_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
-                        listener.deviceIdentity(idReader, id_seq, info_seq);
-                        idReader.return_loan(id_seq, info_seq);
+                        try {
+                            idReader.read_w_condition(id_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            listener.deviceIdentity(idReader, id_seq, info_seq);
+                        } finally {
+                            idReader.return_loan(id_seq, info_seq);
+                        }
                     }
                 } catch (RETCODE_NO_DATA noData) {
                     
@@ -108,9 +111,12 @@ public class DeviceMonitor {
             public void conditionChanged(Condition condition) {
                 try {
                     for(;;) {
-                        connReader.read_w_condition(conn_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
-                        listener.deviceConnectivity(connReader, conn_seq, info_seq);
-                        connReader.return_loan(conn_seq, info_seq);
+                        try {
+                            connReader.read_w_condition(conn_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            listener.deviceConnectivity(connReader, conn_seq, info_seq);
+                        } finally {
+                            connReader.return_loan(conn_seq, info_seq);
+                        }
                     }
                     
                 } catch (RETCODE_NO_DATA noData) {
@@ -128,9 +134,12 @@ public class DeviceMonitor {
             public void conditionChanged(Condition condition) {
                 try {
                     for(;;) {
-                        numReader.read_w_condition(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
-                        listener.numeric(numReader, num_seq, info_seq);
-                        numReader.return_loan(num_seq, info_seq);
+                        try {
+                            numReader.read_w_condition(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            listener.numeric(numReader, num_seq, info_seq);
+                        } finally {
+                            numReader.return_loan(num_seq, info_seq);
+                        }
                     }
                 } catch (RETCODE_NO_DATA noData) {
                     
@@ -148,9 +157,12 @@ public class DeviceMonitor {
             public void conditionChanged(Condition condition) {
                 try {
                     for(;;) {
-                        saReader.read_w_condition(sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
-                        listener.sampleArray(saReader, sa_seq, info_seq);
-                        saReader.return_loan(sa_seq, info_seq);
+                        try {
+                            saReader.read_w_condition(sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            listener.sampleArray(saReader, sa_seq, info_seq);
+                        } finally {
+                            saReader.return_loan(sa_seq, info_seq);
+                        }
                     }
                 } catch (RETCODE_NO_DATA noData) {
                     

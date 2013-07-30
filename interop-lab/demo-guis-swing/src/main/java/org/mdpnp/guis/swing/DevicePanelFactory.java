@@ -7,17 +7,20 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import java.awt.Component;
+import java.awt.Container;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DevicePanelFactory {
 	private DevicePanelFactory() {}
 	
-	public static final Class[] PANELS = new Class[] {
+	public static final Class<?>[] PANELS = new Class[] {
 	    PulseOximeterPanel.class,
 	    BloodPressurePanel.class,
 	    ElectroCardioGramPanel.class,
@@ -36,35 +39,39 @@ public class DevicePanelFactory {
 	}
 	
 
-	public static void resolvePanels(Set<Integer> tags, Collection<DevicePanel> panels) {
-	    Map<Class, DevicePanel> byClass = new HashMap<Class, DevicePanel>();
-	    Collection<DevicePanel> newPanels = new ArrayList<DevicePanel>();
-	    
-	    for(DevicePanel p : panels) {
-	        byClass.put(p.getClass(), p);
-	    }
-	    
-	    for(int i = 0; i < PANELS.length; i++) {
-	        try {
+	private final static Logger log = LoggerFactory.getLogger(DevicePanelFactory.class);
+	
+	
+	public static void resolvePanels(Set<Integer> tags, Container container) {
+        log.trace("resolvePanels tags="+tags+" container="+container);
+        Map<Class<?>, Component> byClass = new HashMap<Class<?>, Component>();
+        
+        for(Component c : container.getComponents()) {
+            byClass.put(c.getClass(), c);
+        }
+        
+        for(int i = 0; i < PANELS.length; i++) {
+            try {
                 if((Boolean)PANEL_SUPPORTED[i].invoke(null, tags)) {
                     if(byClass.containsKey(PANELS[i])) {
-                        newPanels.add(byClass.get(PANELS[i]));
+                        // Reuse a panel
                         byClass.remove(PANELS[i]);
                     } else {
-                        newPanels.add((DevicePanel)PANELS[i].getConstructor().newInstance());
+                        // New panel
+                        container.add((DevicePanel)PANELS[i].getConstructor().newInstance());
                     }
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-	    }
-	    
-	    for(DevicePanel p : byClass.values()) {
-	        p.destroy();
-	    }
-	    byClass.clear();
-	    
-	    panels.clear();
-	    panels.addAll(newPanels);
+        }
+        
+        for(Component c : byClass.values()) {
+            if(c instanceof DevicePanel) {
+                ((DevicePanel)c).destroy();
+            }
+            container.remove(c);
+        }
+        byClass.clear();
 	}
 }

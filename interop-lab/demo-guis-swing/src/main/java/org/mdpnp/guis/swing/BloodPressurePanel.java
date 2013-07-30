@@ -13,21 +13,13 @@ import ice.SampleArray;
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -191,7 +183,9 @@ public class BloodPressurePanel extends DevicePanel {
     private final Numeric inflationN = new Numeric();
     private final Numeric nextInflationN = new Numeric();
     
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(BloodPressurePanel.class);
+    
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
 //        log.debug("N:"+numeric);
