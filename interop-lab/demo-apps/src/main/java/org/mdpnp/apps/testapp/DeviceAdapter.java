@@ -67,7 +67,7 @@ public class DeviceAdapter {
             return new DemoRadical7(domainId, eventLoop);
         case PO_Simulator:
             return new SimPulseOximeter(domainId, eventLoop);
-        case NBP_Simulator:
+        case NIBP_Simulator:
             return new DemoSimulatedBloodPressure(domainId, eventLoop);
         case PhilipsMP70:
             return new DemoMP70(domainId, eventLoop);

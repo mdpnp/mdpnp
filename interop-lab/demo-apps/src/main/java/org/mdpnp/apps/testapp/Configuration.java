@@ -25,7 +25,7 @@ public class Configuration {
     
     public enum DeviceType {
         PO_Simulator(ice.ConnectionType.Simulated),
-        NBP_Simulator(ice.ConnectionType.Simulated),
+        NIBP_Simulator(ice.ConnectionType.Simulated),
         ECG_Simulator(ice.ConnectionType.Simulated),
         CO2_Simulator(ice.ConnectionType.Simulated),
         Bernoulli(ice.ConnectionType.Network),
