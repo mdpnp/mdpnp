@@ -10,17 +10,22 @@ package org.mdpnp.guis.swing;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.LayoutManager;
 
-import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
-public abstract class DevicePanel extends JComponent {
+public abstract class DevicePanel extends JPanel {
     
 	public DevicePanel() {
-		setOpaque(false);
+	    setOpaque(false);
+	}
+	public DevicePanel(LayoutManager layout) {
+	    super(layout);
+	    setOpaque(false);
 	}
 	
 	private static void setBackground(Container c, Color bg) {

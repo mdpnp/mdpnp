@@ -36,6 +36,7 @@ public class ConfigurationDialog extends JDialog {
     private final JTextArea welcomeText = new JTextArea(8, 50);
     private final JScrollPane welcomeScroll = new JScrollPane(welcomeText);
     private final JComboBox applications = new JComboBox(Application.values());
+    private final JLabel applicationsLabel = new JLabel("Application:");
     private final JButton start = new JButton("Start");
     private final JButton quit = new JButton("Quit");
     private final JTextField domainId = new JTextField("0", 2);
@@ -53,6 +54,9 @@ public class ConfigurationDialog extends JDialog {
     public JComboBox getApplications() {
         return applications;
     }
+    public JLabel getApplicationsLabel() {
+        return applicationsLabel;
+    }
     public JTextField getDomainId() {
         return domainId;
     }
@@ -66,6 +70,9 @@ public class ConfigurationDialog extends JDialog {
     }
     public JScrollPane getWelcomeScroll() {
         return welcomeScroll;
+    }
+    public JTextArea getWelcomeText() {
+        return welcomeText;
     }
     protected void set(Application app, DeviceType deviceType) {
         switch(app) {
@@ -227,7 +234,7 @@ public class ConfigurationDialog extends JDialog {
         
         
         gbc.gridx = 0;
-        addLabel(new JLabel("Application:"), gbc);
+        addLabel(applicationsLabel, gbc);
         gbc.gridx++;
         addOption(applications, gbc);
 

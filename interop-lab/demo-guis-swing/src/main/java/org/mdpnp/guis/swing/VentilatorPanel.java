@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -176,13 +177,13 @@ public class VentilatorPanel extends DevicePanel {
 
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
-        // TODO Auto-generated method stub
-        
+        // TODO handle end tidal CO2
     }
 
-
+    private final Date date = new Date();
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
+
         switch(sampleArray.name) {
         case ice.MDC_FLOW_AWAY.VALUE:
             flowWave.applyUpdate(sampleArray);
@@ -194,6 +195,8 @@ public class VentilatorPanel extends DevicePanel {
             etco2Wave.applyUpdate(sampleArray);
             break;
         }
+        date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+        time.setText(dateFormat.format(date));
     }
 
 }

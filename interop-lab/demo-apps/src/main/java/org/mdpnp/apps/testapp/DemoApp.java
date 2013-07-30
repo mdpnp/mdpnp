@@ -19,6 +19,7 @@ import javax.swing.UIManager;
 import javax.swing.DefaultComboBoxModel;
 
 import org.mdpnp.apps.testapp.Configuration.DeviceType;
+import org.mdpnp.apps.testapp.pca.PCAPanel;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 //import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 import org.mdpnp.devices.EventLoop;
@@ -98,6 +99,9 @@ public class DemoApp {
 		frame.setIconImage(ImageIO.read(DemoApp.class.getResource("icon.png")));
 		panel = new DemoPanel();
 		switch(domainId) {
+		case 0:
+		    panel.getBedLabel().setText("ICE Test Domain " + domainId);
+		    break;
 		case 3:
 		    panel.getBedLabel().setText("Operating Room "+domainId);
 		    break;
@@ -180,11 +184,17 @@ public class DemoApp {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ConfigurationDialog dia = new ConfigurationDialog();
+                dia.setTitle("Create a local ICE Device Adapter");
                 dia.getApplications().setModel(new DefaultComboBoxModel(new Configuration.Application[] {Configuration.Application.ICE_Device_Interface}));
                 dia.set(Configuration.Application.ICE_Device_Interface, Configuration.DeviceType.PO_Simulator);
                 dia.remove(dia.getDomainId());
                 dia.remove(dia.getDomainIdLabel());
-                dia.remove(dia.getWelcomeScroll());
+                dia.remove(dia.getApplications());
+                dia.remove(dia.getApplicationsLabel());
+                dia.getWelcomeText().setRows(4);
+                dia.getWelcomeText().setColumns(40);
+//                dia.remove(dia.getWelcomeScroll());
+                dia.getWelcomeText().setText("Typically ICE Device Adapters do not run directly within the ICE Supervisor.  This option is provided for convenient testing.  A window will be created for the device adapter.  To terminate the adapter close that window.  To exit this application you must close the supervisory window.");
                 dia.getQuit().setText("Close");
                 dia.pack();
                 dia.setLocationRelativeTo(panel);
@@ -281,9 +291,8 @@ public class DemoApp {
 		panel.setOpaque(true);
 		
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(640,480);
+		frame.setSize(800,600);
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
-//		nc.solicit();
 	}
 }

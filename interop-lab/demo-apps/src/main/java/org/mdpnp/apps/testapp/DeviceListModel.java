@@ -76,7 +76,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
             device.setDeviceConnectivity(dc);
             Integer idx = contentsByIdx.get(device);
             if(null != idx) {
-                fireContentsChanged(this, idx, idx);
+                fireContentsChanged(DeviceListModel.this, idx, idx);
             } else {
                 log.warn("No index for device UDI="+dc.universal_device_identifier);
             }
@@ -91,7 +91,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
             device.getDeviceIdentity().copy_from(di);
             Integer idx = contentsByIdx.get(device);
             if(null != idx) {
-                fireContentsChanged(this, idx, idx);
+                fireContentsChanged(DeviceListModel.this, idx, idx);
             } else {
                 log.warn("No index for device UDI="+di.universal_device_identifier);
             }
@@ -139,7 +139,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         for(int i = 0; i < contents.size(); i++) {
                             contentsByIdx.put(contents.get(i), i);
                         }
-                        fireIntervalAdded(this, 0, 0);
+                        fireIntervalAdded(DeviceListModel.this, 0, 0);
                     }
                 });
             } catch (InvocationTargetException e) {
@@ -174,7 +174,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                                 contentsByIdx.put(contents.get(i), i);
                             }
                             lastRemoved = device;
-                            fireIntervalRemoved(this, idx, idx);
+                            fireIntervalRemoved(DeviceListModel.this, idx, idx);
 //                        fireIntervalRemoved(this, contents.size(), contents.size());
 //                        fireContentsChanged(this, 0, contents.size() - 1);
                             log.warn("Removed index="+idx);
@@ -182,9 +182,9 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         }
                     });
                 } catch (InvocationTargetException e) {
-                    log.error("adding", e);
+                    log.error("removing", e);
                 } catch (InterruptedException e) {
-                    log.error("adding", e);
+                    log.error("removing", e);
                 }
 
             } else {
@@ -226,10 +226,10 @@ public class DeviceListModel extends AbstractListModel<Device> {
 	private static final Logger log = LoggerFactory
 			.getLogger(DeviceListModel.class);
 	
-	private final List<Device> contents = new ArrayList<Device>();
-	private final Map<String, Device> contentsByUDI = new HashMap<String, Device>();
-	private final Map<InstanceHandle_t, Device> contentsByHandle = new HashMap<InstanceHandle_t, Device>();
-	private final Map<Device, Integer> contentsByIdx = new HashMap<Device, Integer>();
+	protected final List<Device> contents = new ArrayList<Device>();
+	protected final Map<String, Device> contentsByUDI = new HashMap<String, Device>();
+	protected final Map<InstanceHandle_t, Device> contentsByHandle = new HashMap<InstanceHandle_t, Device>();
+	protected final Map<Device, Integer> contentsByIdx = new HashMap<Device, Integer>();
 	
 	private final Subscriber subscriber;
 	private final EventLoop eventLoop;

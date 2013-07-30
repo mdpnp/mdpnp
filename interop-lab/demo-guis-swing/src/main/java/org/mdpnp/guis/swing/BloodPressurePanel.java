@@ -17,9 +17,12 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -40,7 +43,9 @@ public class BloodPressurePanel extends DevicePanel {
 	private JLabel systolic, diastolic, pulse;
 	private JPanel systolicPanel, diastolicPanel, pulsePanel;
 	private JLabel time;
+	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private JLabel nextInflation;
+	private final Date date = new Date();
 //	private JButton inflate = new JButton("Inflate"); 
 	
 	protected void buildComponents() {
@@ -249,6 +254,8 @@ public class BloodPressurePanel extends DevicePanel {
             pulse.setText("");
             break;
         }
+        date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
+        time.setText(dateFormat.format(date));
     }
 
 

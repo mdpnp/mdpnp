@@ -8,6 +8,7 @@ import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -51,7 +52,7 @@ public class MainMenuPanel extends JPanel {
 		appList = new JList(names.toArray(new String[0]));
 		deviceList = new JList();
 		appList.setFont(Font.decode("verdana-30"));
-		deviceList.setFont(Font.decode("verdana-30"));
+		deviceList.setFont(Font.decode("verdana-20"));
 		
 		appList.setCellRenderer(new DefaultListCellRenderer() {
 			@Override
@@ -72,15 +73,21 @@ public class MainMenuPanel extends JPanel {
 		});
 		deviceList.setCellRenderer(new DeviceListCellRenderer());
 		
+
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		leftPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 		leftPanel.add(new JLabel("Available Applications"), BorderLayout.NORTH);
 		leftPanel.add(new JScrollPane(appList), BorderLayout.CENTER);
 		JPanel rightPanel = new JPanel(new BorderLayout());
 		rightPanel.add(new JLabel("Connected Devices"), BorderLayout.NORTH);
+//		JScrollPane p;
 		rightPanel.add(new JScrollPane(deviceList), BorderLayout.CENTER);
+//		p.setBorder(BorderFactory.createEmptyBorder());
 		rightPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-		spawnDeviceAdapter = new JButton("Start an ICE Device Adapter..."); 
+//		deviceList.setBorder(new EmptyBorder(0,0,0,0));
+		
+		spawnDeviceAdapter = new JButton("Create a local ICE Device Adapter..."); 
+		
 		
 		rightPanel.add(spawnDeviceAdapter, BorderLayout.SOUTH);
 		add(leftPanel);

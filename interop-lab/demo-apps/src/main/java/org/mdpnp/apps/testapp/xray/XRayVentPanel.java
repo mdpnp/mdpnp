@@ -1,7 +1,6 @@
 package org.mdpnp.apps.testapp.xray;
 
 import ice.DeviceConnectivity;
-import ice.DeviceIdentity;
 import ice.Numeric;
 import ice.SampleArray;
 
@@ -28,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -49,6 +49,8 @@ import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.guis.swing.DeviceMonitor;
 import org.mdpnp.guis.swing.DeviceMonitorListener;
+import org.mdpnp.guis.waveform.WaveformPanel;
+import org.mdpnp.guis.waveform.WaveformPanelFactory;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 import org.slf4j.Logger;
@@ -64,7 +66,7 @@ import com.rti.dds.subscription.Subscriber;
 public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 	private FramePanel cameraPanel;
 
-	private SwingWaveformPanel waveformPanel;
+	private WaveformPanel waveformPanel;
 	private WaveformUpdateWaveformSource wuws;
 	private JList deviceList;
 	
@@ -175,15 +177,18 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
         l.setFont(l.getFont().deriveFont(FONT_SIZE));
 
         waveformPanel = new SwingWaveformPanel();
-        waveformPanel.setBorder(border);
+//        waveformPanel = new WaveformPanelFactory().createWaveformPanel();
+        if(waveformPanel instanceof JComponent) {
+            ((JComponent)waveformPanel).setBorder(border);
+        }
 //        waveformPanel.setBackground(new Color(1.0f,1.0f,1.0f,0.0f));
         
         waveformPanel.setEvenTempo(false);
         waveformPanel.setSource(wuws);
         waveformPanel.cachingSource().setFixedTimeDomain(6000L);
 
-        waveformPanel.getRenderer().setContinuousRescale(false);
-        enclosingWaveformPanel.add(waveformPanel, BorderLayout.CENTER);
+//        waveformPanel.getRenderer().setContinuousRescale(false);
+        enclosingWaveformPanel.add(waveformPanel.asComponent(), BorderLayout.CENTER);
         panel.add(enclosingWaveformPanel);
         
         
@@ -355,6 +360,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 //	private RTRegression flow = new RTRegressionImpl(10);
 	private boolean started = false;
 	public void stop() {
+	    waveformPanel.stop();
 	    if(null != deviceMonitor) {
 	        deviceMonitor.shutdown();
 	        deviceMonitor = null;
@@ -367,6 +373,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 	
 	public void start() {
 		if(!started) {
+		    waveformPanel.start();
 			demoPanel.getBedLabel().setText("X-Ray / Ventilator Synchronization");
 			demoPanel.getPatientLabel().setText("");
 			demoPanel.getPatientLabel().setFont(Font.decode("courier-bold-20"));

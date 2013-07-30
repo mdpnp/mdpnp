@@ -18,6 +18,7 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -124,6 +125,8 @@ public class PulseOximeterPanel extends DevicePanel {
 	}
 
 	public PulseOximeterPanel() {
+	    setBackground(Color.black);
+	    setOpaque(true);
 		buildComponents();
 		plethPanel.setSource(plethWave);
 		
@@ -152,7 +155,7 @@ public class PulseOximeterPanel extends DevicePanel {
 	           names.contains(ice.MDC_PULS_OXIM_PLETH.VALUE);
 	}
 	private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
-
+	private final Date date = new Date();
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
         setInt(numeric, ice.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
@@ -160,6 +163,8 @@ public class PulseOximeterPanel extends DevicePanel {
         if(ice.MDC_PULS_OXIM_PULS_RATE.VALUE == numeric.name) {
             pulseWave.applyUpdate(numeric);
         }
+        date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
+        time.setText(dateFormat.format(date));
     }
 
     @Override
@@ -169,6 +174,7 @@ public class PulseOximeterPanel extends DevicePanel {
             plethWave.applyUpdate(sampleArray);
             break;
         }
-        
+        date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
+        time.setText(dateFormat.format(date));
     }
 }

@@ -294,4 +294,14 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
         AnimatorSingleton.releaseInstance(singleton);
 	}
 	protected final static Logger log = LoggerFactory.getLogger(GLWaveformPanel.class);
+
+    @Override
+    public void setEvenTempo(boolean evenTempo) {
+        renderer.setEvenTempo(evenTempo);
+    }
+
+    @Override
+    public void setCaching(boolean caching) {
+        renderer.setCaching(caching);
+    }
 }

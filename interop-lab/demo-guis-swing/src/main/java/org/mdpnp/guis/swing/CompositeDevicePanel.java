@@ -33,7 +33,7 @@ import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 
 @SuppressWarnings("serial")
-public class CompositeDevicePanel extends JComponent implements DeviceMonitorListener {
+public class CompositeDevicePanel extends JPanel implements DeviceMonitorListener {
    private final JLabel manufacturer = new JLabel("MANUFACTURER");
    private final JLabel model = new JLabel("MODEL");
    private final JLabel serial_number = new JLabel("SERIAL#");
@@ -51,8 +51,7 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
 
     
     public CompositeDevicePanel() {
-        super();
-        setLayout(new BorderLayout());
+        super(new BorderLayout());
         JComponent header = new JPanel();
         header.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.BASELINE,GridBagConstraints.BOTH, new Insets(1,1,1,1), 1,1);
@@ -147,7 +146,9 @@ public class CompositeDevicePanel extends JComponent implements DeviceMonitorLis
                 for(DevicePanel p : _dataComponents) {
                     data.add(p);
                 }
+                
                 data.setVisible(true);
+                data.revalidate();
             }
         }); 
     }
