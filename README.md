@@ -35,8 +35,6 @@ interop-lab/
         * Simple android demos ... currently connects to Nonin bluetooth pulse oximeters
     * __demo-apps/__
         * Demo Applications (currently demonstrates an ICE Supervisor and many ICE Device Interfaces)
-    * __demo-datamodel/__
-        * Speculative data model used in demonstration applications
     * __demo-devices/__
         * Binding of device protocol implementations (see above) to demo-nomenclature, demo-datamodel, and demo-messaging
     * __demo-guis/__
@@ -45,15 +43,5 @@ interop-lab/
         * Components to bind demo-guis to Java OpenGL (JOGL)
     * __demo-guis-swing/__
         * Components to bind demo-guis to Swing
-    * __demo-jgroups/__
-        * A Binding of demo-messaging to JGroups reliable multicast
-    * __demo-messaging/__
-        * A generic messaging infrastructure for demo apps and devices
-    * __demo-nomenclature/__
-        * Speculative nomenclature used in demonstration applications
-    * __demo-purejavacomm/__
-        * An implementation of SerialProvider that uses Purejavacomm for serial port access
-    * __demo-rtidds/__
-        * A Binding of demo-messaging to RTI DDS middleware
 
 ![](http://arvi.mgh.harvard.edu:8080/ht/?SOURCEFORGEMAINCODE)
