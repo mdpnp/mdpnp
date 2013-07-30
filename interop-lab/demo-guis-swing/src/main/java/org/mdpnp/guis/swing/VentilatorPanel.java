@@ -4,6 +4,7 @@ import ice.Numeric;
 import ice.SampleArray;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.text.DateFormat;
@@ -45,15 +46,14 @@ public class VentilatorPanel extends DevicePanel {
 		JPanel upper = new JPanel(new GridLayout(3,1));
 		upper.setOpaque(false);
 		
-		upper.add(flowPanel.asComponent());
-		upper.add(pressurePanel.asComponent());
-		upper.add(co2Panel.asComponent());
+		upper.add(label("Flow", flowPanel.asComponent()));
+		upper.add(label("Pressure", pressurePanel.asComponent()));
+		upper.add(label("CO\u2082", co2Panel.asComponent()));
 		
 		setLayout(new BorderLayout());
 		add(upper, BorderLayout.CENTER);
 		
-		add(time = new JLabel("TIME"), BorderLayout.SOUTH);
-		time.setHorizontalAlignment(JLabel.RIGHT);
+		add(label("Last Sample: ", time = new JLabel("TIME"), BorderLayout.WEST), BorderLayout.SOUTH);
 		
 		add(etco2 = new JLabel("etCO\u2082"), BorderLayout.NORTH);
 
@@ -103,6 +103,9 @@ public class VentilatorPanel extends DevicePanel {
 		flowPanel.setSource(flowWave);
 		pressurePanel.setSource(pressureWave);
 		co2Panel.setSource(etco2Wave);
+		setForeground(Color.green);
+		setBackground(Color.black);
+		setOpaque(true);
 	}
 		
 	private final WaveformUpdateWaveformSource flowWave = new WaveformUpdateWaveformSource();
@@ -139,6 +142,7 @@ public class VentilatorPanel extends DevicePanel {
             break;
         }
         date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+        
         time.setText(dateFormat.format(date));
     }
 

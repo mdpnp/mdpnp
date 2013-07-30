@@ -11,6 +11,7 @@ import ice.Numeric;
 import ice.SampleArray;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ComponentEvent;
@@ -98,7 +99,9 @@ public class BloodPressurePanel extends DevicePanel {
 //		        gateway.update(BloodPressurePanel.this, mtu);
 //		    }
 //		});
-		
+		setForeground(Color.green);
+		setBackground(Color.black);
+		setOpaque(true);
 	}
 	
 	

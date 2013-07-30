@@ -64,6 +64,7 @@ public class PulseOximeterPanel extends DevicePanel {
 		spo2Panel.setLayout(new BorderLayout());
 		spo2Panel.add(spo2 = new JLabel("----"), BorderLayout.CENTER);
 		spo2.setHorizontalAlignment(JLabel.RIGHT);
+		
 		spo2.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		spo2Panel.add(spo2Bounds, BorderLayout.EAST);
 		
@@ -97,10 +98,10 @@ public class PulseOximeterPanel extends DevicePanel {
 		
 		GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0);
 
-		upper.add(plethPanel.asComponent(), gbc);
+		upper.add(label("Plethysmogram", plethPanel.asComponent()), gbc);
 		
 		gbc.gridy = 1;
-		upper.add(pulsePanel.asComponent(), gbc);
+		upper.add(label("Pulse Rate", pulsePanel.asComponent()), gbc);
 		
 		gbc.gridy = 0;
 		gbc.weightx = 0.1;
@@ -115,10 +116,11 @@ public class PulseOximeterPanel extends DevicePanel {
 		setLayout(new BorderLayout());
 		add(upper, BorderLayout.CENTER);
 
-		add(time = new JLabel("TIME"), BorderLayout.SOUTH);
+		add(label("Last Sample: ", time = new JLabel("TIME"), BorderLayout.WEST), BorderLayout.SOUTH);
 			
 		setForeground(Color.green);
 		setBackground(Color.black);
+		setOpaque(true);
 	}
 
 	public PulseOximeterPanel() {

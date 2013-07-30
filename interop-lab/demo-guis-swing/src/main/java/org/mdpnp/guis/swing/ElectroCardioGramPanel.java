@@ -11,6 +11,7 @@ import ice.Numeric;
 import ice.SampleArray;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -45,23 +46,34 @@ public class ElectroCardioGramPanel extends DevicePanel {
 //	    ice.MDC_ECG_ELEC_POTL_AVR.VALUE,
 	};
 	
+	private final static String[] ECG_LABELS = new String[] {
+	    "ECG LEAD I",
+	    "ECG LEAD II", 
+	    "ECG LEAD III",
+	    "ECG LEAD AVF",
+	    "ECG LEAD AVL",
+	    "ECG LEAD AVR"
+	};
+	
 	private final Map<Integer, WaveformUpdateWaveformSource> panelMap = new HashMap<Integer, WaveformUpdateWaveformSource>();
 	public ElectroCardioGramPanel() {
 		super(new BorderLayout());
-		add(time, BorderLayout.SOUTH);
+		add(label("Last Sample: ", time, BorderLayout.WEST), BorderLayout.SOUTH);
 		JPanel waves = new JPanel(new GridLayout(ECG_WAVEFORMS.length, 1));
  
 		WaveformPanelFactory fact = new WaveformPanelFactory();
 		panel = new WaveformPanel[ECG_WAVEFORMS.length];
 		for(int i = 0; i < panel.length; i++) {
-			waves.add((panel[i] = fact.createWaveformPanel()).asComponent()/*, gbc*/);
+			waves.add(label(ECG_LABELS[i], (panel[i] = fact.createWaveformPanel()).asComponent())/*, gbc*/);
 			WaveformUpdateWaveformSource wuws = new WaveformUpdateWaveformSource();
 			panel[i].setSource(wuws);
 			panelMap.put(ECG_WAVEFORMS[i], wuws);
 			panel[i].start();
 		}
 		add(waves, BorderLayout.CENTER);
-		
+		setForeground(Color.green);
+		setBackground(Color.black);
+		setOpaque(true);
 	}
 	
 	@Override

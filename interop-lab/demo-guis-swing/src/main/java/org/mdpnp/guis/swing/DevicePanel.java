@@ -7,6 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -81,5 +82,15 @@ public abstract class DevicePanel extends JPanel {
 	public void destroy() {
 	}
 	
+	protected static final JPanel label(String label, Component c) {
+	    return label(label, c, BorderLayout.NORTH);
+	}
+	protected static final JPanel label(String label, Component c, String border) {
+	    JPanel pan = new JPanel(new BorderLayout());
+	    pan.setOpaque(false);
+	    pan.add(new JLabel(label), border);
+	    pan.add(c, BorderLayout.CENTER);
+	    return pan;
+	}
 }
 
