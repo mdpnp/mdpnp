@@ -26,8 +26,12 @@ public class AnimatorSingleton {
         if(0 == referenceCount) {
             // Will be paused with no drawables
             animator = new FPSAnimator(FRAMES_PER_INTERVAL);
-            animator.start();
-            log.debug("Created an GLAnimatorControl singleton");
+            if(animator.start()) {
+                log.debug("Created an GLAnimatorControl singleton");
+            } else {
+                log.warn("Unable to start GLAnimatorControl singleton");
+            }
+            
         }
         ++referenceCount;
         return animator;
@@ -40,9 +44,13 @@ public class AnimatorSingleton {
             throw new IllegalArgumentException(animator + " is not the current singleton");
         }
         if(0 == --referenceCount) {
-            animator.stop();
+            if(animator.stop()) {
+                
+                log.debug("Destroyed a GLAnimatorControl singleton");
+            } else {
+                log.warn("Unable to stop an animator");
+            }
             AnimatorSingleton.animator = null;
-            log.debug("Destroyed a GLAnimatorControl singleton");
         }
         
     }
