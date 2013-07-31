@@ -25,8 +25,11 @@ public class EventLoop  {
     }
 
     private final Map<Condition, ConditionHandler> conditionHandlers = new HashMap<Condition, ConditionHandler>();
+    private final List<Mutation> queuedMutations = new ArrayList<Mutation>();
+    private final List<Runnable> queuedRunnables = new ArrayList<Runnable>();
     private final WaitSet waitSet;
     private final GuardCondition mutate = new GuardCondition();
+    private final GuardCondition runnable = new GuardCondition();
 
     private final ConditionHandler mutateHandler = new ConditionHandler() {
 
@@ -52,7 +55,20 @@ public class EventLoop  {
                 m.done();
             }
         }
-        
+    };
+    
+    private final ConditionHandler runnableHandler = new ConditionHandler() {
+        public void conditionChanged(Condition condition) {
+            Runnable[] runnables = new Runnable[0];
+            synchronized(queuedRunnables) {
+                runnables = queuedRunnables.toArray(runnables);
+                queuedRunnables.clear();
+                ((GuardCondition)condition).set_trigger_value(false);
+            }
+            for(Runnable r : runnables) {
+                r.run();
+            }
+        }
     };
     
     private static class Mutation {
@@ -93,17 +109,18 @@ public class EventLoop  {
         }
     }
     
-    private final List<Mutation> queuedMutations = new ArrayList<Mutation>();
+    
     
     public EventLoop() {
-        waitSet = new WaitSet();
-        waitSet.attach_condition(mutate);
-        conditionHandlers.put(mutate, mutateHandler);
+        this(null);
     }
     
     public EventLoop(WaitSetProperty_t properties) {
-        waitSet = new WaitSet(properties);
+        waitSet = null == properties ? new WaitSet() : new WaitSet(properties);
+        waitSet.attach_condition(mutate);
+        waitSet.attach_condition(runnable);
         conditionHandlers.put(mutate, mutateHandler);
+        conditionHandlers.put(runnable, runnableHandler);
     }
     
     public boolean waitAndHandle(ConditionSeq condSeq, Duration_t dur) {
@@ -146,6 +163,13 @@ public class EventLoop  {
         }
         m.await();
 //        log.debug("removeHandler complete for " + condition);
+    }
+    
+    public void doLater(Runnable r) {
+        synchronized(queuedRunnables) {
+            queuedRunnables.add(r);
+            runnable.set_trigger_value(true);
+        }
     }
     
 }
