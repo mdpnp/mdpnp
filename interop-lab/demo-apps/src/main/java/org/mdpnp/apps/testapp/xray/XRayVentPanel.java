@@ -119,12 +119,14 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 	        if(deviceMonitor.getUniversalDeviceIdentifier().equals(source)) {
 	            return;
 	        } else {
-	            deviceMonitor.shutdown();
+	            deviceMonitor.stop();
 	            deviceMonitor = null;
 	        }
 	    }
 	    
-        deviceMonitor = new DeviceMonitor(participant, source, XRayVentPanel.this, eventLoop);
+        deviceMonitor = new DeviceMonitor(source);
+        deviceMonitor.addListener(XRayVentPanel.this);
+        deviceMonitor.start(participant, eventLoop);
 		log.trace("new source is " + source);
 	}
 	
@@ -362,7 +364,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 	public void stop() {
 	    waveformPanel.stop();
 	    if(null != deviceMonitor) {
-	        deviceMonitor.shutdown();
+	        deviceMonitor.stop();
 	        deviceMonitor = null;
 	    }
 		if(started) {

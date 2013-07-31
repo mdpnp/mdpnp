@@ -1,7 +1,5 @@
 package org.mdpnp.apps.testapp;
 
-import ice.DeviceIdentity;
-
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -14,16 +12,16 @@ import java.awt.event.WindowEvent;
 import java.util.TimeZone;
 
 import javax.imageio.ImageIO;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
-import javax.swing.DefaultComboBoxModel;
 
-import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.apps.testapp.pca.PCAPanel;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
-//import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
+import org.mdpnp.guis.swing.CompositeDevicePanel;
+import org.mdpnp.guis.swing.DeviceMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +30,7 @@ import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.subscription.Subscriber;
-
+//
 public class DemoApp {
 	
 	private static String goback = null;
@@ -80,13 +78,8 @@ public class DemoApp {
 		final EventLoop eventLoop = new EventLoop();
 		final EventLoopHandler handler = new EventLoopHandler(eventLoop);
 		
-//				Pointer logger = RTICLibrary.INSTANCE.NDDS_Config_Logger_get_instance();
-//		RTICLibrary.INSTANCE.NDDS_Config_Logger_set_verbosity(logger, RTICLibrary.NDDS_CONFIG_LOG_VERBOSITY_STATUS_ALL);
-//		RTICLibrary.INSTANCE.NDDS_Config_Logger_set_print_format(logger, RTICLibrary.NDDS_CONFIG_LOG_PRINT_FORMAT_MAXIMAL);
-		
 		// This could prove confusing
 		TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
-//		final Gateway gateway = new Gateway();
 		final DomainParticipantQos pQos = new DomainParticipantQos(); 
 		DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
 		pQos.participant_name.name = "DemoApp ICE_Supervisor";
@@ -148,7 +141,7 @@ public class DemoApp {
 		panel.getContent().add(mainMenuPanel, "main");
 		ol.show(panel.getContent(), "main");
 				
-		final DevicePanel devicePanel = new DevicePanel();
+		final CompositeDevicePanel devicePanel = new CompositeDevicePanel();
 		panel.getContent().add(devicePanel, "devicepanel");
 		
 		String s = System.getProperty("NOPCA");
@@ -256,13 +249,32 @@ public class DemoApp {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				int idx  = mainMenuPanel.getDeviceList().locationToIndex(e.getPoint());
-				if(idx>=0) {
-				    Device device = (Device) mainMenuPanel.getDeviceList().getModel().getElementAt(idx);
-				    devicePanel.setModel(subscriber, device.getDeviceIdentity(), eventLoop);
+				if(idx>=0 && mainMenuPanel.getDeviceList().getCellBounds(idx, idx).contains(e.getPoint())) {
+				    final Device device = (Device) mainMenuPanel.getDeviceList().getModel().getElementAt(idx);
+				    // TODO threading model needs to be revisited but here this will ultimately deadlock on this AWT EventQueue thread
+				    Thread t = new Thread(new Runnable() {
+				        public void run() {
+				            DeviceMonitor deviceMonitor = devicePanel.getModel();
+				            if(null != deviceMonitor) {
+				                deviceMonitor.stop();
+				                deviceMonitor = null;
+				            }
+				            deviceMonitor = new DeviceMonitor(device.getDeviceIdentity().universal_device_identifier); 
+				            devicePanel.setModel(deviceMonitor);
+				            deviceMonitor.start(subscriber.get_participant(), eventLoop);
+				        }
+				    });
+				    t.setDaemon(true);
+				    t.start();
+		            
+				    
 					setGoBack("main", new Runnable() {
 					    public void run() {
-					        
-					        devicePanel.setModel(null, null, null);
+					        DeviceMonitor deviceMonitor = devicePanel.getModel();
+                            if(null != deviceMonitor) {
+                                deviceMonitor.stop();
+                            }
+					        devicePanel.setModel(null);
 					    }
 					});
 					ol.show(panel.getContent(), "devicepanel");

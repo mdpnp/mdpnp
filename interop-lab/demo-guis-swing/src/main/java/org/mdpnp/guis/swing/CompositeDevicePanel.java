@@ -22,12 +22,14 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import org.mdpnp.devices.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.Subscriber;
 
 @SuppressWarnings("serial")
 public class CompositeDevicePanel extends JPanel implements DeviceMonitorListener {
@@ -41,7 +43,8 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
    
    private static final Logger log = LoggerFactory.getLogger(CompositeDevicePanel.class);
    
-   private final JPanel data = new JPanel();
+   private final JPanel data = new JPanel(new BorderLayout());
+   private final JLabel WAITING = new JLabel("Waiting for data...");
    private final Collection<DevicePanel> dataComponents = new ArrayList<DevicePanel>();
    
    private final Set<Integer> knownIdentifiers = new HashSet<Integer>();
@@ -87,6 +90,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
         gbc.gridx = 2;
         header.add(icon, gbc);
         add(header, BorderLayout.NORTH);
+        data.add(WAITING, BorderLayout.CENTER);
         add(data, BorderLayout.CENTER);
     }
 
@@ -128,17 +132,24 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
     }
     
     private void replaceDataPanels() {
+        DevicePanel[] _dataComponents;
         synchronized(dataComponents) {
-            dataComponents.clear();
+            DevicePanelFactory.resolvePanels(knownIdentifiers, dataComponents);
+            _dataComponents = dataComponents.toArray(new DevicePanel[0]);
         }
+        final DevicePanel[] __dataComponents = _dataComponents;
+        
         Runnable r = new Runnable() {
             public void run() {
-                DevicePanelFactory.resolvePanels(knownIdentifiers, data);
-                data.setLayout(new GridLayout(data.getComponentCount(), 1));
-                synchronized(dataComponents) {
-                    for(int i = 0; i < data.getComponentCount(); i++) {
-                        dataComponents.add((DevicePanel) data.getComponent(i));
+                data.removeAll();
+                if(__dataComponents.length == 0) {
+                    data.setLayout(new BorderLayout());
+                    data.add(WAITING, BorderLayout.CENTER);
+                } else {
+                    for(DevicePanel d : __dataComponents) {
+                        data.add(d);
                     }
+                    data.setLayout(new GridLayout(__dataComponents.length, 1));
                 }
             }
         };
@@ -169,6 +180,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
                     log.trace("New numeric, new set:"+knownIdentifiers);
                     replaceDataPanels();
                 }
+                // TODO this should probably be handled by replaying the contents of the reader for any new gui panels
                 synchronized(dataComponents) {
                     for(DevicePanel d : dataComponents) {
                         d.numeric(n, si);
@@ -205,5 +217,20 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
     public void reset() {
         knownIdentifiers.clear();
         replaceDataPanels();
+    }
+    private DeviceMonitor deviceMonitor;
+    
+    public void setModel(DeviceMonitor deviceMonitor) {
+        if(null != this.deviceMonitor) {
+            this.deviceMonitor.removeListener(this);
+        }
+        this.deviceMonitor = deviceMonitor;
+        reset();
+        if(null != this.deviceMonitor) { 
+            this.deviceMonitor.addListener(this);
+        }
+    }
+    public DeviceMonitor getModel() {
+        return deviceMonitor;
     }
 }

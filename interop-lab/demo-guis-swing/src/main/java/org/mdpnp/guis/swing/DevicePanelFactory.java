@@ -8,8 +8,8 @@
 package org.mdpnp.guis.swing;
 
 import java.awt.Component;
-import java.awt.Container;
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -42,23 +42,25 @@ public class DevicePanelFactory {
 	private final static Logger log = LoggerFactory.getLogger(DevicePanelFactory.class);
 	
 	
-	public static void resolvePanels(Set<Integer> tags, Container container) {
+	public static <T extends Component> void resolvePanels(Set<Integer> tags, Collection<T> container) {
         log.trace("resolvePanels tags="+tags+" container="+container);
-        Map<Class<?>, Component> byClass = new HashMap<Class<?>, Component>();
+        Map<Class<?>, T> byClass = new HashMap<Class<?>, T>();
         
-        for(Component c : container.getComponents()) {
+        for(T c : container) {
             byClass.put(c.getClass(), c);
         }
-        
+        container.clear();
         for(int i = 0; i < PANELS.length; i++) {
             try {
                 if((Boolean)PANEL_SUPPORTED[i].invoke(null, tags)) {
                     if(byClass.containsKey(PANELS[i])) {
                         // Reuse a panel
-                        byClass.remove(PANELS[i]);
+                        container.add(byClass.remove(PANELS[i]));
+                        log.trace("Reused a " + PANELS[i]);
                     } else {
                         // New panel
-                        container.add((DevicePanel)PANELS[i].getConstructor().newInstance());
+                        container.add((T)PANELS[i].getConstructor().newInstance());
+                        log.trace("Created a " + PANELS[i]);
                     }
                 }
             } catch (Exception e) {
@@ -68,9 +70,12 @@ public class DevicePanelFactory {
         
         for(Component c : byClass.values()) {
             if(c instanceof DevicePanel) {
+                
                 ((DevicePanel)c).destroy();
+                log.trace("Destroyed a " + c.getClass());
+            } else {
+                log.warn("Not a DevicePanel:"+c.getClass());
             }
-            container.remove(c);
         }
         byClass.clear();
 	}

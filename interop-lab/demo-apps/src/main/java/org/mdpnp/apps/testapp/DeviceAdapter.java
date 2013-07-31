@@ -125,8 +125,9 @@ public class DeviceAdapter {
 
         if (gui) {
             final CompositeDevicePanel cdp = new CompositeDevicePanel();
-            final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getParticipant(),
-                    device.getDeviceIdentity().universal_device_identifier, cdp, eventLoop);
+            final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getDeviceIdentity().universal_device_identifier);
+            deviceMonitor.addListener(cdp);
+            deviceMonitor.start(device.getParticipant(), eventLoop);
 
             frame = new DemoFrame("ICE Device Adapter - " + type);
             frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
@@ -154,7 +155,7 @@ public class DeviceAdapter {
                         public void run() {
                             try {
                                 setString(progressBar, "Shut down local monitoring client", 10);
-                                deviceMonitor.shutdown();
+                                deviceMonitor.stop();
                                 setString(progressBar, "Shut down local user interface", 20);
                                 cdp.reset();
                             } finally {
