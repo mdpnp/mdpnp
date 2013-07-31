@@ -69,17 +69,17 @@ public class DeviceAdapter {
         try {
             long tm = start();
             if (getConnected != null) {
-                setString(progressBar, "Issuing disconnect...", 30);
+                setString(progressBar, "Ask the device to disconnect from the ICE", 30);
                 getConnected.disconnect();
                 tm = stop("getConnected.disconnect", tm);
-                setString(progressBar, "Issuing shutdown...", 55);
+                setString(progressBar, "Shut down the connection request client", 55);
                 getConnected.shutdown();
                 stop("getConnected.shutdown", tm);
                 getConnected = null;
             }
             tm = start();
             if (device != null) {
-                setString(progressBar, "Device shutdown...", 80);
+                setString(progressBar, "Shut down the device", 80);
                 device.shutdown();
                 stop("device.shutdown", tm);
                 device = null;
@@ -87,7 +87,7 @@ public class DeviceAdapter {
             tm = start();
             if (handler != null) {
                 try {
-                    setString(progressBar, "EventLoopHandler shutdown...", 95);
+                    setString(progressBar, "Stop event processing", 95);
                     handler.shutdown();
                     stop("handler.shutdown", tm);
                     handler = null;
@@ -153,9 +153,9 @@ public class DeviceAdapter {
                     Runnable r = new Runnable() {
                         public void run() {
                             try {
-                                setString(progressBar, "DeviceMonitor shutdown", 10);
+                                setString(progressBar, "Shut down local monitoring client", 10);
                                 deviceMonitor.shutdown();
-                                setString(progressBar, "CompositeDevicePanel reset", 20);
+                                setString(progressBar, "Shut down local user interface", 20);
                                 cdp.reset();
                             } finally {
                                 killAdapter(progressBar);
