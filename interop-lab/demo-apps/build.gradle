@@ -16,6 +16,7 @@ if(MAC == localOsName) {
         appName = "MDPnP Demo Apps " + project.version
         volumeName = "MDPnP Demo Apps " + project.version
         backgroundImage = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/mdpnp.png"
+        dmgName = project.name + '-' + project.version + '-mac'
     }
 }
 
@@ -25,7 +26,11 @@ launch4j {
     launch4jCmd = "$buildDir/launch4j-install/launch4j/launch4j"
     customProcName = true
     maxHeapSize = 128
+    opt = '-Dsun.java2d.noddraw=true'
 }
+
+
+
 
 buildscript {
     dependencies {
@@ -177,6 +182,12 @@ dependencies {
     }
 }
 
+
+task createZip(type: Zip) {
+    classifier = distZip.classifier
+    from project.buildDir.getAbsolutePath()+File.separator+launch4j.outputDir
+}
+createZip.dependsOn(createExe)
 
 jar {
     manifest {
