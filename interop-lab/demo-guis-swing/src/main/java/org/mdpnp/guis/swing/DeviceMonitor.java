@@ -190,7 +190,16 @@ public class DeviceMonitor {
         }
         dataReaders.clear();
         
-        subscriber.get_participant().delete_subscriber(subscriber);
+        if(null != subscriber) {
+            DomainParticipant participant = subscriber.get_participant();
+            if(null != participant) {
+                participant.delete_subscriber(subscriber);
+            } else {
+                log.warn("participant is null");
+            }
+        } else {
+            log.warn("subscriber is null");
+        }
         log.debug("Shut down a DeviceMonitor");
     }
 }

@@ -204,7 +204,7 @@ public class DemoApp {
                         public void run() {
                             try {
                                 DeviceAdapter da = new DeviceAdapter();
-                                da.start(c.getDeviceType(), domainId, c.getAddress(), true, false);
+                                da.start(c.getDeviceType(), domainId, c.getAddress(), true, false, eventLoop );
                                 log.info("DeviceAdapter ended");
                             } catch (Exception e) {
                                 log.error("Error in spawned DeviceAdapter", e);

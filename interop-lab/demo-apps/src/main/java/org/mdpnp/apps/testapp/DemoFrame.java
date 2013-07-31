@@ -1,6 +1,5 @@
 package org.mdpnp.apps.testapp;
 
-import java.awt.CardLayout;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.KeyEventPostProcessor;
@@ -8,10 +7,15 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import javax.swing.JFrame;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@SuppressWarnings("serial")
 public class DemoFrame extends JFrame {
 	public DemoFrame() {
 		this("");
@@ -37,10 +41,11 @@ public class DemoFrame extends JFrame {
 					}
 					break;
 				case KeyEvent.VK_W:
-				    if(e.isMetaDown()) {
+				    if(e.isMetaDown() && DemoFrame.this.isFocused()) {
 				        dispatchEvent(new WindowEvent(DemoFrame.this, WindowEvent.WINDOW_CLOSING));
 				        return true;
 				    }
+				    break;
 				}
 				break;
 			}
@@ -54,20 +59,52 @@ public class DemoFrame extends JFrame {
 	public DemoFrame(String title) {
 		super(title);
 		setWindowCanFullScreen(true);
+		setQuitStrategy("CLOSE_ALL_WINDOWS");
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventPostProcessor(new PostProcessKey());
 	}
 
+	private static Class<?> applicationClass, quitStrategyClass;
+	private static Object application;
 	
+	private static final Logger log = LoggerFactory.getLogger(DemoFrame.class);
+	public static final boolean setQuitStrategy(final String quitStrategy) {
+	    try {
+    	    Method m = getApplicationClass().getMethod("setQuitStrategy", getQuitStrategyClass());
+    	    Object o = getQuitStrategyClass().getMethod("valueOf", String.class).invoke(null, quitStrategy);
+    	    m.invoke(getApplication(), o);
+    	    return true;
+	    } catch (Exception e) {
+	    }
+	    return false;
+	}
+	
+	public static final Class<?> getQuitStrategyClass() throws ClassNotFoundException {
+	    if(null == quitStrategyClass) {
+	        quitStrategyClass = Class.forName("com.apple.eawt.QuitStrategy");
+	    }
+	    return quitStrategyClass;
+	}
+	
+	public static final Class<?> getApplicationClass() throws ClassNotFoundException {
+	    if(null == applicationClass) {
+	        applicationClass = Class.forName("com.apple.eawt.Application");
+	    }
+	    return applicationClass;
+	}
+	public static final Object getApplication() throws ClassNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	    if(null == application) {
+	        Class<?> app = getApplicationClass();
+	        Method method = app.getMethod("getApplication");
+	        application = method.invoke(app);
+	    }
+	    return application;
+	}
 	
 	public final boolean requestToggleFullScreen() {
 		if(apple) {
-			Class<?> app;
 			try {
-				app = Class.forName("com.apple.eawt.Application");
-				Method method = app.getMethod("getApplication");
-		        Object a = method.invoke(app);
-		        method = app.getMethod("requestToggleFullScreen", Window.class);
-		        method.invoke(a, this);
+		        Method method = getApplicationClass().getMethod("requestToggleFullScreen", Window.class);
+		        method.invoke(getApplication(), this);
 		        repaint();
 		        return true;
 			} catch (ClassNotFoundException e1) {
@@ -140,46 +177,12 @@ public class DemoFrame extends JFrame {
 		Class<?> util;
 		try {
 			util = Class.forName("com.apple.eawt.FullScreenUtilities");
-			Class<?> app = Class.forName("com.apple.eawt.Application");
 	        Class<?> params[] = new Class[]{Window.class, Boolean.TYPE};
 	        Method method = util.getMethod("setWindowCanFullScreen", params);
 	        method.invoke(util, this, b);
-	        // APPLE WHY DO YOU HATE ME?
-	        // Turns out I wasn't enclosing my multiline JTextArea in a JScrollPane
-	        apple = true;
 	        return true;
-		} catch (ClassNotFoundException e) {
-//			e.printStackTrace();
 		} catch (Exception e) {
-//			e.printStackTrace();
 		}
-		apple = false;
-        return false;
+		return false;
 	}
-	
-	public static void main(String[] args) {
-		JFrame frame = new DemoFrame("TEST");
-		DemoPanel panel = new DemoPanel();
-		frame.getContentPane().add(panel);
-		
-		CardLayout ol = new CardLayout();
-		panel.getContent().setLayout(ol);
-		
-		final MainMenuPanel mainMenuPanel = new MainMenuPanel();
-		panel.getContent().add(mainMenuPanel, "main");
-		ol.show(panel.getContent(), "main");
-		
-		final DevicePanel devicePanel = new DevicePanel();
-		panel.getContent().add(devicePanel, "devicepanel");
-		
-//		final PCAPanel pcaPanel = new PCAPanel(null, null);
-//		panel.getContent().add(pcaPanel, "pca");
-		
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(640,480);
-//		frame.getContentPane().setLayout(new BorderLayout());
-//		frame.getContentPane().add(new DemoPanel(), BorderLayout.CENTER);
-		frame.setVisible(true);
-	}
-	
 }
