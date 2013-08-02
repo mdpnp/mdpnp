@@ -17,6 +17,7 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 
 import org.mdpnp.apps.testapp.pca.PCAPanel;
+import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
@@ -136,12 +137,22 @@ public class DemoApp {
 		String s = System.getProperty("NOPCA");
 		PCAPanel _pcaPanel = null;
 		if(null == s || !"true".equals(s)) {
-		    _pcaPanel = new PCAPanel();
+		    UIManager.put("TabbedPane.contentOpaque", false);
+		    _pcaPanel = new PCAPanel(nc);
 		    VitalModel vitalModel = new VitalModelImpl();
-		    vitalModel.addVital("Heart Rate", "bpm", new int[] { ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 0, 120);
-		    vitalModel.addVital("SpO\u2082", "%", new int[] { ice.MDC_PULS_OXIM_SAT_O2.VALUE }, 70, 130);
-		    vitalModel.addVital("Respiratory Rate", "bpm", new int[] { ice.MDC_RESP_RATE.VALUE }, 0, 24);
-		    vitalModel.addVital("etCO\u2082", "mmHg", new int[] { ice.MDC_AWAY_CO2_EXP.VALUE }, 0, 60);
+		    Vital v;
+		    v = vitalModel.addVital("Heart Rate", "bpm", new int[] { ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 0, 120);
+		    v.setLow(40);
+		    v.setHigh(180);
+		    v = vitalModel.addVital("SpO\u2082", "%", new int[] { ice.MDC_PULS_OXIM_SAT_O2.VALUE }, 70, 130);
+		    v.setLow(90);
+		    v.setHigh(101);
+		    v = vitalModel.addVital("Respiratory Rate", "bpm", new int[] { ice.MDC_RESP_RATE.VALUE }, 0, 24);
+		    v.setLow(6);
+		    v.setHigh(18);
+		    v = vitalModel.addVital("etCO\u2082", "mmHg", new int[] { ice.MDC_AWAY_CO2_EXP.VALUE }, 0, 60);
+		    v.setLow(20);
+		    v.setHigh(40);
 		    _pcaPanel.setModel(vitalModel);
 		    vitalModel.start(subscriber, eventLoop);
 		    panel.getContent().add(_pcaPanel, "pca");

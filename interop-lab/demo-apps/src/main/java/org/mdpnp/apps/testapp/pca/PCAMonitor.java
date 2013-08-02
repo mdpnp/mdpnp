@@ -24,6 +24,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ListModel;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalListModelAdapterImpl;
@@ -67,7 +68,7 @@ public class PCAMonitor extends JPanel implements VitalModelListener {
         return model;
     }
     
-    public PCAMonitor() {
+    public PCAMonitor(DeviceListModel deviceListModel) {
         super(new BorderLayout());
 
 
@@ -86,7 +87,7 @@ public class PCAMonitor extends JPanel implements VitalModelListener {
         
         
         panel.add(new JScrollPane(list), BorderLayout.CENTER);
-        list.setCellRenderer(new VitalsListCellRenderer());
+        list.setCellRenderer(new VitalsListCellRenderer(deviceListModel));
         
         JPanel panel2 = new JPanel(new GridLayout(2, 1, 10, 10));
 //      pump.setBackground(Color.green);

@@ -15,7 +15,9 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 
+import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceIcon;
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 
@@ -26,8 +28,12 @@ public class VitalsListCellRenderer extends JPanel implements ListCellRenderer {
 		private final JLabel value = new JLabel(" ");
 		private final JLabel icon = new JLabel(" ");
 		private final JLabel udi = new JLabel(" ");
-		public VitalsListCellRenderer() {
+		
+		private final DeviceListModel deviceListModel;
+		
+		public VitalsListCellRenderer(DeviceListModel deviceListModel) {
 			super(new BorderLayout());
+			this.deviceListModel = deviceListModel;
 			setBorder(BorderFactory.createLineBorder(Color.gray, 1));
 			setOpaque(false);
 			name.setFont(name.getFont().deriveFont(24f));
@@ -67,16 +73,31 @@ public class VitalsListCellRenderer extends JPanel implements ListCellRenderer {
 			this.name.setText(name);
 			String s = "";
 			if(vital.getValues().isEmpty()) {
-			    s = "<NO SOURCES>"; 
+			    s = "<NO SOURCES>";
+			    icon.setIcon(null);
+			    deviceName.setText("");
+			    udi.setText("");
 			} else {
-    			
+    			Device device = deviceListModel.getByUniversalDeviceIdentifier(vital.getValues().get(0).getUniversalDeviceIdentifier());
+    			if(null != device) {
+    			    DeviceIcon di = device.getIcon();
+                  if(null != di) {
+                      icon.setIcon(new ImageIcon(di.getImage()));
+                  }
+                    deviceName.setText(device.getMakeAndModel());
+                    udi.setText(device.getShortUDI());
+    			} else {
+    			    icon.setIcon(null);
+    			    deviceName.setText("");
+    			    udi.setText(vital.getValues().get(0).getUniversalDeviceIdentifier().substring(0, Device.SHORT_UDI_LENGTH));
+    			}
     			for(Value v : vital.getValues()) {
     			    s += v.getNumeric().value + " ";
     			}
     			s+=units;
 			}
 			value.setText(s);
-
+			
 //			DeviceIcon di = v.getDevice().getIcon();
 //			if(null != di) {
 //			    icon.setIcon(new ImageIcon(di.getImage()));

@@ -5,16 +5,16 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class VitalImpl implements Vital {
+class VitalImpl implements Vital {
 
-    private final VitalModel parent;
+    private final VitalModelImpl parent;
     private final String label, units;
     private final int[] names;
     private final float minimum, maximum;
     private float low, high;
     private final List<Value> values = new ArrayList<Value>();
     
-    public VitalImpl(VitalModel parent, String label, String units, int[] names, float minimum, float maximum) {
+    VitalImpl(VitalModelImpl parent, String label, String units, int[] names, float minimum, float maximum) {
         this.parent = parent;
         this.label = label;
         this.units = units;
@@ -59,11 +59,13 @@ public class VitalImpl implements Vital {
     @Override
     public void setLow(float low) {
         this.low = low;
+        parent.fireVitalChanged(this);
     }
 
     @Override
     public void setHigh(float high) {
         this.high = high;
+        parent.fireVitalChanged(this);
     }
 
     @Override

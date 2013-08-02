@@ -144,6 +144,11 @@ public class VitalMonitoring extends JComponent implements VitalModelListener {
             
             float minimum = REVERSE_DIRECTION ? vital.getMaximum() : vital.getMinimum();
             float maximum = REVERSE_DIRECTION ? vital.getMinimum() : vital.getMaximum();
+            
+            float low = vital.getLow();
+            float high = vital.getHigh();
+//            float low = REVERSE_DIRECTION ? vital.getHigh() : vital.getLow();
+//            float high = REVERSE_DIRECTION ? vital.getLow() : vital.getHigh();
 
             // Draw an axis line for this vital
             g.drawLine(x1, y1, x2, y2);
@@ -187,6 +192,8 @@ public class VitalMonitoring extends JComponent implements VitalModelListener {
 //                System.out.println(vital.getLabel() + " rotate " + Math.toDegrees(rotate));
                 g2d.rotate(rotate);
                 // String lbl = v < LABEL.length ? LABEL[v] : "";
+                
+                // Vital name
                 String lbl = vital.getLabel() + " ("+vital.getUnits()+ ")";
                 int maxDescent = g.getFontMetrics().getMaxDescent();
                 int height = g.getFontMetrics().getHeight();
@@ -197,6 +204,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener {
                     g.drawString(lbl, -str_w / 2, FLIP_SIGN * (-2 * height - maxDescent));
                 }
 
+                // Low end of the scale
                 lbl = Integer.toString((int) minimum);
                 str_w = g.getFontMetrics().stringWidth(lbl);
                 if(FLIP) {
@@ -206,7 +214,25 @@ public class VitalMonitoring extends JComponent implements VitalModelListener {
                     g.drawString(lbl, -length / 2, -maxDescent - 5);
                     g.drawLine(-length / 2, 0, -length / 2, -5);
                 }
+                
+                // Alarm low limit
+                Color c = g.getColor();
+                g.setColor(Color.red);
+                lbl = Integer.toString((int) low);
+                str_w = g.getFontMetrics().stringWidth(lbl);
+                double proportion = 1.0 * (low - minimum) / (maximum - minimum);
+                proportion -= 0.5;
+                int xloc = (int) (proportion * length);
+                if(FLIP) {
+                    g.drawString(lbl, -xloc - str_w/2, maxDescent + height + 5);
+                    g.drawLine(-xloc, 0, -xloc, 5);
+                } else {
+                    g.drawString(lbl, xloc-str_w/2, -maxDescent - 5);
+                    g.drawLine(xloc, 0, xloc, -5);
+                }
+                g.setColor(c);
 
+                // High end of the scale
                 lbl = Integer.toString((int) maximum);
                 str_w = g.getFontMetrics().stringWidth(lbl);
                 if(FLIP) {
@@ -217,6 +243,24 @@ public class VitalMonitoring extends JComponent implements VitalModelListener {
                     g.drawLine(length / 2, 0, length / 2, -5);
                 }
 
+                // Alarm high limit
+                c = g.getColor();
+                g.setColor(Color.red);
+                lbl = Integer.toString((int) high);
+                str_w = g.getFontMetrics().stringWidth(lbl);
+                proportion = 1.0 * (high - minimum) / (maximum - minimum);
+                proportion -= 0.5;
+                xloc = (int) (proportion * length);
+                if(FLIP) {
+                    g.drawString(lbl, -xloc - str_w/2, maxDescent + height + 5);
+                    g.drawLine(-xloc, 0, -xloc, 5);
+                } else {
+                    g.drawString(lbl, xloc-str_w/2, -maxDescent - 5);
+                    g.drawLine(xloc, 0, xloc, -5);
+                }
+                g.setColor(c);
+                
+                // Middle of the scale
                 lbl = Integer.toString((int) ((maximum - minimum) / 2 + minimum));
                 str_w = g.getFontMetrics().stringWidth(lbl);
                 if(FLIP) {
@@ -245,7 +289,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener {
                 Arrays.sort(vital_values, 0, i);
                 
                 if(REVERSE_DIRECTION && i > 1) {
-                    System.out.println(i+ " " +Arrays.toString(vital_values));
+//                    System.out.println(i+ " " +Arrays.toString(vital_values));
                     for(int k = 0; k < i/2; k++) {
                         float tmp = vital_values[k];
                         vital_values[k] = vital_values[i-1-k];
