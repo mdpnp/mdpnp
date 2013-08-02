@@ -164,9 +164,9 @@ public class DemoApp {
                     goBackAction = null;
                 }
                 if(pcaPanel != null) {
-                    VitalModel vm = pcaPanel.getModel();
+                    VitalModel vm = pcaPanel.getVitalModel();
                     if(null != vm) {
-                        pcaPanel.setModel(null);
+                        pcaPanel.setModel((VitalModel)null);
                         vm.stop();
                     }
                 }

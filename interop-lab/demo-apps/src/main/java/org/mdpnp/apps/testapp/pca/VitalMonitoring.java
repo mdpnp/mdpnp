@@ -341,16 +341,16 @@ public class VitalMonitoring extends JComponent implements VitalModelListener {
 
     @Override
     public void vitalChanged(VitalModel model, Vital vital) {
-//        repaint();
+        repaint();
     }
 
     @Override
     public void vitalRemoved(VitalModel model, Vital vital) {
-//        repaint();
+        repaint();
     }
 
     @Override
     public void vitalAdded(VitalModel model, Vital vital) {
-//        repaint();
+        repaint();
     }
 }
