@@ -16,8 +16,8 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 
 import org.mdpnp.apps.testapp.DeviceIcon;
-import org.mdpnp.apps.testapp.VitalsModel;
-import org.mdpnp.apps.testapp.VitalsModel.Vitals;
+import org.mdpnp.apps.testapp.vital.Value;
+import org.mdpnp.apps.testapp.vital.Vital;
 
 public class VitalsListCellRenderer extends JPanel implements ListCellRenderer {
 
@@ -59,41 +59,30 @@ public class VitalsListCellRenderer extends JPanel implements ListCellRenderer {
 		@Override
 		public Component getListCellRendererComponent(JList list, Object val,
 				int index, boolean isSelected, boolean cellHasFocus) {
-			VitalsModel.Vitals v = (Vitals) val;
+			Vital vital = (Vital) val;
 			// strongly thinking about making these identifiers into strings
-			String name = Integer.toString(v.getNumeric().name);
-			String units = "";
-			switch(v.getNumeric().name) {
-			case ice.MDC_PULS_OXIM_SAT_O2.VALUE:
-			    name = "SpO\u2082";
-                units = "%";
-                break;
-			case ice.MDC_CO2_RESP_RATE.VALUE:
-			case ice.MDC_RESP_RATE.VALUE:
-			    name = "Respiratory Rate";
-                units = "bpm";
-                break;
-			case ice.MDC_PULS_OXIM_PULS_RATE.VALUE:
-			    name = "Heart Rate";
-                units = "bpm";
-                break;
-			case ice.MDC_CONC_AWAY_CO2.VALUE:
-			case ice.MDC_AWAY_CO2_EXP.VALUE:
-			    name = "etCO\u2082";
-                units = "mmHg";
-                break;
-			}
+			String name = vital.getLabel();
+			String units = vital.getUnits();
 
 			this.name.setText(name);
-			
-			value.setText(""+v.getNumeric().value+" "+units);
-
-			DeviceIcon di = v.getDevice().getIcon();
-			if(null != di) {
-			    icon.setIcon(new ImageIcon(di.getImage()));
+			String s = "";
+			if(vital.getValues().isEmpty()) {
+			    s = "<NO SOURCES>"; 
+			} else {
+    			
+    			for(Value v : vital.getValues()) {
+    			    s += v.getNumeric().value + " ";
+    			}
+    			s+=units;
 			}
-			deviceName.setText(v.getDevice().getMakeAndModel());
-			udi.setText(v.getDevice().getShortUDI());
+			value.setText(s);
+
+//			DeviceIcon di = v.getDevice().getIcon();
+//			if(null != di) {
+//			    icon.setIcon(new ImageIcon(di.getImage()));
+//			}
+//			deviceName.setText(v.getDevice().getMakeAndModel());
+//			udi.setText(v.getDevice().getShortUDI());
 			return this;
 		}
 		

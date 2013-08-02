@@ -17,6 +17,8 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 
 import org.mdpnp.apps.testapp.pca.PCAPanel;
+import org.mdpnp.apps.testapp.vital.VitalModel;
+import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
@@ -111,22 +113,7 @@ public class DemoApp {
 		    panel.getVersion().setText("v"+version+" built:"+BuildInfo.getDate()+" "+BuildInfo.getTime());
 		}
 		
-		frame.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				if(goBackAction != null) {
-					goBackAction.run();
-					goBackAction = null;
-				}
-				nc.tearDown();
-				try {
-                    handler.shutdown();
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
-                }
-				super.windowClosing(e);
-			}
-		});
+
 		
 		frame.getContentPane().add(panel);
 		ol = new CardLayout();
@@ -144,10 +131,19 @@ public class DemoApp {
 		final CompositeDevicePanel devicePanel = new CompositeDevicePanel();
 		panel.getContent().add(devicePanel, "devicepanel");
 		
+		
+		
 		String s = System.getProperty("NOPCA");
 		PCAPanel _pcaPanel = null;
 		if(null == s || !"true".equals(s)) {
-		    _pcaPanel = new PCAPanel(nc, subscriber, eventLoop);
+		    _pcaPanel = new PCAPanel();
+		    VitalModel vitalModel = new VitalModelImpl();
+		    vitalModel.addVital("Heart Rate", "bpm", new int[] { ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 0, 120);
+		    vitalModel.addVital("SpO\u2082", "%", new int[] { ice.MDC_PULS_OXIM_SAT_O2.VALUE }, 70, 130);
+		    vitalModel.addVital("Respiratory Rate", "bpm", new int[] { ice.MDC_RESP_RATE.VALUE }, 0, 24);
+		    vitalModel.addVital("etCO\u2082", "mmHg", new int[] { ice.MDC_AWAY_CO2_EXP.VALUE }, 0, 60);
+		    _pcaPanel.setModel(vitalModel);
+		    vitalModel.start(subscriber, eventLoop);
 		    panel.getContent().add(_pcaPanel, "pca");
 		}
 		final PCAPanel pcaPanel = _pcaPanel;
@@ -160,7 +156,29 @@ public class DemoApp {
 		}
 		final XRayVentPanel xrayVentPanel = _xrayVentPanel;
 		
-		
+      frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if(goBackAction != null) {
+                    goBackAction.run();
+                    goBackAction = null;
+                }
+                if(pcaPanel != null) {
+                    VitalModel vm = pcaPanel.getModel();
+                    if(null != vm) {
+                        pcaPanel.setModel(null);
+                        vm.stop();
+                    }
+                }
+                nc.tearDown();
+                try {
+                    handler.shutdown();
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+                super.windowClosing(e);
+            }
+        });
 		panel.getBack().setVisible(false);
 		
 		panel.getBack().addActionListener(new ActionListener() {

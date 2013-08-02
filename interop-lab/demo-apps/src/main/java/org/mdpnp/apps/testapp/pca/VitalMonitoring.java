@@ -34,7 +34,8 @@ import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.subscription.Subscriber;
 
-public class UITest extends JComponent implements VitalModelListener {
+@SuppressWarnings("serial")
+public class VitalMonitoring extends JComponent implements VitalModelListener {
 
     private final Dimension size = new Dimension();
     private final Point center = new Point();
@@ -72,6 +73,8 @@ public class UITest extends JComponent implements VitalModelListener {
     private int[] y_ideal_points = new int[10];
     private int count_ideal_points = 0;
     
+    private float[] vital_values = new float[10];
+    
     private final void addPoint(int x, int y) {
         if(count_points>=x_points.length) { 
             this.x_points = Arrays.copyOf(this.x_points, this.x_points.length * 2 + 1);
@@ -107,7 +110,7 @@ public class UITest extends JComponent implements VitalModelListener {
             return;
         }
         int N = model.getCount();
-        g = g.create();
+
         getSize(size);
         center.y = size.height / 2;
         center.x = size.width / 2;
@@ -131,10 +134,16 @@ public class UITest extends JComponent implements VitalModelListener {
             double r1 = v * radiansPerArc;
             double r2 = (v == (N - 1) ? 0 : (v + 1)) * radiansPerArc;
 
-            int x1 = (int) (center.x + radius * Math.cos(r1));
-            int x2 = (int) (center.x + radius * Math.cos(r2));
-            int y1 = (int) (center.y + radius * Math.sin(r1));
-            int y2 = (int) (center.y + radius * Math.sin(r2));
+            int x1 = (int) Math.round(center.x + radius * Math.cos(r1));
+            int x2 = (int) Math.round(center.x + radius * Math.cos(r2));
+            int y1 = (int) Math.round(center.y + radius * Math.sin(r1));
+            int y2 = (int) Math.round(center.y + radius * Math.sin(r2));
+            
+            final boolean REVERSE_DIRECTION = y2 > y1;
+            final boolean VERTICAL = Math.abs(x2-x1)<=1;
+            
+            float minimum = REVERSE_DIRECTION ? vital.getMaximum() : vital.getMinimum();
+            float maximum = REVERSE_DIRECTION ? vital.getMinimum() : vital.getMaximum();
 
             // Draw an axis line for this vital
             g.drawLine(x1, y1, x2, y2);
@@ -144,7 +153,7 @@ public class UITest extends JComponent implements VitalModelListener {
 
             int x_ideal = (int) (0.50 * (x2 - x1) + x1);
             int y_ideal = (int) (slope * x_ideal + intercept);
-            if (x1 == x2) {
+            if (VERTICAL) {
                 // vertical line is a special case
                 x_ideal = x1;
                 y_ideal = (int) (0.5 * (y2 - y1) + y1);
@@ -159,28 +168,64 @@ public class UITest extends JComponent implements VitalModelListener {
                 g2d.translate(x_ideal, y_ideal);
                 // g2d.rotate(Math.asin( (y2-y1) / Math.sqrt( (x2-x1)*(x2-x1) +
                 // (y2-y1)*(y2-y1))));
-                g2d.rotate(Math.atan2((y2 - y1), (x2 - x1)));
+                double rotate = Math.atan2((y2 - y1), (x2 - x1));
+                boolean FLIP = false;
+                if(VERTICAL) {
+                    rotate -= Math.PI;
+                    FLIP = true;
+                    // vertical line case
+//                    rotate -= Math.PI;
+//                    FLIP = ;
+                } else if(rotate > Math.PI/2.0) {
+                    rotate -= Math.PI;
+                    FLIP = true;
+                } else if(rotate < -Math.PI/2.0) {
+                    rotate += Math.PI;
+                    FLIP = true;
+                }
+                int FLIP_SIGN = FLIP ? -1 : 1;
+//                System.out.println(vital.getLabel() + " rotate " + Math.toDegrees(rotate));
+                g2d.rotate(rotate);
                 // String lbl = v < LABEL.length ? LABEL[v] : "";
-                String lbl = vital.getLabel();
+                String lbl = vital.getLabel() + " ("+vital.getUnits()+ ")";
                 int maxDescent = g.getFontMetrics().getMaxDescent();
                 int height = g.getFontMetrics().getHeight();
                 int str_w = g.getFontMetrics().stringWidth(lbl);
-                g.drawString(lbl, -str_w / 2, -2 * height - maxDescent);
+                if(FLIP) {
+                    g.drawString(lbl, -str_w / 2, 3 * height + maxDescent);
+                } else {
+                    g.drawString(lbl, -str_w / 2, FLIP_SIGN * (-2 * height - maxDescent));
+                }
 
-                lbl = Integer.toString((int) vital.getMinimum());
+                lbl = Integer.toString((int) minimum);
                 str_w = g.getFontMetrics().stringWidth(lbl);
-                g.drawString(lbl, -length / 2, -1 * maxDescent - 5);
-                g.drawLine(-length / 2, 0, -length / 2, -5);
+                if(FLIP) {
+                    g.drawString(lbl, length / 2 - str_w, maxDescent + height + 5);
+                    g.drawLine(length / 2, 0, length / 2, 5);
+                } else {
+                    g.drawString(lbl, -length / 2, -maxDescent - 5);
+                    g.drawLine(-length / 2, 0, -length / 2, -5);
+                }
 
-                lbl = Integer.toString((int) vital.getMaximum());
+                lbl = Integer.toString((int) maximum);
                 str_w = g.getFontMetrics().stringWidth(lbl);
-                g.drawString(lbl, length / 2 - str_w, -maxDescent - 5);
-                g.drawLine(length / 2, 0, length / 2, -5);
+                if(FLIP) {
+                    g.drawString(lbl, -length / 2, maxDescent + 5 + height);
+                    g.drawLine(-length / 2, 0, -length / 2, 5);
+                } else {
+                    g.drawString(lbl, length / 2 - str_w, -maxDescent - 5);
+                    g.drawLine(length / 2, 0, length / 2, -5);
+                }
 
-                lbl = Integer.toString((int) ((vital.getMaximum() - vital.getMinimum()) / 2 + vital.getMinimum()));
+                lbl = Integer.toString((int) ((maximum - minimum) / 2 + minimum));
                 str_w = g.getFontMetrics().stringWidth(lbl);
-                g.drawString(lbl, -str_w / 2, -maxDescent - 5);
-                g.drawLine(0, 0, 0, -5);
+                if(FLIP) {
+                    g.drawString(lbl, -str_w / 2, maxDescent + 5 + height);
+                    g.drawLine(0, 0, 0, 5);
+                } else {
+                    g.drawString(lbl, -str_w / 2, -maxDescent - 5);
+                    g.drawLine(0, 0, 0,  -5);
+                }
 
                 g2d.setTransform(at);
 
@@ -188,35 +233,33 @@ public class UITest extends JComponent implements VitalModelListener {
 
             if (vital.getValues().isEmpty()) {
                 continue;
-            } else if(vital.getValues().size() == 1) {
-                float f = vital.getValues().get(0).getNumeric().value;
-                double proportion = 1.0 * (f - vital.getMinimum()) / (vital.getMaximum() - vital.getMinimum());
-                int x = (int) Math.floor(proportion * (x2 - x1) + x1);
-                int y = (int) Math.floor(slope * x + intercept);
-
-                if (x1 == x2) {
-                    // vertical line
-                    x = x1;
-                    y = (int) (proportion * (y2 - y1) + y1);
+            } else {
+                while(vital.getValues().size() > vital_values.length) {
+                    vital_values = new float[vital_values.length * 2 + 1];
                 }
 
-                addPoint(x, y);
-                
-            } else {
-    
-                float[] values = new float[vital.getValues().size()];
                 int i = 0;
                 for (Value val : vital.getValues()) {
-                    values[i++] = val.getNumeric().value;
+                    vital_values[i++] = val.getNumeric().value;
                 }
-                Arrays.sort(values);
+                Arrays.sort(vital_values, 0, i);
+                
+                if(REVERSE_DIRECTION && i > 1) {
+                    System.out.println(i+ " " +Arrays.toString(vital_values));
+                    for(int k = 0; k < i/2; k++) {
+                        float tmp = vital_values[k];
+                        vital_values[k] = vital_values[i-1-k];
+                        vital_values[i-1-k] = tmp;
+                    }
+                }
     
-                for (float f : values) {
-                    double proportion = 1.0 * (f - vital.getMinimum()) / (vital.getMaximum() - vital.getMinimum());
+                for(int j = 0; j < i; j++) {
+                    float f = vital_values[j];
+                    double proportion = 1.0 * (f - minimum) / (maximum - minimum);
                     int x = (int) Math.floor(proportion * (x2 - x1) + x1);
                     int y = (int) Math.floor(slope * x + intercept);
     
-                    if (x1 == x2) {
+                    if (VERTICAL) {
                         // vertical line
                         x = x1;
                         y = (int) (proportion * (y2 - y1) + y1);
@@ -257,10 +300,10 @@ public class UITest extends JComponent implements VitalModelListener {
         final VitalModel vm = new VitalModelImpl();
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
         
-        vm.addVital("Heart Rate", new int[] { ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 0, 120);
-        vm.addVital("SpO\u2082", new int[] { ice.MDC_PULS_OXIM_SAT_O2.VALUE }, 70, 130);
-        vm.addVital("Respiratory Rate", new int[] { ice.MDC_RESP_RATE.VALUE }, 0, 24);
-        vm.addVital("etCO\u2082", new int[] { ice.MDC_AWAY_CO2_EXP.VALUE }, 0, 60);
+        vm.addVital("Heart Rate", "bpm", new int[] { ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 0, 120);
+        vm.addVital("SpO\u2082", "%", new int[] { ice.MDC_PULS_OXIM_SAT_O2.VALUE }, 70, 130);
+        vm.addVital("Respiratory Rate", "bpm", new int[] { ice.MDC_RESP_RATE.VALUE }, 0, 24);
+        vm.addVital("etCO\u2082", "mmHg", new int[] { ice.MDC_AWAY_CO2_EXP.VALUE }, 0, 60);
         EventLoop eventLoop = new EventLoop();
         final EventLoopHandler eventLoopHandler = new EventLoopHandler(eventLoop);
 
@@ -268,9 +311,9 @@ public class UITest extends JComponent implements VitalModelListener {
 
         JFrame frame = new JFrame("UITest");
         frame.getContentPane().setBackground(Color.white);
-        final UITest uiTest = new UITest();
+        final VitalMonitoring uiTest = new VitalMonitoring();
         uiTest.setModel(vm);
-        executor.scheduleAtFixedRate(new Runnable() { public void run() { uiTest.repaint(); } }, 0L, 200L, TimeUnit.MILLISECONDS);
+        executor.scheduleAtFixedRate(new Runnable() { public void run() { uiTest.repaint(); } }, 0L, 500L, TimeUnit.MILLISECONDS);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter() {
             @Override

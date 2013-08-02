@@ -8,7 +8,7 @@ import com.rti.dds.subscription.Subscriber;
 public interface VitalModel {
     int getCount();
     Vital getVital(int i);
-    Vital addVital(String label, int[] names, int minimum, int maximum);
+    Vital addVital(String label, String units, int[] names, int minimum, int maximum);
     boolean removeVital(Vital vital);
     Vital removeVital(int i);
     

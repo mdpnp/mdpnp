@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp.vital;
 
 public interface Vital {
     String getLabel();
+    String getUnits();
     int[] getNames();
     float getMinimum();
     float getMaximum();

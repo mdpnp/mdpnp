@@ -8,18 +8,21 @@ import java.util.List;
 public class VitalImpl implements Vital {
 
     private final VitalModel parent;
-    private final String label;
+    private final String label, units;
     private final int[] names;
     private final float minimum, maximum;
     private float low, high;
     private final List<Value> values = new ArrayList<Value>();
     
-    public VitalImpl(VitalModel parent, String label, int[] names, float minimum, float maximum) {
+    public VitalImpl(VitalModel parent, String label, String units, int[] names, float minimum, float maximum) {
         this.parent = parent;
         this.label = label;
+        this.units = units;
         this.names = names;
         this.minimum = minimum;
         this.maximum = maximum;
+        this.low = minimum;
+        this.high = maximum;
     }
     
     
@@ -71,6 +74,10 @@ public class VitalImpl implements Vital {
     @Override
     public VitalModel getParent() {
         return parent;
+    }
+    @Override
+    public String getUnits() {
+        return units;
     }
     @Override
     public String toString() {

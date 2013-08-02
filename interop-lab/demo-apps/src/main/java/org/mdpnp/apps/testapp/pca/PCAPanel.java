@@ -23,36 +23,19 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.ListModel;
 
-import org.mdpnp.apps.testapp.Device;
-import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.VitalsModel;
-import org.mdpnp.apps.testapp.VitalsModel.VitalsListener;
-import org.mdpnp.devices.EventLoop;
+import org.mdpnp.apps.testapp.vital.Value;
+import org.mdpnp.apps.testapp.vital.Vital;
+import org.mdpnp.apps.testapp.vital.VitalListModelAdapterImpl;
+import org.mdpnp.apps.testapp.vital.VitalModel;
+import org.mdpnp.apps.testapp.vital.VitalModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.infrastructure.Time_t;
-import com.rti.dds.subscription.SampleInfo;
-import com.rti.dds.subscription.Subscriber;
 
-public class PCAPanel extends JPanel implements VitalsListener {
-	// TODO BOOKMARK HERE!
-	private static final Vital[] vitals = new Vital[] {
-		new Vital("end tidal CO\u2082", "mmHg", ice.MDC_AWAY_CO2_EXP.VALUE, //Ventilator.END_TIDAL_CO2_MMHG,
-				  15.0, 45.0, 1.0, 100.0),
-		new Vital("respiratory rate", "bpm", ice.MDC_RESP_RATE.VALUE, //  Ventilator.RESPIRATORY_RATE,
-				  8.0, 100.0, 1.0, 200.0),
-	    new Vital("heart rate", "bpm", ice.MDC_PULS_OXIM_PULS_RATE.VALUE, // PulseOximeter.PULSE,
-	    		  50.0, 120.0, 20.0, 200.0),
-	    new Vital("SpO\u2082", "%", ice.MDC_PULS_OXIM_SAT_O2.VALUE, // PulseOximeter.SPO2,
-	    		  90.0, 101.0, 80.0, 101.0)
-	};
-	
-//	private static final Identifier[] REQUEST_IDENTIFIERS = new Identifier[] {Ventilator.RESPIRATORY_RATE, PulseOximeter.PULSE, Ventilator.END_TIDAL_CO2_MMHG, PulseOximeter.SPO2/*, Capnograph.AIRWAY_RESPIRATORY_RATE*/,
-//            DemoCapnostream20.FAST_STATUS, DemoCapnostream20.CAPNOSTREAM_UNITS, DemoCapnostream20.CO2_ACTIVE_ALARMS, DemoCapnostream20.EXTENDED_CO2_STATUS,
-//            DemoCapnostream20.SLOW_STATUS};
-	
+public class PCAPanel extends JPanel implements VitalModelListener {
 	private final JList list;
 	
 	private final JTextArea pump = new JTextArea(" ") {
@@ -68,39 +51,26 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	};
 
 	protected final StringBuilder fastStatusBuilder = new StringBuilder();
-	
-	private final Subscriber subscriber;
-	private final DeviceListModel deviceListModel;
-	private final EventLoop eventLoop;
-	private VitalsModel vitalsModel;
-	
-	private boolean  active;
-	
-	public void setActive(boolean active) {
-	    if(active ^ this.active) {
-	        if(active) {
-	            reset();
-	            vitalsModel = new VitalsModel(subscriber, deviceListModel, eventLoop);
-	            vitalsModel.setListener(this);
-	            list.setModel(vitalsModel);
-	            for(Vital v : vitals) {
-	                vitalsModel.addNumericInterest(v.numeric);
-	            }
-	        } else {
-	            list.setModel(new DefaultListModel());
-	            vitalsModel.setListener(null);
-	            vitalsModel.tearDown();
-	            vitalsModel = null;
-	        }
+	private VitalModel model;
+	private final static ListModel EMPTY_MODEL = new DefaultListModel();
+	public void setModel(VitalModel model) {
+	    if(this.model != null) {
+	        this.model.removeListener(this);
+	        this.list.setModel(EMPTY_MODEL);
 	    }
-	    this.active = active;
-	}
+        this.model = model;
+        if(this.model != null) {
+            this.model.addListener(this);
+            this.list.setModel(new VitalListModelAdapterImpl(this.model));
+        }
+    }
+	public VitalModel getModel() {
+        return model;
+    }
 	
-	public PCAPanel(DeviceListModel model, Subscriber subscriber, EventLoop eventLoop) {
+	public PCAPanel() {
 		super(new BorderLayout());
-		this.subscriber = subscriber;
-		this.deviceListModel = model;
-		this.eventLoop = eventLoop;
+
 
 		
 		JPanel header  = new JPanel(new GridLayout(1,2, 10, 10));
@@ -113,7 +83,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		header.add(l=new JLabel("Infusion Status (Symbiq)"));
 		l.setFont(l.getFont().deriveFont(20f));
 
-		list = new JList();
+		list = new JList(EMPTY_MODEL);
 		
 		
 		panel.add(new JScrollPane(list), BorderLayout.CENTER);
@@ -281,7 +251,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	
 	// STOP THE PUMP
 	public void stop(String reason) {
-		sendPumpCommand("Stop, \n", null);
+//		sendPumpCommand("Stop, \n", null);
 		pump.setForeground(Color.white);
 		pump.setBackground(Color.red);
 		pump.setText("Infusion " + reason);
@@ -290,7 +260,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	
 	// RESTART THE PUMP
 	public void reset() {
-		sendPumpCommand(resetCommand, null);
+//		sendPumpCommand(resetCommand, null);
 		pump.setForeground(Color.black);
 		pump.setBackground(Color.green);
 		pump.setText("Infusion " + resetCommand.substring(0, resetCommand.length()-1) +"mL/h");
@@ -298,35 +268,12 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		reflectState();
 	}
 	
-//	Number sat = null;
-//	Number rr = null;
-//	Number etco2 = null;
-//	Number pulse = null;
-	
-//	MyDevice lastSatSource = null;
-//	MyDevice lastRRSource = null;
-//	MyDevice lastETCO2Source = null;
-//	MyDevice lastPulseSource = null;
-	
-	private static final boolean equal(Number n1, Number n2) {
-		if(null == n1) {
-			if(null == n2) {
-				return true;
-			} else {
-				return false;
-			}
-		} else {
-			if(null == n2) {
-				return false;
-			} else {
-				return 0 == Double.compare(n1.doubleValue(), n2.doubleValue());
-			}
-		}
-	}
-	
-	
 	public void reflectState() {
-		String[] advisories = new String[vitals.length+1];
+	    VitalModel model = this.model;
+	    if(null == model) {
+	        return;
+	    }
+		String[] advisories = new String[model.getCount()+1];
 		
 		String time = timeFormat.format(new Date());
 		boolean anyAdvisory = false;
@@ -334,22 +281,28 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		int countOutOfRange = 0;
 		StringBuilder outOfRange = new StringBuilder();
 		
-		for(int i = 0; i < vitals.length; i++) {
-			ice.Numeric value = vitals[i].getValue();
-			if(!vitals[i].isSet()) {
-				anyAdvisory = true;
-				advisories[i] = "- no source of " + vitals[i].getName() + "\r\n";
-			} else if(vitals[i].getAdvisory_minimum() != null && value.value <= vitals[i].getAdvisory_minimum()) {
-				anyAdvisory = true;
-				advisories[i] = "- low " + vitals[i].getName() + " " + value.value + " " + vitals[i].getUnits() + "\r\n";
-				countOutOfRange++;
-				outOfRange.append(advisories[i]);
-			} else if(vitals[i].getAdvisory_maximum() != null && value.value >= vitals[i].getAdvisory_maximum()) {
-				anyAdvisory = true;
-				advisories[i] = "- high " + vitals[i].getName() + " " + value.value + " " + vitals[i].getUnits() + "\r\n";
-				countOutOfRange++;
-				outOfRange.append(advisories[i]);
-			}
+		for(int i = 0; i < model.getCount(); i++) {
+		    Vital vital = model.getVital(i);
+		    
+		    if(vital.getValues().isEmpty()) {
+		        anyAdvisory = true;
+                advisories[i] = "- no source of " + vital.getLabel() + "\r\n";
+		    } else {
+		        for(Value val : vital.getValues()) {
+		            if(val.getNumeric().value <= vital.getLow()) {
+		                anyAdvisory = true;
+		                advisories[i] = "- low " + vital.getLabel() + " " + val.getNumeric().value + " " + vital.getUnits() + "\r\n";
+		                countOutOfRange++;
+		                outOfRange.append(advisories[i]);
+		            }
+		            if(val.getNumeric().value >= vital.getHigh()) {
+		                anyAdvisory = true;
+		                advisories[i] = "- high " + vital.getLabel() + " " + val.getNumeric().value + " " + vital.getUnits() + "\r\n";
+		                countOutOfRange++;
+		                outOfRange.append(advisories[i]);
+		            }
+		        }
+		    }
 		}
 		
 		if(fastStatusBuilder.length() > 0) {
@@ -359,25 +312,25 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		
 		
 		// Pump stopping rules
-		if(active) {
+//		if(active) {
 		
     		if(countOutOfRange >= 2) {
     			stop("Stopped\r\n" + outOfRange.toString() + "at " + time + "\r\nnurse alerted");
     		} else {
-    			for(Vital v : vitals) {
-    				ice.Numeric value = v.getValue();
-    				if(v.isSet()) {
-    					if(v.getCritical_minimum() != null && value.value <= v.getCritical_minimum()) {
-    						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue().value + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
+    			for(int i = 0; i < model.getCount(); i++) {
+    			    Vital vital = model.getVital(i);
+    			    for(Value val : vital.getValues()) {
+    					if(val.getNumeric().value <= vital.getMinimum()) {
+    						stop("Stopped - " + vital.getLabel() + " outside of critical range (" + val.getNumeric().value + " " + vital.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
     						break;
-    					} else if(v.getCritical_maximum() != null && value.value >= v.getCritical_maximum()) {
-    						stop("Stopped - " + v.getName() + " outside of critical range (" + v.getValue().value + " " + v.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
+    					} else if(val.getNumeric().value >= vital.getMaximum()) {
+    						stop("Stopped - " + vital.getLabel() + " outside of critical range (" + val.getNumeric().value + " " + vital.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
     						break;
     					}
     				}
     			}
     		}
-		}
+//		}
 //		if(null != rr && null != etco2 && != pulse && (rr.doubleValue() <= ADV_RR_MIN && rr.doubleValue()  && (etco2.doubleValue() <= ADV_ETCO2_MIN || etco2.doubleValue() >= ADV_ETCO2_MAX)) {
 //			// Stop on contingent rule
 //			stop("Stopped - Respiratory rate below limit ("+ rr+" bpm) and EtCO\u2082 out of range ("+etco2+"mmHg)");
@@ -411,57 +364,21 @@ public class PCAPanel extends JPanel implements VitalsListener {
 	}
 	
 	private static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
-	@Override
-	public void update(ice.Numeric n, SampleInfo sampleInfo, Device device) {
-		boolean stateChanged = false;
-		
-		// TODO DO NOT INCLUDE THIS
-		if(null != n && n.value <= 5.0f) {
-			log.warn("Ignoring " + n.name + " " + n.value + " " + device.getDeviceIdentity().universal_device_identifier);
-			return;
-		}
-		
-		for(Vital v : vitals) {
-			if(v.getNumeric().equals(n.name)) {
-				if(!equal(v.getValue().value, n.value)) {
-					if(v.getLastSource() != null && v.getValue() != null && !v.getLastSource().equals(device.getDeviceIdentity().universal_device_identifier) && null == n) {
-						
-					} else {
-					    v.set(n, device);
-						stateChanged = true;
-					}
-				}
-			}
-		}
-				
-		if(stateChanged) {
-			reflectState();
-		}
-	}
 
-	@Override
-	public void deviceRemoved(Device device) {
-		boolean stateChanged = false;
-		if(device != null) {
-			for(Vital v : vitals) {
-				if(device.equals(v.getLastSource())) {
-				    v.unset();
-					stateChanged = true;
-				}
-			}
-		}
-		if(stateChanged) {
-			reflectState();
-		}
-	}
-
-	@Override
-	public void deviceAdded(Device device) {
-
-	}	
-	
-	@Override
-	public void deviceChanged(Device device) {
-	    
-	}
+    @Override
+    public void vitalChanged(VitalModel model, org.mdpnp.apps.testapp.vital.Vital vital) {
+        reflectState();
+    }
+    @Override
+    public void vitalRemoved(VitalModel model, org.mdpnp.apps.testapp.vital.Vital vital) {
+        reflectState();
+    }
+    @Override
+    public void vitalAdded(VitalModel model, org.mdpnp.apps.testapp.vital.Vital vital) {
+        reflectState();
+    }
+    public void setActive(boolean b) {
+        // TODO Auto-generated method stub
+        
+    }
 }
