@@ -29,7 +29,7 @@ public abstract class DevicePanel extends JPanel {
 	    setOpaque(false);
 	}
 	
-	private static void setBackground(Container c, Color bg) {
+	public static void setBackground(Container c, Color bg) {
 		for(Component comp : c.getComponents()) {
 			comp.setBackground(bg);
 			if(comp instanceof Container) {
@@ -38,7 +38,7 @@ public abstract class DevicePanel extends JPanel {
 		}
 	}
 	
-	private static void setForeground(Container c, Color fg) {
+	public static void setForeground(Container c, Color fg) {
 		for(Component comp : c.getComponents()) {
 			comp.setForeground(fg);
 			if(comp instanceof Container) {

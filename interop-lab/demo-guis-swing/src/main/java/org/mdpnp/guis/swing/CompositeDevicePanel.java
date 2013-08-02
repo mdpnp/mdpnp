@@ -22,14 +22,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import org.mdpnp.devices.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
-import com.rti.dds.subscription.Subscriber;
 
 @SuppressWarnings("serial")
 public class CompositeDevicePanel extends JPanel implements DeviceMonitorListener {
@@ -146,10 +144,12 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
                     data.setLayout(new BorderLayout());
                     data.add(WAITING, BorderLayout.CENTER);
                 } else {
+                    data.setLayout(new GridLayout(__dataComponents.length, 1));
                     for(DevicePanel d : __dataComponents) {
                         data.add(d);
                     }
-                    data.setLayout(new GridLayout(__dataComponents.length, 1));
+                    CompositeDevicePanel.this.validate();
+                    CompositeDevicePanel.this.repaint();
                 }
             }
         };
