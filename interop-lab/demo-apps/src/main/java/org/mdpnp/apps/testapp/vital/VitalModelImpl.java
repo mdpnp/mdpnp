@@ -69,22 +69,25 @@ public class VitalModelImpl implements VitalModel {
         public void conditionChanged(Condition condition) {
             try {
                 for (;;) {
-                    numericReader.read_w_condition(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
-                            (QueryCondition) condition);
-                    for (int i = 0; i < info_seq.size(); i++) {
-                        SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
-                        if(0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
-                            Numeric keyHolder = new Numeric();
-                            numericReader.get_key_value(keyHolder, sampleInfo.instance_handle);
-                            removeNumeric(keyHolder.universal_device_identifier, keyHolder.name);
-                        } else {
-                            if (sampleInfo.valid_data) {
-                                Numeric n = (Numeric) num_seq.get(i);
-                                updateNumeric(n, sampleInfo);
+                    try {
+                        numericReader.read_w_condition(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+                                (QueryCondition) condition);
+                        for (int i = 0; i < info_seq.size(); i++) {
+                            SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
+                            if(0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
+                                Numeric keyHolder = new Numeric();
+                                numericReader.get_key_value(keyHolder, sampleInfo.instance_handle);
+                                removeNumeric(keyHolder.universal_device_identifier, keyHolder.name);
+                            } else {
+                                if (sampleInfo.valid_data) {
+                                    Numeric n = (Numeric) num_seq.get(i);
+                                    updateNumeric(n, sampleInfo);
+                                }
                             }
                         }
+                    } finally {
+                        numericReader.return_loan(num_seq, info_seq);
                     }
-                    numericReader.return_loan(num_seq, info_seq);
                 }
             } catch (RETCODE_NO_DATA noData) {
 
@@ -224,6 +227,7 @@ public class VitalModelImpl implements VitalModel {
         deviceIdentityReader.get_key_value(keyHolder, handle);
         DeviceIdentitySeq data_seq = new DeviceIdentitySeq();
         SampleInfoSeq info_seq = new SampleInfoSeq();
+        
         try {
             deviceIdentityReader.read_instance(data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
             return new DeviceIdentity((DeviceIdentity) data_seq.get(0));
@@ -232,6 +236,7 @@ public class VitalModelImpl implements VitalModel {
         }
     }
 
+   
     @Override
     public DeviceConnectivity getDeviceConnectivity(String udi) {
         DeviceConnectivity keyHolder = (DeviceConnectivity) DeviceConnectivity.create();
