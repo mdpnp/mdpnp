@@ -21,11 +21,13 @@
 		
 		<g:FlowPanel ui:field='advancedSearch' >
 		    <g:Label text='Advanced Search'  styleName='heading'/>
-			<g:RadioButton ui:field='radioButtonAnd' name='rb' text='Scenarios matching EACH of the specified keywords'></g:RadioButton>
-			<g:HTML><br/></g:HTML>
-			<g:RadioButton ui:field='radioButtonOr' name='rb'  text='Scenarios matching ANY of the specified keywords'></g:RadioButton>
-			<g:HTML><br/></g:HTML>
+<!-- 			<g:RadioButton ui:field='radioButtonAnd' name='rb' text='Scenarios matching EACH of the specified keywords'></g:RadioButton> -->
+<!-- 			<g:HTML><br/></g:HTML> -->
+<!-- 			<g:RadioButton ui:field='radioButtonOr' name='rb'  text='Scenarios matching ANY of the specified keywords'></g:RadioButton> -->
+<!-- 			<g:HTML><br/></g:HTML> -->
 			
+			<g:Label text='Keywords in Scenario "Title"' />
+			<g:TextBox ui:field='titleSearch' /><g:HTML><br/></g:HTML>
 			<g:Label text='Keywords in Scenario "Background"' />
 			<g:TextBox ui:field='backgroundSearch' /><g:HTML><br/></g:HTML>
 			<g:Label text='Keywords in Scenario "Proposed State"' />
@@ -42,17 +44,17 @@
 		</g:FlowPanel>
 
 		<g:FlexTable ui:field='searchResult'/>
-		
-		<g:Grid ui:field='searchResult2'/>
-
-		<g:FlowPanel>
+			
+ 		<g:Label text='Loading...' ui:field='status' visible='false'/>
+ 		
+		<g:FlowPanel ui:field='navigationButtons'>		   
+		    <g:Grid ui:field='searchResult2'/><g:HTML><br/></g:HTML>
 		    <g:Button text='First'  ui:field='buttonFirst' enabled='false'/>
 		    <g:Button text='Previous'  ui:field='buttonPrev' enabled='false'/>
 		    <g:InlineLabel text=' ' ui:field='labelDescription'/>
 		    <g:Button text='Next'  ui:field='buttonNext' enabled='false'/>
 		    <g:Button text='Last'  ui:field='buttonLast' enabled='false'/>		    
 		</g:FlowPanel>
-
 		    
 		
 		<g:Button text='Create New Scenario' ui:field='createNew' styleName='{style.important}'/>

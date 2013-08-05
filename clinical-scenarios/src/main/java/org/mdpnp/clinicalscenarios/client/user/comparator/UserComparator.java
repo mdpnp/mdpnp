@@ -104,6 +104,7 @@ public class UserComparator implements Comparator<UserInfoProxy> {
 			
 			return 0;
 //		      diego@mdpnp.org
+//			Since GWT code is translated to Javascript direct usage of reflection API is not supported
 //		      I don't really want to, but if reflexion doesn't work we are going to need to add
 //		      one method/property for each property in the UserInfoProxy class, and maintain that when ned properties are added
 		      

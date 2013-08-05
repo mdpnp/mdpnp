@@ -64,6 +64,8 @@ h1 {
 
 .clickable {
 	cursor:pointer;
+	padding-right: 5px;
+ 	padding-left: 5px;
 }
 .clickable:hover {
 	background-color:#8FBC8F; /*DarkSeaGreen*/
@@ -71,7 +73,7 @@ h1 {
 
 .scenarioTitle {
 	font-size: 20pt;
-	margin-top: 20px;
+/* 	margin-top: 20px; */
 	margin-bottom: 20px;
 }
 
@@ -88,7 +90,10 @@ h1 {
   color: white;
   font-style: italic;
   text-align: center;
+  padding-right: 50px;
+  padding-left: 50px;
 }
+
 
 .tableHeader {
     background-color: #2062B8;
@@ -110,6 +115,7 @@ h1 {
 
 .tableRowOther{
 	background-color:#EEFFFF;
+/* 	text-align: center; */
 }
 
 .gwt-SuggestBox{}
@@ -117,8 +123,14 @@ h1 {
 .gwt-SuggestBoxPopup .item {}
 .gwt-SuggestBoxPopup .item-selected { background-color:#c3d9FF;}
 
+.titleColumn{
+	width:200px;
+}
 
-/* .unsubmittedScn { */
-/* 	color: black; */
-/* 	font-weight:normal; */
-/* } */
+.navigationPanel{
+	 margin-left: auto;
+ 	margin-right: auto;
+ 	text-aling: center;
+ 	align:center;
+/*  	color: #00AAFF; */
+}

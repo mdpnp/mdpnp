@@ -5,6 +5,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 
+import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioStatusComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioSubmitterComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioTitleComparator;
@@ -49,13 +50,17 @@ public class ScenarioSearchPanel extends Composite {
 	
 	//scenario table columns
 	private static int SCN_TITLE_COL = 0;
-	private static int SCN_SUBMITTER_COL = 1;
-	private static int SCN_STATUS_COL = 2;
-	private static int SCN_DELETEBUTTON_COL = 3;
+	private static int SCN_UNIQUEID_COL = 1;
+	private static int SCN_SUBMITTER_COL = 2;	
+	private static int SCN_STATUS_COL = 3;
+	private static int SCN_DELETEBUTTON_COL = 4;
+	private final int SCN_GRIDLIST_ROWS = 10; //rows in the table showing the Scn List
+	private final int SCN_GRIDLIST_COLUMNS = 5;//tilte, uniqueID, submitter,status,deleteButton(optional)
 	
 	private ScenarioTitleComparator scnTitleComparator = new ScenarioTitleComparator();
 	private ScenarioSubmitterComparator scnSubmitterComparator = new ScenarioSubmitterComparator();
 	private ScenarioStatusComparator scnStatusComparator = new ScenarioStatusComparator();
+	private ScenarioComparator scnComparator = new ScenarioComparator(ScenarioComparator.PROPERTY_TITLE);
 	
 	//TODO add style names as constants too
 	private final static String STYLE_SELECTEDROW = "selectedRow";
@@ -64,9 +69,9 @@ public class ScenarioSearchPanel extends Composite {
 	private final static String STYLE_UNSUBMITTEDSCN =  "unsubmittedScn";
 	
 	private static final String STYLE_TABLEROWOTHER = "tableRowOther";
+	private static final String STYLE_USERLISTHEADER = "userListHeader";
 	
-	private final int SCN_GRIDLIST_ROWS = 10;
-	private final int SCN_GRIDLIST_COLUMNS = 4;//tilte submitter,status,deleteButton(optional)
+
 	
 	private static ScenarioSearchPanelUiBinder uiBinder = GWT.create(ScenarioSearchPanelUiBinder.class);
 	
@@ -172,20 +177,30 @@ public class ScenarioSearchPanel extends Composite {
 	 * Advanced Search: keywords in specific fields
 	 * @param keywords
 	 */
-	public void doAdvancedSearch(Boolean isAndSearch, String sBackground, String sProposed, 
-			String sProcess, String sAlgorithm, String sBenefits, String sRisks){
-		if (isAndSearch){
+	public void doAdvancedSearch(String sBackground, String sProposed, 
+			String sProcess, String sAlgorithm, String sBenefits, String sRisks, String sTitle){
+//		if (isAndSearch){
+//			ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
+//			scenarioRequest.searchByFilter_AndBehavior(sBackground, sProposed, sProcess, sAlgorithm, sBenefits, sRisks, null)
+//			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+//			.to(listScnReceiver).fire();
+//		}else{
 			ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
-			scenarioRequest.searchByFilter_AndBehavior(sBackground, sProposed, sProcess, sAlgorithm, sBenefits, sRisks)
+			scenarioRequest.searchByFilter_OrBehavior(sBackground, sProposed, sProcess, sAlgorithm, sBenefits, sRisks, sTitle)
 			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
 			.to(listScnReceiver).fire();
-		}else{
-			ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
-			scenarioRequest.searchByFilter_OrBehavior(sBackground, sProposed, sProcess, sAlgorithm, sBenefits, sRisks)
-			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
-			.to(listScnReceiver).fire();
-		}
+//		}
 
+	}
+
+	@UiField
+	Label status; 
+		
+	private void cleanScenarioTable(){
+		hideNavigationButtons();
+		searchResult2.clear();
+		status.setVisible(true);
+		
 	}
 	
 	/**
@@ -193,6 +208,7 @@ public class ScenarioSearchPanel extends Composite {
 	 * @param text
 	 */
 	public void doSearch(final String text) {
+		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByKeywords(text)
 		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
@@ -200,6 +216,8 @@ public class ScenarioSearchPanel extends Composite {
 	}	
 	
 	public void findAllScn(){
+//		hideNavigationButtons();
+		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.findAllScenarios()
 		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
@@ -212,6 +230,7 @@ public class ScenarioSearchPanel extends Composite {
 	 * @param status
 	 */
 	public void listScnBySubmitter(final String submitter) {
+		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchScnBySubmitter(submitter)
 		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
@@ -223,8 +242,8 @@ public class ScenarioSearchPanel extends Composite {
 	 * @param status
 	 */
 	public void listScnByStatus(final String status){
-		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
-		
+		cleanScenarioTable();
+		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();		
 		scenarioRequest.searchByStatus(status)
 		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
 		.to(listScnReceiver).fire();		
@@ -238,9 +257,9 @@ public class ScenarioSearchPanel extends Composite {
 
 		@Override
 		public void onSuccess(List<ScenarioProxy> response) {
-			//drawScenariosListTable(response);//DAG
+			//drawScenariosListTable(response);//DAG Older way to print the table using FleaxTable and not limiting results shwon
 			resetGridAuxVar(response);
-			drawScenariosListGrid(response);//XXX DAG Experiment w/ the GRID
+			drawScenariosListGrid(response);
 			
 		}
 		@Override
@@ -312,7 +331,7 @@ public class ScenarioSearchPanel extends Composite {
 		searchResult.setWidget(0, SCN_TITLE_COL,lbl_title);
 		searchResult.setWidget(0, SCN_SUBMITTER_COL, lbl_submitter);
 		searchResult.setWidget(0, SCN_STATUS_COL, lbl_status);
-		searchResult.getRowFormatter().addStyleName(0, "userListHeader"); //TODO Style this table
+		searchResult.getRowFormatter().addStyleName(0, STYLE_USERLISTHEADER); //TODO Style this table
 		
 		int row =1;
 		for(final ScenarioProxy sp : response) {
@@ -353,8 +372,6 @@ public class ScenarioSearchPanel extends Composite {
 						ScenarioRequest req = scenarioRequestFactory.scenarioRequest();
 						ScenarioProxy mutableProxy = req.edit(sp);
 						req.remove().using(mutableProxy).fire();
-						scn_list_size-=1;
-						drawScenariosListGrid();
 					}
 				}
 			});
@@ -378,12 +395,15 @@ public class ScenarioSearchPanel extends Composite {
 
 	}
 	
+	//aux var to ptint the scn list
 	private List<ScenarioProxy> scnList = null;
 	private static int scn_search_index = 0;
 	private static int scn_list_size = 0;
-	private static int resultsNum1;//Showing resultsNum1 - resultsNum2 of resultListSize
-	private static int resultsNum2;
+//	private static int resultsNum1;//Showing resultsNum1 - resultsNum2 of resultListSize
+//	private static int resultsNum2;
 		
+	@UiField
+	FlowPanel navigationButtons;
 	@UiField
 	Button buttonFirst; //|<
 	@UiField
@@ -395,32 +415,43 @@ public class ScenarioSearchPanel extends Composite {
 	@UiField
 	Label labelDescription; 
 	
-	
+	/**
+	 * Hides (makes invisible) the navigation buttons panel for the scenario list
+	 */
 	public void hideNavigationButtons(){
+		navigationButtons.setVisible(false);
 		buttonFirst.setVisible(false);
 		buttonPrev.setVisible(false);
 		buttonNext.setVisible(false);
 		buttonLast.setVisible(false);
-		labelDescription.setText("");	
+//		labelDescription.setText("");
+		labelDescription.setVisible(false);
 	}
 	
+	/**
+	 * Shows (makes visible) the navigation buttons panel for the scenario list
+	 */
 	public void showNavigationButtons(){
+		navigationButtons.setVisible(true);
 		buttonFirst.setVisible(true);
 		buttonPrev.setVisible(true);
 		buttonNext.setVisible(true);
 		buttonLast.setVisible(true);
+		labelDescription.setVisible(true);
 	}
 	
 	/**
 	 * resets the aux variables that we need to move thru the scn list editor
 	 */
 	private void resetGridAuxVar(List<ScenarioProxy> response){
-		showNavigationButtons();
+//		showNavigationButtons();
+		hideNavigationButtons();
 		scnList = response;
 		scn_search_index = 0; //beginning of the search
 		scn_list_size =scnList.size();
 		buttonFirst.setEnabled(false);
 		buttonPrev.setEnabled(false);
+		//FIXME Do I need to do this or can I rely that is checked later?
 		if(scn_list_size>SCN_GRIDLIST_ROWS){
 			buttonNext.setEnabled(true);
 			buttonLast.setEnabled(true);
@@ -429,21 +460,18 @@ public class ScenarioSearchPanel extends Composite {
 			buttonLast.setEnabled(false);
 		}
 			
-		resultsNum1 = 0;
-		resultsNum2 =Math.min(scn_list_size, SCN_GRIDLIST_ROWS);
-//		String text = " Results "+(resultsNum1+1) +" to "+resultsNum2+" of "+scn_list_size;
-//		labelDescription.setText(text);
-		String text;
+		String text;//FIXME Do I need to do this or can I rely that is checked later?
 		if(response.size()==0){
 			text = "No resulsts found";
 		}else
 			text = "Results 1 to "+Math.min(SCN_GRIDLIST_ROWS, response.size())+" of "+response.size();
 		labelDescription.setText(text);
-//		searchResult2.getElement().getStyle().setProperty("margin", "0 auto");
-		buttonFirst.getParent().getElement().getStyle().setTextAlign(TextAlign.CENTER);
-		
+
+		navigationButtons.setStylePrimaryName("navigationPanel");
 
 	}
+	
+
 	
 	/** XXX Experimental */
 	private void drawScenariosListGrid(){
@@ -451,9 +479,12 @@ public class ScenarioSearchPanel extends Composite {
 	}
 	
 	private void drawScenariosListGrid(final List<ScenarioProxy> response){
+		status.setVisible(false);
 		int row =1;
 	
 		searchResult2.clear();
+		hideNavigationButtons();
+//		searchResult2.setVisible(true);
 		int size = scn_search_index+SCN_GRIDLIST_ROWS>scn_list_size?(scn_list_size-scn_search_index): SCN_GRIDLIST_ROWS;
 //		searchResult2.resizeRows(SCN_GRIDLIST_ROWS+1);
 		searchResult2.resizeRows(size+1);
@@ -465,8 +496,21 @@ public class ScenarioSearchPanel extends Composite {
 	    lbl_title.addClickHandler(new ClickHandler() {//clicking the title, we sort by title			
 			@Override
 			public void onClick(ClickEvent event) {
-				Collections.sort(response, scnTitleComparator);
+				Collections.sort(response, scnTitleComparator);//TODO Maybe now we can use the 
 				scnTitleComparator.switchOrder();
+				resetGridAuxVar(response);
+				drawScenariosListGrid(response);
+			}
+		});
+	    
+	    Label lbl_uniqueId = new Label("Unique Id");
+	    lbl_uniqueId.setStyleName(STYLE_CLICKABLE);
+	    lbl_uniqueId.addClickHandler(new ClickHandler() {//clicking the title, we sort by title			
+			@Override
+			public void onClick(ClickEvent event) {
+				scnComparator.setProperty(ScenarioComparator.PROPERTY_ID);
+				Collections.sort(response, scnComparator);
+				scnComparator.switchReverseOrder();
 				resetGridAuxVar(response);
 				drawScenariosListGrid(response);
 			}
@@ -498,16 +542,16 @@ public class ScenarioSearchPanel extends Composite {
 	    
 
 		searchResult2.setWidget(0, SCN_TITLE_COL,lbl_title);
+		searchResult2.setWidget(0, SCN_UNIQUEID_COL,lbl_uniqueId);
 		searchResult2.setWidget(0, SCN_SUBMITTER_COL, lbl_submitter);
 		searchResult2.setWidget(0, SCN_STATUS_COL, lbl_status);
-		searchResult2.getRowFormatter().addStyleName(0, "userListHeader"); //TODO Style this table
+		searchResult2.getRowFormatter().addStyleName(0, STYLE_USERLISTHEADER); //TODO Style this table
+//		searchResult2.setWidth("500px");
+		searchResult2.getColumnFormatter().addStyleName(0, "titleColumn");
 		
 		ScenarioProxy[] responseArray = new ScenarioProxy[response.size()];
 		responseArray = response.toArray(responseArray);
 		int arrayIndex = scn_search_index;
-		
-		//description of the result search and navigation buttons
-		String text;
 		
 		//draw table rows
 		while(row<=SCN_GRIDLIST_ROWS && arrayIndex<responseArray.length){
@@ -530,10 +574,12 @@ public class ScenarioSearchPanel extends Composite {
 		final String auxTitle = title;
 		lbl.setText(title);
 		searchResult2.setWidget(row, SCN_TITLE_COL, lbl);
+		searchResult2.setWidget(row, SCN_UNIQUEID_COL, new Label(String.valueOf(sp.getId())));
 		searchResult2.setWidget(row, SCN_SUBMITTER_COL, new Label(sp.getSubmitter()));
 		searchResult2.setWidget(row, SCN_STATUS_COL, new Label(sp.getStatus()));
 		
 		final int rowDel = row;
+		final int arrayIndex2 = arrayIndex;
 		Button deleteButton = new Button("Delete");
 		deleteButton.addClickHandler(new ClickHandler() {
 				
@@ -541,11 +587,17 @@ public class ScenarioSearchPanel extends Composite {
 			public void onClick(ClickEvent event) {
 				boolean delete = Window.confirm("Are you sure you want to delete scenario \""+auxTitle+"\"?");
 				if(delete){
-					searchResult2.removeRow(rowDel);
 					//delete the entity too (or delete entity and redraw
 					ScenarioRequest req = scenarioRequestFactory.scenarioRequest();
 					ScenarioProxy mutableProxy = req.edit(sp);
 					req.remove().using(mutableProxy).fire();
+					
+					//update rows shown
+					if(arrayIndex2==scn_search_index && arrayIndex2==scn_list_size-1)//show previous
+						scn_search_index-=SCN_GRIDLIST_ROWS;
+					scnList.remove(arrayIndex2);
+					scn_list_size -=1;
+					drawScenariosListGrid(scnList);
 				}
 			}
 		});
@@ -554,23 +606,45 @@ public class ScenarioSearchPanel extends Composite {
 			searchResult2.setWidget(row, SCN_DELETEBUTTON_COL, deleteButton);
 		
 		//style table rows
-		if(sp.getStatus()!=null)
-		if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_SUBMITTED))
-			searchResult2.getRowFormatter().addStyleName(row, STYLE_SUBMITTEDSCN);
-		else{
-			searchResult2.getRowFormatter().addStyleName(row, STYLE_UNSUBMITTEDSCN);
-			searchResult2.getRowFormatter().removeStyleName(row, STYLE_SUBMITTEDSCN);
+		if(sp.getStatus()!=null){
+			//print 'pijama' for scn grid list
+			if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_SUBMITTED)){
+				searchResult2.getRowFormatter().addStyleName(row, STYLE_SUBMITTEDSCN);
+				searchResult2.getRowFormatter().removeStyleName(row, STYLE_UNSUBMITTEDSCN);
+			}else{
+				searchResult2.getRowFormatter().addStyleName(row, STYLE_UNSUBMITTEDSCN);
+				searchResult2.getRowFormatter().removeStyleName(row, STYLE_SUBMITTEDSCN);
+			}
 		}
-        
         //increase row number (the FOR loop is not increasing our row index variable, which is also final)
 		if(row%2==0)
 			searchResult2.getRowFormatter().addStyleName(row, STYLE_TABLEROWOTHER);
+		else
+			searchResult2.getRowFormatter().removeStyleName(row, STYLE_TABLEROWOTHER);
 		
 		row +=1;
 		arrayIndex++;
 		}
+		searchResult2.setVisible(true);
+		if(arrayIndex<scn_list_size){
+			buttonNext.setEnabled(true);
+			buttonLast.setEnabled(true);
+		}else{
+			buttonNext.setEnabled(false);
+			buttonLast.setEnabled(false);
+		}
+		showNavigationButtons();
+		//description of the result search and navigation buttons
+		String text;// = "Results "+ (scn_search_index +1)+" to "+arrayIndex+" of "+scn_list_size;
+		if(response.size()==0){
+			text = "No resulsts found";
+		}else
+			text = "Results "+ (scn_search_index +1)+" to "+arrayIndex+" of "+scn_list_size;
+		labelDescription.setText(text);
 
 	}
+	
+
 	
 	@UiHandler("buttonFirst")
 	public void onClickGoToFirst(ClickEvent clickEvent) {
@@ -581,10 +655,10 @@ public class ScenarioSearchPanel extends Composite {
 			buttonLast.setEnabled(true);
 		}
 		scn_search_index = 0;
-		resultsNum1 =0;
-		resultsNum2 = Math.min(SCN_GRIDLIST_ROWS, scn_list_size);
-		String text = "Results "+ (resultsNum1 +1)+" to "+resultsNum2+" of "+scn_list_size;
-		labelDescription.setText(text);
+//		resultsNum1 =0;
+//		resultsNum2 = Math.min(SCN_GRIDLIST_ROWS, scn_list_size);
+//		String text = "Results "+ (resultsNum1 +1)+" to "+resultsNum2+" of "+scn_list_size;
+//		labelDescription.setText(text);
 		drawScenariosListGrid();
 	}
 	
@@ -596,11 +670,12 @@ public class ScenarioSearchPanel extends Composite {
 			buttonFirst.setEnabled(true);
 			buttonPrev.setEnabled(true);
 		}
-		scn_search_index = (scn_list_size/SCN_GRIDLIST_ROWS)*SCN_GRIDLIST_ROWS;
-		resultsNum1 = scn_search_index;
-		resultsNum2 = scn_list_size;
-		String text = "Results "+(resultsNum1+1) +" to "+resultsNum2+" of "+scn_list_size;
-		labelDescription.setText(text);
+		int aux = scn_list_size%SCN_GRIDLIST_ROWS;
+		scn_search_index = scn_list_size%SCN_GRIDLIST_ROWS==0?scn_list_size-SCN_GRIDLIST_ROWS:(scn_list_size/SCN_GRIDLIST_ROWS)*SCN_GRIDLIST_ROWS;
+//		resultsNum1 = scn_search_index;
+//		resultsNum2 = scn_list_size;
+//		String text = "Results "+(resultsNum1+1) +" to "+resultsNum2+" of "+scn_list_size;
+//		labelDescription.setText(text);
 		drawScenariosListGrid();
 
 	}
@@ -611,14 +686,14 @@ public class ScenarioSearchPanel extends Composite {
 		buttonPrev.setEnabled(true);
 
 		scn_search_index += SCN_GRIDLIST_ROWS ;
-		resultsNum1 += SCN_GRIDLIST_ROWS;
-		resultsNum2 = Math.min(scn_list_size, resultsNum2+SCN_GRIDLIST_ROWS);
-		if(resultsNum2 == scn_list_size){
-			buttonNext.setEnabled(false);
-			buttonLast.setEnabled(false);
-		}
-		String text = "Results "+(resultsNum1 +1)+" to "+resultsNum2+" of "+scn_list_size;
-		labelDescription.setText(text);
+//		resultsNum1 += SCN_GRIDLIST_ROWS;
+//		resultsNum2 = Math.min(scn_list_size, resultsNum2+SCN_GRIDLIST_ROWS);
+//		if(resultsNum2 == scn_list_size){
+//			buttonNext.setEnabled(false);
+//			buttonLast.setEnabled(false);
+//		}
+//		String text = "Results "+(resultsNum1 +1)+" to "+resultsNum2+" of "+scn_list_size;
+//		labelDescription.setText(text);
 		drawScenariosListGrid();
 
 	}
@@ -629,17 +704,17 @@ public class ScenarioSearchPanel extends Composite {
 		buttonLast.setEnabled(true);
 
 		scn_search_index -= SCN_GRIDLIST_ROWS ;
-//		resultsNum2 = resultsNum1-1;
-		resultsNum2 = resultsNum1;//-1;
-		resultsNum1 -= SCN_GRIDLIST_ROWS;
-//		resultsNum2 = Math.min(resultListSize, resultsNum2-SCN_GRIDLIST_ROWS);
-		
-		if(resultsNum1 == 0){
-			buttonFirst.setEnabled(false);
-			buttonPrev.setEnabled(false);
-		}
-		String text = "Results "+(resultsNum1 +1) +" to "+resultsNum2+" of "+scn_list_size;
-		labelDescription.setText(text);
+////		resultsNum2 = resultsNum1-1;
+//		resultsNum2 = resultsNum1;//-1;
+//		resultsNum1 -= SCN_GRIDLIST_ROWS;
+////		resultsNum2 = Math.min(resultListSize, resultsNum2-SCN_GRIDLIST_ROWS);
+//		
+//		if(resultsNum1 == 0){
+//			buttonFirst.setEnabled(false);
+//			buttonPrev.setEnabled(false);
+//		}
+//		String text = "Results "+(resultsNum1 +1) +" to "+resultsNum2+" of "+scn_list_size;
+//		labelDescription.setText(text);
 		drawScenariosListGrid();
 
 	}
@@ -653,6 +728,7 @@ public class ScenarioSearchPanel extends Composite {
 	
 	@UiHandler("submitButton")
 	public void onClick(ClickEvent clickEvent) {
+		hideBasicSearch();
 		doSearch(searchQuery.getText());
 	}
 	
@@ -682,12 +758,14 @@ public class ScenarioSearchPanel extends Composite {
 	
 	public void hideBasicSearch(){
 		basicSearch.setVisible(false);		
+		status.setVisible(true);
 //		searchQuery.setVisible(false);
 //		pleaseEnterKeywords.setVisible(false);
 //		submitButton.setVisible(false);
 	}
 	public void showBasicSearch(){
 		basicSearch.setVisible(true);
+		status.setVisible(false);
 //		searchQuery.setText("");
 //		searchQuery.setVisible(true);
 //		pleaseEnterKeywords.setVisible(true);
@@ -698,6 +776,8 @@ public class ScenarioSearchPanel extends Composite {
 	@UiField
 	FlowPanel advancedSearch;
 	
+	@UiField
+	TextBox titleSearch;
 	@UiField
 	TextBox backgroundSearch;
 	@UiField
@@ -716,6 +796,7 @@ public class ScenarioSearchPanel extends Composite {
 	
 	@UiHandler("advancedSearchButton")
 	public void onClickAdvancedSearchButton(ClickEvent clickEvent) {
+		hideAdvancedSearch();
 		
 		String sBackground = backgroundSearch.getText()!= null && !backgroundSearch.getText().trim().equals("")? backgroundSearch.getText().trim():null;
 		String sProposed = proposedSearch.getText()!=null && !proposedSearch.getText().trim().equals("")?proposedSearch.getText().trim():null;
@@ -723,27 +804,27 @@ public class ScenarioSearchPanel extends Composite {
 		String sAlgorithm = algorithmSearch.getText()!=null && !algorithmSearch.getText().trim().equals("")?algorithmSearch.getText().trim():null;
 		String sBenefits = benefitsSearch.getText()!=null && !benefitsSearch.getText().trim().equals("")?benefitsSearch.getText().trim():null;
 		String sRisks = risksSearch.getText()!=null && !risksSearch.getText().trim().equals("")?risksSearch.getText().trim():null;
+		String sTitle= titleSearch.getText()!=null && !titleSearch.getText().trim().equals("")?titleSearch.getText().trim():null;
 		
-		doAdvancedSearch(radioButtonAnd.getValue(), sBackground, sProposed, sProcess, sAlgorithm, sBenefits, sRisks);
+		
+		doAdvancedSearch(sBackground, sProposed, sProcess, sAlgorithm, sBenefits, sRisks, sTitle);
 	}
 	
 	public void hideAdvancedSearch(){
 		advancedSearch.setVisible(false);
-//		backgroundSearch.setVisible(false);
-//		proposedSearch.setVisible(false);
-//		advancedSearchButton.setVisible(false);
-		
+		status.setVisible(true);
+		searchResult2.setVisible(false);
 	}
 	public void showAdvancedSearch(){
 		advancedSearch.setVisible(true);
-		radioButtonOr.setValue(true);
-//		backgroundSearch.setVisible(true);
-//		proposedSearch.setVisible(true);
-//		advancedSearchButton.setVisible(true);
+		status.setVisible(false);
+		searchResult2.setVisible(false);	
+//		radioButtonOr.setValue(true);
 	}
-	@UiField
-	RadioButton radioButtonAnd;
-	@UiField
-	RadioButton radioButtonOr;
+	
+//	@UiField
+//	RadioButton radioButtonAnd;
+//	@UiField
+//	RadioButton radioButtonOr;
 	
 }

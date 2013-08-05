@@ -21,6 +21,6 @@ public interface ScenarioRequest extends RequestContext {
 	Request<List<ScenarioProxy>> searchByStatus(String status);
 	Request<List<ScenarioProxy>> searchScnBySubmitter(String submitter);
 	InstanceRequest<ScenarioProxy, ScenarioProxy> persistWithNotification(String toWho, String subject, String messageText);
-	Request<List<ScenarioProxy>> searchByFilter_OrBehavior(String sBackground, String sProposed, String sProcess, String sAlgorithm, String sBenefits, String sRisks);
-	Request<List<ScenarioProxy>> searchByFilter_AndBehavior(String sBackground, String sProposed, String sProcess, String sAlgorithm, String sBenefits, String sRisks);
+	Request<List<ScenarioProxy>> searchByFilter_OrBehavior(String sBackground, String sProposed, String sProcess, String sAlgorithm, String sBenefits, String sRisks, String title);
+//	Request<List<ScenarioProxy>> searchByFilter_AndBehavior(String sBackground, String sProposed, String sProcess, String sAlgorithm, String sBenefits, String sRisks, String title);
 }

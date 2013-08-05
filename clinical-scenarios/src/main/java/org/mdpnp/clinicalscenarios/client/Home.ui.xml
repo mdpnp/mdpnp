@@ -29,6 +29,12 @@
 
 	<h3>Disclaimer.</h3> 
 	<p class="welcomeText">The MD PnP program just hosts this website to promote a shareable data base of clinical scenarios. Users are responsible for the content they submit or retrieve from this website and the consecuences of the use of such information. No protected health information such as names of individuals or institutios is allowed in the submission of clinical scenarios.</p>
+	
+	<h3>Contac us.</h3> 
+	<p class="welcomeText">Click 
+	    <a href="mailto:md.pnp.team@gmail.com?Subject=Clincical%20Scenario%20Repository" target="_top">here</a> 
+	    to contat the Clinical Scenario Repository Administrators</p>
+	
 	<p class="welcomeText"> © 2013 MD PnP Program</p>
 	</g:HTMLPanel>
 	</g:FlowPanel>

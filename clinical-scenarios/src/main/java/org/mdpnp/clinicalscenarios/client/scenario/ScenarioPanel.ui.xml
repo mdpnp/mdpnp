@@ -29,11 +29,14 @@
 	<g:DockPanel>
 	<g:Dock direction="NORTH" size="100px">
 		
-	<g:FlowPanel><g:TextBox text='Scenario Title' ui:field='titleEditor' styleName='scenarioTitle' visibleLength='50' maxLength='100'/>
-	    <!-- <g:TextBox text="" ui:field='titleTextBox' visibleLength='75' maxLength='75' visible='false'/>-->
+	<g:FlowPanel>
+	    <g:HTML><br/><span style="font-size:16pt; margin-top: 20px;">Scenario Title</span></g:HTML>
+	    <g:TextBox text='Scenario Title' ui:field='titleEditor' styleName='scenarioTitle' visibleLength='50' maxLength='100'/>
+	    <g:Label ui:field='uniqueId' styleName='important'/>
 	    <g:Label ui:field='status'/>
 	    </g:FlowPanel>
 	</g:Dock>
+	
 	<g:Dock direction="CENTER" size="400px">
 	<g:TabPanel ui:field="tabPanel">
 	<g:Tab text="Background">

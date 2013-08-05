@@ -53,7 +53,7 @@ public class UserInfoBanner extends Composite {
 	
 	private MenuItem listMyScn = new MenuItem("My Scenarios", NOOP);//List Scn for registered users
 	private MenuItem listApprvScn = new MenuItem("All Approved Scenarios", NOOP);//list of Approved Scn for Anonymous/registered users
-	private MenuItem createNewScn = new MenuItem("Create New", NOOP);
+	private MenuItem createNewScn = new MenuItem("Create New", NOOP);//Ticket-102 Must be independent in the menu bar
 	
 	private UserInfoProxy userInfo;
 	
@@ -166,6 +166,7 @@ public class UserInfoBanner extends Composite {
 						 * + Create New Scn
 						 */
 						listScenarios.setTitle("List Scenarios");
+						listAllScn.setTitle("List all scenarios");
 						listScenarios.addItem(listAllScn);
 						listScnByStatus.setTitle("List Scenarios by Status");
 						listScnByStatus.addItem(scnUnsubmited);
@@ -176,9 +177,11 @@ public class UserInfoBanner extends Composite {
 						scnApproved.setTitle("List all approved scenarios");
 //						listScnByStatus.addItem(scnRejected);XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
 						listScenarios.addItem("List Scenarios by Status", listScnByStatus);
-						createNewScn.setTitle("Create New Scenario");
-						listScenarios.addItem(createNewScn);
+						listScenarios.addItem(listMyScn);
+						listMyScn.setTitle("All scenarios created by this user");
+
 						username.addItem("List Scenarios", listScenarios);
+						
 						
 						username.addItem(listUsers);
 						username.addItem(listTags);//add tag search
@@ -188,10 +191,12 @@ public class UserInfoBanner extends Composite {
 						listMyScn.setTitle("All scenarios created by this user");
 						listScenarios.addItem(listApprvScn);
 						listApprvScn.setTitle("All Approved Scenarios");
-						listScenarios.addItem(createNewScn);
-						createNewScn.setTitle("Create New Scenario");
+
 						username.addItem("List Scenarios", listScenarios);
 					}
+					//Ticket-102
+					createNewScn.setTitle("Create New Scenario");
+					username.addItem(createNewScn);
 					
 					MenuBar logoutMenu = new MenuBar(true);
 					
