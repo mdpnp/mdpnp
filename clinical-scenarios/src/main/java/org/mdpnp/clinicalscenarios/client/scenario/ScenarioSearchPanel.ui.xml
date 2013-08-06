@@ -10,13 +10,52 @@
 		}
 	</ui:style>
 	<g:FlowPanel>
-		<g:Label text='Basic Search' ui:field='header' styleName='heading'/>
+		
 
-		<g:TextBox ui:field='searchQuery' text='Enter keywords'/>		
-		<g:Button text='Search' ui:field='submitButton'/>
-		<g:Label text='Please Enter Keywords' ui:field='pleaseEnterKeywords' styleName='{style.notimportant}'/>
+		<g:FlowPanel ui:field='basicSearch' >
+		    <g:Label text='Basic Search' ui:field='header' styleName='heading'/>
+			<g:TextBox ui:field='searchQuery' text='Enter keywords'/>		
+			<g:Button text='Search' ui:field='submitButton'/>
+			<g:Label text='Please Enter Keywords' ui:field='pleaseEnterKeywords' styleName='{style.notimportant}'/>
+		</g:FlowPanel>
+		
+		<g:FlowPanel ui:field='advancedSearch' >
+		    <g:Label text='Advanced Search'  styleName='heading'/>
+<!-- 			<g:RadioButton ui:field='radioButtonAnd' name='rb' text='Scenarios matching EACH of the specified keywords'></g:RadioButton> -->
+<!-- 			<g:HTML><br/></g:HTML> -->
+<!-- 			<g:RadioButton ui:field='radioButtonOr' name='rb'  text='Scenarios matching ANY of the specified keywords'></g:RadioButton> -->
+<!-- 			<g:HTML><br/></g:HTML> -->
+			
+			<g:Label text='Keywords in Scenario "Title"' />
+			<g:TextBox ui:field='titleSearch' /><g:HTML><br/></g:HTML>
+			<g:Label text='Keywords in Scenario "Background"' />
+			<g:TextBox ui:field='backgroundSearch' /><g:HTML><br/></g:HTML>
+			<g:Label text='Keywords in Scenario "Proposed State"' />
+			<g:TextBox ui:field='proposedSearch' /><g:HTML><br/></g:HTML>
+			<g:Label text='Keywords in Scenario "Process"' />
+			<g:TextBox ui:field='processSearch' /><g:HTML><br/></g:HTML>
+			<g:Label text='Keywords in Scenario "Algorithm"' />
+			<g:TextBox ui:field='algorithmSearch' /><g:HTML><br/></g:HTML>
+			<g:Label text='Keywords in Scenario "Benefits"' />
+			<g:TextBox ui:field='benefitsSearch' /><g:HTML><br/></g:HTML>
+			<g:Label text='Keywords in Scenario "Risks"' />
+			<g:TextBox ui:field='risksSearch' /><g:HTML><br/></g:HTML>
+			<g:Button text='Advanced Search' ui:field='advancedSearchButton'/>
+		</g:FlowPanel>
 
 		<g:FlexTable ui:field='searchResult'/>
+			
+ 		<g:Label text='Loading...' ui:field='status' visible='false'/>
+ 		
+		<g:FlowPanel ui:field='navigationButtons'>		   
+		    <g:Grid ui:field='searchResult2'/><g:HTML><br/></g:HTML>
+		    <g:Button text='First'  ui:field='buttonFirst' enabled='false'/>
+		    <g:Button text='Previous'  ui:field='buttonPrev' enabled='false'/>
+		    <g:InlineLabel text=' ' ui:field='labelDescription'/>
+		    <g:Button text='Next'  ui:field='buttonNext' enabled='false'/>
+		    <g:Button text='Last'  ui:field='buttonLast' enabled='false'/>		    
+		</g:FlowPanel>
+		    
 		
 		<g:Button text='Create New Scenario' ui:field='createNew' styleName='{style.important}'/>
 		<g:Label text='Please Sign In to create new scenarios' ui:field='pleaseSignIn' visible='false' styleName='{style.important}'/>

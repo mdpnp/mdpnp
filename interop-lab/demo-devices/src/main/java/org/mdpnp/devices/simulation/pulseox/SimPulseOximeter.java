@@ -7,20 +7,14 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation.pulseox;
 
-import ice.MDC_PULS_OXIM_PLETH;
-import ice.MDC_PULS_OXIM_PULS_RATE;
-import ice.MDC_PULS_OXIM_SAT_O2;
-import ice.Numeric;
-import ice.SampleArray;
-
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 
 public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
     
-    protected final InstanceHolder<Numeric> pulse;
-    protected final InstanceHolder<Numeric> SpO2;
-    protected final InstanceHolder<SampleArray> pleth;
+    protected final InstanceHolder<ice.Numeric> pulse;
+    protected final InstanceHolder<ice.Numeric> SpO2;
+    protected final InstanceHolder<ice.SampleArray> pleth;
 	
 	private class MySimulatedPulseOximeter extends SimulatedPulseOximeter {
 	    @Override
@@ -49,9 +43,9 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
 	public SimPulseOximeter(int domainId, EventLoop eventLoop) {
 		super(domainId, eventLoop);
 		
-		pulse = createNumericInstance(MDC_PULS_OXIM_PULS_RATE.VALUE);
-		SpO2 = createNumericInstance(MDC_PULS_OXIM_SAT_O2.VALUE);
-		pleth = createSampleArrayInstance(MDC_PULS_OXIM_PLETH.VALUE);
+		pulse = createNumericInstance(ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
+		SpO2 = createNumericInstance(ice.MDC_PULS_OXIM_SAT_O2.VALUE);
+		pleth = createSampleArrayInstance(ice.MDC_PULS_OXIM_PLETH.VALUE);
 		
 		deviceIdentity.model = "Pulse Ox (Simulated)";
 		deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);

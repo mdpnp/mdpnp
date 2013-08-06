@@ -1,10 +1,8 @@
-package org.mdpnp.apps.testapp;
+package org.mdpnp.apps.testapp.pca;
 
-import ice.Numeric;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
@@ -16,9 +14,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -27,9 +23,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.ListCellRenderer;
 
-import org.mdpnp.apps.testapp.VitalsModel.Vitals;
+import org.mdpnp.apps.testapp.Device;
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.VitalsModel;
 import org.mdpnp.apps.testapp.VitalsModel.VitalsListener;
 import org.mdpnp.devices.EventLoop;
 import org.slf4j.Logger;
@@ -72,71 +69,6 @@ public class PCAPanel extends JPanel implements VitalsListener {
 
 	protected final StringBuilder fastStatusBuilder = new StringBuilder();
 	
-	private static class VitalsRenderer extends JPanel implements ListCellRenderer {
-
-		private final JLabel name = new JLabel(" ");
-		private final JLabel deviceName = new JLabel(" ");
-		private final JLabel value = new JLabel(" ");
-		private final JLabel icon = new JLabel(" ");
-		
-		public VitalsRenderer() {
-			super(new GridLayout(1, 2));
-			setBorder(BorderFactory.createLineBorder(Color.gray, 1));
-			setOpaque(false);
-			name.setFont(name.getFont().deriveFont(18f));
-			value.setFont(value.getFont().deriveFont(24f));
-			deviceName.setFont(deviceName.getFont().deriveFont(14f));
-//			value.setFont(value.getFont().deriveFont(14f));
-			JPanel pan = new JPanel(new GridLayout(3,1));
-			pan.setOpaque(false);
-			pan.add(name);
-			pan.add(value);
-			pan.add(deviceName);
-			add(pan);
-			add(icon);
-		}
-		
-		@Override
-		public Component getListCellRendererComponent(JList list, Object val,
-				int index, boolean isSelected, boolean cellHasFocus) {
-			VitalsModel.Vitals v = (Vitals) val;
-			// strongly thinking about making these identifiers into strings
-			String name = Integer.toString(v.getNumeric().name);
-			String units = "";
-			switch(v.getNumeric().name) {
-			case ice.MDC_PULS_OXIM_SAT_O2.VALUE:
-			    name = "SpO\u2082";
-                units = "%";
-                break;
-			case ice.MDC_CO2_RESP_RATE.VALUE:
-			case ice.MDC_RESP_RATE.VALUE:
-			    name = "Respiratory Rate";
-                units = "bpm";
-                break;
-			case ice.MDC_PULS_OXIM_PULS_RATE.VALUE:
-			    name = "Heart Rate";
-                units = "bpm";
-                break;
-			case ice.MDC_CONC_AWAY_CO2.VALUE:
-			case ice.MDC_AWAY_CO2_EXP.VALUE:
-			    name = "etCO\u2082";
-                units = "mmHg";
-                break;
-			}
-
-			this.name.setText(name);
-			
-			value.setText(""+v.getNumeric().value+" "+units);
-
-			DeviceIcon di = v.getDevice().getIcon();
-			if(null != di) {
-			    icon.setIcon(new ImageIcon(di.getImage()));
-			}
-			deviceName.setText(v.getDevice().getMakeAndModel());
-			return this;
-		}
-		
-	}
 	private final Subscriber subscriber;
 	private final DeviceListModel deviceListModel;
 	private final EventLoop eventLoop;
@@ -185,7 +117,7 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		
 		
 		panel.add(new JScrollPane(list), BorderLayout.CENTER);
-		list.setCellRenderer(new VitalsRenderer());
+		list.setCellRenderer(new VitalsListCellRenderer());
 		
 		JPanel panel2 = new JPanel(new GridLayout(2, 1, 10, 10));
 //		pump.setBackground(Color.green);
@@ -392,72 +324,6 @@ public class PCAPanel extends JPanel implements VitalsListener {
 		}
 	}
 	
-	
-	private static class Vital {
-		private final String name;
-		private final String units;
-		private final Integer numeric;
-		private final Double advisory_minimum;
-		private final Double advisory_maximum;
-		private final Double critical_minimum;
-		private final Double critical_maximum;
-		
-		private Device lastSource;
-		private ice.Numeric value = (Numeric) ice.Numeric.create();
-		
-		public ice.Numeric getValue() {
-			return value;
-		}
-		public String getName() {
-			return name;
-		}
-		public Integer getNumeric() {
-			return numeric;
-		}
-		public Double getAdvisory_maximum() {
-			return advisory_maximum;
-		}
-		public Double getAdvisory_minimum() {
-			return advisory_minimum;
-		}
-		public Double getCritical_maximum() {
-			return critical_maximum;
-		}
-		public Double getCritical_minimum() {
-			return critical_minimum;
-		}
-		public String getUnits() {
-			return units;
-		}
-		public Device getLastSource() {
-			return lastSource;
-		}
-		public void set(ice.Numeric n, Device lastSource) {
-		    this.lastSource = lastSource;
-		    this.value.copy_from(n);
-		}
-		public boolean isSet() {
-            return lastSource != null;
-        }
-		public void unset() {
-		    this.lastSource = null;
-		}
-		public Vital (String name, String units, Integer numeric, Double advisory_minimum, Double advisory_maximum, Double critical_minimum, Double critical_maximum) {
-			this.name = name;
-			this.units = units;
-			this.numeric = numeric;
-			this.advisory_maximum = advisory_maximum;
-			this.advisory_minimum = advisory_minimum;
-			this.critical_maximum = critical_maximum;
-			this.critical_minimum = critical_minimum;
-		}
-		
-	}
-	
-
-		
-	
-
 	
 	public void reflectState() {
 		String[] advisories = new String[vitals.length+1];

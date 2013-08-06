@@ -10,6 +10,7 @@ import com.google.appengine.api.users.UserServiceFactory;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
+import com.googlecode.objectify.annotation.OnSave;
 
 @SuppressWarnings("serial")
 @Entity
@@ -17,6 +18,11 @@ public class UserInfo implements java.io.Serializable {
 	@Id
 	private String userId;
 	private int version = 1;
+	
+	@OnSave
+	void onPersist() {
+	    version++;
+	}
 	
 	public String getUserId() {
 		return userId;

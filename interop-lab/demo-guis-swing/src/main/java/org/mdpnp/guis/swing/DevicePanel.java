@@ -7,23 +7,29 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.LayoutManager;
 
-import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
-public abstract class DevicePanel extends JComponent {
+public abstract class DevicePanel extends JPanel {
     
 	public DevicePanel() {
-		setOpaque(false);
+	    setOpaque(false);
+	}
+	public DevicePanel(LayoutManager layout) {
+	    super(layout);
+	    setOpaque(false);
 	}
 	
-	private static void setBackground(Container c, Color bg) {
+	public static void setBackground(Container c, Color bg) {
 		for(Component comp : c.getComponents()) {
 			comp.setBackground(bg);
 			if(comp instanceof Container) {
@@ -32,7 +38,7 @@ public abstract class DevicePanel extends JComponent {
 		}
 	}
 	
-	private static void setForeground(Container c, Color fg) {
+	public static void setForeground(Container c, Color fg) {
 		for(Component comp : c.getComponents()) {
 			comp.setForeground(fg);
 			if(comp instanceof Container) {
@@ -76,5 +82,15 @@ public abstract class DevicePanel extends JComponent {
 	public void destroy() {
 	}
 	
+	protected static final JPanel label(String label, Component c) {
+	    return label(label, c, BorderLayout.NORTH);
+	}
+	protected static final JPanel label(String label, Component c, String border) {
+	    JPanel pan = new JPanel(new BorderLayout());
+	    pan.setOpaque(false);
+	    pan.add(new JLabel(label), border);
+	    pan.add(c, BorderLayout.CENTER);
+	    return pan;
+	}
 }
 

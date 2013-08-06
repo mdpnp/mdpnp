@@ -28,12 +28,12 @@ public class UserComparator implements Comparator<UserInfoProxy> {
 	}
 	
 	//getter and setter
-	public String getPersonProperty() {
+	public String getProperty() {
 		return userProperty;
 	}
 
-	public void setPersonProperty(String personProperty) {
-		this.userProperty = personProperty;
+	public void setProperty(String property) {
+		this.userProperty = property;
 	}
 	
 	public void switcReverseOrder(){
@@ -49,13 +49,62 @@ public class UserComparator implements Comparator<UserInfoProxy> {
 	 *  String type properties will be sorted lexicografically
 	 */
 		public int compare(UserInfoProxy user1, UserInfoProxy user2) {
-			//XXX CAREFUL!! Check the property is NOT NULL
-		      if(reverseOrder)
-		    	  return -1*( user1.getEmail().compareToIgnoreCase(user2.getEmail()) );  
-		      else
-		    	  return user1.getEmail().compareToIgnoreCase(user2.getEmail()) ; 
-		      
+
+			if(userProperty!=null){
+				if(userProperty.equals("email")){
+			      if(reverseOrder)
+			    	  return -1*( compare(user1.getEmail(), user2.getEmail()) );  
+			      else
+			    	  return compare(user1.getEmail(), user2.getEmail()) ; 
+			     
+				}else if(userProperty.equals("title")){
+				      if(reverseOrder)
+				    	  return -1*( compare(user1.getTitle(), user2.getTitle()) );  
+				      else
+				    	  return compare(user1.getTitle(), user2.getTitle()) ; 
+				     
+				}else if(userProperty.equals("givenName")){
+					  if(reverseOrder)
+						  return -1*( compare(user1.getGivenName(), user2.getGivenName()) );  
+					   else
+						  return compare(user1.getGivenName(), user2.getGivenName()) ; 
+					     
+				}else if(userProperty.equals("company")){
+				      if(reverseOrder)
+				    	  return -1*( compare(user1.getCompany(), user2.getCompany()) );  
+				      else
+				    	  return compare(user1.getCompany(), user2.getCompany()) ; 
+				     
+				}else if(userProperty.equals("jobTitle")){
+					      if(reverseOrder)
+					    	  return -1*( compare(user1.getJobTitle(), user2.getJobTitle()) );  
+					      else
+					    	  return compare(user1.getJobTitle(), user2.getJobTitle()) ; 
+					     
+				}else if(userProperty.equals("yearsInField")){
+				      if(reverseOrder)
+				    	  return -1*( compare(user1.getYearsInField(), user2.getYearsInField()) );  
+				      else
+				    	  return compare(user1.getYearsInField(), user2.getYearsInField()) ; 
+				     
+				}else if(userProperty.equals("phoneNumber")){
+				      if(reverseOrder)
+				    	  return -1*( compare(user1.getPhoneNumber(), user2.getPhoneNumber()) );  
+				      else
+				    	  return compare(user1.getPhoneNumber(), user2.getPhoneNumber()) ; 
+				     
+				}else if(userProperty.equals("admin")){
+				      if(reverseOrder)
+				    	  return -1*( new Boolean (user1.getAdmin()).compareTo((Boolean)user2.getAdmin()) );  
+				      else
+				    	  return new Boolean(user1.getAdmin()).compareTo((Boolean) user2.getAdmin()); 
+				     
+				}else return 0;
+			}
+			
+			return 0;
 //		      diego@mdpnp.org
+//			Since GWT code is translated to Javascript direct usage of reflection API is not supported
 //		      I don't really want to, but if reflexion doesn't work we are going to need to add
 //		      one method/property for each property in the UserInfoProxy class, and maintain that when ned properties are added
 		      

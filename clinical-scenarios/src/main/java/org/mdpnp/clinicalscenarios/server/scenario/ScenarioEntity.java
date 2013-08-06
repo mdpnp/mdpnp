@@ -3,9 +3,12 @@ package org.mdpnp.clinicalscenarios.server.scenario;
 import static org.mdpnp.clinicalscenarios.server.OfyService.ofy;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Hashtable;
 import java.util.List;
 
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
+import org.mdpnp.clinicalscenarios.server.mailservice.RepositoryMailService;
 
 import com.google.appengine.api.datastore.QueryResultIterator;
 import com.google.appengine.api.users.User;
@@ -17,6 +20,7 @@ import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
 import com.googlecode.objectify.annotation.OnSave;
 //import java.util.logging.Logger;
+
 
 
 @SuppressWarnings("serial")
@@ -31,19 +35,23 @@ public class ScenarioEntity implements java.io.Serializable {
 	@Id
 	private Long id;
 	
-	//XXX @ Index  --Shouldn't we index the title if we are going to base our basic search on it?
+	@Index  //--Shouldn't we index the title if we are going to base our basic search on it?
 	private String title; //title of the scenario
 	@Index
 	private String status; //status of the scenario (modified, submitted, ect...)
 	@Index
 	private String submitter;//creator or submitter of the scenario
 	//TODO submitter should probably be a valueProxy of type UserInfo @Embebed UserInfo
+	
+	private Date creationDate = new Date();
+	private Date modificationDate;
 		  
     protected int version = 1;
 	
 	@OnSave
 	void onPersist() {
 	    version++;
+	    modificationDate = new Date();
 	}
 	
 	private BackgroundValue background = new BackgroundValue();
@@ -116,8 +124,24 @@ public class ScenarioEntity implements java.io.Serializable {
 		return id + " == " + title;
 	}
 	
+	//creation date
+	public Date getCreationDate(){
+		return creationDate;
+	}
+	public void setCreationDate(Date d){
+		creationDate = d;
+	}
+	
+	//modification date
+	public Date getModificationDate(){
+		return modificationDate;
+	}
+	public void setModificationDate(Date d){
+		modificationDate = d;
+	}
+	
 	public ScenarioEntity() {
-		
+		//creationDate = new Date();
 	}
 	
 	public BackgroundValue getBackground() {
@@ -127,15 +151,19 @@ public class ScenarioEntity implements java.io.Serializable {
         this.background = background;
     }
 		
-	public static ScenarioEntity create() {
-	    ScenarioEntity s = new ScenarioEntity();
-	    s.setStatus(ScenarioPanel.SCN_STATUS_UNSUBMITTED);//By default, pending of submission
-		//to ID the current user
-	    UserService userService = UserServiceFactory.getUserService();
-	    User user = userService.getCurrentUser();//final? What happens when we change the user?
-	    s.setSubmitter(user.getEmail());
-        ofy().save().entity(s).now();
-        return s;
+	public static ScenarioEntity create() /*throws Exception*/ {
+		try{
+		    ScenarioEntity s = new ScenarioEntity();
+		    s.setStatus(ScenarioPanel.SCN_STATUS_UNSUBMITTED);//By default, pending of submission
+			//to ID the current user
+		    UserService userService = UserServiceFactory.getUserService();
+		    User user = userService.getCurrentUser();
+		    s.setSubmitter(user.getEmail());
+	       // ofy().save().entity(s).now();//TICKET-81 To avoid persist empty SCN
+	        return s;
+		}catch(Exception e){
+			return null;
+		}
 	}
 	
 	public static List<Long> findAllIds() {
@@ -167,7 +195,8 @@ public class ScenarioEntity implements java.io.Serializable {
 		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
 		
-		String str = keywords.toUpperCase();
+		String str = keywords.toUpperCase(); //String comparison in UPPERCASE ******
+		//TODO Declare a keyword separator (WHITESPACE) and tokenize elements to use several Keywords
 		try{
 
 		for(ScenarioEntity s : scenarios) {
@@ -178,20 +207,20 @@ public class ScenarioEntity implements java.io.Serializable {
 				matchingScenarios.add(s);
 			}else{
 				//2- Check background
-				String currentState = s.getBackground().getCurrentState()==null ? "" : s.getBackground().getCurrentState();
-				String proposedState = s.getBackground().getProposedState()==null ? "" : s.getBackground().getProposedState();
+				String currentState = s.getBackground().getCurrentState()==null ? "" : s.getBackground().getCurrentState().toUpperCase();
+				String proposedState = s.getBackground().getProposedState()==null ? "" : s.getBackground().getProposedState().toUpperCase();
 				if(currentState.toUpperCase().contains(str) || proposedState.toUpperCase().contains(str)){
 					matchingScenarios.add(s);
 				}else{
 					//3- Check Benefits and risks
-					String benefits = s.getBenefitsAndRisks().getBenefits()==null ? "" : s.getBenefitsAndRisks().getBenefits();
-					String risks = s.getBenefitsAndRisks().getRisks()==null ? "" : s.getBenefitsAndRisks().getRisks();
+					String benefits = s.getBenefitsAndRisks().getBenefits()==null ? "" : s.getBenefitsAndRisks().getBenefits().toUpperCase();
+					String risks = s.getBenefitsAndRisks().getRisks()==null ? "" : s.getBenefitsAndRisks().getRisks().toUpperCase();
 					if(benefits.toUpperCase().contains(str) || risks.toUpperCase().contains(str)){
 						matchingScenarios.add(s);
 					}else{
 						//4- check Proposed Solution
-						String algorithm = s.getProposedSolution().getAlgorithm()==null ? "" : s.getProposedSolution().getAlgorithm();
-						String process = s.getProposedSolution().getProcess()==null ? "" : s.getProposedSolution().getProcess();
+						String algorithm = s.getProposedSolution().getAlgorithm()==null ? "" : s.getProposedSolution().getAlgorithm().toUpperCase();
+						String process = s.getProposedSolution().getProcess()==null ? "" : s.getProposedSolution().getProcess().toUpperCase();
 						if(algorithm.toUpperCase().contains(str) || process.toUpperCase().contains(str))
 							matchingScenarios.add(s);
 					}
@@ -206,6 +235,105 @@ public class ScenarioEntity implements java.io.Serializable {
 		}
 		return matchingScenarios;
 	}
+	
+	/**
+	 * Searches for scenarios that have any of the keywords in the associated field
+	 * @param sBackground keywords in background
+	 * @param sProposed keywords in proposed state
+	 * @return
+	 */
+	public static List<ScenarioEntity> searchByFilter_OrBehavior(String sBackground, String sProposed,
+			String sProcess, String sAlgorithm, String sBenefits, String sRisks, String sTitle) {
+		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
+		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
+
+		try{
+
+		for(ScenarioEntity s : scenarios) {
+			//1- check title
+			if(sTitle!=null && s.getTitle()!=null && s.getTitle().toUpperCase().contains(sTitle.toUpperCase())) {
+				matchingScenarios.add(s);
+			//2- check background
+			}else if (sBackground!=null && s.getBackground().getCurrentState()!=null && s.getBackground().getCurrentState().toUpperCase().contains(sBackground.toUpperCase())){
+				matchingScenarios.add(s);
+			//3- check proposed state
+			}else if(sProposed!=null && s.getBackground().getProposedState()!=null && s.getBackground().getProposedState().toUpperCase().contains(sProposed.toUpperCase())){
+				matchingScenarios.add(s);
+			//4- check process
+			}else if(sProcess!=null && s.getProposedSolution().getProcess()!=null && s.getProposedSolution().getProcess().toUpperCase().contains(sProcess.toUpperCase())){
+				matchingScenarios.add(s);
+			//5- check Algorithm
+			}else if(sAlgorithm!=null && s.getProposedSolution().getAlgorithm()!=null && s.getProposedSolution().getAlgorithm().toUpperCase().contains(sAlgorithm.toUpperCase())){
+				matchingScenarios.add(s);
+			//6- check benefits
+			}else if(sBenefits!=null && s.getBenefitsAndRisks().getBenefits()!=null && s.getBenefitsAndRisks().getBenefits().toUpperCase().contains(sBenefits.toUpperCase())){
+				matchingScenarios.add(s);
+			//7- check risks
+			}else if(sRisks!=null && s.getBenefitsAndRisks().getRisks()!=null && s.getBenefitsAndRisks().getRisks().toUpperCase().contains(sRisks.toUpperCase())){
+				matchingScenarios.add(s);
+			}
+			
+		}
+		
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return matchingScenarios;		
+	}
+	
+	/**
+	 * Searches for scenarios that have all the provided keywords in the appropriate field 
+	 * @param sBackground
+	 * @param sProposed
+	 * @return
+	 */
+//	public static List<ScenarioEntity> searchByFilter_AndBehavior(String sBackground, String sProposed,
+//			String sProcess, String sAlgorithm, String sBenefits, String sRisks, String sTitle) {
+//		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
+//		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
+//		
+//		boolean isAdd = true;//and
+//		boolean isAllNull = true;//Or 
+//
+//		try{
+//		for(ScenarioEntity s : scenarios) {
+//			isAdd = true;//and
+//			isAllNull = false;//Or 
+//			//1- check title
+//			if(sTitle!=null && s.getTitle()!=null && s.getTitle().toUpperCase().contains(sTitle)) {
+//				isAdd &= true;
+//				isAllNull &= false;
+//			}else if(sTitle!=null){
+//				isAdd &= false;
+//				isAllNull &= true;
+//			}else{
+//				isAdd &= false;
+//			}
+//			//2- check background
+//			 if (sBackground!=null && s.getBackground().getCurrentState()!=null && s.getBackground().getCurrentState().toUpperCase().contains(sBackground.toUpperCase()))
+//			//3- check proposed state
+//			 if(sProposed!=null && s.getBackground().getProposedState()!=null && s.getBackground().getProposedState().toUpperCase().contains(sProposed.toUpperCase()))
+//			//4- check process
+//			 if(sProcess!=null && s.getProposedSolution().getProcess()!=null && s.getProposedSolution().getProcess().toUpperCase().contains(sProcess.toUpperCase()))
+//			//5- check Algorithm
+//			 if(sAlgorithm!=null && s.getProposedSolution().getAlgorithm()!=null && s.getProposedSolution().getAlgorithm().toUpperCase().contains(sAlgorithm.toUpperCase()))
+//			//6- check benefits
+//			 if(sBenefits!=null && s.getBenefitsAndRisks().getBenefits()!=null && s.getBenefitsAndRisks().getBenefits().toUpperCase().contains(sBenefits.toUpperCase()))
+//			//7- check risks
+//			 if(sRisks!=null && s.getBenefitsAndRisks().getRisks()!=null && s.getBenefitsAndRisks().getRisks().toUpperCase().contains(sRisks.toUpperCase()))
+//
+//			
+//			 if(isAdd && !isAllNull)
+//				 matchingScenarios.add(s);
+//		}
+//		
+//		}catch(Exception e){
+//			e.printStackTrace();
+//		}
+//		return matchingScenarios;
+//		
+//	}
+	
 	
 	/**
 	 * List Scn by status type 
@@ -262,5 +390,23 @@ public class ScenarioEntity implements java.io.Serializable {
 //	    ofy().save().entity(this).now();
 //	    return this;
 //	}
+	
+	/**
+	 * Enhanced persistence functionality to include capability to send methods
+	 * @param toWho
+	 * @param subject
+	 * @param messageText
+	 * @return
+	 */
+	public ScenarioEntity persistWithNotification(String toWho, String subject, String messageText){
+		RepositoryMailService mailservice = new RepositoryMailService(toWho, subject, messageText);
+		try{
+			mailservice.send();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		ofy().save().entity(this).now();
+		return this;
+	}
 	
 }

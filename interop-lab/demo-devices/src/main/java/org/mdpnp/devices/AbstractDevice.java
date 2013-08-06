@@ -190,6 +190,9 @@ public abstract class AbstractDevice implements ThreadFactory {
 	
 	
 	public void shutdown() {
+	    // TODO there is nothing preventing inheritors from interacting with these objects as (and after) they are destroyed.
+	    // TODO there isn't a coherent way to dispose of the instances an inheritor may have registered... perhaps they should be responsible in their override of shutdown?
+	    
 	    publisher.delete_datawriter(sampleArrayDataWriter);
 	    domainParticipant.delete_topic(sampleArrayTopic);
 	    SampleArrayTypeSupport.unregister_type(domainParticipant, SampleArrayTypeSupport.get_type_name());

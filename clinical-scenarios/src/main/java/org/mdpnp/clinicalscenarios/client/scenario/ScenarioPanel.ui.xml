@@ -29,11 +29,14 @@
 	<g:DockPanel>
 	<g:Dock direction="NORTH" size="100px">
 		
-	<g:FlowPanel><g:TextBox text='Scenario Title' ui:field='titleEditor' styleName='clickable scenarioTitle' visibleLength='50' maxLength='100'/>
-	    <!-- <g:TextBox text="" ui:field='titleTextBox' visibleLength='75' maxLength='75' visible='false'/>-->
+	<g:FlowPanel>
+	    <g:HTML><br/><span style="font-size:16pt; margin-top: 20px;">Scenario Title</span></g:HTML>
+	    <g:TextBox text='Scenario Title' ui:field='titleEditor' styleName='scenarioTitle' visibleLength='50' maxLength='100'/>
+	    <g:Label ui:field='uniqueId' styleName='important'/>
 	    <g:Label ui:field='status'/>
 	    </g:FlowPanel>
 	</g:Dock>
+	
 	<g:Dock direction="CENTER" size="400px">
 	<g:TabPanel ui:field="tabPanel">
 	<g:Tab text="Background">
@@ -140,6 +143,20 @@
 	  </g:FlowPanel>
 	</g:Tab>
 	-->
+<!-- 	</g:TabPanel> -->
+<!-- 	</g:Dock> -->
+	    
+	<g:Tab text="Approve or Reject">
+	  <g:FlowPanel>
+	    <g:HTML><h2>Approve or Reject Scenario</h2></g:HTML>
+	    <g:InlineLabel text='Feedback for submitter (if any):'/>
+	    <g:TextArea ui:field='feedback' visibleLines='10' characterWidth='50' styleName='{style.verywide}'/>                
+	    <g:Button text='Approve Scenario' ui:field='approveScnButton' styleName='{style.givemespace}'/>
+	    <g:Button text='Reject Scenario' ui:field='rejectScnButton' styleName='{style.givemespace}'/>
+	  </g:FlowPanel>
+	</g:Tab>
+	
+	
 	</g:TabPanel>
 	</g:Dock>
 	
@@ -147,8 +164,8 @@
 	<g:FlowPanel>
 	    <g:Button text='Submit for Approval' ui:field='submitButton' styleName='{style.givemespace}'/>
 	    <g:Button text='Save For Later' ui:field='saveButton' styleName='{style.givemespace}'/>
-	    <g:Button text='Approve Scenario' ui:field='approveScnButton' styleName='{style.givemespace}'/>
-	    <g:Button text='Reject Scenario Scenario' ui:field='rejectScnButton' styleName='{style.givemespace}'/>
+<!-- 	    <g:Button text='Approve Scenario' ui:field='approveScnButton' styleName='{style.givemespace}'/> -->
+<!-- 	    <g:Button text='Reject Scenario Scenario' ui:field='rejectScnButton' styleName='{style.givemespace}'/> -->
 	</g:FlowPanel>
 	</g:Dock>
 	</g:DockPanel>

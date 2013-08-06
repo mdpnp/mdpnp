@@ -1,7 +1,7 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
-import java.awt.image.TileObserver;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -15,9 +15,6 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -76,10 +73,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	public final static String SCN_STATUS_APPROVED = 		"approved"; //revised and approved
 	public final static String SCN_STATUS_REJECTED = 		"rejected"; //revised but not approved. Rejected for revision 
 	
+	private final static int APPRV_SCN_TAB_POS = 6;//position of the tab to approve or reject scn
+	
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
 	
-//	private boolean isScenarioAlterable = true;//indicates if we can modify the info of the scn
 	private enum UserRole {Administrator, RegisteredUser, AnonymousUser}
 	private UserRole userRole;
 	
@@ -217,8 +215,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		equipmentTable.setText(0, EQUIPMENT_MODEL_COL, "Model");
 		equipmentTable.setText(0, EQUIPMENT_ROSSETAID_COL, "Rosetta ID");
 
-		///XXX Do we really need the static block now?
-		{if(isDrawNew || currentScenario==null || //FIXME  actually currentScenario.getEquipment().getEntries() should NEVER be null, because is always created as empty list
+
+		if(isDrawNew || currentScenario==null || //FIXME  actually currentScenario.getEquipment().getEntries() should NEVER be null, because is always created as empty list
 				currentScenario.getEquipment().getEntries()==null || currentScenario.getEquipment().getEntries().isEmpty()){
 			//the table will have no elements, either because we have anew scenario or because the current one
 			// has no elements on its equipment list
@@ -266,7 +264,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					}
 				});
 			}			
-		}
+		
 		
 		}
 	}
@@ -460,8 +458,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private void save(){
 		if (currentScenario.getStatus().equals(SCN_STATUS_APPROVED)) return;//Don't change Approved Scenarios
 		if (currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED) && userRole!=UserRole.Administrator) return;//Don't change submitted
-//		if(!isScenarioAlterable) return;//Anonymous users can't modify the Scn information
 		if(userRole==UserRole.AnonymousUser) return;//Anonymous users can't modify the Scn information
+		if(isEmptyScenario()) return;//XXX Ticket-81 Don't persist empty Scn
 		
 		status.setText("SAVING");			
 		ScenarioRequest rc = (ScenarioRequest) driver.flush();
@@ -484,7 +482,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				status.setText("SAVED");
 				scenarioRequestFactory.getEventBus().fireEvent(new EntityProxyChange<ScenarioProxy>(response, WriteOperation.UPDATE));
 //				logger.info("DURING:"+response.getTitle());
-				setCurrentScenario(response);
+//				setCurrentScenario(response);//XXX diego@mdpnp.org if setting the 'response', due to the event delay we have a funny behaviour
+				setCurrentScenario(currentScenario);
 //				logger.info("AFTER:"+currentScenario.getTitle());
 			}
 			
@@ -534,6 +533,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 		//select first tab
 		tabPanel.selectTab(0);
+		manageScnStatus = tabPanel.getWidget(APPRV_SCN_TAB_POS);//get Feedback_Tab (reject/approve Scn widget)
 		
 		//check user role
 		if(userInfoRequestFactory != null){
@@ -546,27 +546,18 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				@Override
 				public void onSuccess(UserInfoProxy response) {
 					userEmail = response.getEmail();
-					if(response.getAdmin()){
-						rejectScnButton.setVisible(true);
-						approveScnButton.setVisible(true);
-					}else{
-						rejectScnButton.setVisible(false);
-						approveScnButton.setVisible(false);
-					}
+//					if(response.getAdmin()){
+//						rejectScnButton.setVisible(true);//XXX Probably I no longer need this, because I'm hiding the tab
+//						approveScnButton.setVisible(true);
+//					}else{
+//						rejectScnButton.setVisible(false);
+//						approveScnButton.setVisible(false);
+//					}
 
 					if(response.getEmail()==null ||response.getEmail().trim().equals("") ){
 						//Anonymous user
-						saveButton.setVisible(false);//can't save on demand
-						submitButton.setVisible(false);//can't submit the scn
-//						isScenarioAlterable = false; //can't modify the Scn
 						userRole = UserRole.AnonymousUser;
-						algorithmDescription.setEnabled(false);
-						clinicalProcesses.setEnabled(false);
-						risks.setEnabled(false);
-						benefits.setEnabled(false);
-						titleEditor.setEnabled(false);
-						currentStateEditor.setEnabled(false);
-						proposedStateEditor.setEnabled(false);
+						disableSaveScenario();
 					}else{
 						if(response.getAdmin()) 
 							userRole = UserRole.Administrator;
@@ -585,6 +576,40 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		}
 					
 	}
+	
+	/**
+	 * Disables the "editable" property of a Scenario. We don't see the buttons to save, 
+	 * we can't interact w/ the panels
+	 */
+	private void disableSaveScenario(){
+		status.setText("");
+		
+		saveButton.setVisible(false);//can't save on demand
+		submitButton.setVisible(false);//can't submit the scn
+		
+		algorithmDescription.setEnabled(false);
+		clinicalProcesses.setEnabled(false);
+		risks.setEnabled(false);
+		benefits.setEnabled(false);
+		titleEditor.setEnabled(false);
+		currentStateEditor.setEnabled(false);
+		proposedStateEditor.setEnabled(false);
+	}
+	
+	private void enableSaveScenario(){
+//		status.setText("");
+		
+		saveButton.setVisible(true);
+		submitButton.setVisible(true);
+		
+		algorithmDescription.setEnabled(true);
+		clinicalProcesses.setEnabled(true);
+		risks.setEnabled(true);
+		benefits.setEnabled(true);
+		titleEditor.setEnabled(true);
+		currentStateEditor.setEnabled(true);
+		proposedStateEditor.setEnabled(true);
+	}
 
 	
 	private ScenarioProxy currentScenario;
@@ -592,31 +617,40 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	public void setCurrentScenario(ScenarioProxy currentScenario) {
 		
 		ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
-		if(null == currentScenario) {
-		    context.create()
-		    .with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
-		    .to(new Receiver<ScenarioProxy>() {
-	    	
-                @Override
-                public void onSuccess(ScenarioProxy response) {
-                    logger.info(""+response.getBackground());
-                    ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
-                    ScenarioProxy currentScenario = context.edit(response); 
-                    driver.edit(currentScenario, context);                    
-                    ScenarioPanel.this.currentScenario = currentScenario;
-                    
-                    //after the Entity has been succesfully created, we populate the widgets w/ the entity info and draw it
-        		    buildEquipmentTable(true);//new scn. No equipment list
-        		    buildHazardsTable(true);
-        			buildCliniciansTable(true);
-        			buildEnvironmentsTable(true);
-                    
-                }
-		        
-		    }).fire();
-		    
-//		    buildEquipmentTable(true);//new scn. No equipment list
-//		    buildHazardsTable(true);
+		if(null == currentScenario) {		
+			    context.create()
+			    .with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+			    .to(new Receiver<ScenarioProxy>() {
+		    	
+	                @Override
+	                public void onSuccess(ScenarioProxy response) {
+	                	if(response==null){
+	                		Window.alert("Please, Sign In to create new Scenarios");
+	                		titleEditor.setText("Please sign in to create new Clinical Scenarios");
+	                	}
+	                    logger.info(""+response.getBackground());
+	                    ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
+	                    ScenarioProxy currentScenario = context.edit(response); 
+	                    driver.edit(currentScenario, context);  
+//	                    currentScenario.setTitle("Scenario Title");
+	                    ScenarioPanel.this.currentScenario = currentScenario;
+                  	                    
+	                    //after the Entity has been succesfully created, we populate the widgets w/ the entity info and draw it
+	        		    buildEquipmentTable(true);//new scn. No equipment list
+	        		    buildHazardsTable(true);
+	        			buildCliniciansTable(true);
+	        			buildEnvironmentsTable(true);
+
+	        			configureComponents();
+
+	                }
+			        
+			    }).fire();
+			    tabPanel.selectTab(0);
+			    status.setText("");
+			    uniqueId.setText("");
+
+			    
 
 		} else {
 		    currentScenario = context.edit(currentScenario); 
@@ -626,32 +660,84 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
             buildHazardsTable(false);
     		buildCliniciansTable(false);
     		buildEnvironmentsTable(false);
+    		if(currentScenario.getId()!=null)
+    			uniqueId.setText("Scenario Unique ID: "+String.valueOf(currentScenario.getId()));
     		
-    		//buttons
-    		//you can't submit an scn that is already approved
-    		if(currentScenario.getStatus()!=null){//FIXME this line shouldn't be necessary w/ the proper data in the GAE
-    		if(currentScenario.getStatus().equals(SCN_STATUS_APPROVED))
-    			submitButton.setEnabled(false);
-    		if(!currentScenario.getSubmitter().equals(userEmail)){
-    			submitButton.setEnabled(false);//can't submit other user's scn
-    		}
-    		if(!currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED)){
-    			approveScnButton.setEnabled(false);
-    			rejectScnButton.setEnabled(false);
-    		}else{
-    			approveScnButton.setEnabled(true);
-    			rejectScnButton.setEnabled(true);
-    		}
-    		}
+    		configureComponents();
 		}
 		
+		//select first tab
+//		tabPanel.selectTab(0); DANGER DANGER DANGER
+		//XXX CAREFUL!!! Selecting a tab here triggers again the associated tab ClickHandler, that calls this very same method
+		// and we have a circular call and therefore an infinite loop. 
 
-
+	}
+	
+	/**
+	 * Configures the different components of the panel according to the 
+	 * user role and Scenario status
+	 */
+	private void configureComponents(){
+		enableSaveScenario();
+		//1- Unsubmitted
+		// only the scenario owner could submit the scn. 
+		// only owner + admin could modify the scn
+		if(currentScenario.getStatus().equals(SCN_STATUS_UNSUBMITTED)){
+			if(!currentScenario.getSubmitter().equals(userEmail)){
+				submitButton.setVisible(false);
+				saveButton.setVisible(false);
+			}else{
+				submitButton.setVisible(true);
+				saveButton.setVisible(true);
+			}
+			if(userRole == UserRole.Administrator)
+				saveButton.setVisible(true);
+			//Don't show FeedBack Panel
+			if(tabPanel.getWidgetCount() > APPRV_SCN_TAB_POS){
+				tabPanel.remove(APPRV_SCN_TAB_POS);
+				tabPanel.selectTab(0); //XXX careful w/ circular call
+			}
+		}else if(currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED)){ 
+		//2- Submitted. Not editable except for administrators
+			submitButton.setVisible(false);
+			if(userRole == UserRole.Administrator)
+				saveButton.setVisible(true);
+			else{
+				saveButton.setVisible(false);
+				disableSaveScenario();
+			}
+			
+			//administrators can see feedback panel for approval / rejection
+			if(userRole!=UserRole.Administrator){
+				//if the tab is already showing we remove it
+				if(tabPanel.getWidgetCount() > APPRV_SCN_TAB_POS){
+					tabPanel.remove(APPRV_SCN_TAB_POS);
+					tabPanel.selectTab(0); //XXX careful w/ circular call
+				}
+			}else{//admin sees the feedback tab
+				if(tabPanel.getWidgetCount() <= APPRV_SCN_TAB_POS)//add it if is not there
+					tabPanel.add(manageScnStatus, "Approve or Reject");
+			}
+		}else if(currentScenario.getStatus().equals(SCN_STATUS_APPROVED)){//XXX Ticket-103
+				//3- Approved. No one can edit the scn
+			 disableSaveScenario();
+				//Don't show FeedBack Panel
+			if(tabPanel.getWidgetCount() > APPRV_SCN_TAB_POS){
+				tabPanel.remove(APPRV_SCN_TAB_POS);
+				tabPanel.selectTab(0); //XXX careful w/ circular call
+			}
+		}
 	}
 	
 	@UiField
 	TabPanel tabPanel;
 	
+	final Widget manageScnStatus; //= tabPanel.getWidget(APPRV_SCN_TAB_POS);
+	
+	@UiField
+	@Ignore
+	TextArea feedback;//feedback for Scn approval / rejection
+		
 	@UiField
 	@Path("background.currentState")
 	TextArea currentStateEditor;
@@ -1109,11 +1195,16 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
 	}
+	
 //	@UiField
 //	FlexTable testCasesTable;
 	
 	@UiField
 	TextBox titleEditor;
+	
+	@UiField
+	@Ignore
+	Label uniqueId;
 	
 	@UiField
 	@Path(value="benefitsAndRisks.benefits")
@@ -1146,7 +1237,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 				@Override
 				public void onSuccess(ScenarioProxy response) {
-					Window.alert("This Clinical Scenario has been submitted for approval");				
+					Window.alert("This Clinical Scenario has been submitted for approval");		
+					setCurrentScenario(currentScenario);
 				}
 				
 				public void onFailure(ServerFailure error) {
@@ -1162,52 +1254,148 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		save();//persist our entities
 	}
 	
-	//button to approve the scn
 	@UiField
-	Button approveScnButton; 
+	Button approveScnButton; 	//button to approve the scn
 	
 	@UiHandler("approveScnButton")
 	public void onClickApproveScn(ClickEvent clickEvent) {
-		//TODO Should redirect to a screen where you can email the submitter?
 		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
 		currentScenario.setStatus(SCN_STATUS_APPROVED);
 		boolean confirm = Window.confirm("Are you sure you want to APPROVE this scenario?");
-		if(confirm)
-		scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(new Receiver<ScenarioProxy>() {
-
-			@Override
-			public void onSuccess(ScenarioProxy response) {
-				Window.alert("This Clinical Scenario has been approved");				
-			}
+		if(confirm){
+			String subject ="Your scenario "+currentScenario.getTitle()+" has been approved";
+			String message = "Your scenario "+currentScenario.getTitle()+" submission has been approved by the MD PnP Clinical Scenario Repository Administrators.\n"
+			+"Thank you for your submission.";
+			message += "\n\n"+feedback.getText();
+			message += "\n The MD PnP Team \n www.mdpnp.org";
 			
-			public void onFailure(ServerFailure error) {
-				super.onFailure(error);
-			}
-		});
+			scnReq.persistWithNotification(currentScenario.getSubmitter(), subject, message)
+			.using(currentScenario).with(driver.getPaths())
+			.fire(new Receiver<ScenarioProxy>() {
+	
+				@Override
+				public void onSuccess(ScenarioProxy response) {
+					Window.alert("This Clinical Scenario has been approved");	
+					setCurrentScenario(currentScenario);
+				}
+				
+				public void onFailure(ServerFailure error) {
+					super.onFailure(error);
+				}
+			});
+			
+			configureComponents();
+		}
 	}
 	
-	//Button to reject the Scn
+	
 	@UiField
-	Button rejectScnButton; 
+	Button rejectScnButton; //Button to reject the Scn
 	
 	@UiHandler("rejectScnButton")
 	public void onClickRejectScn(ClickEvent clickEvent) {
-		//TODO Should redirect to a screen where you can email the submiter?
 		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
 //		currentScenario.setStatus(SCN_STATUS_REJECTED);//XXX 07/22/13 diego@mdpnp.org, rejected Scn = pending of submission
 		currentScenario.setStatus(SCN_STATUS_UNSUBMITTED);
 		boolean confirm = Window.confirm("Are you sure you want to REJECT this scenario?");
-		if(confirm)
-		scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(new Receiver<ScenarioProxy>() {
-
-			@Override
-			public void onSuccess(ScenarioProxy response) {
-				Window.alert("This Clinical Scenario has been rejected");				
-			}
+		if(confirm){
+			String subject ="Your scenario "+currentScenario.getTitle()+" has been rejected";
+			String message = "Your scenario "+currentScenario.getTitle()
+					+" submission has been rejected by the MD PnP Clinical Scenario Repository Administrators.\n"
+					+"We appreciate your submission, but the data provided makes this scenario not suitable for approval.";
+			message += "\n \n"+feedback.getText();
+			message += "\n The MD PnP Team \n www.mdpnp.org";
 			
-			public void onFailure(ServerFailure error) {
-				super.onFailure(error);
-			}
-		});
+			scnReq.persistWithNotification(currentScenario.getSubmitter(), subject, message)
+			.using(currentScenario).with(driver.getPaths())
+			.fire(new Receiver<ScenarioProxy>() {
+	
+				@Override
+				public void onSuccess(ScenarioProxy response) {
+					Window.alert("This Clinical Scenario has been rejected");	
+					setCurrentScenario(currentScenario);
+				}
+				
+				public void onFailure(ServerFailure error) {
+					super.onFailure(error);
+				}
+				
+			});
+			
+			configureComponents();
+		}
 	}
+	
+	/**
+	 * Returns true if the current scenario has no meaningful information <p>
+	 * 1- no title <p>
+	 * 2- no background <p>
+	 * 3- no/empty hazards list <p>
+	 * 4- no/empty environment list  <p>
+	 * 5- no/empty equipment list <p>
+	 * 6- no proposed solution <p>
+	 * 7- no benefits and risks  <p>
+	 * 
+	 * @return true/false
+	 */
+	private boolean isEmptyScenario(){
+		
+		//textareas
+		if(!titleEditor.getText().trim().equals("")) return false;
+		if(!currentStateEditor.getText().trim().equals("") ||
+			!proposedStateEditor.getText().trim().equals("")) return false;
+		if(!benefits.getText().trim().equals("") || 
+				!risks.getText().trim().equals("")) return false;
+		if(!clinicalProcesses.getText().trim().equals("") ||
+				!algorithmDescription.getText().trim().equals("")) return false;
+		//Flextables
+		if(hazardsTable.getRowCount()>3 ) return false;
+		if(equipmentTable.getRowCount()>2) return false;
+		if(cliniciansTable.getRowCount()>1) return false;
+		if(environmentsTable.getRowCount()>1) return false;
+		
+		/**
+		 * We could still have the problem of persisting Scn that have multiple empty hazards/equipment rows
+		 */
+		
+		boolean isEmpty = true;
+		String text = null;
+		
+		//find at least a non-empty element
+		//Hazards
+		for(int j=0; j<2; j++){
+			Widget widget = hazardsTable.getWidget(2, j);
+			text = ((TextArea)widget).getText().trim();
+			if(!text.equals(""))
+				isEmpty=false;
+		}
+		if(!isEmpty) return false;
+
+		//equipment
+		for(int j=0; j<4; j++){
+			Widget widget = equipmentTable.getWidget(1, j);
+			text = ((TextBox)widget).getText().trim();
+			if(!text.equals(""))
+				isEmpty=false;
+		}
+		if(!isEmpty) return false;
+		
+		//clinicians
+		Widget widget = cliniciansTable.getWidget(0, 0);
+		text = ((SuggestBox)widget).getText().trim();
+		if(!text.equals(""))
+			return false;
+		
+		//environments
+		widget = environmentsTable.getWidget(0, 0);
+		text = ((SuggestBox)widget).getText().trim();
+		if(!text.equals(""))
+			return false;
+
+		//if not, means the scenario has no meaningful info
+		return true;
+	}
+	
+
+	
 }

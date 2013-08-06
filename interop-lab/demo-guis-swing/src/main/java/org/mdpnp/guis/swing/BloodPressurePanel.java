@@ -11,20 +11,16 @@ import ice.Numeric;
 import ice.SampleArray;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -40,7 +36,9 @@ public class BloodPressurePanel extends DevicePanel {
 	private JLabel systolic, diastolic, pulse;
 	private JPanel systolicPanel, diastolicPanel, pulsePanel;
 	private JLabel time;
+	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private JLabel nextInflation;
+	private final Date date = new Date();
 //	private JButton inflate = new JButton("Inflate"); 
 	
 	protected void buildComponents() {
@@ -101,7 +99,9 @@ public class BloodPressurePanel extends DevicePanel {
 //		        gateway.update(BloodPressurePanel.this, mtu);
 //		    }
 //		});
-		
+		setForeground(Color.green);
+		setBackground(Color.black);
+		setOpaque(true);
 	}
 	
 	
@@ -186,7 +186,9 @@ public class BloodPressurePanel extends DevicePanel {
     private final Numeric inflationN = new Numeric();
     private final Numeric nextInflationN = new Numeric();
     
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(BloodPressurePanel.class);
+    
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
 //        log.debug("N:"+numeric);
@@ -249,6 +251,8 @@ public class BloodPressurePanel extends DevicePanel {
             pulse.setText("");
             break;
         }
+        date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
+        time.setText(dateFormat.format(date));
     }
 
 

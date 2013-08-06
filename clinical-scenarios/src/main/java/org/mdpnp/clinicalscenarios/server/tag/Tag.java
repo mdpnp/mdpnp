@@ -26,6 +26,11 @@ public class Tag implements Serializable {
 	private Long id; //id for the GAE
 	private int version =1;
 	
+	@OnSave
+	void onPersist() {
+	    version++;
+	}
+	
 	@Index
 	private String name; // name (identifier) of the tag
 	
@@ -89,10 +94,7 @@ public class Tag implements Serializable {
 	    ofy().save().entity(this).now();
 	    return this;
 	}
-	@OnSave
-	void onPersist() {
-	    version++;
-	}
+
 	
 	/**
 	 * Find all tags

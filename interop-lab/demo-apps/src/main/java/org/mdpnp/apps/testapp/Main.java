@@ -11,6 +11,9 @@ import javax.imageio.ImageIO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.domain.DomainParticipantFactoryQos;
+
 public class Main {
 	
 	private static final Logger log = LoggerFactory.getLogger(Main.class);
@@ -18,6 +21,7 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 	    // TODO this should be external
 	    System.setProperty("java.net.preferIPv4Stack","true");
+
 
 	    Configuration runConf = null;
 	    
@@ -78,6 +82,12 @@ public class Main {
 		    if(!(Boolean)Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init").invoke(null)) {
                 throw new Exception("Unable to DDS.init");
             }
+		    {		    
+		            DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
+		            DomainParticipantFactory.get_instance().get_qos(qos);
+		            qos.resource_limits.max_objects_per_thread = 8192;
+		            DomainParticipantFactory.get_instance().set_qos(qos);
+		    }
 
 			switch(runConf.getApplication()) {
 			case ICE_Device_Interface:

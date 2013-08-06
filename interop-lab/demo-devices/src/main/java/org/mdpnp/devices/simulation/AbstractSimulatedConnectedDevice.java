@@ -67,4 +67,14 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
 	public String getConnectionInfo() {
 		return null;
 	}
+	
+	@Override
+	public void shutdown() {
+	    // TODO add this back in and test it vigorously.
+	    // 7/30/2013 doesn't seem to impart any benefit currently. I think other shutdown
+	    // issues are more pressing
+	    deviceIdentityWriter.dispose(deviceIdentity, deviceIdentityHandle);
+	    deviceIdentityHandle = null;
+	    super.shutdown();
+	}
 }

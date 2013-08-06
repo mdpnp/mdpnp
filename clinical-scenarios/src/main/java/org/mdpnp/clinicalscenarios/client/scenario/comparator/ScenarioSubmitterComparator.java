@@ -11,8 +11,25 @@ import org.mdpnp.clinicalscenarios.client.scenario.ScenarioProxy;
  */
 public class ScenarioSubmitterComparator implements Comparator<ScenarioProxy> {
 
+	private boolean reverserOrder;
+	
+	/**
+	 * Toggle comparison order
+	 */
+	public void switchOrder(){
+		reverserOrder = !reverserOrder;
+	}
+
 	 //compare by Submitter ascending (lexicographically)
-	  public int compare(ScenarioProxy scn1, ScenarioProxy scn2) {
+	public int compare(ScenarioProxy scn1, ScenarioProxy scn2) {
+		if(reverserOrder)
+			return (-1 * doCompare(scn1, scn2));
+		else
+			return doCompare(scn1, scn2);
+	}
+	 
+	//compare by Submitter ascending (lexicographically)
+	  private int doCompare(ScenarioProxy scn1, ScenarioProxy scn2) {
 		  if(scn1.getSubmitter()==null) return 1;//XXX we shouldn't need this two lines of code if every Scn has its submitter
 		  if(scn2.getSubmitter()==null) return -1;
 		  

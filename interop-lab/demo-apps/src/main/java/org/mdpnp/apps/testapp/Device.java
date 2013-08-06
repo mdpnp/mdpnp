@@ -23,6 +23,8 @@ public class Device {
     
     private SoftReference<DeviceIcon> realIcon;
     
+    private final static int SHORT_UDI_LENGTH = 20;
+    
     private final static Logger log = LoggerFactory.getLogger(Device.class);
     
     public Device() {
@@ -54,6 +56,10 @@ public class Device {
         } else {
             return deviceIdentity.manufacturer + " " + deviceIdentity.model;
         }
+    }
+    
+    public String getShortUDI() {
+        return null == deviceIdentity.universal_device_identifier ? null : deviceIdentity.universal_device_identifier.substring(0, SHORT_UDI_LENGTH);
     }
     
     public Device(DeviceIdentity di) {

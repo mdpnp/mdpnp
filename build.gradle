@@ -44,11 +44,11 @@ ext {
     targetOsArch = project.hasProperty('OS_ARCH') ? fromOsArch(OS_ARCH) : localOsArch 
 }
 group 'org.mdpnp'
-version '0.1.1-SNAPSHOT'
+version '0.1.1'
 
 subprojects {
     group 'org.mdpnp'
-    version '0.1.1-SNAPSHOT'
+    version '0.1.1'
     buildscript {
         repositories {
             // Repository for external released libs hosted by mdpnp (unavailable in any other repo)

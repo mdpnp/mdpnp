@@ -1,7 +1,17 @@
 /** Add css rules here for your application. */
-body {
+
+html{
+/* 	background-image: -webkit-linear-gradient(bottom, #FFFFFF 0%, #BAE6EF 100%); */
+/* 	background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #FFFFFF), color-stop(10, #BAE6EF)); */
+/* 	background: -webkit-linear-gradient(top, cyan, white); */
+}
+
+.body {
 	padding:10px;
-	background-color: AntiqueWhite #FAEBD7;
+/* 	background-color: AntiqueWhite #FAEBD7; */
+	background-color:#DDFFFF;
+/* 	background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #FFFFFF), color-stop(10, #BAE6EF));*/
+/* 	background: -webkit-linear-gradient(top, #BAE6EF, #FFFFFF); */
 }
 
 /** Example rules used by the template application (remove for your app) */
@@ -12,6 +22,11 @@ h1 {
   margin: 40px 0px 70px;
   text-align: center;
 }
+
+.bla{
+	background-color:#e0ffff;
+}
+
 .heading {
   font-size: 1.5em;
   font-weight: bold;
@@ -49,20 +64,25 @@ h1 {
 
 .clickable {
 	cursor:pointer;
+	padding-right: 5px;
+ 	padding-left: 5px;
+}
+.clickable:hover {
+	background-color:#8FBC8F; /*DarkSeaGreen*/
 }
 
 .scenarioTitle {
 	font-size: 20pt;
-	margin-top: 20px;
+/* 	margin-top: 20px; */
 	margin-bottom: 20px;
 }
-/*
-p.welcomeText{
-	width:900px;
-	text-align:justify;
-	text-justify:inter-word;
-	background-color:AntiqueWhite;
-}*/
+
+.welcomeText{
+		width:900px;
+		text-align:justify;
+		text-justify:inter-word;
+		background-color: #F5FFFA;/*MintCream*/
+}
 
 /* users list table header row */
 .userListHeader {
@@ -70,7 +90,10 @@ p.welcomeText{
   color: white;
   font-style: italic;
   text-align: center;
+  padding-right: 50px;
+  padding-left: 50px;
 }
+
 
 .tableHeader {
     background-color: #2062B8;
@@ -90,7 +113,24 @@ p.welcomeText{
 	color: #FFFFFF;
 }
 
-/* .unsubmittedScn { */
-/* 	color: black; */
-/* 	font-weight:normal; */
-/* } */
+.tableRowOther{
+	background-color:#EEFFFF;
+/* 	text-align: center; */
+}
+
+.gwt-SuggestBox{}
+.gwt-SuggestBoxPopup{ border : 2px solid #C3d9FF; background-color:#e8eef7;}
+.gwt-SuggestBoxPopup .item {}
+.gwt-SuggestBoxPopup .item-selected { background-color:#c3d9FF;}
+
+.titleColumn{
+	width:200px;
+}
+
+.navigationPanel{
+	 margin-left: auto;
+ 	margin-right: auto;
+ 	text-aling: center;
+ 	align:center;
+/*  	color: #00AAFF; */
+}

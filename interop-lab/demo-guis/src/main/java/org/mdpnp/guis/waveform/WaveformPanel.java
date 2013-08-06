@@ -8,4 +8,6 @@ public interface WaveformPanel {
 	void setOutOfTrack(boolean outOfTrack);
 	void start();
 	void stop();
+	void setEvenTempo(boolean evenTempo);
+	void setCaching(boolean caching);
 }

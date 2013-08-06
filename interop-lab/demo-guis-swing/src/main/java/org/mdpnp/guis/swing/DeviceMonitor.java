@@ -13,7 +13,9 @@ import ice.SampleArrayDataReader;
 import ice.SampleArraySeq;
 import ice.SampleArrayTypeSupport;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.mdpnp.devices.EventLoop;
@@ -37,13 +39,39 @@ import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.TopicDescription;
 
 public class DeviceMonitor {
-    private final Subscriber subscriber;
+    private Subscriber subscriber;
     private final Set<Condition> conditions = new HashSet<Condition>();
     private final Set<DataReader> dataReaders = new HashSet<DataReader>();
-    private final EventLoop eventLoop;
+    private EventLoop eventLoop;
     private static final Logger log = LoggerFactory.getLogger(DeviceMonitor.class);
     
     private final String udi;
+    
+    
+    private final List<DeviceMonitorListener> listeners = new ArrayList<DeviceMonitorListener>();
+    private ThreadLocal<DeviceMonitorListener[]> simpleListeners = new ThreadLocal<DeviceMonitorListener[]>() {
+        protected DeviceMonitorListener[] initialValue() {
+            return new DeviceMonitorListener[0];
+        }
+    };
+    private final synchronized DeviceMonitorListener[] getListeners() {
+        DeviceMonitorListener[] listeners;
+        if(null != this.simpleListeners) {
+            simpleListeners.set(listeners = this.listeners.toArray(simpleListeners.get()));
+        } else {
+            listeners = new DeviceMonitorListener[0];
+        }
+        return listeners;
+    }
+    
+    public final synchronized void addListener(DeviceMonitorListener listener) {
+        this.listeners.add(listener);
+    }
+    public final synchronized void removeListener(DeviceMonitorListener listener) {
+        this.listeners.remove(listener);
+    }
+    
+    
     
     private final Condition c(Condition c) {
         conditions.add(c);
@@ -54,13 +82,13 @@ public class DeviceMonitor {
         return udi;
     }
     
-    public DeviceMonitor(DomainParticipant participant, String udi, final DeviceMonitorListener listener, final EventLoop eventLoop) {
+    public DeviceMonitor(final String udi) {
         this.udi = udi;
-        final StringSeq identity = new StringSeq();
-        identity.add("'"+udi+"'");
-        
+    }
+
+    public void start(final DomainParticipant participant, final EventLoop eventLoop) {
         this.eventLoop = eventLoop;
-        
+
         subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         TopicDescription deviceIdentityTopic = lookupOrCreateTopic(participant, ice.DeviceIdentityTopic.VALUE, ice.DeviceIdentityTypeSupport.class);
         TopicDescription deviceConnectivityTopic = lookupOrCreateTopic(participant, ice.DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.class);
@@ -77,21 +105,29 @@ public class DeviceMonitor {
         dataReaders.add(numReader);
         dataReaders.add(saReader);
         
+        final StringSeq identity = new StringSeq();
+        identity.add("'"+udi+"'");
+        
         final DeviceIdentitySeq id_seq = new DeviceIdentitySeq();
         final DeviceConnectivitySeq conn_seq = new DeviceConnectivitySeq();
         final NumericSeq num_seq = new NumericSeq();
         final SampleArraySeq sa_seq = new SampleArraySeq();
         final SampleInfoSeq info_seq = new SampleInfoSeq();
-
+        
         eventLoop.addHandler(c(idReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE,
                 "universal_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
             @Override
             public void conditionChanged(Condition condition) {
                 try {
                     for(;;) {
-                        idReader.read_w_condition(id_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
-                        listener.deviceIdentity(idReader, id_seq, info_seq);
-                        idReader.return_loan(id_seq, info_seq);
+                        try {
+                            idReader.read_w_condition(id_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            for(DeviceMonitorListener listener : getListeners()) {
+                                listener.deviceIdentity(idReader, id_seq, info_seq);
+                            }
+                        } finally {
+                            idReader.return_loan(id_seq, info_seq);
+                        }
                     }
                 } catch (RETCODE_NO_DATA noData) {
                     
@@ -108,9 +144,14 @@ public class DeviceMonitor {
             public void conditionChanged(Condition condition) {
                 try {
                     for(;;) {
-                        connReader.read_w_condition(conn_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
-                        listener.deviceConnectivity(connReader, conn_seq, info_seq);
-                        connReader.return_loan(conn_seq, info_seq);
+                        try {
+                            connReader.read_w_condition(conn_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            for(DeviceMonitorListener listener : getListeners()) {
+                                listener.deviceConnectivity(connReader, conn_seq, info_seq);
+                            }
+                        } finally {
+                            connReader.return_loan(conn_seq, info_seq);
+                        }
                     }
                     
                 } catch (RETCODE_NO_DATA noData) {
@@ -120,7 +161,7 @@ public class DeviceMonitor {
                 }
             }
         });
-        
+
         eventLoop.addHandler(c(numReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE,
                 "universal_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
             
@@ -128,9 +169,14 @@ public class DeviceMonitor {
             public void conditionChanged(Condition condition) {
                 try {
                     for(;;) {
-                        numReader.read_w_condition(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
-                        listener.numeric(numReader, num_seq, info_seq);
-                        numReader.return_loan(num_seq, info_seq);
+                        try {
+                            numReader.read_w_condition(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            for(DeviceMonitorListener listener : getListeners()) {
+                                listener.numeric(numReader, num_seq, info_seq);
+                            }
+                        } finally {
+                            numReader.return_loan(num_seq, info_seq);
+                        }
                     }
                 } catch (RETCODE_NO_DATA noData) {
                     
@@ -148,9 +194,14 @@ public class DeviceMonitor {
             public void conditionChanged(Condition condition) {
                 try {
                     for(;;) {
-                        saReader.read_w_condition(sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
-                        listener.sampleArray(saReader, sa_seq, info_seq);
-                        saReader.return_loan(sa_seq, info_seq);
+                        try {
+                            saReader.read_w_condition(sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            for(DeviceMonitorListener listener : getListeners()) {
+                                listener.sampleArray(saReader, sa_seq, info_seq);
+                            }
+                        } finally {
+                            saReader.return_loan(sa_seq, info_seq);
+                        }
                     }
                 } catch (RETCODE_NO_DATA noData) {
                     
@@ -159,13 +210,13 @@ public class DeviceMonitor {
                 }
             }
         });
-        
-//        eventLoop.addHandler(reader.create_querycondition(arg0, arg1, arg2, arg3, arg4), conditionHandler)
-        log.debug("started a DeviceMonitor");
-
     }
-
-    public void shutdown() {
+    
+    public void stop() {
+        synchronized(this) {
+            listeners.clear();
+            simpleListeners = null;
+        }
         for(Condition c : conditions) {
             eventLoop.removeHandler(c);
             if(c instanceof ReadCondition) {
@@ -178,7 +229,18 @@ public class DeviceMonitor {
         }
         dataReaders.clear();
         
-        subscriber.get_participant().delete_subscriber(subscriber);
+        if(null != subscriber) {
+            DomainParticipant participant = subscriber.get_participant();
+            if(null != participant) {
+                participant.delete_subscriber(subscriber);
+                subscriber = null;
+            } else {
+                log.warn("participant is null");
+            }
+        } else {
+            log.warn("subscriber is null");
+        }
         log.debug("Shut down a DeviceMonitor");
+        this.eventLoop = null;
     }
 }

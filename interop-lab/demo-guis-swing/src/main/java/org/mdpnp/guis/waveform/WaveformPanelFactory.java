@@ -13,7 +13,6 @@ public class WaveformPanelFactory {
 	}
 	public WaveformPanel createWaveformPanel() {
 		try {
-//			return new SwingWaveformPanel();
 			return new GLWaveformPanel();
 		} catch (java.lang.UnsatisfiedLinkError err) {
 			log.warn("Unable to load native libraries for Java OpenGL ("+err.getMessage()+"), using swing...");

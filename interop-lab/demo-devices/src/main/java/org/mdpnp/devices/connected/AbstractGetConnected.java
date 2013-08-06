@@ -75,6 +75,8 @@ public abstract class AbstractGetConnected {
 	    DeviceConnectivityObjectiveTypeSupport.unregister_type(participant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
 	    participant.delete_publisher(publisher);
 	    participant.delete_subscriber(subscriber);
+	    
+	    participant.delete_contained_entities();
 	    DomainParticipantFactory.get_instance().delete_participant(participant);
 	}
 	
@@ -104,24 +106,26 @@ public abstract class AbstractGetConnected {
             DeviceConnectivitySeq data_seq = new DeviceConnectivitySeq();
             @Override
             public void conditionChanged(Condition condition) {
-                
-                try {
-                    deviceConnectivityReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, qc);
-                    for(int i = 0; i < data_seq.size(); i++) {
-                        SampleInfo si = (SampleInfo) info_seq.get(i);
-                        if(si.valid_data) {
-                            DeviceConnectivity dc = (DeviceConnectivity) data_seq.get(i);
-                            deviceConnectivity.copy_from(dc);
-                            synchronized(AbstractGetConnected.this) {
-                                deviceConnectivityReceived = true;
-                                AbstractGetConnected.this.notifyAll();
+                for(;;) {
+                    
+                    try {
+                        deviceConnectivityReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, qc);
+                        for(int i = 0; i < data_seq.size(); i++) {
+                            SampleInfo si = (SampleInfo) info_seq.get(i);
+                            if(si.valid_data) {
+                                DeviceConnectivity dc = (DeviceConnectivity) data_seq.get(i);
+                                deviceConnectivity.copy_from(dc);
+                                synchronized(AbstractGetConnected.this) {
+                                    deviceConnectivityReceived = true;
+                                    AbstractGetConnected.this.notifyAll();
+                                }
                             }
                         }
+                    } catch(RETCODE_NO_DATA noData) {
+                        return;
+                    } finally {
+                        deviceConnectivityReader.return_loan(data_seq, info_seq);
                     }
-                    
-                    deviceConnectivityReader.return_loan(data_seq, info_seq);
-                } catch(RETCODE_NO_DATA noData) {
-                    
                 }
             }
         });
@@ -154,7 +158,6 @@ public abstract class AbstractGetConnected {
 					try {
 						this.wait(1000L);
 					} catch (InterruptedException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 				}
@@ -213,8 +216,7 @@ public abstract class AbstractGetConnected {
 			    deviceConnectivityObjective.connected = true;
 			    deviceConnectivityObjectiveWriter.write(deviceConnectivityObjective, InstanceHandle_t.HANDLE_NIL);
 			} else {
-			    System.out.println();
-			    // SO SCREWED
+			    
 			}
 		} finally {
 			synchronized(this) {

@@ -11,6 +11,10 @@ package org.mdpnp.devices.math;
 
 public class DCT {
 	
+    public static double[] idct(double[] coeffs, double[] results) {
+        return idct(coeffs, 0, coeffs.length, results, 0, results.length);
+    }
+    
 	public static double[] idct(double[] coeffs, int coff, int clen, double[] results) {
 		return idct(coeffs, coff, clen, results, 0, results.length);
 	}
