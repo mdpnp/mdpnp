@@ -29,8 +29,8 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     }
 
     @Override
-    public Vital addVital(String label, String units, int[] names, int minimum, int maximum) {
-        return model.addVital(label, units, names, minimum, maximum);
+    public Vital addVital(String label, String units, int[] names, float low, float high, float minimum, float maximum) {
+        return model.addVital(label, units, names, low, high, minimum, maximum);
     }
 
     @Override
@@ -93,6 +93,7 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
         model.removeListener(new VitalListModelListenerAdapter(l));
     }
     
+    @SuppressWarnings("serial")
     private static final class MutableListDataEvent extends ListDataEvent {
         private int type, index0, index1;
         
@@ -167,5 +168,31 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
             event.setTypeAndRange(ListDataEvent.CONTENTS_CHANGED, 0, getCount()-1);
             listener.contentsChanged(event);
         }
+    }
+
+
+    @Override
+    public State getState() {
+        return model.getState();
+    }
+
+    @Override
+    public String getWarningText() {
+        return model.getWarningText();
+    }
+
+    @Override
+    public void resetInfusion() {
+        model.resetInfusion();
+    }
+
+    @Override
+    public boolean isInfusionStopped() {
+        return model.isInfusionStopped();
+    }
+
+    @Override
+    public String getInterlockText() {
+        return model.getInterlockText();
     }
 }

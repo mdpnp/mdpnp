@@ -16,6 +16,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ListCellRenderer;
 import javax.swing.border.EmptyBorder;
 
 import org.slf4j.Logger;
@@ -50,27 +51,15 @@ public class MainMenuPanel extends JPanel {
 		}
 
 		appList = new JList(names.toArray(new String[0]));
+		appList.setSelectionBackground(appList.getBackground());
+		appList.setSelectionForeground(appList.getForeground());
 		deviceList = new JList();
 		appList.setFont(Font.decode("verdana-30"));
-		deviceList.setFont(Font.decode("verdana-20"));
+		deviceList.setFont(Font.decode("verdana-30"));
+		ListCellRenderer lcr = new DefaultListCellRenderer();
+		((DefaultListCellRenderer)lcr).setBackground(new Color(1f, 1f, 1f, .5f));
 		
-		appList.setCellRenderer(new DefaultListCellRenderer() {
-			@Override
-			public Component getListCellRendererComponent(JList list,
-					Object value, int index, boolean isSelected,
-					boolean cellHasFocus) {
-				
-				Component c = super.getListCellRendererComponent(list, value, index, isSelected,
-						cellHasFocus);
-//				c.setBackground(DemoPanel.lightBlue);
-				c.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
-				if(c instanceof JComponent) {
-//					((JComponent)c).setOpaque(false);
-//					((JComponent)c).setBorder(new LineBorder(new Color(1.0f, 1.0f, 1.0f, 0.1f), 5));
-				}
-				return c;
-			}
-		});
+		appList.setCellRenderer(lcr);
 		deviceList.setCellRenderer(new DeviceListCellRenderer());
 		
 

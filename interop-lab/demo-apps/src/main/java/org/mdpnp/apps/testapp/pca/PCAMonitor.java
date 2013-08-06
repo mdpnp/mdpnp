@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.ScheduledExecutorService;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -37,7 +38,7 @@ import com.rti.dds.infrastructure.Time_t;
 
 public class PCAMonitor extends JPanel implements VitalModelListener {
     private final JList list;
-    
+    private final JProgressAnimation pumpProgress;
     private final JTextArea pump = new JTextArea(" ") {
         @Override
         public void setOpaque(boolean isOpaque) {
@@ -68,7 +69,7 @@ public class PCAMonitor extends JPanel implements VitalModelListener {
         return model;
     }
     
-    public PCAMonitor(DeviceListModel deviceListModel) {
+    public PCAMonitor(DeviceListModel deviceListModel, ScheduledExecutorService executor) {
         super(new BorderLayout());
 
 
@@ -92,8 +93,12 @@ public class PCAMonitor extends JPanel implements VitalModelListener {
         JPanel panel2 = new JPanel(new GridLayout(2, 1, 10, 10));
 //      pump.setBackground(Color.green);
 //      warnings.setBackground(Color.white);
-        panel2.add(new JScrollPane(pump));
-
+        JPanel panel4 = new JPanel(new GridLayout(1,2,0,0));
+        panel4.add(pumpProgress = new JProgressAnimation(executor));
+        pumpProgress.setBackground(new Color(1f,1f,1f,.5f));
+        pumpProgress.setOpaque(false);
+        panel4.add(new JScrollPane(pump));
+        panel2.add(panel4);
         JPanel panel3 = new JPanel(new BorderLayout());
         panel3.add(l=new JLabel("Informational Messages"), BorderLayout.NORTH);
         l.setFont(l.getFont().deriveFont(20f));
@@ -114,7 +119,7 @@ public class PCAMonitor extends JPanel implements VitalModelListener {
                         reflectState();
                     }
                 } else {
-                    reset();
+                    model.resetInfusion();
                 }
             }
             
@@ -235,135 +240,37 @@ public class PCAMonitor extends JPanel implements VitalModelListener {
         t.start();
     }
     
-    public void normal(String status) {
-        warnings.setBackground(Color.white);
-        warnings.setForeground(Color.black);
-        warnings.setText("");
-
-    }
-
-    public void advise(String reason) {
-        warnings.setBackground(Color.yellow);
-        warnings.setForeground(Color.black);
-        warnings.setText(reason);
-        
-    }
-    
-    // STOP THE PUMP
-    public void stop(String reason) {
-//      sendPumpCommand("Stop, \n", null);
-        pump.setForeground(Color.white);
-        pump.setBackground(Color.red);
-        pump.setText("Infusion " + reason);
-
-    }
-    
-    // RESTART THE PUMP
-    public void reset() {
-//      sendPumpCommand(resetCommand, null);
-        pump.setForeground(Color.black);
-        pump.setBackground(Color.green);
-        pump.setText("Infusion " + resetCommand.substring(0, resetCommand.length()-1) +"mL/h");
-        
-        reflectState();
-    }
-    
     public void reflectState() {
         VitalModel model = this.model;
         if(null == model) {
             return;
         }
-        String[] advisories = new String[model.getCount()+1];
         
-        String time = timeFormat.format(new Date());
-        boolean anyAdvisory = false;
-        
-        int countOutOfRange = 0;
-        StringBuilder outOfRange = new StringBuilder();
-        
-        for(int i = 0; i < model.getCount(); i++) {
-            Vital vital = model.getVital(i);
-            
-            if(vital.getValues().isEmpty()) {
-                anyAdvisory = true;
-                advisories[i] = "- no source of " + vital.getLabel() + "\r\n";
-            } else {
-                for(Value val : vital.getValues()) {
-                    if(val.getNumeric().value <= vital.getLow()) {
-                        anyAdvisory = true;
-                        advisories[i] = "- low " + vital.getLabel() + " " + val.getNumeric().value + " " + vital.getUnits() + "\r\n";
-                        countOutOfRange++;
-                        outOfRange.append(advisories[i]);
-                    }
-                    if(val.getNumeric().value >= vital.getHigh()) {
-                        anyAdvisory = true;
-                        advisories[i] = "- high " + vital.getLabel() + " " + val.getNumeric().value + " " + vital.getUnits() + "\r\n";
-                        countOutOfRange++;
-                        outOfRange.append(advisories[i]);
-                    }
-                }
-            }
-        }
-        
-        if(fastStatusBuilder.length() > 0) {
-            anyAdvisory = true;
-            advisories[advisories.length - 1] = "- CO\u2082 Status: "+fastStatusBuilder.toString()+"\n"; 
-        }
-        
-        
-        // Pump stopping rules
-//      if(active) {
-        
-            if(countOutOfRange >= 2) {
-                stop("Stopped\r\n" + outOfRange.toString() + "at " + time + "\r\nnurse alerted");
-            } else {
-                for(int i = 0; i < model.getCount(); i++) {
-                    Vital vital = model.getVital(i);
-                    for(Value val : vital.getValues()) {
-                        if(val.getNumeric().value <= vital.getMinimum()) {
-                            stop("Stopped - " + vital.getLabel() + " outside of critical range (" + val.getNumeric().value + " " + vital.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
-                            break;
-                        } else if(val.getNumeric().value >= vital.getMaximum()) {
-                            stop("Stopped - " + vital.getLabel() + " outside of critical range (" + val.getNumeric().value + " " + vital.getUnits() + ")\r\nat " + time + "\r\nnurse alerted");
-                            break;
-                        }
-                    }
-                }
-            }
-//      }
-//      if(null != rr && null != etco2 && != pulse && (rr.doubleValue() <= ADV_RR_MIN && rr.doubleValue()  && (etco2.doubleValue() <= ADV_ETCO2_MIN || etco2.doubleValue() >= ADV_ETCO2_MAX)) {
-//          // Stop on contingent rule
-//          stop("Stopped - Respiratory rate below limit ("+ rr+" bpm) and EtCO\u2082 out of range ("+etco2+"mmHg)");
-//      } 
-        
-        
-        
-//      else if(null != rr && rr.doubleValue() <= 6.0) {
-//          stop("Stopped - Respiratory rate below critical limit ("+ rr+" bpm)");
-//      } else if(null != etco2 && (etco2.doubleValue() <= 20.0 || etco2.doubleValue() >= 70)) {
-//          stop("Stopped - EtCO\u2082 outside critical range ("+ etco2+"mmHg)");
-//      }
-        
-        // Advisory processing
-        if(anyAdvisory) {
-            StringBuilder sb = new StringBuilder();
-            for(String a : advisories) {
-                if(null != a) {
-                    sb.append(a);
-                }
-            }
-            sb.append("at ").append(time);
-            advise(sb.toString());
+        if(model.isInfusionStopped()) {
+            pumpProgress.stop();
+            pump.setBackground(Color.red);
+            pump.setText(model.getInterlockText());
         } else {
-            normal("");
+            pumpProgress.start();
+            pump.setBackground(Color.green);
+            pump.setText(model.getInterlockText());
         }
+
+        switch(model.getState()) {
+        case Alarm:
+            warnings.setBackground(Color.red);
+            break;
+        case Normal:
+            warnings.setBackground(Color.white);
+            break;
+        case Warning:
+            warnings.setBackground(Color.yellow);
+            break;
+        default:
+        }
+        warnings.setText(model.getWarningText());
     }
     
-    private final static Date date(Time_t t) {
-        return new Date(t.sec * 1000L + t.nanosec / 1000000L);
-    }
-    
-    private static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
 
     @Override
     public void vitalChanged(VitalModel model, org.mdpnp.apps.testapp.vital.Vital vital) {

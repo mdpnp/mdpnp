@@ -39,4 +39,40 @@ public class ValueImpl implements Value {
     public String toString() {
         return "[udi="+universalDeviceIdentifier+",numeric="+numeric+",sampleInfo="+sampleInfo+"]";
     }
+    @Override
+    public boolean isIgnore() {
+        return parent.isIgnoreZero() && 0 == Float.compare(0f, numeric.value);
+    }
+    
+    @Override
+    public boolean isAtOrAboveHigh() {
+        return isIgnore() ? false : Float.compare(numeric.value, parent.getHigh()) >= 0;
+    }
+    @Override
+    public boolean isAtOrBelowLow() {
+        return isIgnore() ? false : Float.compare(parent.getLow(), numeric.value) >= 0;
+    }
+    @Override
+    public boolean isAtOrOutsideOfBounds() {
+        return isAtOrAboveHigh() || isAtOrBelowLow();
+    }
+    
+    @Override
+    public boolean isAtOrAboveCriticalHigh() {
+        return isIgnore() ? false : Float.compare(numeric.value,  parent.getMaximum()) >= 0;
+    }
+    @Override
+    public boolean isAtOrBelowCriticalLow() {
+        return isIgnore() ? false : Float.compare(parent.getMinimum(), numeric.value) >= 0;
+    }
+    @Override
+    public boolean isAtOrOutsideOfCriticalBounds() {
+        return isAtOrAboveCriticalHigh() || isAtOrBelowCriticalLow();
+    }
+    
+    @Override
+    public long getAgeInMilliseconds() {
+        return System.currentTimeMillis() - (sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+    }
+    
 }

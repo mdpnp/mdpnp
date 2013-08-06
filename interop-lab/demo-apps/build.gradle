@@ -7,8 +7,6 @@ apply plugin: 'launch4j'
 
 defaultTasks 'build'
 
-println WINDOWS
-
 if(MAC == localOsName) {
     macAppBundle {
         mainClassName = "org.mdpnp.apps.testapp.Main"
@@ -73,7 +71,7 @@ createExe.dependsOn(explodeLaunch4j)
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
-mainClassName = "org.mdpnp.apps.testapp.Main"
+mainClassName = 'org.mdpnp.apps.testapp.Main'
 
 def String BUILD_NUMBER = "$System.env.BUILD_NUMBER"
 
@@ -181,7 +179,6 @@ dependencies {
         }
     }
 }
-
 
 task createZip(type: Zip) {
     classifier = distZip.classifier

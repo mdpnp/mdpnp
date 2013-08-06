@@ -14,10 +14,11 @@ import org.mdpnp.devices.nellcor.pulseox.DemoN595;
 import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
 import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
 import org.mdpnp.devices.philips.intellivue.DemoMP70;
-import org.mdpnp.devices.simulation.DemoSimulatedBloodPressure;
 import org.mdpnp.devices.simulation.co2.SimCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
+import org.mdpnp.devices.simulation.nibp.DemoSimulatedBloodPressure;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
+import org.mdpnp.devices.simulation.temp.SimThermometer;
 
 public class DeviceFactory {
     public static final AbstractDevice buildDevice(DeviceType type, int domainId, EventLoop eventLoop)
@@ -49,6 +50,8 @@ public class DeviceFactory {
             return new SimElectroCardioGram(domainId, eventLoop);
         case CO2_Simulator:
             return new SimCapnometer(domainId, eventLoop);
+        case Temp_Simulator:
+            return new SimThermometer(domainId, eventLoop);
         default:
             throw new RuntimeException("Unknown type:" + type);
         }

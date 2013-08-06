@@ -28,6 +28,7 @@ public class Configuration {
         NIBP_Simulator(ice.ConnectionType.Simulated),
         ECG_Simulator(ice.ConnectionType.Simulated),
         CO2_Simulator(ice.ConnectionType.Simulated),
+        Temp_Simulator(ice.ConnectionType.Simulated),
         Bernoulli(ice.ConnectionType.Network),
         Nonin(ice.ConnectionType.Serial),
         PhilipsMP70(ice.ConnectionType.Network),

@@ -213,6 +213,8 @@ public class BloodPressurePanel extends DevicePanel {
             diastolicN.copy_from(numeric);
             break;
         case ice.MDC_PULS_RATE_NON_INV.VALUE:
+            // TODO call it a pulse ox rate just for testing
+        case ice.MDC_PULS_OXIM_PULS_RATE.VALUE:
             pulseN.copy_from(numeric);
             break;
         case ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE:

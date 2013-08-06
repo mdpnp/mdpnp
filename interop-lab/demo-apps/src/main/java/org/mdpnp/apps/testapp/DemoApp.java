@@ -10,6 +10,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.TimeZone;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import javax.imageio.ImageIO;
 import javax.swing.DefaultComboBoxModel;
@@ -17,6 +19,7 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 
 import org.mdpnp.apps.testapp.pca.PCAPanel;
+import org.mdpnp.apps.testapp.pca.VitalSign;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
@@ -81,6 +84,9 @@ public class DemoApp {
 		final EventLoop eventLoop = new EventLoop();
 		final EventLoopHandler handler = new EventLoopHandler(eventLoop);
 		
+//		UIManager.put("List.focusSelectedCellHighlightBorder", null);
+//		UIManager.put("List.focusCellHighlightBorder", null);
+		
 		// This could prove confusing
 		TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
 		final DomainParticipantQos pQos = new DomainParticipantQos(); 
@@ -89,7 +95,7 @@ public class DemoApp {
 		final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null, StatusKind.STATUS_MASK_NONE);
 		final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop);
-		
+		final ScheduledExecutorService refreshScheduler = Executors.newSingleThreadScheduledExecutor();
 		
 		final DemoFrame frame = new DemoFrame("ICE Supervisor");
 		frame.setIconImage(ImageIO.read(DemoApp.class.getResource("icon.png")));
@@ -138,21 +144,13 @@ public class DemoApp {
 		PCAPanel _pcaPanel = null;
 		if(null == s || !"true".equals(s)) {
 		    UIManager.put("TabbedPane.contentOpaque", false);
-		    _pcaPanel = new PCAPanel(nc);
+		    _pcaPanel = new PCAPanel(nc, refreshScheduler);
+		    _pcaPanel.setFont(_pcaPanel.getFont().deriveFont(30f));
 		    VitalModel vitalModel = new VitalModelImpl();
-		    Vital v;
-		    v = vitalModel.addVital("Heart Rate", "bpm", new int[] { ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 0, 120);
-		    v.setLow(40);
-		    v.setHigh(180);
-		    v = vitalModel.addVital("SpO\u2082", "%", new int[] { ice.MDC_PULS_OXIM_SAT_O2.VALUE }, 70, 130);
-		    v.setLow(90);
-		    v.setHigh(101);
-		    v = vitalModel.addVital("Respiratory Rate", "bpm", new int[] { ice.MDC_RESP_RATE.VALUE }, 0, 24);
-		    v.setLow(6);
-		    v.setHigh(18);
-		    v = vitalModel.addVital("etCO\u2082", "mmHg", new int[] { ice.MDC_AWAY_CO2_EXP.VALUE }, 0, 60);
-		    v.setLow(20);
-		    v.setHigh(40);
+		    VitalSign.HeartRate.addToModel(vitalModel);
+		    VitalSign.SpO2.addToModel(vitalModel);
+		    VitalSign.RespiratoryRate.addToModel(vitalModel);
+//		    VitalSign.EndTidalCO2.addToModel(vitalModel);
 		    _pcaPanel.setModel(vitalModel);
 		    vitalModel.start(subscriber, eventLoop);
 		    panel.getContent().add(_pcaPanel, "pca");
@@ -170,6 +168,7 @@ public class DemoApp {
       frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
+                refreshScheduler.shutdownNow();
                 if(goBackAction != null) {
                     goBackAction.run();
                     goBackAction = null;
@@ -247,7 +246,7 @@ public class DemoApp {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				int idx = mainMenuPanel.getAppList().locationToIndex(e.getPoint());
-				if(idx >= 0) {
+				if(idx >= 0 && mainMenuPanel.getAppList().getCellBounds(idx, idx).contains(e.getPoint())) {
 					Object o = mainMenuPanel.getAppList().getModel().getElementAt(idx);
 					/*if("Data Fusion".equals(o) && null != roomSyncPanel) {
 						setGoBack("main", null);

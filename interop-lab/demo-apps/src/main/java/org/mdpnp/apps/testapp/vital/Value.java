@@ -9,4 +9,15 @@ public interface Value {
     Numeric getNumeric();
     SampleInfo getSampleInfo();
     Vital getParent();
+    boolean isAtOrAboveHigh();
+    boolean isAtOrBelowLow();
+    boolean isAtOrOutsideOfBounds();
+    
+    boolean isAtOrAboveCriticalHigh();
+    boolean isAtOrBelowCriticalLow();
+    boolean isAtOrOutsideOfCriticalBounds();
+    
+    boolean isIgnore();
+    
+    long getAgeInMilliseconds();
 }

@@ -100,6 +100,7 @@
 				<!-- Enabling lots of RTPS level fragmentation  -->
 				<reader_resource_limits>
 				    <max_fragments_per_sample>5000</max_fragments_per_sample>
+				    <max_query_condition_filters>32</max_query_condition_filters>
 				</reader_resource_limits>
 			</datareader_qos>
 			<datawriter_qos>
