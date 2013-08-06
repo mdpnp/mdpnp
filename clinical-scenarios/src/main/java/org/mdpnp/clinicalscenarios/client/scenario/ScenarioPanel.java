@@ -3,6 +3,7 @@ package org.mdpnp.clinicalscenarios.client.scenario;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.mdpnp.clinicalscenarios.client.user.UserInfoProxy;
@@ -15,6 +16,7 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -30,7 +32,9 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
+import com.google.gwt.user.client.ui.SourcesTabEvents;
 import com.google.gwt.user.client.ui.SuggestBox;
+import com.google.gwt.user.client.ui.TabListener;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -166,9 +170,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 */
 	private final void buildCliniciansTable(boolean isDrawNew) {
 		cliniciansTable.removeAllRows();
-		//XXX currentScenario.getEnvironments() and the clinicians list should never be null
-		if(isDrawNew || currentScenario==null || currentScenario.getEnvironments()==null
-				|| currentScenario.getEnvironments().getCliniciansInvolved().isEmpty()){
+		if(isDrawNew || currentScenario.getEnvironments().getCliniciansInvolved().isEmpty()){
 			addNewClinicianRow("");			
 		}else{
 			List<String> clinicians =currentScenario.getEnvironments().getCliniciansInvolved();
@@ -187,9 +189,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 */
 	private final void buildEnvironmentsTable(boolean isDrawNew) {
 		environmentsTable.removeAllRows();
-		//XXX currentScenario.getEnvironments() and the environments list should never be null
-		if(isDrawNew || currentScenario==null || currentScenario.getEnvironments()==null
-				|| currentScenario.getEnvironments().getClinicalEnvironments().isEmpty()){
+		if(isDrawNew || currentScenario.getEnvironments().getClinicalEnvironments().isEmpty()){
 			addNewEnvironmentRow("");
 		}else{
 			List<String> environments = currentScenario.getEnvironments().getClinicalEnvironments();
@@ -216,9 +216,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		equipmentTable.setText(0, EQUIPMENT_ROSSETAID_COL, "Rosetta ID");
 
 
-		if(isDrawNew || currentScenario==null || //FIXME  actually currentScenario.getEquipment().getEntries() should NEVER be null, because is always created as empty list
-				currentScenario.getEquipment().getEntries()==null || currentScenario.getEquipment().getEntries().isEmpty()){
-			//the table will have no elements, either because we have anew scenario or because the current one
+		if(isDrawNew || currentScenario.getEquipment().getEntries().isEmpty()){
+			//the table will have no elements, either because we have a new scenario or because the current one
 			// has no elements on its equipment list
 			for(int i = 0; i < 1; i++) {
 				equipmentTable.insertRow(i + 1);
@@ -291,9 +290,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		hazardsTable.setHTML(1,  HAZARDS_SEVERITY_COL, "<div style=\"width:350px; font-size:8pt;\"><ul><li><b>Mild</b>: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li><li><b>Moderate</b>: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li><li><b>Severe</b>: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li><li><b>Life Threatening</b>: Immediate risk of deat, life threatening or disabling</li><li><b>Fatal</b>: Causes death of the patient</li></ul></div>");
 
 		//table data
-		if(isDrawNew || currentScenario==null || currentScenario.getHazards()==null ||
-				currentScenario.getHazards().getEntries()==null || currentScenario.getHazards().getEntries().isEmpty())
-			//XXX currentScenario.getHazards() should never be null, nor its entries
+		if(isDrawNew || currentScenario.getHazards().getEntries().isEmpty())
 			addNewHazardTableRow();
 		else{
 			//populate the table
@@ -316,7 +313,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * @param rc ScenarioRequest
 	 */
 	private void checkEquipmentListForPersistence(ScenarioRequest rc){
-		if(currentScenario!=null){
+//		if(currentScenario!=null){
 			currentScenario.getEquipment().getEntries().clear();//clear equipment list entries. We will re-populate 
 			for(int row = 1; row < equipmentTable.getRowCount(); row++) {//Row 0 is HEADERS
 				
@@ -354,7 +351,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				if(isAdding)
 					currentScenario.getEquipment().getEntries().add(eep);
 			}
-		}
+//		}
 	}
 	
 	/**
@@ -362,7 +359,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * @param rc ScenarioRequest
 	 */
 	private void checkHazardsListForPersistence(ScenarioRequest rc){
-		if(currentScenario!=null && currentScenario.getHazards()!=null){//FIXME  && currentScenario.getHazards()!=null has to go
 			currentScenario.getHazards().getEntries().clear();//clean and re-populate
 			for(int row =2; row<hazardsTable.getRowCount();row++){//row 0 headers; row 1 description
 				
@@ -403,7 +399,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				}
 			}
 			
-		}
 	}
 	
 	/**
@@ -411,7 +406,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * @param scn
 	 */
 	private void checkCliniciansListForPersistence(/*ScenarioRequest scn*/){
-		if(currentScenario!=null && currentScenario.getEnvironments()!= null){
+//		if(currentScenario!=null && currentScenario.getEnvironments()!= null){
 			currentScenario.getEnvironments().getCliniciansInvolved().clear();
 			//delete the list and repopulate w/ data from the table
 //			List clinicians = currentScenario.getEnvironments().getCliniciansInvolved();
@@ -423,7 +418,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 						currentScenario.getEnvironments().getCliniciansInvolved().add(text);
 				}
 			}
-		}
+//		}
 		
 	}
 	
@@ -431,7 +426,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * Checks if we need to persist the environments list
 	 */
 	private void checkEnvironmentsListForPersistence(){
-		if(currentScenario!=null && currentScenario.getEnvironments()!= null){
+//		if(currentScenario!=null && currentScenario.getEnvironments()!= null){
 			currentScenario.getEnvironments().getClinicalEnvironments().clear();
 			//delete the list and re-populate w/ data from the table
 			for(int row=0; row<environmentsTable.getRowCount();row++){
@@ -442,8 +437,26 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 						currentScenario.getEnvironments().getClinicalEnvironments().add(text);
 				}
 			}
-		}
+//		}
 		
+	}
+	
+	/**
+	 * Checks the content of the user interface fields and updates the information in the 
+	 * scenario entity that we are going to use for persistence
+	 * @param scnReq a ScenarioRequest object is needed to create some of the components of our list-type parameters
+	 *  (list of hazards, list of equipment).
+	 */
+	private void checkScenarioFields(ScenarioRequest scnReq){
+		
+		//Save equipment list
+		checkEquipmentListForPersistence(scnReq);
+		//Save hazards list
+		checkHazardsListForPersistence(scnReq);
+		//save clinicians list
+		checkCliniciansListForPersistence();
+		//save environments
+		checkEnvironmentsListForPersistence();	
 	}
 	
 	/**
@@ -459,19 +472,21 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		if (currentScenario.getStatus().equals(SCN_STATUS_APPROVED)) return;//Don't change Approved Scenarios
 		if (currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED) && userRole!=UserRole.Administrator) return;//Don't change submitted
 		if(userRole==UserRole.AnonymousUser) return;//Anonymous users can't modify the Scn information
-		if(isEmptyScenario()) return;//XXX Ticket-81 Don't persist empty Scn
+		if(isEmptyScenario()) return;//Ticket-81 Don't persist empty Scn
 		
 		status.setText("SAVING");			
 		ScenarioRequest rc = (ScenarioRequest) driver.flush();
+	
+		checkScenarioFields(rc);
 			
-		//Save equipment list
-		checkEquipmentListForPersistence(rc);
-		//Save hazards list
-		checkHazardsListForPersistence(rc);
-		//save clinicians list
-		checkCliniciansListForPersistence();
-		//save environments
-		checkEnvironmentsListForPersistence();				
+//		//Save equipment list
+//		checkEquipmentListForPersistence(rc);
+//		//Save hazards list
+//		checkHazardsListForPersistence(rc);
+//		//save clinicians list
+//		checkCliniciansListForPersistence();
+//		//save environments
+//		checkEnvironmentsListForPersistence();		
 
 		//persist scenario entity
 		rc.persist().using(currentScenario).with(driver.getPaths()).with("equipment", "hazards", "environments").to(new Receiver<ScenarioProxy>() {
@@ -485,20 +500,32 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 //				setCurrentScenario(response);//XXX diego@mdpnp.org if setting the 'response', due to the event delay we have a funny behaviour
 				setCurrentScenario(currentScenario);
 //				logger.info("AFTER:"+currentScenario.getTitle());
+				logger.info("SAVED "+currentScenario.toString()+" @ "+ (new Date()));
 			}
 			
 			@Override
 			public void onFailure(ServerFailure error) {
 				super.onFailure(error);
 				Window.alert(error.getMessage());
+				//log message
 			}
 			
 		}).fire();
 		
 	}
 	
+	/**
+	 * Selects the first tab of the form. <p>
+	 * XXX Careful with circular calls selectTab->save->setScenario->selectTab(0)
+	 */
+	public void selectFirstTab(){
+		if(tabPanel.getTabBar().getSelectedTab()!=0)
+			tabPanel.selectTab(0);
+	}
 	
 	public ScenarioPanel(final ScenarioRequestFactory scenarioRequestFactory) {
+		logger.setLevel(Level.INFO);
+		
 		initWidget(uiBinder.createAndBindUi(this));
 		this.scenarioRequestFactory = scenarioRequestFactory;
 		driver.initialize(scenarioRequestFactory, this);
@@ -525,14 +552,16 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {			
 			@Override
 			public void onSelection(SelectionEvent<Integer> event) {
-				if(currentScenario!= null){					 
+				if(currentScenario != null){					 
 					save();
+					
 				}
 			}
 		});
 		
 		//select first tab
-		tabPanel.selectTab(0);
+		selectFirstTab();
+
 		manageScnStatus = tabPanel.getWidget(APPRV_SCN_TAB_POS);//get Feedback_Tab (reject/approve Scn widget)
 		
 		//check user role
@@ -546,13 +575,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				@Override
 				public void onSuccess(UserInfoProxy response) {
 					userEmail = response.getEmail();
-//					if(response.getAdmin()){
-//						rejectScnButton.setVisible(true);//XXX Probably I no longer need this, because I'm hiding the tab
-//						approveScnButton.setVisible(true);
-//					}else{
-//						rejectScnButton.setVisible(false);
-//						approveScnButton.setVisible(false);
-//					}
 
 					if(response.getEmail()==null ||response.getEmail().trim().equals("") ){
 						//Anonymous user
@@ -641,14 +663,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	        			buildCliniciansTable(true);
 	        			buildEnvironmentsTable(true);
 
-	        			configureComponents();
+	        			configureComponents();   			  
+	    			    status.setText("");
+	    			    uniqueId.setText("");	
 
 	                }
 			        
 			    }).fire();
-			    tabPanel.selectTab(0);
-			    status.setText("");
-			    uniqueId.setText("");
+
 
 			    
 
@@ -670,6 +692,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 //		tabPanel.selectTab(0); DANGER DANGER DANGER
 		//XXX CAREFUL!!! Selecting a tab here triggers again the associated tab ClickHandler, that calls this very same method
 		// and we have a circular call and therefore an infinite loop. 
+ 
 
 	}
 	
@@ -678,6 +701,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * user role and Scenario status
 	 */
 	private void configureComponents(){
+		//XXX this would be a good place to do tabPanel.selectTab(0)???;	 
+		// if we algo wanted to return to this tab after submitting a scn
 		enableSaveScenario();
 		//1- Unsubmitted
 		// only the scenario owner could submit the scn. 
@@ -695,7 +720,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			//Don't show FeedBack Panel
 			if(tabPanel.getWidgetCount() > APPRV_SCN_TAB_POS){
 				tabPanel.remove(APPRV_SCN_TAB_POS);
-				tabPanel.selectTab(0); //XXX careful w/ circular call
+				selectFirstTab();
 			}
 		}else if(currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED)){ 
 		//2- Submitted. Not editable except for administrators
@@ -712,19 +737,19 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				//if the tab is already showing we remove it
 				if(tabPanel.getWidgetCount() > APPRV_SCN_TAB_POS){
 					tabPanel.remove(APPRV_SCN_TAB_POS);
-					tabPanel.selectTab(0); //XXX careful w/ circular call
+					selectFirstTab();
 				}
 			}else{//admin sees the feedback tab
 				if(tabPanel.getWidgetCount() <= APPRV_SCN_TAB_POS)//add it if is not there
 					tabPanel.add(manageScnStatus, "Approve or Reject");
 			}
-		}else if(currentScenario.getStatus().equals(SCN_STATUS_APPROVED)){//XXX Ticket-103
+		}else if(currentScenario.getStatus().equals(SCN_STATUS_APPROVED)){//Ticket-103
 				//3- Approved. No one can edit the scn
 			 disableSaveScenario();
 				//Don't show FeedBack Panel
 			if(tabPanel.getWidgetCount() > APPRV_SCN_TAB_POS){
 				tabPanel.remove(APPRV_SCN_TAB_POS);
-				tabPanel.selectTab(0); //XXX careful w/ circular call
+				selectFirstTab();
 			}
 		}
 	}
@@ -1230,21 +1255,33 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("submitButton")
 	public void onClickSubmit(ClickEvent clickEvent) {
-		if(!currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED)){
+		//TICKET-106 
+		// Either call save, or check the list-type components
+		// option 3 we do like 'Approve' or 'Reject' an also send a email message
+		// scnReq.persistWithNotification
+	
+//		if(!currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED)){
+		if(!isEmptyScenario() && currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_UNSUBMITTED)){
 			ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
 			currentScenario.setStatus(SCN_STATUS_SUBMITTED);
-			scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(new Receiver<ScenarioProxy>() {
-
-				@Override
-				public void onSuccess(ScenarioProxy response) {
-					Window.alert("This Clinical Scenario has been submitted for approval");		
-					setCurrentScenario(currentScenario);
-				}
-				
-				public void onFailure(ServerFailure error) {
-					super.onFailure(error);
-				}
-			});
+			checkScenarioFields(scnReq);
+			boolean confirm = Window.confirm("Are you sure you want to SUBMIT this scenario?");
+			if(confirm){
+				scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(new Receiver<ScenarioProxy>() {
+	
+					@Override
+					public void onSuccess(ScenarioProxy response) {
+						Window.alert("This Clinical Scenario has been submitted for approval");		
+						setCurrentScenario(currentScenario);
+					}
+					
+					public void onFailure(ServerFailure error) {
+						super.onFailure(error);
+						//log error
+					}
+				});
+				configureComponents();
+			}
 		}
 
 	}
@@ -1260,7 +1297,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	@UiHandler("approveScnButton")
 	public void onClickApproveScn(ClickEvent clickEvent) {
 		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
-		currentScenario.setStatus(SCN_STATUS_APPROVED);
+		currentScenario.setStatus(SCN_STATUS_APPROVED);//update entity information
+		checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
 		boolean confirm = Window.confirm("Are you sure you want to APPROVE this scenario?");
 		if(confirm){
 			String subject ="Your scenario "+currentScenario.getTitle()+" has been approved";
@@ -1296,7 +1334,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	public void onClickRejectScn(ClickEvent clickEvent) {
 		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
 //		currentScenario.setStatus(SCN_STATUS_REJECTED);//XXX 07/22/13 diego@mdpnp.org, rejected Scn = pending of submission
-		currentScenario.setStatus(SCN_STATUS_UNSUBMITTED);
+		currentScenario.setStatus(SCN_STATUS_UNSUBMITTED);//update entity information
+		checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
 		boolean confirm = Window.confirm("Are you sure you want to REJECT this scenario?");
 		if(confirm){
 			String subject ="Your scenario "+currentScenario.getTitle()+" has been rejected";
@@ -1340,7 +1379,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 */
 	private boolean isEmptyScenario(){
 		
-		//textareas
+		//Text Areas
 		if(!titleEditor.getText().trim().equals("")) return false;
 		if(!currentStateEditor.getText().trim().equals("") ||
 			!proposedStateEditor.getText().trim().equals("")) return false;
