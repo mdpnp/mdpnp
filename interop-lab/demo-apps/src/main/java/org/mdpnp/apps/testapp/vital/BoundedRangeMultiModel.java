@@ -11,15 +11,15 @@ public interface BoundedRangeMultiModel {
 
     void setMaximum(int newMaximum);
 
-    int getValue(int idx);
+    Float getValue(int idx);
 
-    void setValue(int idx, int newValue);
+    void setValue(int idx, Float newValue);
     
     int getValueCount();
     
     int getMarkerCount();
     
-    int getMarker(int idx);
+    Float getMarker(int idx);
 
     void setValueIsAdjusting(boolean b);
 

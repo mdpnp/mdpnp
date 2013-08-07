@@ -34,23 +34,23 @@ public class VitalBoundedRangleMulti implements BoundedRangeMultiModel {
     }
 
     @Override
-    public int getValue(int idx) {
+    public Float getValue(int idx) {
         switch (idx) {
         case 0:
-            return (int) vital.getCriticalLow();
+            return vital.getCriticalLow();
         case 1:
-            return (int) vital.getWarningLow();
+            return vital.getWarningLow();
         case 2:
-            return (int) vital.getWarningHigh();
+            return vital.getWarningHigh();
         case 3:
-            return (int) vital.getCriticalHigh();
+            return vital.getCriticalHigh();
         default:
             throw new IllegalArgumentException("No such idx=" + idx);
         }
     }
 
     @Override
-    public void setValue(int idx, int newValue) {
+    public void setValue(int idx, Float newValue) {
         switch (idx) {
         case 0:
             vital.setCriticalLow(newValue);
@@ -139,7 +139,7 @@ public class VitalBoundedRangleMulti implements BoundedRangeMultiModel {
     }
     
     @Override
-    public int getMarker(int idx) {
-        return (int) vital.getValues().get(idx).getNumeric().value;
+    public Float getMarker(int idx) {
+        return vital.getValues().get(idx).getNumeric().value;
     }
 }

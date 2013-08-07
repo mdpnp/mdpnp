@@ -46,11 +46,13 @@ public class ValueImpl implements Value {
     
     @Override
     public boolean isAtOrAboveHigh() {
-        return isIgnore() ? false : Float.compare(numeric.value, parent.getWarningHigh()) >= 0;
+        Float warningHigh = parent.getWarningHigh();
+        return isIgnore() || null == warningHigh ? false : Float.compare(numeric.value, warningHigh) >= 0;
     }
     @Override
     public boolean isAtOrBelowLow() {
-        return isIgnore() ? false : Float.compare(parent.getWarningLow(), numeric.value) >= 0;
+        Float warningLow = parent.getWarningLow();
+        return isIgnore() || null == warningLow ? false : Float.compare(warningLow, numeric.value) >= 0;
     }
     @Override
     public boolean isAtOrOutsideOfBounds() {
@@ -59,11 +61,13 @@ public class ValueImpl implements Value {
     
     @Override
     public boolean isAtOrAboveCriticalHigh() {
-        return isIgnore() ? false : Float.compare(numeric.value,  parent.getCriticalHigh()) >= 0;
+        Float criticalHigh = parent.getCriticalHigh();
+        return isIgnore() || null == criticalHigh ? false : Float.compare(numeric.value,  criticalHigh) >= 0;
     }
     @Override
     public boolean isAtOrBelowCriticalLow() {
-        return isIgnore() ? false : Float.compare(parent.getCriticalLow(), numeric.value) >= 0;
+        Float criticalLow = parent.getCriticalLow();
+        return isIgnore() || null == criticalLow ? false : Float.compare(criticalLow, numeric.value) >= 0;
     }
     @Override
     public boolean isAtOrOutsideOfCriticalBounds() {

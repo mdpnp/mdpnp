@@ -169,8 +169,24 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
             String minimumLabel = REVERSE_DIRECTION ? vital.getLabelMaximum() : vital.getLabelMinimum();
             String maximumLabel = REVERSE_DIRECTION ? vital.getLabelMinimum() : vital.getLabelMaximum();
             
-            float low = vital.getWarningLow();
-            float high = vital.getWarningHigh();
+            Float low = vital.getWarningLow();
+            Float high = vital.getWarningHigh();
+            
+            if(null == low) {
+                if(null == high) {
+                    low = vital.getMinimum();
+                    high = vital.getMaximum();
+                } else {
+                    low = high - 2 * (high - vital.getMinimum());
+                }
+            } else {
+                if(null == high) {
+                    high = low + 2 * (vital.getMaximum() - low);
+                } else {
+                    // All's well
+                }
+            }
+
 //            float low = REVERSE_DIRECTION ? vital.getHigh() : vital.getLow();
 //            float high = REVERSE_DIRECTION ? vital.getLow() : vital.getHigh();
 
@@ -194,7 +210,6 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
                     y_ideal = (int) (proportion * (y2 - y1) + y1);
                 }
                 idealArea.addPoint(x_ideal, y_ideal);
-                
                 
                  proportion = 1.0 * (low - minimum) / (maximum - minimum);
                  x_ideal = (int) (proportion * (x2 - x1) + x1);
@@ -289,21 +304,23 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
                 }
                 
                 // Alarm low limit
-                Color c = g.getColor();
-                g.setColor(IDEAL_COLOR);
-                lbl = Integer.toString((int) low);
-                str_w = g.getFontMetrics().stringWidth(lbl);
-                double proportion = 1.0 * (low - minimum) / (maximum - minimum);
-                proportion -= 0.5;
-                int xloc = (int) (proportion * length);
-                if(FLIP) {
-                    g.drawString(lbl, -xloc - str_w/2, maxDescent + height + 5);
-                    g.drawLine(-xloc, 0, -xloc, 5);
-                } else {
-                    g.drawString(lbl, xloc-str_w/2, -maxDescent - 5);
-                    g.drawLine(xloc, 0, xloc, -5);
+                if(null != vital.getWarningLow()) {
+                    Color c = g.getColor();
+                    g.setColor(IDEAL_COLOR);
+                    lbl = Integer.toString((int)(float) low);
+                    str_w = g.getFontMetrics().stringWidth(lbl);
+                    double proportion = 1.0 * (low - minimum) / (maximum - minimum);
+                    proportion -= 0.5;
+                    int xloc = (int) (proportion * length);
+                    if(FLIP) {
+                        g.drawString(lbl, -xloc - str_w/2, maxDescent + height + 5);
+                        g.drawLine(-xloc, 0, -xloc, 5);
+                    } else {
+                        g.drawString(lbl, xloc-str_w/2, -maxDescent - 5);
+                        g.drawLine(xloc, 0, xloc, -5);
+                    }
+                    g.setColor(c);
                 }
-                g.setColor(c);
 
                 // High end of the scale
                 lbl = maximumLabel;
@@ -317,22 +334,23 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
                 }
 
                 // Alarm high limit
-                c = g.getColor();
-                g.setColor(IDEAL_COLOR);
-                lbl = Integer.toString((int) high);
-                str_w = g.getFontMetrics().stringWidth(lbl);
-                proportion = 1.0 * (high - minimum) / (maximum - minimum);
-                proportion -= 0.5;
-                xloc = (int) (proportion * length);
-                if(FLIP) {
-                    g.drawString(lbl, -xloc - str_w/2, maxDescent + height + 5);
-                    g.drawLine(-xloc, 0, -xloc, 5);
-                } else {
-                    g.drawString(lbl, xloc-str_w/2, -maxDescent - 5);
-                    g.drawLine(xloc, 0, xloc, -5);
-                }
-                g.setColor(c);
-                
+                if(null != vital.getWarningHigh()) {
+                    Color c = g.getColor();
+                    g.setColor(IDEAL_COLOR);
+                    lbl = Integer.toString((int)(float) high);
+                    str_w = g.getFontMetrics().stringWidth(lbl);
+                    double proportion = 1.0 * (high - minimum) / (maximum - minimum);
+                    proportion -= 0.5;
+                    int xloc = (int) (proportion * length);
+                    if(FLIP) {
+                        g.drawString(lbl, -xloc - str_w/2, maxDescent + height + 5);
+                        g.drawLine(-xloc, 0, -xloc, 5);
+                    } else {
+                        g.drawString(lbl, xloc-str_w/2, -maxDescent - 5);
+                        g.drawLine(xloc, 0, xloc, -5);
+                    }
+                    g.setColor(c);
+                }                
                 // Middle of the scale
                 lbl = Integer.toString((int) ((maximum - minimum) / 2 + minimum));
                 str_w = g.getFontMetrics().stringWidth(lbl);
@@ -430,10 +448,10 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
         final VitalModel vm = new VitalModelImpl();
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
         
-        vm.addVital("Heart Rate", "bpm", new int[] { ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 40, 80, 0, 120);
-        vm.addVital("SpO\u2082", "%", new int[] { ice.MDC_PULS_OXIM_SAT_O2.VALUE }, 90, 100, 70, 130);
-        vm.addVital("Respiratory Rate", "bpm", new int[] { ice.MDC_RESP_RATE.VALUE }, 6, 15, 0, 24);
-        vm.addVital("etCO\u2082", "mmHg", new int[] { ice.MDC_AWAY_CO2_EXP.VALUE }, 20, 50, 0, 60);
+//        vm.addVital("Heart Rate", "bpm", new int[] { ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 40, 80, 0, 120);
+//        vm.addVital("SpO\u2082", "%", new int[] { ice.MDC_PULS_OXIM_SAT_O2.VALUE }, 90, 100, 70, 130);
+//        vm.addVital("Respiratory Rate", "bpm", new int[] { ice.MDC_RESP_RATE.VALUE }, 6, 15, 0, 24);
+//        vm.addVital("etCO\u2082", "mmHg", new int[] { ice.MDC_AWAY_CO2_EXP.VALUE }, 20, 50, 0, 60);
         EventLoop eventLoop = new EventLoop();
         final EventLoopHandler eventLoopHandler = new EventLoopHandler(eventLoop);
 

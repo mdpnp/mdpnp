@@ -29,8 +29,8 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     }
 
     @Override
-    public Vital addVital(String label, String units, int[] names, float low, float high, float minimum, float maximum) {
-        return model.addVital(label, units, names, low, high, minimum, maximum);
+    public Vital addVital(String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum) {
+        return model.addVital(label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum);
     }
 
     @Override
@@ -205,4 +205,5 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     public int getCountWarningsBecomeAlarm() {
         return model.getCountWarningsBecomeAlarm();
     }
+
 }

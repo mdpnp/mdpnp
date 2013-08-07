@@ -92,7 +92,9 @@ public class JMultiSlider extends JComponent implements ChangeListener {
             g.fillRect(left.x+left.width, left.y, size.width - (left.x+left.width), left.height);
         }
         
-        for(int i = 0; i < rectangles.size() / 2; i++) {
+        int leftofcenter = rectangles.size() / 2;
+        
+        for(int i = 0; i < leftofcenter; i++) {
             if((i+1) < rangeColor.length && rangeColor[i+1] != null) {
                 g.setColor(rangeColor[i+1]);
                 Rectangle left = rectangles.get(i);
@@ -104,6 +106,21 @@ public class JMultiSlider extends JComponent implements ChangeListener {
                 g.fillRect(left.x+left.width, left.y, right.x+right.width-(left.x+left.width), left.height);
             }
         }
+        
+        
+        // middle segment
+        if(rectangles.size() > 1 && (leftofcenter+1) < rangeColor.length && rangeColor[leftofcenter+1] != null) {
+            g.setColor(rangeColor[leftofcenter+1]);
+            Rectangle left = rectangles.get(leftofcenter);
+            Rectangle right = rectangles.get(leftofcenter+1);
+            g.fillRect(left.x, left.y, right.x-left.x+right.width, left.height);
+            
+//            right = rectangles.get(rectangles.size()-i-1);
+//            left = rectangles.get(rectangles.size()-i-2);
+//            g.fillRect(left.x+left.width, left.y, right.x+right.width-(left.x+left.width), left.height);
+        }
+        
+        
         g.setColor(getForeground());
         for(Rectangle r : rectangles) {
 //            System.out.println(r);
@@ -121,10 +138,12 @@ public class JMultiSlider extends JComponent implements ChangeListener {
         }
         g.setColor(Color.blue);
         for(int i = 0; i < model.getMarkerCount(); i++) {
-            int val = model.getMarker(i);
-            double p = 1.0 * (val - model.getMinimum()) / (model.getMaximum() - model.getMinimum());
-            int x = (int) (p * size.width);
-            g.drawLine(x, size.height/2-9, x, size.height/2);
+            Float val = model.getMarker(i);
+            if(null != val) {
+                double p = 1.0 * (val - model.getMinimum()) / (model.getMaximum() - model.getMinimum());
+                int x = (int) (p * size.width);
+                g.drawLine(x, size.height/2-9, x, size.height/2);
+            }
         }
         
     }
@@ -181,12 +200,20 @@ public class JMultiSlider extends JComponent implements ChangeListener {
         for(int i = 0; i < model.getValueCount(); i++) {
             Rectangle r = rectangles.get(i);
             r.y = size.height/2-r.height;
-            int value = model.getValue(i);
-            double p = 1.0 * (value - minimum) / range;
-            if(i < model.getValueCount() / 2) {
-                r.x = (int) (p * size.width);
+            Float value = model.getValue(i);
+            if(null == value) {
+                if(i < model.getValueCount()/2) {
+                    r.x = -r.width;
+                } else {
+                    r.x = size.width;
+                }
             } else {
-                r.x = (int) (p * size.width) - r.width;
+                double p = 1.0 * (value - minimum) / range;
+                if(i < model.getValueCount() / 2) {
+                    r.x = (int) (p * size.width);
+                } else {
+                    r.x = (int) (p * size.width) - r.width;
+                }
             }
         }
 //        System.out.println(rectangles);
@@ -219,13 +246,13 @@ public class JMultiSlider extends JComponent implements ChangeListener {
         case MouseEvent.MOUSE_DRAGGED:
 //            System.out.println(e);
             if(null != startingMousePoint) {
-                int mouse_position;
+                float mouse_position;
                 if(idx < model.getValueCount()/2) {
                     mouse_position = e.getPoint().x - rectangles.get(idx).width/2;
                 } else {
                     mouse_position = e.getPoint().x + rectangles.get(idx).width/2;
                 }
-                mouse_position = (int) (1.0 * mouse_position / size.width * (model.getMaximum() - model.getMinimum()) + model.getMinimum());
+                mouse_position = (float) (1.0 * mouse_position / size.width * (model.getMaximum() - model.getMinimum()) + model.getMinimum());
 //                int x_delta = e.getPoint().x - startingMousePoint.x;
 //                int x = startingRectPoint.x + x_delta;
                 model.setValue(idx, mouse_position);

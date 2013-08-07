@@ -10,24 +10,24 @@ class VitalImpl implements Vital {
     private final String label, units;
     private final int[] names;
     private final float minimum, maximum;
-    private float warningLow, warningHigh;
-    private float criticalLow, criticalHigh;
+    private Float warningLow, warningHigh;
+    private Float criticalLow, criticalHigh;
     private final List<Value> values = new ArrayList<Value>();
     private boolean noValueWarning = false;
     private long warningAgeBecomesAlarm = Long.MAX_VALUE;
     
     
-    VitalImpl(VitalModelImpl parent, String label, String units, int[] names, float low, float high, float minimum, float maximum) {
+    VitalImpl(VitalModelImpl parent, String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum) {
         this.parent = parent;
         this.label = label;
         this.units = units;
         this.names = names;
-        this.minimum = this.warningLow = this.criticalLow = minimum;
-        this.maximum = this.warningHigh = this.criticalHigh = maximum;
+        this.minimum =  minimum;
+        this.maximum =  maximum;
+        setCriticalLow(criticalLow);
+        setCriticalHigh(criticalHigh);
         setWarningLow(low);
         setWarningHigh(high);
-        setCriticalLow(minimum);
-        setCriticalHigh(maximum);
     }
     
     
@@ -52,33 +52,59 @@ class VitalImpl implements Vital {
     }
 
     @Override
-    public float getWarningLow() {
+    public Float getWarningLow() {
         return warningLow;
     }
 
     @Override
-    public float getWarningHigh() {
+    public Float getWarningHigh() {
         return warningHigh;
     }
     
     @Override
-    public float getCriticalHigh() {
+    public Float getCriticalHigh() {
         return criticalHigh;
     }
     
     @Override
-    public float getCriticalLow() {
+    public Float getCriticalLow() {
         return criticalLow;
     }
 
     @Override
     public float getDisplayMaximum() {
-        return 1.5f*warningHigh-0.5f*warningLow;
+        if(null == this.warningHigh) {
+            if(null == this.warningLow) {
+                return maximum + maximum - minimum;
+            } else {
+                return maximum + 2 * (maximum - warningLow);
+            }
+        } else {
+            if(null == this.warningLow) {
+                return warningHigh + (warningHigh - minimum);
+            } else {
+                return 1.5f*warningHigh-0.5f*warningLow;
+            }
+        }
+        
+        
     }
     
     @Override
     public float getDisplayMinimum() {
-        return 1.5f * warningLow - 0.5f*warningHigh;
+        if(null == this.warningHigh) {
+            if(null == this.warningLow) {
+                return minimum - minimum + maximum;
+            } else {
+                return warningLow -  (maximum - warningLow);
+            }
+        } else {
+            if(null == this.warningLow) {
+                return warningHigh  - 3 * (warningHigh - minimum);
+            } else {
+                return 1.5f * warningLow - 0.5f*warningHigh;
+            }
+        }
     }
     
     @Override
@@ -100,44 +126,52 @@ class VitalImpl implements Vital {
     }
     
     @Override
-    public void setWarningLow(float low) {
-        if(low < criticalLow) {
-            low = criticalLow;
-        } else if(low > warningHigh) {
-            low = warningHigh;
+    public void setWarningLow(Float low) {
+        if(null != low) {
+            if(criticalLow != null && low < criticalLow) {
+                low = criticalLow;
+            } else if(warningHigh != null && low > warningHigh) {
+                low = warningHigh;
+            }
         }
         this.warningLow = low;
         parent.fireVitalChanged(this);
     }
 
     @Override
-    public void setWarningHigh(float high) {
-        if(high > criticalHigh) {
-            high = criticalHigh;
-        } else if(high < warningLow) {
-            high = warningLow;
+    public void setWarningHigh(Float high) {
+        if(null != high) {
+            if(criticalHigh != null && high > criticalHigh) {
+                high = criticalHigh;
+            } else if(warningLow != null && high < warningLow) {
+                high = warningLow;
+            }
         }
         this.warningHigh = high;
         parent.fireVitalChanged(this);
     }
     
     @Override
-    public void setCriticalLow(float low) {
-        if(low < minimum) {
-            low = minimum;
-        } else if(low > warningLow) {
-            low = warningLow;
+    public void setCriticalLow(Float low) {
+        if(null != low) {
+            if(low < minimum) {
+                low = minimum;
+            } else if(warningLow != null && low > warningLow) {
+                low = warningLow;
+            }
         }
         this.criticalLow = low;
         parent.fireVitalChanged(this);
     }
     
     @Override
-    public void setCriticalHigh(float high) {
-        if(high > maximum) {
-            high = maximum;
-        } else if(high < warningHigh) {
-            high = warningHigh;
+    public void setCriticalHigh(Float high) {
+        if(null != high) {
+            if(high > maximum) {
+                high = maximum;
+            } else if(warningHigh != null && high < warningHigh) {
+                high = warningHigh;
+            }
         }
         this.criticalHigh = high;
         parent.fireVitalChanged(this);

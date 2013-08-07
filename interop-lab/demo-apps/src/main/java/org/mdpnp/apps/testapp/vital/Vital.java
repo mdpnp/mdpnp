@@ -36,26 +36,26 @@ public interface Vital {
      * Further heuristics may turn warnings into alarms under some conditions
      * @return
      */
-    float getWarningLow();
+    Float getWarningLow();
     
     /**
      * A Value at or above this warning high will generate a warning
      * Further heuristics may turn warnings into alarms under some conditions
      * @return
      */
-    float getWarningHigh();
+    Float getWarningHigh();
     
     /**
      * A Value at or below this critical low will generate an alarm
      * @return
      */
-    float getCriticalLow();
+    Float getCriticalLow();
     
     /**
      * A Value at or above this critical high will generate an alarm
      * @return
      */
-    float getCriticalHigh();
+    Float getCriticalHigh();
     
     /**
      * Used for display purposes
@@ -102,10 +102,10 @@ public interface Vital {
     void setWarningAgeBecomesAlarm(long warningAgeBecomesAlarm);
     
     
-    void setWarningLow(float low);
-    void setWarningHigh(float high);
-    void setCriticalLow(float low);
-    void setCriticalHigh(float high);
+    void setWarningLow(Float low);
+    void setWarningHigh(Float high);
+    void setCriticalLow(Float low);
+    void setCriticalHigh(Float high);
     java.util.List<Value> getValues();
     VitalModel getParent();
     boolean isAnyOutOfBounds();

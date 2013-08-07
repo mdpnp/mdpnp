@@ -89,6 +89,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
             slider = new JMultiSlider(range);
             slider.setRangeColor(0, Color.red);
             slider.setRangeColor(1, Color.yellow);
+            slider.setRangeColor(2, Color.green);
             slider.setOpaque(false);
 //            range.addChangeListener(this);
 //            slider.setPaintLabels(true);

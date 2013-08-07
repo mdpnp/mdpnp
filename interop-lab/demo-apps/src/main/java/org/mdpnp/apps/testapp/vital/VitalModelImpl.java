@@ -144,8 +144,8 @@ public class VitalModelImpl implements VitalModel {
     }
 
     @Override
-    public Vital addVital(String label, String units, int[] names, float low, float high, float minimum, float maximum) {
-        Vital v = new VitalImpl(this, label, units, names, low, high, minimum, maximum);
+    public Vital addVital(String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum) {
+        Vital v = new VitalImpl(this, label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum);
         vitals.add(v);
         addQueryConditions(v);
         fireVitalAdded(v);
@@ -364,7 +364,7 @@ public class VitalModelImpl implements VitalModel {
                 System.out.println("Added:" + vital);
             }
         });
-        vm.addVital("Heart Rate", "bpm", new int[] { ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 20, 200, 0, 200);
+//        vm.addVital("Heart Rate", "bpm", new int[] { ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 20, 200, 10, 210, 0, 200);
         EventLoop eventLoop = new EventLoop();
         // EventLoopHandler eventLoopHandler =
         new EventLoopHandler(eventLoop);

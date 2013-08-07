@@ -8,7 +8,7 @@ import javax.swing.event.ChangeListener;
 public class DefaultBoundedRangeMultiModel implements BoundedRangeMultiModel {
 
     private int minimum = 0, maximum = 100;
-    private int[] values = new int[] {0,25,50,75};
+    private Float[] values = new Float[] {0f,25f,50f,75f};
     private boolean valueIsAdjusting = false;
     private ChangeListener[] listeners = new ChangeListener[2];
     private int listenerCount = 0;  
@@ -36,14 +36,14 @@ public class DefaultBoundedRangeMultiModel implements BoundedRangeMultiModel {
     }
 
     @Override
-    public int getValue(int idx) {
+    public Float getValue(int idx) {
         return values[idx];
     }
 
     @Override
-    public void setValue(int idx, int newValue) {
-        int left = idx <= 0 ? minimum : values[idx-1];
-        int right = idx>=(values.length-1)?maximum:values[idx+1];
+    public void setValue(int idx, Float newValue) {
+        Float left = idx <= 0 ? minimum : values[idx-1];
+        Float right = idx>=(values.length-1)?maximum:values[idx+1];
         if(newValue < left) {
             newValue = left;
         }
@@ -140,7 +140,7 @@ public class DefaultBoundedRangeMultiModel implements BoundedRangeMultiModel {
         return 0;
     }
     @Override
-    public int getMarker(int idx) {
-        return 0;
+    public Float getMarker(int idx) {
+        return 0f;
     }
 }
