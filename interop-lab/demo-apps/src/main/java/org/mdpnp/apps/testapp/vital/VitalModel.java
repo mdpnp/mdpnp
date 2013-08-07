@@ -22,12 +22,22 @@ public interface VitalModel {
     void addListener(VitalModelListener vitalModelListener);
     boolean removeListener(VitalModelListener vitalModelListener);
     
-    ice.DeviceIdentity getDeviceIdentity(String udi);
-    ice.DeviceConnectivity getDeviceConnectivity(String udi);
+//    ice.DeviceIdentity getDeviceIdentity(String udi);
+//    ice.DeviceConnectivity getDeviceConnectivity(String udi);
     
     void start(Subscriber subscriber, EventLoop eventLoop);
     void stop();
 
+    void setCountWarningsBecomeAlarm(int countWarningsBecomeAlarm);
+    
+    /**
+     * This many concurrent warnings will trigger an alarm
+     * @return
+     */
+    int getCountWarningsBecomeAlarm();
+    
+
+  
     /**
      * Get the current state of the VitalModel
      * @return

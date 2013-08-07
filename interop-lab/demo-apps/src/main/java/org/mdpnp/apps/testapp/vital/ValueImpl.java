@@ -46,11 +46,11 @@ public class ValueImpl implements Value {
     
     @Override
     public boolean isAtOrAboveHigh() {
-        return isIgnore() ? false : Float.compare(numeric.value, parent.getHigh()) >= 0;
+        return isIgnore() ? false : Float.compare(numeric.value, parent.getWarningHigh()) >= 0;
     }
     @Override
     public boolean isAtOrBelowLow() {
-        return isIgnore() ? false : Float.compare(parent.getLow(), numeric.value) >= 0;
+        return isIgnore() ? false : Float.compare(parent.getWarningLow(), numeric.value) >= 0;
     }
     @Override
     public boolean isAtOrOutsideOfBounds() {
@@ -59,11 +59,11 @@ public class ValueImpl implements Value {
     
     @Override
     public boolean isAtOrAboveCriticalHigh() {
-        return isIgnore() ? false : Float.compare(numeric.value,  parent.getMaximum()) >= 0;
+        return isIgnore() ? false : Float.compare(numeric.value,  parent.getCriticalHigh()) >= 0;
     }
     @Override
     public boolean isAtOrBelowCriticalLow() {
-        return isIgnore() ? false : Float.compare(parent.getMinimum(), numeric.value) >= 0;
+        return isIgnore() ? false : Float.compare(parent.getCriticalLow(), numeric.value) >= 0;
     }
     @Override
     public boolean isAtOrOutsideOfCriticalBounds() {
@@ -74,5 +74,4 @@ public class ValueImpl implements Value {
     public long getAgeInMilliseconds() {
         return System.currentTimeMillis() - (sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
     }
-    
 }

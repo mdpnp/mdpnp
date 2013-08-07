@@ -100,7 +100,7 @@ public class DeviceIcon extends ImageIcon {
 	@Override
 	public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
 		super.paintIcon(c, g, x, y);
-		if(!connected) {
+		if(!isConnected()) {
 			int height = getIconHeight();
 			int width = getIconWidth();
 			g.setColor(Color.red);
@@ -121,6 +121,10 @@ public class DeviceIcon extends ImageIcon {
 		if(connected ^ this.connected) {
 			this.connected = connected;
 		}
+	}
+	
+	protected boolean isConnected() {
+	    return this.connected;
 	}
 	
 }

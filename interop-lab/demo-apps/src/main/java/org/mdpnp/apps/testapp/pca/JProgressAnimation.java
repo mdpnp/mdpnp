@@ -4,16 +4,13 @@ import java.awt.AWTEvent;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
-import java.awt.BufferCapabilities;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
@@ -21,9 +18,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Arc2D;
 import java.awt.geom.Line2D;
-import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -33,10 +28,10 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
+@SuppressWarnings("serial")
 public class JProgressAnimation extends JComponent implements Runnable {
 
-    private final Line2D[] lines = new Line2D[30];
-    private final Arc2D[] arcs = new Arc2D[30];
+    private final Line2D[] lines = new Line2D[18];
     private int drawLine = 0;
 
     private static final double SCALE_RADIUS = 100.0;
@@ -49,20 +44,21 @@ public class JProgressAnimation extends JComponent implements Runnable {
         switch (e.getID()) {
         case ComponentEvent.COMPONENT_RESIZED:
             getSize(size);
-            BufferedImage newImage = (BufferedImage) createImage(size.width, size.height);
-
-            Graphics g = newImage.createGraphics();
-            if (this.image != null) {
-
-                g.drawImage(this.image, 0, 0, size.width, size.height, this);
-
-            } else {
-                g.setColor(getBackground());
-                g.fillRect(0, 0, size.width, size.height);
+            if(size.width != 0 && size.height != 0) {
+                BufferedImage newImage = (BufferedImage) createImage(size.width, size.height);
+    
+                Graphics g = newImage.createGraphics();
+                if (this.image != null) {
+    
+                    g.drawImage(this.image, 0, 0, size.width, size.height, this);
+    
+                } else {
+                    g.setColor(getBackground());
+                    g.fillRect(0, 0, size.width, size.height);
+                }
+                this.image = newImage;
+                g.dispose();
             }
-            this.image = newImage;
-            g.dispose();
-
             break;
         }
         super.processComponentEvent(e);
@@ -104,12 +100,14 @@ public class JProgressAnimation extends JComponent implements Runnable {
 
     public void start() {
         if (null == future) {
-            Graphics g = image.createGraphics();
-            g.setColor(getBackground());
-            g.fillRect(0,0,size.width,size.height);
-            g.dispose();
+            if(null != image) {
+                Graphics g = image.createGraphics();
+                g.setColor(getBackground());
+                g.fillRect(0,0,size.width,size.height);
+                g.dispose();
+            }
             repaint();
-            future = executor.scheduleAtFixedRate(this, 0L, 75L, TimeUnit.MILLISECONDS);
+            future = executor.scheduleAtFixedRate(this, 0L, 100L, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -127,7 +125,6 @@ public class JProgressAnimation extends JComponent implements Runnable {
         repaint();
     }
 
-    private int positionInDegrees;
     private static final Stroke LINE_STROKE = new BasicStroke(10f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     private static final Stroke STOP_STROKE = new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 
@@ -137,58 +134,60 @@ public class JProgressAnimation extends JComponent implements Runnable {
     @Override
     protected void paintComponent(Graphics g_) {
         super.paintComponent(g_);
-        Graphics g = image.getGraphics();
-
-        if (g instanceof Graphics2D) {
-            Graphics2D g2d = (Graphics2D) g;
-            if (null == future) {
-                g2d.setBackground(getBackground());
-                g2d.clearRect(0, 0, size.width, size.height);
-            } else {
-                g.setColor(getBackground());
-                g2d.setComposite(AlphaComposite.SrcAtop.derive(.4f));
-                g.fillRect(0, 0, size.width, size.height);
+        if(image != null) {
+            Graphics g = image.getGraphics();
+    
+            if (g instanceof Graphics2D) {
+                Graphics2D g2d = (Graphics2D) g;
+                if (null == future) {
+                    g2d.setBackground(getBackground());
+                    g2d.clearRect(0, 0, size.width, size.height);
+                } else {
+                    g.setColor(getBackground());
+                    g2d.setComposite(AlphaComposite.SrcAtop.derive(.4f));
+                    g.fillRect(0, 0, size.width, size.height);
+                }
+    
+                g2d.setComposite(AlphaComposite.Src);
+                AffineTransform transform = g2d.getTransform();
+                center.y = size.height / 2;
+                center.x = size.width / 2;
+                int radius = (int) (Math.min(center.x, center.y));
+                g2d.translate(center.x, center.y);
+                g2d.scale(radius / SCALE_RADIUS, radius / SCALE_RADIUS);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                
+                if (null == future) {
+                    g.setColor(Color.red);
+                    g.fillPolygon(hexagon);
+                    g2d.setStroke(STOP_STROKE);
+                    g.setColor(Color.white);
+                    g.drawPolygon(innerHexagon);
+                    String stop = "Arr\u00EAt";
+                    g.setFont(g.getFont().deriveFont(30f));
+                    int width = g.getFontMetrics().stringWidth(stop);
+                    int height = g.getFontMetrics().getHeight();
+                    height *= SCALE_RADIUS / radius;
+                    // height is not scaled
+                    g.drawString(stop, -width/2, height / 2);
+                } else {
+                    g2d.setColor(Color.green);
+    
+                    g2d.setStroke(LINE_STROKE);
+    
+                    // int radius = (int) (0.8 * Math.min(center.x, center.y));
+                    // g2d.drawOval( (int)(radius *
+                    // Math.cos(Math.toRadians(positionInDegrees)))-5, (int)(radius
+                    // * Math.sin(Math.toRadians(positionInDegrees)))-5, 10, 10);
+                    g2d.draw(lines[drawLine]);
+                }
+                g2d.setTransform(transform);
             }
-
-            g2d.setComposite(AlphaComposite.Src);
-            AffineTransform transform = g2d.getTransform();
-            center.y = size.height / 2;
-            center.x = size.width / 2;
-            int radius = (int) (Math.min(center.x, center.y));
-            g2d.translate(center.x, center.y);
-            g2d.scale(radius / SCALE_RADIUS, radius / SCALE_RADIUS);
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            
-            if (null == future) {
-                g.setColor(Color.red);
-                g.fillPolygon(hexagon);
-                g2d.setStroke(STOP_STROKE);
-                g.setColor(Color.white);
-                g.drawPolygon(innerHexagon);
-                String stop = "Arr\u00EAt";
-                g.setFont(g.getFont().deriveFont(30f));
-                int width = g.getFontMetrics().stringWidth(stop);
-                int height = g.getFontMetrics().getHeight();
-                height *= SCALE_RADIUS / radius;
-                // height is not scaled
-                g.drawString(stop, -width/2, height / 2);
-            } else {
-                g2d.setColor(Color.green);
-
-                g2d.setStroke(LINE_STROKE);
-
-                // int radius = (int) (0.8 * Math.min(center.x, center.y));
-                // g2d.drawOval( (int)(radius *
-                // Math.cos(Math.toRadians(positionInDegrees)))-5, (int)(radius
-                // * Math.sin(Math.toRadians(positionInDegrees)))-5, 10, 10);
-                g2d.draw(lines[drawLine]);
-            }
-            g2d.setTransform(transform);
+    
+            g.dispose();
+            g_.drawImage(image, 0, 0, this);
         }
-
-        g.dispose();
-        g_.drawImage(image, 0, 0, this);
     }
 
     public static void main(String[] args) {

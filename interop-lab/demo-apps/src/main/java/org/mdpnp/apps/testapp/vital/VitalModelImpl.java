@@ -1,15 +1,5 @@
 package org.mdpnp.apps.testapp.vital;
 
-import ice.DeviceConnectivity;
-import ice.DeviceConnectivityDataReader;
-import ice.DeviceConnectivitySeq;
-import ice.DeviceConnectivityTopic;
-import ice.DeviceConnectivityTypeSupport;
-import ice.DeviceIdentity;
-import ice.DeviceIdentityDataReader;
-import ice.DeviceIdentitySeq;
-import ice.DeviceIdentityTopic;
-import ice.DeviceIdentityTypeSupport;
 import ice.Numeric;
 import ice.NumericDataReader;
 import ice.NumericSeq;
@@ -36,7 +26,6 @@ import org.mdpnp.rti.dds.DDS;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.infrastructure.Condition;
-import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
@@ -56,8 +45,8 @@ public class VitalModelImpl implements VitalModel {
 
     private VitalModelListener[] listeners = new VitalModelListener[0];
 
-    private DeviceIdentityDataReader deviceIdentityReader;
-    private DeviceConnectivityDataReader deviceConnectivityReader;
+//    private DeviceIdentityDataReader deviceIdentityReader;
+//    private DeviceConnectivityDataReader deviceConnectivityReader;
     protected NumericDataReader numericReader;
     private final Map<Vital, Set<QueryCondition>> queryConditions = new HashMap<Vital, Set<QueryCondition>>();
 
@@ -235,41 +224,41 @@ public class VitalModelImpl implements VitalModel {
         }
     }
 
-    @Override
-    public DeviceIdentity getDeviceIdentity(String udi) {
-        DeviceIdentity keyHolder = (DeviceIdentity) DeviceIdentity.create();
-        InstanceHandle_t handle = new InstanceHandle_t();
-        keyHolder.universal_device_identifier = udi;
-        handle.copy_from(deviceIdentityReader.lookup_instance(keyHolder));
+//    @Override
+//    public DeviceIdentity getDeviceIdentity(String udi) {
+//        DeviceIdentity keyHolder = (DeviceIdentity) DeviceIdentity.create();
+//        InstanceHandle_t handle = new InstanceHandle_t();
+//        keyHolder.universal_device_identifier = udi;
+//        handle.copy_from(deviceIdentityReader.lookup_instance(keyHolder));
+//
+//        DeviceIdentitySeq data_seq = new DeviceIdentitySeq();
+//        SampleInfoSeq info_seq = new SampleInfoSeq();
+//
+//        try {
+//            deviceIdentityReader.read_instance(data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE,
+//                    ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
+//            return new DeviceIdentity((DeviceIdentity) data_seq.get(0));
+//        } finally {
+//            deviceIdentityReader.return_loan(data_seq, info_seq);
+//        }
+//    }
 
-        DeviceIdentitySeq data_seq = new DeviceIdentitySeq();
-        SampleInfoSeq info_seq = new SampleInfoSeq();
-
-        try {
-            deviceIdentityReader.read_instance(data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE,
-                    ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
-            return new DeviceIdentity((DeviceIdentity) data_seq.get(0));
-        } finally {
-            deviceIdentityReader.return_loan(data_seq, info_seq);
-        }
-    }
-
-    @Override
-    public DeviceConnectivity getDeviceConnectivity(String udi) {
-        DeviceConnectivity keyHolder = (DeviceConnectivity) DeviceConnectivity.create();
-        InstanceHandle_t handle = new InstanceHandle_t();
-        keyHolder.universal_device_identifier = udi;
-        deviceConnectivityReader.get_key_value(keyHolder, handle);
-        DeviceConnectivitySeq data_seq = new DeviceConnectivitySeq();
-        SampleInfoSeq info_seq = new SampleInfoSeq();
-        try {
-            deviceConnectivityReader.read_instance(data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE,
-                    ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
-            return new DeviceConnectivity((DeviceConnectivity) data_seq.get(0));
-        } finally {
-            deviceConnectivityReader.return_loan(data_seq, info_seq);
-        }
-    }
+//    @Override
+//    public DeviceConnectivity getDeviceConnectivity(String udi) {
+//        DeviceConnectivity keyHolder = (DeviceConnectivity) DeviceConnectivity.create();
+//        InstanceHandle_t handle = new InstanceHandle_t();
+//        keyHolder.universal_device_identifier = udi;
+//        deviceConnectivityReader.get_key_value(keyHolder, handle);
+//        DeviceConnectivitySeq data_seq = new DeviceConnectivitySeq();
+//        SampleInfoSeq info_seq = new SampleInfoSeq();
+//        try {
+//            deviceConnectivityReader.read_instance(data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE,
+//                    ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
+//            return new DeviceConnectivity((DeviceConnectivity) data_seq.get(0));
+//        } finally {
+//            deviceConnectivityReader.return_loan(data_seq, info_seq);
+//        }
+//    }
 
     private void removeQueryConditions(final Vital v) {
         final NumericDataReader numericReader = this.numericReader;
@@ -313,17 +302,17 @@ public class VitalModelImpl implements VitalModel {
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
         DomainParticipant participant = subscriber.get_participant();
-        DeviceIdentityTypeSupport.register_type(participant, DeviceIdentityTypeSupport.get_type_name());
-        TopicDescription diTopic = TopicUtil.lookupOrCreateTopic(participant, DeviceIdentityTopic.VALUE,
-                DeviceIdentityTypeSupport.class);
-        deviceIdentityReader = (DeviceIdentityDataReader) subscriber.create_datareader(diTopic,
-                Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-
-        DeviceConnectivityTypeSupport.register_type(participant, DeviceConnectivityTypeSupport.get_type_name());
-        TopicDescription dcTopic = TopicUtil.lookupOrCreateTopic(participant, DeviceConnectivityTopic.VALUE,
-                DeviceConnectivityTypeSupport.class);
-        deviceConnectivityReader = (DeviceConnectivityDataReader) subscriber.create_datareader(dcTopic,
-                Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+//        DeviceIdentityTypeSupport.register_type(participant, DeviceIdentityTypeSupport.get_type_name());
+//        TopicDescription diTopic = TopicUtil.lookupOrCreateTopic(participant, DeviceIdentityTopic.VALUE,
+//                DeviceIdentityTypeSupport.class);
+//        deviceIdentityReader = (DeviceIdentityDataReader) subscriber.create_datareader(diTopic,
+//                Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+//
+//        DeviceConnectivityTypeSupport.register_type(participant, DeviceConnectivityTypeSupport.get_type_name());
+//        TopicDescription dcTopic = TopicUtil.lookupOrCreateTopic(participant, DeviceConnectivityTopic.VALUE,
+//                DeviceConnectivityTypeSupport.class);
+//        deviceConnectivityReader = (DeviceConnectivityDataReader) subscriber.create_datareader(dcTopic,
+//                Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
         NumericTypeSupport.register_type(participant, NumericTypeSupport.get_type_name());
         TopicDescription nTopic = TopicUtil.lookupOrCreateTopic(participant, NumericTopic.VALUE,
@@ -345,10 +334,10 @@ public class VitalModelImpl implements VitalModel {
         numericReader.delete_contained_entities();
         subscriber.delete_datareader(numericReader);
 
-        deviceIdentityReader.delete_contained_entities();
-        subscriber.delete_datareader(deviceIdentityReader);
-        deviceConnectivityReader.delete_contained_entities();
-        subscriber.delete_datareader(deviceConnectivityReader);
+//        deviceIdentityReader.delete_contained_entities();
+//        subscriber.delete_datareader(deviceIdentityReader);
+//        deviceConnectivityReader.delete_contained_entities();
+//        subscriber.delete_datareader(deviceConnectivityReader);
         this.subscriber = null;
         this.eventLoop = null;
     }
@@ -450,7 +439,7 @@ public class VitalModelImpl implements VitalModel {
             state = State.Normal;
         }
         
-        if (countOutOfRange >= 2) {
+        if (countOutOfRange >= countWarningsBecomeAlarm) {
             state = State.Alarm;
             stopInfusion("Stopped\r\n" + outOfRange.toString() + "at " + time + "\r\nnurse alerted");
         } else {
@@ -510,6 +499,20 @@ public class VitalModelImpl implements VitalModel {
     @Override
     public boolean isInfusionStopped() {
         return interlock;
+    }
+
+    private int countWarningsBecomeAlarm = 2;
+    
+    @Override
+    public void setCountWarningsBecomeAlarm(int countWarningsBecomeAlarm) {
+        this.countWarningsBecomeAlarm = countWarningsBecomeAlarm;
+        updateState();
+        fireVitalChanged(null);
+    }
+
+    @Override
+    public int getCountWarningsBecomeAlarm() {
+        return countWarningsBecomeAlarm;
     }
 
 }

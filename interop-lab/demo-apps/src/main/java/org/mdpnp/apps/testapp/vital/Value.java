@@ -9,6 +9,7 @@ public interface Value {
     Numeric getNumeric();
     SampleInfo getSampleInfo();
     Vital getParent();
+    
     boolean isAtOrAboveHigh();
     boolean isAtOrBelowLow();
     boolean isAtOrOutsideOfBounds();

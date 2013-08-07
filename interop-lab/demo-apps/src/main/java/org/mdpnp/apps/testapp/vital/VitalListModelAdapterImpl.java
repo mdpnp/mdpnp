@@ -53,15 +53,15 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
         return removeListener(vitalModelListener);
     }
 
-    @Override
-    public DeviceIdentity getDeviceIdentity(String udi) {
-        return model.getDeviceIdentity(udi);
-    }
-
-    @Override
-    public DeviceConnectivity getDeviceConnectivity(String udi) {
-        return model.getDeviceConnectivity(udi);
-    }
+//    @Override
+//    public DeviceIdentity getDeviceIdentity(String udi) {
+//        return model.getDeviceIdentity(udi);
+//    }
+//
+//    @Override
+//    public DeviceConnectivity getDeviceConnectivity(String udi) {
+//        return model.getDeviceConnectivity(udi);
+//    }
 
     @Override
     public void start(Subscriber subscriber, EventLoop eventLoop) {
@@ -194,5 +194,15 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     @Override
     public String getInterlockText() {
         return model.getInterlockText();
+    }
+
+    @Override
+    public void setCountWarningsBecomeAlarm(int countWarningsBecomeAlarm) {
+        model.setCountWarningsBecomeAlarm(countWarningsBecomeAlarm);
+    }
+
+    @Override
+    public int getCountWarningsBecomeAlarm() {
+        return model.getCountWarningsBecomeAlarm();
     }
 }

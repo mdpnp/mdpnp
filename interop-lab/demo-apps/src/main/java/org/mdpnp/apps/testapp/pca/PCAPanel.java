@@ -1,13 +1,13 @@
 package org.mdpnp.apps.testapp.pca;
 
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
 
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.vital.Vital;
@@ -15,25 +15,21 @@ import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
 
 @SuppressWarnings("serial")
-public class PCAPanel extends JTabbedPane implements VitalModelListener {
+public class PCAPanel extends JPanel implements VitalModelListener {
 
-    private final PCAConfig pcaConfig2;
-    private final PCAMonitor pcaMonitor;
+    private final PCAConfig pcaConfig;
     private final VitalMonitoring vitalMonitor;
     
     public PCAPanel(DeviceListModel deviceListModel, ScheduledExecutorService refreshScheduler) {
-        pcaMonitor = new PCAMonitor(deviceListModel, refreshScheduler);
+        super(new BorderLayout());
         vitalMonitor = new VitalMonitoring(refreshScheduler);
-        setOpaque(false);
-        pcaMonitor.setOpaque(false);
+//        setOpaque(false);
         vitalMonitor.setOpaque(true);
         vitalMonitor.setBackground(Color.white);
         JPanel stuff = new JPanel(new GridLayout(1,2));
-        stuff.setOpaque(false);
-        stuff.add(pcaConfig2 = new PCAConfig(deviceListModel, refreshScheduler));
+        stuff.add(pcaConfig = new PCAConfig(deviceListModel, refreshScheduler));
         stuff.add(vitalMonitor);
-        addTab("Monitoring", pcaMonitor);
-        addTab("Graphic Monitoring", stuff);
+        add(stuff, BorderLayout.CENTER);
     }
     
     
@@ -51,8 +47,7 @@ public class PCAPanel extends JTabbedPane implements VitalModelListener {
         if(this.model != null) {
             this.model.addListener(this);
         }
-        pcaConfig2.setModel(model);
-        pcaMonitor.setModel(vitalModel);
+        pcaConfig.setModel(model);
         vitalMonitor.setModel(vitalModel);
     }
     public VitalModel getVitalModel() {

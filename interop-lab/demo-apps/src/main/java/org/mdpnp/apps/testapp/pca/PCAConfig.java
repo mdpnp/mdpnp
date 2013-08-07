@@ -2,6 +2,8 @@ package org.mdpnp.apps.testapp.pca;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -13,6 +15,8 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ScheduledExecutorService;
 
+import javax.media.nativewindow.util.Dimension;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -20,24 +24,25 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.RangeSlider;
+import org.mdpnp.apps.testapp.ScaledDeviceIcon;
+import org.mdpnp.apps.testapp.vital.JMultiSlider;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
-import org.mdpnp.guis.swing.SpaceFillLabel;
 
 @SuppressWarnings("serial")
 public class PCAConfig extends JComponent implements VitalModelListener {
     private final DeviceListModel deviceListModel;
     public PCAConfig(DeviceListModel deviceListModel, ScheduledExecutorService executor) {
+        setLayout(new GridBagLayout());
         this.deviceListModel = deviceListModel;
         pumpProgress = new JProgressAnimation(executor);
         pumpProgress.setBackground(new Color(1f,1f,1f,.5f));
@@ -58,10 +63,10 @@ public class PCAConfig extends JComponent implements VitalModelListener {
     }
     private VitalModel model;
     
-    private final static class JVital extends JComponent implements ChangeListener {
+    private final static class JVital extends JComponent {
         private final Vital vital;
-        private final RangeSlider slider;
-        private final JLabel vitalLabel;
+        private final JMultiSlider slider;
+
         private final JPanel vitalValues;
         private final DeviceListModel deviceListModel;
         
@@ -70,30 +75,27 @@ public class PCAConfig extends JComponent implements VitalModelListener {
         }
         
         public JVital(final Vital vital, final DeviceListModel deviceListModel) {
+            setBorder(BorderFactory.createTitledBorder(null, vital.getLabel() + " ("+vital.getUnits()+")", 0, 0, Font.decode("fixed-20"), getForeground()));
             this.vital = vital;
             this.deviceListModel = deviceListModel;
             setOpaque(false);
-            slider = new RangeSlider((int)vital.getMinimum(), (int) vital.getMaximum());
+            VitalBoundedRangleMulti range = new VitalBoundedRangleMulti(vital);
+            slider = new JMultiSlider(range);
+            slider.setRangeColor(0, Color.red);
+            slider.setRangeColor(1, Color.yellow);
             slider.setOpaque(false);
-            VitalBoundedRange range = new VitalBoundedRange(vital);
-            slider.setModel(range);
-            range.addChangeListener(this);
-            slider.setPaintLabels(true);
-            slider.setPaintTicks(true);
-            stateChanged(null);
+//            range.addChangeListener(this);
+//            slider.setPaintLabels(true);
+//            slider.setPaintTicks(true);
+//            stateChanged(null);
             
             setLayout(new GridBagLayout());
-            GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(1,1,1,1), 1, 1);
+            GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0);
             gbc.gridx = 0;
             gbc.weightx = 0.1;
-            JButton delete = new JButton("Remove");
-            delete.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    vital.getParent().removeVital(vital);
-                }
-            });
             
+
+            ignoreZero.setOpaque(false);
             ignoreZero.addActionListener(new ActionListener() {
 
                 @Override
@@ -102,12 +104,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
                 }
                 
             });
-            add(delete, gbc);
-            gbc.gridx++;
-            vitalLabel = new JLabel("<html>"+vital.getLabel()+"<br/>("+vital.getUnits()+")</html>");
-            vitalLabel.setOpaque(false);
-            vitalLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            add(vitalLabel, gbc);
+            add(new JLabel("Limits"), gbc);
             
             gbc.gridx++;
             gbc.weightx = 10.0;
@@ -117,12 +114,22 @@ public class PCAConfig extends JComponent implements VitalModelListener {
             gbc.gridx++;
             add(ignoreZero, gbc);
             
+            gbc.gridx++;
+            JButton delete = new JButton("Remove");
+            delete.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    vital.getParent().removeVital(vital);
+                }
+            });
+            add(delete, gbc);
+            
             gbc.gridy++;
             
             gbc.weightx = 1.0;
             gbc.gridx = 0;
-            gbc.gridwidth = 4;
-            vitalValues = new JPanel();
+            gbc.gridwidth = 5;
+            vitalValues = new JPanel(new FlowLayout());
             vitalValues.setOpaque(false);
             updateData();
 
@@ -130,15 +137,15 @@ public class PCAConfig extends JComponent implements VitalModelListener {
         }
 
         private final JCheckBox ignoreZero = new JCheckBox("Ignore Zero");
-        @Override
-        public void stateChanged(ChangeEvent e) {
-            float range = vital.getMaximum() - vital.getMinimum();
-          int incr  = (int) (range / 10f);
-          if(incr != slider.getMajorTickSpacing()) {
-              slider.setLabelTable(slider.createStandardLabels(incr));
-              slider.setMajorTickSpacing(incr);
-          }
-        }
+//        @Override
+//        public void stateChanged(ChangeEvent e) {
+//            float range = vital.getMaximum() - vital.getMinimum();
+//            int incr  = (int) (range / 5f);
+//            if(incr != slider.getMajorTickSpacing()) {
+//              slider.setLabelTable(slider.createStandardLabels(incr));
+//              slider.setMajorTickSpacing(incr);
+//            }
+//        }
         
         public void updateData() {
             final int N = vital.getValues().isEmpty() ? 1 : vital.getValues().size();
@@ -147,18 +154,18 @@ public class PCAConfig extends JComponent implements VitalModelListener {
                 if(N != vitalValues.getComponentCount()) {
                     Runnable r = new Runnable() {
                         public void run() {
+                            
                             while(vitalValues.getComponentCount() < N) {
-                                vitalValues.setLayout(new GridLayout(1, N));
                                 for(int i = 0; i < (N - vitalValues.getComponentCount()); i++) {
                                     JLabel lbl = new JLabel();
+                                    lbl.setFont(Font.decode("fixed-20"));
+//                                    lbl.setMaximumSize(new java.awt.Dimension(100, 30));
+                                    lbl.setBorder(BorderFactory.createTitledBorder("  "));
                                     vitalValues.add(lbl);
-                                    SpaceFillLabel.attachResizeFontToFill(JVital.this, lbl);
-                                    SpaceFillLabel.resizeFontToFill(lbl);
                                 }
                                 validate();
                             }
                             while(N < vitalValues.getComponentCount()) {
-                                vitalValues.setLayout(new GridLayout(1, N));
                                 for(int i = 0; i < (vitalValues.getComponentCount() - N); i++) {
                                     vitalValues.remove(0);
                                 }
@@ -183,6 +190,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
             
             
             if(vital.getValues().isEmpty()) {
+                ((JLabel)vitalValues.getComponent(0)).setForeground(Color.yellow);
                 ((JLabel)vitalValues.getComponent(0)).setText("<NO SOURCES>");
             } else {
                 for(int i = 0; i < vital.getValues().size(); i++) {
@@ -192,9 +200,21 @@ public class PCAConfig extends JComponent implements VitalModelListener {
                     lbl.setForeground(val.isAtOrOutsideOfBounds() ? Color.yellow : Color.green);
                     lbl.setText(Integer.toString((int)val.getNumeric().value));
                     Device device = deviceListModel.getByUniversalDeviceIdentifier(val.getUniversalDeviceIdentifier());
+                    
                     if(null != device) {
-                        lbl.setIcon(device.getIcon());
+                        if(lbl.getBorder() instanceof TitledBorder) {
+                            ((TitledBorder)lbl.getBorder()).setTitle(device.getMakeAndModel());
+                        }
+                        if(!(lbl.getIcon() instanceof ScaledDeviceIcon) ||
+                           !((ScaledDeviceIcon)lbl.getIcon()).getSource().equals(device.getIcon())) {
+                            lbl.setIcon(new ScaledDeviceIcon(device.getIcon(), 0.5));
+                        }
+                        
+                        
                     } else {
+                        if(lbl.getBorder() instanceof TitledBorder) {
+                            ((TitledBorder)lbl.getBorder()).setTitle("");
+                        }
                         lbl.setIcon(null);
                     }
                 }
@@ -226,15 +246,16 @@ public class PCAConfig extends JComponent implements VitalModelListener {
 
         final VitalModel model = this.model;
         if(model != null) {
-            setLayout(new GridLayout(model.getCount() + 2, 1));
+            GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0);
             
             for(int i = 0; i < model.getCount(); i++) {
                 final Vital vital = model.getVital(i);
                 JVital jVital = new JVital(vital, deviceListModel);
-                add(jVital);
+                add(jVital, gbc);
+                gbc.gridy++;
             }
             JPanel panel = new JPanel();
-            
+            panel.setOpaque(false);
             final JComboBox vitalSigns = new JComboBox(VitalSign.values());
             panel.add(vitalSigns);
             
@@ -251,9 +272,13 @@ public class PCAConfig extends JComponent implements VitalModelListener {
             pumpPanel.add(pumpProgress);
             pumpPanel.add(pumpStatus);
             pumpPanel.add(warningStatus);
+            gbc.weighty = 0.1;
+            add(panel, gbc);
             
-            add(panel);
-            add(pumpPanel);
+            gbc.gridy++;
+            gbc.weighty = 1.0;
+            
+            add(pumpPanel, gbc);
         }
     }
     
@@ -266,37 +291,45 @@ public class PCAConfig extends JComponent implements VitalModelListener {
             this.model.addListener(this);
         }
         updateVitals();
+        vitalChanged(this.model, null);
     }
     @Override
     public void vitalChanged(VitalModel model, Vital vital) {
-        if(model.isInfusionStopped()) {
-            pumpProgress.stop();
-//            pumpStatus.setBackground(Color.red);
-        } else {
-            pumpProgress.start();
-//            pumpStatus.setBackground(Color.green);
-        }
-        pumpStatus.setText(model.getInterlockText());
-        
-        switch(model.getState()) {
-        case Alarm:
-            warningStatus.setBackground(Color.red);
-            break;
-        case Warning:
-            warningStatus.setBackground(Color.yellow);
-            break;
-        case Normal:
-            warningStatus.setBackground(Color.white);
-            break;
-        }
-        warningStatus.setText(model.getWarningText());
-        for(Component c : getComponents()) {
-            if(c instanceof JVital && ((JVital)c).getVital().equals(vital)) {
-                ((JVital)c).updateData();
-                return;
+        if(model != null) {
+            if(model.isInfusionStopped()) {
+                pumpProgress.stop();
+    //            pumpStatus.setBackground(Color.red);
+            } else {
+                pumpProgress.start();
+    //            pumpStatus.setBackground(Color.green);
             }
+            pumpStatus.setText(model.getInterlockText());
+            
+            switch(model.getState()) {
+            case Alarm:
+                warningStatus.setBackground(Color.red);
+                break;
+            case Warning:
+                warningStatus.setBackground(Color.yellow);
+                break;
+            case Normal:
+                warningStatus.setBackground(Color.white);
+                break;
+            }
+            warningStatus.setText(model.getWarningText());
+            repaint();
         }
-        updateVitals();
+        if(vital != null) {
+            for(Component c : getComponents()) {
+                if(c instanceof JVital && ((JVital)c).getVital().equals(vital)) {
+                    ((JVital)c).updateData();
+                    return;
+                }
+            }
+            // fell through if the specified vital was not found
+            updateVitals();
+        }
+        
 
     }
     @Override

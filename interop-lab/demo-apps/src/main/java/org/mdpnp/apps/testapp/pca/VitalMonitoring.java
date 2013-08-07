@@ -121,6 +121,15 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
         getSize(size);
         center.y = size.height / 2;
         center.x = size.width / 2;
+        
+        if(N < 3) {
+            String s = "Please add at least three vital signs.";
+            int width = g.getFontMetrics().stringWidth(s);
+            int height = g.getFontMetrics().getHeight();
+            g.drawString("Please add at least three vital signs.", center.x - width / 2, center.y + height / 2);
+            return;
+        }
+        
         int radius = (int) (0.8 * Math.min(center.x, center.y));
         double radiansPerArc = 2.0 * Math.PI / N;
 
@@ -160,8 +169,8 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
             String minimumLabel = REVERSE_DIRECTION ? vital.getLabelMaximum() : vital.getLabelMinimum();
             String maximumLabel = REVERSE_DIRECTION ? vital.getLabelMinimum() : vital.getLabelMaximum();
             
-            float low = vital.getLow();
-            float high = vital.getHigh();
+            float low = vital.getWarningLow();
+            float high = vital.getWarningHigh();
 //            float low = REVERSE_DIRECTION ? vital.getHigh() : vital.getLow();
 //            float high = REVERSE_DIRECTION ? vital.getLow() : vital.getHigh();
 
