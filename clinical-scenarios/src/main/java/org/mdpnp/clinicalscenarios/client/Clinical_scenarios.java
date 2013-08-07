@@ -161,8 +161,6 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getListAllScenarios().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
-//				showWidget(userInfoSearchPanel);
-//				scenarioListPanel.doSearch("");
 				scenarioListPanel.findAllScn();
 				showWidget(scenarioListPanel);
 			}
@@ -172,7 +170,6 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getListScnSubmitted().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
-//				showWidget(userInfoSearchPanel);
 				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_SUBMITTED);
 				showWidget(scenarioListPanel);
 			}
@@ -180,7 +177,6 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getListScnUnsubmitted().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
-//				showWidget(userInfoSearchPanel);
 				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_UNSUBMITTED);
 				showWidget(scenarioListPanel);
 			}
@@ -188,7 +184,6 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getListScnApproved().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
-//				showWidget(userInfoSearchPanel);
 				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 				showWidget(scenarioListPanel);
 			}
@@ -209,8 +204,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 				showWidget(scenarioListPanel);
 			}
 		});
-		userInfoBanner.getlistApprvScn().setScheduledCommand(new Command() {
-			
+		userInfoBanner.getlistApprvScn().setScheduledCommand(new Command() {			
 			@Override
 			public void execute() {
 				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
@@ -221,6 +215,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			
 			@Override
 			public void execute() {
+				scenarioPanel.selectFirstTab();
 				scenarioPanel.setCurrentScenario(null);
 				showWidget(scenarioPanel);
 			}
@@ -262,6 +257,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 
 	@Override
 	public void onSearchResult(ScenarioProxy sp) {
+		scenarioPanel.selectFirstTab();
 		scenarioPanel.setCurrentScenario(sp);
 		showWidget(scenarioPanel);
 	}

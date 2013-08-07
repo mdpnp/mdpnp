@@ -68,9 +68,10 @@ public class UserInfoPanel extends Composite implements Editor<UserInfoProxy> {
 	@UiField
 	TextBox yearsInFieldEditor;
 	@UiField
-	TextBox phoneNumberEditor;
-	@UiField
+	TextBox phoneNumberEditor;	
+	@UiField	
 	Button saveButton;
+	
 	@UiHandler("saveButton")
 	void onClick(ClickEvent e) {
 		UserInfoRequest uir = (UserInfoRequest) driver.flush();
@@ -79,6 +80,7 @@ public class UserInfoPanel extends Composite implements Editor<UserInfoProxy> {
 			@Override
 			public void onSuccess(UserInfoProxy response) {
 				saveHandler.onSave(response);
+				currentUserInfo = response;
 			}
 			@Override
 			public void onFailure(ServerFailure error) {

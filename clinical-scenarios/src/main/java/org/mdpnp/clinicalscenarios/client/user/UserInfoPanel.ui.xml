@@ -30,15 +30,15 @@
 	   <g:customCell><g:Label ui:field="emailEditor"/></g:customCell>
 	</g:row>
 	<g:row>
-	   <g:customCell><g:Label text='Title:'/></g:customCell>
+	   <g:customCell><g:Label text='Salutation:'/></g:customCell>
 	   <g:customCell><g:TextBox ui:field='titleEditor'/></g:customCell>
 	</g:row>
 	<g:row>
-	   <g:customCell><g:Label text='Given Name:'/></g:customCell>
+	   <g:customCell><g:Label text='First Name:'/></g:customCell>
 	   <g:customCell><g:TextBox ui:field='givenNameEditor'/></g:customCell>
 	</g:row>	
 	<g:row>
-	   <g:customCell><g:Label text='Family Name:'/></g:customCell>
+	   <g:customCell><g:Label text='Last Name:'/></g:customCell>
 	   <g:customCell><g:TextBox ui:field='familyNameEditor'/></g:customCell>
 	</g:row>	
 	<g:row>

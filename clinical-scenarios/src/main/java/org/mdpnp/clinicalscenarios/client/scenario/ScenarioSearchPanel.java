@@ -51,11 +51,15 @@ public class ScenarioSearchPanel extends Composite {
 	//scenario table columns
 	private static int SCN_TITLE_COL = 0;
 	private static int SCN_UNIQUEID_COL = 1;
-	private static int SCN_SUBMITTER_COL = 2;	
-	private static int SCN_STATUS_COL = 3;
+	private static int SCN_STATUS_COL = 2;
+	//XXX if we add creation/modification dates to the columns, it should be the new third column
+	private static int SCN_SUBMITTER_COL = 3;	
 	private static int SCN_DELETEBUTTON_COL = 4;
+	
 	private final int SCN_GRIDLIST_ROWS = 10; //rows in the table showing the Scn List
-	private final int SCN_GRIDLIST_COLUMNS = 5;//tilte, uniqueID, submitter,status,deleteButton(optional)
+	private final int SCN_GRIDLIST_COLUMNS_admin = 5;//tilte, uniqueID, submitter,status,deleteButton
+	private final int SCN_GRIDLIST_COLUMNS_RegUser = 3;//tilte, uniqueID, status
+	private final int SCN_GRIDLIST_COLUMNS_UnregUser = 2;//tilte, uniqueID
 	
 	private ScenarioTitleComparator scnTitleComparator = new ScenarioTitleComparator();
 	private ScenarioSubmitterComparator scnSubmitterComparator = new ScenarioSubmitterComparator();
@@ -272,7 +276,8 @@ public class ScenarioSearchPanel extends Composite {
 	/**
 	 * Draws the scenario list table
 	 */
-	@SuppressWarnings("deprecation")
+	//@SuppressWarnings("deprecation")
+	@Deprecated
 	private void drawScenariosListTable(final List<ScenarioProxy> response){
 	    searchResult.removeAllRows();
 	    
@@ -487,8 +492,14 @@ public class ScenarioSearchPanel extends Composite {
 //		searchResult2.setVisible(true);
 		int size = scn_search_index+SCN_GRIDLIST_ROWS>scn_list_size?(scn_list_size-scn_search_index): SCN_GRIDLIST_ROWS;
 //		searchResult2.resizeRows(SCN_GRIDLIST_ROWS+1);
-		searchResult2.resizeRows(size+1);
-		searchResult2.resizeColumns(SCN_GRIDLIST_COLUMNS);
+		searchResult2.resizeRows(size+1);//add +1 for title row
+		if(userRole == UserRole.Administrator){
+			searchResult2.resizeColumns(SCN_GRIDLIST_COLUMNS_admin);
+		}else if(userRole == UserRole.RegisteredUser){
+			searchResult2.resizeColumns(SCN_GRIDLIST_COLUMNS_RegUser);
+		}else 
+			searchResult2.resizeColumns(SCN_GRIDLIST_COLUMNS_UnregUser);
+		
 		
 		//HEADER
 	    Label lbl_title = new Label("Title");
@@ -543,8 +554,15 @@ public class ScenarioSearchPanel extends Composite {
 
 		searchResult2.setWidget(0, SCN_TITLE_COL,lbl_title);
 		searchResult2.setWidget(0, SCN_UNIQUEID_COL,lbl_uniqueId);
-		searchResult2.setWidget(0, SCN_SUBMITTER_COL, lbl_submitter);
-		searchResult2.setWidget(0, SCN_STATUS_COL, lbl_status);
+		if(userRole == UserRole.Administrator){
+			searchResult2.setWidget(0, SCN_SUBMITTER_COL, lbl_submitter);
+			searchResult2.setWidget(0, SCN_STATUS_COL, lbl_status);
+		}
+		if(userRole == UserRole.RegisteredUser){
+			searchResult2.setWidget(0, SCN_STATUS_COL, lbl_status);
+		}
+//		searchResult2.setWidget(0, SCN_SUBMITTER_COL, lbl_submitter);
+//		searchResult2.setWidget(0, SCN_STATUS_COL, lbl_status);
 		searchResult2.getRowFormatter().addStyleName(0, STYLE_USERLISTHEADER); //TODO Style this table
 //		searchResult2.setWidth("500px");
 		searchResult2.getColumnFormatter().addStyleName(0, "titleColumn");
@@ -575,8 +593,17 @@ public class ScenarioSearchPanel extends Composite {
 		lbl.setText(title);
 		searchResult2.setWidget(row, SCN_TITLE_COL, lbl);
 		searchResult2.setWidget(row, SCN_UNIQUEID_COL, new Label(String.valueOf(sp.getId())));
-		searchResult2.setWidget(row, SCN_SUBMITTER_COL, new Label(sp.getSubmitter()));
-		searchResult2.setWidget(row, SCN_STATUS_COL, new Label(sp.getStatus()));
+		
+		if(userRole == UserRole.Administrator){
+			searchResult2.setWidget(row, SCN_SUBMITTER_COL, new Label(sp.getSubmitter()));
+			searchResult2.setWidget(row, SCN_STATUS_COL, new Label(sp.getStatus()));
+		}
+		if(userRole == UserRole.RegisteredUser){
+			searchResult2.setWidget(row, SCN_STATUS_COL, new Label(sp.getStatus()));
+		}
+//		searchResult2.setWidget(row, SCN_SUBMITTER_COL, new Label(sp.getSubmitter()));
+//		searchResult2.setWidget(row, SCN_STATUS_COL, new Label(sp.getStatus()));
+		
 		
 		final int rowDel = row;
 		final int arrayIndex2 = arrayIndex;
