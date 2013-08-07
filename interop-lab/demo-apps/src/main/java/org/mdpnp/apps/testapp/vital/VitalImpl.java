@@ -13,7 +13,7 @@ class VitalImpl implements Vital {
     private float warningLow, warningHigh;
     private float criticalLow, criticalHigh;
     private final List<Value> values = new ArrayList<Value>();
-    private boolean noValueWarning = true;
+    private boolean noValueWarning = false;
     private long warningAgeBecomesAlarm = Long.MAX_VALUE;
     
     
@@ -200,8 +200,10 @@ class VitalImpl implements Vital {
 
     @Override
     public void setNoValueWarning(boolean noValueWarning) {
-        this.noValueWarning = noValueWarning;
-        parent.fireVitalChanged(this);
+        if(this.noValueWarning ^ noValueWarning) {
+            this.noValueWarning = noValueWarning;
+            parent.fireVitalChanged(this);
+        }
     }
 
     @Override

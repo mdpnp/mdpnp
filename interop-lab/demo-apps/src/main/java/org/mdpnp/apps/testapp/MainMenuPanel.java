@@ -4,7 +4,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +42,7 @@ public class MainMenuPanel extends JPanel {
 	}
 
 	public MainMenuPanel() {
-		super(new GridLayout(1,2));
+		super(new GridBagLayout());
 		
 		setOpaque(false);
 		List<String> names = new ArrayList<String>();
@@ -49,7 +52,7 @@ public class MainMenuPanel extends JPanel {
 		if(!isTrue("NOXRAYVENT")) {
 		    names.add("X-Ray Ventilator Sync");
 		}
-
+		GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(2,10,2,10), 0, 0);
 		appList = new JList(names.toArray(new String[0]));
 		appList.setSelectionBackground(appList.getBackground());
 		appList.setSelectionForeground(appList.getForeground());
@@ -61,27 +64,40 @@ public class MainMenuPanel extends JPanel {
 		
 		appList.setCellRenderer(lcr);
 		deviceList.setCellRenderer(new DeviceListCellRenderer());
-		
 
-		JPanel leftPanel = new JPanel(new BorderLayout());
-		leftPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-		leftPanel.add(new JLabel("Available Applications"), BorderLayout.NORTH);
-		leftPanel.add(new JScrollPane(appList), BorderLayout.CENTER);
-		JPanel rightPanel = new JPanel(new BorderLayout());
-		rightPanel.add(new JLabel("Connected Devices"), BorderLayout.NORTH);
-//		JScrollPane p;
-		rightPanel.add(new JScrollPane(deviceList), BorderLayout.CENTER);
-//		p.setBorder(BorderFactory.createEmptyBorder());
-		rightPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-//		deviceList.setBorder(new EmptyBorder(0,0,0,0));
+		add(new JLabel("Available Applications"), gbc);
+		gbc.gridy++;
+		gbc.weighty = 100.0;
+		JScrollPane scrollAppList = new JScrollPane(appList);
+		scrollAppList.getViewport().setOpaque(false);
+		add(scrollAppList, gbc);
+		scrollAppList.setOpaque(false);
+        appList.setOpaque(false);
+		
+		gbc.gridy++;
+		gbc.weighty = 1.0;
+		add(new JLabel(), gbc);
+
+		gbc.gridy = 0;
+		gbc.weightx = 1.0;
+		gbc.gridx++;
+		gbc.weighty = 1.0;
+		add(new JLabel("Connected Devices"), gbc);
+		gbc.gridy++;
+		gbc.weighty = 100.0;
+		
+		JScrollPane scrollDeviceList = new JScrollPane(deviceList); 
+		add(scrollDeviceList, gbc);
+		scrollDeviceList.setOpaque(false);
+		scrollDeviceList.getViewport().setOpaque(false);
+		deviceList.setOpaque(false);
+		
+		gbc.gridy++;
+		gbc.weighty = 1.0;
 		
 		spawnDeviceAdapter = new JButton("Create a local ICE Device Adapter..."); 
 		
-		
-		rightPanel.add(spawnDeviceAdapter, BorderLayout.SOUTH);
-		add(leftPanel);
-		add(rightPanel);
-		
+		add(spawnDeviceAdapter, gbc);
 	}
 	
 	public JList getAppList() {

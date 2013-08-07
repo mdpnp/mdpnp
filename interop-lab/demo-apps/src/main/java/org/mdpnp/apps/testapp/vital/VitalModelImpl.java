@@ -106,7 +106,6 @@ public class VitalModelImpl implements VitalModel {
                 }
             }
             if (updated) {
-                updateState();
                 fireVitalChanged(v);
             }
         }
@@ -128,7 +127,6 @@ public class VitalModelImpl implements VitalModel {
                     if (!updated) {
                         v.getValues().add(new ValueImpl(n.universal_device_identifier, v));
                     }
-                    updateState();
                     fireVitalChanged(v);
                 }
             }
@@ -150,7 +148,6 @@ public class VitalModelImpl implements VitalModel {
         Vital v = new VitalImpl(this, label, units, names, low, high, minimum, maximum);
         vitals.add(v);
         addQueryConditions(v);
-        updateState();
         fireVitalAdded(v);
         return v;
     }
@@ -160,7 +157,6 @@ public class VitalModelImpl implements VitalModel {
         boolean r = vitals.remove(vital);
         if (r) {
             removeQueryConditions(vital);
-            updateState();
             fireVitalRemoved(vital);
         }
         return r;
@@ -171,7 +167,6 @@ public class VitalModelImpl implements VitalModel {
         Vital v = vitals.remove(i);
         if (v != null) {
             removeQueryConditions(v);
-            updateState();
             fireVitalRemoved(v);
         }
         return v;
@@ -204,6 +199,7 @@ public class VitalModelImpl implements VitalModel {
     }
 
     protected void fireVitalAdded(Vital v) {
+        updateState();
         VitalModelListener[] listeners = this.listeners;
         for (VitalModelListener vml : listeners) {
             vml.vitalAdded(this, v);
@@ -211,6 +207,7 @@ public class VitalModelImpl implements VitalModel {
     }
 
     protected void fireVitalRemoved(Vital v) {
+        updateState();
         VitalModelListener[] listeners = this.listeners;
         for (VitalModelListener vml : listeners) {
             vml.vitalRemoved(this, v);
@@ -218,6 +215,7 @@ public class VitalModelImpl implements VitalModel {
     }
 
     protected void fireVitalChanged(Vital v) {
+        updateState();
         VitalModelListener[] listeners = this.listeners;
         for (VitalModelListener vml : listeners) {
             vml.vitalChanged(this, v);
@@ -392,39 +390,32 @@ public class VitalModelImpl implements VitalModel {
         now.setTime(System.currentTimeMillis());
         String time = timeFormat.format(now);
 
-        boolean anyAdvisory = false;
-
-        int countOutOfRange = 0;
-        StringBuilder outOfRange = new StringBuilder();
+        int countWarnings = 0;
 
         for (int i = 0; i < N; i++) {
             Vital vital = getVital(i);
             advisories[i] = null;
-            if (vital.getValues().isEmpty()) {
-                anyAdvisory = true;
+            if (vital.isNoValueWarning() && vital.getValues().isEmpty()) {
+                countWarnings++;
                 advisories[i] = "- no source of " + vital.getLabel() + "\r\n";
             } else {
                 for (Value val : vital.getValues()) {
                     if (val.isAtOrBelowLow()) {
-                        anyAdvisory = true;
+                        countWarnings++;
                         advisories[i] = "- low " + vital.getLabel() + " " + val.getNumeric().value + " "
                                 + vital.getUnits() + "\r\n";
-                        countOutOfRange++;
-                        outOfRange.append(advisories[i]);
                     }
                     if (val.isAtOrAboveHigh()) {
-                        anyAdvisory = true;
+                        countWarnings++;
                         advisories[i] = "- high " + vital.getLabel() + " " + val.getNumeric().value + " "
                                 + vital.getUnits() + "\r\n";
-                        countOutOfRange++;
-                        outOfRange.append(advisories[i]);
                     }
                 }
             }
         }
 
         // Advisory processing
-        if (anyAdvisory) {
+        if (countWarnings>0) {
             warningTextBuilder.delete(0, warningTextBuilder.length());
             for (int i = 0; i < N; i++) {
                 if (null != advisories[i]) {
@@ -439,9 +430,9 @@ public class VitalModelImpl implements VitalModel {
             state = State.Normal;
         }
         
-        if (countOutOfRange >= countWarningsBecomeAlarm) {
+        if (countWarnings >= countWarningsBecomeAlarm) {
             state = State.Alarm;
-            stopInfusion("Stopped\r\n" + outOfRange.toString() + "at " + time + "\r\nnurse alerted");
+            stopInfusion("Stopped\r\n" + warningText + "at " + time + "\r\nnurse alerted");
         } else {
             for (int i = 0; i < N; i++) {
                 Vital vital = getVital(i);
@@ -492,7 +483,6 @@ public class VitalModelImpl implements VitalModel {
     public void resetInfusion() {
         interlock = false;
         interlockText = DEFAULT_INTERLOCK_TEXT;
-        updateState();
         fireVitalChanged(null);
     }
 
@@ -506,7 +496,6 @@ public class VitalModelImpl implements VitalModel {
     @Override
     public void setCountWarningsBecomeAlarm(int countWarningsBecomeAlarm) {
         this.countWarningsBecomeAlarm = countWarningsBecomeAlarm;
-        updateState();
         fireVitalChanged(null);
     }
 

@@ -132,6 +132,7 @@ public class DemoApp {
 		
 		
 		final MainMenuPanel mainMenuPanel = new MainMenuPanel();
+		mainMenuPanel.setOpaque(false);
 		panel.getContent().add(mainMenuPanel, "main");
 		ol.show(panel.getContent(), "main");
 				
@@ -145,7 +146,7 @@ public class DemoApp {
 		if(null == s || !"true".equals(s)) {
 		    UIManager.put("TabbedPane.contentOpaque", false);
 		    _pcaPanel = new PCAPanel(nc, refreshScheduler);
-		    _pcaPanel.setFont(_pcaPanel.getFont().deriveFont(30f));
+		    _pcaPanel.setOpaque(false);
 		    VitalModel vitalModel = new VitalModelImpl();
 		    VitalSign.HeartRate.addToModel(vitalModel);
 		    VitalSign.SpO2.addToModel(vitalModel);
@@ -325,10 +326,10 @@ public class DemoApp {
 		
 		
 		
-		DemoPanel.setChildrenOpaque(panel, false);
+//		DemoPanel.setChildrenOpaque(panel, false);
 		
 		
-		panel.setOpaque(true);
+//		panel.setOpaque(true);
 		
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(800,600);

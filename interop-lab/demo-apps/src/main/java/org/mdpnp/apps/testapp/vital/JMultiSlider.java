@@ -36,6 +36,9 @@ public class JMultiSlider extends JComponent implements ChangeListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         
+        
+        g.setFont(getFont());
+        
         Graphics2D g2d = (Graphics2D) g;
         getSize(size);
         
@@ -165,7 +168,7 @@ public class JMultiSlider extends JComponent implements ChangeListener {
 
     private void updateIt(BoundedRangeMultiModel model) {
         getSize(size);
-        System.out.println(size);
+//        System.out.println(size);
         while(rectangles.size() < model.getValueCount()) {
             rectangles.add(new Rectangle(9, 9));
         }
