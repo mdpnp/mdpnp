@@ -105,6 +105,9 @@ public class VitalModelImpl implements VitalModel {
     };
 
     protected void removeNumeric(String udi, int name) {
+        Vital[] vitals = vitalBuffer.get();
+        vitals = this.vitals.toArray(vitals);
+        vitalBuffer.set(vitals);
         for (Vital v : vitals) {
             boolean updated = false;
             for (int x : v.getNames()) {
@@ -125,7 +128,16 @@ public class VitalModelImpl implements VitalModel {
         }
     }
 
+    ThreadLocal<Vital[]> vitalBuffer = new ThreadLocal<Vital[]>() {
+        @Override
+        protected Vital[] initialValue() {
+            return new Vital[0];
+        }
+    };
     protected void updateNumeric(Numeric n, SampleInfo si) {
+        Vital[] vitals = vitalBuffer.get();
+        vitals = this.vitals.toArray(vitals);
+        vitalBuffer.set(vitals);
         for (Vital v : vitals) {
             for (int x : v.getNames()) {
                 // Change to this vital from a source

@@ -68,7 +68,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
     }
     private VitalModel model;
     
-    private final static class JVital extends JComponent {
+    private final static class JVital extends JPanel {
         private final Vital vital;
         private final JMultiSlider slider;
 
@@ -223,6 +223,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
 //                ((JLabel)vitalValues.getComponent(0)).setForeground(Color.yellow);
 //                ((JLabel)vitalValues.getComponent(0)).setBackground(Color.yellow);
                 ((JLabel)vitalValues.getComponent(0)).setText("NONE");
+                ((JLabel)vitalValues.getComponent(0)).setIcon(null);
             } else {
                 for(int i = 0; i < vital.getValues().size(); i++) {
                     Value val = vital.getValues().get(i);
@@ -245,7 +246,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
                     SoftReference<DeviceIcon> ref2 = udiToDeviceIcon.get(val.getUniversalDeviceIdentifier());
                     DeviceIcon dicon = null == ref2 ? null : ref2.get();
                     if(null == dicon && di != null) {
-                        dicon = new DeviceIcon(di.icon, 0.5);
+                        dicon = new DeviceIcon(di.icon, 0.25);
                         dicon.setConnected(true);
                         udiToDeviceIcon.put(val.getUniversalDeviceIdentifier(), new SoftReference<DeviceIcon>(dicon));
                     }
@@ -305,10 +306,10 @@ public class PCAConfig extends JComponent implements VitalModelListener {
             for(int i = 0; i < model.getCount(); i++) {
                 final Vital vital = model.getVital(i);
                 JVital jVital = new JVital(vital);
-                jVital.setOpaque(true);
-                jVital.setBackground(Color.white);
-                add(jVital, gbc);
                 
+
+                add(jVital, gbc);
+                jVital.setOpaque(true);
                 gbc.gridy++;
             }
             JPanel panel = new JPanel();
@@ -355,7 +356,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
             add(panel, gbc);
             
             gbc.gridy++;
-            gbc.weighty = 1.0;
+            gbc.weighty = 5.0;
             
             add(pumpPanel, gbc);
             
