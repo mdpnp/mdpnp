@@ -1,5 +1,7 @@
 package org.mdpnp.apps.testapp.pca;
 
+import ice.DeviceIdentity;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
@@ -12,15 +14,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
-import javax.media.nativewindow.util.Dimension;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -32,13 +37,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
-import org.mdpnp.apps.testapp.Device;
-import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.ScaledDeviceIcon;
+import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.apps.testapp.vital.JMultiSlider;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
@@ -47,13 +47,11 @@ import org.mdpnp.apps.testapp.vital.VitalModelListener;
 
 @SuppressWarnings("serial")
 public class PCAConfig extends JComponent implements VitalModelListener {
-    private final DeviceListModel deviceListModel;
-    public PCAConfig(DeviceListModel deviceListModel, ScheduledExecutorService executor) {
+    public PCAConfig(ScheduledExecutorService executor) {
         setLayout(new GridBagLayout());
-        this.deviceListModel = deviceListModel;
         pumpProgress = new JProgressAnimation(executor);
         pumpProgress.setBackground(new Color(1f,1f,1f,.5f));
-        pumpProgress.setOpaque(false);
+
         pumpProgress.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -75,22 +73,19 @@ public class PCAConfig extends JComponent implements VitalModelListener {
         private final JMultiSlider slider;
 
         private final JPanel vitalValues;
-        private final DeviceListModel deviceListModel;
         
         public Vital getVital() {
             return vital;
         }
         
-        public JVital(final Vital vital, final DeviceListModel deviceListModel) {
+        public JVital(final Vital vital) {
             setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black, 1), vital.getLabel() + " ("+vital.getUnits()+")", 0, 0, Font.decode("fixed-20"), getForeground()));
             this.vital = vital;
-            this.deviceListModel = deviceListModel;
             VitalBoundedRangleMulti range = new VitalBoundedRangleMulti(vital);
             slider = new JMultiSlider(range);
             slider.setRangeColor(0, Color.red);
             slider.setRangeColor(1, Color.yellow);
             slider.setRangeColor(2, Color.green);
-            slider.setOpaque(false);
 //            range.addChangeListener(this);
 //            slider.setPaintLabels(true);
 //            slider.setPaintTicks(true);
@@ -103,7 +98,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
                     vital.getParent().removeVital(vital);
                 }
             });
-            ignoreZero.setOpaque(false);
+
             ignoreZero.addActionListener(new ActionListener() {
 
                 @Override
@@ -113,7 +108,6 @@ public class PCAConfig extends JComponent implements VitalModelListener {
                 
             });
             
-            required.setOpaque(false);
             required.addActionListener(new ActionListener() {
                @Override
                 public void actionPerformed(ActionEvent e) {
@@ -160,7 +154,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
             gbc.gridx++;
             gbc.gridwidth = 3;
             vitalValues = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            vitalValues.setOpaque(false);
+
             updateData();
 
             add(vitalValues, gbc);
@@ -236,30 +230,46 @@ public class PCAConfig extends JComponent implements VitalModelListener {
                     
 //                    lbl.setForeground(val.isAtOrOutsideOfBounds() ? Color.yellow : Color.green);
 //                    lbl.setText(Integer.toString((int)val.getNumeric().value));
-                    Device device = deviceListModel.getByUniversalDeviceIdentifier(val.getUniversalDeviceIdentifier());
+//                    Device device = deviceListModel.getByUniversalDeviceIdentifier(val.getUniversalDeviceIdentifier());
+//                    DeviceIdentity di = vital.getParent().getDeviceIdentity(val.getUniversalDeviceIdentifier());
+                    
+//                    Device device = new Device();
+//                    SoftReference<Device> ref = udiToDeviceIcon.get(val.getUniversalDeviceIdentifier());
+                    SoftReference<DeviceIdentity> ref = udiToDeviceIdentity.get(val.getUniversalDeviceIdentifier());
+                    DeviceIdentity di = null == ref ? null : ref.get();
+                    if(null == di) {
+                        di = vital.getParent().getDeviceIdentity(val.getUniversalDeviceIdentifier());
+                        udiToDeviceIdentity.put(val.getUniversalDeviceIdentifier(), new SoftReference<DeviceIdentity>(di));
+                    }
+                    
+                    SoftReference<DeviceIcon> ref2 = udiToDeviceIcon.get(val.getUniversalDeviceIdentifier());
+                    DeviceIcon dicon = null == ref2 ? null : ref2.get();
+                    if(null == dicon && di != null) {
+                        dicon = new DeviceIcon(di.icon, 0.5);
+                        dicon.setConnected(true);
+                        udiToDeviceIcon.put(val.getUniversalDeviceIdentifier(), new SoftReference<DeviceIcon>(dicon));
+                    }
+                    
                     date.setTime(val.getSampleInfo().source_timestamp.sec*1000L + val.getSampleInfo().source_timestamp.nanosec / 1000000L);
-                    if(null != device) {
-//                        if(lbl.getBorder() instanceof TitledBorder) {
-//                            ((TitledBorder)lbl.getBorder()).setTitle(device.getMakeAndModel());
-//                        }
-                        lbl.setText("<html>"+device.getMakeAndModel()+"<br/>"+Integer.toString((int)val.getNumeric().value)+" @ "+timeFormat.format(date));
-                        if(!(lbl.getIcon() instanceof ScaledDeviceIcon) ||
-                           !((ScaledDeviceIcon)lbl.getIcon()).getSource().equals(device.getIcon())) {
-                            lbl.setIcon(new ScaledDeviceIcon(device.getIcon(), 0.5));
-                        }
-                        
-                        
+                    
+                    if(null != di) {
+                        String s = di.manufacturer.equals(di.model) ? di.manufacturer : (di.manufacturer + " " + di.model);
+                        lbl.setText("<html>"+s+"<br/>"+Integer.toString((int)val.getNumeric().value)+" @ "+timeFormat.format(date));
                     } else {
-//                        if(lbl.getBorder() instanceof TitledBorder) {
-//                            ((TitledBorder)lbl.getBorder()).setTitle("");
-//                        }
                         lbl.setText(Integer.toString((int)val.getNumeric().value)+ " @ "+timeFormat.format(date));
+                    }
+                    if(null != dicon) {
+                        lbl.setIcon(dicon);
+                    } else {
                         lbl.setIcon(null);
                     }
                 }
             }
         }
     }
+    
+    private static final Map<String,SoftReference<DeviceIdentity>> udiToDeviceIdentity = Collections.synchronizedMap(new HashMap<String, SoftReference<DeviceIdentity>>());
+    private static final Map<String,SoftReference<DeviceIcon>> udiToDeviceIcon = Collections.synchronizedMap(new HashMap<String, SoftReference<DeviceIcon>>()); 
     
     
     protected void updateVitals() {
@@ -294,14 +304,15 @@ public class PCAConfig extends JComponent implements VitalModelListener {
             
             for(int i = 0; i < model.getCount(); i++) {
                 final Vital vital = model.getVital(i);
-                JVital jVital = new JVital(vital, deviceListModel);
-                add(jVital, gbc);
+                JVital jVital = new JVital(vital);
                 jVital.setOpaque(true);
-                jVital.setBackground(Color.blue);
+                jVital.setBackground(Color.white);
+                add(jVital, gbc);
+                
                 gbc.gridy++;
             }
             JPanel panel = new JPanel();
-            panel.setOpaque(false);
+
             
             List<Integer> values = new ArrayList<Integer>();
             for(int i = 0; i < VitalSign.values().length; i++) {
@@ -380,7 +391,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
             }
             pumpStatus.setText(model.getInterlockText());
             // TODO setOpaque(false) is running rampant
-            warningStatus.setOpaque(true);
+
             switch(model.getState()) {
             case Alarm:
                 warningStatus.setBackground(Color.red);

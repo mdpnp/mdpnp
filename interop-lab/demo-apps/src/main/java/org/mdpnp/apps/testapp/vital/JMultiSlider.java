@@ -36,9 +36,6 @@ public class JMultiSlider extends JComponent implements ChangeListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         
-        
-        g.setFont(getFont());
-        
         Graphics2D g2d = (Graphics2D) g;
         getSize(size);
         
@@ -142,10 +139,15 @@ public class JMultiSlider extends JComponent implements ChangeListener {
             if(null != val) {
                 double p = 1.0 * (val - model.getMinimum()) / (model.getMaximum() - model.getMinimum());
                 int x = (int) (p * size.width);
+                if( (size.width-x) < 3) {
+                    x-= 3;
+                }
+                if( (x - 0) < 3) {
+                    x+=3;
+                }
                 g.drawLine(x, size.height/2-9, x, size.height/2);
             }
         }
-        
     }
     
     public JMultiSlider() {

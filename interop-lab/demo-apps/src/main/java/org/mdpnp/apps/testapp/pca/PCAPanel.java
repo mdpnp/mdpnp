@@ -1,9 +1,7 @@
 package org.mdpnp.apps.testapp.pca;
 
 
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridLayout;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -13,10 +11,8 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.BorderFactory;
-import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
 
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.vital.Vital;
@@ -35,15 +31,13 @@ public class PCAPanel extends JSplitPane implements VitalModelListener {
     
     private Clip drugDeliveryAlarm, generalAlarm;
     
-    public PCAPanel(DeviceListModel deviceListModel, ScheduledExecutorService refreshScheduler) {
-        super(JSplitPane.HORIZONTAL_SPLIT, true, new PCAConfig(deviceListModel, refreshScheduler), new VitalMonitoring(refreshScheduler));
+    public PCAPanel(ScheduledExecutorService refreshScheduler) {
+        super(JSplitPane.HORIZONTAL_SPLIT, true, new PCAConfig(refreshScheduler), new VitalMonitoring(refreshScheduler));
         pcaConfig = (PCAConfig) getLeftComponent();
         vitalMonitor = (VitalMonitoring) getRightComponent();
         
         setBorder(EMPTY_BORDER);
-        pcaConfig.setOpaque(false);
 
-        setOpaque(false);
         setDividerSize(4);
 
         setDividerLocation(0.5);

@@ -47,7 +47,7 @@ public class DeviceIcon extends ImageIcon {
        return WHITE_SQUARE.equals(getImage());
    }
 	
-   public void setImage(ice.Image image) {
+   public void setImage(ice.Image image, double scale) {
         int width = image.width;
         int height = image.height;
         byte[] raster = new byte[image.raster.size()];
@@ -65,9 +65,9 @@ public class DeviceIcon extends ImageIcon {
                     bi.setRGB(x, y, ib.get());
                 }
             }
-            BufferedImage after = new BufferedImage(3*width/4+1, 3*height/4+1, BufferedImage.TYPE_INT_ARGB);
+            BufferedImage after = new BufferedImage((int)(scale * width), (int)(scale * height), BufferedImage.TYPE_INT_ARGB);
             java.awt.geom.AffineTransform at = new java.awt.geom.AffineTransform();
-            at.scale(0.75, 0.75);
+            at.scale(scale, scale);
             
             AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
             after = scaleOp.filter(bi, after);
@@ -81,8 +81,12 @@ public class DeviceIcon extends ImageIcon {
     }
 	
    public DeviceIcon(ice.Image image) {
+       this(image, 0.75);
+   }
+   
+   public DeviceIcon(ice.Image image, double scale) {
         super();
-        setImage(image);
+        setImage(image, scale);
     }
 	public DeviceIcon(Image image) {
 		super(image);

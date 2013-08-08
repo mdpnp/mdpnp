@@ -145,7 +145,7 @@ public class DemoApp {
 		PCAPanel _pcaPanel = null;
 		if(null == s || !"true".equals(s)) {
 		    UIManager.put("TabbedPane.contentOpaque", false);
-		    _pcaPanel = new PCAPanel(nc, refreshScheduler);
+		    _pcaPanel = new PCAPanel(refreshScheduler);
 		    _pcaPanel.setOpaque(false);
 		    VitalModel vitalModel = new VitalModelImpl();
 		    VitalSign.HeartRate.addToModel(vitalModel);

@@ -22,8 +22,8 @@ public interface VitalModel {
     void addListener(VitalModelListener vitalModelListener);
     boolean removeListener(VitalModelListener vitalModelListener);
     
-//    ice.DeviceIdentity getDeviceIdentity(String udi);
-//    ice.DeviceConnectivity getDeviceConnectivity(String udi);
+    ice.DeviceIdentity getDeviceIdentity(String udi);
+    ice.DeviceConnectivity getDeviceConnectivity(String udi);
     
     void start(Subscriber subscriber, EventLoop eventLoop);
     void stop();
