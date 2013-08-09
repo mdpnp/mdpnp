@@ -73,9 +73,14 @@ public class JValueChart extends JComponent {
             
             for(int i = 0; i < value.getHistoryCount(); i++) {
                 int x = (int) (size.width * 1.0*(value.getHistoryTime(i)-first)/(last-first));
-                int y = size.height - (int) (size.height * 1.0 * (value.getHistoryValue(i)-low)/(high-low));
+                int y = size.height - (int) ( (size.height-1) * 1.0 * (value.getHistoryValue(i)-low)/(high-low)) - 1;
                 if(null != last_x && null != last_y) {
-                    g.drawLine(last_x, last_y, x, y);
+                    // in this ridiculously first-pass implementation we might hit the wraparound of the circular buffer
+                    // TODO better communicate the state of the circular buffer from the ValueImpl to avoid some of this
+                    // redundant processing
+                    if(last_x < x) {
+                        g.drawLine(last_x, last_y, x, y);
+                    }
                 }
                 
                 last_x = x;
