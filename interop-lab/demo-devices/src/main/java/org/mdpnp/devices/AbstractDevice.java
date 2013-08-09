@@ -128,6 +128,21 @@ public abstract class AbstractDevice implements ThreadFactory {
 	    numericDataWriter.write(holder.data, holder.handle);
 	}
 	
+	protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, int name) {
+	    if(null != newValue) {
+	        if(null == holder) {
+	            holder = createNumericInstance(name);
+	        }
+	        numericSample(holder, (int) newValue);
+	    } else {
+	        if(null != holder) {
+	            unregisterNumericInstance(holder);
+	            holder = null;
+	        }
+	    }
+	    return holder;
+	}
+	
 	protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, int msPerSample) {
 	    holder.data.values.clear();
         for(Number n : newValues) {

@@ -143,13 +143,13 @@ public class VitalModelImpl implements VitalModel {
                 if (x == n.name) {
                     boolean updated = false;
                     for (Value va : v.getValues()) {
-                        if (va.getUniversalDeviceIdentifier().equals(n.universal_device_identifier)) {
+                        if (va.getName() == n.name && va.getUniversalDeviceIdentifier().equals(n.universal_device_identifier)) {
                             va.updateFrom(n, si);
                             updated = true;
                         }
                     }
                     if (!updated) {
-                        v.getValues().add(new ValueImpl(n.universal_device_identifier, v));
+                        v.getValues().add(new ValueImpl(n.universal_device_identifier, n.name, v));
                     }
                     fireVitalChanged(v);
                 }
@@ -310,10 +310,11 @@ public class VitalModelImpl implements VitalModel {
         if (null != numericReader && null != eventLoop) {
             // TODO this should probably be a ContentFilteredTopic to allow the
             // writer to do the filtering
-            StringSeq params = new StringSeq();
+            
             Set<QueryCondition> set = queryConditions.get(v);
             set = null == set ? new HashSet<QueryCondition>() : set;
             for (int x : v.getNames()) {
+                StringSeq params = new StringSeq();    
                 params.add(Integer.toString(x));
                 QueryCondition qc = numericReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
                         ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "name = %0", params);

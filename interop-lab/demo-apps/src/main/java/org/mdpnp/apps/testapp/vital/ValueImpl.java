@@ -7,6 +7,7 @@ import ice.Numeric;
 public class ValueImpl implements Value {
 
     private final String universalDeviceIdentifier;
+    private final int name;
     private final Numeric numeric = (Numeric) Numeric.create();
     private final SampleInfo sampleInfo = new SampleInfo();
     private final Vital parent;
@@ -21,8 +22,8 @@ public class ValueImpl implements Value {
     private long[] historyTime = new long[HISTORY_SAMPLES];
     private float[] historyValue = new float[HISTORY_SAMPLES];
     
-    public ValueImpl(String universalDeviceIdentifier, Vital parent) {
-        
+    public ValueImpl(String universalDeviceIdentifier, int name, Vital parent) {
+        this.name = name;
         this.universalDeviceIdentifier = universalDeviceIdentifier;
         this.parent = parent;
         
@@ -167,5 +168,9 @@ public class ValueImpl implements Value {
         }
         
 
+    }
+    @Override
+    public int getName() {
+        return name;
     }
 }

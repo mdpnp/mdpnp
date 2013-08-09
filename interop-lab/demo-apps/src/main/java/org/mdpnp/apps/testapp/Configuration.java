@@ -30,6 +30,7 @@ public class Configuration {
         CO2_Simulator(ice.ConnectionType.Simulated),
         Temp_Simulator(ice.ConnectionType.Simulated),
         Bernoulli(ice.ConnectionType.Network),
+        Ivy450C(ice.ConnectionType.Serial),
         Nonin(ice.ConnectionType.Serial),
         PhilipsMP70(ice.ConnectionType.Network),
         DragerApollo(ice.ConnectionType.Serial),
