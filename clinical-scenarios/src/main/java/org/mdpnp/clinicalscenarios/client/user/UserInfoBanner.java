@@ -53,7 +53,7 @@ public class UserInfoBanner extends Composite {
 	
 	private MenuItem listMyScn = new MenuItem("My Scenarios", NOOP);//List Scn for registered users
 	private MenuItem listApprvScn = new MenuItem("All Approved Scenarios", NOOP);//list of Approved Scn for Anonymous/registered users
-	private MenuItem createNewScn = new MenuItem("Create New", NOOP);//Ticket-102 Must be independent in the menu bar
+	private MenuItem createNewScn = new MenuItem("Create New Scenario", NOOP);//Ticket-102 Must be independent in the menu bar
 	
 	private UserInfoProxy userInfo;
 	
@@ -195,7 +195,7 @@ public class UserInfoBanner extends Composite {
 						username.addItem("List Scenarios", listScenarios);
 					}
 					//Ticket-102
-					createNewScn.setTitle("Create New Scenario");
+					createNewScn.setTitle("Create a new Clinical Scenario");
 					username.addItem(createNewScn);
 					
 					MenuBar logoutMenu = new MenuBar(true);

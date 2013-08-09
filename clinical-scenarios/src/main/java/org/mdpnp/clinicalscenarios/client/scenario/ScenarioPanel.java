@@ -406,7 +406,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * @param scn
 	 */
 	private void checkCliniciansListForPersistence(/*ScenarioRequest scn*/){
-//		if(currentScenario!=null && currentScenario.getEnvironments()!= null){
 			currentScenario.getEnvironments().getCliniciansInvolved().clear();
 			//delete the list and repopulate w/ data from the table
 //			List clinicians = currentScenario.getEnvironments().getCliniciansInvolved();
@@ -417,16 +416,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					if(!text.equals(""))
 						currentScenario.getEnvironments().getCliniciansInvolved().add(text);
 				}
-			}
-//		}
-		
+			}		
 	}
 	
 	/**
 	 * Checks if we need to persist the environments list
 	 */
 	private void checkEnvironmentsListForPersistence(){
-//		if(currentScenario!=null && currentScenario.getEnvironments()!= null){
 			currentScenario.getEnvironments().getClinicalEnvironments().clear();
 			//delete the list and re-populate w/ data from the table
 			for(int row=0; row<environmentsTable.getRowCount();row++){
@@ -436,9 +432,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					if(!text.equals(""))
 						currentScenario.getEnvironments().getClinicalEnvironments().add(text);
 				}
-			}
-//		}
-		
+			}		
 	}
 	
 	/**
@@ -479,15 +473,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 		checkScenarioFields(rc);
 			
-//		//Save equipment list
-//		checkEquipmentListForPersistence(rc);
-//		//Save hazards list
-//		checkHazardsListForPersistence(rc);
-//		//save clinicians list
-//		checkCliniciansListForPersistence();
-//		//save environments
-//		checkEnvironmentsListForPersistence();		
-
 		//persist scenario entity
 		rc.persist().using(currentScenario).with(driver.getPaths()).with("equipment", "hazards", "environments").to(new Receiver<ScenarioProxy>() {
 
@@ -607,7 +592,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		status.setText("");
 		
 		saveButton.setVisible(false);//can't save on demand
-		submitButton.setVisible(false);//can't submit the scn
+		submitButton.setVisible(false);//can't submit the Scn
 		
 		algorithmDescription.setEnabled(false);
 		clinicalProcesses.setEnabled(false);
@@ -1176,7 +1161,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("currentStateExample")
 	void onCSEClick(ClickEvent click) {
-		MyDialog md = new MyDialog("Current State Example", "A 49-year-old woman underwent an uneventful total abdominal hysterectomy and bilateral salpingo-oophorectomy. Postoperatively, the patient complained of severe pain and received intravenous morphine sulfate in small increments. She began receiving a continuous infusion of morphine via a patient controlled analgesia (PCA) pump. A few hours after leaving the PACU [post anesthesia care unit] and arriving on the floor, she was found pale with shallow breathing, a faint pulse, and pinpoint pupils. The nursing staff called a 'code,' and the patient was resuscitated and transferred to the intensive care unit on a respirator [ventilator]. Based on family wishes, life support was withdrawn and the patient died. Review of the case by providers implicated a PCA overdose. Delayed detection of respiratory compromise in PATIENTS undergoing PCA therapy is not uncommon because monitoring of respiratory status has been confounded by excessive nuisance alarm conditions (poor alarm condition specificity).");
+//		MyDialog md = new MyDialog("Current State Example", "A 49-year-old woman underwent an uneventful total abdominal hysterectomy and bilateral salpingo-oophorectomy. Postoperatively, the patient complained of severe pain and received intravenous morphine sulfate in small increments. She began receiving a continuous infusion of morphine via a patient controlled analgesia (PCA) pump. A few hours after leaving the PACU [post anesthesia care unit] and arriving on the floor, she was found pale with shallow breathing, a faint pulse, and pinpoint pupils. The nursing staff called a 'code,' and the patient was resuscitated and transferred to the intensive care unit on a respirator [ventilator]. Based on family wishes, life support was withdrawn and the patient died. Review of the case by providers implicated a PCA overdose. Delayed detection of respiratory compromise in PATIENTS undergoing PCA therapy is not uncommon because monitoring of respiratory status has been confounded by excessive nuisance alarm conditions (poor alarm condition specificity).");
+		String header = "\"Current State\" describes an adverse event or barrier to provide clinical care or to improving workflow, and the clinical challenges that could be solved with the proposed system."; 
+		String example = "Example: A 49-year-old woman underwent an uneventful total abdominal hysterectomy and bilateral salpingo-oophorectomy. Postoperatively, the patient complained of severe pain and received intravenous morphine sulfate in small increments. She began receiving a continuous infusion of morphine via a patient controlled analgesia (PCA) pump. A few hours after leaving the PACU [post anesthesia care unit] and arriving on the floor, she was found pale with shallow breathing, a faint pulse, and pinpoint pupils. The nursing staff called a 'code,' and the patient was resuscitated and transferred to the intensive care unit on a respirator [ventilator]. Based on family wishes, life support was withdrawn and the patient died. Review of the case by providers implicated a PCA overdose. Delayed detection of respiratory compromise in PATIENTS undergoing PCA therapy is not uncommon because monitoring of respiratory status has been confounded by excessive nuisance alarm conditions (poor alarm condition specificity).";
+		MyDialog md = new MyDialog(header, example);
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
@@ -1184,7 +1172,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("proposedStateExample")
 	void onPSEClick(ClickEvent click) {
-		MyDialog md = new MyDialog("Proposed State Example", "While on the PCA infusion pump, the PATIENT is monitored with a respiration rate monitor and a pulse oximeter. If physiological parameters move outside the pre-determined range, the infusion is stopped and clinical staff is notified to examine the PATIENT and restart the infusion if appropriate. The use of two independent physiological measurements of respiratory function (oxygen saturation and respiratory rate) enables a smart algorithm to optimize sensitivity, thereby enhancing the detection of respiratory compromise while reducing nuisance alarm conditions.");
+		String header = "\"Proposed State\" is a brief description of the improvement in safety and effectivenes obtained by applying the proposed system.";
+		String example ="Example: While on the PCA infusion pump, the PATIENT is monitored with a respiration rate monitor and a pulse oximeter. If physiological parameters move outside the pre-determined range, the infusion is stopped and clinical staff is notified to examine the PATIENT and restart the infusion if appropriate. The use of two independent physiological measurements of respiratory function (oxygen saturation and respiratory rate) enables a smart algorithm to optimize sensitivity, thereby enhancing the detection of respiratory compromise while reducing nuisance alarm conditions.";
+		MyDialog md = new MyDialog(header, example);
+//		MyDialog md = new MyDialog("Proposed State Example", "While on the PCA infusion pump, the PATIENT is monitored with a respiration rate monitor and a pulse oximeter. If physiological parameters move outside the pre-determined range, the infusion is stopped and clinical staff is notified to examine the PATIENT and restart the infusion if appropriate. The use of two independent physiological measurements of respiratory function (oxygen saturation and respiratory rate) enables a smart algorithm to optimize sensitivity, thereby enhancing the detection of respiratory compromise while reducing nuisance alarm conditions.");
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
@@ -1192,7 +1183,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("clinicalProcessesExample")
 	void onCPClick(ClickEvent click) {
-		MyDialog md = new MyDialog("Clinical Processes Example", "The patient is connected to a PCA infusion pump containing morphine sulfate, a large volume infusion pump acting as a carrier line of saline, a pulse oximeter, a non-invasive blood pressure device, a respiration rate monitor and a distributed alarm system. Heart rate and blood pressure, respiration rate, pain score and sedation score are collected as directed by the clinical process for set-up of a PCA pump. An intravenous (IV) line assessment is also completed. The PCA infusion pump, large volume infusion pump, and pulse oximeter are attached to the integrated system. The system queries the hospital information system for the patient's weight, age, and medication list (specifically, whether the patient is receiving sedatives or non-PCA opioids), and searches for a diagnosis of sleep apnea. The system then accesses the physician's orders from the computerized physician order entry system for dosage and rate for the PCA and large volume infusion pump, and verifies the values programmed into the infusion pump. The patient's SpO2 (arterial oxygen saturation measured by pulse oximetry) and respiration rate are monitored continuously.");
+		String header = "\"Clinical Processes\" describes how this approach affects the practicce environment, both clinically and from the business/process perspective.";
+		String example = "Example: The patient is connected to a PCA infusion pump containing morphine sulfate, a large volume infusion pump acting as a carrier line of saline, a pulse oximeter, a non-invasive blood pressure device, a respiration rate monitor and a distributed alarm system. Heart rate and blood pressure, respiration rate, pain score and sedation score are collected as directed by the clinical process for set-up of a PCA pump. An intravenous (IV) line assessment is also completed. The PCA infusion pump, large volume infusion pump, and pulse oximeter are attached to the integrated system. The system queries the hospital information system for the patient's weight, age, and medication list (specifically, whether the patient is receiving sedatives or non-PCA opioids), and searches for a diagnosis of sleep apnea. The system then accesses the physician's orders from the computerized physician order entry system for dosage and rate for the PCA and large volume infusion pump, and verifies the values programmed into the infusion pump. The patient's SpO2 (arterial oxygen saturation measured by pulse oximetry) and respiration rate are monitored continuously.";
+		MyDialog md = new MyDialog(header, example);
+//		MyDialog md = new MyDialog("Clinical Processes Example", "The patient is connected to a PCA infusion pump containing morphine sulfate, a large volume infusion pump acting as a carrier line of saline, a pulse oximeter, a non-invasive blood pressure device, a respiration rate monitor and a distributed alarm system. Heart rate and blood pressure, respiration rate, pain score and sedation score are collected as directed by the clinical process for set-up of a PCA pump. An intravenous (IV) line assessment is also completed. The PCA infusion pump, large volume infusion pump, and pulse oximeter are attached to the integrated system. The system queries the hospital information system for the patient's weight, age, and medication list (specifically, whether the patient is receiving sedatives or non-PCA opioids), and searches for a diagnosis of sleep apnea. The system then accesses the physician's orders from the computerized physician order entry system for dosage and rate for the PCA and large volume infusion pump, and verifies the values programmed into the infusion pump. The patient's SpO2 (arterial oxygen saturation measured by pulse oximetry) and respiration rate are monitored continuously.");
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
@@ -1200,14 +1194,20 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("algorithmDescriptionExample")
 	void onADClick(ClickEvent click) {
-		MyDialog md = new MyDialog("Algorithm Description Example", "The system uses an algorithm based on weight, age, medication list, diagnoses, SpO2 and respiration rate to determine the state of the patient. Sedation and pain scores also contribute to this algorithm. If the algorithm detects decreases in the patient's SpO2 and/or respiration rate below the calculated or pre-set threshold, a command is sent to stop the PCA pump to prevent further drug overdose, and the system generates a respiratory distress medium priority alarm condition sent via the distributed alarm system. Furthermore, if the algorithm detects that both the SpO2 and respiration rate indicate distress, the system generates an extreme respiratory distress high priority alarm condition sent via the distributed alarm system.");
+		String header = "\"Algorithm Description\" is a brief explanation of the new workflow.";
+		String example ="Example: The system uses an algorithm based on weight, age, medication list, diagnoses, SpO2 and respiration rate to determine the state of the patient. Sedation and pain scores also contribute to this algorithm. If the algorithm detects decreases in the patient's SpO2 and/or respiration rate below the calculated or pre-set threshold, a command is sent to stop the PCA pump to prevent further drug overdose, and the system generates a respiratory distress medium priority alarm condition sent via the distributed alarm system. Furthermore, if the algorithm detects that both the SpO2 and respiration rate indicate distress, the system generates an extreme respiratory distress high priority alarm condition sent via the distributed alarm system.";
+		MyDialog md = new MyDialog(header, example);
+//		MyDialog md = new MyDialog("Algorithm Description Example", "The system uses an algorithm based on weight, age, medication list, diagnoses, SpO2 and respiration rate to determine the state of the patient. Sedation and pain scores also contribute to this algorithm. If the algorithm detects decreases in the patient's SpO2 and/or respiration rate below the calculated or pre-set threshold, a command is sent to stop the PCA pump to prevent further drug overdose, and the system generates a respiratory distress medium priority alarm condition sent via the distributed alarm system. Furthermore, if the algorithm detects that both the SpO2 and respiration rate indicate distress, the system generates an extreme respiratory distress high priority alarm condition sent via the distributed alarm system.");
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
 	}
 	@UiHandler("benefitsExample")
 	void onBClick(ClickEvent click) {
-		MyDialog md = new MyDialog("Benefits Example", "Add error resistance to the x-ray procedure by eliminating the dependence on the operator (e.g. anesthesia provider) to remember to turn the ventilator back on. Shorten or eliminate the period of apnea, thereby reducing potentially adverse responses to apnea; and Provide the ability to synchronize x-ray exposure with inspiratory hold, without requiring anyone to be present in the x-ray exposure area to manually generate sustained inspiration");
+		String header = "\"Benefits\" describes obstales to efficiency, temawork or safety that could be aliminated with the proposed system.";
+		String example ="Example: Add error resistance to the x-ray procedure by eliminating the dependence on the operator (e.g. anesthesia provider) to remember to turn the ventilator back on. Shorten or eliminate the period of apnea, thereby reducing potentially adverse responses to apnea; and Provide the ability to synchronize x-ray exposure with inspiratory hold, without requiring anyone to be present in the x-ray exposure area to manually generate sustained inspiration.";
+		MyDialog md = new MyDialog(header, example);
+//		MyDialog md = new MyDialog("Benefits Example", "Add error resistance to the x-ray procedure by eliminating the dependence on the operator (e.g. anesthesia provider) to remember to turn the ventilator back on. Shorten or eliminate the period of apnea, thereby reducing potentially adverse responses to apnea; and Provide the ability to synchronize x-ray exposure with inspiratory hold, without requiring anyone to be present in the x-ray exposure area to manually generate sustained inspiration");
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
@@ -1215,7 +1215,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("risksExample")
 	void onRClick(ClickEvent click) {
-		MyDialog md = new MyDialog("Risks Example", "A synchronization error could lead to x-ray exposure at an incorrect phase of respiration.");
+		String header = "\"Risks\" is a description of new risks that could be introduced with the proposed and a how they could be mitigated.";
+		String example ="Example: A synchronization error could lead to x-ray exposure at an incorrect phase of respiration.";
+		MyDialog md = new MyDialog(header, example);
+//		MyDialog md = new MyDialog("Risks Example", "A synchronization error could lead to x-ray exposure at an incorrect phase of respiration.");
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
@@ -1262,16 +1265,18 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 //		if(!currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED)){
 		if(!isEmptyScenario() && currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_UNSUBMITTED)){
-			ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
-			currentScenario.setStatus(SCN_STATUS_SUBMITTED);
-			checkScenarioFields(scnReq);
+			final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+
 			boolean confirm = Window.confirm("Are you sure you want to SUBMIT this scenario?");
 			if(confirm){
+				
+				currentScenario.setStatus(SCN_STATUS_SUBMITTED);
+				checkScenarioFields(scnReq);
 				scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(new Receiver<ScenarioProxy>() {
 	
 					@Override
 					public void onSuccess(ScenarioProxy response) {
-						Window.alert("This Clinical Scenario has been submitted for approval");		
+						Window.alert("This Clinical Scenario has been submitted for approval");	
 						setCurrentScenario(currentScenario);
 					}
 					
@@ -1296,9 +1301,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("approveScnButton")
 	public void onClickApproveScn(ClickEvent clickEvent) {
-		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
-		currentScenario.setStatus(SCN_STATUS_APPROVED);//update entity information
-		checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
+		final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+
 		boolean confirm = Window.confirm("Are you sure you want to APPROVE this scenario?");
 		if(confirm){
 			String subject ="Your scenario "+currentScenario.getTitle()+" has been approved";
@@ -1306,6 +1310,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			+"Thank you for your submission.";
 			message += "\n\n"+feedback.getText();
 			message += "\n The MD PnP Team \n www.mdpnp.org";
+			
+			currentScenario.setStatus(SCN_STATUS_APPROVED);//update entity information
+			checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
 			
 			scnReq.persistWithNotification(currentScenario.getSubmitter(), subject, message)
 			.using(currentScenario).with(driver.getPaths())
@@ -1332,10 +1339,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("rejectScnButton")
 	public void onClickRejectScn(ClickEvent clickEvent) {
-		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
-//		currentScenario.setStatus(SCN_STATUS_REJECTED);//XXX 07/22/13 diego@mdpnp.org, rejected Scn = pending of submission
-		currentScenario.setStatus(SCN_STATUS_UNSUBMITTED);//update entity information
-		checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
+		final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+
 		boolean confirm = Window.confirm("Are you sure you want to REJECT this scenario?");
 		if(confirm){
 			String subject ="Your scenario "+currentScenario.getTitle()+" has been rejected";
@@ -1344,6 +1349,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					+"We appreciate your submission, but the data provided makes this scenario not suitable for approval.";
 			message += "\n \n"+feedback.getText();
 			message += "\n The MD PnP Team \n www.mdpnp.org";
+			
+//			currentScenario.setStatus(SCN_STATUS_REJECTED);//XXX 07/22/13 diego@mdpnp.org, rejected Scn = pending of submission
+			currentScenario.setStatus(SCN_STATUS_UNSUBMITTED);//update entity information
+			checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
 			
 			scnReq.persistWithNotification(currentScenario.getSubmitter(), subject, message)
 			.using(currentScenario).with(driver.getPaths())
