@@ -46,16 +46,16 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 	}
 	
 	protected final InstanceHolder<ice.SampleArray> co2;
-	protected final InstanceHolder<ice.Numeric> spo2;
-	protected final InstanceHolder<ice.Numeric> pulserate;
+	protected InstanceHolder<ice.Numeric> spo2;
+	protected InstanceHolder<ice.Numeric> pulserate;
 
-	protected final InstanceHolder<ice.Numeric> rr;
-	protected final InstanceHolder<ice.Numeric> etco2;
-	protected final InstanceHolder<ice.Numeric> fastStatus; //= new MutableNumericUpdateImpl(DemoCapnostream20.FAST_STATUS);
-	protected final InstanceHolder<ice.Numeric> slowStatus; //= new MutableNumericUpdateImpl(DemoCapnostream20.SLOW_STATUS);
-	protected final InstanceHolder<ice.Numeric> co2ActiveAlarms; //= new MutableNumericUpdateImpl(DemoCapnostream20.CO2_ACTIVE_ALARMS);
-	protected final InstanceHolder<ice.Numeric> spo2ActiveAlarms; //= new MutableNumericUpdateImpl(DemoCapnostream20.SPO2_ACTIVE_ALARMS);
-	protected final InstanceHolder<ice.Numeric> extendedCO2Status; //= new MutableNumericUpdateImpl(DemoCapnostream20.EXTENDED_CO2_STATUS);
+	protected InstanceHolder<ice.Numeric> rr;
+	protected InstanceHolder<ice.Numeric> etco2;
+	protected InstanceHolder<ice.Numeric> fastStatus; //= new MutableNumericUpdateImpl(DemoCapnostream20.FAST_STATUS);
+	protected InstanceHolder<ice.Numeric> slowStatus; //= new MutableNumericUpdateImpl(DemoCapnostream20.SLOW_STATUS);
+	protected InstanceHolder<ice.Numeric> co2ActiveAlarms; //= new MutableNumericUpdateImpl(DemoCapnostream20.CO2_ACTIVE_ALARMS);
+	protected InstanceHolder<ice.Numeric> spo2ActiveAlarms; //= new MutableNumericUpdateImpl(DemoCapnostream20.SPO2_ACTIVE_ALARMS);
+	protected InstanceHolder<ice.Numeric> extendedCO2Status; //= new MutableNumericUpdateImpl(DemoCapnostream20.EXTENDED_CO2_STATUS);
 //	protected final MutableEnumerationUpdate capnostreamUnits = new MutableEnumerationUpdateImpl(DemoCapnostream20.CAPNOSTREAM_UNITS);
 	
 
@@ -72,16 +72,12 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
         
+        // Realtime data never explicitly absent... think about this
         co2 = createSampleArrayInstance(ice.MDC_CAPNOGRAPH.VALUE);
-        spo2 = createNumericInstance(ice.MDC_PULS_OXIM_SAT_O2.VALUE);
-        pulserate = createNumericInstance(ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
-        rr = createNumericInstance(ice.MDC_RESP_RATE.VALUE);
-        etco2 = createNumericInstance(ice.MDC_AWAY_CO2_EXP.VALUE);
         fastStatus = createNumericInstance(ice.oridion.MDC_FAST_STATUS.VALUE);
-        slowStatus = createNumericInstance(ice.oridion.MDC_SLOW_STATUS.VALUE);
-        co2ActiveAlarms = createNumericInstance(ice.oridion.MDC_CO2_ACTIVE_ALARMS.VALUE);
-        spo2ActiveAlarms = createNumericInstance(ice.oridion.MDC_SPO2_ACTIVE_ALARMS.VALUE);
-        extendedCO2Status = createNumericInstance(ice.oridion.MDC_EXTENDED_CO2_STATUS.VALUE);
+
+        
+        
 	}
 	
 	public DemoCapnostream20(int domainId, EventLoop eventLoop, SerialSocket serialSocket) {
@@ -97,15 +93,8 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
         
         co2 = createSampleArrayInstance(ice.MDC_CAPNOGRAPH.VALUE);
-        spo2 = createNumericInstance(ice.MDC_PULS_OXIM_SAT_O2.VALUE);
-        pulserate = createNumericInstance(ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
-        rr = createNumericInstance(ice.MDC_RESP_RATE.VALUE);
-        etco2 = createNumericInstance(ice.MDC_AWAY_CO2_EXP.VALUE);
-        fastStatus = createNumericInstance(ice.oridion.MDC_FAST_STATUS.VALUE);
-        slowStatus = createNumericInstance(ice.oridion.MDC_SLOW_STATUS.VALUE);
-        co2ActiveAlarms = createNumericInstance(ice.oridion.MDC_CO2_ACTIVE_ALARMS.VALUE);
-        spo2ActiveAlarms = createNumericInstance(ice.oridion.MDC_SPO2_ACTIVE_ALARMS.VALUE);
-        extendedCO2Status = createNumericInstance(ice.oridion.MDC_EXTENDED_CO2_STATUS.VALUE);
+        
+        // Other instances we'll register as they become available
     }
 	
 	private static final int BUFFER_SAMPLES = 10;
@@ -127,33 +116,87 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 		        int extendedCO2Status) {
 		    
 		    if(0xFF != spo2) {
+		        // We have an SpO2 value
+		        if(null == DemoCapnostream20.this.spo2) {
+		            // Must re-create
+		            DemoCapnostream20.this.spo2 = createNumericInstance(ice.MDC_PULS_OXIM_SAT_O2.VALUE);
+		        }
 		        numericSample(DemoCapnostream20.this.spo2, spo2);
+		    } else if(DemoCapnostream20.this.spo2 != null) {
+		        unregisterNumericInstance(DemoCapnostream20.this.spo2);
+		        DemoCapnostream20.this.spo2 = null;
 		    }
+		    
 		    if(respiratoryRate != 0xFF) {
+		        if(null == rr) {
+		            rr = createNumericInstance(ice.MDC_RESP_RATE.VALUE);
+		        }
 		        numericSample(rr, respiratoryRate);
+		    } else if(rr != null) {
+		        unregisterNumericInstance(rr);
+		        rr = null;
 		    }
+		    
 		    if(etCO2 != 0xFF) {
+		        if(null == etco2) {
+		            etco2 = createNumericInstance(ice.MDC_AWAY_CO2_EXP.VALUE);
+		        }
 		        numericSample(etco2, etCO2);
+		    } else if(etco2 != null) {
+		        unregisterNumericInstance(etco2);
+		        etco2 = null;
 		    }
+		    
 		    if(pulserate != 0xFF) {
+		        if(null == DemoCapnostream20.this.pulserate) {
+		            DemoCapnostream20.this.pulserate = createNumericInstance(ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
+		        }
 		        numericSample(DemoCapnostream20.this.pulserate, pulserate);
+		    } else if(DemoCapnostream20.this.pulserate != null) {
+		        unregisterNumericInstance(DemoCapnostream20.this.pulserate);
+		        DemoCapnostream20.this.pulserate = null;
 		    }
+		    
 		    if(0xFF != extendedCO2Status) {
+		        if(null == DemoCapnostream20.this.extendedCO2Status) {
+		            DemoCapnostream20.this.extendedCO2Status = createNumericInstance(ice.oridion.MDC_EXTENDED_CO2_STATUS.VALUE);
+		        }
 		        numericSample(DemoCapnostream20.this.extendedCO2Status, extendedCO2Status);
+		    } else if(DemoCapnostream20.this.extendedCO2Status != null) {
+		        unregisterNumericInstance(DemoCapnostream20.this.extendedCO2Status);
+		        DemoCapnostream20.this.extendedCO2Status = null;
 		    }
+		    
 		    if(0xFF != slowStatus) {
+		        if(null == DemoCapnostream20.this.slowStatus) {
+		            DemoCapnostream20.this.slowStatus = createNumericInstance(ice.oridion.MDC_SLOW_STATUS.VALUE);
+		        }
 		        numericSample(DemoCapnostream20.this.slowStatus, slowStatus);
+		    } else if(DemoCapnostream20.this.slowStatus != null) {
+		        unregisterNumericInstance(DemoCapnostream20.this.slowStatus);
+		        DemoCapnostream20.this.slowStatus = null;
 		    }
+		    
 		    if(0xFF != CO2ActiveAlarms) {
+		        if(null == DemoCapnostream20.this.co2ActiveAlarms) {
+		            co2ActiveAlarms = createNumericInstance(ice.oridion.MDC_CO2_ACTIVE_ALARMS.VALUE);
+		        }
 		        numericSample(DemoCapnostream20.this.co2ActiveAlarms, CO2ActiveAlarms);
+		    } else if(DemoCapnostream20.this.co2ActiveAlarms != null) {
+		        unregisterNumericInstance(DemoCapnostream20.this.co2ActiveAlarms);
+		        DemoCapnostream20.this.co2ActiveAlarms = null;
 		    }
+		    
 		    if(0xFF != SpO2ActiveAlarms) {
+		        if(null == DemoCapnostream20.this.spo2ActiveAlarms) {
+		            DemoCapnostream20.this.spo2ActiveAlarms = createNumericInstance(ice.oridion.MDC_SPO2_ACTIVE_ALARMS.VALUE);
+		        }
 		        numericSample(DemoCapnostream20.this.spo2ActiveAlarms, CO2ActiveAlarms);
+		    } else if(DemoCapnostream20.this.spo2ActiveAlarms != null) {
+		        unregisterNumericInstance(DemoCapnostream20.this.spo2ActiveAlarms);
+		        DemoCapnostream20.this.spo2ActiveAlarms = null;
 		    }
 
-//            if(DemoCapnostream20.this.capnostreamUnits.setValue(units)) {
-//                updates.add(DemoCapnostream20.this.capnostreamUnits);
-//            }
             return true;
 		}
 		

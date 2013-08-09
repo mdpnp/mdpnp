@@ -106,6 +106,10 @@ public abstract class AbstractDevice implements ThreadFactory {
 	    return holder;
 	}
 	
+	protected void unregisterNumericInstance(InstanceHolder<Numeric> holder) {
+        numericDataWriter.unregister_instance(holder.data, holder.handle);
+    }
+	
 	protected InstanceHolder<SampleArray> createSampleArrayInstance(int name) {
 	    if(deviceIdentity == null || deviceIdentity.universal_device_identifier == null || "".equals(deviceIdentity.universal_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.universal_device_identifier before calling createSampleArrayInstance");

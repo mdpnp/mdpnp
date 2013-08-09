@@ -56,7 +56,9 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 			executor.scheduleAtFixedRate(new Watchdog(), 0L, getMaximumQuietTime(), TimeUnit.MILLISECONDS);
 		}
 		this.socket = sock;
-		this.portIdentifier = sock.getPortIdentifier();
+		if(null != sock) {
+		    this.portIdentifier = sock.getPortIdentifier();
+		}
 	}
 	
 	public void setSerialProvider(SerialProvider serialProvider) {

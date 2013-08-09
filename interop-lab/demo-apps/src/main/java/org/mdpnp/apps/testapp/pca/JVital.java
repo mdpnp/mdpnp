@@ -178,7 +178,7 @@ public final class JVital extends JPanel {
             if(vital.getValues().isEmpty()) {
 //                ((JLabel)vitalValues.getComponent(0)).setForeground(Color.yellow);
 //                ((JLabel)vitalValues.getComponent(0)).setBackground(Color.yellow);
-                ((JValue)vitalValues.getComponent(0)).update(null, "NONE", null, null, 0L, 0L);
+                ((JValue)vitalValues.getComponent(0)).update(null, null, "NONE", null, null, 0L, 0L);
             } else {
                 for(int i = 0; i < vital.getValues().size(); i++) {
                     Value val = vital.getValues().get(i);
@@ -208,9 +208,9 @@ public final class JVital extends JPanel {
                     
                     if(null != di) {
                         String s = di.manufacturer.equals(di.model) ? di.manufacturer : (di.manufacturer + " " + di.model);
-                        lbl.update(dicon, s, val.getNumeric(), val.getSampleInfo(), val.getValueMsBelowLow(), val.getValueMsAboveHigh());
+                        lbl.update(val, dicon, s, val.getNumeric(), val.getSampleInfo(), val.getValueMsBelowLow(), val.getValueMsAboveHigh());
                     } else {
-                        lbl.update(dicon, "", val.getNumeric(), val.getSampleInfo(), val.getValueMsBelowLow(), val.getValueMsAboveHigh());
+                        lbl.update(val, dicon, "", val.getNumeric(), val.getSampleInfo(), val.getValueMsBelowLow(), val.getValueMsAboveHigh());
                     }
 
                 }

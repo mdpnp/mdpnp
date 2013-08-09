@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.pca;
 import ice.Numeric;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -14,6 +15,9 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
+import org.mdpnp.apps.testapp.vital.JValueChart;
+import org.mdpnp.apps.testapp.vital.Value;
+
 import com.rti.dds.subscription.SampleInfo;
 
 public class JValue extends JComponent {
@@ -22,6 +26,7 @@ public class JValue extends JComponent {
     private final JLabel value = new JLabel();
     private final JLabel valueMsAbove = new JLabel();
     private final JLabel valueMsBelow = new JLabel();
+    private final JValueChart valueChart = new JValueChart(null);
     
     public JValue() {
         setLayout(new GridBagLayout());
@@ -46,13 +51,20 @@ public class JValue extends JComponent {
         gbc.gridy++;
         add(valueMsBelow, gbc);
         
+        gbc.gridx++;
+        gbc.gridy = 0;
+        gbc.gridheight = 2;
+        valueChart.setMinimumSize(new Dimension(100, 20));
+        valueChart.setPreferredSize(new Dimension(100, 20));
+        add(valueChart, gbc);
+        
         
     }
     
     private final Date date = new Date();
     private final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
     
-    public void update(Icon icon, String deviceName, Numeric numeric, SampleInfo si, long valueMsBelowLow, long valueMsAboveHigh) {
+    public void update(Value value, Icon icon, String deviceName, Numeric numeric, SampleInfo si, long valueMsBelowLow, long valueMsAboveHigh) {
         this.icon.setIcon(icon);
         this.deviceName.setText(deviceName);
         if(si != null && numeric != null) {
@@ -63,7 +75,7 @@ public class JValue extends JComponent {
         }
         this.valueMsAbove.setText(0L == valueMsAboveHigh ? "" : Long.toString(valueMsAboveHigh/1000L));
         this.valueMsBelow.setText(0L == valueMsBelowLow ? "" : Long.toString(valueMsBelowLow / 1000L));
-        
+        this.valueChart.setValue(value);
         
     }
 }

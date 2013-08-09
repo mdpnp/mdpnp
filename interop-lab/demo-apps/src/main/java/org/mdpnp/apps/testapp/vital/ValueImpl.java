@@ -14,7 +14,7 @@ public class ValueImpl implements Value {
     private long valueMsBelowLow;
     private long valueMsAboveHigh;
     
-    private static final int HISTORY_SAMPLES = 50;
+    private static final int HISTORY_SAMPLES = 100;
     private int historyCount = 0;
     private boolean historyWrapped = false;
     
