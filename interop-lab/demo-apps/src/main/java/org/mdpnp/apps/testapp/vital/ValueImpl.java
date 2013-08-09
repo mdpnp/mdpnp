@@ -11,9 +11,21 @@ public class ValueImpl implements Value {
     private final SampleInfo sampleInfo = new SampleInfo();
     private final Vital parent;
     
+    private long valueMsBelowLow;
+    private long valueMsAboveHigh;
+    
+    private static final int HISTORY_SAMPLES = 50;
+    private int historyCount = 0;
+    private boolean historyWrapped = false;
+    
+    private long[] historyTime = new long[HISTORY_SAMPLES];
+    private float[] historyValue = new float[HISTORY_SAMPLES];
+    
     public ValueImpl(String universalDeviceIdentifier, Vital parent) {
+        
         this.universalDeviceIdentifier = universalDeviceIdentifier;
         this.parent = parent;
+        
     }
     
     @Override
@@ -77,5 +89,83 @@ public class ValueImpl implements Value {
     @Override
     public long getAgeInMilliseconds() {
         return System.currentTimeMillis() - (sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+    }
+    
+    @Override
+    public long getValueMsBelowLow() {
+        return valueMsBelowLow;
+    }
+    
+    public long getValueMsAboveHigh() {
+        return valueMsAboveHigh;
+    }
+    
+    @Override
+    public int getHistoryCount() {
+        return historyWrapped ? HISTORY_SAMPLES : historyCount;
+    }
+    
+    @Override
+    public long getHistoryTime(int x) {
+        return historyTime[x];
+    }
+    
+    @Override
+    public float getHistoryValue(int x) {
+        return historyValue[x];
+    }
+    
+    @Override
+    public void updateFrom(Numeric numeric, SampleInfo sampleInfo) {
+        // characterize the previous sample
+        boolean wasBelow = isAtOrBelowLow();
+        boolean wasAbove = isAtOrAboveHigh();
+        float wasValue = this.numeric.value;
+        long wasTime = this.sampleInfo.source_timestamp.sec * 1000L + this.sampleInfo.source_timestamp.nanosec / 1000000L;
+
+        // update the sample info
+        this.numeric.copy_from(numeric);
+        this.sampleInfo.copy_from(sampleInfo);
+
+        // characterize the new sample
+        boolean isAbove = isAtOrAboveHigh();
+        boolean isBelow =  isAtOrBelowLow();
+        float isValue = this.numeric.value;
+        long isTime = this.sampleInfo.source_timestamp.sec * 1000L + this.sampleInfo.source_timestamp.nanosec / 1000000L;
+        
+        // store for history
+        historyTime[historyCount] = isTime;
+        historyValue[historyCount] = isValue;
+        
+        if(++historyCount>=HISTORY_SAMPLES) {
+            historyWrapped = true;
+            historyCount = 0;
+        }
+        
+        // Integrate
+        if(isAbove) {
+            if(wasAbove) {
+                // persisting above the bound ... 
+                valueMsAboveHigh += (long) ((isTime - wasTime) * (wasValue - parent.getWarningHigh()));
+            } else {
+                // above the bound but it wasn't previously ... so restart at zero
+                valueMsAboveHigh = 0L;
+            }
+        } else {
+            valueMsAboveHigh = 0L;
+        }
+        
+        if(isBelow) {
+            if(wasBelow) {
+                // persisting below the bound ...
+                valueMsBelowLow += (long)((isTime - wasTime) * (parent.getWarningLow() - wasValue));
+            } else {
+                valueMsBelowLow = 0L;
+            }
+        } else {
+            valueMsBelowLow = 0L;
+        }
+        
+
     }
 }

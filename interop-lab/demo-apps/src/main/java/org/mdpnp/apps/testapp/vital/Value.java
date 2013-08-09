@@ -21,4 +21,15 @@ public interface Value {
     boolean isIgnore();
     
     long getAgeInMilliseconds();
+    
+    void updateFrom(Numeric numeric, SampleInfo sampleInfo);
+    
+    long getValueMsBelowLow();
+    long getValueMsAboveHigh();
+    
+    int getHistoryCount();
+    float getHistoryValue(int x);
+    long getHistoryTime(int x);
+    
+//    long getRateOfChange();
 }

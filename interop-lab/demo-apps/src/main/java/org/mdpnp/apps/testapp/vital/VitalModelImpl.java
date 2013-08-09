@@ -55,9 +55,6 @@ public class VitalModelImpl implements VitalModel {
     private final List<Vital> vitals = Collections.synchronizedList(new ArrayList<Vital>());
 
     private VitalModelListener[] listeners = new VitalModelListener[0];
-    
-    private final Map<String,InstanceHandle_t> udiToIdentityHandle = new HashMap<String,InstanceHandle_t>();
-    private final Map<String,InstanceHandle_t> udiToConnectivityHandle = new HashMap<String,InstanceHandle_t>();
 
     private DeviceIdentityDataReader deviceIdentityReader;
     private DeviceConnectivityDataReader deviceConnectivityReader;
@@ -138,6 +135,8 @@ public class VitalModelImpl implements VitalModel {
         Vital[] vitals = vitalBuffer.get();
         vitals = this.vitals.toArray(vitals);
         vitalBuffer.set(vitals);
+        // TODO linear search?  Query Condition should be vital specific
+        // or maybe these should be hashed because creating myriad QueryConditions is not advisable
         for (Vital v : vitals) {
             for (int x : v.getNames()) {
                 // Change to this vital from a source
@@ -145,8 +144,7 @@ public class VitalModelImpl implements VitalModel {
                     boolean updated = false;
                     for (Value va : v.getValues()) {
                         if (va.getUniversalDeviceIdentifier().equals(n.universal_device_identifier)) {
-                            va.getNumeric().copy_from(n);
-                            va.getSampleInfo().copy_from(si);
+                            va.updateFrom(n, si);
                             updated = true;
                         }
                     }
@@ -259,7 +257,9 @@ public class VitalModelImpl implements VitalModel {
         synchronized(info_seq) {
             diKeyHolder.universal_device_identifier = udi;
             InstanceHandle_t handle = deviceIdentityReader.lookup_instance(diKeyHolder);
-    
+            if(InstanceHandle_t.HANDLE_NIL.equals(handle)) {
+                return null;
+            }
             try {
                 deviceIdentityReader.read_instance(di_data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE,
                         ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
@@ -409,7 +409,10 @@ public class VitalModelImpl implements VitalModel {
     private String warningText = "", interlockText = DEFAULT_INTERLOCK_TEXT;
     private boolean interlock = false;
 
-    private final void updateState() {
+    // TODO I synchronized this because I saw a transient concurrent mod exception
+    // but it's unclear to me which thread other than the EventLoopHandler should be calling it
+    // am I mixing AWT and ELH calls?
+    private final synchronized void updateState() {
         int N = getCount();
 
         while (advisories.length < N) {
