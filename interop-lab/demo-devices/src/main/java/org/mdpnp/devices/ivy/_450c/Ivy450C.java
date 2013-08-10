@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.cpc.ansarB.AnsarB;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
@@ -32,7 +31,7 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
     }
 
-    private InstanceHolder<Numeric> heartRate, respiratoryRate, spo2, etco2, t1, t2, pulseRate;
+    private InstanceHolder<Numeric> heartRate, respiratoryRate, spo2, etco2, t1, t2, pulseRate, nibpSystolic, nibpDiastolic, nibpMean, nibpPulse, ibpSystolic, ibpDiastolic, ibpMean;
     
     @Override
     protected String iconResourceName() {
@@ -54,18 +53,20 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
         @Override
         protected void receiveNIBP(Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label) {
-            // TODO Auto-generated method stub
-            super.receiveNIBP(systolic, diastolic, mean, pulse, label);
+            nibpSystolic = numericSample(nibpSystolic, systolic, ice.MDC_PRESS_CUFF_SYS.VALUE);
+            nibpDiastolic = numericSample(nibpDiastolic, diastolic, ice.MDC_PRESS_CUFF_DIA.VALUE);
+            nibpPulse = numericSample(nibpPulse, pulse, ice.MDC_PULS_RATE_NON_INV.VALUE);
+            nibpMean = numericSample(nibpMean, mean, ice.MDC_PRESS_CUFF_MEAN.VALUE);
         }
         @Override
         protected void receivePressure1(Integer systolic, Integer diastolic, Integer mean, String label) {
-            // TODO Auto-generated method stub
-            super.receivePressure1(systolic, diastolic, mean, label);
+            ibpSystolic = numericSample(ibpSystolic, systolic, ice.MDC_PRESS_BLD_SYS.VALUE);
+            ibpDiastolic = numericSample(ibpDiastolic, diastolic, ice.MDC_PRESS_BLD_DIA.VALUE);
+            ibpMean = numericSample(ibpMean, mean, ice.MDC_PRESS_BLD_MEAN.VALUE);
         }
         @Override
         protected void receivePressure2(Integer systolic, Integer diastolic, Integer mean, String label) {
-            // TODO Auto-generated method stub
-            super.receivePressure2(systolic, diastolic, mean, label);
+            // TODO enable multiple instances of the same type of physiological identifier in future iterations
         }
         @Override
         protected void receiveRespiratoryRate(Integer value, String label) {
@@ -79,13 +80,11 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
         @Override
         protected void receiveTemperature1(Integer value, String label) {
-            // TODO Auto-generated method stub
-            super.receiveTemperature1(value, label);
+            t1 = numericSample(t1, value, ice.MDC_TEMP_BLD.VALUE);
         }
         @Override
         protected void receiveTemperature2(Integer value, String label) {
-            // TODO Auto-generated method stub
-            super.receiveTemperature2(value, label);
+            // TODO enable multiple instances of the same type of physiological identifier in future iterations 
         }
     }
     

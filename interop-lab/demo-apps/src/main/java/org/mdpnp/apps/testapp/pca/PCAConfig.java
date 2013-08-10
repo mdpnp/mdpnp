@@ -4,6 +4,7 @@ import ice.DeviceIdentity;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -39,8 +40,9 @@ import org.mdpnp.apps.testapp.vital.VitalModelListener;
 public class PCAConfig extends JComponent implements VitalModelListener {
     public PCAConfig(ScheduledExecutorService executor) {
         setLayout(new GridBagLayout());
-        pumpProgress = new JProgressAnimation(executor);
+        pumpProgress = new JProgressAnimation2(executor);
         pumpProgress.setBackground(new Color(1f,1f,1f,.5f));
+//        pumpProgress.setFont(Font.decode("fixed-20"));
 
         pumpProgress.addMouseListener(new MouseAdapter() {
             @Override
@@ -76,7 +78,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
         }
     }
     
-    private final JProgressAnimation pumpProgress;
+    private final JProgressAnimation2 pumpProgress;
     private final JTextArea pumpStatus = new JTextArea(" ");
     private final JTextArea warningStatus = new JTextArea(" ");
     private final JComboBox warningsToAlarm = new JComboBox();

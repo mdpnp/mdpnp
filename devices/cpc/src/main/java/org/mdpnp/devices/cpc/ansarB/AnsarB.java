@@ -3,9 +3,7 @@ package org.mdpnp.devices.cpc.ansarB;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,7 +159,7 @@ public class AnsarB {
         for(int i = off + FIXED_LENGTH; i < (len - 1); i++) {
             if(message[i] == '\r') {
                 // Now there is a line from last to (i - last - 1)
-                // We've put off encoding it long enough
+                // We've put off decoding it long enough
                 String line = new String(message, last, i - last - 1, ASCII).intern();
                 receiveLine(line);
                 last = i + 1;
