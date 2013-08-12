@@ -54,11 +54,11 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
                 offsetDelta = (int) (0.01 * size.width);
                 offsetDelta = offsetDelta<=0?1:offsetDelta;
                 
-                while(getFontMetrics(getFont()).stringWidth(TEXT) < (size.width-10)) {
+                while(getFontMetrics(getFont()).stringWidth(TEXT) < (size.width-10) || getFontMetrics(getFont()).getHeight() < (size.height/2)) {
                     setFont(getFont().deriveFont(getFont().getSize()+1f));
                 }
                 
-                while(getFontMetrics(getFont()).stringWidth(TEXT) > (size.width-10)) {
+                while(getFontMetrics(getFont()).stringWidth(TEXT) > (size.width-10) || getFontMetrics(getFont()).getHeight() > (size.height / 2)) {
                     setFont(getFont().deriveFont(getFont().getSize()-1f));
                 }
                 

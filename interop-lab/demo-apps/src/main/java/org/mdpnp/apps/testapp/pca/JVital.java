@@ -149,7 +149,7 @@ public final class JVital extends JPanel {
             gbc.gridheight = showConfiguration ? 2 : 1;
 //            add(new JLabel("Sources:"), gbc);
             
-            gbc.fill = GridBagConstraints.NONE;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
 //            gbc.gridx++;
 //            gbc.gridwidth = 3;
             
@@ -241,7 +241,7 @@ public final class JVital extends JPanel {
                     SoftReference<DeviceIcon> ref2 = PCAConfig.udiToDeviceIcon.get(val.getUniversalDeviceIdentifier());
                     DeviceIcon dicon = null == ref2 ? null : ref2.get();
                     if(null == dicon && di != null) {
-                        dicon = new DeviceIcon(di.icon, 0.50);
+                        dicon = new DeviceIcon(di.icon, 0.75);
                         dicon.setConnected(true);
                         PCAConfig.udiToDeviceIcon.put(val.getUniversalDeviceIdentifier(), new SoftReference<DeviceIcon>(dicon));
                     }
