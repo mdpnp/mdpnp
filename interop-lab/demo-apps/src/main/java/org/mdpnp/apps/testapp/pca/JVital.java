@@ -12,9 +12,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.InvocationTargetException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -32,7 +29,15 @@ public final class JVital extends JPanel {
         private final Vital vital;
         private final JMultiSlider slider;
 
-        private final JPanel vitalValues;
+        private final JPanel vitalValues = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        private final JButton deleteButton = new JButton("Remove");
+        private final JCheckBox ignoreZeroBox = new JCheckBox("Ignore Zero");
+        private final JCheckBox requiredBox = new JCheckBox("Required");
+        
+        private JLabel limitsLabel = new JLabel("Limits:");
+        private JLabel configureLabel = new JLabel("Configure:");
+        
+        private boolean showConfiguration = false;
         
         public Vital getVital() {
             return vital;
@@ -40,40 +45,71 @@ public final class JVital extends JPanel {
         
         public JVital(final Vital vital) {
             setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black, 1), vital.getLabel() + " ("+vital.getUnits()+")", 0, 0, Font.decode("fixed-20"), getForeground()));
+            
+//            setBackground(Color.black);
+//            setForeground(Color.green);
             this.vital = vital;
             VitalBoundedRangleMulti range = new VitalBoundedRangleMulti(vital);
             slider = new JMultiSlider(range);
             slider.setRangeColor(0, Color.red);
             slider.setRangeColor(1, Color.yellow);
             slider.setRangeColor(2, Color.green);
-//            range.addChangeListener(this);
-//            slider.setPaintLabels(true);
-//            slider.setPaintTicks(true);
-//            stateChanged(null);
             
-            JButton delete = new JButton("Remove");
-            delete.addActionListener(new ActionListener() {
+            deleteButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     vital.getParent().removeVital(vital);
                 }
             });
-
-            ignoreZero.addActionListener(new ActionListener() {
+            
+            ignoreZeroBox.addActionListener(new ActionListener() {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    vital.setIgnoreZero(ignoreZero.isSelected());
+                    vital.setIgnoreZero(ignoreZeroBox.isSelected());
                 }
                 
             });
             
-            required.addActionListener(new ActionListener() {
-               @Override
-                public void actionPerformed(ActionEvent e) {
-                   vital.setNoValueWarning(required.isSelected());
-                } 
-            });
+            requiredBox.addActionListener(new ActionListener() {
+                @Override
+                 public void actionPerformed(ActionEvent e) {
+                    vital.setNoValueWarning(requiredBox.isSelected());
+                 } 
+             });
+
+            _refreshContents();
+        }
+        
+        public void setShowConfiguration(boolean showConfiguration) {
+            if(showConfiguration ^ this.showConfiguration) {
+                this.showConfiguration = showConfiguration;
+                refreshContents();
+            }
+        }
+        
+        public void refreshContents() {
+            Runnable r = new Runnable() {
+                public void run() {
+                    _refreshContents();
+                }
+            };
+            if(SwingUtilities.isEventDispatchThread()) {
+                r.run();
+            } else {
+                try {
+                    SwingUtilities.invokeAndWait(r);
+                } catch (InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        
+        public void _refreshContents() {
+            removeAll();
             
             setLayout(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0);
@@ -83,45 +119,49 @@ public final class JVital extends JPanel {
             gbc.weightx = 0.1;
 
 
-            add(new JLabel("Limits:"), gbc);
+            add(limitsLabel, gbc);
             gbc.weightx = 10.0;
             gbc.gridx++;
             gbc.gridwidth = 3;
             add(slider, gbc);
             
-            // SECOND ROW
-            gbc.gridwidth = 1;
-//            gbc.fill = GridBagConstraints.NONE;
-            gbc.weightx = 1.0;
-            gbc.gridy++;
-            gbc.gridx = 0;
-            add(new JLabel("Configure:"), gbc);
-            gbc.gridx++;
-            add(ignoreZero, gbc);
+            if(showConfiguration) {
+                // SECOND ROW
+                gbc.gridwidth = 1;
+    //            gbc.fill = GridBagConstraints.NONE;
+                gbc.weightx = 1.0;
+                gbc.gridy++;
+                gbc.gridx = 0;
+                add(configureLabel, gbc);
+                gbc.gridx++;
+                add(ignoreZeroBox, gbc);
+                
+                gbc.gridx++;
+                add(requiredBox, gbc);
+                
+                gbc.gridx++;
+                add(deleteButton, gbc);
+            }
+
+            // DATA area
+            gbc.gridy = 0;
+            gbc.gridx = 4;
+            gbc.gridheight = showConfiguration ? 2 : 1;
+//            add(new JLabel("Sources:"), gbc);
             
-            gbc.gridx++;
-            add(required, gbc);
+            gbc.fill = GridBagConstraints.NONE;
+//            gbc.gridx++;
+//            gbc.gridwidth = 3;
             
-            gbc.gridx++;
-            add(delete, gbc);
-            
-            // THIRD ROW
-            gbc.gridy++;
-            gbc.gridx = 0;
-            add(new JLabel("Sources:"), gbc);
-            
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.gridx++;
-            gbc.gridwidth = 3;
-            vitalValues = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
             updateData();
 
             add(vitalValues, gbc);
+            
+            validate();
         }
 
-        private final JCheckBox ignoreZero = new JCheckBox("Ignore Zero");
-        private final JCheckBox required = new JCheckBox("Required");
+        
 //        @Override
 //        public void stateChanged(ChangeEvent e) {
 //            float range = vital.getMaximum() - vital.getMinimum();
@@ -136,8 +176,8 @@ public final class JVital extends JPanel {
         
         public void updateData() {
             final int N = vital.getValues().isEmpty() ? 1 : vital.getValues().size();
-            ignoreZero.setSelected(vital.isIgnoreZero());
-            required.setSelected(vital.isNoValueWarning());
+            ignoreZeroBox.setSelected(vital.isIgnoreZero());
+            requiredBox.setSelected(vital.isNoValueWarning());
             try {
                 if(N != vitalValues.getComponentCount()) {
                     Runnable r = new Runnable() {
@@ -201,7 +241,7 @@ public final class JVital extends JPanel {
                     SoftReference<DeviceIcon> ref2 = PCAConfig.udiToDeviceIcon.get(val.getUniversalDeviceIdentifier());
                     DeviceIcon dicon = null == ref2 ? null : ref2.get();
                     if(null == dicon && di != null) {
-                        dicon = new DeviceIcon(di.icon, 0.25);
+                        dicon = new DeviceIcon(di.icon, 0.50);
                         dicon.setConnected(true);
                         PCAConfig.udiToDeviceIcon.put(val.getUniversalDeviceIdentifier(), new SoftReference<DeviceIcon>(dicon));
                     }

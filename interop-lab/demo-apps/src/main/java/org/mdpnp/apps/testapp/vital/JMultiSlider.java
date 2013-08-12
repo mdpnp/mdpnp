@@ -34,6 +34,8 @@ public class JMultiSlider extends JComponent implements ChangeListener {
 
     private static final Stroke LINE_STROKE = new BasicStroke(3f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
 
+    private static final int[] HAPPY_INTERVALS = {5, 10, 20, 50, 100};
+    
     @Override
     protected void paintComponent(Graphics g_) {
         super.paintComponent(g_);
@@ -53,7 +55,6 @@ public class JMultiSlider extends JComponent implements ChangeListener {
             for (int i = 0; i < 10; i++) {
 
             }
-            int idx = 0;
 
             g.drawLine(0, size.height / 2, 0, size.height / 2 + 2);
             String s = Integer.toString(model.getMinimum());
@@ -67,17 +68,31 @@ public class JMultiSlider extends JComponent implements ChangeListener {
 
             g.drawString(s, size.width - w, size.height / 2 + h + 2);
 
-            final int N = 6;
-
-            w = size.width / (N - 1);
-            for (int i = 1; i < N; i++) {
-                int val = (int) (1.0 * i / N * (model.getMaximum() - model.getMinimum()) + model.getMinimum());
-                s = Integer.toString(val);
-                w = g.getFontMetrics().stringWidth(s);
-                int x = (int) (1.0 * i / N * size.width);
-                g.drawLine(x, size.height / 2, x, size.height / 2 + 2);
-                g.drawString(s, x - w / 2, size.height / 2 + h + 2);
+            
+            int range = model.getMaximum() - model.getMinimum();
+            
+            int width_max = Math.max(g.getFontMetrics().stringWidth(Integer.toString(model.getMaximum())), g.getFontMetrics().stringWidth(Integer.toString(model.getMinimum())));
+            // leave some extra wiggle room
+            width_max += 5;
+            for(int i = 0; i < HAPPY_INTERVALS.length; i++) {
+                int required_width = width_max * (range / HAPPY_INTERVALS[i]);
+                if(required_width < size.width) {
+                    int N = range/HAPPY_INTERVALS[i];
+                    w = size.width / (N - 1);
+                    for (int j = 1; j < N; j++) {
+                        int val = ((int) (1.0 * j / N * (model.getMaximum() - model.getMinimum()) + model.getMinimum()) / HAPPY_INTERVALS[i]) * HAPPY_INTERVALS[i];
+                        s = Integer.toString(val);
+                        w = g.getFontMetrics().stringWidth(s);
+                        int x = (int) (1.0 * j / N * size.width);
+                        g.drawLine(x, size.height / 2, x, size.height / 2 + 2);
+                        g.drawString(s, x - w / 2, size.height / 2 + h + 2);
+                    }
+                    break;
+                }
             }
+            
+
+
 
             // s = Integer.toString( (model.getMaximum()+model.getMinimum()) /
             // 2);
@@ -125,16 +140,29 @@ public class JMultiSlider extends JComponent implements ChangeListener {
             }
 
             g.setColor(getForeground());
+            int idx = 0;
             for (Rectangle r : rectangles) {
                 // System.out.println(r);
                 if (idx < rectangles.size() / 2) {
                     // left bound
                     g.drawLine(r.x, r.y, r.x, r.y + r.height);
                     g.drawLine(r.x, r.y, r.x + r.width, r.y);
+                    Float f = model.getValue(idx);
+                    String l = null == f ? null : Integer.toString((int)(float)f);
+                    if(null != f) {
+                        int wi = g.getFontMetrics().stringWidth(l);
+                        g.drawString(l, r.x+r.width/2-wi/2, size.height / 2 - 14);
+                    }
                 } else {
                     // right bound
                     g.drawLine(r.x + r.width, r.y, r.x + r.width, r.y + r.height);
                     g.drawLine(r.x, r.y, r.x + r.width, r.y);
+                    Float f = model.getValue(idx);
+                    String l = null == f ? null : Integer.toString((int)(float)f);
+                    if(null != f) {
+                        int wi = g.getFontMetrics().stringWidth(l);
+                        g.drawString(l, r.x+r.width/2-wi/2, size.height / 2 - 14);
+                    }
                 }
                 // g.fillRect(r.x, r.y, r.width, r.height);
                 idx++;
@@ -145,13 +173,20 @@ public class JMultiSlider extends JComponent implements ChangeListener {
                 if (null != val) {
                     double p = 1.0 * (val - model.getMinimum()) / (model.getMaximum() - model.getMinimum());
                     int x = (int) (p * size.width);
+                    
+                    // pull in points that would go over the edge
                     if ((size.width - x) < 3) {
                         x -= 3;
                     }
                     if ((x - 0) < 3) {
                         x += 3;
                     }
+                    
                     g.drawLine(x, size.height / 2 - 9, x, size.height / 2);
+                    
+                    String l = Integer.toString((int)(float)val);
+                    int wi = g.getFontMetrics().stringWidth(l);
+                    g.drawString(l, x-wi/2, size.height/2 - 14);
                 }
             }
             g.dispose();
@@ -215,9 +250,9 @@ public class JMultiSlider extends JComponent implements ChangeListener {
             Float value = model.getValue(i);
             if (null == value) {
                 if (i < model.getValueCount() / 2) {
-                    r.x = -r.width;
+                    r.x = -r.width-10;
                 } else {
-                    r.x = size.width;
+                    r.x = size.width+10;
                 }
             } else {
                 double p = 1.0 * (value - minimum) / range;

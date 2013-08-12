@@ -1,6 +1,7 @@
 package org.mdpnp.apps.testapp.pca;
 
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -11,19 +12,18 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.BorderFactory;
-import javax.swing.JSplitPane;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
 
-import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
 
 @SuppressWarnings("serial")
-public class PCAPanel extends JSplitPane implements VitalModelListener {
+public class PCAPanel extends JPanel implements VitalModelListener {
 
     private final PCAConfig pcaConfig;
-    private final VitalMonitoring vitalMonitor;
+//    private final VitalMonitoring vitalMonitor;
     
     private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder(15, 15, 15, 15);
     private static final Border YELLOW_BORDER = BorderFactory.createLineBorder(Color.yellow, 15, false);
@@ -32,15 +32,19 @@ public class PCAPanel extends JSplitPane implements VitalModelListener {
     private Clip drugDeliveryAlarm, generalAlarm;
     
     public PCAPanel(ScheduledExecutorService refreshScheduler) {
-        super(JSplitPane.HORIZONTAL_SPLIT, true, new PCAConfig(refreshScheduler), new VitalMonitoring(refreshScheduler));
-        pcaConfig = (PCAConfig) getLeftComponent();
-        vitalMonitor = (VitalMonitoring) getRightComponent();
+//        super(JSplitPane.HORIZONTAL_SPLIT, true, new PCAConfig(refreshScheduler), new VitalMonitoring(refreshScheduler));
+        super(new BorderLayout());
+//        pcaConfig = (PCAConfig) getLeftComponent();
+//        vitalMonitor = (VitalMonitoring) getRightComponent();
+        pcaConfig = new PCAConfig(refreshScheduler);
         
         setBorder(EMPTY_BORDER);
+        
+        add(pcaConfig, BorderLayout.CENTER);
 
-        setDividerSize(4);
+//        setDividerSize(4);
 
-        setDividerLocation(0.5);
+//        setDividerLocation(0.5);
         
         try {
             // http://www.anaesthesia.med.usyd.edu.au/resources/alarms/
@@ -63,10 +67,6 @@ public class PCAPanel extends JSplitPane implements VitalModelListener {
         }
     }
     
-    
-    public void setActive(boolean b) {
-        
-    }
 
     private VitalModel model;
     
@@ -79,7 +79,7 @@ public class PCAPanel extends JSplitPane implements VitalModelListener {
             this.model.addListener(this);
         }
         pcaConfig.setModel(model);
-        vitalMonitor.setModel(vitalModel);
+//        vitalMonitor.setModel(vitalModel);
     }
     public VitalModel getVitalModel() {
         return model;

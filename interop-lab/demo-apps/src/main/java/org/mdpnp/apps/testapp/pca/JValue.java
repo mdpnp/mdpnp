@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.pca;
 import ice.Numeric;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -30,6 +31,14 @@ public class JValue extends JComponent {
     private final JValueChart valueChart = new JValueChart(null);
     
     public JValue() {
+        icon.setOpaque(false);
+        deviceName.setOpaque(false);
+        value.setOpaque(false);
+        valueMsAbove.setOpaque(false);
+        valueMsBelow.setOpaque(false);
+        
+        value.setForeground(Color.blue);
+        
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.CENTER,GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0);
         gbc.gridheight = 2;
@@ -68,6 +77,13 @@ public class JValue extends JComponent {
     private final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
     
     public void update(Value value, Icon icon, String deviceName, Numeric numeric, SampleInfo si, long valueMsBelowLow, long valueMsAboveHigh) {
+//        if(value.isAtOrOutsideOfBounds()) {
+//            setBackground(Color.yellow);
+//        } else if(value.isAtOrOutsideOfCriticalBounds()) {
+//            setBackground(Color.red);
+//        } else {
+//            setBackground(getParent().getBackground());
+//        }
         this.icon.setIcon(icon);
         this.deviceName.setText(deviceName);
         if(si != null && numeric != null) {

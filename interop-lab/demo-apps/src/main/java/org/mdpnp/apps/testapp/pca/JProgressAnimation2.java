@@ -183,7 +183,7 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
                 // height is not scaled
 //                g.drawString(stop, -width/2, height / 2);
             } else {
-                g2d.setColor(Color.green);
+                g2d.setColor(getForeground());
                 g.setFont(getFont());
                 int w = g.getFontMetrics().stringWidth(TEXT);
                 g.drawString(TEXT, size.width/2-w/2, size.height / 3);

@@ -32,28 +32,15 @@ public class MainMenuPanel extends JPanel {
 	private final JList deviceList;
 	private final JButton spawnDeviceAdapter;
 	
-	private static final boolean isTrue(String property) {
-	    String s = System.getProperty(property);
-	    if(null != s && "true".equals(s)) {
-	        return true;
-	    } else {
-	        return false;
-	    }
-	}
 
-	public MainMenuPanel() {
+
+	public MainMenuPanel(String[] names) {
 		super(new GridBagLayout());
 		
 		setOpaque(false);
-		List<String> names = new ArrayList<String>();
-		if(!isTrue("NOPCA")) {
-		    names.add("Infusion Safety");
-		}
-		if(!isTrue("NOXRAYVENT")) {
-		    names.add("X-Ray Ventilator Sync");
-		}
+
 		GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(2,10,2,10), 0, 0);
-		appList = new JList(names.toArray(new String[0]));
+		appList = new JList(names);
 		appList.setSelectionBackground(appList.getBackground());
 		appList.setSelectionForeground(appList.getForeground());
 		deviceList = new JList();

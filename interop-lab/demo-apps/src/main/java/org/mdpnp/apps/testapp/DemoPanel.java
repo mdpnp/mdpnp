@@ -39,7 +39,7 @@ public class DemoPanel extends JPanel implements Runnable {
 	private final JPanel header = new JPanel();
 	private final JPanel footer = new JPanel();
 	private final JLabel status = new JLabel("  ");
-	private final JButton back = new JButton("Back");
+	private final JButton back = new JButton("Exit App");
 	private final JLabel time = new JLabel("HH:mm:ss");
 	private final JLabel version = new JLabel(" ");
 	

@@ -23,6 +23,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -38,10 +39,15 @@ import org.mdpnp.apps.testapp.vital.VitalModelListener;
 
 @SuppressWarnings("serial")
 public class PCAConfig extends JComponent implements VitalModelListener {
+    
+    JCheckBox configureModeBox = new JCheckBox("Configuration Mode");
+    JPanel configurePanel = new JPanel();
+    
     public PCAConfig(ScheduledExecutorService executor) {
         setLayout(new GridBagLayout());
         pumpProgress = new JProgressAnimation2(executor);
-        pumpProgress.setBackground(new Color(1f,1f,1f,.5f));
+        pumpProgress.setForeground(Color.green);
+//        pumpProgress.setBackground(new Color(1f,1f,1f,.5f));
 //        pumpProgress.setFont(Font.decode("fixed-20"));
 
         pumpProgress.addMouseListener(new MouseAdapter() {
@@ -57,6 +63,53 @@ public class PCAConfig extends JComponent implements VitalModelListener {
         warningStatus.setEditable(false);
         warningStatus.setLineWrap(true);
         warningStatus.setWrapStyleWord(true);
+        
+        
+        List<Integer> values = new ArrayList<Integer>();
+        for(int i = 0; i < VitalSign.values().length; i++) {
+            values.add(i+1);
+        }
+        warningsToAlarm.setModel(new DefaultComboBoxModel(values.toArray(new Integer[0])));
+//        warningsToAlarm.setSelectedItem((Integer)model.getCountWarningsBecomeAlarm());
+        configurePanel.add(warningsToAlarm);
+        configurePanel.add(new JLabel("Warnings become an alarm"));
+        warningsToAlarm.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                model.setCountWarningsBecomeAlarm((Integer)warningsToAlarm.getSelectedItem());
+            }
+            
+        });
+        
+        
+        final JComboBox vitalSigns = new JComboBox(VitalSign.values());
+        configurePanel.add(vitalSigns);
+        
+        JButton add = new JButton("Add");
+        add.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ((VitalSign)vitalSigns.getSelectedItem()).addToModel(model);
+            }
+        });
+        configurePanel.add(add);
+
+        
+        configureModeBox.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                configurePanel.setVisible(configureModeBox.isSelected());
+                for(Component c : getComponents()) {
+                    if(c instanceof JVital) {
+                        
+                        ((JVital)c).setShowConfiguration(configureModeBox.isSelected());
+                    }
+                }
+            }
+            
+        });
     }
     private VitalModel model;
     
@@ -88,74 +141,52 @@ public class PCAConfig extends JComponent implements VitalModelListener {
 
             }
         }
+        
+        // TODO this has become unnecessary ... vitals can be selectively added and removed with a little bit of caution instead of this current rebuilding at every change 
         removeAll();
 
         final VitalModel model = this.model;
         if(model != null) {
             GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0);
             
+            // ARGH
+//            warningStatus.setBackground(Color.white);
+//            pumpStatus.setBackground(Color.white);
+//            warningStatus.setOpaque(true);
+//            pumpStatus.setOpaque(true);
+            
+            JPanel pumpPanel = new JPanel(new GridLayout(1,3));
+            pumpPanel.add(pumpProgress);
+            JScrollPane scrollPane;
+            pumpPanel.add(scrollPane = new JScrollPane(pumpStatus));
+            scrollPane.setBorder(null);
+            pumpPanel.add(scrollPane = new JScrollPane(warningStatus));
+            scrollPane.setBorder(null);
+            gbc.weighty = 5.0;
+            add(pumpPanel, gbc);
+            
+            gbc.weighty = 1.0;
+            gbc.gridy++;
+            
+            gbc.gridwidth = 3;
+            add(configureModeBox, gbc);
+            
+            gbc.gridy++;
+            gbc.gridwidth = 1;
+            
             for(int i = 0; i < model.getCount(); i++) {
                 final Vital vital = model.getVital(i);
                 JVital jVital = new JVital(vital);
-                
+                jVital.setShowConfiguration(configureModeBox.isSelected());
 
                 add(jVital, gbc);
                 jVital.setOpaque(true);
                 gbc.gridy++;
             }
-            JPanel panel = new JPanel();
-
-            
-            List<Integer> values = new ArrayList<Integer>();
-            for(int i = 0; i < VitalSign.values().length; i++) {
-                values.add(i+1);
-            }
-            warningsToAlarm.setModel(new DefaultComboBoxModel(values.toArray(new Integer[0])));
-            warningsToAlarm.setSelectedItem((Integer)model.getCountWarningsBecomeAlarm());
-            panel.add(warningsToAlarm);
-            panel.add(new JLabel("Warnings become an alarm"));
-            warningsToAlarm.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    model.setCountWarningsBecomeAlarm((Integer)warningsToAlarm.getSelectedItem());
-                }
-                
-            });
-            
-            
-            final JComboBox vitalSigns = new JComboBox(VitalSign.values());
-            panel.add(vitalSigns);
-            
-            JButton add = new JButton("Add");
-            add.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    ((VitalSign)vitalSigns.getSelectedItem()).addToModel(model);
-                }
-            });
-            panel.add(add);
-            
-            JPanel pumpPanel = new JPanel(new GridLayout(1,3));
-            pumpPanel.add(pumpProgress);
-            pumpPanel.add(new JScrollPane(pumpStatus));
-            pumpPanel.add(new JScrollPane(warningStatus));
-            
-            
-            
             gbc.weighty = 0.1;
-            add(panel, gbc);
+            configurePanel.setVisible(configureModeBox.isSelected());
+            add(configurePanel, gbc);
             
-            gbc.gridy++;
-            gbc.weighty = 5.0;
-            
-            add(pumpPanel, gbc);
-            
-         // ARGH
-            warningStatus.setBackground(Color.white);
-            pumpStatus.setBackground(Color.white);
-            warningStatus.setOpaque(true);
-            pumpStatus.setOpaque(true);
         }
     }
     
@@ -192,7 +223,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
                 warningStatus.setBackground(Color.yellow);
                 break;
             case Normal:
-                warningStatus.setBackground(Color.white);
+                warningStatus.setBackground(getBackground());
                 break;
             }
             warningStatus.setText(model.getWarningText());

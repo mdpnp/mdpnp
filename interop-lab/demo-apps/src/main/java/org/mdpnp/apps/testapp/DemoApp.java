@@ -9,6 +9,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,7 +22,6 @@ import javax.swing.UIManager;
 
 import org.mdpnp.apps.testapp.pca.PCAPanel;
 import org.mdpnp.apps.testapp.pca.VitalSign;
-import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
@@ -48,6 +49,73 @@ public class DemoApp {
 	private static int verticalAlignment, verticalTextAlignment;
 	private static CardLayout ol;
 	
+	private enum AppType {
+	    Main("main", "Main Menu", null, false),
+	    Device("device", "Device Info", null, false),
+	    PCA("pca", "Infusion Safety", "NOPCA", true),
+	    PCAViz("pcaviz", "Data Visualization", null, true),
+	    XRay("xray", "X-Ray Ventilator Sync", "NOXRAYVENT", true)
+	    ;
+	    
+	    private final String id;
+	    private final String name;
+	    private final String disableProperty;
+	    private final boolean listed;
+	    
+	    private AppType(final String id, final String name, final String disableProperty, final boolean listed) {
+	        this.id = id;
+	        this.name = name;
+	        this.disableProperty = disableProperty;
+	        this.listed = listed;
+        }
+	    
+	    public String getId() {
+            return id;
+        }
+	    public String getName() {
+            return name;
+        }
+	    public boolean isListed() {
+            return listed;
+        }
+	    
+	    @Override
+	    public String toString() {
+	        return name;
+	    }
+	    private static final boolean isTrue(String property) {
+	        String s = System.getProperty(property);
+	        if(null != s && "true".equals(s)) {
+	            return true;
+	        } else {
+	            return false;
+	        }
+	    }
+	    public boolean isDisabled() {
+	        return null != disableProperty && isTrue(disableProperty);
+	    }
+	    public static String[] getListedNames() {
+	        List<String> names = new ArrayList<String>();
+	        for(AppType at : values()) {
+	            if(!at.isDisabled() && at.isListed()) {
+	                names.add(at.name);
+	            }
+	        }
+	        return names.toArray(new String[0]);
+	    }
+	    public static AppType fromName(String name) {
+	        if(name == null) {
+	            return null;
+	        }
+	        for(AppType at : values()) {
+	            if(name.equals(at.getName())) {
+	                return at;
+	            }
+	        }
+	        return null;
+	    }
+	}
+		
 	private static void setGoBack(String goback, Runnable goBackAction) {
 		DemoApp.goback = goback;
 		DemoApp.goBackAction = goBackAction;
@@ -131,40 +199,43 @@ public class DemoApp {
 //		panel.getContent().add(loginPanel, "login");
 		
 		
-		final MainMenuPanel mainMenuPanel = new MainMenuPanel();
+		final MainMenuPanel mainMenuPanel = new MainMenuPanel(AppType.getListedNames());
 		mainMenuPanel.setOpaque(false);
-		panel.getContent().add(mainMenuPanel, "main");
-		ol.show(panel.getContent(), "main");
+		panel.getContent().add(mainMenuPanel, AppType.Main.getId());
+		ol.show(panel.getContent(), AppType.Main.getId());
 				
 		final CompositeDevicePanel devicePanel = new CompositeDevicePanel();
-		panel.getContent().add(devicePanel, "devicepanel");
+		panel.getContent().add(devicePanel, AppType.Device.getId());
 		
+        final VitalModel vitalModel = new VitalModelImpl();
+        VitalSign.HeartRate.addToModel(vitalModel);
+        VitalSign.SpO2.addToModel(vitalModel);
+        VitalSign.RespiratoryRate.addToModel(vitalModel);
+//      VitalSign.EndTidalCO2.addToModel(vitalModel);
+		vitalModel.start(subscriber, eventLoop);
 		
-		
-		String s = System.getProperty("NOPCA");
 		PCAPanel _pcaPanel = null;
-		if(null == s || !"true".equals(s)) {
+		if(!AppType.PCA.isDisabled()) {
 		    UIManager.put("TabbedPane.contentOpaque", false);
 		    _pcaPanel = new PCAPanel(refreshScheduler);
 		    _pcaPanel.setOpaque(false);
-		    VitalModel vitalModel = new VitalModelImpl();
-		    VitalSign.HeartRate.addToModel(vitalModel);
-		    VitalSign.SpO2.addToModel(vitalModel);
-		    VitalSign.RespiratoryRate.addToModel(vitalModel);
-//		    VitalSign.EndTidalCO2.addToModel(vitalModel);
-		    _pcaPanel.setModel(vitalModel);
-		    vitalModel.start(subscriber, eventLoop);
-		    panel.getContent().add(_pcaPanel, "pca");
+		    panel.getContent().add(_pcaPanel, AppType.PCA.getId());
 		}
 		final PCAPanel pcaPanel = _pcaPanel;
-		
-		s = System.getProperty("NOXRAYVENT");
+
 		XRayVentPanel _xrayVentPanel = null;
-		if(null == s || !"true".equals(s)) {
+		if(!AppType.XRay.isDisabled()) {
 		    _xrayVentPanel = new XRayVentPanel(panel, nc, subscriber, eventLoop);
-		    panel.getContent().add(_xrayVentPanel, "xray");
+		    panel.getContent().add(_xrayVentPanel, AppType.XRay.getId());
 		}
 		final XRayVentPanel xrayVentPanel = _xrayVentPanel;
+		
+		DataVisualization _pcaviz = null;
+		if(!AppType.PCAViz.isDisabled()) {
+		    _pcaviz = new DataVisualization(refreshScheduler);
+		    panel.getContent().add(_pcaviz, AppType.PCAViz.getId());
+		}
+		final DataVisualization pcaviz = _pcaviz;
 		
       frame.addWindowListener(new WindowAdapter() {
             @Override
@@ -175,12 +246,12 @@ public class DemoApp {
                     goBackAction = null;
                 }
                 if(pcaPanel != null) {
-                    VitalModel vm = pcaPanel.getVitalModel();
-                    if(null != vm) {
-                        pcaPanel.setModel((VitalModel)null);
-                        vm.stop();
-                    }
+                    pcaPanel.setModel(null);
                 }
+                if(null != pcaviz) {
+                    pcaviz.setModel(null);
+                }
+                vitalModel.stop();
                 nc.tearDown();
                 try {
                     handler.shutdown();
@@ -249,26 +320,47 @@ public class DemoApp {
 				int idx = mainMenuPanel.getAppList().locationToIndex(e.getPoint());
 				if(idx >= 0 && mainMenuPanel.getAppList().getCellBounds(idx, idx).contains(e.getPoint())) {
 					Object o = mainMenuPanel.getAppList().getModel().getElementAt(idx);
-					/*if("Data Fusion".equals(o) && null != roomSyncPanel) {
-						setGoBack("main", null);
-						ol.show(panel.getContent(), "roomsync");
-					} else*/ if("Infusion Safety".equals(o) && null != pcaPanel) {
-						setGoBack("main", new Runnable() {
-						    public void run() {
-						        // TODO these apps need a lifecycle defined
-						        pcaPanel.setActive(false);
-						    }
-						});
-						pcaPanel.setActive(true);
-						ol.show(panel.getContent(), "pca");
-					} else if("X-Ray Ventilator Sync".equals(o) && null != xrayVentPanel) {
-						setGoBack("main", new Runnable() {
-							public void run() {
-							    xrayVentPanel.stop();
-							}
-						});
-						ol.show(panel.getContent(), "xray");
-						xrayVentPanel.start();
+					AppType appType = AppType.fromName((String)o);
+					
+					switch(appType) {
+					case PCAViz:
+					    if(null != pcaviz) {
+					        setGoBack(AppType.Main.getId(), new Runnable() {
+					           public void run() {
+					               pcaviz.setModel(null);
+					           }
+					        });
+					        panel.getBedLabel().setText(appType.getName());
+                            panel.getPatientLabel().setText("");
+                            pcaviz.setModel(vitalModel);
+                            ol.show(panel.getContent(), AppType.PCAViz.getId());
+					    }
+					    break;
+					case PCA:
+					    if(null != pcaPanel) {
+    						setGoBack(AppType.Main.getId(), new Runnable() {
+    						    public void run() {
+    						        pcaPanel.setModel(null);
+    						    }
+    						});
+    						panel.getBedLabel().setText(appType.getName());
+                            panel.getPatientLabel().setText("");
+    						pcaPanel.setModel(vitalModel);
+    						ol.show(panel.getContent(), AppType.PCA.getId());
+					    }
+					    break;
+					case XRay:
+					    if(null != xrayVentPanel) {
+    						setGoBack(AppType.Main.getId(), new Runnable() {
+    							public void run() {
+    							    xrayVentPanel.stop();
+    							}
+    						});
+    						ol.show(panel.getContent(), AppType.XRay.getId());
+    						xrayVentPanel.start();
+					    }
+					    break;
+
 					}
 				}
 				super.mouseClicked(e);
@@ -297,7 +389,7 @@ public class DemoApp {
 				    t.start();
 		            
 				    
-					setGoBack("main", new Runnable() {
+					setGoBack(AppType.Main.getId(), new Runnable() {
 					    public void run() {
 					        DeviceMonitor deviceMonitor = devicePanel.getModel();
                             if(null != deviceMonitor) {
@@ -306,7 +398,7 @@ public class DemoApp {
 					        devicePanel.setModel(null);
 					    }
 					});
-					ol.show(panel.getContent(), "devicepanel");
+					ol.show(panel.getContent(), AppType.Device.getId());
 				}
 				super.mouseClicked(e);
 			}
