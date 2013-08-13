@@ -8,10 +8,10 @@ import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
 
-public class VitalBoundedRangleMulti implements BoundedRangeMultiModel {
+public class VitalBoundedRangeMulti implements BoundedRangeMultiModel {
     private final Vital vital;
 
-    public VitalBoundedRangleMulti(final Vital vital) {
+    public VitalBoundedRangeMulti(final Vital vital) {
         this.vital = vital;
     }
 

@@ -12,12 +12,13 @@ class VitalImpl implements Vital {
     private final float minimum, maximum;
     private Float warningLow, warningHigh;
     private Float criticalLow, criticalHigh;
+    private Long valueMsWarningLow, valueMsWarningHigh;
     private final List<Value> values = new ArrayList<Value>();
     private boolean noValueWarning = false;
     private long warningAgeBecomesAlarm = Long.MAX_VALUE;
     
     
-    VitalImpl(VitalModelImpl parent, String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum) {
+    VitalImpl(VitalModelImpl parent, String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh) {
         this.parent = parent;
         this.label = label;
         this.units = units;
@@ -28,6 +29,8 @@ class VitalImpl implements Vital {
         setCriticalHigh(criticalHigh);
         setWarningLow(low);
         setWarningHigh(high);
+        setValueMsWarningLow(valueMsWarningLow);
+        setValueMsWarningHigh(valueMsWarningHigh);
     }
     
     
@@ -248,6 +251,28 @@ class VitalImpl implements Vital {
     @Override
     public void setWarningAgeBecomesAlarm(long warningAgeBecomesAlarm) {
         this.warningAgeBecomesAlarm = warningAgeBecomesAlarm;
+        parent.fireVitalChanged(this);
+    }
+    
+    @Override
+    public Long getValueMsWarningHigh() {
+        return valueMsWarningHigh;
+    }
+    
+    @Override
+    public Long getValueMsWarningLow() {
+        return valueMsWarningLow;
+    }
+    
+    @Override
+    public void setValueMsWarningHigh(Long high) {
+        this.valueMsWarningHigh = high;
+        parent.fireVitalChanged(this);
+    }
+    
+    @Override
+    public void setValueMsWarningLow(Long low) {
+        this.valueMsWarningLow = low;
         parent.fireVitalChanged(this);
     }
 }

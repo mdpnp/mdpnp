@@ -18,6 +18,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
 import org.mdpnp.apps.testapp.DeviceIcon;
@@ -27,9 +28,10 @@ import org.mdpnp.apps.testapp.vital.Vital;
 
 public final class JVital extends JPanel {
         private final Vital vital;
-        private final JMultiSlider slider;
+        private final JMultiSlider slider, slider2;
 
-        private final JPanel vitalValues = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        private final JLabel name = new JLabel();
+        private final JPanel vitalValues = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         private final JButton deleteButton = new JButton("Remove");
         private final JCheckBox ignoreZeroBox = new JCheckBox("Ignore Zero");
         private final JCheckBox requiredBox = new JCheckBox("Required");
@@ -44,16 +46,35 @@ public final class JVital extends JPanel {
         }
         
         public JVital(final Vital vital) {
-            setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black, 1), vital.getLabel() + " ("+vital.getUnits()+")", 0, 0, Font.decode("fixed-20"), getForeground()));
+            setBorder(null);
+//            setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black, 1), vital.getLabel() + " ("+vital.getUnits()+")", 0, 0, Font.decode("fixed-20"), getForeground()));
             
 //            setBackground(Color.black);
 //            setForeground(Color.green);
             this.vital = vital;
-            VitalBoundedRangleMulti range = new VitalBoundedRangleMulti(vital);
+//            name.setWrapStyleWord(true);
+//            name.setEditable(false);
+//            name.setLineWrap(true);
+            String lbl = vital.getLabel();
+            if(lbl.contains(" ")) {
+                lbl = lbl.replaceAll("\\ +", "<br/>");
+                lbl = "<html>"+lbl+"</html>";
+//                System.out.println("Label:"+lbl);
+            }
+            name.setText(lbl);
+            name.setFont(Font.decode("verdana-30"));
+            VitalBoundedRangeMulti range = new VitalBoundedRangeMulti(vital);
             slider = new JMultiSlider(range);
             slider.setRangeColor(0, Color.red);
             slider.setRangeColor(1, Color.yellow);
             slider.setRangeColor(2, Color.green);
+            VitalValueMsBoundedRangeMulti range2 = new VitalValueMsBoundedRangeMulti(vital);
+            slider2 = new JMultiSlider(range2);
+            slider2.setRangeColor(0, Color.yellow);
+            slider2.setRangeColor(1, Color.green);
+            slider2.setDrawThumbs(true);
+            
+            
             
             deleteButton.addActionListener(new ActionListener() {
                 @Override
@@ -82,10 +103,12 @@ public final class JVital extends JPanel {
         }
         
         public void setShowConfiguration(boolean showConfiguration) {
+            slider.setDrawThumbs(showConfiguration);
             if(showConfiguration ^ this.showConfiguration) {
                 this.showConfiguration = showConfiguration;
                 refreshContents();
             }
+            
         }
         
         public void refreshContents() {
@@ -115,8 +138,14 @@ public final class JVital extends JPanel {
             GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0);
             
             // FIRST ROW
-            gbc.gridx = 0;
+            
+            add(name, gbc);
+            
+            
+            
+            gbc.gridx = 1;
             gbc.weightx = 0.1;
+            
 
 
             add(limitsLabel, gbc);
@@ -126,12 +155,15 @@ public final class JVital extends JPanel {
             add(slider, gbc);
             
             if(showConfiguration) {
+                gbc.gridy++;
+                add(slider2, gbc);
+                
                 // SECOND ROW
                 gbc.gridwidth = 1;
     //            gbc.fill = GridBagConstraints.NONE;
                 gbc.weightx = 1.0;
                 gbc.gridy++;
-                gbc.gridx = 0;
+                gbc.gridx = 1;
                 add(configureLabel, gbc);
                 gbc.gridx++;
                 add(ignoreZeroBox, gbc);
@@ -145,7 +177,7 @@ public final class JVital extends JPanel {
 
             // DATA area
             gbc.gridy = 0;
-            gbc.gridx = 4;
+            gbc.gridx = 5;
             gbc.gridheight = showConfiguration ? 2 : 1;
 //            add(new JLabel("Sources:"), gbc);
             
@@ -178,6 +210,7 @@ public final class JVital extends JPanel {
             final int N = vital.getValues().isEmpty() ? 1 : vital.getValues().size();
             ignoreZeroBox.setSelected(vital.isIgnoreZero());
             requiredBox.setSelected(vital.isNoValueWarning());
+//            name.setText(vital.getLabel());
             try {
                 if(N != vitalValues.getComponentCount()) {
                     Runnable r = new Runnable() {
@@ -218,7 +251,7 @@ public final class JVital extends JPanel {
             if(vital.getValues().isEmpty()) {
 //                ((JLabel)vitalValues.getComponent(0)).setForeground(Color.yellow);
 //                ((JLabel)vitalValues.getComponent(0)).setBackground(Color.yellow);
-                ((JValue)vitalValues.getComponent(0)).update(null, null, "NONE", null, null, 0L, 0L);
+                ((JValue)vitalValues.getComponent(0)).update(null, null, "<NO SOURCES>", null, null, 0L, 0L);
             } else {
                 for(int i = 0; i < vital.getValues().size(); i++) {
                     Value val = vital.getValues().get(i);

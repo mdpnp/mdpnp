@@ -65,6 +65,9 @@ public class PCAConfig extends JComponent implements VitalModelListener {
         warningStatus.setWrapStyleWord(true);
         
         
+        pumpStatus.setFont(Font.decode("verdana-20"));
+        warningStatus.setFont(pumpStatus.getFont());
+        
         List<Integer> values = new ArrayList<Integer>();
         for(int i = 0; i < VitalSign.values().length; i++) {
             values.add(i+1);
@@ -207,10 +210,10 @@ public class PCAConfig extends JComponent implements VitalModelListener {
             warningsToAlarm.setSelectedItem((Integer)model.getCountWarningsBecomeAlarm());
             if(model.isInfusionStopped()) {
                 pumpProgress.stop();
-    //            pumpStatus.setBackground(Color.red);
+                pumpStatus.setBackground(Color.red);
             } else {
                 pumpProgress.start();
-    //            pumpStatus.setBackground(Color.green);
+                pumpStatus.setBackground(getBackground());
             }
             pumpStatus.setText(model.getInterlockText());
             // TODO setOpaque(false) is running rampant

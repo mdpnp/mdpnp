@@ -9,9 +9,6 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.swing.DefaultListModel;
@@ -26,15 +23,11 @@ import javax.swing.JTextArea;
 import javax.swing.ListModel;
 
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.vital.Value;
-import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalListModelAdapterImpl;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.rti.dds.infrastructure.Time_t;
 
 public class PCAMonitor extends JPanel implements VitalModelListener {
     private final JList list;
@@ -180,7 +173,7 @@ public class PCAMonitor extends JPanel implements VitalModelListener {
     
     private static String lastPumpCommand;
     
-    private static final void sendPumpCommand(final String command, final JComponent parent) {
+    public static final void sendPumpCommand(final String command, final JComponent parent) {
         lastPumpCommand = command;
         
         // removed by JP May 2, 2013

@@ -109,7 +109,8 @@ public class ElectroCardioGramPanel extends DevicePanel {
 	    case ice.MDC_RESP_RATE.VALUE:
 	        respiratoryRate.setText(Integer.toString((int)numeric.value));
 	        break;
-	    case ice.MDC_PULS_OXIM_PULS_RATE.VALUE:
+//	    case ice.MDC_PULS_OXIM_PULS_RATE.VALUE:
+	    case ice.MDC_PULS_RATE.VALUE:
 	        heartRate.setText(Integer.toString((int)numeric.value));
 	        break;
 	    }

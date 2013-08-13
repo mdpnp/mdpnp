@@ -85,7 +85,6 @@ public class PCAPanel extends JPanel implements VitalModelListener {
         return model;
     }
 
-
     @Override
     public void vitalChanged(VitalModel model, Vital vital) {
         if(model.isInfusionStopped()) {
@@ -104,11 +103,13 @@ public class PCAPanel extends JPanel implements VitalModelListener {
             case Alarm:
                 if(null != generalAlarm && !generalAlarm.isRunning()) {
                     generalAlarm.loop(Clip.LOOP_CONTINUOUSLY);
+//                    PCAMonitor.sendPumpCommand("Stop, \n", null);
                 }
                 break;
             case Warning:
             case Normal:
                 if(null != generalAlarm) {
+//                    PCAMonitor.sendPumpCommand("Start, 10\n", null);
                     generalAlarm.stop();
                 }
             default:

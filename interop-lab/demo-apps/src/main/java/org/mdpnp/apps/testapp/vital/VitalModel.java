@@ -15,7 +15,7 @@ public interface VitalModel {
     
     int getCount();
     Vital getVital(int i);
-    Vital addVital(String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum);
+    Vital addVital(String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh);
     boolean removeVital(Vital vital);
     Vital removeVital(int i);
     

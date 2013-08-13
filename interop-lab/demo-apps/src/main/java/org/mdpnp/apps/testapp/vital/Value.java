@@ -19,6 +19,9 @@ public interface Value {
     boolean isAtOrBelowCriticalLow();
     boolean isAtOrOutsideOfCriticalBounds();
     
+    boolean isAtOrAboveValueMsHigh();
+    boolean isAtOrAboveValueMsLow();
+    
     boolean isIgnore();
     
     long getAgeInMilliseconds();

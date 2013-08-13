@@ -168,8 +168,8 @@ public class VitalModelImpl implements VitalModel {
     }
 
     @Override
-    public Vital addVital(String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum) {
-        Vital v = new VitalImpl(this, label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum);
+    public Vital addVital(String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh) {
+        Vital v = new VitalImpl(this, label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow, valueMsWarningHigh);
         vitals.add(v);
         addQueryConditions(v);
         fireVitalAdded(v);
@@ -401,7 +401,7 @@ public class VitalModelImpl implements VitalModel {
         vm.start(s, eventLoop);
     }
 
-    private static final String DEFAULT_INTERLOCK_TEXT = "Active Infusion\r\nMorphine\r\n4cc / hour";
+    private static final String DEFAULT_INTERLOCK_TEXT = "Drug: Morphine\r\nRate: 4cc / hour";
     
     private static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
     private String[] advisories = new String[0];

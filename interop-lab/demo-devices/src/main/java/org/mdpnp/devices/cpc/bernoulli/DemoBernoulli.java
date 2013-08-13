@@ -29,6 +29,8 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 	protected final Map<String, InstanceHolder<Numeric>> numerics = new HashMap<String, InstanceHolder<Numeric>>();
 	private final Map<String, InstanceHolder<SampleArray>> waveforms = new HashMap<String, InstanceHolder<SampleArray>>();
 	
+
+	
 	
 	private class MyBernoulli extends Bernoulli {
 

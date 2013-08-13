@@ -78,16 +78,18 @@ public class JMultiSlider extends JComponent implements ChangeListener {
                 int required_width = width_max * (range / HAPPY_INTERVALS[i]);
                 if(required_width < size.width) {
                     int N = range/HAPPY_INTERVALS[i];
-                    w = size.width / (N - 1);
-                    for (int j = 1; j < N; j++) {
-                        int val = ((int) (1.0 * j / N * (model.getMaximum() - model.getMinimum()) + model.getMinimum()) / HAPPY_INTERVALS[i]) * HAPPY_INTERVALS[i];
-                        s = Integer.toString(val);
-                        w = g.getFontMetrics().stringWidth(s);
-                        int x = (int) (1.0 * j / N * size.width);
-                        g.drawLine(x, size.height / 2, x, size.height / 2 + 2);
-                        g.drawString(s, x - w / 2, size.height / 2 + h + 2);
+                    if(N > 1) {
+                        w = size.width / (N - 1);
+                        for (int j = 1; j < N; j++) {
+                            int val = ((int) (1.0 * j / N * (model.getMaximum() - model.getMinimum()) + model.getMinimum()) / HAPPY_INTERVALS[i]) * HAPPY_INTERVALS[i];
+                            s = Integer.toString(val);
+                            w = g.getFontMetrics().stringWidth(s);
+                            int x = (int) (1.0 * j / N * size.width);
+                            g.drawLine(x, size.height / 2, x, size.height / 2 + 2);
+                            g.drawString(s, x - w / 2, size.height / 2 + h + 2);
+                        }
+                        break;
                     }
-                    break;
                 }
             }
             
@@ -140,32 +142,34 @@ public class JMultiSlider extends JComponent implements ChangeListener {
             }
 
             g.setColor(getForeground());
-            int idx = 0;
-            for (Rectangle r : rectangles) {
-                // System.out.println(r);
-                if (idx < rectangles.size() / 2) {
-                    // left bound
-                    g.drawLine(r.x, r.y, r.x, r.y + r.height);
-                    g.drawLine(r.x, r.y, r.x + r.width, r.y);
-                    Float f = model.getValue(idx);
-                    String l = null == f ? null : Integer.toString((int)(float)f);
-                    if(null != f) {
-                        int wi = g.getFontMetrics().stringWidth(l);
-                        g.drawString(l, r.x+r.width/2-wi/2, size.height / 2 - 14);
+            if(drawThumbs) {
+                int idx = 0;
+                for (Rectangle r : rectangles) {
+                    // System.out.println(r);
+                    if (idx < rectangles.size() / 2) {
+                        // left bound
+                        g.drawLine(r.x, r.y, r.x, r.y + r.height);
+                        g.drawLine(r.x, r.y, r.x + r.width, r.y);
+                        Float f = model.getValue(idx);
+                        String l = null == f ? null : Integer.toString((int)(float)f);
+                        if(null != f) {
+                            int wi = g.getFontMetrics().stringWidth(l);
+                            g.drawString(l, r.x+r.width/2-wi/2, size.height / 2 - 14);
+                        }
+                    } else {
+                        // right bound
+                        g.drawLine(r.x + r.width, r.y, r.x + r.width, r.y + r.height);
+                        g.drawLine(r.x, r.y, r.x + r.width, r.y);
+                        Float f = model.getValue(idx);
+                        String l = null == f ? null : Integer.toString((int)(float)f);
+                        if(null != f) {
+                            int wi = g.getFontMetrics().stringWidth(l);
+                            g.drawString(l, r.x+r.width/2-wi/2, size.height / 2 - 14);
+                        }
                     }
-                } else {
-                    // right bound
-                    g.drawLine(r.x + r.width, r.y, r.x + r.width, r.y + r.height);
-                    g.drawLine(r.x, r.y, r.x + r.width, r.y);
-                    Float f = model.getValue(idx);
-                    String l = null == f ? null : Integer.toString((int)(float)f);
-                    if(null != f) {
-                        int wi = g.getFontMetrics().stringWidth(l);
-                        g.drawString(l, r.x+r.width/2-wi/2, size.height / 2 - 14);
-                    }
+                    // g.fillRect(r.x, r.y, r.width, r.height);
+                    idx++;
                 }
-                // g.fillRect(r.x, r.y, r.width, r.height);
-                idx++;
             }
             g.setColor(Color.blue);
             for (int i = 0; i < model.getMarkerCount(); i++) {
@@ -176,10 +180,12 @@ public class JMultiSlider extends JComponent implements ChangeListener {
                     
                     // pull in points that would go over the edge
                     if ((size.width - x) < 3) {
-                        x -= 3;
+//                        x -= 3;
+                        x = size.width - 3;
                     }
                     if ((x - 0) < 3) {
-                        x += 3;
+//                        x += 3;
+                        x = 3;
                     }
                     
                     g.drawLine(x, size.height / 2 - 9, x, size.height / 2);
@@ -206,6 +212,15 @@ public class JMultiSlider extends JComponent implements ChangeListener {
         setModel(model);
         setMinimumSize(new Dimension(100, 50));
         setPreferredSize(new Dimension(100, 50));
+    }
+    
+    private boolean drawThumbs;
+    
+    public void setDrawThumbs(boolean drawThumbs) {
+        if(drawThumbs ^ this.drawThumbs) {
+            this.drawThumbs = drawThumbs;
+            repaint();
+        }
     }
 
     public void setModel(BoundedRangeMultiModel model) {

@@ -60,12 +60,12 @@ public class ValueImpl implements Value {
     @Override
     public boolean isAtOrAboveHigh() {
         Float warningHigh = parent.getWarningHigh();
-        return isIgnore() || null == warningHigh ? false : Float.compare(numeric.value, warningHigh) >= 0;
+        return (isIgnore() || null == warningHigh) ? false : (Float.compare(numeric.value, warningHigh) >= 0);
     }
     @Override
     public boolean isAtOrBelowLow() {
         Float warningLow = parent.getWarningLow();
-        return isIgnore() || null == warningLow ? false : Float.compare(warningLow, numeric.value) >= 0;
+        return (isIgnore() || null == warningLow) ? false : (Float.compare(warningLow, numeric.value) >= 0);
     }
     @Override
     public boolean isAtOrOutsideOfBounds() {
@@ -75,12 +75,12 @@ public class ValueImpl implements Value {
     @Override
     public boolean isAtOrAboveCriticalHigh() {
         Float criticalHigh = parent.getCriticalHigh();
-        return isIgnore() || null == criticalHigh ? false : Float.compare(numeric.value,  criticalHigh) >= 0;
+        return (isIgnore() || null == criticalHigh) ? false : (Float.compare(numeric.value,  criticalHigh) >= 0);
     }
     @Override
     public boolean isAtOrBelowCriticalLow() {
         Float criticalLow = parent.getCriticalLow();
-        return isIgnore() || null == criticalLow ? false : Float.compare(criticalLow, numeric.value) >= 0;
+        return (isIgnore() || null == criticalLow) ? false : (Float.compare(criticalLow, numeric.value) >= 0);
     }
     @Override
     public boolean isAtOrOutsideOfCriticalBounds() {
@@ -172,5 +172,17 @@ public class ValueImpl implements Value {
     @Override
     public int getName() {
         return name;
+    }
+
+    @Override
+    public boolean isAtOrAboveValueMsHigh() {
+        Long warningHigh = parent.getValueMsWarningHigh();
+        return (isIgnore() || null == warningHigh) ? false : Long.compare(valueMsAboveHigh, warningHigh) >= 0;
+    }
+
+    @Override
+    public boolean isAtOrAboveValueMsLow() {
+        Long warningLow = parent.getValueMsWarningLow();
+        return (isIgnore() || null == warningLow) ? false : (Long.compare(warningLow, valueMsBelowLow) >= 0);
     }
 }
