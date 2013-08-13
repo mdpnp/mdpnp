@@ -54,9 +54,16 @@ public class TagsManagementPanel extends Composite implements Editor<TagProxy>{
 	public TagsManagementPanel(final TagRequestFactory tagRequestFactory) {
 		this.tagRequestFactory = tagRequestFactory;
 		initWidget(uiBinder.createAndBindUi(this));
-		TagRequest taReq = tagRequestFactory.tagRequest();
+//		TagRequest taReq = tagRequestFactory.tagRequest();
 		driver.initialize(tagRequestFactory, this);
+		drawTagTable();
 		
+	}
+	
+	public void drawTagTable(){
+		
+		TagRequest taReq = tagRequestFactory.tagRequest();
+		list.removeAllRows();
 		list.insertRow(0);
 		list.getRowFormatter().addStyleName(0, "tableHeader"); //TODO Style this table
 		

@@ -261,7 +261,7 @@ public class ScenarioSearchPanel extends Composite {
 
 		@Override
 		public void onSuccess(List<ScenarioProxy> response) {
-			//drawScenariosListTable(response);//DAG Older way to print the table using FleaxTable and not limiting results shwon
+			//drawScenariosListTable(response);//DAG Older way to print the table using FleaxTable and not limiting results shown
 			resetGridAuxVar(response);
 			drawScenariosListGrid(response);
 			

@@ -3,6 +3,7 @@ package org.mdpnp.clinicalscenarios.client.user;
 import java.util.Collections;
 import java.util.List;
 
+import org.mdpnp.clinicalscenarios.client.user.UserInfoPanel.Driver;
 import org.mdpnp.clinicalscenarios.client.user.comparator.UserComparator;
 
 import com.google.gwt.core.client.GWT;
@@ -35,6 +36,7 @@ public class UserInfoSearchPanel extends Composite {
 	
 //	private boolean reverseOrder;
 	private UserComparator comparator = new UserComparator("email", false);
+	private UserInfoRequest uir = null;
 
 	private static UserInfoSearchPanelUiBinder uiBinder = GWT
 			.create(UserInfoSearchPanelUiBinder.class);
@@ -50,16 +52,15 @@ public class UserInfoSearchPanel extends Composite {
 	Label userLabel;
 	
 	private static final String[] headers = new String[] {
-		"Email", "Title", "Given Name", "Family Name", "Company",
+		"Email", "Salutation", "First Name", "Last Name", "Organization",
 		"Job Title", "Years In Field", "Phone Number", "Admin Status"};
 
 	
 	
 	public UserInfoSearchPanel(UserInfoRequestFactory userInfoRequestFactory) {
-		initWidget(uiBinder.createAndBindUi(this));
-		UserInfoRequest uir = userInfoRequestFactory.userInfoRequest();
-		
-
+		initWidget(uiBinder.createAndBindUi(this));		
+		this.uir = userInfoRequestFactory.userInfoRequest();
+	
 		uir.findAllUserInfo().to(new Receiver<List<UserInfoProxy>>() {
 			
 			@Override
@@ -75,11 +76,33 @@ public class UserInfoSearchPanel extends Composite {
 		}).fire();
 	}
 	
+	public void fetchUsersList(){
+//		if(uir!=null){
+	
+		uir.findAllUserInfo()
+		.with("userInfo")
+		.to(new Receiver<List<UserInfoProxy>>() {
+//			uir.findAllUserInfo().to(new Receiver<List<UserInfoProxy>>() {
+				
+				public void onSuccess(final List<UserInfoProxy> response) {
+					drawUsersList(response);			
+				}
+				
+				public void onFailure(ServerFailure error) {
+					super.onFailure(error);
+					Window.alert(error.getMessage());
+					//XXX Log message
+				}
+			}).fire();
+//		}
+		
+	}
+	
 	/**
 	 * Draws the list of users
 	 * @param response
 	 */
-	public void drawUsersList(final List<UserInfoProxy> response){		
+	private void drawUsersList(final List<UserInfoProxy> response){		
 		list.removeAllRows();
 		//HEADERS
 		list.insertRow(0);
@@ -125,7 +148,7 @@ public class UserInfoSearchPanel extends Composite {
 	}
 	
 	/**
-	 * Gets a table column header and returns the acording property in the proxy
+	 * Gets a table column header and returns the according property in the proxy
 	 * @return
 	 */
 	private String getUserInfoProperty(String prop){

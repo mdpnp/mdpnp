@@ -20,9 +20,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockPanel;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
@@ -230,6 +228,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 
 			@Override
 			public void execute() {
+//				userInfoSearchPanel.fetchUsersList();
 				showWidget(userInfoSearchPanel);
 			}
 			
@@ -239,6 +238,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			
 			@Override
 			public void execute() {
+				tagsManagementPanel.drawTagTable();
 				showWidget(tagsManagementPanel);
 				
 			}

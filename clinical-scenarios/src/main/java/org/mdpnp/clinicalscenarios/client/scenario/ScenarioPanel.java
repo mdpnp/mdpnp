@@ -1452,12 +1452,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	public void onClickRejectScn(ClickEvent clickEvent) {
 		final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
 
+		//XXX
 		boolean confirm = Window.confirm("Are you sure you want to REJECT this scenario?");
 		if(confirm){
-			String subject ="Your scenario "+currentScenario.getTitle()+" has been rejected";
-			String message = "Your scenario "+currentScenario.getTitle()
-					+" submission has been rejected by the MD PnP Clinical Scenario Repository Administrators.\n"
-					+"We appreciate your submission, but the data provided makes this scenario not suitable for approval.";
+			String subject ="Requested clarification for your scenario "+currentScenario.getTitle();
+			String message = "The MD PnP Clinical Scenario Repository Administrators " +
+					"have requested further clarification for your scenario "+currentScenario.getTitle()
+					+".\n Please see the comments below \n";
 			message += "\n \n"+feedback.getText();
 			message += "\n The MD PnP Team \n www.mdpnp.org";
 			
