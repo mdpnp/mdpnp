@@ -107,20 +107,22 @@ public class VitalModelImpl implements VitalModel {
         vitalBuffer.set(vitals);
         for (Vital v : vitals) {
             boolean updated = false;
-            for (int x : v.getNames()) {
-                if (x == name) {
-                    ListIterator<Value> li = v.getValues().listIterator();
-                    while (li.hasNext()) {
-                        Value va = li.next();
-                        if (va.getUniversalDeviceIdentifier().equals(udi)) {
-                            li.remove();
-                            updated = true;
+            if(v != null) {
+                for (int x : v.getNames()) {
+                    if (x == name) {
+                        ListIterator<Value> li = v.getValues().listIterator();
+                        while (li.hasNext()) {
+                            Value va = li.next();
+                            if (va.getUniversalDeviceIdentifier().equals(udi)) {
+                                li.remove();
+                                updated = true;
+                            }
                         }
                     }
                 }
-            }
-            if (updated) {
-                fireVitalChanged(v);
+                if (updated) {
+                    fireVitalChanged(v);
+                }
             }
         }
     }
@@ -138,20 +140,22 @@ public class VitalModelImpl implements VitalModel {
         // TODO linear search?  Query Condition should be vital specific
         // or maybe these should be hashed because creating myriad QueryConditions is not advisable
         for (Vital v : vitals) {
-            for (int x : v.getNames()) {
-                // Change to this vital from a source
-                if (x == n.name) {
-                    boolean updated = false;
-                    for (Value va : v.getValues()) {
-                        if (va.getName() == n.name && va.getUniversalDeviceIdentifier().equals(n.universal_device_identifier)) {
-                            va.updateFrom(n, si);
-                            updated = true;
+            if(v != null) {
+                for (int x : v.getNames()) {
+                    // Change to this vital from a source
+                    if (x == n.name) {
+                        boolean updated = false;
+                        for (Value va : v.getValues()) {
+                            if (va.getName() == n.name && va.getUniversalDeviceIdentifier().equals(n.universal_device_identifier)) {
+                                va.updateFrom(n, si);
+                                updated = true;
+                            }
                         }
+                        if (!updated) {
+                            v.getValues().add(new ValueImpl(n.universal_device_identifier, n.name, v));
+                        }
+                        fireVitalChanged(v);
                     }
-                    if (!updated) {
-                        v.getValues().add(new ValueImpl(n.universal_device_identifier, n.name, v));
-                    }
-                    fireVitalChanged(v);
                 }
             }
         }
