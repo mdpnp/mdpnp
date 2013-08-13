@@ -16,7 +16,6 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -32,9 +31,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
-import com.google.gwt.user.client.ui.SourcesTabEvents;
 import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.TabListener;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -213,7 +210,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		equipmentTable.setText(0, EQUIPMENT_DEVICETYPE_COL, "Device Type");
 		equipmentTable.setText(0, EQUIPMENT_MANUFACTURER_COL, "Manufacturer");
 		equipmentTable.setText(0, EQUIPMENT_MODEL_COL, "Model");
-		equipmentTable.setText(0, EQUIPMENT_ROSSETAID_COL, "Rosetta ID");
+		equipmentTable.setText(0, EQUIPMENT_ROSSETAID_COL, "Rosetta ID (if known)");
 
 
 		if(isDrawNew || currentScenario.getEquipment().getEntries().isEmpty()){
@@ -601,6 +598,38 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		titleEditor.setEnabled(false);
 		currentStateEditor.setEnabled(false);
 		proposedStateEditor.setEnabled(false);
+		
+		//disable Hazards List
+		for(int row =2; row<hazardsTable.getRowCount();row++){//row 0 headers; row 1 description		
+			Widget wDescription = hazardsTable.getWidget(row, HAZARDS_DESCRIPTION_COL);	
+			Widget wFactor = hazardsTable.getWidget(row, HAZARDS_FACTORS_COL);	
+			if(wDescription instanceof TextArea){((TextArea) wDescription).setEnabled(false);}
+			if(wFactor instanceof TextArea){((TextArea) wFactor).setEnabled(false);}
+		}
+		
+		//disable Equipment list
+		for(int row = 1; row < equipmentTable.getRowCount(); row++) {//Row 0 is HEADERS			
+			Widget wDevType = equipmentTable.getWidget(row, EQUIPMENT_DEVICETYPE_COL);//getWidget row column		
+			Widget wManu = equipmentTable.getWidget(row, EQUIPMENT_MANUFACTURER_COL);//getWidget row column		
+			Widget wModel = equipmentTable.getWidget(row, EQUIPMENT_MODEL_COL);//getWidget row column		
+			Widget wRoss = equipmentTable.getWidget(row, EQUIPMENT_ROSSETAID_COL);//getWidget row column		
+			
+			if(wDevType instanceof TextBox) {((TextBox) wDevType).setEnabled(false);}
+			if(wManu instanceof TextBox) {((TextBox) wManu).setEnabled(false);}
+			if(wModel instanceof TextBox) {((TextBox) wModel).setEnabled(false);}
+			if(wRoss instanceof TextBox) {((TextBox) wRoss).setEnabled(false);}
+		}
+		
+		//disable clinicians and environments list
+		for(int row=0; row<cliniciansTable.getRowCount();row++){
+			Widget wClinician = cliniciansTable.getWidget(row, CLINICIANS_TYPE_COL);
+			if(wClinician instanceof SuggestBox){((SuggestBox) wClinician).setEnabled(false);}
+		}
+		for(int row=0; row<environmentsTable.getRowCount();row++){
+			Widget wEnvironment = environmentsTable.getWidget(row, ENVIRONMENT_TYPE_COL);
+			if(wEnvironment instanceof SuggestBox){((SuggestBox) wEnvironment).setEnabled(false);
+			}
+		}
 	}
 	
 	private void enableSaveScenario(){
@@ -616,6 +645,39 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		titleEditor.setEnabled(true);
 		currentStateEditor.setEnabled(true);
 		proposedStateEditor.setEnabled(true);
+		//disable Hazards List
+		for(int row =2; row<hazardsTable.getRowCount();row++){//row 0 headers; row 1 description		
+			Widget wDescription = hazardsTable.getWidget(row, HAZARDS_DESCRIPTION_COL);	
+			Widget wFactor = hazardsTable.getWidget(row, HAZARDS_FACTORS_COL);	
+			if(wDescription instanceof TextArea){((TextArea) wDescription).setEnabled(true);}
+			if(wFactor instanceof TextArea){((TextArea) wFactor).setEnabled(true);}
+		}
+		
+		//enable Equipment list
+		for(int row = 1; row < equipmentTable.getRowCount(); row++) {//Row 0 is HEADERS			
+			Widget wDevType = equipmentTable.getWidget(row, EQUIPMENT_DEVICETYPE_COL);//getWidget row column		
+			Widget wManu = equipmentTable.getWidget(row, EQUIPMENT_MANUFACTURER_COL);//getWidget row column		
+			Widget wModel = equipmentTable.getWidget(row, EQUIPMENT_MODEL_COL);//getWidget row column		
+			Widget wRoss = equipmentTable.getWidget(row, EQUIPMENT_ROSSETAID_COL);//getWidget row column		
+			
+			if(wDevType instanceof TextBox) {((TextBox) wDevType).setEnabled(true);}
+			if(wManu instanceof TextBox) {((TextBox) wManu).setEnabled(true);}
+			if(wModel instanceof TextBox) {((TextBox) wModel).setEnabled(true);}
+			if(wRoss instanceof TextBox) {((TextBox) wRoss).setEnabled(true);}
+		}
+		
+		//disable clinicians and environments list
+		for(int row=0; row<cliniciansTable.getRowCount();row++){
+			Widget wClinician = cliniciansTable.getWidget(row, CLINICIANS_TYPE_COL);
+			if(wClinician instanceof SuggestBox){((SuggestBox) wClinician).setEnabled(true);}
+		}
+		for(int row=0; row<environmentsTable.getRowCount();row++){
+			Widget wEnvironment = environmentsTable.getWidget(row, ENVIRONMENT_TYPE_COL);
+			if(wEnvironment instanceof SuggestBox){((SuggestBox) wEnvironment).setEnabled(true);
+			}
+		}
+		
+		
 	}
 
 	
@@ -793,6 +855,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiField
 	@Ignore
+	Anchor clinicanExample;
+	
+	@UiField
+	@Ignore
+	Anchor	environmentExample;
+	
+	@UiField
+	@Ignore
 	FlexTable cliniciansTable;
 	
 	@UiField
@@ -923,7 +993,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		"Post surgical care unit",
 		"Psychiatric ward",
 		"Radiology/imaging",
-		"Recovery room",
+		"ICU-intensive care unit",
 		"Renal unit",
 		"Telemetry",
 		"Transport",
@@ -967,28 +1037,39 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	//When clicking in "AddNew Equipment" anchor
 	@UiHandler("addNewEquipment")
 	void onAddNewEqClick(ClickEvent click) {
-		final int rows = equipmentTable.getRowCount();
-		equipmentTable.insertRow(rows);
-		for(int j = 0; j < 4; j++) {//add four text boxes
-			equipmentTable.setWidget(rows, j, new TextBox());
-		}
-		//add delete button
-		Button deleteButton = new Button("Delete");
-		equipmentTable.setWidget(rows, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
-
-		//click handler that deletes the current row
-		deleteButton.addClickHandler(new ClickHandler() {	
-			@Override
-			public void onClick(ClickEvent event) {
-				equipmentTable.removeRow(rows);
+		/**
+		 * We use the currentStateEditor to know if the components have been enabled/disabled for modification
+		 * and thus know if we should allow to create new empty rows
+		 */
+		if(currentStateEditor.isEnabled()){//TICKET-110
+			final int rows = equipmentTable.getRowCount();
+			equipmentTable.insertRow(rows);
+			for(int j = 0; j < 4; j++) {//add four text boxes
+				equipmentTable.setWidget(rows, j, new TextBox());
 			}
-		});
+			//add delete button
+			Button deleteButton = new Button("Delete");
+			equipmentTable.setWidget(rows, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
+	
+			//click handler that deletes the current row
+			deleteButton.addClickHandler(new ClickHandler() {	
+				@Override
+				public void onClick(ClickEvent event) {
+					equipmentTable.removeRow(rows);
+				}
+			});
+		}
 	}
 	
 	//When clicking in "AddNew Equipment" anchor
 	@UiHandler("addNewHazard")
 	void onAddNewHazardClick(ClickEvent click) {
-		addNewHazardTableRow();
+		/**
+		 * We use the currentStateEditor to know if the components have been enabled/disabled for modification
+		 * and thus know if we should allow to create new empty rows
+		 */
+		if(currentStateEditor.isEnabled())//TICKET-110
+			addNewHazardTableRow();
 	}
 	
 	/**
@@ -1069,23 +1150,29 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("addNewClinician")
 	void onANCClick(ClickEvent click) {
-		final int rows = cliniciansTable.getRowCount();
-		cliniciansTable.insertRow(rows);
-		final SuggestBox sb = new SuggestBox(clinicianSuggestOracle);
-		sb.setStyleName("wideSuggest");
-		cliniciansTable.setWidget(rows, CLINICIANS_TYPE_COL, sb);
-			
-		//to delete this entry
-		Button deleteButton = new Button("Delete");
-		deleteButton.addClickHandler(new ClickHandler() {
-			
-			@Override
-			public void onClick(ClickEvent event) {
-				cliniciansTable.removeRow(rows);
+		/**
+		 * We use the currentStateEditor to know if the components have been enabled/disabled for modification
+		 * and thus know if we should allow to create new empty rows
+		 */
+		if(currentStateEditor.isEnabled()){//TICKET-110
+			final int rows = cliniciansTable.getRowCount();
+			cliniciansTable.insertRow(rows);
+			final SuggestBox sb = new SuggestBox(clinicianSuggestOracle);
+			sb.setStyleName("wideSuggest");
+			cliniciansTable.setWidget(rows, CLINICIANS_TYPE_COL, sb);
 				
-			}
-		});
-		cliniciansTable.setWidget(rows, CLINICIANS_DELETEBUTTON_COL, deleteButton);
+			//to delete this entry
+			Button deleteButton = new Button("Delete");
+			deleteButton.addClickHandler(new ClickHandler() {
+				
+				@Override
+				public void onClick(ClickEvent event) {
+					cliniciansTable.removeRow(rows);
+					
+				}
+			});
+			cliniciansTable.setWidget(rows, CLINICIANS_DELETEBUTTON_COL, deleteButton);
+		}
 	}
 	
 	/**
@@ -1115,23 +1202,29 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("addNewEnvironment")
 	void onANEClick(ClickEvent click) {
-		final int rows = environmentsTable.getRowCount();
-		environmentsTable.insertRow(rows);
-		final SuggestBox sb = new SuggestBox(environmentSuggestOracle);
-		sb.setStyleName("wideSuggest");
-		environmentsTable.setWidget(rows, ENVIRONMENT_TYPE_COL, sb);
-			
-		//to delete this entry
-		Button deleteButton = new Button("Delete");
-		deleteButton.addClickHandler(new ClickHandler() {
-			
-			@Override
-			public void onClick(ClickEvent event) {
-				environmentsTable.removeRow(rows);
+		/**
+		 * We use the currentStateEditor to know if the components have been enabled/disabled for modification
+		 * and thus know if we should allow to create new empty rows
+		 */
+		if(currentStateEditor.isEnabled()){//TICKET-110
+			final int rows = environmentsTable.getRowCount();
+			environmentsTable.insertRow(rows);
+			final SuggestBox sb = new SuggestBox(environmentSuggestOracle);
+			sb.setStyleName("wideSuggest");
+			environmentsTable.setWidget(rows, ENVIRONMENT_TYPE_COL, sb);
 				
-			}
-		});
-		environmentsTable.setWidget(rows, ENVIRONMENT_DELETEBUTTON_COL, deleteButton);
+			//to delete this entry
+			Button deleteButton = new Button("Delete");
+			deleteButton.addClickHandler(new ClickHandler() {
+				
+				@Override
+				public void onClick(ClickEvent event) {
+					environmentsTable.removeRow(rows);
+					
+				}
+			});
+			environmentsTable.setWidget(rows, ENVIRONMENT_DELETEBUTTON_COL, deleteButton);
+	}
 	}
 	
 	/**
@@ -1220,6 +1313,24 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		MyDialog md = new MyDialog(header, example);
 //		MyDialog md = new MyDialog("Risks Example", "A synchronization error could lead to x-ray exposure at an incorrect phase of respiration.");
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
+		md.setAutoHideEnabled(true);
+		md.showRelativeTo(titleEditor);
+	}
+	
+	@UiHandler("clinicanExample")
+	void onClinicianExampleClick(ClickEvent click) {
+		String header = "Include a \"Clinician\" for each role or actor present in the scenario .";
+		String example ="Example: Anesthesioligist, Oncologist or Surgeon.";
+		MyDialog md = new MyDialog(header, example);;
+		md.setAutoHideEnabled(true);
+		md.showRelativeTo(titleEditor);
+	}
+	
+	@UiHandler("environmentExample")
+	void onEnvironmentExampleClick(ClickEvent click) {
+		String header = "\"Environments\" is the environment of use: home , transport or hospital (with specific clinical areas).";
+		String example ="Example: 	ICU-intensive care unit, OR-operating room, Patients bay, Nurse station, Transport or even Cafeteria.";
+		MyDialog md = new MyDialog(header, example);;
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
 	}

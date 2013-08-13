@@ -42,7 +42,7 @@
 	   <g:customCell><g:TextBox ui:field='familyNameEditor'/></g:customCell>
 	</g:row>	
 	<g:row>
-	   <g:customCell><g:Label text='Company:'/></g:customCell>
+	   <g:customCell><g:Label text='Organization:'/></g:customCell>
 	   <g:customCell><g:TextBox ui:field='companyEditor'/></g:customCell>
 	</g:row>	
 	<g:row>
