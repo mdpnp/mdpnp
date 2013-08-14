@@ -46,6 +46,7 @@
 		<g:FlexTable ui:field='searchResult'/>
 			
  		<g:Label text='Loading...' ui:field='status' visible='false'/>
+ 		<g:Label text='' ui:field='searchResultCaption' visible='false'/>
  		
 		<g:FlowPanel ui:field='navigationButtons'>		   
 		    <g:Grid ui:field='searchResult2'/><g:HTML><br/></g:HTML>

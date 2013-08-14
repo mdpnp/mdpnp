@@ -16,7 +16,7 @@
 	<br/>
 	<h2>Welcome to the Clinical Scenario Repository.</h2>  
 	<!-- <p>The Clinical Scenario Repository is hosted by the <g:Anchor href="http://www.mdpnp.org/">MD PnP</g:Anchor>  Team.</p>  -->
-	<p class="welcomeText">The Clinical Scenario Repository is hosted by the <a href="http://www.mdpnp.org/">MD PnP</a> Program.</p>
+	<p class="welcomeText">The Clinical Scenario Repository is hosted by the <a href="http://www.mdpnp.org/" target="_blank">MD PnP</a> Program.</p>
 	
 	<p class="welcomeText">A <em>clinical scenario</em> is a brief description of a clinical situation or event. The purpose of the clinical scenario is 
 	to provide a background and ilustrate the need for the development of technical solutions. Solutions for these 

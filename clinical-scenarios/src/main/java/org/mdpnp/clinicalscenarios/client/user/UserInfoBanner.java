@@ -40,6 +40,8 @@ public class UserInfoBanner extends Composite {
 	private MenuItem listUsers = new MenuItem("List Users", NOOP);
 	private MenuItem basicSearch = new MenuItem("Basic Search", NOOP);
 	private MenuItem advancedSearch = new MenuItem("Advanced Search", NOOP);
+	private MenuItem showLatestSearch = new MenuItem("Latest Search Results", NOOP);
+	
 	private MenuItem listTags = new MenuItem("List Tags", NOOP);//list the tags
 	//list scenarios
 	private MenuBar listScenarios = new MenuBar(true);
@@ -54,6 +56,8 @@ public class UserInfoBanner extends Composite {
 	private MenuItem listMyScn = new MenuItem("My Scenarios", NOOP);//List Scn for registered users
 	private MenuItem listApprvScn = new MenuItem("All Approved Scenarios", NOOP);//list of Approved Scn for Anonymous/registered users
 	private MenuItem createNewScn = new MenuItem("Create New Scenario", NOOP);//Ticket-102 Must be independent in the menu bar
+		 
+	private MenuItem goBackHome = new MenuItem("Go to Homepage", NOOP);//go back to home page
 	
 	private UserInfoProxy userInfo;
 	
@@ -105,6 +109,12 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getCreateNewScenario(){
 		return createNewScn;
 	}
+	public MenuItem getGoBackHome(){
+		return goBackHome;
+	}
+	public MenuItem getShowLatestSearch(){
+		return showLatestSearch;
+	}
 //	XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
 //	public MenuItem getListScnRejected(){
 //		return scnRejected;
@@ -125,6 +135,8 @@ public class UserInfoBanner extends Composite {
 		search.setTitle("Search Scenarios");
 		search.addItem(basicSearch);
 		search.addItem(advancedSearch);
+		showLatestSearch.setTitle("Retrieve the previous search results");
+		search.addItem(showLatestSearch);
 		
 		UserInfoRequest userInfoRequest = userInfoRequestFactory.userInfoRequest();
 		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).to(new Receiver<UserInfoProxy>() {
@@ -212,6 +224,7 @@ public class UserInfoBanner extends Composite {
 
 					logoutMenu.addItem(editProfile);
 					logoutMenu.addItem(signOut);
+					logoutMenu.addItem(goBackHome);
 					username.addItem(response.getEmail(), logoutMenu);
 					if(null == response.getGivenName() && null != newUserHandler) {
 						newUserHandler.onNewUser(response);

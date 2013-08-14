@@ -109,14 +109,17 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			}
 			
 		});
+		userInfoBanner.getGoBackHome().setScheduledCommand(new Command(){
+			public void execute() {
+				showWidget(homePanel);
+			}
+		});
 		
 		
 		userInfoBanner.getBasicSearch().setScheduledCommand(new Command() {
 
 			@Override
 			public void execute() {
-				scenarioSearchPanel.hideNavigationButtons();
-				scenarioSearchPanel.hideAdvancedSearch();
 				scenarioSearchPanel.showBasicSearch();
 				showWidget(scenarioSearchPanel);
 			}
@@ -127,18 +130,23 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 //		scenarioListPanel.getPleaseEnterKeywords().setVisible(false);
 		scenarioListPanel.getHeader().setText("Scenario List");
 //		scenarioListPanel.getSubmitButton().setVisible(false);
-		scenarioSearchPanel.hideNavigationButtons();
-		scenarioListPanel.hideBasicSearch();
-		scenarioListPanel.hideAdvancedSearch();
+		scenarioSearchPanel.hideAllSearchPanels();
 		
 		
 		userInfoBanner.getAdvancedSearch().setScheduledCommand(new Command() {
 			
 			@Override
 			public void execute() {
-				scenarioSearchPanel.hideNavigationButtons();
-				scenarioSearchPanel.hideBasicSearch();
 				scenarioSearchPanel.showAdvancedSearch();
+				showWidget(scenarioSearchPanel);	
+				
+			}
+		});
+		
+		userInfoBanner.getShowLatestSearch().setScheduledCommand(new Command() {
+			@Override
+			public void execute() {
+				scenarioSearchPanel.showLatestSearch();
 				showWidget(scenarioSearchPanel);	
 				
 			}
