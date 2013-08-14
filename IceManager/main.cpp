@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 //        timer2.setSingleShot(false);
 //        timer2.setInterval(100);
 //        QObject::connect(&timer2, SIGNAL(timeout()), &dim2, SLOT(wait()));
-//        w.setModel(&dim1);
+        w.setModel(&dim1);
 //        w.setModel2(&dim2);
 //        QObject::connect(&dim, SIGNAL(instanceAlive(DDS_InstanceHandle_t&,DeviceIdentity*)), &w, SLOT(instanceAlive(DDS_InstanceHandle_t&,DeviceIdentity*)));
         timer1.start();

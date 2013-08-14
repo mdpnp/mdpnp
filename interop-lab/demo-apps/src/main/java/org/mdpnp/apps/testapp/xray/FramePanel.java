@@ -10,7 +10,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
-import java.text.ParseException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,7 +107,7 @@ public class FramePanel extends ImagePanel implements Runnable {
 	private BufferedImage bufferedCameraImage;
 	private BufferedImage renderCameraImage;
 	private Graphics2D renderCameraGraphics;
-	private Graphics2D bufferedCameraGraphics;
+//	private Graphics2D bufferedCameraGraphics;
 	private volatile boolean running = true;
 
 	private final AlphaComposite composite = AlphaComposite.SrcOver.derive(0.1f);
@@ -139,7 +138,7 @@ public class FramePanel extends ImagePanel implements Runnable {
 			bufferedCameraImage = image.getBufferedImage();
 //			bufferedCameraImage = new BufferedImage(image.width(), image.height(), BufferedImage.TYPE_INT_ARGB);
 //			image.copyTo(bufferedCameraImage);
-			bufferedCameraGraphics = bufferedCameraImage.createGraphics();
+//			bufferedCameraGraphics = bufferedCameraImage.createGraphics();
 			
 //			renderCameraImage = image.getBufferedImage();
 			renderCameraImage = new BufferedImage(image.width(), image.height(), BufferedImage.TYPE_INT_ARGB);

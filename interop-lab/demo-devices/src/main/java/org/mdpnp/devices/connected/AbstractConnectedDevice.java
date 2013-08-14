@@ -55,11 +55,21 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 	protected final StateMachine<ice.ConnectionState> stateMachine = new StateMachine<ice.ConnectionState>(legalTransitions, ice.ConnectionState.Disconnected) {
 		@Override
 		public void emit(ice.ConnectionState newState, ice.ConnectionState oldState) {
+		    stateChanging(newState, oldState);
 			log.debug(oldState + "==>"+newState);
 			deviceConnectivity.state = newState;
 			deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+			stateChanged(newState, oldState);
 		};
 	};
+	
+	protected void stateChanging(ice.ConnectionState newState, ice.ConnectionState oldState) {
+	    
+	}
+	
+	protected void stateChanged(ice.ConnectionState newState, ice.ConnectionState oldState) {
+	    
+	}
 	
 	private static final Logger log = LoggerFactory.getLogger(AbstractConnectedDevice.class);
 	

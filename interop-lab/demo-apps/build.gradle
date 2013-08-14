@@ -7,10 +7,10 @@ apply plugin: 'launch4j'
 
 defaultTasks 'build'
 
-println WINDOWS
-
 if(MAC == localOsName) {
     macAppBundle {
+        keyChain = 'login'
+        certIdentity = 'E279LP5667'
         mainClassName = "org.mdpnp.apps.testapp.Main"
         icon = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns"
         appName = "MDPnP Demo Apps " + project.version
@@ -18,6 +18,7 @@ if(MAC == localOsName) {
         backgroundImage = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/mdpnp.png"
         dmgName = project.name + '-' + project.version + '-mac'
     }
+//    createDmg.dependsOn('codesign')
 }
 
 launch4j {
@@ -73,7 +74,7 @@ createExe.dependsOn(explodeLaunch4j)
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
-mainClassName = "org.mdpnp.apps.testapp.Main"
+mainClassName = 'org.mdpnp.apps.testapp.Main'
 
 def String BUILD_NUMBER = "$System.env.BUILD_NUMBER"
 
@@ -99,10 +100,11 @@ dependencies {
     runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.2'
     runtime group: 'log4j', name: 'log4j', version: '1.2.17'
     runtime project(':interop-lab:pump-control')
-
+    runtime group: 'org.mdpnp.apps.testapp.pca', name: 'mdpnp-sounds', version: '0.1.0'
 
     compile group: 'org.jfree', name:'jfreechart', version: '1.0.14'
     compile group: 'com.jeffplourde', name: 'Utility', version: '0.0.1'
+    
 
     // Java CV (Requires OpenCV)
     compile group: 'com.googlecode.javacpp', name: 'javacpp', version: '0.5'
@@ -181,7 +183,6 @@ dependencies {
         }
     }
 }
-
 
 task createZip(type: Zip) {
     classifier = distZip.classifier

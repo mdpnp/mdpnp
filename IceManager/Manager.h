@@ -31,7 +31,7 @@ private:
 
     // Deal with publication subscription
     DDSPublicationBuiltinTopicDataDataReader *publicationReader;
-    DDSQueryCondition *publicationReadCondition;
+    DDSReadCondition *publicationReadCondition;
 
     // Deal with subscription for actual data
     DDSSubscriber *dataSubscriber;

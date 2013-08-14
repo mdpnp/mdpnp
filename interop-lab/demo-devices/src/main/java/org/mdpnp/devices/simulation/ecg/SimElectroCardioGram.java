@@ -50,7 +50,7 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
 		ii = createSampleArrayInstance(ice.MDC_ECG_ELEC_POTL_II.VALUE);
 		iii = createSampleArrayInstance(ice.MDC_ECG_ELEC_POTL_III.VALUE);
 		respiratoryRate = createNumericInstance(ice.MDC_RESP_RATE.VALUE);
-		heartRate = createNumericInstance(ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
+		heartRate = createNumericInstance(ice.MDC_PULS_RATE.VALUE);
 		
 		deviceIdentity.model = "ECG (Simulated)";
 		deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);

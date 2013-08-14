@@ -58,7 +58,7 @@ public class DemoFrame extends JFrame {
 	
 	public DemoFrame(String title) {
 		super(title);
-		setWindowCanFullScreen(true);
+		apple = setWindowCanFullScreen(true);
 		setQuitStrategy("CLOSE_ALL_WINDOWS");
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventPostProcessor(new PostProcessKey());
 	}

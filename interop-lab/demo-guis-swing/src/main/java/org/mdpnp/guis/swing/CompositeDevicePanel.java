@@ -9,6 +9,7 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -108,7 +109,11 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
                 serial_number.setText(di.serial_number);
                 universal_device_identifier.setText(di.universal_device_identifier);
                 icon.setText("");
-                icon.setIcon(new ImageIcon(IconUtil.image(di.icon)));
+                Image img = IconUtil.image(di.icon);
+
+                if(null != img) {
+                    icon.setIcon(new ImageIcon(img));
+                }
             }
         }
 

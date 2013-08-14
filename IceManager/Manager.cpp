@@ -15,13 +15,16 @@ Manager::Manager(DDSDomainParticipant* participant_, const char *topic_, QObject
     dataSubscriber(NULL), topicName(topic_), dataTopic(NULL),
     dataReader(NULL), dataTypeSupport(NULL), dataReadCondition(NULL)
 {
+//    DDS_StringSeq * params = new DDS_StringSeq(1);
     DDS_StringSeq params(1);
     params.ensure_length(1 , 1);
     int n = strlen(topic_) + 3;
     params[0] = DDS_String_alloc(n);
     snprintf(params[0], n, "'%s'", topic_);
+    params[0][n] = '\0';
 
     DDSPublicationBuiltinTopicDataTypeSupport::register_type(participant);
+    DDSStringTypeSupport::register_type(participant, DDSStringTypeSupport::get_type_name());
     publicationReader = (DDSPublicationBuiltinTopicDataDataReader*) participant->get_builtin_subscriber()->lookup_datareader(DDS_PUBLICATION_TOPIC_NAME);
 //    DDSTopicDescription *td = participant->get_builtin_subscriber()->lookup_datareader(DDS_PUBLICATION_TOPIC_NAME)->get_topicdescription();
 //    DDSTopic *topic = participant->create_topic(DDS_PUBLICATION_TOPIC_NAME, DDSPublicationBuiltinTopicDataTypeSupport::get_type_name(), DDS_TOPIC_QOS_DEFAULT, NULL, DDS_STATUS_MASK_NONE);
@@ -31,8 +34,8 @@ Manager::Manager(DDSDomainParticipant* participant_, const char *topic_, QObject
 //    topicReader = participant->create_datareader(topic, DDS_DATAREADER_QOS_DEFAULT, NULL, DDS_STATUS_MASK_NONE);
     std::cerr << "Params(" << params.length() << "): " << params[0] << std::endl;
 
-    publicationReadCondition = publicationReader->create_querycondition(DDS_NOT_READ_SAMPLE_STATE, DDS_ANY_VIEW_STATE, DDS_ALIVE_INSTANCE_STATE, "topic_name MATCH %0", params);
-//    publicationReadCondition = publicationReader->create_readcondition(DDS_NOT_READ_SAMPLE_STATE, DDS_ANY_VIEW_STATE, DDS_ALIVE_INSTANCE_STATE);
+//    publicationReadCondition = publicationReader->create_querycondition(DDS_NOT_READ_SAMPLE_STATE, DDS_ANY_VIEW_STATE, DDS_ALIVE_INSTANCE_STATE, "topic_name = %0", params);
+    publicationReadCondition = publicationReader->create_readcondition(DDS_NOT_READ_SAMPLE_STATE, DDS_ANY_VIEW_STATE, DDS_ALIVE_INSTANCE_STATE);
     waitSet.attach_condition(publicationReadCondition);
 
 }
@@ -78,7 +81,7 @@ void Manager::wait() {
     for(int i = 0; i < seq.length(); ++i) {
 
         if(seq[i] == publicationReadCondition) {
-            if(DDS_RETCODE_OK == publicationReader->take_w_condition(data_seq, info_seq, DDS_LENGTH_UNLIMITED, publicationReadCondition)) {
+            if(DDS_RETCODE_OK == publicationReader->read_w_condition(data_seq, info_seq, DDS_LENGTH_UNLIMITED, publicationReadCondition)) {
                 for(int j = 0; j < data_seq.length(); ++j) {
                     if(info_seq[j].valid_data) {
 //                    beginInsertRows(QModelIndex(), 0, 0);
@@ -88,16 +91,18 @@ void Manager::wait() {
                     if(d->type_code != NULL && d->type_name != NULL && 0 == strcmp(d->topic_name, topicName)) {
                         std::cout << "Received topic: " << d->topic_name << std::endl;
                         d->type_code->print_IDL(1, ex);
-                        beginResetModel();
-                        dataTypeSupport = new DDSDynamicDataTypeSupport(d->type_code, DDS_DYNAMIC_DATA_TYPE_PROPERTY_DEFAULT);
-                        endResetModel();
-    //                    topic = participant->lookup_topicdescription(d->topic_name);
-                        dataTypeSupport->register_type(participant, d->type_name);
-                        dataTopic = participant->create_topic(d->topic_name, d->type_name, DDS_TOPIC_QOS_DEFAULT, NULL, DDS_STATUS_MASK_NONE);
-                        dataSubscriber = participant->create_subscriber(DDS_SUBSCRIBER_QOS_DEFAULT, NULL, DDS_STATUS_MASK_NONE);
-                        dataReader = (DDSDynamicDataReader*) dataSubscriber->create_datareader(dataTopic, DDS_DATAREADER_QOS_DEFAULT, NULL, DDS_STATUS_MASK_NONE);
-                        dataReadCondition = dataReader->create_readcondition(DDS_NOT_READ_SAMPLE_STATE, DDS_ANY_VIEW_STATE, DDS_ALIVE_INSTANCE_STATE);
-                        waitSet.attach_condition(dataReadCondition);
+                        if(NULL == dataTypeSupport) {
+                            beginResetModel();
+                            dataTypeSupport = new DDSDynamicDataTypeSupport(d->type_code, DDS_DYNAMIC_DATA_TYPE_PROPERTY_DEFAULT);
+                            endResetModel();
+        //                    topic = participant->lookup_topicdescription(d->topic_name);
+                            dataTypeSupport->register_type(participant, d->type_name);
+                            dataTopic = participant->create_topic(d->topic_name, d->type_name, DDS_TOPIC_QOS_DEFAULT, NULL, DDS_STATUS_MASK_NONE);
+                            dataSubscriber = participant->create_subscriber(DDS_SUBSCRIBER_QOS_DEFAULT, NULL, DDS_STATUS_MASK_NONE);
+                            dataReader = (DDSDynamicDataReader*) dataSubscriber->create_datareader(dataTopic, DDS_DATAREADER_QOS_DEFAULT, NULL, DDS_STATUS_MASK_NONE);
+                            dataReadCondition = dataReader->create_readcondition(DDS_NOT_READ_SAMPLE_STATE, DDS_ANY_VIEW_STATE, DDS_ALIVE_INSTANCE_STATE);
+                            waitSet.attach_condition(dataReadCondition);
+                        }
                     } else {
                         std::cerr << "No typecode received for " << d->topic_name << std::endl;
                     }
@@ -114,6 +119,11 @@ void Manager::wait() {
                         DDS_DynamicData *data = dataTypeSupport->create_data();
                         dataTypeSupport->copy_data(data, &mdata_seq[j]);
                         beginInsertRows(QModelIndex(), 0, 0);
+                        char* str = new char[1024];
+                        DDS_UnsignedLong length = 1024;
+                        data->get_string(str, &length, NULL, 1);
+                        std::cerr << "Insert data " << str << std::endl;
+                        delete str;
                         list.insert(0, data);
                         endInsertRows();
                     }
@@ -135,7 +145,9 @@ int Manager::columnCount(const QModelIndex &) const
 {
     if(dataTypeSupport) {
         DDS_ExceptionCode_t ex;
-        return dataTypeSupport->get_data_type()->member_count(ex);
+        int cnt = dataTypeSupport->get_data_type()->member_count(ex);
+        std::cerr << "count=" << cnt << std::endl;
+        return cnt;
     } else {
         return 0;
     }

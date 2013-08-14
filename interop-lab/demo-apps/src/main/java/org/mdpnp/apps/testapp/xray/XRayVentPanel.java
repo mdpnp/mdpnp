@@ -50,25 +50,25 @@ import org.mdpnp.devices.EventLoop;
 import org.mdpnp.guis.swing.DeviceMonitor;
 import org.mdpnp.guis.swing.DeviceMonitorListener;
 import org.mdpnp.guis.waveform.WaveformPanel;
-import org.mdpnp.guis.waveform.WaveformPanelFactory;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeffplourde.util.math.RTRegression;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.Subscriber;
 
+@SuppressWarnings("serial")
 public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 	private FramePanel cameraPanel;
 
 	private WaveformPanel waveformPanel;
 	private WaveformUpdateWaveformSource wuws;
-	private JList deviceList;
+	@SuppressWarnings("rawtypes")
+    private JList deviceList;
 	
 	public enum Strategy { 
 		Manual,
@@ -81,9 +81,9 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 	}
 
 	private final DemoPanel demoPanel;
-	private final static long startOfTime = System.currentTimeMillis();
+//	private final static long startOfTime = System.currentTimeMillis();
 	
-	private static final String XRAY = "xray";
+//	private static final String XRAY = "xray";
 	
 //	private final JList<Strategy> strategies = new JList<Strategy>(Strategy.values());
 //	private final JList<TargetTime> targetTime = new JList<TargetTime>(TargetTime.values());
@@ -131,7 +131,8 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 	}
 	
 //	private static final Font RADIO_FONT = Font.decode("verdana-20");
-	protected JPanel buildXRay(final DeviceListModel devices, final Subscriber subscriber, final EventLoop eventLoop) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+    protected JPanel buildXRay(final DeviceListModel devices, final Subscriber subscriber, final EventLoop eventLoop) {
 		JPanel panel = new JPanel(new GridLayout(2,2));
 		
 		JPanel textPanel = new JPanel(new BorderLayout());
@@ -287,11 +288,11 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 	private boolean imageButtonDown = false;
 //	private Clip shutterClip;
 	
-	private DeviceListModel devices;
+//	private DeviceListModel devices;
 	public XRayVentPanel(DemoPanel demoPanel, DeviceListModel devices, Subscriber subscriber, EventLoop eventLoop) {
 		super(new BorderLayout());
 
-		this.devices = devices;
+//		this.devices = devices;
         this.demoPanel = demoPanel;
 		
 		
@@ -386,16 +387,16 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 		}
 	}
 	
-	private static final void regressionUpdate(String name, ice.SampleArray wu, RTRegression rtRegression) {
-		double first_sample = System.currentTimeMillis() - startOfTime - wu.values.size() * wu.millisecondsPerSample;
-		
-		for(int i = 0; i < wu.values.size(); i++) {
-			double x = first_sample+i*wu.millisecondsPerSample;
-			double y = wu.values.getFloat(i);
-			rtRegression.newPoint(x, y);
-			
-		}
-	}
+//	private static final void regressionUpdate(String name, ice.SampleArray wu, RTRegression rtRegression) {
+//		double first_sample = System.currentTimeMillis() - startOfTime - wu.values.size() * wu.millisecondsPerSample;
+//		
+//		for(int i = 0; i < wu.values.size(); i++) {
+//			double x = first_sample+i*wu.millisecondsPerSample;
+//			double y = wu.values.getFloat(i);
+//			rtRegression.newPoint(x, y);
+//			
+//		}
+//	}
 	
 	private long inspiratoryTime;
 	private long period;

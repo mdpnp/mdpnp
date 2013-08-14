@@ -26,6 +26,7 @@ public class Main {
 	    Configuration runConf = null;
 	    
 	    File jumpStartSettings = new File(".JumpStartSettings");
+	    File jumpStartSettingsHome = new File(System.getProperty("user.home"), ".JumpStartSettings");
 	    
 	    boolean cmdline = false;
 	    
@@ -36,21 +37,26 @@ public class Main {
 	        FileInputStream fis = new FileInputStream(jumpStartSettings);
 	        runConf = Configuration.read(fis);
 	        fis.close();
+	    } else if(jumpStartSettingsHome.exists() && jumpStartSettingsHome.canRead()) {
+	        FileInputStream fis = new FileInputStream(jumpStartSettingsHome);
+            runConf = Configuration.read(fis);
+            fis.close();
 	    }
 
 	    Configuration writeConf = null;
+
+        try {
+            Class<?> cls = Class.forName("com.apple.eawt.Application");
+            Method m1 = cls.getMethod("getApplication");
+            Method m2 = cls.getMethod("setDockIconImage", Image.class);
+            m2.invoke(m1.invoke(null), ImageIO.read(Main.class.getResource("icon.png")));
+        } catch (Throwable t) {
+            log.debug("Not able to set Mac OS X dock icon");
+        }
 	    
 		if(!cmdline) {
 		    ConfigurationDialog d = new ConfigurationDialog(runConf);
-		    try {
-    		    Class<?> cls = Class.forName("com.apple.eawt.Application");
-    		    Method m1 = cls.getMethod("getApplication");
-    		    Method m2 = cls.getMethod("setDockIconImage", Image.class);
-    		    m2.invoke(m1.invoke(null), ImageIO.read(Main.class.getResource("icon.png")));
-		    } catch (Throwable t) {
-		        log.debug("Not able to set Mac OS X dock icon");
-		    }
-		    
+
 		    d.setIconImage(ImageIO.read(Main.class.getResource("icon.png")));
 		    runConf = d.showDialog();
 		    // It's nice to be able to change settings even without running
@@ -70,9 +76,18 @@ public class Main {
                 jumpStartSettings.createNewFile();
             }
             
-            
             if(jumpStartSettings.canWrite()) {
                 FileOutputStream fos = new FileOutputStream(jumpStartSettings);
+                writeConf.write(fos);
+                fos.close();
+            }
+            
+            if(!jumpStartSettingsHome.exists()) {
+                jumpStartSettingsHome.createNewFile();
+            }
+            
+            if(jumpStartSettingsHome.canWrite()) {
+                FileOutputStream fos = new FileOutputStream(jumpStartSettingsHome);
                 writeConf.write(fos);
                 fos.close();
             }

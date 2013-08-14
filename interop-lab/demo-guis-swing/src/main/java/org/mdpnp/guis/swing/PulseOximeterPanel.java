@@ -21,9 +21,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
 
-import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 
 import org.mdpnp.guis.waveform.NumericUpdateWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
@@ -66,7 +66,7 @@ public class PulseOximeterPanel extends DevicePanel {
 		spo2Panel.add(spo2 = new JLabel("----"), BorderLayout.CENTER);
 		spo2.setHorizontalAlignment(JLabel.RIGHT);
 		
-		spo2.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		spo2.setBorder(new EmptyBorder(5, 5, 5, 5));
 		spo2Panel.add(spo2Bounds, BorderLayout.EAST);
 		
 		heartrateBounds = new JPanel();
@@ -83,7 +83,7 @@ public class PulseOximeterPanel extends DevicePanel {
 		heartratePanel.setLayout(new BorderLayout());
 		heartratePanel.add(new JLabel("Pulse Rate"), BorderLayout.NORTH);
 		heartratePanel.add(heartrate = new JLabel("----"), BorderLayout.CENTER);
-		heartrate.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		heartrate.setBorder(new EmptyBorder(5, 5, 5, 5));
 		heartrate.setHorizontalAlignment(JLabel.RIGHT);
 		heartratePanel.add(heartrateBounds, BorderLayout.EAST);
 		
