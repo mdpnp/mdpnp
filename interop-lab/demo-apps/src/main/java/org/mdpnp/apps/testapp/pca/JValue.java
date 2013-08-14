@@ -15,7 +15,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -107,7 +106,6 @@ public class JValue extends JComponent {
         valueChart.setMinimumSize(new Dimension(100, 20));
         valueChart.setPreferredSize(new Dimension(100, 20));
         gbc.insets = new Insets(1,1,1,1);
-//        valueChart.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         add(valueChart, gbc);
         
         gbc.gridy++;

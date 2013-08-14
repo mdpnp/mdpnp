@@ -8,12 +8,12 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
-import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
+import javax.swing.border.LineBorder;
 
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceIcon;
@@ -34,7 +34,7 @@ public class VitalsListCellRenderer extends JPanel implements ListCellRenderer {
 		public VitalsListCellRenderer(DeviceListModel deviceListModel) {
 			super(new BorderLayout());
 			this.deviceListModel = deviceListModel;
-			setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+			setBorder(new LineBorder(Color.gray, 1));
 			setOpaque(false);
 			name.setFont(name.getFont().deriveFont(24f));
 			value.setFont(value.getFont().deriveFont(24f));

@@ -3,7 +3,10 @@ package org.mdpnp.apps.testapp.pca;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.sound.sampled.AudioInputStream;
@@ -11,9 +14,10 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
@@ -25,11 +29,24 @@ public class PCAPanel extends JPanel implements VitalModelListener {
     private final PCAConfig pcaConfig;
 //    private final VitalMonitoring vitalMonitor;
     
-    private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder(15, 15, 15, 15);
-    private static final Border YELLOW_BORDER = BorderFactory.createLineBorder(Color.yellow, 15, false);
-    private static final Border RED_BORDER = BorderFactory.createLineBorder(Color.red, 15, false);
+    private static final Border EMPTY_BORDER = new EmptyBorder(15,15,15,15);
+    private static final Border YELLOW_BORDER = new LineBorder(Color.yellow, 15, false);
+    private static final Border RED_BORDER = new LineBorder(Color.red, 15, false);
     
     private Clip drugDeliveryAlarm, generalAlarm;
+    
+    private static final InputStream inMemory(InputStream is) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[2048];
+        int b = is.read(buf);
+        while(b >= 0) {
+            baos.write(buf, 0, b);
+            b = is.read(buf);
+        }
+        is.close();
+        return new ByteArrayInputStream(baos.toByteArray());
+    }
+    
     
     public PCAPanel(ScheduledExecutorService refreshScheduler) {
 //        super(JSplitPane.HORIZONTAL_SPLIT, true, new PCAConfig(refreshScheduler), new VitalMonitoring(refreshScheduler));
@@ -48,12 +65,16 @@ public class PCAPanel extends JPanel implements VitalModelListener {
         
         try {
             // http://www.anaesthesia.med.usyd.edu.au/resources/alarms/
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(PCAPanel.class.getResourceAsStream("drughi.wav"));
+            
+            // Per the documentation for AudioSystem.getAudioInputStream mark/reset on the stream is required
+            // so we'll load it into memory because I stored the audio clips in a Jar file and the inflating
+            // InputStream does not support mark/reset
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(inMemory(PCAPanel.class.getResourceAsStream("drughi.wav")));
             drugDeliveryAlarm = AudioSystem.getClip();
             drugDeliveryAlarm.open(audioInputStream);
             drugDeliveryAlarm.setLoopPoints(0, -1);
             System.out.println(drugDeliveryAlarm.getFrameLength());
-            audioInputStream = AudioSystem.getAudioInputStream(PCAPanel.class.getResourceAsStream("genhi.wav"));
+            audioInputStream = AudioSystem.getAudioInputStream(inMemory(PCAPanel.class.getResourceAsStream("genhi.wav")));
             generalAlarm = AudioSystem.getClip();
             generalAlarm.open(audioInputStream);
             generalAlarm.setLoopPoints(0, -1);

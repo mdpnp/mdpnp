@@ -9,17 +9,15 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 
-import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
-import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 
 public class DeviceListCellRenderer extends JComponent implements ListCellRenderer {
     
@@ -59,7 +57,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         
         JPanel text = new JPanel(new GridLayout(3, 1));
         text.setOpaque(false);
-        text.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 5));
+        text.setBorder(new EmptyBorder(1, 5, 1, 5));
         
         gbc.weightx = 1.5;
         gbc.gridheight = 1;

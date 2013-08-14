@@ -13,13 +13,13 @@ import java.awt.event.ActionListener;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.InvocationTargetException;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import javax.swing.border.LineBorder;
 
 import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.apps.testapp.vital.JMultiSlider;
@@ -47,8 +47,6 @@ public final class JVital extends JPanel {
         
         public JVital(final Vital vital) {
             setBorder(null);
-//            setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black, 1), vital.getLabel() + " ("+vital.getUnits()+")", 0, 0, Font.decode("fixed-20"), getForeground()));
-            
 //            setBackground(Color.black);
 //            setForeground(Color.green);
             this.vital = vital;
@@ -219,7 +217,7 @@ public final class JVital extends JPanel {
                             while(vitalValues.getComponentCount() < N) {
                                 for(int i = 0; i < (N - vitalValues.getComponentCount()); i++) {
                                     JValue val = new JValue();
-                                    val.setBorder(BorderFactory.createLineBorder(Color.black));
+                                    val.setBorder(new LineBorder(Color.black));
                                     vitalValues.add(val);
                                 }
                                 validate();

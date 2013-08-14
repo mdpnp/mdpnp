@@ -15,7 +15,7 @@ import org.mdpnp.devices.simulation.nibp.SimulatedNoninvasiveBloodPressure;
 
 public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice {
 
-    protected final InstanceHolder<Numeric> systolic, diastolic, pulse, inflation, nextInflationTime, state;
+    protected InstanceHolder<Numeric> systolic, diastolic, pulse, inflation, nextInflationTime, state;
     // TODO needs to subscribe to an objective state for triggering a NIBP
 
     private final SimulatedNoninvasiveBloodPressure bloodPressure = new SimulatedNoninvasiveBloodPressure() {
@@ -63,7 +63,7 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
         nextInflationTime = createNumericInstance(ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE);
         inflation = createNumericInstance(ice.MDC_PRESS_CUFF_INFLATION.VALUE);
         // TODO temporarily more interesting
-        pulse = createNumericInstance(ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
+        pulse = createNumericInstance(ice.MDC_PULS_RATE_NON_INV.VALUE);
         // pulse = createNumericInstance(ice.MDC_PULS_RATE_NON_INV.VALUE);
 
         numericSample(state, ice.MDC_EVT_STAT_OFF.VALUE);
