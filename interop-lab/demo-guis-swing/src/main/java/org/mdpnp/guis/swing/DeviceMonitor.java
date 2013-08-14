@@ -94,16 +94,20 @@ public class DeviceMonitor {
         TopicDescription deviceConnectivityTopic = lookupOrCreateTopic(participant, ice.DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.class);
         TopicDescription deviceNumericTopic = lookupOrCreateTopic(participant, ice.NumericTopic.VALUE, NumericTypeSupport.class);
         TopicDescription deviceSampleArrayTopic = lookupOrCreateTopic(participant, ice.SampleArrayTopic.VALUE, SampleArrayTypeSupport.class);
+        TopicDescription deviceInfusionStatusTopic = lookupOrCreateTopic(participant, ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.class);
+        
         
         final DeviceIdentityDataReader idReader = (DeviceIdentityDataReader) subscriber.create_datareader(deviceIdentityTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final DeviceConnectivityDataReader connReader = (DeviceConnectivityDataReader) subscriber.create_datareader(deviceConnectivityTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final NumericDataReader numReader = (NumericDataReader) subscriber.create_datareader(deviceNumericTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final SampleArrayDataReader saReader = (SampleArrayDataReader) subscriber.create_datareader(deviceSampleArrayTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        final ice.InfusionStatusDataReader ipReader = (ice.InfusionStatusDataReader) subscriber.create_datareader(deviceInfusionStatusTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         
         dataReaders.add(idReader);
         dataReaders.add(connReader);
         dataReaders.add(numReader);
         dataReaders.add(saReader);
+        dataReaders.add(ipReader);
         
         final StringSeq identity = new StringSeq();
         identity.add("'"+udi+"'");
@@ -113,6 +117,7 @@ public class DeviceMonitor {
         final NumericSeq num_seq = new NumericSeq();
         final SampleArraySeq sa_seq = new SampleArraySeq();
         final SampleInfoSeq info_seq = new SampleInfoSeq();
+        final ice.InfusionStatusSeq inf_seq = new ice.InfusionStatusSeq();
         
         eventLoop.addHandler(c(idReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE,
                 "universal_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
@@ -209,6 +214,26 @@ public class DeviceMonitor {
                     
                 }
             }
+        });
+        
+        eventLoop.addHandler(c(ipReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "universal_device_identifier = %0",  identity)), new EventLoop.ConditionHandler() {
+
+            @Override
+            public void conditionChanged(Condition condition) {
+                for(;;) {
+                    try {
+                        ipReader.read_w_condition(inf_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                        for(DeviceMonitorListener listener : getListeners()) {
+                            listener.infusionPump(ipReader, inf_seq, info_seq);
+                        }
+                    } catch (RETCODE_NO_DATA noData) {
+                        break;
+                    } finally {
+                        ipReader.return_loan(inf_seq, info_seq);
+                    }
+                }
+            }
+            
         });
     }
     

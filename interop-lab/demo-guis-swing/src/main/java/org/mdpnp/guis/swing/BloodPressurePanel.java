@@ -7,6 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import ice.InfusionStatus;
 import ice.Numeric;
 import ice.SampleArray;
 
@@ -258,6 +259,12 @@ public class BloodPressurePanel extends DevicePanel {
 
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
+        
+    }
+
+
+    @Override
+    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
         
     }
 

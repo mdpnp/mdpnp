@@ -7,6 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import ice.InfusionStatus;
 import ice.Numeric;
 import ice.SampleArray;
 
@@ -121,5 +122,10 @@ public class ElectroCardioGramPanel extends DevicePanel {
         date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
         time.setText(dateFormat.format(date));
 	}
+
+    @Override
+    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
+        
+    }
 
 }

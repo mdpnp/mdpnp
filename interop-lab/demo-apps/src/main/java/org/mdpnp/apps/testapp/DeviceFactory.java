@@ -19,6 +19,7 @@ import org.mdpnp.devices.simulation.co2.SimCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
 import org.mdpnp.devices.simulation.nibp.DemoSimulatedBloodPressure;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
+import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
 
 public class DeviceFactory {
@@ -53,6 +54,8 @@ public class DeviceFactory {
             return new SimCapnometer(domainId, eventLoop);
         case Temp_Simulator:
             return new SimThermometer(domainId, eventLoop);
+        case Pump_Simulator:
+            return new SimInfusionPump(domainId, eventLoop);
         case Ivy450C:
             return new Ivy450C(domainId, eventLoop);
         default:

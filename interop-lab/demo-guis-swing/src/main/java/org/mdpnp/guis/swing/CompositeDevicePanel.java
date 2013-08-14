@@ -2,6 +2,8 @@ package org.mdpnp.guis.swing;
 
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
+import ice.InfusionStatus;
+import ice.InfusionStatusDataReader;
 import ice.Numeric;
 import ice.SampleArray;
 
@@ -47,6 +49,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
    private final Collection<DevicePanel> dataComponents = new ArrayList<DevicePanel>();
    
    private final Set<Integer> knownIdentifiers = new HashSet<Integer>();
+   private final Set<String> knownPumps = new HashSet<String>();
 
     
     public CompositeDevicePanel() {
@@ -137,7 +140,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
     private void replaceDataPanels() {
         DevicePanel[] _dataComponents;
         synchronized(dataComponents) {
-            DevicePanelFactory.resolvePanels(knownIdentifiers, dataComponents);
+            DevicePanelFactory.resolvePanels(knownIdentifiers, dataComponents, knownPumps);
             _dataComponents = dataComponents.toArray(new DevicePanel[0]);
         }
         final DevicePanel[] __dataComponents = _dataComponents;
@@ -221,6 +224,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
     
     public void reset() {
         knownIdentifiers.clear();
+        knownPumps.clear();
         replaceDataPanels();
     }
     private DeviceMonitor deviceMonitor;
@@ -237,5 +241,28 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
     }
     public DeviceMonitor getModel() {
         return deviceMonitor;
+    }
+
+
+
+    @Override
+    public void infusionPump(InfusionStatusDataReader reader, ice.InfusionStatusSeq status, SampleInfoSeq sampleInfo) {
+        for(int i = 0; i < sampleInfo.size(); i++) {
+            InfusionStatus infusionStatus = (InfusionStatus) status.get(i);
+            SampleInfo si = (SampleInfo) sampleInfo.get(i);
+            if(si.valid_data) {
+                log.info("Pump Status:"+infusionStatus);
+                if(!knownPumps.contains(infusionStatus.universal_device_identifier)) {
+                    knownPumps.add(infusionStatus.universal_device_identifier);
+                    replaceDataPanels();
+                }
+                synchronized(dataComponents) {
+                    for(DevicePanel d : dataComponents) {
+                        d.infusionStatus(infusionStatus, si);
+                    }
+                }
+            }
+        }
+        
     }
 }

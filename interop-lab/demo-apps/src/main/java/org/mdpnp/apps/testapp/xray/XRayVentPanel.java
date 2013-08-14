@@ -1,6 +1,8 @@
 package org.mdpnp.apps.testapp.xray;
 
 import ice.DeviceConnectivity;
+import ice.InfusionStatusDataReader;
+import ice.InfusionStatusSeq;
 import ice.Numeric;
 import ice.SampleArray;
 
@@ -519,6 +521,12 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
             }
         }
 
+    }
+
+    @Override
+    public void infusionPump(InfusionStatusDataReader reader, InfusionStatusSeq status, SampleInfoSeq sampleInfo) {
+        // TODO Auto-generated method stub
+        
     }
 
 }

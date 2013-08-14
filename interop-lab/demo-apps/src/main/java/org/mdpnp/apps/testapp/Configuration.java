@@ -29,6 +29,7 @@ public class Configuration {
         ECG_Simulator(ice.ConnectionType.Simulated),
         CO2_Simulator(ice.ConnectionType.Simulated),
         Temp_Simulator(ice.ConnectionType.Simulated),
+        Pump_Simulator(ice.ConnectionType.Simulated),
         Bernoulli(ice.ConnectionType.Network),
         Ivy450C(ice.ConnectionType.Serial),
         Nonin(ice.ConnectionType.Serial),

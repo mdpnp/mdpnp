@@ -24,32 +24,47 @@ public class DevicePanelFactory {
 	    PulseOximeterPanel.class,
 	    BloodPressurePanel.class,
 	    ElectroCardioGramPanel.class,
-	    VentilatorPanel.class
+	    VentilatorPanel.class,
+	    InfusionPumpPanel.class
 	};
-	
+	private final static Logger log = LoggerFactory.getLogger(DevicePanelFactory.class);
 	public static final Method[] PANEL_SUPPORTED = new Method[PANELS.length];
 	static {
 	    for(int i = 0; i < PANELS.length; i++) {
 	        try {
                 PANEL_SUPPORTED[i] = PANELS[i].getDeclaredMethod("supported", Set.class);
             } catch (Exception e) {
-                throw new ExceptionInInitializerError(e);
+                log.error("Exception checking supported method", e);
+//                throw new ExceptionInInitializerError(e);
             }
 	    }
 	}
 	
 
-	private final static Logger log = LoggerFactory.getLogger(DevicePanelFactory.class);
 	
 	
-	public static <T extends Component> void resolvePanels(Set<Integer> tags, Collection<T> container) {
+	
+	public static <T extends Component> void resolvePanels(Set<Integer> tags, Collection<T> container, Set<String> pumps) {
         log.trace("resolvePanels tags="+tags+" container="+container);
         Map<Class<?>, T> byClass = new HashMap<Class<?>, T>();
         
         for(T c : container) {
             byClass.put(c.getClass(), c);
         }
+        
         container.clear();
+        try {
+            if(!pumps.isEmpty()) {
+                if(byClass.containsKey(InfusionPumpPanel.class)) {
+                    container.add(byClass.remove(InfusionPumpPanel.class));
+                } else {
+                    container.add((T)InfusionPumpPanel.class.getConstructor().newInstance());
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        
         for(int i = 0; i < PANELS.length; i++) {
             try {
                 if((Boolean)PANEL_SUPPORTED[i].invoke(null, tags)) {

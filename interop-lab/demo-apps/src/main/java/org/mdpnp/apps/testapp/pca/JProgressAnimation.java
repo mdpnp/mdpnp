@@ -65,8 +65,8 @@ public class JProgressAnimation extends JComponent implements Runnable {
     }
 
     private final ScheduledExecutorService executor;
-    private final Polygon hexagon = new Polygon();
-    private final Polygon innerHexagon = new Polygon();
+    private final Polygon octagon = new Polygon();
+    private final Polygon innerOctagon = new Polygon();
 
     public JProgressAnimation(ScheduledExecutorService executor) {
         this.executor = executor;
@@ -78,12 +78,13 @@ public class JProgressAnimation extends JComponent implements Runnable {
             double s = Math.sin(radians);
             lines[i] = new Line2D.Double(LINE_R1 * c, LINE_R1 * s, LINE_R2 * c, LINE_R2 * s);
         }
-        radiansPerLine = 2.0 * Math.PI / 6.0;
-        for (int i = 0; i < 6; i++) {
-            hexagon.addPoint((int) (LINE_R2 * Math.cos(i * radiansPerLine)),
-                    (int) (LINE_R2 * Math.sin(i * radiansPerLine)));
-            innerHexagon.addPoint((int) ((LINE_R2 - 4) * Math.cos(i * radiansPerLine)),
-                    (int) ((LINE_R2 - 4) * Math.sin(i * radiansPerLine)));
+        radiansPerLine = 2.0 * Math.PI / 8.0;
+        double offset = 2.0 * Math.PI / 16.0;
+        for (int i = 0; i < 8; i++) {
+            octagon.addPoint((int) (LINE_R2 * Math.cos(offset + i * radiansPerLine)),
+                    (int) (LINE_R2 * Math.sin(offset + i * radiansPerLine)));
+            innerOctagon.addPoint((int) ((LINE_R2 - 4) * Math.cos(offset + i * radiansPerLine)),
+                    (int) ((LINE_R2 - 4) * Math.sin(offset + i * radiansPerLine)));
         }
 
     }
@@ -160,10 +161,10 @@ public class JProgressAnimation extends JComponent implements Runnable {
                 
                 if (null == future) {
                     g.setColor(Color.red);
-                    g.fillPolygon(hexagon);
+                    g.fillPolygon(octagon);
                     g2d.setStroke(STOP_STROKE);
                     g.setColor(Color.white);
-                    g.drawPolygon(innerHexagon);
+                    g.drawPolygon(innerOctagon);
                     String stop = "Arr\u00EAt";
                     g.setFont(g.getFont().deriveFont(30f));
                     int width = g.getFontMetrics().stringWidth(stop);

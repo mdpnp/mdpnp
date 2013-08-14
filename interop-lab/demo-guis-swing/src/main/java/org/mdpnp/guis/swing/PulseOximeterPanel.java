@@ -7,6 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import ice.InfusionStatus;
 import ice.Numeric;
 import ice.SampleArray;
 
@@ -178,5 +179,10 @@ public class PulseOximeterPanel extends DevicePanel {
         }
         date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
         time.setText(dateFormat.format(date));
+    }
+
+    @Override
+    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
+
     }
 }

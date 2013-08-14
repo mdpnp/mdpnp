@@ -97,12 +97,13 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
         this.executor = executor;
         
 
-        double radiansPerLine = 2.0 * Math.PI / 6.0;
-        for (int i = 0; i < 6; i++) {
-            hexagon.addPoint((int) (LINE_R2 * Math.cos(i * radiansPerLine)),
-                    (int) (LINE_R2 * Math.sin(i * radiansPerLine)));
-            innerHexagon.addPoint((int) ((LINE_R2 - 4) * Math.cos(i * radiansPerLine)),
-                    (int) ((LINE_R2 - 4) * Math.sin(i * radiansPerLine)));
+        double radiansPerLine = 2.0 * Math.PI / 8.0;
+        double offset = 2.0 * Math.PI / 16.0;
+        for (int i = 0; i < 8; i++) {
+            octagon.addPoint((int) (LINE_R2 * Math.cos(offset + i * radiansPerLine)),
+                    (int) (LINE_R2 * Math.sin(offset + i * radiansPerLine)));
+            innerOctagon.addPoint((int) ((LINE_R2 - 4) * Math.cos(offset + i * radiansPerLine)),
+                    (int) ((LINE_R2 - 4) * Math.sin(offset + i * radiansPerLine)));
         }
 
     }
@@ -110,8 +111,8 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
     private static final double LINE_R2 = 80.0;
     
     private ScheduledFuture<?> future;
-    private final Polygon hexagon = new Polygon();
-    private final Polygon innerHexagon = new Polygon();
+    private final Polygon octagon = new Polygon();
+    private final Polygon innerOctagon = new Polygon();
 
     public void toggle() {
         if (null == future) {
@@ -170,18 +171,20 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
                 g2d.translate(size.width/2, size.height/2);
                 g2d.scale(radius / SCALE_RADIUS, radius / SCALE_RADIUS);
                 g.setColor(Color.red);
-                g.fillPolygon(hexagon);
+                g.fillPolygon(octagon);
                 g2d.setStroke(STOP_STROKE);
                 g.setColor(Color.white);
-                g.drawPolygon(innerHexagon);
+                g.drawPolygon(innerOctagon);
 //                String stop = "Arr\u00EAt";
-//                g.setFont(g.getFont().deriveFont(30f));
+//                String stop = "STOP";
+//                g.setFont(g.getFont().deriveFont(50f));
 //                int width = g.getFontMetrics().stringWidth(stop);
 //                int height = g.getFontMetrics().getHeight();
                 
 //                height *= SCALE_RADIUS / radius;
-                // height is not scaled
-//                g.drawString(stop, -width/2, height / 2);
+//                width *= SCALE_RADIUS / radius;
+//                 height is not scaled
+//                g.drawString(stop, -width/2, -height / 2);
             } else {
                 g.setColor(Color.black);
                 g.drawLine(0, 2 * size.height / 3 - scaleArrow.getBounds().height / 2, size.width, 2 * size.height / 3 - scaleArrow.getBounds().height / 2);
