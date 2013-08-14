@@ -16,6 +16,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 
@@ -36,14 +37,14 @@ public class UserInfoSearchPanel extends Composite {
 	
 //	private boolean reverseOrder;
 	private UserComparator comparator = new UserComparator("email", false);
-	private UserInfoRequest uir = null;
+	private UserInfoRequestFactory userInfoRequestFactory;
 
-	private static UserInfoSearchPanelUiBinder uiBinder = GWT
-			.create(UserInfoSearchPanelUiBinder.class);
+	private static UserInfoSearchPanelUiBinder uiBinder = GWT.create(UserInfoSearchPanelUiBinder.class);
 
 	interface UserInfoSearchPanelUiBinder extends
 			UiBinder<Widget, UserInfoSearchPanel> {
 	}
+
 
 	@UiField
 	FlexTable list;
@@ -59,28 +60,30 @@ public class UserInfoSearchPanel extends Composite {
 	
 	public UserInfoSearchPanel(UserInfoRequestFactory userInfoRequestFactory) {
 		initWidget(uiBinder.createAndBindUi(this));		
-		this.uir = userInfoRequestFactory.userInfoRequest();
+		this.userInfoRequestFactory = userInfoRequestFactory;// userInfoRequestFactory.userInfoRequest();
 	
-		uir.findAllUserInfo().to(new Receiver<List<UserInfoProxy>>() {
-			
-			@Override
-			public void onSuccess(final List<UserInfoProxy> response) {
-				drawUsersList(response);			
-			}
-			
-			@Override
-			public void onFailure(ServerFailure error) {
-				super.onFailure(error);
-				Window.alert(error.getMessage());
-			}
-		}).fire();
+		UserInfoRequest uir =  userInfoRequestFactory.userInfoRequest();
+		fetchUsersList();
+//		uir.findAllUserInfo().to(new Receiver<List<UserInfoProxy>>() {
+//			
+//			@Override
+//			public void onSuccess(final List<UserInfoProxy> response) {
+//				drawUsersList(response);			
+//			}
+//			
+//			@Override
+//			public void onFailure(ServerFailure error) {
+//				super.onFailure(error);
+//				Window.alert(error.getMessage());
+//			}
+//		}).fire();
 	}
 	
 	public void fetchUsersList(){
 //		if(uir!=null){
-	
+		
+		UserInfoRequest uir =  userInfoRequestFactory.userInfoRequest();
 		uir.findAllUserInfo()
-		.with("userInfo")
 		.to(new Receiver<List<UserInfoProxy>>() {
 //			uir.findAllUserInfo().to(new Receiver<List<UserInfoProxy>>() {
 				

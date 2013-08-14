@@ -109,7 +109,7 @@
 	<g:Tab text='Proposed Solution'>
 	  <g:FlowPanel>
 	     <g:HTML><span style="font-size:16pt;">Proposed Solution</span><br/>
-	     A specific solution implementing the Proposed State<br/>
+	     A specific solution implementing the Proposed Solution<br/>
 	     <br/>
 	     
 	     </g:HTML>

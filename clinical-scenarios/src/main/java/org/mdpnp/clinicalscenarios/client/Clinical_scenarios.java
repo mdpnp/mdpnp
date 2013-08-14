@@ -228,7 +228,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 
 			@Override
 			public void execute() {
-//				userInfoSearchPanel.fetchUsersList();
+				userInfoSearchPanel.fetchUsersList();//TICKET-98
 				showWidget(userInfoSearchPanel);
 			}
 			
