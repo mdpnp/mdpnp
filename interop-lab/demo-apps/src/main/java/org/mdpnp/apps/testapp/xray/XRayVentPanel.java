@@ -512,7 +512,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
                 seenInstances.add(si.instance_handle);
                 ice.SampleArray sa = (SampleArray) sa_seq.get(i);
                 switch(sa.name) {
-                case ice.MDC_FLOW_AWAY.VALUE:
+                case ice.Physio._MDC_FLOW_AWAY:
                     wuws.applyUpdate(sa);
                     break;
                 }

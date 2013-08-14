@@ -7,16 +7,12 @@
  ******************************************************************************/
 package org.mdpnp.devices.nonin.pulseox;
 
-import ice.MDC_PULS_OXIM_PLETH;
-import ice.MDC_PULS_OXIM_PULS_RATE;
-import ice.MDC_PULS_OXIM_SAT_O2;
 import ice.SampleArray;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
@@ -58,9 +54,9 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 		AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Nonin";
 		
-	    pulse = createNumericInstance(MDC_PULS_OXIM_PULS_RATE.VALUE);
-	    SpO2 = createNumericInstance(MDC_PULS_OXIM_SAT_O2.VALUE);
-	    pleth = createSampleArrayInstance(MDC_PULS_OXIM_PLETH.VALUE);
+	    pulse = createNumericInstance(ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
+	    SpO2 = createNumericInstance(ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
+	    pleth = createSampleArrayInstance(ice.Physio.MDC_PULS_OXIM_PLETH.value());
 	    
 	    pleth.data.millisecondsPerSample = (int) NoninPulseOx.MILLISECONDS_PER_SAMPLE;
 	    pleth.data.values.setSize(Packet.FRAMES);

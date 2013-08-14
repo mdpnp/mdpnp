@@ -44,8 +44,8 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
 		super(domainId, eventLoop);
 
 		co2 = createSampleArrayInstance(ice.MDC_CAPNOGRAPH.VALUE);
-		respiratoryRate = createNumericInstance(ice.MDC_RESP_RATE.VALUE);
-		etCO2 = createNumericInstance(ice.MDC_AWAY_CO2_EXP.VALUE);
+		respiratoryRate = createNumericInstance(ice.Physio.MDC_RESP_RATE.value());
+		etCO2 = createNumericInstance(ice.Physio.MDC_AWAY_CO2_EXP.value());
 		
 		deviceIdentity.model = "Capnometer (Simulated)";
 		deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);

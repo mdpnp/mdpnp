@@ -152,7 +152,7 @@ public class BloodPressurePanel extends DevicePanel {
 
 	   
     public static boolean supported(Set<Integer> names) {
-        return names.contains(ice.MDC_PRESS_CUFF.VALUE);
+        return names.contains(ice.Physio.MDC_PRESS_CUFF.value());
     }
 
     // TODO manage state better
@@ -193,7 +193,7 @@ public class BloodPressurePanel extends DevicePanel {
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
 //        log.debug("N:"+numeric);
         switch(numeric.name) {
-        case ice.MDC_PRESS_CUFF.VALUE:
+        case ice.Physio._MDC_PRESS_CUFF:
             switch((int)numeric.value) {
             case ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE:
                 state = State.Deflating;
@@ -206,15 +206,13 @@ public class BloodPressurePanel extends DevicePanel {
                 break;
             }
             break;
-        case ice.MDC_PRESS_CUFF_SYS.VALUE:
+        case ice.Physio._MDC_PRESS_CUFF_SYS:
             systolicN.copy_from(numeric);
             break;
-        case ice.MDC_PRESS_CUFF_DIA.VALUE:
+        case ice.Physio._MDC_PRESS_CUFF_DIA:
             diastolicN.copy_from(numeric);
             break;
-        case ice.MDC_PULS_RATE_NON_INV.VALUE:
-            // TODO call it a pulse ox rate just for testing
-        case ice.MDC_PULS_OXIM_PULS_RATE.VALUE:
+        case ice.Physio._MDC_PULS_RATE_NON_INV:
             pulseN.copy_from(numeric);
             break;
         case ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE:

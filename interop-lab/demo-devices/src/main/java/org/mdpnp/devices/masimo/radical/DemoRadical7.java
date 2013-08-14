@@ -97,8 +97,8 @@ public class DemoRadical7 extends AbstractSerialDevice {
         
 		this.fieldDelegate = new MyMasimoRadical7();
 
-		spo2Update = createNumericInstance(ice.MDC_PULS_OXIM_SAT_O2.VALUE);
-		pulseUpdate = createNumericInstance(ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
+		spo2Update = createNumericInstance(ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
+		pulseUpdate = createNumericInstance(ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
 	}
 	
 

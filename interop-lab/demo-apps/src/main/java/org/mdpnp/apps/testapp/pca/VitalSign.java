@@ -4,11 +4,11 @@ import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 
 public enum VitalSign {
-  HeartRate("Heart Rate", "bpm", new int[] { ice.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.MDC_PULS_RATE.VALUE, ice.MDC_PULS_RATE_NON_INV.VALUE, ice.MDC_BLD_PULS_RATE_INV.VALUE }, 40f, 140f, 20f, 160f, 0f, 250f, 5000L, 5000L),
-  SpO2("SpO\u2082", "%", new int[] { ice.MDC_PULS_OXIM_SAT_O2.VALUE }, 90f, null, 80f, null, 50f, 100f, 5000L, 5000L),
-  RespiratoryRate("Resp Rate", "bpm", new int[] { ice.MDC_RESP_RATE.VALUE }, 10f, 16f, 2f, 35f, 0f, 40f, 5000L, 5000L),
-  EndTidalCO2("etCO\u2082", "mmHg", new int[] { ice.MDC_AWAY_CO2_EXP.VALUE }, 20f, 100f, 10f, 110f, 0f, 120f, 5000L, 5000L),
-  Temperature("Temp", "\u00B0C", new int[] {ice.MDC_TEMP_BLD.VALUE}, 35f, 39f, 32f, 42f, 20f, 60f, 5000L, 5000L);
+  HeartRate("Heart Rate", "bpm", new int[] { ice.Physio._MDC_PULS_OXIM_PULS_RATE, ice.Physio._MDC_PULS_RATE, ice.Physio._MDC_PULS_RATE_NON_INV, ice.Physio._MDC_BLD_PULS_RATE_INV }, 40f, 140f, 20f, 160f, 0f, 250f, 5000L, 5000L),
+  SpO2("SpO\u2082", "%", new int[] { ice.Physio._MDC_PULS_OXIM_SAT_O2 }, 90f, null, 80f, null, 50f, 100f, 5000L, 5000L),
+  RespiratoryRate("Resp Rate", "bpm", new int[] { ice.Physio._MDC_RESP_RATE }, 10f, 16f, 2f, 35f, 0f, 40f, 5000L, 5000L),
+  EndTidalCO2("etCO\u2082", "mmHg", new int[] { ice.Physio._MDC_AWAY_CO2_EXP }, 20f, 100f, 10f, 110f, 0f, 120f, 5000L, 5000L),
+  Temperature("Temp", "\u00B0C", new int[] {ice.Physio._MDC_TEMP_BLD}, 35f, 39f, 32f, 42f, 20f, 60f, 5000L, 5000L);
   ;
 
   VitalSign(String label, String units, int[] names, Float startingLow, Float startingHigh, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh) {
