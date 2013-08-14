@@ -7,6 +7,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -156,6 +158,66 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 	    log.trace("Added Numeric:"+name+" tag="+tagName);
 	}
 	
+	private static Integer getValue(String name) throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException {
+	    try {
+            Class<?> cls = Class.forName(name);
+            return cls.getField("VALUE").getInt(null);
+        } catch (ClassNotFoundException e) {
+            // If it's not a class then maybe it's a static member
+            int lastIndexOfDot = name.lastIndexOf('.');
+            if(lastIndexOfDot < 0) {
+                return null;
+            }
+            Class<?> cls = Class.forName(name.substring(0, lastIndexOfDot));
+            Object obj = cls.getField(name.substring(lastIndexOfDot+1, name.length())).get(null);
+            return (Integer) obj.getClass().getMethod("value").invoke(obj);
+            
+        }
+	    
+	}
+	
+	private static void populateMap(Map<String, Integer> numerics, Map<String, Integer> waveforms) throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException, IOException, InvocationTargetException, NoSuchMethodException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(DemoBernoulli.class.getResourceAsStream("bernoulli.map")));
+        String line = null;
+        while(null != (line = br.readLine())) {
+            line = line.trim();
+            if('#'!=line.charAt(0)) {
+                String v[] = line.split("\t");
+                if(v.length < 3) {
+                    log.warn("Bad line in bernoulli.map:"+line);
+                } else {
+                    v[2] = v[2].trim();
+                    Integer value = getValue(v[1]);
+                    if(null == value) {
+                        log.warn("Cannot find value for " + v[1]);
+                        continue;
+                    }
+                    if("W".equals(v[2])) {
+                        if(waveforms.containsKey(v[0])) {
+                            throw new RuntimeException("Duplicate values for waveform " + v[0] + " " + waveforms.get(v[0]) + " and " + value);
+                        }
+                        waveforms.put(v[0], value);
+                    } else if("N".equals(v[2])) {
+                        if(numerics.containsKey(v[0])) {
+                            throw new RuntimeException("Duplicate values for numeric " + v[0] + " " + numerics.get(v[0]) + " and " + value);
+                        }
+                        numerics.put(v[0], value);
+                    } else {
+                        log.warn("Unknown field type="+v[2]);
+                    }
+                }
+            }
+        }
+	}
+	
+	public static void main(String[] args) throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException, IOException, InvocationTargetException, NoSuchMethodException {
+	    Map<String, Integer> numerics = new HashMap<String, Integer>();
+	    Map<String, Integer> waveforms = new HashMap<String, Integer>();
+	    populateMap(numerics, waveforms);
+	    System.out.println(numerics);
+	    System.out.println(waveforms);
+	}
+	
 	public DemoBernoulli(int domainId, EventLoop eventLoop) {
 		super(domainId, eventLoop);
 		
@@ -171,29 +233,15 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 	        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
 	        
 		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(DemoBernoulli.class.getResourceAsStream("bernoulli.map")));
-			String line = null;
-			// TODO this is a kluge until nomenclature ideas are more mature
-			String prefix = Numeric.class.getPackage().getName()+".";
-			while(null != (line = br.readLine())) {
-				line = line.trim();
-				if('#'!=line.charAt(0)) {
-					String v[] = line.split("\t");
-					if(v.length < 3) {
-					    log.warn("Bad line in bernoulli.map:"+line);
-					} else {
-					    v[2] = v[2].trim();
-					    Class cls = Class.forName(prefix+v[1]);
-    					if("W".equals(v[2])) {
-    					    addWaveform(v[0], cls.getField("VALUE").getInt(null));
-    					} else if("N".equals(v[2])) {
-    					    addNumeric(v[0], cls.getField("VALUE").getInt(null));
-    					} else {
-    					    log.warn("Unknown field type="+v[2]);
-    					}
-					}
-				}
-			}
+		    Map<String, Integer> numerics = new HashMap<String, Integer>();
+		    Map<String, Integer> waveforms = new HashMap<String, Integer>();
+		    populateMap(numerics, waveforms);
+		    for(String name : numerics.keySet()) {
+		        addNumeric(name, numerics.get(name));
+		    }
+		    for(String name : waveforms.keySet()) {
+		        addWaveform(name, waveforms.get(name));
+		    }
 		} catch(Exception e) {
 			throw new RuntimeException(e);
 		}

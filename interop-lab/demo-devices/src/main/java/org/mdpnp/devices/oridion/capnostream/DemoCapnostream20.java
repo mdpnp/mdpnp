@@ -134,26 +134,26 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             // We have an SpO2 value
 
             DemoCapnostream20.this.spo2 = numericSample(DemoCapnostream20.this.spo2, 0xFF == spo2 ? null : spo2,
-                    ice.MDC_PULS_OXIM_SAT_O2.VALUE);
+                    ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
 
-            rr = numericSample(rr, 0xFF == respiratoryRate ? null : respiratoryRate, ice.MDC_RESP_RATE.VALUE);
+            rr = numericSample(rr, 0xFF == respiratoryRate ? null : respiratoryRate, ice.Physio.MDC_RESP_RATE.value());
 
-            etco2 = numericSample(etco2, 0xFF == etCO2 ? null : etCO2, ice.MDC_AWAY_CO2_EXP.VALUE);
+            etco2 = numericSample(etco2, 0xFF == etCO2 ? null : etCO2, ice.Physio.MDC_AWAY_CO2_EXP.value());
 
             DemoCapnostream20.this.pulserate = numericSample(DemoCapnostream20.this.pulserate, 0xFF == pulserate ? null
-                    : pulserate, ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
+                    : pulserate, ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
 
             DemoCapnostream20.this.extendedCO2Status = numericSample(DemoCapnostream20.this.extendedCO2Status,
-                    0xFF == extendedCO2Status ? null : extendedCO2Status, ice.oridion.MDC_EXTENDED_CO2_STATUS.VALUE);
+                    0xFF == extendedCO2Status ? null : extendedCO2Status, oridion.MDC_EXTENDED_CO2_STATUS.VALUE);
 
             DemoCapnostream20.this.slowStatus = numericSample(DemoCapnostream20.this.slowStatus,
-                    0xFF == slowStatus ? null : slowStatus, ice.oridion.MDC_SLOW_STATUS.VALUE);
+                    0xFF == slowStatus ? null : slowStatus, oridion.MDC_SLOW_STATUS.VALUE);
 
             DemoCapnostream20.this.co2ActiveAlarms = numericSample(DemoCapnostream20.this.co2ActiveAlarms,
-                    0xFF == CO2ActiveAlarms ? null : CO2ActiveAlarms, ice.oridion.MDC_CO2_ACTIVE_ALARMS.VALUE);
+                    0xFF == CO2ActiveAlarms ? null : CO2ActiveAlarms, oridion.MDC_CO2_ACTIVE_ALARMS.VALUE);
 
             DemoCapnostream20.this.spo2ActiveAlarms = numericSample(DemoCapnostream20.this.spo2ActiveAlarms,
-                    0xFF == SpO2ActiveAlarms ? null : SpO2ActiveAlarms, ice.oridion.MDC_SPO2_ACTIVE_ALARMS.VALUE);
+                    0xFF == SpO2ActiveAlarms ? null : SpO2ActiveAlarms, oridion.MDC_SPO2_ACTIVE_ALARMS.VALUE);
 
             return true;
         }
@@ -164,7 +164,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
             if (0xFF != status) {
                 DemoCapnostream20.this.fastStatus = numericSample(DemoCapnostream20.this.fastStatus,
-                        0xFF == status ? null : status, ice.oridion.MDC_FAST_STATUS.VALUE);
+                        0xFF == status ? null : status, oridion.MDC_FAST_STATUS.VALUE);
             }
 
             if (realtimeBufferCount == realtimeBuffer.length) {

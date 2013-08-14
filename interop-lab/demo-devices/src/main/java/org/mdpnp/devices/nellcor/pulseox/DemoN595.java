@@ -111,8 +111,8 @@ public class DemoN595 extends AbstractSerialDevice {
         deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
 		
-        spo2Update = createNumericInstance(ice.MDC_PULS_OXIM_SAT_O2.VALUE);
-        pulseUpdate = createNumericInstance(ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
+        spo2Update = createNumericInstance(ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
+        pulseUpdate = createNumericInstance(ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
         
 		this.fieldDelegate = new MyNellcorN595();
 	}

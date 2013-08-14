@@ -28,11 +28,11 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
             return null;
         }
         if(lbl.startsWith(ECG_III_PREFIX)) {
-            return ice.MDC_ECG_ELEC_POTL_III.VALUE;
+            return ice.Physio.MDC_ECG_AMPL_ST_I.value();
         } else if(lbl.startsWith(ECG_II_PREFIX)) {
-            return ice.MDC_ECG_ELEC_POTL_II.VALUE;
+            return ice.Physio.MDC_ECG_AMPL_ST_II.value();
         } else if(lbl.startsWith(ECG_I_PREFIX)) {
-            return ice.MDC_ECG_ELEC_POTL_I.VALUE;
+            return ice.Physio.MDC_ECG_AMPL_ST_III.value();
         } else {
             log.warn("Unknown ECG:"+lbl);
             return null;
@@ -75,7 +75,7 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
         @Override
         protected void receiveEndTidalCO2(Integer value, String label) {
-            etco2 = numericSample(etco2, value, ice.MDC_AWAY_CO2_EXP.VALUE);
+            etco2 = numericSample(etco2, value, ice.Physio.MDC_AWAY_CO2_EXP.value());
         }
         
         @Override
@@ -93,17 +93,17 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         
         @Override
         protected void receiveRespWave(int[] data, int count, int msPerSample) {
-            respWave = sampleArraySample(respWave, data, count, msPerSample, ice.MDC_CONC_AWAY_CO2.VALUE);
+            respWave = sampleArraySample(respWave, data, count, msPerSample, ice.Physio.MDC_CONC_AWAY_CO2.value());
         }
         
         @Override
         protected void receivePlethWave(int[] data, int count, int msPerSample) {
-            plethWave = sampleArraySample(plethWave, data, count, msPerSample, ice.MDC_PULS_OXIM_PLETH.VALUE);
+            plethWave = sampleArraySample(plethWave, data, count, msPerSample, ice.Physio.MDC_PULS_OXIM_PLETH.value());
         }
         
         @Override
         protected void receiveP1Wave(int[] data, int count, int msPerSample) {
-            p1Wave = sampleArraySample(p1Wave, data, count, msPerSample, ice.MDC_PRESS_BLD.VALUE);
+            p1Wave = sampleArraySample(p1Wave, data, count, msPerSample, ice.Physio.MDC_PRESS_BLD.value());
         }
         
         @Override
@@ -116,21 +116,21 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         @Override
         protected void receiveHeartRate(Integer value, String label) {
             // should be ECG heart rate?  or should it .. depends upon mode
-            heartRate = numericSample(heartRate, value, ice.MDC_PULS_RATE.VALUE);
+            heartRate = numericSample(heartRate, value, ice.Physio.MDC_PULS_RATE.value());
             
         }
         @Override
         protected void receiveNIBP(Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label) {
-            nibpSystolic = numericSample(nibpSystolic, systolic, ice.MDC_PRESS_CUFF_SYS.VALUE);
-            nibpDiastolic = numericSample(nibpDiastolic, diastolic, ice.MDC_PRESS_CUFF_DIA.VALUE);
-            nibpPulse = numericSample(nibpPulse, pulse, ice.MDC_PULS_RATE_NON_INV.VALUE);
-            nibpMean = numericSample(nibpMean, mean, ice.MDC_PRESS_CUFF_MEAN.VALUE);
+            nibpSystolic = numericSample(nibpSystolic, systolic, ice.Physio.MDC_PRESS_CUFF_SYS.value());
+            nibpDiastolic = numericSample(nibpDiastolic, diastolic, ice.Physio.MDC_PRESS_CUFF_DIA.value());
+            nibpPulse = numericSample(nibpPulse, pulse, ice.Physio.MDC_PULS_RATE_NON_INV.value());
+            nibpMean = numericSample(nibpMean, mean, ice.Physio.MDC_PRESS_CUFF_MEAN.value());
         }
         @Override
         protected void receivePressure1(Integer systolic, Integer diastolic, Integer mean, String label) {
-            ibpSystolic = numericSample(ibpSystolic, systolic, ice.MDC_PRESS_BLD_SYS.VALUE);
-            ibpDiastolic = numericSample(ibpDiastolic, diastolic, ice.MDC_PRESS_BLD_DIA.VALUE);
-            ibpMean = numericSample(ibpMean, mean, ice.MDC_PRESS_BLD_MEAN.VALUE);
+            ibpSystolic = numericSample(ibpSystolic, systolic, ice.Physio.MDC_PRESS_BLD_SYS.value());
+            ibpDiastolic = numericSample(ibpDiastolic, diastolic, ice.Physio.MDC_PRESS_BLD_DIA.value());
+            ibpMean = numericSample(ibpMean, mean, ice.Physio.MDC_PRESS_BLD_MEAN.value());
         }
         @Override
         protected void receivePressure2(Integer systolic, Integer diastolic, Integer mean, String label) {
@@ -138,17 +138,17 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
         @Override
         protected void receiveRespiratoryRate(Integer value, String label) {
-            respiratoryRate = numericSample(respiratoryRate, value, ice.MDC_RESP_RATE.VALUE);
+            respiratoryRate = numericSample(respiratoryRate, value, ice.Physio.MDC_RESP_RATE.value());
         }
         @Override
         protected void receiveSpO2(Integer value, String label, Integer pulseRate) {
-            spo2 = numericSample(spo2, value, ice.MDC_PULS_OXIM_SAT_O2.VALUE);
-            Ivy450C.this.pulseRate = numericSample(Ivy450C.this.pulseRate, pulseRate, ice.MDC_PULS_OXIM_PULS_RATE.VALUE);
+            spo2 = numericSample(spo2, value, ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
+            Ivy450C.this.pulseRate = numericSample(Ivy450C.this.pulseRate, pulseRate, ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
             
         }
         @Override
         protected void receiveTemperature1(Integer value, String label) {
-            t1 = numericSample(t1, value, ice.MDC_TEMP_BLD.VALUE);
+            t1 = numericSample(t1, value, ice.Physio.MDC_TEMP_BLD.value());
         }
         @Override
         protected void receiveTemperature2(Integer value, String label) {

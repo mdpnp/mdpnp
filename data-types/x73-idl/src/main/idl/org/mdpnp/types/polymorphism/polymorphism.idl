@@ -1,6 +1,13 @@
 #ifndef  _POLYMORPHISM_IDL_
 #define  _POLYMORPHISM_IDL_
 
+/***
+   This IDL is maintained for the sake of a unit test
+   that demonstrates the lack of runtime polymorphism in
+   DDS in the current version.
+***/
+
+
 /*************
 Elements of a numeric
 **** TOP 

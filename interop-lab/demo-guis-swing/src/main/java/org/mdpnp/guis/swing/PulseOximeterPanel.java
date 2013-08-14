@@ -151,18 +151,18 @@ public class PulseOximeterPanel extends DevicePanel {
 	}
 	
 	public static boolean supported(Set<Integer> names) {
-	    return names.contains(ice.MDC_PULS_OXIM_SAT_O2.VALUE) &&
-	           names.contains(ice.MDC_PULS_OXIM_PULS_RATE.VALUE) && 
-	           names.contains(ice.MDC_PULS_OXIM_PLETH.VALUE);
+	    return names.contains(ice.Physio._MDC_PULS_OXIM_SAT_O2) &&
+	           names.contains(ice.Physio._MDC_PULS_OXIM_PULS_RATE) && 
+	           names.contains(ice.Physio._MDC_PULS_OXIM_PLETH);
 	}
 	@SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
 	private final Date date = new Date();
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
-        setInt(numeric, ice.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
-        setInt(numeric, ice.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
-        if(ice.MDC_PULS_OXIM_PULS_RATE.VALUE == numeric.name) {
+        setInt(numeric, ice.Physio._MDC_PULS_OXIM_SAT_O2, spo2, null);
+        setInt(numeric, ice.Physio._MDC_PULS_OXIM_PULS_RATE, heartrate, null);
+        if(ice.Physio._MDC_PULS_OXIM_PULS_RATE == numeric.name) {
             pulseWave.applyUpdate(numeric);
         }
         date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
@@ -172,7 +172,7 @@ public class PulseOximeterPanel extends DevicePanel {
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
         switch(sampleArray.name) {
-        case ice.MDC_PULS_OXIM_PLETH.VALUE:
+        case ice.Physio._MDC_PULS_OXIM_PLETH:
             plethWave.applyUpdate(sampleArray);
             break;
         }
