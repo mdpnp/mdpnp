@@ -62,7 +62,6 @@ public class UserInfoSearchPanel extends Composite {
 		initWidget(uiBinder.createAndBindUi(this));		
 		this.userInfoRequestFactory = userInfoRequestFactory;// userInfoRequestFactory.userInfoRequest();
 	
-		UserInfoRequest uir =  userInfoRequestFactory.userInfoRequest();
 		fetchUsersList();
 //		uir.findAllUserInfo().to(new Receiver<List<UserInfoProxy>>() {
 //			
@@ -80,12 +79,9 @@ public class UserInfoSearchPanel extends Composite {
 	}
 	
 	public void fetchUsersList(){
-//		if(uir!=null){
-		
 		UserInfoRequest uir =  userInfoRequestFactory.userInfoRequest();
 		uir.findAllUserInfo()
 		.to(new Receiver<List<UserInfoProxy>>() {
-//			uir.findAllUserInfo().to(new Receiver<List<UserInfoProxy>>() {
 				
 				public void onSuccess(final List<UserInfoProxy> response) {
 					drawUsersList(response);			
@@ -96,9 +92,7 @@ public class UserInfoSearchPanel extends Composite {
 					Window.alert(error.getMessage());
 					//XXX Log message
 				}
-			}).fire();
-//		}
-		
+			}).fire();		
 	}
 	
 	/**

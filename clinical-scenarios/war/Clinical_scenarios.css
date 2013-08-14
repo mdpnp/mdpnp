@@ -19,8 +19,10 @@ h1 {
   font-size: 2em;
   font-weight: bold;
   color: #777777;
-  margin: 40px 0px 70px;
+/*     margin: 40px 0px 70px; */
+  margin: 0px 0px 70px;
   text-align: center;
+  width:900px;
 }
 
 .bla{

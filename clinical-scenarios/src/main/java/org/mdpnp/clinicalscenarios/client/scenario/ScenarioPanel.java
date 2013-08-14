@@ -1373,6 +1373,20 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		// Either call save, or check the list-type components
 		// option 3 we do like 'Approve' or 'Reject' an also send a email message
 		// scnReq.persistWithNotification
+		
+		if(isEmptyScenario()){
+			Window.alert("You can't submit an empty scenario for revision.");
+			return;
+		}
+		//TICKET-115
+		if(titleEditor.getText().trim().equals("") ||
+				currentStateEditor.getText().trim().equals("") ||
+				proposedStateEditor.getText().trim().equals("")){
+			String t = "The sceanrio \"Title\", \"Current State\" and \"Proposed State\" (see the \"Sceanrio Description\" tab) are MANDATORY fields." +
+					" \nPlease complete this information";
+			Window.alert(t);
+			return;
+		}
 	
 //		if(!currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED)){
 		if(!isEmptyScenario() && currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_UNSUBMITTED)){

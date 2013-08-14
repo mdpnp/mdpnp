@@ -21,7 +21,7 @@
 	<g:Label text='Edit User Profile' ui:field='header' styleName='heading'/>
 	<g:HTMLPanel styleName='{style.notice}'>
 		This information will be used for administrative purposes only and will not be shared with the public.<br/><br/>
-		All fields are mandatory.
+<!-- 		All fields are mandatory. TICKET-117-->
 		
 	</g:HTMLPanel>	
 	<g:Grid styleName='{style.dialog}'>
