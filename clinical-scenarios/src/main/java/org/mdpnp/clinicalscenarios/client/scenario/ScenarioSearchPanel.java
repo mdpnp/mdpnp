@@ -198,10 +198,10 @@ public class ScenarioSearchPanel extends Composite {
 	}
 
 	@UiField
-	Label status; 
+	Label status; //status: "Loading..."
 	
 	@UiField
-	Label searchResultCaption;
+	Label searchResultCaption; //"results from search: XXX"
 			
 	private void cleanScenarioTable(){
 		hideNavigationButtons();
@@ -215,7 +215,7 @@ public class ScenarioSearchPanel extends Composite {
 	 * @param text
 	 */
 	public void doSearch(final String text) {
-		hideAllSearchPanels();
+//		hideAllSearchPanels();
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByKeywords(text)
@@ -506,7 +506,7 @@ public class ScenarioSearchPanel extends Composite {
 		
 		this.scnList = response;//update aux var
 		
-		hideAllSearchPanels();//updates status label to "visible"
+//		hideAllSearchPanels();//updates status label to "visible"
 		status.setVisible(false);
 		int row =1;
 		int size = scn_search_index+SCN_GRIDLIST_ROWS>scn_list_size?(scn_list_size-scn_search_index): SCN_GRIDLIST_ROWS;
@@ -747,10 +747,10 @@ public class ScenarioSearchPanel extends Composite {
 	}
 	
 	@UiHandler("submitButton")
-	public void onClick(ClickEvent clickEvent) {
+	public void onClick(ClickEvent clickEvent) {		
+		hideAllSearchPanels();
 		searchResultCaption.setText("Search results for: \""+searchQuery.getText()+"\"");
 		searchResultCaption.setVisible(true);
-		hideBasicSearch();
 		doSearch(searchQuery.getText());
 	}
 	
@@ -758,9 +758,9 @@ public class ScenarioSearchPanel extends Composite {
 	public void onKeyUp(KeyUpEvent kue) {
 		
 		if(kue.getNativeKeyCode()==KeyCodes.KEY_ENTER) {
+			hideAllSearchPanels();//TICKET-119
 			searchResultCaption.setText("Search results for: \""+searchQuery.getText()+"\"");
 			searchResultCaption.setVisible(true);
-			hideBasicSearch();//TICKET-119
 			doSearch(searchQuery.getText());
 			
 		}
@@ -786,13 +786,7 @@ public class ScenarioSearchPanel extends Composite {
 	public void showBasicSearch(){
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		basicSearch.setVisible(true);
-		status.setVisible(false);
-		searchResultCaption.setVisible(false);
-//		searchQuery.setText("");
-//		searchQuery.setVisible(true);
-//		pleaseEnterKeywords.setVisible(true);
-//		submitButton.setVisible(true);
-		
+		status.setVisible(false);		
 	}
 	
 	@UiField
@@ -835,13 +829,11 @@ public class ScenarioSearchPanel extends Composite {
 	private void hideAdvancedSearch(){
 		advancedSearch.setVisible(false);
 		searchResult2.setVisible(false);
-		searchResultCaption.setVisible(false);
 	}
 	public void showAdvancedSearch(){
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		advancedSearch.setVisible(true);
 		status.setVisible(false);
-		searchResultCaption.setVisible(false);
 		searchResult2.setVisible(false);	
 //		radioButtonOr.setValue(true);
 	}
@@ -859,6 +851,7 @@ public class ScenarioSearchPanel extends Composite {
 		hideAdvancedSearch();
 		hideBasicSearch();
 		searchResult2.clear();//clear scn table
+		searchResultCaption.setVisible(false);
 		//We hide the search panels to show something new, that will be the result of the search
 		// so we update/show this label to indicate that we're fetching data
 		status.setVisible(true);

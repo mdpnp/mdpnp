@@ -8,6 +8,13 @@
 		.notimportant {
 			font-size:8pt;
 		}
+		.importantText{
+			font-size:14pt;
+		}
+		.resultsFound{
+			padding:0px 5px 0px 5px;
+		}
+
 	</ui:style>
 	<g:FlowPanel>
 		
@@ -46,13 +53,13 @@
 		<g:FlexTable ui:field='searchResult'/>
 			
  		<g:Label text='Loading...' ui:field='status' visible='false'/>
- 		<g:Label text='' ui:field='searchResultCaption' visible='false'/>
+ 		<g:Label text='' ui:field='searchResultCaption' visible='false' styleName='{style.importantText}'/>
  		
 		<g:FlowPanel ui:field='navigationButtons'>		   
 		    <g:Grid ui:field='searchResult2'/><g:HTML><br/></g:HTML>
 		    <g:Button text='First'  ui:field='buttonFirst' enabled='false'/>
 		    <g:Button text='Previous'  ui:field='buttonPrev' enabled='false'/>
-		    <g:InlineLabel text=' ' ui:field='labelDescription'/>
+		    <g:InlineLabel text=' ' ui:field='labelDescription' styleName='{style.resultsFound}'/>
 		    <g:Button text='Next'  ui:field='buttonNext' enabled='false'/>
 		    <g:Button text='Last'  ui:field='buttonLast' enabled='false'/>		    
 		</g:FlowPanel>
