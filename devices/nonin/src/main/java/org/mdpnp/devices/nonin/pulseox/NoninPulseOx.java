@@ -55,7 +55,7 @@ public class NoninPulseOx {
 		return null == packet ? null : packet.getAvgHeartRateFourBeat();
 	}
 
-	public Short getFirmwareRevision() {
+	public Integer getFirmwareRevision() {
 		Packet packet = getCurrentPacket();
 		return null == packet ? null : packet.getFirmwareRevision();
 	}
@@ -75,17 +75,17 @@ public class NoninPulseOx {
 		return null == packet ? null : packet.isLowBattery();
 	}
 
-	public Short getAvgSpO2FourBeat() {
+	public Integer getAvgSpO2FourBeat() {
 		Packet packet = getCurrentPacket();
 		return null == packet ? null : packet.getAvgSpO2FourBeat();
 	}
 
-	public Short getAvgSpO2FourBeatFast() {
+	public Integer getAvgSpO2FourBeatFast() {
 		Packet packet = getCurrentPacket();
 		return null == packet ? null : packet.getAvgSpO2FourBeatFast();
 	}
 
-	public Short getSpO2BeatToBeat() {
+	public Integer getSpO2BeatToBeat() {
 		Packet packet = getCurrentPacket();
 		return null == packet ? null : packet.getSpO2BeatToBeat();
 	}
@@ -95,12 +95,12 @@ public class NoninPulseOx {
 		return null == packet ? null : packet.getAvgHeartRateEightBeat();
 	}
 
-	public Short getAvgSpO2EightBeat() {
+	public Integer getAvgSpO2EightBeat() {
 		Packet packet = getCurrentPacket();
 		return null == packet ? null : packet.getAvgSpO2EightBeat();
 	}
 
-	public Short getAvgSpO2EightBeatForDisplay() {
+	public Integer getAvgSpO2EightBeatForDisplay() {
 		Packet packet = getCurrentPacket();
 		return null == packet ? null : packet.getAvgSpO2EightBeatForDisplay();
 	}

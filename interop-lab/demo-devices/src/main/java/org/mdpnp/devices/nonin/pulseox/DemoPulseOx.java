@@ -95,8 +95,10 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 			    pulse = numericSample(pulse, null, ice.Physio._MDC_PULS_OXIM_PULS_RATE);
 			    SpO2 = numericSample(SpO2, null, ice.Physio._MDC_PULS_OXIM_SAT_O2);
 			} else {
-			    pulse = numericSample(pulse, getHeartRate(), ice.Physio._MDC_PULS_OXIM_PULS_RATE);
-			    numericSample(SpO2, getSpO2(), ice.Physio._MDC_PULS_OXIM_SAT_O2);
+			    Integer heartRate = getHeartRate();
+			    Integer spo2 = getSpO2();
+			    pulse = numericSample(pulse, heartRate != null ? (heartRate < 895 ? heartRate : null) : null, ice.Physio._MDC_PULS_OXIM_PULS_RATE);
+			    numericSample(SpO2, spo2 != null ? (spo2 < 895 ? spo2 : null) : null, ice.Physio._MDC_PULS_OXIM_SAT_O2);
 			}
 
 			
