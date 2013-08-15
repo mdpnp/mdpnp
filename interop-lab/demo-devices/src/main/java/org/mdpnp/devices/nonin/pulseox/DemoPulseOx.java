@@ -54,9 +54,9 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 		AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Nonin";
 		
-	    pulse = createNumericInstance(ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
-	    SpO2 = createNumericInstance(ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
-	    pleth = createSampleArrayInstance(ice.Physio.MDC_PULS_OXIM_PLETH.value());
+//	    pulse = createNumericInstance(ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
+//	    SpO2 = createNumericInstance(ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
+//	    pleth = createSampleArrayInstance(ice.Physio.MDC_PULS_OXIM_PLETH.value());
 	    
 	    pleth.data.millisecondsPerSample = (int) NoninPulseOx.MILLISECONDS_PER_SAMPLE;
 	    pleth.data.values.setSize(Packet.FRAMES);
@@ -92,11 +92,11 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 			sampleArrayDataWriter.write(pleth.data, pleth.handle);
 			
 			if(currentPacket.getCurrentStatus().isArtifact()||currentPacket.getCurrentStatus().isSensorAlarm()||currentPacket.getCurrentStatus().isOutOfTrack()) {
-//				pulseUpdate.set(null, getTimestamp());
-//				spo2Update.set(null, getTimestamp());
+			    pulse = numericSample(pulse, null, ice.Physio._MDC_PULS_OXIM_PULS_RATE);
+			    SpO2 = numericSample(SpO2, null, ice.Physio._MDC_PULS_OXIM_SAT_O2);
 			} else {
-			    numericSample(pulse, getHeartRate());
-			    numericSample(SpO2, getSpO2());
+			    pulse = numericSample(pulse, getHeartRate(), ice.Physio._MDC_PULS_OXIM_PULS_RATE);
+			    numericSample(SpO2, getSpO2(), ice.Physio._MDC_PULS_OXIM_SAT_O2);
 			}
 
 			
@@ -159,9 +159,9 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 	protected NoninPulseOx buildDelegate(InputStream in, OutputStream out) {
 		return new MyNoninPulseOx(in, out);
 	}
-    protected final InstanceHolder<ice.Numeric> pulse;
-    protected final InstanceHolder<ice.Numeric> SpO2;
-    protected final InstanceHolder<SampleArray> pleth;
+    protected InstanceHolder<ice.Numeric> pulse;
+    protected InstanceHolder<ice.Numeric> SpO2;
+    protected InstanceHolder<SampleArray> pleth;
     
 //	private final MutableNumericUpdate pulseUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE);
 //	private final MutableNumericUpdate spo2Update = new MutableNumericUpdateImpl(PulseOximeter.SPO2);
