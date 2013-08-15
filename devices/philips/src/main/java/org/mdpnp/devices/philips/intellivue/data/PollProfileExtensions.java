@@ -30,5 +30,10 @@ public class PollProfileExtensions implements Value {
 		Bits.putUnsignedInt(bb, pollProfileExtOptions);
 		ext_attr.format(bb);
 	}
+	
+	@Override
+	public java.lang.String toString() {
+	    return "[pollProfileExtOptions="+Long.toHexString(pollProfileExtOptions)+",ext_attr="+ext_attr+"]";
+	}
 
 }

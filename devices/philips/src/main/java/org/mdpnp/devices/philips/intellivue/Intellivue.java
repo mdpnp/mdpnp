@@ -176,7 +176,7 @@ public class Intellivue implements NetworkConnection {
 
 		if(log.isTraceEnabled()) {
 			time.setTime(System.currentTimeMillis());
-			log.trace("In Message("+simpleDateformat.format(time)+"):\n"+lineWrap(message.toString()));
+//			log.trace("In Message("+simpleDateformat.format(time)+"):\n"+lineWrap(message.toString()));
 		}
 		if(message instanceof DataExportMessage) {
 			handle((DataExportMessage)message);
@@ -683,6 +683,7 @@ public class Intellivue implements NetworkConnection {
 	private void requestAssociation() {
 		AssociationConnect req = new AssociationConnectImpl();
 		PollProfileSupport pps = req.getUserInfo().getPollProfileSupport();
+		
 		pps.getMinPollPeriod().fromMilliseconds(500L);
 		MdibObjectSupport obj = req.getUserInfo().getMdibObjectSupport();
 		obj.addClass(ObjectClass.NOM_MOC_VMS_MDS, 1);
@@ -692,15 +693,15 @@ public class Intellivue implements NetworkConnection {
 		obj.addClass(ObjectClass.NOM_MOC_PT_DEMOG, 1);
 		obj.addClass(ObjectClass.NOM_MOC_VMO_AL_MON, 1);
 		
-		obj.addClass(ObjectClass.NOM_MOC_SCAN, 1);
-		obj.addClass(ObjectClass.NOM_MOC_SCAN_CFG, 1);
-		obj.addClass(ObjectClass.NOM_MOC_SCAN_CFG_EPI, 1);
-		obj.addClass(ObjectClass.NOM_MOC_SCAN_CFG_PERI, 1);
-		obj.addClass(ObjectClass.NOM_MOC_SCAN_CFG_PERI_FAST, 1);
+//		obj.addClass(ObjectClass.NOM_MOC_SCAN, 1);
+//		obj.addClass(ObjectClass.NOM_MOC_SCAN_CFG, 1);
+//		obj.addClass(ObjectClass.NOM_MOC_SCAN_CFG_EPI, 1);
+//		obj.addClass(ObjectClass.NOM_MOC_SCAN_CFG_PERI, 1);
+//		obj.addClass(ObjectClass.NOM_MOC_SCAN_CFG_PERI_FAST, 1);
 		
-		obj.addClass(ObjectClass.NOM_MOC_SCAN_UCFG, 1);
-		obj.addClass(ObjectClass.NOM_MOC_SCAN_UCFG_ALSTAT, 1);
-		obj.addClass(ObjectClass.NOM_MOC_SCAN_UCFG_CTXT, 1);
+//		obj.addClass(ObjectClass.NOM_MOC_SCAN_UCFG, 1);
+//		obj.addClass(ObjectClass.NOM_MOC_SCAN_UCFG_ALSTAT, 1);
+//		obj.addClass(ObjectClass.NOM_MOC_SCAN_UCFG_CTXT, 1);
 		
 
 		send(req);

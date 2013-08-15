@@ -23,6 +23,11 @@ public class PollProfileSupport implements Value {
 	private final Attribute<PollProfileExtensions> pollProfileExtensions = AttributeFactory.getPollProfileExtensions();
 	
 	@Override
+	public java.lang.String toString() {
+	    return "[pollProfileRevision="+pollProfileRevision+",minPollPeriod="+minPollPeriod+",maxMtuRx="+maxMtuRx+",maxMtuTx="+maxMtuTx+",maxBwTx="+maxBwTx+",pollProfileOptions="+Long.toHexString(pollProfileOptions)+",optionaPackages="+optionalPackages+",pollProfileExtensions="+pollProfileExtensions+"]";
+	}
+	
+	@Override
 	public void parse(ByteBuffer bb) {
 		pollProfileRevision = Bits.getUnsignedInt(bb);
 		minPollPeriod.parse(bb);
