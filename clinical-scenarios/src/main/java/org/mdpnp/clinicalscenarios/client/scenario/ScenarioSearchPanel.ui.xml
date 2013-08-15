@@ -49,6 +49,12 @@
 			<g:TextBox ui:field='risksSearch' /><g:HTML><br/></g:HTML>
 			<g:Button text='Advanced Search' ui:field='advancedSearchButton'/>
 		</g:FlowPanel>
+		
+		<g:FlowPanel ui:field='searchById' >
+		    <g:Label text='Search Scenarios by Id' styleName='heading'/>
+			<g:TextBox ui:field='searchQueryById' text='Enter Scenario Id'/>		
+			<g:Button text='Search' ui:field='buttonSearchById'/>
+		</g:FlowPanel>
 
 		<g:FlexTable ui:field='searchResult'/>
 			
