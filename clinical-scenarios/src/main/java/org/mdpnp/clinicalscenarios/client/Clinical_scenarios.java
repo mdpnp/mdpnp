@@ -143,10 +143,21 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			}
 		});
 		
+		//Retrieve the results of the latest search
 		userInfoBanner.getShowLatestSearch().setScheduledCommand(new Command() {
 			@Override
 			public void execute() {
 				scenarioSearchPanel.showLatestSearch();
+				showWidget(scenarioSearchPanel);	
+				
+			}
+		});
+		
+		//find scn by Id
+		userInfoBanner.getSearchById().setScheduledCommand(new Command() {
+			@Override
+			public void execute() {
+				scenarioSearchPanel.showSearchById();
 				showWidget(scenarioSearchPanel);	
 				
 			}

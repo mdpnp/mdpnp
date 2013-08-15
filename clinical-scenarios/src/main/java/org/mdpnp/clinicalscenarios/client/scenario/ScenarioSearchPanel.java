@@ -1,5 +1,6 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -82,6 +83,7 @@ public class ScenarioSearchPanel extends Composite {
 	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
 	private enum UserRole {Administrator, RegisteredUser, AnonymousUser}
 	private UserRole userRole;
+	private String submitterName;//email of the current user
 
 	interface ScenarioSearchPanelUiBinder extends
 			UiBinder<Widget, ScenarioSearchPanel> {
@@ -105,6 +107,7 @@ public class ScenarioSearchPanel extends Composite {
 					userRole = UserRole.AnonymousUser;//can't modify the Scn
 					
 				}else{
+					submitterName = response.getEmail();
 					if(response.getAdmin()) 
 						userRole = UserRole.Administrator;
 					else
@@ -198,10 +201,10 @@ public class ScenarioSearchPanel extends Composite {
 	}
 
 	@UiField
-	Label status; 
+	Label status; //status: "Loading..."
 	
 	@UiField
-	Label searchResultCaption;
+	Label searchResultCaption; //"results from search: XXX"
 			
 	private void cleanScenarioTable(){
 		hideNavigationButtons();
@@ -215,7 +218,7 @@ public class ScenarioSearchPanel extends Composite {
 	 * @param text
 	 */
 	public void doSearch(final String text) {
-		hideAllSearchPanels();
+//		hideAllSearchPanels();
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByKeywords(text)
@@ -261,6 +264,7 @@ public class ScenarioSearchPanel extends Composite {
 	}
 	
 	//----------------------------------------------------------------------------------------
+	//RECEIVERS for REQUESTCONTEXT
 	/**
 	 * Receiver for any search of list of SCN
 	 */
@@ -278,6 +282,26 @@ public class ScenarioSearchPanel extends Composite {
 			super.onFailure(error);
 		}
 	};
+	
+	/**
+	 * Receiver for any search of SINGLE Scenario
+	 */
+	Receiver<ScenarioProxy> scnReceiver = new Receiver<ScenarioProxy>() {
+
+		@Override
+		public void onSuccess(ScenarioProxy result) {
+			List<ScenarioProxy> response = new ArrayList<ScenarioProxy>();
+			response.add(result);
+			resetGridAuxVar(response);
+			drawScenariosListGrid(response);
+			
+		}
+		@Override
+		public void onFailure(ServerFailure error) {
+			super.onFailure(error);
+		}
+	};
+	//----
 	//----------------------------------------------------------------------------------------
 	
 	/**
@@ -506,7 +530,7 @@ public class ScenarioSearchPanel extends Composite {
 		
 		this.scnList = response;//update aux var
 		
-		hideAllSearchPanels();//updates status label to "visible"
+//		hideAllSearchPanels();//updates status label to "visible"
 		status.setVisible(false);
 		int row =1;
 		int size = scn_search_index+SCN_GRIDLIST_ROWS>scn_list_size?(scn_list_size-scn_search_index): SCN_GRIDLIST_ROWS;
@@ -747,10 +771,10 @@ public class ScenarioSearchPanel extends Composite {
 	}
 	
 	@UiHandler("submitButton")
-	public void onClick(ClickEvent clickEvent) {
+	public void onClick(ClickEvent clickEvent) {		
+		hideAllSearchPanels();
 		searchResultCaption.setText("Search results for: \""+searchQuery.getText()+"\"");
 		searchResultCaption.setVisible(true);
-		hideBasicSearch();
 		doSearch(searchQuery.getText());
 	}
 	
@@ -758,9 +782,9 @@ public class ScenarioSearchPanel extends Composite {
 	public void onKeyUp(KeyUpEvent kue) {
 		
 		if(kue.getNativeKeyCode()==KeyCodes.KEY_ENTER) {
+			hideAllSearchPanels();//TICKET-119
 			searchResultCaption.setText("Search results for: \""+searchQuery.getText()+"\"");
 			searchResultCaption.setVisible(true);
-			hideBasicSearch();//TICKET-119
 			doSearch(searchQuery.getText());
 			
 		}
@@ -786,13 +810,7 @@ public class ScenarioSearchPanel extends Composite {
 	public void showBasicSearch(){
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		basicSearch.setVisible(true);
-		status.setVisible(false);
-		searchResultCaption.setVisible(false);
-//		searchQuery.setText("");
-//		searchQuery.setVisible(true);
-//		pleaseEnterKeywords.setVisible(true);
-//		submitButton.setVisible(true);
-		
+		status.setVisible(false);		
 	}
 	
 	@UiField
@@ -835,13 +853,11 @@ public class ScenarioSearchPanel extends Composite {
 	private void hideAdvancedSearch(){
 		advancedSearch.setVisible(false);
 		searchResult2.setVisible(false);
-		searchResultCaption.setVisible(false);
 	}
 	public void showAdvancedSearch(){
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		advancedSearch.setVisible(true);
 		status.setVisible(false);
-		searchResultCaption.setVisible(false);
 		searchResult2.setVisible(false);	
 //		radioButtonOr.setValue(true);
 	}
@@ -859,9 +875,111 @@ public class ScenarioSearchPanel extends Composite {
 		hideAdvancedSearch();
 		hideBasicSearch();
 		searchResult2.clear();//clear scn table
+		searchResultCaption.setVisible(false);
 		//We hide the search panels to show something new, that will be the result of the search
 		// so we update/show this label to indicate that we're fetching data
 		status.setVisible(true);
+		hideSearchById();// Search by ID
 	}
 	
+	//---------------------------------------
+	//Search Scenarios by Id feature
+	@UiField
+	FlowPanel searchById;
+	
+	@UiField
+	TextBox searchQueryById;
+	
+	@UiField
+	Button buttonSearchById;
+	
+	private void hideSearchById(){
+		searchById.setVisible(false);
+	}
+	public void showSearchById(){
+		hideAllSearchPanels();//HIDE all the others; SHOW this one
+		searchById.setVisible(true);
+		status.setVisible(false);
+	}
+	
+	
+	@UiHandler("buttonSearchById")
+	public void onClickButtonSearchById(ClickEvent clickEvent) {	
+		Long scnId;
+		//Validation of numeric ID
+		try{
+			scnId = Long.parseLong(searchQueryById.getText());
+		}catch(NumberFormatException e){
+			String msg = searchQueryById.getText()+" is NOT a valid number. Scenarios Id MUST be a number.";
+			Window.alert(msg);	
+			return;
+		}
+		hideAllSearchPanels();
+		searchResultCaption.setText("Search results for ID #"+searchQueryById.getText()+".");
+		searchResultCaption.setVisible(true);
+		doSearchById(scnId);
+	}
+	
+	@UiHandler("searchQueryById")
+	public void onFocusSearchQueryById(FocusEvent focusEvent) {
+		searchQueryById.setText("");
+	}
+	
+	@UiHandler("searchQueryById")
+	public void onKeyUpButtonSearchById(KeyUpEvent kue) {		
+		if(kue.getNativeKeyCode()==KeyCodes.KEY_ENTER) {
+			Long scnId;
+			//Validation of numeric ID
+			try{
+				scnId = Long.parseLong(searchQueryById.getText());
+			}catch(NumberFormatException e){
+				String msg = searchQueryById.getText()+" is NOT a valid number. Scenarios Id MUST be a number.";
+				Window.alert(msg);	
+				return;
+			}
+			hideAllSearchPanels();
+			searchResultCaption.setText("Search results for ID #"+searchQueryById.getText()+".");
+			searchResultCaption.setVisible(true);
+			doSearchById(scnId);
+			
+		}
+	}
+	
+	/**
+	 * Searches a Scenario by its unique ID. Checks the user has priviledger to see this Scn.
+	 * @param scnId
+	 */
+	public void doSearchById(Long scnId) {
+		cleanScenarioTable();
+		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
+		scenarioRequest.findById(scnId)
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.to(new Receiver<ScenarioProxy>() {
+
+			@Override
+			public void onSuccess(ScenarioProxy result) {
+				List<ScenarioProxy> response = new ArrayList<ScenarioProxy>();
+				/**
+				 * Unregistered user: can see scn only is it is APPROVED
+				 * Registered user: can see Scn if is APPROVED or if they own it
+				 * Administrators: can see the scn w/out restriction
+				 */
+				if(userRole==UserRole.Administrator)
+					response.add(result);
+				else if (userRole==UserRole.RegisteredUser){
+					if(result.getSubmitter().equals(submitterName))
+						response.add(result);
+				}else if (result.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED))
+					response.add(result);
+				
+				resetGridAuxVar(response);
+				drawScenariosListGrid(response);
+				
+			}
+			@Override
+			public void onFailure(ServerFailure error) {
+				super.onFailure(error);
+			}
+		}).fire();
+	}	
 }

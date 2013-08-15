@@ -8,6 +8,13 @@
 		.notimportant {
 			font-size:8pt;
 		}
+		.importantText{
+			font-size:14pt;
+		}
+		.resultsFound{
+			padding:0px 5px 0px 5px;
+		}
+
 	</ui:style>
 	<g:FlowPanel>
 		
@@ -42,17 +49,23 @@
 			<g:TextBox ui:field='risksSearch' /><g:HTML><br/></g:HTML>
 			<g:Button text='Advanced Search' ui:field='advancedSearchButton'/>
 		</g:FlowPanel>
+		
+		<g:FlowPanel ui:field='searchById' >
+		    <g:Label text='Search Scenarios by Id' styleName='heading'/>
+			<g:TextBox ui:field='searchQueryById' text='Enter Scenario Id'/>		
+			<g:Button text='Search' ui:field='buttonSearchById'/>
+		</g:FlowPanel>
 
 		<g:FlexTable ui:field='searchResult'/>
 			
  		<g:Label text='Loading...' ui:field='status' visible='false'/>
- 		<g:Label text='' ui:field='searchResultCaption' visible='false'/>
+ 		<g:Label text='' ui:field='searchResultCaption' visible='false' styleName='{style.importantText}'/>
  		
 		<g:FlowPanel ui:field='navigationButtons'>		   
 		    <g:Grid ui:field='searchResult2'/><g:HTML><br/></g:HTML>
 		    <g:Button text='First'  ui:field='buttonFirst' enabled='false'/>
 		    <g:Button text='Previous'  ui:field='buttonPrev' enabled='false'/>
-		    <g:InlineLabel text=' ' ui:field='labelDescription'/>
+		    <g:InlineLabel text=' ' ui:field='labelDescription' styleName='{style.resultsFound}'/>
 		    <g:Button text='Next'  ui:field='buttonNext' enabled='false'/>
 		    <g:Button text='Last'  ui:field='buttonLast' enabled='false'/>		    
 		</g:FlowPanel>

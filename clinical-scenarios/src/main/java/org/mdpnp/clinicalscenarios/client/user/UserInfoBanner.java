@@ -41,6 +41,7 @@ public class UserInfoBanner extends Composite {
 	private MenuItem basicSearch = new MenuItem("Basic Search", NOOP);
 	private MenuItem advancedSearch = new MenuItem("Advanced Search", NOOP);
 	private MenuItem showLatestSearch = new MenuItem("Latest Search Results", NOOP);
+	private MenuItem searchById = new MenuItem("Search Sceanrio by Id", NOOP);
 	
 	private MenuItem listTags = new MenuItem("List Tags", NOOP);//list the tags
 	//list scenarios
@@ -115,6 +116,9 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getShowLatestSearch(){
 		return showLatestSearch;
 	}
+	public MenuItem getSearchById(){
+		return searchById;
+	}
 //	XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
 //	public MenuItem getListScnRejected(){
 //		return scnRejected;
@@ -135,8 +139,11 @@ public class UserInfoBanner extends Composite {
 		search.setTitle("Search Scenarios");
 		search.addItem(basicSearch);
 		search.addItem(advancedSearch);
+		searchById.setTitle("Find a scenario by its unique Id");
+		search.addItem(searchById);
 		showLatestSearch.setTitle("Retrieve the previous search results");
 		search.addItem(showLatestSearch);
+
 		
 		UserInfoRequest userInfoRequest = userInfoRequestFactory.userInfoRequest();
 		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).to(new Receiver<UserInfoProxy>() {
@@ -223,8 +230,9 @@ public class UserInfoBanner extends Composite {
 					});
 
 					logoutMenu.addItem(editProfile);
-					logoutMenu.addItem(signOut);
 					logoutMenu.addItem(goBackHome);
+					logoutMenu.addItem(signOut);
+					
 					username.addItem(response.getEmail(), logoutMenu);
 					if(null == response.getGivenName() && null != newUserHandler) {
 						newUserHandler.onNewUser(response);
