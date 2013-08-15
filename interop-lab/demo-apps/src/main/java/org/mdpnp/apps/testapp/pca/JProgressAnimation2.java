@@ -122,7 +122,15 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
         }
     }
 
+    private boolean populated = false;
+    
+    public void setPopulated(boolean populated) {
+        this.populated = populated;
+        repaint();
+    }
+    
     public void start() {
+        populated = true;
         if (null == future) {
             if(null != image) {
                 Graphics g = image.createGraphics();
@@ -136,6 +144,7 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
     }
 
     public void stop() {
+        populated = true;
         if (null != future) {
             future.cancel(true);
             future = null;
@@ -164,47 +173,50 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
             g.fillRect(0, 0, size.width, size.height);
             
             ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
-            if (null == future) {
-                int radius = (int) (Math.min(size.width / 2, size.height / 2));
-                
-                g2d.translate(size.width/2, size.height/2);
-                g2d.scale(radius / SCALE_RADIUS, radius / SCALE_RADIUS);
-                g.setColor(Color.red);
-                g.fillPolygon(octagon);
-                g2d.setStroke(STOP_STROKE);
-                g.setColor(Color.white);
-                g.drawPolygon(innerOctagon);
-//                String stop = "Arr\u00EAt";
-//                String stop = "STOP";
-//                g.setFont(g.getFont().deriveFont(50f));
-//                int width = g.getFontMetrics().stringWidth(stop);
-//                int height = g.getFontMetrics().getHeight();
-                
-//                height *= SCALE_RADIUS / radius;
-//                width *= SCALE_RADIUS / radius;
-//                 height is not scaled
-//                g.drawString(stop, -width/2, -height / 2);
-            } else {
-                g.setColor(Color.black);
-                g.drawLine(0, 2 * size.height / 3 - scaleArrow.getBounds().height / 2, size.width, 2 * size.height / 3 - scaleArrow.getBounds().height / 2);
-                g.drawLine(0, 2 * size.height / 3 + scaleArrow.getBounds().height / 2, size.width, 2 * size.height / 3 + scaleArrow.getBounds().height / 2);
-                
-                g.setColor(getForeground());
-                g.setFont(getFont());
-                int w = g.getFontMetrics().stringWidth(TEXT);
-                
-                g.drawString(TEXT, size.width/2-w/2, size.height / 3);
-                ((Graphics2D)g).translate(-arrowWidth+offset, 2 * size.height / 3);
-                for(int i = 0; i <= FIT_ARROWS; i++) {
+            if(populated) {
+                if (null == future) {
+                    int radius = (int) (Math.min(size.width / 2, size.height / 2));
                     
-//                    ((Graphics2D)g).scale(5.0, 5.0);
-                    ((Graphics2D)g).fill(scaleArrow);
-//                    ((Graphics2D)g).scale(1.0/5.0, 1.0/5.0);
-                    ((Graphics2D)g).translate(arrowWidth, 0);
+                    g2d.translate(size.width/2, size.height/2);
+                    g2d.scale(radius / SCALE_RADIUS, radius / SCALE_RADIUS);
+                    g.setColor(Color.red);
+                    g.fillPolygon(octagon);
+                    g2d.setStroke(STOP_STROKE);
+                    g.setColor(Color.white);
+                    g.drawPolygon(innerOctagon);
+    //                String stop = "Arr\u00EAt";
+    //                String stop = "STOP";
+    //                g.setFont(g.getFont().deriveFont(50f));
+    //                int width = g.getFontMetrics().stringWidth(stop);
+    //                int height = g.getFontMetrics().getHeight();
+                    
+    //                height *= SCALE_RADIUS / radius;
+    //                width *= SCALE_RADIUS / radius;
+    //                 height is not scaled
+    //                g.drawString(stop, -width/2, -height / 2);
+                } else {
+                    g.setColor(Color.black);
+                    g.drawLine(0, 2 * size.height / 3 - scaleArrow.getBounds().height / 2, size.width, 2 * size.height / 3 - scaleArrow.getBounds().height / 2);
+                    g.drawLine(0, 2 * size.height / 3 + scaleArrow.getBounds().height / 2, size.width, 2 * size.height / 3 + scaleArrow.getBounds().height / 2);
+                    
+                    g.setColor(getForeground());
+                    g.setFont(getFont());
+                    int w = g.getFontMetrics().stringWidth(TEXT);
+                    
+                    g.drawString(TEXT, size.width/2-w/2, size.height / 3);
+                    ((Graphics2D)g).translate(-arrowWidth+offset, 2 * size.height / 3);
+                    for(int i = 0; i <= FIT_ARROWS; i++) {
+                        
+    //                    ((Graphics2D)g).scale(5.0, 5.0);
+                        ((Graphics2D)g).fill(scaleArrow);
+    //                    ((Graphics2D)g).scale(1.0/5.0, 1.0/5.0);
+                        ((Graphics2D)g).translate(arrowWidth, 0);
+                    }
                 }
+            } else {
+                g.setFont(getFont());
+                g.drawString("?", size.width/2, size.height/2);
             }
-            
             
 
             g.dispose();

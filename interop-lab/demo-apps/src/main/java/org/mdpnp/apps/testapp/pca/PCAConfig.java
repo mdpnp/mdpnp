@@ -22,23 +22,32 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import org.mdpnp.apps.testapp.DeviceIcon;
+import org.mdpnp.apps.testapp.pump.Pump;
+import org.mdpnp.apps.testapp.pump.PumpListModel;
+import org.mdpnp.apps.testapp.pump.PumpModel;
+import org.mdpnp.apps.testapp.pump.PumpModelListener;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
 
 @SuppressWarnings("serial")
-public class PCAConfig extends JComponent implements VitalModelListener {
+public class PCAConfig extends JComponent implements VitalModelListener, PumpModelListener {
     
     JCheckBox configureModeBox = new JCheckBox("Configuration Mode");
     JPanel configurePanel = new JPanel();
@@ -113,8 +122,40 @@ public class PCAConfig extends JComponent implements VitalModelListener {
             }
             
         });
+        
+        pumpList.addListSelectionListener(new ListSelectionListener() {
+
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                vitalChanged(model, null);
+                if(null == pumpList.getSelectedValue()) {
+                    pumpProgress.setPopulated(false);
+                } else {
+                    pumpChanged(pumpModel, (Pump) pumpList.getSelectedValue());
+                }
+            }
+            
+        });
+        pumpList.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
+                    boolean cellHasFocus) {
+                if(value != null && value instanceof Pump) {
+                    String udi = ((Pump)value).getInfusionStatus().universal_device_identifier;
+                    VitalModel model = PCAConfig.this.model;
+                    if(model != null) {
+                        ice.DeviceIdentity di = model.getDeviceIdentity(udi);
+                        if(null != di) {
+                            value = di.manufacturer + " " + di.model;
+                        }
+                    }
+                }
+                return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            }
+        });
     }
     private VitalModel model;
+    private PumpModel pumpModel;
     
     static final Map<String,SoftReference<DeviceIdentity>> udiToDeviceIdentity = Collections.synchronizedMap(new HashMap<String, SoftReference<DeviceIdentity>>());
     static final Map<String,SoftReference<DeviceIcon>> udiToDeviceIcon = Collections.synchronizedMap(new HashMap<String, SoftReference<DeviceIcon>>()); 
@@ -136,6 +177,7 @@ public class PCAConfig extends JComponent implements VitalModelListener {
     
     private final JProgressAnimation2 pumpProgress;
     private final JTextArea pumpStatus = new JTextArea(" ");
+    private final JList pumpList = new JList();
     private final JTextArea warningStatus = new JTextArea(" ");
     private final JComboBox warningsToAlarm = new JComboBox();
     protected void _updateVitals() {
@@ -157,14 +199,18 @@ public class PCAConfig extends JComponent implements VitalModelListener {
 //            pumpStatus.setBackground(Color.white);
 //            warningStatus.setOpaque(true);
 //            pumpStatus.setOpaque(true);
+
             
-            JPanel pumpPanel = new JPanel(new GridLayout(1,3));
+            JPanel pumpPanel = new JPanel(new GridLayout(1,4));
             pumpPanel.add(pumpProgress);
             JScrollPane scrollPane;
+            pumpPanel.add(scrollPane = new JScrollPane(pumpList));
+            scrollPane.setBorder(null);
             pumpPanel.add(scrollPane = new JScrollPane(pumpStatus));
             scrollPane.setBorder(null);
             pumpPanel.add(scrollPane = new JScrollPane(warningStatus));
             scrollPane.setBorder(null);
+            
             gbc.weighty = 5.0;
             add(pumpPanel, gbc);
             
@@ -193,7 +239,16 @@ public class PCAConfig extends JComponent implements VitalModelListener {
         }
     }
     
-    public void setModel(VitalModel model) {
+    public void setModel(VitalModel model, PumpModel pumpModel) {
+        pumpList.setModel(null == pumpModel ? new DefaultListModel() : new PumpListModel(pumpModel));
+        if(this.pumpModel != null) {
+            this.pumpModel.removeListener(this);
+        }
+        this.pumpModel = pumpModel;
+        if(this.pumpModel != null) {
+            this.pumpModel.addListener(this);
+        }
+        
         if(this.model != null) {
             this.model.removeListener(this);
         }
@@ -208,14 +263,28 @@ public class PCAConfig extends JComponent implements VitalModelListener {
     public void vitalChanged(VitalModel model, Vital vital) {
         if(model != null) {
             warningsToAlarm.setSelectedItem((Integer)model.getCountWarningsBecomeAlarm());
+            Object o = pumpList.getSelectedValue();
+            Pump p = null;
+            if(o instanceof Pump) {
+                p = (Pump) o;
+            }
             if(model.isInfusionStopped()) {
-                pumpProgress.stop();
+                if(null != p) {
+                    p.setStop(true);
+                }
+                pumpStatus.setText(model.getInterlockText());
+//                pumpProgress.stop();
                 pumpStatus.setBackground(Color.red);
             } else {
-                pumpProgress.start();
+                if(null != p) {
+                    p.setStop(false);
+                    pumpStatus.setText("Drug:"+p.getInfusionStatus().drug_name+"\nVTBI:"+p.getInfusionStatus().volume_to_be_infused_ml+" mL\nDuration:"+p.getInfusionStatus().infusion_duration_seconds+" seconds\nProgress:"+Integer.toString( (int) (100f * p.getInfusionStatus().infusion_fraction_complete))+"%");
+                }
+//                pumpProgress.start();
+                
                 pumpStatus.setBackground(getBackground());
             }
-            pumpStatus.setText(model.getInterlockText());
+            
             // TODO setOpaque(false) is running rampant
 
             switch(model.getState()) {
@@ -253,5 +322,26 @@ public class PCAConfig extends JComponent implements VitalModelListener {
     @Override
     public void vitalAdded(VitalModel model, Vital vital) {
         vitalChanged(model, vital);
+    }
+
+    @Override
+    public void pumpAdded(PumpModel model, Pump pump) {
+        vitalChanged(this.model,  null);
+    }
+
+    @Override
+    public void pumpRemoved(PumpModel model, Pump pump) {
+        vitalChanged(this.model, null);
+    }
+
+    @Override
+    public void pumpChanged(PumpModel model, Pump pump) {
+        if(pump!=null&&pump.equals(pumpList.getSelectedValue())) {
+            if(pump.getInfusionStatus().infusionActive) {
+                pumpProgress.start();
+            } else {
+                pumpProgress.stop();
+            }
+        }
     }
 }

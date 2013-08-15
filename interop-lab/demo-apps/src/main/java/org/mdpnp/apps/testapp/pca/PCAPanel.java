@@ -19,6 +19,7 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
+import org.mdpnp.apps.testapp.pump.PumpModel;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
@@ -91,7 +92,7 @@ public class PCAPanel extends JPanel implements VitalModelListener {
 
     private VitalModel model;
     
-    public void setModel(VitalModel vitalModel) {
+    public void setModel(VitalModel vitalModel, PumpModel pumpModel) {
         if(this.model != null) {
             this.model.removeListener(this);
         }
@@ -99,7 +100,7 @@ public class PCAPanel extends JPanel implements VitalModelListener {
         if(this.model != null) {
             this.model.addListener(this);
         }
-        pcaConfig.setModel(model);
+        pcaConfig.setModel(model, pumpModel);
 //        vitalMonitor.setModel(vitalModel);
     }
     public VitalModel getVitalModel() {

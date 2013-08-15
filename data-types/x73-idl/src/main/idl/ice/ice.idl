@@ -92,13 +92,13 @@ module ice {
   const string TextTopic = "ice::Text";
   
   struct InfusionObjective {
-    string<256> universal_device_identifier; // @key
-    string<256> requestor; // @key
+    string<256> universal_device_identifier; //@key
+    string<128> requestor;
     boolean stopInfusion;
   };
   const string InfusionObjectiveTopic = "ice::InfusionObjective";
   struct InfusionStatus {
-    string<256> universal_device_identifier; // @key
+    string<256> universal_device_identifier; //@key
     // is the pump actively infusing?
     boolean infusionActive;
     

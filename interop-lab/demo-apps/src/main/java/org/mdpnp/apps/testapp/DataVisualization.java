@@ -6,6 +6,7 @@ import javax.swing.JSplitPane;
 
 import org.mdpnp.apps.testapp.pca.PCAConfig;
 import org.mdpnp.apps.testapp.pca.VitalMonitoring;
+import org.mdpnp.apps.testapp.pump.PumpModel;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 
 @SuppressWarnings("serial")
@@ -20,8 +21,8 @@ public class DataVisualization extends JSplitPane {
         setDividerLocation(0.5);
     }
     
-    public void setModel(VitalModel vitalModel) {
-        pcaConfig.setModel(vitalModel);
+    public void setModel(VitalModel vitalModel, PumpModel pumpModel) {
+        pcaConfig.setModel(vitalModel, pumpModel);
         vitalMonitoring.setModel(vitalModel);
     }
 }

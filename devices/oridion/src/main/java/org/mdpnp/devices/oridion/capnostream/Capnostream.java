@@ -404,7 +404,7 @@ public class Capnostream {
 	}
 
 	private static double co2(byte[] buf, int off) {
-		return buf[off] + buf[off + 1] / 256.0;
+		return (0xFF&buf[off]) + (0xFF&buf[off + 1]) / 256.0;
 	}
 
 	public boolean receiveNumerics(long date, int etCO2, int FiCO2,

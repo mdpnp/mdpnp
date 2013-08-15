@@ -22,6 +22,8 @@ import javax.swing.UIManager;
 
 import org.mdpnp.apps.testapp.pca.PCAPanel;
 import org.mdpnp.apps.testapp.pca.VitalSign;
+import org.mdpnp.apps.testapp.pump.PumpModel;
+import org.mdpnp.apps.testapp.pump.PumpModelImpl;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
@@ -36,6 +38,7 @@ import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 //
 public class DemoApp {
@@ -162,6 +165,7 @@ public class DemoApp {
 		pQos.participant_name.name = "DemoApp ICE_Supervisor";
 		final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null, StatusKind.STATUS_MASK_NONE);
 		final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+		final Publisher publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 		final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop);
 		final ScheduledExecutorService refreshScheduler = Executors.newSingleThreadScheduledExecutor();
 		
@@ -208,12 +212,13 @@ public class DemoApp {
 		panel.getContent().add(devicePanel, AppType.Device.getId());
 		
         final VitalModel vitalModel = new VitalModelImpl();
+        final PumpModel pumpModel = new PumpModelImpl();
         VitalSign.HeartRate.addToModel(vitalModel);
         VitalSign.SpO2.addToModel(vitalModel);
         VitalSign.RespiratoryRate.addToModel(vitalModel);
 //      VitalSign.EndTidalCO2.addToModel(vitalModel);
 		vitalModel.start(subscriber, eventLoop);
-		
+		pumpModel.start(subscriber, publisher, eventLoop);
 		PCAPanel _pcaPanel = null;
 		if(!AppType.PCA.isDisabled()) {
 		    UIManager.put("TabbedPane.contentOpaque", false);
@@ -246,10 +251,10 @@ public class DemoApp {
                     goBackAction = null;
                 }
                 if(pcaPanel != null) {
-                    pcaPanel.setModel(null);
+                    pcaPanel.setModel(null, null);
                 }
                 if(null != pcaviz) {
-                    pcaviz.setModel(null);
+                    pcaviz.setModel(null, null);
                 }
                 vitalModel.stop();
                 nc.tearDown();
@@ -327,12 +332,12 @@ public class DemoApp {
 					    if(null != pcaviz) {
 					        setGoBack(AppType.Main.getId(), new Runnable() {
 					           public void run() {
-					               pcaviz.setModel(null);
+					               pcaviz.setModel(null, null);
 					           }
 					        });
 					        panel.getBedLabel().setText(appType.getName());
                             panel.getPatientLabel().setText("");
-                            pcaviz.setModel(vitalModel);
+                            pcaviz.setModel(vitalModel, pumpModel);
                             ol.show(panel.getContent(), AppType.PCAViz.getId());
 					    }
 					    break;
@@ -340,12 +345,12 @@ public class DemoApp {
 					    if(null != pcaPanel) {
     						setGoBack(AppType.Main.getId(), new Runnable() {
     						    public void run() {
-    						        pcaPanel.setModel(null);
+    						        pcaPanel.setModel(null, null);
     						    }
     						});
     						panel.getBedLabel().setText(appType.getName());
                             panel.getPatientLabel().setText("");
-    						pcaPanel.setModel(vitalModel);
+    						pcaPanel.setModel(vitalModel, pumpModel);
     						ol.show(panel.getContent(), AppType.PCA.getId());
 					    }
 					    break;
