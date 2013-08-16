@@ -11,11 +11,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -270,7 +268,9 @@ public class JMultiSlider extends JComponent implements ChangeListener {
     public static void main(String[] args) {
         JFrame frame = new JFrame();
         frame.getContentPane().setLayout(new BorderLayout());
-        frame.getContentPane().add(new JMultiSlider(), BorderLayout.CENTER);
+        JMultiSlider slider = new JMultiSlider();
+        slider.setDrawThumbs(true);
+        frame.getContentPane().add(slider, BorderLayout.CENTER);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(400, 100);
         frame.setVisible(true);
@@ -322,6 +322,7 @@ public class JMultiSlider extends JComponent implements ChangeListener {
     protected void processComponentEvent(ComponentEvent e) {
         switch (e.getID()) {
         case ComponentEvent.COMPONENT_RESIZED:
+        case ComponentEvent.COMPONENT_SHOWN:
             getSize(size);
             if (size.width != 0 && size.height != 0) {
                 BufferedImage newImage = (BufferedImage) createImage(size.width, size.height);
@@ -338,7 +339,7 @@ public class JMultiSlider extends JComponent implements ChangeListener {
     }
 
     private Point startingMousePoint;
-    private Point startingRectPoint;
+//    private Point startingRectPoint;
     private int idx;
 
     @Override
@@ -372,10 +373,11 @@ public class JMultiSlider extends JComponent implements ChangeListener {
         switch (e.getID()) {
         case MouseEvent.MOUSE_PRESSED:
             idx = 0;
+            Point adjustedPoint = new Point(e.getPoint().x-GUTTER, e.getPoint().y);
             for (Rectangle r : rectangles) {
-                if (r.contains(e.getPoint())) {
-                    startingMousePoint = new Point(e.getPoint());
-                    startingRectPoint = new Point(r.x, r.y);
+                if (r.contains(adjustedPoint)) {
+                    startingMousePoint = adjustedPoint; // new Point(e.getPoint().x - GUTTER, e.getPoint().y);
+//                    startingRectPoint = new Point(r.x, r.y);
                     model.setValueIsAdjusting(true);
                     // updateIt(model);
                     break;
@@ -387,7 +389,7 @@ public class JMultiSlider extends JComponent implements ChangeListener {
         case MouseEvent.MOUSE_RELEASED:
             if (startingMousePoint != null) {
                 startingMousePoint = null;
-                startingRectPoint = null;
+//                startingRectPoint = null;
                 model.setValueIsAdjusting(false);
                 // updateIt(model);
             }

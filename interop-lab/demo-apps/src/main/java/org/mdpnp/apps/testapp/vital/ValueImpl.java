@@ -54,7 +54,7 @@ public class ValueImpl implements Value {
     }
     @Override
     public boolean isIgnore() {
-        return parent.isIgnoreZero() && 0 == Float.compare(0f, numeric.value);
+        return parent.isIgnoreZero() && (0 == Float.compare(0f, numeric.value) || Float.isNaN(numeric.value));
     }
     
     @Override

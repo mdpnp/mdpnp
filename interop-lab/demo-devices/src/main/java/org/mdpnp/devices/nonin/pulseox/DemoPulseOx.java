@@ -56,7 +56,7 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 		
 //	    pulse = createNumericInstance(ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
 //	    SpO2 = createNumericInstance(ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
-//	    pleth = createSampleArrayInstance(ice.Physio.MDC_PULS_OXIM_PLETH.value());
+	    pleth = createSampleArrayInstance(ice.Physio.MDC_PULS_OXIM_PLETH.value());
 	    
 	    pleth.data.millisecondsPerSample = (int) NoninPulseOx.MILLISECONDS_PER_SAMPLE;
 	    pleth.data.values.setSize(Packet.FRAMES);
@@ -98,7 +98,7 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 			    Integer heartRate = getHeartRate();
 			    Integer spo2 = getSpO2();
 			    pulse = numericSample(pulse, heartRate != null ? (heartRate < 895 ? heartRate : null) : null, ice.Physio._MDC_PULS_OXIM_PULS_RATE);
-			    numericSample(SpO2, spo2 != null ? (spo2 < 895 ? spo2 : null) : null, ice.Physio._MDC_PULS_OXIM_SAT_O2);
+			    SpO2 = numericSample(SpO2, spo2 != null ? (spo2 < 895 ? spo2 : null) : null, ice.Physio._MDC_PULS_OXIM_SAT_O2);
 			}
 
 			

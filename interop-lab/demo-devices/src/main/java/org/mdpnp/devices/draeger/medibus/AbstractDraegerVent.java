@@ -395,7 +395,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             numericUpdates.put(name, createNumericInstance(numerics.get(name)));
         }
         for (Enum<?> name : waveforms.keySet()) {
-            sampleArrayUpdates.put(name, createSampleArrayInstance(numerics.get(name)));
+            sampleArrayUpdates.put(name, createSampleArrayInstance(waveforms.get(name)));
         }
     }
 

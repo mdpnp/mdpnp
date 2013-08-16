@@ -115,7 +115,7 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
             @Override
             public void actionPerformed(ActionEvent e) {
                 configurePanel.setVisible(configureModeBox.isSelected());
-                for(Component c : getComponents()) {
+                for(Component c : vitalsPanel.getComponents()) {
                     if(c instanceof JVital) {
                         
                         ((JVital)c).setShowConfiguration(configureModeBox.isSelected());
@@ -192,11 +192,13 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
         add(configureModeBox, gbc);
         
         gbc.gridy++;
-        gbc.gridwidth = 1;
+        gbc.gridwidth = 4;
         
-        gbcVitalsStart = (GridBagConstraints) gbc.clone();
-                    
-        gbc.weighty = 0.1;
+        add(vitalsPanel, gbc);
+//        gbcVitalsStart = (GridBagConstraints) gbc.clone();
+        
+         
+        gbc.gridy++;
         configurePanel.setVisible(configureModeBox.isSelected());
         add(configurePanel, gbc);
     }
@@ -227,35 +229,38 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
     private final JList pumpList = new JList();
     private final JTextArea warningStatus = new JTextArea(" ");
     private final JComboBox warningsToAlarm = new JComboBox();
+    private final JPanel vitalsPanel = new JPanel();
+    
     protected void _updateVitals() {
         
         Map<Vital, JVital> existentJVitals = new HashMap<Vital, JVital>();
         
-        for(Component c : getComponents()) {
+        for(Component c : vitalsPanel.getComponents()) {
             if(c instanceof JVital) {
-                remove(c);
+                vitalsPanel.remove(c);
                 existentJVitals.put(((JVital)c).getVital(), (JVital)c);
             }
         }
-        remove(configurePanel);
+//        remove(configurePanel);
 
-        GridBagConstraints gbc = (GridBagConstraints) gbcVitalsStart.clone();
+//        GridBagConstraints gbc = (GridBagConstraints) gbcVitalsStart.clone();
         
         final VitalModel model = this.model;
         if(model != null) {
+            vitalsPanel.setLayout(new GridLayout(model.getCount(), 1));
             for(int i = 0; i < model.getCount(); i++) {
                 final Vital vital = model.getVital(i);
                 
                 JVital jVital = existentJVitals.containsKey(vital) ? existentJVitals.remove(vital) : new JVital(vital);
                 jVital.setShowConfiguration(configureModeBox.isSelected());
 
-                add(jVital, gbc);
+                vitalsPanel.add(jVital);
                 jVital.setOpaque(true);
-                gbc.gridy++;
+//                gbc.gridy++;
             }
-            gbc.weighty = 0.1;
-            configurePanel.setVisible(configureModeBox.isSelected());
-            add(configurePanel, gbc);
+//            gbc.weighty = 0.1;
+//            configurePanel.setVisible(configureModeBox.isSelected());
+//            add(configurePanel, gbc);
             
         }
     }
@@ -338,7 +343,7 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
             repaint();
         }
         if(vital != null) {
-            for(Component c : getComponents()) {
+            for(Component c : vitalsPanel.getComponents()) {
                 if(c instanceof JVital && ((JVital)c).getVital().equals(vital)) {
                     ((JVital)c).updateData();
                     return;

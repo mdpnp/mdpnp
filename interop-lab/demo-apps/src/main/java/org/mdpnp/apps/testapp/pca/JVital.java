@@ -17,7 +17,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 
@@ -65,6 +64,7 @@ public final class JVital extends JPanel {
             VitalBoundedRangeMulti range = new VitalBoundedRangeMulti(vital);
             slider = new JMultiSlider(range);
             slider.setFont(font);
+//            slider.setSize(100, slider.getPreferredSize().height);
             slider.setRangeColor(0, Color.red);
             slider.setRangeColor(1, Color.yellow);
             slider.setRangeColor(2, Color.green);
