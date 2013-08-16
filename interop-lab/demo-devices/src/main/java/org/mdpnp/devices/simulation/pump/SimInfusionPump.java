@@ -157,4 +157,9 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
         super.shutdown();
     }
     
+    @Override
+    protected String iconResourceName() {
+        return "pump.png";
+    }
+    
 }

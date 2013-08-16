@@ -36,8 +36,8 @@ public final class JVital extends JPanel {
         private final JCheckBox ignoreZeroBox = new JCheckBox("Ignore Zero");
         private final JCheckBox requiredBox = new JCheckBox("Required");
         
-        private JLabel limitsLabel = new JLabel("Limits:");
-        private JLabel configureLabel = new JLabel("Configure:");
+//        private JLabel limitsLabel = new JLabel("Limits:");
+//        private JLabel configureLabel = new JLabel("Configure:");
         
         private boolean showConfiguration = false;
         
@@ -59,15 +59,18 @@ public final class JVital extends JPanel {
                 lbl = "<html>"+lbl+"</html>";
 //                System.out.println("Label:"+lbl);
             }
+            Font font = Font.decode("verdana-20");
             name.setText(lbl);
             name.setFont(Font.decode("verdana-30"));
             VitalBoundedRangeMulti range = new VitalBoundedRangeMulti(vital);
             slider = new JMultiSlider(range);
+            slider.setFont(font);
             slider.setRangeColor(0, Color.red);
             slider.setRangeColor(1, Color.yellow);
             slider.setRangeColor(2, Color.green);
             VitalValueMsBoundedRangeMulti range2 = new VitalValueMsBoundedRangeMulti(vital);
             slider2 = new JMultiSlider(range2);
+            slider2.setFont(font);
             slider2.setRangeColor(0, Color.yellow);
             slider2.setRangeColor(1, Color.green);
             slider2.setDrawThumbs(true);
@@ -139,14 +142,6 @@ public final class JVital extends JPanel {
             
             add(name, gbc);
             
-            
-            
-            gbc.gridx = 1;
-            gbc.weightx = 0.1;
-            
-
-
-            add(limitsLabel, gbc);
             gbc.weightx = 10.0;
             gbc.gridx++;
             gbc.gridwidth = 3;
@@ -160,9 +155,7 @@ public final class JVital extends JPanel {
                 gbc.gridwidth = 1;
     //            gbc.fill = GridBagConstraints.NONE;
                 gbc.weightx = 1.0;
-                gbc.gridy++;
-                gbc.gridx = 1;
-                add(configureLabel, gbc);
+
                 gbc.gridx++;
                 add(ignoreZeroBox, gbc);
                 

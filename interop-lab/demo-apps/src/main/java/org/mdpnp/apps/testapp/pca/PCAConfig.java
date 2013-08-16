@@ -158,7 +158,49 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
                 return c;
             }
         });
+        buildGUI();
     }
+    private GridBagConstraints gbcVitalsStart;
+    
+    private void buildGUI() {
+        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0);
+        
+        // ARGH
+//        warningStatus.setBackground(Color.white);
+//        pumpStatus.setBackground(Color.white);
+//        warningStatus.setOpaque(true);
+//        pumpStatus.setOpaque(true);
+
+        
+        JPanel pumpPanel = new JPanel(new GridLayout(1,4));
+        pumpPanel.add(pumpProgress);
+        JScrollPane scrollPane;
+        pumpPanel.add(scrollPane = new JScrollPane(pumpList));
+        scrollPane.setBorder(null);
+        pumpPanel.add(scrollPane = new JScrollPane(pumpStatus));
+        scrollPane.setBorder(null);
+        pumpPanel.add(scrollPane = new JScrollPane(warningStatus));
+        scrollPane.setBorder(null);
+        
+        gbc.weighty = 5.0;
+        add(pumpPanel, gbc);
+        
+        gbc.weighty = 1.0;
+        gbc.gridy++;
+        
+        gbc.gridwidth = 3;
+        add(configureModeBox, gbc);
+        
+        gbc.gridy++;
+        gbc.gridwidth = 1;
+        
+        gbcVitalsStart = (GridBagConstraints) gbc.clone();
+                    
+        gbc.weighty = 0.1;
+        configurePanel.setVisible(configureModeBox.isSelected());
+        add(configurePanel, gbc);
+    }
+    
     private VitalModel model;
     private PumpModel pumpModel;
     
@@ -186,51 +228,25 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
     private final JTextArea warningStatus = new JTextArea(" ");
     private final JComboBox warningsToAlarm = new JComboBox();
     protected void _updateVitals() {
+        
+        Map<Vital, JVital> existentJVitals = new HashMap<Vital, JVital>();
+        
         for(Component c : getComponents()) {
             if(c instanceof JVital) {
-
+                remove(c);
+                existentJVitals.put(((JVital)c).getVital(), (JVital)c);
             }
         }
-        
-        // TODO this has become unnecessary ... vitals can be selectively added and removed with a little bit of caution instead of this current rebuilding at every change 
-        removeAll();
+        remove(configurePanel);
 
+        GridBagConstraints gbc = (GridBagConstraints) gbcVitalsStart.clone();
+        
         final VitalModel model = this.model;
         if(model != null) {
-            GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0);
-            
-            // ARGH
-//            warningStatus.setBackground(Color.white);
-//            pumpStatus.setBackground(Color.white);
-//            warningStatus.setOpaque(true);
-//            pumpStatus.setOpaque(true);
-
-            
-            JPanel pumpPanel = new JPanel(new GridLayout(1,4));
-            pumpPanel.add(pumpProgress);
-            JScrollPane scrollPane;
-            pumpPanel.add(scrollPane = new JScrollPane(pumpList));
-            scrollPane.setBorder(null);
-            pumpPanel.add(scrollPane = new JScrollPane(pumpStatus));
-            scrollPane.setBorder(null);
-            pumpPanel.add(scrollPane = new JScrollPane(warningStatus));
-            scrollPane.setBorder(null);
-            
-            gbc.weighty = 5.0;
-            add(pumpPanel, gbc);
-            
-            gbc.weighty = 1.0;
-            gbc.gridy++;
-            
-            gbc.gridwidth = 3;
-            add(configureModeBox, gbc);
-            
-            gbc.gridy++;
-            gbc.gridwidth = 1;
-            
             for(int i = 0; i < model.getCount(); i++) {
                 final Vital vital = model.getVital(i);
-                JVital jVital = new JVital(vital);
+                
+                JVital jVital = existentJVitals.containsKey(vital) ? existentJVitals.remove(vital) : new JVital(vital);
                 jVital.setShowConfiguration(configureModeBox.isSelected());
 
                 add(jVital, gbc);

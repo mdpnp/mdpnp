@@ -41,6 +41,11 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
 
     private final class RespiratoryRateDevice extends AbstractDevice {
 
+        @Override
+        protected String iconResourceName() {
+            return "rrr.png";
+        }
+        
         public RespiratoryRateDevice(int domainId, EventLoop eventLoop) {
             super(domainId, eventLoop);
             deviceIdentity.manufacturer = "";

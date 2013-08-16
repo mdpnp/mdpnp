@@ -9,8 +9,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -55,74 +53,6 @@ public class DemoApp {
 	private static int verticalAlignment, verticalTextAlignment;
 	private static CardLayout ol;
 	
-	private enum AppType {
-	    Main("main", "Main Menu", null, false),
-	    Device("device", "Device Info", null, false),
-	    PCA("pca", "Infusion Safety", "NOPCA", true),
-	    PCAViz("pcaviz", "Data Visualization", null, true),
-	    XRay("xray", "X-Ray Ventilator Sync", "NOXRAYVENT", true),
-	    RRR("rrr", "Rapid Respiratory Rate", "NORRR", true)
-	    ;
-	    
-	    private final String id;
-	    private final String name;
-	    private final String disableProperty;
-	    private final boolean listed;
-	    
-	    private AppType(final String id, final String name, final String disableProperty, final boolean listed) {
-	        this.id = id;
-	        this.name = name;
-	        this.disableProperty = disableProperty;
-	        this.listed = listed;
-        }
-	    
-	    public String getId() {
-            return id;
-        }
-	    public String getName() {
-            return name;
-        }
-	    public boolean isListed() {
-            return listed;
-        }
-	    
-	    @Override
-	    public String toString() {
-	        return name;
-	    }
-	    private static final boolean isTrue(String property) {
-	        String s = System.getProperty(property);
-	        if(null != s && "true".equals(s)) {
-	            return true;
-	        } else {
-	            return false;
-	        }
-	    }
-	    public boolean isDisabled() {
-	        return null != disableProperty && isTrue(disableProperty);
-	    }
-	    public static String[] getListedNames() {
-	        List<String> names = new ArrayList<String>();
-	        for(AppType at : values()) {
-	            if(!at.isDisabled() && at.isListed()) {
-	                names.add(at.name);
-	            }
-	        }
-	        return names.toArray(new String[0]);
-	    }
-	    public static AppType fromName(String name) {
-	        if(name == null) {
-	            return null;
-	        }
-	        for(AppType at : values()) {
-	            if(name.equals(at.getName())) {
-	                return at;
-	            }
-	        }
-	        return null;
-	    }
-	}
-		
 	private static void setGoBack(String goback, Runnable goBackAction) {
 		DemoApp.goback = goback;
 		DemoApp.goBackAction = goBackAction;
@@ -207,7 +137,7 @@ public class DemoApp {
 //		panel.getContent().add(loginPanel, "login");
 		
 		
-		final MainMenuPanel mainMenuPanel = new MainMenuPanel(AppType.getListedNames());
+		final MainMenuPanel mainMenuPanel = new MainMenuPanel(AppType.getListedTypes());
 		mainMenuPanel.setOpaque(false);
 		panel.getContent().add(mainMenuPanel, AppType.Main.getId());
 		ol.show(panel.getContent(), AppType.Main.getId());
@@ -343,7 +273,7 @@ public class DemoApp {
 				int idx = mainMenuPanel.getAppList().locationToIndex(e.getPoint());
 				if(idx >= 0 && mainMenuPanel.getAppList().getCellBounds(idx, idx).contains(e.getPoint())) {
 					Object o = mainMenuPanel.getAppList().getModel().getElementAt(idx);
-					AppType appType = AppType.fromName((String)o);
+					AppType appType = (AppType) o;
 					
 					switch(appType) {
 					case RRR:
