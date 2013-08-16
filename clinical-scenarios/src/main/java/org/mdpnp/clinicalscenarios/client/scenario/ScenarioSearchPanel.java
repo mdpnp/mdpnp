@@ -2,6 +2,7 @@ package org.mdpnp.clinicalscenarios.client.scenario;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -25,6 +26,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -41,6 +43,7 @@ import com.google.gwt.user.client.ui.SourcesTableEvents;
 import com.google.gwt.user.client.ui.TableListener;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.datepicker.client.DateBox;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.shared.Receiver;
@@ -510,10 +513,10 @@ public class ScenarioSearchPanel extends Composite {
 	/**
 	 * Shows the users latest search (if any)
 	 */
-	public void showLatestSearch(){		
+	public void showLatestSearch(){			
+		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		status.setVisible(false);
-		if(scnList!= null && scnList.size()>0){
-			hideAllSearchPanels();//HIDE all the others; SHOW this one
+		if(scnList!= null && scnList.size()>0){			
 			onClickGoToFirst(null);
 		}else{
 			searchResultCaption.setText("No previous search information available");
@@ -880,6 +883,7 @@ public class ScenarioSearchPanel extends Composite {
 		// so we update/show this label to indicate that we're fetching data
 		status.setVisible(true);
 		hideSearchById();// Search by ID
+		hideSearchByDates();// Search by dates
 	}
 	
 	//---------------------------------------
@@ -901,8 +905,7 @@ public class ScenarioSearchPanel extends Composite {
 		searchById.setVisible(true);
 		status.setVisible(false);
 	}
-	
-	
+		
 	@UiHandler("buttonSearchById")
 	public void onClickButtonSearchById(ClickEvent clickEvent) {	
 		Long scnId;
@@ -982,4 +985,58 @@ public class ScenarioSearchPanel extends Composite {
 			}
 		}).fire();
 	}	
+	//----------------------------------------------------------------------------------------------------------
+	
+	//---------------------------------------
+	//Search by Dates
+	@UiField
+	FlowPanel searchByDates;
+	
+	@UiField
+	DateBox dopDateBox1;
+	
+	@UiField
+	DateBox dopDateBox2;
+	
+	@UiField
+	Button buttonSearchByDates;
+	
+	private void hideSearchByDates(){
+		searchByDates.setVisible(false);
+	}
+	public void showSearchByDates(){
+		hideAllSearchPanels();//HIDE all the others; SHOW this one
+		searchByDates.setVisible(true);
+		status.setVisible(false);
+		dopDateBox1.setFormat(new DateBox.DefaultFormat(DateTimeFormat.getFormat("MMMM dd, yyyy")));
+		dopDateBox2.setFormat(new DateBox.DefaultFormat(DateTimeFormat.getFormat("MMMM dd, yyyy")));
+	}
+	
+	@UiHandler("buttonSearchByDates")
+	public void onClickButtonSearchByDates(ClickEvent clickEvent) {	
+		Date dateFrom = dopDateBox1.getValue();
+		Date dateUntil = dopDateBox2.getValue();
+
+		//1- validation that not both dates are NULL
+		if(dateFrom==null && dateUntil==null){
+			String msg = "Both dates can't be empty";
+			Window.alert(msg);	
+			return;
+		}
+		//2-Validation that date-from in not after date-until
+		if(dateFrom!=null && dateUntil!=null && dateFrom.after(dateUntil)){
+			String msg = "Date \"from\" can not be after date \"until\"";
+			Window.alert(msg);	
+			return;
+		}
+		
+		hideAllSearchPanels();
+		//TODO Add here a Date format to pretty-print the dates if we are going to show it.
+		searchResultCaption.setText("Search results for scenarios between #"+dopDateBox1.getValue()+" and "+dopDateBox2.getValue()+".");
+		searchResultCaption.setVisible(true);
+//		doSearchByDates(Date dateFrom, Date DateUntil);
+		//XXX For Search by dates, which date do we use? creation date, modification date, auditing date???
+	}
+	
+	
 }

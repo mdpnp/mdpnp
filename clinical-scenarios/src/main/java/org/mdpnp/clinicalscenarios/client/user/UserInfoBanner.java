@@ -41,7 +41,8 @@ public class UserInfoBanner extends Composite {
 	private MenuItem basicSearch = new MenuItem("Basic Search", NOOP);
 	private MenuItem advancedSearch = new MenuItem("Advanced Search", NOOP);
 	private MenuItem showLatestSearch = new MenuItem("Latest Search Results", NOOP);
-	private MenuItem searchById = new MenuItem("Search Sceanrio by Id", NOOP);
+	private MenuItem searchById = new MenuItem("Search Scenario by Id", NOOP);
+	private MenuItem searchByDates= new MenuItem("Search Scenarios by Dates", NOOP);
 	
 	private MenuItem listTags = new MenuItem("List Tags", NOOP);//list the tags
 	//list scenarios
@@ -119,6 +120,11 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getSearchById(){
 		return searchById;
 	}
+	public MenuItem getSearchByDates(){
+		return searchByDates;
+	}
+	
+	
 //	XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
 //	public MenuItem getListScnRejected(){
 //		return scnRejected;
@@ -141,6 +147,9 @@ public class UserInfoBanner extends Composite {
 		search.addItem(advancedSearch);
 		searchById.setTitle("Find a scenario by its unique Id");
 		search.addItem(searchById);
+		//XXX SEarch by dates not yet - consider which date of the scenario to use
+//		searchByDates.setTitle("Find scenarios in a date range");
+//		search.addItem(searchByDates);
 		showLatestSearch.setTitle("Retrieve the previous search results");
 		search.addItem(showLatestSearch);
 
@@ -206,10 +215,10 @@ public class UserInfoBanner extends Composite {
 						username.addItem(listTags);//add tag search
 					}else{//registered user (NOT ADMIN)
 						listScenarios.setTitle("List Scenarios");
-						listScenarios.addItem(listMyScn);
-						listMyScn.setTitle("All scenarios created by this user");
 						listScenarios.addItem(listApprvScn);
 						listApprvScn.setTitle("All Approved Scenarios");
+						listScenarios.addItem(listMyScn);
+						listMyScn.setTitle("All scenarios created by this user");
 
 						username.addItem("List Scenarios", listScenarios);
 					}

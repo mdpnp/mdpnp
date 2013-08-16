@@ -162,6 +162,16 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 				
 			}
 		});
+		
+		//find scenarios by date range
+		userInfoBanner.getSearchByDates().setScheduledCommand(new Command() {
+			@Override
+			public void execute() {
+				scenarioSearchPanel.showSearchByDates();
+				showWidget(scenarioSearchPanel);	
+				
+			}
+		});
 
 		
 //		userInfoBanner.getList().setScheduledCommand(new Command() {

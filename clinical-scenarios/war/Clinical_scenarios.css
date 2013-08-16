@@ -79,6 +79,11 @@ h1 {
 	margin-bottom: 20px;
 }
 
+		.important {
+			font-weight: bold;
+			font-size:12pt;
+		}
+
 .welcomeText{
 		width:900px;
 		text-align:justify;
