@@ -65,11 +65,19 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
     
     private final MySimulatedInfusionPump pump = new MySimulatedInfusionPump();
     
-    public SimInfusionPump(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
-        
+    protected void writeIdentity() {
         deviceIdentity.model = "Infusion Pump (Simulated)";
         deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+    }
+    
+    protected void stopThePump(boolean stopThePump) {
+        pump.setInterlockStop(stopThePump);
+    }
+    
+    public SimInfusionPump(int domainId, EventLoop eventLoop) {
+        super(domainId, eventLoop);
+
+        writeIdentity();
         
         ice.InfusionStatusTypeSupport.register_type(getParticipant(), ice.InfusionStatusTypeSupport.get_type_name());
         infusionStatusTopic = getParticipant().create_topic(ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
@@ -109,7 +117,7 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
                             SampleInfo si = (SampleInfo) info_seq.get(i);
                             ice.InfusionObjective data = (InfusionObjective) data_seq.get(i);
                             if(si.valid_data) {
-                                pump.setInterlockStop(data.stopInfusion);
+                                stopThePump(data.stopInfusion);
                             }
                         }
                     } catch(RETCODE_NO_DATA noData) {

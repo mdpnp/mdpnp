@@ -38,6 +38,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.mdpnp.apps.testapp.DeviceIcon;
+import org.mdpnp.apps.testapp.co2.Capno;
+import org.mdpnp.apps.testapp.co2.CapnoListModel;
 import org.mdpnp.apps.testapp.pump.Pump;
 import org.mdpnp.apps.testapp.pump.PumpListModel;
 import org.mdpnp.apps.testapp.pump.PumpModel;
@@ -147,10 +149,13 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
                         ice.DeviceIdentity di = model.getDeviceIdentity(udi);
                         if(null != di) {
                             value = di.manufacturer + " " + di.model;
+                            
                         }
                     }
                 }
-                return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                
+                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                return c;
             }
         });
     }
@@ -240,7 +245,22 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
     }
     
     public void setModel(VitalModel model, PumpModel pumpModel) {
+        String selectedUdi = null;
+        Object selected = pumpList.getSelectedValue();
+        if(null != selected && selected instanceof Pump) {
+            selectedUdi  =((Pump)selected).getInfusionStatus().universal_device_identifier;
+        }
         pumpList.setModel(null == pumpModel ? new DefaultListModel() : new PumpListModel(pumpModel));
+        if(null != selectedUdi && pumpModel != null) {
+            for(int i = 0; i < pumpModel.getCount(); i++) {
+                if(selectedUdi.equals(pumpModel.getPump(i).getInfusionStatus().universal_device_identifier)) {
+                    pumpList.setSelectedValue(pumpModel.getPump(i), true);
+                }
+            }
+        }
+        
+        
+        
         if(this.pumpModel != null) {
             this.pumpModel.removeListener(this);
         }

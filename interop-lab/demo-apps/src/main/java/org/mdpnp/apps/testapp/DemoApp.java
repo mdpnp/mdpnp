@@ -20,10 +20,13 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
 
+import org.mdpnp.apps.testapp.co2.CapnoModel;
+import org.mdpnp.apps.testapp.co2.CapnoModelImpl;
 import org.mdpnp.apps.testapp.pca.PCAPanel;
 import org.mdpnp.apps.testapp.pca.VitalSign;
 import org.mdpnp.apps.testapp.pump.PumpModel;
 import org.mdpnp.apps.testapp.pump.PumpModelImpl;
+import org.mdpnp.apps.testapp.rrr.RapidRespiratoryRate;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
@@ -57,7 +60,8 @@ public class DemoApp {
 	    Device("device", "Device Info", null, false),
 	    PCA("pca", "Infusion Safety", "NOPCA", true),
 	    PCAViz("pcaviz", "Data Visualization", null, true),
-	    XRay("xray", "X-Ray Ventilator Sync", "NOXRAYVENT", true)
+	    XRay("xray", "X-Ray Ventilator Sync", "NOXRAYVENT", true),
+	    RRR("rrr", "Rapid Respiratory Rate", "NORRR", true)
 	    ;
 	    
 	    private final String id;
@@ -213,12 +217,14 @@ public class DemoApp {
 		
         final VitalModel vitalModel = new VitalModelImpl();
         final PumpModel pumpModel = new PumpModelImpl();
+        final CapnoModel capnoModel = new CapnoModelImpl(ice.MDC_CAPNOGRAPH.VALUE);
         VitalSign.HeartRate.addToModel(vitalModel);
         VitalSign.SpO2.addToModel(vitalModel);
         VitalSign.RespiratoryRate.addToModel(vitalModel);
 //      VitalSign.EndTidalCO2.addToModel(vitalModel);
 		vitalModel.start(subscriber, eventLoop);
 		pumpModel.start(subscriber, publisher, eventLoop);
+		capnoModel.start(subscriber, eventLoop);
 		PCAPanel _pcaPanel = null;
 		if(!AppType.PCA.isDisabled()) {
 		    UIManager.put("TabbedPane.contentOpaque", false);
@@ -242,6 +248,13 @@ public class DemoApp {
 		}
 		final DataVisualization pcaviz = _pcaviz;
 		
+		RapidRespiratoryRate _rrr = null;
+		if(!AppType.RRR.isDisabled()) {
+		    _rrr = new RapidRespiratoryRate(domainId, eventLoop);
+		    panel.getContent().add(_rrr, AppType.RRR.getId());
+		}
+		final RapidRespiratoryRate rrr = _rrr;
+		
       frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -256,7 +269,12 @@ public class DemoApp {
                 if(null != pcaviz) {
                     pcaviz.setModel(null, null);
                 }
+                if(null != rrr) {
+                    rrr.setModel(null, null);
+                }
                 vitalModel.stop();
+                pumpModel.stop();
+                capnoModel.stop();
                 nc.tearDown();
                 try {
                     handler.shutdown();
@@ -328,6 +346,19 @@ public class DemoApp {
 					AppType appType = AppType.fromName((String)o);
 					
 					switch(appType) {
+					case RRR:
+					    if(null != rrr) {
+					        setGoBack(AppType.Main.getId(), new Runnable() {
+					            public void run() {
+//					                rrr.setModel(null, null);
+					            }
+					        });
+					        panel.getBedLabel().setText(appType.getName());
+					        panel.getPatientLabel().setText("");
+					        rrr.setModel(capnoModel, vitalModel);
+					        ol.show(panel.getContent(), appType.getId());
+					    }
+					    break;
 					case PCAViz:
 					    if(null != pcaviz) {
 					        setGoBack(AppType.Main.getId(), new Runnable() {

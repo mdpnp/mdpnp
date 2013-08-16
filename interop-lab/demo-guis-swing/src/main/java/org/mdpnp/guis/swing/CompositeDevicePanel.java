@@ -251,7 +251,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
             InfusionStatus infusionStatus = (InfusionStatus) status.get(i);
             SampleInfo si = (SampleInfo) sampleInfo.get(i);
             if(si.valid_data) {
-                log.info("Pump Status:"+infusionStatus);
+//                log.info("Pump Status:"+infusionStatus);
                 if(!knownPumps.contains(infusionStatus.universal_device_identifier)) {
                     knownPumps.add(infusionStatus.universal_device_identifier);
                     replaceDataPanels();

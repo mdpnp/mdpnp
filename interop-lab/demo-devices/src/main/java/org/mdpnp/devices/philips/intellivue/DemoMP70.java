@@ -80,6 +80,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 		protected void handle(SetResult result, boolean confirmed) {
 			super.handle(result, confirmed);
 			Attribute<TextIdList> ati = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_POLL_NU_PRIO_LIST, TextIdList.class);
+
 			if(result.getAttributes().get(ati) && ati.getValue().containsAll(numericLabels.values().toArray(new Label[0]))) {
 				
 				TaskQueue.Task<Object> nuTask = new TaskQueue.TaskImpl<Object>() {
@@ -248,11 +249,11 @@ public class DemoMP70 extends AbstractConnectedDevice {
 		@Override
 		protected void handle(ExtendedPollDataResult result) {
 			log.debug("ExtendedPollDataResult");
-			log.debug(lineWrap(result.toString()));
+//			log.debug(lineWrap(result.toString()));
 			for(SingleContextPoll sop : result.getPollInfoList()) {
 				for(ObservationPoll op : sop.getPollInfo()) {
 					int handle = op.getHandle().getHandle();
-							
+					
 					if(op.getAttributes().get(observed)) {
 						log.debug(observed.toString());
 						handle(handle, observed.getValue());
@@ -330,6 +331,8 @@ public class DemoMP70 extends AbstractConnectedDevice {
 				InstanceHolder<ice.Numeric> mnu = numericUpdates.get(ov);
 				if(null != mnu) {
 					numericSample(mnu, observed.getValue().floatValue());
+				} else {
+				    log.debug("Unknown numeric:"+observed);
 				}
 			}
 			
@@ -356,7 +359,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 							for(int i = 0; i < cnt; i++) {	
 								w.applyValue(i, bytes);
 							}
-							log.debug(Arrays.toString(bytes));
+//							log.debug(Arrays.toString(bytes));
 //							log.debug(Arrays.toString(values));
 							sampleArrayDataWriter.write(w.holder.data, w.holder.handle);
 //						}

@@ -69,7 +69,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     protected InstanceHolder<ice.SampleArray> co2;
     protected InstanceHolder<ice.Numeric> spo2;
     protected InstanceHolder<ice.Numeric> pulserate;
-
+ 
     protected InstanceHolder<ice.Numeric> rr;
     protected InstanceHolder<ice.Numeric> etco2;
     protected InstanceHolder<ice.Numeric> fastStatus; // = new
@@ -160,13 +160,49 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
         @Override
         public boolean receiveCO2Wave(int messageNumber, double co2, int status) {
-            realtimeBuffer[realtimeBufferCount++] = co2;
+            DemoCapnostream20.this.fastStatus = numericSample(DemoCapnostream20.this.fastStatus,
+                    status, oridion.MDC_FAST_STATUS.VALUE);
 
-            if (0xFF != status) {
-                DemoCapnostream20.this.fastStatus = numericSample(DemoCapnostream20.this.fastStatus,
-                        0xFF == status ? null : status, oridion.MDC_FAST_STATUS.VALUE);
+            if (0 != (0x01 & status)) {
+                log.warn("invalid CO2 value ignored " + co2 + " with fast status " + Integer.toHexString(status));
+                return true;
+            }
+            if(0 != (0x02 & status)) {
+                log.warn("Initialization " + co2 + " with fast status " + Integer.toHexString(status));
+                return true;
+            }
+            if(0 != (0x04 & status)) {
+                log.warn("occlusion " + co2 + " with fast status " + Integer.toHexString(status));
+                return true;
+            }
+            if(0 != (0x08 & status)) {
+//                log.debug("End of breath");
+            }
+            if(0 != (0x10 & status)) {
+                // SFM in progress
+                log.warn("SFM in progress " + co2 + " with fast status " + Integer.toHexString(status));
+                return true;
+            }
+            if(0 != (0x20 & status)) {
+                // purge in progress
+                log.warn("purge in progress " + co2 + " with fast status " + Integer.toHexString(status));
+                return true;
+            }
+            if(0 != (0x40 & status)) {
+                // filter line not connected
+//                if(null != DemoCapnostream20.this.co2) {
+//                    unregisterSampleArrayInstance(DemoCapnostream20.this.co2);
+//                    DemoCapnostream20.this.co2 = null;
+//                }
+                log.warn("Filterline indicates disconnected " + co2 + " with fast status " + Integer.toHexString(status));
+                return true;
+            }
+            if(0 != (0x80 & status)) {
+                log.warn("CO2 malfunction " + co2 + " with fast status " + Integer.toHexString(status));
+                return true;
             }
 
+            realtimeBuffer[realtimeBufferCount++] = co2;
             if (realtimeBufferCount == realtimeBuffer.length) {
                 realtimeBufferCount = 0;
                 DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, realtimeBuffer, 50,

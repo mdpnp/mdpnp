@@ -10,6 +10,8 @@ import java.util.ListIterator;
 
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.TopicUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.Condition;
@@ -76,7 +78,7 @@ public class PumpModelImpl implements PumpModel {
             }
         }
     };
-    
+    private static final Logger log = LoggerFactory.getLogger(PumpModelImpl.class);
     protected void removePump(String udi) {
         List<Pump> removed = new ArrayList<Pump>();
         synchronized(pumps) {
@@ -88,6 +90,9 @@ public class PumpModelImpl implements PumpModel {
                     litr.remove();
                 }
             }
+        }
+        if(removed.isEmpty()) {
+            log.warn("Couldn't find pump with udi to remove : " + udi);
         }
         for(Pump p : removed) {
             firePumpRemoved(p);

@@ -27,7 +27,7 @@ public class AnsarB {
     
     private final static int ECG_PTS = 200, RESP_PTS = 50, PLETH_PTS = 50, P1_PTS = 50, P2_PTS = 50;
     private final static int ECG_OFF = 0, RESP_OFF = 200, PLETH_OFF = 250, P1_OFF = 300, P2_OFF = 350; 
-    private final static int ECG_OFFSET = 118, RESP_OFFSET = 175, PLETH_OFFSET = 86, P1_OFFSET = 80, P2_OFFSET = 251;
+    private final static int ECG_OFFSET = 118, RESP_OFFSET = 0, PLETH_OFFSET = 86, P1_OFFSET = 80, P2_OFFSET = 251;
     private final static int ECG_PERIOD = 5, RESP_PERIOD = 20, PLETH_PERIOD = 20, P1_PERIOD = 20, P2_PERIOD = 20;
             
     private int[] wavedata = new int[ECG_PTS];

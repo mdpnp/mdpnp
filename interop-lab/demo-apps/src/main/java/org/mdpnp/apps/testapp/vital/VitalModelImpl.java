@@ -268,6 +268,8 @@ public class VitalModelImpl implements VitalModel {
                 deviceIdentityReader.read_instance(di_data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE,
                         ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
                 return new DeviceIdentity((DeviceIdentity) di_data_seq.get(0));
+            } catch (RETCODE_NO_DATA noData) {
+                return null;
             } finally {
                 deviceIdentityReader.return_loan(di_data_seq, info_seq);
             }
@@ -284,6 +286,8 @@ public class VitalModelImpl implements VitalModel {
                 deviceConnectivityReader.read_instance(dc_data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE,
                         ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
                 return new DeviceConnectivity((DeviceConnectivity) dc_data_seq.get(0));
+            } catch(RETCODE_NO_DATA noData) {
+                return null;
             } finally {
                 deviceConnectivityReader.return_loan(dc_data_seq, info_seq);
             }

@@ -316,6 +316,8 @@ public abstract class AbstractDevice implements ThreadFactory {
         domainParticipant.delete_publisher(publisher);
         domainParticipant.delete_subscriber(subscriber);
 
+        domainParticipant.delete_contained_entities();
+        
         DomainParticipantFactory.get_instance().delete_participant(domainParticipant);
 
         executor.shutdown();

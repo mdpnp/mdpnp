@@ -93,7 +93,7 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         
         @Override
         protected void receiveRespWave(int[] data, int count, int msPerSample) {
-            respWave = sampleArraySample(respWave, data, count, msPerSample, ice.Physio.MDC_CONC_AWAY_CO2.value());
+            respWave = sampleArraySample(respWave, data, count, msPerSample, ice.MDC_CAPNOGRAPH.VALUE);
         }
         
         @Override
