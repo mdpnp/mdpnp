@@ -809,6 +809,10 @@ public class Medibus {
 			log.trace("received EOF instead of cmd code");
 			return false;
 		}
+		while(cmdCodeB == ASCIIByte.ESC) {
+		    cmdCodeB = slowIn.read();
+		}
+		
 		Object cmdCode = Command.fromByteIf((byte) cmdCodeB);
 		
 	
