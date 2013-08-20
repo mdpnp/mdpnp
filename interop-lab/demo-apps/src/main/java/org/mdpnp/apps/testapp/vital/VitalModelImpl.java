@@ -502,21 +502,20 @@ public class VitalModelImpl implements VitalModel {
         
         if (countWarnings >= countWarningsBecomeAlarm) {
             state = State.Alarm;
-            stopInfusion("Stopped\r\n" + warningText + "at " + time + "\r\nnurse alerted");
+            stopInfusion("Stopped\r\n" + warningText + "\r\nnurse alerted");
         } else {
             for (int i = 0; i < N; i++) {
                 Vital vital = getVital(i);
                 for (Value val : vital.getValues()) {
                     if (val.isAtOrBelowCriticalLow()) {
                         state = State.Alarm;
-                        stopInfusion("Stopped - " + vital.getLabel() + " outside of critical range ("
-                                + val.getNumeric().value + " " + vital.getUnits() + ")\r\nat " + time
+                        stopInfusion("Stopped\r\n- low " + vital.getLabel() + " " + val.getNumeric().value + " " + vital.getUnits() + "\r\nat " + time
                                 + "\r\nnurse alerted");
                         break;
                     } else if (val.isAtOrAboveCriticalHigh()) {
                         state = State.Alarm;
-                        stopInfusion("Stopped - " + vital.getLabel() + " outside of critical range ("
-                                + val.getNumeric().value + " " + vital.getUnits() + ")\r\nat " + time
+                        stopInfusion("Stopped\r\n- high " + vital.getLabel() + " " + 
+                                + val.getNumeric().value + " " + vital.getUnits() + "\r\nat " + time
                                 + "\r\nnurse alerted");
                         break;
                     }
