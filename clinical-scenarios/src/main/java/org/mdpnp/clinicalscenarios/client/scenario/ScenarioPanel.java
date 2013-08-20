@@ -471,7 +471,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		checkScenarioFields(rc);
 			
 		//persist scenario entity
-		rc.persist().using(currentScenario).with(driver.getPaths()).with("equipment", "hazards", "environments").to(new Receiver<ScenarioProxy>() {
+		rc.persist().using(currentScenario)
+		.with(driver.getPaths()).with("equipment", "hazards", "environments")
+//		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.to(new Receiver<ScenarioProxy>() {
 
 			@Override
 			public void onSuccess(ScenarioProxy response) {
@@ -522,16 +525,19 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 
 		//associate handlers and value entities
-		titleEditor.addChangeHandler(saveOnChange);
+		
+		//TICKET-125
+	   /* titleEditor.addChangeHandler(saveOnChange);
 		proposedStateEditor.addChangeHandler(saveOnChange);
 		currentStateEditor.addChangeHandler(saveOnChange);
 		benefits.addChangeHandler(saveOnChange);
 		risks.addChangeHandler(saveOnChange);
 		clinicalProcesses.addChangeHandler(saveOnChange);
-		algorithmDescription.addChangeHandler(saveOnChange);
+		algorithmDescription.addChangeHandler(saveOnChange);*/
 		
 		//Listener for when the tabs are clicked (user moves to a different tab)
-		tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {			
+		//TICKET-125
+	/*	tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {			
 			@Override
 			public void onSelection(SelectionEvent<Integer> event) {
 				if(currentScenario != null){					 
@@ -539,7 +545,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					
 				}
 			}
-		});
+		});*/
 		
 		//select first tab
 		selectFirstTab();

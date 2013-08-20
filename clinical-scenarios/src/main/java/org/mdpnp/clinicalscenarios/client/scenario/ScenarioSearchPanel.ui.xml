@@ -1,6 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:dp="urn:import:com.google.gwt.user.datepicker.client">
+	
 	<ui:style>
 		.important {
 			margin: 10px 0 10px;
@@ -14,11 +16,14 @@
 		.resultsFound{
 			padding:0px 5px 0px 5px;
 		}
+		.datePickerSyle{
+			padding:0px 5px 0px 5px;
+		}
 
 	</ui:style>
 	<g:FlowPanel>
 		
-
+<!-- 		Basic search -->
 		<g:FlowPanel ui:field='basicSearch' >
 		    <g:Label text='Basic Search' ui:field='header' styleName='heading'/>
 			<g:TextBox ui:field='searchQuery' text='Enter keyword'/>		
@@ -26,6 +31,7 @@
 			<g:Label text='Please enter single Keyword' ui:field='pleaseEnterKeywords' styleName='{style.notimportant}'/>
 		</g:FlowPanel>
 		
+<!-- 		Advanced Search -->
 		<g:FlowPanel ui:field='advancedSearch' >
 		    <g:Label text='Advanced Search'  styleName='heading'/>
 <!-- 			<g:RadioButton ui:field='radioButtonAnd' name='rb' text='Scenarios matching EACH of the specified keywords'></g:RadioButton> -->
@@ -50,10 +56,35 @@
 			<g:Button text='Advanced Search' ui:field='advancedSearchButton'/>
 		</g:FlowPanel>
 		
+<!-- 		Search by Id -->
 		<g:FlowPanel ui:field='searchById' >
 		    <g:Label text='Search Scenarios by Id' styleName='heading'/>
 			<g:TextBox ui:field='searchQueryById' text='Enter Scenario Id'/>		
 			<g:Button text='Search' ui:field='buttonSearchById'/>
+		</g:FlowPanel>
+		
+<!-- 		Search by Date Range -->
+		<g:FlowPanel ui:field='searchByDates' >
+		    <!-- <g:HTML>
+		    <table>
+		      <tr>
+		          <td><g:InlineLabel text='Date From' /></td>
+		          <td><g:InlineLabel text='Date Until' /></td>
+		      </tr>  
+		      <tr>
+		          <td><dp:DateBox ui:field="dopDateBox1" /></td>
+		          <td><dp:DateBox ui:field="dopDateBox2" /></td>
+		          <td><g:Button text='Search' ui:field='buttonSearchByDates'/></td>
+		      </tr>		        
+		    </table>		    
+		    </g:HTML>-->
+		    <g:Label text='Search by Dates Range' styleName='heading'/>
+		    <g:InlineLabel text='Search: from date' />
+		    <dp:DateBox ui:field="dopDateBox1" styleName='datePickerSyle'/>
+		    <g:InlineLabel text='up to date' />
+		    <dp:DateBox ui:field="dopDateBox2" styleName='datePickerSyle'/>
+		    <g:Button text='Search' ui:field='buttonSearchByDates'/>
+
 		</g:FlowPanel>
 
 		<g:FlexTable ui:field='searchResult'/>

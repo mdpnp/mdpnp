@@ -26,6 +26,10 @@
 		.withborder {
 			border: 1px solid black;
 		}
+		.remind{
+			font-weight: bold;
+			font-size:16pt;
+		}
 
 	</ui:style>
 	<g:DockPanel>
@@ -36,6 +40,7 @@
 	    <g:TextBox text='Scenario Title' ui:field='titleEditor' styleName='scenarioTitle' visibleLength='50' maxLength='100'/>
 	    <g:Label ui:field='uniqueId' styleName='important'/>
 	    <g:Label ui:field='status'/>
+	    <g:Label text='Remember to SAVE your changes' styleName='important'/><!-- TICKET-125 -->
 	    </g:FlowPanel>
 	</g:Dock>
 	
@@ -172,8 +177,6 @@
 	<g:FlowPanel>
 	    <g:Button text='Submit for Approval' ui:field='submitButton' styleName='{style.givemespace}'/>
 	    <g:Button text='Save For Later' ui:field='saveButton' styleName='{style.givemespace}'/>
-<!-- 	    <g:Button text='Approve Scenario' ui:field='approveScnButton' styleName='{style.givemespace}'/> -->
-<!-- 	    <g:Button text='Reject Scenario Scenario' ui:field='rejectScnButton' styleName='{style.givemespace}'/> -->
 	</g:FlowPanel>
 	</g:Dock>
 	</g:DockPanel>
