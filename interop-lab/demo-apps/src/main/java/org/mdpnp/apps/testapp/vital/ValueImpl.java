@@ -15,7 +15,7 @@ public class ValueImpl implements Value {
     private long valueMsBelowLow;
     private long valueMsAboveHigh;
     
-    private static final int HISTORY_SAMPLES = 100;
+    private static final int HISTORY_SAMPLES = 1500;
     private int historyCount = 0;
     private boolean historyWrapped = false;
     
@@ -114,6 +114,11 @@ public class ValueImpl implements Value {
     @Override
     public float getHistoryValue(int x) {
         return historyValue[x];
+    }
+    
+    @Override
+    public int getHistoryCurrent() {
+        return historyCount;
     }
     
     @Override

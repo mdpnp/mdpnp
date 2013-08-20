@@ -16,6 +16,7 @@ import ice.NumericSeq;
 import ice.NumericTopic;
 import ice.NumericTypeSupport;
 
+import java.lang.ref.SoftReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -28,6 +29,8 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.mdpnp.apps.testapp.DeviceIcon;
+import org.mdpnp.apps.testapp.pca.PCAConfig;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.TopicUtil;
@@ -256,8 +259,33 @@ public class VitalModelImpl implements VitalModel {
     private final DeviceIdentity diKeyHolder = new DeviceIdentity();
     private final DeviceConnectivity dcKeyHolder = new DeviceConnectivity();
     
+    private final Map<String,SoftReference<DeviceIdentity>> udiToDeviceIdentity = Collections.synchronizedMap(new HashMap<String, SoftReference<DeviceIdentity>>());
+    private final Map<String,SoftReference<DeviceIcon>> udiToDeviceIcon = Collections.synchronizedMap(new HashMap<String, SoftReference<DeviceIcon>>());
+    
+    public DeviceIcon getDeviceIcon(String udi) {
+        SoftReference<DeviceIcon> ref2 = udiToDeviceIcon.get(udi);
+        DeviceIcon dicon = null == ref2 ? null : ref2.get();
+        if(null == dicon) {
+            ice.DeviceIdentity di = getDeviceIdentity(udi);
+            if(null != di) {
+                dicon = new DeviceIcon(di.icon, 0.75);
+                dicon.setConnected(true);
+                udiToDeviceIcon.put(udi, new SoftReference<DeviceIcon>(dicon));
+            }
+        }
+        return dicon;
+    }
+    
+
+    
+    
     @Override
     public DeviceIdentity getDeviceIdentity(String udi) {
+        SoftReference<DeviceIdentity> ref = udiToDeviceIdentity.get(udi);
+        DeviceIdentity di = null == ref ? null : ref.get();
+        if(null != di) {
+            return di;
+        }
         synchronized(info_seq) {
             diKeyHolder.universal_device_identifier = udi;
             InstanceHandle_t handle = deviceIdentityReader.lookup_instance(diKeyHolder);
@@ -267,7 +295,9 @@ public class VitalModelImpl implements VitalModel {
             try {
                 deviceIdentityReader.read_instance(di_data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE,
                         ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
-                return new DeviceIdentity((DeviceIdentity) di_data_seq.get(0));
+                di = new DeviceIdentity((DeviceIdentity) di_data_seq.get(0)); 
+                udiToDeviceIdentity.put(udi, new SoftReference<DeviceIdentity>(di));
+                return di;
             } catch (RETCODE_NO_DATA noData) {
                 return null;
             } finally {

@@ -1,7 +1,6 @@
 package org.mdpnp.apps.testapp.pca;
 
-import ice.DeviceIdentity;
-
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
@@ -13,9 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.lang.ref.SoftReference;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,13 +30,11 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.mdpnp.apps.testapp.DeviceIcon;
-import org.mdpnp.apps.testapp.co2.Capno;
-import org.mdpnp.apps.testapp.co2.CapnoListModel;
 import org.mdpnp.apps.testapp.pump.Pump;
 import org.mdpnp.apps.testapp.pump.PumpListModel;
 import org.mdpnp.apps.testapp.pump.PumpModel;
@@ -68,16 +63,13 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
                 super.mouseClicked(e);
             }
         });
-        pumpStatus.setEditable(false);
-        pumpStatus.setLineWrap(true);
-        pumpStatus.setWrapStyleWord(true);
+
         warningStatus.setEditable(false);
         warningStatus.setLineWrap(true);
         warningStatus.setWrapStyleWord(true);
         
-        
-        pumpStatus.setFont(Font.decode("verdana-20"));
-        warningStatus.setFont(pumpStatus.getFont());
+        Font font = Font.decode("verdana-20");
+        warningStatus.setFont(font);
         
         List<Integer> values = new ArrayList<Integer>();
         for(int i = 0; i < VitalSign.values().length; i++) {
@@ -142,19 +134,26 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
                     boolean cellHasFocus) {
+                String udi = null;
+                setOpaque(false);
                 if(value != null && value instanceof Pump) {
-                    String udi = ((Pump)value).getInfusionStatus().universal_device_identifier;
+                    udi = ((Pump)value).getInfusionStatus().universal_device_identifier;
                     VitalModel model = PCAConfig.this.model;
                     if(model != null) {
                         ice.DeviceIdentity di = model.getDeviceIdentity(udi);
                         if(null != di) {
                             value = di.manufacturer + " " + di.model;
-                            
                         }
+                        
                     }
                 }
                 
                 Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                
+                if(null != udi && c instanceof JLabel && null != model) {
+                    ((JLabel)c).setIcon(model.getDeviceIcon(udi));
+                    ((JLabel)c).setOpaque(false);
+                }
                 return c;
             }
         });
@@ -172,15 +171,34 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
 //        pumpStatus.setOpaque(true);
 
         
-        JPanel pumpPanel = new JPanel(new GridLayout(1,4));
-        pumpPanel.add(pumpProgress);
+        JPanel pumpPanel = new JPanel(new GridLayout(1,3));
         JScrollPane scrollPane;
-        pumpPanel.add(scrollPane = new JScrollPane(pumpList));
+        
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        Font font = Font.decode("verdana-20");
+        JLabel lbl = new JLabel("Select Infusion Pump");
+        lbl.setFont(font);
+        panel.add(lbl, BorderLayout.NORTH);
+        panel.add(scrollPane = new JScrollPane(pumpList), BorderLayout.CENTER);
+        pumpList.setFont(font);
         scrollPane.setBorder(null);
-        pumpPanel.add(scrollPane = new JScrollPane(pumpStatus));
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setOpaque(false);
+        pumpList.setOpaque(false);
+        pumpPanel.add(panel);
+        
+        pumpPanel.add(pumpProgress);
+
+        lbl = new JLabel("Informational Messages");
+        lbl.setFont(font);
+        panel = new JPanel(new BorderLayout());
+        panel.add(lbl, BorderLayout.NORTH);
+        panel.add(scrollPane = new JScrollPane(warningStatus), BorderLayout.CENTER);
         scrollPane.setBorder(null);
-        pumpPanel.add(scrollPane = new JScrollPane(warningStatus));
-        scrollPane.setBorder(null);
+        warningStatus.setFont(font);
+        pumpPanel.add(panel);
+        
         
         gbc.weighty = 5.0;
         add(pumpPanel, gbc);
@@ -206,9 +224,10 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
     private VitalModel model;
     private PumpModel pumpModel;
     
-    static final Map<String,SoftReference<DeviceIdentity>> udiToDeviceIdentity = Collections.synchronizedMap(new HashMap<String, SoftReference<DeviceIdentity>>());
-    static final Map<String,SoftReference<DeviceIcon>> udiToDeviceIcon = Collections.synchronizedMap(new HashMap<String, SoftReference<DeviceIcon>>()); 
-    
+
+
+
+
     
     protected void updateVitals() {
         if(SwingUtilities.isEventDispatchThread()) {
@@ -225,7 +244,6 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
     }
     
     private final JProgressAnimation2 pumpProgress;
-    private final JTextArea pumpStatus = new JTextArea(" ");
     private final JList pumpList = new JList();
     private final JTextArea warningStatus = new JTextArea(" ");
     private final JComboBox warningsToAlarm = new JComboBox();
@@ -279,6 +297,7 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
                 }
             }
         }
+        pumpList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         
         
         
@@ -313,20 +332,13 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
                 if(null != p) {
                     p.setStop(true);
                 }
-                pumpStatus.setText(model.getInterlockText());
-//                pumpProgress.stop();
-                pumpStatus.setBackground(Color.red);
+                pumpProgress.setInterlockText(model.getInterlockText());
             } else {
                 if(null != p) {
                     p.setStop(false);
-                    pumpStatus.setText("Drug:"+p.getInfusionStatus().drug_name+"\nVTBI:"+p.getInfusionStatus().volume_to_be_infused_ml+" mL\nDuration:"+p.getInfusionStatus().infusion_duration_seconds+" seconds\nProgress:"+Integer.toString( (int) (100f * p.getInfusionStatus().infusion_fraction_complete))+"%");
                 }
-//                pumpProgress.start();
-                
-                pumpStatus.setBackground(getBackground());
+                pumpProgress.setInterlockText(null);
             }
-            
-            // TODO setOpaque(false) is running rampant
 
             switch(model.getState()) {
             case Alarm:
@@ -379,7 +391,7 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
     public void pumpChanged(PumpModel model, Pump pump) {
         if(pump!=null&&pump.equals(pumpList.getSelectedValue())) {
             if(pump.getInfusionStatus().infusionActive) {
-                pumpProgress.start();
+                pumpProgress.start(pump.getInfusionStatus().drug_name, pump.getInfusionStatus().volume_to_be_infused_ml, pump.getInfusionStatus().infusion_duration_seconds, pump.getInfusionStatus().infusion_fraction_complete);
             } else {
                 pumpProgress.stop();
             }

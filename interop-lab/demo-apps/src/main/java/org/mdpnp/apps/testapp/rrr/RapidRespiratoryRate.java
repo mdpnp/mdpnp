@@ -7,7 +7,6 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
-import java.util.Arrays;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
@@ -16,6 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.ListSelectionModel;
 
 import org.mdpnp.apps.testapp.co2.Capno;
 import org.mdpnp.apps.testapp.co2.CapnoListModel;
@@ -24,6 +24,7 @@ import org.mdpnp.apps.testapp.co2.CapnoModelListener;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.EventLoop;
+import org.mdpnp.devices.math.DCT;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
@@ -65,10 +66,16 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
             resumed = false;
             deviceIdentityWriter.unregister_instance(deviceIdentity, deviceIdentityHandle);
             deviceIdentityHandle = null;
+            unregisterNumericInstance(this.rate);
+            this.rate = null;
+            unregisterAllNumericInstances();
+            unregisterAllSampleArrayInstances();
         }
         
         private InstanceHolder<Numeric> rate;
         void updateRate(float rate) {
+            // TODO clearly a synchronization issue here.
+            // enforce a singular calling thread or synchronize accesses
             if(resumed) {
                 this.rate = numericSample(this.rate, (int)Math.round(rate), ice.Physio._MDC_RESP_RATE);
             }
@@ -111,8 +118,9 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
                     boolean cellHasFocus) {
+                String udi = null;
                 if(value != null && value instanceof Capno) {
-                    String udi = ((Capno)value).getSampleArray().universal_device_identifier;
+                    udi = ((Capno)value).getSampleArray().universal_device_identifier;
                     VitalModel model = RapidRespiratoryRate.this.vitalModel;
                     if(model != null) {
                         ice.DeviceIdentity di = model.getDeviceIdentity(udi);
@@ -121,7 +129,11 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
                         }
                     }
                 }
-                return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if(null != udi && c instanceof JLabel && vitalModel != null) {
+                    ((JLabel)c).setIcon(vitalModel.getDeviceIcon(udi));
+                }
+                return c;
             }
         });
     }
@@ -135,6 +147,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
         if(null != selected && selected instanceof Capno) {
             selectedUdi  =((Capno)selected).getSampleArray().universal_device_identifier;
         }
+        
         capnoSources.setModel(null==model?new DefaultListModel():new CapnoListModel(model));
         if(null != selectedUdi && model != null) {
             for(int i = 0; i < model.getCount(); i++) {
@@ -143,6 +156,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
                 }
             }
         }
+        capnoSources.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         if(this.model != null) {
             this.model.removeCapnoListener(this);
         }
@@ -160,9 +174,10 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
         
     }
     
-    private final static int HISTORY = 60;
+    private final static int HISTORY = 200;
     private long[] times = new long[HISTORY];
     private float[] values = new float[HISTORY];
+    private float[] coeffs = new float[HISTORY];
     private int current;
     
     private final int minus(int x) {
@@ -182,6 +197,9 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
     
     private float high = Float.MIN_VALUE, low = Float.MAX_VALUE;
     
+    
+    private double rr;
+    
     @Override
     public void capnoChanged(CapnoModel model, Capno capno) {
         if(null != capno && capno.equals(capnoSources.getSelectedValue())) {
@@ -197,11 +215,11 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
                 values[current] = capno.getSampleArray().values.getFloat(i);
                 if(values[minus(current)] <= thresholdSlider.getValue() && values[current] > thresholdSlider.getValue()) {
                     if(lastBreathTime != null) {
-                        double rr = 60000.0 / (times[current] - lastBreathTime);
-                        rrLabel.setText(Double.toString(rr));
-                        if(rrDevice != null) {
-                            rrDevice.updateRate((float) rr);
-                        }
+                        rr = 60000.0 / (times[current] - lastBreathTime);
+//                        rrLabel.setText(Double.toString(rr));
+//                        if(rrDevice != null) {
+//                            rrDevice.updateRate((float) rr);
+//                        }
                     }
                     lastBreathTime = times[current];
                 }
@@ -210,6 +228,26 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
             
             long mostRecentTime = times[minus(current)];
             long oneHalfSecondAgo = times[minus(current)]-500L;
+            DCT.dct(values, current, coeffs, 10);
+            double weighted = 0.0, sum = 0.0;
+            double max = Double.MIN_VALUE;
+            int index = 0;
+            
+            for(int i = 1; i < 10; i++) {
+                weighted += i * Math.abs(coeffs[i]);
+                sum += Math.abs(coeffs[i]);
+                if(Math.abs(coeffs[i]) > max) {
+                    index = i;
+                    max = Math.abs(coeffs[i]);
+                }
+            }
+            double weighted_C = weighted / sum;
+            double bpm = (Math.PI * HISTORY * msPerSample / 1000.0) / (weighted_C + 2);
+            bpm = 60.0 / bpm;
+            rrLabel.setText(Double.toString(bpm) + "  " + weighted_C + "  " + index + "  " + rr);
+            if(rrDevice != null) {
+                rrDevice.updateRate((float) bpm);
+            }
             
             
             // process each point as if it were coming in anew like real data samples would

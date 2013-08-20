@@ -1,9 +1,13 @@
 package org.mdpnp.apps.testapp;
 
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -12,10 +16,10 @@ import org.mdpnp.apps.testapp.rrr.RapidRespiratoryRate;
 public enum AppType {
     Main("main", "Main Menu", null, false),
     Device("device", "Device Info", null, false),
-    PCA("pca", "Infusion Safety", "NOPCA", true, "infusion-safety.png"),
-    PCAViz("pcaviz", "Data Visualization", null, true, "data-viz.png"),
-    XRay("xray", "X-Ray Ventilator Sync", "NOXRAYVENT", true, "xray-vent.png"),
-    RRR("rrr", "Rapid Respiratory Rate", "NORRR", true, RapidRespiratoryRate.class.getResource("rrr.png"))
+    PCA("pca", "Infusion Safety", "NOPCA", true, "infusion-safety.png", 0.75),
+    PCAViz("pcaviz", "Data Visualization", null, true, "data-viz.png", 0.75),
+    XRay("xray", "X-Ray Ventilator Sync", "NOXRAYVENT", true, "xray-vent.png", 0.75),
+    RRR("rrr", "Rapid Respiratory Rate", "NORRR", true, RapidRespiratoryRate.class.getResource("rrr.png"), 0.75)
     ;
     
     private final String id;
@@ -24,23 +28,53 @@ public enum AppType {
     private final boolean listed;
     private final Icon icon;
     
-    private AppType(final String id, final String name, final String disableProperty, final boolean listed, final Icon icon) {
+    private static final BufferedImage read(URL url) {
+         try {
+            return ImageIO.read(url);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    private static final BufferedImage read(String name) {
+       return read(DemoApp.class.getResource(name));
+   }
+    private static final BufferedImage scale(BufferedImage before, double scale) {
+        if(null == before) {
+            return null;
+        }
+        if(0==Double.compare(scale, 0.0)) {
+            return before;
+        }
+        int width = before.getWidth();
+        int height = before.getHeight();
+
+        BufferedImage after = new BufferedImage((int)(scale * width), (int)(scale * height), BufferedImage.TYPE_INT_ARGB);
+        java.awt.geom.AffineTransform at = new java.awt.geom.AffineTransform();
+        at.scale(scale, scale);
+        
+        AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+        after = scaleOp.filter(before, after);
+        return after;
+    }
+    
+    private AppType(final String id, final String name, final String disableProperty, final boolean listed, final BufferedImage icon, double scale) {
         this.id = id;
         this.name = name;
         this.disableProperty = disableProperty;
         this.listed = listed;
-        this.icon = icon;
+        this.icon = null == icon ? null : new ImageIcon(scale(icon, scale));
     }
     
-    private AppType(final String id, final String name, final String disableProperty, final boolean listed, final URL icon) {
-        this(id, name, disableProperty, listed, new ImageIcon(icon));
+    private AppType(final String id, final String name, final String disableProperty, final boolean listed, final URL icon, double scale) {
+        this(id, name, disableProperty, listed, read(icon), scale);
     }
     
-    private AppType(final String id, final String name, final String disableProperty, final boolean listed, final String icon) {
-        this(id, name, disableProperty, listed, new ImageIcon(DemoApp.class.getResource(icon)));
+    private AppType(final String id, final String name, final String disableProperty, final boolean listed, final String icon, double scale) {
+        this(id, name, disableProperty, listed, read((icon)), scale);
     }
     private AppType(final String id, final String name, final String disableProperty, final boolean listed) {
-        this(id, name, disableProperty, listed, (Icon) null);
+        this(id, name, disableProperty, listed, (BufferedImage) null, 1.0);
     }
     
     public String getId() {

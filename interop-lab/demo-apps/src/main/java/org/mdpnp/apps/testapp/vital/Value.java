@@ -34,6 +34,7 @@ public interface Value {
     int getHistoryCount();
     float getHistoryValue(int x);
     long getHistoryTime(int x);
+    int getHistoryCurrent();
     
 //    long getRateOfChange();
 }

@@ -17,6 +17,7 @@ public class SimulatedInfusionPump {
                     infusionFractionComplete = 0f;
                     // Well only really active if no interlockStop
                     infusionActive = !interlockStop;
+                    resumeTime = 0L;
                 } else {
                     // in the waiting period
                     infusionActive = false;

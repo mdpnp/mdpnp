@@ -6,6 +6,7 @@ import ice.DeviceIdentity;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
+import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.devices.EventLoop;
 
 import com.rti.dds.subscription.Subscriber;
@@ -214,6 +215,11 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     @Override
     public DeviceConnectivity getDeviceConnectivity(String udi) {
         return model.getDeviceConnectivity(udi);
+    }
+
+    @Override
+    public DeviceIcon getDeviceIcon(String udi) {
+        return model.getDeviceIcon(udi);
     }
 
 }

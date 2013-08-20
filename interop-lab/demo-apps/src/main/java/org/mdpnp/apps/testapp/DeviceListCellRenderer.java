@@ -9,7 +9,9 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -45,28 +47,22 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         setOpaque(true);
         
         udi.setFont(Font.decode("fixed-12"));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.BOTH;
-
-        gbc.weightx = 0.5;
-        gbc.gridheight = 3;
         add(icon, BorderLayout.WEST);
-        
-        JPanel text = new JPanel(new GridLayout(3, 1));
+
+        JPanel text = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0);
         text.setOpaque(false);
-        text.setBorder(new EmptyBorder(1, 5, 1, 5));
+//        text.setBorder(new EmptyBorder(1, 5, 1, 5));
+
+        gbc.gridwidth = 2;
+        text.add(modelName, gbc);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        gbc.gridwidth = 1;
+        text.add(connectionStatus, gbc);
         
-        gbc.weightx = 1.5;
-        gbc.gridheight = 1;
         gbc.gridx++;
-        text.add(modelName);
-        gbc.gridy++;
-        text.add(udi);
-        gbc.gridy++;
-        text.add(connectionStatus);
+        text.add(udi, gbc);
         add(text, BorderLayout.CENTER);
         
     }

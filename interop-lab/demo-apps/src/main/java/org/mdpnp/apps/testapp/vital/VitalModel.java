@@ -1,5 +1,6 @@
 package org.mdpnp.apps.testapp.vital;
 
+import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.devices.EventLoop;
 
 import com.rti.dds.subscription.Subscriber;
@@ -24,6 +25,7 @@ public interface VitalModel {
     
     ice.DeviceIdentity getDeviceIdentity(String udi);
     ice.DeviceConnectivity getDeviceConnectivity(String udi);
+    DeviceIcon getDeviceIcon(String udi);
     
     void start(Subscriber subscriber, EventLoop eventLoop);
     void stop();

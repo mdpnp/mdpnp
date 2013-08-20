@@ -58,6 +58,8 @@ public class PCAPanel extends JPanel implements VitalModelListener {
         
         setBorder(EMPTY_BORDER);
         
+//        pcaConfig.setBackground(Color.orange);
+        
         add(pcaConfig, BorderLayout.CENTER);
 
 //        setDividerSize(4);

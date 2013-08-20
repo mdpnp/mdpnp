@@ -38,7 +38,7 @@ public final class JVital extends JPanel {
 //        private JLabel limitsLabel = new JLabel("Limits:");
 //        private JLabel configureLabel = new JLabel("Configure:");
         
-        private boolean showConfiguration = false;
+//        private boolean showConfiguration = false;
         
         public Vital getVital() {
             return vital;
@@ -100,16 +100,65 @@ public final class JVital extends JPanel {
                  } 
              });
 
-            _refreshContents();
+            setLayout(new GridBagLayout());
+            GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0);
+            
+            // FIRST ROW
+            gbc.gridheight = 3;
+            add(name, gbc);
+            
+            gbc.gridheight = 1;
+            gbc.weightx = 10.0;
+            gbc.gridx++;
+            gbc.gridwidth = 3;
+            add(slider, gbc);
+            
+            gbc.gridy++;
+            add(slider2, gbc);
+            
+            gbc.gridy++;
+            gbc.gridwidth = 1;
+//            gbc.fill = GridBagConstraints.NONE;
+            gbc.weightx = 1.0;
+
+            add(ignoreZeroBox, gbc);
+            
+            gbc.gridx++;
+            add(requiredBox, gbc);
+            
+            gbc.gridx++;
+            add(deleteButton, gbc);
+
+            gbc.weightx = 1.0;
+            // DATA area
+            gbc.gridy = 0;
+            gbc.gridx++;
+            gbc.gridheight = 3;
+//            add(new JLabel("Sources:"), gbc);
+            
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+//            gbc.gridx++;
+//            gbc.gridwidth = 3;
+            
+
+            
+
+            add(vitalValues, gbc);
+            
+            setShowConfiguration(false);
+
+
         }
         
         public void setShowConfiguration(boolean showConfiguration) {
             slider.setDrawThumbs(showConfiguration);
-            if(showConfiguration ^ this.showConfiguration) {
-                this.showConfiguration = showConfiguration;
-                refreshContents();
-            }
+            slider2.setVisible(showConfiguration);
+            ignoreZeroBox.setVisible(showConfiguration);
+            requiredBox.setVisible(showConfiguration);
+            deleteButton.setVisible(showConfiguration);
             
+            validate();
+
         }
         
         public void refreshContents() {
@@ -133,55 +182,7 @@ public final class JVital extends JPanel {
 
         
         public void _refreshContents() {
-            removeAll();
-            
-            setLayout(new GridBagLayout());
-            GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0);
-            
-            // FIRST ROW
-            
-            add(name, gbc);
-            
-            gbc.weightx = 10.0;
-            gbc.gridx++;
-            gbc.gridwidth = 3;
-            add(slider, gbc);
-            
-            if(showConfiguration) {
-                gbc.gridy++;
-                add(slider2, gbc);
-                
-                // SECOND ROW
-                gbc.gridwidth = 1;
-    //            gbc.fill = GridBagConstraints.NONE;
-                gbc.weightx = 1.0;
-
-                gbc.gridx++;
-                add(ignoreZeroBox, gbc);
-                
-                gbc.gridx++;
-                add(requiredBox, gbc);
-                
-                gbc.gridx++;
-                add(deleteButton, gbc);
-            }
-
-            // DATA area
-            gbc.gridy = 0;
-            gbc.gridx = 5;
-            gbc.gridheight = showConfiguration ? 2 : 1;
-//            add(new JLabel("Sources:"), gbc);
-            
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-//            gbc.gridx++;
-//            gbc.gridwidth = 3;
-            
-
             updateData();
-
-            add(vitalValues, gbc);
-            
-            validate();
         }
 
         
@@ -248,27 +249,8 @@ public final class JVital extends JPanel {
                     Value val = vital.getValues().get(i);
                     JValue lbl = (JValue) vitalValues.getComponent(i);
                     
-//                    lbl.setForeground(val.isAtOrOutsideOfBounds() ? Color.yellow : Color.green);
-//                    lbl.setText(Integer.toString((int)val.getNumeric().value));
-//                    Device device = deviceListModel.getByUniversalDeviceIdentifier(val.getUniversalDeviceIdentifier());
-//                    DeviceIdentity di = vital.getParent().getDeviceIdentity(val.getUniversalDeviceIdentifier());
-                    
-//                    Device device = new Device();
-//                    SoftReference<Device> ref = udiToDeviceIcon.get(val.getUniversalDeviceIdentifier());
-                    SoftReference<DeviceIdentity> ref = PCAConfig.udiToDeviceIdentity.get(val.getUniversalDeviceIdentifier());
-                    DeviceIdentity di = null == ref ? null : ref.get();
-                    if(null == di) {
-                        di = vital.getParent().getDeviceIdentity(val.getUniversalDeviceIdentifier());
-                        PCAConfig.udiToDeviceIdentity.put(val.getUniversalDeviceIdentifier(), new SoftReference<DeviceIdentity>(di));
-                    }
-                    
-                    SoftReference<DeviceIcon> ref2 = PCAConfig.udiToDeviceIcon.get(val.getUniversalDeviceIdentifier());
-                    DeviceIcon dicon = null == ref2 ? null : ref2.get();
-                    if(null == dicon && di != null) {
-                        dicon = new DeviceIcon(di.icon, 0.75);
-                        dicon.setConnected(true);
-                        PCAConfig.udiToDeviceIcon.put(val.getUniversalDeviceIdentifier(), new SoftReference<DeviceIcon>(dicon));
-                    }
+                    ice.DeviceIdentity di = vital.getParent().getDeviceIdentity(val.getUniversalDeviceIdentifier());
+                    DeviceIcon dicon = vital.getParent().getDeviceIcon(val.getUniversalDeviceIdentifier());
                     
                     if(null != di) {
                         String s = di.manufacturer.equals(di.model) ? di.manufacturer : (di.manufacturer + " " + di.model);

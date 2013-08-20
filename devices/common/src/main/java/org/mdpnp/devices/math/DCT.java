@@ -60,4 +60,26 @@ public class DCT {
 		}
 		return r;
 	}
+	
+	public static float[] dct(float[] d, int start, float[] r) {
+	    return dct(d, start, r, d.length);
+	}
+	   public static float[] dct(float[] d, int start, float[] r, int count) {
+	        if(null == r) {
+	            r = new float[d.length];
+	        } else {
+	            for(int i = 0; i < r.length; i++) {
+	                r[i] = 0f;
+	            }
+	        }
+	        double cc = Math.sqrt(1.0/d.length);
+	        for(int i = 0; i < count; i++) {
+	            for(int j = 0; j < d.length; j++) {
+	                r[i] += d[(start+j)%d.length] * Math.cos(Math.PI * (j + 0.5) * i / d.length);
+	            }
+	            r[i] *= cc;
+	            cc = Math.sqrt(2.0/d.length);
+	        }
+	        return r;
+	    }
 }

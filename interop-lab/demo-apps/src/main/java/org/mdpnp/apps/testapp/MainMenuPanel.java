@@ -46,48 +46,26 @@ public class MainMenuPanel extends JPanel {
 		appList = new JList(appTypes);
 		appList.setSelectionBackground(appList.getBackground());
 		appList.setSelectionForeground(appList.getForeground());
+		appList.setBorder(null);
+		
 		deviceList = new JList();
 		appList.setFont(bigFont);
 		deviceList.setFont(bigFont);
-		ListCellRenderer lcr = new DefaultListCellRenderer() {
-		    @Override
-    		public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-    		        boolean cellHasFocus) {
-		        AppType at = value instanceof AppType ? (AppType) value : null;
-		        value = at != null ? at.getName() : value;
-    		    Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    		    if(c instanceof JLabel) {
-    		        if(at != null) {
-    		            ((JLabel)c).setIcon(at.getIcon());
-    		        } else {
-    		            ((JLabel)c).setIcon(null);
-    		        }
-    		    }
-
-    		    return c;
-    		}  
-//		    private Dimension myDimension = new Dimension();
-//		    @Override
-//		    protected void paintComponent(Graphics g) {
-//		        if(isOpaque()) {
-//		            g.setColor(getBackground());
-//		            myDimension = getSize(myDimension);
-//		            g.fillRect(0, 0, myDimension.width, myDimension.height);
-//		        }
-//		        ((Graphics2D)g).setBackground(getBackground());
-//		        super.paintComponent(g);
-//		    }
-		};
-//		((DefaultListCellRenderer)lcr).setBackground(new Color(1f, 1f, 1f, .5f));
-		((DefaultListCellRenderer)lcr).setOpaque(false);
-		((DefaultListCellRenderer)lcr).setVerticalTextPosition(SwingConstants.TOP);
-//		Border b = new LineBorder(Color.black, 1);
-//		BorderFactory.createCompoundBorder(outsideBorder, insideBorder)
-//		((DefaultListCellRenderer)lcr).setBorder(new CompoundBorder(new LineBorder(Color.black, 5), new EmptyBorder(1, 5, 1, 5)));
+		deviceList.setBorder(null);
 		
+		AppListCellRenderer lcr = new AppListCellRenderer();
+		DeviceListCellRenderer dlcr = new DeviceListCellRenderer();
+		
+		CompoundBorder cb = new CompoundBorder(new EmptyBorder(5,5,5,5), new LineBorder(Color.black, 1, true));
+		CompoundBorder cb1 = new CompoundBorder(new EmptyBorder(5,5,5,5), new LineBorder(Color.black, 1, true));
+
+		lcr.setBorder(cb);
+		dlcr.setBorder(cb1);
 		
 		appList.setCellRenderer(lcr);
-		deviceList.setCellRenderer(new DeviceListCellRenderer());
+		deviceList.setCellRenderer(dlcr);
+		
+		
 
 		JLabel lbl;
 		add(lbl = new JLabel("Available Applications"), gbc);
@@ -95,6 +73,7 @@ public class MainMenuPanel extends JPanel {
 		gbc.gridy++;
 		gbc.weighty = 100.0;
 		JScrollPane scrollAppList = new JScrollPane(appList);
+		scrollAppList.setBorder(null);
 		scrollAppList.getViewport().setOpaque(false);
 		add(scrollAppList, gbc);
 		scrollAppList.setOpaque(false);
@@ -114,6 +93,7 @@ public class MainMenuPanel extends JPanel {
 		gbc.weighty = 100.0;
 		
 		JScrollPane scrollDeviceList = new JScrollPane(deviceList); 
+		scrollDeviceList.setBorder(null);
 		add(scrollDeviceList, gbc);
 		scrollDeviceList.setOpaque(false);
 		scrollDeviceList.getViewport().setOpaque(false);
