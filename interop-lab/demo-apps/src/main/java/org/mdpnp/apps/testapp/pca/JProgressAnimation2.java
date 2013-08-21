@@ -27,11 +27,8 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
 
     private BufferedImage image;
     
-    private final static String TEXT = "Active Infusion";
-    
     private final static int FIT_ARROWS = 5;
     private int arrowWidth, offset, offsetDelta;
-
     
     private void growFontAsNeeded(String s) {
         if(null != s) {
@@ -63,11 +60,9 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
                 scaleArrow = transform.createTransformedShape(arrowPolygon);
                 offsetDelta = (int) (0.01 * size.width);
                 offsetDelta = offsetDelta<=0?1:offsetDelta;
-                
-                growFontAsNeeded(TEXT);
-                shrinkFontAsNeeded(TEXT);
+
+                growFontAsNeeded(l1);
                 shrinkFontAsNeeded(l1);
-                shrinkFontAsNeeded(l2);
                 
                 Graphics g = newImage.createGraphics();
                 if (this.image != null) {
@@ -121,14 +116,6 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
     private final Polygon octagon = new Polygon();
     private final Polygon innerOctagon = new Polygon();
 
-//    public void toggle() {
-//        if (null == future) {
-//            start();
-//        } else {
-//            stop();
-//        }
-//    }
-
     private boolean populated = false;
     
     public void setPopulated(boolean populated) {
@@ -136,17 +123,15 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
         repaint();
     }
     
-    private String l1, l2;
+    private String l1;
     
     public void start(String drug, int vtbi, int seconds, float progress) {
         populated = true;
         
-        l1 = drug + " " + vtbi + " mL";
-        double done = progress * seconds;
-        l2 = secondsToHHMMSS((int)done) + " / " + secondsToHHMMSS(seconds);
-        
+        l1 = drug + " PCA";
+
+        growFontAsNeeded(l1);
         shrinkFontAsNeeded(l1);
-        shrinkFontAsNeeded(l2);
         
         if (null == future) {
             if(null != image) {
@@ -183,33 +168,16 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
     private static final Stroke STOP_STROKE = new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     private static final double SCALE_RADIUS = 100.0;
     
-    private static final int ROWS = 5;
-    
-    private static final String twoDigits(int n) {
-        if(n == 0) {
-            return "00";
-        } else if(n < 10) {
-            return "0"+n;
-        } else {
-            return Integer.toString(n);
-        }
-    }
-    
-    private static final String secondsToHHMMSS(int seconds) {
-        int hrs = seconds / 3600;
-        int mins = (seconds - hrs * 3600) / 60;
-        int s = (seconds - hrs * 3600 - mins * 60);
-        return twoDigits(hrs)+":"+twoDigits(mins)+":"+twoDigits(s);
+    private static final int ROWS = 3;
         
-    }
-    
     private String interlockText;
     
     public void setInterlockText(String interlockText) {
         if(null != this.interlockText && null == interlockText) {
-            growFontAsNeeded(TEXT);
+            
         }
         this.interlockText = interlockText;
+        repaint();
     }
     
     @Override
@@ -234,39 +202,22 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
                     g.setColor(Color.white);
                     g.drawPolygon(innerOctagon);
                     g2d.setTransform(t);
-    //                String stop = "Arr\u00EAt";
-    //                String stop = "STOP";
-    //                g.setFont(g.getFont().deriveFont(50f));
-    //                int width = g.getFontMetrics().stringWidth(stop);
-    //                int height = g.getFontMetrics().getHeight();
-                    
-    //                height *= SCALE_RADIUS / radius;
-    //                width *= SCALE_RADIUS / radius;
-    //                 height is not scaled
-    //                g.drawString(stop, -width/2, -height / 2);
                 } else {
                     g.setColor(Color.black);
-                    g.drawLine(0, 3 * size.height / ROWS - scaleArrow.getBounds().height / 2, size.width, 3 * size.height / ROWS - scaleArrow.getBounds().height / 2);
-                    g.drawLine(0, 3 * size.height / ROWS + scaleArrow.getBounds().height / 2, size.width, 3 * size.height / ROWS + scaleArrow.getBounds().height / 2);
+                    g.drawLine(0, 2 * size.height / ROWS - scaleArrow.getBounds().height / 2, size.width, 2 * size.height / ROWS - scaleArrow.getBounds().height / 2);
+                    g.drawLine(0, 2 * size.height / ROWS + scaleArrow.getBounds().height / 2, size.width, 2 * size.height / ROWS + scaleArrow.getBounds().height / 2);
                     
                     g.setColor(getForeground());
                     g.setFont(getFont());
-                    int w = g.getFontMetrics().stringWidth(TEXT);
-                    g.drawString(TEXT, size.width/2-w/2, size.height / ROWS);
                     
-                    w = g.getFontMetrics().stringWidth(l1);
-                    g.drawString(l1, size.width/2-w/2, 2 * size.height / ROWS);
-                    
-                    w = g.getFontMetrics().stringWidth(l2);
-                    g.drawString(l2, size.width/2-w/2, 5 * size.height / ROWS);
+                    int w = g.getFontMetrics().stringWidth(l1);
+                    g.drawString(l1, size.width/2-w/2, 1 * size.height / ROWS);
                     
                     
-                    ((Graphics2D)g).translate(-arrowWidth+offset, 3 * size.height / ROWS);
+                    
+                    ((Graphics2D)g).translate(-arrowWidth+offset, 2 * size.height / ROWS);
                     for(int i = 0; i <= FIT_ARROWS; i++) {
-                        
-    //                    ((Graphics2D)g).scale(5.0, 5.0);
                         ((Graphics2D)g).fill(scaleArrow);
-    //                    ((Graphics2D)g).scale(1.0/5.0, 1.0/5.0);
                         ((Graphics2D)g).translate(arrowWidth, 0);
                     }
                 }
@@ -274,6 +225,7 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
                 g.setColor(Color.black);
                 g.setFont(getFont());
                 int w = g.getFontMetrics().stringWidth(NO_PUMP);
+                growFontAsNeeded(NO_PUMP);
                 shrinkFontAsNeeded(NO_PUMP);
                 g.drawString(NO_PUMP, size.width/2-w/2, size.height/2);
             }
@@ -293,29 +245,4 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
         }
     }
     private static final String NO_PUMP = "No Pump Selected";
-//    public static void main(String[] args) {
-//        JFrame frame = new JFrame("TEST THIS");
-//        final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-//        frame.getContentPane().setLayout(new BorderLayout());
-//        final JProgressAnimation2 c = new JProgressAnimation2(executor);
-//        frame.getContentPane().add(c, BorderLayout.CENTER);
-//        c.addMouseListener(new MouseAdapter() {
-//            @Override
-//            public void mouseClicked(MouseEvent e) {
-//                c.toggle();
-//                super.mouseClicked(e);
-//            }
-//        });
-//        c.setBackground(Color.white);
-//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        frame.setSize(320, 240);
-//        frame.addWindowListener(new WindowAdapter() {
-//            @Override
-//            public void windowClosing(WindowEvent e) {
-//                executor.shutdownNow();
-//                super.windowClosing(e);
-//            }
-//        });
-//        frame.setVisible(true);
-//    }
 }

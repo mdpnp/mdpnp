@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.pca;
 import ice.DeviceIdentity;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -30,7 +31,8 @@ public final class JVital extends JPanel {
         private final JMultiSlider slider, slider2;
 
         private final JLabel name = new JLabel();
-        private final JPanel vitalValues = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        private final JLabel name2 = new JLabel();
+        private final JPanel vitalValues = new JPanel(new FlowLayout(FlowLayout.LEFT));
         private final JButton deleteButton = new JButton("Remove");
         private final JCheckBox ignoreZeroBox = new JCheckBox("Ignore Zero");
         private final JCheckBox requiredBox = new JCheckBox("Required");
@@ -55,15 +57,23 @@ public final class JVital extends JPanel {
             String lbl = vital.getLabel();
             if(lbl.contains(" ")) {
                 lbl = lbl.replaceAll("\\ +", "<br/>");
+                lbl = lbl + " (" + vital.getUnits() + ")";
                 lbl = "<html>"+lbl+"</html>";
 //                System.out.println("Label:"+lbl);
+            } else {
+                lbl = lbl + " (" + vital.getUnits() + ")";
             }
+//            lbl = lbl + " (" + vital.getUnits() + ")";
             Font font = Font.decode("verdana-20");
             name.setText(lbl);
+            name2.setText(lbl);
             name.setFont(Font.decode("verdana-30"));
+            name2.setFont(Font.decode("verdana-30"));
             VitalBoundedRangeMulti range = new VitalBoundedRangeMulti(vital);
             slider = new JMultiSlider(range);
             slider.setFont(font);
+//            slider.setPreferredSize(new Dimension(100, Integer.MAX_VALUE));
+//            slider.setMaximumSize(new Dimension(100, Integer.MAX_VALUE));
 //            slider.setSize(100, slider.getPreferredSize().height);
             slider.setRangeColor(0, Color.red);
             slider.setRangeColor(1, Color.yellow);
@@ -136,7 +146,7 @@ public final class JVital extends JPanel {
             gbc.gridheight = 3;
 //            add(new JLabel("Sources:"), gbc);
             
-            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.fill = GridBagConstraints.NONE;
 //            gbc.gridx++;
 //            gbc.gridwidth = 3;
             
@@ -145,6 +155,10 @@ public final class JVital extends JPanel {
 
             add(vitalValues, gbc);
             
+            gbc.gridx++;
+            add(name2, gbc);
+            
+            
             setShowConfiguration(false);
 
 
@@ -152,6 +166,7 @@ public final class JVital extends JPanel {
         
         public void setShowConfiguration(boolean showConfiguration) {
             slider.setDrawThumbs(showConfiguration);
+//            slider.setVisible(showConfiguration);
             slider2.setVisible(showConfiguration);
             ignoreZeroBox.setVisible(showConfiguration);
             requiredBox.setVisible(showConfiguration);

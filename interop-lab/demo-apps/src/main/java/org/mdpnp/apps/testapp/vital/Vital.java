@@ -1,11 +1,15 @@
 package org.mdpnp.apps.testapp.vital;
 
+import java.awt.Color;
+
 public interface Vital {
     /**
      * A String describing this vital sign
      * @return
      */
     String getLabel();
+    
+    Color getColor();
     
     /**
      * Units in which this vital sign is measured

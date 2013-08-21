@@ -16,6 +16,7 @@ import ice.NumericSeq;
 import ice.NumericTopic;
 import ice.NumericTypeSupport;
 
+import java.awt.Color;
 import java.lang.ref.SoftReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -175,8 +176,8 @@ public class VitalModelImpl implements VitalModel {
     }
 
     @Override
-    public Vital addVital(String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh) {
-        Vital v = new VitalImpl(this, label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow, valueMsWarningHigh);
+    public Vital addVital(String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
+        Vital v = new VitalImpl(this, label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow, valueMsWarningHigh, color);
         vitals.add(v);
         addQueryConditions(v);
         fireVitalAdded(v);
@@ -268,7 +269,7 @@ public class VitalModelImpl implements VitalModel {
         if(null == dicon) {
             ice.DeviceIdentity di = getDeviceIdentity(udi);
             if(null != di) {
-                dicon = new DeviceIcon(di.icon, 0.75);
+                dicon = new DeviceIcon(di.icon, 1.00);
                 dicon.setConnected(true);
                 udiToDeviceIcon.put(udi, new SoftReference<DeviceIcon>(dicon));
             }

@@ -1,5 +1,6 @@
 package org.mdpnp.apps.testapp.vital;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,6 +11,7 @@ class VitalImpl implements Vital {
     private final String label, units;
     private final int[] names;
     private final float minimum, maximum;
+    private Color color;
     private Float warningLow, warningHigh;
     private Float criticalLow, criticalHigh;
     private Long valueMsWarningLow, valueMsWarningHigh;
@@ -18,7 +20,7 @@ class VitalImpl implements Vital {
     private long warningAgeBecomesAlarm = Long.MAX_VALUE;
     
     
-    VitalImpl(VitalModelImpl parent, String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh) {
+    VitalImpl(VitalModelImpl parent, String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
         this.parent = parent;
         this.label = label;
         this.units = units;
@@ -274,5 +276,11 @@ class VitalImpl implements Vital {
     public void setValueMsWarningLow(Long low) {
         this.valueMsWarningLow = low;
         parent.fireVitalChanged(this);
+    }
+
+
+    @Override
+    public Color getColor() {
+        return color;
     }
 }

@@ -84,17 +84,13 @@ public class JValue extends JComponent {
         valueMsAbove.setOpaque(false);
         valueMsBelow.setOpaque(false);
         time.setOpaque(false);
-        value.setFont(Font.decode("verdana-60"));
+        value.setFont(Font.decode("verdana-100"));
         value.setForeground(Color.blue);
-        
+        deviceName.setFont(value.getFont().deriveFont(20f));
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.CENTER,GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0);
         
-        
         gbc.gridheight = 3;
-        add(value, gbc);
-        gbc.gridx++;
-        
         add(icon, gbc);
         
         gbc.gridx++;
@@ -103,8 +99,8 @@ public class JValue extends JComponent {
         add(deviceName, gbc);
         gbc.gridy++;
         
-        valueChart.setMinimumSize(new Dimension(100, 20));
-        valueChart.setPreferredSize(new Dimension(100, 20));
+        valueChart.setMinimumSize(new Dimension(200, 40));
+        valueChart.setPreferredSize(new Dimension(200, 40));
         gbc.insets = new Insets(1,1,1,1);
         add(valueChart, gbc);
         
@@ -119,7 +115,12 @@ public class JValue extends JComponent {
         gbc.gridy++;
         add(valueMsBelow, gbc);
         
+        gbc.gridx++;
+        gbc.gridy = 0;
+        gbc.gridheight = 3;
+        add(value, gbc);
 
+        
 
         
         
@@ -137,13 +138,19 @@ public class JValue extends JComponent {
 //            setBackground(getParent().getBackground());
 //        }
         this.icon.setIcon(icon);
+        
         this.deviceName.setText(deviceName);
         if(si != null && numeric != null) {
             date.setTime(1000L * si.source_timestamp.sec + si.source_timestamp.nanosec / 1000000L);
-            this.value.setText(Integer.toString((int)numeric.value));
+            String s = Integer.toString((int)numeric.value);
+            while(s.length()<3) {
+                s = " "+s;
+            }
+            this.value.setText(s);
+            
             this.time.setText(timeFormat.format(date));
         } else {
-            this.value.setText("");
+            this.value.setText("   ");
             this.time.setText("");
         }
         this.valueMsAbove.setText(0L == valueMsAboveHigh ? "" : Long.toString(valueMsAboveHigh/1000L));
