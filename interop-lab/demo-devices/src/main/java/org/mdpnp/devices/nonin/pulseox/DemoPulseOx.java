@@ -98,7 +98,7 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 			    Integer heartRate = getHeartRate();
 			    Integer spo2 = getSpO2();
 			    pulse = numericSample(pulse, heartRate != null ? (heartRate < 895 ? heartRate : null) : null, ice.Physio._MDC_PULS_OXIM_PULS_RATE);
-			    SpO2 = numericSample(SpO2, spo2 != null ? (spo2 < 100 ? spo2 : null) : null, ice.Physio._MDC_PULS_OXIM_SAT_O2);
+			    SpO2 = numericSample(SpO2, spo2 != null ? (spo2 <= 100 ? spo2 : null) : null, ice.Physio._MDC_PULS_OXIM_SAT_O2);
 			}
 
 			
@@ -218,13 +218,16 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 	protected boolean delegateReceive(NoninPulseOx delegate) throws IOException {
 		return delegate.receive();
 	}
-
-
+	
+	@Override
+	protected long getConnectInterval() {
+	    return 5000L;
+	}
 
 	
 	@Override
 	protected long getMaximumQuietTime() {
-		return 1000L;
+		return 2000L;
 	}
 	
 	@Override

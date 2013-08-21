@@ -48,7 +48,7 @@ public class SimulatedInfusionPump {
     }
     
     protected static final long UPDATE_PERIOD = 1000L;
-    protected static final long WAITING_PERIOD = 2 * 60 * 1000L;
+    protected static final long WAITING_PERIOD = 10000L;
     
     private ScheduledFuture<?> task;
     
