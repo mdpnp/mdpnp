@@ -80,13 +80,14 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
                 this.rate = numericSample(this.rate, (int)Math.round(rate), ice.Physio._MDC_RESP_RATE);
             }
         }
-        
     }
     
     private RespiratoryRateDevice rrDevice;
+    private final EventLoop eventLoop;
     
-    public RapidRespiratoryRate(int domainId, EventLoop eventLoop) {
+    public RapidRespiratoryRate(int domainId, final EventLoop eventLoop) {
         super(new GridLayout(2,2));
+        this.eventLoop = eventLoop;
         rrDevice = new RespiratoryRateDevice(domainId, eventLoop);
         enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
         add(capnoSources);
@@ -104,11 +105,20 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
             public void actionPerformed(ActionEvent e) {
                 if(device.isSelected()) {
                     if(rrDevice != null) {
-                        rrDevice.resume();
+                        eventLoop.doLater(new Runnable() {
+                            public void run() {
+                                rrDevice.resume();
+                            }
+                        });
+                        
                     }
                 } else {
                     if(rrDevice != null) {
-                        rrDevice.pause();
+                        eventLoop.doLater(new Runnable() {
+                            public void run() {
+                                rrDevice.pause();
+                            }
+                        });
                     }
                 }
             }
@@ -200,6 +210,14 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
     
     private double rr;
     
+    private final Runnable updateRate = new Runnable() {
+        public void run() {
+            if(rrDevice != null) {
+                rrDevice.updateRate((float) Math.round(rr));
+            }
+        }
+    };
+    
     @Override
     public void capnoChanged(CapnoModel model, Capno capno) {
         if(null != capno && capno.equals(capnoSources.getSelectedValue())) {
@@ -245,9 +263,11 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
             double bpm = (Math.PI * HISTORY * msPerSample / 1000.0) / (weighted_C + 2);
             bpm = 60.0 / bpm;
             rrLabel.setText(Double.toString(bpm) + "  " + weighted_C + "  " + index + "  " + rr);
-            if(rrDevice != null) {
-                rrDevice.updateRate((float) bpm);
-            }
+            this.rr = bpm;
+            eventLoop.doLater(updateRate);
+//            if(rrDevice != null) {
+//                rrDevice.updateRate((float) bpm);
+//            }
             
             
             // process each point as if it were coming in anew like real data samples would
