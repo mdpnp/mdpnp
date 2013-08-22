@@ -221,6 +221,17 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
                         ((Graphics2D)g).translate(arrowWidth, 0);
                     }
                 }
+                if(interlockText != null) {
+                    
+                    g.setColor(Color.red);
+                    
+                    String[] lines = interlockText.split("\\n");
+                    for(int i = 0; i < lines.length; i++) {
+                        shrinkFontAsNeeded(lines[i]);
+                        g.setFont(getFont());
+                        g.drawString(lines[i], 0, (i+1)*g.getFontMetrics().getHeight());
+                    }
+                }
             } else {
                 g.setColor(Color.black);
                 g.setFont(getFont());
@@ -229,17 +240,7 @@ public class JProgressAnimation2 extends JComponent implements Runnable {
                 shrinkFontAsNeeded(NO_PUMP);
                 g.drawString(NO_PUMP, size.width/2-w/2, size.height/2);
             }
-            if(interlockText != null) {
-                
-                g.setColor(Color.red);
-                
-                String[] lines = interlockText.split("\\n");
-                for(int i = 0; i < lines.length; i++) {
-                    shrinkFontAsNeeded(lines[i]);
-                    g.setFont(getFont());
-                    g.drawString(lines[i], 0, (i+1)*g.getFontMetrics().getHeight());
-                }
-            }
+
             g.dispose();
             g_.drawImage(image, 0, 0, this);
         }
