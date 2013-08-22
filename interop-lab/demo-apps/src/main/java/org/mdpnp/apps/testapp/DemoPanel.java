@@ -204,12 +204,21 @@ public class DemoPanel extends JPanel implements Runnable {
 				double scr_width = size.getWidth();
 				double scr_height = size.getHeight();
 				
-				
-				img_src_x1 = (int)((img_width-scr_width) / 2.0);
-				img_src_x2 = (int)( img_src_x1 + scr_width );
-	
-				img_src_y1 = (int)((img_height-scr_height) /2.0);
-				img_src_y2 = (int)(img_src_y1+scr_height);
+				// if the screen is bigger than the image
+				if(scr_width >= img_width) {
+				    img_src_x1 = 0;
+				    img_src_x2 = (int) img_width;
+				} else {
+    				img_src_x1 = (int)((img_width-scr_width) / 2.0);
+    				img_src_x2 = (int)( img_src_x1 + scr_width );
+				}
+				if(scr_height >= img_height) {
+				    img_src_y1 = 0;
+				    img_src_y2 = (int) img_height;
+				} else {
+    				img_src_y1 = (int)((img_height-scr_height) /2.0);
+    				img_src_y2 = (int)(img_src_y1+scr_height);
+				}
 			}			
 			break;
 		}
