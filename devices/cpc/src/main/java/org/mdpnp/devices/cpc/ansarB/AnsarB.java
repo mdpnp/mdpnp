@@ -13,8 +13,6 @@ public class AnsarB {
     private final InputStream inputStream;
     private final OutputStream outputStream;
     
-    
-    
     public AnsarB(InputStream in, OutputStream out) {
         this.inputStream = in;
         this.outputStream = out;
@@ -158,9 +156,9 @@ public class AnsarB {
                     receivePressure1(parseIntOrNull(fields[1]), parseIntOrNull(fields[2]), parseIntOrNull(fields[3]), fields[fields.length-1]);
                 } else if("P2".equals(name[0]) && fields.length > 4) {
                     receivePressure2(parseIntOrNull(fields[1]),  parseIntOrNull(fields[2]), parseIntOrNull(fields[3]), fields[fields.length-1]);
-                } else if("T1".equals(name[0]) && fields.length > 2) {
+                } else if("T1".equals(name[0]) && fields.length > 1) {
                     receiveTemperature1(parseIntOrNull(fields[1]), fields[fields.length-1]);
-                } else if("T2".equals(name[0]) && fields.length > 2) {
+                } else if("T2".equals(name[0]) && fields.length > 1) {
                     receiveTemperature2(parseIntOrNull(fields[1]), fields[fields.length-1]);
                 }
             }

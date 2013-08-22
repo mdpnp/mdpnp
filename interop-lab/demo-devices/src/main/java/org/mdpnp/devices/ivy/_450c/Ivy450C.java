@@ -1,12 +1,10 @@
 package org.mdpnp.devices.ivy._450c;
 
 import ice.ConnectionState;
-import ice.Numeric;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.cpc.ansarB.AnsarB;
@@ -73,6 +71,18 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         public MyAnsarB(InputStream in, OutputStream out) {
             super(in, out);
         }
+        
+        @Override
+        protected void receiveLine(String line) {
+            synchronized(Ivy450C.this) {
+                if(!inited) {
+                    inited = true;
+                    this.notifyAll();
+                }
+            }
+            super.receiveLine(line);
+        }
+        
         @Override
         protected void receiveEndTidalCO2(Integer value, String label) {
             etco2 = numericSample(etco2, value, ice.Physio.MDC_AWAY_CO2_EXP.value());
@@ -148,7 +158,7 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
         @Override
         protected void receiveTemperature1(Integer value, String label) {
-            t1 = numericSample(t1, value, ice.Physio.MDC_TEMP_BLD.value());
+            t1 = numericSample(t1, value, ice.Physio._MDC_TEMP_BLD);
         }
         @Override
         protected void receiveTemperature2(Integer value, String label) {
@@ -168,12 +178,38 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
     
     @Override
     protected long getMaximumQuietTime() {
-        return 5000L;
+        return 3000L;
     }
     
     @Override
     protected long getConnectInterval() {
         return 2000L;
+    }
+    
+    protected boolean inited = false;
+    
+    @Override
+    protected boolean doInitCommands(OutputStream outputStream) throws IOException {
+        if(!super.doInitCommands(outputStream)) {
+            return false;
+        }
+        
+        inited = false;
+
+        long start = System.currentTimeMillis();
+        synchronized(this) {
+            while(!inited) {
+                try {
+                    this.wait(500L);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if( (System.currentTimeMillis()-start) >= getMaximumQuietTime()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     @Override
