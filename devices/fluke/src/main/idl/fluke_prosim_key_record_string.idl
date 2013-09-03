@@ -1,0 +1,54 @@
+/**
+ * @file     fluke_prosim_key_record_string.idl 
+ *
+ * @brief    Defines a DDS transport structure used to exchange key press data.
+ * If both the Validation and Record flags are true, and an operator presses a
+ * key on the Fluke patient simulator, the simulator responds with a Key Record
+ * String.
+ *
+ * @see      Fluke Biomedical Prosim 6/8 Communications Interface Document for
+ * more information
+ */
+
+typedef char CHARSTRING;
+typedef octet INTU8;
+typedef short INTI16;
+
+const INTI16 kFlukeProsimMaxUDIStrSize = 16;
+const INTI16 kFlukeProsimMaxLCDChecksumSize = 32;
+
+
+struct AbsoluteTime
+{
+  INTU8 century;  // Zero-based. For year 2012, century = 20 (not 21)
+  INTU8 year;     // For 2012, year = 12
+  INTU8 month;    // 1 - 12
+  INTU8 day;      // 1 - 31
+  INTU8 hour;
+  INTU8 minute;
+  INTU8 second;
+  INTU8 sec_fractions; // hundredths of second
+};
+
+
+struct FlukeProsimKeyRecordString
+{
+  // Universal Device ID  
+  CHARSTRING udi[kFlukeProsimMaxUDIStrSize];  
+
+  // Code of pressed key per key code table
+  INTI16 key_code;
+
+  // Number of cycles the key was pressed
+  INTI16 number_of_cycles_pressed;
+
+  // Screen number of resultant LCD screen
+  INTI16 lcd_screen_number;
+
+  // 32 Hex digit checksum of LCD screen
+  CHARSTRING lcd_checksum[kFlukeProsimMaxLCDChecksumSize];
+
+  // Time of observation.
+  AbsoluteTime absolute_timestamp;
+};
+

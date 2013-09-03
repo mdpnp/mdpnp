@@ -382,7 +382,7 @@ int sio_OpenComport(const char *portname, const int baudrate)
     cfsetspeed(&new_port_settings, baudr);
     new_port_settings.c_iflag = IGNPAR;
     new_port_settings.c_cc[VMIN] = 0;   // block until n bytes are received
-    new_port_settings.c_cc[VTIME] = 10;  // block until a timer expires (n * 100 mSec)
+    new_port_settings.c_cc[VTIME] = 3;  // block until a timer expires (n * 100 mSec)
     _error = tcsetattr(_hport[portnumber], TCSANOW, &new_port_settings);
     if (_error == -1)
     {
