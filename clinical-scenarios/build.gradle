@@ -28,11 +28,11 @@ dependencies {
     runtime 'net.sf.jsr107cache:jsr107cache:1.1'
     
 	runtime "com.google.gwt:gwt-servlet:$gwtVersion"
+    runtime "com.google.web.bindery:requestfactory-server:$gwtVersion"
     runtime 'org.json:json:20090211'
     runtime 'org.hibernate:hibernate-validator:5.0.1.Final'
     
     runtime group: 'com.googlecode.objectify', name: 'objectify', version: '4.0rc1'
- 
 }
 
 task copyJarsToWEBINF(type: Copy) {
