@@ -45,7 +45,7 @@ public class ScenarioEntity implements java.io.Serializable {
 	
 	private Date creationDate = new Date();
 	private Date modificationDate;
-		  
+	
     protected int version = 1;
 	
 	@OnSave
