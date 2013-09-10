@@ -1,6 +1,7 @@
 package org.mdpnp.clinicalscenarios.client.user;
 
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
+import org.mortbay.log.Log;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -153,9 +154,8 @@ public class UserInfoBanner extends Composite {
 		showLatestSearch.setTitle("Retrieve the previous search results");
 		search.addItem(showLatestSearch);
 
-		
 		UserInfoRequest userInfoRequest = userInfoRequestFactory.userInfoRequest();
-		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).to(new Receiver<UserInfoProxy>() {
+		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).with("loginURL").to(new Receiver<UserInfoProxy>() {
 
 			@Override
 			public void onSuccess(final UserInfoProxy response) {
@@ -169,16 +169,20 @@ public class UserInfoBanner extends Composite {
 				
 
 				if(null == response.getEmail()) {
-					MenuItem signIn = new MenuItem("Sign In", new Command() {
-
-						@Override
-						public void execute() {
-							Window.Location.replace(response.getLoginURL());
-						}
-						
-					});
+					MenuBar signIn = new MenuBar(true);
+					System.out.println(""+response.getLoginURL());
+					for(final LoginProviderProxy lpp : response.getLoginURL()) {
+					    MenuItem mi = new MenuItem(lpp.getName(), new Command() {
+					        @Override
+					        public void execute() {
+					            Window.Location.replace(lpp.getLoginURL());
+					        }
+					    });
+					    signIn.addItem(mi);
+					}
+					
 					username.addItem(listApprvScn);
-					username.addItem(signIn);
+					username.addItem("Sign In", signIn);
 					
 				} else {
 					if(response.getAdmin()) {//ADMIN
