@@ -22,7 +22,14 @@
 		<param-value>WEB-INF/classes/symbolMaps/</param-value>
 	</init-param>
 </servlet>
-
+<filter>
+        <filter-name>ObjectifyFilter</filter-name>
+        <filter-class>com.googlecode.objectify.ObjectifyFilter</filter-class>
+</filter>
+<filter-mapping>
+        <filter-name>ObjectifyFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+</filter-mapping>
 <servlet-mapping>
 	<servlet-name>requestFactoryServlet</servlet-name>
 	<url-pattern>/gwtRequest</url-pattern>
