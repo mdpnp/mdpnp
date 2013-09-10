@@ -68,13 +68,31 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static final int ENVIRONMENT_TYPE_COL = 0;
 	private static final int ENVIRONMENT_DELETEBUTTON_COL = 1;
 	
+	//references table
+	private static final int REFERENCE_http_COL = 0;
+	private static final int REFERENCE_TEXT_COL = 1;
+	private static final int REFERENCE_DELETEBUTTON_COL = 2;
+	private static final int REFERENCE_FOLLOWBUTTON_COL = 3;
+	
 	//scenario status
 	public final static String SCN_STATUS_UNSUBMITTED = 	"unsubmitted";//created and/or modified, but not yet submitted for approval
 	public final static String SCN_STATUS_SUBMITTED = 		"submitted"; //submitted for approval, not yet revised nor approved 
 	public final static String SCN_STATUS_APPROVED = 		"approved"; //revised and approved
 	public final static String SCN_STATUS_REJECTED = 		"rejected"; //revised but not approved. Rejected for revision 
 	
-	private final static int APPRV_SCN_TAB_POS = 6;//position of the tab to approve or reject scn
+	/**
+	 * Tabs for our CConOps (Clinical concept of Operations)
+	 * Background -->tab (0)
+	 * Hazards
+	 * Environments
+	 * Equipment
+	 * Proposed State
+	 * Benefists+Risks -->tab(5)
+	 * References (links)
+	 * 
+	 * Feedback-->Approve or reject
+	 */	
+	private final static int APPRV_SCN_TAB_POS = 7;//position of the tab to approve or reject scn
 	
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
@@ -296,9 +314,25 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				HazardsEntryProxy hep = (HazardsEntryProxy) hazards.get(i);
 				addNewHazardTableRow(hep.getDescription(), hep.getFactors(), hep.getExpected(), hep.getSeverity());
 			}
+		}	
+		
+	}
+	
+	/**
+	 * prints/draws the references table 
+	 */
+	private final void buildReferencesTable(boolean isDrawNew) {
+		referencesTable.removeAllRows();//clear
+		//XXX currentScenario.getReferences()!=null because was added after all the other fields
+		if(isDrawNew || currentScenario.getReferences()==null || currentScenario.getReferences().getLinkedRefenrences().isEmpty()){
+			addNewLinkedReference();			
+		}else{
+			//populate the table
+			for(String ref : currentScenario.getReferences().getLinkedRefenrences()){
+				addNewLinkedReference(ref);
+			}
 		}
-		
-		
+
 	}
 	
 	private Logger logger = Logger.getLogger(ScenarioPanel.class.getName());
@@ -433,6 +467,22 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	}
 	
 	/**
+	 * checks if we need to persist references
+	 */
+	private void checkReferencesListForPersistence(){
+		currentScenario.getReferences().getLinkedRefenrences().clear();
+		//delete and repopulate
+		for(int row =0; row<referencesTable.getRowCount(); row++){
+			Widget w = referencesTable.getWidget(row, REFERENCE_TEXT_COL);
+			if(w instanceof TextArea){
+				String ref = ((TextArea) w).getText();
+				if(!ref.trim().equals(""))
+					currentScenario.getReferences().getLinkedRefenrences().add(ref);
+			}
+		}
+	}
+	
+	/**
 	 * Checks the content of the user interface fields and updates the information in the 
 	 * scenario entity that we are going to use for persistence
 	 * @param scnReq a ScenarioRequest object is needed to create some of the components of our list-type parameters
@@ -448,6 +498,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		checkCliniciansListForPersistence();
 		//save environments
 		checkEnvironmentsListForPersistence();	
+		//save references
+		checkReferencesListForPersistence();
 	}
 	
 	/**
@@ -475,6 +527,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		.with(driver.getPaths()).with("equipment", "hazards", "environments")
 //		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
 		.to(new Receiver<ScenarioProxy>() {
+
 
 			@Override
 			public void onSuccess(ScenarioProxy response) {
@@ -526,18 +579,17 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 		//associate handlers and value entities
 		
-		//TICKET-125
-	   /* titleEditor.addChangeHandler(saveOnChange);
+		
+	    titleEditor.addChangeHandler(saveOnChange);
 		proposedStateEditor.addChangeHandler(saveOnChange);
 		currentStateEditor.addChangeHandler(saveOnChange);
 		benefits.addChangeHandler(saveOnChange);
 		risks.addChangeHandler(saveOnChange);
 		clinicalProcesses.addChangeHandler(saveOnChange);
-		algorithmDescription.addChangeHandler(saveOnChange);*/
+		algorithmDescription.addChangeHandler(saveOnChange);
 		
 		//Listener for when the tabs are clicked (user moves to a different tab)
-		//TICKET-125
-	/*	tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {			
+		tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {			
 			@Override
 			public void onSelection(SelectionEvent<Integer> event) {
 				if(currentScenario != null){					 
@@ -545,7 +597,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					
 				}
 			}
-		});*/
+		});
 		
 		//select first tab
 		selectFirstTab();
@@ -685,6 +737,15 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 		
 	}
+	
+	
+	private void buildTabsTables(boolean drawNew){
+	    buildEquipmentTable(drawNew);//new scn. No equipment list
+	    buildHazardsTable(drawNew);
+		buildCliniciansTable(drawNew);
+		buildEnvironmentsTable(drawNew);
+		buildReferencesTable(drawNew);
+	}
 
 	
 	private ScenarioProxy currentScenario;
@@ -694,7 +755,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
 		if(null == currentScenario) {		
 			    context.create()
-			    .with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+			    .with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
 			    .to(new Receiver<ScenarioProxy>() {
 		    	
 	                @Override
@@ -711,16 +772,23 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	                    ScenarioPanel.this.currentScenario = currentScenario;
                   	                    
 	                    //after the Entity has been succesfully created, we populate the widgets w/ the entity info and draw it
-	        		    buildEquipmentTable(true);//new scn. No equipment list
-	        		    buildHazardsTable(true);
-	        			buildCliniciansTable(true);
-	        			buildEnvironmentsTable(true);
+//	        		    buildEquipmentTable(true);//new scn. No equipment list
+//	        		    buildHazardsTable(true);
+//	        			buildCliniciansTable(true);
+//	        			buildEnvironmentsTable(true);
+//	        			buildReferencesTable(true);
+	                    buildTabsTables(true);
 
 	        			configureComponents();   			  
 	    			    status.setText("");
 	    			    uniqueId.setText("");	
 
 	                }
+	                
+					public void onFailure(ServerFailure error) {
+						super.onFailure(error);
+						logger.log(Level.SEVERE, error.getMessage());
+					}
 			        
 			    }).fire();
 
@@ -731,10 +799,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		    currentScenario = context.edit(currentScenario); 
             driver.edit(currentScenario, context);
             this.currentScenario = currentScenario;
-            buildEquipmentTable(false);
-            buildHazardsTable(false);
-    		buildCliniciansTable(false);
-    		buildEnvironmentsTable(false);
+//            buildEquipmentTable(false);
+//            buildHazardsTable(false);
+//    		buildCliniciansTable(false);
+//    		buildEnvironmentsTable(false);
+//    		buildReferencesTable(false);
+            buildTabsTables(false);
     		if(currentScenario.getId()!=null)
     			uniqueId.setText("Scenario Unique ID: "+String.valueOf(currentScenario.getId()));
     		
@@ -890,6 +960,15 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	@UiField
 	@Ignore
 	Anchor addNewHazard;//adds a new empty hazards row
+	
+	//references tab
+	@UiField
+	@Ignore
+	FlexTable referencesTable;
+	
+	@UiField
+	@Ignore
+	Anchor addNewLinkedReference;//adds a new reference row
 	
 	
 	private static class ClinicianSuggestOracle extends MultiWordSuggestOracle {
@@ -1148,6 +1227,67 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			public void onClick(ClickEvent event) {
 				hazardsTable.removeRow(row);
 				
+			}
+		});
+	}
+	
+	/**
+	 * add a new empty reference box
+	 */
+	private void addNewLinkedReference(){
+		final int rows = referencesTable.getRowCount();
+		referencesTable.insertRow(rows);//add new roe
+		referencesTable.setWidget(rows, REFERENCE_http_COL, new Label("http://"));
+		final TextArea reference = new TextArea();
+		reference.setVisibleLines(1);
+		reference.setCharacterWidth(70);
+		referencesTable.setWidget(rows, REFERENCE_TEXT_COL, reference);
+		
+		Button deleteButton = new Button("Delete");
+		referencesTable.setWidget(rows, REFERENCE_DELETEBUTTON_COL, deleteButton);
+		deleteButton.addClickHandler(new ClickHandler() {				
+			@Override
+			public void onClick(ClickEvent event) {
+				referencesTable.removeRow(rows);				
+			}
+		});
+		
+	}
+	
+	//When clicking in "AddNew addNewLinkedReference" anchor
+	@UiHandler("addNewLinkedReference")
+	void onAddNewReferenceClick(ClickEvent click) {
+		addNewLinkedReference();
+	}
+	
+	private void addNewLinkedReference(String ref){
+		final int rows = referencesTable.getRowCount();
+		referencesTable.insertRow(rows);//add new roe
+		referencesTable.setWidget(rows, REFERENCE_http_COL, new Label("http://"));
+		final TextArea reference = new TextArea();
+		reference.setVisibleLines(1);
+		reference.setCharacterWidth(70);
+		reference.setText(ref);
+		referencesTable.setWidget(rows, REFERENCE_TEXT_COL, reference);
+		
+		Button deleteButton = new Button("Delete");
+		referencesTable.setWidget(rows, REFERENCE_DELETEBUTTON_COL, deleteButton);
+		deleteButton.addClickHandler(new ClickHandler() {				
+			@Override
+			public void onClick(ClickEvent event) {
+				referencesTable.removeRow(rows);
+				
+			}
+		});
+		
+		Button followLink = new Button("Follow link");
+		referencesTable.setWidget(rows, REFERENCE_FOLLOWBUTTON_COL, followLink);
+		followLink.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				System.out.println(reference.getText());
+				if(!reference.getText().trim().equals(""))
+					Window.open("http://"+reference.getText(), "_blank", "");//use "enabled" as third argument to open in new tab	
+//				Window.open("http://www.google.com/", "_blank", "");
 			}
 		});
 	}
