@@ -45,7 +45,7 @@ public class UserComparator implements Comparator<UserInfoProxy> {
 	/**
 	 * Compares two users based on the member variables of the class.
 	 * If the property provided is not in the UserInfoProxy class
-	 * it will return 0 and won´t establish and other.
+	 * it will return 0 and won't establish and other.
 	 *  String type properties will be sorted lexicografically
 	 */
 		public int compare(UserInfoProxy user1, UserInfoProxy user2) {
@@ -125,13 +125,13 @@ public class UserComparator implements Comparator<UserInfoProxy> {
 //			    	  return prop1.compareTo(prop2) ;  
 //			     } 
 //			     else { //IF THEY ARE NOT COMPARABLE 
-//			    	 return 0;//doesn´t compare /sort		  
+//			    	 return 0;//doesn't compare /sort		  
 //			     }  		    
 //			    }  
 //			    catch(Exception e) {  
 //			    	//NoSuchMethod
 //			    	e.printStackTrace();  
-//			    	return 0;//Doesn´t compare/sort
+//			    	return 0;//Doesn't compare/sort
 //			    } 
 		}
 		

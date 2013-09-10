@@ -48,7 +48,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
-import com.sun.corba.se.impl.encoding.CodeSetConversion.BTCConverter;
 
 public class ScenarioSearchPanel extends Composite {
 	
