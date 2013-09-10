@@ -24,7 +24,7 @@ public class Tag implements Serializable {
 	
 	@Id
 	private Long id; //id for the GAE
-	private int version =1;
+	private Integer version =1;
 	
 	@OnSave
 	void onPersist() {
@@ -54,6 +54,7 @@ public class Tag implements Serializable {
 	public void setId(Long id) {
 		this.id = id;
 	}
+	
 
 	public String getName() {
 		return name;
@@ -71,11 +72,11 @@ public class Tag implements Serializable {
 		this.description = description;
 	}
 
-	public int getVersion() {
+	public Integer getVersion() {
 		return version;
 	}
 
-	public void setVersion(int version) {
+	public void setVersion(Integer version) {
 		this.version = version;
 	}
 	

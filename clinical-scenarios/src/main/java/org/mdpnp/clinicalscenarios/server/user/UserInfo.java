@@ -17,12 +17,13 @@ import com.googlecode.objectify.annotation.OnSave;
 public class UserInfo implements java.io.Serializable {
 	@Id
 	private String userId;
-	private int version = 1;
+	private Integer version = 1;
 	
 	@OnSave
 	void onPersist() {
 	    version++;
 	}
+	
 	
 	public String getUserId() {
 		return userId;

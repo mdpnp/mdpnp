@@ -18,6 +18,7 @@ public class OfyService {
 
     public static Objectify ofy() {
         return ObjectifyService.ofy();
+//    	return ObjectifyService.ofy().cache(false);
     }
 
     public static ObjectifyFactory factory() {

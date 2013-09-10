@@ -46,7 +46,7 @@ public class ScenarioEntity implements java.io.Serializable {
 	private Date creationDate = new Date();
 	private Date modificationDate;
 	
-    protected int version = 1;
+    protected Integer version = 1;
 	
 	@OnSave
 	void onPersist() {
@@ -364,7 +364,7 @@ public class ScenarioEntity implements java.io.Serializable {
 	    ofy().delete().entity(this).now();
 	}
 	
-	protected int getVersion() {
+	protected Integer getVersion() {
 		return version;
 	}
 
