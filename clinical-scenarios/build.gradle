@@ -9,7 +9,7 @@ repositories {
 
 configurations.create("libsDir")
 
-project.ext.gaeVersion = '1.8.3'
+project.ext.gaeVersion = '1.8.4'
 project.ext.gwtVersion = '2.5.1'
 
 dependencies {
