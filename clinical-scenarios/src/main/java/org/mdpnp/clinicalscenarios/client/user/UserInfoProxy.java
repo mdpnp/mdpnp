@@ -1,5 +1,7 @@
 package org.mdpnp.clinicalscenarios.client.user;
 
+import java.util.List;
+
 import org.mdpnp.clinicalscenarios.server.user.UserInfo;
 import org.mdpnp.clinicalscenarios.server.user.UserInfoLocator;
 
@@ -55,7 +57,7 @@ public interface UserInfoProxy extends EntityProxy {
 
 	String getLogoutURL();
 
-	String getLoginURL();
+	List<LoginProviderProxy> getLoginURL();
 	
 	boolean getAdmin();
 
