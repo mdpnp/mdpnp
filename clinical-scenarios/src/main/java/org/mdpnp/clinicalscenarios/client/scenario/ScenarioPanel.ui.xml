@@ -40,7 +40,7 @@
 	    <g:TextBox text='Scenario Title' ui:field='titleEditor' styleName='scenarioTitle' visibleLength='50' maxLength='100'/>
 	    <g:Label ui:field='uniqueId' styleName='important'/>
 	    <g:Label ui:field='status'/>
-	    <g:Label text='Remember to SAVE your changes' styleName='important'/><!-- TICKET-125 -->
+	    <!-- <g:Label text='Remember to SAVE your changes' styleName='important'/> TICKET-125 -->
 	    </g:FlowPanel>
 	</g:Dock>
 	
@@ -158,11 +158,20 @@
 	-->
 <!-- 	</g:TabPanel> -->
 <!-- 	</g:Dock> -->
+
+	<g:Tab text="References">
+	    <g:FlowPanel>
+	     <g:HTML><span style="font-size:16pt;">Add links to relevant internet references for this scenario</span><br/>
+	     </g:HTML>
+	  	<g:FlexTable ui:field='referencesTable'></g:FlexTable>
+	  	<g:Anchor text='Add New...' href='#' ui:field='addNewLinkedReference'/>
+	    </g:FlowPanel>
+	</g:Tab>
 	    
 	<g:Tab text="Approve or Reject">
 	  <g:FlowPanel>
 	    <g:HTML><h2>Approve or Reject Scenario</h2></g:HTML>
-	    <g:InlineLabel text='Feedback for submitter (if any):'/>
+	    <g:Label text='Feedback for submitter (if any):'/>
 	    <g:TextArea ui:field='feedback' visibleLines='10' characterWidth='50' styleName='{style.verywide}'/>                
 	    <g:Button text='Approve Scenario' ui:field='approveScnButton' styleName='{style.givemespace}'/>
 	    <g:Button text='Reject Scenario' ui:field='rejectScnButton' styleName='{style.givemespace}'/>

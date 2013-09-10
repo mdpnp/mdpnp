@@ -4,7 +4,6 @@ import static org.mdpnp.clinicalscenarios.server.OfyService.ofy;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Hashtable;
 import java.util.List;
 
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
@@ -14,7 +13,6 @@ import com.google.appengine.api.datastore.QueryResultIterator;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
-import com.google.gwt.user.client.Window;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
@@ -60,6 +58,7 @@ public class ScenarioEntity implements java.io.Serializable {
 	private Equipment equipment = new Equipment();
 	private ProposedSolutionValue proposedSolution = new ProposedSolutionValue();
 	private BenefitsAndRisksValue benefitsAndRisks = new BenefitsAndRisksValue();
+	private References references = new References();
 	
 
 
@@ -103,7 +102,15 @@ public class ScenarioEntity implements java.io.Serializable {
     public void setBenefitsAndRisks(BenefitsAndRisksValue benefitsAndRisks) {
         this.benefitsAndRisks = benefitsAndRisks;
     }
-    	
+      	
+	public References getReferences() {
+		return references;
+	}
+
+	public void setReferences(References references) {
+		this.references = references;
+	}
+
 	public Long getId() {
 		return id;
 	}

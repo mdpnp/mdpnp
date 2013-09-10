@@ -196,7 +196,7 @@ public class ScenarioSearchPanel extends Composite {
 //		}else{
 			ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 			scenarioRequest.searchByFilter_OrBehavior(sBackground, sProposed, sProcess, sAlgorithm, sBenefits, sRisks, sTitle)
-			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
 			.to(listScnReceiver).fire();
 //		}
 
@@ -224,7 +224,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByKeywords(text)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
 		.to(listScnReceiver).fire();
 	}	
 	
@@ -234,7 +234,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.findAllScenarios()
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
 		.to(listScnReceiver).fire();
 	}
 
@@ -248,7 +248,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchScnBySubmitter(submitter)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
 		.to(listScnReceiver).fire();
 	}
 	
@@ -261,7 +261,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();		
 		scenarioRequest.searchByStatus(status)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
 		.to(listScnReceiver).fire();		
 	}
 	

@@ -21,7 +21,8 @@ public interface ScenarioProxy extends EntityProxy {
 	EquipmentProxy getEquipment();
 	ProposedSolutionProxy getProposedSolution();
 	BenefitsAndRisksProxy getBenefitsAndRisks();
-	EnvironmentsProxy getEnvironments();//	DAG
+	EnvironmentsProxy getEnvironments();
+	ReferencesProxy  getReferences() ;
 	
 	//
 	public String getSubmitter();
