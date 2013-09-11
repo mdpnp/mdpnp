@@ -101,7 +101,7 @@ public class ScenarioSearchPanel extends Composite {
 			userInfoRequestFactory.initialize(eventBus);
 		
 		UserInfoRequest userInfoRequest = userInfoRequestFactory.userInfoRequest();
-		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).to(new Receiver<UserInfoProxy>() {
+		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).with("loginURL").to(new Receiver<UserInfoProxy>() {
 			@Override
 			public void onSuccess(UserInfoProxy response) {
 				if(response.getEmail()==null ||response.getEmail().trim().equals("") ){
@@ -115,6 +115,11 @@ public class ScenarioSearchPanel extends Composite {
 					else
 						userRole = UserRole.RegisteredUser;
 				}
+			}
+			
+			public void onFailure(ServerFailure error) {
+				super.onFailure(error);
+				Window.alert(error.getMessage());
 			}
 
 	
@@ -960,6 +965,10 @@ public class ScenarioSearchPanel extends Composite {
 
 			@Override
 			public void onSuccess(ScenarioProxy result) {
+				if(null==result){ 
+					status.setVisible(false); 
+					return;}
+				
 				List<ScenarioProxy> response = new ArrayList<ScenarioProxy>();
 				/**
 				 * Unregistered user: can see scn only is it is APPROVED

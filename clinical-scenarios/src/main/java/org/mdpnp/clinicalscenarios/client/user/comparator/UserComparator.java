@@ -99,6 +99,18 @@ public class UserComparator implements Comparator<UserInfoProxy> {
 				      else
 				    	  return new Boolean(user1.getAdmin()).compareTo((Boolean) user2.getAdmin()); 
 				     
+				}else if(userProperty.equals("creationDate")){
+				      if(reverseOrder)
+				    	  return -1*( user1.getCreationDate().compareTo(user2.getCreationDate()) );  
+				      else
+				    	  return user1.getCreationDate().compareTo(user2.getCreationDate()); 
+				     
+				}else if(userProperty.equals("lastLoginDate")){
+				      if(reverseOrder)
+				    	  return -1*(user1.getLastLoginDate().compareTo(user2.getLastLoginDate()) );  
+				      else
+				    	  return user1.getLastLoginDate().compareTo( user2.getLastLoginDate()); 
+				     
 				}else return 0;
 			}
 			

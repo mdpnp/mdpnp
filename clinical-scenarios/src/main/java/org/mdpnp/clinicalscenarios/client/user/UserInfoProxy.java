@@ -1,5 +1,6 @@
 package org.mdpnp.clinicalscenarios.client.user;
 
+import java.util.Date;
 import java.util.List;
 
 import org.mdpnp.clinicalscenarios.server.user.UserInfo;
@@ -60,5 +61,9 @@ public interface UserInfoProxy extends EntityProxy {
 	List<LoginProviderProxy> getLoginURL();
 	
 	boolean getAdmin();
+	
+	public Date getCreationDate();
+	public Date getLastLoginDate();
+
 
 }
