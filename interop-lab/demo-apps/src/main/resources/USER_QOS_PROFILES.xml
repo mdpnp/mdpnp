@@ -102,6 +102,17 @@
 				    <max_fragments_per_sample>5000</max_fragments_per_sample>
 				    <max_query_condition_filters>32</max_query_condition_filters>
 				</reader_resource_limits>
+				<!--
+				JP 16-Sep-2013 
+				I want instances purged shortly after they lose liveliness so that I can detect them as
+				new instances again when they get re-connected but so far this is not the way. 
+				<reader_data_lifecycle>
+				    <autopurge_nowriter_samples_delay>
+				      <sec>0</sec>
+              <nanosec>100000000</nanosec>
+				    </autopurge_nowriter_samples_delay>
+				</reader_data_lifecycle>
+				-->
 			</datareader_qos>
 			<datawriter_qos>
 				<liveliness>
