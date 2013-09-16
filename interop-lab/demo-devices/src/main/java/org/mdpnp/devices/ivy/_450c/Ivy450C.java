@@ -26,11 +26,11 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
             return null;
         }
         if(lbl.startsWith(ECG_III_PREFIX)) {
-            return ice.Physio.MDC_ECG_AMPL_ST_I.value();
+            return ice.Physio._MDC_ECG_AMPL_ST_I;
         } else if(lbl.startsWith(ECG_II_PREFIX)) {
-            return ice.Physio.MDC_ECG_AMPL_ST_II.value();
+            return ice.Physio._MDC_ECG_AMPL_ST_II;
         } else if(lbl.startsWith(ECG_I_PREFIX)) {
-            return ice.Physio.MDC_ECG_AMPL_ST_III.value();
+            return ice.Physio._MDC_ECG_AMPL_ST_III;
         } else {
             log.warn("Unknown ECG:"+lbl);
             return null;
@@ -77,7 +77,7 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
             synchronized(Ivy450C.this) {
                 if(!inited) {
                     inited = true;
-                    this.notifyAll();
+                    Ivy450C.this.notifyAll();
                 }
             }
             super.receiveLine(line);
@@ -85,7 +85,7 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         
         @Override
         protected void receiveEndTidalCO2(Integer value, String label) {
-            etco2 = numericSample(etco2, value, ice.Physio.MDC_AWAY_CO2_EXP.value());
+            etco2 = numericSample(etco2, value, ice.Physio._MDC_AWAY_CO2_EXP);
         }
         
         @Override
@@ -108,12 +108,12 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         
         @Override
         protected void receivePlethWave(int[] data, int count, int msPerSample) {
-            plethWave = sampleArraySample(plethWave, data, count, msPerSample, ice.Physio.MDC_PULS_OXIM_PLETH.value());
+            plethWave = sampleArraySample(plethWave, data, count, msPerSample, ice.Physio._MDC_PULS_OXIM_PLETH);
         }
         
         @Override
         protected void receiveP1Wave(int[] data, int count, int msPerSample) {
-            p1Wave = sampleArraySample(p1Wave, data, count, msPerSample, ice.Physio.MDC_PRESS_BLD.value());
+            p1Wave = sampleArraySample(p1Wave, data, count, msPerSample, ice.Physio._MDC_PRESS_BLD);
         }
         
         @Override
@@ -126,21 +126,21 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         @Override
         protected void receiveHeartRate(Integer value, String label) {
             // should be ECG heart rate?  or should it .. depends upon mode
-            heartRate = numericSample(heartRate, value, ice.Physio.MDC_PULS_RATE.value());
+            heartRate = numericSample(heartRate, value, ice.Physio._MDC_PULS_RATE);
             
         }
         @Override
         protected void receiveNIBP(Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label) {
-            nibpSystolic = numericSample(nibpSystolic, systolic, ice.Physio.MDC_PRESS_CUFF_SYS.value());
-            nibpDiastolic = numericSample(nibpDiastolic, diastolic, ice.Physio.MDC_PRESS_CUFF_DIA.value());
-            nibpPulse = numericSample(nibpPulse, pulse, ice.Physio.MDC_PULS_RATE_NON_INV.value());
-            nibpMean = numericSample(nibpMean, mean, ice.Physio.MDC_PRESS_CUFF_MEAN.value());
+            nibpSystolic = numericSample(nibpSystolic, systolic, ice.Physio._MDC_PRESS_CUFF_SYS);
+            nibpDiastolic = numericSample(nibpDiastolic, diastolic, ice.Physio._MDC_PRESS_CUFF_DIA);
+            nibpPulse = numericSample(nibpPulse, pulse, ice.Physio._MDC_PULS_RATE_NON_INV);
+            nibpMean = numericSample(nibpMean, mean, ice.Physio._MDC_PRESS_CUFF_MEAN);
         }
         @Override
         protected void receivePressure1(Integer systolic, Integer diastolic, Integer mean, String label) {
-            ibpSystolic = numericSample(ibpSystolic, systolic, ice.Physio.MDC_PRESS_BLD_SYS.value());
-            ibpDiastolic = numericSample(ibpDiastolic, diastolic, ice.Physio.MDC_PRESS_BLD_DIA.value());
-            ibpMean = numericSample(ibpMean, mean, ice.Physio.MDC_PRESS_BLD_MEAN.value());
+            ibpSystolic = numericSample(ibpSystolic, systolic, ice.Physio._MDC_PRESS_BLD_SYS);
+            ibpDiastolic = numericSample(ibpDiastolic, diastolic, ice.Physio._MDC_PRESS_BLD_DIA);
+            ibpMean = numericSample(ibpMean, mean, ice.Physio._MDC_PRESS_BLD_MEAN);
         }
         @Override
         protected void receivePressure2(Integer systolic, Integer diastolic, Integer mean, String label) {
@@ -148,12 +148,12 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
         @Override
         protected void receiveRespiratoryRate(Integer value, String label) {
-            respiratoryRate = numericSample(respiratoryRate, value, ice.Physio.MDC_RESP_RATE.value());
+            respiratoryRate = numericSample(respiratoryRate, value, ice.Physio._MDC_RESP_RATE);
         }
         @Override
         protected void receiveSpO2(Integer value, String label, Integer pulseRate) {
-            spo2 = numericSample(spo2, value, ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
-            Ivy450C.this.pulseRate = numericSample(Ivy450C.this.pulseRate, pulseRate, ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
+            spo2 = numericSample(spo2, value, ice.Physio._MDC_PULS_OXIM_SAT_O2);
+            Ivy450C.this.pulseRate = numericSample(Ivy450C.this.pulseRate, pulseRate, ice.Physio._MDC_PULS_OXIM_PULS_RATE);
             
         }
         @Override
@@ -178,40 +178,41 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
     
     @Override
     protected long getMaximumQuietTime() {
-        return 3000L;
+        return 2000L;
     }
     
     @Override
     protected long getConnectInterval() {
-        return 2000L;
+        return 1200L;
     }
-    
+
     protected boolean inited = false;
     
     @Override
     protected boolean doInitCommands(OutputStream outputStream) throws IOException {
+        inited = false;
+        
         if(!super.doInitCommands(outputStream)) {
             return false;
         }
         
-        inited = false;
-
         long start = System.currentTimeMillis();
+        
         synchronized(this) {
             while(!inited) {
                 try {
                     this.wait(500L);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    log.error("wait(...)", e);
                 }
-                if( (System.currentTimeMillis()-start) >= getMaximumQuietTime()) {
+                if( (System.currentTimeMillis()-start)>=getMaximumQuietTime()) {
                     return false;
                 }
             }
         }
         return true;
     }
-
+    
     @Override
     public SerialProvider getSerialProvider() {
         SerialProvider serialProvider =  super.getSerialProvider();
