@@ -19,7 +19,9 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 
 public class DeviceListCellRenderer extends JComponent implements ListCellRenderer {
     
@@ -67,6 +69,8 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         
     }
     
+    private final Border selectedBorder = new LineBorder(Color.blue, 1);
+    
 	@Override
 	public Component getListCellRendererComponent(JList list,
 			Object value, int index, boolean isSelected,
@@ -97,6 +101,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
 		} else {
 			connectionStatus.setForeground(Color.red);
 		}
+		setBorder(isSelected?selectedBorder:null);
 		return this;
 	}
 }
