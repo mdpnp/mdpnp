@@ -3,6 +3,7 @@ package org.mdpnp.clinicalscenarios.server.user;
 import static org.mdpnp.clinicalscenarios.server.OfyService.ofy;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -126,7 +127,7 @@ public class UserInfo implements java.io.Serializable {
     private String jobTitle;
     private String yearsInField;
     private String phoneNumber;
-    private boolean agreeToBeContacted;
+    private boolean agreeToBeContacted; 
 
     @Ignore
     private String logoutURL;
@@ -168,6 +169,8 @@ public class UserInfo implements java.io.Serializable {
     }
 
     public UserInfo() {
+    	this.creationDate = new Date();
+    	this.lastLoginDate = new Date();
 
     }
 
@@ -214,10 +217,11 @@ public class UserInfo implements java.io.Serializable {
                 ofy().save().entity(ui).now();
             } else {
                 // This is an authenticated user that we know
+            	updateLastLoginDate(ui);
             }
 
         }
-        ui.setAdmin(userService.isUserLoggedIn() && userService.isUserAdmin());
+        ui.setAdmin(userService.isUserLoggedIn() && userService.isUserAdmin());//TICKET-108
         ui.setLogoutURL(userService.createLogoutURL(url));
 
         return ui;
@@ -228,4 +232,32 @@ public class UserInfo implements java.io.Serializable {
         ofy().save().entity(this).now();
         return this;
     }
+    
+
+	//@Index
+	private Date creationDate; //Date user first logged in
+	//@Index
+	private Date lastLoginDate; //Date of user's latest logged in process
+
+	public Date getCreationDate() {
+		return creationDate;
+	}
+
+	public void setCreationDate(Date creationDate) {
+		this.creationDate = creationDate;
+	}
+
+	public Date getLastLoginDate() {
+		return lastLoginDate;
+	}
+
+	public void setLastLoginDate(Date lastLoginDate) {
+		this.lastLoginDate = lastLoginDate;
+	}
+
+	/** updates user lastLogin date */
+	private static void updateLastLoginDate(UserInfo ui) {
+		ui.lastLoginDate = new Date();
+		ui.persist();
+	}
 }
