@@ -855,8 +855,11 @@ public class Medibus {
 			log.trace("received EOF instead of cmd echo in response");
 			// EOF
 			return false;
-		} else if(ASCIIByte.ESC==cmdEchoB) {
+		}
+		
+		while(ASCIIByte.ESC==cmdEchoB) {
 			receiveCommand();
+			cmdEchoB = slowIn.read();
 		}
 		Object cmdEcho = Command.fromByteIf((byte) cmdEchoB);
 		
@@ -867,8 +870,10 @@ public class Medibus {
 			if(leading < 0) {
 				log.trace("received EOF instead of response payload");
 				return false;
-			} else if(ASCIIByte.ESC == leading) {
+			}
+			while(ASCIIByte.ESC == leading) {
 				receiveCommand();
+				leading = slowIn.read();
 			}
 					
 			receiveBuffer[pos++] = (byte) leading;

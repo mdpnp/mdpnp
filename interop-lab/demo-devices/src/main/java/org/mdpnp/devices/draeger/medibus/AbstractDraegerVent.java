@@ -231,9 +231,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     // private static final long POLITE_REQUEST_INTERVAL = 500L;
     private static final long REQUEST_TIMEOUT = 7000L;
     private static final Command[] REQUEST_COMMANDS = {
-            // Command.ReqDateTime,
+             Command.ReqDateTime,
             Command.ReqDeviceSetting,
-            // Command.ReqAlarmsCP1,
+//             Command.ReqAlarmsCP1,
             Command.ReqMeasuredDataCP1,
     // Command.ReqAlarmsCP2,
     // Command.ReqMeasuredDataCP2,
@@ -296,7 +296,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     private void init() {
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
-        deviceIdentity.manufacturer = "Draeger";
+        deviceIdentity.manufacturer = "Dr\u00E4ger";
         deviceIdentity.model = "???";
         deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 
