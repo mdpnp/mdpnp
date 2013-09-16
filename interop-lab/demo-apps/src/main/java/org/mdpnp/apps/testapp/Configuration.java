@@ -34,12 +34,14 @@ public class Configuration {
         Ivy450C(ice.ConnectionType.Serial),
         Nonin(ice.ConnectionType.Serial),
         PhilipsMP70(ice.ConnectionType.Network),
-        DragerApollo(ice.ConnectionType.Serial),
-        DragerEvitaXL(ice.ConnectionType.Serial),
+        Dr\u00E4gerApollo(ice.ConnectionType.Serial),
+        Dr\u00E4gerEvitaXL(ice.ConnectionType.Serial),
+        Dr\u00E4gerV500(ice.ConnectionType.Serial),
         Capnostream20(ice.ConnectionType.Serial),
         NellcorN595(ice.ConnectionType.Serial),
         MasimoRadical7(ice.ConnectionType.Serial),
-        Symbiq(ice.ConnectionType.Simulated);
+        Symbiq(ice.ConnectionType.Simulated),
+        MultiPO_Simulator(ice.ConnectionType.Simulated);
         
         private final ice.ConnectionType connectionType;
         

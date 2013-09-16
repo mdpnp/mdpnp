@@ -8,6 +8,7 @@ import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
 import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
+import org.mdpnp.devices.draeger.medibus.DemoV500;
 import org.mdpnp.devices.hospira.symbiq.DemoSymbiq;
 import org.mdpnp.devices.ivy._450c.Ivy450C;
 import org.mdpnp.devices.masimo.radical.DemoRadical7;
@@ -18,6 +19,7 @@ import org.mdpnp.devices.philips.intellivue.DemoMP70;
 import org.mdpnp.devices.simulation.co2.SimCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
 import org.mdpnp.devices.simulation.nibp.DemoSimulatedBloodPressure;
+import org.mdpnp.devices.simulation.pulseox.MultiSimPulseOximeter;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
@@ -38,10 +40,12 @@ public class DeviceFactory {
             return new DemoSimulatedBloodPressure(domainId, eventLoop);
         case PhilipsMP70:
             return new DemoMP70(domainId, eventLoop);
-        case DragerApollo:
+        case Dr\u00E4gerApollo:
             return new DemoApollo(domainId, eventLoop);
-        case DragerEvitaXL:
+        case Dr\u00E4gerEvitaXL:
             return new DemoEvitaXL(domainId, eventLoop);
+        case Dr\u00E4gerV500:
+            return new DemoV500(domainId, eventLoop);
         case Bernoulli:
             return new DemoBernoulli(domainId, eventLoop);
         case Capnostream20:
@@ -58,6 +62,8 @@ public class DeviceFactory {
             return new SimInfusionPump(domainId, eventLoop);
         case Ivy450C:
             return new Ivy450C(domainId, eventLoop);
+        case MultiPO_Simulator:
+            return new MultiSimPulseOximeter(domainId, eventLoop);
         default:
             throw new RuntimeException("Unknown type:" + type);
         }
