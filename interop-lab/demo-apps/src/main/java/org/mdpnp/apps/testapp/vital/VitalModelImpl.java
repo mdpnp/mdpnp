@@ -156,7 +156,9 @@ public class VitalModelImpl implements VitalModel {
                             }
                         }
                         if (!updated) {
-                            v.getValues().add(new ValueImpl(n.universal_device_identifier, n.name, v));
+                            Value va = new ValueImpl(n.universal_device_identifier, n.name, v);
+                            va.updateFrom(n, si);
+                            v.getValues().add(va);
                         }
                         fireVitalChanged(v);
                     }
