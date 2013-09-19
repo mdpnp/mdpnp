@@ -147,7 +147,7 @@ public class PureJavaCommSerialProvider implements SerialProvider {
         // is trying several connect methods
     }
 
-    public SerialSocket connect(String portIdentifier, long timeout) {
+    public SerialSocket connect(String portIdentifier, long timeout) throws java.io.IOException {
         try {
             // getPortIdentifiers does some initialization that we desire
             Enumeration<?> e = CommPortIdentifier.getPortIdentifiers();
@@ -162,8 +162,8 @@ public class PureJavaCommSerialProvider implements SerialProvider {
                 }
             }
             throw new IllegalArgumentException("Unknown portIdentifier:" + portIdentifier);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (Throwable t) {
+            throw new IOException(t);
         }
     }
 }
