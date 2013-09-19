@@ -3,8 +3,11 @@ package org.mdpnp.clinicalscenarios.server.scenario;
 import static org.mdpnp.clinicalscenarios.server.OfyService.ofy;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
 import org.mdpnp.clinicalscenarios.server.mailservice.RepositoryMailService;
@@ -191,57 +194,142 @@ public class ScenarioEntity implements java.io.Serializable {
 	 * One concern about the methods herein published for searches: Am I bringing too much business logic to this point?
 	 * Should the be simpler searches that I would filter later?
 	 */
+	/*
+	 * Diego@mdpnp.org
+	 * This won't work because title is "Prototype Scenario #1" which will never be on 
+	 * a keywords list such as ["protoype", "Scenario"] but could be used for other queries
+	public static List<ScenarioEntity> searchByKeywords(String keywords){
+
+//		List<String> keyWordsList = Arrays.asList(keywords.split("\\s+")); careful w/ single words
+		List<String> keyWordsList = new ArrayList<String>();
+		keyWordsList.add(keywords);
+		
+		Iterable<ScenarioEntity> scns =  ofy().load().type(ScenarioEntity.class)
+				.filter("status", ScenarioPanel.SCN_STATUS_APPROVED)//get only approved Scn
+				.filter("title in", keyWordsList)
+				.iterable();
+		
+		List<ScenarioEntity> listScn = new ArrayList<ScenarioEntity>();
+		Iterator<ScenarioEntity> it = scns.iterator();
+		while(it.hasNext()) listScn.add((ScenarioEntity)it.next());
+		
+//		List<ScenarioEntity> listScn = ofy().load().type(ScenarioEntity.class)
+//				.filter("status", ScenarioPanel.SCN_STATUS_APPROVED)//get only approved Scn
+////				.filter("title in", keywords)
+//				.list();
+		return listScn;
+	}*/
+	
+	/**
+	 * Auxiliary method that returns true if the param line contains any of the words included in the keyWordList
+	 * @param line
+	 * @param keyWordsList
+	 * @return
+	 */
+	private static boolean containsStr(String line, List<String> keyWordsList){		
+		for(String s : keyWordsList){
+			if(line.toUpperCase().contains(s.toUpperCase())) return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Returns a list of scenario entities within the approved scenarios that contain in their fields title, background, proposed state,
+	 * algorithm, process, benefits or risks any of the words included in the param 'keywords' (either a single word or more than one
+	 * using whitespace as separator).
+	 * @param keywords one or more strings (whitespace is the separator)
+	 * @return
+	 */
+	public static List<ScenarioEntity> searchByKeywords(String keywords) {
+		keywords = keywords.trim();
+		List<ScenarioEntity> approvedScenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);//starting point
+		List<String> keyWordsList = new ArrayList<String>();
+		List<ScenarioEntity> result = new ArrayList<ScenarioEntity>();
+		
+		try{		
+			if(keywords.indexOf(" ")>=0)
+				keyWordsList = Arrays.asList(keywords.split("\\s+")); //TICKET-134. Multiword search
+			else
+				keyWordsList.add(keywords);
+			//filter scenarios
+			for(ScenarioEntity s : approvedScenarios) {
+				//1- Check title
+				String title = null == s.getTitle() ? "" : s.getTitle();
+				//2- Check background
+				String currentState = s.getBackground().getCurrentState()==null ? "" : s.getBackground().getCurrentState().toUpperCase();
+				String proposedState = s.getBackground().getProposedState()==null ? "" : s.getBackground().getProposedState().toUpperCase();
+				//3- Check Benefits and risks
+				String benefits = s.getBenefitsAndRisks().getBenefits()==null ? "" : s.getBenefitsAndRisks().getBenefits().toUpperCase();
+				String risks = s.getBenefitsAndRisks().getRisks()==null ? "" : s.getBenefitsAndRisks().getRisks().toUpperCase();
+				//4- check Proposed Solution
+				String algorithm = s.getProposedSolution().getAlgorithm()==null ? "" : s.getProposedSolution().getAlgorithm().toUpperCase();
+				String process = s.getProposedSolution().getProcess()==null ? "" : s.getProposedSolution().getProcess().toUpperCase();
+				
+				if(containsStr(title, keyWordsList)	
+						|| containsStr(currentState, keyWordsList) || containsStr(proposedState, keyWordsList)	
+						|| containsStr(benefits, keyWordsList) || containsStr(risks, keyWordsList)	
+						|| containsStr(algorithm, keyWordsList) || containsStr(process, keyWordsList))
+					
+					result.add(s);		
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			return new ArrayList<ScenarioEntity>();
+		}
+
+		return result;
+	}
 	
 	/**
 	 * Searches scenarios using the keywords
 	 * @param keywords
 	 * @return
 	 */
-	public static List<ScenarioEntity> searchByKeywords(String keywords) {
-//		List<ScenarioEntity> scenarios = findAllScenarios();//XXX diego@mdpnp.org The basic search should be among APPROVED Scn, and not all of them
-		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
-		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
-		
-		String str = keywords.toUpperCase(); //String comparison in UPPERCASE ******
-		//TODO Declare a keyword separator (WHITESPACE) and tokenize elements to use several Keywords
-		try{
-
-		for(ScenarioEntity s : scenarios) {
-			//1- Check title
-			String title = s.getTitle();
-			title = null == title ? "" : title;
-			if(title.toUpperCase().contains(str)) {
-				matchingScenarios.add(s);
-			}else{
-				//2- Check background
-				String currentState = s.getBackground().getCurrentState()==null ? "" : s.getBackground().getCurrentState().toUpperCase();
-				String proposedState = s.getBackground().getProposedState()==null ? "" : s.getBackground().getProposedState().toUpperCase();
-				if(currentState.toUpperCase().contains(str) || proposedState.toUpperCase().contains(str)){
-					matchingScenarios.add(s);
-				}else{
-					//3- Check Benefits and risks
-					String benefits = s.getBenefitsAndRisks().getBenefits()==null ? "" : s.getBenefitsAndRisks().getBenefits().toUpperCase();
-					String risks = s.getBenefitsAndRisks().getRisks()==null ? "" : s.getBenefitsAndRisks().getRisks().toUpperCase();
-					if(benefits.toUpperCase().contains(str) || risks.toUpperCase().contains(str)){
-						matchingScenarios.add(s);
-					}else{
-						//4- check Proposed Solution
-						String algorithm = s.getProposedSolution().getAlgorithm()==null ? "" : s.getProposedSolution().getAlgorithm().toUpperCase();
-						String process = s.getProposedSolution().getProcess()==null ? "" : s.getProposedSolution().getProcess().toUpperCase();
-						if(algorithm.toUpperCase().contains(str) || process.toUpperCase().contains(str))
-							matchingScenarios.add(s);
-					}
-				}
-				
-			}
-
-		}
-		
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-		return matchingScenarios;
-	}
+//	public static List<ScenarioEntity> searchByKeywords(String keywords) {
+////		List<ScenarioEntity> scenarios = findAllScenarios();//diego@mdpnp.org The basic search should be among APPROVED Scn, and not all of them
+//		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
+//		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
+//		
+//		String str = keywords.toUpperCase(); //String comparison in UPPERCASE ******
+//		//TODO Declare a keyword separator (WHITESPACE) and tokenize elements to use several Keywords
+//		try{
+//
+//		for(ScenarioEntity s : scenarios) {
+//			//1- Check title
+//			String title = s.getTitle();
+//			title = null == title ? "" : title;
+//			if(title.toUpperCase().contains(str)) {
+//				matchingScenarios.add(s);
+//			}else{
+//				//2- Check background
+//				String currentState = s.getBackground().getCurrentState()==null ? "" : s.getBackground().getCurrentState().toUpperCase();
+//				String proposedState = s.getBackground().getProposedState()==null ? "" : s.getBackground().getProposedState().toUpperCase();
+//				if(currentState.toUpperCase().contains(str) || proposedState.toUpperCase().contains(str)){
+//					matchingScenarios.add(s);
+//				}else{
+//					//3- Check Benefits and risks
+//					String benefits = s.getBenefitsAndRisks().getBenefits()==null ? "" : s.getBenefitsAndRisks().getBenefits().toUpperCase();
+//					String risks = s.getBenefitsAndRisks().getRisks()==null ? "" : s.getBenefitsAndRisks().getRisks().toUpperCase();
+//					if(benefits.toUpperCase().contains(str) || risks.toUpperCase().contains(str)){
+//						matchingScenarios.add(s);
+//					}else{
+//						//4- check Proposed Solution
+//						String algorithm = s.getProposedSolution().getAlgorithm()==null ? "" : s.getProposedSolution().getAlgorithm().toUpperCase();
+//						String process = s.getProposedSolution().getProcess()==null ? "" : s.getProposedSolution().getProcess().toUpperCase();
+//						if(algorithm.toUpperCase().contains(str) || process.toUpperCase().contains(str))
+//							matchingScenarios.add(s);
+//					}
+//				}
+//				
+//			}
+//
+//		}
+//		
+//		}catch(Exception e){
+//			e.printStackTrace();
+//		}
+//		return matchingScenarios;
+//	}
 	
 	/**
 	 * Searches for scenarios that have any of the keywords in the associated field
@@ -414,6 +502,43 @@ public class ScenarioEntity implements java.io.Serializable {
 		}
 		ofy().save().entity(this).now();
 		return this;
+	}
+	
+	public static List<ScenarioEntity> searchByCreationDateRange(Date dateFrom, Date dateUntil){
+		/*
+		Query<ScenarioEntity> queryScn =  ofy().load().type(ScenarioEntity.class)
+				.filter("status", ScenarioPanel.SCN_STATUS_APPROVED); //get only approved Scn
+		
+		 This doesn't do the trick for filtering, so we have to filter manually
+		if(null != dateFrom)
+			queryScn = queryScn.filter("creationDate >", dateFrom);	
+		if(null!=dateUntil)
+			queryScn = queryScn.filter("creationDate <", dateUntil);
+		
+		return queryScn.list();
+		*/
+		List<ScenarioEntity> scnList = ofy().load().type(ScenarioEntity.class)
+				.filter("status", ScenarioPanel.SCN_STATUS_APPROVED).list(); //get only approved Scn		
+		List<ScenarioEntity> filteredList = new ArrayList<ScenarioEntity>();
+		
+		for(ScenarioEntity scn : scnList){
+			/*
+			 * 1- if none of filter dates is null --> between
+			 * 2- if dateFrom is null --> before dateUntil
+			 * 3- if dateUntil is null --> after dateFrom
+			 */
+			if(null != dateFrom && null != dateUntil){
+				if(scn.getCreationDate().after(dateFrom) && scn.getCreationDate().before(dateUntil))
+					filteredList.add(scn);
+			}else if(null != dateFrom && scn.getCreationDate().after(dateFrom)){
+				filteredList.add(scn);
+			}else if(null != dateUntil && scn.getCreationDate().before(dateUntil)){
+				filteredList.add(scn);
+			}
+		}
+				
+		return filteredList;
+	
 	}
 	
 	
