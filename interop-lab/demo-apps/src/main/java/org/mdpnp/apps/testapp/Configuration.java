@@ -77,7 +77,7 @@ public class Configuration {
         return address;
     }
     public void write(OutputStream os) throws IOException {
-        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, "ASCII"));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, CHARACTER_ENCODING));
         bw.write("application");
         bw.write("\t");
         bw.write(application.name());
@@ -106,9 +106,9 @@ public class Configuration {
     }
     
     private final static Logger log = LoggerFactory.getLogger(Configuration.class);
-    
+    private static final String CHARACTER_ENCODING = "ISO8859_1";
     public static Configuration read(InputStream is) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(is, "ASCII"));
+        BufferedReader br = new BufferedReader(new InputStreamReader(is, CHARACTER_ENCODING));
         
         String line = null;
         
