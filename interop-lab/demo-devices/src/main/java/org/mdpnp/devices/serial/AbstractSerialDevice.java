@@ -321,10 +321,18 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
         super.shutdown();
     }
 
+    /**
+     * milliseconds to wait between connect attempts
+     * @return
+     */
     protected long getConnectInterval() {
         return 20000L;
     }
 
+    /**
+     * milliseconds between doInitCommands whilst in the Negotiating state
+     * @return
+     */
     protected long getNegotiateInterval() {
         return 10000L;
     }
