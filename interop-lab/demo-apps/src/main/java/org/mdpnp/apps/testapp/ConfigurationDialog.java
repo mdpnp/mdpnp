@@ -127,9 +127,9 @@ public class ConfigurationDialog extends JDialog {
     
     
     
-    private static boolean ddsInit() {
+    private static boolean ddsInit(boolean debug) {
         try {
-            if((Boolean)Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init").invoke(null)) {
+            if((Boolean)Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init", boolean.class).invoke(null, debug)) {
                 return true;                
             } else {
                 throw new Exception("Unable to init");
@@ -158,13 +158,18 @@ public class ConfigurationDialog extends JDialog {
     }
     
     public ConfigurationDialog() {
-        this(null);
+        this(false);
     }
     
-    public ConfigurationDialog(Configuration conf) {
+    public ConfigurationDialog(boolean ddsDebug) {
+        this(null, ddsDebug);
+    }
+    
+    public ConfigurationDialog(Configuration conf, boolean ddsDebug) {
         super( (JDialog)null, true);
         
-        if(!ddsInit()) {
+        // Why does this occur here and not outside?
+        if(!ddsInit(ddsDebug)) {
             throw new IllegalStateException("DDS not available");
         }
         
