@@ -35,7 +35,6 @@ public class DemoN595 extends AbstractSerialDevice {
 
         @Override
         public void firePulseOximeter() {
-            reportConnected();
             pulseUpdate = numericSample(pulseUpdate, getHeartRate(), ice.Physio._MDC_PULS_OXIM_PULS_RATE);
             spo2Update = numericSample(spo2Update, getSpO2(), ice.Physio._MDC_PULS_OXIM_SAT_O2);
         }
@@ -49,6 +48,7 @@ public class DemoN595 extends AbstractSerialDevice {
         }
         @Override
         public void fireDevice() {
+            reportConnected();
             deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 
         }
@@ -63,18 +63,31 @@ public class DemoN595 extends AbstractSerialDevice {
     }
 
     private final MyNellcorN595 fieldDelegate;
+    private OutputStream outputStream;
     @Override
     protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
+        this.outputStream = outputStream;
         fieldDelegate.setInputStream(inputStream);
         fieldDelegate.run();
     }
 
-//    private static final byte[] dumpInstrumentInfo = new byte[] {0x30, 0x0D, 0x0A, 0x03, 0x03, 0x31, 0x0D, 0x0A, 0x30, 0x0D, 0x0A};
+
+    private static final byte[] enterInteractiveMode = new byte[] {0x03, 0x03};
+    private static final byte[] dumpInstrumentInfo = new byte[] {0x31, 0x0D, 0x0A};
+    private static final byte[] exitInteractiveMode = new byte[] {0x30, 0x0D, 0x0A};
+
 
     @Override
     protected void doInitCommands() throws IOException {
-//		outputStream.write(dumpInstrumentInfo);
-//		outputStream.flush();
+        OutputStream outputStream = this.outputStream;
+        if(null != outputStream) {
+            outputStream.write(enterInteractiveMode);
+            outputStream.flush();
+            outputStream.write(dumpInstrumentInfo);
+            outputStream.flush();
+            outputStream.write(exitInteractiveMode);
+            outputStream.flush();
+        }
     }
 
 
@@ -91,9 +104,6 @@ public class DemoN595 extends AbstractSerialDevice {
         deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
 
-        spo2Update = createNumericInstance(ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
-        pulseUpdate = createNumericInstance(ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
-
         this.fieldDelegate = new MyNellcorN595();
     }
 
@@ -104,12 +114,12 @@ public class DemoN595 extends AbstractSerialDevice {
 
     @Override
     protected long getConnectInterval() {
-        return 10000L;
+        return 4000L;
     }
 
     @Override
     protected long getNegotiateInterval() {
-        return 5000L;
+        return 2000L;
     }
 
     @Override
@@ -121,5 +131,12 @@ public class DemoN595 extends AbstractSerialDevice {
     @Override
     protected String iconResourceName() {
         return "n595.png";
+    }
+
+    @Override
+    protected void unregisterAllNumericInstances() {
+        super.unregisterAllNumericInstances();
+        this.pulseUpdate = null;
+        this.spo2Update = null;
     }
 }
