@@ -35,8 +35,8 @@ Setting.FrequencyIPPV	ice.MDC_VENT_TIME_PD_PPV	N
 #MeasuredDataCP1.InspCO2Pct	Ventilator.INSP_CO2_PCT
 #MeasuredDataCP1.InspCO2mmHg	Ventilator.INSP_CO2_MMHG
 #MeasuredDataCP1.EndTidalCO2Percent	Ventilator.END_TIDAL_CO2_PERCENT
-#MeasuredDataCP1.EndTidalCO2kPa	Ventilator.END_TIDAL_CO2_KPA
-#MeasuredDataCP1.EndTidalCO2mmHg	Ventilator.END_TIDAL_CO2_MMHG
+#MeasuredDataCP1.EndTidalCO2kPa	Ventilator.END_TIDAL_CO2_KPA  N
+MeasuredDataCP1.EndTidalCO2mmHg	ice.Physio.MDC_AWAY_CO2_EXP N
 #MeasuredDataCP1.InspAgentPct	Ventilator.INSP_AGENT_PCT
 #MeasuredDataCP1.ExpAgentPct	Ventilator.EXP_AGENT_PCT
 #MeasuredDataCP1.ExpO2	Ventilator.EXP_O2
