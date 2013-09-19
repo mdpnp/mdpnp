@@ -6,9 +6,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,9 +73,6 @@ public class Medibus {
      * @param out Destination of data bound for Draeger device
      */
     public Medibus(InputStream in, OutputStream out) {
-        // TODO why buffer this actually?
-        InputStream bis = new BufferedInputStream(in);
-
         // Implementing software flow control doesn't seem to be necessary
 //		bis =  new SuspendableInputStream(ASCIIByte.DC1, ASCIIByte.DC3, bis);
 
@@ -96,7 +95,7 @@ public class Medibus {
                     }
 
                 }
-        }, bis);
+        }, in);
         isp.getProcessingThread().setName("Medibus I/O Multiplexor");
         this.slowIn = isp.getInputStream(0);
         this.fastIn = isp.getInputStream(1);
@@ -276,10 +275,16 @@ public class Medibus {
         log.debug("Unknown command:"+cmdEcho);
     }
 
-    protected void receiveValidResponse(Object cmdEcho, byte[] response, int len) {
-
+    protected void receiveResponse(byte[] buffer, int len) {
+        if(len < 1) {
+            log.warn("Empty response");
+            return;
+        }
+        Object cmdEcho = Command.fromByteIf(buffer[0]);
+        log.trace("Received response:"+cmdEcho);
         if(cmdEcho instanceof Command) {
             Command cmd = (Command) cmdEcho;
+
             switch(cmd) {
             case ReqMeasuredDataCP1:
             case ReqLowAlarmLimitsCP1:
@@ -287,40 +292,39 @@ public class Medibus {
             case ReqMeasuredDataCP2:
             case ReqLowAlarmLimitsCP2:
             case ReqHighAlarmLimitsCP2:
-                receiveDataCodes(cmd, response, len);
+                receiveDataCodes(cmd, buffer, len);
                 break;
             case ReqAlarmsCP1:
             case ReqAlarmsCP2:
-                receiveAlarmCodes(cmd, response, len);
+                receiveAlarmCodes(cmd, buffer, len);
                 break;
             case ReqDateTime:
-                receiveDateTime(response, len);
+                receiveDateTime(buffer, len);
                 break;
             case ReqDeviceSetting:
-                receiveDeviceSetting(response, len);
+                receiveDeviceSetting(buffer, len);
                 break;
             case ReqTextMessages:
-                receiveTextMessage(response, len);
+                receiveTextMessage(buffer, len);
                 break;
             case ReqDeviceId:
-                receiveDeviceIdentification(response, len);
+                receiveDeviceIdentification(buffer, len);
                 break;
             case InitializeComm:
+                // TODO this is important
             case StopComm:
-
+                // TODO this is important
                 break;
             case TimeChanged:
             case ConfigureResponse:
             case Corrupt:
-
+                receiveCorruptResponse();
+                break;
             case NoOperation:
-
-
-
                 log.debug("Not dealing with valid command:"+cmdEcho);
-    //			sendCommand(Command.ReqDateTime);
                 break;
             default:
+                receiveUnknownResponse(cmd);
                 break;
             }
         } else {
@@ -382,14 +386,14 @@ public class Medibus {
 //			data[i] = new Data();
             switch(codepage) {
             case 1:
-                data[i].code = MeasuredDataCP1.fromByteIf((byte)recvASCIIHex(response, i*6));
+                data[i].code = MeasuredDataCP1.fromByteIf((byte)recvASCIIHex(response, 1+i*6));
                 break;
             case 2:
-                data[i].code = MeasuredDataCP2.fromByteIf((byte)recvASCIIHex(response, i*6));
+                data[i].code = MeasuredDataCP2.fromByteIf((byte)recvASCIIHex(response, 1+i*6));
                 break;
             }
 
-            data[i].data = new String(response, i*6+2, 4);
+            data[i].data = new String(response, 1+i*6+2, 4);
         }
         for(int i = n; i < this.data.length; i++) {
             data[i] = null;
@@ -453,19 +457,19 @@ public class Medibus {
         Alarm[] alarms = new Alarm[len / 15];
         for(int i = 0; i < alarms.length; i++) {
             alarms[i] = new Alarm();
-            alarms[i].priority = response[15*i];
+            alarms[i].priority = response[1+15*i];
             switch(cmdEcho) {
             case ReqAlarmsCP1:
-                alarms[i].alarmCode = AlarmMessageCP1.fromByteIf((byte) recvASCIIHex(response, 15*i+1));
+                alarms[i].alarmCode = AlarmMessageCP1.fromByteIf((byte) recvASCIIHex(response, 1+15*i+1));
                 break;
             case ReqAlarmsCP2:
-                alarms[i].alarmCode = AlarmMessageCP2.fromByteIf((byte) recvASCIIHex(response, 15*i+1));
+                alarms[i].alarmCode = AlarmMessageCP2.fromByteIf((byte) recvASCIIHex(response, 1+15*i+1));
                 break;
             default:
                 throw new RuntimeException("Unknown cmd:"+cmdEcho);
             }
 
-            alarms[i].alarmPhrase = new String(response, 15*i+3, 12);
+            alarms[i].alarmPhrase = new String(response, 1+15*i+3, 12);
         }
         receiveAlarms(alarms);
     }
@@ -497,13 +501,13 @@ public class Medibus {
     protected void receiveDateTime(byte[] response, int len) {
         Calendar cal = Calendar.getInstance();
         String s = null;
-        Matcher m = timePattern.matcher(s = new String(response, 0, 8));
+        Matcher m = timePattern.matcher(s = new String(response, 1, 8));
         if(m.matches()) {
             cal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(m.group(1)));
             cal.set(Calendar.MINUTE, Integer.parseInt(m.group(2)));
             cal.set(Calendar.SECOND, Integer.parseInt(m.group(3)));
             cal.set(Calendar.MILLISECOND, 0);
-            m = datePattern.matcher(s = new String(response, 8, 9));
+            m = datePattern.matcher(s = new String(response, 9, 9));
             if(m.matches()) {
                 cal.set(Calendar.DATE, Integer.parseInt(m.group(1)));
                 cal.set(Calendar.MONTH, germanMonths.get(m.group(2)));
@@ -525,8 +529,8 @@ public class Medibus {
 //		Data[] data = new Data[len / 7];
         for(int i = 0; i < n; i++) {
 //			data[i] = new Data();
-            data[i].code = Setting.fromByteIf((byte)recvASCIIHex(response, i*7));
-            data[i].data = new String(response, i*7+2, 5);
+            data[i].code = Setting.fromByteIf((byte)recvASCIIHex(response, 1+i*7));
+            data[i].data = new String(response, 1+i*7+2, 5);
         }
         receiveDeviceSetting(data, n);
     }
@@ -548,12 +552,12 @@ public class Medibus {
 //			Data d = new Data();
 //			data.add(d);
             Data d = data[i++];
-            d.code = TextMessage.fromByteIf((byte) recvASCIIHex(response, off));
+            d.code = TextMessage.fromByteIf((byte) recvASCIIHex(response, 1+off));
             off+=2;
-            int length = 0xFF&response[off];
+            int length = 0xFF&response[1+off];
             length -= 0x30;
             off++;
-            d.data = new String(response, off, length);
+            d.data = new String(response, 1+off, length);
             off+=length;
             // ETX
             off++;
@@ -592,13 +596,13 @@ public class Medibus {
 //		}
         if(len >= 4) {
 
-            String idNumber = new String(response, 0, 4);
+            String idNumber = new String(response, 1, 4);
             StringBuilder sb = new StringBuilder();
 
             int off = 4;
             boolean insideApostrophes = false;
             while(off < len) {
-                int v = response[off++];
+                int v = response[1+off++];
                 if(APOSTROPHE == v) {
                     if(!insideApostrophes) {
                         insideApostrophes = true;
@@ -613,7 +617,7 @@ public class Medibus {
             }
 
             if( (off+11) <= len) {
-                String revision = new String(response, off, 11);
+                String revision = new String(response, 1+off, 11);
                 receiveDeviceIdentification(idNumber, sb.length()==0?null:sb.toString(), revision);
             } else {
                 receiveDeviceIdentification(idNumber, sb.toString(), null);
@@ -631,37 +635,93 @@ public class Medibus {
 
     private final byte[] receiveBuffer = new byte[32000];
 
+    private static class Buffer {
+        public Buffer(Type type) {
+            this.type = type;
+        }
+
+        public Type getType() {
+            return type;
+        }
+
+        public int getCount() {
+            return count;
+        }
+
+        public byte[] getReceiveBuffer() {
+            return receiveBuffer;
+        }
+
+        public void addByte(byte b) {
+            receiveBuffer[count++] = b;
+        }
+        public Buffer reset(Type type) {
+            this.type = type;
+            this.count = 0;
+            return this;
+        }
+        private final byte[] receiveBuffer = new byte[8000];
+        private int count;
+        private Type type;
+        public enum Type {
+            Command, Response
+        }
+    }
+
+    private static final Buffer aFreeBuffer(Buffer.Type type, List<Buffer> freeBuffers) {
+        if(freeBuffers.isEmpty()) {
+            return new Buffer(type);
+        } else {
+            return freeBuffers.remove(0).reset(type);
+        }
+    }
 
     public boolean receive() throws IOException {
         int leading = 0;
 
-        while(true) {
+        List<Buffer> buffers = new ArrayList<Buffer>();
+        List<Buffer> freeBuffers = new ArrayList<Buffer>();
 
+        Buffer topBuffer = null;
+
+        while(true) {
             leading = slowIn.read();
             if(leading < 0) {
                 log.trace("receive got " + leading + " from slowIn.read");
                 // EOF
                 return false;
             }
+
             switch(leading) {
             case ASCIIByte.SOH:
-                if(receiveResponse()) {
-//					log.trace("receiveResponse returned true");
-                    return true;
-                } else {
-                    log.trace("receiveResponse returned false");
-                    return false;
-                }
+                buffers.add(0, topBuffer = aFreeBuffer(Buffer.Type.Response, freeBuffers));
+                break;
             case ASCIIByte.ESC:
-                if(receiveCommand()) {
-//					log.trace("receiveCommand returned true");
-                    return true;
+                buffers.add(0, topBuffer = aFreeBuffer(Buffer.Type.Command, freeBuffers));
+                break;
+            case ASCIIByte.CR:
+                if(null != topBuffer) {
+                    switch(topBuffer.getType()) {
+                    case Command:
+                        receiveCommand(topBuffer.getReceiveBuffer(), topBuffer.getCount());
+                        break;
+                    case Response:
+                        receiveResponse(topBuffer.getReceiveBuffer(), topBuffer.getCount());
+                        break;
+                    }
+                    freeBuffers.add(topBuffer);
+                    buffers.remove(0);
+                    topBuffer = buffers.isEmpty() ? null : buffers.get(0);
                 } else {
-                    log.trace("receiveCommand return false");
-                    return false;
+                    log.warn("Received a CR with no matching SOH or ESC");
                 }
+                break;
             default:
-                log.error("Unknown byte:"+Integer.toHexString(leading));
+                if(topBuffer != null) {
+                    topBuffer.addByte((byte) leading);
+                } else {
+                    log.error("Unknown byte: 0x"+Integer.toHexString(leading));
+                }
             }
         }
     }
@@ -674,7 +734,15 @@ public class Medibus {
     protected String getRevision() {
         return "04.03";
     }
-    protected void receiveCommand(Object cmdCode, byte[] argument, int len) throws IOException {
+    protected void receiveCommand(byte[] buffer, int len) throws IOException {
+        if(len < 1) {
+            log.warn("Empty command");
+            return;
+        }
+        Object cmdCode = Command.fromByteIf(buffer[0]);
+        log.trace("Received command:"+cmdCode);
+        // Check digits
+        len -= 2;
         if(cmdCode instanceof Command) {
             switch((Command)cmdCode) {
             case InitializeComm:
@@ -719,102 +787,4 @@ public class Medibus {
             sendResponse(cmdCode, null);
         }
     }
-
-//	private final State[] cmdInterruptedState = new State[] {State.Idle};
-
-    public boolean receiveCommand() throws IOException {
-        int cmdCodeB = slowIn.read();
-        if(cmdCodeB < 0) {
-            log.trace("received EOF instead of cmd code");
-            return false;
-        }
-        while(cmdCodeB == ASCIIByte.ESC) {
-            cmdCodeB = slowIn.read();
-        }
-
-        Object cmdCode = Command.fromByteIf((byte) cmdCodeB);
-
-
-        int b = 0;
-        int pos = 0;
-
-        while(b != ASCIIByte.CR) {
-            b = slowIn.read();
-            if(b < 0) {
-                log.trace("received EOF in cmd arguments");
-                return false;
-            }
-            receiveBuffer[pos++] = (byte) b;
-        }
-
-//		receiveBuffer[--pos]; // CR
-//		receiveBuffer[--pos]; // CHK2
-//		receiveBuffer[--pos]; // CHK1
-        pos-=3;
-
-        log.trace("receive cmd:" + cmdCode);
-
-        receiveCommand(cmdCode, receiveBuffer, pos);
-
-        if(Command.StopComm.equals(cmdCode)) {
-            log.trace("sent a StopComm");
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    public boolean receiveResponse() throws IOException {
-        int cmdEchoB = slowIn.read();
-        if(cmdEchoB < 0) {
-            log.trace("received EOF instead of cmd echo in response");
-            // EOF
-            return false;
-        }
-
-        while(ASCIIByte.ESC==cmdEchoB) {
-            receiveCommand();
-            cmdEchoB = slowIn.read();
-        }
-        Object cmdEcho = Command.fromByteIf((byte) cmdEchoB);
-
-        int leading = 0;
-        int pos = 0;
-        while(leading != ASCIIByte.CR) {
-            leading = slowIn.read();
-            if(leading < 0) {
-                log.trace("received EOF instead of response payload");
-                return false;
-            }
-            while(ASCIIByte.ESC == leading) {
-                receiveCommand();
-                leading = slowIn.read();
-            }
-
-            receiveBuffer[pos++] = (byte) leading;
-        }
-
-//		receiveBuffer[--pos]; //CR
-//		receiveBuffer[--pos]; // CHK2
-//		receiveBuffer[--pos]; // CHK1
-        pos-=3;
-        log.trace("receive response " + cmdEcho);
-        // TODO check the checksum validity
-
-        if(Command.Corrupt.equals(cmdEcho)) {
-            receiveCorruptResponse();
-        } else {
-            receiveValidResponse(cmdEcho, receiveBuffer, pos);
-        }
-
-        if(Command.StopComm.equals(cmdEcho)) {
-            log.trace("Received StopComm");
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-
-
 }

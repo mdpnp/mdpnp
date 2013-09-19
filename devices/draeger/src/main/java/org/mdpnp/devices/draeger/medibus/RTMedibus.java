@@ -4,9 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import org.mdpnp.devices.draeger.medibus.types.Command;
 import org.mdpnp.devices.draeger.medibus.types.RealtimeData;
@@ -37,81 +35,6 @@ public class RTMedibus extends Medibus {
     private int dataCounter = 0;
 
     private static final Logger log = LoggerFactory.getLogger(RTMedibus.class);
-
-    private final RTDataConfig currentRTConfig(RealtimeData rd) {
-        for(int i = 0; i < currentRTDataConfig.length; i++) {
-            if(rd.equals(currentRTDataConfig[i].realtimeData)) {
-                return currentRTDataConfig[i];
-            }
-        }
-        return null;
-    }
-
-
-    public synchronized boolean enableRealtime(RealtimeData... requestedValues) throws IOException {
-
-        sendCommand(Command.ReqRealtimeConfig);
-
-        long giveup = System.currentTimeMillis() + 5000L;
-
-        while(null == currentRTDataConfig) {
-            long now = System.currentTimeMillis();
-            if(now >= giveup) {
-                log.debug("timed out waiting for currentRTDataConfig response");
-                return false;
-            } else {
-                try {
-                    wait(giveup - now);
-                } catch (InterruptedException e) {
-                    log.warn(e.getMessage(), e);
-                }
-            }
-        }
-        log.trace("enableRealtime " + (giveup - System.currentTimeMillis()) + "ms remain after waiting for current realtime config");
-        List<RTTransmit> transmits = new ArrayList<RTTransmit>();
-        for(RealtimeData rd : requestedValues) {
-            RTDataConfig config = currentRTConfig(rd);
-            if(null != config) {
-                transmits.add(new RTTransmit(rd, 1, config));
-            } else {
-                log.warn("DEvice does not support requested " + rd);
-            }
-        }
-        this.lastTransmitted = transmits.toArray(new RTTransmit[0]);
-
-        if(this.lastTransmitted.length == 0) {
-            log.warn("no matching realtime data");
-            return true;
-        }
-
-        log.trace("enableRealtime " + (giveup - System.currentTimeMillis()) + "ms remain after building RTTransmits");
-        this.realtimeConfiguredSuccess = false;
-        sendRTTransmissionCommand(lastTransmitted);
-
-        synchronized(this) {
-            while(!realtimeConfiguredSuccess) {
-                try {
-                    wait(100L);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                if(System.currentTimeMillis() > giveup) {
-                    log.trace("timed out waiting for confirmation of successful realtimeconfiguration");
-                    return false;
-                }
-            }
-        }
-
-
-        int[] traces = new int[lastTransmitted.length];
-        for(int i = 0; i < traces.length; i++) {
-            traces[i] = lastTransmitted[i].rtDataConfig.ordinal;
-        }
-        sendEnableRealtime(traces);
-        log.debug("Requested realtime data");
-        return true;
-    }
-
 
     public void sendEnableRealtime(int[] traces) throws IOException {
         out.write(SYNC_BYTE);
@@ -207,6 +130,10 @@ public class RTMedibus extends Medibus {
 
     }
 
+    public RTTransmit[] getLastTransmitted() {
+        return lastTransmitted;
+    }
+
     public void receiveData(int first, int second) throws IOException {
         // which of the transmitted streams is this
         int idx = dataCounter++;
@@ -290,6 +217,7 @@ public class RTMedibus extends Medibus {
             }
             sendASCIIHex(baos, (byte) transmits[i].multiplier);
         }
+        this.lastTransmitted = transmits;
         sendCommand(Command.ConfigureRealtime, baos.toByteArray());
     }
 
@@ -303,7 +231,7 @@ public class RTMedibus extends Medibus {
         }
     }
 
-    private RTDataConfig[] currentRTDataConfig;
+//    private RTDataConfig[] currentRTDataConfig;
     private RTTransmit[] lastTransmitted;
 
     private static final int parseInt(byte[] buf, int off, int len) {
@@ -314,54 +242,58 @@ public class RTMedibus extends Medibus {
         RTDataConfig[] rtDataConfig = new RTDataConfig[len / 23];
         for(int i = 0; i < rtDataConfig.length; i++) {
             rtDataConfig[i] = new RTDataConfig();
-            rtDataConfig[i].realtimeData = RealtimeData.fromByteIf((byte) recvASCIIHex(response, i*23));
-            rtDataConfig[i].interval = parseInt(response, 23*i+2, 8);
-            rtDataConfig[i].min = parseInt(response, 23*i+10, 5);
-            rtDataConfig[i].max = parseInt(response, 23*i+15, 5);
-            rtDataConfig[i].maxbin = recvASCIIHex(response, 23*i+20, 3);
+            rtDataConfig[i].realtimeData = RealtimeData.fromByteIf((byte) recvASCIIHex(response, 1+i*23));
+            rtDataConfig[i].interval = parseInt(response, 1+23*i+2, 8);
+            rtDataConfig[i].min = parseInt(response, 1+23*i+10, 5);
+            rtDataConfig[i].max = parseInt(response, 1+23*i+15, 5);
+            rtDataConfig[i].maxbin = recvASCIIHex(response, 1+23*i+20, 3);
             rtDataConfig[i].ordinal = i;
         }
         receiveRealtimeConfig(rtDataConfig);
     }
 
-    protected synchronized void receiveRealtimeConfig(RTDataConfig[] config) {
-        this.currentRTDataConfig = config;
+    protected void receiveRealtimeConfig(RTDataConfig[] config) {
         log.debug("RT Config");
         for(int i = 0; i < config.length; i++) {
             log.debug("\t"+config[i]);
         }
-        notifyAll();
-
     }
-    private volatile boolean realtimeConfiguredSuccess;
 
     @Override
-    protected void receiveValidResponse(Object cmdEcho, byte[] response, int len) {
+    protected void receiveResponse(byte[] response, int len) {
+        if(len < 1) {
+            return;
+        }
+        Object cmdEcho = Command.fromByteIf(response[0]);
         if(cmdEcho instanceof Command) {
             switch((Command)cmdEcho) {
             case ReqRealtimeConfig:
                 receiveRealtimeConfig(response, len);
                 break;
             case ConfigureRealtime:
-                synchronized(this) {
-                    realtimeConfiguredSuccess = true;
-                    notifyAll();
-                }
+                receiveRealtimeConfigSuccess();
                 log.trace("Configure realtime succeeded");
                 break;
             case RealtimeConfigChanged:
                 break;
             default:
-                super.receiveValidResponse(cmdEcho, response, len);
+                super.receiveResponse(response, len);
             }
         } else {
-            super.receiveValidResponse(cmdEcho, response, len);
+            super.receiveResponse(response, len);
         }
+
+    }
+    protected void receiveRealtimeConfigSuccess() {
 
     }
 
     @Override
-    protected void receiveCommand(Object cmdCode, byte[] argument, int len) throws IOException {
+    protected void receiveCommand(byte[] argument, int len) throws IOException {
+        if(len < 1) {
+            return;
+        }
+        Object cmdCode = Command.fromByteIf(argument[0]);
         if(cmdCode instanceof Command) {
             switch((Command)cmdCode) {
             case RealtimeConfigChanged:
@@ -373,10 +305,10 @@ public class RTMedibus extends Medibus {
                 sendResponse(cmdCode, null);
                 break;
             default:
-                super.receiveCommand(cmdCode, argument, len);
+                super.receiveCommand(argument, len);
             }
         } else {
-            super.receiveCommand(cmdCode, argument, len);
+            super.receiveCommand(argument, len);
         }
     }
 
