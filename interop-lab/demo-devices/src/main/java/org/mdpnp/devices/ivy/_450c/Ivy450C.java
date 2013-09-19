@@ -1,7 +1,5 @@
 package org.mdpnp.devices.ivy._450c;
 
-import ice.ConnectionState;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -18,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
-    
+
     private static final String ECG_I_PREFIX = "ECG-I", ECG_II_PREFIX = "ECG-II", ECG_III_PREFIX = "ECG-III";
 
     private final static Integer nameOfECGWave(String lbl) {
@@ -37,7 +35,7 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
     }
     private static final Logger log = LoggerFactory.getLogger(Ivy450C.class);
-    
+
     public Ivy450C(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
         deviceIdentity.manufacturer = "Ivy";
@@ -45,36 +43,36 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
         deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-        
+
         deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
         deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
     }
-    
-    private InstanceHolder<ice.Numeric> heartRate, respiratoryRate, spo2, etco2, t1, t2, pulseRate, nibpSystolic, nibpDiastolic, nibpMean, nibpPulse, ibpSystolic, ibpDiastolic, ibpMean;
-    
-    private InstanceHolder<ice.SampleArray> ecgWave, respWave, plethWave, p1Wave, p2Wave;
+
+    private InstanceHolder<ice.Numeric> heartRate, respiratoryRate, spo2, etco2, t1, /*t2,*/ pulseRate, nibpSystolic, nibpDiastolic, nibpMean, nibpPulse, ibpSystolic, ibpDiastolic, ibpMean;
+
+    private InstanceHolder<ice.SampleArray> ecgWave, respWave, plethWave, p1Wave/*, p2Wave*/;
     @Override
     protected String iconResourceName() {
         return "450c.png";
     }
-    
+
     private class MyAnsarB extends AnsarB {
         public MyAnsarB(InputStream in, OutputStream out) {
             super(in, out);
         }
-        
+
         @Override
         protected void receiveLine(String line) {
             reportConnected();
             super.receiveLine(line);
         }
-        
+
         @Override
         protected void receiveEndTidalCO2(Integer value, String label) {
             etco2 = numericSample(etco2, value, ice.Physio._MDC_AWAY_CO2_EXP);
         }
-        
+
         @Override
         protected void receiveECGWave(int[] data, int count, int msPerSample, String label) {
             Integer ecg = nameOfECGWave(label);
@@ -84,37 +82,37 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
                 if(ecgWave != null) {
                     unregisterSampleArrayInstance(ecgWave);
                     ecgWave = null;
-                } 
+                }
             }
         }
-        
+
         @Override
         protected void receiveRespWave(int[] data, int count, int msPerSample) {
             respWave = sampleArraySample(respWave, data, count, msPerSample, ice.MDC_CAPNOGRAPH.VALUE);
         }
-        
+
         @Override
         protected void receivePlethWave(int[] data, int count, int msPerSample) {
             plethWave = sampleArraySample(plethWave, data, count, msPerSample, ice.Physio._MDC_PULS_OXIM_PLETH);
         }
-        
+
         @Override
         protected void receiveP1Wave(int[] data, int count, int msPerSample) {
             p1Wave = sampleArraySample(p1Wave, data, count, msPerSample, ice.Physio._MDC_PRESS_BLD);
         }
-        
+
         @Override
         protected void receiveP2Wave(int[] data, int count, int msPerSample) {
             // TODO Don't know what nomenclature tag ... multiple instances needs to be enabled?
         }
-        
-        
-        
+
+
+
         @Override
         protected void receiveHeartRate(Integer value, String label) {
             // should be ECG heart rate?  or should it .. depends upon mode
             heartRate = numericSample(heartRate, value, ice.Physio._MDC_PULS_RATE);
-            
+
         }
         @Override
         protected void receiveNIBP(Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label) {
@@ -141,7 +139,7 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         protected void receiveSpO2(Integer value, String label, Integer pulseRate) {
             spo2 = numericSample(spo2, value, ice.Physio._MDC_PULS_OXIM_SAT_O2);
             Ivy450C.this.pulseRate = numericSample(Ivy450C.this.pulseRate, pulseRate, ice.Physio._MDC_PULS_OXIM_PULS_RATE);
-            
+
         }
         @Override
         protected void receiveTemperature1(Integer value, String label) {
@@ -149,10 +147,10 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
         @Override
         protected void receiveTemperature2(Integer value, String label) {
-            // TODO enable multiple instances of the same type of physiological identifier in future iterations 
+            // TODO enable multiple instances of the same type of physiological identifier in future iterations
         }
     }
-    
+
     @Override
     protected AnsarB buildDelegate(InputStream in, OutputStream out) {
         return new MyAnsarB(in, out);
@@ -162,18 +160,23 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
     protected boolean delegateReceive(AnsarB delegate) throws IOException {
         return delegate.receive();
     }
-    
+
     @Override
     protected long getMaximumQuietTime() {
         return 1100L;
     }
-    
+
     @Override
     protected long getConnectInterval() {
+        return 2000L;
+    }
+
+    @Override
+    protected long getNegotiateInterval() {
         return 200L;
     }
-    
-    
+
+
     @Override
     public SerialProvider getSerialProvider() {
         SerialProvider serialProvider =  super.getSerialProvider();

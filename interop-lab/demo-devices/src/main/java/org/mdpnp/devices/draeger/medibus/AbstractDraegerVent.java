@@ -30,7 +30,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     private Map<Enum<?>, Integer> numerics = new HashMap<Enum<?>, Integer>();
     private Map<Enum<?>, Integer> waveforms = new HashMap<Enum<?>, Integer>();
-    
+
     protected Map<Enum<?>, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Enum<?>, InstanceHolder<ice.Numeric>>();
     protected Map<Enum<?>, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Enum<?>, InstanceHolder<ice.SampleArray>>();
 
@@ -72,8 +72,6 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     private final int[] realtimeBufferCount = new int[16];
     private long lastRealtime;
 
-    private final Date date = new Date();
-
     protected void processRealtime(RTMedibus.RTDataConfig config, int multiplier, int streamIndex, Object code,
             double value) {
         lastRealtime = System.currentTimeMillis();
@@ -84,7 +82,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         realtimeBuffer[streamIndex][realtimeBufferCount[streamIndex]++] = value;
         if (realtimeBufferCount[streamIndex] == realtimeBuffer[streamIndex].length) {
             realtimeBufferCount[streamIndex] = 0;
-            
+
             // flush
             if (code instanceof Enum<?>) {
                 Integer name = waveforms.get(code);
@@ -98,13 +96,13 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             }
         }
     }
-    
+
     @Override
     protected void unregisterAllNumericInstances() {
         super.unregisterAllNumericInstances();
         numericUpdates.clear();
     }
-    
+
     @Override
     protected void unregisterAllSampleArrayInstances() {
         super.unregisterAllSampleArrayInstances();
@@ -164,7 +162,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                 initializeCommAcknowledged();
             }
         }
-        
+
         @Override
         protected void receiveDeviceIdentification(String idNumber, String name, String revision) {
             receiveDeviceId(idNumber, name);
@@ -429,7 +427,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             log.error("Unable to request device id", ioe);
         }
     }
-    
+
     @Override
     protected long getMaximumQuietTime() {
         return 1000L;
@@ -437,9 +435,14 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     @Override
     protected long getConnectInterval() {
+        return 3000L;
+    }
+
+    @Override
+    protected long getNegotiateInterval() {
         return 1000L;
     }
-    
+
     @Override
     protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
 

@@ -7,8 +7,6 @@
  ******************************************************************************/
 package org.mdpnp.devices.oridion.capnostream;
 
-import ice.ConnectionState;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,7 +40,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     // EnumerationImpl(DemoCapnostream20.class, "CAPNOSTREAM_UNITS");
     // public static final Numeric EXTENDED_CO2_STATUS = new
     // NumericImpl(DemoCapnostream20.class, "EXTENDED_CO2_STATUS");
-    
+
     @Override
     protected long getMaximumQuietTime() {
         return 400L;
@@ -50,6 +48,11 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
     @Override
     protected long getConnectInterval() {
+        return 3000L;
+    }
+
+    @Override
+    protected long getNegotiateInterval() {
         return 200L;
     }
 
@@ -61,7 +64,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     protected InstanceHolder<ice.SampleArray> co2;
     protected InstanceHolder<ice.Numeric> spo2;
     protected InstanceHolder<ice.Numeric> pulserate;
- 
+
     protected InstanceHolder<ice.Numeric> rr;
     protected InstanceHolder<ice.Numeric> etco2;
     protected InstanceHolder<ice.Numeric> fastStatus; // = new
@@ -87,7 +90,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             log.error("Error sending link is active message", e);
         }
     }
-    
+
     public DemoCapnostream20(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
         deviceIdentity.manufacturer = "Oridion";
@@ -99,7 +102,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
         deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
-        
+
         linkIsActive = executor.scheduleAtFixedRate(new Runnable() {
             public void run() {
                 linkIsActive();
@@ -119,7 +122,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
         deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
-        
+
         linkIsActive = executor.scheduleAtFixedRate(new Runnable() {
             public void run() {
                 linkIsActive();
