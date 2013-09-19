@@ -47,26 +47,9 @@
 		
 <!-- 		Search by Date Range -->
 		<g:FlowPanel ui:field='searchByDates' >
-		    <!-- <g:HTML>
-		    <table>
-		      <tr>
-		          <td><g:InlineLabel text='Date From' /></td>
-		          <td><g:InlineLabel text='Date Until' /></td>
-		      </tr>  
-		      <tr>
-		          <td><dp:DateBox ui:field="dopDateBox1" /></td>
-		          <td><dp:DateBox ui:field="dopDateBox2" /></td>
-		          <td><g:Button text='Search' ui:field='buttonSearchByDates'/></td>
-		      </tr>		        
-		    </table>		    
-		    </g:HTML>-->
 		    <g:Label text='Search by Dates Range' styleName='heading'/>
-		    <g:InlineLabel text='Search: from date' />
-		    <dp:DateBox ui:field="dopDateBox1" styleName='datePickerStyle'/>
-		    <g:InlineLabel text='up to date' />
-		    <dp:DateBox ui:field="dopDateBox2" styleName='datePickerStyle'/>
+		    <g:FlexTable ui:field='dateRangeSearchComponentsTable'/>	
 		    <g:Button text='Search' ui:field='buttonSearchByDates'/>
-
 		</g:FlowPanel>
 
 		<g:FlexTable ui:field='searchResult'/>

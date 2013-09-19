@@ -1305,10 +1305,8 @@ public class ScenarioSearchPanel extends Composite {
 	FlowPanel searchByDates;
 	
 	@UiField
-	DateBox dopDateBox1;
-	
-	@UiField
-	DateBox dopDateBox2;
+	@Ignore
+	FlexTable dateRangeSearchComponentsTable;
 	
 	@UiField
 	Button buttonSearchByDates;
@@ -1320,14 +1318,18 @@ public class ScenarioSearchPanel extends Composite {
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		searchByDates.setVisible(true);
 		status.setVisible(false);
-		dopDateBox1.setFormat(new DateBox.DefaultFormat(DateTimeFormat.getFormat("MMMM dd, yyyy")));
-		dopDateBox2.setFormat(new DateBox.DefaultFormat(DateTimeFormat.getFormat("MMMM dd, yyyy")));
+		//one row, four columns
+		dateRangeSearchComponentsTable.setWidget(1, 1, new Label("Search: from date "));
+		dateRangeSearchComponentsTable.setWidget(1, 2, advancedSearchDateBoxFrom);
+		dateRangeSearchComponentsTable.setWidget(1, 3, new Label(" up to date "));
+		dateRangeSearchComponentsTable.setWidget(1, 4, advancedSearchDateBoxUntil);
 	}
 	
 	@UiHandler("buttonSearchByDates")
 	public void onClickButtonSearchByDates(ClickEvent clickEvent) {	
-		Date dateFrom = dopDateBox1.getValue();
-		Date dateUntil = dopDateBox2.getValue();
+
+		Date dateFrom = advancedSearchDateBoxFrom.getValue();
+		Date dateUntil = advancedSearchDateBoxUntil.getValue();
 
 		//1- validation that not both dates are NULL
 		if(dateFrom==null && dateUntil==null){
@@ -1345,13 +1347,13 @@ public class ScenarioSearchPanel extends Composite {
 		hideAllSearchPanels();
 		DefaultDateTimeFormatInfo info = new DefaultDateTimeFormatInfo();
 		DateTimeFormat dtf = new DateTimeFormat("MM/dd/yyyy", info) {}; 
-		String headline = "Search results for scenarios";
-		if(null != dopDateBox1.getValue() && null != dopDateBox2.getValue())
-			headline += " between "+dtf.format(dopDateBox1.getValue())+" and "+dtf.format(dopDateBox2.getValue())+".";
-		else if (null != dopDateBox1.getValue())
-			headline += " after "+dtf.format(dopDateBox1.getValue())+".";
+		String headline = "Search results for scenarios created";
+		if(null != advancedSearchDateBoxFrom.getValue() && null != advancedSearchDateBoxUntil.getValue())
+			headline += " between "+dtf.format(advancedSearchDateBoxFrom.getValue())+" and "+dtf.format(advancedSearchDateBoxUntil.getValue())+".";
+		else if (null != advancedSearchDateBoxFrom.getValue())
+			headline += " after "+dtf.format(advancedSearchDateBoxFrom.getValue())+".";
 		else 	
-			headline += " before "+dtf.format(dopDateBox2.getValue())+".";
+			headline += " before "+dtf.format(advancedSearchDateBoxUntil.getValue())+".";
 		searchResultCaption.setText(headline);
 		searchResultCaption.setVisible(true);
 		doSearchByDates(dateFrom, dateUntil);
