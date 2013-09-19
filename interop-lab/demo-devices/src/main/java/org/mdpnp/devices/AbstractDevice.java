@@ -30,14 +30,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
+import org.mdpnp.devices.EventLoop.ConditionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantQos;
+import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.PublicationMatchedStatus;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.topic.Topic;
@@ -168,6 +171,25 @@ public abstract class AbstractDevice implements ThreadFactory {
                 holder = createNumericInstance(name);
             }
             numericSample(holder, (int) newValue);
+        } else {
+            if (null != holder) {
+                unregisterNumericInstance(holder);
+                holder = null;
+            }
+        }
+        return holder;
+    }
+
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, int name) {
+        if (holder != null && holder.data.name != name) {
+            unregisterNumericInstance(holder);
+            holder = null;
+        }
+        if (null != newValue) {
+            if (null == holder) {
+                holder = createNumericInstance(name);
+            }
+            numericSample(holder, newValue);
         } else {
             if (null != holder) {
                 unregisterNumericInstance(holder);
@@ -309,6 +331,7 @@ public abstract class AbstractDevice implements ThreadFactory {
         domainParticipant.delete_topic(numericTopic);
         NumericTypeSupport.unregister_type(domainParticipant, NumericTypeSupport.get_type_name());
 
+        eventLoop.removeHandler(deviceIdentityWriter.get_statuscondition());
         publisher.delete_datawriter(deviceIdentityWriter);
         domainParticipant.delete_topic(deviceIdentityTopic);
         DeviceIdentityTypeSupport.unregister_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
@@ -317,7 +340,7 @@ public abstract class AbstractDevice implements ThreadFactory {
         domainParticipant.delete_subscriber(subscriber);
 
         domainParticipant.delete_contained_entities();
-        
+
         DomainParticipantFactory.get_instance().delete_participant(domainParticipant);
 
         executor.shutdown();
@@ -350,6 +373,25 @@ public abstract class AbstractDevice implements ThreadFactory {
         } catch (IOException e1) {
             log.warn("", e1);
         }
+
+        // JeffP 16-Sep-2013
+        // For DeviceIdentity we want to assert liveliness when publications match so that the instance regains liveliness
+        deviceIdentityWriter.get_statuscondition().set_enabled_statuses(StatusKind.PUBLICATION_MATCHED_STATUS);
+        eventLoop.addHandler(deviceIdentityWriter.get_statuscondition(), new ConditionHandler() {
+
+            @Override
+            public void conditionChanged(Condition condition) {
+                PublicationMatchedStatus pms = new PublicationMatchedStatus();
+                deviceIdentityWriter.get_publication_matched_status(pms);
+                if(deviceIdentityHandle != null) {
+                    log.debug("rewriting deviceIdentity for publication match " + pms);
+                    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+                }
+            }
+
+        });
+
+
 
         NumericTypeSupport.register_type(domainParticipant, NumericTypeSupport.get_type_name());
         numericTopic = domainParticipant.create_topic(ice.NumericTopic.VALUE, NumericTypeSupport.get_type_name(),

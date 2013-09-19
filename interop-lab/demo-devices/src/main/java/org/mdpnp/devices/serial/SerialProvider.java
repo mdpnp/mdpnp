@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface SerialProvider {
 	List<String> getPortNames();
-	SerialSocket connect(String portIdentifier);
+	SerialSocket connect(String portIdentifier, long timeout);
 	void cancelConnect();
 	void setDefaultSerialSettings(int baudrate, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits);
 	

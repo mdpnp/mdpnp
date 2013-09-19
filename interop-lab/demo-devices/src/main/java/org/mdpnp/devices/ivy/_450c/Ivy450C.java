@@ -50,14 +50,6 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
     }
-
-    @Override
-    protected void stateChanging(ConnectionState newState, ConnectionState oldState) {
-        if(ice.ConnectionState.Disconnected.equals(newState)) {
-            unregisterAllNumericInstances();
-            unregisterAllSampleArrayInstances();
-        }
-    }
     
     private InstanceHolder<ice.Numeric> heartRate, respiratoryRate, spo2, etco2, t1, t2, pulseRate, nibpSystolic, nibpDiastolic, nibpMean, nibpPulse, ibpSystolic, ibpDiastolic, ibpMean;
     
@@ -74,12 +66,7 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         
         @Override
         protected void receiveLine(String line) {
-            synchronized(Ivy450C.this) {
-                if(!inited) {
-                    inited = true;
-                    Ivy450C.this.notifyAll();
-                }
-            }
+            reportConnected();
             super.receiveLine(line);
         }
         
@@ -178,40 +165,14 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
     
     @Override
     protected long getMaximumQuietTime() {
-        return 2000L;
+        return 1100L;
     }
     
     @Override
     protected long getConnectInterval() {
-        return 1200L;
+        return 200L;
     }
-
-    protected boolean inited = false;
     
-    @Override
-    protected boolean doInitCommands(OutputStream outputStream) throws IOException {
-        inited = false;
-        
-        if(!super.doInitCommands(outputStream)) {
-            return false;
-        }
-        
-        long start = System.currentTimeMillis();
-        
-        synchronized(this) {
-            while(!inited) {
-                try {
-                    this.wait(500L);
-                } catch (InterruptedException e) {
-                    log.error("wait(...)", e);
-                }
-                if( (System.currentTimeMillis()-start)>=getMaximumQuietTime()) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
     
     @Override
     public SerialProvider getSerialProvider() {

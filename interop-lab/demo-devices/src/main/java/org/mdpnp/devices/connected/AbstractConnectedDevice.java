@@ -19,6 +19,7 @@ import ice.DeviceConnectivityTypeSupport;
 
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.EventLoop;
+import org.mdpnp.devices.EventLoop.ConditionHandler;
 import org.mdpnp.devices.io.util.StateMachine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +29,8 @@ import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
-import com.rti.dds.infrastructure.StatusCondition;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.PublicationMatchedStatus;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.ReadCondition;
@@ -58,7 +59,10 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 		    stateChanging(newState, oldState);
 			log.debug(oldState + "==>"+newState);
 			deviceConnectivity.state = newState;
-			deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+			InstanceHandle_t handle = deviceConnectivityHandle;
+			if(handle != null) {
+			    deviceConnectivityWriter.write(deviceConnectivity, handle);
+			}
 			stateChanged(newState, oldState);
 		};
 	};
@@ -81,10 +85,12 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 	    domainParticipant.delete_topic(deviceConnectivityObjectiveTopic);
 	    DeviceConnectivityObjectiveTypeSupport.unregister_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
 	    
-	    
+	    eventLoop.removeHandler(deviceConnectivityWriter.get_statuscondition());
 	    if(null != deviceConnectivityHandle) {
-	        deviceConnectivityWriter.dispose(deviceConnectivity, deviceConnectivityHandle);
+	        InstanceHandle_t handle = deviceConnectivityHandle;
 	        deviceConnectivityHandle = null;
+	        deviceConnectivityWriter.dispose(deviceConnectivity, handle);
+	        
 	    }
 	    publisher.delete_datawriter(deviceConnectivityWriter);
 	    domainParticipant.delete_topic(deviceConnectivityTopic);
@@ -102,6 +108,22 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 		if(null == deviceConnectivityWriter) {
 		    throw new RuntimeException("unable to create writer");
 		}
+		
+		deviceConnectivityWriter.get_statuscondition().set_enabled_statuses(StatusKind.PUBLICATION_MATCHED_STATUS);
+		eventLoop.addHandler(deviceConnectivityWriter.get_statuscondition(), new ConditionHandler() {
+
+            @Override
+            public void conditionChanged(Condition condition) {
+                PublicationMatchedStatus pms = new PublicationMatchedStatus();
+                deviceConnectivityWriter.get_publication_matched_status(pms);
+                
+                if(null != deviceConnectivityHandle) {
+                    log.debug("Rewriting device connectivity status because of new publication match " + pms);
+                    deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+                }
+            }
+		    
+		});
 		
 		deviceConnectivity = new DeviceConnectivity();
 		deviceConnectivity.type = getConnectionType();
@@ -161,15 +183,30 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 	
 	private static final ice.ConnectionState[][] legalTransitions = new ice.ConnectionState[][] {
 		// Normal "flow"
+	    // A "connect" was requested
 		{ice.ConnectionState.Disconnected, ice.ConnectionState.Connecting},
+		// A "disconnect" was requested from the Connected state
 		{ice.ConnectionState.Connected, ice.ConnectionState.Disconnecting},
+	      // A "disconnect" was requested from the Connecting state
+        {ice.ConnectionState.Connecting, ice.ConnectionState.Disconnecting},
+        // A "disconnect" was requested from the Negotiating state
+        {ice.ConnectionState.Negotiating, ice.ConnectionState.Disconnecting},
+        // Connection was established
 		{ice.ConnectionState.Connecting, ice.ConnectionState.Negotiating},
+		// Connection still open but no active session (silence on the RS-232 line for example)
+		{ice.ConnectionState.Connected, ice.ConnectionState.Negotiating},
+		// Negotiation was successful
 		{ice.ConnectionState.Negotiating, ice.ConnectionState.Connected},
+		// Disconnection was successful
 		{ice.ConnectionState.Disconnecting, ice.ConnectionState.Disconnected},
 		// Exception pathways
+		// A fatal error occurred in the Negotiating state 
 		{ice.ConnectionState.Negotiating, ice.ConnectionState.Disconnected},
+		// A fatal error occurred in the Connecting state
 		{ice.ConnectionState.Connecting, ice.ConnectionState.Disconnected},
-		{ice.ConnectionState.Connected, ice.ConnectionState.Disconnected}
+		// A fatal error occurred in the Connected state
+		{ice.ConnectionState.Connected, ice.ConnectionState.Disconnected},
+
 	};
 	
 	//Disconnected -> Connecting -> Negotiating -> Connected -> Disconnecting -> Disconnected

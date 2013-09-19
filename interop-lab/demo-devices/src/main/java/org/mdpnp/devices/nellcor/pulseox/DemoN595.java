@@ -20,11 +20,9 @@ import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 
 public class DemoN595 extends AbstractSerialDevice {
-    private final InstanceHolder<ice.Numeric> pulseUpdate;
-    private final InstanceHolder<ice.Numeric> spo2Update;
+    private InstanceHolder<ice.Numeric> pulseUpdate;
+    private InstanceHolder<ice.Numeric> spo2Update;
     
-//	private final MutableNumericUpdate pulseUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE);
-//	private final MutableNumericUpdate spo2Update = new MutableNumericUpdateImpl(PulseOximeter.SPO2);
 //	private final MutableNumericUpdate pulseUpperUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE_UPPER);
 //	private final MutableNumericUpdate pulseLowerUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE_LOWER);
 //	private final MutableNumericUpdate spo2UpperUpdate = new MutableNumericUpdateImpl(PulseOximeter.SPO2_UPPER);
@@ -37,8 +35,9 @@ public class DemoN595 extends AbstractSerialDevice {
 		
 		@Override
 		public void firePulseOximeter() {
-		    numericSample(pulseUpdate, getHeartRate());
-		    numericSample(spo2Update, getSpO2());
+		    reportConnected();
+		    pulseUpdate = numericSample(pulseUpdate, getHeartRate(), ice.Physio._MDC_PULS_OXIM_PULS_RATE);
+		    spo2Update = numericSample(spo2Update, getSpO2(), ice.Physio._MDC_PULS_OXIM_SAT_O2);
 		}
 		@Override
 		public void fireAlarmPulseOximeter() {
@@ -50,11 +49,8 @@ public class DemoN595 extends AbstractSerialDevice {
 		}
 		@Override
 		public void fireDevice() {
-			synchronized(this) {
-				inited = true;
-				this.notifyAll();
-			}
-			deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+		    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+		    
 		}
 		@Override
 		protected void setName(String name) {
@@ -67,34 +63,20 @@ public class DemoN595 extends AbstractSerialDevice {
 	}
 
 	private final MyNellcorN595 fieldDelegate;
-	private boolean inited = false;
-	
+	private OutputStream outputStream;
 	@Override
-	protected void process(InputStream inputStream) throws IOException {
+	protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
+	    this.outputStream = outputStream;
 		fieldDelegate.setInputStream(inputStream);
 		fieldDelegate.run();
 	}
 	
-	private static final byte[] dumpInstrumentInfo = new byte[] {0x03, 0x03, 0x31, 0x0D, 0x0A, 0x30, 0x0D, 0x0A};
+	private static final byte[] dumpInstrumentInfo = new byte[] {0x30, 0x0D, 0x0A, 0x03, 0x03, 0x31, 0x0D, 0x0A, 0x30, 0x0D, 0x0A};
 	
 	@Override
-	protected boolean doInitCommands(OutputStream outputStream) throws IOException {
-		inited = false;
-		outputStream.write(dumpInstrumentInfo);
-		long start = System.currentTimeMillis();
-		synchronized(this) {
-			while(!inited) {
-				try {
-					this.wait(500L);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				if( (System.currentTimeMillis()-start) >= getMaximumQuietTime()) {
-					return false;
-				}
-			}
-		}
-		return true;
+	protected void doInitCommands() throws IOException {
+//		outputStream.write(dumpInstrumentInfo);
+//		outputStream.flush();
 	}
 	
 	
@@ -119,7 +101,12 @@ public class DemoN595 extends AbstractSerialDevice {
 
 	@Override
 	protected long getMaximumQuietTime() {
-		return 3000L;
+		return 2200L;
+	}
+	
+	@Override
+	protected long getConnectInterval() {
+	    return 10000L;
 	}
 	
 	@Override

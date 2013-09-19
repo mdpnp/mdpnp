@@ -34,10 +34,8 @@ public abstract class AbstractDelegatingSerialDevice<T> extends AbstractSerialDe
 	protected abstract boolean delegateReceive(T delegate) throws IOException;
 	
 	@Override
-	protected boolean doInitCommands(OutputStream outputStream) throws IOException {
-	    log.trace("doInitCommands outputStream="+outputStream);
-	    setOutputStream(outputStream);
-	    return true;
+	protected void doInitCommands() throws IOException {
+	    log.trace("doInitCommands");
 	}
 	
 	protected synchronized T getDelegate() {
@@ -69,10 +67,11 @@ public abstract class AbstractDelegatingSerialDevice<T> extends AbstractSerialDe
 		return delegate;
 	}
 	@Override
-	protected void process(InputStream inputStream) throws IOException {
+	protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
 		log.trace("process inputStream="+inputStream);
 		try {
 			setInputStream(inputStream);
+			setOutputStream(outputStream);
 			final T delegate = getDelegate();
 			boolean keepGoing = true;
 			while(keepGoing) {

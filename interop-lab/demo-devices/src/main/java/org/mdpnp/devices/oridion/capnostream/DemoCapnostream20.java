@@ -42,23 +42,15 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     // EnumerationImpl(DemoCapnostream20.class, "CAPNOSTREAM_UNITS");
     // public static final Numeric EXTENDED_CO2_STATUS = new
     // NumericImpl(DemoCapnostream20.class, "EXTENDED_CO2_STATUS");
-
-    @Override
-    protected void stateChanging(ConnectionState newState, ConnectionState oldState) {
-        if(ice.ConnectionState.Disconnected.equals(newState)) {
-            unregisterAllNumericInstances();
-            unregisterAllSampleArrayInstances();
-        }
-    }
     
     @Override
     protected long getMaximumQuietTime() {
-        return 5000L;
+        return 400L;
     }
 
     @Override
     protected long getConnectInterval() {
-        return 2000L;
+        return 200L;
     }
 
     @Override
@@ -85,6 +77,17 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     // protected final MutableEnumerationUpdate capnostreamUnits = new
     // MutableEnumerationUpdateImpl(DemoCapnostream20.CAPNOSTREAM_UNITS);
 
+    protected void linkIsActive() {
+        try {
+            if(ice.ConnectionState.Connected.equals(getState())) {
+                getDelegate().sendCommand(Command.LinkIsActive);
+                getDelegate().sendHostMonitoringId("ICE");
+            }
+        } catch (IOException e) {
+            log.error("Error sending link is active message", e);
+        }
+    }
+    
     public DemoCapnostream20(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
         deviceIdentity.manufacturer = "Oridion";
@@ -96,6 +99,12 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
         deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+        
+        linkIsActive = executor.scheduleAtFixedRate(new Runnable() {
+            public void run() {
+                linkIsActive();
+            }
+        }, 5000L, 5000L, TimeUnit.MILLISECONDS);
 
     }
 
@@ -110,14 +119,18 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
         deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+        
+        linkIsActive = executor.scheduleAtFixedRate(new Runnable() {
+            public void run() {
+                linkIsActive();
+            }
+        }, 5000L, 5000L, TimeUnit.MILLISECONDS);
 
     }
 
     private static final int BUFFER_SAMPLES = 10;
     private final Number[] realtimeBuffer = new Number[BUFFER_SAMPLES];
     private int realtimeBufferCount = 0;
-
-    protected volatile boolean connected = false;
 
     public class MyCapnostream extends Capnostream {
         public MyCapnostream(InputStream in, OutputStream out) {
@@ -223,7 +236,13 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
         @Override
         public boolean receiveDeviceIdSoftwareVersion(String s) {
-            connected = true;
+            reportConnected();
+            log.debug("receiveDeviceIdSoftwareVersion:"+s);
+            try {
+                getDelegate().sendCommand(Command.StartRTComm);
+            } catch (IOException e) {
+                log.error("send StartRTComm", e);
+            }
             return super.receiveDeviceIdSoftwareVersion(s);
         }
 
@@ -239,49 +258,13 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     private ScheduledFuture<?> linkIsActive;
 
     @Override
-    protected boolean doInitCommands(OutputStream outputStream) throws IOException {
-        super.doInitCommands(outputStream);
-
-        long giveup = System.currentTimeMillis() + 10000L;
-
-        connected = false;
-
-        while (System.currentTimeMillis() < giveup && !connected) {
-            getDelegate().sendCommand(Command.EnableComm);
-            try {
-                Thread.sleep(400L);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        getDelegate().sendCommand(Command.LinkIsActive);
-        getDelegate().sendHostMonitoringId("ICE");
-
-        // JP ... need to test this
-        linkIsActive = executor.scheduleAtFixedRate(new Runnable() {
-            public void run() {
-                try {
-
-                    getDelegate().sendCommand(Command.LinkIsActive);
-                    // getDelegate().sendHostMonitoringId("ICE");
-                    // log.debug("Sent host id and command");
-                } catch (IOException e) {
-                    log.error("Error sending link is active message", e);
-                }
-            }
-        }, 5000L, 5000L, TimeUnit.MILLISECONDS);
-
-        getDelegate().sendCommand(Command.StartRTComm);
-        return connected;
+    protected void doInitCommands() throws IOException {
+        super.doInitCommands();
+        getDelegate().sendCommand(Command.EnableComm);
     }
 
     @Override
     public void disconnect() {
-        if (null != linkIsActive) {
-            linkIsActive.cancel(false);
-            linkIsActive = null;
-        }
 
         Capnostream capnostream = getDelegate(false);
 
@@ -310,4 +293,13 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         return delegate.receive();
     }
 
+    @Override
+    public void shutdown() {
+        super.shutdown();
+        if (null != linkIsActive) {
+            linkIsActive.cancel(false);
+            linkIsActive = null;
+        }
+
+    }
 }

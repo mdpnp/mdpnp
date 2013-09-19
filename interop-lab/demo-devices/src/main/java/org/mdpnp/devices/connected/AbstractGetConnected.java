@@ -15,8 +15,6 @@ import ice.DeviceConnectivityObjectiveTypeSupport;
 import ice.DeviceConnectivitySeq;
 import ice.DeviceConnectivityTypeSupport;
 
-import java.util.Arrays;
-
 import org.mdpnp.devices.EventLoop;
 
 import com.rti.dds.domain.DomainParticipant;
@@ -29,21 +27,12 @@ import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.DataReader;
-import com.rti.dds.subscription.DataReaderAdapter;
-import com.rti.dds.subscription.DataReaderListener;
 import com.rti.dds.subscription.InstanceStateKind;
-import com.rti.dds.subscription.LivelinessChangedStatus;
 import com.rti.dds.subscription.QueryCondition;
-import com.rti.dds.subscription.RequestedDeadlineMissedStatus;
-import com.rti.dds.subscription.RequestedIncompatibleQosStatus;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
-import com.rti.dds.subscription.SampleLostStatus;
-import com.rti.dds.subscription.SampleRejectedStatus;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.SubscriptionMatchedStatus;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 
@@ -106,26 +95,22 @@ public abstract class AbstractGetConnected {
             DeviceConnectivitySeq data_seq = new DeviceConnectivitySeq();
             @Override
             public void conditionChanged(Condition condition) {
-                for(;;) {
-                    
-                    try {
-                        deviceConnectivityReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, qc);
-                        for(int i = 0; i < data_seq.size(); i++) {
-                            SampleInfo si = (SampleInfo) info_seq.get(i);
-                            if(si.valid_data) {
-                                DeviceConnectivity dc = (DeviceConnectivity) data_seq.get(i);
-                                deviceConnectivity.copy_from(dc);
-                                synchronized(AbstractGetConnected.this) {
-                                    deviceConnectivityReceived = true;
-                                    AbstractGetConnected.this.notifyAll();
-                                }
+                try {
+                    deviceConnectivityReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, qc);
+                    for(int i = 0; i < data_seq.size(); i++) {
+                        SampleInfo si = (SampleInfo) info_seq.get(i);
+                        if(si.valid_data) {
+                            DeviceConnectivity dc = (DeviceConnectivity) data_seq.get(i);
+                            deviceConnectivity.copy_from(dc);
+                            synchronized(AbstractGetConnected.this) {
+                                deviceConnectivityReceived = true;
+                                AbstractGetConnected.this.notifyAll();
                             }
                         }
-                    } catch(RETCODE_NO_DATA noData) {
-                        return;
-                    } finally {
-                        deviceConnectivityReader.return_loan(data_seq, info_seq);
                     }
+                } catch(RETCODE_NO_DATA noData) {
+                } finally {
+                    deviceConnectivityReader.return_loan(data_seq, info_seq);
                 }
             }
         });

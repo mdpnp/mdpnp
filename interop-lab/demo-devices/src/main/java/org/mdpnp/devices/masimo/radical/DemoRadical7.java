@@ -18,15 +18,11 @@ import org.mdpnp.devices.serial.SerialSocket;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 
 public class DemoRadical7 extends AbstractSerialDevice {
-    private final InstanceHolder<ice.Numeric> pulseUpdate;
-    private final InstanceHolder<ice.Numeric> spo2Update;
-
+    private InstanceHolder<ice.Numeric> pulseUpdate;
+    private InstanceHolder<ice.Numeric> spo2Update;
 
 	private static final String MANUFACTURER_NAME = "Masimo";
 	private static final String MODEL_NAME = "Radical-7";
-	
-
-	private volatile boolean inited;
 	
 	private class MyMasimoRadical7 extends MasimoRadical7 {
 
@@ -36,8 +32,9 @@ public class DemoRadical7 extends AbstractSerialDevice {
 		@Override
 		public void firePulseOximeter() {
 			super.firePulseOximeter();
-			numericSample(pulseUpdate, getHeartRate());
-			numericSample(spo2Update, getSpO2());
+			reportConnected();
+			pulseUpdate = numericSample(pulseUpdate, getHeartRate(), ice.Physio._MDC_PULS_OXIM_PULS_RATE);
+			spo2Update = numericSample(spo2Update, getSpO2(), ice.Physio._MDC_PULS_OXIM_SAT_O2);
 			String guid = getUniqueId();
 			if(guid != null && !guid.equals(deviceIdentity.serial_number)) {
 				deviceIdentity.serial_number = guid;
@@ -49,31 +46,16 @@ public class DemoRadical7 extends AbstractSerialDevice {
 	private final MyMasimoRadical7 fieldDelegate;
 	
 	@Override
-	protected void process(InputStream inputStream) throws IOException {
+	protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
 		fieldDelegate.setInputStream(inputStream);
 		fieldDelegate.run();
 	}
 	@Override
 	protected long getMaximumQuietTime() {
-		return 3000L;
+		return 1100L;
 	}
 	@Override
-	protected boolean doInitCommands(OutputStream outputStream) throws IOException {
-		inited = false;
-		long giveup = System.currentTimeMillis() + getMaximumQuietTime();
-		synchronized(this) {
-			while(!inited) {
-				try {
-					this.wait(500L);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				if(System.currentTimeMillis()>giveup) {
-					return false;
-				}
-			}
-		}
-		return true;
+	protected void doInitCommands() throws IOException {
 	}
 	
 
@@ -96,9 +78,6 @@ public class DemoRadical7 extends AbstractSerialDevice {
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
         
 		this.fieldDelegate = new MyMasimoRadical7();
-
-		spo2Update = createNumericInstance(ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
-		pulseUpdate = createNumericInstance(ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
 	}
 	
 

@@ -53,13 +53,6 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 		
 		AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Nonin";
-		
-//	    pulse = createNumericInstance(ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
-//	    SpO2 = createNumericInstance(ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
-	    pleth = createSampleArrayInstance(ice.Physio.MDC_PULS_OXIM_PLETH.value());
-	    
-	    pleth.data.millisecondsPerSample = (int) NoninPulseOx.MILLISECONDS_PER_SAMPLE;
-	    pleth.data.values.setSize(Packet.FRAMES);
 	    
 	    deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
 	    
@@ -72,28 +65,92 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 //	    add(firmwareRevisionUpdate);
 //		add(pulseUpdate, spo2Update, plethUpdate);
 //		add(perfusionUpdate, artifactUpdate, smartPointUpdate, lowBatteryUpdate, outOfTrackUpdate);
-		
-//		this.plethUpdate.setMillisecondsPerSample(NoninPulseOx.MILLISECONDS_PER_SAMPLE);
-//		this.plethUpdate.setValues(new Number[Packet.FRAMES]);
-
-		
-	
 	}
+	
+	protected enum Format {
+	    Onyx, WristOx
+	};
+	protected Format formatRequested;
+	
 	private class MyNoninPulseOx extends NoninPulseOx {
 
 		public MyNoninPulseOx(InputStream in, OutputStream out) {
 			super(in, out);
 		}
+		
+		@Override
+		protected synchronized void receiveSerialNumber(String serial) {
+		    super.receiveSerialNumber(serial);
+		    
+		    formatRequested = Format.Onyx;
+		    try {
+                getDelegate().sendSetOnyxFormat();
+            } catch (IOException e) {
+                log.error("Error sending set onyx format", e);
+            }
+		}
+		
+		@Override
+		protected synchronized void recvAcknowledged(boolean success) {
+		    super.recvAcknowledged(success);
+		    if(Format.Onyx.equals(formatRequested)) {
+		        formatRequested = null;
+		        if(success) {
+		            deviceIdentity.model = "Onyx II";
+		            
+                    try {
+                        iconFromResource(deviceIdentity, "9650.png");
+                    } catch (IOException e) {
+                        log.error("Error loading icon resource", e);
+                        deviceIdentity.icon.raster.clear();
+                        deviceIdentity.icon.height = 0;
+                        deviceIdentity.icon.width = 0;
+                    }
+                    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+                    getDelegate().readyFlag = true;
+		        } else {
+		            formatRequested = Format.WristOx;
+		            try {
+                        sendSetWristOxFormat();
+                    } catch (IOException e) {
+                        log.error("Error sending set wristox format", e);
+                    }
+		        }
+		    } else if(Format.WristOx.equals(formatRequested)) {
+		        formatRequested = null;
+		        if(success) {
+		            deviceIdentity.model = "WristOx2";
+                    try {
+                        iconFromResource(deviceIdentity, "3150.png");
+                    } catch (IOException e) {
+                        log.error("Error loading icon resource", e);
+                        deviceIdentity.icon.raster.clear();
+                        deviceIdentity.icon.height = 0;
+                        deviceIdentity.icon.width = 0;
+                    }
+                    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+                    getDelegate().readyFlag = true;
+		        } else {
+		            log.warn("Onyx and WristOx formats rejected; nothing left to try");
+		        }
+		    }
+		}
+		
+		private int[] plethBuffer = new int[Packet.FRAMES];
+		
 		@Override
 		public void receivePacket(Packet currentPacket) {
+		    reportConnected();
+
 			for(int i = 0; i < Packet.FRAMES; i++) {
-			    pleth.data.values.setFloat(i, currentPacket.getPleth(i));
+			    plethBuffer[i] = currentPacket.getPleth(i);
 			}
-			sampleArrayDataWriter.write(pleth.data, pleth.handle);
+			pleth = sampleArraySample(pleth, plethBuffer, plethBuffer.length, (int)NoninPulseOx.MILLISECONDS_PER_SAMPLE, ice.Physio._MDC_PULS_OXIM_PLETH);
+
 			
 			if(currentPacket.getCurrentStatus().isArtifact()||currentPacket.getCurrentStatus().isSensorAlarm()||currentPacket.getCurrentStatus().isOutOfTrack()) {
-			    pulse = numericSample(pulse, null, ice.Physio._MDC_PULS_OXIM_PULS_RATE);
-			    SpO2 = numericSample(SpO2, null, ice.Physio._MDC_PULS_OXIM_SAT_O2);
+			    pulse = numericSample(pulse, (Integer)null, ice.Physio._MDC_PULS_OXIM_PULS_RATE);
+			    SpO2 = numericSample(SpO2, (Integer)null, ice.Physio._MDC_PULS_OXIM_SAT_O2);
 			} else {
 			    Integer heartRate = getHeartRate();
 			    Integer spo2 = getSpO2();
@@ -178,39 +235,11 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 	
 
 	
-	public boolean doInitCommands(OutputStream outputStream) throws IOException {
-	    if(!super.doInitCommands(outputStream)) {
-	        return false;
+	public void doInitCommands() throws IOException {
+	    super.doInitCommands();
+	    if(null == formatRequested) {
+	        getDelegate().sendGetSerial();
 	    }
-	    
-		String guid = getDelegate().fetchSerial();
-		
-		log.trace("Nonin device serial #"+guid);
-
-		if(null == guid) {
-			return false;
-		}
-		boolean ack;
-		
-//		for(int i = 0; i < guid.length(); i++) {
-//		    deviceIdentity.universal_device_identifier[i] = (byte) guid.charAt(i);
-//		}
-//		System.arraycopy(deviceIdentity.universal_device_identifier, 0, deviceConnectivity.universal_device_identifier, 0, deviceConnectivity.universal_device_identifier.length);
-//		deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
-//		deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
-		
-	 	if(ack = getDelegate().setDataFormat(getDelegate().onyxFormat)) {
-	 	    deviceIdentity.model = "Onyx II"; 
-	 		iconFromResource(deviceIdentity, "9650.png");
-	 	} else if(ack = getDelegate().setDataFormat(getDelegate().wristOxFormat)) {
-	 	    deviceIdentity.model = "WristOx2";
-	 		iconFromResource(deviceIdentity, "3150.png");
-		}
-	 	deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-	 	
-		getDelegate().readyFlag = ack;
-		return ack;
-		
 	}
 
 
@@ -221,13 +250,14 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 	
 	@Override
 	protected long getConnectInterval() {
-	    return 5000L;
+	    return 1000L;
 	}
 
 	
 	@Override
+	// 3 packets per second mean the theoretical max quiet time is 333ms
 	protected long getMaximumQuietTime() {
-		return 2000L;
+		return 750L;
 	}
 	
 	@Override

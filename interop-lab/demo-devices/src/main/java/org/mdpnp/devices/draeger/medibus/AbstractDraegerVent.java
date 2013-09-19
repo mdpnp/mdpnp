@@ -19,7 +19,6 @@ import org.mdpnp.devices.draeger.medibus.types.Command;
 import org.mdpnp.devices.draeger.medibus.types.MeasuredDataCP1;
 import org.mdpnp.devices.draeger.medibus.types.RealtimeData;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
-import org.mdpnp.devices.serial.AbstractSerialDevice;
 import org.mdpnp.devices.serial.SerialSocket;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
@@ -29,64 +28,39 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     private static final Logger log = LoggerFactory.getLogger(AbstractDraegerVent.class);
 
+    private Map<Enum<?>, Integer> numerics = new HashMap<Enum<?>, Integer>();
+    private Map<Enum<?>, Integer> waveforms = new HashMap<Enum<?>, Integer>();
+    
     protected Map<Enum<?>, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Enum<?>, InstanceHolder<ice.Numeric>>();
     protected Map<Enum<?>, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Enum<?>, InstanceHolder<ice.SampleArray>>();
 
-    protected final InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate;// =
-                                                                            // new
-                                                                            // MutableTextUpdateImpl(Ventilator.START_INSPIRATORY_CYCLE);
-    protected final InstanceHolder<ice.Numeric> timeUpdate; // = new
-                                                            // MutableNumericUpdateImpl(Device.TIME_MSEC_SINCE_EPOCH);
+    protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate;
+    protected InstanceHolder<ice.Numeric> timeUpdate;
 
-    protected InstanceHolder<ice.Numeric> getNumericUpdate(Object code) {
-        if (code instanceof Enum<?>) {
-            InstanceHolder<ice.Numeric> miu = numericUpdates.get(code);
-            if (null == miu) {
-                log.trace("No update for enum code=" + code + " class=" + code.getClass().getName());
-            }
-            return miu;
-        } else {
-            log.trace("No update for code=" + code + " class=" + code.getClass().getName());
-            return null;
-        }
-    }
-
-    protected InstanceHolder<ice.SampleArray> getSampleArrayUpdate(Object code) {
-        if (code instanceof Enum<?>) {
-            InstanceHolder<ice.SampleArray> miu = sampleArrayUpdates.get(code);
-            if (null == miu) {
-                log.trace("No update for enum code=" + code + " class=" + code.getClass().getName());
-            }
-            return miu;
-        } else {
-            log.trace("No update for code=" + code + " class=" + code.getClass().getName());
-            return null;
-        }
-    }
-
-    protected void populateUpdate(InstanceHolder<ice.Numeric> update, Object value) {
+    protected InstanceHolder<ice.Numeric> doNumericUpdate(InstanceHolder<ice.Numeric> update, Object value, int name) {
         try {
             // TODO There are weird number formats in medibus .. this will need
             // enhancement
             if (value instanceof Number) {
-
-                update.data.value = ((Number) value).floatValue();
+                return numericSample(update, ((Number) value).floatValue(), name);
             } else {
                 String s = null == value ? null : value.toString().trim();
                 if (null != s) {
-                    update.data.value = Float.parseFloat(s);
+                    return numericSample(update, Float.parseFloat(s), name);
+                } else {
+                    return numericSample(update, (Float) null, name);
                 }
             }
 
         } catch (NumberFormatException nfe) {
             log.trace("Invalid number:" + value);
-            // ((MutableNumericUpdate)update).setValue(null);
+            return numericSample(update, (Float) null, name);
         }
     }
 
     protected void processStartInspCycle() {
         // TODO This should not be triggered as a numeric; it's a bad idea
-        numericSample(startInspiratoryCycleUpdate, 0);
+        startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0, ice.MDC_START_OF_BREATH.VALUE);
     }
 
     private static final int BUFFER_SAMPLES = 10;
@@ -110,32 +84,43 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         realtimeBuffer[streamIndex][realtimeBufferCount[streamIndex]++] = value;
         if (realtimeBufferCount[streamIndex] == realtimeBuffer[streamIndex].length) {
             realtimeBufferCount[streamIndex] = 0;
+            
             // flush
-            InstanceHolder<ice.SampleArray> miu = getSampleArrayUpdate(code);
-            if (null != miu) {
-                date.setTime(System.currentTimeMillis());
-                miu.data.values.clear();
-                for (Number n : realtimeBuffer[streamIndex]) {
-                    miu.data.values.addFloat(n.floatValue());
+            if (code instanceof Enum<?>) {
+                Integer name = waveforms.get(code);
+                if(null != name) {
+                    sampleArrayUpdates.put((Enum<?>)code, sampleArraySample(sampleArrayUpdates.get(code), realtimeBuffer[streamIndex], (int) (1.0 * config.interval * multiplier / 1000.0), name));
+                } else {
+                    log.trace("No nomenclature code for enum code=" + code + " class=" + code.getClass().getName());
                 }
-                // mwu.setValues(realtimeBuffer[streamIndex]);
-                // mwu.setTimestamp(date);
-                // interval is in microseconds
-                miu.data.millisecondsPerSample = (int) (1.0 * config.interval * multiplier / 1000.0);
-                sampleArrayDataWriter.write(miu.data, miu.handle);
             } else {
-                log.warn("for " + code + " did not get expected WaveformUpdate type, identifier="
-                        + (null == miu ? "null" : miu.data.name));
+                log.trace("No enumerated type for code=" + code + " class=" + code.getClass().getName());
             }
-
         }
+    }
+    
+    @Override
+    protected void unregisterAllNumericInstances() {
+        super.unregisterAllNumericInstances();
+        numericUpdates.clear();
+    }
+    
+    @Override
+    protected void unregisterAllSampleArrayInstances() {
+        super.unregisterAllSampleArrayInstances();
+        sampleArrayUpdates.clear();
     }
 
     protected void process(Object code, Object data) {
-        InstanceHolder<ice.Numeric> miu = getNumericUpdate(code);
-        if (null != miu) {
-            populateUpdate(miu, data);
-            numericDataWriter.write(miu.data, miu.handle);
+        if (code instanceof Enum<?>) {
+            Integer name = numerics.get(code);
+            if(null != name) {
+                numericUpdates.put((Enum<?>)code, doNumericUpdate(numericUpdates.get(code), data, name));
+            } else {
+                log.trace("No nomenclature code for enum code=" + code + " class=" + code.getClass().getName());
+            }
+        } else {
+            log.trace("No enumerated type for code=" + code + " class=" + code.getClass().getName());
         }
     }
 
@@ -155,18 +140,10 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     protected void process(Date date) {
         // TODO Don't do this
-        numericSample(timeUpdate, date.getTime());
+        timeUpdate = numericSample(timeUpdate, (int)date.getTime(), ice.MDC_TIME_MSEC_SINCE_EPOCH.VALUE);
     }
 
-    protected void processCorrupt(Object cmd) {
-        if (Command.ReqDeviceId.equals(cmd)) {
-            // Repeat ourselves
-            try {
-                getDelegate().sendCommand(Command.ReqDeviceId, REQUEST_TIMEOUT);
-            } catch (IOException e) {
-                log.error("", e);
-            }
-        }
+    protected void processCorrupt() {
     }
 
     protected void process(Data[] data, int n) {
@@ -180,6 +157,14 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             super(in, out);
         }
 
+        @Override
+        protected void receiveValidResponse(Object cmdEcho, byte[] response, int len) {
+            super.receiveValidResponse(cmdEcho, response, len);
+            if(Command.InitializeComm.equals(cmdEcho)) {
+                initializeCommAcknowledged();
+            }
+        }
+        
         @Override
         protected void receiveDeviceIdentification(String idNumber, String name, String revision) {
             receiveDeviceId(idNumber, name);
@@ -201,8 +186,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
 
         @Override
-        protected void receiveCorruptResponse(Object priorCommand) {
-            processCorrupt(priorCommand);
+        protected void receiveCorruptResponse() {
+            processCorrupt();
         }
 
         @Override
@@ -228,8 +213,6 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     }
 
-    // private static final long POLITE_REQUEST_INTERVAL = 500L;
-    private static final long REQUEST_TIMEOUT = 7000L;
     private static final Command[] REQUEST_COMMANDS = {
              Command.ReqDateTime,
             Command.ReqDeviceSetting,
@@ -248,7 +231,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                         log.warn("" + (System.currentTimeMillis() - lastRealtime)
                                 + "ms since realtime data, requesting anew");
 
-                        if (!getDelegate().enableRealtime(REQUEST_TIMEOUT, RealtimeData.AirwayPressure,
+                        if (!getDelegate().enableRealtime(RealtimeData.AirwayPressure,
                                 RealtimeData.FlowInspExp, RealtimeData.ExpiratoryCO2mmHg, RealtimeData.O2InspExp)) {
                             log.debug("timed out waiting to issue enableRealtime");
                         }
@@ -256,10 +239,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
                     RTMedibus medibus = AbstractDraegerVent.this.getDelegate();
                     for (Command c : REQUEST_COMMANDS) {
-                        if (!medibus.sendCommand(c, REQUEST_TIMEOUT)) {
-                            log.debug("polling thread timed out sending request " + c);
-                            return;
-                        }
+                        medibus.sendCommand(c);
                         Thread.sleep(200L);
                     }
                 } catch (Exception e) {
@@ -279,11 +259,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
         if (null != medibus) {
             try {
-                if (!medibus.sendCommand(Command.StopComm, 1000L)) {
-                    log.trace("timed out waiting to send StopComm");
-                } else {
-                    log.trace("sent StopComm");
-                }
+                medibus.sendCommand(Command.StopComm);
             } catch (IOException e) {
                 log.error(e.getMessage(), e);
             }
@@ -387,18 +363,6 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     }
 
-    private void prepareMap() {
-        Map<Enum<?>, Integer> numerics = new HashMap<Enum<?>, Integer>();
-        Map<Enum<?>, Integer> waveforms = new HashMap<Enum<?>, Integer>();
-        loadMap(numerics, waveforms);
-        for (Enum<?> name : numerics.keySet()) {
-            numericUpdates.put(name, createNumericInstance(numerics.get(name)));
-        }
-        for (Enum<?> name : waveforms.keySet()) {
-            sampleArrayUpdates.put(name, createSampleArrayInstance(waveforms.get(name)));
-        }
-    }
-
     public static void main(String[] args) {
         Map<Enum<?>, Integer> numerics = new HashMap<Enum<?>, Integer>();
         Map<Enum<?>, Integer> waveforms = new HashMap<Enum<?>, Integer>();
@@ -410,17 +374,13 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     public AbstractDraegerVent(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
         init();
-        prepareMap();
-        timeUpdate = createNumericInstance(ice.MDC_TIME_MSEC_SINCE_EPOCH.VALUE);
-        startInspiratoryCycleUpdate = createNumericInstance(ice.MDC_START_OF_BREATH.VALUE);
+        loadMap(numerics, waveforms);
     }
 
     public AbstractDraegerVent(int domainId, EventLoop eventLoop, SerialSocket serialSocket) {
         super(domainId, eventLoop, serialSocket);
         init();
-        prepareMap();
-        timeUpdate = createNumericInstance(ice.MDC_TIME_MSEC_SINCE_EPOCH.VALUE);
-        startInspiratoryCycleUpdate = createNumericInstance(ice.MDC_START_OF_BREATH.VALUE);
+        loadMap(numerics, waveforms);
     }
 
     @Override
@@ -433,8 +393,6 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected boolean delegateReceive(RTMedibus delegate) throws IOException {
         return delegate.receive();
     }
-
-    private boolean gotDeviceId = false;
 
     protected synchronized void receiveDeviceId(String guid, String name) {
         log.trace("receiveDeviceId:guid=" + guid + ", name=" + name);
@@ -452,57 +410,38 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         if (writeIt) {
             deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
         }
-        gotDeviceId = true;
-        notifyAll();
+        startRequestSlowData();
+        reportConnected();
     }
 
     @Override
-    protected boolean doInitCommands(OutputStream outputStream) throws IOException {
-        super.doInitCommands(outputStream);
+    protected void doInitCommands() throws IOException {
+        super.doInitCommands();
         RTMedibus rtMedibus = getDelegate();
 
-        long now = System.currentTimeMillis();
-        long giveup = now + getConnectInterval();
-
-        // if(Medibus.State.Uninitialized.equals(rtMedibus.getState())) {
-        if (!rtMedibus.sendCommand(Command.InitializeComm, giveup - System.currentTimeMillis())) {
-            log.debug("timed out waiting to issue InitializeComm");
-            return false;
-        }
-        // }
-
-        synchronized (this) {
-            gotDeviceId = false;
-            while (true) {
-                if (gotDeviceId) {
-                    startRequestSlowData();
-                    return true;
-                } else if (System.currentTimeMillis() > giveup) {
-                    log.debug("timed out waiting for deviceId");
-                    return false;
-                }
-
-                if (!rtMedibus.sendCommand(Command.ReqDeviceId, giveup - System.currentTimeMillis())) {
-                    log.debug("timed out waiting to issue ReqDeviceId");
-                    return false;
-                }
-
-                try {
-                    wait(giveup - System.currentTimeMillis());
-                } catch (InterruptedException e) {
-                    log.error("", e);
-                }
-            }
-        }
+        rtMedibus.sendCommand(Command.InitializeComm);
     }
 
+    protected void initializeCommAcknowledged() {
+        try {
+            getDelegate().sendCommand(Command.ReqDeviceId);
+        } catch(IOException ioe) {
+            log.error("Unable to request device id", ioe);
+        }
+    }
+    
     @Override
     protected long getMaximumQuietTime() {
-        return 6000L;
+        return 1000L;
     }
 
     @Override
-    protected void process(InputStream inputStream) throws IOException {
+    protected long getConnectInterval() {
+        return 1000L;
+    }
+    
+    @Override
+    protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
 
         Thread t = new Thread(new Runnable() {
             public void run() {
@@ -522,7 +461,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         // really the RTMedibus thread will block until
         // the super.process populates an InputStream to allow
         // building of the delegate
-        super.process(inputStream);
+        super.process(inputStream, outputStream);
 
     }
 
