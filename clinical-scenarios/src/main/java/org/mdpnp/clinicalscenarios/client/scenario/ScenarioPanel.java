@@ -24,6 +24,7 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -51,7 +52,17 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static final int EQUIPMENT_MANUFACTURER_COL = 1;
 	private static final int EQUIPMENT_MODEL_COL = 2;
 	private static final int EQUIPMENT_ROSSETAID_COL = 3;
-	private static final int EQUIPMENT_DElETEBUTTON_COL = 4;
+//	private static final int EQUIPMENT_DElETEBUTTON_COL = 4;//ticket-140
+	private static final int EQUIPMENT_GAPINTRAINING_COL  = 4;
+	private static final int EQUIPMENT_LACKINSTRUCTION_COL  = 5;
+	private static final int EQUIPMENT_LACKTRAINING_COL  = 6;
+	private static final int EQUIPMENT_CONFUSINGINTERFACES_COL  = 7;
+	private static final int EQUIPMENT_CONFUSINGSETTINGS_COL  = 8;
+	private static final int EQUIPMENT_SWPROBLEM_COL = 9;
+	private static final int EQUIPMENT_HWPROBLEM_COL = 10;
+	private static final int EQUIPMENT_DElETEBUTTON_COL = 11;//ticket-140
+	
+	
 	
 	//hazards tab panel
 	private static final int HAZARDS_DESCRIPTION_COL = 0;
@@ -143,6 +154,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	}
 	
 	private static final String[] hazardSeverity = new String[] {"Mild", "Moderate", "Severe", "Life Threatening", "Fatal", "Unknown"};
+	public static String[] getHazardSeverityValues(){
+		return hazardSeverity;
+	}
 	/**
 	 * Returns the associated index or a word of the hazardSeverity array
 	 * @param word
@@ -229,6 +243,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		equipmentTable.setText(0, EQUIPMENT_MANUFACTURER_COL, "Manufacturer");
 		equipmentTable.setText(0, EQUIPMENT_MODEL_COL, "Model");
 		equipmentTable.setText(0, EQUIPMENT_ROSSETAID_COL, "Rosetta ID (if known)");
+		
+		equipmentTable.setText(0, EQUIPMENT_GAPINTRAINING_COL, "Gap in trainig");
+		equipmentTable.setText(0, EQUIPMENT_LACKINSTRUCTION_COL, "Lack of access to instructions");
+		equipmentTable.setText(0, EQUIPMENT_LACKTRAINING_COL, "Lack of or inapropiate training");
+		equipmentTable.setText(0, EQUIPMENT_CONFUSINGINTERFACES_COL, "Confusing interfaces");
+		equipmentTable.setText(0, EQUIPMENT_CONFUSINGSETTINGS_COL, "Confusing settings");
+		equipmentTable.setText(0, EQUIPMENT_SWPROBLEM_COL, "Software problem");
+		equipmentTable.setText(0, EQUIPMENT_HWPROBLEM_COL, "Hardware problem");
 
 
 		if(isDrawNew || currentScenario.getEquipment().getEntries().isEmpty()){
@@ -238,6 +260,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				equipmentTable.insertRow(i + 1);
 				for(int j = 0; j < 4; j++) {//add four textboxes for data
 					equipmentTable.setWidget(i+1, j, new TextBox());
+				}
+				for(int j = 4; j < EQUIPMENT_DElETEBUTTON_COL; j++) {//add four textboxes for data
+					equipmentTable.setWidget(i+1, j, new CheckBox());
 				}
 				//add button to delete current row 
 				Button deleteButton = new Button("Delete");
@@ -1049,6 +1074,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 	}
 	private final ClinicianSuggestOracle clinicianSuggestOracle = new ClinicianSuggestOracle();
+	public static ClinicianSuggestOracle getClinicianSuggestOracle(){
+		return new ClinicianSuggestOracle();
+	}
+	
 	
 	private static class EnvironmentSuggestOracle extends MultiWordSuggestOracle {
 		private static String[] values = new String[] {"Acute assessment unit",
@@ -1114,6 +1143,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			}
 		}
 		
+	}
+	private final EnvironmentSuggestOracle environmentSuggestOracle = new EnvironmentSuggestOracle();
+	public static EnvironmentSuggestOracle getEnvironmentSuggestOracle(){
+		return new EnvironmentSuggestOracle();
 	}
 	
 	//-----------------------------------------
@@ -1292,7 +1325,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		});
 	}
 	
-	private final EnvironmentSuggestOracle environmentSuggestOracle = new EnvironmentSuggestOracle();
+
 	
 	@UiHandler("addNewClinician")
 	void onANCClick(ClickEvent click) {

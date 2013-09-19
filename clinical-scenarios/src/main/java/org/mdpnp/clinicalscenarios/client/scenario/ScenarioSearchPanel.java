@@ -1,10 +1,10 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Hashtable;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioComparator;
@@ -14,19 +14,17 @@ import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioTitleCompa
 import org.mdpnp.clinicalscenarios.client.user.UserInfoProxy;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequest;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequestFactory;
-import org.mdpnp.clinicalscenarios.server.user.UserInfo;
 
-import com.google.appengine.api.users.User;
-import com.google.appengine.api.users.UserService;
-import com.google.appengine.api.users.UserServiceFactory;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.TextAlign;
+//import com.google.gwt.dev.util.collect.HashSet;
+import com.google.gwt.editor.client.Editor.Ignore;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DefaultDateTimeFormatInfo;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -37,10 +35,8 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RadioButton;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.SourcesTableEvents;
-import com.google.gwt.user.client.ui.TableListener;
+import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.datepicker.client.DateBox;
@@ -95,6 +91,14 @@ public class ScenarioSearchPanel extends Composite {
 		initWidget(uiBinder.createAndBindUi(this));
 		this.scenarioRequestFactory = scenarioRequestFactory;
 		
+		advancedSearchDateBoxFrom.setFormat(new DateBox.DefaultFormat(DateTimeFormat.getFormat("MMMM dd, yyyy")));
+		advancedSearchDateBoxUntil.setFormat(new DateBox.DefaultFormat(DateTimeFormat.getFormat("MMMM dd, yyyy")));
+		advancedSearchHazardSeverityListbox.clear();
+		advancedSearchHazardSeverityListbox.addItem(" ");// to ad no-filter option
+		for(String s : ScenarioPanel.getHazardSeverityValues()){
+			advancedSearchHazardSeverityListbox.addItem(s);
+		}
+		
 		//check user role
 		if(userInfoRequestFactory != null){
 			final EventBus eventBus = new SimpleEventBus();
@@ -133,12 +137,13 @@ public class ScenarioSearchPanel extends Composite {
 	
 	@UiField
 	Grid searchResult2;
+	
  	
 	@UiField
 	Label header;
 	
-	@UiField
-	Label pleaseEnterKeywords;
+//	@UiField
+//	Label pleaseEnterKeywords;
 	
 	@UiField
 	Button submitButton;
@@ -169,9 +174,9 @@ public class ScenarioSearchPanel extends Composite {
 		return searchQuery;
 	}
 	
-	public Label getPleaseEnterKeywords(){
-		return pleaseEnterKeywords;
-	}
+//	public Label getPleaseEnterKeywords(){
+//		return pleaseEnterKeywords;
+//	}
 	
 	public Button getCreateNewScnButton(){
 		return createNew;
@@ -188,30 +193,262 @@ public class ScenarioSearchPanel extends Composite {
 	}
 	
 	/**
-	 * Advanced Search: keywords in specific fields
-	 * @param keywords
+	 * Advanced Search; Gets the list of approved scn with the keywords and then filters using the other fields 
 	 */
-	public void doAdvancedSearch(String sBackground, String sProposed, 
-			String sProcess, String sAlgorithm, String sBenefits, String sRisks, String sTitle){
-//		if (isAndSearch){
-//			ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
-//			scenarioRequest.searchByFilter_AndBehavior(sBackground, sProposed, sProcess, sAlgorithm, sBenefits, sRisks, null)
-//			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
-//			.to(listScnReceiver).fire();
-//		}else{
-			ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
-			scenarioRequest.searchByFilter_OrBehavior(sBackground, sProposed, sProcess, sAlgorithm, sBenefits, sRisks, sTitle)
+//	public void doAdvancedSearch(){
+//		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
+//		scenarioRequest.searchByKeywords(advancedSearchKeywordsTextBox.getText())
+//			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+//			.to(new Receiver<List<ScenarioProxy>> () {
+//
+//				@Override
+//				public void onSuccess(List<ScenarioProxy> response) {
+//					if(null==response || response.size()==0){ 
+//						status.setVisible(false); 
+//						return;
+//					}
+//					
+//					List<ScenarioProxy> filteredResult= new ArrayList<ScenarioProxy>();
+//					HashSet<ScenarioProxy> nScenarios = new HashSet<ScenarioProxy>();
+//					//we filter the results returned
+////					/**
+////					 * Unregistered user: can see scn only is it is APPROVED
+////					 * Registered user: can see Scn if is APPROVED or if they own it
+////					 * Administrators: can see the scn w/out restriction
+////					 */
+////					if(userRole==UserRole.Administrator)
+////						response.add(result);
+////					else if (userRole==UserRole.RegisteredUser){
+////						if(result.getSubmitter().equals(submitterName))
+////							response.add(result);
+////					}else if (result.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED))
+////						response.add(result);
+//					Date dateFrom = advancedSearchDateBoxFrom.getValue();
+//					Date dateUntil = advancedSearchDateBoxUntil.getValue();
+//					String hazardSeverity = advancedSearchHazardSeverityListbox.getValue(advancedSearchHazardSeverityListbox.getSelectedIndex());
+//					String clinicianInvolved = advancedSearchCliniciansTextBox.getText();
+//					String environmentInvolved = advancedSearchEnvironmentsTextBox.getText();
+//					String deviceType = advancedSearchEquipmentTypeTextBox.getText();
+//					String deviceManufacturer = advancedSearchEquipmentManufacturerTextBox.getText();
+//					for(ScenarioProxy scn : response){
+//						//1- filter creation date range
+//						if(null != dateFrom && null != dateUntil){
+//							if(scn.getCreationDate().after(dateFrom) && scn.getCreationDate().before(dateUntil))
+//								nScenarios.add(scn);
+//						}else if(null != dateFrom && scn.getCreationDate().after(dateFrom)){
+//							nScenarios.add(scn);
+//						}else if(null != dateUntil && scn.getCreationDate().before(dateUntil)){
+//							nScenarios.add(scn);
+//						}
+//						//2-filter hazard severity. The scenario has a List of hazards
+//						List<HazardsEntryProxy> hazardsList = scn.getHazards().getEntries();
+//						if(hazardSeverity.trim()!="" && null != hazardsList && hazardsList.size()>0){
+//							for(int i=0;i<hazardsList.size();i++){
+//								HazardsEntryProxy hep = hazardsList.get(i);
+//								if(hep.getSeverity().trim().equalsIgnoreCase(hazardSeverity)){
+//									nScenarios.add(scn); break;
+//								}
+//							}
+//						}
+//						//3- filter clinicians involved
+//						List<String> clinicians = scn.getEnvironments().getCliniciansInvolved();
+//						if(!clinicianInvolved.trim().equals("") && clinicianInvolved.trim()!= null && null!=clinicians && clinicians.size()>0){
+//							for(int i=0;i<clinicians.size();i++){
+//								if(clinicians.get(i).trim().equalsIgnoreCase(clinicianInvolved)){
+//									nScenarios.add(scn); break;
+//								}
+//							}
+//						}
+//						//4- filter environments
+//						List<String> env = scn.getEnvironments().getClinicalEnvironments();
+//						if(!environmentInvolved.trim().equals("")  && clinicianInvolved.trim()!= null && null!=env && env.size()>0){
+//							for(int i=0;i<env.size();i++){
+//								if(env.get(i).trim().equalsIgnoreCase(environmentInvolved)){
+//									nScenarios.add(scn); break;
+//								}
+//							}
+//						}
+//						//5- filter device type and device manufacturer
+//						List<EquipmentEntryProxy> devices = scn.getEquipment().getEntries();
+//						if(devices!=null && devices.size()>0){
+//							for(int i=0;i<devices.size();i++){
+//								EquipmentEntryProxy eep = devices.get(i);
+//								if(!deviceType.trim().equals("")  && eep.getDeviceType()!=null && deviceType.trim().equalsIgnoreCase(eep.getDeviceType().trim()) ){
+//									nScenarios.add(scn); break;
+//								}
+//								if(!deviceManufacturer.equals("")  && eep.getManufacturer()!=null && deviceManufacturer.trim().equalsIgnoreCase(eep.getManufacturer().trim())){
+//									nScenarios.add(scn); break;
+//								}
+//							}
+//							
+//						}
+//					}
+//					
+//					//convert set into list
+//					java.util.Iterator<ScenarioProxy> it = nScenarios.iterator();
+//					while(it.hasNext()){
+//						filteredResult.add(it.next());
+//					}
+//					
+//					resetGridAuxVar(filteredResult);
+//					drawScenariosListGrid(filteredResult);
+//					
+//				}
+//				@Override
+//				public void onFailure(ServerFailure error) {
+//					super.onFailure(error);
+//				}
+//			}).fire();
+//	}
+	
+	/**
+	 * Advanced Search; Gets the list of approved scn with the keywords and then filters using the other fields 
+	 */
+	public void doAdvancedSearch(){
+		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
+		scenarioRequest.searchByKeywords(advancedSearchKeywordsTextBox.getText())
 			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
-			.to(listScnReceiver).fire();
-//		}
+			.to(new Receiver<List<ScenarioProxy>> () {
 
+				@Override
+				public void onSuccess(List<ScenarioProxy> response) {
+					if(null==response || response.size()==0){ 
+						status.setVisible(false); 
+						return;
+					}
+					
+					List<ScenarioProxy> filteredResult= new ArrayList<ScenarioProxy>();
+					HashSet<ScenarioProxy> nScenarios = new HashSet<ScenarioProxy>(response);
+					//we filter the results returned
+//					/**
+//					 * Unregistered user: can see scn only is it is APPROVED
+//					 * Registered user: can see Scn if is APPROVED or if they own it
+//					 * Administrators: can see the scn w/out restriction
+//					 */
+//					if(userRole==UserRole.Administrator)
+//						response.add(result);
+//					else if (userRole==UserRole.RegisteredUser){
+//						if(result.getSubmitter().equals(submitterName))
+//							response.add(result);
+//					}else if (result.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED))
+//						response.add(result);
+					Date dateFrom = advancedSearchDateBoxFrom.getValue();
+					Date dateUntil = advancedSearchDateBoxUntil.getValue();
+					String hazardSeverity = advancedSearchHazardSeverityListbox.getValue(advancedSearchHazardSeverityListbox.getSelectedIndex());
+					String clinicianInvolved = advancedSearchCliniciansTextBox.getText();
+					String environmentInvolved = advancedSearchEnvironmentsTextBox.getText();
+					String deviceType = advancedSearchEquipmentTypeTextBox.getText();
+					String deviceManufacturer = advancedSearchEquipmentManufacturerTextBox.getText();
+					boolean found = false;
+					for(ScenarioProxy scn : response){
+						//1- filter creation date range
+						if(null != dateFrom && null != dateUntil){
+							if(scn.getCreationDate().before(dateFrom) || scn.getCreationDate().after(dateUntil))
+								nScenarios.remove(scn);
+						}else if(null != dateFrom && scn.getCreationDate().before(dateFrom)){
+							nScenarios.remove(scn); 
+						}else if(null != dateUntil && scn.getCreationDate().after(dateUntil)){
+							nScenarios.remove(scn);
+						}
+						//2-filter hazard severity. The scenario has a List of hazards
+						List<HazardsEntryProxy> hazardsList = scn.getHazards().getEntries();
+						if(!hazardSeverity.trim().equals("")){
+							if(null != hazardsList && hazardsList.size()>0){
+								found = false;
+								for(int i=0;i<hazardsList.size();i++){
+									HazardsEntryProxy hep = hazardsList.get(i);
+									if(hep.getSeverity().trim().equalsIgnoreCase(hazardSeverity)){
+										found=true; break;
+									}
+								}
+								if(!found){
+									nScenarios.remove(scn);
+								}
+							}else{
+								nScenarios.remove(scn);//there's a filter but no list of hazards
+							}
+						}
+						//3- filter clinicians involved
+						List<String> clinicians = scn.getEnvironments().getCliniciansInvolved();
+						if(!clinicianInvolved.trim().equals("")){
+							if(clinicianInvolved.trim()!= null && null!=clinicians && clinicians.size()>0){
+								found = false;
+								for(int i=0;i<clinicians.size();i++){
+									if(clinicians.get(i).trim().equalsIgnoreCase(clinicianInvolved)){
+										found =true; break;
+									}
+								}
+								if(!found){
+									nScenarios.remove(scn);
+								}
+							}else{
+								nScenarios.remove(scn);//there's a filter but no list of clinicians
+							}
+						}
+							
+						//4- filter environments
+						List<String> env = scn.getEnvironments().getClinicalEnvironments();
+						if(!environmentInvolved.trim().equals("")){
+							if(clinicianInvolved.trim()!= null && null!=env && env.size()>0){
+								found = false;
+								for(int i=0;i<env.size();i++){
+									if(env.get(i).trim().equalsIgnoreCase(environmentInvolved)){
+										found = true; break;
+									}
+								}
+								if(!found){
+									nScenarios.remove(scn); 
+								}
+							}else{
+								nScenarios.remove(scn);//there's a filter but no list of environments
+							}
+						}
+						//5- filter device type and device manufacturer
+						List<EquipmentEntryProxy> devices = scn.getEquipment().getEntries();
+						if(devices!=null && devices.size()>0){
+							found = false;
+							for(int i=0;i<devices.size();i++){
+								EquipmentEntryProxy eep = devices.get(i);
+								if(!deviceType.trim().equals("")  && eep.getDeviceType()!=null && deviceType.trim().equalsIgnoreCase(eep.getDeviceType().trim()) ){
+									found = true; break;
+								}
+								if(!deviceManufacturer.equals("")  && eep.getManufacturer()!=null && deviceManufacturer.trim().equalsIgnoreCase(eep.getManufacturer().trim())){
+									found = true; break;
+								}
+							}
+							if((!deviceType.trim().equals("") || !deviceManufacturer.equals(""))  && !found){
+								nScenarios.remove(scn); 
+							}
+							
+						}else{
+							if(!deviceType.trim().equals("")  || !deviceManufacturer.equals("")){
+								nScenarios.remove(scn); //filters for devices, but no list of equipment
+							}
+						}
+					}
+					
+					//convert set into list
+					java.util.Iterator<ScenarioProxy> it = nScenarios.iterator();
+					while(it.hasNext()){
+						filteredResult.add(it.next());
+					}
+					
+					resetGridAuxVar(filteredResult);
+					drawScenariosListGrid(filteredResult);
+					
+				}
+				@Override
+				public void onFailure(ServerFailure error) {
+					super.onFailure(error);
+				}
+			}).fire();
 	}
 
 	@UiField
 	Label status; //status: "Loading..."
 	
 	@UiField
-	Label searchResultCaption; //"results from search: XXX"
+	Label searchResultCaption; //"results from search: blablabla"
 			
 	private void cleanScenarioTable(){
 		hideNavigationButtons();
@@ -780,7 +1017,18 @@ public class ScenarioSearchPanel extends Composite {
 	@UiHandler("submitButton")
 	public void onClick(ClickEvent clickEvent) {		
 		hideAllSearchPanels();
-		searchResultCaption.setText("Search results for: \""+searchQuery.getText()+"\"");
+//		searchResultCaption.setText("Search results for: \""+searchQuery.getText()+"\""); TICKET-134. Multiword search
+		if (searchQuery.getText().trim().indexOf(" ")<0)
+			searchResultCaption.setText("Search results for: \""+searchQuery.getText()+"\"");
+		else{
+			String word = new String();
+			List<String> keyWordsList = Arrays.asList(searchQuery.getText().trim().split("\\s+"));
+			for(String s : keyWordsList){
+				word += "\""+s+"\", ";
+			}
+			searchResultCaption.setText("Search results for: "+word.substring(0, word.length()-2));
+		}
+			
 		searchResultCaption.setVisible(true);
 		doSearch(searchQuery.getText());
 	}
@@ -790,7 +1038,17 @@ public class ScenarioSearchPanel extends Composite {
 		
 		if(kue.getNativeKeyCode()==KeyCodes.KEY_ENTER) {
 			hideAllSearchPanels();//TICKET-119
-			searchResultCaption.setText("Search results for: \""+searchQuery.getText()+"\"");
+//			searchResultCaption.setText("Search results for: \""+searchQuery.getText()+"\""); TICKET-134. Multiword search
+			if (searchQuery.getText().trim().indexOf(" ")<0)
+				searchResultCaption.setText("Search results for: \""+searchQuery.getText()+"\"");
+			else{
+				String word = new String();
+				List<String> keyWordsList = Arrays.asList(searchQuery.getText().trim().split("\\s+"));
+				for(String s : keyWordsList){
+					word += "\""+s+"\", ";
+				}
+				searchResultCaption.setText("Search results for: "+word.substring(0, word.length()-2));
+			}
 			searchResultCaption.setVisible(true);
 			doSearch(searchQuery.getText());
 			
@@ -822,39 +1080,44 @@ public class ScenarioSearchPanel extends Composite {
 	
 	@UiField
 	FlowPanel advancedSearch;
+	@UiField
+	@Ignore
+	FlexTable advancedSearchComponentsTable;
 	
-	@UiField
-	TextBox titleSearch;
-	@UiField
-	TextBox backgroundSearch;
-	@UiField
-	TextBox proposedSearch;
-	@UiField
-	TextBox processSearch;
-	@UiField
-	TextBox algorithmSearch;
-	@UiField
-	TextBox benefitsSearch;
-	@UiField
-	TextBox risksSearch;
+//	@UiField
+	TextBox advancedSearchKeywordsTextBox = new TextBox();
+//	@UiField
+	DateBox advancedSearchDateBoxFrom = new DateBox();	
+//	@UiField
+	DateBox advancedSearchDateBoxUntil = new DateBox();
+//	@UiField
+	ListBox advancedSearchHazardSeverityListbox = new ListBox();
+//	@UiField
+	SuggestBox advancedSearchCliniciansTextBox = new SuggestBox(ScenarioPanel.getClinicianSuggestOracle());
+//	@UiField
+	SuggestBox advancedSearchEnvironmentsTextBox = new SuggestBox(ScenarioPanel.getEnvironmentSuggestOracle());
+//	@UiField
+	TextBox advancedSearchEquipmentTypeTextBox = new TextBox();
+//	@UiField
+	TextBox advancedSearchEquipmentManufacturerTextBox = new TextBox();
 	
 	@UiField
 	Button advancedSearchButton;
 	
 	@UiHandler("advancedSearchButton")
 	public void onClickAdvancedSearchButton(ClickEvent clickEvent) {
-		hideAdvancedSearch();
+		Date dateFrom = advancedSearchDateBoxFrom.getValue();
+		Date dateUntil = advancedSearchDateBoxUntil.getValue();
+
+		//1- Validation that date-from in not after date-until
+		if(dateFrom!=null && dateUntil!=null && dateFrom.after(dateUntil)){
+			String msg = "Date \"from\" can not be after date \"until\"";
+			Window.alert(msg);	
+			return;
+		}
 		
-		String sBackground = backgroundSearch.getText()!= null && !backgroundSearch.getText().trim().equals("")? backgroundSearch.getText().trim():null;
-		String sProposed = proposedSearch.getText()!=null && !proposedSearch.getText().trim().equals("")?proposedSearch.getText().trim():null;
-		String sProcess = proposedSearch.getText()!=null && !processSearch.getText().trim().equals("")?processSearch.getText().trim():null;
-		String sAlgorithm = algorithmSearch.getText()!=null && !algorithmSearch.getText().trim().equals("")?algorithmSearch.getText().trim():null;
-		String sBenefits = benefitsSearch.getText()!=null && !benefitsSearch.getText().trim().equals("")?benefitsSearch.getText().trim():null;
-		String sRisks = risksSearch.getText()!=null && !risksSearch.getText().trim().equals("")?risksSearch.getText().trim():null;
-		String sTitle= titleSearch.getText()!=null && !titleSearch.getText().trim().equals("")?titleSearch.getText().trim():null;
-		
-		
-		doAdvancedSearch(sBackground, sProposed, sProcess, sAlgorithm, sBenefits, sRisks, sTitle);
+		hideAllSearchPanels();		
+		doAdvancedSearch();
 	}
 	
 	private void hideAdvancedSearch(){
@@ -867,6 +1130,47 @@ public class ScenarioSearchPanel extends Composite {
 		status.setVisible(false);
 		searchResult2.setVisible(false);	
 //		radioButtonOr.setValue(true);
+		initializeAdvancedSearchPanel();
+
+
+	}
+	
+	/**
+	 * Initializes the flextable with the components for the advanced search
+	 */
+	private void initializeAdvancedSearchPanel(){
+		advancedSearchComponentsTable.removeAllRows();
+		//first row
+		advancedSearchComponentsTable.setWidget(1, 1, new Label("Keywords in scenario"));
+		advancedSearchComponentsTable.setWidget(1, 2, advancedSearchKeywordsTextBox);
+		//second row
+		advancedSearchComponentsTable.setWidget(2, 1, new Label("Creation date from "));
+		advancedSearchComponentsTable.setWidget(2, 2, advancedSearchDateBoxFrom);
+		advancedSearchComponentsTable.setWidget(2, 3, new Label("  up to date "));
+		advancedSearchComponentsTable.setWidget(2, 4, advancedSearchDateBoxUntil);
+		//third row
+		advancedSearchComponentsTable.setWidget(3, 1, new Label("Hazard severity"));
+		advancedSearchComponentsTable.setWidget(3, 2, advancedSearchHazardSeverityListbox);
+		//XXX This could go somewhere else and being called ONCE instead of EACH TIME.
+//		advancedSearchDateBoxFrom.setFormat(new DateBox.DefaultFormat(DateTimeFormat.getFormat("MMMM dd, yyyy")));
+//		advancedSearchDateBoxUntil.setFormat(new DateBox.DefaultFormat(DateTimeFormat.getFormat("MMMM dd, yyyy")));
+//		advancedSearchHazardSeverityListbox.clear();
+//		advancedSearchHazardSeverityListbox.addItem(" ");// to ad no-filter option
+//		for(String s : ScenarioPanel.getHazardSeverityValues()){
+//			advancedSearchHazardSeverityListbox.addItem(s);
+//		}
+		//
+		//fourth row
+		advancedSearchComponentsTable.setWidget(4, 1, new Label("Clinicians Involved "));
+		advancedSearchComponentsTable.setWidget(4, 2, advancedSearchCliniciansTextBox);
+		advancedSearchComponentsTable.setWidget(4, 3, new Label("Clinicial Environments Involved"));
+		advancedSearchComponentsTable.setWidget(4, 4, advancedSearchEnvironmentsTextBox);
+		//fifth row
+		advancedSearchComponentsTable.setWidget(5, 1, new Label("Device Type"));
+		advancedSearchComponentsTable.setWidget(5, 2, advancedSearchEquipmentTypeTextBox);
+		advancedSearchComponentsTable.setWidget(5, 3, new Label("Device Manufacturer"));
+		advancedSearchComponentsTable.setWidget(5, 4, advancedSearchEquipmentManufacturerTextBox);
+		
 	}
 	
 //	@UiField
@@ -960,7 +1264,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.findById(scnId)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
 		.to(new Receiver<ScenarioProxy>() {
 
 			@Override
@@ -1001,10 +1305,8 @@ public class ScenarioSearchPanel extends Composite {
 	FlowPanel searchByDates;
 	
 	@UiField
-	DateBox dopDateBox1;
-	
-	@UiField
-	DateBox dopDateBox2;
+	@Ignore
+	FlexTable dateRangeSearchComponentsTable;
 	
 	@UiField
 	Button buttonSearchByDates;
@@ -1016,14 +1318,18 @@ public class ScenarioSearchPanel extends Composite {
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		searchByDates.setVisible(true);
 		status.setVisible(false);
-		dopDateBox1.setFormat(new DateBox.DefaultFormat(DateTimeFormat.getFormat("MMMM dd, yyyy")));
-		dopDateBox2.setFormat(new DateBox.DefaultFormat(DateTimeFormat.getFormat("MMMM dd, yyyy")));
+		//one row, four columns
+		dateRangeSearchComponentsTable.setWidget(1, 1, new Label("Search: from date "));
+		dateRangeSearchComponentsTable.setWidget(1, 2, advancedSearchDateBoxFrom);
+		dateRangeSearchComponentsTable.setWidget(1, 3, new Label(" up to date "));
+		dateRangeSearchComponentsTable.setWidget(1, 4, advancedSearchDateBoxUntil);
 	}
 	
 	@UiHandler("buttonSearchByDates")
 	public void onClickButtonSearchByDates(ClickEvent clickEvent) {	
-		Date dateFrom = dopDateBox1.getValue();
-		Date dateUntil = dopDateBox2.getValue();
+
+		Date dateFrom = advancedSearchDateBoxFrom.getValue();
+		Date dateUntil = advancedSearchDateBoxUntil.getValue();
 
 		//1- validation that not both dates are NULL
 		if(dateFrom==null && dateUntil==null){
@@ -1039,12 +1345,57 @@ public class ScenarioSearchPanel extends Composite {
 		}
 		
 		hideAllSearchPanels();
-		//TODO Add here a Date format to pretty-print the dates if we are going to show it.
-		searchResultCaption.setText("Search results for scenarios between #"+dopDateBox1.getValue()+" and "+dopDateBox2.getValue()+".");
+		DefaultDateTimeFormatInfo info = new DefaultDateTimeFormatInfo();
+		DateTimeFormat dtf = new DateTimeFormat("MM/dd/yyyy", info) {}; 
+		String headline = "Search results for scenarios created";
+		if(null != advancedSearchDateBoxFrom.getValue() && null != advancedSearchDateBoxUntil.getValue())
+			headline += " between "+dtf.format(advancedSearchDateBoxFrom.getValue())+" and "+dtf.format(advancedSearchDateBoxUntil.getValue())+".";
+		else if (null != advancedSearchDateBoxFrom.getValue())
+			headline += " after "+dtf.format(advancedSearchDateBoxFrom.getValue())+".";
+		else 	
+			headline += " before "+dtf.format(advancedSearchDateBoxUntil.getValue())+".";
+		searchResultCaption.setText(headline);
 		searchResultCaption.setVisible(true);
-//		doSearchByDates(Date dateFrom, Date DateUntil);
+		doSearchByDates(dateFrom, dateUntil);
 		//XXX For Search by dates, which date do we use? creation date, modification date, auditing date???
 	}
 	
+	public void doSearchByDates(Date dateFrom, Date dateUntil){
+		cleanScenarioTable();
+		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
+		scenarioRequest.searchByCreationDateRange(dateFrom, dateUntil)
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.to(new Receiver<List<ScenarioProxy>> () {
+
+			@Override
+			public void onSuccess(List<ScenarioProxy> result) {
+				if(null==result){ 
+					status.setVisible(false); 
+					return;}
+				
+//				List<ScenarioProxy> response = new ArrayList<ScenarioProxy>();
+//				/**
+//				 * Unregistered user: can see scn only is it is APPROVED
+//				 * Registered user: can see Scn if is APPROVED or if they own it
+//				 * Administrators: can see the scn w/out restriction
+//				 */
+//				if(userRole==UserRole.Administrator)
+//					response.add(result);
+//				else if (userRole==UserRole.RegisteredUser){
+//					if(result.getSubmitter().equals(submitterName))
+//						response.add(result);
+//				}else if (result.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED))
+//					response.add(result);
+				
+				resetGridAuxVar(result);
+				drawScenariosListGrid(result);
+				
+			}
+			@Override
+			public void onFailure(ServerFailure error) {
+				super.onFailure(error);
+			}
+		}).fire();
+	}
 	
 }

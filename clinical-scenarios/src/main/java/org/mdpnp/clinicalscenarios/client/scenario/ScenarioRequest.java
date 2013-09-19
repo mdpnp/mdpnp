@@ -1,5 +1,6 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import com.google.web.bindery.requestfactory.shared.ServiceName;
 public interface ScenarioRequest extends RequestContext {
 	Request<List<ScenarioProxy>> findAllScenarios();
 	Request<ScenarioProxy> findById(Long id);
+	Request<List<ScenarioProxy>>  searchByCreationDateRange(Date dateFrom, Date dateUntil);
 	Request<List<Long>> findAllIds();
 	InstanceRequest<ScenarioProxy, ScenarioProxy> persist();
 	InstanceRequest<ScenarioProxy, Void> remove();

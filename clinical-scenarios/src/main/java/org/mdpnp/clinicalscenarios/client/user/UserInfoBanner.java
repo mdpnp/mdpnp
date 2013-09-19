@@ -149,8 +149,8 @@ public class UserInfoBanner extends Composite {
 		searchById.setTitle("Find a scenario by its unique Id");
 		search.addItem(searchById);
 		//XXX SEarch by dates not yet - consider which date of the scenario to use
-//		searchByDates.setTitle("Find scenarios in a date range");
-//		search.addItem(searchByDates);
+		searchByDates.setTitle("Find scenarios in a date range");
+		search.addItem(searchByDates);
 		showLatestSearch.setTitle("Retrieve the previous search results");
 		search.addItem(showLatestSearch);
 

@@ -16,7 +16,7 @@
 		.resultsFound{
 			padding:0px 5px 0px 5px;
 		}
-		.datePickerSyle{
+		.datePickerStyle{
 			padding:0px 5px 0px 5px;
 		}
 
@@ -26,34 +26,16 @@
 <!-- 		Basic search -->
 		<g:FlowPanel ui:field='basicSearch' >
 		    <g:Label text='Basic Search' ui:field='header' styleName='heading'/>
-			<g:TextBox ui:field='searchQuery' text='Enter keyword'/>		
+			<g:TextBox ui:field='searchQuery' text='Enter keyword(s)'/>		
 			<g:Button text='Search' ui:field='submitButton'/>
-			<g:Label text='Please enter single Keyword' ui:field='pleaseEnterKeywords' styleName='{style.notimportant}'/>
+<!-- 			<g:Label text='Please enter single Keyword' ui:field='pleaseEnterKeywords' styleName='{style.notimportant}'/> TICKET-134-->
 		</g:FlowPanel>
 		
 <!-- 		Advanced Search -->
 		<g:FlowPanel ui:field='advancedSearch' >
 		    <g:Label text='Advanced Search'  styleName='heading'/>
-<!-- 			<g:RadioButton ui:field='radioButtonAnd' name='rb' text='Scenarios matching EACH of the specified keywords'></g:RadioButton> -->
-<!-- 			<g:HTML><br/></g:HTML> -->
-<!-- 			<g:RadioButton ui:field='radioButtonOr' name='rb'  text='Scenarios matching ANY of the specified keywords'></g:RadioButton> -->
-<!-- 			<g:HTML><br/></g:HTML> -->
-			
-			<g:Label text='Keywords in Scenario "Title"' />
-			<g:TextBox ui:field='titleSearch' /><g:HTML><br/></g:HTML>
-			<g:Label text='Keywords in Scenario "Background"' />
-			<g:TextBox ui:field='backgroundSearch' /><g:HTML><br/></g:HTML>
-			<g:Label text='Keywords in Scenario "Proposed State"' />
-			<g:TextBox ui:field='proposedSearch' /><g:HTML><br/></g:HTML>
-			<g:Label text='Keywords in Scenario "Process"' />
-			<g:TextBox ui:field='processSearch' /><g:HTML><br/></g:HTML>
-			<g:Label text='Keywords in Scenario "Algorithm"' />
-			<g:TextBox ui:field='algorithmSearch' /><g:HTML><br/></g:HTML>
-			<g:Label text='Keywords in Scenario "Benefits"' />
-			<g:TextBox ui:field='benefitsSearch' /><g:HTML><br/></g:HTML>
-			<g:Label text='Keywords in Scenario "Risks"' />
-			<g:TextBox ui:field='risksSearch' /><g:HTML><br/></g:HTML>
-			<g:Button text='Advanced Search' ui:field='advancedSearchButton'/>
+			<g:FlexTable ui:field='advancedSearchComponentsTable'/>			
+			<g:Button text='Advanced Search' ui:field='advancedSearchButton'/>			
 		</g:FlowPanel>
 		
 <!-- 		Search by Id -->
@@ -65,26 +47,9 @@
 		
 <!-- 		Search by Date Range -->
 		<g:FlowPanel ui:field='searchByDates' >
-		    <!-- <g:HTML>
-		    <table>
-		      <tr>
-		          <td><g:InlineLabel text='Date From' /></td>
-		          <td><g:InlineLabel text='Date Until' /></td>
-		      </tr>  
-		      <tr>
-		          <td><dp:DateBox ui:field="dopDateBox1" /></td>
-		          <td><dp:DateBox ui:field="dopDateBox2" /></td>
-		          <td><g:Button text='Search' ui:field='buttonSearchByDates'/></td>
-		      </tr>		        
-		    </table>		    
-		    </g:HTML>-->
 		    <g:Label text='Search by Dates Range' styleName='heading'/>
-		    <g:InlineLabel text='Search: from date' />
-		    <dp:DateBox ui:field="dopDateBox1" styleName='datePickerSyle'/>
-		    <g:InlineLabel text='up to date' />
-		    <dp:DateBox ui:field="dopDateBox2" styleName='datePickerSyle'/>
+		    <g:FlexTable ui:field='dateRangeSearchComponentsTable'/>	
 		    <g:Button text='Search' ui:field='buttonSearchByDates'/>
-
 		</g:FlowPanel>
 
 		<g:FlexTable ui:field='searchResult'/>
