@@ -114,7 +114,9 @@ public class Main {
             }
         } else if(cmdline) {
             Configuration.help(Main.class, System.out);
-        }
+        } else {
 
+        }
+        log.trace("This is the end of Main");
     }
 }

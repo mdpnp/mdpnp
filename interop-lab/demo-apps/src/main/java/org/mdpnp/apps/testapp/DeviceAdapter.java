@@ -1,7 +1,6 @@
 package org.mdpnp.apps.testapp;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
@@ -11,11 +10,9 @@ import java.io.InputStreamReader;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import org.mdpnp.apps.testapp.Configuration.DeviceType;
@@ -50,7 +47,7 @@ public class DeviceAdapter {
     long start() {
         return System.currentTimeMillis();
     }
-    
+
     long stop(String s, long tm) {
         log.trace(s + " took " + (System.currentTimeMillis() - tm) + "ms");
         return start();
@@ -61,7 +58,7 @@ public class DeviceAdapter {
             progressBar.setValue(value);
         }
     }
-    
+
     private void killAdapter() {
         killAdapter(null);
     }
@@ -108,8 +105,9 @@ public class DeviceAdapter {
     public void start(DeviceType type, int domainId, final String address, boolean gui) throws Exception {
         start(type, domainId, address, gui, true, null);
     }
-    
+
     public void start(DeviceType type, int domainId, final String address, boolean gui, boolean exit, EventLoop eventLoop) throws Exception {
+        log.trace("Starting DeviceAdapter with type="+type);
         if (null != address && address.contains(":")) {
             SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
             log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
@@ -140,17 +138,17 @@ public class DeviceAdapter {
 //                    progressBar.setPreferredSize(new Dimension(300, 100));
                     progressBar.setMinimum(1);
                     progressBar.setMaximum(100);
-                    
+
                     progressBar.setStringPainted(true);
                     setString(progressBar, "Shutting down", 1);
 
                     frame.getContentPane().removeAll();
-                    
+
                     frame.getContentPane().setLayout(new BorderLayout());
                     frame.getContentPane().add(progressBar, BorderLayout.NORTH);
                     frame.validate();
                     frame.repaint();
-                    
+
                     Runnable r = new Runnable() {
                         public void run() {
                             try {
@@ -214,7 +212,7 @@ public class DeviceAdapter {
         }
 
         getConnected.connect();
-        
+
 
         // Wait until killAdapter, then report on any threads that didn't come down successfully
         synchronized (this) {
@@ -222,8 +220,8 @@ public class DeviceAdapter {
                 wait();
             }
         }
-       
-        
+
+
         if(gui) {
             SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
@@ -231,10 +229,10 @@ public class DeviceAdapter {
                 }
             });
             frame.setVisible(false);
-            frame.dispose();                    
+            frame.dispose();
 //            awtThread.join(5000L);
         }
-        
+
         if (exit) {
 
             int n = Thread.activeCount() + 10;
@@ -245,7 +243,7 @@ public class DeviceAdapter {
                     log.warn("Non-Daemon thread would block exit: " + threads[i].getName());
                 }
             }
-            
+
             System.exit(0);
         }
     }
