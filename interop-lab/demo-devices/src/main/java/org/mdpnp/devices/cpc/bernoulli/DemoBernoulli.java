@@ -263,7 +263,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
         return "450c.png";
     }
     @Override
-    protected void connect(String str) {
+    public void connect(String str) {
         int port = 17008;
         if(str.contains(":")) {
             int colon = str.lastIndexOf(':');
@@ -382,7 +382,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 
 
     @Override
-    protected void disconnect() {
+    public void disconnect() {
         log.trace("disconnect requested");
         synchronized(this) {
             switch(getState().ordinal()){

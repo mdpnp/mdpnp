@@ -173,8 +173,8 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         });
     }
 
-    protected abstract void connect(String str);
-    protected abstract void disconnect();
+    public abstract void connect(String str);
+    public abstract void disconnect();
     protected abstract ice.ConnectionType getConnectionType();
 
     public ice.ConnectionState getState() {
@@ -211,6 +211,9 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 
     //Disconnected -> Connecting -> Negotiating -> Connected -> Disconnecting -> Disconnected
 
+    public boolean awaitState(ice.ConnectionState state, long timeout) {
+        return stateMachine.wait(state, timeout);
+    }
 
     protected void setConnectionInfo(String connectionInfo) {
         if(null == connectionInfo) {
