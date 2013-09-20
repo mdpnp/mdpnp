@@ -11,7 +11,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 
 import javax.swing.JComponent;
@@ -19,9 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
-import javax.swing.ListModel;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 public class DeviceListCellRenderer extends JComponent implements ListCellRenderer {
@@ -107,13 +104,20 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
                     makeAndModel = di.manufacturer + " " + makeAndModel;
                 }
                 modelName.setText(makeAndModel);
-
+            } else {
+                modelName.setText("<unknown>");
             }
 
             if (icon != null) {
                 this.icon.setIcon(icon);
+            } else {
+                this.icon.setIcon(null);
             }
         } else {
+            udi.setText("<awaiting UDI>");
+            connectionStatus.setText("");
+            modelName.setText("<unknown>");
+            this.icon.setIcon(null);
         }
         setBorder(isSelected ? selectedBorder : null);
         return this;
