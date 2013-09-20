@@ -11,70 +11,71 @@ import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 
 public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice {
-	protected Throwable t;
-	
-	public AbstractSimulatedConnectedDevice(int domainId, EventLoop eventLoop) {
-		super(domainId, eventLoop);
-		AbstractSimulatedDevice.randomUDI(deviceIdentity);
-		deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
-	    deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
-	    deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
-	}
-	
-	public Throwable getLastError() {
-		return t;
-	}
+    protected Throwable t;
 
-	@Override
-	public void connect(String str) {
-	    ice.ConnectionState state = getState();
-	    if(ice.ConnectionState.Connected.equals(state) ||
-	       ice.ConnectionState.Connecting.equals(state) ||
-	       ice.ConnectionState.Negotiating.equals(state)) {
-	    } else {
-    		if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting, 1000L)) {
-    			throw new RuntimeException("Unable to enter Connecting State");
-    		}
-    		if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Negotiating, 1000L)) {
-    			throw new RuntimeException("Unable to enter Negotiating State");
-    		}
-    		if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Connected, 1000L)) {
-    			throw new RuntimeException("Unable to enter Connected State");
-    		}
-	    }
-	}
+    public AbstractSimulatedConnectedDevice(int domainId, EventLoop eventLoop) {
+        super(domainId, eventLoop);
+        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
+        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
+        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
+        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+    }
 
-	@Override
-	public void disconnect() {
-	    ice.ConnectionState state = getState();
-	    if(ice.ConnectionState.Disconnected.equals(state) ||
-	       ice.ConnectionState.Disconnecting.equals(state)) {
-	    } else {
-    		if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnecting, 1000L)) {
-    			throw new RuntimeException("Unable to enter Disconnecting State");
-    		}
-    		if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnected, 1000L)) {
-    			throw new RuntimeException("Unable to enter Disconnected State");
-    		}
-	    }
-	}
-	
-	@Override
-	protected ice.ConnectionType getConnectionType() {
-		return ice.ConnectionType.Simulated;
-	}
-	
-	public String getConnectionInfo() {
-		return null;
-	}
-	
-	@Override
-	public void shutdown() {
-	    // TODO add this back in and test it vigorously.
-	    // 7/30/2013 doesn't seem to impart any benefit currently. I think other shutdown
-	    // issues are more pressing
-	    deviceIdentityWriter.dispose(deviceIdentity, deviceIdentityHandle);
-	    deviceIdentityHandle = null;
-	    super.shutdown();
-	}
+    public Throwable getLastError() {
+        return t;
+    }
+
+    @Override
+    public void connect(String str) {
+        ice.ConnectionState state = getState();
+        if(ice.ConnectionState.Connected.equals(state) ||
+           ice.ConnectionState.Connecting.equals(state) ||
+           ice.ConnectionState.Negotiating.equals(state)) {
+        } else {
+            if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting, 1000L)) {
+                throw new RuntimeException("Unable to enter Connecting State");
+            }
+            if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Negotiating, 1000L)) {
+                throw new RuntimeException("Unable to enter Negotiating State");
+            }
+            if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Connected, 1000L)) {
+                throw new RuntimeException("Unable to enter Connected State");
+            }
+        }
+    }
+
+    @Override
+    public void disconnect() {
+        ice.ConnectionState state = getState();
+        if(ice.ConnectionState.Disconnected.equals(state) ||
+           ice.ConnectionState.Disconnecting.equals(state)) {
+        } else {
+            if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnecting, 1000L)) {
+                throw new RuntimeException("Unable to enter Disconnecting State");
+            }
+            if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnected, 1000L)) {
+                throw new RuntimeException("Unable to enter Disconnected State");
+            }
+        }
+    }
+
+    @Override
+    protected ice.ConnectionType getConnectionType() {
+        return ice.ConnectionType.Simulated;
+    }
+
+    public String getConnectionInfo() {
+        return null;
+    }
+
+    @Override
+    public void shutdown() {
+        // TODO add this back in and test it vigorously.
+        // 7/30/2013 doesn't seem to impart any benefit currently. I think other shutdown
+        // issues are more pressing
+        deviceIdentityWriter.dispose(deviceIdentity, deviceIdentityHandle);
+        deviceIdentityHandle = null;
+        super.shutdown();
+    }
 }
