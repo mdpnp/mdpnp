@@ -351,6 +351,57 @@ public class DeviceListModel extends AbstractListModel<Device> {
                 dataAvailable(reader);
             }
         });
+
+        eventLoop.doLater(new Runnable() {
+            public void run() {
+                InstanceHandle_t previousInstance = InstanceHandle_t.HANDLE_NIL;
+                // Iterate to ensure we didn't miss any previously discovered instances
+                int i = 0;
+                for(;;) {
+                    try {
+                        reader.read_next_instance(part_seq, info_seq, 1, previousInstance, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                        ParticipantBuiltinTopicData data = (ParticipantBuiltinTopicData) part_seq.get(0);
+                        SampleInfo si = (SampleInfo) info_seq.get(0);
+                        i++;
+                        log.trace("This InstanceHandle was already in the reader! "+si.instance_handle);
+                        seeAnInstance(data, si);
+
+                        previousInstance = si.instance_handle;
+                    } catch (RETCODE_NO_DATA noData) {
+                        log.trace("Iterated over " + i + " instances");
+                        return;
+                    } finally {
+                        reader.return_loan(part_seq, info_seq);
+                    }
+                }
+
+            }
+        });
+    }
+
+    private final void seeAnInstance(ParticipantBuiltinTopicData pbtd, SampleInfo si) {
+        if(0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
+            if(!contentsByHandle.containsKey(si.instance_handle) && si.valid_data) {
+                if(!pbtd.user_data.value.isEmpty()) {
+                     byte[] arrbyte = new byte[pbtd.user_data.value.size()];
+                     pbtd.user_data.value.toArrayByte(arrbyte);
+                     String udi = null;
+                     try {
+                         udi = new String(arrbyte, "ASCII");
+                     } catch (UnsupportedEncodingException e) {
+                         log.error(e.getMessage(), e);
+                     }
+                     add(si.instance_handle, udi);
+                } else {
+                    log.debug("Received instance_handle but no UDI in the user_data:"+si.instance_handle);
+                }
+            } else {
+            }
+         } else {
+             if(contentsByHandle.containsKey(si.instance_handle)) {
+                 remove(si.instance_handle);
+             }
+         }
     }
 
     private final void dataAvailable(ParticipantBuiltinTopicDataDataReader reader) {
@@ -360,30 +411,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                 ParticipantBuiltinTopicData pbtd = (ParticipantBuiltinTopicData) part_seq.get(i);
                 SampleInfo si = (SampleInfo) info_seq.get(i);
 
-                if(0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
-                   if(!contentsByHandle.containsKey(si.instance_handle) && si.valid_data) {
-                       if(!pbtd.user_data.value.isEmpty()) {
-                            byte[] arrbyte = new byte[pbtd.user_data.value.size()];
-                            pbtd.user_data.value.toArrayByte(arrbyte);
-                            String udi = null;
-                            try {
-                                udi = new String(arrbyte, "ASCII");
-                            } catch (UnsupportedEncodingException e) {
-                                log.error(e.getMessage(), e);
-                            }
-                            add(si.instance_handle, udi);
-                       } else {
-                           log.debug("Received instance_handle but no UDI in the user_data:"+si.instance_handle);
-                       }
-                   } else {
-                   }
-                } else {
-                    if(contentsByHandle.containsKey(si.instance_handle)) {
-                        remove(si.instance_handle);
-                    }
-                }
-
-
+                seeAnInstance(pbtd, si);
             }
         } catch (RETCODE_NO_DATA noData) {
 
