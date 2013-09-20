@@ -1,4 +1,4 @@
-PARCEL=demo-apps-0.1.2-SNAPSHOT-linux-arm
+PARCEL=demo-apps-0.1.2-linux-arm
 TARGETS=`cat targets | sed '/^\s*#/d'`
 
 ./gradlew -POS_NAME=linux -POS_ARCH=arm :interop-lab:demo-apps:distZip
