@@ -1,5 +1,8 @@
 package org.mdpnp.clinicalscenarios.client;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioProxy;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioRequestFactory;
@@ -197,7 +200,10 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getListScnSubmitted().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
-				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_SUBMITTED);
+				Set<String> status = new HashSet<String>();
+				status.add(ScenarioPanel.SCN_STATUS_SUBMITTED);
+				status.add(ScenarioPanel.SCN_STATUS_UNLOCKED_PRE);
+				scenarioListPanel.listScnByStatus(status);
 				showWidget(scenarioListPanel);
 			}
 		});
@@ -215,15 +221,23 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 				showWidget(scenarioListPanel);
 			}
 		});
-		//XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
-//		userInfoBanner.getListScnRejected().setScheduledCommand(new Command(){
-//			@Override
-//			public void execute() {
-////				showWidget(userInfoSearchPanel);
-//				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_REJECTED);
-//				showWidget(scenarioListPanel);
-//			}
-//		});
+		userInfoBanner.getListScnModified().setScheduledCommand(new Command(){
+			@Override
+			public void execute() {
+				Set<String> status = new HashSet<String>();
+				status.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+				status.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+				scenarioListPanel.listScnByStatus(status);
+				showWidget(scenarioListPanel);
+			}
+		});
+		userInfoBanner.getListScnRejected().setScheduledCommand(new Command(){
+			@Override
+			public void execute() {
+				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_REJECTED);
+				showWidget(scenarioListPanel);
+			}
+		});
 		userInfoBanner.getListMyScn().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {

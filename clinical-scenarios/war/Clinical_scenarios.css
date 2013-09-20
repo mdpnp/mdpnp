@@ -114,6 +114,11 @@ h1 {
 	font-weight:bold;
 }
 
+.rejectedScn {
+	color: #C71585;
+	font-weight:bold;
+}
+
 /* A selected row from a table*/
 .selectedRow{
 	background-color:#316AC5;

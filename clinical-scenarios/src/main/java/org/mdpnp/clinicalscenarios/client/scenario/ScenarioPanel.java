@@ -1,5 +1,6 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -86,10 +87,23 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static final int REFERENCE_FOLLOWBUTTON_COL = 3;
 	
 	//scenario status
-	public final static String SCN_STATUS_UNSUBMITTED = 	"unsubmitted";//created and/or modified, but not yet submitted for approval
+	public final static String SCN_STATUS_UNSUBMITTED = 	"unsubmitted";//created and/or modified, but not yet submitted for approval. Only modificable by owner
 	public final static String SCN_STATUS_SUBMITTED = 		"submitted"; //submitted for approval, not yet revised nor approved 
+	public final static String SCN_STATUS_UNLOCKED_PRE =	"unlocked(pre)"; //unlocked pre-scenario submission	
 	public final static String SCN_STATUS_APPROVED = 		"approved"; //revised and approved
-	public final static String SCN_STATUS_REJECTED = 		"rejected"; //revised but not approved. Rejected for revision 
+	public final static String SCN_STATUS_REJECTED = 		"rejected"; //rejected or killed. The scenario reaches a 'dead' state
+	public final static String SCN_STATUS_UNLOCKED_POST =	"unlocked(post)"; //unlocked post-scenario submission	
+	public final static String SCN_STATUS_MODIFIED = 		"dirty"; //an approved scenario modified post-approval
+	
+	//scenario last action taken
+	public final static String SCN_LAST_ACTION_EDITED = 	"edited"; //after scenario modification
+	public final static String SCN_LAST_ACTION_SUBMITTED = "submitted"; //after submission for approval
+	public final static String SCN_LAST_ACTION_APPROVED = "approved"; //after FIRST approval by admin
+	public final static String SCN_LAST_ACTION_REAPPROVED = "reapproved"; //after the second and sucesive approvals
+	public final static String SCN_LAST_ACTION_REJECTED = "rejected"; //after scenarion has been definitely rejected or killed
+	public final static String SCN_LAST_ACTION_RETURNED = "returned"; //after scenario has been returned for clarification
+	public final static String SCN_LAST_ACTION_LOCKED = "locked";     //after scenario has been locked
+	public final static String SCN_LAST_ACTION_UNLOCKED = "unlocked"; //after scenario has been unlocked
 	
 	/**
 	 * Tabs for our CConOps (Clinical concept of Operations)
@@ -108,10 +122,35 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
 	
+	//to Id our user
 	private enum UserRole {Administrator, RegisteredUser, AnonymousUser}
-	private UserRole userRole;
-	
+	private UserRole userRole;	
 	private String userEmail;
+	
+	private boolean editable = false; //indicates if the scenario is editable
+	
+	/**
+	 * Check if its possible to edit this scenario information and updates the flag;
+	 */
+	private void checkEditable(){
+		if(null==currentScenario){
+			editable = false;
+			return;
+		}
+		editable = true;
+		//1- Only states unsubmitted, unloked_pre y unlocked_post are editables
+		if (!(currentScenario.getStatus().equals(SCN_STATUS_UNSUBMITTED) || 
+				currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE) ||
+				currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST))) editable = false;
+		//if unsumbitted, only the creator can edit
+		if(currentScenario.getStatus().equals(SCN_STATUS_UNSUBMITTED) && !userEmail.equals(currentScenario.getSubmitter())) editable = false;
+		
+		//if unlocked_pre or unlocked_post, only owner of lock can edit.
+		if((currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE) || currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST)) 
+				&& !currentScenario.getLockOwner().equals(userEmail)) editable = false;
+		
+		if(userRole==UserRole.AnonymousUser) editable = false;//Anonymous users can't modify the Scn information
+	}
 
 
 	interface Driver extends RequestFactoryEditorDriver<ScenarioProxy, ScenarioPanel> {
@@ -122,6 +161,22 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	interface ScenarioPanelUiBinder extends UiBinder<Widget, ScenarioPanel> {
 	}
+	
+	/**
+	 * Receiver for any search of SINGLE Scenario
+	 */
+	private Receiver<ScenarioProxy> singleScenarioReceiver = new Receiver<ScenarioProxy>() {
+		@Override
+		public void onSuccess(ScenarioProxy response) {
+			setCurrentScenario(currentScenario);
+		}
+		
+		@Override
+		public void onFailure(ServerFailure error) {
+			super.onFailure(error);
+			logger.log(Level.SEVERE, error.getMessage());
+		}
+	};
 
 	 private static class MyDialog extends DialogBox {
 
@@ -254,46 +309,34 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 
 		if(isDrawNew || currentScenario.getEquipment().getEntries().isEmpty()){
-			//the table will have no elements, either because we have a new scenario or because the current one
-			// has no elements on its equipment list
-			for(int i = 0; i < 1; i++) {
-				equipmentTable.insertRow(i + 1);
-				for(int j = 0; j < 4; j++) {//add four textboxes for data
-					equipmentTable.setWidget(i+1, j, new TextBox());
-				}
-				for(int j = 4; j < EQUIPMENT_DElETEBUTTON_COL; j++) {//add four textboxes for data
-					equipmentTable.setWidget(i+1, j, new CheckBox());
-				}
-				//add button to delete current row 
-				Button deleteButton = new Button("Delete");
-				equipmentTable.setWidget(i+1, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
-				final int row = i+1;
-				//click handler that deletes the current row
-				deleteButton.addClickHandler(new ClickHandler() {	
-					@Override
-					public void onClick(ClickEvent event) {
-						equipmentTable.removeRow(row);
-					}
-				});				
-			}
+			addNewEquipmentRow();
 		
 		}else{
 			//populate the table w/ the data from the equipment list of the scenario
-			List<?> eqEntries = currentScenario.getEquipment().getEntries();
+			List<EquipmentEntryProxy> eqEntries = currentScenario.getEquipment().getEntries();
 			for(int i=0; i<eqEntries.size();i++){
 				final int row = i+1;
 				equipmentTable.insertRow(row);
 				EquipmentEntryProxy eep = (EquipmentEntryProxy) eqEntries.get(i);
-				TextBox dtTextbox = new TextBox(); dtTextbox.setText(eep.getDeviceType());
+				TextBox dtTextbox = new TextBox();
+				dtTextbox.setText(eep.getDeviceType());
+				dtTextbox.setReadOnly(!editable);
 				equipmentTable.setWidget(row, EQUIPMENT_DEVICETYPE_COL, dtTextbox);
-				TextBox manufTextBox = new TextBox(); manufTextBox.setText(eep.getManufacturer());
+				TextBox manufTextBox = new TextBox(); 
+				manufTextBox.setText(eep.getManufacturer());
+				manufTextBox.setReadOnly(!editable);
 				equipmentTable.setWidget(row, EQUIPMENT_MANUFACTURER_COL, manufTextBox);
-				TextBox modelTextBox = new TextBox(); modelTextBox.setText(eep.getModel());
+				TextBox modelTextBox = new TextBox(); 
+				modelTextBox.setText(eep.getModel());
+				modelTextBox.setReadOnly(!editable);
 				equipmentTable.setWidget(row, EQUIPMENT_MODEL_COL, modelTextBox);
-				TextBox rossTextBox = new TextBox(); rossTextBox.setText(eep.getRosettaId());
+				TextBox rossTextBox = new TextBox(); 
+				rossTextBox.setText(eep.getRosettaId());
+				rossTextBox.setReadOnly(!editable);
 				equipmentTable.setWidget(i+1, EQUIPMENT_ROSSETAID_COL, rossTextBox);
 				Button deleteButton = new Button("Delete");
-				equipmentTable.setWidget(row, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
+				if(editable)
+					equipmentTable.setWidget(row, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
 				
 				//add click handler to the delete button
 				deleteButton.addClickHandler(new ClickHandler() {				
@@ -536,11 +579,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * <p> 4- Save Clinicians and Environment List
 	 * <p> Persist the scenario entity with all its associated values
 	 */
-	private void save(){
-		if (currentScenario.getStatus().equals(SCN_STATUS_APPROVED)) return;//Don't change Approved Scenarios
-		if (currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED) && userRole!=UserRole.Administrator) return;//Don't change submitted
-		if(userRole==UserRole.AnonymousUser) return;//Anonymous users can't modify the Scn information
+	private void save(){	
+		if(!editable) return;	//Ticket-144 Mutual exclusion / persistence permission	
 		if(isEmptyScenario()) return;//Ticket-81 Don't persist empty Scn
+		
+		currentScenario.setLastActionTaken(SCN_LAST_ACTION_EDITED);
+		currentScenario.setLastActionUser(userEmail);
 		
 		status.setText("SAVING");			
 		ScenarioRequest rc = (ScenarioRequest) driver.flush();
@@ -600,11 +644,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				save();
 			}			
 		};
-		
 
 		//associate handlers and value entities
-		
-		
 	    titleEditor.addChangeHandler(saveOnChange);
 		proposedStateEditor.addChangeHandler(saveOnChange);
 		currentStateEditor.addChangeHandler(saveOnChange);
@@ -644,13 +685,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					if(response.getEmail()==null ||response.getEmail().trim().equals("") ){
 						//Anonymous user
 						userRole = UserRole.AnonymousUser;
-						disableSaveScenario();
 					}else{
 						if(response.getAdmin()) 
 							userRole = UserRole.Administrator;
 						else
 							userRole = UserRole.RegisteredUser;
 					}
+					checkEditable();
 					
 				}
 				@Override
@@ -669,98 +710,26 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * we can't interact w/ the panels
 	 */
 	private void disableSaveScenario(){
-		status.setText("");
-		
-		saveButton.setVisible(false);//can't save on demand
-		submitButton.setVisible(false);//can't submit the Scn
-		
-		algorithmDescription.setEnabled(false);
-		clinicalProcesses.setEnabled(false);
-		risks.setEnabled(false);
-		benefits.setEnabled(false);
-		titleEditor.setEnabled(false);
-		currentStateEditor.setEnabled(false);
-		proposedStateEditor.setEnabled(false);
-		
-		//disable Hazards List
-		for(int row =2; row<hazardsTable.getRowCount();row++){//row 0 headers; row 1 description		
-			Widget wDescription = hazardsTable.getWidget(row, HAZARDS_DESCRIPTION_COL);	
-			Widget wFactor = hazardsTable.getWidget(row, HAZARDS_FACTORS_COL);	
-			if(wDescription instanceof TextArea){((TextArea) wDescription).setEnabled(false);}
-			if(wFactor instanceof TextArea){((TextArea) wFactor).setEnabled(false);}
-		}
-		
-		//disable Equipment list
-		for(int row = 1; row < equipmentTable.getRowCount(); row++) {//Row 0 is HEADERS			
-			Widget wDevType = equipmentTable.getWidget(row, EQUIPMENT_DEVICETYPE_COL);//getWidget row column		
-			Widget wManu = equipmentTable.getWidget(row, EQUIPMENT_MANUFACTURER_COL);//getWidget row column		
-			Widget wModel = equipmentTable.getWidget(row, EQUIPMENT_MODEL_COL);//getWidget row column		
-			Widget wRoss = equipmentTable.getWidget(row, EQUIPMENT_ROSSETAID_COL);//getWidget row column		
-			
-			if(wDevType instanceof TextBox) {((TextBox) wDevType).setEnabled(false);}
-			if(wManu instanceof TextBox) {((TextBox) wManu).setEnabled(false);}
-			if(wModel instanceof TextBox) {((TextBox) wModel).setEnabled(false);}
-			if(wRoss instanceof TextBox) {((TextBox) wRoss).setEnabled(false);}
-		}
-		
-		//disable clinicians and environments list
-		for(int row=0; row<cliniciansTable.getRowCount();row++){
-			Widget wClinician = cliniciansTable.getWidget(row, CLINICIANS_TYPE_COL);
-			if(wClinician instanceof SuggestBox){((SuggestBox) wClinician).setEnabled(false);}
-		}
-		for(int row=0; row<environmentsTable.getRowCount();row++){
-			Widget wEnvironment = environmentsTable.getWidget(row, ENVIRONMENT_TYPE_COL);
-			if(wEnvironment instanceof SuggestBox){((SuggestBox) wEnvironment).setEnabled(false);
-			}
-		}
+		status.setText("You dont have permission to modify the scenario");
+		status.setVisible(false);
+				
+		algorithmDescription.setReadOnly(true);
+		clinicalProcesses.setReadOnly(true);
+		risks.setReadOnly(true);
+		benefits.setReadOnly(true);
+		titleEditor.setReadOnly(true);
+		currentStateEditor.setReadOnly(true);
+		proposedStateEditor.setReadOnly(true);
 	}
 	
-	private void enableSaveScenario(){
-//		status.setText("");
-		
-		saveButton.setVisible(true);
-		submitButton.setVisible(true);
-		
-		algorithmDescription.setEnabled(true);
-		clinicalProcesses.setEnabled(true);
-		risks.setEnabled(true);
-		benefits.setEnabled(true);
-		titleEditor.setEnabled(true);
-		currentStateEditor.setEnabled(true);
-		proposedStateEditor.setEnabled(true);
-		//disable Hazards List
-		for(int row =2; row<hazardsTable.getRowCount();row++){//row 0 headers; row 1 description		
-			Widget wDescription = hazardsTable.getWidget(row, HAZARDS_DESCRIPTION_COL);	
-			Widget wFactor = hazardsTable.getWidget(row, HAZARDS_FACTORS_COL);	
-			if(wDescription instanceof TextArea){((TextArea) wDescription).setEnabled(true);}
-			if(wFactor instanceof TextArea){((TextArea) wFactor).setEnabled(true);}
-		}
-		
-		//enable Equipment list
-		for(int row = 1; row < equipmentTable.getRowCount(); row++) {//Row 0 is HEADERS			
-			Widget wDevType = equipmentTable.getWidget(row, EQUIPMENT_DEVICETYPE_COL);//getWidget row column		
-			Widget wManu = equipmentTable.getWidget(row, EQUIPMENT_MANUFACTURER_COL);//getWidget row column		
-			Widget wModel = equipmentTable.getWidget(row, EQUIPMENT_MODEL_COL);//getWidget row column		
-			Widget wRoss = equipmentTable.getWidget(row, EQUIPMENT_ROSSETAID_COL);//getWidget row column		
-			
-			if(wDevType instanceof TextBox) {((TextBox) wDevType).setEnabled(true);}
-			if(wManu instanceof TextBox) {((TextBox) wManu).setEnabled(true);}
-			if(wModel instanceof TextBox) {((TextBox) wModel).setEnabled(true);}
-			if(wRoss instanceof TextBox) {((TextBox) wRoss).setEnabled(true);}
-		}
-		
-		//disable clinicians and environments list
-		for(int row=0; row<cliniciansTable.getRowCount();row++){
-			Widget wClinician = cliniciansTable.getWidget(row, CLINICIANS_TYPE_COL);
-			if(wClinician instanceof SuggestBox){((SuggestBox) wClinician).setEnabled(true);}
-		}
-		for(int row=0; row<environmentsTable.getRowCount();row++){
-			Widget wEnvironment = environmentsTable.getWidget(row, ENVIRONMENT_TYPE_COL);
-			if(wEnvironment instanceof SuggestBox){((SuggestBox) wEnvironment).setEnabled(true);
-			}
-		}
-		
-		
+	private void enableSaveScenario(){		
+		algorithmDescription.setReadOnly(false);
+		clinicalProcesses.setReadOnly(false);
+		risks.setReadOnly(false);
+		benefits.setReadOnly(false);
+		titleEditor.setReadOnly(false);
+		currentStateEditor.setReadOnly(false);
+		proposedStateEditor.setReadOnly(false);	
 	}
 	
 	
@@ -797,16 +766,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	                    ScenarioPanel.this.currentScenario = currentScenario;
                   	                    
 	                    //after the Entity has been succesfully created, we populate the widgets w/ the entity info and draw it
-//	        		    buildEquipmentTable(true);//new scn. No equipment list
-//	        		    buildHazardsTable(true);
-//	        			buildCliniciansTable(true);
-//	        			buildEnvironmentsTable(true);
-//	        			buildReferencesTable(true);
 	                    buildTabsTables(true);
-
 	        			configureComponents();   			  
 	    			    status.setText("");
 	    			    uniqueId.setText("");	
+	    			    
 
 	                }
 	                
@@ -824,15 +788,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		    currentScenario = context.edit(currentScenario); 
             driver.edit(currentScenario, context);
             this.currentScenario = currentScenario;
-//            buildEquipmentTable(false);
-//            buildHazardsTable(false);
-//    		buildCliniciansTable(false);
-//    		buildEnvironmentsTable(false);
-//    		buildReferencesTable(false);
             buildTabsTables(false);
     		if(currentScenario.getId()!=null)
-    			uniqueId.setText("Scenario Unique ID: "+String.valueOf(currentScenario.getId()));
-    		
+    			uniqueId.setText("Scenario Unique ID: "+String.valueOf(currentScenario.getId()));  		
+
     		configureComponents();
 		}
 		
@@ -844,13 +803,74 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 	}
 	
+	private void configureComponents(){
+		checkEditable();
+		//1- Save button
+		if(!editable){
+			saveButton.setVisible(false);
+			submitButton.setVisible(false);
+			disableSaveScenario();
+		}else{
+			saveButton.setVisible(true);
+			submitButton.setVisible(true);
+			enableSaveScenario();
+		}
+		//2- submit button
+		if(currentScenario.getStatus().equals(SCN_STATUS_UNSUBMITTED) && currentScenario.getSubmitter().equals(userEmail)){
+			submitButton.setVisible(true);
+		}else{
+			submitButton.setVisible(false);
+		}
+		//3- lock button
+		if(userRole==UserRole.Administrator){
+			if(currentScenario.getStatus().equals(SCN_STATUS_UNSUBMITTED) || currentScenario.getStatus().equals(SCN_STATUS_REJECTED)){
+				lockButton.setVisible(false);
+			}else{
+				lockButton.setVisible(true);
+				if(currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE) || currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST)){
+					lockButton.setText("Lock");
+				}else{
+					lockButton.setText("Unlock");
+				}
+			}
+		}else{
+			lockButton.setVisible(false);
+		}
+
+		//4- Feedback tab panel
+		if(userRole==UserRole.Administrator && (//currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED) ||
+				currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE) ||
+				currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST))){
+			if(tabPanel.getWidgetCount() <= APPRV_SCN_TAB_POS)//add Feedback tab if is not there
+				tabPanel.add(manageScnStatus, "Approve or Reject");
+			//feedbak tab buttons
+			//4.1 Approve button: always visible
+			approveScnButton.setVisible(true);
+			//4.2 and 4.3 Return and reject scenario, only possible for unlocked pre-approved scenarios.
+			if(currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE)){
+				returnScnButton.setVisible(true);
+				rejectScnButton.setVisible(true);
+			}else{
+				returnScnButton.setVisible(false);
+				rejectScnButton.setVisible(false);
+			}
+
+		}else{
+			//if the tab is already showing we remove it
+			if(tabPanel.getWidgetCount() > APPRV_SCN_TAB_POS){
+				tabPanel.remove(APPRV_SCN_TAB_POS);
+				selectFirstTab();
+			}
+		}
+	}
+	
 	/**
 	 * Configures the different components of the panel according to the 
 	 * user role and Scenario status
 	 */
-	private void configureComponents(){
-		//XXX this would be a good place to do tabPanel.selectTab(0)???;	 
-		// if we algo wanted to return to this tab after submitting a scn
+/*	private void configureComponents(){
+		//XXX this would be a good place to do tabPanel.selectTab(0)???;
+		// if we also wanted to return to this tab after submitting a scn
 		enableSaveScenario();
 		//1- Unsubmitted
 		// only the scenario owner could submit the scn. 
@@ -900,7 +920,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				selectFirstTab();
 			}
 		}
-	}
+	}*/
 	
 	@UiField
 	TabPanel tabPanel;
@@ -1155,29 +1175,30 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	//When clicking in "AddNew Equipment" anchor
 	@UiHandler("addNewEquipment")
 	void onAddNewEqClick(ClickEvent click) {
-		/**
-		 * We use the currentStateEditor to know if the components have been enabled/disabled for modification
-		 * and thus know if we should allow to create new empty rows
-		 */
-		if(currentStateEditor.isEnabled()){//TICKET-110
-			final int rows = equipmentTable.getRowCount();
-			equipmentTable.insertRow(rows);
-			for(int j = 0; j < 4; j++) {//add four text boxes
-				equipmentTable.setWidget(rows, j, new TextBox());
-			}
-			//add delete button
-			Button deleteButton = new Button("Delete");
-			equipmentTable.setWidget(rows, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
-	
-			//click handler that deletes the current row
-			deleteButton.addClickHandler(new ClickHandler() {	
-				@Override
-				public void onClick(ClickEvent event) {
-					equipmentTable.removeRow(rows);
-				}
-			});
+		if(editable){//TICKET-110
+			addNewEquipmentRow();
 		}
 	}
+	
+	private void addNewEquipmentRow(){
+		final int rows = equipmentTable.getRowCount();
+		equipmentTable.insertRow(rows);
+		for(int j = 0; j < 4; j++) {//add four text boxes
+			equipmentTable.setWidget(rows, j, new TextBox());
+		}
+		//add delete button
+		Button deleteButton = new Button("Delete");
+		equipmentTable.setWidget(rows, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
+
+		//click handler that deletes the current row
+		deleteButton.addClickHandler(new ClickHandler() {	
+			@Override
+			public void onClick(ClickEvent event) {
+				equipmentTable.removeRow(rows);
+			}
+		});
+	}
+	
 	
 	//When clicking in "AddNew Equipment" anchor
 	@UiHandler("addNewHazard")
@@ -1194,15 +1215,18 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * Adds a new empty row to the hazards table
 	 */
 	private void addNewHazardTableRow(){
+		
 		final int row = hazardsTable.getRowCount();
 		hazardsTable.insertRow(row);
 		final TextArea hazardDescription = new TextArea();
 		hazardDescription.setVisibleLines(10);
 		hazardDescription.setCharacterWidth(40);
+		hazardDescription.setReadOnly(!editable);
 		
 		final TextArea hazardFactors = new TextArea();
 		hazardFactors.setVisibleLines(10);
 		hazardFactors.setCharacterWidth(40);
+		hazardFactors.setReadOnly(!editable);
 		
 		hazardsTable.setWidget(row, HAZARDS_DESCRIPTION_COL, hazardDescription);
 		hazardsTable.setWidget(row, HAZARDS_FACTORS_COL, hazardFactors);
@@ -1210,7 +1234,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		hazardsTable.setWidget(row, HAZARDS_SEVERITY_COL, buildListBox(hazardSeverity));
 		
 		Button deleteButton = new Button("Delete");
-		hazardsTable.setWidget(row, HAZARDS_DELETEBUTTON_COL, deleteButton);
+		if(editable)
+			hazardsTable.setWidget(row, HAZARDS_DELETEBUTTON_COL, deleteButton);
 		deleteButton.addClickHandler(new ClickHandler() {				
 			@Override
 			public void onClick(ClickEvent event) {
@@ -1234,11 +1259,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		hazardDescription.setText(description);
 		hazardDescription.setVisibleLines(10);
 		hazardDescription.setCharacterWidth(40);
+		hazardDescription.setReadOnly(!editable);
 		
 		final TextArea hazardFactors = new TextArea();
 		hazardFactors.setText(factors);
 		hazardFactors.setVisibleLines(10);
 		hazardFactors.setCharacterWidth(40);
+		hazardFactors.setReadOnly(!editable);
 		
 		final ListBox hazardsExpected = buildListBox(hazardExpected);
 		int indexExpected = getHazardExpectedIndex(expected);
@@ -1254,7 +1281,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		hazardsTable.setWidget(row, HAZARDS_SEVERITY_COL, hazardsSeverity);
 		
 		Button deleteButton = new Button("Delete");
-		hazardsTable.setWidget(row, HAZARDS_DELETEBUTTON_COL, deleteButton);
+		if(editable){ hazardsTable.setWidget(row, HAZARDS_DELETEBUTTON_COL, deleteButton);}
+		
 		deleteButton.addClickHandler(new ClickHandler() {				
 			@Override
 			public void onClick(ClickEvent event) {
@@ -1274,10 +1302,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		final TextArea reference = new TextArea();
 		reference.setVisibleLines(1);
 		reference.setCharacterWidth(70);
+		reference.setReadOnly(!editable);
 		referencesTable.setWidget(rows, REFERENCE_TEXT_COL, reference);
 		
 		Button deleteButton = new Button("Delete");
-		referencesTable.setWidget(rows, REFERENCE_DELETEBUTTON_COL, deleteButton);
+		if(editable)
+			referencesTable.setWidget(rows, REFERENCE_DELETEBUTTON_COL, deleteButton);
+		
 		deleteButton.addClickHandler(new ClickHandler() {				
 			@Override
 			public void onClick(ClickEvent event) {
@@ -1290,7 +1321,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	//When clicking in "AddNew addNewLinkedReference" anchor
 	@UiHandler("addNewLinkedReference")
 	void onAddNewReferenceClick(ClickEvent click) {
-		addNewLinkedReference();
+		if(editable)
+			addNewLinkedReference();
 	}
 	
 	private void addNewLinkedReference(String ref){
@@ -1301,10 +1333,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		reference.setVisibleLines(1);
 		reference.setCharacterWidth(70);
 		reference.setText(ref);
+		reference.setReadOnly(!editable);
 		referencesTable.setWidget(rows, REFERENCE_TEXT_COL, reference);
 		
 		Button deleteButton = new Button("Delete");
-		referencesTable.setWidget(rows, REFERENCE_DELETEBUTTON_COL, deleteButton);
+		if(editable)
+			referencesTable.setWidget(rows, REFERENCE_DELETEBUTTON_COL, deleteButton);
+		
 		deleteButton.addClickHandler(new ClickHandler() {				
 			@Override
 			public void onClick(ClickEvent event) {
@@ -1333,7 +1368,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		 * We use the currentStateEditor to know if the components have been enabled/disabled for modification
 		 * and thus know if we should allow to create new empty rows
 		 */
-		if(currentStateEditor.isEnabled()){//TICKET-110
+		if(editable){//TICKET-110
 			final int rows = cliniciansTable.getRowCount();
 			cliniciansTable.insertRow(rows);
 			final SuggestBox sb = new SuggestBox(clinicianSuggestOracle);
@@ -1364,6 +1399,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		final SuggestBox sb = new SuggestBox(clinicianSuggestOracle);
 		sb.setText(clinician);
 		sb.setStyleName("wideSuggest");
+		sb.setEnabled(editable);
 		cliniciansTable.setWidget(rows, CLINICIANS_TYPE_COL, sb);
 				
 		//to delete this entry
@@ -1376,7 +1412,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				
 			}
 		});
-		cliniciansTable.setWidget(rows, CLINICIANS_DELETEBUTTON_COL, deleteButton);
+		if(editable)
+			cliniciansTable.setWidget(rows, CLINICIANS_DELETEBUTTON_COL, deleteButton);
 	}
 	
 	@UiHandler("addNewEnvironment")
@@ -1385,7 +1422,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		 * We use the currentStateEditor to know if the components have been enabled/disabled for modification
 		 * and thus know if we should allow to create new empty rows
 		 */
-		if(currentStateEditor.isEnabled()){//TICKET-110
+		if(editable){//TICKET-110
 			final int rows = environmentsTable.getRowCount();
 			environmentsTable.insertRow(rows);
 			final SuggestBox sb = new SuggestBox(environmentSuggestOracle);
@@ -1416,6 +1453,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		final SuggestBox sb = new SuggestBox(environmentSuggestOracle);
 		sb.setText(environment);
 		sb.setStyleName("wideSuggest");
+		sb.setEnabled(editable);
 		environmentsTable.setWidget(rows, ENVIRONMENT_TYPE_COL, sb);
 			
 		//to delete this entry
@@ -1428,7 +1466,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				
 			}
 		});
-		environmentsTable.setWidget(rows, ENVIRONMENT_DELETEBUTTON_COL, deleteButton);
+		if(editable)
+			environmentsTable.setWidget(rows, ENVIRONMENT_DELETEBUTTON_COL, deleteButton);
 	}
 	
 	@UiHandler("currentStateExample")
@@ -1546,6 +1585,37 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	@UiField
 	Button saveButton; //persist the Scn info
 	
+	@UiField
+	Button lockButton; //persist the Scn info
+	
+	@UiHandler("lockButton")
+	public void onClickLock(ClickEvent clickEvent) {
+		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+		currentScenario.setLastActionUser(userEmail);
+		if(!editable){//unlock
+			currentScenario.setLockOwner(userEmail);
+			currentScenario.setLastActionTaken(SCN_LAST_ACTION_UNLOCKED);
+			
+			if(currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED))
+				currentScenario.setStatus(SCN_STATUS_UNLOCKED_PRE);
+			if(currentScenario.getStatus().equals(SCN_STATUS_APPROVED))
+				currentScenario.setStatus(SCN_STATUS_UNLOCKED_POST);
+			if(currentScenario.getStatus().equals(SCN_STATUS_MODIFIED))
+				currentScenario.setStatus(SCN_STATUS_UNLOCKED_POST);	
+			editable = true;
+		}else{//lock
+			currentScenario.setLockOwner(null);
+			currentScenario.setLastActionTaken(SCN_LAST_ACTION_LOCKED);
+			if(currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE))
+				currentScenario.setStatus(SCN_STATUS_SUBMITTED);
+			if(currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST))
+				currentScenario.setStatus(SCN_STATUS_MODIFIED);
+			editable = false;
+		}
+		scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(singleScenarioReceiver);
+		
+	}
+	
 	@UiHandler("submitButton")
 	public void onClickSubmit(ClickEvent clickEvent) {
 		//TICKET-106 
@@ -1575,6 +1645,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			if(confirm){
 				
 				currentScenario.setStatus(SCN_STATUS_SUBMITTED);
+				currentScenario.setLastActionTaken(SCN_LAST_ACTION_SUBMITTED);
+				currentScenario.setLastActionUser(userEmail);
 				checkScenarioFields(scnReq);
 				scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(new Receiver<ScenarioProxy>() {
 	
@@ -1615,7 +1687,77 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			message += "\n\n"+feedback.getText();
 			message += "\n The MD PnP Team \n www.mdpnp.org";
 			
+			boolean sendEmail = false; //FIXME MAil servce as its own entity w/ services
+			
+			if(currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST)){
+				currentScenario.setLastActionTaken(SCN_LAST_ACTION_REAPPROVED);
+			}else{
+				currentScenario.setLastActionTaken(SCN_LAST_ACTION_APPROVED);
+				sendEmail = true;
+			}			
 			currentScenario.setStatus(SCN_STATUS_APPROVED);//update entity information
+			currentScenario.setLockOwner(null);
+			currentScenario.setLastActionUser(userEmail);
+
+			checkScenarioFields(scnReq);//not really that necessary, because it has been updated when clicking the FeedBack tab
+			
+			if(sendEmail){
+				scnReq.persistWithNotification(currentScenario.getSubmitter(), subject, message)
+				.using(currentScenario).with(driver.getPaths())
+				.fire(new Receiver<ScenarioProxy>() {
+		
+					@Override
+					public void onSuccess(ScenarioProxy response) {
+						Window.alert("This Clinical Scenario has been approved");	
+						setCurrentScenario(currentScenario);
+					}
+					
+					public void onFailure(ServerFailure error) {
+						super.onFailure(error);
+					}
+				});
+			}else{
+				scnReq.persist()
+				.using(currentScenario).with(driver.getPaths())
+				.fire(new Receiver<ScenarioProxy>() {
+		
+					@Override
+					public void onSuccess(ScenarioProxy response) {
+						Window.alert("This Clinical Scenario has been approved");	
+						setCurrentScenario(currentScenario);
+					}
+					
+					public void onFailure(ServerFailure error) {
+						super.onFailure(error);
+					}
+				});
+			}
+		}
+	}
+	
+	
+	@UiField
+	Button returnScnButton; //Button to return the Scn for clarification
+	
+	@UiHandler("returnScnButton")
+	public void onClickReturnScn(ClickEvent clickEvent) {
+		final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+
+		//XXX
+		boolean confirm = Window.confirm("Are you sure you want to RETURN this scenario?");
+		if(confirm){
+			String subject ="Requested clarification for your scenario "+currentScenario.getTitle();
+			String message = "The MD PnP Clinical Scenario Repository Administrators " +
+					"have requested further clarification for your scenario "+currentScenario.getTitle()
+					+".\n Please see the comments below \n";
+			message += "\n \n"+feedback.getText();
+			message += "\n The MD PnP Team \n www.mdpnp.org";
+			
+//			currentScenario.setStatus(SCN_STATUS_REJECTED);//XXX 07/22/13 diego@mdpnp.org, rejected Scn = pending of submission
+			currentScenario.setStatus(SCN_STATUS_UNSUBMITTED);//update entity information
+			currentScenario.setLockOwner(null);
+			currentScenario.setLastActionTaken(SCN_LAST_ACTION_RETURNED);
+			currentScenario.setLastActionUser(userEmail);
 			checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
 			
 			scnReq.persistWithNotification(currentScenario.getSubmitter(), subject, message)
@@ -1624,19 +1766,19 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 				@Override
 				public void onSuccess(ScenarioProxy response) {
-					Window.alert("This Clinical Scenario has been approved");	
+					Window.alert("This Clinical Scenario has been returned for clarification");	
 					setCurrentScenario(currentScenario);
 				}
 				
 				public void onFailure(ServerFailure error) {
 					super.onFailure(error);
 				}
+				
 			});
 			
-			configureComponents();
+//			configureComponents();
 		}
 	}
-	
 	
 	@UiField
 	Button rejectScnButton; //Button to reject the Scn
@@ -1648,18 +1790,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		//XXX
 		boolean confirm = Window.confirm("Are you sure you want to REJECT this scenario?");
 		if(confirm){
-			String subject ="Requested clarification for your scenario "+currentScenario.getTitle();
-			String message = "The MD PnP Clinical Scenario Repository Administrators " +
-					"have requested further clarification for your scenario "+currentScenario.getTitle()
-					+".\n Please see the comments below \n";
-			message += "\n \n"+feedback.getText();
-			message += "\n The MD PnP Team \n www.mdpnp.org";
 			
-//			currentScenario.setStatus(SCN_STATUS_REJECTED);//XXX 07/22/13 diego@mdpnp.org, rejected Scn = pending of submission
-			currentScenario.setStatus(SCN_STATUS_UNSUBMITTED);//update entity information
+			currentScenario.setStatus(SCN_STATUS_REJECTED);//update entity information
+			currentScenario.setLockOwner(null);
+			currentScenario.setLastActionTaken(SCN_LAST_ACTION_REJECTED);
+			currentScenario.setLastActionUser(userEmail);
 			checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
 			
-			scnReq.persistWithNotification(currentScenario.getSubmitter(), subject, message)
+			scnReq.persist()
 			.using(currentScenario).with(driver.getPaths())
 			.fire(new Receiver<ScenarioProxy>() {
 	
@@ -1671,11 +1809,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				
 				public void onFailure(ServerFailure error) {
 					super.onFailure(error);
+					currentScenario.setStatus(SCN_STATUS_SUBMITTED);//update entity information
+					//setCurrent?
 				}
 				
 			});
 			
-			configureComponents();
 		}
 	}
 	

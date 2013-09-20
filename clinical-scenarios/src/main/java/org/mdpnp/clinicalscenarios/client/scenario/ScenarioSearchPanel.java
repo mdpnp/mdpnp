@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioStatusComparator;
@@ -48,16 +49,18 @@ import com.google.web.bindery.requestfactory.shared.ServerFailure;
 public class ScenarioSearchPanel extends Composite {
 	
 	//scenario table columns
-	private static int SCN_TITLE_COL = 0;
-	private static int SCN_UNIQUEID_COL = 1;
-	private static int SCN_STATUS_COL = 2;
-	//XXX if we add creation/modification dates to the columns, it should be the new third column
-	private static int SCN_SUBMITTER_COL = 3;	
-	private static int SCN_DELETEBUTTON_COL = 4;
+	private static int SCN_TABLE_FIRST_COL = 0;
+	private static int SCN_TABLE_SECOND_COL = 1;
+	private static int SCN_TABLE_THIRD_COL = 2;
+	private static int SCN_TABLE_FOURTH_COL = 3;
+	private static int SCN_TABLE_FIFTH_COL = 4;	
+	private static int SCN_TABLE_SIXTH_COL = 5;
+	private static int SCN_TABLE_SEVENTH_COL = 6;
+	private static int SCN_TABLE_EIGTH_COL = 7;
 	
 	private final int SCN_GRIDLIST_ROWS = 10; //rows in the table showing the Scn List
-	private final int SCN_GRIDLIST_COLUMNS_admin = 5;//tilte, uniqueID, submitter,status,deleteButton
-	private final int SCN_GRIDLIST_COLUMNS_RegUser = 3;//tilte, uniqueID, status
+	private final int SCN_GRIDLIST_COLUMNS_admin = 8;//tilte, uniqueID, status, submitter, created, lastAction, lockebBy, deleteButton
+	private final int SCN_GRIDLIST_COLUMNS_RegUser = 5;//tilte, uniqueID, status, creationDate, lastAction
 	private final int SCN_GRIDLIST_COLUMNS_UnregUser = 2;//tilte, uniqueID
 	
 	private ScenarioTitleComparator scnTitleComparator = new ScenarioTitleComparator();
@@ -70,6 +73,7 @@ public class ScenarioSearchPanel extends Composite {
 	private final static String STYLE_CLICKABLE = "clickable";
 	private final static String STYLE_SUBMITTEDSCN =  "submittedScn";
 	private final static String STYLE_UNSUBMITTEDSCN =  "unsubmittedScn";
+	private final static String STYLE_REJECTEDSCN =  "rejectedScn";
 	
 	private static final String STYLE_TABLEROWOTHER = "tableRowOther";
 	private static final String STYLE_USERLISTHEADER = "userListHeader";
@@ -82,6 +86,9 @@ public class ScenarioSearchPanel extends Composite {
 	private enum UserRole {Administrator, RegisteredUser, AnonymousUser}
 	private UserRole userRole;
 	private String submitterName;//email of the current user
+	
+	private DefaultDateTimeFormatInfo info = new DefaultDateTimeFormatInfo();
+	private DateTimeFormat dtf = new DateTimeFormat("MM/dd/yyyy", info) {}; 
 
 	interface ScenarioSearchPanelUiBinder extends
 			UiBinder<Widget, ScenarioSearchPanel> {
@@ -507,6 +514,19 @@ public class ScenarioSearchPanel extends Composite {
 		.to(listScnReceiver).fire();		
 	}
 	
+	/**
+	 * list scn by status
+	 * @param status
+	 */
+	public void listScnByStatus(final Set<String> status){
+		hideAllSearchPanels();
+		cleanScenarioTable();
+		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();		
+		scenarioRequest.searchByStatus(status)
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.to(listScnReceiver).fire();		
+	}
+	
 	//----------------------------------------------------------------------------------------
 	//RECEIVERS for REQUESTCONTEXT
 	/**
@@ -608,9 +628,9 @@ public class ScenarioSearchPanel extends Composite {
 		});
 	    
 		searchResult.insertRow(0);
-		searchResult.setWidget(0, SCN_TITLE_COL,lbl_title);
-		searchResult.setWidget(0, SCN_SUBMITTER_COL, lbl_submitter);
-		searchResult.setWidget(0, SCN_STATUS_COL, lbl_status);
+		searchResult.setWidget(0, SCN_TABLE_FIRST_COL,lbl_title);
+		searchResult.setWidget(0, SCN_TABLE_FIFTH_COL, lbl_submitter);
+		searchResult.setWidget(0, SCN_TABLE_THIRD_COL, lbl_status);
 		searchResult.getRowFormatter().addStyleName(0, STYLE_USERLISTHEADER); //TODO Style this table
 		
 		int row =1;
@@ -634,9 +654,9 @@ public class ScenarioSearchPanel extends Composite {
 			final String auxTitle = title;
 			lbl.setText(title);
 			searchResult.insertRow(row);
-			searchResult.setWidget(row, SCN_TITLE_COL, lbl);
-			searchResult.setWidget(row, SCN_SUBMITTER_COL, new Label(sp.getSubmitter()));
-			searchResult.setWidget(row, SCN_STATUS_COL, new Label(sp.getStatus()));
+			searchResult.setWidget(row, SCN_TABLE_FIRST_COL, lbl);
+			searchResult.setWidget(row, SCN_TABLE_FIFTH_COL, new Label(sp.getSubmitter()));
+			searchResult.setWidget(row, SCN_TABLE_THIRD_COL, new Label(sp.getStatus()));
 			
 			final int rowDel = row;
 			Button deleteButton = new Button("Delete");
@@ -656,7 +676,7 @@ public class ScenarioSearchPanel extends Composite {
 				}
 			});
 			if(userRole==userRole.Administrator)//Only Admins should be able to delete Scn
-				searchResult.setWidget(row, SCN_DELETEBUTTON_COL, deleteButton);
+				searchResult.setWidget(row, SCN_TABLE_EIGTH_COL, deleteButton);
 			
 			//style table rows
 			if(sp.getStatus()!=null)
@@ -765,6 +785,7 @@ public class ScenarioSearchPanel extends Composite {
 		}
 	}
 	
+	
 	/** XXX Experimental */
 	private void drawScenariosListGrid(){
 		drawScenariosListGrid(scnList);
@@ -840,19 +861,21 @@ public class ScenarioSearchPanel extends Composite {
 		});
 	    
 
-		searchResult2.setWidget(0, SCN_TITLE_COL,lbl_title);
-		searchResult2.setWidget(0, SCN_UNIQUEID_COL,lbl_uniqueId);
+		searchResult2.setWidget(0, SCN_TABLE_FIRST_COL,lbl_title);
+		searchResult2.setWidget(0, SCN_TABLE_SECOND_COL,lbl_uniqueId);
 		if(userRole == UserRole.Administrator){
-			searchResult2.setWidget(0, SCN_SUBMITTER_COL, lbl_submitter);
-			searchResult2.setWidget(0, SCN_STATUS_COL, lbl_status);
+			searchResult2.setWidget(0, SCN_TABLE_THIRD_COL, lbl_status);
+			searchResult2.setWidget(0, SCN_TABLE_FOURTH_COL, lbl_submitter);
+			searchResult2.setWidget(0, SCN_TABLE_FIFTH_COL, new Label("Created"));
+			searchResult2.setWidget(0, SCN_TABLE_SIXTH_COL, new Label("Last Modified"));
+			searchResult2.setWidget(0, SCN_TABLE_SEVENTH_COL, new Label("Locked by"));
 		}
 		if(userRole == UserRole.RegisteredUser){
-			searchResult2.setWidget(0, SCN_STATUS_COL, lbl_status);
+			searchResult2.setWidget(0, SCN_TABLE_THIRD_COL, lbl_status);
+			searchResult2.setWidget(0, SCN_TABLE_FOURTH_COL, new Label("Created"));
+			searchResult2.setWidget(0, SCN_TABLE_FIFTH_COL, new Label("Last Modified"));
 		}
-//		searchResult2.setWidget(0, SCN_SUBMITTER_COL, lbl_submitter);
-//		searchResult2.setWidget(0, SCN_STATUS_COL, lbl_status);
 		searchResult2.getRowFormatter().addStyleName(0, STYLE_USERLISTHEADER); //TODO Style this table
-//		searchResult2.setWidth("500px");
 		searchResult2.getColumnFormatter().addStyleName(0, "titleColumn");
 		
 		ScenarioProxy[] responseArray = new ScenarioProxy[response.size()];
@@ -879,21 +902,28 @@ public class ScenarioSearchPanel extends Composite {
 		title = null == title || "".equals(title) ? "<none>" : title;//XXX title.trim() ??
 		final String auxTitle = title;
 		lbl.setText(title);
-		searchResult2.setWidget(row, SCN_TITLE_COL, lbl);
-		searchResult2.setWidget(row, SCN_UNIQUEID_COL, new Label(String.valueOf(sp.getId())));
+		searchResult2.setWidget(row, SCN_TABLE_FIRST_COL, lbl);
+		searchResult2.setWidget(row, SCN_TABLE_SECOND_COL, new Label(String.valueOf(sp.getId())));
 		
 		if(userRole == UserRole.Administrator){
-			searchResult2.setWidget(row, SCN_SUBMITTER_COL, new Label(sp.getSubmitter()));
-			searchResult2.setWidget(row, SCN_STATUS_COL, new Label(sp.getStatus()));
+			searchResult2.setWidget(row, SCN_TABLE_THIRD_COL, new Label(sp.getStatus()));
+			searchResult2.setWidget(row, SCN_TABLE_FOURTH_COL, new Label(sp.getSubmitter()));
+			searchResult2.setWidget(row, SCN_TABLE_FIFTH_COL, new Label(dtf.format(sp.getCreationDate())));
+			String action = null==sp.getLastActionTaken()? "action unknown" :sp.getLastActionTaken();
+			String user = null==sp.getLastActionUser()? "user unknown" : sp.getLastActionUser();
+			String date = null==sp.getModificationDate()? "date unknown" : dtf.format(sp.getCreationDate());
+			String lastAction = action+" by " +user+" on "+date;
+			searchResult2.setWidget(row, SCN_TABLE_SIXTH_COL, new Label(lastAction));
+			String lockOwner = null==sp.getLockOwner()? "-unlocked-" : sp.getLockOwner();
+			searchResult2.setWidget(row, SCN_TABLE_SEVENTH_COL, new Label(lockOwner));
 		}
 		if(userRole == UserRole.RegisteredUser){
-			searchResult2.setWidget(row, SCN_STATUS_COL, new Label(sp.getStatus()));
+			searchResult2.setWidget(row, SCN_TABLE_THIRD_COL, new Label(sp.getStatus()));
+			searchResult2.setWidget(row, SCN_TABLE_FOURTH_COL, new Label(dtf.format(sp.getCreationDate())));
+			String modifDate = null==sp.getModificationDate() ? "-unknown-" : dtf.format(sp.getModificationDate());
+			searchResult2.setWidget(row, SCN_TABLE_FIFTH_COL, new Label(modifDate));
 		}
-//		searchResult2.setWidget(row, SCN_SUBMITTER_COL, new Label(sp.getSubmitter()));
-//		searchResult2.setWidget(row, SCN_STATUS_COL, new Label(sp.getStatus()));
-		
-		
-		final int rowDel = row;
+
 		final int arrayIndex2 = arrayIndex;
 		Button deleteButton = new Button("Delete");
 		deleteButton.addClickHandler(new ClickHandler() {
@@ -916,30 +946,33 @@ public class ScenarioSearchPanel extends Composite {
 				}
 			}
 		});
-//		searchResult2.getColumnCount()
+
 		if(userRole==userRole.Administrator)//Only Admins should be able to delete Scn
-			searchResult2.setWidget(row, SCN_DELETEBUTTON_COL, deleteButton);
+			searchResult2.setWidget(row, SCN_TABLE_EIGTH_COL, deleteButton);
 		
 		//style table rows
 		if(sp.getStatus()!=null){
-			//print 'pijama' for scn grid list
+			searchResult2.getRowFormatter().removeStyleName(row, STYLE_UNSUBMITTEDSCN);
+			searchResult2.getRowFormatter().removeStyleName(row, STYLE_SUBMITTEDSCN);
+			searchResult2.getRowFormatter().removeStyleName(row, STYLE_REJECTEDSCN);
 			if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_SUBMITTED)){
 				searchResult2.getRowFormatter().addStyleName(row, STYLE_SUBMITTEDSCN);
-				searchResult2.getRowFormatter().removeStyleName(row, STYLE_UNSUBMITTEDSCN);
+			}else if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_REJECTED)){
+				searchResult2.getRowFormatter().addStyleName(row, STYLE_REJECTEDSCN);
 			}else{
 				searchResult2.getRowFormatter().addStyleName(row, STYLE_UNSUBMITTEDSCN);
-				searchResult2.getRowFormatter().removeStyleName(row, STYLE_SUBMITTEDSCN);
 			}
 		}
-        //increase row number (the FOR loop is not increasing our row index variable, which is also final)
+        //print pijama
 		if(row%2==0)
 			searchResult2.getRowFormatter().addStyleName(row, STYLE_TABLEROWOTHER);
 		else
 			searchResult2.getRowFormatter().removeStyleName(row, STYLE_TABLEROWOTHER);
 		
-		row +=1;
+		row +=1;//increase row number (the FOR loop is not increasing our row index variable, which is also final)
 		arrayIndex++;
 		}
+		
 		searchResult2.setVisible(true);
 		if(arrayIndex<scn_list_size){
 			buttonNext.setEnabled(true);
@@ -1345,8 +1378,6 @@ public class ScenarioSearchPanel extends Composite {
 		}
 		
 		hideAllSearchPanels();
-		DefaultDateTimeFormatInfo info = new DefaultDateTimeFormatInfo();
-		DateTimeFormat dtf = new DateTimeFormat("MM/dd/yyyy", info) {}; 
 		String headline = "Search results for scenarios created";
 		if(null != advancedSearchDateBoxFrom.getValue() && null != advancedSearchDateBoxUntil.getValue())
 			headline += " between "+dtf.format(advancedSearchDateBoxFrom.getValue())+" and "+dtf.format(advancedSearchDateBoxUntil.getValue())+".";
