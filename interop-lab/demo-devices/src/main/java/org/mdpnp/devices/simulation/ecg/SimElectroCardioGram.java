@@ -13,51 +13,51 @@ import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
 
     protected final InstanceHolder<ice.SampleArray> i, ii, iii;
-    
+
     protected final InstanceHolder<ice.Numeric> respiratoryRate, heartRate;
-	
-	private class MySimulatedElectroCardioGram extends SimulatedElectroCardioGram {
-	    @Override
-	    protected void receiveECG(Number[] iValues, Number[] iiValues, Number[] iiiValues, int heartRateValue, int respiratoryRateValue,
-	            double msPerSample) {
-	        sampleArraySample(i, iValues, (int) msPerSample);
+
+    private class MySimulatedElectroCardioGram extends SimulatedElectroCardioGram {
+        @Override
+        protected void receiveECG(Number[] iValues, Number[] iiValues, Number[] iiiValues, int heartRateValue, int respiratoryRateValue,
+                double msPerSample) {
+            sampleArraySample(i, iValues, (int) msPerSample);
             sampleArraySample(ii, iiValues, (int) msPerSample);
             sampleArraySample(iii, iiiValues, (int) msPerSample);
             numericSample(heartRate, heartRateValue);
             numericSample(respiratoryRate, respiratoryRateValue);
-	    }
-	}
-	
-	private final MySimulatedElectroCardioGram ecg = new MySimulatedElectroCardioGram();
-	
-	
-	@Override
-	public void connect(String str) {
-	    ecg.connect(executor);
-		super.connect(str);
-	}
-	
-	@Override
-	public void disconnect() {
-	    ecg.disconnect();
-		super.disconnect();
-	}
-	
-	public SimElectroCardioGram(int domainId, EventLoop eventLoop) {
-		super(domainId, eventLoop);
+        }
+    }
 
-		i = createSampleArrayInstance(ice.Physio.MDC_ECG_AMPL_ST_I.value());
-		ii = createSampleArrayInstance(ice.Physio.MDC_ECG_AMPL_ST_II.value());
-		iii = createSampleArrayInstance(ice.Physio.MDC_ECG_AMPL_ST_III.value());
-		respiratoryRate = createNumericInstance(ice.Physio.MDC_RESP_RATE.value());
-		heartRate = createNumericInstance(ice.Physio.MDC_PULS_RATE.value());
-		
-		deviceIdentity.model = "ECG (Simulated)";
-		deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-	}
-	
-	@Override
-	protected String iconResourceName() {
-		return "ecg.png";
-	}
+    private final MySimulatedElectroCardioGram ecg = new MySimulatedElectroCardioGram();
+
+
+    @Override
+    public void connect(String str) {
+        ecg.connect(executor);
+        super.connect(str);
+    }
+
+    @Override
+    public void disconnect() {
+        ecg.disconnect();
+        super.disconnect();
+    }
+
+    public SimElectroCardioGram(int domainId, EventLoop eventLoop) {
+        super(domainId, eventLoop);
+
+        i = createSampleArrayInstance(ice.Physio.MDC_ECG_AMPL_ST_I.value());
+        ii = createSampleArrayInstance(ice.Physio.MDC_ECG_AMPL_ST_II.value());
+        iii = createSampleArrayInstance(ice.Physio.MDC_ECG_AMPL_ST_III.value());
+        respiratoryRate = createNumericInstance(ice.Physio.MDC_RESP_RATE.value());
+        heartRate = createNumericInstance(ice.Physio.MDC_PULS_RATE.value());
+
+        deviceIdentity.model = "ECG (Simulated)";
+        writeDeviceIdentity();
+    }
+
+    @Override
+    protected String iconResourceName() {
+        return "ecg.png";
+    }
 }

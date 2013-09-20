@@ -30,6 +30,6 @@ public abstract class AbstractSimulatedDevice extends AbstractDevice {
     public AbstractSimulatedDevice(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
         randomUDI(deviceIdentity);
-        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
+        writeDeviceIdentity();
     }
 }

@@ -96,12 +96,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         deviceIdentity.manufacturer = "Oridion";
         deviceIdentity.model = "Capnostream20";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
-        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-
-        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
-        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
-        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+        writeDeviceIdentity();
 
         linkIsActive = executor.scheduleAtFixedRate(new Runnable() {
             public void run() {
@@ -116,12 +111,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         deviceIdentity.manufacturer = "Oridion";
         deviceIdentity.model = "Capnostream20";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
-        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-
-        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
-        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
-        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+        writeDeviceIdentity();
 
         linkIsActive = executor.scheduleAtFixedRate(new Runnable() {
             public void run() {
@@ -232,7 +222,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         public boolean receiveDeviceIdSoftwareVersion(String softwareVersion, Date softwareReleaseDate,
                 PulseOximetry pulseOximetry, String revision, String serial_number) {
             deviceIdentity.serial_number = serial_number;
-            deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+            writeDeviceIdentity();
             return true;
 
         }

@@ -21,69 +21,64 @@ public class DemoRadical7 extends AbstractSerialDevice {
     private InstanceHolder<ice.Numeric> pulseUpdate;
     private InstanceHolder<ice.Numeric> spo2Update;
 
-	private static final String MANUFACTURER_NAME = "Masimo";
-	private static final String MODEL_NAME = "Radical-7";
-	
-	private class MyMasimoRadical7 extends MasimoRadical7 {
+    private static final String MANUFACTURER_NAME = "Masimo";
+    private static final String MODEL_NAME = "Radical-7";
 
-		public MyMasimoRadical7() throws NoSuchFieldException, SecurityException, IOException {
-			super();
-		}
-		@Override
-		public void firePulseOximeter() {
-			super.firePulseOximeter();
-			reportConnected();
-			pulseUpdate = numericSample(pulseUpdate, getHeartRate(), ice.Physio._MDC_PULS_OXIM_PULS_RATE);
-			spo2Update = numericSample(spo2Update, getSpO2(), ice.Physio._MDC_PULS_OXIM_SAT_O2);
-			String guid = getUniqueId();
-			if(guid != null && !guid.equals(deviceIdentity.serial_number)) {
-				deviceIdentity.serial_number = guid;
-				deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-			}
-		}
-	}
-	
-	private final MyMasimoRadical7 fieldDelegate;
-	
-	@Override
-	protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
-		fieldDelegate.setInputStream(inputStream);
-		fieldDelegate.run();
-	}
-	@Override
-	protected long getMaximumQuietTime() {
-		return 1100L;
-	}
-	@Override
-	protected void doInitCommands() throws IOException {
-	}
-	
+    private class MyMasimoRadical7 extends MasimoRadical7 {
 
-	@Override
-	public SerialProvider getSerialProvider() {
-		SerialProvider serialProvider =  super.getSerialProvider();
-		serialProvider.setDefaultSerialSettings(9600, SerialSocket.DataBits.Eight, SerialSocket.Parity.None, SerialSocket.StopBits.One);
-		return serialProvider;
-	}
-	public DemoRadical7(int domainId, EventLoop eventLoop) throws NoSuchFieldException, SecurityException, IOException {
-		super(domainId, eventLoop);
+        public MyMasimoRadical7() throws NoSuchFieldException, SecurityException, IOException {
+            super();
+        }
+        @Override
+        public void firePulseOximeter() {
+            super.firePulseOximeter();
+            reportConnected();
+            pulseUpdate = numericSample(pulseUpdate, getHeartRate(), ice.Physio._MDC_PULS_OXIM_PULS_RATE);
+            spo2Update = numericSample(spo2Update, getSpO2(), ice.Physio._MDC_PULS_OXIM_SAT_O2);
+            String guid = getUniqueId();
+            if(guid != null && !guid.equals(deviceIdentity.serial_number)) {
+                deviceIdentity.serial_number = guid;
+                writeDeviceIdentity();
+            }
+        }
+    }
+
+    private final MyMasimoRadical7 fieldDelegate;
+
+    @Override
+    protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
+        fieldDelegate.setInputStream(inputStream);
+        fieldDelegate.run();
+    }
+    @Override
+    protected long getMaximumQuietTime() {
+        return 1100L;
+    }
+    @Override
+    protected void doInitCommands() throws IOException {
+    }
+
+
+    @Override
+    public SerialProvider getSerialProvider() {
+        SerialProvider serialProvider =  super.getSerialProvider();
+        serialProvider.setDefaultSerialSettings(9600, SerialSocket.DataBits.Eight, SerialSocket.Parity.None, SerialSocket.StopBits.One);
+        return serialProvider;
+    }
+    public DemoRadical7(int domainId, EventLoop eventLoop) throws NoSuchFieldException, SecurityException, IOException {
+        super(domainId, eventLoop);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = MANUFACTURER_NAME;
         deviceIdentity.model = MODEL_NAME;
-        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-        
-        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
-        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
-        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
-        
-		this.fieldDelegate = new MyMasimoRadical7();
-	}
-	
+        writeDeviceIdentity();
 
-	@Override
-	protected String iconResourceName() {
-		return "radical7.png";
-	}
+        this.fieldDelegate = new MyMasimoRadical7();
+    }
+
+
+    @Override
+    protected String iconResourceName() {
+        return "radical7.png";
+    }
 
 }

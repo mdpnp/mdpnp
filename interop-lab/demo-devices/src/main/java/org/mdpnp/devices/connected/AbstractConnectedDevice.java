@@ -19,7 +19,6 @@ import ice.DeviceConnectivityTypeSupport;
 
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.EventLoop;
-import org.mdpnp.devices.EventLoop.ConditionHandler;
 import org.mdpnp.devices.io.util.StateMachine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +29,6 @@ import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.publication.PublicationMatchedStatus;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.ReadCondition;
@@ -44,8 +42,8 @@ import com.rti.dds.topic.Topic;
 public abstract class AbstractConnectedDevice extends AbstractDevice {
     protected final DeviceConnectivity deviceConnectivity;
     protected final Topic deviceConnectivityTopic;
-    protected InstanceHandle_t deviceConnectivityHandle;
-    protected final DeviceConnectivityDataWriter deviceConnectivityWriter;
+    private InstanceHandle_t deviceConnectivityHandle;
+    private final DeviceConnectivityDataWriter deviceConnectivityWriter;
 
     protected final DeviceConnectivityObjective deviceConnectivityObjective;
     protected final DeviceConnectivityObjectiveDataReader deviceConnectivityObjectiveReader;
@@ -61,7 +59,7 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
             deviceConnectivity.state = newState;
             InstanceHandle_t handle = deviceConnectivityHandle;
             if(handle != null) {
-                deviceConnectivityWriter.write(deviceConnectivity, handle);
+                writeDeviceConnectivity();
             }
             stateChanged(newState, oldState);
         };
@@ -85,7 +83,6 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         domainParticipant.delete_topic(deviceConnectivityObjectiveTopic);
         DeviceConnectivityObjectiveTypeSupport.unregister_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
 
-        eventLoop.removeHandler(deviceConnectivityWriter.get_statuscondition());
         if(null != deviceConnectivityHandle) {
             InstanceHandle_t handle = deviceConnectivityHandle;
             deviceConnectivityHandle = null;
@@ -108,22 +105,6 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         if(null == deviceConnectivityWriter) {
             throw new RuntimeException("unable to create writer");
         }
-
-        deviceConnectivityWriter.get_statuscondition().set_enabled_statuses(StatusKind.PUBLICATION_MATCHED_STATUS);
-        eventLoop.addHandler(deviceConnectivityWriter.get_statuscondition(), new ConditionHandler() {
-
-            @Override
-            public void conditionChanged(Condition condition) {
-                PublicationMatchedStatus pms = new PublicationMatchedStatus();
-                deviceConnectivityWriter.get_publication_matched_status(pms);
-
-                if(null != deviceConnectivityHandle) {
-                    log.debug("Rewriting device connectivity status because of new publication match " + pms);
-                    deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
-                }
-            }
-
-        });
 
         deviceConnectivity = new DeviceConnectivity();
         deviceConnectivity.type = getConnectionType();
@@ -223,8 +204,26 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         }
         if(!connectionInfo.equals(deviceConnectivity.info)) {
             deviceConnectivity.info = connectionInfo;
-            deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+            writeDeviceConnectivity();
         }
+    }
 
+    @Override
+    protected void writeDeviceIdentity() {
+        super.writeDeviceIdentity();
+        if(null == deviceConnectivityHandle) {
+            writeDeviceConnectivity();
+        }
+    }
+
+    protected void writeDeviceConnectivity() {
+        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
+        if(null == deviceConnectivity.universal_device_identifier || "".equals(deviceConnectivity.universal_device_identifier)) {
+            throw new IllegalStateException("No UDI");
+        }
+        if(null == deviceConnectivityHandle) {
+            deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
+        }
+        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
     }
 }

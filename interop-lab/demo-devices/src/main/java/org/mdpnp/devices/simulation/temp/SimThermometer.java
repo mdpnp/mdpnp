@@ -12,39 +12,39 @@ import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 
 public class SimThermometer extends AbstractSimulatedConnectedDevice {
 
-    protected final InstanceHolder<ice.Numeric> temperature; 
-    
+    protected final InstanceHolder<ice.Numeric> temperature;
+
     private class MySimulatedThermometer extends SimulatedThermometer {
         @Override
         protected void receiveTemp(float temperature) {
             numericSample(SimThermometer.this.temperature, temperature);
-            
+
         }
     }
-    
+
     private final MySimulatedThermometer thermometer = new MySimulatedThermometer();
-    
-    
+
+
     @Override
     public void connect(String str) {
         thermometer.connect(executor);
         super.connect(str);
     }
-    
+
     @Override
     public void disconnect() {
         thermometer.disconnect();
         super.disconnect();
     }
-    
+
     public SimThermometer(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
         temperature = createNumericInstance(ice.Physio.MDC_TEMP_BLD.value());
-        
+
         deviceIdentity.model = "Thermometer (Simulated)";
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+        writeDeviceIdentity();
     }
-    
+
     @Override
     protected String iconResourceName() {
         return null;

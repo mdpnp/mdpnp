@@ -13,25 +13,25 @@ import org.slf4j.LoggerFactory;
 public class DemoSymbiq extends SimInfusionPump {
 
     private final File pumpControlFile = new File("C:\\pump_control_1.txt");
-    
+
     @Override
     protected void writeIdentity() {
         deviceIdentity.manufacturer = "Hospira";
         deviceIdentity.model = "Symbiq";
         deviceIdentity.serial_number = "xxx";
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);    
+        writeDeviceIdentity();
     }
     private static final Logger log = LoggerFactory.getLogger(DemoSymbiq.class);
-    
+
     private Boolean lastStopThePumpWritten = null;
-    
-    
+
+
     @Override
     protected void stopThePump(boolean stopThePump) {
         super.stopThePump(stopThePump);
         if(null == lastStopThePumpWritten || (stopThePump ^ lastStopThePumpWritten)) {
-                
-    
+
+
             Writer w;
             try {
                 w = new FileWriter(pumpControlFile);
@@ -45,18 +45,18 @@ public class DemoSymbiq extends SimInfusionPump {
             } catch (IOException e) {
                 log.error("can't stop", e);
             }
-            
-        }
-        
-    }
-    
-	public DemoSymbiq(int domainId, EventLoop eventLoop) {
-		super(domainId, eventLoop);
 
-	}
-	@Override
-	protected String iconResourceName() {
-		return "symbiq.png";
-	}
-	
+        }
+
+    }
+
+    public DemoSymbiq(int domainId, EventLoop eventLoop) {
+        super(domainId, eventLoop);
+
+    }
+    @Override
+    protected String iconResourceName() {
+        return "symbiq.png";
+    }
+
 }

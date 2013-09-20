@@ -49,7 +49,7 @@ public class DemoN595 extends AbstractSerialDevice {
         @Override
         public void fireDevice() {
             reportConnected();
-            deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+            writeDeviceIdentity();
 
         }
         @Override
@@ -97,12 +97,7 @@ public class DemoN595 extends AbstractSerialDevice {
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = NellcorN595.MANUFACTURER_NAME;
         deviceIdentity.model = NellcorN595.MODEL_NAME;
-        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-
-        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
-        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
-        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+        writeDeviceIdentity();
 
         this.fieldDelegate = new MyNellcorN595();
     }

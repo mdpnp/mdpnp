@@ -41,12 +41,7 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         deviceIdentity.manufacturer = "Ivy";
         deviceIdentity.model = "450C";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
-        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-
-        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
-        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
-        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+        writeDeviceIdentity();
     }
 
     private InstanceHolder<ice.Numeric> heartRate, respiratoryRate, spo2, etco2, t1, /*t2,*/ pulseRate, nibpSystolic, nibpDiastolic, nibpMean, nibpPulse, ibpSystolic, ibpDiastolic, ibpMean;

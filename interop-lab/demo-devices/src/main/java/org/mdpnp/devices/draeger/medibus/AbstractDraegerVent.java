@@ -339,14 +339,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     private void init() {
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
-        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
         deviceIdentity.manufacturer = "Dr\u00E4ger";
         deviceIdentity.model = "???";
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-
-        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
-        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
-        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+        writeDeviceIdentity();
     }
 
     private static void loadMap(Map<Enum<?>, Integer> numerics, Map<Enum<?>, Integer> waveforms) {
@@ -487,7 +482,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             writeIt = true;
         }
         if (writeIt) {
-            deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+            writeDeviceIdentity();
         }
         reportConnected();
     }

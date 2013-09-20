@@ -31,7 +31,7 @@ import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 
 public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
-    
+
     private final JList capnoSources = new JList();
     private final JPanel controlPanel = new JPanel();
     private final JLabel rrLabel = new JLabel("???");
@@ -46,32 +46,33 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
         protected String iconResourceName() {
             return "rrr.png";
         }
-        
+
         public RespiratoryRateDevice(int domainId, EventLoop eventLoop) {
             super(domainId, eventLoop);
             deviceIdentity.manufacturer = "";
             deviceIdentity.model = "Rapid Respiratory Rate";
             deviceIdentity.serial_number = "1234";
             AbstractSimulatedDevice.randomUDI(deviceIdentity);
+            writeDeviceIdentity();
         }
-        
+
         private boolean resumed = false;
         public void resume() {
-            deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
-            deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+//            deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
+//            deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
             resumed = true;
         }
-        
+
         public void pause() {
             resumed = false;
-            deviceIdentityWriter.unregister_instance(deviceIdentity, deviceIdentityHandle);
-            deviceIdentityHandle = null;
+//            deviceIdentityWriter.unregister_instance(deviceIdentity, deviceIdentityHandle);
+//            deviceIdentityHandle = null;
             unregisterNumericInstance(this.rate);
             this.rate = null;
             unregisterAllNumericInstances();
             unregisterAllSampleArrayInstances();
         }
-        
+
         private InstanceHolder<Numeric> rate;
         void updateRate(float rate) {
             // TODO clearly a synchronization issue here.
@@ -81,14 +82,14 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
             }
         }
     }
-    
+
     private RespiratoryRateDevice rrDevice;
     private final EventLoop eventLoop;
-    
-    public RapidRespiratoryRate(int domainId, final EventLoop eventLoop) {
+
+    public RapidRespiratoryRate(final int domainId, final EventLoop eventLoop) {
         super(new GridLayout(2,2));
         this.eventLoop = eventLoop;
-        rrDevice = new RespiratoryRateDevice(domainId, eventLoop);
+//        rrDevice = new RespiratoryRateDevice(domainId, eventLoop);
         enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
         add(capnoSources);
         add(controlPanel);
@@ -104,25 +105,17 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(device.isSelected()) {
-                    if(rrDevice != null) {
-                        eventLoop.doLater(new Runnable() {
-                            public void run() {
-                                rrDevice.resume();
-                            }
-                        });
-                        
+                    if(rrDevice == null) {
+                        rrDevice = new RespiratoryRateDevice(domainId, eventLoop);
                     }
                 } else {
                     if(rrDevice != null) {
-                        eventLoop.doLater(new Runnable() {
-                            public void run() {
-                                rrDevice.pause();
-                            }
-                        });
+                        rrDevice.shutdown();
+                        rrDevice = null;
                     }
                 }
             }
-            
+
         });
         capnoSources.setCellRenderer(new DefaultListCellRenderer() {
             @Override
@@ -147,7 +140,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
             }
         });
     }
-    
+
     private CapnoModel model;
     private VitalModel vitalModel;
     public void setModel(CapnoModel model, VitalModel vitalModel) {
@@ -157,7 +150,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
         if(null != selected && selected instanceof Capno) {
             selectedUdi  =((Capno)selected).getSampleArray().universal_device_identifier;
         }
-        
+
         capnoSources.setModel(null==model?new DefaultListModel():new CapnoListModel(model));
         if(null != selectedUdi && model != null) {
             for(int i = 0; i < model.getCount(); i++) {
@@ -177,39 +170,39 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
     }
     @Override
     public void capnoAdded(CapnoModel model, Capno capno) {
-        
+
     }
     @Override
     public void capnoRemoved(CapnoModel model, Capno capno) {
-        
+
     }
-    
+
     private final static int HISTORY = 200;
     private long[] times = new long[HISTORY];
     private float[] values = new float[HISTORY];
     private float[] coeffs = new float[HISTORY];
     private int current;
-    
+
     private final int minus(int x) {
         return --x < 0 ? (HISTORY-1) : x;
     }
-    
+
     private final int plus(int x) {
         return plus(x, 1);
     }
-    
+
     private final int plus(int x, int delta) {
         return (x+=delta) >= HISTORY ? (x % HISTORY) : x;
     }
-    
+
     private Long lastBreathTime;
     private Float highWaterMark;
-    
+
     private float high = Float.MIN_VALUE, low = Float.MAX_VALUE;
-    
-    
+
+
     private double rr;
-    
+
     private final Runnable updateRate = new Runnable() {
         public void run() {
             if(rrDevice != null) {
@@ -217,7 +210,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
             }
         }
     };
-    
+
     @Override
     public void capnoChanged(CapnoModel model, Capno capno) {
         if(null != capno && capno.equals(capnoSources.getSelectedValue())) {
@@ -243,14 +236,14 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
                 }
                 current = plus(current);
             }
-            
+
             long mostRecentTime = times[minus(current)];
             long oneHalfSecondAgo = times[minus(current)]-500L;
             DCT.dct(values, current, coeffs, 10);
             double weighted = 0.0, sum = 0.0;
             double max = Double.MIN_VALUE;
             int index = 0;
-            
+
             for(int i = 1; i < 10; i++) {
                 weighted += i * Math.abs(coeffs[i]);
                 sum += Math.abs(coeffs[i]);
@@ -268,8 +261,8 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
 //            if(rrDevice != null) {
 //                rrDevice.updateRate((float) bpm);
 //            }
-            
-            
+
+
             // process each point as if it were coming in anew like real data samples would
             for(int localCurrent = startedAtCurrent; localCurrent < current; localCurrent = plus(localCurrent)) {
 //                for(int i = minus(localCurrent); i != localCurrent; i = minus(i)) {
@@ -287,8 +280,8 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
 //            if(current == 0) {
 //                System.err.println(Arrays.toString(values));
 //            }
-            
+
         }
     }
-    
+
 }

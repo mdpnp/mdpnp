@@ -18,6 +18,7 @@ import ice.SampleArrayDataWriter;
 import ice.SampleArrayTypeSupport;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -56,9 +57,9 @@ public abstract class AbstractDevice implements ThreadFactory {
     protected final Publisher publisher;
     protected final Subscriber subscriber;
     protected final Topic deviceIdentityTopic;
-    protected final DeviceIdentityDataWriter deviceIdentityWriter;
+    private final DeviceIdentityDataWriter deviceIdentityWriter;
     protected final DeviceIdentity deviceIdentity;
-    protected InstanceHandle_t deviceIdentityHandle;
+    private InstanceHandle_t deviceIdentityHandle;
 
     protected final Topic numericTopic;
     protected final NumericDataWriter numericDataWriter;
@@ -331,7 +332,6 @@ public abstract class AbstractDevice implements ThreadFactory {
         domainParticipant.delete_topic(numericTopic);
         NumericTypeSupport.unregister_type(domainParticipant, NumericTypeSupport.get_type_name());
 
-        eventLoop.removeHandler(deviceIdentityWriter.get_statuscondition());
         publisher.delete_datawriter(deviceIdentityWriter);
         domainParticipant.delete_topic(deviceIdentityTopic);
         DeviceIdentityTypeSupport.unregister_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
@@ -350,7 +350,9 @@ public abstract class AbstractDevice implements ThreadFactory {
     public AbstractDevice(int domainId, EventLoop eventLoop) {
         DomainParticipantQos pQos = new DomainParticipantQos();
         DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-        pQos.participant_name.name = "AbstractDevice";
+        pQos.participant_name.name = "Device";
+
+
         domainParticipant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null,
                 StatusKind.STATUS_MASK_NONE);
         publisher = domainParticipant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null,
@@ -373,25 +375,6 @@ public abstract class AbstractDevice implements ThreadFactory {
         } catch (IOException e1) {
             log.warn("", e1);
         }
-
-        // JeffP 16-Sep-2013
-        // For DeviceIdentity we want to assert liveliness when publications match so that the instance regains liveliness
-        deviceIdentityWriter.get_statuscondition().set_enabled_statuses(StatusKind.PUBLICATION_MATCHED_STATUS);
-        eventLoop.addHandler(deviceIdentityWriter.get_statuscondition(), new ConditionHandler() {
-
-            @Override
-            public void conditionChanged(Condition condition) {
-                PublicationMatchedStatus pms = new PublicationMatchedStatus();
-                deviceIdentityWriter.get_publication_matched_status(pms);
-                if(deviceIdentityHandle != null) {
-                    log.debug("rewriting deviceIdentity for publication match " + pms);
-                    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-                }
-            }
-
-        });
-
-
 
         NumericTypeSupport.register_type(domainParticipant, NumericTypeSupport.get_type_name());
         numericTopic = domainParticipant.create_topic(ice.NumericTopic.VALUE, NumericTypeSupport.get_type_name(),
@@ -421,5 +404,25 @@ public abstract class AbstractDevice implements ThreadFactory {
         };
         threadGroup.setDaemon(true);
         this.eventLoop = eventLoop;
+    }
+
+    protected void writeDeviceIdentity() {
+        if(null==deviceIdentity.universal_device_identifier||"".equals(deviceIdentity.universal_device_identifier)) {
+            throw new IllegalStateException("cannot write deviceIdentity without a UDI");
+        }
+        DomainParticipantQos qos = new DomainParticipantQos();
+        domainParticipant.get_qos(qos);
+        try {
+            qos.user_data.value.clear();
+            qos.user_data.value.addAllByte(deviceIdentity.universal_device_identifier.getBytes("ASCII"));
+        } catch (UnsupportedEncodingException e) {
+            log.error(e.getMessage(), e);
+        }
+        domainParticipant.set_qos(qos);
+
+        if(null == deviceIdentityHandle) {
+            deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
+        }
+        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
     }
 }

@@ -129,7 +129,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
                     VariableLabel vl = ps.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER, ComponentId.ID_COMP_PRODUCT);
                     if(null != vl) {
                         deviceIdentity.serial_number = vl.getString();
-                        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+                        writeDeviceIdentity();
                     }
                 }
 
@@ -137,12 +137,12 @@ public class DemoMP70 extends AbstractConnectedDevice {
 //				String name = "";
                 if(createEvent.getAttributes().get(asm)) {
                     deviceIdentity.manufacturer = asm.getValue().getManufacturer().getString();
-                    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+                    writeDeviceIdentity();
 //					name = name + asm.getValue().getManufacturer().getString() + " " + asm.getValue().getModelNumber() + " ";
                 }
                 if(createEvent.getAttributes().get(as)) {
                     deviceIdentity.model = asm.getValue().getModelNumber().getString();
-                    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+                    writeDeviceIdentity();
 //					modelNumber = asm.getValue().getModelNumber().getString();
 //					name = name + as.getValue().getString() + " ";
                 }
@@ -215,7 +215,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
                         VariableLabel vlabel = prodSpec.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER, ComponentId.ID_COMP_PRODUCT);
                         if(vlabel != null) {
                             deviceIdentity.serial_number = vlabel.getString();
-                            deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+                            writeDeviceIdentity();
                         }
                         vlabel = prodSpec.getValue().getByComponentId(ProductionSpecificationType.PART_NUMBER, ComponentId.ID_COMP_PRODUCT);
                         if(vlabel != null) {
@@ -450,12 +450,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
         deviceIdentity.manufacturer = "Philips";
         deviceIdentity.model = "MP70";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
-        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-
-        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
-        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
-        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+        writeDeviceIdentity();
         myIntellivue = new MyIntellivue();
         configureData();
     }
@@ -465,12 +460,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
         deviceIdentity.manufacturer = "Philips";
         deviceIdentity.model = "MP70";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
-        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-
-        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
-        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
-        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+        writeDeviceIdentity();
         myIntellivue = new MyIntellivue(loop);
         configureData();
     }

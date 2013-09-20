@@ -53,14 +53,7 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Nonin";
-
-        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
-
-        deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
-        deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
-
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-        deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
+        writeDeviceIdentity();
 
 //	    add(firmwareRevisionUpdate);
 //		add(pulseUpdate, spo2Update, plethUpdate);
@@ -106,7 +99,7 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
                         deviceIdentity.icon.height = 0;
                         deviceIdentity.icon.width = 0;
                     }
-                    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+                    writeDeviceIdentity();
                     getDelegate().readyFlag = true;
                 } else {
                     formatRequested = Format.WristOx;
@@ -128,7 +121,7 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
                         deviceIdentity.icon.height = 0;
                         deviceIdentity.icon.width = 0;
                     }
-                    deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+                    writeDeviceIdentity();
                     getDelegate().readyFlag = true;
                 } else {
                     log.warn("Onyx and WristOx formats rejected; nothing left to try");

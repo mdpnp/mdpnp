@@ -55,7 +55,7 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
     public DemoSimulatedBloodPressure(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
         deviceIdentity.model = "NIBP (Simulated)";
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+        writeDeviceIdentity();
 
         state = createNumericInstance(ice.Physio.MDC_PRESS_CUFF.value());
         systolic = createNumericInstance(ice.Physio.MDC_PRESS_CUFF_SYS.value());

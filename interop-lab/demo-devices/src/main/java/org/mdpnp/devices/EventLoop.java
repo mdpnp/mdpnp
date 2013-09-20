@@ -17,9 +17,9 @@ import com.rti.dds.infrastructure.WaitSet;
 import com.rti.dds.infrastructure.WaitSetProperty_t;
 
 public class EventLoop  {
-    
-    private static final Logger log = LoggerFactory.getLogger(EventLoop.class); 
-    
+
+    private static final Logger log = LoggerFactory.getLogger(EventLoop.class);
+
     public interface ConditionHandler {
         void conditionChanged(Condition condition);
     }
@@ -42,21 +42,27 @@ public class EventLoop  {
                 ((GuardCondition)condition).set_trigger_value(false);
             }
             for(Mutation m : mutations) {
-                
+
                 if(m.isAdd()) {
 //                    log.debug("Handling an add mutation for " + m.getCondition());
                     conditionHandlers.put(m.getCondition(), m.getConditionHandler());
                     waitSet.attach_condition(m.getCondition());
                 } else {
 //                    log.debug("Handling a remove mutation for " + m.getCondition());
-                    conditionHandlers.remove(m.getCondition());
-                    waitSet.detach_condition(m.getCondition());
+                    if(null == conditionHandlers.remove(m.getCondition())) {
+                        log.warn("Attempt to detach unknown condition:"+m.getCondition());
+                        for(int i = 0; i < m.getTrace().length; i++) {
+                            log.warn("\tat "+m.getTrace()[i]);
+                        }
+                    } else {
+                        waitSet.detach_condition(m.getCondition());
+                    }
                 }
                 m.done();
             }
         }
     };
-    
+
     private final ConditionHandler runnableHandler = new ConditionHandler() {
         public void conditionChanged(Condition condition) {
             Runnable[] runnables = new Runnable[0];
@@ -70,18 +76,20 @@ public class EventLoop  {
             }
         }
     };
-    
+
     private static class Mutation {
         private final boolean add;
         private final Condition condition;
         private final ConditionHandler conditionHandler;
-        
+        private final StackTraceElement[] trace;
+
         private boolean done = false;
-        
+
         public Mutation(boolean add, Condition condition, ConditionHandler conditionHandler) {
             this.add = add;
             this.condition = condition;
             this.conditionHandler = conditionHandler;
+            this.trace = Thread.currentThread().getStackTrace();
         }
 
         public boolean isAdd() {
@@ -94,6 +102,10 @@ public class EventLoop  {
 
         public ConditionHandler getConditionHandler() {
             return conditionHandler;
+        }
+
+        public StackTraceElement[] getTrace() {
+            return trace;
         }
         public synchronized void done() {
             this.done = true;
@@ -108,13 +120,13 @@ public class EventLoop  {
             }
         }
     }
-    
-    
-    
+
+
+
     public EventLoop() {
         this(null);
     }
-    
+
     public EventLoop(WaitSetProperty_t properties) {
         waitSet = null == properties ? new WaitSet() : new WaitSet(properties);
         waitSet.attach_condition(mutate);
@@ -122,7 +134,7 @@ public class EventLoop  {
         conditionHandlers.put(mutate, mutateHandler);
         conditionHandlers.put(runnable, runnableHandler);
     }
-    
+
     public boolean waitAndHandle(ConditionSeq condSeq, Duration_t dur) {
         condSeq.clear();
         try {
@@ -141,8 +153,8 @@ public class EventLoop  {
             return false;
         }
     }
-   
-    
+
+
     public void addHandler(Condition condition, ConditionHandler conditionHandler) {
         Mutation m = new Mutation(true, condition, conditionHandler);
         synchronized(queuedMutations) {
@@ -153,7 +165,7 @@ public class EventLoop  {
         m.await();
 //        log.debug("addHandler complete for " + condition);
     }
-    
+
     public void removeHandler(Condition condition) {
         Mutation m = new Mutation(false, condition, null);
         synchronized(queuedMutations) {
@@ -164,12 +176,12 @@ public class EventLoop  {
         m.await();
 //        log.debug("removeHandler complete for " + condition);
     }
-    
+
     public void doLater(Runnable r) {
         synchronized(queuedRunnables) {
             queuedRunnables.add(r);
             runnable.set_trigger_value(true);
         }
     }
-    
+
 }

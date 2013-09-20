@@ -56,7 +56,7 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
         }
 
         deviceIdentity.model = "Pulse Ox (Simulated)";
-        deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+        writeDeviceIdentity();
     }
 
     @Override
