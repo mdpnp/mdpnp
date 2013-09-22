@@ -83,8 +83,6 @@ public class PCAPanel extends JPanel implements VitalModelListener {
             drugDeliveryAlarm = (Clip) AudioSystem.getLine(info);
             drugDeliveryAlarm.open(audioInputStream);
             drugDeliveryAlarm.setLoopPoints(0, -1);
-            System.out.println(drugDeliveryAlarm.getFrameLength());
-            System.out.println(drugDeliveryAlarm.getFormat());
 
             format = new AudioFormat(AudioFormat.Encoding.PCM_UNSIGNED,
                     22050.0f,
@@ -95,7 +93,6 @@ public class PCAPanel extends JPanel implements VitalModelListener {
             generalAlarm = (Clip) AudioSystem.getLine(info);
             generalAlarm.open(audioInputStream);
             generalAlarm.setLoopPoints(0, -1);
-            System.out.println(generalAlarm.getFormat());
 
         } catch (UnsupportedAudioFileException e) {
             e.printStackTrace();

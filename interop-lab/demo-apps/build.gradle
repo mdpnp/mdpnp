@@ -1,5 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'application'
+
 // macAppBundle adds the createDmg task as a dependency of the assemble task
 // which will fail if not run on a macintosh
 if(MAC == localOsName) apply plugin: 'macAppBundle'
@@ -9,8 +10,8 @@ defaultTasks 'build'
 
 if(MAC == localOsName) {
     macAppBundle {
-        keyChain = 'login'
-        certIdentity = 'E279LP5667'
+        //keyChain = 'login'
+        //certIdentity = 'E279LP5667'
         mainClassName = "org.mdpnp.apps.testapp.Main"
         icon = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns"
         appName = "MDPnP Demo Apps " + project.version
@@ -92,7 +93,6 @@ dependencies {
     compile project(':interop-lab:demo-devices')
     compile project(':interop-lab:demo-guis')
     compile project(':interop-lab:demo-guis-swing')
-    compile project(':interop-lab:demo-guis-jogl')
 
     runtime project(':interop-lab:demo-purejavacomm')
 
@@ -104,12 +104,9 @@ dependencies {
 
     compile group: 'org.jfree', name:'jfreechart', version: '1.0.14'
     compile group: 'com.jeffplourde', name: 'Utility', version: '0.0.1'
-    
 
-    // Java CV (Requires OpenCV)
-    compile group: 'com.googlecode.javacpp', name: 'javacpp', version: '0.5'
-    compile group: 'com.googlecode.javacv', name: 'javacv', version: '0.5'
-    compile group: 'org.xeustechnologies', name: 'jcl-core', version: '2.3'
+    // Default capture device is a trimmed down piece of OpenIMAJ
+    compile group: 'com.github.sarxos', name: 'webcam-capture', version: '0.3.9'
 
     switch(targetOsName) {
         case ALL: distZip.classifier = ""
@@ -121,8 +118,8 @@ dependencies {
         case LINUX: distZip.classifier = "linux"
         break
     }
-    
-    
+
+
     if(WINDOWS == targetOsName || ALL == targetOsName) {
         switch(targetOsArch) {
             case ALL: distZip.classifier+=""
@@ -135,20 +132,17 @@ dependencies {
 
         if(ALL == targetOsArch || X64 == targetOsArch) {
             runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32amd64'
-            runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'windows-x86_64'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-windows-amd64'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-windows-amd64'
         }
         if(ALL == targetOsArch || X86 == targetOsArch) {
             runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32x86'
-            runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'windows-x86'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-windows-i586'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-windows-i586'
         }
     }
     if(MAC == targetOsName || ALL == targetOsName) {
         runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'darwin'
-        runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'macosx-x86_64'
         runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-macosx-universal'
         runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-macosx-universal'
     }
@@ -165,19 +159,16 @@ dependencies {
         }
         if(ALL == targetOsArch || X64 == targetOsArch) {
             runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxamd64'
-            runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'linux-x86_64'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-linux-amd64'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-linux-amd64'
         }
         if(ALL == targetOsArch || X86 == targetOsArch) {
             runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxi386'
-            runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'linux-x86'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-linux-i586'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-linux-i586'
         }
         if(ALL == targetOsArch || ARM == targetOsArch || ARMHF == targetOsArch) {
             runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxarm'
-            runtime group: 'com.googlecode.javacv', name: 'javacv', version: '0.5', classifier: 'android-arm'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-android-armv6'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-android-armv6'
         }
