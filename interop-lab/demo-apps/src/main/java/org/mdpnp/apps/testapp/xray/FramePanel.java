@@ -1,34 +1,24 @@
 package org.mdpnp.apps.testapp.xray;
 
 import java.awt.AlphaComposite;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 
+import org.mdpnp.devices.io.util.StateMachine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.sarxos.webcam.Webcam;
-import com.github.sarxos.webcam.WebcamException;
 
 @SuppressWarnings("serial")
 public class FramePanel extends JComponent implements Runnable {
@@ -36,62 +26,27 @@ public class FramePanel extends JComponent implements Runnable {
     public enum State {
         Freezing,
         Frozen,
-        Thawed
+        Thawed,
+        Thawing
     }
 
+    protected final StateMachine<State> stateMachine = new StateMachine<State>(
+            new State[][] {
+                    { State.Thawed, State.Freezing },
+                    { State.Freezing, State.Frozen },
+                    { State.Frozen, State.Thawing },
+                    { State.Thawing, State.Thawed }
+            }, State.Thawed) {
+        public void emit(State newState, State oldState) {
+            log.debug(oldState + " --> " + newState);
+        };
+    };
 
-    public void start() {
-        if(cameraThread == null) {
-            running = true;
-            cameraThread = new Thread(this, "Camera Thread");
-            cameraThread.setDaemon(true);
-            cameraThread.start();
-        }
-    }
-
-    private Webcam webcam;
     private final ScheduledExecutorService executor;
 
     public void setWebcam(Webcam webcam) {
-
-        if(null != this.webcam) {
-            if(null != webcam && this.webcam.equals(webcam)) {
-                return;
-            }
-            this.webcam = null;
-        }
-
-        Dimension size = getSize();
-        if(null != webcam) {
-            if(size.width > 0 && size.height > 0) {
-                if(webcam.isOpen()) {
-                    webcam.close();
-                }
-                webcam.setCustomViewSizes(new Dimension[] { size });
-                webcam.setViewSize(size);
-
-                if(!size.equals(webcam.getViewSize())) {
-                    for(Dimension d : webcam.getViewSizes()) {
-                        if(d.width <= size.width && d.height <= size.height) {
-                            webcam.setViewSize(d);
-                        }
-                    }
-                }
-            }
-        }
-
-        this.webcam = webcam;
-
-        if(this.webcam != null) {
-            if(running && !webcam.isOpen() && size.width > 0 && size.height > 0) {
-                webcam.open();
-            }
-            if(!running && webcam.isOpen()) {
-                webcam.close();
-            }
-        } else {
-            imageToPaint = null;
-        }
+        this.proposedWebcam = webcam;
+        log.debug("Proposed webcam:"+webcam);
     }
 
     public FramePanel(ScheduledExecutorService executor) {
@@ -103,78 +58,58 @@ public class FramePanel extends JComponent implements Runnable {
         freeze(0L);
     }
 
-    public synchronized void freeze(long exposureTime) {
-        if(State.Frozen.equals(state)) {
-            return;
-        }
-        if(exposureTime > 0L) {
-            freezeBy = System.currentTimeMillis() + exposureTime;
+    public void freeze(long exposureTime) {
+        if(stateMachine.transitionWhenLegal(State.Freezing, 1000L)) {
+            freezeBy = exposureTime > 0L ? (System.currentTimeMillis() + exposureTime) : 0L;
             log.info("will freeze:"+freezeBy);
-            state = State.Freezing;
-            notifyAll();
         } else {
-            state = State.Frozen;
-            notifyAll();
+            log.info("cannot enter Freezing state");
         }
     }
 
-    public synchronized void unfreeze() {
-        while(State.Freezing.equals(state)) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+    public void unfreeze() {
+        if(stateMachine.transitionWhenLegal(State.Thawing, 1000L)) {
+            log.info("will thaw");
+        } else {
+            log.info("cannot enter Thawing state");
         }
-        state = State.Thawed;
-        notifyAll();
     }
 
-    private Thread cameraThread;
 
-
-
-
-    public synchronized void toggle() {
-        while(State.Freezing.equals(state)) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        switch(state) {
+    public void toggle() {
+        switch(stateMachine.getState()) {
         case Thawed:
+        case Thawing:
             freeze();
             break;
-        default:
+        case Frozen:
+        case Freezing:
             unfreeze();
             break;
         }
-//        state = State.Thawed.equals(state)?State.Frozen:State.Thawed;
-        notifyAll();
     }
 
-    public void stop() {
-        if (cameraThread != null) {
-            running = false;
-            unfreeze();
+    @SuppressWarnings("rawtypes")
+    private ScheduledFuture future;
 
-            try {
-                cameraThread.join();
-                cameraThread = null;
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
-            }
-            Webcam webcam = this.webcam;
-            if(webcam.isOpen()) {
-                webcam.close();
-            }
+    public synchronized void start() {
+        if(null == future) {
+            future = executor.scheduleAtFixedRate(this, 0L, FRAME_INTERVAL, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    public synchronized void stop() {
+
+        if(future != null) {
+            future.cancel(false);
+            future = null;
+        }
+        if(null != acceptedWebcam) {
+            acceptedWebcam.close();
+            acceptedWebcam = null;
         }
     }
     private long freezeBy;
-    private State state = State.Thawed;
-    private volatile boolean running = false;
 
     private final AlphaComposite composite = AlphaComposite.SrcOver.derive(0.1f);
 
@@ -196,155 +131,139 @@ public class FramePanel extends JComponent implements Runnable {
 
     private BufferedImage imageToPaint = null;
 
+    private volatile Webcam proposedWebcam, acceptedWebcam;
+    private volatile boolean mustResize;
+
+    // Image we use to create a blur effect
+    private BufferedImage renderCameraImage = null;
+    private Graphics2D renderCameraGraphics = null;
+
+    private BufferedImage grabFrame() {
+        BufferedImage img = acceptedWebcam.getImage();
+        // Build a compositing buffer if necessary (reset when camera or size changes)
+        if(null == renderCameraImage) {
+            renderCameraImage = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        }
+        return img;
+    }
+
     @Override
     public void run() {
 
-        Webcam webcam = null;
+        long lastStart = System.currentTimeMillis();
 
-        try {
-            long lastStart = 0L;
+        // We must drive these state transitions regardless of the camera state
+        boolean fromFreezingToFrozen = State.Freezing.equals(stateMachine.getState()) && System.currentTimeMillis() >= freezeBy && stateMachine.transitionIfLegal(State.Frozen);
+        @SuppressWarnings("unused")
+        boolean fromThawingToThawed = State.Thawing.equals(stateMachine.getState()) && stateMachine.transitionIfLegal(State.Thawed);
 
-            // Image from the camera
-            BufferedImage bufferedCameraImage = null;
+        // Somebody called setWebcam, let's accept it
+        if(proposedWebcam != acceptedWebcam) {
+            if(acceptedWebcam != null && acceptedWebcam.isOpen()) {
+                acceptedWebcam.close();
+            }
+            acceptedWebcam = proposedWebcam;
+            log.debug("Accepted webcam:"+acceptedWebcam);
+            renderCameraImage = null;
+            renderCameraGraphics = null;
+            mustResize = true;
+        }
 
-            // Image we use to create a blur effect
-            BufferedImage renderCameraImage = null;
-            Graphics2D renderCameraGraphics = null;
+        // No currently selected webcam
+        if(acceptedWebcam == null) {
+            // Nothing to do!
+            return;
+        }
 
-
-
-            while (running) {
-                // New webcam specified
-                if(this.webcam != webcam) {
-                    webcam = this.webcam;
-                    if(null != webcam) {
-                        bufferedCameraImage = webcam.getImage();
-                        if(bufferedCameraImage != null) {
-                            renderCameraImage = new BufferedImage(bufferedCameraImage.getWidth(), bufferedCameraImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
-                        }
-                    }
-                } else {
-                    if(webcam != null) {
-                        bufferedCameraImage = webcam.getImage();
-                    }
-                }
-
-                lastStart = System.currentTimeMillis();
-                if(webcam != null && bufferedCameraImage!=null) {
-                    switch(state) {
-
-                    case Frozen:
-                        if(null == renderCameraGraphics) {
-                            // Straight to frozen
-                            renderCameraGraphics = renderCameraImage.createGraphics();
-                            renderCameraGraphics.drawImage(bufferedCameraImage, 0, 0, null);
-                            imageToPaint = renderCameraImage;
-                        }
-                        renderCameraGraphics.dispose();
-                        renderCameraGraphics = null;
-                        gray(renderCameraImage);
-                        break;
-                    case Freezing:
-                        if(null == renderCameraGraphics) {
-                            renderCameraGraphics = renderCameraImage.createGraphics();
-                            renderCameraGraphics.drawImage(bufferedCameraImage, 0, 0, null);
-                            renderCameraGraphics.setComposite(composite);
-                            imageToPaint = renderCameraImage;
-                        } else {
-                            renderCameraGraphics.drawImage(bufferedCameraImage, 0, 0, this);
-                        }
-                        break;
-                    case Thawed:
-                        imageToPaint = bufferedCameraImage;
-                        break;
-                    default:
-                    }
-                }
-
-
-                synchronized (this) {
-                    if(State.Freezing.equals(state) && System.currentTimeMillis() >= freezeBy) {
-                        log.info("frozen:"+System.currentTimeMillis());
-                        state = State.Frozen;
-                        continue;
-                    } else {
-
-                        while(running && State.Frozen.equals(state)) {
-                            repaint();
-                            try {
-                                wait();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-//					renderCameraGraphics.fillRect(0, 0, image.width(), image.height());
-                }
+        // There's been a resize
+        if(mustResize) {
+            Dimension size = getSize();
+            if(size.width <= 0 || size.height <= 0) {
+                return;
+            }
+            if(!size.equals(acceptedWebcam.getViewSize())) {
+                renderCameraImage = null;
+                renderCameraGraphics = null;
+                imageToPaint = null;
                 repaint();
-                long now = System.currentTimeMillis();
-                if( FRAME_INTERVAL > (now - lastStart) ) {
-                    try {
-                        Thread.sleep(FRAME_INTERVAL - (now - lastStart));
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+
+                if(acceptedWebcam.isOpen()) {
+                    acceptedWebcam.close();
+                }
+                acceptedWebcam.setCustomViewSizes(new Dimension[] { size });
+                acceptedWebcam.setViewSize(size);
+
+                if(!size.equals(acceptedWebcam.getViewSize())) {
+                    for(Dimension d : acceptedWebcam.getViewSizes()) {
+                        if(d.width <= size.width && d.height <= size.height) {
+                            acceptedWebcam.setViewSize(d);
+                        }
                     }
-                } else {
-                    log.warn("Frame took " + (now-lastStart) + "ms which exceeds FRAME_INTERVAL="+ FRAME_INTERVAL+"ms");
                 }
-
-
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if(webcam != null) {
-                    webcam.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         }
-    }
 
-
-    private static final String ACQUIRING_IMAGE = "Acquiring image...";
-    private static final String IMAGE_ACQUIRED = "Image Acquired";
-    private static final String LIVE_VIDEO = "Live Video";
-    private static final Color transparentWhite = new Color(1.0f, 1.0f, 1.0f, 0.8f);
-    private static final Color transparentRed = new Color(1.0f, 0.0f, 0.0f, 0.8f);
-
-    @SuppressWarnings("rawtypes")
-    ScheduledFuture resizerFuture;
-
-    private final class Resizer implements Runnable {
-        public void run() {
-
-
-            Webcam webcam = FramePanel.this.webcam;
-            if(!webcam.getViewSize().equals(getSize())) {
-                setWebcam(null);
-                setWebcam(webcam);
-            }
+        // Get the camera open
+        if(!acceptedWebcam.isOpen()) {
+            acceptedWebcam.open();
         }
+
+        // Image from the camera
+        BufferedImage bufferedCameraImage;
+        switch(stateMachine.getState()) {
+        case Frozen:
+            if(fromFreezingToFrozen) {
+                if(null == renderCameraGraphics) {
+                    bufferedCameraImage = grabFrame();
+                    // Straight to frozen; no pass through Freezing
+                    renderCameraGraphics = renderCameraImage.createGraphics();
+                    renderCameraGraphics.drawImage(bufferedCameraImage, 0, 0, null);
+                    imageToPaint = renderCameraImage;
+                }
+                // Finish
+                renderCameraGraphics.dispose();
+                renderCameraGraphics = null;
+                gray(renderCameraImage);
+            }
+            break;
+        case Freezing:
+            bufferedCameraImage = grabFrame();
+            if(null == renderCameraGraphics) {
+                // First pass in freezing state, build a graphics to use for compositing *after* a baseline image copied
+                renderCameraGraphics = renderCameraImage.createGraphics();
+                renderCameraGraphics.drawImage(bufferedCameraImage, 0, 0, null);
+                renderCameraGraphics.setComposite(composite);
+                imageToPaint = renderCameraImage;
+            } else {
+                // Add to the composite
+                renderCameraGraphics.drawImage(bufferedCameraImage, 0, 0, this);
+            }
+            break;
+        case Thawed:
+            bufferedCameraImage = grabFrame();
+            imageToPaint = bufferedCameraImage;
+            break;
+        default:
+        }
+
+        long frameProcessingTime = System.currentTimeMillis() - lastStart;
+
+        if( frameProcessingTime > FRAME_INTERVAL ) {
+            log.warn("Frame processing " + frameProcessingTime + "ms exceeds " + FRAME_INTERVAL + "ms");
+        }
+        repaint();
     }
-    private final Resizer resizer = new Resizer();
 
     @Override
     protected void processComponentEvent(ComponentEvent e) {
         switch(e.getID()) {
         case ComponentEvent.COMPONENT_RESIZED:
-            if(null != resizerFuture) {
-                resizerFuture.cancel(false);
-            }
-            resizerFuture = executor.schedule(resizer, 1500L, TimeUnit.MILLISECONDS);
-
+            mustResize = true;
             break;
         }
         super.processComponentEvent(e);
     }
 
-    private static Font bigFont;
     private final Dimension paintSize = new Dimension();
     @Override
     protected void paintComponent(Graphics g) {
@@ -359,82 +278,5 @@ public class FramePanel extends JComponent implements Runnable {
             g.fillRect(0, 0, getWidth(), getHeight());
             g.setColor(c);
         }
-        FontMetrics fontMetrics;
-
-        if(null == bigFont) {
-            float fontSize = 50f;
-            String s = System.getProperty("XRAYVENTFONTSIZE");
-            if(null != s) {
-                try {
-                    fontSize = Float.parseFloat(s);
-                } catch (NumberFormatException nfe) {
-                    log.error("Cannot read XRAYVENTFONTSIZE system property", nfe);
-                }
-            }
-            bigFont = g.getFont().deriveFont(fontSize);
-//		    System.out.println("bigFont");
-        }
-        g.setFont(bigFont);
-
-        fontMetrics = g.getFontMetrics();
-        final int Y = 70;
-        final int X = 20;
-        int y = Y - fontMetrics.getHeight() + fontMetrics.getDescent();
-
-        switch(state) {
-        case Freezing:
-            g.setColor(transparentWhite);
-            g.fillRect(X, y, fontMetrics.stringWidth(ACQUIRING_IMAGE), fontMetrics.getHeight());
-            g.setColor(Color.black);
-            g.drawString(ACQUIRING_IMAGE, X, Y);
-            break;
-        case Frozen:
-            g.setColor(transparentRed);
-            g.fillRect(X, y, fontMetrics.stringWidth(IMAGE_ACQUIRED), fontMetrics.getHeight());
-            g.setColor(Color.black);
-            g.drawString(IMAGE_ACQUIRED, X, Y);
-            break;
-        case Thawed:
-            g.setColor(transparentWhite);
-            g.fillRect(X, y, fontMetrics.stringWidth(LIVE_VIDEO), fontMetrics.getHeight());
-            g.setColor(Color.black);
-            g.drawString(LIVE_VIDEO, X, Y);
-            break;
-        default:
-        }
-
-    }
-
-    public static void main(String[] args) throws WebcamException, TimeoutException {
-        JFrame top = new JFrame("FramePanel test");
-        Webcam webcam = Webcam.getDefault(5000L);
-        final FramePanel panel = new FramePanel(Executors.newSingleThreadScheduledExecutor());
-        panel.setWebcam(webcam);
-        top.getContentPane().setLayout(new BorderLayout());
-        top.getContentPane().add(panel, BorderLayout.CENTER);
-
-
-        top.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                panel.stop();
-                super.windowClosing(e);
-            }
-        });
-
-        panel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                panel.toggle();
-                super.mouseReleased(e);
-            }
-        });
-
-        top.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        top.setSize(640, 480);
-        top.setLocationRelativeTo(null);
-        top.setVisible(true);
-
-        panel.start();
     }
 }
