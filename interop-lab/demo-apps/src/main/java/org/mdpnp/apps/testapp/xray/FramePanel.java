@@ -59,7 +59,7 @@ public class FramePanel extends JComponent implements Runnable {
     }
 
     public void freeze(long exposureTime) {
-        if(stateMachine.transitionWhenLegal(State.Freezing, 1000L)) {
+        if(stateMachine.transitionIfLegal(State.Freezing)) {
             freezeBy = exposureTime > 0L ? (System.currentTimeMillis() + exposureTime) : 0L;
             log.info("will freeze:"+freezeBy);
         } else {
@@ -68,7 +68,7 @@ public class FramePanel extends JComponent implements Runnable {
     }
 
     public void unfreeze() {
-        if(stateMachine.transitionWhenLegal(State.Thawing, 1000L)) {
+        if(stateMachine.transitionIfLegal(State.Thawing)) {
             log.info("will thaw");
         } else {
             log.info("cannot enter Thawing state");
@@ -127,24 +127,23 @@ public class FramePanel extends JComponent implements Runnable {
     }
 
     private static final long FRAME_INTERVAL = 1000L / 30L;
+    private static final long RESIZE_DELAY = 1000L;
     private static final Logger log = LoggerFactory.getLogger(FramePanel.class);
 
-    private BufferedImage imageToPaint = null;
-
     private volatile Webcam proposedWebcam, acceptedWebcam;
-    private volatile boolean mustResize;
+    private volatile long resizeAt = Long.MAX_VALUE;
 
     // Image we use to create a blur effect
-    private BufferedImage renderCameraImage = null;
+    private BufferedImage renderCameraImage = null, bufferedCameraImage = null;
     private Graphics2D renderCameraGraphics = null;
 
     private BufferedImage grabFrame() {
-        BufferedImage img = acceptedWebcam.getImage();
+        bufferedCameraImage = acceptedWebcam.getImage();
         // Build a compositing buffer if necessary (reset when camera or size changes)
         if(null == renderCameraImage) {
-            renderCameraImage = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            renderCameraImage = new BufferedImage(bufferedCameraImage.getWidth(), bufferedCameraImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
         }
-        return img;
+        return bufferedCameraImage;
     }
 
     @Override
@@ -163,7 +162,7 @@ public class FramePanel extends JComponent implements Runnable {
             log.debug("Accepted webcam:"+acceptedWebcam);
             renderCameraImage = null;
             renderCameraGraphics = null;
-            mustResize = true;
+            resizeAt = 0L;
         }
 
         // No currently selected webcam
@@ -173,32 +172,48 @@ public class FramePanel extends JComponent implements Runnable {
         }
 
         // There's been a resize
-        if(mustResize) {
+        if(System.currentTimeMillis() >= resizeAt) {
+            log.trace("resizeAt has expired");
             getSize(size);
             if(size.width <= 0 || size.height <= 0) {
+                log.trace("Not resizing to " + size);
                 return;
             }
             if(!size.equals(acceptedWebcam.getViewSize())) {
+                log.trace("Resizing the webcam");
+                bufferedCameraImage = null;
+
+                if(null != renderCameraGraphics) {
+                    renderCameraGraphics.dispose();
+                    renderCameraGraphics = null;
+                }
                 renderCameraImage = null;
-                renderCameraGraphics = null;
-                imageToPaint = null;
                 repaint();
 
                 if(acceptedWebcam.isOpen()) {
+                    log.trace("Closing the accepted webcam for resize");
                     acceptedWebcam.close();
                 }
-                acceptedWebcam.setCustomViewSizes(new Dimension[] { size });
-                acceptedWebcam.setViewSize(size);
+
+
+                // cam holds references to these dimensions
+                acceptedWebcam.setCustomViewSizes(new Dimension[] { new Dimension(size) });
+                acceptedWebcam.setViewSize(new Dimension(size));
 
                 if(!size.equals(acceptedWebcam.getViewSize())) {
+                    log.trace("cam did not accept resolution " + size + " looking for best fit");
                     for(Dimension d : acceptedWebcam.getViewSizes()) {
                         if(d.width <= size.width && d.height <= size.height) {
+                            log.trace("setViewSize " + d);
                             acceptedWebcam.setViewSize(d);
+
                         }
                     }
                 }
+            } else {
+                log.trace("Already sized correctly " + size + " and " + acceptedWebcam.getViewSize());
             }
-            mustResize = false;
+            resizeAt = Long.MAX_VALUE;
         }
 
         // Get the camera open
@@ -216,7 +231,6 @@ public class FramePanel extends JComponent implements Runnable {
                     // Straight to frozen; no pass through Freezing
                     renderCameraGraphics = renderCameraImage.createGraphics();
                     renderCameraGraphics.drawImage(bufferedCameraImage, 0, 0, null);
-                    imageToPaint = renderCameraImage;
                 }
                 // Finish
                 renderCameraGraphics.dispose();
@@ -231,7 +245,6 @@ public class FramePanel extends JComponent implements Runnable {
                 renderCameraGraphics = renderCameraImage.createGraphics();
                 renderCameraGraphics.drawImage(bufferedCameraImage, 0, 0, null);
                 renderCameraGraphics.setComposite(composite);
-                imageToPaint = renderCameraImage;
             } else {
                 // Add to the composite
                 renderCameraGraphics.drawImage(bufferedCameraImage, 0, 0, this);
@@ -239,7 +252,6 @@ public class FramePanel extends JComponent implements Runnable {
             break;
         case Thawed:
             bufferedCameraImage = grabFrame();
-            imageToPaint = bufferedCameraImage;
             break;
         default:
         }
@@ -251,7 +263,8 @@ public class FramePanel extends JComponent implements Runnable {
     protected void processComponentEvent(ComponentEvent e) {
         switch(e.getID()) {
         case ComponentEvent.COMPONENT_RESIZED:
-            mustResize = true;
+            resizeAt = System.currentTimeMillis() + RESIZE_DELAY;
+            log.trace("Resizing at : " + resizeAt);
             break;
         }
         super.processComponentEvent(e);
@@ -261,15 +274,31 @@ public class FramePanel extends JComponent implements Runnable {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        BufferedImage imageToPaint = this.imageToPaint;
-        if(null != imageToPaint) {
-            getSize(paintSize);
-            g.drawImage(imageToPaint, (paintSize.width - imageToPaint.getWidth()) / 2 , (paintSize.height - imageToPaint.getHeight()) / 2, this);
-        } else {
-            Color c = g.getColor();
-            g.setColor(Color.gray);
-            g.fillRect(0, 0, getWidth(), getHeight());
-            g.setColor(c);
+        getSize(paintSize);
+
+        BufferedImage imageToPaint = null;
+
+        switch(stateMachine.getState()) {
+        case Freezing:
+        case Thawing:
+        case Frozen:
+            imageToPaint = renderCameraImage;
+            break;
+        case Thawed:
+        default:
+            imageToPaint = bufferedCameraImage;
+            break;
+        }
+
+        if(paintSize.width > 0 && paintSize.height > 0) {
+            if(null != imageToPaint && imageToPaint.getWidth() > 0 && imageToPaint.getHeight() > 0) {
+                g.drawImage(imageToPaint, (paintSize.width - imageToPaint.getWidth()) / 2 , (paintSize.height - imageToPaint.getHeight()) / 2, this);
+            } else {
+                Color c = g.getColor();
+                g.setColor(Color.gray);
+                g.fillRect(0, 0, paintSize.width, paintSize.height);
+                g.setColor(c);
+            }
         }
     }
 }
