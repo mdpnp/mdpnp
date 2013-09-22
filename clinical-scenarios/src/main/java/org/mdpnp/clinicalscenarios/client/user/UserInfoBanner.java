@@ -54,7 +54,8 @@ public class UserInfoBanner extends Composite {
 	private MenuItem scnUnsubmited = new MenuItem(ScenarioPanel.SCN_STATUS_UNSUBMITTED, NOOP);
 	private MenuItem scnSubmited = new MenuItem(ScenarioPanel.SCN_STATUS_SUBMITTED, NOOP);
 	private MenuItem scnApproved= new MenuItem(ScenarioPanel.SCN_STATUS_APPROVED, NOOP);
-//	private MenuItem scnRejected = new MenuItem(ScenarioPanel.SCN_STATUS_REJECTED, NOOP); XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission 
+	private MenuItem scnModified = new MenuItem(ScenarioPanel.SCN_STATUS_MODIFIED, NOOP);
+	private MenuItem scnRejected = new MenuItem(ScenarioPanel.SCN_STATUS_REJECTED, NOOP);  
 	
 	private MenuItem listMyScn = new MenuItem("My Scenarios", NOOP);//List Scn for registered users
 	private MenuItem listApprvScn = new MenuItem("All Approved Scenarios", NOOP);//list of Approved Scn for Anonymous/registered users
@@ -109,6 +110,13 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getListScnApproved(){
 		return scnApproved;
 	}
+	public MenuItem getListScnModified(){
+		return scnModified;
+	}
+	public MenuItem getListScnRejected(){
+		return scnRejected;
+	}
+	
 	public MenuItem getCreateNewScenario(){
 		return createNewScn;
 	}
@@ -207,7 +215,11 @@ public class UserInfoBanner extends Composite {
 						scnSubmited.setTitle("Scenarios pendig of revision and approval");
 						listScnByStatus.addItem(scnApproved);
 						scnApproved.setTitle("List all approved scenarios");
-//						listScnByStatus.addItem(scnRejected);XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
+						listScnByStatus.addItem(scnModified);
+						scnModified.setTitle("List all post-approved modified scenarios");
+						listScnByStatus.addItem(scnRejected);
+						scnRejected.setTitle("List all rejected scenarios");
+
 						listScenarios.addItem("List Scenarios by Status", listScnByStatus);
 						listScenarios.addItem(listMyScn);
 						listMyScn.setTitle("All scenarios created by this user");

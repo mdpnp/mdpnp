@@ -5,7 +5,6 @@ import static org.mdpnp.clinicalscenarios.server.OfyService.ofy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -35,6 +34,7 @@ public class ScenarioEntity implements java.io.Serializable {
 	
 	@Id
 	private Long id;
+	protected Integer version = 1;
 	
 	@Index  //--Shouldn't we index the title if we are going to base our basic search on it?
 	private String title; //title of the scenario
@@ -45,10 +45,12 @@ public class ScenarioEntity implements java.io.Serializable {
 	//TODO submitter should probably be a valueProxy of type UserInfo @Embebed UserInfo
 	
 	private Date creationDate = new Date();
-	private Date modificationDate;
+	private Date modificationDate;   //timestamp of last action taken
+	private String lastActionTaken;  //description of last action taken
+	private String lastActionUser;   //name of the last user to perform an action with the scenario
+	private String lockOwner; //name of user who has lock ownership over this scenario
 	
-    protected Integer version = 1;
-	
+
 	@OnSave
 	void onPersist() {
 	    version++;
@@ -160,11 +162,57 @@ public class ScenarioEntity implements java.io.Serializable {
 	public void setBackground(BackgroundValue background) {
         this.background = background;
     }
+	
+	protected Integer getVersion() {
+		return version;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public String getSubmitter() {
+		return submitter;
+	}
+
+	public void setSubmitter(String submitter) {
+		this.submitter = submitter;
+	}
 		
+	public String getLastActionTaken() {
+		return lastActionTaken;
+	}
+
+	public void setLastActionTaken(String lastActionTaken) {
+		this.lastActionTaken = lastActionTaken;
+	}
+
+	public String getLastActionUser() {
+		return lastActionUser;
+	}
+
+	public void setLastActionUser(String lastActionUser) {
+		this.lastActionUser = lastActionUser;
+	}
+
+	public String getLockOwner() {
+		return lockOwner;
+	}
+
+	public void setLockOwner(String lockOwner) {
+		this.lockOwner = lockOwner;
+	}
+
 	public static ScenarioEntity create() /*throws Exception*/ {
 		try{
 		    ScenarioEntity s = new ScenarioEntity();
 		    s.setStatus(ScenarioPanel.SCN_STATUS_UNSUBMITTED);//By default, pending of submission
+		    s.setLastActionTaken("created new");
+		    s.setLastActionUser(s.getSubmitter());
 			//to ID the current user
 		    UserService userService = UserServiceFactory.getUserService();
 		    User user = userService.getCurrentUser();
@@ -189,37 +237,7 @@ public class ScenarioEntity implements java.io.Serializable {
 	    return ofy().load().type(ScenarioEntity.class).id(id).now();
 	}
 	
-	
-	/* XXX diego@mdpnp.org
-	 * One concern about the methods herein published for searches: Am I bringing too much business logic to this point?
-	 * Should the be simpler searches that I would filter later?
-	 */
-	/*
-	 * Diego@mdpnp.org
-	 * This won't work because title is "Prototype Scenario #1" which will never be on 
-	 * a keywords list such as ["protoype", "Scenario"] but could be used for other queries
-	public static List<ScenarioEntity> searchByKeywords(String keywords){
-
-//		List<String> keyWordsList = Arrays.asList(keywords.split("\\s+")); careful w/ single words
-		List<String> keyWordsList = new ArrayList<String>();
-		keyWordsList.add(keywords);
 		
-		Iterable<ScenarioEntity> scns =  ofy().load().type(ScenarioEntity.class)
-				.filter("status", ScenarioPanel.SCN_STATUS_APPROVED)//get only approved Scn
-				.filter("title in", keyWordsList)
-				.iterable();
-		
-		List<ScenarioEntity> listScn = new ArrayList<ScenarioEntity>();
-		Iterator<ScenarioEntity> it = scns.iterator();
-		while(it.hasNext()) listScn.add((ScenarioEntity)it.next());
-		
-//		List<ScenarioEntity> listScn = ofy().load().type(ScenarioEntity.class)
-//				.filter("status", ScenarioPanel.SCN_STATUS_APPROVED)//get only approved Scn
-////				.filter("title in", keywords)
-//				.list();
-		return listScn;
-	}*/
-	
 	/**
 	 * Auxiliary method that returns true if the param line contains any of the words included in the keyWordList
 	 * @param line
@@ -440,6 +458,18 @@ public class ScenarioEntity implements java.io.Serializable {
 		return listScn;
 	}
 	
+	public static List<ScenarioEntity> searchByStatus(Set<String> nStatus){
+		List<ScenarioEntity> listAllScn = ofy().load().type(ScenarioEntity.class).list();
+		List<ScenarioEntity> filteredList = new ArrayList<ScenarioEntity>();
+		for(ScenarioEntity scn : listAllScn){
+			String status = scn.getStatus();
+			if(nStatus.contains(status)){
+					filteredList.add(scn);
+			}				
+		}
+		return filteredList;
+	}
+	
 	public static List<ScenarioEntity> searchScnBySubmitter(String submitter){
 		List<ScenarioEntity> listScn = ofy().load().type(ScenarioEntity.class).filter("submitter", submitter).list();
 		return listScn;
@@ -451,7 +481,8 @@ public class ScenarioEntity implements java.io.Serializable {
 	
 //	private static Logger logger = Logger.getLogger(Scenario.class.getName());
 	public ScenarioEntity persist() {
-	    ofy().save().entity(this).now();
+//		if(username!= null && !username.trim().equals("") && username.equals(lockOwner))
+		ofy().save().entity(this).now();
 	    return this;
 	}
 	
@@ -459,25 +490,7 @@ public class ScenarioEntity implements java.io.Serializable {
 	    ofy().delete().entity(this).now();
 	}
 	
-	protected Integer getVersion() {
-		return version;
-	}
 
-	public String getStatus() {
-		return status;
-	}
-
-	public void setStatus(String status) {
-		this.status = status;
-	}
-
-	public String getSubmitter() {
-		return submitter;
-	}
-
-	public void setSubmitter(String submitter) {
-		this.submitter = submitter;
-	}
 	
 	//DAG option discarded
 //	public ScenarioEntity submittScenario() {
@@ -539,6 +552,29 @@ public class ScenarioEntity implements java.io.Serializable {
 				
 		return filteredList;
 	
+	}
+	
+	/**
+	 * Locks the scenario for editing privilege
+	 * @param username name of user requesting the lock
+	 * @return
+	 */
+	public ScenarioEntity lock(String username) {
+		if(submitter == null){
+			this.lockOwner = username;
+		    ofy().save().entity(this).now();
+		}
+	    return this;
+	}
+	
+	/**
+	 * Frees the scenario
+	 * @return
+	 */
+	public ScenarioEntity unlock() {
+		this.lockOwner = null;
+		ofy().save().entity(this).now();
+	    return this;
 	}
 	
 	
