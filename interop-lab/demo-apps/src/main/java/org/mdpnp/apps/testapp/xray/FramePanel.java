@@ -94,7 +94,7 @@ public class FramePanel extends JComponent implements Runnable {
 
     public synchronized void start() {
         if(null == future) {
-            future = executor.scheduleAtFixedRate(this, 0L, FRAME_INTERVAL, TimeUnit.MILLISECONDS);
+            future = executor.scheduleWithFixedDelay(this, 0L, FRAME_INTERVAL, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -149,9 +149,6 @@ public class FramePanel extends JComponent implements Runnable {
 
     @Override
     public void run() {
-
-        long lastStart = System.currentTimeMillis();
-
         // We must drive these state transitions regardless of the camera state
         boolean fromFreezingToFrozen = State.Freezing.equals(stateMachine.getState()) && System.currentTimeMillis() >= freezeBy && stateMachine.transitionIfLegal(State.Frozen);
         @SuppressWarnings("unused")
@@ -177,7 +174,7 @@ public class FramePanel extends JComponent implements Runnable {
 
         // There's been a resize
         if(mustResize) {
-            Dimension size = getSize();
+            getSize(size);
             if(size.width <= 0 || size.height <= 0) {
                 return;
             }
@@ -201,6 +198,7 @@ public class FramePanel extends JComponent implements Runnable {
                     }
                 }
             }
+            mustResize = false;
         }
 
         // Get the camera open
@@ -246,11 +244,6 @@ public class FramePanel extends JComponent implements Runnable {
         default:
         }
 
-        long frameProcessingTime = System.currentTimeMillis() - lastStart;
-
-        if( frameProcessingTime > FRAME_INTERVAL ) {
-            log.warn("Frame processing " + frameProcessingTime + "ms exceeds " + FRAME_INTERVAL + "ms");
-        }
         repaint();
     }
 
@@ -263,7 +256,7 @@ public class FramePanel extends JComponent implements Runnable {
         }
         super.processComponentEvent(e);
     }
-
+    private final Dimension size = new Dimension();
     private final Dimension paintSize = new Dimension();
     @Override
     protected void paintComponent(Graphics g) {
