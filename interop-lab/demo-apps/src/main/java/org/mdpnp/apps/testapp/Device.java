@@ -79,6 +79,7 @@ public class Device {
     }
 
     public void setDeviceIdentity(DeviceIdentity deviceIdentity) {
+        this.realIcon = null;
         if(null == deviceIdentity) {
             this.deviceIdentity = null;
         } else {

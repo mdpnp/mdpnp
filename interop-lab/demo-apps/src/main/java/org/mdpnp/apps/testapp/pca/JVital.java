@@ -1,9 +1,6 @@
 package org.mdpnp.apps.testapp.pca;
 
-import ice.DeviceIdentity;
-
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -11,7 +8,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.ref.SoftReference;
 import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.JButton;
@@ -26,26 +22,26 @@ import org.mdpnp.apps.testapp.vital.JMultiSlider;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 
+@SuppressWarnings("serial")
 public final class JVital extends JPanel {
         private final Vital vital;
         private final JMultiSlider slider, slider2;
 
         private final JLabel name = new JLabel();
-        private final JLabel name2 = new JLabel();
         private final JPanel vitalValues = new JPanel(new FlowLayout(FlowLayout.LEFT));
         private final JButton deleteButton = new JButton("Remove");
         private final JCheckBox ignoreZeroBox = new JCheckBox("Ignore Zero");
         private final JCheckBox requiredBox = new JCheckBox("Required");
-        
+
 //        private JLabel limitsLabel = new JLabel("Limits:");
 //        private JLabel configureLabel = new JLabel("Configure:");
-        
+
 //        private boolean showConfiguration = false;
-        
+
         public Vital getVital() {
             return vital;
         }
-        
+
         public JVital(final Vital vital) {
             setBorder(null);
 //            setBackground(Color.black);
@@ -65,10 +61,8 @@ public final class JVital extends JPanel {
             }
 //            lbl = lbl + " (" + vital.getUnits() + ")";
             Font font = Font.decode("verdana-20");
-            name.setText(lbl);
-            name2.setText(lbl);
+            name.setText(lbl);;
             name.setFont(Font.decode("verdana-30"));
-            name2.setFont(Font.decode("verdana-30"));
             VitalBoundedRangeMulti range = new VitalBoundedRangeMulti(vital);
             slider = new JMultiSlider(range);
             slider.setFont(font);
@@ -84,86 +78,82 @@ public final class JVital extends JPanel {
             slider2.setRangeColor(0, Color.yellow);
             slider2.setRangeColor(1, Color.green);
             slider2.setDrawThumbs(true);
-            
-            
-            
+
+
+
             deleteButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     vital.getParent().removeVital(vital);
                 }
             });
-            
+
             ignoreZeroBox.addActionListener(new ActionListener() {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     vital.setIgnoreZero(ignoreZeroBox.isSelected());
                 }
-                
+
             });
-            
+
             requiredBox.addActionListener(new ActionListener() {
                 @Override
                  public void actionPerformed(ActionEvent e) {
                     vital.setNoValueWarning(requiredBox.isSelected());
-                 } 
+                 }
              });
 
             setLayout(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0);
-            
+
             // FIRST ROW
             gbc.gridheight = 3;
             add(name, gbc);
-            
+
             gbc.gridheight = 1;
             gbc.weightx = 10.0;
             gbc.gridx++;
             gbc.gridwidth = 3;
             add(slider, gbc);
-            
+
             gbc.gridy++;
             add(slider2, gbc);
-            
+
             gbc.gridy++;
             gbc.gridwidth = 1;
 //            gbc.fill = GridBagConstraints.NONE;
             gbc.weightx = 1.0;
 
             add(ignoreZeroBox, gbc);
-            
+
             gbc.gridx++;
             add(requiredBox, gbc);
-            
+
             gbc.gridx++;
             add(deleteButton, gbc);
 
-            gbc.weightx = 1.0;
+            gbc.weightx = 10.0;
             // DATA area
             gbc.gridy = 0;
             gbc.gridx++;
             gbc.gridheight = 3;
 //            add(new JLabel("Sources:"), gbc);
-            
+
             gbc.fill = GridBagConstraints.NONE;
 //            gbc.gridx++;
 //            gbc.gridwidth = 3;
-            
 
-            
+
+
 
             add(vitalValues, gbc);
-            
-            gbc.gridx++;
-            add(name2, gbc);
-            
-            
+
             setShowConfiguration(false);
 
 
         }
-        
+
         public void setShowConfiguration(boolean showConfiguration) {
             slider.setDrawThumbs(showConfiguration);
 //            slider.setVisible(showConfiguration);
@@ -171,11 +161,11 @@ public final class JVital extends JPanel {
             ignoreZeroBox.setVisible(showConfiguration);
             requiredBox.setVisible(showConfiguration);
             deleteButton.setVisible(showConfiguration);
-            
+
             validate();
 
         }
-        
+
         public void refreshContents() {
             Runnable r = new Runnable() {
                 public void run() {
@@ -195,12 +185,12 @@ public final class JVital extends JPanel {
             }
         }
 
-        
+
         public void _refreshContents() {
             updateData();
         }
 
-        
+
 //        @Override
 //        public void stateChanged(ChangeEvent e) {
 //            float range = vital.getMaximum() - vital.getMinimum();
@@ -210,9 +200,9 @@ public final class JVital extends JPanel {
 //              slider.setMajorTickSpacing(incr);
 //            }
 //        }
-        
 
-        
+
+
         public void updateData() {
             final int N = vital.getValues().isEmpty() ? 1 : vital.getValues().size();
             ignoreZeroBox.setSelected(vital.isIgnoreZero());
@@ -222,7 +212,7 @@ public final class JVital extends JPanel {
                 if(N != vitalValues.getComponentCount()) {
                     Runnable r = new Runnable() {
                         public void run() {
-                            
+
                             while(vitalValues.getComponentCount() < N) {
                                 for(int i = 0; i < (N - vitalValues.getComponentCount()); i++) {
                                     JValue val = new JValue();
@@ -237,7 +227,7 @@ public final class JVital extends JPanel {
                                 }
                                 validate();
                             }
-                            
+
                         }
                     };
                     if(SwingUtilities.isEventDispatchThread()) {
@@ -253,8 +243,8 @@ public final class JVital extends JPanel {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            
-            
+
+
             if(vital.getValues().isEmpty()) {
 //                ((JLabel)vitalValues.getComponent(0)).setForeground(Color.yellow);
 //                ((JLabel)vitalValues.getComponent(0)).setBackground(Color.yellow);
@@ -263,10 +253,10 @@ public final class JVital extends JPanel {
                 for(int i = 0; i < vital.getValues().size(); i++) {
                     Value val = vital.getValues().get(i);
                     JValue lbl = (JValue) vitalValues.getComponent(i);
-                    
+
                     ice.DeviceIdentity di = vital.getParent().getDeviceIdentity(val.getUniversalDeviceIdentifier());
                     DeviceIcon dicon = vital.getParent().getDeviceIcon(val.getUniversalDeviceIdentifier());
-                    
+//                    dicon = null == dicon ? null : new ScaledDeviceIcon(dicon, 0.5);
                     if(null != di) {
                         String s = di.manufacturer.equals(di.model) ? di.manufacturer : (di.manufacturer + " " + di.model);
                         lbl.update(val, dicon, s, val.getNumeric(), val.getSampleInfo(), val.getValueMsBelowLow(), val.getValueMsAboveHigh());

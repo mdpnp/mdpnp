@@ -39,7 +39,6 @@ import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
 import com.rti.dds.domain.DomainParticipantQos;
-import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicDataTypeSupport;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
@@ -85,6 +84,7 @@ public class DemoApp {
 
     private static final Logger log = LoggerFactory.getLogger(DemoApp.class);
 
+    @SuppressWarnings("unchecked")
     public static final void start(final int domainId) throws Exception {
         UIManager.setLookAndFeel(new MDPnPLookAndFeel());
 
@@ -158,7 +158,7 @@ public class DemoApp {
         final CompositeDevicePanel devicePanel = new CompositeDevicePanel();
         panel.getContent().add(devicePanel, AppType.Device.getId());
 
-        final VitalModel vitalModel = new VitalModelImpl();
+        final VitalModel vitalModel = new VitalModelImpl(nc);
         final PumpModel pumpModel = new PumpModelImpl();
         final CapnoModel capnoModel = new CapnoModelImpl(ice.MDC_CAPNOGRAPH.VALUE);
         VitalSign.HeartRate.addToModel(vitalModel);
@@ -240,6 +240,7 @@ public class DemoApp {
 
         mainMenuPanel.getSpawnDeviceAdapter().addActionListener(new ActionListener() {
 
+            @SuppressWarnings({ "rawtypes" })
             @Override
             public void actionPerformed(ActionEvent e) {
                 ConfigurationDialog dia = new ConfigurationDialog();
@@ -338,6 +339,12 @@ public class DemoApp {
                             ol.show(panel.getContent(), AppType.XRay.getId());
                             xrayVentPanel.start();
                         }
+                        break;
+                    case Device:
+                        break;
+                    case Main:
+                        break;
+                    default:
                         break;
 
                     }

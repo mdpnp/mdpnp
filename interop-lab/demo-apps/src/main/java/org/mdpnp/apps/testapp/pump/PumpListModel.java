@@ -5,12 +5,13 @@ import javax.swing.ListModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
+@SuppressWarnings({ "serial", "rawtypes" })
 public class PumpListModel extends AbstractListModel implements ListModel {
     private final PumpModel model;
-    
+
     private class PumpListModelListener implements PumpModelListener {
         private final ListDataListener listener;
-        
+
         public PumpListModelListener(ListDataListener listener) {
             this.listener = listener;
         }
@@ -26,7 +27,7 @@ public class PumpListModel extends AbstractListModel implements ListModel {
                 return false;
             }
         }
-        
+
         @Override
         public void pumpAdded(PumpModel model, Pump pump) {
             listener.intervalAdded(new ListDataEvent(PumpListModel.this, ListDataEvent.INTERVAL_ADDED, 0, 0));
@@ -38,7 +39,7 @@ public class PumpListModel extends AbstractListModel implements ListModel {
             if(getSize() > 0) {
                 listener.contentsChanged(new ListDataEvent(PumpListModel.this, ListDataEvent.CONTENTS_CHANGED, 0, getSize() - 1));
             }
-            
+
         }
         @Override
         public void pumpChanged(PumpModel model, Pump pump) {
@@ -48,9 +49,9 @@ public class PumpListModel extends AbstractListModel implements ListModel {
 //            // TODO maybe remove this ... could just be noise for this purpose
 //            fireContentsChanged(PumpListModel.this, 0, getSize() - 1);
         }
-        
+
     }
-    
+
     public PumpListModel(PumpModel model) {
         this.model = model;
     }

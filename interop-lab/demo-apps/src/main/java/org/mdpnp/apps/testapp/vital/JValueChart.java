@@ -5,25 +5,23 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ComponentEvent;
-import java.util.concurrent.ExecutorService;
 
 import javax.swing.JComponent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("serial")
 public class JValueChart extends JComponent {
-    private Value value;
 
     public JValueChart(final Value value) {
         enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
-        this.value = value;
     }
 
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(JValueChart.class);
 
     public void setValue(Value value) {
-        this.value = value;
         if (null == value) {
             return;
         }
@@ -31,7 +29,7 @@ public class JValueChart extends JComponent {
         if (null != image) {
             final int historyCount = value.getHistoryCount();
 
-            Graphics g = image.getGraphics(); 
+            Graphics g = image.getGraphics();
 
             Integer last_x = null;
             int last_y = 0;
@@ -60,10 +58,10 @@ public class JValueChart extends JComponent {
             for (int i = 0; i < historyCount; i++) {
                 long tm = value.getHistoryTime(i);
                 float v = value.getHistoryValue(i);
-                
+
                 int x = (int) (size.width * 1.0 * (tm - first) / (last - first));
                 int y = size.height - (int) ((size.height-1) * 1.0 * (v - low) / (high - low)) - 1;
-                
+
                 if (null != last_x) {
                     if (last_x <= x && (x >= 0 || last_x >= 0)) {
                         g.drawLine(last_x, last_y, x, y);

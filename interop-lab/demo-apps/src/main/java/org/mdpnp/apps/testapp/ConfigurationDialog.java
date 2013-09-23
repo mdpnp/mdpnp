@@ -32,6 +32,7 @@ import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings( { "serial", "rawtypes", "unchecked" } )
 public class ConfigurationDialog extends JDialog {
     private final JTextArea welcomeText = new JTextArea(8, 50);
     private final JScrollPane welcomeScroll = new JScrollPane(welcomeText);
@@ -43,14 +44,14 @@ public class ConfigurationDialog extends JDialog {
     private boolean quitPressed = true;
     private final JComboBox deviceType = new JComboBox(DeviceType.values());
     private final JLabel deviceTypeLabel = new JLabel("Device Type:");
-    
+
     private JComboBox serialPorts;
     private final JTextField address = new JTextField("", 10);
     private final JLabel addressLabel = new JLabel("Address:");
     private final CardLayout addressCards = new CardLayout();
     private final JPanel addressPanel = new JPanel(addressCards);
     private final JLabel domainIdLabel = new JLabel("Domain Id:");
-    
+
     public JComboBox getApplications() {
         return applications;
     }
@@ -60,11 +61,11 @@ public class ConfigurationDialog extends JDialog {
     public JTextField getDomainId() {
         return domainId;
     }
-    
+
     public JLabel getDomainIdLabel() {
         return domainIdLabel;
     }
-    
+
     public JButton getQuit() {
         return quit;
     }
@@ -95,7 +96,7 @@ public class ConfigurationDialog extends JDialog {
                 } else {
                     addressCards.show(addressPanel, "serial");
                 }
-                
+
             } else if(ice.ConnectionType.Network.equals(selected)) {
                 addressLabel.setVisible(true);
                 addressLabel.setText("IP Address:");
@@ -120,17 +121,17 @@ public class ConfigurationDialog extends JDialog {
                 pack();
                 setLocationRelativeTo(null);
             }
-        });  
+        });
     }
-    
+
     private final static Logger log = LoggerFactory.getLogger(ConfigurationDialog.class);
-    
-    
-    
+
+
+
     private static boolean ddsInit(boolean debug) {
         try {
             if((Boolean)Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init", boolean.class).invoke(null, debug)) {
-                return true;                
+                return true;
             } else {
                 throw new Exception("Unable to init");
             }
@@ -139,7 +140,7 @@ public class ConfigurationDialog extends JDialog {
         }
         return false;
     }
-    
+
     private final void addWithAnchor(JComponent c, GridBagConstraints gbc, int anchor, int fill) {
         int previousAnchor = gbc.anchor;
         int previousFill = gbc.fill;
@@ -149,37 +150,37 @@ public class ConfigurationDialog extends JDialog {
         gbc.anchor = previousAnchor;
         gbc.fill = previousFill;
     }
-    
+
     private final void addLabel(JComponent c, GridBagConstraints gbc) {
         addWithAnchor(c, gbc, GridBagConstraints.EAST, GridBagConstraints.NONE);
     }
     private final void addOption(JComponent c, GridBagConstraints gbc) {
         addWithAnchor(c, gbc, GridBagConstraints.WEST, GridBagConstraints.NONE);
     }
-    
+
     public ConfigurationDialog() {
         this(false);
     }
-    
+
     public ConfigurationDialog(boolean ddsDebug) {
         this(null, ddsDebug);
     }
-    
+
     public ConfigurationDialog(Configuration conf, boolean ddsDebug) {
         super( (JDialog)null, true);
-        
+
         // Why does this occur here and not outside?
         if(!ddsInit(ddsDebug)) {
             throw new IllegalStateException("DDS not available");
         }
-        
+
         if(null != conf) {
             if(null != conf.getApplication()) {
                 applications.setSelectedItem(conf.getApplication());
             }
             if(null != conf.getDeviceType()) {
                 deviceType.setSelectedItem(conf.getDeviceType());
-            } 
+            }
             domainId.setText(Integer.toString(conf.getDomainId()));
 
             if(null != conf.getApplication() && null != conf.getAddress()) {
@@ -197,24 +198,28 @@ public class ConfigurationDialog extends JDialog {
                             this.serialPorts.setSelectedItem(conf.getAddress());
                             this.address.setText(conf.getAddress());
                         }
-                    }                    
+                    }
+                case ICE_Supervisor:
+                    break;
+                default:
+                    break;
                 }
             }
         }
-        
-        
+
+
         setTitle("MD PnP Demo Apps");
-        
+
         setLayout(new GridBagLayout());
-        
+
         domainId.setHorizontalAlignment(SwingConstants.RIGHT);
-        
+
         GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(2,0,2,0), 2, 2);
-        
+
         InputStream is = ConfigurationDialog.class.getResourceAsStream("welcome");
         if(null != is) {
             try {
-            
+
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
                 StringBuffer sb = new StringBuffer();
                 String line = null;
@@ -236,8 +241,8 @@ public class ConfigurationDialog extends JDialog {
                 log.warn("No welcome text", ioe);
             }
         }
-        
-        
+
+
         gbc.gridx = 0;
         addLabel(applicationsLabel, gbc);
         gbc.gridx++;
@@ -248,22 +253,22 @@ public class ConfigurationDialog extends JDialog {
         addLabel(deviceTypeLabel, gbc);
         gbc.gridx++;
         addOption(deviceType, gbc);
-        
-        
+
+
         addressPanel.add(address, "address");
         gbc.gridy++;
         gbc.gridx = 0;
         addLabel(addressLabel, gbc);
         gbc.gridx++;
         addOption(addressPanel, gbc);
-   
-        
+
+
         gbc.gridy++;
         gbc.gridx = 0;
         addLabel(domainIdLabel, gbc);
         gbc.gridx++;
         addOption(domainId, gbc);
-        
+
         gbc.gridy++;
         gbc.gridx = 0;
         addOption(quit, gbc);
@@ -272,14 +277,14 @@ public class ConfigurationDialog extends JDialog {
 
         getRootPane().setDefaultButton(start);
         start.requestFocus(false);
-        
+
         quit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 setVisible(false);
             }
         });
-        
+
         start.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -287,7 +292,7 @@ public class ConfigurationDialog extends JDialog {
                 setVisible(false);
             }
         });
-        
+
         applications.addItemListener(new ItemListener() {
 
             @Override
@@ -296,32 +301,32 @@ public class ConfigurationDialog extends JDialog {
                     set((Application)e.getItem(), (DeviceType)deviceType.getSelectedItem());
                 }
             }
-            
+
         });
-        
+
         deviceType.addItemListener(new ItemListener() {
            @Override
             public void itemStateChanged(ItemEvent e) {
                if(e.getStateChange()==ItemEvent.SELECTED) {
                    set((Application)applications.getSelectedItem(),(DeviceType)e.getItem());
                }
-            } 
+            }
         });
 
         set((Application)applications.getSelectedItem(), (DeviceType)deviceType.getSelectedItem());
     }
-    
+
     private Configuration lastConf;
-    
+
     public Configuration getLastConfiguration() {
         return lastConf;
     }
-    
+
     public Configuration showDialog() {
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
-        
+
         String address = null;
         switch((Application)applications.getSelectedItem()) {
         case ICE_Device_Interface:
@@ -335,7 +340,11 @@ public class ConfigurationDialog extends JDialog {
                     address = this.serialPorts.getSelectedItem().toString();
                 }
             }
-            
+        case ICE_Supervisor:
+            break;
+        default:
+            break;
+
         }
         lastConf = new Configuration((Application)applications.getSelectedItem(), Integer.parseInt(domainId.getText()), (DeviceType) deviceType.getSelectedItem(), address);
 

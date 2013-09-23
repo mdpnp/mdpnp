@@ -30,8 +30,10 @@ import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 
+@SuppressWarnings("serial")
 public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
 
+    @SuppressWarnings("rawtypes")
     private final JList capnoSources = new JList();
     private final JPanel controlPanel = new JPanel();
     private final JLabel rrLabel = new JLabel("???");
@@ -56,36 +58,18 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
             writeDeviceIdentity();
         }
 
-        private boolean resumed = false;
-        public void resume() {
-//            deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
-//            deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
-            resumed = true;
-        }
-
-        public void pause() {
-            resumed = false;
-//            deviceIdentityWriter.unregister_instance(deviceIdentity, deviceIdentityHandle);
-//            deviceIdentityHandle = null;
-            unregisterNumericInstance(this.rate);
-            this.rate = null;
-            unregisterAllNumericInstances();
-            unregisterAllSampleArrayInstances();
-        }
-
         private InstanceHolder<Numeric> rate;
         void updateRate(float rate) {
             // TODO clearly a synchronization issue here.
             // enforce a singular calling thread or synchronize accesses
-            if(resumed) {
-                this.rate = numericSample(this.rate, (int)Math.round(rate), ice.Physio._MDC_RESP_RATE);
-            }
+            this.rate = numericSample(this.rate, (int)Math.round(rate), ice.Physio._MDC_RESP_RATE);
         }
     }
 
     private RespiratoryRateDevice rrDevice;
     private final EventLoop eventLoop;
 
+    @SuppressWarnings("unchecked")
     public RapidRespiratoryRate(final int domainId, final EventLoop eventLoop) {
         super(new GridLayout(2,2));
         this.eventLoop = eventLoop;
@@ -143,6 +127,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
 
     private CapnoModel model;
     private VitalModel vitalModel;
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void setModel(CapnoModel model, VitalModel vitalModel) {
         this.vitalModel = vitalModel;
         String selectedUdi = null;
@@ -196,9 +181,9 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
     }
 
     private Long lastBreathTime;
-    private Float highWaterMark;
+//    private Float highWaterMark;
 
-    private float high = Float.MIN_VALUE, low = Float.MAX_VALUE;
+//    private float high = Float.MIN_VALUE, low = Float.MAX_VALUE;
 
 
     private double rr;
@@ -237,8 +222,8 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
                 current = plus(current);
             }
 
-            long mostRecentTime = times[minus(current)];
-            long oneHalfSecondAgo = times[minus(current)]-500L;
+//            long mostRecentTime = times[minus(current)];
+//            long oneHalfSecondAgo = times[minus(current)]-500L;
             DCT.dct(values, current, coeffs, 10);
             double weighted = 0.0, sum = 0.0;
             double max = Double.MIN_VALUE;

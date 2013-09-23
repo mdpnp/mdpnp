@@ -5,14 +5,13 @@ import javax.swing.ListModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
-import org.mdpnp.apps.testapp.pump.PumpListModel;
-
+@SuppressWarnings({ "serial", "rawtypes" })
 public class CapnoListModel extends AbstractListModel implements ListModel {
     private final CapnoModel model;
-    
+
     private class CapnoListModelListener implements CapnoModelListener {
         private final ListDataListener listener;
-        
+
         public CapnoListModelListener(ListDataListener listener) {
             this.listener = listener;
         }
@@ -28,7 +27,7 @@ public class CapnoListModel extends AbstractListModel implements ListModel {
                 return false;
             }
         }
-        
+
         @Override
         public void capnoAdded(CapnoModel model, Capno capno) {
             listener.intervalAdded(new ListDataEvent(CapnoListModel.this, ListDataEvent.INTERVAL_ADDED, 0, 0));
@@ -40,16 +39,16 @@ public class CapnoListModel extends AbstractListModel implements ListModel {
             if(getSize() > 0) {
                 listener.contentsChanged(new ListDataEvent(CapnoListModel.this, ListDataEvent.CONTENTS_CHANGED, 0, getSize() - 1));
             }
-            
+
         }
         @Override
         public void capnoChanged(CapnoModel model, Capno pump) {
             // NOT RELAYING CHANGES TO CONTENTS
             // DO NOT RENDER VARIABLE STATE
         }
-        
+
     }
-    
+
     public CapnoListModel(CapnoModel model) {
         this.model = model;
     }

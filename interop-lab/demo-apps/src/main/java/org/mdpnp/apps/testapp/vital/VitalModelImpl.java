@@ -1,15 +1,7 @@
 package org.mdpnp.apps.testapp.vital;
 
 import ice.DeviceConnectivity;
-import ice.DeviceConnectivityDataReader;
-import ice.DeviceConnectivitySeq;
-import ice.DeviceConnectivityTopic;
-import ice.DeviceConnectivityTypeSupport;
 import ice.DeviceIdentity;
-import ice.DeviceIdentityDataReader;
-import ice.DeviceIdentitySeq;
-import ice.DeviceIdentityTopic;
-import ice.DeviceIdentityTypeSupport;
 import ice.Numeric;
 import ice.NumericDataReader;
 import ice.NumericSeq;
@@ -17,7 +9,6 @@ import ice.NumericTopic;
 import ice.NumericTypeSupport;
 
 import java.awt.Color;
-import java.lang.ref.SoftReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -30,8 +21,9 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceIcon;
-import org.mdpnp.apps.testapp.pca.PCAConfig;
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.TopicUtil;
@@ -40,7 +32,6 @@ import org.mdpnp.rti.dds.DDS;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.infrastructure.Condition;
-import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
@@ -60,8 +51,6 @@ public class VitalModelImpl implements VitalModel {
 
     private VitalModelListener[] listeners = new VitalModelListener[0];
 
-    private DeviceIdentityDataReader deviceIdentityReader;
-    private DeviceConnectivityDataReader deviceConnectivityReader;
     protected NumericDataReader numericReader;
     private final Map<Vital, Set<QueryCondition>> queryConditions = new HashMap<Vital, Set<QueryCondition>>();
 
@@ -255,76 +244,28 @@ public class VitalModelImpl implements VitalModel {
             vml.vitalChanged(this, v);
         }
     }
-
-    private final DeviceIdentitySeq di_data_seq = new DeviceIdentitySeq();
-    private final DeviceConnectivitySeq dc_data_seq = new DeviceConnectivitySeq();
-    private final SampleInfoSeq info_seq = new SampleInfoSeq();
-    private final DeviceIdentity diKeyHolder = new DeviceIdentity();
-    private final DeviceConnectivity dcKeyHolder = new DeviceConnectivity();
-    
-    private final Map<String,SoftReference<DeviceIdentity>> udiToDeviceIdentity = Collections.synchronizedMap(new HashMap<String, SoftReference<DeviceIdentity>>());
-    private final Map<String,SoftReference<DeviceIcon>> udiToDeviceIcon = Collections.synchronizedMap(new HashMap<String, SoftReference<DeviceIcon>>());
-    
-    public DeviceIcon getDeviceIcon(String udi) {
-        SoftReference<DeviceIcon> ref2 = udiToDeviceIcon.get(udi);
-        DeviceIcon dicon = null == ref2 ? null : ref2.get();
-        if(null == dicon) {
-            ice.DeviceIdentity di = getDeviceIdentity(udi);
-            if(null != di) {
-                dicon = new DeviceIcon(di.icon, 1.00);
-                dicon.setConnected(true);
-                udiToDeviceIcon.put(udi, new SoftReference<DeviceIcon>(dicon));
-            }
+    public Device getDevice(String udi) {
+        if(null == udi) {
+            return null;
         }
-        return dicon;
+        DeviceListModel deviceListModel = this.deviceListModel;
+        return null == deviceListModel ? null : deviceListModel.getByUniversalDeviceIdentifier(udi);
     }
-    
+    public DeviceIcon getDeviceIcon(String udi) {
+        Device device = getDevice(udi);
+        return null == device ? null : device.getIcon();
+    }
 
-    
-    
     @Override
     public DeviceIdentity getDeviceIdentity(String udi) {
-        SoftReference<DeviceIdentity> ref = udiToDeviceIdentity.get(udi);
-        DeviceIdentity di = null == ref ? null : ref.get();
-        if(null != di) {
-            return di;
-        }
-        synchronized(info_seq) {
-            diKeyHolder.universal_device_identifier = udi;
-            InstanceHandle_t handle = deviceIdentityReader.lookup_instance(diKeyHolder);
-            if(InstanceHandle_t.HANDLE_NIL.equals(handle)) {
-                return null;
-            }
-            try {
-                deviceIdentityReader.read_instance(di_data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE,
-                        ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
-                di = new DeviceIdentity((DeviceIdentity) di_data_seq.get(0)); 
-                udiToDeviceIdentity.put(udi, new SoftReference<DeviceIdentity>(di));
-                return di;
-            } catch (RETCODE_NO_DATA noData) {
-                return null;
-            } finally {
-                deviceIdentityReader.return_loan(di_data_seq, info_seq);
-            }
-        }
+        Device device = getDevice(udi);
+        return null == device ? null : device.getDeviceIdentity();
     }
 
     @Override
     public DeviceConnectivity getDeviceConnectivity(String udi) {
-        synchronized(info_seq) {
-            dcKeyHolder.universal_device_identifier = udi;
-            InstanceHandle_t handle = deviceConnectivityReader.lookup_instance(dcKeyHolder);
-
-            try {
-                deviceConnectivityReader.read_instance(dc_data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE,
-                        ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
-                return new DeviceConnectivity((DeviceConnectivity) dc_data_seq.get(0));
-            } catch(RETCODE_NO_DATA noData) {
-                return null;
-            } finally {
-                deviceConnectivityReader.return_loan(dc_data_seq, info_seq);
-            }
-        }
+        Device device = getDevice(udi);
+        return null == device ? null : device.getDeviceConnectivity();
     }
 
     private void removeQueryConditions(final Vital v) {
@@ -351,11 +292,11 @@ public class VitalModelImpl implements VitalModel {
         if (null != numericReader && null != eventLoop) {
             // TODO this should probably be a ContentFilteredTopic to allow the
             // writer to do the filtering
-            
+
             Set<QueryCondition> set = queryConditions.get(v);
             set = null == set ? new HashSet<QueryCondition>() : set;
             for (int x : v.getNames()) {
-                StringSeq params = new StringSeq();    
+                StringSeq params = new StringSeq();
                 params.add(Integer.toString(x));
                 QueryCondition qc = numericReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
                         ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "name = %0", params);
@@ -370,17 +311,6 @@ public class VitalModelImpl implements VitalModel {
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
         DomainParticipant participant = subscriber.get_participant();
-        DeviceIdentityTypeSupport.register_type(participant, DeviceIdentityTypeSupport.get_type_name());
-        TopicDescription diTopic = TopicUtil.lookupOrCreateTopic(participant, DeviceIdentityTopic.VALUE,
-                DeviceIdentityTypeSupport.class);
-        deviceIdentityReader = (DeviceIdentityDataReader) subscriber.create_datareader(diTopic,
-                Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-
-        DeviceConnectivityTypeSupport.register_type(participant, DeviceConnectivityTypeSupport.get_type_name());
-        TopicDescription dcTopic = TopicUtil.lookupOrCreateTopic(participant, DeviceConnectivityTopic.VALUE,
-                DeviceConnectivityTypeSupport.class);
-        deviceConnectivityReader = (DeviceConnectivityDataReader) subscriber.create_datareader(dcTopic,
-                Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
         NumericTypeSupport.register_type(participant, NumericTypeSupport.get_type_name());
         TopicDescription nTopic = TopicUtil.lookupOrCreateTopic(participant, NumericTopic.VALUE,
@@ -402,10 +332,6 @@ public class VitalModelImpl implements VitalModel {
         numericReader.delete_contained_entities();
         subscriber.delete_datareader(numericReader);
 
-        deviceIdentityReader.delete_contained_entities();
-        subscriber.delete_datareader(deviceIdentityReader);
-        deviceConnectivityReader.delete_contained_entities();
-        subscriber.delete_datareader(deviceConnectivityReader);
         this.subscriber = null;
         this.eventLoop = null;
     }
@@ -415,7 +341,7 @@ public class VitalModelImpl implements VitalModel {
         DomainParticipant p = DomainParticipantFactory.get_instance().create_participant(0,
                 DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         Subscriber s = p.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        VitalModel vm = new VitalModelImpl();
+        VitalModel vm = new VitalModelImpl(null);
 
         vm.addListener(new VitalModelListener() {
 
@@ -443,7 +369,7 @@ public class VitalModelImpl implements VitalModel {
     }
 
     private static final String DEFAULT_INTERLOCK_TEXT = "Drug: Morphine\r\nRate: 4cc / hour";
-    
+
     private static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
     private String[] advisories = new String[0];
     private final Date now = new Date();
@@ -502,7 +428,7 @@ public class VitalModelImpl implements VitalModel {
             warningText = "";
             state = State.Normal;
         }
-        
+
         if (countWarnings >= countWarningsBecomeAlarm) {
             state = State.Alarm;
             stopInfusion("Stopped\r\n" + warningText + "\r\nnurse alerted");
@@ -517,7 +443,7 @@ public class VitalModelImpl implements VitalModel {
                         break;
                     } else if (val.isAtOrAboveCriticalHigh()) {
                         state = State.Alarm;
-                        stopInfusion("Stopped\r\n- high " + vital.getLabel() + " " + 
+                        stopInfusion("Stopped\r\n- high " + vital.getLabel() + " " +
                                 + val.getNumeric().value + " " + vital.getUnits() + "\r\nat " + time
                                 + "\r\nnurse alerted");
                         break;
@@ -564,7 +490,7 @@ public class VitalModelImpl implements VitalModel {
     }
 
     private int countWarningsBecomeAlarm = 2;
-    
+
     @Override
     public void setCountWarningsBecomeAlarm(int countWarningsBecomeAlarm) {
         this.countWarningsBecomeAlarm = countWarningsBecomeAlarm;
@@ -576,4 +502,8 @@ public class VitalModelImpl implements VitalModel {
         return countWarningsBecomeAlarm;
     }
 
+    final DeviceListModel deviceListModel;
+    public VitalModelImpl(DeviceListModel deviceListModel) {
+        this.deviceListModel = deviceListModel;
+    }
 }
