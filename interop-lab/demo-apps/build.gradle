@@ -99,7 +99,6 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
     runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.2'
     runtime group: 'log4j', name: 'log4j', version: '1.2.17'
-    runtime project(':interop-lab:pump-control')
     runtime group: 'org.mdpnp.apps.testapp.pca', name: 'mdpnp-sounds', version: '0.1.0'
 
     compile group: 'org.jfree', name:'jfreechart', version: '1.0.14'
