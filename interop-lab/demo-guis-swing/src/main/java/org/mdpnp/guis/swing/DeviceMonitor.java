@@ -44,10 +44,10 @@ public class DeviceMonitor {
     private final Set<DataReader> dataReaders = new HashSet<DataReader>();
     private EventLoop eventLoop;
     private static final Logger log = LoggerFactory.getLogger(DeviceMonitor.class);
-    
+
     private final String udi;
-    
-    
+
+
     private final List<DeviceMonitorListener> listeners = new ArrayList<DeviceMonitorListener>();
     private ThreadLocal<DeviceMonitorListener[]> simpleListeners = new ThreadLocal<DeviceMonitorListener[]>() {
         protected DeviceMonitorListener[] initialValue() {
@@ -63,62 +63,69 @@ public class DeviceMonitor {
         }
         return listeners;
     }
-    
+
     public final synchronized void addListener(DeviceMonitorListener listener) {
         this.listeners.add(listener);
     }
     public final synchronized void removeListener(DeviceMonitorListener listener) {
         this.listeners.remove(listener);
     }
-    
-    
-    
+
+
+
     private final Condition c(Condition c) {
         conditions.add(c);
         return c;
     }
-    
+
     public String getUniversalDeviceIdentifier() {
         return udi;
     }
-    
+
     public DeviceMonitor(final String udi) {
         this.udi = udi;
     }
 
     public void start(final DomainParticipant participant, final EventLoop eventLoop) {
         this.eventLoop = eventLoop;
+        eventLoop.doLater(new Runnable() {
+            public void run() {
+                _start(participant, eventLoop);
+            }
+        });
+    }
 
+    protected void _start(final DomainParticipant participant, final EventLoop eventLoop) {
         subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         TopicDescription deviceIdentityTopic = lookupOrCreateTopic(participant, ice.DeviceIdentityTopic.VALUE, ice.DeviceIdentityTypeSupport.class);
         TopicDescription deviceConnectivityTopic = lookupOrCreateTopic(participant, ice.DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.class);
         TopicDescription deviceNumericTopic = lookupOrCreateTopic(participant, ice.NumericTopic.VALUE, NumericTypeSupport.class);
         TopicDescription deviceSampleArrayTopic = lookupOrCreateTopic(participant, ice.SampleArrayTopic.VALUE, SampleArrayTypeSupport.class);
         TopicDescription deviceInfusionStatusTopic = lookupOrCreateTopic(participant, ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.class);
-        
-        
+
+
         final DeviceIdentityDataReader idReader = (DeviceIdentityDataReader) subscriber.create_datareader(deviceIdentityTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final DeviceConnectivityDataReader connReader = (DeviceConnectivityDataReader) subscriber.create_datareader(deviceConnectivityTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final NumericDataReader numReader = (NumericDataReader) subscriber.create_datareader(deviceNumericTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final SampleArrayDataReader saReader = (SampleArrayDataReader) subscriber.create_datareader(deviceSampleArrayTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final ice.InfusionStatusDataReader ipReader = (ice.InfusionStatusDataReader) subscriber.create_datareader(deviceInfusionStatusTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        
+
         dataReaders.add(idReader);
         dataReaders.add(connReader);
         dataReaders.add(numReader);
         dataReaders.add(saReader);
         dataReaders.add(ipReader);
-        
+
         final StringSeq identity = new StringSeq();
         identity.add("'"+udi+"'");
-        
+
         final DeviceIdentitySeq id_seq = new DeviceIdentitySeq();
         final DeviceConnectivitySeq conn_seq = new DeviceConnectivitySeq();
         final NumericSeq num_seq = new NumericSeq();
         final SampleArraySeq sa_seq = new SampleArraySeq();
         final SampleInfoSeq info_seq = new SampleInfoSeq();
         final ice.InfusionStatusSeq inf_seq = new ice.InfusionStatusSeq();
-        
+
         eventLoop.addHandler(c(idReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE,
                 "universal_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
             @Override
@@ -135,16 +142,16 @@ public class DeviceMonitor {
                         }
                     }
                 } catch (RETCODE_NO_DATA noData) {
-                    
+
                 } finally {
-                    
+
                 }
             }
         });
-        
-        eventLoop.addHandler(c(connReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, 
+
+        eventLoop.addHandler(c(connReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE,
                 "universal_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
-            
+
             @Override
             public void conditionChanged(Condition condition) {
                 try {
@@ -158,18 +165,18 @@ public class DeviceMonitor {
                             connReader.return_loan(conn_seq, info_seq);
                         }
                     }
-                    
+
                 } catch (RETCODE_NO_DATA noData) {
-                    
+
                 } finally {
-                    
+
                 }
             }
         });
 
         eventLoop.addHandler(c(numReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE,
                 "universal_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
-            
+
             @Override
             public void conditionChanged(Condition condition) {
                 try {
@@ -184,17 +191,17 @@ public class DeviceMonitor {
                         }
                     }
                 } catch (RETCODE_NO_DATA noData) {
-                    
+
                 } finally {
-                    
+
                 }
             }
         });
-        
-        
+
+
         eventLoop.addHandler(c(saReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE,
                 "universal_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
-            
+
             @Override
             public void conditionChanged(Condition condition) {
                 try {
@@ -209,13 +216,13 @@ public class DeviceMonitor {
                         }
                     }
                 } catch (RETCODE_NO_DATA noData) {
-                    
+
                 } finally {
-                    
+
                 }
             }
         });
-        
+
         eventLoop.addHandler(c(ipReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "universal_device_identifier = %0",  identity)), new EventLoop.ConditionHandler() {
 
             @Override
@@ -233,11 +240,19 @@ public class DeviceMonitor {
                     }
                 }
             }
-            
+
         });
     }
-    
+
     public void stop() {
+        eventLoop.doLater(new Runnable() {
+            public void run() {
+                _stop();
+            }
+        });
+    }
+
+    protected void _stop() {
         synchronized(this) {
             listeners.clear();
             simpleListeners = null;
@@ -253,7 +268,7 @@ public class DeviceMonitor {
             subscriber.delete_datareader(r);
         }
         dataReaders.clear();
-        
+
         if(null != subscriber) {
             DomainParticipant participant = subscriber.get_participant();
             if(null != participant) {
