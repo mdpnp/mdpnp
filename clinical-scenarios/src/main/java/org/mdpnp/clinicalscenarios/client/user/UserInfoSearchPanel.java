@@ -148,7 +148,9 @@ public class UserInfoSearchPanel extends Composite {
 			list.setText(row, CREATION_DATE_COL, dateFormatter.format(u.getCreationDate()));
 			list.setText(row, LATEST_LOGIN_COL, dateFormatter.format(u.getLastLoginDate()));
 			if(row%2==0)
-				list.getRowFormatter().addStyleName(i, STYLE_TABLEROWOTHER);
+				list.getRowFormatter().addStyleName(row, STYLE_TABLEROWOTHER);
+			else
+				list.getRowFormatter().removeStyleName(row, STYLE_TABLEROWOTHER);
 		}
 	}
 	
