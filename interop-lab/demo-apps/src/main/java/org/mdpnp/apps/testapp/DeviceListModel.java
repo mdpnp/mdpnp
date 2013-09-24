@@ -11,14 +11,12 @@ import ice.DeviceIdentitySeq;
 import ice.DeviceIdentityTypeSupport;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.swing.AbstractListModel;
-import javax.swing.SwingUtilities;
 
 import org.mdpnp.devices.EventLoop;
 import org.slf4j.Logger;
@@ -103,27 +101,21 @@ public class DeviceListModel extends AbstractListModel<Device> {
         } else if(contentsByHandle.containsKey(handle)) {
             log.warn("Ignored attempt to re-add instance_handle="+handle);
         } else {
-            try {
-                SwingUtilities.invokeAndWait(new Runnable() {
-                    public void run() {
-                        contents.add(0, d);
-                        contentsByUDI.put(d.getUDI(), d);
-                        // The incoming instance handle is borrowed and will be returned
-                        // so we need to make a copy
-                        contentsByHandle.put(new InstanceHandle_t(handle), d);
-                        log.trace("Added handle="+handle+" and hashCode="+handle.hashCode());
-                        contentsByIdx.clear();
-                        for(int i = 0; i < contents.size(); i++) {
-                            contentsByIdx.put(contents.get(i), i);
-                        }
-                        fireIntervalAdded(DeviceListModel.this, 0, 0);
+            eventLoop.doLater(new Runnable() {
+                public void run() {
+                    contents.add(0, d);
+                    contentsByUDI.put(d.getUDI(), d);
+                    // The incoming instance handle is borrowed and will be returned
+                    // so we need to make a copy
+                    contentsByHandle.put(new InstanceHandle_t(handle), d);
+                    log.trace("Added handle="+handle+" and hashCode="+handle.hashCode());
+                    contentsByIdx.clear();
+                    for(int i = 0; i < contents.size(); i++) {
+                        contentsByIdx.put(contents.get(i), i);
                     }
-                });
-            } catch (InvocationTargetException e) {
-                log.error("added", e);
-            } catch (InterruptedException e) {
-                log.error("added", e);
-            }
+                    fireIntervalAdded(DeviceListModel.this, 0, 0);
+                }
+            });
         }
     }
 
@@ -141,28 +133,22 @@ public class DeviceListModel extends AbstractListModel<Device> {
             if(contentsByIdx.containsKey(device)) {
 
                 final int idx = contentsByIdx.get(device);
-                try {
-                    // Cheap way to synchronize
-                    SwingUtilities.invokeAndWait(new Runnable() {
-                        public void run() {
-                            contents.remove(idx);
-                            contentsByIdx.clear();
-                            for(int i = 0; i < contents.size(); i++) {
-                                contentsByIdx.put(contents.get(i), i);
-                            }
-                            lastRemoved = device;
-                            fireIntervalRemoved(DeviceListModel.this, idx, idx);
+                // Changes here are probably being driven by ELH anyway
+                eventLoop.doLater(new Runnable() {
+                    public void run() {
+                        contents.remove(idx);
+                        contentsByIdx.clear();
+                        for(int i = 0; i < contents.size(); i++) {
+                            contentsByIdx.put(contents.get(i), i);
+                        }
+                        lastRemoved = device;
+                        fireIntervalRemoved(DeviceListModel.this, idx, idx);
 //                        fireIntervalRemoved(this, contents.size(), contents.size());
 //                        fireContentsChanged(this, 0, contents.size() - 1);
-                            log.warn("Removed index="+idx);
-                            lastRemoved = null;
-                        }
-                    });
-                } catch (InvocationTargetException e) {
-                    log.error("removing", e);
-                } catch (InterruptedException e) {
-                    log.error("removing", e);
-                }
+                        log.warn("Removed index="+idx);
+                        lastRemoved = null;
+                    }
+                });
 
             } else {
                 log.warn("No index for handle="+handle);
