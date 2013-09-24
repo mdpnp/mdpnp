@@ -25,6 +25,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import org.mdpnp.devices.DeviceMonitor;
+import org.mdpnp.devices.DeviceMonitorListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,4 +1,4 @@
-package org.mdpnp.guis.swing;
+package org.mdpnp.devices;
 
 import static org.mdpnp.devices.TopicUtil.lookupOrCreateTopic;
 import ice.DeviceConnectivityDataReader;
@@ -18,7 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.mdpnp.devices.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

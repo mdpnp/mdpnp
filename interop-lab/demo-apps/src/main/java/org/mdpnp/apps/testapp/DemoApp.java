@@ -28,10 +28,10 @@ import org.mdpnp.apps.testapp.rrr.RapidRespiratoryRate;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
+import org.mdpnp.devices.DeviceMonitor;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
-import org.mdpnp.guis.swing.DeviceMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

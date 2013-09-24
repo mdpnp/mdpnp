@@ -16,13 +16,13 @@ import javax.swing.JTextArea;
 
 import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.DeviceMonitor;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
-import org.mdpnp.guis.swing.DeviceMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

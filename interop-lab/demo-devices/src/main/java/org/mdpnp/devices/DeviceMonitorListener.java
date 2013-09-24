@@ -1,4 +1,4 @@
-package org.mdpnp.guis.swing;
+package org.mdpnp.devices;
 
 import com.rti.dds.subscription.SampleInfoSeq;
 
