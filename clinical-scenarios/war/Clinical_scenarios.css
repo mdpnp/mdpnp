@@ -79,10 +79,10 @@ h1 {
 	margin-bottom: 20px;
 }
 
-		.important {
-			font-weight: bold;
-			font-size:12pt;
-		}
+.important {
+	font-weight: bold;
+	font-size:12pt;
+}
 
 .welcomeText{
 		width:900px;
@@ -145,4 +145,10 @@ h1 {
  	text-aling: center;
  	align:center;
 /*  	color: #00AAFF; */
+}
+
+.styleRowEquipment{
+	width:700px;
+/* 	padding:10px; */
+/* 	border : 1px solid black;  */
 }

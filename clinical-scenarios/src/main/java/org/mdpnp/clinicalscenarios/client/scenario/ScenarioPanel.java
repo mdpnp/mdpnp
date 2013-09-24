@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
@@ -104,6 +105,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	public final static String SCN_LAST_ACTION_RETURNED = "returned"; //after scenario has been returned for clarification
 	public final static String SCN_LAST_ACTION_LOCKED = "locked";     //after scenario has been locked
 	public final static String SCN_LAST_ACTION_UNLOCKED = "unlocked"; //after scenario has been unlocked
+	
+	private final static String STYLE_ROW_EQUIPMENT = "styleRowEquipment";
+	private final static String EQUIPMENT_TEXTBOX_WIDTH = "100px";
 	
 	/**
 	 * Tabs for our CConOps (Clinical concept of Operations)
@@ -292,16 +296,18 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 */
 	private final void buildEquipmentTable(boolean isDrawNew) {
 		equipmentTable.removeAllRows();//clear rows to draw again
+		equipmentTable.setStyleName(STYLE_ROW_EQUIPMENT);
+
 		//HEADERS
 		equipmentTable.insertRow(0);
 		equipmentTable.setText(0, EQUIPMENT_DEVICETYPE_COL, "Device Type");
 		equipmentTable.setText(0, EQUIPMENT_MANUFACTURER_COL, "Manufacturer");
 		equipmentTable.setText(0, EQUIPMENT_MODEL_COL, "Model");
-		equipmentTable.setText(0, EQUIPMENT_ROSSETAID_COL, "Rosetta ID (if known)");
+		equipmentTable.setText(0, EQUIPMENT_ROSSETAID_COL, "Rosetta ID");
 		
 		equipmentTable.setText(0, EQUIPMENT_GAPINTRAINING_COL, "Gap in trainig");
 		equipmentTable.setText(0, EQUIPMENT_LACKINSTRUCTION_COL, "Lack of access to instructions");
-		equipmentTable.setText(0, EQUIPMENT_LACKTRAINING_COL, "Lack of or inapropiate training");
+		equipmentTable.setText(0, EQUIPMENT_LACKTRAINING_COL, "Lack of / inadecuate training");
 		equipmentTable.setText(0, EQUIPMENT_CONFUSINGINTERFACES_COL, "Confusing interfaces");
 		equipmentTable.setText(0, EQUIPMENT_CONFUSINGSETTINGS_COL, "Confusing settings");
 		equipmentTable.setText(0, EQUIPMENT_SWPROBLEM_COL, "Software problem");
@@ -321,19 +327,29 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				TextBox dtTextbox = new TextBox();
 				dtTextbox.setText(eep.getDeviceType());
 				dtTextbox.setReadOnly(!editable);
+				dtTextbox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+//				dtTextbox.set
 				equipmentTable.setWidget(row, EQUIPMENT_DEVICETYPE_COL, dtTextbox);
 				TextBox manufTextBox = new TextBox(); 
 				manufTextBox.setText(eep.getManufacturer());
 				manufTextBox.setReadOnly(!editable);
+				manufTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
 				equipmentTable.setWidget(row, EQUIPMENT_MANUFACTURER_COL, manufTextBox);
 				TextBox modelTextBox = new TextBox(); 
 				modelTextBox.setText(eep.getModel());
 				modelTextBox.setReadOnly(!editable);
+				modelTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
 				equipmentTable.setWidget(row, EQUIPMENT_MODEL_COL, modelTextBox);
 				TextBox rossTextBox = new TextBox(); 
 				rossTextBox.setText(eep.getRosettaId());
 				rossTextBox.setReadOnly(!editable);
+				rossTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
 				equipmentTable.setWidget(i+1, EQUIPMENT_ROSSETAID_COL, rossTextBox);
+				
+				for(int j = 4; j < EQUIPMENT_DElETEBUTTON_COL; j++) {//add four check boxes
+					equipmentTable.setWidget(i+1, j, new CheckBox());
+				}
+				
 				Button deleteButton = new Button("Delete");
 				if(editable)
 					equipmentTable.setWidget(row, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
@@ -702,6 +718,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			}).fire();
 		
 		}
+		
+		rejectScnButton.setTitle("Reject this scenario if is not even woth asking submiter's calification. Can NOT be undone");
+		returnScnButton.setTitle("Return this scenario to the submitter for clarification.");
+		approveScnButton.setTitle("Validate this scenario and make it available to all users.");
 					
 	}
 	
@@ -1183,8 +1203,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private void addNewEquipmentRow(){
 		final int rows = equipmentTable.getRowCount();
 		equipmentTable.insertRow(rows);
+		
 		for(int j = 0; j < 4; j++) {//add four text boxes
-			equipmentTable.setWidget(rows, j, new TextBox());
+			TextBox textbox = new TextBox();
+			textbox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+			equipmentTable.setWidget(rows, j, textbox);
+		}
+		for(int j = 4; j < EQUIPMENT_DElETEBUTTON_COL; j++) {//add four check boxes
+			equipmentTable.setWidget(rows, j, new CheckBox());
 		}
 		//add delete button
 		Button deleteButton = new Button("Delete");
