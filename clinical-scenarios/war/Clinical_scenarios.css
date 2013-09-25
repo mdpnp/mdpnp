@@ -69,6 +69,11 @@ h1 {
 	padding-right: 5px;
  	padding-left: 5px;
 }
+
+.hoverCross:hover{
+	text-decoration: line-through;
+}
+
 .clickable:hover {
 	background-color:#8FBC8F; /*DarkSeaGreen*/
 }
