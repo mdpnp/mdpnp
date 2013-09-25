@@ -21,6 +21,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.jfree.util.Log;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.apps.testapp.DeviceListModel;
@@ -54,8 +55,8 @@ public class VitalModelImpl implements VitalModel {
     protected NumericDataReader numericReader;
     private final Map<Vital, Set<QueryCondition>> queryConditions = new HashMap<Vital, Set<QueryCondition>>();
 
-    private Subscriber subscriber;
-    private EventLoop eventLoop;
+    protected Subscriber subscriber;
+    protected EventLoop eventLoop;
     private State state = State.Normal;
 
     private final EventLoop.ConditionHandler numericHandler = new EventLoop.ConditionHandler() {
@@ -74,6 +75,7 @@ public class VitalModelImpl implements VitalModel {
                             if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
                                 Numeric keyHolder = new Numeric();
                                 numericReader.get_key_value(keyHolder, sampleInfo.instance_handle);
+                                Log.debug("Numeric NOT ALIVE:"+keyHolder);
                                 removeNumeric(keyHolder.universal_device_identifier, keyHolder.name);
                             } else {
                                 if (sampleInfo.valid_data) {
@@ -307,33 +309,45 @@ public class VitalModelImpl implements VitalModel {
     }
 
     @Override
-    public void start(Subscriber subscriber, EventLoop eventLoop) {
-        this.subscriber = subscriber;
-        this.eventLoop = eventLoop;
-        DomainParticipant participant = subscriber.get_participant();
+    public void start(final Subscriber subscriber, final EventLoop eventLoop) {
 
-        NumericTypeSupport.register_type(participant, NumericTypeSupport.get_type_name());
-        TopicDescription nTopic = TopicUtil.lookupOrCreateTopic(participant, NumericTopic.VALUE,
-                NumericTypeSupport.class);
-        numericReader = (NumericDataReader) subscriber.create_datareader(nTopic, Subscriber.DATAREADER_QOS_DEFAULT,
-                null, StatusKind.STATUS_MASK_NONE);
 
-        for (Vital v : vitals) {
-            addQueryConditions(v);
-        }
+        eventLoop.doLater(new Runnable() {
+            public void run() {
+                VitalModelImpl.this.subscriber = subscriber;
+                VitalModelImpl.this.eventLoop = eventLoop;
+                DomainParticipant participant = subscriber.get_participant();
+
+                NumericTypeSupport.register_type(participant, NumericTypeSupport.get_type_name());
+                TopicDescription nTopic = TopicUtil.lookupOrCreateTopic(participant, NumericTopic.VALUE,
+                        NumericTypeSupport.class);
+                numericReader = (NumericDataReader) subscriber.create_datareader(nTopic, Subscriber.DATAREADER_QOS_DEFAULT,
+                        null, StatusKind.STATUS_MASK_NONE);
+
+                for (Vital v : vitals) {
+                    addQueryConditions(v);
+                }
+
+            }
+        });
     }
 
     @Override
     public void stop() {
-        for (Vital v : queryConditions.keySet()) {
-            removeQueryConditions(v);
-        }
-        queryConditions.clear();
-        numericReader.delete_contained_entities();
-        subscriber.delete_datareader(numericReader);
+        eventLoop.doLater(new Runnable() {
+            public void run() {
+                for (Vital v : queryConditions.keySet()) {
+                    removeQueryConditions(v);
+                }
+                queryConditions.clear();
+                numericReader.delete_contained_entities();
+                subscriber.delete_datareader(numericReader);
 
-        this.subscriber = null;
-        this.eventLoop = null;
+                VitalModelImpl.this.subscriber = null;
+                VitalModelImpl.this.eventLoop = null;
+            }
+        });
+
     }
 
     public static void main(String[] args) {

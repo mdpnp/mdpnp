@@ -9,6 +9,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.UnsupportedEncodingException;
 import java.util.TimeZone;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -31,6 +32,7 @@ import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 import org.mdpnp.devices.DeviceMonitor;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
+import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +101,15 @@ public class DemoApp {
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
         final DomainParticipantQos pQos = new DomainParticipantQos();
         DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-        pQos.participant_name.name = "DemoApp ICE_Supervisor";
+        String udi = AbstractSimulatedDevice.randomUDI();
+        pQos.participant_name.name = "Supervisor";
+        try {
+
+            pQos.user_data.value.clear();
+            pQos.user_data.value.addAllByte(udi.getBytes("ASCII"));
+        } catch (UnsupportedEncodingException e) {
+            log.error(e.getMessage(), e);
+        }
 
 
         DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
@@ -144,7 +154,7 @@ public class DemoApp {
         frame.getContentPane().add(panel);
         ol = new CardLayout();
         panel.getContent().setLayout(ol);
-
+        panel.getUdi().setText(udi);
 //		LoginPanel loginPanel = new LoginPanel();
 //
 //		panel.getContent().add(loginPanel, "login");

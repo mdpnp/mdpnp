@@ -151,7 +151,7 @@ public final class JVital extends JPanel {
 
             setShowConfiguration(false);
 
-
+            refreshContents();
         }
 
         public void setShowConfiguration(boolean showConfiguration) {

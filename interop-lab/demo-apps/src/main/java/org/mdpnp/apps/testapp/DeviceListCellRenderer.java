@@ -80,10 +80,15 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         connectionStatus.setFont(list.getFont());
 
         if (null != device) {
-            udi.setText(device.getShortUDI());
+
+            String shortUDI = device.getShortUDI();
+            if(null == shortUDI) {
+                udi.setText("<unknown UDI>");
+            } else {
+                udi.setText(shortUDI);
+            }
 
             DeviceIcon icon = device.getIcon();
-
 
             DeviceConnectivity dc = device.getDeviceConnectivity();
             if (null != dc) {
@@ -106,13 +111,13 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
                 }
                 modelName.setText(makeAndModel);
             } else {
-                modelName.setText("<unknown>");
+                modelName.setText(device.getParticipantData().participant_name.name);
             }
 
             if (icon != null) {
                 this.icon.setIcon(icon);
             } else {
-                this.icon.setIcon(null);
+                this.icon.setIcon(DeviceIcon.WHITE_SQUARE_ICON);
             }
         } else {
             udi.setText("<awaiting UDI>");

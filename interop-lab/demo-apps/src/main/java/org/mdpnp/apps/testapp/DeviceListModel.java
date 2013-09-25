@@ -10,7 +10,6 @@ import ice.DeviceIdentityDataReader;
 import ice.DeviceIdentitySeq;
 import ice.DeviceIdentityTypeSupport;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +44,9 @@ import com.rti.dds.topic.TopicDescription;
 public class DeviceListModel extends AbstractListModel<Device> {
 
     private final void update(DeviceConnectivity dc) {
+        if(!eventLoop.isCurrentServiceThread()) {
+            throw new IllegalStateException("Not called from EventLoop service thread, instead:"+Thread.currentThread());
+        }
         Device device = contentsByUDI.get(dc.universal_device_identifier);
         if(null != device) {
             device.setDeviceConnectivity(dc);
@@ -60,6 +62,9 @@ public class DeviceListModel extends AbstractListModel<Device> {
     }
 
     private final void update(DeviceIdentity di) {
+        if(!eventLoop.isCurrentServiceThread()) {
+            throw new IllegalStateException("Not called from EventLoop service thread, instead:"+Thread.currentThread());
+        }
         Device device = contentsByUDI.get(di.universal_device_identifier);
         if(null != device) {
             device.setDeviceIdentity(di);
@@ -74,87 +79,73 @@ public class DeviceListModel extends AbstractListModel<Device> {
         }
     }
 
-    private final void add(InstanceHandle_t handle, String udi) {
-        if(contentsByHandle.containsKey(handle)) {
-            log.warn("Attempt to re-add device with handle="+handle);
-        } else if(contentsByUDI.containsKey(udi)) {
-            log.warn("Attempt to re-add device with udi="+udi);
-        } else {
-            Device d = new Device(udi);
-            DeviceConnectivity dc = getConnectivityForUdi(udi);
-            DeviceIdentity di = getIdentityForUdi(udi);
-            d.setDeviceConnectivity(dc);
-            d.setDeviceIdentity(di);
-            add(handle, d);
+    private final void addOrUpdate(InstanceHandle_t handle, ParticipantBuiltinTopicData pbtd) {
+        if(!eventLoop.isCurrentServiceThread()) {
+            throw new IllegalStateException("Not called from EventLoop service thread, instead:"+Thread.currentThread());
         }
-    }
+        Device device = contentsByHandle.get(handle);
+        if(null == device) {
+            device = new Device(pbtd);
+            System.out.println(pbtd);
+            contentsByHandle.put(new InstanceHandle_t(handle), device);
+            contents.add(0, device);
+            contentsByIdx.clear();
+            for(int i = 0; i < contents.size(); i++) {
+                contentsByIdx.put(contents.get(i), i);
+            }
+            String udi = device.getUDI();
+            // Check for Identity and Connectivity in the case that it arrived before the discovery message
+            if(null != udi && !"".equals(udi)) {
+                contentsByUDI.put(udi, device);
+                DeviceConnectivity dc = getConnectivityForUdi(udi);
+                DeviceIdentity di = getIdentityForUdi(udi);
+                device.setDeviceConnectivity(dc);
+                device.setDeviceIdentity(di);
+            }
+            fireIntervalAdded(DeviceListModel.this, 0, 0);
+        } else {
+            device.setParticipantData(pbtd);
+            String udi = device.getUDI();
+            if(null != udi && !"".equals(udi) && !contentsByUDI.containsKey(udi)) {
+                contentsByUDI.put(udi, device);
+                DeviceConnectivity dc = getConnectivityForUdi(udi);
+                DeviceIdentity di = getIdentityForUdi(udi);
+                device.setDeviceConnectivity(dc);
+                device.setDeviceIdentity(di);
+            }
+            int idx = contentsByIdx.get(device);
+            fireContentsChanged(DeviceListModel.this, idx, idx);
+        }
 
-    private final void add(final InstanceHandle_t handle, final Device d) {
-        if(d == null) {
-            throw new IllegalArgumentException("Tried to add a null device");
-        }
-        if("".equals(d.getUDI())) {
-            throw new IllegalArgumentException("Tried to add a device with no UDI");
-        }
-        if(contentsByUDI.containsKey(d.getUDI())) {
-            log.warn("Ignored attempt to re-add UDI="+d.getUDI());
-        } else if(contentsByHandle.containsKey(handle)) {
-            log.warn("Ignored attempt to re-add instance_handle="+handle);
-        } else {
-            eventLoop.doLater(new Runnable() {
-                public void run() {
-                    contents.add(0, d);
-                    contentsByUDI.put(d.getUDI(), d);
-                    // The incoming instance handle is borrowed and will be returned
-                    // so we need to make a copy
-                    contentsByHandle.put(new InstanceHandle_t(handle), d);
-                    log.trace("Added handle="+handle+" and hashCode="+handle.hashCode());
-                    contentsByIdx.clear();
-                    for(int i = 0; i < contents.size(); i++) {
-                        contentsByIdx.put(contents.get(i), i);
-                    }
-                    fireIntervalAdded(DeviceListModel.this, 0, 0);
-                }
-            });
-        }
     }
 
     private final void remove(final InstanceHandle_t handle) {
+        if(!eventLoop.isCurrentServiceThread()) {
+            throw new IllegalStateException("Not called from EventLoop service thread, instead:"+Thread.currentThread());
+        }
         if(null == handle) {
             throw new IllegalArgumentException("Tried to remove a null handle");
         }
-        if(contentsByHandle.containsKey(handle)) {
-            final Device device = contentsByHandle.get(handle);
-            if(contentsByUDI.containsKey(device.getUDI())) {
-                contentsByUDI.remove(device.getUDI());
-            } else {
-                log.warn("No UDI="+device.getUDI());
+        Device device = contentsByHandle.get(handle);
+        if(null != device) {
+            String udi = device.getUDI();
+            if(null != udi && !"".equals(udi)) {
+                if(null == contentsByUDI.remove(udi)) {
+                    log.warn("No UDI="+device.getUDI());
+                }
             }
-            if(contentsByIdx.containsKey(device)) {
 
-                final int idx = contentsByIdx.get(device);
-                // Changes here are probably being driven by ELH anyway
-                eventLoop.doLater(new Runnable() {
-                    public void run() {
-                        contents.remove(idx);
-                        contentsByIdx.clear();
-                        for(int i = 0; i < contents.size(); i++) {
-                            contentsByIdx.put(contents.get(i), i);
-                        }
-                        lastRemoved = device;
-                        fireIntervalRemoved(DeviceListModel.this, idx, idx);
-//                        fireIntervalRemoved(this, contents.size(), contents.size());
-//                        fireContentsChanged(this, 0, contents.size() - 1);
-                        log.warn("Removed index="+idx);
-                        lastRemoved = null;
-                    }
-                });
-
-            } else {
-                log.warn("No index for handle="+handle);
+            final int idx = contentsByIdx.get(device);
+            contents.remove(idx);
+            contentsByIdx.clear();
+            for(int i = 0; i < contents.size(); i++) {
+                contentsByIdx.put(contents.get(i), i);
             }
-            contentsByHandle.remove(handle);
-            log.info("Removed handle="+handle);
+            lastRemoved = device;
+            fireIntervalRemoved(DeviceListModel.this, idx, idx);
+
+            log.warn("Removed index="+idx);
+            lastRemoved = null;
         } else {
             log.warn("Tried to remove non-existent handle="+handle+ " w/hashCode="+handle.hashCode()+" "+contentsByHandle.get(handle));
             for(InstanceHandle_t h : contentsByHandle.keySet()) {
@@ -173,10 +164,11 @@ public class DeviceListModel extends AbstractListModel<Device> {
 
     private final Subscriber subscriber;
     private final EventLoop eventLoop;
-    private final ParticipantBuiltinTopicDataDataReader reader;
-    private final ice.DeviceIdentityDataReader idReader;
-    private TopicDescription topic, connTopic;
-    private final ice.DeviceConnectivityDataReader connReader;
+    protected ParticipantBuiltinTopicDataDataReader reader;
+    protected ice.DeviceIdentityDataReader idReader;
+    protected ice.DeviceConnectivityDataReader connReader;
+    protected TopicDescription idTopic, connTopic;
+
 
     DeviceIdentity getIdentityForUdi(String udi) {
         DeviceIdentity keyHolder = new DeviceIdentity();
@@ -288,57 +280,60 @@ public class DeviceListModel extends AbstractListModel<Device> {
     final ParticipantBuiltinTopicDataSeq part_seq = new ParticipantBuiltinTopicDataSeq();
     final SampleInfoSeq info_seq = new SampleInfoSeq();
 
-    public DeviceListModel(Subscriber subscriber, final EventLoop eventLoop)	{
-        this.subscriber = subscriber;
+    public DeviceListModel(final Subscriber subscriber, final EventLoop eventLoop) {
         this.eventLoop = eventLoop;
-
-        DomainParticipant participant = subscriber.get_participant();
-
-        topic = lookupOrCreateTopic(participant, ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.class);
-        connTopic = lookupOrCreateTopic(participant, ice.DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.class);
-
-        reader = (ParticipantBuiltinTopicDataDataReader) participant.get_builtin_subscriber().lookup_datareader(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME);
-        idReader = (DeviceIdentityDataReader) subscriber.create_datareader(topic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        connReader = (DeviceConnectivityDataReader) subscriber.create_datareader(connTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-
-        reader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
-        idReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS /* | StatusKind.LIVELINESS_CHANGED_STATUS | StatusKind.SAMPLE_LOST_STATUS | StatusKind.SAMPLE_REJECTED_STATUS*/);
-        connReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
-
-        eventLoop.addHandler(reader.get_statuscondition(), new EventLoop.ConditionHandler() {
-
-            @Override
-            public void conditionChanged(Condition condition) {
-                ParticipantBuiltinTopicDataDataReader reader = (ParticipantBuiltinTopicDataDataReader) ((StatusCondition)condition).get_entity();
-                int status_changes = reader.get_status_changes();
-                if(0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
-                    dataAvailable(reader);
-                }
-            }
-        });
-
-        eventLoop.addHandler(idReader.get_statuscondition(), new EventLoop.ConditionHandler() {
-                @Override
-                public void conditionChanged(Condition condition) {
-                    ice.DeviceIdentityDataReader reader = (DeviceIdentityDataReader) ((StatusCondition)condition).get_entity();
-                    int status_changes = reader.get_status_changes();
-                    if(0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
-                        dataAvailable(reader);
-                    }
-                }
-
-            });
-        eventLoop.addHandler(connReader.get_statuscondition(), new EventLoop.ConditionHandler() {
-
-            @Override
-            public void conditionChanged(Condition condition) {
-                ice.DeviceConnectivityDataReader reader = (ice.DeviceConnectivityDataReader) ((StatusCondition)condition).get_entity();
-                dataAvailable(reader);
-            }
-        });
-
+        this.subscriber = subscriber;
         eventLoop.doLater(new Runnable() {
             public void run() {
+                DomainParticipant participant = subscriber.get_participant();
+
+                idTopic = lookupOrCreateTopic(participant, ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.class);
+                connTopic = lookupOrCreateTopic(participant, ice.DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.class);
+
+                reader = (ParticipantBuiltinTopicDataDataReader) participant.get_builtin_subscriber().lookup_datareader(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME);
+                idReader = (DeviceIdentityDataReader) subscriber.create_datareader(idTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+                connReader = (DeviceConnectivityDataReader) subscriber.create_datareader(connTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+
+                reader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
+                idReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
+                connReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
+
+                eventLoop.addHandler(reader.get_statuscondition(), new EventLoop.ConditionHandler() {
+
+                    @Override
+                    public void conditionChanged(Condition condition) {
+                        ParticipantBuiltinTopicDataDataReader reader = (ParticipantBuiltinTopicDataDataReader) ((StatusCondition)condition).get_entity();
+                        int status_changes = reader.get_status_changes();
+                        if(0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
+                            dataAvailable(reader);
+                        }
+                    }
+                });
+
+                eventLoop.addHandler(idReader.get_statuscondition(), new EventLoop.ConditionHandler() {
+                        @Override
+                        public void conditionChanged(Condition condition) {
+                            ice.DeviceIdentityDataReader reader = (DeviceIdentityDataReader) ((StatusCondition)condition).get_entity();
+                            int status_changes = reader.get_status_changes();
+                            if(0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
+                                dataAvailable(reader);
+                            }
+                        }
+
+                    });
+                eventLoop.addHandler(connReader.get_statuscondition(), new EventLoop.ConditionHandler() {
+
+                    @Override
+                    public void conditionChanged(Condition condition) {
+                        ice.DeviceConnectivityDataReader reader = (ice.DeviceConnectivityDataReader) ((StatusCondition)condition).get_entity();
+                        int status_changes = reader.get_status_changes();
+                        if(0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
+                            dataAvailable(reader);
+                        }
+                    }
+                });
+
+
                 InstanceHandle_t previousInstance = InstanceHandle_t.HANDLE_NIL;
                 // Iterate to ensure we didn't miss any previously discovered instances
                 int i = 0;
@@ -359,33 +354,24 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         reader.return_loan(part_seq, info_seq);
                     }
                 }
-
             }
         });
     }
 
     private final void seeAnInstance(ParticipantBuiltinTopicData pbtd, SampleInfo si) {
         if(0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
-            if(!contentsByHandle.containsKey(si.instance_handle) && si.valid_data) {
-                if(!pbtd.user_data.value.isEmpty()) {
-                     byte[] arrbyte = new byte[pbtd.user_data.value.size()];
-                     pbtd.user_data.value.toArrayByte(arrbyte);
-                     String udi = null;
-                     try {
-                         udi = new String(arrbyte, "ASCII");
-                     } catch (UnsupportedEncodingException e) {
-                         log.error(e.getMessage(), e);
-                     }
-                     add(si.instance_handle, udi);
+            if(si.valid_data) {
+                // TODO temporarily filtering to only Device participants
+                if("Device".equals(pbtd.participant_name.name)) {
+                    addOrUpdate(si.instance_handle, pbtd);
                 } else {
-                    log.debug("Received instance_handle but no UDI in the user_data:"+si.instance_handle);
+                    remove(si.instance_handle);
                 }
             } else {
+                remove(si.instance_handle);
             }
          } else {
-             if(contentsByHandle.containsKey(si.instance_handle)) {
-                 remove(si.instance_handle);
-             }
+            remove(si.instance_handle);
          }
     }
 
@@ -424,13 +410,19 @@ public class DeviceListModel extends AbstractListModel<Device> {
     }
 
     public void tearDown() {
-        eventLoop.removeHandler(reader.get_statuscondition());
-        eventLoop.removeHandler(idReader.get_statuscondition());
-        eventLoop.removeHandler(connReader.get_statuscondition());
-        idReader.delete_contained_entities();
-        subscriber.delete_datareader(idReader);
-        connReader.delete_contained_entities();
-        subscriber.delete_datareader(connReader);
+        // TODO Tear down the topics?  IF created?  How do we interact with others in this PArticipant
+        eventLoop.doLater(new Runnable() {
+            public void run() {
+                eventLoop.removeHandler(reader.get_statuscondition());
+                eventLoop.removeHandler(idReader.get_statuscondition());
+                eventLoop.removeHandler(connReader.get_statuscondition());
+                idReader.delete_contained_entities();
+                subscriber.delete_datareader(idReader);
+                connReader.delete_contained_entities();
+                subscriber.delete_datareader(connReader);
+            }
+        });
+
     }
 
     @Override

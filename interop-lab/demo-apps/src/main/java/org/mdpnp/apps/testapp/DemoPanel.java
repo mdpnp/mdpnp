@@ -7,6 +7,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.event.ComponentEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -38,17 +39,24 @@ public class DemoPanel extends JPanel implements Runnable {
     public final static Color lightBlue = new Color(1, 153, 203);
 
     private final JPanel header = new JPanel();
-    private final JPanel footer = new JPanel();
+    private final JPanel wholeFooter = new JPanel();
+    private final JPanel topFooter = new JPanel();
+    private final JPanel bottomFooter = new JPanel();
     private final JLabel status = new JLabel("  ");
     private final JButton back = new JButton("Exit App");
     private final JLabel time = new JLabel("HH:mm:ss");
     private final JLabel version = new JLabel(" ");
+    private final JLabel udi = new JLabel(" ");
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     private final JPanel content = new JPanel();
     public JPanel getContent() {
         return content;
+    }
+
+    public JLabel getUdi() {
+        return udi;
     }
 
     public JLabel getBedLabel() {
@@ -126,27 +134,40 @@ public class DemoPanel extends JPanel implements Runnable {
     }
 
     private void buildFooter() {
-        footer.setLayout(new BorderLayout());
-//		footer.setPreferredSize(new Dimension(1000, 50));
-        footer.setOpaque(false);
+        wholeFooter.setLayout(new GridLayout(2,1));
+        wholeFooter.add(topFooter);
+        wholeFooter.add(bottomFooter);
+        wholeFooter.setOpaque(false);
+
+        topFooter.setLayout(new BorderLayout());
+        bottomFooter.setLayout(new BorderLayout());
+        topFooter.setOpaque(false);
+        bottomFooter.setOpaque(false);
+        topFooter.setForeground(darkBlue);
+        bottomFooter.setForeground(darkBlue);
+
         status.setForeground(darkBlue);
         status.setFont(Font.decode("verdana-15"));
-        footer.add(back, BorderLayout.WEST);
-        footer.add(status, BorderLayout.CENTER);
-        footer.add(time, BorderLayout.EAST);
-        footer.setForeground(darkBlue);
-        footer.setOpaque(false);
+        topFooter.add(back, BorderLayout.WEST);
+        topFooter.add(status, BorderLayout.CENTER);
+        topFooter.add(time, BorderLayout.EAST);
+
         time.setForeground(darkBlue);
         time.setOpaque(false);
         time.setFont(Font.decode("verdana-15"));
         version.setForeground(darkBlue);
         version.setOpaque(false);
         version.setFont(Font.decode("Courier-10"));
-        footer.add(version, BorderLayout.SOUTH);
-        revalidate();
-//		SpaceFillLabel.attachResizeFontToFill(footer, time, status);
+        udi.setForeground(darkBlue);
+        udi.setFont(Font.decode("Courier-10"));
+        udi.setOpaque(false);
 
-        add(footer, BorderLayout.SOUTH);
+        bottomFooter.add(udi, BorderLayout.EAST);
+        bottomFooter.add(version, BorderLayout.WEST);
+
+
+        add(wholeFooter, BorderLayout.SOUTH);
+        revalidate();
     }
 //    private static final Color transparentWhite = new Color(1.0f, 1.0f, 1.0f, 0.8f);
     public DemoPanel() {
@@ -241,10 +262,10 @@ public class DemoPanel extends JPanel implements Runnable {
 //		super.paintComponent(g);
     }
     private final Date date = new Date();
-    private final DateFormat timeForma = new SimpleDateFormat("HH:mm:ss");
+    private final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
     @Override
     public void run() {
         date.setTime(System.currentTimeMillis());
-        this.time.setText(timeForma.format(date));
+        this.time.setText(timeFormat.format(date));
     }
 }

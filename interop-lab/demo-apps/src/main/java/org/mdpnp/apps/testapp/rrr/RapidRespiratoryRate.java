@@ -52,7 +52,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
         public RespiratoryRateDevice(int domainId, EventLoop eventLoop) {
             super(domainId, eventLoop);
             deviceIdentity.manufacturer = "";
-            deviceIdentity.model = "Rapid Respiratory Rate";
+            deviceIdentity.model = "Respiratory Rate Calc";
             deviceIdentity.serial_number = "1234";
             AbstractSimulatedDevice.randomUDI(deviceIdentity);
             writeDeviceIdentity();

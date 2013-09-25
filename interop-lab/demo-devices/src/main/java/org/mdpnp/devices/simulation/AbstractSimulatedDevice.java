@@ -19,11 +19,14 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractSimulatedDevice extends AbstractDevice {
     private static final Logger log = LoggerFactory.getLogger(AbstractSimulatedDevice.class);
 
-    public static void randomUDI(DeviceIdentity di) {
+    public static String randomUDI() {
         UUID uuid = UUID.randomUUID();
-        di.universal_device_identifier =
-        Long.toHexString(uuid.getMostSignificantBits()) +
+        return Long.toHexString(uuid.getMostSignificantBits()) +
         Long.toHexString(uuid.getLeastSignificantBits());
+    }
+
+    public static void randomUDI(DeviceIdentity di) {
+        di.universal_device_identifier = randomUDI();
         log.debug("Created Random UDI:"+di.universal_device_identifier);
     }
 

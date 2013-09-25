@@ -3,10 +3,13 @@ package org.mdpnp.apps.testapp;
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.SoftReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
 
 /**
  * Convenience class for storing DeviceIdentity and DeviceConnectivity instances
@@ -17,8 +20,9 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class Device {
-    private final String udi;
-    private DeviceIdentity deviceIdentity = new DeviceIdentity();
+    private String udi;
+    private final ParticipantBuiltinTopicData participantData = new ParticipantBuiltinTopicData();
+    private DeviceIdentity deviceIdentity;
     private DeviceConnectivity deviceConnectivity;
 
     private SoftReference<DeviceIcon> realIcon;
@@ -27,8 +31,11 @@ public class Device {
 
     private final static Logger log = LoggerFactory.getLogger(Device.class);
 
-    public Device(String udi) {
-        this.udi = udi;
+    public Device() {
+    }
+
+    public Device(ParticipantBuiltinTopicData participantData) {
+        setParticipantData(participantData);
     }
 
     public DeviceIcon getIcon() {
@@ -70,6 +77,10 @@ public class Device {
         return deviceIdentity;
     }
 
+    public ParticipantBuiltinTopicData getParticipantData() {
+        return participantData;
+    }
+
     public DeviceConnectivity getDeviceConnectivity() {
         return deviceConnectivity;
     }
@@ -91,6 +102,23 @@ public class Device {
         }
     }
 
+    public void setParticipantData(ParticipantBuiltinTopicData participantData) {
+        if(null != participantData) {
+            this.participantData.copy_from(participantData);
+            if(!participantData.user_data.value.isEmpty()) {
+                byte[] arrbyte = new byte[participantData.user_data.value.size()];
+                participantData.user_data.value.toArrayByte(arrbyte);
+                String udi = null;
+                try {
+                    udi = new String(arrbyte, "ASCII");
+                    this.udi = udi;
+                } catch (UnsupportedEncodingException e) {
+                    log.error(e.getMessage(), e);
+                    this.udi = null;
+                }
+            }
+        }
+    }
 
     public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {
         if(null == deviceConnectivity) {

@@ -28,35 +28,36 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("serial")
 public class DeviceIcon extends ImageIcon {
     private static final Logger log = LoggerFactory.getLogger(DeviceIcon.class);
-	
-	private static final BufferedImage WHITE_SQUARE = new BufferedImage(96, 96, BufferedImage.TYPE_4BYTE_ABGR);
-	static {
-		for(int y = 0; y < WHITE_SQUARE.getHeight(); y++) {
-			for(int x = 0; x < WHITE_SQUARE.getWidth(); x++) {
-				WHITE_SQUARE.setRGB(x, y, 0xFFFFFFFF);
-			}
-		}
-	}
 
-	public DeviceIcon() {
-		super(WHITE_SQUARE);
-	}
+    public static final BufferedImage WHITE_SQUARE = new BufferedImage(96, 96, BufferedImage.TYPE_4BYTE_ABGR);
+    public static final ImageIcon WHITE_SQUARE_ICON = new ImageIcon(WHITE_SQUARE);
+    static {
+        for(int y = 0; y < WHITE_SQUARE.getHeight(); y++) {
+            for(int x = 0; x < WHITE_SQUARE.getWidth(); x++) {
+                WHITE_SQUARE.setRGB(x, y, 0xFFFFFFFF);
+            }
+        }
+    }
 
-	
+    public DeviceIcon() {
+        super(WHITE_SQUARE);
+    }
+
+
    public boolean isBlank() {
        return WHITE_SQUARE.equals(getImage());
    }
-	
+
    public void setImage(ice.Image image, double scale) {
         int width = image.width;
         int height = image.height;
         byte[] raster = new byte[image.raster.size()];
         image.raster.toArrayByte(raster);
-        
+
         if(raster.length < (width * height * 4)) {
             throw new IllegalArgumentException("the specified image is " + width + "x" + height + " and only " + raster.length + " bytes");
         }
-        
+
         if(raster != null && width > 0 && height > 0) {
             BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             IntBuffer ib = ByteBuffer.wrap(raster).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
@@ -68,7 +69,7 @@ public class DeviceIcon extends ImageIcon {
             BufferedImage after = new BufferedImage((int)(scale * width), (int)(scale * height), BufferedImage.TYPE_INT_ARGB);
             java.awt.geom.AffineTransform at = new java.awt.geom.AffineTransform();
             at.scale(scale, scale);
-            
+
             AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
             after = scaleOp.filter(bi, after);
             setImage(after);
@@ -79,56 +80,56 @@ public class DeviceIcon extends ImageIcon {
             setImage(WHITE_SQUARE);
         }
     }
-	
+
    public DeviceIcon(ice.Image image) {
        this(image, 0.75);
    }
-   
+
    public DeviceIcon(ice.Image image, double scale) {
         super();
         setImage(image, scale);
     }
-	public DeviceIcon(Image image) {
-		super(image);
-	}
-	
-	private static final double PI_OVER_4 = Math.PI / 4.0;
-	private static final double FIVEPI_OVER_4 = 5.0 * Math.PI / 4.0;
-	
-	private static final double unitX1 = Math.cos(PI_OVER_4);
-	private static final double unitY1 = Math.sin(PI_OVER_4);
-	
-	private static final double unitX2 = Math.cos(FIVEPI_OVER_4);
-	private static final double unitY2 = Math.sin(FIVEPI_OVER_4);
-	
-	@Override
-	public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
-		super.paintIcon(c, g, x, y);
-		if(!isConnected()) {
-			int height = getIconHeight();
-			int width = getIconWidth();
-			g.setColor(Color.red);
-			if(g instanceof Graphics2D) {
-				((Graphics2D)g).setStroke(new BasicStroke(3.0f));
-				((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+    public DeviceIcon(Image image) {
+        super(image);
+    }
+
+    private static final double PI_OVER_4 = Math.PI / 4.0;
+    private static final double FIVEPI_OVER_4 = 5.0 * Math.PI / 4.0;
+
+    private static final double unitX1 = Math.cos(PI_OVER_4);
+    private static final double unitY1 = Math.sin(PI_OVER_4);
+
+    private static final double unitX2 = Math.cos(FIVEPI_OVER_4);
+    private static final double unitY2 = Math.sin(FIVEPI_OVER_4);
+
+    @Override
+    public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
+        super.paintIcon(c, g, x, y);
+        if(!isConnected()) {
+            int height = getIconHeight();
+            int width = getIconWidth();
+            g.setColor(Color.red);
+            if(g instanceof Graphics2D) {
+                ((Graphics2D)g).setStroke(new BasicStroke(3.0f));
+                ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                         RenderingHints.VALUE_ANTIALIAS_ON);
-			}
-			g.drawOval(x, y, width, height);
-			
-			g.drawLine((int)(x + unitX1 * width / 2 + width / 2), (int)(y + unitY1 * height / 2 + height / 2), (int)(x + unitX2 * width / 2 + width / 2) , (int)(y + unitY2 * height / 2 + height / 2));
-		}
-	}
-	
-	private boolean connected = false;
-	
-	public void setConnected(boolean connected) {
-		if(connected ^ this.connected) {
-			this.connected = connected;
-		}
-	}
-	
-	protected boolean isConnected() {
-	    return this.connected;
-	}
-	
+            }
+            g.drawOval(x, y, width, height);
+
+            g.drawLine((int)(x + unitX1 * width / 2 + width / 2), (int)(y + unitY1 * height / 2 + height / 2), (int)(x + unitX2 * width / 2 + width / 2) , (int)(y + unitY2 * height / 2 + height / 2));
+        }
+    }
+
+    private boolean connected = false;
+
+    public void setConnected(boolean connected) {
+        if(connected ^ this.connected) {
+            this.connected = connected;
+        }
+    }
+
+    protected boolean isConnected() {
+        return this.connected;
+    }
+
 }
