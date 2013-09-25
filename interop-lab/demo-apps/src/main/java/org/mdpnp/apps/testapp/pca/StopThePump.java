@@ -31,22 +31,28 @@ import com.rti.dds.topic.Topic;
 
 public class StopThePump {
     public static void main(String[] args) {
+        int domainId = 0;
+
+        if(args.length > 0) {
+            domainId = Integer.parseInt(args[0]);
+        }
+
         DDS.init();
-        DomainParticipant part = DomainParticipantFactory.get_instance().create_participant(0, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        DomainParticipant part = DomainParticipantFactory.get_instance().create_participant(domainId, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         Subscriber sub = part.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         Publisher pub = part.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         ice.InfusionStatusTypeSupport.register_type(part, ice.InfusionStatusTypeSupport.get_type_name());
-        
+
         Topic infoTopic = part.create_topic(ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         ice.InfusionStatusDataReader reader = (InfusionStatusDataReader) sub.create_datareader(infoTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         ReadCondition rc = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
-        
+
         ice.InfusionObjectiveTypeSupport.register_type(part, ice.InfusionObjectiveTypeSupport.get_type_name());
         Topic objTopic = part.create_topic(ice.InfusionObjectiveTopic.VALUE, ice.InfusionObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         ice.InfusionObjectiveDataWriter writer = (InfusionObjectiveDataWriter) pub.create_datawriter(objTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        
+
         final GuardCondition exitCondition = new GuardCondition();
-        
+
         Thread t = new Thread(new Runnable() {
             public void run() {
                 System.out.println("Press enter to exit");
@@ -61,21 +67,21 @@ public class StopThePump {
         });
         t.setDaemon(true);
         t.start();
-        
+
         WaitSet ws = new WaitSet();
         ws.attach_condition(rc);
         ws.attach_condition(exitCondition);
-        
+
         ConditionSeq active_conditions = new ConditionSeq();
         Duration_t forever = new Duration_t(Duration_t.DURATION_INFINITE_SEC, Duration_t.DURATION_INFINITE_NSEC);
-        
+
         boolean exit = false;
-        
+
         ice.InfusionStatusSeq data_seq = new ice.InfusionStatusSeq();
         SampleInfoSeq info_seq = new SampleInfoSeq();
-        
+
         while(!exit) {
-            
+
             ws.wait(active_conditions, forever);
             for(int i = 0; i < active_conditions.size(); i++) {
                 Condition c = (Condition) active_conditions.get(i);
@@ -84,7 +90,7 @@ public class StopThePump {
                     break;
                 } else if(c.equals(rc)) {
                     for(;;) {
-                        try {   
+                        try {
                             reader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, rc);
                             for(int j = 0; j < data_seq.size(); j++) {
                                 SampleInfo si = (SampleInfo) info_seq.get(j);
@@ -122,15 +128,15 @@ public class StopThePump {
         part.delete_topic(infoTopic);
         infoTopic = null;
         ice.InfusionStatusTypeSupport.unregister_type(part, ice.InfusionStatusTypeSupport.get_type_name());
-        
+
         part.delete_publisher(pub);
         pub = null;
         part.delete_subscriber(sub);
         sub = null;
         DomainParticipantFactory.get_instance().delete_participant(part);
         part = null;
-        
+
         DomainParticipantFactory.finalize_instance();
-        
+
     }
 }
