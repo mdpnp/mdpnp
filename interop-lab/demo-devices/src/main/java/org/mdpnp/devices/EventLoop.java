@@ -187,10 +187,14 @@ public class EventLoop  {
         }
     }
 
+    public synchronized boolean isCurrentServiceThread() {
+        return Thread.currentThread().equals(currentServiceThread);
+    }
+
 
     public void addHandler(Condition condition, ConditionHandler conditionHandler) {
         Mutation m = new Mutation(true, condition, conditionHandler);
-        if(Thread.currentThread().equals(currentServiceThread)) {
+        if(isCurrentServiceThread()) {
             handleMutation(m);
         } else {
             synchronized(queuedMutations) {
@@ -206,7 +210,7 @@ public class EventLoop  {
     public void removeHandler(Condition condition) {
 
         Mutation m = new Mutation(false, condition, null);
-        if(Thread.currentThread().equals(currentServiceThread)) {
+        if(isCurrentServiceThread()) {
             handleMutation(m);
         } else {
             synchronized(queuedMutations) {
