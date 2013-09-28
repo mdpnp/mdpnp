@@ -86,7 +86,6 @@ public class DeviceListModel extends AbstractListModel<Device> {
         Device device = contentsByHandle.get(handle);
         if(null == device) {
             device = new Device(pbtd);
-            System.out.println(pbtd);
             contentsByHandle.put(new InstanceHandle_t(handle), device);
             contents.add(0, device);
             contentsByIdx.clear();
@@ -126,7 +125,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
         if(null == handle) {
             throw new IllegalArgumentException("Tried to remove a null handle");
         }
-        Device device = contentsByHandle.get(handle);
+        Device device = contentsByHandle.remove(handle);
         if(null != device) {
             String udi = device.getUDI();
             if(null != udi && !"".equals(udi)) {
