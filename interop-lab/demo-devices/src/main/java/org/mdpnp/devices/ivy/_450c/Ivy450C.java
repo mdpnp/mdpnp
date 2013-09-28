@@ -24,11 +24,11 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
             return null;
         }
         if(lbl.startsWith(ECG_III_PREFIX)) {
-            return ice.Physio._MDC_ECG_AMPL_ST_I;
+            return ice.Physio._MDC_ECG_AMPL_ST_III;
         } else if(lbl.startsWith(ECG_II_PREFIX)) {
             return ice.Physio._MDC_ECG_AMPL_ST_II;
         } else if(lbl.startsWith(ECG_I_PREFIX)) {
-            return ice.Physio._MDC_ECG_AMPL_ST_III;
+            return ice.Physio._MDC_ECG_AMPL_ST_I;
         } else {
             log.warn("Unknown ECG:"+lbl);
             return null;
