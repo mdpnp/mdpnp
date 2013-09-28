@@ -32,6 +32,6 @@ public class CapnoImpl implements Capno {
     
     @Override
     public String toString() {
-        return sampleArray.universal_device_identifier;
+        return sampleArray.unique_device_identifier;
     }
 }

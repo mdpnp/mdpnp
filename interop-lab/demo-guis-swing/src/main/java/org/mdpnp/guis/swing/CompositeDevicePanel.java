@@ -41,7 +41,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
    private final JLabel serial_number = new JLabel("SERIAL#");
    
    private final JLabel connectionState = new JLabel("CONN");
-   private final JLabel universal_device_identifier = new JLabel("UDI");
+   private final JLabel unique_device_identifier = new JLabel("UDI");
    private final JLabel icon = new JLabel("ICON");
    
    private static final Logger log = LoggerFactory.getLogger(CompositeDevicePanel.class);
@@ -80,7 +80,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
         gbc.gridx--;
         header.add(new JLabel("Universal Device Id"), gbc);
         gbc.gridx++;
-        header.add(universal_device_identifier, gbc);
+        header.add(unique_device_identifier, gbc);
         
         gbc.gridy++;
         gbc.gridx--;
@@ -112,7 +112,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
                 manufacturer.setText(di.manufacturer);
                 model.setText(di.model);
                 serial_number.setText(di.serial_number);
-                universal_device_identifier.setText(di.universal_device_identifier);
+                unique_device_identifier.setText(di.unique_device_identifier);
                 icon.setText("");
                 Image img = IconUtil.image(di.icon);
 
@@ -254,8 +254,8 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
             SampleInfo si = (SampleInfo) sampleInfo.get(i);
             if(si.valid_data) {
 //                log.info("Pump Status:"+infusionStatus);
-                if(!knownPumps.contains(infusionStatus.universal_device_identifier)) {
-                    knownPumps.add(infusionStatus.universal_device_identifier);
+                if(!knownPumps.contains(infusionStatus.unique_device_identifier)) {
+                    knownPumps.add(infusionStatus.unique_device_identifier);
                     replaceDataPanels();
                 }
                 synchronized(dataComponents) {

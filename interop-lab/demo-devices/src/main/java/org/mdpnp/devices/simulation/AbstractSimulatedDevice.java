@@ -26,8 +26,8 @@ public abstract class AbstractSimulatedDevice extends AbstractDevice {
     }
 
     public static void randomUDI(DeviceIdentity di) {
-        di.universal_device_identifier = randomUDI();
-        log.debug("Created Random UDI:"+di.universal_device_identifier);
+        di.unique_device_identifier = randomUDI();
+        log.debug("Created Random UDI:"+di.unique_device_identifier);
     }
 
     public AbstractSimulatedDevice(int domainId, EventLoop eventLoop) {

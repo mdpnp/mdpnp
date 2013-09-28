@@ -117,7 +117,7 @@ public class DeviceAdapter {
 
         if (gui) {
             final CompositeDevicePanel cdp = new CompositeDevicePanel();
-            final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getDeviceIdentity().universal_device_identifier);
+            final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getDeviceIdentity().unique_device_identifier);
             deviceMonitor.addListener(cdp);
             deviceMonitor.start(device.getParticipant(), eventLoop);
 

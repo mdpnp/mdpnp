@@ -376,7 +376,7 @@ public class DemoApp {
                                 deviceMonitor.stop();
                                 deviceMonitor = null;
                             }
-                            deviceMonitor = new DeviceMonitor(device.getDeviceIdentity().universal_device_identifier);
+                            deviceMonitor = new DeviceMonitor(device.getDeviceIdentity().unique_device_identifier);
                             devicePanel.setModel(deviceMonitor);
                             deviceMonitor.start(subscriber.get_participant(), eventLoop);
                         }

@@ -51,7 +51,7 @@ public class CapnoModelImpl implements CapnoModel {
                             if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
                                 ice.SampleArray keyHolder = new ice.SampleArray();
                                 capnoReader.get_key_value(keyHolder, sampleInfo.instance_handle);
-                                removeCapno(keyHolder.universal_device_identifier);
+                                removeCapno(keyHolder.unique_device_identifier);
                             } else {
                                 if (sampleInfo.valid_data) {
                                     ice.SampleArray s = (ice.SampleArray) sa_seq.get(i);
@@ -120,7 +120,7 @@ public class CapnoModelImpl implements CapnoModel {
             ListIterator<Capno> litr = capnos.listIterator();
             while(litr.hasNext()) {
                 Capno capno = litr.next();
-                if(capno.getSampleArray().universal_device_identifier.equals(udi)) {
+                if(capno.getSampleArray().unique_device_identifier.equals(udi)) {
                     removed.add(capno);
                     litr.remove();
                 }
@@ -137,7 +137,7 @@ public class CapnoModelImpl implements CapnoModel {
             ListIterator<Capno> itr = capnos.listIterator();
             while(itr.hasNext()) {
                 capno = itr.next();
-                if(sampleArray.universal_device_identifier.equals(capno.getSampleArray().universal_device_identifier)) {
+                if(sampleArray.unique_device_identifier.equals(capno.getSampleArray().unique_device_identifier)) {
                     break;
                 } else {
                     capno = null;

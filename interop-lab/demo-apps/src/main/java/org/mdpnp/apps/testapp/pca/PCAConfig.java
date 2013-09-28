@@ -138,7 +138,7 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
                 String udi = null;
                 setOpaque(false);
                 if(value != null && value instanceof Pump) {
-                    udi = ((Pump)value).getInfusionStatus().universal_device_identifier;
+                    udi = ((Pump)value).getInfusionStatus().unique_device_identifier;
                     VitalModel model = PCAConfig.this.model;
                     if(model != null) {
                         ice.DeviceIdentity di = model.getDeviceIdentity(udi);
@@ -290,12 +290,12 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
         String selectedUdi = null;
         Object selected = pumpList.getSelectedValue();
         if(null != selected && selected instanceof Pump) {
-            selectedUdi  =((Pump)selected).getInfusionStatus().universal_device_identifier;
+            selectedUdi  =((Pump)selected).getInfusionStatus().unique_device_identifier;
         }
         pumpList.setModel(null == pumpModel ? new DefaultListModel() : new PumpListModel(pumpModel));
         if(null != selectedUdi && pumpModel != null) {
             for(int i = 0; i < pumpModel.getCount(); i++) {
-                if(selectedUdi.equals(pumpModel.getPump(i).getInfusionStatus().universal_device_identifier)) {
+                if(selectedUdi.equals(pumpModel.getPump(i).getInfusionStatus().unique_device_identifier)) {
                     pumpList.setSelectedValue(pumpModel.getPump(i), true);
                 }
             }

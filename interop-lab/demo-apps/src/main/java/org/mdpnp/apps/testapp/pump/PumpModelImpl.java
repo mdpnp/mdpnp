@@ -59,7 +59,7 @@ public class PumpModelImpl implements PumpModel {
                             if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
                                 ice.InfusionStatus keyHolder = new ice.InfusionStatus();
                                 statusReader.get_key_value(keyHolder, sampleInfo.instance_handle);
-                                removePump(keyHolder.universal_device_identifier);
+                                removePump(keyHolder.unique_device_identifier);
                             } else {
                                 if (sampleInfo.valid_data) {
                                     ice.InfusionStatus s = (ice.InfusionStatus) inf_seq.get(i);
@@ -85,7 +85,7 @@ public class PumpModelImpl implements PumpModel {
             ListIterator<Pump> litr = pumps.listIterator();
             while(litr.hasNext()) {
                 Pump pump = litr.next();
-                if(pump.getInfusionStatus().universal_device_identifier.equals(udi)) {
+                if(pump.getInfusionStatus().unique_device_identifier.equals(udi)) {
                     removed.add(pump);
                     litr.remove();
                 }
@@ -105,7 +105,7 @@ public class PumpModelImpl implements PumpModel {
             ListIterator<Pump> itr = pumps.listIterator();
             while(itr.hasNext()) {
                 pump = itr.next();
-                if(status.universal_device_identifier.equals(pump.getInfusionStatus().universal_device_identifier)) {
+                if(status.unique_device_identifier.equals(pump.getInfusionStatus().unique_device_identifier)) {
                     break;
                 } else {
                     pump = null;
@@ -214,7 +214,7 @@ public class PumpModelImpl implements PumpModel {
     public void setStop(Pump pump, boolean stop) {
         ice.InfusionObjective obj = new ice.InfusionObjective();
         obj.requestor = "ME";
-        obj.universal_device_identifier = pump.getInfusionStatus().universal_device_identifier;
+        obj.unique_device_identifier = pump.getInfusionStatus().unique_device_identifier;
         obj.stopInfusion = stop;
         objectiveWriter.write(obj, InstanceHandle_t.HANDLE_NIL);
     }

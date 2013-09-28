@@ -9,7 +9,7 @@ public class PumpImpl implements Pump {
 
     @Override
     public String toString() {
-        return infusionStatus.universal_device_identifier;
+        return infusionStatus.unique_device_identifier;
     }
 
     public PumpImpl(PumpModel parent, ice.InfusionStatus infusionStatus, SampleInfo sampleInfo) {

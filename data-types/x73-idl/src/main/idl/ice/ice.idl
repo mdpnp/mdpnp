@@ -1,5 +1,7 @@
 module ice {
 
+  typedef string<128> UDI;
+
   struct Image {
     sequence<octet, 65530> raster;
     long width;
@@ -7,7 +9,7 @@ module ice {
   };
 
   struct DeviceIdentity {
-    string<256> universal_device_identifier; //@key
+    UDI unique_device_identifier; //@key
     string<128> manufacturer;
     string<128> model;
     string<128> serial_number;
@@ -30,7 +32,7 @@ module ice {
   };
 
   struct DeviceConnectivity {
-    string<256> universal_device_identifier; //@key
+    UDI unique_device_identifier; //@key
     ConnectionState state;
     ConnectionType type;
     string<128> info;
@@ -38,7 +40,7 @@ module ice {
   };
 
   struct DeviceConnectivityObjective {
-   string<256> universal_device_identifier; //@key
+    UDI unique_device_identifier; //@key
     boolean connected;
     string<128> target;
   };
@@ -85,14 +87,14 @@ module ice {
 
 
   struct Numeric {
-    string<256> universal_device_identifier; //@key
+    UDI unique_device_identifier; //@key
     long name; //@key
     float value;
   };
   const string NumericTopic = "ice::Numeric";
 
   struct SampleArray {
-    string<256> universal_device_identifier; //@key
+    UDI unique_device_identifier; //@key
     long name; //@key
     sequence<float,400> values;
     long millisecondsPerSample;
@@ -100,20 +102,20 @@ module ice {
   const string SampleArrayTopic = "ice::SampleArray";
 
   struct Text {
-    string<256> universal_device_identifier; //@key
+    UDI unique_device_identifier; //@key
     long name; //@key
     string<256> value;
   };
   const string TextTopic = "ice::Text";
 
   struct InfusionObjective {
-    string<256> universal_device_identifier; //@key
+    UDI unique_device_identifier; //@key
     string<128> requestor;
     boolean stopInfusion;
   };
   const string InfusionObjectiveTopic = "ice::InfusionObjective";
   struct InfusionStatus {
-    string<256> universal_device_identifier; //@key
+    UDI unique_device_identifier; //@key
     // is the pump actively infusing?
     boolean infusionActive;
 
@@ -139,7 +141,7 @@ module ice {
   const string InfusionStatusTopic = "ice::InfusionStatus";
 
   struct AlarmSettings {
-    string<256> universal_device_identifier; //@key
+    UDI unique_device_identifier; //@key
     long name; //@key
     float lower;
     float upper;
@@ -148,7 +150,7 @@ module ice {
   const string AlarmSettingsTopic = "ice::AlarmSettings";
 
   struct AlarmSettingsObjective {
-    string<256> universal_device_identifier; //@key
+    UDI unique_device_identifier; //@key
     long name; //@key
     string<256> requestor_udi;
     float lower;

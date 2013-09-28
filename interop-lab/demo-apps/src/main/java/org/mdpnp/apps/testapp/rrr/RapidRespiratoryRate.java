@@ -107,7 +107,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
                     boolean cellHasFocus) {
                 String udi = null;
                 if(value != null && value instanceof Capno) {
-                    udi = ((Capno)value).getSampleArray().universal_device_identifier;
+                    udi = ((Capno)value).getSampleArray().unique_device_identifier;
                     VitalModel model = RapidRespiratoryRate.this.vitalModel;
                     if(model != null) {
                         ice.DeviceIdentity di = model.getDeviceIdentity(udi);
@@ -133,13 +133,13 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
         String selectedUdi = null;
         Object selected = capnoSources.getSelectedValue();
         if(null != selected && selected instanceof Capno) {
-            selectedUdi  =((Capno)selected).getSampleArray().universal_device_identifier;
+            selectedUdi  =((Capno)selected).getSampleArray().unique_device_identifier;
         }
 
         capnoSources.setModel(null==model?new DefaultListModel():new CapnoListModel(model));
         if(null != selectedUdi && model != null) {
             for(int i = 0; i < model.getCount(); i++) {
-                if(selectedUdi.equals(model.getCapno(i).getSampleArray().universal_device_identifier)) {
+                if(selectedUdi.equals(model.getCapno(i).getSampleArray().unique_device_identifier)) {
                     capnoSources.setSelectedValue(model.getCapno(i), true);
                 }
             }

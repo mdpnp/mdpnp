@@ -66,7 +66,7 @@ public class PulseOxActivity extends Activity implements GatewayListener {
 			}
 			
 		}
-		getConnected = new GetConnected(domainId, pulseox.getDeviceIdentity().universal_device_identifier, null==device?"":device.getAddress(), eventLoop);
+		getConnected = new GetConnected(domainId, pulseox.getDeviceIdentity().unique_device_identifier, null==device?"":device.getAddress(), eventLoop);
 		
 		wave.setSource(wuws);
 	}
@@ -110,8 +110,8 @@ public class PulseOxActivity extends Activity implements GatewayListener {
 	private static class GetConnected extends AbstractGetConnected {
 		private final String address;
 		
-		GetConnected(int domainId, String universal_device_identifier, String address, EventLoop eventLoop) {
-			super(domainId, universal_device_identifier, eventLoop);
+		GetConnected(int domainId, String unique_device_identifier, String address, EventLoop eventLoop) {
+			super(domainId, unique_device_identifier, eventLoop);
 			this.address = address;
 		}
 		

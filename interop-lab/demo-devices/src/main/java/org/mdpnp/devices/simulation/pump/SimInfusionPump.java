@@ -83,7 +83,7 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
         infusionStatusTopic = getParticipant().create_topic(ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         infusionStatusWriter = (InfusionStatusDataWriter) publisher.create_datawriter(infusionStatusTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
-        infusionStatus.universal_device_identifier = deviceIdentity.universal_device_identifier;
+        infusionStatus.unique_device_identifier = deviceIdentity.unique_device_identifier;
         infusionStatusHandle = infusionStatusWriter.register_instance(infusionStatus);
 
         infusionStatus.drug_name = "Morphine";
@@ -101,8 +101,8 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
         infusionObjectiveReader = (ice.InfusionObjectiveDataReader) subscriber.create_datareader(infusionObjectiveTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
         StringSeq params = new StringSeq();
-        params.add("'"+deviceIdentity.universal_device_identifier+"'");
-        infusionObjectiveQueryCondition = infusionObjectiveReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "universal_device_identifier = %0", params);
+        params.add("'"+deviceIdentity.unique_device_identifier+"'");
+        infusionObjectiveQueryCondition = infusionObjectiveReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0", params);
         eventLoop.addHandler(infusionObjectiveQueryCondition, new ConditionHandler() {
             private ice.InfusionObjectiveSeq data_seq = new ice.InfusionObjectiveSeq();
             private SampleInfoSeq info_seq = new SampleInfoSeq();

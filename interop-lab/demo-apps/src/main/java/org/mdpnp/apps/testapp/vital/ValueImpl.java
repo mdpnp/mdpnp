@@ -31,7 +31,7 @@ public class ValueImpl implements Value {
     public ValueImpl(String universalDeviceIdentifier, int name, Vital parent) {
         objective.data = (AlarmSettingsObjective) ice.AlarmSettingsObjective.create();
         objective.data.name = name;
-        objective.data.universal_device_identifier = universalDeviceIdentifier;
+        objective.data.unique_device_identifier = universalDeviceIdentifier;
         this.name = name;
         this.universalDeviceIdentifier = universalDeviceIdentifier;
         this.parent = parent;

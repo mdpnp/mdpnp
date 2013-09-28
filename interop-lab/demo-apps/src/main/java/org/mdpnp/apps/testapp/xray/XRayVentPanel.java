@@ -204,7 +204,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
                 if(idx >= 0) {
                     Device device = devices.getElementAt(idx);
                     if(null != device) {
-                        changeSource(device.getDeviceIdentity().universal_device_identifier, subscriber.get_participant(), eventLoop);
+                        changeSource(device.getDeviceIdentity().unique_device_identifier, subscriber.get_participant(), eventLoop);
                     }
                 }
             }

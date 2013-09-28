@@ -126,7 +126,7 @@ public class DeviceMonitor {
         final ice.InfusionStatusSeq inf_seq = new ice.InfusionStatusSeq();
 
         eventLoop.addHandler(c(idReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE,
-                "universal_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
+                "unique_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
             @Override
             public void conditionChanged(Condition condition) {
                 try {
@@ -149,7 +149,7 @@ public class DeviceMonitor {
         });
 
         eventLoop.addHandler(c(connReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE,
-                "universal_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
+                "unique_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
 
             @Override
             public void conditionChanged(Condition condition) {
@@ -174,7 +174,7 @@ public class DeviceMonitor {
         });
 
         eventLoop.addHandler(c(numReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE,
-                "universal_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
+                "unique_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
 
             @Override
             public void conditionChanged(Condition condition) {
@@ -199,7 +199,7 @@ public class DeviceMonitor {
 
 
         eventLoop.addHandler(c(saReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE,
-                "universal_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
+                "unique_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
 
             @Override
             public void conditionChanged(Condition condition) {
@@ -222,7 +222,7 @@ public class DeviceMonitor {
             }
         });
 
-        eventLoop.addHandler(c(ipReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "universal_device_identifier = %0",  identity)), new EventLoop.ConditionHandler() {
+        eventLoop.addHandler(c(ipReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0",  identity)), new EventLoop.ConditionHandler() {
 
             @Override
             public void conditionChanged(Condition condition) {

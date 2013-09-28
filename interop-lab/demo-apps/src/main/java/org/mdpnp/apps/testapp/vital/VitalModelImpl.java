@@ -79,7 +79,7 @@ public class VitalModelImpl implements VitalModel {
                                 Numeric keyHolder = new Numeric();
                                 numericReader.get_key_value(keyHolder, sampleInfo.instance_handle);
                                 Log.debug("Numeric NOT ALIVE:"+keyHolder);
-                                removeNumeric(keyHolder.universal_device_identifier, keyHolder.name);
+                                removeNumeric(keyHolder.unique_device_identifier, keyHolder.name);
                             } else {
                                 if (sampleInfo.valid_data) {
                                     Numeric n = (Numeric) num_seq.get(i);
@@ -152,13 +152,13 @@ public class VitalModelImpl implements VitalModel {
                     if (x == n.name) {
                         boolean updated = false;
                         for (Value va : v.getValues()) {
-                            if (va.getName() == n.name && va.getUniversalDeviceIdentifier().equals(n.universal_device_identifier)) {
+                            if (va.getName() == n.name && va.getUniversalDeviceIdentifier().equals(n.unique_device_identifier)) {
                                 va.updateFrom(n, si);
                                 updated = true;
                             }
                         }
                         if (!updated) {
-                            Value va = new ValueImpl(n.universal_device_identifier, n.name, v);
+                            Value va = new ValueImpl(n.unique_device_identifier, n.name, v);
                             va.updateFrom(n, si);
                             v.getValues().add(va);
                             va.writeCriticalLimitsToDevice(getWriter());

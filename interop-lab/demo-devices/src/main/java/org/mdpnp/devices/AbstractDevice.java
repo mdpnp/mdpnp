@@ -118,15 +118,15 @@ public abstract class AbstractDevice implements ThreadFactory {
 
 
     protected InstanceHolder<Numeric> createNumericInstance(int name) {
-        if (deviceIdentity == null || deviceIdentity.universal_device_identifier == null
-                || "".equals(deviceIdentity.universal_device_identifier)) {
+        if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null
+                || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException(
-                    "Please populate deviceIdentity.universal_device_identifier before calling createNumericInstance");
+                    "Please populate deviceIdentity.unique_device_identifier before calling createNumericInstance");
         }
 
         InstanceHolder<Numeric> holder = new InstanceHolder<Numeric>();
         holder.data = new Numeric();
-        holder.data.universal_device_identifier = deviceIdentity.universal_device_identifier;
+        holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.name = name;
         holder.handle = numericDataWriter.register_instance(holder.data);
         registeredNumericInstances.add(holder);
@@ -134,15 +134,15 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
     protected InstanceHolder<ice.AlarmSettings> createAlarmSettingsInstance(int name) {
-        if (deviceIdentity == null || deviceIdentity.universal_device_identifier == null
-                || "".equals(deviceIdentity.universal_device_identifier)) {
+        if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null
+                || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException(
-                    "Please populate deviceIdentity.universal_device_identifier before calling createAlarmInstance");
+                    "Please populate deviceIdentity.unique_device_identifier before calling createAlarmInstance");
         }
 
         InstanceHolder<ice.AlarmSettings> holder = new InstanceHolder<ice.AlarmSettings>();
         holder.data = new ice.AlarmSettings();
-        holder.data.universal_device_identifier = deviceIdentity.universal_device_identifier;
+        holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.name = name;
         holder.handle = alarmSettingsDataWriter.register_instance(holder.data);
         registeredAlarmSettingsInstances.add(holder);
@@ -195,15 +195,15 @@ public abstract class AbstractDevice implements ThreadFactory {
     private List<InstanceHolder<ice.AlarmSettings>> registeredAlarmSettingsInstances = new ArrayList<InstanceHolder<ice.AlarmSettings>>();
 
     protected InstanceHolder<SampleArray> createSampleArrayInstance(int name) {
-        if (deviceIdentity == null || deviceIdentity.universal_device_identifier == null
-                || "".equals(deviceIdentity.universal_device_identifier)) {
+        if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null
+                || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException(
-                    "Please populate deviceIdentity.universal_device_identifier before calling createSampleArrayInstance");
+                    "Please populate deviceIdentity.unique_device_identifier before calling createSampleArrayInstance");
         }
 
         InstanceHolder<SampleArray> holder = new InstanceHolder<SampleArray>();
         holder.data = new SampleArray();
-        holder.data.universal_device_identifier = deviceIdentity.universal_device_identifier;
+        holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.name = name;
         holder.handle = sampleArrayDataWriter.register_instance(holder.data);
         registeredSampleArrayInstances.add(holder);
@@ -254,10 +254,10 @@ public abstract class AbstractDevice implements ThreadFactory {
             alarmSettingsSample(holder, newLower, newUpper);
         } else {
             if(null != newLower) {
-                log.warn("Not setting only a lower limit on " + name + " for " + holder.data.universal_device_identifier);
+                log.warn("Not setting only a lower limit on " + name + " for " + holder.data.unique_device_identifier);
             }
             if(null != newUpper) {
-                log.warn("Not setting only an upper limit on " + name + " for " + holder.data.universal_device_identifier);
+                log.warn("Not setting only an upper limit on " + name + " for " + holder.data.unique_device_identifier);
             }
             if (null != holder) {
                 unregisterAlarmSettingsInstance(holder);
@@ -528,14 +528,14 @@ public abstract class AbstractDevice implements ThreadFactory {
 
 
     protected void writeDeviceIdentity() {
-        if(null==deviceIdentity.universal_device_identifier||"".equals(deviceIdentity.universal_device_identifier)) {
+        if(null==deviceIdentity.unique_device_identifier||"".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("cannot write deviceIdentity without a UDI");
         }
         DomainParticipantQos qos = new DomainParticipantQos();
         domainParticipant.get_qos(qos);
         try {
             qos.user_data.value.clear();
-            qos.user_data.value.addAllByte(deviceIdentity.universal_device_identifier.getBytes("ASCII"));
+            qos.user_data.value.addAllByte(deviceIdentity.unique_device_identifier.getBytes("ASCII"));
         } catch (UnsupportedEncodingException e) {
             log.error(e.getMessage(), e);
         }
@@ -548,10 +548,10 @@ public abstract class AbstractDevice implements ThreadFactory {
 
         if(null == alarmSettingsObjectiveCondition) {
             StringSeq udiSeq = new StringSeq();
-            udiSeq.add("'"+deviceIdentity.universal_device_identifier+"'");
+            udiSeq.add("'"+deviceIdentity.unique_device_identifier+"'");
             final SampleInfoSeq info_seq = new SampleInfoSeq();
             final ice.AlarmSettingsObjectiveSeq data_seq = new ice.AlarmSettingsObjectiveSeq();
-            eventLoop.addHandler(alarmSettingsObjectiveCondition = alarmSettingsObjectiveReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "universal_device_identifier = %0", udiSeq),
+            eventLoop.addHandler(alarmSettingsObjectiveCondition = alarmSettingsObjectiveReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "unique_device_identifier = %0", udiSeq),
                 new ConditionHandler() {
                     @Override
                     public void conditionChanged(Condition condition) {

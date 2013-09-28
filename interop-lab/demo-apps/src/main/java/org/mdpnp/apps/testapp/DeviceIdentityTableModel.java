@@ -31,7 +31,7 @@ public class DeviceIdentityTableModel extends AbstractTableModel implements
         ice.DeviceIdentity d = (ice.DeviceIdentity) model.getElementAt(rowIndex);
         switch (columnIndex) {
         case 0:
-            return d.universal_device_identifier;
+            return d.unique_device_identifier;
         case 1:
             return d.manufacturer;
         case 2:

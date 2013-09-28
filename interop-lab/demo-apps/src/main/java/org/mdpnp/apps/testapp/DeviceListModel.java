@@ -47,17 +47,17 @@ public class DeviceListModel extends AbstractListModel<Device> {
         if(!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:"+Thread.currentThread());
         }
-        Device device = contentsByUDI.get(dc.universal_device_identifier);
+        Device device = contentsByUDI.get(dc.unique_device_identifier);
         if(null != device) {
             device.setDeviceConnectivity(dc);
             Integer idx = contentsByIdx.get(device);
             if(null != idx) {
                 fireContentsChanged(DeviceListModel.this, idx, idx);
             } else {
-                log.warn("No index for device UDI="+dc.universal_device_identifier);
+                log.warn("No index for device UDI="+dc.unique_device_identifier);
             }
         } else {
-            log.warn("Tried to update non-existent device for connectivity with UDI="+dc.universal_device_identifier);
+            log.warn("Tried to update non-existent device for connectivity with UDI="+dc.unique_device_identifier);
         }
     }
 
@@ -65,17 +65,17 @@ public class DeviceListModel extends AbstractListModel<Device> {
         if(!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:"+Thread.currentThread());
         }
-        Device device = contentsByUDI.get(di.universal_device_identifier);
+        Device device = contentsByUDI.get(di.unique_device_identifier);
         if(null != device) {
             device.setDeviceIdentity(di);
             Integer idx = contentsByIdx.get(device);
             if(null != idx) {
                 fireContentsChanged(DeviceListModel.this, idx, idx);
             } else {
-                log.warn("No index for device identity UDI="+di.universal_device_identifier);
+                log.warn("No index for device identity UDI="+di.unique_device_identifier);
             }
         } else {
-            log.warn("Tried to update non-existent device for identity with UDI="+di.universal_device_identifier);
+            log.warn("Tried to update non-existent device for identity with UDI="+di.unique_device_identifier);
         }
     }
 
@@ -171,7 +171,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
 
     DeviceIdentity getIdentityForUdi(String udi) {
         DeviceIdentity keyHolder = new DeviceIdentity();
-        keyHolder.universal_device_identifier = udi;
+        keyHolder.unique_device_identifier = udi;
 
         DeviceIdentitySeq data_seq = new DeviceIdentitySeq();
         SampleInfoSeq info_seq = new SampleInfoSeq();
@@ -202,7 +202,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
 
     DeviceConnectivity getConnectivityForUdi(String udi) {
         DeviceConnectivity keyHolder = new DeviceConnectivity();
-        keyHolder.universal_device_identifier = udi;
+        keyHolder.unique_device_identifier = udi;
 
         DeviceConnectivitySeq data_seq = new DeviceConnectivitySeq();
         SampleInfoSeq info_seq = new SampleInfoSeq();

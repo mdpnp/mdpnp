@@ -69,17 +69,17 @@ public abstract class AbstractGetConnected {
         DomainParticipantFactory.get_instance().delete_participant(participant);
     }
 
-    public AbstractGetConnected(int domainId, String universal_device_identifier, EventLoop eventLoop) {
+    public AbstractGetConnected(int domainId, String unique_device_identifier, EventLoop eventLoop) {
         this.eventLoop = eventLoop;
         DomainParticipantQos pQos = new DomainParticipantQos();
         DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-        pQos.participant_name.name = "AbstractGetConnected " + universal_device_identifier;
+        pQos.participant_name.name = "AbstractGetConnected " + unique_device_identifier;
         participant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null, StatusKind.STATUS_MASK_NONE);
         subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         deviceConnectivity = (DeviceConnectivity) DeviceConnectivity.create();
         deviceConnectivityObjective = (DeviceConnectivityObjective) DeviceConnectivityObjective.create();
-        deviceConnectivityObjective.universal_device_identifier = universal_device_identifier;
+        deviceConnectivityObjective.unique_device_identifier = unique_device_identifier;
         DeviceConnectivityObjectiveTypeSupport.register_type(participant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
         deviceConnectivityObjectiveTopic = participant.create_topic(ice.DeviceConnectivityObjectiveTopic.VALUE, ice.DeviceConnectivityObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         deviceConnectivityObjectiveWriter = (DeviceConnectivityObjectiveDataWriter) publisher.create_datawriter(deviceConnectivityObjectiveTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
@@ -88,8 +88,8 @@ public abstract class AbstractGetConnected {
         deviceConnectivityTopic = participant.create_topic(ice.DeviceConnectivityTopic.VALUE, ice.DeviceConnectivityTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         deviceConnectivityReader = (DeviceConnectivityDataReader) subscriber.create_datareader(deviceConnectivityTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         StringSeq udis = new StringSeq();
-        udis.add("'"+universal_device_identifier+"'");
-        qc = deviceConnectivityReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "universal_device_identifier MATCH %0",  udis);
+        udis.add("'"+unique_device_identifier+"'");
+        qc = deviceConnectivityReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "unique_device_identifier MATCH %0",  udis);
         eventLoop.addHandler(qc, new EventLoop.ConditionHandler() {
             SampleInfoSeq info_seq = new SampleInfoSeq();
             DeviceConnectivitySeq data_seq = new DeviceConnectivitySeq();

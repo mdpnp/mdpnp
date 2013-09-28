@@ -130,14 +130,14 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
                         SampleInfo si = (SampleInfo) info_seq.get(i);
                         if(si.valid_data) {
                             DeviceConnectivityObjective dco = (DeviceConnectivityObjective) data_seq.get(i);
-                            if(deviceIdentity.universal_device_identifier.equals(dco.universal_device_identifier)) {
+                            if(deviceIdentity.unique_device_identifier.equals(dco.unique_device_identifier)) {
 
                                 if(dco.connected) {
-                                    log.info("Issuing connect for " + deviceIdentity.universal_device_identifier + " to " + dco.target);
+                                    log.info("Issuing connect for " + deviceIdentity.unique_device_identifier + " to " + dco.target);
                                     connect(dco.target);
 
                                 } else {
-                                    log.info("Issuing disconnect for " + deviceIdentity.universal_device_identifier);
+                                    log.info("Issuing disconnect for " + deviceIdentity.unique_device_identifier);
                                     disconnect();
                                 }
                             }
@@ -217,8 +217,8 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
     }
 
     protected void writeDeviceConnectivity() {
-        deviceConnectivity.universal_device_identifier = deviceIdentity.universal_device_identifier;
-        if(null == deviceConnectivity.universal_device_identifier || "".equals(deviceConnectivity.universal_device_identifier)) {
+        deviceConnectivity.unique_device_identifier = deviceIdentity.unique_device_identifier;
+        if(null == deviceConnectivity.unique_device_identifier || "".equals(deviceConnectivity.unique_device_identifier)) {
             throw new IllegalStateException("No UDI");
         }
         if(null == deviceConnectivityHandle) {
