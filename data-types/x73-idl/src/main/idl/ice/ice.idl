@@ -22,7 +22,7 @@ module ice {
     Disconnecting,
     Disconnected
   };
-    
+
   enum ConnectionType {
     Serial,
     Simulated,
@@ -36,24 +36,24 @@ module ice {
     string<128> info;
     sequence<string<128>, 128> valid_targets;
   };
-  
+
   struct DeviceConnectivityObjective {
    string<256> universal_device_identifier; //@key
     boolean connected;
     string<128> target;
   };
-  
-  
+
+
   const string DeviceConnectivityTopic = "ice::DeviceConnectivity";
   const string DeviceConnectivityObjectiveTopic = "ice::DeviceConnectivityObjective";
-  
 
 
-  
+
+
   // SPECULATIVE
   const long MDC_PRESS_CUFF_NEXT_INFLATION = 65536;
   const long MDC_PRESS_CUFF_INFLATION = 65537;
-  
+
   const long MDC_PULS_OXIM_PLETH1 = 65600;
   const long MDC_PULS_OXIM_PLETH2 = 65601;
   const long MDC_PULS_OXIM_PLETH3 = 65602;
@@ -67,7 +67,7 @@ module ice {
   const long MDC_PULS_OXIM_PLETH11 = 65610;
   const long MDC_PULS_OXIM_PLETH12 = 65611;
 
-  
+
 
 
   const long MDC_HR_ECG_MODE = 65538;
@@ -82,15 +82,15 @@ module ice {
   const long MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS = 6222;
   const long MDC_EVT_STAT_OFF = 6226;
   const long MDC_VENT_TIME_PD_PPV = 21344;
-  
-  
+
+
   struct Numeric {
     string<256> universal_device_identifier; //@key
     long name; //@key
     float value;
   };
   const string NumericTopic = "ice::Numeric";
- 
+
   struct SampleArray {
     string<256> universal_device_identifier; //@key
     long name; //@key
@@ -98,14 +98,14 @@ module ice {
     long millisecondsPerSample;
   };
   const string SampleArrayTopic = "ice::SampleArray";
-  
+
   struct Text {
     string<256> universal_device_identifier; //@key
     long name; //@key
     string<256> value;
   };
   const string TextTopic = "ice::Text";
-  
+
   struct InfusionObjective {
     string<256> universal_device_identifier; //@key
     string<128> requestor;
@@ -116,18 +116,18 @@ module ice {
     string<256> universal_device_identifier; //@key
     // is the pump actively infusing?
     boolean infusionActive;
-    
+
     // it's entirely unclear if patient id, care area, BSA, etc. should be here
-    
+
     // measurement units are standardized to avoid inconsistent states
     // derived values are omitted to avoid inconsistent states
-    
+
     // what's in the bag
     string<256> drug_name;
     long drug_mass_mcg;
     long solution_volume_ml;
     // concentration can be derived
-    
+
     // what's the program
     long volume_to_be_infused_ml;
     long infusion_duration_seconds;
@@ -137,4 +137,23 @@ module ice {
     float infusion_fraction_complete;
   };
   const string InfusionStatusTopic = "ice::InfusionStatus";
+
+  struct AlarmSettings {
+    string<256> universal_device_identifier; //@key
+    long name; //@key
+    float lower;
+    float upper;
+
+  };
+  const string AlarmSettingsTopic = "ice::AlarmSettings";
+
+  struct AlarmSettingsObjective {
+    string<256> universal_device_identifier; //@key
+    long name; //@key
+    string<256> requestor_udi;
+    float lower;
+    float upper;
+
+  };
+  const string AlarmSettingsObjectiveTopic = "ice:AlarmSettingsObjective";
 };
