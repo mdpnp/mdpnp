@@ -1,5 +1,6 @@
 package org.mdpnp.apps.testapp.vital;
 
+import ice.AlarmSettingsObjectiveDataWriter;
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
 import ice.Numeric;
@@ -37,6 +38,7 @@ import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.QueryCondition;
 import com.rti.dds.subscription.SampleInfo;
@@ -44,6 +46,7 @@ import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
+import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicDescription;
 
 public class VitalModelImpl implements VitalModel {
@@ -109,6 +112,7 @@ public class VitalModelImpl implements VitalModel {
                         while (li.hasNext()) {
                             Value va = li.next();
                             if (va.getUniversalDeviceIdentifier().equals(udi)) {
+                                va.unregisterCriticalLimits(getWriter());
                                 li.remove();
                                 updated = true;
                             }
@@ -128,6 +132,13 @@ public class VitalModelImpl implements VitalModel {
             return new Vital[0];
         }
     };
+
+    private ice.AlarmSettingsObjectiveDataWriter writer;
+
+    public ice.AlarmSettingsObjectiveDataWriter getWriter() {
+        return writer;
+    }
+
     protected void updateNumeric(Numeric n, SampleInfo si) {
         Vital[] vitals = vitalBuffer.get();
         vitals = this.vitals.toArray(vitals);
@@ -150,6 +161,7 @@ public class VitalModelImpl implements VitalModel {
                             Value va = new ValueImpl(n.universal_device_identifier, n.name, v);
                             va.updateFrom(n, si);
                             v.getValues().add(va);
+                            va.writeCriticalLimitsToDevice(getWriter());
                         }
                         fireVitalChanged(v);
                     }
@@ -318,6 +330,11 @@ public class VitalModelImpl implements VitalModel {
                 VitalModelImpl.this.eventLoop = eventLoop;
                 DomainParticipant participant = subscriber.get_participant();
 
+                ice.AlarmSettingsObjectiveTypeSupport.register_type(participant, ice.AlarmSettingsObjectiveTypeSupport.get_type_name());
+//                TopicDescription topic = TopicUtil.lookupOrCreateTopic(participant, ice.AlarmSettingsObjectiveTopic.VALUE, ice.AlarmSettingsObjectiveTypeSupport.class);
+                Topic topic = participant.create_topic(ice.AlarmSettingsObjectiveTopic.VALUE, ice.AlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+                writer = (AlarmSettingsObjectiveDataWriter) participant.create_datawriter(topic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+
                 NumericTypeSupport.register_type(participant, NumericTypeSupport.get_type_name());
                 TopicDescription nTopic = TopicUtil.lookupOrCreateTopic(participant, NumericTopic.VALUE,
                         NumericTypeSupport.class);
@@ -336,6 +353,8 @@ public class VitalModelImpl implements VitalModel {
     public void stop() {
         eventLoop.doLater(new Runnable() {
             public void run() {
+                subscriber.get_participant().delete_datawriter(writer);
+
                 for (Vital v : queryConditions.keySet()) {
                     removeQueryConditions(v);
                 }

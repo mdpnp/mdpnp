@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp.vital;
 
 import java.awt.Color;
 
+import ice.AlarmSettingsObjectiveDataWriter;
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
 
@@ -16,11 +17,11 @@ import com.rti.dds.subscription.Subscriber;
 public class VitalListModelAdapterImpl implements VitalListModelAdapter {
 
     private final VitalModel model;
-    
+
     public VitalListModelAdapterImpl(VitalModel model) {
         this.model = model;
     }
-    
+
     @Override
     public int getCount() {
         return model.getCount();
@@ -95,31 +96,31 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     public void removeListDataListener(ListDataListener l) {
         model.removeListener(new VitalListModelListenerAdapter(l));
     }
-    
+
     @SuppressWarnings("serial")
     private static final class MutableListDataEvent extends ListDataEvent {
         private int type, index0, index1;
-        
+
         public MutableListDataEvent(Object source, int type, int index0, int index1) {
             super(source, type, index0, index1);
             setRange(index0, index1);
             setType(type);
         }
-        
+
         public void setRange(int index0, int index1) {
             this.index0 = Math.min(index0, index1);
             this.index1 = Math.max(index0, index1);
         }
-        
+
         public void setType(int type) {
             this.type = type;
         }
-        
+
         public void setTypeAndRange(int type, int index0, int index1) {
             setType(type);
             setRange(index0, index1);
         }
-        
+
         @Override
         public int getIndex0() {
             return index0;
@@ -134,12 +135,12 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
             return type;
         }
     }
-    
+
 
     private class VitalListModelListenerAdapter implements VitalModelListener {
         private final ListDataListener listener;
         private final MutableListDataEvent event = new MutableListDataEvent(VitalListModelAdapterImpl.this, ListDataEvent.CONTENTS_CHANGED, 0, 0);
-        
+
         public VitalListModelListenerAdapter(ListDataListener listener) {
             this.listener = listener;
         }
@@ -222,6 +223,11 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     @Override
     public DeviceIcon getDeviceIcon(String udi) {
         return model.getDeviceIcon(udi);
+    }
+
+    @Override
+    public AlarmSettingsObjectiveDataWriter getWriter() {
+        return model.getWriter();
     }
 
 }
