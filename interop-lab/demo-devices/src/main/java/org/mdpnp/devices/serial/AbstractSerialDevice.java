@@ -271,8 +271,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
                     if(quietTime > getMaximumQuietTime()) {
                         eventLoop.doLater(new Runnable() {
                             public void run() {
-                                unregisterAllNumericInstances();
-                                unregisterAllSampleArrayInstances();
+                                unregisterAllInstances();
                             }
                         });
 
