@@ -1,6 +1,6 @@
 module ice {
 
-  typedef string<128> UniqueDeviceIdentifier;
+  typedef string<64> UniqueDeviceIdentifier;
   typedef string<64>  MetricIdentifier;
   typedef long InstanceIdentifier;
 
