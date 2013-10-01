@@ -22,15 +22,15 @@
         </discovery>
         <discovery_config>
           <participant_liveliness_lease_duration>
-            <sec>1</sec>
+            <sec>3</sec>
             <nanosec>0</nanosec>
           </participant_liveliness_lease_duration>
           <participant_liveliness_assert_period>
             <sec>0</sec>
-            <nanosec>500000000</nanosec>
+            <nanosec>250000000</nanosec>
           </participant_liveliness_assert_period>
           <max_liveliness_loss_detection_period>
-            <sec>1</sec>
+            <sec>3</sec>
             <nanosec>0</nanosec>
           </max_liveliness_loss_detection_period>
         </discovery_config>
@@ -52,11 +52,13 @@
               There's a great chance these are less than optimal because fragmented IP
               packets are terribly noisy ... and it's better to keep it to one IP frame
               per UDP datagram -->
+            <!--
             <element>
               <name>dds.transport.UDPv4.builtin.parent.message_size_max</name>
               <value>65530</value>
               <propagate>false</propagate>
             </element>
+            -->
             <element>
               <name>dds.transport.UDPv4.builtin.recv_socket_buffer_size</name>
               <value>65530</value>
@@ -113,12 +115,20 @@
           <max_fragments_per_sample>5000</max_fragments_per_sample>
           <max_query_condition_filters>32</max_query_condition_filters>
         </reader_resource_limits>
-        <!-- JP 16-Sep-2013 I want instances purged shortly after they lose liveliness
-          so that I can detect them as new instances again when they get re-connected
-          but so far this is not the way. -->
-        <!-- <reader_data_lifecycle> <autopurge_nowriter_samples_delay> <sec>1</sec>
-          <nanosec>0</nanosec> </autopurge_nowriter_samples_delay> <autopurge_disposed_samples_delay>
-          <sec>1</sec> <nanosec>0</nanosec> </autopurge_disposed_samples_delay> </reader_data_lifecycle> -->
+        <!-- JP 30-Sep-2013 get_key_value is failing on unalive instances
+         maybe they are being purged too quickly? -->
+         <!--
+        <reader_data_lifecycle>
+          <autopurge_nowriter_samples_delay>
+            <sec>INFINITE</sec>
+            <nanosec>INFINITE</nanosec>
+          </autopurge_nowriter_samples_delay>
+          <autopurge_disposed_samples_delay>
+            <sec>INFINITE</sec>
+            <nanosec>INFINITE</nanosec>
+          </autopurge_disposed_samples_delay>
+        </reader_data_lifecycle>
+         -->
       </datareader_qos>
       <datawriter_qos>
         <liveliness>
@@ -141,7 +151,7 @@
         <reliability>
           <kind>RELIABLE_RELIABILITY_QOS</kind>
           <max_blocking_time>
-            <sec>5</sec>
+            <sec>3</sec>
             <nanosec>0</nanosec>
           </max_blocking_time>
           <acknowledgment_kind>DDS_PROTOCOL_ACKNOWLEDGMENT_MODE
@@ -163,6 +173,11 @@
         <publish_mode>
           <kind>ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
         </publish_mode>
+        <protocol>
+            <serialize_key_with_dispose>
+                true
+            </serialize_key_with_dispose>
+        </protocol>
       </datawriter_qos>
     </qos_profile>
   </qos_library>
