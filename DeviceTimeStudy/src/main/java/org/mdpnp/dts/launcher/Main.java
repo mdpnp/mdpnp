@@ -34,6 +34,8 @@ public class Main {
 	static Hashtable byDeviceType; //HT key: (String) device type; value (OffsetStatisticsImpl) statistics for this device type
 	static Hashtable byConnection; //HT Key: (String) Networked/Standalone; value (OffsetStatisticsImpl) object w/ statistics
 	static Hashtable byThresholdRange;//HT Key threshold range ; value (OffsetStatisticsImpl) object w/ statistics
+	static Hashtable byThresholdRangeBestCase;//HT Key threshold range ; value (OffsetStatisticsImpl) object w/ statistics
+	static Hashtable byThresholdRangeWorstCase;//HT Key threshold range ; value (OffsetStatisticsImpl) object w/ statistics
 	static Hashtable hospitalsByCategory = new Hashtable<>();//Each hospital by Threshold category
 	//HT Key:name of hospital, Val: another HT categories
 	//sub HT Categories Key: threshold categories, val Object to calculate statistics
@@ -67,7 +69,8 @@ public class Main {
 		 */
 		
 		//Reader myReader = new Reader("C:\\Users\\da792\\Documents\\Device Time Study Package\\Diego", sFilename, Reader.SEP_PIPE, 5);
-		Reader myReader = new Reader(path, sFilename, Reader.SEP_PIPE, 5);
+		final int DEFAULT_SKIPPED_LINES =5;//these lines are just headers
+		Reader myReader = new Reader(path, sFilename, Reader.SEP_PIPE, DEFAULT_SKIPPED_LINES);
 		initDate = new Date();
 		myReader.readFile();
 		endDate = new Date();
@@ -78,10 +81,12 @@ public class Main {
 		byDeviceType = myReader.getStatsByDeviceType();
 		byConnection = myReader.getStatsByConnection();
 		byThresholdRange = myReader.getByThresholdRange();
+		byThresholdRangeBestCase = myReader.getByThresholdRangeBestCase();
+		byThresholdRangeWorstCase = myReader.getByThresholdRangeWorstCase();
 //		totalLinesRead = myReader.geLinesReaded()==0?myReader.geLinesReaded():1;
 		hospitalsByCategory =myReader.getHospitalsByCategory();
 
-		//GENERATE THE CHARTS
+		//GENERATE THE CHARTS - Statistics
 		//Statistics by Device Type
 //		printStatsByDeviceType();
 		writeStatsByDeviceType(path, "byDeviceType.csv");
@@ -89,15 +94,16 @@ public class Main {
 //		
 //		//Statistics by connection type: Networked Vs. Stand-Alone
 //		printStatsByConnectionType();
-		writeStatsByConnectionType(path, "byConnection.csv");
+		writeStatsByConnectionType(path+"\\new\\", "byConnection.csv");
 //		
 //		//statistics by threshold Type
 //		printStatsByThreshold();
+		writeStatsByThreshold(path+"\\new\\", "byThreshold.csv");
 		
 		//statistics for each hospital by threshold range
-		printStatsForHospitalByThreshold();
+//		printStatsForHospitalByThreshold();
 //		writeStatsForHospitalByThreshold();//write to file
-		writeStatsForHospitalByThreshold(path, "dataForHospitalByThreshold.csv");
+		writeStatsForHospitalByThreshold(path+"\\new\\", "dataForHospitalByThreshold.csv");
                
 		endDateCalc = new Date();		
 		System.out.println("Done!!");
@@ -240,7 +246,7 @@ public class Main {
 		String row ="";
 		String sep = Reader.SEP_PIPE;
 		
-		fileWriter.addRow(""+sep+"regular Offset"+sep+"New Minute Scenario Offset"+sep+"New Minute Eve Scenario");
+		fileWriter.addRow(""+sep+"regular Offset"+sep+"Worst Case Scenario Offset"+sep+"Best Case Scenario Offset");
 		
 		for(String key : auxConnSortedList){
 			OffsetStatisticsImpl value = (OffsetStatisticsImpl)byConnection.get(key);
@@ -249,14 +255,18 @@ public class Main {
 //					+sep+UtilsDTS.getTimeFrom(Math.round(value.getAvgOffset_NewMinuteEve()));
 			
 			row=key+" Avg Offset"+sep+UtilsDTS.parseDateToStringFormat(Math.round(value.getAvgOffset()))
-			+sep+ UtilsDTS.parseDateToStringFormat(Math.round(value.getAvgOffsetNewMinute()))
-			+sep+ UtilsDTS.parseDateToStringFormat(Math.round(value.getAvgOffsetNewMinuteEve()));			
+			+sep+ UtilsDTS.parseDateToStringFormat(Math.round(value.getAvgOffsetWorstCaseScenario()))
+			+sep+ UtilsDTS.parseDateToStringFormat(Math.round(value.getAvgOffsetBestCaseScenario()));			
 			fileWriter.addRow(row);
 			
 			row=key+" STD Dev"+sep+UtilsDTS.parseDateToStringFormat(Math.round(value.getStdDev()))
-			+sep+ UtilsDTS.parseDateToStringFormat(Math.round(value.getStdDevNewMinute()))
-			+sep+ UtilsDTS.parseDateToStringFormat(Math.round(value.getStdDevNewMinuteEve()));			
+			+sep+ UtilsDTS.parseDateToStringFormat(Math.round(value.getStdDevWorstCaseScenario()))
+			+sep+ UtilsDTS.parseDateToStringFormat(Math.round(value.getStdDevBestCaseScenario()));			
 			fileWriter.addRow(row);
+			
+			System.out.println(key+" # devices "+value.getCount()+
+					" max offset Best Case: "+ UtilsDTS.getTimeFrom(value.getMaxOffsetBestCaseScenario())+
+					" max offset Worst Case"+ UtilsDTS.getTimeFrom(value.getMaxOffWorstCaseScenario()));
 		}
 		fileWriter.close();
 	}
@@ -279,6 +289,34 @@ public class Main {
 		offsetPieChart.pack();
         RefineryUtilities.centerFrameOnScreen(offsetPieChart);
         offsetPieChart.setVisible(true);
+	}
+	
+	private static void writeStatsByThreshold(String pathName, String fileName){
+		DTSFileWriter fileWriter = new DTSFileWriter(pathName, fileName);
+		
+		List<String> rangesList = new ArrayList<String>(byThresholdRange.keySet());
+
+		String sep = Reader.SEP_PIPE;
+		String title =""+sep;
+		String rowBestCase ="best case"+sep;
+		String rowWorstCase ="worst case"+sep;
+		
+		//write header line
+		fileWriter.addRow(""+sep+"regular Offset"+sep+"Worst Case Scenario Offset"+sep+"Best Case Scenario Offset");
+		
+		for(String range: rangesList){
+			title +=" "+range+sep;
+			OffsetStatisticsImpl valueBC = (OffsetStatisticsImpl)byThresholdRangeBestCase.get(range);
+			OffsetStatisticsImpl valueWC = (OffsetStatisticsImpl)byThresholdRangeWorstCase.get(range);
+			rowBestCase += valueBC.getCount()+sep;
+			rowWorstCase += valueWC.getCount()+sep;
+			
+		}
+		//write to file
+		fileWriter.addRow(title);
+		fileWriter.addRow(rowBestCase);
+		fileWriter.addRow(rowWorstCase);	
+		fileWriter.close();
 	}
 	
 	
@@ -329,6 +367,7 @@ public class Main {
 	
 	/**
 	 * Writes the information into a CSV file
+	 * @deprecated
 	 */
 	private static void writeStatsForHospitalByThreshold(){
 		//Add capability to write data into a file

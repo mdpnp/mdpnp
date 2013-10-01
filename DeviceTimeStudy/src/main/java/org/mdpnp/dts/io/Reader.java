@@ -11,6 +11,7 @@ import java.util.StringTokenizer;
 
 import org.mdpnp.dts.data.DTSdata;
 import org.mdpnp.dts.statistics.OffsetStatisticsImpl;
+import org.mdpnp.dts.utils.UtilsDTS;
 
 /**
  * 
@@ -39,6 +40,8 @@ public class Reader {
 	private Hashtable byDeviceType = new Hashtable<>();//data by device type
 	private Hashtable byConnection = new Hashtable<>();//data by Networked / Standalone
 	private Hashtable byThresholdRange = new Hashtable<>();//data by threshold
+	private Hashtable byThresholdRangeBestCase = new Hashtable<>();//data by threshold
+	private Hashtable byThresholdRangeWorstCase = new Hashtable<>();//data by threshold
 	private Hashtable hospitalsByCategory = new Hashtable<>();//Each hospital by Threshold category
 	//HT Key:name of hospital, Val: another HT categories
 	//sub HT Categories Key: threshold categories, val Object to calculate statistics
@@ -109,6 +112,14 @@ public class Reader {
 		return byThresholdRange;
 	}
 	
+	public Hashtable getByThresholdRangeBestCase() {
+		return byThresholdRangeBestCase;
+	}
+	
+	public Hashtable getByThresholdRangeWorstCase() {
+		return byThresholdRangeWorstCase;
+	}
+	
 	public Hashtable getHospitalsByCategory() {
 		return hospitalsByCategory;
 	}
@@ -173,11 +184,14 @@ public class Reader {
 						  data.setCorrectedEXIFTime(st.nextToken().trim());
 						  data.setDeviceOffset(st.nextToken().trim());
 						  data.setAbsDeviceOffset(st.nextToken().trim());//device offset w/out negative sign
-						  data.setOffsetSign(st.nextToken().trim()); //device offset sign in words
- 
+						  String offsetSign = st.nextToken().trim();
+						  data.setOffsetSign(offsetSign); //device offset sign in words						  
+						  data.setThreshold_noOffset(offsetSign.toLowerCase().equals("no offset"));
+						  
 						  String threshold = st.nextToken().trim();//void value threshold > 2 sec
 						  threshold = st.nextToken().trim().toLowerCase();
 						  data.setThreshold(threshold);
+						  
 						  data.setThresholdGT_2sec(!threshold.equals("no offset") && !threshold.equals("offset less than 2 sec"));
 						  st.nextToken().trim();//void value threshold > 1 min
 						  threshold = st.nextToken().trim().toLowerCase();
@@ -207,6 +221,27 @@ public class Reader {
 						  loadByDeviceType(byDeviceType, data);
 						  loadByConnection(data);
 						  genericLoad(byThresholdRange, data.getThresholdCategory(), data.getAbsDeviceOffasetAsLong());//by  Threshold
+						  //calcula best case and worst case offsets
+						  long offsetBestCase;
+						  long offsetWorstCase;
+						  if(data.isDisplaysSeconds()){
+							  offsetBestCase = offsetWorstCase = data.getAbsDeviceOffasetAsLong();
+						  }else{
+								String newMinuteScn = UtilsDTS.getNewMinuteDate(data.getDeviceTimeCorrectedForDST());
+								long auxOffsetNewMinute = UtilsDTS.getOffsetFromDates(data.getCorrectedEXIFTime(), newMinuteScn);	
+								
+								String newMinuteEveScn = UtilsDTS.getNewMinuteEveDate(data.getDeviceTimeCorrectedForDST());
+								long auxOffsetNewMinuteEve = UtilsDTS.getOffsetFromDates(data.getCorrectedEXIFTime(), newMinuteEveScn);
+								
+								offsetWorstCase = Math.max(auxOffsetNewMinute, auxOffsetNewMinuteEve);
+								
+								//if medical device and reference time (camera) are in the same day, hour and minute, we assume seconds so be so too, and offset is 0
+								// if not, the best case offset will be the minimun between the new minute and new minute eve.
+								
+								offsetBestCase = UtilsDTS.isSameMinute(data.getDeviceTimeCorrectedForDST(), data.getCorrectedEXIFTime()) ? 0 : Math.min(auxOffsetNewMinute, auxOffsetNewMinuteEve);
+						  }
+						  genericLoad(byThresholdRangeBestCase, data.getThresholdCategory(), offsetBestCase);//by  Threshold
+						  genericLoad(byThresholdRangeWorstCase, data.getThresholdCategory(), offsetWorstCase);//by  Threshold
 						  //hospitals by category
 						  loadHospitalsByCategory(data);
 							  
