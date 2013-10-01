@@ -57,7 +57,7 @@ public class TCPSerialProvider implements SerialProvider {
 	}
 
 	@Override
-	public SerialSocket connect(String portIdentifier) {
+	public SerialSocket connect(String portIdentifier, long timeout) {
 		String[] parts = portIdentifier.split("\\:");
 		String host = parts[0];
 		int port = Integer.parseInt(parts[1]);

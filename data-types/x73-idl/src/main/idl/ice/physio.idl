@@ -1,0 +1,782 @@
+#ifndef _NOMENCLATURE_IDL_
+#define _NOMENCLATURE_IDL_
+
+/**
+ Derived from Rosetta table as maintained by NIST at
+ http://hit-testing.nist.gov:13110/rtmms/getCSVRosettaVendor.do?currentView=false&vendor=All&name=rosetta_terms&filter=%5B%5D&start=0&limit=50
+**/
+
+module ice {
+  /**
+    Unclear if an enum is truly appropriate.
+    I'm using it so I can refer by name and also
+    convert incoming integers back to names.
+  **/
+  enum Physio {
+    // from 
+    MDC_ECG_AMPL_ST = 768,
+    // from 
+    MDC_ECG_AMPL_ST_I = 769,
+    // from 
+    MDC_ECG_AMPL_ST_II = 770,
+    // from 
+    MDC_ECG_AMPL_ST_V1 = 771,
+    // from 
+    MDC_ECG_AMPL_ST_V2 = 772,
+    // from 
+    MDC_ECG_AMPL_ST_V3 = 773,
+    // from 
+    MDC_ECG_AMPL_ST_V4 = 774,
+    // from 
+    MDC_ECG_AMPL_ST_V5 = 775,
+    // from 
+    MDC_ECG_AMPL_ST_V6 = 776,
+    // from 
+    MDC_ECG_AMPL_ST_III = 829,
+    // from 
+    MDC_ECG_AMPL_ST_AVR = 830,
+    // from 
+    MDC_ECG_AMPL_ST_AVL = 831,
+    // from 
+    MDC_ECG_AMPL_ST_AVF = 832,
+    // from 
+    MDC_ECG_AMPL_ST_V = 835,
+    // from 
+    MDC_ECG_AMPL_ST_MCL = 843,
+    // from 
+    MDC_ECG_AMPL_ST_ES = 868,
+    // from 
+    MDC_ECG_AMPL_ST_AS = 869,
+    // from 
+    MDC_ECG_AMPL_ST_AI = 870,
+    // from 
+    MDC_ECG_TIME_PD_QT_GL = 16160,
+    // from 
+    MDC_ECG_TIME_PD_QTc = 16164,
+    // from A.7.2.1
+    MDC_ECG_CARD_BEAT_RATE = 16770,
+    // from 
+    MDC_ECG_CARD_BEAT_RATE_BTB = 16778,
+    // from 
+    MDC_ECG_V_P_C_CNT = 16993,
+    // from 
+    MDC_PULS_RATE = 18442,
+    // from 
+    MDC_PULS_OXIM_PULS_RATE = 18458,
+    // from 
+    MDC_RES_VASC_SYS_INDEX = 18688,
+    // from 
+    MDC_WK_LV_STROKE_INDEX = 18692,
+    // from A.7.3.1
+    MDC_WK_RV_STROKE_INDEX = 18696,
+    // from 
+    MDC_OUTPUT_CARD_INDEX = 18700,
+    // from 
+    MDC_PRESS_BLD = 18944,
+    // from 
+    MDC_PRESS_BLD_SYS = 18945,
+    // from 
+    MDC_PRESS_BLD_DIA = 18946,
+    // from 
+    MDC_PRESS_BLD_MEAN = 18947,
+    // from 
+    MDC_PRESS_BLD_NONINV = 18948,
+    // from 
+    MDC_PRESS_BLD_NONINV_SYS = 18949,
+    // from 
+    MDC_PRESS_BLD_NONINV_DIA = 18950,
+    // from 
+    MDC_PRESS_BLD_NONINV_MEAN = 18951,
+    // from 
+    MDC_PRESS_BLD_AORT = 18956,
+    // from 
+    MDC_PRESS_BLD_AORT_SYS = 18957,
+    // from 
+    MDC_PRESS_BLD_AORT_DIA = 18958,
+    // from 
+    MDC_PRESS_BLD_AORT_MEAN = 18959,
+    // from 
+    MDC_PRESS_BLD_ART = 18960,
+    // from 
+    MDC_PRESS_BLD_ART_SYS = 18961,
+    // from 
+    MDC_PRESS_BLD_ART_DIA = 18962,
+    // from 
+    MDC_PRESS_BLD_ART_MEAN = 18963,
+    // from 
+    MDC_PRESS_BLD_ART_ABP = 18964,
+    // from 
+    MDC_PRESS_BLD_ART_ABP_SYS = 18965,
+    // from 
+    MDC_PRESS_BLD_ART_ABP_DIA = 18966,
+    // from 
+    MDC_PRESS_BLD_ART_ABP_MEAN = 18967,
+    // from 
+    MDC_PRESS_BLD_ART_PULM = 18972,
+    // from 
+    MDC_PRESS_BLD_ART_PULM_SYS = 18973,
+    // from 
+    MDC_PRESS_BLD_ART_PULM_DIA = 18974,
+    // from 
+    MDC_PRESS_BLD_ART_PULM_MEAN = 18975,
+    // from 
+    MDC_PRESS_BLD_ART_PULM_WEDGE = 18980,
+    // from 
+    MDC_PRESS_BLD_ART_UMB = 18984,
+    // from 
+    MDC_PRESS_BLD_ART_UMB_SYS = 18985,
+    // from 
+    MDC_PRESS_BLD_ART_UMB_DIA = 18986,
+    // from 
+    MDC_PRESS_BLD_ART_UMB_MEAN = 18987,
+    // from 
+    MDC_PRESS_BLD_ATR_LEFT = 18992,
+    // from 
+    MDC_PRESS_BLD_ATR_LEFT_SYS = 18993,
+    // from 
+    MDC_PRESS_BLD_ATR_LEFT_DIA = 18994,
+    // from 
+    MDC_PRESS_BLD_ATR_LEFT_MEAN = 18995,
+    // from 
+    MDC_PRESS_BLD_ATR_RIGHT = 18996,
+    // from 
+    MDC_PRESS_BLD_ATR_RIGHT_SYS = 18997,
+    // from 
+    MDC_PRESS_BLD_ATR_RIGHT_DIA = 18998,
+    // from 
+    MDC_PRESS_BLD_ATR_RIGHT_MEAN = 18999,
+    // from 
+    MDC_PRESS_BLD_PULM_CAP = 19004,
+    // from 
+    MDC_PRESS_BLD_PULM_CAP_SYS = 19005,
+    // from 
+    MDC_PRESS_BLD_PULM_CAP_DIA = 19006,
+    // from 
+    MDC_PRESS_BLD_PULM_CAP_MEAN = 19007,
+    // from 
+    MDC_PRESS_BLD_VEN_CENT = 19012,
+    // from 
+    MDC_PRESS_BLD_VEN_CENT_SYS = 19013,
+    // from 
+    MDC_PRESS_BLD_VEN_CENT_DIA = 19014,
+    // from 
+    MDC_PRESS_BLD_VEN_CENT_MEAN = 19015,
+    // from 
+    MDC_PRESS_BLD_VEN_UMB = 19016,
+    // from 
+    MDC_PRESS_BLD_VEN_UMB_SYS = 19017,
+    // from 
+    MDC_PRESS_BLD_VEN_UMB_DIA = 19018,
+    // from 
+    MDC_PRESS_BLD_VEN_UMB_MEAN = 19019,
+    // from 
+    MDC_SAT_O2_CONSUMP = 19200,
+    // from 
+    MDC_OUTPUT_CARD = 19204,
+    // from 
+    MDC_PRESS_CUFF = 19228,
+    // from 
+    MDC_RES_VASC_SYS = 19240,
+    // from 
+    MDC_SAT_O2_ART = 19252,
+    // from 
+    MDC_SAT_O2_VEN = 19260,
+    // from 
+    MDC_SAT_DIFF_O2_ART_ALV = 19264,
+    // from 
+    MDC_TEMP = 19272,
+    // from 
+    MDC_TEMP_ART = 19280,
+    // from 
+    MDC_TEMP_AWAY = 19284,
+    // from 
+    MDC_TEMP_CORE = 19296,
+    // from 
+    MDC_TEMP_ESOPH = 19300,
+    // from 
+    MDC_TEMP_INJ = 19304,
+    // from 
+    MDC_TEMP_NASOPH = 19308,
+    // from 
+    MDC_TEMP_SKIN = 19316,
+    // from 
+    MDC_TEMP_VEN = 19324,
+    // from 
+    MDC_VOL_BLD_STROKE = 19332,
+    // from 
+    MDC_WK_CARD_LEFT = 19344,
+    // from 
+    MDC_WK_CARD_RIGHT = 19348,
+    // from 
+    MDC_WK_LV_STROKE = 19356,
+    // from 
+    MDC_PULS_OXIM_PERF_REL = 19376,
+    // from 
+    MDC_PULS_OXIM_PLETH = 19380,
+    // from 
+    MDC_PULS_OXIM_SAT_O2 = 19384,
+    // from 
+    MDC_PULS_OXIM_SAT_O2_DIFF = 19396,
+    // from 
+    MDC_PULS_OXIM_SAT_O2_ART_LEFT = 19400,
+    // from 
+    MDC_PULS_OXIM_SAT_O2_ART_RIGHT = 19404,
+    // from 
+    MDC_DESAT = 19412,
+    // from 
+    MDC_OUTPUT_CARD_CTS = 19420,
+    // from 
+    MDC_GRAD_PRESS_BLD_AORT_POS_MAX = 19493,
+    // from 
+    MDC_TRANSMISSION = 19496,
+    // from 
+    MDC_TRANSMISSION_RED = 19500,
+    // from 
+    MDC_TRANSMISSION_INFRARED = 19504,
+    // from 
+    MDC_RESP_RATE = 20490,
+    // from 
+    MDC_AWAY_RESP_RATE = 20498,
+    // from 
+    MDC_CAPAC_VITAL = 20608,
+    // from 
+    MDC_COMPL_LUNG = 20616,
+    // from 
+    MDC_COMPL_LUNG_DYN = 20620,
+    // from 
+    MDC_COMPL_LUNG_STATIC = 20624,
+    // from A.7.4.1
+    MDC_AWAY_CO2 = 20652,
+    // from 
+    MDC_AWAY_CO2_ET = 20656,
+    // from 
+    MDC_AWAY_CO2_INSP_MIN = 20666,
+    // from 
+    MDC_CO2_TCUT = 20684,
+    // from 
+    MDC_O2_TCUT = 20688,
+    // from 
+    MDC_FLOW_AWAY = 20692,
+    // from 
+    MDC_FLOW_AWAY_EXP_MAX = 20697,
+    // from 
+    MDC_FLOW_AWAY_INSP_MAX = 20701,
+    // from 
+    MDC_FLOW_CO2_PROD_RESP = 20704,
+    // from 
+    MDC_IMPED_TTHOR = 20708,
+    // from 
+    MDC_PRESS_RESP_PLAT = 20712,
+    // from 
+    MDC_PRESS_AWAY = 20720,
+    // from 
+    MDC_PRESS_AWAY_MIN = 20722,
+    // from 
+    MDC_PRESS_AWAY_CTS_POS = 20724,
+    // from 
+    MDC_PRESS_AWAY_NEG_MAX = 20729,
+    // from A.7.4.1
+    MDC_PRESS_AWAY_END_EXP_POS_INTRINSIC = 20736,
+    // from 
+    MDC_PRESS_AWAY_INSP = 20744,
+    // from 
+    MDC_PRESS_AWAY_INSP_MAX = 20745,
+    // from 
+    MDC_PRESS_AWAY_INSP_MEAN = 20747,
+    // from 
+    MDC_RATIO_IE = 20760,
+    // from 
+    MDC_RATIO_AWAY_DEADSP_TIDAL = 20764,
+    // from 
+    MDC_RES_AWAY = 20768,
+    // from 
+    MDC_TIME_PD_APNEA = 20784,
+    // from 
+    MDC_VOL_AWAY_TIDAL = 20796,
+    // from 
+    MDC_VOL_MINUTE_AWAY = 20808,
+    // from 
+    MDC_VOL_MINUTE_AWAY_EXP = 20812,
+    // from 
+    MDC_VOL_MINUTE_AWAY_INSP = 20816,
+    // from 
+    MDC_CONC_AWAY_O2 = 20836,
+    // from 
+    MDC_VENT_CONC_AWAY_O2_DELTA = 20840,
+    // from 
+    MDC_VENT_FLOW_INSP = 20876,
+    // from 
+    MDC_VENT_FLOW_RATIO_PERF_ALV_INDEX = 20880,
+    // from 
+    MDC_VENT_PRESS_OCCL = 20892,
+    // from 
+    MDC_VENT_PRESS_AWAY_END_EXP_POS = 20904,
+    // from 
+    MDC_VENT_VOL_AWAY_DEADSP = 20912,
+    // from 
+    MDC_VENT_VOL_AWAY_DEADSP_REL = 20916,
+    // from 
+    MDC_VENT_VOL_LUNG_TRAPD = 20920,
+    // from 
+    MDC_CONC_AWAY_DESFL = 20952,
+    // from 
+    MDC_CONC_AWAY_ENFL = 20956,
+    // from 
+    MDC_CONC_AWAY_HALOTH = 20960,
+    // from 
+    MDC_CONC_AWAY_SEVOFL = 20964,
+    // from 
+    MDC_CONC_AWAY_ISOFL = 20968,
+    // from 
+    MDC_CONC_AWAY_N2O = 20976,
+    // from 
+    MDC_CONC_AWAY_DESFL_ET = 21012,
+    // from 
+    MDC_CONC_AWAY_ENFL_ET = 21016,
+    // from 
+    MDC_CONC_AWAY_HALOTH_ET = 21020,
+    // from 
+    MDC_CONC_AWAY_SEVOFL_ET = 21024,
+    // from 
+    MDC_CONC_AWAY_ISOFL_ET = 21028,
+    // from 
+    MDC_CONC_AWAY_N2O_ET = 21036,
+    // from 
+    MDC_CONC_AWAY_DESFL_INSP = 21096,
+    // from 
+    MDC_CONC_AWAY_ENFL_INSP = 21100,
+    // from 
+    MDC_CONC_AWAY_HALOTH_INSP = 21104,
+    // from 
+    MDC_CONC_AWAY_SEVOFL_INSP = 21108,
+    // from 
+    MDC_CONC_AWAY_ISOFL_INSP = 21112,
+    // from 
+    MDC_CONC_AWAY_N2O_INSP = 21120,
+    // from 
+    MDC_CONC_AWAY_O2_INSP = 21124,
+    // from 
+    MDC_VENT_VOL_LEAK = 21360,
+    // from 
+    MDC_VENT_VOL_LUNG_ALV = 21364,
+    // from 
+    MDC_CONC_AWAY_O2_ET = 21368,
+    // from 
+    MDC_CONC_AWAY_N2 = 21372,
+    // from 
+    MDC_CONC_AWAY_N2_ET = 21376,
+    // from 
+    MDC_CONC_AWAY_N2_INSP = 21380,
+    // from 
+    MDC_CONC_AWAY_AGENT = 21384,
+    // from 
+    MDC_CONC_AWAY_AGENT_ET = 21388,
+    // from 
+    MDC_CONC_AWAY_AGENT_INSP = 21392,
+    // from 
+    MDC_PRESS_CEREB_PERF = 22532,
+    // from 
+    MDC_PRESS_INTRA_CRAN = 22536,
+    // from 
+    MDC_PRESS_INTRA_CRAN_SYS = 22537,
+    // from 
+    MDC_PRESS_INTRA_CRAN_DIA = 22538,
+    // from 
+    MDC_PRESS_INTRA_CRAN_MEAN = 22539,
+    // from 
+    MDC_SCORE_GLAS_COMA = 22656,
+    // from 
+    MDC_SCORE_EYE_SUBSC_GLAS_COMA = 22658,
+    // from 
+    MDC_SCORE_MOTOR_SUBSC_GLAS_COMA = 22659,
+    // from 
+    MDC_SCORE_SUBSC_VERBAL_GLAS_COMA = 22660,
+    // from 
+    MDC_CIRCUM_HEAD = 22784,
+    // from 
+    MDC_TIME_PD_PUPIL_REACT_LEFT = 22820,
+    // from 
+    MDC_TIME_PD_PUPIL_REACT_RIGHT = 22824,
+    // from 
+    MDC_EEG_ELEC_POTL_CRTX = 22828,
+    // from A.7.8.1
+    MDC_EMG_ELEC_POTL_MUSCL = 22844,
+    // from 
+    MDC_EEG_FREQ_PWR_SPEC_CRTX_DOM_MEAN = 22908,
+    // from 
+    MDC_EEG_FREQ_PWR_SPEC_CRTX_PEAK = 22916,
+    // from 
+    MDC_EEG_FREQ_PWR_SPEC_CRTX_SPECTRAL_EDGE = 22920,
+    // from 
+    MDC_EEG_NUM_SPK = 22956,
+    // from 
+    MDC_EEG_NUM_SEIZ = 22960,
+    // from 
+    MDC_EEG_PWR_SPEC_CSA = 22964,
+    // from 
+    MDC_EEG_PWR_SPEC_TOT = 22968,
+    // from 
+    MDC_EEG_PWR_SPEC_ALPHA_REL = 22996,
+    // from 
+    MDC_EEG_PWR_SPEC_BETA_REL = 23000,
+    // from 
+    MDC_EEG_PWR_SPEC_DELTA_REL = 23004,
+    // from 
+    MDC_EEG_PWR_SPEC_THETA_REL = 23008,
+    // from 
+    MDC_CONC_PH_ART = 28676,
+    // from 
+    MDC_CONC_PCO2_ART = 28680,
+    // from 
+    MDC_CONC_PO2_ART = 28684,
+    // from 
+    MDC_CONC_HB_ART = 28692,
+    // from 
+    MDC_CONC_HB_O2_ART = 28696,
+    // from 
+    MDC_CONC_PH_VEN = 28724,
+    // from 
+    MDC_CONC_PCO2_VEN = 28728,
+    // from 
+    MDC_CONC_PO2_VEN = 28732,
+    // from 
+    MDC_CONC_HB_O2_VEN = 28744,
+    // from 
+    MDC_CONC_NA_URINE = 28780,
+    // from 
+    MDC_CONC_NA_SERUM = 28888,
+    // from 
+    MDC_CONC_PH_GEN = 28932,
+    // from 
+    MDC_CONC_HCO3_GEN = 28936,
+    // from 
+    MDC_CONC_NA_GEN = 28940,
+    // from 
+    MDC_CONC_K_GEN = 28944,
+    // from 
+    MDC_CONC_GLU_GEN = 28948,
+    // from 
+    MDC_CONC_CA_GEN = 28952,
+    // from 
+    MDC_CONC_PCO2_GEN = 28992,
+    // from A.7.5.1
+    MDC_CONC_CHLORIDE_GEN = 29032,
+    // from A.7.5.1
+    MDC_BASE_EXCESS_BLD_ART = 29036,
+    // from 
+    MDC_CONC_PO2_GEN = 29044,
+    // from 
+    MDC_CONC_HCT_GEN = 29060,
+    // from 
+    MDC_VENT_CONC_AWAY_O2_INSP = 20848,
+    // from 
+    MDC_ECG_STAT_ECT = 53254,
+    // from 
+    MDC_ECG_STAT_RHY = 53255,
+    // from 
+    MDC_TEMP_RECT = 57348,
+    // from 
+    MDC_TEMP_BLD = 57364,
+    // from 
+    MDC_TEMP_DIFF = 57368,
+    // from 
+    MDC_ATTR_AL_COND = 2476,
+    // from 
+    MDC_ATTR_PT_HEIGHT = 2524,
+    // from 
+    MDC_ATTR_PT_WEIGHT = 2527,
+    // from 
+    MDC_CONC_DRUG = 26688,
+    // from 
+    MDC_FLOW_FLUID_PUMP = 26712,
+    // from 
+    MDC_VOL_FLUID_TBI_REMAIN = 26800,
+    // from 
+    MDC_TIME_PD_REMAIN = 26844,
+    // from 
+    MDC_RATE_DOSE = 26852,
+    // from 
+    MDC_DRUG_NAME_TYPE = 53258,
+    // from 
+    MDC_PUMP_MODE = 53432,
+    // from 
+    MDC_PUMP_STAT = 53436,
+    // from 
+    MDC_VOL_FLUID_DELIV = 26792,
+    // from 
+    MDC_PULS_RATE_NON_INV = 18474,
+    // from 
+    MDC_LEN_BODY_ACTUAL = 57668,
+    // from 
+    MDC_MASS_BODY_ACTUAL = 57664,
+    // from 
+    MDC_ECG_PACED_BEAT_RATE = 16554,
+    // from 
+    MDC_ECG_ARRHY = 17424,
+    // from 
+    MDC_EEG_PAROX_CRTX_BURST_SUPPRN = 23952,
+    // from 
+    MDC_OUTPUT_CARD_NONCTS = 19424,
+    // from 
+    MDC_PRESS_BLD_NONINV_DIA_CTS = 18954,
+    // from 
+    MDC_PRESS_BLD_NONINV_MEAN_CTS = 18955,
+    // from 
+    MDC_PRESS_BLD_NONINV_SYS_CTS = 18953,
+    // from 
+    MDC_VOL_VENT_L_END_DIA = 19456,
+    // from 
+    MDC_EEG_FREQ_PWR_SPEC_CRTX_MEDIAN = 22912,
+    // from 
+    MDC_RES_AWAY_EXP = 20772,
+    // from 
+    MDC_VOL_VENT_L_END_SYS = 19460,
+    // from 
+    MDC_CONC_HCO3_ART = 28688,
+    // from 
+    MDC_CONC_HCT_ART = 28996,
+    // from 
+    MDC_VENT_CONC_ISOFL_INSP = 21144,
+    // from 
+    MDC_CONC_AWAY_CO2_INSP = 20644,
+    // from 
+    MDC_VENT_CONC_DESFL_INSP = 21128,
+    // from 
+    MDC_VENT_CONC_ENFL_INSP = 21132,
+    // from 
+    MDC_VENT_CONC_HALOTH_INSP = 21136,
+    // from 
+    MDC_RES_AWAY_INSP = 20776,
+    // from 
+    MDC_VENT_CONC_SEVOFL_INSP = 21140,
+    // from 
+    MDC_PRESS_BLD_VENT_LEFT_DIA = 19030,
+    // from 
+    MDC_PRESS_BLD_VENT_LEFT_MEAN = 19031,
+    // from 
+    MDC_PRESS_BLD_VENT_LEFT_SYS = 19029,
+    // from 
+    MDC_VOL_AWAY_DEADSP = 20800,
+    // from 
+    MDC_VENT_VOL_MINUTE_EXP = 20928,
+    // from 
+    MDC_VENT_VOL_MINUTE_AWAY_INSP = 20944,
+    // from 
+    MDC_PRESS_RESP_PAUSE = 20716,
+    // from A.7.4.1
+    MDC_AWAY_CO2_EXP = 20660,
+    // from 
+    MDC_PRESS_AWAY_END_EXP_POS = 20732,
+    // from 
+    MDC_VENT_FLOW_EXP_MAX = 20873,
+    // from 
+    MDC_VENT_FLOW_INSP_MAX = 20877,
+    // from 
+    MDC_VENT_PRESS_MAX = 20885,
+    // from 
+    MDC_VENT_RESP_RATE = 20514,
+    // from 
+    MDC_VENT_FLOW_EXP = 20872,
+    // from 
+    MDC_FLOW_AWAY_EXP = 20696,
+    // from 
+    MDC_VENT_VOL_TIDAL = 20908,
+    // from 
+    MDC_FLOW_O2_CONSUMP = 21348,
+    // from 
+    MDC_PRESS_CUFF_DIA = 19230,
+    // from 
+    MDC_PRESS_CUFF_MEAN = 19231,
+    // from 
+    MDC_PRESS_CUFF_SYS = 19229,
+    // from 
+    MDC_BLD_PULS_RATE_INV = 18450,
+    // from 
+    MDC_RES_VASC_PULM = 19236,
+    // from 
+    MDC_TTHOR_RESP_RATE = 20506,
+    // from 
+    MDC_VENT_CO2_RESP_RATE = 20538,
+    // from 
+    MDC_CO2_RESP_RATE = 20522,
+    // from 
+    MDC_PRESS_BLD_VENT_RIGHT_DIA = 19034,
+    // from 
+    MDC_PRESS_BLD_VENT_RIGHT_MEAN = 19035,
+    // from 
+    MDC_PRESS_BLD_VENT_RIGHT_SYS = 19033,
+    // from 
+    MDC_ECG_AMPL_ST_dV1 = 871,
+    // from 
+    MDC_ECG_AMPL_ST_dV2 = 872,
+    // from 
+    MDC_ECG_AMPL_ST_dV3 = 873,
+    // from 
+    MDC_ECG_AMPL_ST_dV4 = 874,
+    // from 
+    MDC_ECG_AMPL_ST_dV5 = 875,
+    // from 
+    MDC_ECG_AMPL_ST_dV6 = 876,
+    // from 
+    MDC_ECG_AMPL_ST_MCL1 = 844,
+    // from 
+    MDC_ECG_AMPL_ST_MCL6 = 849,
+    // from 
+    MDC_AREA_BODY_SURF_ACTUAL = 57672,
+    // from 
+    MDC_CONC_AWAY_CO2_EXP = 20640,
+    // from A.7.4.1
+    MDC_AWAY_O2_EXP = 20676,
+    // from 
+    MDC_TIME_PD_VENT_L_AORT_VALV = 19448,
+    // from A.7.4.1
+    MDC_AWAY_N2O_EXP = 21248,
+    // from A.7.4.1
+    MDC_AWAY_HALOTH_EXP = 21232,
+    // from A.7.4.1
+    MDC_AWAY_ISOFL_EXP = 21240,
+    // from A.7.4.1
+    MDC_AWAY_ENFL_EXP = 21228,
+    // from A.7.4.1
+    MDC_AWAY_DESFL_EXP = 21224,
+    // from A.7.4.1
+    MDC_AWAY_SEVOFL_EXP = 21236,
+    // from 
+    MDC_CONC_CA_ART = 28720,
+    // from 
+    MDC_CONC_UREA_ART = 29008,
+    // from 
+    MDC_VOL_URINE_COL = 26672,
+    // from 
+    MDC_VENT_VOL_MINUTE_AWAY = 20936,
+    // from 
+    MDC_VENT_PRESS_AWAY = 20900,
+    // from 
+    MDC_VENT_FLOW = 20868,
+    // from 
+    MDC_ECG_TIME_PD_RR_GL = 16168,
+    // from 
+    MDC_PRESS_GI = 57408,
+    // from 
+    MDC_QUO_RESP = 20756,
+    // from 
+    MDC_FLOW_DRUG_DELIV = 26732,
+    // from 
+    MDC_CONC_AWAY_CO2_ET = 20636,
+    // from 
+    MDC_BLD_PERF_INDEX = 19416,
+    // from 
+    MDC_CONC_AWAY_CO2 = 20628,
+    // from 
+    MDC_PRESS_ESOPH = 20748,
+    // from 
+    MDC_TEMP_FOLEY = 19276,
+    // from 
+    MDC_TEMP_EAR = 57356,
+    // from 
+    MDC_TEMP_FINGER = 57360,
+    // from 
+    MDC_TEMP_ORAL = 57352,
+    // from 
+    MDC_TEMP_BODY = 19292,
+    // from 
+    MDC_TEMP_TOE = 57376,
+    // from 
+    MDC_TEMP_TYMP = 19320,
+    // from A.7.4.1
+    MDC_VENT_AWAY_DESFL = 21192,
+    // from A.7.4.1
+    MDC_VENT_DESFL_INSP = 21312,
+    // from A.7.4.1
+    MDC_VENT_DESFL_EXP = 21252,
+    // from A.7.4.1
+    MDC_AWAY_DESFL = 21160,
+    // from A.7.4.1
+    MDC_AWAY_DESFL_INSP = 21284,
+    // from A.7.4.1
+    MDC_VENT_ENFL_INSP = 21316,
+    // from A.7.4.1
+    MDC_VENT_ENFL_EXP = 21256,
+    // from A.7.4.1
+    MDC_AWAY_ENFL = 21168,
+    // from A.7.4.1
+    MDC_AWAY_ENFL_INSP = 21288,
+    // from A.7.4.1
+    MDC_VENT_HALOTH_INSP = 21320,
+    // from A.7.4.1
+    MDC_VENT_HALOTH_EXP = 21260,
+    // from A.7.4.1
+    MDC_AWAY_HALOTH = 21172,
+    // from A.7.4.1
+    MDC_AWAY_HALOTH_INSP = 21292,
+    // from A.7.4.1
+    MDC_VENT_SEVOFL_INSP = 21324,
+    // from A.7.4.1
+    MDC_VENT_SEVOFL_EXP = 21264,
+    // from A.7.4.1
+    MDC_AWAY_SEVOFL = 21176,
+    // from A.7.4.1
+    MDC_AWAY_SEVOFL_INSP = 21296,
+    // from A.7.4.1
+    MDC_VENT_ISOFL_INSP = 21328,
+    // from A.7.4.1
+    MDC_VENT_ISOFL_EXP = 21268,
+    // from A.7.4.1
+    MDC_AWAY_ISOFL = 21180,
+    // from A.7.4.1
+    MDC_AWAY_ISOFL_INSP = 21300,
+    // from A.7.4.1
+    MDC_VENT_N2O_INSP = 21336,
+    // from A.7.4.1
+    MDC_VENT_N2O_EXP = 21276,
+    // from A.7.4.1
+    MDC_AWAY_N2O = 21188,
+    // from A.7.4.1
+    MDC_AWAY_N2O_INSP = 21308,
+    // from 
+    MDC_VOL_FLUID_TBI = 26812,
+    // from 
+    MDC_VOL_FLUID_DELIV_TOTAL_SET = 26816,
+    // from 
+    MDC_MASS_DRUG_DELIV = 26748,
+    // from A.7.4.1
+    MDC_VENT_AWAY_O2 = 21220,
+    // from 
+    MDC_VENT_AWAY_O2_INSP = 21340,
+    // from 
+    MDC_VENT_AWAY_O2_EXP = 21280,
+    // from A.7.4.1
+    MDC_AWAY_O2 = 20668,
+    // from A.7.4.1
+    MDC_AWAY_O2_INSP = 20680,
+    // from A.7.4.1
+    MDC_VENT_AWAY_CO2 = 20852,
+    // from 
+    MDC_VENT_AWAY_CO2_INSP = 20864,
+    // from 
+    MDC_VENT_AWAY_CO2_EXP = 20860,
+    // from A.7.4.1
+    MDC_AWAY_CO2_INSP = 20664,
+    // from A.7.4.1
+    MDC_AWAY_NO2 = 21184,
+    // from A.7.4.1
+    MDC_AWAY_NO2_INSP = 21304,
+    // from A.7.4.1
+    MDC_AWAY_NO2_EXP = 21244,
+    // from 
+    MDC_ECG_V_P_C_RATE = 16994,
+    // from 
+    MDC_VOL_SYRINGE = 26808,
+    // from 
+    MDC_SYRINGE_TYPE = 53404,
+    // from 
+    MDC_PUMP_MODE_CURRENT = 26909,
+    // from 
+    MDC_TIME_PD_FLUID_BOLUS_LOCKOUT = 26696,
+    // from 
+    MDC_VENT_MODE = 53280
+  };
+};
+
+#endif
+

@@ -88,13 +88,13 @@ public class ScenarioComparator implements Comparator<ScenarioProxy> {
 //		    	  return prop1.compareTo(prop2) ;  
 //		     } 
 //		     else { //IF THEY ARE NOT COMPARABLE 
-//		    	 return 0;//doesn´t compare /sort		  
+//		    	 return 0;//doesn't compare /sort		  
 //		     }  		    
 //		    }  
 //		    catch(Exception e) {  
 //		    	//NoSuchMethod
 //		    	e.printStackTrace();  
-//		    	return 0;//Doesn´t compare/sort
+//		    	return 0;//Doesn't compare/sort
 //		    } 
 	}
 }

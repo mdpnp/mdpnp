@@ -7,6 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import ice.InfusionStatus;
 import ice.Numeric;
 import ice.SampleArray;
 
@@ -38,12 +39,9 @@ public class ElectroCardioGramPanel extends DevicePanel {
 	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	private final static int[] ECG_WAVEFORMS = new int[] {
-	    ice.MDC_ECG_ELEC_POTL_I.VALUE,
-	    ice.MDC_ECG_ELEC_POTL_II.VALUE,
-	    ice.MDC_ECG_ELEC_POTL_III.VALUE,
-//	    ice.MDC_ECG_ELEC_POTL_AVF.VALUE,
-//	    ice.MDC_ECG_ELEC_POTL_AVL.VALUE,
-//	    ice.MDC_ECG_ELEC_POTL_AVR.VALUE,
+	    ice.Physio.MDC_ECG_AMPL_ST_I.value(),
+	    ice.Physio.MDC_ECG_AMPL_ST_II.value(),
+	    ice.Physio.MDC_ECG_AMPL_ST_III.value(),
 	};
 	
 	private final static String[] ECG_LABELS = new String[] {
@@ -106,10 +104,11 @@ public class ElectroCardioGramPanel extends DevicePanel {
 	@Override
 	public void numeric(Numeric numeric, SampleInfo sampleInfo) {
 	    switch(numeric.name) {
-	    case ice.MDC_RESP_RATE.VALUE:
+	    case ice.Physio._MDC_RESP_RATE:
 	        respiratoryRate.setText(Integer.toString((int)numeric.value));
 	        break;
-	    case ice.MDC_PULS_OXIM_PULS_RATE.VALUE:
+//	    case ice.MDC_PULS_OXIM_PULS_RATE.VALUE:
+	    case ice.Physio._MDC_PULS_RATE:
 	        heartRate.setText(Integer.toString((int)numeric.value));
 	        break;
 	    }
@@ -123,5 +122,10 @@ public class ElectroCardioGramPanel extends DevicePanel {
         date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
         time.setText(dateFormat.format(date));
 	}
+
+    @Override
+    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
+        
+    }
 
 }

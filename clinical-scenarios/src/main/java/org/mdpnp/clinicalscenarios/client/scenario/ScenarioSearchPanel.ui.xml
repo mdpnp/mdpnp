@@ -1,6 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:dp="urn:import:com.google.gwt.user.datepicker.client">
+	
 	<ui:style>
 		.important {
 			margin: 10px 0 10px;
@@ -8,50 +10,58 @@
 		.notimportant {
 			font-size:8pt;
 		}
+		.importantText{
+			font-size:14pt;
+		}
+		.resultsFound{
+			padding:0px 5px 0px 5px;
+		}
+		.datePickerStyle{
+			padding:0px 5px 0px 5px;
+		}
+
 	</ui:style>
 	<g:FlowPanel>
 		
-
+<!-- 		Basic search -->
 		<g:FlowPanel ui:field='basicSearch' >
 		    <g:Label text='Basic Search' ui:field='header' styleName='heading'/>
-			<g:TextBox ui:field='searchQuery' text='Enter keywords'/>		
+			<g:TextBox ui:field='searchQuery' text='Enter keyword(s)'/>		
 			<g:Button text='Search' ui:field='submitButton'/>
-			<g:Label text='Please Enter Keywords' ui:field='pleaseEnterKeywords' styleName='{style.notimportant}'/>
+<!-- 			<g:Label text='Please enter single Keyword' ui:field='pleaseEnterKeywords' styleName='{style.notimportant}'/> TICKET-134-->
 		</g:FlowPanel>
 		
+<!-- 		Advanced Search -->
 		<g:FlowPanel ui:field='advancedSearch' >
 		    <g:Label text='Advanced Search'  styleName='heading'/>
-<!-- 			<g:RadioButton ui:field='radioButtonAnd' name='rb' text='Scenarios matching EACH of the specified keywords'></g:RadioButton> -->
-<!-- 			<g:HTML><br/></g:HTML> -->
-<!-- 			<g:RadioButton ui:field='radioButtonOr' name='rb'  text='Scenarios matching ANY of the specified keywords'></g:RadioButton> -->
-<!-- 			<g:HTML><br/></g:HTML> -->
-			
-			<g:Label text='Keywords in Scenario "Title"' />
-			<g:TextBox ui:field='titleSearch' /><g:HTML><br/></g:HTML>
-			<g:Label text='Keywords in Scenario "Background"' />
-			<g:TextBox ui:field='backgroundSearch' /><g:HTML><br/></g:HTML>
-			<g:Label text='Keywords in Scenario "Proposed State"' />
-			<g:TextBox ui:field='proposedSearch' /><g:HTML><br/></g:HTML>
-			<g:Label text='Keywords in Scenario "Process"' />
-			<g:TextBox ui:field='processSearch' /><g:HTML><br/></g:HTML>
-			<g:Label text='Keywords in Scenario "Algorithm"' />
-			<g:TextBox ui:field='algorithmSearch' /><g:HTML><br/></g:HTML>
-			<g:Label text='Keywords in Scenario "Benefits"' />
-			<g:TextBox ui:field='benefitsSearch' /><g:HTML><br/></g:HTML>
-			<g:Label text='Keywords in Scenario "Risks"' />
-			<g:TextBox ui:field='risksSearch' /><g:HTML><br/></g:HTML>
-			<g:Button text='Advanced Search' ui:field='advancedSearchButton'/>
+			<g:FlexTable ui:field='advancedSearchComponentsTable'/>			
+			<g:Button text='Advanced Search' ui:field='advancedSearchButton'/>			
+		</g:FlowPanel>
+		
+<!-- 		Search by Id -->
+		<g:FlowPanel ui:field='searchById' >
+		    <g:Label text='Search Scenarios by Id' styleName='heading'/>
+			<g:TextBox ui:field='searchQueryById' text='Enter Scenario Id'/>		
+			<g:Button text='Search' ui:field='buttonSearchById'/>
+		</g:FlowPanel>
+		
+<!-- 		Search by Date Range -->
+		<g:FlowPanel ui:field='searchByDates' >
+		    <g:Label text='Search by Dates Range' styleName='heading'/>
+		    <g:FlexTable ui:field='dateRangeSearchComponentsTable'/>	
+		    <g:Button text='Search' ui:field='buttonSearchByDates'/>
 		</g:FlowPanel>
 
 		<g:FlexTable ui:field='searchResult'/>
 			
  		<g:Label text='Loading...' ui:field='status' visible='false'/>
+ 		<g:Label text='' ui:field='searchResultCaption' visible='false' styleName='{style.importantText}'/>
  		
 		<g:FlowPanel ui:field='navigationButtons'>		   
 		    <g:Grid ui:field='searchResult2'/><g:HTML><br/></g:HTML>
 		    <g:Button text='First'  ui:field='buttonFirst' enabled='false'/>
 		    <g:Button text='Previous'  ui:field='buttonPrev' enabled='false'/>
-		    <g:InlineLabel text=' ' ui:field='labelDescription'/>
+		    <g:InlineLabel text=' ' ui:field='labelDescription' styleName='{style.resultsFound}'/>
 		    <g:Button text='Next'  ui:field='buttonNext' enabled='false'/>
 		    <g:Button text='Last'  ui:field='buttonLast' enabled='false'/>		    
 		</g:FlowPanel>

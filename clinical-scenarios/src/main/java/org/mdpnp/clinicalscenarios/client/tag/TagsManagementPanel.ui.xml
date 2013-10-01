@@ -9,8 +9,9 @@
 		}
 	</ui:style>
 	<g:FlowPanel>
+	<g:Label text='Tags' styleName='heading'/>
 	<g:FlexTable ui:field='list'/>
-	<g:Button text='Add New Tag' ui:field='addNewTag'/>
+<!-- 	<g:Button text='Add New Tag' ui:field='addNewTag'/> -->
 	</g:FlowPanel>
 	
 </ui:UiBinder> 

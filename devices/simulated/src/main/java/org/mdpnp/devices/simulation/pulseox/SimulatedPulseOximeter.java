@@ -7,14 +7,12 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation.pulseox;
 
-import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.math.DCT;
-
 
 public class SimulatedPulseOximeter {
 	private int count = 0;
@@ -35,42 +33,14 @@ public class SimulatedPulseOximeter {
 			for(int i = 0; i < plethValues.length; i++) {
 				plethValues[i] = pleth[postIncrCount()];
 			}
-
-			state = transition(state);
-			currentDraw = state.nextDraw();
-			myDate.setTime(currentDraw.getTimestamp());
-			receivePulseOx(currentDraw.getTimestamp(), currentDraw.getHeartRate(), currentDraw.getSpO2(), plethValues, MILLISECONDS_PER_SAMPLE);
+			nextDraw();
+			receivePulseOx(System.currentTimeMillis(), (int)Math.round(heartRate), (int)Math.round(spO2), plethValues, MILLISECONDS_PER_SAMPLE);
 		}
 		
 	};
 	
 	protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, double msPerSample) {
 	    
-	}
-	
-	private static class Draw {
-		private int heartRate;
-		private int spO2;
-		private long time;
-		
-		public long getTimestamp() {
-			return time;
-		}
-		public int getHeartRate() {
-			return heartRate;
-		}
-		public int getSpO2() {
-			return spO2;
-		}
-		public void setHeartRate(int heartRate) {
-			this.heartRate = heartRate;
-		}
-		public void setSpO2(int spO2) {
-			this.spO2 = spO2;
-		}
-		public void setTimestamp(long now) {
-			this.time = now;
-		}
 	}
 	
     protected static final long UPDATE_PERIOD = 80L;
@@ -104,92 +74,30 @@ public class SimulatedPulseOximeter {
 	
 	public SimulatedPulseOximeter() {
 		initPleth();
-		state = transition(state);
-		currentDraw = state.nextDraw();
 	}
 	
-	private static class MiniMean {
-		private double basis;
-		private final double[] memory;
-		private int nextLoc = 0;
-		
-		MiniMean(int sz, double initialValue) {
-			basis = sz * initialValue;
-			memory = new double[sz];
-			for(int i = 0; i < memory.length; i++) {
-				memory[i] = initialValue;
-			}
-		}
-		void apply(double x) {
-			basis -= memory[nextLoc>0?(nextLoc-1):(memory.length-1)];
-			basis += x;
-			memory[nextLoc] = x;
-			nextLoc = ++nextLoc>=memory.length?0:nextLoc;
-		}
-		double get() {
-			return basis / memory.length;
-		}
-	}
+    private double heartRate = 60;
+    private double spO2 = 98;
+    
+    private final double floorHeartRate = 30;
+    private final double floorSpO2 = 60;
+    private final double ceilingHeartRate = 200;
+    private final double ceilingSpO2 = 100;
+    
+    private final Random random = new Random(System.currentTimeMillis());
 	
-	private static class State {
-		private final double avgHeartRate;
-		private final double avgSpO2;
-		private final double stdevHeartRate;
-		private final double stdevSpO2;
-		private final double floorHeartRate;
-		private final double floorSpO2;
-		private final double ceilingHeartRate;
-		private final double ceilingSpO2;
+	public void nextDraw() {
+	    double d1 = random.nextDouble();
+	    double d2 = random.nextDouble();
+	    
+		double hr = heartRate + (d1 > 0.3 ? 0 : (d1 > 0.15 ? 0.3 : -0.3));
+		double spo2 = spO2 + (d2 > 0.3 ? 0 : (d2 > 0.1 ? 0.3 : -0.3));
+		hr = Math.max(hr, floorHeartRate);
+		hr = Math.min(hr, ceilingHeartRate);
+		heartRate = hr;
 		
-		private final Draw draw = new Draw();
-		
-		private final MiniMean heartRate;
-		private final MiniMean spo2;
-		
-		private final Random random = new Random(System.currentTimeMillis());
-		
-		State(double avgHeartRate, double avgSpO2, double stdevHeartRate, double stdevSpO2, double floorHeartRate, double ceilingHeartRate, double floorSpO2, double ceilingSpO2) {
-			this.avgHeartRate = avgHeartRate;
-			// TODO it's pretty stupid to average a bunch of Guassian draws
-			// the mean needs some kind of markov property to create a more interesting simulation
-			this.heartRate = new MiniMean(100, avgHeartRate);
-			this.avgSpO2 = avgSpO2;
-			this.spo2 = new MiniMean(4, avgSpO2);
-			this.stdevHeartRate = stdevHeartRate;
-			this.stdevSpO2 = stdevSpO2;
-			this.floorHeartRate = floorHeartRate;
-			this.floorSpO2 = floorSpO2;
-			this.ceilingHeartRate = ceilingHeartRate;
-			this.ceilingSpO2 = ceilingSpO2;
-			
-		}
-		
-		public Draw nextDraw() {
-			double hr = random.nextGaussian() * stdevHeartRate + avgHeartRate;
-			double spo2 = random.nextGaussian() * stdevSpO2 + avgSpO2;
-			hr = Math.max(hr, floorHeartRate);
-			hr = Math.min(hr, ceilingHeartRate);
-			heartRate.apply(hr);
-			
-			spo2 = Math.max(spo2, floorSpO2);
-			spo2 = Math.min(spo2, ceilingSpO2);
-			this.spo2.apply(spo2);
-			
-			draw.setHeartRate((int)Math.round(heartRate.get()));
-			draw.setSpO2((int)Math.round(this.spo2.get()));
-			draw.setTimestamp(System.currentTimeMillis());
-			return draw;
-		}
-		
+		spo2 = Math.max(spo2, floorSpO2);
+		spo2 = Math.min(spo2, ceilingSpO2);
+		spO2 = spo2;
 	}
-	
-	private static State transition(State state) {
-		return state;
-	}
-		
-	private Draw currentDraw = null;
-	private State state = new State(75, 98, 30.0, 0.25, 50, 200, 80, 100);
-		
-	private final Date myDate = new Date();
-	
 }

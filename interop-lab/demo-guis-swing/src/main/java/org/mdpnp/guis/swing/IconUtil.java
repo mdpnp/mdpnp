@@ -8,6 +8,9 @@ import java.nio.IntBuffer;
 
 public class IconUtil {
     public static Image image(ice.Image image) {
+      if(image.raster.size()==0 || image.width == 0 || image.height == 0) {
+          return null;
+      }
       BufferedImage bi = new BufferedImage(image.width, image.height, BufferedImage.TYPE_INT_ARGB);
       byte[] raster = new byte[image.raster.size()];
       raster = image.raster.toArrayByte(raster);

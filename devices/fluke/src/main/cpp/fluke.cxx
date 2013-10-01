@@ -1,7 +1,8 @@
 /*
  * @file    fluke.cxx
- * @brief   TODO
+ * @brief   Defines the Fluke API
  *
+ * @see Fluke Biomedical ProSim 6/8 Communications Interface full
  */
 //=============================================================================
 
@@ -21,15 +22,34 @@
 #include <string.h>
 #include <string>
 #include <limits.h>
+#include <exception>
 #endif
 
 #include "fluke.h"
 #include "fluke_listener.h"
 
 using namespace std;
+using namespace boost;
 
 static const int kAsciiCR = 0x0d;
 static const int kAsciiLF = 0x0a;
+
+
+#ifdef TESTING_WITHOUT_DEVICE_ATTACHED
+static const char* kfluke_sim_responses[] =
+{
+  "PROSIM6,1.00.06\r\n", // IDENT
+  "LOCAL\r\n", // LOCAL or QMODE
+  "RMAIN\r\n", // REMOTE or QMODE or EXIT
+  "DIAG\r\n", // DIAG or QMODE
+  "CAL\r\n", // CAL or QMODE
+  "T\r\n", // QVAL
+  "F\r\n", // QVAL
+  "*\r\n", // Most commands return this for success
+  "NOTHING\r\n", // QUSB
+  "01,001,019,123456789ABCDEF00123456789ABCDEF\r\n" // Key Record string
+};
+#endif
 
 
 /**
@@ -94,7 +114,7 @@ Fluke::Fluke(int in_fd, int out_fd)
    _output_fd(0),
    _validation_flag(false),
    _record_flag(false),
-   _initialize_fluke(false),
+   _is_fluke_initialized(false),
    _init_option(INIT_OPTION_UNKNOWN)
 {
   _input_fd = in_fd;
@@ -114,44 +134,41 @@ FlukeListener::~FlukeListener()
 
 int Fluke::Init()
 {
-  cout << string(80, '-') << endl;
-  cout << "Initializing API"  << endl;
-  cout << string(80, '-') << endl;
-
   int istat = STATUS_OK;
-  _initialize_fluke = true;
+  _is_fluke_initialized = true;
 
-  istat = SendCommand(QVAL, "");
-  if (!IsStatusOk(istat)) return istat;
+  static bool sent_qval = false;
+  static bool initialize_complete = false;
 
-  millisleep(100);
+  // Query the Validation flag state.
+  if (!sent_qval)
+  {
+    istat = SendCommand(QVAL, "");
+    if (!IsStatusOk(istat)) return istat;
 
+    sent_qval = true;
+    millisleep(100); // Allow some time to receive response
+  }
+
+  // If the Validation flag is false, then the Record flag is false.
+  // If the Validation flag is true, then send command to set the Record
+  // flag to false.
   if (_init_option == INIT_OPTION_VALIDATION_FALSE)
   {
-    // Turn on Validation flag to set Record flag to false.
-    istat = SendCommand(VALIDATION, "OZYMANDIAS");
-    if (!IsStatusOk(istat)) return istat;
-
-    millisleep(100);
-
-    // Set Record flag to false
-    istat = SendCommand(RECORD, "FALSE");
-    if (!IsStatusOk(istat)) return istat;
-
-    millisleep(100);
-
-    // Set Validation flag to false
-    istat = SendCommand(VALOFF, "");
-    if (!IsStatusOk(istat)) return istat;
+    initialize_complete = true;
   }
   else if (_init_option == INIT_OPTION_VALIDATION_TRUE)
   {
     // Set Record flag to false
     istat = SendCommand(RECORD, "FALSE");
     if (!IsStatusOk(istat)) return istat;
+
+    initialize_complete = true;
   }
 
-  return istat;
+  if (!IsStatusOk(istat)) return istat;
+  else if (initialize_complete) return istat;
+  else return RC_INIT_INCOMPLETE;
 }
 
 
@@ -169,7 +186,7 @@ bool Fluke::IsStatusOk(const int istat)
 
 bool Fluke::HasBeenInitialized()
 {
-  return _initialize_fluke;
+  return _is_fluke_initialized;
 }
 
 
@@ -762,68 +779,76 @@ int Fluke::SendCommand(CommandName command, const char* params)
   int istat = STATUS_OK;
   int nbytes = -1;
 
+  // Wait for condition to lock mutex
+  unique_lock<mutex> lock(_lock);
+
+  // Set timeout to occur in the 100 ms from now.
+  system_time timeout = boost::get_system_time() +
+    boost::posix_time::milliseconds(100);
+
+  // Wait for condition to become true or timeout.
+  _condition.timed_wait(lock, timeout);
+
+  //_condition.wait(lock); // No Timeout?
+
   // Make sure Init() function was called before first command
   // is sent to the simulator.
   if (!HasBeenInitialized()) return RC_NOT_OK_TO_SEND_COMMAND;
 
+  // Must be able to change flag states when the current flag states
+  // do not allow commands to be sent.
   if (command != RECORD && command != VALIDATION && command != VALOFF)
     if (!OkToSendCommand()) return RC_NOT_OK_TO_SEND_COMMAND;
 
+  // Convert CommandName enumerator into string
   istat = GetCommandName(command, &command_name);
-  if (!IsStatusOk(istat))
-    return istat;
+  if (!IsStatusOk(istat)) return istat;
 
+  // Construct complete command to send
   string device_command = command_name + params;
   device_command += kAsciiCR;
 
-  if (OkToSendCommand())
+#ifdef TESTING_WITHOUT_DEVICE_ATTACHED
+  try
   {
+    _simulated_cmds_sent.push_back(command_name);
+  }
+  catch(std::exception& exc)
+  {
+    stringstream ss;
+    ss << "Fluke::SendCommand() Exception thrown " << exc.what()
+       << " Failed to push device command onto deque";
+    _statusmsg = ss.str();
+    return RC_EXCEPTION_THROWN;
+  }
+#endif
+
+  // Increase sequence number for every command sent
+  if (OkToSendCommand() || command == RECORD || command == VALIDATION
+    || command == VALOFF)
+  {
+    _sequence_number++;
     cout << "Sending device command<" << get_human_readable_string(
       &device_command) << "> with sequence "
       "number (" << get_sequence_number() << ")..." << endl;
   }
-  else
-  {
-    cout << "Sending device command<" << get_human_readable_string(
-      &device_command) << ">..." << endl;
-  }
 
-  // Monitor each device command which modifies flag values.
+  // Monitor each device command that modifies flag values.
   if (command == RECORD || command == VALIDATION || command == VALOFF)
   {
-    if (!OkToSendCommand())
+    try
     {
-      try
-      {
-        // Store in FIFO queue each device command sent while current
-        // flag states do not allow commands to be sent.
-        _cmds_sent_while_not_ok.push_back(device_command);
-      }
-      catch(exception& exc)
-      {
-        stringstream ss;
-        ss << "Fluke::SendCommand() Exception thrown " << exc.what()
-           << " Failed to push device command onto deque";
-        _statusmsg = ss.str();
-        return RC_EXCEPTION_THROWN;
-      }
+      // Store in FIFO queue each device command sent while current
+      // flag states allow commands to be sent.
+      _flag_cmds_sent.push_back(device_command);
     }
-    else
+    catch(std::exception& exc)
     {
-      try
-      {
-        // Store in FIFO queue each device command sent while current
-        // flag states allow commands to be sent.
-        _flag_cmds_sent.push_back(device_command);
-      }
-      catch(exception& exc)
-      {
-        stringstream ss;
-        ss << "Fluke::SendCommand() Exception thrown " << exc.what()
-          << " Failed to push device command onto deque";
-        _statusmsg = ss.str();
-        return RC_EXCEPTION_THROWN;
-      }
+      stringstream ss;
+      ss << "Fluke::SendCommand() Exception thrown " << exc.what()
+        << " Failed to push device command onto deque";
+      _statusmsg = ss.str();
+      return RC_EXCEPTION_THROWN;
     }
   }
 
@@ -860,71 +885,123 @@ int Fluke::ReceiveMessage()
   string message;
 
 #ifdef TESTING_WITHOUT_DEVICE_ATTACHED
-  message = "*\r\n";
+
+  string cmd_sent;
+
+  if (!OkToSendCommand() && _flag_cmds_sent.size() == 0)
+    message = kfluke_sim_responses[9];
+
+  if (!_simulated_cmds_sent.empty())
+  {
+    cmd_sent = _simulated_cmds_sent.front();
+    _simulated_cmds_sent.pop_front();
+
+    if (!cmd_sent.compare("IDENT")) message = kfluke_sim_responses[0];
+    else if (!cmd_sent.compare("LOCAL")) message = kfluke_sim_responses[1];
+    else if (!cmd_sent.compare("REMOTE")) message = kfluke_sim_responses[2];
+    else if (!cmd_sent.compare("QMODE")) message = kfluke_sim_responses[2];
+    else if (!cmd_sent.compare("QUSB")) message = kfluke_sim_responses[8];
+    else if (!cmd_sent.compare("DIAG=")) message = kfluke_sim_responses[3];
+    else if (!cmd_sent.compare("CAL=")) message = kfluke_sim_responses[4];
+    else if (!cmd_sent.compare("EXIT")) message = kfluke_sim_responses[2];
+    else if (!cmd_sent.compare("QVAL")) message = kfluke_sim_responses[5];
+    else message = kfluke_sim_responses[7]; // All other commands
+  }
+
 #endif
 
-  while(1)
+  // Beginning of code block. The mutex is released
+  // (unlocked) when out of scope of this code block.
   {
-#ifndef TESTING_WITHOUT_DEVICE_ATTACHED
-    // Start reading one byte at a time
+    // Grab lock
+    lock_guard<mutex> lock(_lock);
+
     while(1)
     {
-      unsigned char byte = 0;
-      int nbytes = 0;
+#ifndef TESTING_WITHOUT_DEVICE_ATTACHED
+      // Start reading one byte at a time
+      while(1)
+      {
+        unsigned char byte = 0;
+        int nbytes = 0;
 
-      // Read character from port
-      // Will block indefinitely if USB is idle
+        // Read character from port
+        // Will block indefinitely if USB is idle
 #ifdef _WIN32
-      ReadFile(
-        reinterpret_cast<HANDLE>(_input_fd),
-        reinterpret_cast<char*>(&byte),
-        1,
-        (LPDWORD)((void *)&nbytes),
-        NULL);
+        ReadFile(
+          reinterpret_cast<HANDLE>(_input_fd),
+          reinterpret_cast<char*>(&byte),
+          1,
+          (LPDWORD)((void *)&nbytes),
+          NULL);
 #else
-      nbytes = read(_input_fd, reinterpret_cast<char*>(&byte), 1);
+        nbytes = read(_input_fd, reinterpret_cast<char*>(&byte), 1);
 #endif
 
-      if (nbytes > 0)
-      {
-        message += byte;
+        if (nbytes > 0)
+        {
+          message += byte;
 
-        if (message.size() >= 2)
-        if (message[message.size() - 2] == kAsciiCR
-          && message[message.size() - 1] == kAsciiLF) break;
+          if (message.size() >= 2)
+          if (message[message.size() - 2] == kAsciiCR
+            && message[message.size() - 1] == kAsciiLF) break;
+        }
+        else
+        {
+          istat = RC_READ_TIMEOUT;
+          break;
+        }
+
+        millisleep(0);
+      }
+#endif
+
+      if (IsStatusOk(istat))
+      {
+        SimulatorDataResponseType resp_type = RT_UNKNOWN_RESPONSE;
+
+        // If it's okay to send command or a command was sent while
+        // it was not okay, then we are expecting a response to a
+        // device command.
+        if (OkToSendCommand() || _flag_cmds_sent.size() > 0)
+        {
+          // If the command was sent while not okay, then it's possible to
+          // receive a key record string instead of the command response.
+          if (!OkToSendCommand() && IsKeyRecordString((char*)message.c_str(),
+            strlen(message.c_str())))
+            resp_type = RT_NON_DEVICE_COMMAND_RESPONSE;
+          else
+            resp_type = RT_DEVICE_COMMAND_RESPONSE;
+        }
+        else
+        {
+          resp_type = RT_NON_DEVICE_COMMAND_RESPONSE;
+        }
+
+        istat = ReceiveMessage(resp_type, (char*)message.c_str(),
+          strlen(message.c_str()));
+        if (!IsStatusOk(istat)) break;
+
+#ifdef TESTING_WITHOUT_DEVICE_ATTACHED
+        millisleep(1000);
+        istat = RC_READ_TIMEOUT; // Fake the timeout for testing
+#endif
+        message.erase();
       }
       else
       {
-        istat = RC_READ_TIMEOUT;
         break;
       }
-
-      millisleep(0);
     }
-#endif
-    if (IsStatusOk(istat))
-    {
-      SimulatorDataResponseType resp_type = RT_UNKNOWN_RESPONSE;
+  } // End of code block. Mutex is released
 
-      // Determine which type of response to handle.
-      if (OkToSendCommand()) resp_type = RT_DEVICE_COMMAND_RESPONSE;
-      else resp_type = RT_NON_DEVICE_COMMAND_RESPONSE;
+  millisleep(0);
 
-      istat = ReceiveMessage(resp_type, (char*)message.c_str(),
-        strlen(message.c_str()));
-      if (!IsStatusOk(istat)) break;
+  // Notify *this that the condition has changed.
+  _condition.notify_one();
 
-#ifdef TESTING_WITHOUT_DEVICE_ATTACHED
-      millisleep(2000);
-      istat = RC_READ_TIMEOUT; // Fake timeout for testing
-#endif
-      message.erase();
-    }
-    else
-    {
-      break;
-    }
-  }
+  // Give a chance for other thread waiting on *this to lock mutex
+  millisleep(0);
 
   return istat;
 }
@@ -942,8 +1019,6 @@ int Fluke::ReceiveMessage(const SimulatorDataResponseType response_type,
   int istat = STATUS_OK;
   static bool first_init_resp = true;
   static bool second_init_resp = false;
-  static bool third_init_resp = false;
-  static bool fourth_init_resp = false;
 
   switch(response_type)
   {
@@ -966,7 +1041,7 @@ int Fluke::ReceiveMessage(const SimulatorDataResponseType response_type,
           string device_command = _flag_cmds_sent.front();
           _flag_cmds_sent.pop_front();
 
-          // Convert string to all capital letters in preparation
+          // Convert string to all capital letters to prepare
           // for easy string comparisons.
           for (size_t ix = 0; ix < device_command.size(); ix++)
             device_command[ix] = toupper(device_command[ix]);
@@ -991,7 +1066,9 @@ int Fluke::ReceiveMessage(const SimulatorDataResponseType response_type,
           }
           else if (device_command.find("VALOFF", 0) != string::npos)
           {
+            // If the Validation flag is false, then the Record flag is false
             _validation_flag = false;
+            if (_record_flag) _record_flag = false;
           }
         }
         else if (message[0] == '!') // Each error coded message starts with '!'
@@ -1032,6 +1109,7 @@ int Fluke::ReceiveMessage(const SimulatorDataResponseType response_type,
           // course of action.
           _init_option = INIT_OPTION_VALIDATION_FALSE;
           _validation_flag = false;
+          _record_flag = false;
         }
         else
         {
@@ -1042,47 +1120,10 @@ int Fluke::ReceiveMessage(const SimulatorDataResponseType response_type,
         }
 
         second_init_resp = true;
-        goto exit_switch;
+        break;
       }
 
-      // The Init() function has the ability to send two different
-      // device commands to the Fluke simulator in order to properly set
-      // the Record Flag.
-      if (second_init_resp && _init_option == INIT_OPTION_VALIDATION_FALSE)
-      {
-        // When the Validation flag is false, a command response from
-        // the VALIDATION command is expected.
-        second_init_resp = false; // Never enter this if statement again.
-
-        // A successful command response to the VALIDATION command
-        // contains three characters (i.e., "*\r\n")
-        if (size != 3)
-        {
-          // The command response doesn't belong to the VALIDATION command
-          // or an error coded message was received.
-          _statusmsg = "Fluke::ReceiveMessage() Cannot set validation "
-            "flag value";
-          return __LINE__;
-        }
-
-        // The VALIDATION command returns "*\r\n" when successfully executed.
-        // The first character is '*'.
-        if (message[0] == '*')
-        {
-          _validation_flag = true;
-        }
-        else
-        {
-          // Command response doesn't belong to VALIDATION command.
-          _statusmsg = "Fluke::ReceiveMessage() Initialization failed "
-            "to set Validation flag";
-          return __LINE__;
-        }
-
-        third_init_resp = true; // Get ready for the RECORD command
-        goto exit_switch;
-      }
-      else if (second_init_resp && _init_option == INIT_OPTION_VALIDATION_TRUE)
+      if (second_init_resp && _init_option == INIT_OPTION_VALIDATION_TRUE)
       {
         // The Validation flag is set to true and the next command sent by
         // the Init() function was the RECORD command (with "FALSE" parameter).
@@ -1112,93 +1153,8 @@ int Fluke::ReceiveMessage(const SimulatorDataResponseType response_type,
           return __LINE__;
         }
 
-        // This is the last command response associated with initialization.
-        cout << string(80, '-') << endl;
-        cout << "API initialization complete" << endl;
-        cout << string(80, '-') << endl;
-
-        goto exit_switch;
+        break;
       }
-
-      if (third_init_resp && _init_option == INIT_OPTION_VALIDATION_FALSE)
-      {
-        // The Validation flag was initially set to false. The Validation
-        // flag is now set to true, which allows the operator to set the
-        // Record flag to false. The Third command sent by the Init()
-        // function was the RECORD command (with "FALSE" parameter).
-        third_init_resp = false; // Never enter this if statement again
-
-        // A successful command response to the RECORD command
-        // contains three characters (i.e., "*\r\n")
-        if (size != 3)
-        {
-          // Received a different command response or an error coded message.
-          _statusmsg = "Fluke::ReceiveMessage() Cannot set Record "
-            "flag value";
-          return __LINE__;
-        }
-
-        // A successful command response to the RECORD contains '*' as the
-        // first character
-        if (message[0] == '*')
-        {
-          _record_flag = false;
-        }
-        else
-        {
-          // The command response doesn't belong the the RECORD command.
-          _statusmsg = "Fluke::ReceiveMessage() Initialization failed "
-            "to set Record flag";
-          return __LINE__;
-        }
-
-        fourth_init_resp = true; // Get ready for VALOFF command
-        goto exit_switch;
-      }
-
-      if (fourth_init_resp && _init_option == INIT_OPTION_VALIDATION_FALSE)
-      {
-        // This is the last step of the Fluke initialization. The Validation
-        // flag was initially false. The Record flag is now set to false.
-        // This is a command response to the VALOFF command. The Validation
-        // flag was set to true during initialization in order to set the
-        // Record flag to false.
-        fourth_init_resp = false; // Never enter this if statement again.
-
-        // A successful command response to the VALOFF command
-        // contains three characters (i.e., "*\r\n")
-        if (size != 3)
-        {
-          // Received a different command response or an error coded message.
-          _statusmsg = "Fluke::ReceiveMessage() Cannot set validation "
-            "flag value";
-          return __LINE__;
-        }
-
-        // A successful command response to the VALOFF contains '*' as the
-        // first character.
-        if (message[0] == '*')
-        {
-          _validation_flag = false;
-        }
-        else
-        {
-          // The command response doesn't belong the the VALOFF command.
-          _statusmsg = "Fluke::ReceiveMessage() Cannot set validation "
-            "flag value";
-          return __LINE__;
-        }
-
-        // This is the last command response associated with initialization.
-        cout << string(80, '-') << endl;
-        cout << "API initialization complete" << endl;
-        cout << string(80, '-') << endl;
-
-        goto exit_switch;
-      }
-
-exit_switch:
-      _sequence_number++;
 
     break;
     case RT_NON_DEVICE_COMMAND_RESPONSE:
@@ -1206,52 +1162,6 @@ exit_switch:
       if (size < 1) break;
 
       ReceiveResponse(message, size);
-
-      // RECORD, VALIDATION, and VALOFF commands can be sent while it is not
-      // okay to send commands. Check to see if any of them were sent.
-      if (_cmds_sent_while_not_ok.size() > 0)
-      {
-        // RECORD, VALIDATION, and VALOFF commands return a three character
-        // command response for success (i.e., "*\r\n")
-        if (message[0] == '*')
-        {
-          // Get the first device command and remove it from the queue.
-          string device_command = _cmds_sent_while_not_ok.front();
-          _cmds_sent_while_not_ok.pop_front();
-
-          // Convert device command to all uppercase for easy string searches.
-          for (size_t ix = 0; ix < device_command.size(); ix++)
-            device_command[ix] = toupper(device_command[ix]);
-
-          // If a RECORD, VALIDATION, or VALOFF command was sent, then
-          // the state of the flags are modified.
-          if (device_command.find("RECORD", 0) != std::string::npos)
-          {
-            if (device_command.find("TRUE", 0) != std::string::npos)
-            {
-              _record_flag = true;
-            }
-            else if (device_command.find("FALSE", 0) != std::string::npos)
-            {
-              _record_flag = false;
-            }
-          }
-          else if (device_command.find("VALIDATION", 0) != string::npos)
-          {
-            _validation_flag = true;
-          }
-          else if (device_command.find("VALOFF", 0) != string::npos)
-          {
-            _validation_flag = false;
-          }
-        }
-        else if (message[0] == '!') // Each error coded message starts with '!'
-        {
-          // The Fluke simulator has replied to the device command with an
-          // error coded message.
-          _cmds_sent_while_not_ok.pop_front(); // Remove from queue.
-        }
-      }
     break;
     default:
       _statusmsg = "Fluke::ReceiveMessage() Unknown response_type enumerator";
@@ -1260,6 +1170,72 @@ exit_switch:
   }
 
   return istat;
+}
+
+
+bool Fluke::IsKeyRecordString(char* message, size_t size)
+{
+  // All Key Record Strings have 45 characters
+  if (size != 45) return false;
+
+  int iindex = 0;
+
+  // The first 2 characters are digits which represent the key code.
+  for (; iindex < 2; iindex++)
+  {
+    // Checks for char < '0' or char > '9'
+    if (message[iindex] < 0x30 || message[iindex] > 0x39)
+      return false;
+  }
+
+  // Check for comma
+  if (message[iindex] != 0x2C) return false;
+  iindex++;
+
+  // The next 3 characters are digits which represent the number of cycles
+  // the key was pressed.
+  for (; iindex < 6; iindex++)
+  {
+    // Checks for char < '0' or char > '9'
+    if (message[iindex] < 0x30 || message[iindex] > 0x39)
+      return false;
+  }
+
+  // Check for comma
+  if (message[iindex] != 0x2C) return false;
+  iindex++;
+
+  // The next 3 characters are digits which represent the LCD screen number.
+  for (; iindex < 10; iindex++)
+  {
+    // Checks for char < '0' or char > '9'
+    if (message[iindex] < 0x30 || message[iindex] > 0x39)
+      return false;
+  }
+
+  // Check for comma
+  if (message[iindex] != 0x2C) return false;
+  iindex++;
+
+  // The next 32 characters are hexidecimal digits which represent
+  // the LCD screen checksum.
+  for (; iindex < 43; iindex++)
+  {
+    if (message[iindex] < 0x30 // char < '0'
+      || (message[iindex] > 0x39 && message[iindex] < 0x41) // '9' < char < 'A'
+      || (message[iindex] > 0x46 && message[iindex] < 0x61) // 'F' < char < 'a'
+      || message[iindex] > 0x66) // char > 'f'
+      return false;
+  }
+
+  // Check for carriage return
+  if (message[iindex] != kAsciiCR) return false;
+  iindex++;
+
+  // Check for linefeed
+  if (message[iindex] != kAsciiLF) return false;
+
+  return true;
 }
 
 

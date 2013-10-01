@@ -17,8 +17,8 @@ import org.mdpnp.devices.EventLoop;
 public class GetConnected extends AbstractGetConnected {
 	private final JFrame frame;
 	
-	public GetConnected(JFrame frame, int domainId, String universal_device_identifier, EventLoop eventLoop) {
-		super(domainId, universal_device_identifier, eventLoop);
+	public GetConnected(JFrame frame, int domainId, String unique_device_identifier, EventLoop eventLoop) {
+		super(domainId, unique_device_identifier, eventLoop);
 		this.frame = frame;
 	}
 	

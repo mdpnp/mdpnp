@@ -14,7 +14,7 @@ public class TimeAwareInputStream extends FilterInputStream {
 	@Override
 	public int read() throws IOException {
 		int r = super.read();
-		if(r >= 0) {
+		if(r > 0) {
 			lastRead = System.currentTimeMillis();
 		}
 		return r;
@@ -23,14 +23,14 @@ public class TimeAwareInputStream extends FilterInputStream {
 	@Override
 	public int read(byte[] b) throws IOException {
 		int n = in.read(b);
-		if(n >= 0) {
+		if(n > 0) {
 			lastRead = System.currentTimeMillis();
 		}
 		return n;
 	}
 	public int read(byte[] b, int off, int len) throws IOException {
 		int n = in.read(b, off, len);
-		if(n >= 0) {
+		if(n > 0) {
 			lastRead = System.currentTimeMillis();
 		}
 		return n;
@@ -38,5 +38,7 @@ public class TimeAwareInputStream extends FilterInputStream {
 	public long getLastReadTime() {
 		return lastRead;
 	}
-	
+	public void promoteLastReadTime() {
+	    this.lastRead = System.currentTimeMillis();
+	}
 }

@@ -12,10 +12,11 @@ import com.googlecode.objectify.annotation.OnSave;
 
 /**
  * 
- * @author dalonso@mdpnp.org 
+ * @author diego@mdpnp.org 
  * 
  * Class to implement a KEYWORD that will Tag or Label
- * the clincial scenarios 
+ * the clinical scenarios  <p>
+ * since 09/25/2013, the tags are going to be just a keyword, so we no longer need the description field 
  *
  */
 @SuppressWarnings("serial")
@@ -24,7 +25,7 @@ public class Tag implements Serializable {
 	
 	@Id
 	private Long id; //id for the GAE
-	private int version =1;
+	private Integer version =1;
 	
 	@OnSave
 	void onPersist() {
@@ -34,7 +35,7 @@ public class Tag implements Serializable {
 	@Index
 	private String name; // name (identifier) of the tag
 	
-	private String description; //description associated to the tag
+//	private String description; //description associated to the tag
 	
 	//TODO Add auditing info?  creation date/ user and modification date/user
 	
@@ -43,7 +44,7 @@ public class Tag implements Serializable {
 	
 	public Tag(String name, String descrp){
 		this.name = name;
-		this.description = descrp;
+//		this.description = descrp;
 	}
 
 	//getters and setters
@@ -54,6 +55,7 @@ public class Tag implements Serializable {
 	public void setId(Long id) {
 		this.id = id;
 	}
+	
 
 	public String getName() {
 		return name;
@@ -63,26 +65,26 @@ public class Tag implements Serializable {
 		this.name = name;
 	}
 
-	public String getDescription() {
-		return description;
-	}
+//	public String getDescription() {
+//		return description;
+//	}
+//
+//	public void setDescription(String description) {
+//		this.description = description;
+//	}
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public int getVersion() {
+	public Integer getVersion() {
 		return version;
 	}
 
-	public void setVersion(int version) {
+	public void setVersion(Integer version) {
 		this.version = version;
 	}
 	
 	
 	public static Tag create() {
 	    Tag t = new Tag();
-        ofy().save().entity(t).now();
+//        ofy().save().entity(t).now();
         return t;
 	}
 	

@@ -15,6 +15,26 @@ public class StateMachine<T> {
 		this.legalTransitions = legalTransitions;
 	}
 	
+	public synchronized boolean wait(T state, long timeout) {
+	    long giveup = System.currentTimeMillis() + timeout;
+	    
+	    if(timeout < 10L) {
+	        log.warn("Blocking in 10ms increments so timeout of " + timeout + "ms is promoted");
+	    }
+	    if(0L != (timeout % 10L)) {
+	        log.warn("Blocking in 10ms increments so timeout of " + timeout +"ms made coarser");
+	    }
+	    
+	    while(!state.equals(this.state) && System.currentTimeMillis() <= giveup) {
+	        try {
+                wait(10L);
+            } catch (InterruptedException e) {
+                log.error("interrupted waiting for " + state, e);
+            }
+	    }
+	    return state.equals(this.state);
+	}
+	
 	public synchronized boolean legalTransition(T state) {
 		// TODO technically transitions from State A to State A should be explicitly legalized
 //		if(this.state.equals(state)) {

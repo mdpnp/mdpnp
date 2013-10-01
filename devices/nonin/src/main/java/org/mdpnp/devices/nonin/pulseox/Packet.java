@@ -34,7 +34,7 @@ public class Packet {
 		return avgHeartRateFourBeat;
 	}
 
-	public short getFirmwareRevision() {
+	public int getFirmwareRevision() {
 		return firmwareRevision;
 	}
 
@@ -50,15 +50,15 @@ public class Packet {
 		return lowBattery;
 	}
 
-	public short getAvgSpO2FourBeat() {
+	public int getAvgSpO2FourBeat() {
 		return avgSpO2FourBeat;
 	}
 
-	public short getAvgSpO2FourBeatFast() {
+	public int getAvgSpO2FourBeatFast() {
 		return avgSpO2FourBeatFast;
 	}
 
-	public short getSpO2BeatToBeat() {
+	public int getSpO2BeatToBeat() {
 		return SpO2BeatToBeat;
 	}
 
@@ -66,11 +66,11 @@ public class Packet {
 		return avgHeartRateEightBeat;
 	}
 
-	public short getAvgSpO2EightBeat() {
+	public int getAvgSpO2EightBeat() {
 		return avgSpO2EightBeat;
 	}
 
-	public short getAvgSpO2EightBeatForDisplay() {
+	public int getAvgSpO2EightBeatForDisplay() {
 		return avgSpO2EightBeatForDisplay;
 	}
 
@@ -86,28 +86,28 @@ public class Packet {
 	private final Status[] status = new Status[FRAMES];
 	
 	private int avgHeartRateFourBeat;
-	private short firmwareRevision;
+	private int firmwareRevision;
 	private int timer;
 	private boolean smartPoint;
 	private boolean lowBattery;
-	private short avgSpO2FourBeat;
-	private short avgSpO2FourBeatFast;
-	private short SpO2BeatToBeat;
+	private int avgSpO2FourBeat;
+	private int avgSpO2FourBeatFast;
+	private int SpO2BeatToBeat;
 	private int avgHeartRateEightBeat;
-	private short avgSpO2EightBeat;
-	private short avgSpO2EightBeatForDisplay;
+	private int avgSpO2EightBeat;
+	private int avgSpO2EightBeatForDisplay;
 	private int avgHeartRateFourBeatForDisplay;
 	private int avgHeartRateEightBeatForDisplay;
 	
 	private int currentFrame;
 	
-	private void setvar(byte b) {
+	private void setvar(int b) {
 		switch(currentFrame) {
 		case 0:
-			avgHeartRateFourBeat = (0xFF&b) << 8;
+			avgHeartRateFourBeat = (b << 8);
 			break;
 		case 1:
-			avgHeartRateFourBeat |= (0xFF&b);
+			avgHeartRateFourBeat |= b;
 			break;
 		case 2:
 			avgSpO2FourBeat = b;
@@ -117,17 +117,17 @@ public class Packet {
 			break;
 		// 4 reserved
 		case 5:
-			timer = b >> 8;
+			timer = (b << 8);
 			break;
 		case 6:
-			timer &= b;
+			timer |= b;
 			break;
 		case 7:
 			smartPoint = 0 != (0x20&b);
 			lowBattery = 0 != (0x01&b);
 			break;
 		case 8:
-			avgSpO2FourBeat = (short)(0xFF&b);
+			avgSpO2FourBeat = b;
 			break;
 		case 9:
 			avgSpO2FourBeatFast = b;
@@ -137,10 +137,10 @@ public class Packet {
 			break;
 		// 11/12 reserved
 		case 13:
-			avgHeartRateEightBeat = b << 8;
+			avgHeartRateEightBeat = (b << 8);
 			break;
 		case 14:
-			avgHeartRateEightBeat &= b;
+			avgHeartRateEightBeat |= b;
 			break;
 		case 15:
 			avgSpO2EightBeat = b;
@@ -150,16 +150,16 @@ public class Packet {
 			break;
 		// 17/18 reserved
 		case 19:
-			avgHeartRateFourBeatForDisplay = b << 8;
+			avgHeartRateFourBeatForDisplay = (b << 8);
 			break;
 		case 20:
-			avgHeartRateFourBeatForDisplay &= b;
+			avgHeartRateFourBeatForDisplay |= b;
 			break;
 		case 21:
-			avgHeartRateEightBeatForDisplay = b << 8;
+			avgHeartRateEightBeatForDisplay = (b << 8);
 			break;
 		case 22:
-			avgHeartRateEightBeatForDisplay &= b;
+			avgHeartRateEightBeatForDisplay |= b;
 			break;
 		default:
 		}
@@ -190,7 +190,7 @@ public class Packet {
 			status[currentFrame].set(b[off+0]);
 		}
 		pleth[currentFrame] = ((0xFF&b[off+1]) << 8) | (0xFF&b[off+2]);
-		setvar(b[off+3]);
+		setvar(0xFF&b[off+3]);
 
 		if(!validChecksum(b, off)) {
 			log.warn("Frame="+currentFrame+" "/*+Util.bytesString(b, off, FRAME_LENGTH)*/);

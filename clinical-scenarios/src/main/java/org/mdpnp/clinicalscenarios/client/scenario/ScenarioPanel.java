@@ -1,5 +1,6 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -16,7 +17,6 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -25,16 +25,16 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
-import com.google.gwt.user.client.ui.SourcesTabEvents;
 import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.TabListener;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -54,7 +54,17 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static final int EQUIPMENT_MANUFACTURER_COL = 1;
 	private static final int EQUIPMENT_MODEL_COL = 2;
 	private static final int EQUIPMENT_ROSSETAID_COL = 3;
-	private static final int EQUIPMENT_DElETEBUTTON_COL = 4;
+//	private static final int EQUIPMENT_DElETEBUTTON_COL = 4;//ticket-140
+	private static final int EQUIPMENT_GAPINTRAINING_COL  = 4;
+	private static final int EQUIPMENT_LACKINSTRUCTION_COL  = 5;
+	private static final int EQUIPMENT_LACKTRAINING_COL  = 6;
+	private static final int EQUIPMENT_CONFUSINGINTERFACES_COL  = 7;
+	private static final int EQUIPMENT_CONFUSINGSETTINGS_COL  = 8;
+	private static final int EQUIPMENT_SWPROBLEM_COL = 9;
+	private static final int EQUIPMENT_HWPROBLEM_COL = 10;
+	private static final int EQUIPMENT_DElETEBUTTON_COL = 11;//ticket-140
+	
+	
 	
 	//hazards tab panel
 	private static final int HAZARDS_DESCRIPTION_COL = 0;
@@ -71,21 +81,80 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static final int ENVIRONMENT_TYPE_COL = 0;
 	private static final int ENVIRONMENT_DELETEBUTTON_COL = 1;
 	
-	//scenario status
-	public final static String SCN_STATUS_UNSUBMITTED = 	"unsubmitted";//created and/or modified, but not yet submitted for approval
-	public final static String SCN_STATUS_SUBMITTED = 		"submitted"; //submitted for approval, not yet revised nor approved 
-	public final static String SCN_STATUS_APPROVED = 		"approved"; //revised and approved
-	public final static String SCN_STATUS_REJECTED = 		"rejected"; //revised but not approved. Rejected for revision 
+	//references table
+	private static final int REFERENCE_http_COL = 0;
+	private static final int REFERENCE_TEXT_COL = 1;
+	private static final int REFERENCE_DELETEBUTTON_COL = 2;
+	private static final int REFERENCE_FOLLOWBUTTON_COL = 3;
 	
-	private final static int APPRV_SCN_TAB_POS = 6;//position of the tab to approve or reject scn
+	//scenario status
+	public final static String SCN_STATUS_UNSUBMITTED = 	"unsubmitted";//created and/or modified, but not yet submitted for approval. Only modificable by owner
+	public final static String SCN_STATUS_SUBMITTED = 		"submitted"; //submitted for approval, not yet revised nor approved 
+	public final static String SCN_STATUS_UNLOCKED_PRE =	"unlocked(pre)"; //unlocked pre-scenario submission	
+	public final static String SCN_STATUS_APPROVED = 		"approved"; //revised and approved
+	public final static String SCN_STATUS_REJECTED = 		"rejected"; //rejected or killed. The scenario reaches a 'dead' state
+	public final static String SCN_STATUS_UNLOCKED_POST =	"unlocked(post)"; //unlocked post-scenario submission	
+	public final static String SCN_STATUS_MODIFIED = 		"dirty"; //an approved scenario modified post-approval
+	
+	//scenario last action taken
+	public final static String SCN_LAST_ACTION_EDITED = 	"edited"; //after scenario modification
+	public final static String SCN_LAST_ACTION_SUBMITTED = "submitted"; //after submission for approval
+	public final static String SCN_LAST_ACTION_APPROVED = "approved"; //after FIRST approval by admin
+	public final static String SCN_LAST_ACTION_REAPPROVED = "reapproved"; //after the second and sucesive approvals
+	public final static String SCN_LAST_ACTION_REJECTED = "rejected"; //after scenarion has been definitely rejected or killed
+	public final static String SCN_LAST_ACTION_RETURNED = "returned"; //after scenario has been returned for clarification
+	public final static String SCN_LAST_ACTION_LOCKED = "locked";     //after scenario has been locked
+	public final static String SCN_LAST_ACTION_UNLOCKED = "unlocked"; //after scenario has been unlocked
+	
+	private final static String STYLE_ROW_EQUIPMENT = "styleRowEquipment";
+	private final static String EQUIPMENT_TEXTBOX_WIDTH = "100px";
+	
+	/**
+	 * Tabs for our CConOps (Clinical concept of Operations)
+	 * Background -->tab (0)
+	 * Hazards
+	 * Environments
+	 * Equipment
+	 * Proposed State
+	 * Benefists+Risks -->tab(5)
+	 * References (links)
+	 * 
+	 * Feedback-->Approve or reject
+	 */	
+	private final static int APPRV_SCN_TAB_POS = 7;//position of the tab to approve or reject scn
 	
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
 	
+	//to Id our user
 	private enum UserRole {Administrator, RegisteredUser, AnonymousUser}
-	private UserRole userRole;
-	
+	private UserRole userRole;	
 	private String userEmail;
+	
+	private boolean editable = false; //indicates if the scenario is editable
+	
+	/**
+	 * Check if its possible to edit this scenario information and updates the flag;
+	 */
+	private void checkEditable(){
+		if(null==currentScenario){
+			editable = false;
+			return;
+		}
+		editable = true;
+		//1- Only states unsubmitted, unloked_pre y unlocked_post are editables
+		if (!(currentScenario.getStatus().equals(SCN_STATUS_UNSUBMITTED) || 
+				currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE) ||
+				currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST))) editable = false;
+		//if unsumbitted, only the creator can edit
+		if(currentScenario.getStatus().equals(SCN_STATUS_UNSUBMITTED) && !userEmail.equals(currentScenario.getSubmitter())) editable = false;
+		
+		//if unlocked_pre or unlocked_post, only owner of lock can edit.
+		if((currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE) || currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST)) 
+				&& !currentScenario.getLockOwner().equals(userEmail)) editable = false;
+		
+		if(userRole==UserRole.AnonymousUser) editable = false;//Anonymous users can't modify the Scn information
+	}
 
 
 	interface Driver extends RequestFactoryEditorDriver<ScenarioProxy, ScenarioPanel> {
@@ -96,6 +165,22 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	interface ScenarioPanelUiBinder extends UiBinder<Widget, ScenarioPanel> {
 	}
+	
+	/**
+	 * Receiver for any search of SINGLE Scenario
+	 */
+	private Receiver<ScenarioProxy> singleScenarioReceiver = new Receiver<ScenarioProxy>() {
+		@Override
+		public void onSuccess(ScenarioProxy response) {
+			setCurrentScenario(currentScenario);
+		}
+		
+		@Override
+		public void onFailure(ServerFailure error) {
+			super.onFailure(error);
+			logger.log(Level.SEVERE, error.getMessage());
+		}
+	};
 
 	 private static class MyDialog extends DialogBox {
 
@@ -128,6 +213,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	}
 	
 	private static final String[] hazardSeverity = new String[] {"Mild", "Moderate", "Severe", "Life Threatening", "Fatal", "Unknown"};
+	public static String[] getHazardSeverityValues(){
+		return hazardSeverity;
+	}
 	/**
 	 * Returns the associated index or a word of the hazardSeverity array
 	 * @param word
@@ -208,52 +296,63 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 */
 	private final void buildEquipmentTable(boolean isDrawNew) {
 		equipmentTable.removeAllRows();//clear rows to draw again
+		equipmentTable.setStyleName(STYLE_ROW_EQUIPMENT);
+
 		//HEADERS
 		equipmentTable.insertRow(0);
 		equipmentTable.setText(0, EQUIPMENT_DEVICETYPE_COL, "Device Type");
 		equipmentTable.setText(0, EQUIPMENT_MANUFACTURER_COL, "Manufacturer");
 		equipmentTable.setText(0, EQUIPMENT_MODEL_COL, "Model");
 		equipmentTable.setText(0, EQUIPMENT_ROSSETAID_COL, "Rosetta ID");
+		
+		equipmentTable.setText(0, EQUIPMENT_GAPINTRAINING_COL, "Gap in trainig");
+		equipmentTable.setText(0, EQUIPMENT_LACKINSTRUCTION_COL, "Lack of access to instructions");
+		equipmentTable.setText(0, EQUIPMENT_LACKTRAINING_COL, "Lack of / inadecuate training");
+		equipmentTable.setText(0, EQUIPMENT_CONFUSINGINTERFACES_COL, "Confusing interfaces");
+		equipmentTable.setText(0, EQUIPMENT_CONFUSINGSETTINGS_COL, "Confusing settings");
+		equipmentTable.setText(0, EQUIPMENT_SWPROBLEM_COL, "Software problem");
+		equipmentTable.setText(0, EQUIPMENT_HWPROBLEM_COL, "Hardware problem");
 
 
 		if(isDrawNew || currentScenario.getEquipment().getEntries().isEmpty()){
-			//the table will have no elements, either because we have a new scenario or because the current one
-			// has no elements on its equipment list
-			for(int i = 0; i < 1; i++) {
-				equipmentTable.insertRow(i + 1);
-				for(int j = 0; j < 4; j++) {//add four textboxes for data
-					equipmentTable.setWidget(i+1, j, new TextBox());
-				}
-				//add button to delete current row 
-				Button deleteButton = new Button("Delete");
-				equipmentTable.setWidget(i+1, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
-				final int row = i+1;
-				//click handler that deletes the current row
-				deleteButton.addClickHandler(new ClickHandler() {	
-					@Override
-					public void onClick(ClickEvent event) {
-						equipmentTable.removeRow(row);
-					}
-				});				
-			}
+			addNewEquipmentRow();
 		
 		}else{
 			//populate the table w/ the data from the equipment list of the scenario
-			List<?> eqEntries = currentScenario.getEquipment().getEntries();
+			List<EquipmentEntryProxy> eqEntries = currentScenario.getEquipment().getEntries();
 			for(int i=0; i<eqEntries.size();i++){
 				final int row = i+1;
 				equipmentTable.insertRow(row);
 				EquipmentEntryProxy eep = (EquipmentEntryProxy) eqEntries.get(i);
-				TextBox dtTextbox = new TextBox(); dtTextbox.setText(eep.getDeviceType());
+				TextBox dtTextbox = new TextBox();
+				dtTextbox.setText(eep.getDeviceType());
+				dtTextbox.setReadOnly(!editable);
+				dtTextbox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+//				dtTextbox.set
 				equipmentTable.setWidget(row, EQUIPMENT_DEVICETYPE_COL, dtTextbox);
-				TextBox manufTextBox = new TextBox(); manufTextBox.setText(eep.getManufacturer());
+				TextBox manufTextBox = new TextBox(); 
+				manufTextBox.setText(eep.getManufacturer());
+				manufTextBox.setReadOnly(!editable);
+				manufTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
 				equipmentTable.setWidget(row, EQUIPMENT_MANUFACTURER_COL, manufTextBox);
-				TextBox modelTextBox = new TextBox(); modelTextBox.setText(eep.getModel());
+				TextBox modelTextBox = new TextBox(); 
+				modelTextBox.setText(eep.getModel());
+				modelTextBox.setReadOnly(!editable);
+				modelTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
 				equipmentTable.setWidget(row, EQUIPMENT_MODEL_COL, modelTextBox);
-				TextBox rossTextBox = new TextBox(); rossTextBox.setText(eep.getRosettaId());
+				TextBox rossTextBox = new TextBox(); 
+				rossTextBox.setText(eep.getRosettaId());
+				rossTextBox.setReadOnly(!editable);
+				rossTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
 				equipmentTable.setWidget(i+1, EQUIPMENT_ROSSETAID_COL, rossTextBox);
+				
+				for(int j = 4; j < EQUIPMENT_DElETEBUTTON_COL; j++) {//add four check boxes
+					equipmentTable.setWidget(i+1, j, new CheckBox());
+				}
+				
 				Button deleteButton = new Button("Delete");
-				equipmentTable.setWidget(row, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
+				if(editable)
+					equipmentTable.setWidget(row, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
 				
 				//add click handler to the delete button
 				deleteButton.addClickHandler(new ClickHandler() {				
@@ -299,9 +398,25 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				HazardsEntryProxy hep = (HazardsEntryProxy) hazards.get(i);
 				addNewHazardTableRow(hep.getDescription(), hep.getFactors(), hep.getExpected(), hep.getSeverity());
 			}
+		}	
+		
+	}
+	
+	/**
+	 * prints/draws the references table 
+	 */
+	private final void buildReferencesTable(boolean isDrawNew) {
+		referencesTable.removeAllRows();//clear
+		//XXX currentScenario.getReferences()!=null because was added after all the other fields
+		if(isDrawNew || currentScenario.getReferences()==null || currentScenario.getReferences().getLinkedRefenrences().isEmpty()){
+			addNewLinkedReference();			
+		}else{
+			//populate the table
+			for(String ref : currentScenario.getReferences().getLinkedRefenrences()){
+				addNewLinkedReference(ref);
+			}
 		}
-		
-		
+
 	}
 	
 	private Logger logger = Logger.getLogger(ScenarioPanel.class.getName());
@@ -406,7 +521,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * @param scn
 	 */
 	private void checkCliniciansListForPersistence(/*ScenarioRequest scn*/){
-//		if(currentScenario!=null && currentScenario.getEnvironments()!= null){
 			currentScenario.getEnvironments().getCliniciansInvolved().clear();
 			//delete the list and repopulate w/ data from the table
 //			List clinicians = currentScenario.getEnvironments().getCliniciansInvolved();
@@ -417,16 +531,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					if(!text.equals(""))
 						currentScenario.getEnvironments().getCliniciansInvolved().add(text);
 				}
-			}
-//		}
-		
+			}		
 	}
 	
 	/**
 	 * Checks if we need to persist the environments list
 	 */
 	private void checkEnvironmentsListForPersistence(){
-//		if(currentScenario!=null && currentScenario.getEnvironments()!= null){
 			currentScenario.getEnvironments().getClinicalEnvironments().clear();
 			//delete the list and re-populate w/ data from the table
 			for(int row=0; row<environmentsTable.getRowCount();row++){
@@ -436,9 +547,23 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					if(!text.equals(""))
 						currentScenario.getEnvironments().getClinicalEnvironments().add(text);
 				}
+			}		
+	}
+	
+	/**
+	 * checks if we need to persist references
+	 */
+	private void checkReferencesListForPersistence(){
+		currentScenario.getReferences().getLinkedRefenrences().clear();
+		//delete and repopulate
+		for(int row =0; row<referencesTable.getRowCount(); row++){
+			Widget w = referencesTable.getWidget(row, REFERENCE_TEXT_COL);
+			if(w instanceof TextArea){
+				String ref = ((TextArea) w).getText();
+				if(!ref.trim().equals(""))
+					currentScenario.getReferences().getLinkedRefenrences().add(ref);
 			}
-//		}
-		
+		}
 	}
 	
 	/**
@@ -457,6 +582,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		checkCliniciansListForPersistence();
 		//save environments
 		checkEnvironmentsListForPersistence();	
+		//save references
+		checkReferencesListForPersistence();
 	}
 	
 	/**
@@ -468,28 +595,24 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * <p> 4- Save Clinicians and Environment List
 	 * <p> Persist the scenario entity with all its associated values
 	 */
-	private void save(){
-		if (currentScenario.getStatus().equals(SCN_STATUS_APPROVED)) return;//Don't change Approved Scenarios
-		if (currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED) && userRole!=UserRole.Administrator) return;//Don't change submitted
-		if(userRole==UserRole.AnonymousUser) return;//Anonymous users can't modify the Scn information
+	private void save(){	
+		if(!editable) return;	//Ticket-144 Mutual exclusion / persistence permission	
 		if(isEmptyScenario()) return;//Ticket-81 Don't persist empty Scn
+		
+		currentScenario.setLastActionTaken(SCN_LAST_ACTION_EDITED);
+		currentScenario.setLastActionUser(userEmail);
 		
 		status.setText("SAVING");			
 		ScenarioRequest rc = (ScenarioRequest) driver.flush();
 	
 		checkScenarioFields(rc);
 			
-//		//Save equipment list
-//		checkEquipmentListForPersistence(rc);
-//		//Save hazards list
-//		checkHazardsListForPersistence(rc);
-//		//save clinicians list
-//		checkCliniciansListForPersistence();
-//		//save environments
-//		checkEnvironmentsListForPersistence();		
-
 		//persist scenario entity
-		rc.persist().using(currentScenario).with(driver.getPaths()).with("equipment", "hazards", "environments").to(new Receiver<ScenarioProxy>() {
+		rc.persist().using(currentScenario)
+		.with(driver.getPaths()).with("equipment", "hazards", "environments")
+//		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.to(new Receiver<ScenarioProxy>() {
+
 
 			@Override
 			public void onSuccess(ScenarioProxy response) {
@@ -537,10 +660,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				save();
 			}			
 		};
-		
 
 		//associate handlers and value entities
-		titleEditor.addChangeHandler(saveOnChange);
+	    titleEditor.addChangeHandler(saveOnChange);
 		proposedStateEditor.addChangeHandler(saveOnChange);
 		currentStateEditor.addChangeHandler(saveOnChange);
 		benefits.addChangeHandler(saveOnChange);
@@ -570,7 +692,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			userInfoRequestFactory.initialize(eventBus);
 		
 		UserInfoRequest userInfoRequest = userInfoRequestFactory.userInfoRequest();
-		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).to(new Receiver<UserInfoProxy>() {
+		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).with("loginURL").to(new Receiver<UserInfoProxy>() {
 
 				@Override
 				public void onSuccess(UserInfoProxy response) {
@@ -579,13 +701,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					if(response.getEmail()==null ||response.getEmail().trim().equals("") ){
 						//Anonymous user
 						userRole = UserRole.AnonymousUser;
-						disableSaveScenario();
 					}else{
 						if(response.getAdmin()) 
 							userRole = UserRole.Administrator;
 						else
 							userRole = UserRole.RegisteredUser;
 					}
+					checkEditable();
 					
 				}
 				@Override
@@ -596,6 +718,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			}).fire();
 		
 		}
+		
+		rejectScnButton.setTitle("Reject this scenario if is not even woth asking submiter's calification. Can NOT be undone");
+		returnScnButton.setTitle("Return this scenario to the submitter for clarification.");
+		approveScnButton.setTitle("Validate this scenario and make it available to all users.");
 					
 	}
 	
@@ -604,33 +730,35 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * we can't interact w/ the panels
 	 */
 	private void disableSaveScenario(){
-		status.setText("");
-		
-		saveButton.setVisible(false);//can't save on demand
-		submitButton.setVisible(false);//can't submit the scn
-		
-		algorithmDescription.setEnabled(false);
-		clinicalProcesses.setEnabled(false);
-		risks.setEnabled(false);
-		benefits.setEnabled(false);
-		titleEditor.setEnabled(false);
-		currentStateEditor.setEnabled(false);
-		proposedStateEditor.setEnabled(false);
+		status.setText("You dont have permission to modify the scenario");
+		status.setVisible(false);
+				
+		algorithmDescription.setReadOnly(true);
+		clinicalProcesses.setReadOnly(true);
+		risks.setReadOnly(true);
+		benefits.setReadOnly(true);
+		titleEditor.setReadOnly(true);
+		currentStateEditor.setReadOnly(true);
+		proposedStateEditor.setReadOnly(true);
 	}
 	
-	private void enableSaveScenario(){
-//		status.setText("");
-		
-		saveButton.setVisible(true);
-		submitButton.setVisible(true);
-		
-		algorithmDescription.setEnabled(true);
-		clinicalProcesses.setEnabled(true);
-		risks.setEnabled(true);
-		benefits.setEnabled(true);
-		titleEditor.setEnabled(true);
-		currentStateEditor.setEnabled(true);
-		proposedStateEditor.setEnabled(true);
+	private void enableSaveScenario(){		
+		algorithmDescription.setReadOnly(false);
+		clinicalProcesses.setReadOnly(false);
+		risks.setReadOnly(false);
+		benefits.setReadOnly(false);
+		titleEditor.setReadOnly(false);
+		currentStateEditor.setReadOnly(false);
+		proposedStateEditor.setReadOnly(false);	
+	}
+	
+	
+	private void buildTabsTables(boolean drawNew){
+	    buildEquipmentTable(drawNew);//new scn. No equipment list
+	    buildHazardsTable(drawNew);
+		buildCliniciansTable(drawNew);
+		buildEnvironmentsTable(drawNew);
+		buildReferencesTable(drawNew);
 	}
 
 	
@@ -641,7 +769,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
 		if(null == currentScenario) {		
 			    context.create()
-			    .with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+			    .with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
 			    .to(new Receiver<ScenarioProxy>() {
 		    	
 	                @Override
@@ -658,16 +786,18 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	                    ScenarioPanel.this.currentScenario = currentScenario;
                   	                    
 	                    //after the Entity has been succesfully created, we populate the widgets w/ the entity info and draw it
-	        		    buildEquipmentTable(true);//new scn. No equipment list
-	        		    buildHazardsTable(true);
-	        			buildCliniciansTable(true);
-	        			buildEnvironmentsTable(true);
-
+	                    buildTabsTables(true);
 	        			configureComponents();   			  
 	    			    status.setText("");
 	    			    uniqueId.setText("");	
+	    			    
 
 	                }
+	                
+					public void onFailure(ServerFailure error) {
+						super.onFailure(error);
+						logger.log(Level.SEVERE, error.getMessage());
+					}
 			        
 			    }).fire();
 
@@ -678,13 +808,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		    currentScenario = context.edit(currentScenario); 
             driver.edit(currentScenario, context);
             this.currentScenario = currentScenario;
-            buildEquipmentTable(false);
-            buildHazardsTable(false);
-    		buildCliniciansTable(false);
-    		buildEnvironmentsTable(false);
+            buildTabsTables(false);
     		if(currentScenario.getId()!=null)
-    			uniqueId.setText("Scenario Unique ID: "+String.valueOf(currentScenario.getId()));
-    		
+    			uniqueId.setText("Scenario Unique ID: "+String.valueOf(currentScenario.getId()));  		
+
     		configureComponents();
 		}
 		
@@ -696,13 +823,74 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 	}
 	
+	private void configureComponents(){
+		checkEditable();
+		//1- Save button
+		if(!editable){
+			saveButton.setVisible(false);
+			submitButton.setVisible(false);
+			disableSaveScenario();
+		}else{
+			saveButton.setVisible(true);
+			submitButton.setVisible(true);
+			enableSaveScenario();
+		}
+		//2- submit button
+		if(currentScenario.getStatus().equals(SCN_STATUS_UNSUBMITTED) && currentScenario.getSubmitter().equals(userEmail)){
+			submitButton.setVisible(true);
+		}else{
+			submitButton.setVisible(false);
+		}
+		//3- lock button
+		if(userRole==UserRole.Administrator){
+			if(currentScenario.getStatus().equals(SCN_STATUS_UNSUBMITTED) || currentScenario.getStatus().equals(SCN_STATUS_REJECTED)){
+				lockButton.setVisible(false);
+			}else{
+				lockButton.setVisible(true);
+				if(currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE) || currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST)){
+					lockButton.setText("Lock");
+				}else{
+					lockButton.setText("Unlock");
+				}
+			}
+		}else{
+			lockButton.setVisible(false);
+		}
+
+		//4- Feedback tab panel
+		if(userRole==UserRole.Administrator && (//currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED) ||
+				currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE) ||
+				currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST))){
+			if(tabPanel.getWidgetCount() <= APPRV_SCN_TAB_POS)//add Feedback tab if is not there
+				tabPanel.add(manageScnStatus, "Approve or Reject");
+			//feedbak tab buttons
+			//4.1 Approve button: always visible
+			approveScnButton.setVisible(true);
+			//4.2 and 4.3 Return and reject scenario, only possible for unlocked pre-approved scenarios.
+			if(currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE)){
+				returnScnButton.setVisible(true);
+				rejectScnButton.setVisible(true);
+			}else{
+				returnScnButton.setVisible(false);
+				rejectScnButton.setVisible(false);
+			}
+
+		}else{
+			//if the tab is already showing we remove it
+			if(tabPanel.getWidgetCount() > APPRV_SCN_TAB_POS){
+				tabPanel.remove(APPRV_SCN_TAB_POS);
+				selectFirstTab();
+			}
+		}
+	}
+	
 	/**
 	 * Configures the different components of the panel according to the 
 	 * user role and Scenario status
 	 */
-	private void configureComponents(){
-		//XXX this would be a good place to do tabPanel.selectTab(0)???;	 
-		// if we algo wanted to return to this tab after submitting a scn
+/*	private void configureComponents(){
+		//XXX this would be a good place to do tabPanel.selectTab(0)???;
+		// if we also wanted to return to this tab after submitting a scn
 		enableSaveScenario();
 		//1- Unsubmitted
 		// only the scenario owner could submit the scn. 
@@ -752,7 +940,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				selectFirstTab();
 			}
 		}
-	}
+	}*/
 	
 	@UiField
 	TabPanel tabPanel;
@@ -808,6 +996,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiField
 	@Ignore
+	Anchor clinicanExample;
+	
+	@UiField
+	@Ignore
+	Anchor	environmentExample;
+	
+	@UiField
+	@Ignore
 	FlexTable cliniciansTable;
 	
 	@UiField
@@ -829,6 +1025,15 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	@UiField
 	@Ignore
 	Anchor addNewHazard;//adds a new empty hazards row
+	
+	//references tab
+	@UiField
+	@Ignore
+	FlexTable referencesTable;
+	
+	@UiField
+	@Ignore
+	Anchor addNewLinkedReference;//adds a new reference row
 	
 	
 	private static class ClinicianSuggestOracle extends MultiWordSuggestOracle {
@@ -909,6 +1114,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 	}
 	private final ClinicianSuggestOracle clinicianSuggestOracle = new ClinicianSuggestOracle();
+	public static ClinicianSuggestOracle getClinicianSuggestOracle(){
+		return new ClinicianSuggestOracle();
+	}
+	
 	
 	private static class EnvironmentSuggestOracle extends MultiWordSuggestOracle {
 		private static String[] values = new String[] {"Acute assessment unit",
@@ -938,7 +1147,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		"Post surgical care unit",
 		"Psychiatric ward",
 		"Radiology/imaging",
-		"Recovery room",
+		"ICU-intensive care unit",
 		"Renal unit",
 		"Telemetry",
 		"Transport",
@@ -975,6 +1184,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		}
 		
 	}
+	private final EnvironmentSuggestOracle environmentSuggestOracle = new EnvironmentSuggestOracle();
+	public static EnvironmentSuggestOracle getEnvironmentSuggestOracle(){
+		return new EnvironmentSuggestOracle();
+	}
 	
 	//-----------------------------------------
 	//ANCHORS 
@@ -982,10 +1195,22 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	//When clicking in "AddNew Equipment" anchor
 	@UiHandler("addNewEquipment")
 	void onAddNewEqClick(ClickEvent click) {
+		if(editable){//TICKET-110
+			addNewEquipmentRow();
+		}
+	}
+	
+	private void addNewEquipmentRow(){
 		final int rows = equipmentTable.getRowCount();
 		equipmentTable.insertRow(rows);
+		
 		for(int j = 0; j < 4; j++) {//add four text boxes
-			equipmentTable.setWidget(rows, j, new TextBox());
+			TextBox textbox = new TextBox();
+			textbox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+			equipmentTable.setWidget(rows, j, textbox);
+		}
+		for(int j = 4; j < EQUIPMENT_DElETEBUTTON_COL; j++) {//add four check boxes
+			equipmentTable.setWidget(rows, j, new CheckBox());
 		}
 		//add delete button
 		Button deleteButton = new Button("Delete");
@@ -1000,25 +1225,34 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		});
 	}
 	
+	
 	//When clicking in "AddNew Equipment" anchor
 	@UiHandler("addNewHazard")
 	void onAddNewHazardClick(ClickEvent click) {
-		addNewHazardTableRow();
+		/**
+		 * We use the currentStateEditor to know if the components have been enabled/disabled for modification
+		 * and thus know if we should allow to create new empty rows
+		 */
+		if(currentStateEditor.isEnabled())//TICKET-110
+			addNewHazardTableRow();
 	}
 	
 	/**
 	 * Adds a new empty row to the hazards table
 	 */
 	private void addNewHazardTableRow(){
+		
 		final int row = hazardsTable.getRowCount();
 		hazardsTable.insertRow(row);
 		final TextArea hazardDescription = new TextArea();
 		hazardDescription.setVisibleLines(10);
 		hazardDescription.setCharacterWidth(40);
+		hazardDescription.setReadOnly(!editable);
 		
 		final TextArea hazardFactors = new TextArea();
 		hazardFactors.setVisibleLines(10);
 		hazardFactors.setCharacterWidth(40);
+		hazardFactors.setReadOnly(!editable);
 		
 		hazardsTable.setWidget(row, HAZARDS_DESCRIPTION_COL, hazardDescription);
 		hazardsTable.setWidget(row, HAZARDS_FACTORS_COL, hazardFactors);
@@ -1026,7 +1260,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		hazardsTable.setWidget(row, HAZARDS_SEVERITY_COL, buildListBox(hazardSeverity));
 		
 		Button deleteButton = new Button("Delete");
-		hazardsTable.setWidget(row, HAZARDS_DELETEBUTTON_COL, deleteButton);
+		if(editable)
+			hazardsTable.setWidget(row, HAZARDS_DELETEBUTTON_COL, deleteButton);
 		deleteButton.addClickHandler(new ClickHandler() {				
 			@Override
 			public void onClick(ClickEvent event) {
@@ -1050,11 +1285,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		hazardDescription.setText(description);
 		hazardDescription.setVisibleLines(10);
 		hazardDescription.setCharacterWidth(40);
+		hazardDescription.setReadOnly(!editable);
 		
 		final TextArea hazardFactors = new TextArea();
 		hazardFactors.setText(factors);
 		hazardFactors.setVisibleLines(10);
 		hazardFactors.setCharacterWidth(40);
+		hazardFactors.setReadOnly(!editable);
 		
 		final ListBox hazardsExpected = buildListBox(hazardExpected);
 		int indexExpected = getHazardExpectedIndex(expected);
@@ -1070,7 +1307,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		hazardsTable.setWidget(row, HAZARDS_SEVERITY_COL, hazardsSeverity);
 		
 		Button deleteButton = new Button("Delete");
-		hazardsTable.setWidget(row, HAZARDS_DELETEBUTTON_COL, deleteButton);
+		if(editable){ hazardsTable.setWidget(row, HAZARDS_DELETEBUTTON_COL, deleteButton);}
+		
 		deleteButton.addClickHandler(new ClickHandler() {				
 			@Override
 			public void onClick(ClickEvent event) {
@@ -1080,27 +1318,101 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		});
 	}
 	
-	private final EnvironmentSuggestOracle environmentSuggestOracle = new EnvironmentSuggestOracle();
-	
-	@UiHandler("addNewClinician")
-	void onANCClick(ClickEvent click) {
-		final int rows = cliniciansTable.getRowCount();
-		cliniciansTable.insertRow(rows);
-		final SuggestBox sb = new SuggestBox(clinicianSuggestOracle);
-		sb.setStyleName("wideSuggest");
-		cliniciansTable.setWidget(rows, CLINICIANS_TYPE_COL, sb);
-			
-		//to delete this entry
+	/**
+	 * add a new empty reference box
+	 */
+	private void addNewLinkedReference(){
+		final int rows = referencesTable.getRowCount();
+		referencesTable.insertRow(rows);//add new roe
+		referencesTable.setWidget(rows, REFERENCE_http_COL, new Label("http://"));
+		final TextArea reference = new TextArea();
+		reference.setVisibleLines(1);
+		reference.setCharacterWidth(70);
+		reference.setReadOnly(!editable);
+		referencesTable.setWidget(rows, REFERENCE_TEXT_COL, reference);
+		
 		Button deleteButton = new Button("Delete");
-		deleteButton.addClickHandler(new ClickHandler() {
-			
+		if(editable)
+			referencesTable.setWidget(rows, REFERENCE_DELETEBUTTON_COL, deleteButton);
+		
+		deleteButton.addClickHandler(new ClickHandler() {				
 			@Override
 			public void onClick(ClickEvent event) {
-				cliniciansTable.removeRow(rows);
+				referencesTable.removeRow(rows);				
+			}
+		});
+		
+	}
+	
+	//When clicking in "AddNew addNewLinkedReference" anchor
+	@UiHandler("addNewLinkedReference")
+	void onAddNewReferenceClick(ClickEvent click) {
+		if(editable)
+			addNewLinkedReference();
+	}
+	
+	private void addNewLinkedReference(String ref){
+		final int rows = referencesTable.getRowCount();
+		referencesTable.insertRow(rows);//add new roe
+		referencesTable.setWidget(rows, REFERENCE_http_COL, new Label("http://"));
+		final TextArea reference = new TextArea();
+		reference.setVisibleLines(1);
+		reference.setCharacterWidth(70);
+		reference.setText(ref);
+		reference.setReadOnly(!editable);
+		referencesTable.setWidget(rows, REFERENCE_TEXT_COL, reference);
+		
+		Button deleteButton = new Button("Delete");
+		if(editable)
+			referencesTable.setWidget(rows, REFERENCE_DELETEBUTTON_COL, deleteButton);
+		
+		deleteButton.addClickHandler(new ClickHandler() {				
+			@Override
+			public void onClick(ClickEvent event) {
+				referencesTable.removeRow(rows);
 				
 			}
 		});
-		cliniciansTable.setWidget(rows, CLINICIANS_DELETEBUTTON_COL, deleteButton);
+		
+		Button followLink = new Button("Follow link");
+		referencesTable.setWidget(rows, REFERENCE_FOLLOWBUTTON_COL, followLink);
+		followLink.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				System.out.println(reference.getText());
+				if(!reference.getText().trim().equals(""))
+					Window.open("http://"+reference.getText(), "_blank", "");//use "enabled" as third argument to open in new tab	
+//				Window.open("http://www.google.com/", "_blank", "");
+			}
+		});
+	}
+	
+
+	
+	@UiHandler("addNewClinician")
+	void onANCClick(ClickEvent click) {
+		/**
+		 * We use the currentStateEditor to know if the components have been enabled/disabled for modification
+		 * and thus know if we should allow to create new empty rows
+		 */
+		if(editable){//TICKET-110
+			final int rows = cliniciansTable.getRowCount();
+			cliniciansTable.insertRow(rows);
+			final SuggestBox sb = new SuggestBox(clinicianSuggestOracle);
+			sb.setStyleName("wideSuggest");
+			cliniciansTable.setWidget(rows, CLINICIANS_TYPE_COL, sb);
+				
+			//to delete this entry
+			Button deleteButton = new Button("Delete");
+			deleteButton.addClickHandler(new ClickHandler() {
+				
+				@Override
+				public void onClick(ClickEvent event) {
+					cliniciansTable.removeRow(rows);
+					
+				}
+			});
+			cliniciansTable.setWidget(rows, CLINICIANS_DELETEBUTTON_COL, deleteButton);
+		}
 	}
 	
 	/**
@@ -1113,6 +1425,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		final SuggestBox sb = new SuggestBox(clinicianSuggestOracle);
 		sb.setText(clinician);
 		sb.setStyleName("wideSuggest");
+		sb.setEnabled(editable);
 		cliniciansTable.setWidget(rows, CLINICIANS_TYPE_COL, sb);
 				
 		//to delete this entry
@@ -1125,28 +1438,35 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				
 			}
 		});
-		cliniciansTable.setWidget(rows, CLINICIANS_DELETEBUTTON_COL, deleteButton);
+		if(editable)
+			cliniciansTable.setWidget(rows, CLINICIANS_DELETEBUTTON_COL, deleteButton);
 	}
 	
 	@UiHandler("addNewEnvironment")
 	void onANEClick(ClickEvent click) {
-		final int rows = environmentsTable.getRowCount();
-		environmentsTable.insertRow(rows);
-		final SuggestBox sb = new SuggestBox(environmentSuggestOracle);
-		sb.setStyleName("wideSuggest");
-		environmentsTable.setWidget(rows, ENVIRONMENT_TYPE_COL, sb);
-			
-		//to delete this entry
-		Button deleteButton = new Button("Delete");
-		deleteButton.addClickHandler(new ClickHandler() {
-			
-			@Override
-			public void onClick(ClickEvent event) {
-				environmentsTable.removeRow(rows);
+		/**
+		 * We use the currentStateEditor to know if the components have been enabled/disabled for modification
+		 * and thus know if we should allow to create new empty rows
+		 */
+		if(editable){//TICKET-110
+			final int rows = environmentsTable.getRowCount();
+			environmentsTable.insertRow(rows);
+			final SuggestBox sb = new SuggestBox(environmentSuggestOracle);
+			sb.setStyleName("wideSuggest");
+			environmentsTable.setWidget(rows, ENVIRONMENT_TYPE_COL, sb);
 				
-			}
-		});
-		environmentsTable.setWidget(rows, ENVIRONMENT_DELETEBUTTON_COL, deleteButton);
+			//to delete this entry
+			Button deleteButton = new Button("Delete");
+			deleteButton.addClickHandler(new ClickHandler() {
+				
+				@Override
+				public void onClick(ClickEvent event) {
+					environmentsTable.removeRow(rows);
+					
+				}
+			});
+			environmentsTable.setWidget(rows, ENVIRONMENT_DELETEBUTTON_COL, deleteButton);
+	}
 	}
 	
 	/**
@@ -1159,6 +1479,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		final SuggestBox sb = new SuggestBox(environmentSuggestOracle);
 		sb.setText(environment);
 		sb.setStyleName("wideSuggest");
+		sb.setEnabled(editable);
 		environmentsTable.setWidget(rows, ENVIRONMENT_TYPE_COL, sb);
 			
 		//to delete this entry
@@ -1171,12 +1492,16 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				
 			}
 		});
-		environmentsTable.setWidget(rows, ENVIRONMENT_DELETEBUTTON_COL, deleteButton);
+		if(editable)
+			environmentsTable.setWidget(rows, ENVIRONMENT_DELETEBUTTON_COL, deleteButton);
 	}
 	
 	@UiHandler("currentStateExample")
 	void onCSEClick(ClickEvent click) {
-		MyDialog md = new MyDialog("Current State Example", "A 49-year-old woman underwent an uneventful total abdominal hysterectomy and bilateral salpingo-oophorectomy. Postoperatively, the patient complained of severe pain and received intravenous morphine sulfate in small increments. She began receiving a continuous infusion of morphine via a patient controlled analgesia (PCA) pump. A few hours after leaving the PACU [post anesthesia care unit] and arriving on the floor, she was found pale with shallow breathing, a faint pulse, and pinpoint pupils. The nursing staff called a 'code,' and the patient was resuscitated and transferred to the intensive care unit on a respirator [ventilator]. Based on family wishes, life support was withdrawn and the patient died. Review of the case by providers implicated a PCA overdose. Delayed detection of respiratory compromise in PATIENTS undergoing PCA therapy is not uncommon because monitoring of respiratory status has been confounded by excessive nuisance alarm conditions (poor alarm condition specificity).");
+//		MyDialog md = new MyDialog("Current State Example", "A 49-year-old woman underwent an uneventful total abdominal hysterectomy and bilateral salpingo-oophorectomy. Postoperatively, the patient complained of severe pain and received intravenous morphine sulfate in small increments. She began receiving a continuous infusion of morphine via a patient controlled analgesia (PCA) pump. A few hours after leaving the PACU [post anesthesia care unit] and arriving on the floor, she was found pale with shallow breathing, a faint pulse, and pinpoint pupils. The nursing staff called a 'code,' and the patient was resuscitated and transferred to the intensive care unit on a respirator [ventilator]. Based on family wishes, life support was withdrawn and the patient died. Review of the case by providers implicated a PCA overdose. Delayed detection of respiratory compromise in PATIENTS undergoing PCA therapy is not uncommon because monitoring of respiratory status has been confounded by excessive nuisance alarm conditions (poor alarm condition specificity).");
+		String header = "\"Current State\" describes an adverse event or barrier to provide clinical care or to improving workflow, and the clinical challenges that could be solved with the proposed system."; 
+		String example = "Example: A 49-year-old woman underwent an uneventful total abdominal hysterectomy and bilateral salpingo-oophorectomy. Postoperatively, the patient complained of severe pain and received intravenous morphine sulfate in small increments. She began receiving a continuous infusion of morphine via a patient controlled analgesia (PCA) pump. A few hours after leaving the PACU [post anesthesia care unit] and arriving on the floor, she was found pale with shallow breathing, a faint pulse, and pinpoint pupils. The nursing staff called a 'code,' and the patient was resuscitated and transferred to the intensive care unit on a respirator [ventilator]. Based on family wishes, life support was withdrawn and the patient died. Review of the case by providers implicated a PCA overdose. Delayed detection of respiratory compromise in PATIENTS undergoing PCA therapy is not uncommon because monitoring of respiratory status has been confounded by excessive nuisance alarm conditions (poor alarm condition specificity).";
+		MyDialog md = new MyDialog(header, example);
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
@@ -1184,7 +1509,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("proposedStateExample")
 	void onPSEClick(ClickEvent click) {
-		MyDialog md = new MyDialog("Proposed State Example", "While on the PCA infusion pump, the PATIENT is monitored with a respiration rate monitor and a pulse oximeter. If physiological parameters move outside the pre-determined range, the infusion is stopped and clinical staff is notified to examine the PATIENT and restart the infusion if appropriate. The use of two independent physiological measurements of respiratory function (oxygen saturation and respiratory rate) enables a smart algorithm to optimize sensitivity, thereby enhancing the detection of respiratory compromise while reducing nuisance alarm conditions.");
+		String header = "\"Proposed State\" is a brief description of the improvement in safety and effectivenes obtained by applying the proposed system.";
+		String example ="Example: While on the PCA infusion pump, the PATIENT is monitored with a respiration rate monitor and a pulse oximeter. If physiological parameters move outside the pre-determined range, the infusion is stopped and clinical staff is notified to examine the PATIENT and restart the infusion if appropriate. The use of two independent physiological measurements of respiratory function (oxygen saturation and respiratory rate) enables a smart algorithm to optimize sensitivity, thereby enhancing the detection of respiratory compromise while reducing nuisance alarm conditions.";
+		MyDialog md = new MyDialog(header, example);
+//		MyDialog md = new MyDialog("Proposed State Example", "While on the PCA infusion pump, the PATIENT is monitored with a respiration rate monitor and a pulse oximeter. If physiological parameters move outside the pre-determined range, the infusion is stopped and clinical staff is notified to examine the PATIENT and restart the infusion if appropriate. The use of two independent physiological measurements of respiratory function (oxygen saturation and respiratory rate) enables a smart algorithm to optimize sensitivity, thereby enhancing the detection of respiratory compromise while reducing nuisance alarm conditions.");
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
@@ -1192,7 +1520,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("clinicalProcessesExample")
 	void onCPClick(ClickEvent click) {
-		MyDialog md = new MyDialog("Clinical Processes Example", "The patient is connected to a PCA infusion pump containing morphine sulfate, a large volume infusion pump acting as a carrier line of saline, a pulse oximeter, a non-invasive blood pressure device, a respiration rate monitor and a distributed alarm system. Heart rate and blood pressure, respiration rate, pain score and sedation score are collected as directed by the clinical process for set-up of a PCA pump. An intravenous (IV) line assessment is also completed. The PCA infusion pump, large volume infusion pump, and pulse oximeter are attached to the integrated system. The system queries the hospital information system for the patient's weight, age, and medication list (specifically, whether the patient is receiving sedatives or non-PCA opioids), and searches for a diagnosis of sleep apnea. The system then accesses the physician's orders from the computerized physician order entry system for dosage and rate for the PCA and large volume infusion pump, and verifies the values programmed into the infusion pump. The patient's SpO2 (arterial oxygen saturation measured by pulse oximetry) and respiration rate are monitored continuously.");
+		String header = "\"Clinical Processes\" describes how this approach affects the practicce environment, both clinically and from the business/process perspective.";
+		String example = "Example: The patient is connected to a PCA infusion pump containing morphine sulfate, a large volume infusion pump acting as a carrier line of saline, a pulse oximeter, a non-invasive blood pressure device, a respiration rate monitor and a distributed alarm system. Heart rate and blood pressure, respiration rate, pain score and sedation score are collected as directed by the clinical process for set-up of a PCA pump. An intravenous (IV) line assessment is also completed. The PCA infusion pump, large volume infusion pump, and pulse oximeter are attached to the integrated system. The system queries the hospital information system for the patient's weight, age, and medication list (specifically, whether the patient is receiving sedatives or non-PCA opioids), and searches for a diagnosis of sleep apnea. The system then accesses the physician's orders from the computerized physician order entry system for dosage and rate for the PCA and large volume infusion pump, and verifies the values programmed into the infusion pump. The patient's SpO2 (arterial oxygen saturation measured by pulse oximetry) and respiration rate are monitored continuously.";
+		MyDialog md = new MyDialog(header, example);
+//		MyDialog md = new MyDialog("Clinical Processes Example", "The patient is connected to a PCA infusion pump containing morphine sulfate, a large volume infusion pump acting as a carrier line of saline, a pulse oximeter, a non-invasive blood pressure device, a respiration rate monitor and a distributed alarm system. Heart rate and blood pressure, respiration rate, pain score and sedation score are collected as directed by the clinical process for set-up of a PCA pump. An intravenous (IV) line assessment is also completed. The PCA infusion pump, large volume infusion pump, and pulse oximeter are attached to the integrated system. The system queries the hospital information system for the patient's weight, age, and medication list (specifically, whether the patient is receiving sedatives or non-PCA opioids), and searches for a diagnosis of sleep apnea. The system then accesses the physician's orders from the computerized physician order entry system for dosage and rate for the PCA and large volume infusion pump, and verifies the values programmed into the infusion pump. The patient's SpO2 (arterial oxygen saturation measured by pulse oximetry) and respiration rate are monitored continuously.");
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
@@ -1200,14 +1531,20 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("algorithmDescriptionExample")
 	void onADClick(ClickEvent click) {
-		MyDialog md = new MyDialog("Algorithm Description Example", "The system uses an algorithm based on weight, age, medication list, diagnoses, SpO2 and respiration rate to determine the state of the patient. Sedation and pain scores also contribute to this algorithm. If the algorithm detects decreases in the patient's SpO2 and/or respiration rate below the calculated or pre-set threshold, a command is sent to stop the PCA pump to prevent further drug overdose, and the system generates a respiratory distress medium priority alarm condition sent via the distributed alarm system. Furthermore, if the algorithm detects that both the SpO2 and respiration rate indicate distress, the system generates an extreme respiratory distress high priority alarm condition sent via the distributed alarm system.");
+		String header = "\"Algorithm Description\" is a brief explanation of the new workflow.";
+		String example ="Example: The system uses an algorithm based on weight, age, medication list, diagnoses, SpO2 and respiration rate to determine the state of the patient. Sedation and pain scores also contribute to this algorithm. If the algorithm detects decreases in the patient's SpO2 and/or respiration rate below the calculated or pre-set threshold, a command is sent to stop the PCA pump to prevent further drug overdose, and the system generates a respiratory distress medium priority alarm condition sent via the distributed alarm system. Furthermore, if the algorithm detects that both the SpO2 and respiration rate indicate distress, the system generates an extreme respiratory distress high priority alarm condition sent via the distributed alarm system.";
+		MyDialog md = new MyDialog(header, example);
+//		MyDialog md = new MyDialog("Algorithm Description Example", "The system uses an algorithm based on weight, age, medication list, diagnoses, SpO2 and respiration rate to determine the state of the patient. Sedation and pain scores also contribute to this algorithm. If the algorithm detects decreases in the patient's SpO2 and/or respiration rate below the calculated or pre-set threshold, a command is sent to stop the PCA pump to prevent further drug overdose, and the system generates a respiratory distress medium priority alarm condition sent via the distributed alarm system. Furthermore, if the algorithm detects that both the SpO2 and respiration rate indicate distress, the system generates an extreme respiratory distress high priority alarm condition sent via the distributed alarm system.");
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
 	}
 	@UiHandler("benefitsExample")
 	void onBClick(ClickEvent click) {
-		MyDialog md = new MyDialog("Benefits Example", "Add error resistance to the x-ray procedure by eliminating the dependence on the operator (e.g. anesthesia provider) to remember to turn the ventilator back on. Shorten or eliminate the period of apnea, thereby reducing potentially adverse responses to apnea; and Provide the ability to synchronize x-ray exposure with inspiratory hold, without requiring anyone to be present in the x-ray exposure area to manually generate sustained inspiration");
+		String header = "\"Benefits\" describes obstales to efficiency, temawork or safety that could be aliminated with the proposed system.";
+		String example ="Example: Add error resistance to the x-ray procedure by eliminating the dependence on the operator (e.g. anesthesia provider) to remember to turn the ventilator back on. Shorten or eliminate the period of apnea, thereby reducing potentially adverse responses to apnea; and Provide the ability to synchronize x-ray exposure with inspiratory hold, without requiring anyone to be present in the x-ray exposure area to manually generate sustained inspiration.";
+		MyDialog md = new MyDialog(header, example);
+//		MyDialog md = new MyDialog("Benefits Example", "Add error resistance to the x-ray procedure by eliminating the dependence on the operator (e.g. anesthesia provider) to remember to turn the ventilator back on. Shorten or eliminate the period of apnea, thereby reducing potentially adverse responses to apnea; and Provide the ability to synchronize x-ray exposure with inspiratory hold, without requiring anyone to be present in the x-ray exposure area to manually generate sustained inspiration");
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
@@ -1215,8 +1552,29 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("risksExample")
 	void onRClick(ClickEvent click) {
-		MyDialog md = new MyDialog("Risks Example", "A synchronization error could lead to x-ray exposure at an incorrect phase of respiration.");
+		String header = "\"Risks\" is a description of new risks that could be introduced with the proposed and a how they could be mitigated.";
+		String example ="Example: A synchronization error could lead to x-ray exposure at an incorrect phase of respiration.";
+		MyDialog md = new MyDialog(header, example);
+//		MyDialog md = new MyDialog("Risks Example", "A synchronization error could lead to x-ray exposure at an incorrect phase of respiration.");
 //		md.setPopupPosition(click.getClientX(), click.getClientY());
+		md.setAutoHideEnabled(true);
+		md.showRelativeTo(titleEditor);
+	}
+	
+	@UiHandler("clinicanExample")
+	void onClinicianExampleClick(ClickEvent click) {
+		String header = "Include a \"Clinician\" for each role or actor present in the scenario .";
+		String example ="Example: Anesthesioligist, Oncologist or Surgeon.";
+		MyDialog md = new MyDialog(header, example);;
+		md.setAutoHideEnabled(true);
+		md.showRelativeTo(titleEditor);
+	}
+	
+	@UiHandler("environmentExample")
+	void onEnvironmentExampleClick(ClickEvent click) {
+		String header = "\"Environments\" is the environment of use: home , transport or hospital (with specific clinical areas).";
+		String example ="Example: 	ICU-intensive care unit, OR-operating room, Patients bay, Nurse station, Transport or even Cafeteria.";
+		MyDialog md = new MyDialog(header, example);;
 		md.setAutoHideEnabled(true);
 		md.showRelativeTo(titleEditor);
 	}
@@ -1253,25 +1611,74 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	@UiField
 	Button saveButton; //persist the Scn info
 	
+	@UiField
+	Button lockButton; //persist the Scn info
+	
+	@UiHandler("lockButton")
+	public void onClickLock(ClickEvent clickEvent) {
+		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+		currentScenario.setLastActionUser(userEmail);
+		if(!editable){//unlock
+			currentScenario.setLockOwner(userEmail);
+			currentScenario.setLastActionTaken(SCN_LAST_ACTION_UNLOCKED);
+			
+			if(currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED))
+				currentScenario.setStatus(SCN_STATUS_UNLOCKED_PRE);
+			if(currentScenario.getStatus().equals(SCN_STATUS_APPROVED))
+				currentScenario.setStatus(SCN_STATUS_UNLOCKED_POST);
+			if(currentScenario.getStatus().equals(SCN_STATUS_MODIFIED))
+				currentScenario.setStatus(SCN_STATUS_UNLOCKED_POST);	
+			editable = true;
+		}else{//lock
+			currentScenario.setLockOwner(null);
+			currentScenario.setLastActionTaken(SCN_LAST_ACTION_LOCKED);
+			if(currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE))
+				currentScenario.setStatus(SCN_STATUS_SUBMITTED);
+			if(currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST))
+				currentScenario.setStatus(SCN_STATUS_MODIFIED);
+			editable = false;
+		}
+		scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(singleScenarioReceiver);
+		
+	}
+	
 	@UiHandler("submitButton")
 	public void onClickSubmit(ClickEvent clickEvent) {
 		//TICKET-106 
 		// Either call save, or check the list-type components
 		// option 3 we do like 'Approve' or 'Reject' an also send a email message
 		// scnReq.persistWithNotification
+		
+		if(isEmptyScenario()){
+			Window.alert("You can't submit an empty scenario for revision.");
+			return;
+		}
+		//TICKET-115
+		if(titleEditor.getText().trim().equals("") ||
+				currentStateEditor.getText().trim().equals("") ||
+				proposedStateEditor.getText().trim().equals("")){
+			String t = "The sceanrio \"Title\", \"Current State\" and \"Proposed State\" (see the \"Sceanrio Description\" tab) are MANDATORY fields." +
+					" \nPlease complete this information";
+			Window.alert(t);
+			return;
+		}
 	
 //		if(!currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED)){
 		if(!isEmptyScenario() && currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_UNSUBMITTED)){
-			ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
-			currentScenario.setStatus(SCN_STATUS_SUBMITTED);
-			checkScenarioFields(scnReq);
+			final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+
 			boolean confirm = Window.confirm("Are you sure you want to SUBMIT this scenario?");
 			if(confirm){
+				
+				currentScenario.setStatus(SCN_STATUS_SUBMITTED);
+				currentScenario.setLastActionTaken(SCN_LAST_ACTION_SUBMITTED);
+				currentScenario.setLastActionUser(userEmail);
+				checkScenarioFields(scnReq);
 				scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(new Receiver<ScenarioProxy>() {
 	
 					@Override
 					public void onSuccess(ScenarioProxy response) {
-						Window.alert("This Clinical Scenario has been submitted for approval");		
+						Window.alert("This Clinical Scenario has been submitted for approval");	
 						setCurrentScenario(currentScenario);
 					}
 					
@@ -1296,9 +1703,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	@UiHandler("approveScnButton")
 	public void onClickApproveScn(ClickEvent clickEvent) {
-		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
-		currentScenario.setStatus(SCN_STATUS_APPROVED);//update entity information
-		checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
+		final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+
 		boolean confirm = Window.confirm("Are you sure you want to APPROVE this scenario?");
 		if(confirm){
 			String subject ="Your scenario "+currentScenario.getTitle()+" has been approved";
@@ -1307,45 +1713,117 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			message += "\n\n"+feedback.getText();
 			message += "\n The MD PnP Team \n www.mdpnp.org";
 			
+			boolean sendEmail = false; //FIXME MAil servce as its own entity w/ services
+			
+			if(currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST)){
+				currentScenario.setLastActionTaken(SCN_LAST_ACTION_REAPPROVED);
+			}else{
+				currentScenario.setLastActionTaken(SCN_LAST_ACTION_APPROVED);
+				sendEmail = true;
+			}			
+			currentScenario.setStatus(SCN_STATUS_APPROVED);//update entity information
+			currentScenario.setLockOwner(null);
+			currentScenario.setLastActionUser(userEmail);
+
+			checkScenarioFields(scnReq);//not really that necessary, because it has been updated when clicking the FeedBack tab
+			
+			if(sendEmail){
+				scnReq.persistWithNotification(currentScenario.getSubmitter(), subject, message)
+				.using(currentScenario).with(driver.getPaths())
+				.fire(new Receiver<ScenarioProxy>() {
+		
+					@Override
+					public void onSuccess(ScenarioProxy response) {
+						Window.alert("This Clinical Scenario has been approved");	
+						setCurrentScenario(currentScenario);
+					}
+					
+					public void onFailure(ServerFailure error) {
+						super.onFailure(error);
+					}
+				});
+			}else{
+				scnReq.persist()
+				.using(currentScenario).with(driver.getPaths())
+				.fire(new Receiver<ScenarioProxy>() {
+		
+					@Override
+					public void onSuccess(ScenarioProxy response) {
+						Window.alert("This Clinical Scenario has been approved");	
+						setCurrentScenario(currentScenario);
+					}
+					
+					public void onFailure(ServerFailure error) {
+						super.onFailure(error);
+					}
+				});
+			}
+		}
+	}
+	
+	
+	@UiField
+	Button returnScnButton; //Button to return the Scn for clarification
+	
+	@UiHandler("returnScnButton")
+	public void onClickReturnScn(ClickEvent clickEvent) {
+		final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+
+		//XXX
+		boolean confirm = Window.confirm("Are you sure you want to RETURN this scenario?");
+		if(confirm){
+			String subject ="Requested clarification for your scenario "+currentScenario.getTitle();
+			String message = "The MD PnP Clinical Scenario Repository Administrators " +
+					"have requested further clarification for your scenario "+currentScenario.getTitle()
+					+".\n Please see the comments below \n";
+			message += "\n \n"+feedback.getText();
+			message += "\n The MD PnP Team \n www.mdpnp.org";
+			
+//			currentScenario.setStatus(SCN_STATUS_REJECTED);//XXX 07/22/13 diego@mdpnp.org, rejected Scn = pending of submission
+			currentScenario.setStatus(SCN_STATUS_UNSUBMITTED);//update entity information
+			currentScenario.setLockOwner(null);
+			currentScenario.setLastActionTaken(SCN_LAST_ACTION_RETURNED);
+			currentScenario.setLastActionUser(userEmail);
+			checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
+			
 			scnReq.persistWithNotification(currentScenario.getSubmitter(), subject, message)
 			.using(currentScenario).with(driver.getPaths())
 			.fire(new Receiver<ScenarioProxy>() {
 	
 				@Override
 				public void onSuccess(ScenarioProxy response) {
-					Window.alert("This Clinical Scenario has been approved");	
+					Window.alert("This Clinical Scenario has been returned for clarification");	
 					setCurrentScenario(currentScenario);
 				}
 				
 				public void onFailure(ServerFailure error) {
 					super.onFailure(error);
 				}
+				
 			});
 			
-			configureComponents();
+//			configureComponents();
 		}
 	}
-	
 	
 	@UiField
 	Button rejectScnButton; //Button to reject the Scn
 	
 	@UiHandler("rejectScnButton")
 	public void onClickRejectScn(ClickEvent clickEvent) {
-		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
-//		currentScenario.setStatus(SCN_STATUS_REJECTED);//XXX 07/22/13 diego@mdpnp.org, rejected Scn = pending of submission
-		currentScenario.setStatus(SCN_STATUS_UNSUBMITTED);//update entity information
-		checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
+		final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+
+		//XXX
 		boolean confirm = Window.confirm("Are you sure you want to REJECT this scenario?");
 		if(confirm){
-			String subject ="Your scenario "+currentScenario.getTitle()+" has been rejected";
-			String message = "Your scenario "+currentScenario.getTitle()
-					+" submission has been rejected by the MD PnP Clinical Scenario Repository Administrators.\n"
-					+"We appreciate your submission, but the data provided makes this scenario not suitable for approval.";
-			message += "\n \n"+feedback.getText();
-			message += "\n The MD PnP Team \n www.mdpnp.org";
 			
-			scnReq.persistWithNotification(currentScenario.getSubmitter(), subject, message)
+			currentScenario.setStatus(SCN_STATUS_REJECTED);//update entity information
+			currentScenario.setLockOwner(null);
+			currentScenario.setLastActionTaken(SCN_LAST_ACTION_REJECTED);
+			currentScenario.setLastActionUser(userEmail);
+			checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
+			
+			scnReq.persist()
 			.using(currentScenario).with(driver.getPaths())
 			.fire(new Receiver<ScenarioProxy>() {
 	
@@ -1357,11 +1835,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				
 				public void onFailure(ServerFailure error) {
 					super.onFailure(error);
+					currentScenario.setStatus(SCN_STATUS_SUBMITTED);//update entity information
+					//setCurrent?
 				}
 				
 			});
 			
-			configureComponents();
 		}
 	}
 	

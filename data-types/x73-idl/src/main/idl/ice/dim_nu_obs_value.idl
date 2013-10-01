@@ -1,0 +1,52 @@
+/**
+ * @file    dim_nu_obs_value.idl
+ * @author  WMS
+ * @brief   Define objects for nu obs value.
+ */
+
+typedef char CHARSTRING;
+typedef octet INTU8;
+typedef short INTI16;
+typedef double FLOATType;
+typedef unsigned short INTU16;
+typedef INTU16 BITS16;
+typedef INTU8 OCTETSTRING;
+typedef INTU16 DIMHANDLE;
+typedef INTU16 OIDType;
+typedef BITS16 MeasurementStatus;  
+const INTI16 MAXSTRSIZE_UDI = 16;
+
+struct nu_obs_value
+{
+  DIMHANDLE dimhandle;  /// 11073 name is handle, renamed to avoid conflict
+  OIDType   metric_id;  /// from VMO::Type or Metric-Id-Partition partition
+  MeasurementStatus state;
+  OIDType   unit_code;
+  FLOATType value;
+};
+
+struct absolute_time
+{
+  INTU8 century;  /// Zero-based. For year 2012, century = 20 (not 21)
+  INTU8 year;     /// For 2012, year = 12
+  INTU8 month;    /// 1 - 12
+  INTU8 day;      /// 1 - 31
+  INTU8 hour;
+  INTU8 minute;
+  INTU8 second;
+  INTU8 sec_fractions;  /// hundredths of second
+};
+
+/**
+ * Numeric data type object
+ */
+struct DIMT_NumericObsVal
+{
+  /// Universal Device ID  
+  CHARSTRING   udi[MAXSTRSIZE_UDI];  
+
+  nu_obs_value value;
+
+  /// Time of observation.
+  absolute_time absolute_timestamp;
+};

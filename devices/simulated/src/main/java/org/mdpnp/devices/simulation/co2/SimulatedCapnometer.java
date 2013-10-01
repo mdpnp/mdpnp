@@ -28,6 +28,9 @@ public class SimulatedCapnometer {
 	    
 		@Override
 		public void run() {
+		    
+		    
+		    
 			for(int i = 0; i < values.length; i++) {
 				values[i] = SimulatedCapnometer.this.co2[postIncrCount()];
 			}

@@ -1,5 +1,8 @@
 package org.mdpnp.clinicalscenarios.client;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioProxy;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioRequestFactory;
@@ -20,9 +23,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockPanel;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
@@ -111,14 +112,17 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			}
 			
 		});
+		userInfoBanner.getGoBackHome().setScheduledCommand(new Command(){
+			public void execute() {
+				showWidget(homePanel);
+			}
+		});
 		
 		
 		userInfoBanner.getBasicSearch().setScheduledCommand(new Command() {
 
 			@Override
 			public void execute() {
-				scenarioSearchPanel.hideNavigationButtons();
-				scenarioSearchPanel.hideAdvancedSearch();
 				scenarioSearchPanel.showBasicSearch();
 				showWidget(scenarioSearchPanel);
 			}
@@ -129,18 +133,44 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 //		scenarioListPanel.getPleaseEnterKeywords().setVisible(false);
 		scenarioListPanel.getHeader().setText("Scenario List");
 //		scenarioListPanel.getSubmitButton().setVisible(false);
-		scenarioSearchPanel.hideNavigationButtons();
-		scenarioListPanel.hideBasicSearch();
-		scenarioListPanel.hideAdvancedSearch();
+		scenarioSearchPanel.hideAllSearchPanels();
 		
 		
 		userInfoBanner.getAdvancedSearch().setScheduledCommand(new Command() {
 			
 			@Override
 			public void execute() {
-				scenarioSearchPanel.hideNavigationButtons();
-				scenarioSearchPanel.hideBasicSearch();
 				scenarioSearchPanel.showAdvancedSearch();
+				showWidget(scenarioSearchPanel);	
+				
+			}
+		});
+		
+		//Retrieve the results of the latest search
+		userInfoBanner.getShowLatestSearch().setScheduledCommand(new Command() {
+			@Override
+			public void execute() {
+				scenarioSearchPanel.showLatestSearch();
+				showWidget(scenarioSearchPanel);	
+				
+			}
+		});
+		
+		//find scn by Id
+		userInfoBanner.getSearchById().setScheduledCommand(new Command() {
+			@Override
+			public void execute() {
+				scenarioSearchPanel.showSearchById();
+				showWidget(scenarioSearchPanel);	
+				
+			}
+		});
+		
+		//find scenarios by date range
+		userInfoBanner.getSearchByDates().setScheduledCommand(new Command() {
+			@Override
+			public void execute() {
+				scenarioSearchPanel.showSearchByDates();
 				showWidget(scenarioSearchPanel);	
 				
 			}
@@ -170,7 +200,10 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getListScnSubmitted().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
-				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_SUBMITTED);
+				Set<String> status = new HashSet<String>();
+				status.add(ScenarioPanel.SCN_STATUS_SUBMITTED);
+				status.add(ScenarioPanel.SCN_STATUS_UNLOCKED_PRE);
+				scenarioListPanel.listScnByStatus(status);
 				showWidget(scenarioListPanel);
 			}
 		});
@@ -188,15 +221,23 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 				showWidget(scenarioListPanel);
 			}
 		});
-		//XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
-//		userInfoBanner.getListScnRejected().setScheduledCommand(new Command(){
-//			@Override
-//			public void execute() {
-////				showWidget(userInfoSearchPanel);
-//				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_REJECTED);
-//				showWidget(scenarioListPanel);
-//			}
-//		});
+		userInfoBanner.getListScnModified().setScheduledCommand(new Command(){
+			@Override
+			public void execute() {
+				Set<String> status = new HashSet<String>();
+				status.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+				status.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+				scenarioListPanel.listScnByStatus(status);
+				showWidget(scenarioListPanel);
+			}
+		});
+		userInfoBanner.getListScnRejected().setScheduledCommand(new Command(){
+			@Override
+			public void execute() {
+				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_REJECTED);
+				showWidget(scenarioListPanel);
+			}
+		});
 		userInfoBanner.getListMyScn().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
@@ -230,6 +271,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 
 			@Override
 			public void execute() {
+				userInfoSearchPanel.fetchUsersList();//TICKET-98
 				showWidget(userInfoSearchPanel);
 			}
 			
@@ -239,6 +281,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			
 			@Override
 			public void execute() {
+				tagsManagementPanel.drawTagTable();
 				showWidget(tagsManagementPanel);
 				
 			}

@@ -1,6 +1,6 @@
 defaultTasks 'build'
 
-// builds a gradle wrapper 
+// builds a gradle wrapper
 // http://www.gradle.org/docs/current/userguide/gradle_wrapper.html
 task wrapper(type: Wrapper) {
     gradleVersion = '1.6'
@@ -41,27 +41,27 @@ ext {
     localOsName = fromOsName(System.properties['os.name'])
     localOsArch = fromOsArch(System.properties['os.arch'])
     targetOsName = project.hasProperty('OS_NAME') ? fromOsName(OS_NAME) : localOsName
-    targetOsArch = project.hasProperty('OS_ARCH') ? fromOsArch(OS_ARCH) : localOsArch 
+    targetOsArch = project.hasProperty('OS_ARCH') ? fromOsArch(OS_ARCH) : localOsArch
 }
 group 'org.mdpnp'
-version '0.1.1'
+version '0.1.3-SNAPSHOT'
 
 subprojects {
     group 'org.mdpnp'
-    version '0.1.1'
+    version '0.1.3-SNAPSHOT'
     buildscript {
         repositories {
             // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
             maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-release-local' }
-            
+
             ivy {  artifactPattern 'http://gradle-macappbundle.googlecode.com/files/[module]-[revision].[ext]' }
-            
+
             ivy {  artifactPattern 'http://gradle-launch4j.googlecode.com/files/[module]-[revision].[ext]' }
-            
+
             mavenCentral()
         }
-        
-        
+
+
     }
     repositories {
         // Virtual repository of all remote repositories
@@ -78,13 +78,13 @@ subprojects {
 
         // Repository for external snapshot libs hosted by mdpnp (unavailable in any other repo)
         maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-snapshot-local' }
-        
+
         // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
         maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-release-local' }
 
         // All the following should be covered by the remote-repos repository above
         // They are included her for reference (and potentially fallback)
-        
+
         // Repository for a build of purejavacomm
         maven { url 'http://www.sparetimelabs.com/maven2' }
 

@@ -1,64 +1,51 @@
 /*
  * @file    fluke_prosim_app.h
- * @brief   TODO
- *
  */
 //=============================================================================
 
-#ifndef FLUKE_SRC_FLUKE_PROSIM_APP_H__
-#define FLUKE_SRC_FLUKE_PROSIM_APP_H__
+#ifndef FLUKE_SRC_FLUKE_PROSIM_APP_H_
+#define FLUKE_SRC_FLUKE_PROSIM_APP_H_
 
 #include <string>
+#include "ndds/ndds_cpp.h"
 
-class FlukeProSim8App
+class MyFluke;
+
+
+class FlukeProsimApp
 {
 public:
-  FlukeProSim8App();
-  ~FlukeProSim8App();
+  enum
+  {
+    RC_STATUS_OK = 0,
+    RC_FAIL,
+    RC_BAD_SAMPLE_FORMAT
+  };
 
+  FlukeProsimApp();
+  ~FlukeProsimApp();
 
   static bool IsStatusOk(const int istat);
+  static int ConvertStringCommandNameToEnum(const std::string &command_name);
+  static void CmdLineHelp(const char *thisprogramname, int exitprogram);
+
   std::string get_statusmsg();
-  int get_portnumber();
-
-
-  /**
-   * Parses command line options and sets variables for setup.
-   * @param [in] argc Number of elements in argv array
-   * @param [in] argv pointer to array of strings
-   * @return Zero for success.
-   */
   int ParseCommandLineArgs(int argc, char* argv[]);
-
-
-  /**
-   * Open port using the port name and baud rate.
-   * @return Zero for success.
-   */
-  int OpenPort();
-
+  int RunApp();
 
 private:
   // Disallow use of implicitly generated member functions:
-  FlukeProSim8App(const FlukeProSim8App &src);
-  FlukeProSim8App &operator=(const FlukeProSim8App &rhs);
+  FlukeProsimApp(const FlukeProsimApp &src);
+  FlukeProsimApp &operator=(const FlukeProsimApp &rhs);
 
+  int ProcessData(const std::string& cmd);
 
-  /**
-   * Print help message.
-   * @param [in] thisprogramname The name of the executable (argv[0]).
-   * @param [in] exitprogram 0 or 1 value signifying whether or not to close
-   * application after help message is printed.
-   */
-  void cmdlinehelp(char *thisprogramname, int exitprogram);
-
+  std::string _statusmsg;
   std::string _portname;
   int _baudrate;
-  std::string _statusmsg;
-  int _portnumber;
+  int _domain_id;
+  MyFluke* _fluke_api;
 };
 
+
 #endif
-
-
-

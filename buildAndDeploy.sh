@@ -1,4 +1,4 @@
-PARCEL=demo-apps-0.1.1-linux-arm
+PARCEL=demo-apps-0.1.2-linux-arm
 TARGETS=`cat targets | sed '/^\s*#/d'`
 
 ./gradlew -POS_NAME=linux -POS_ARCH=arm :interop-lab:demo-apps:distZip
@@ -19,7 +19,7 @@ do
 done
 echo Awaiting decompression
 wait
-  
+
 for TARGET in $TARGETS
 do
   echo Copying more files to $TARGET

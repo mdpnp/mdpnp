@@ -118,6 +118,10 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
 				map.put(type, p);
 				return true;
 			}
+		} else if(a.getValue() instanceof ByteArray) {
+		    ByteArray ba = (ByteArray) a.getValue();
+		    p.parse(ByteBuffer.wrap(ba.getArray()));
+		    return true;
 		} else {
 			return false;
 		}

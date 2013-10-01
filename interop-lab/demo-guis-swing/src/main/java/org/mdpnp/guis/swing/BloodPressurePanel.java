@@ -7,6 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import ice.InfusionStatus;
 import ice.Numeric;
 import ice.SampleArray;
 
@@ -20,9 +21,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
 
-import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,7 @@ public class BloodPressurePanel extends DevicePanel {
 		systolicPanel.setLayout(new BorderLayout());
 		systolicPanel.add(systolic = new JLabel("---"), BorderLayout.CENTER);
 		systolic.setHorizontalAlignment(JLabel.RIGHT);
-		systolic.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		systolic.setBorder(new EmptyBorder(5, 5, 5, 5));
 		systolicPanel.add(systolicLabel, BorderLayout.EAST);
 		
 		diastolicLabel = new JLabel("mmHg");
@@ -58,7 +59,7 @@ public class BloodPressurePanel extends DevicePanel {
 		diastolicPanel.setOpaque(false);
 		diastolicPanel.setLayout(new BorderLayout());
 		diastolicPanel.add(diastolic = new JLabel("---"), BorderLayout.CENTER);
-		diastolic.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		diastolic.setBorder(new EmptyBorder(5, 5, 5, 5));
 		diastolic.setHorizontalAlignment(JLabel.RIGHT);
 		diastolicPanel.add(diastolicLabel, BorderLayout.EAST);
 
@@ -68,7 +69,7 @@ public class BloodPressurePanel extends DevicePanel {
 		pulsePanel.setOpaque(false);
 		pulsePanel.setLayout(new BorderLayout());
 		pulsePanel.add(pulse = new JLabel("---"), BorderLayout.CENTER);
-		pulse.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		pulse.setBorder(new EmptyBorder(5, 5, 5, 5));
 		pulse.setHorizontalAlignment(JLabel.RIGHT);
 		pulsePanel.add(pulseLabel, BorderLayout.EAST);
 		
@@ -152,7 +153,7 @@ public class BloodPressurePanel extends DevicePanel {
 
 	   
     public static boolean supported(Set<Integer> names) {
-        return names.contains(ice.MDC_PRESS_CUFF.VALUE);
+        return names.contains(ice.Physio.MDC_PRESS_CUFF.value());
     }
 
     // TODO manage state better
@@ -193,7 +194,7 @@ public class BloodPressurePanel extends DevicePanel {
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
 //        log.debug("N:"+numeric);
         switch(numeric.name) {
-        case ice.MDC_PRESS_CUFF.VALUE:
+        case ice.Physio._MDC_PRESS_CUFF:
             switch((int)numeric.value) {
             case ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE:
                 state = State.Deflating;
@@ -206,13 +207,13 @@ public class BloodPressurePanel extends DevicePanel {
                 break;
             }
             break;
-        case ice.MDC_PRESS_CUFF_SYS.VALUE:
+        case ice.Physio._MDC_PRESS_CUFF_SYS:
             systolicN.copy_from(numeric);
             break;
-        case ice.MDC_PRESS_CUFF_DIA.VALUE:
+        case ice.Physio._MDC_PRESS_CUFF_DIA:
             diastolicN.copy_from(numeric);
             break;
-        case ice.MDC_PULS_RATE_NON_INV.VALUE:
+        case ice.Physio._MDC_PULS_RATE_NON_INV:
             pulseN.copy_from(numeric);
             break;
         case ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE:
@@ -258,6 +259,12 @@ public class BloodPressurePanel extends DevicePanel {
 
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
+        
+    }
+
+
+    @Override
+    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
         
     }
 

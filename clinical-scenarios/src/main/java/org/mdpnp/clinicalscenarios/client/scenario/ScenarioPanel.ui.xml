@@ -13,6 +13,7 @@
 			float:right;
 			right: 0px;
 		}
+
 		.verywide {
 			width:98%;
 		}
@@ -25,6 +26,11 @@
 		.withborder {
 			border: 1px solid black;
 		}
+		.remind{
+			font-weight: bold;
+			font-size:16pt;
+		}
+
 	</ui:style>
 	<g:DockPanel>
 	<g:Dock direction="NORTH" size="100px">
@@ -34,20 +40,21 @@
 	    <g:TextBox text='Scenario Title' ui:field='titleEditor' styleName='scenarioTitle' visibleLength='50' maxLength='100'/>
 	    <g:Label ui:field='uniqueId' styleName='important'/>
 	    <g:Label ui:field='status'/>
+	    <!-- <g:Label text='Remember to SAVE your changes' styleName='important'/> TICKET-125 -->
 	    </g:FlowPanel>
 	</g:Dock>
 	
 	<g:Dock direction="CENTER" size="400px">
 	<g:TabPanel ui:field="tabPanel">
-	<g:Tab text="Background">
+	<g:Tab text="Scenario Description">
 		<g:FlowPanel>
-		<g:HTML><span style="font-size:16pt;">Background Info</span>
+		<g:HTML><span style="font-size:12pt;">Guidelines</span>
 		<ul>
 	     	<li>Do not include protected health information</li>
 	     	<li>Omit actual names of individuals or institutions</li>
-	     	<li>Keep the information relevant</li>
-	     	<li>Avoid redundant scenarios</li>
-	     	</ul>
+	     	<li>No fields are mandatory. Complete the information in the tabs that is relevant for the case</li>
+	     	<li>Keep information relevant and avoid redundant scenarios</li>
+	    </ul>
 	     <br/>
 	     
 	     </g:HTML>
@@ -64,25 +71,28 @@
 	
 	<g:Tab text="Hazards">
 	  <g:FlowPanel>
-	  	 <g:HTML><span style="font-size:16pt;">Current State Hazards</span><br/>
-	     </g:HTML>
-
+	  	 <g:HTML><span style="font-size:16pt;">Current State Hazards</span><br/> </g:HTML>
 	  	<g:FlexTable ui:field='hazardsTable'></g:FlexTable>
 	  	<g:Anchor text='Add New...' href='#' ui:field='addNewHazard'/>
 	  </g:FlowPanel>
 	</g:Tab>
 	
 	<g:Tab text="Environments">
-	  <g:FlowPanel>
-	  
-	  <g:HTML><span style="font-size:16pt;">Clinicians &amp; Clinical Environments</span><br/>
-
-	     </g:HTML>
-	    <g:Label text='Clinicians Involved:'/>
+	  <g:FlowPanel>	  
+	  <g:HTML><span style="font-size:16pt;">Clinicians &amp; Clinical Environments</span><br/></g:HTML>
+	      <g:FlowPanel>
+		    <g:InlineLabel text='Clinicians Involved:'/>
+		    <g:Anchor ui:field='clinicanExample' styleName='{style.rightAligned}' href='#' text='Example'/>
+	     </g:FlowPanel>
 	    <g:FlexTable ui:field='cliniciansTable' styleName='{style.withborder}'/>
 	    <g:Anchor text='Add New...' href='#' ui:field='addNewClinician'/>
+	    
 	    <g:HTML>&nbsp;</g:HTML>
-	    <g:Label text='Clinical Environments:'/>
+	    
+	    <g:FlowPanel>
+		    <g:InlineLabel text='Clinical Environments:'/>
+		    <g:Anchor ui:field='environmentExample' styleName='{style.rightAligned}'   href='#' text='Example'/>
+	    </g:FlowPanel>
 	    <g:FlexTable ui:field='environmentsTable' styleName='{style.withborder}'/>
 	    <g:Anchor text='Add New...' href='#' ui:field='addNewEnvironment'/>
 	  </g:FlowPanel>
@@ -101,7 +111,7 @@
 	<g:Tab text='Proposed Solution'>
 	  <g:FlowPanel>
 	     <g:HTML><span style="font-size:16pt;">Proposed Solution</span><br/>
-	     A specific solution implementing the Proposed State<br/>
+	     A specific solution implementing the Proposed Solution<br/>
 	     <br/>
 	     
 	     </g:HTML>
@@ -120,7 +130,7 @@
 	
 	<g:Tab text="Benefits &amp; Risks">
 	  <g:FlowPanel>
-	    <g:HTML><span style="font-size:16pt;">Benefits &amp; Risks</span><br/>
+	    <g:HTML><span style="font-size:16pt;">Benefits &amp; Risks of the Proposed Solution</span><br/>
 	     <br/>
 	     
 	     </g:HTML>
@@ -145,18 +155,26 @@
 	-->
 <!-- 	</g:TabPanel> -->
 <!-- 	</g:Dock> -->
+
+	<g:Tab text="References">
+	    <g:FlowPanel>
+	     <g:HTML><span style="font-size:16pt;">Add links to relevant internet references for this scenario</span><br/>
+	     </g:HTML>
+	  	<g:FlexTable ui:field='referencesTable'></g:FlexTable>
+	  	<g:Anchor text='Add New...' href='#' ui:field='addNewLinkedReference'/>
+	    </g:FlowPanel>
+	</g:Tab>
 	    
 	<g:Tab text="Approve or Reject">
 	  <g:FlowPanel>
 	    <g:HTML><h2>Approve or Reject Scenario</h2></g:HTML>
-	    <g:InlineLabel text='Feedback for submitter (if any):'/>
+	    <g:Label text='Feedback for submitter (if any):'/>
 	    <g:TextArea ui:field='feedback' visibleLines='10' characterWidth='50' styleName='{style.verywide}'/>                
 	    <g:Button text='Approve Scenario' ui:field='approveScnButton' styleName='{style.givemespace}'/>
+	    <g:Button text='Return Scenario' ui:field='returnScnButton' styleName='{style.givemespace}'/>
 	    <g:Button text='Reject Scenario' ui:field='rejectScnButton' styleName='{style.givemespace}'/>
 	  </g:FlowPanel>
 	</g:Tab>
-	
-	
 	</g:TabPanel>
 	</g:Dock>
 	
@@ -164,8 +182,7 @@
 	<g:FlowPanel>
 	    <g:Button text='Submit for Approval' ui:field='submitButton' styleName='{style.givemespace}'/>
 	    <g:Button text='Save For Later' ui:field='saveButton' styleName='{style.givemespace}'/>
-<!-- 	    <g:Button text='Approve Scenario' ui:field='approveScnButton' styleName='{style.givemespace}'/> -->
-<!-- 	    <g:Button text='Reject Scenario Scenario' ui:field='rejectScnButton' styleName='{style.givemespace}'/> -->
+	    <g:Button text='Lock' ui:field='lockButton' styleName='{style.givemespace}'/>
 	</g:FlowPanel>
 	</g:Dock>
 	</g:DockPanel>

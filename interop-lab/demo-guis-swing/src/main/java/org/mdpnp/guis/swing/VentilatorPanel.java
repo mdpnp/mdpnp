@@ -1,5 +1,6 @@
 package org.mdpnp.guis.swing;
 
+import ice.InfusionStatus;
 import ice.Numeric;
 import ice.SampleArray;
 
@@ -95,17 +96,17 @@ public class VentilatorPanel extends DevicePanel {
     private static final Logger log = LoggerFactory.getLogger(VentilatorPanel.class);
 
 	public static boolean supported(Set<Integer> identifiers) {
-		return identifiers.contains(ice.MDC_PRESS_AWAY.VALUE) || identifiers.contains(ice.MDC_CAPNOGRAPH.VALUE);
+		return identifiers.contains(ice.Physio._MDC_PRESS_AWAY) || identifiers.contains(ice.MDC_CAPNOGRAPH.VALUE);
 	}
 
 
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
         switch(numeric.name) {
-        case ice.MDC_RESP_RATE.VALUE:
+        case ice.Physio._MDC_RESP_RATE:
             respiratoryRate.setText(Integer.toString((int)numeric.value));
             break;
-        case ice.MDC_AWAY_CO2_EXP.VALUE:
+        case ice.Physio._MDC_AWAY_CO2_EXP:
             endTidalCO2.setText(Integer.toString((int)numeric.value));
             break;
         }
@@ -116,10 +117,10 @@ public class VentilatorPanel extends DevicePanel {
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
 
         switch(sampleArray.name) {
-        case ice.MDC_FLOW_AWAY.VALUE:
+        case ice.Physio._MDC_FLOW_AWAY:
             flowWave.applyUpdate(sampleArray);
             break;
-        case ice.MDC_PRESS_AWAY.VALUE:
+        case ice.Physio._MDC_PRESS_AWAY:
             pressureWave.applyUpdate(sampleArray);
             break;
         case ice.MDC_CAPNOGRAPH.VALUE:
@@ -129,6 +130,10 @@ public class VentilatorPanel extends DevicePanel {
         date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
         
         time.setText(dateFormat.format(date));
+    }
+    @Override
+    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
+        
     }
 
 }

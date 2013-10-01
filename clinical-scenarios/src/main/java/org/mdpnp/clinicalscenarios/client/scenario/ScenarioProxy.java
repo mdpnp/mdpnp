@@ -15,19 +15,28 @@ public interface ScenarioProxy extends EntityProxy {
 	void setTitle(String title);
 	void setCreationDate(Date d);
 	Date getCreationDate();
+	void setModificationDate(Date d);
+	Date getModificationDate();
 	
 	BackgroundProxy getBackground();
 	HazardsProxy getHazards();
 	EquipmentProxy getEquipment();
 	ProposedSolutionProxy getProposedSolution();
 	BenefitsAndRisksProxy getBenefitsAndRisks();
-	EnvironmentsProxy getEnvironments();//	DAG
+	EnvironmentsProxy getEnvironments();
+	ReferencesProxy  getReferences() ;
 	
 	//
 	public String getSubmitter();
-	public String getStatus();
 	public void setSubmitter(String submitter);
+	public String getStatus();
 	public void setStatus(String status);
+	public String getLastActionTaken();
+	public void setLastActionTaken(String lastActionTaken);
+	public String getLastActionUser();
+	public void setLastActionUser(String lastActionUser);
+	public String getLockOwner();
+	public void setLockOwner(String lockOwner);
 	
 	
 }

@@ -13,7 +13,10 @@
 
 #include <string>
 #include <deque>
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
 #include "fluke_listener.h"
+
 
 //#define TESTING_WITHOUT_DEVICE_ATTACHED
 
@@ -23,6 +26,7 @@ public:
 
   enum CommandName
   {
+    NOTACOMMAND = -1,
     IDENT = 0, // General commands
     LOCAL,
     REMOTE,
@@ -207,7 +211,8 @@ public:
     RC_UNKNOWN_COMMAND,
     RC_UNKNOWN_RESPONSE_TYPE,
     RC_READ_TIMEOUT,
-    RC_NOT_OK_TO_SEND_COMMAND
+    RC_NOT_OK_TO_SEND_COMMAND,
+    RC_INIT_INCOMPLETE
   };
 
   enum SimulatorDataResponseType
@@ -237,6 +242,18 @@ public:
   int get_output_fd();
   bool get_validation_flag();
   bool get_record_flag();
+
+  /**
+   * Determines if response is a Key Record String.
+   * The format of a Key Record String is:
+   * DD,DDD,DDD,HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH\r\n
+   * D: Decimal digit
+   * H: Hexidecimal digit
+   * @param [in] message Pointer to array of characters.
+   * @param [in] size Size of the array of characters pointed to by message
+   * @return Returns true if the message is a Key Record String.
+   */
+  static bool IsKeyRecordString(char* message, size_t size);
 
 
   /**
@@ -336,16 +353,21 @@ private:
   bool HasBeenInitialized();
 
 
+  boost::mutex _lock;
+  boost::condition_variable _condition;
   unsigned int _sequence_number;
   int _input_fd;
   int _output_fd;
   bool _validation_flag;
   bool _record_flag;
-  bool _initialize_fluke;
+  bool _is_fluke_initialized;
   InitializationOptionType _init_option;
   std::string _statusmsg;
-  std::deque<std::string> _cmds_sent_while_not_ok;
   std::deque<std::string> _flag_cmds_sent;
+
+#ifdef TESTING_WITHOUT_DEVICE_ATTACHED
+  std::deque<std::string> _simulated_cmds_sent;
+#endif
 };
 
 #endif

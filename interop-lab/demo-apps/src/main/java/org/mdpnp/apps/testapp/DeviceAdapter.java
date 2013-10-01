@@ -1,7 +1,6 @@
 package org.mdpnp.apps.testapp;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
@@ -11,30 +10,25 @@ import java.io.InputStreamReader;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 
 import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.DeviceMonitor;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.devices.connected.GetConnected;
-import org.mdpnp.devices.connected.GetConnectedToFixedAddress;
+import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
-import org.mdpnp.guis.swing.DeviceMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DeviceAdapter {
 
     private JFrame frame;
-    private GetConnected getConnected;
     private AbstractDevice device;
     private EventLoopHandler handler;
 
@@ -42,15 +36,10 @@ public class DeviceAdapter {
         return frame;
     }
 
-    public GetConnected getGetConnected() {
-        return getConnected;
-    }
-
-
     long start() {
         return System.currentTimeMillis();
     }
-    
+
     long stop(String s, long tm) {
         log.trace(s + " took " + (System.currentTimeMillis() - tm) + "ms");
         return start();
@@ -61,25 +50,27 @@ public class DeviceAdapter {
             progressBar.setValue(value);
         }
     }
-    
+
     private void killAdapter() {
         killAdapter(null);
     }
     private synchronized void killAdapter(final JProgressBar progressBar) {
         try {
             long tm = start();
-            if (getConnected != null) {
-                setString(progressBar, "Ask the device to disconnect from the ICE", 30);
-                getConnected.disconnect();
-                tm = stop("getConnected.disconnect", tm);
-                setString(progressBar, "Shut down the connection request client", 55);
-                getConnected.shutdown();
-                stop("getConnected.shutdown", tm);
-                getConnected = null;
+
+            if(null != device && device instanceof AbstractConnectedDevice) {
+                AbstractConnectedDevice cDevice = (AbstractConnectedDevice) device;
+                setString(progressBar, "Ask the device to disconnect from the ICE", 20);
+                cDevice.disconnect();
+                if(!cDevice.awaitState(ice.ConnectionState.Disconnected, 5000L)) {
+                    log.warn("ConnectedDevice ended in State:"+cDevice.getState());
+                }
+                tm = stop("disconnect", tm);
             }
+
             tm = start();
             if (device != null) {
-                setString(progressBar, "Shut down the device", 80);
+                setString(progressBar, "Shut down the device", 50);
                 device.shutdown();
                 stop("device.shutdown", tm);
                 device = null;
@@ -108,8 +99,9 @@ public class DeviceAdapter {
     public void start(DeviceType type, int domainId, final String address, boolean gui) throws Exception {
         start(type, domainId, address, gui, true, null);
     }
-    
+
     public void start(DeviceType type, int domainId, final String address, boolean gui, boolean exit, EventLoop eventLoop) throws Exception {
+        log.trace("Starting DeviceAdapter with type="+type);
         if (null != address && address.contains(":")) {
             SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
             log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
@@ -125,7 +117,7 @@ public class DeviceAdapter {
 
         if (gui) {
             final CompositeDevicePanel cdp = new CompositeDevicePanel();
-            final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getDeviceIdentity().universal_device_identifier);
+            final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getDeviceIdentity().unique_device_identifier);
             deviceMonitor.addListener(cdp);
             deviceMonitor.start(device.getParticipant(), eventLoop);
 
@@ -140,17 +132,17 @@ public class DeviceAdapter {
 //                    progressBar.setPreferredSize(new Dimension(300, 100));
                     progressBar.setMinimum(1);
                     progressBar.setMaximum(100);
-                    
+
                     progressBar.setStringPainted(true);
                     setString(progressBar, "Shutting down", 1);
 
                     frame.getContentPane().removeAll();
-                    
+
                     frame.getContentPane().setLayout(new BorderLayout());
                     frame.getContentPane().add(progressBar, BorderLayout.NORTH);
                     frame.validate();
                     frame.repaint();
-                    
+
                     Runnable r = new Runnable() {
                         public void run() {
                             try {
@@ -205,16 +197,9 @@ public class DeviceAdapter {
             }));
         }
 
-        if (null == address) {
-            getConnected = new GetConnected(frame, domainId, device.getDeviceIdentity().universal_device_identifier,
-                    eventLoop);
-        } else {
-            getConnected = new GetConnectedToFixedAddress(frame, domainId,
-                    device.getDeviceIdentity().universal_device_identifier, address, eventLoop);
+        if(null != device && device instanceof AbstractConnectedDevice) {
+            ((AbstractConnectedDevice)device).connect(address);
         }
-
-        getConnected.connect();
-        
 
         // Wait until killAdapter, then report on any threads that didn't come down successfully
         synchronized (this) {
@@ -222,19 +207,13 @@ public class DeviceAdapter {
                 wait();
             }
         }
-       
-        
+
+
         if(gui) {
-            SwingUtilities.invokeAndWait(new Runnable() {
-                public void run() {
-                    awtThread = Thread.currentThread();
-                }
-            });
             frame.setVisible(false);
-            frame.dispose();                    
-//            awtThread.join(5000L);
+            frame.dispose();
         }
-        
+
         if (exit) {
 
             int n = Thread.activeCount() + 10;
@@ -245,10 +224,9 @@ public class DeviceAdapter {
                     log.warn("Non-Daemon thread would block exit: " + threads[i].getName());
                 }
             }
-            
+
             System.exit(0);
         }
     }
-    private Thread awtThread;
     private boolean interrupted = false;
 }

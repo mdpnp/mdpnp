@@ -1,11 +1,11 @@
-RealtimeData.AirwayPressure	MDC_PRESS_AWAY	W
-RealtimeData.FlowInspExp	MDC_FLOW_AWAY	W
-#RealtimeData.O2InspExp	MDC_FLOW_O2_CONSUMP	W
-RealtimeData.ExpiratoryCO2mmHg	MDC_VENT_CONC_AWAY_O2	W
-Setting.ApneaTime	MDC_TIME_PD_APNEA	N
-MeasuredDataCP1.PulseRate	MDC_PULS_OXIM_PULS_RATE	N
-Setting.InspiratoryTime	MDC_TIME_PD_INSPIRATORY	N
-Setting.FrequencyIPPV	MDC_VENT_TIME_PD_PPV	N
+RealtimeData.AirwayPressure	ice.Physio.MDC_PRESS_AWAY	W
+RealtimeData.FlowInspExp	ice.Physio.MDC_FLOW_AWAY	W
+#RealtimeData.O2InspExp	ice.Physio.MDC_FLOW_O2_CONSUMP	W
+RealtimeData.ExpiratoryCO2mmHg	ice.Physio.MDC_CONC_AWAY_CO2_ET	W
+Setting.ApneaTime	ice.Physio.MDC_TIME_PD_APNEA	N
+MeasuredDataCP1.PulseRate	ice.Physio.MDC_PULS_OXIM_PULS_RATE	N
+Setting.InspiratoryTime	ice.MDC_TIME_PD_INSPIRATORY	N
+Setting.FrequencyIPPV	ice.MDC_VENT_TIME_PD_PPV	N
 #Setting.IntermittentPEEP	Ventilator.INTERMITTENT_PEEP
 #Setting.ASBRamp	Ventilator.ASB_RAMP
 #Setting.InspiratoryPressure	Ventilator.INSPIRATORY_PRESSURE
@@ -35,8 +35,8 @@ Setting.FrequencyIPPV	MDC_VENT_TIME_PD_PPV	N
 #MeasuredDataCP1.InspCO2Pct	Ventilator.INSP_CO2_PCT
 #MeasuredDataCP1.InspCO2mmHg	Ventilator.INSP_CO2_MMHG
 #MeasuredDataCP1.EndTidalCO2Percent	Ventilator.END_TIDAL_CO2_PERCENT
-#MeasuredDataCP1.EndTidalCO2kPa	Ventilator.END_TIDAL_CO2_KPA
-#MeasuredDataCP1.EndTidalCO2mmHg	Ventilator.END_TIDAL_CO2_MMHG
+#MeasuredDataCP1.EndTidalCO2kPa	Ventilator.END_TIDAL_CO2_KPA  N
+MeasuredDataCP1.EndTidalCO2mmHg	ice.Physio.MDC_AWAY_CO2_EXP N
 #MeasuredDataCP1.InspAgentPct	Ventilator.INSP_AGENT_PCT
 #MeasuredDataCP1.ExpAgentPct	Ventilator.EXP_AGENT_PCT
 #MeasuredDataCP1.ExpO2	Ventilator.EXP_O2
