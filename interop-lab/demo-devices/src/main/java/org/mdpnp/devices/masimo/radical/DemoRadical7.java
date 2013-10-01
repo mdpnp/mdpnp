@@ -33,8 +33,8 @@ public class DemoRadical7 extends AbstractSerialDevice {
         public void firePulseOximeter() {
             super.firePulseOximeter();
             reportConnected();
-            pulseUpdate = numericSample(pulseUpdate, getHeartRate(), ice.Physio._MDC_PULS_OXIM_PULS_RATE);
-            spo2Update = numericSample(spo2Update, getSpO2(), ice.Physio._MDC_PULS_OXIM_SAT_O2);
+            pulseUpdate = numericSample(pulseUpdate, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
+            spo2Update = numericSample(spo2Update, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
             String guid = getUniqueId();
             if(guid != null && !guid.equals(deviceIdentity.serial_number)) {
                 deviceIdentity.serial_number = guid;

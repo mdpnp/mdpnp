@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -33,8 +32,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     private static final Logger log = LoggerFactory.getLogger(AbstractDraegerVent.class);
 
-    private Map<Enum<?>, Integer> numerics = new HashMap<Enum<?>, Integer>();
-    private Map<Enum<?>, Integer> waveforms = new HashMap<Enum<?>, Integer>();
+    private Map<Enum<?>, String> numerics = new HashMap<Enum<?>, String>();
+    private Map<Enum<?>, String> waveforms = new HashMap<Enum<?>, String>();
 
     protected Map<Enum<?>, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Enum<?>, InstanceHolder<ice.Numeric>>();
     protected Map<Enum<?>, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Enum<?>, InstanceHolder<ice.SampleArray>>();
@@ -42,24 +41,24 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate;
     protected InstanceHolder<ice.Numeric> timeUpdate;
 
-    protected InstanceHolder<ice.Numeric> doNumericUpdate(InstanceHolder<ice.Numeric> update, Object value, int name) {
+    protected InstanceHolder<ice.Numeric> doNumericUpdate(InstanceHolder<ice.Numeric> update, Object value, String metric_id) {
         try {
             // TODO There are weird number formats in medibus .. this will need
             // enhancement
             if (value instanceof Number) {
-                return numericSample(update, ((Number) value).floatValue(), name);
+                return numericSample(update, ((Number) value).floatValue(), metric_id);
             } else {
                 String s = null == value ? null : value.toString().trim();
                 if (null != s) {
-                    return numericSample(update, Float.parseFloat(s), name);
+                    return numericSample(update, Float.parseFloat(s), metric_id);
                 } else {
-                    return numericSample(update, (Float) null, name);
+                    return numericSample(update, (Float) null, metric_id);
                 }
             }
 
         } catch (NumberFormatException nfe) {
             log.trace("Invalid number:" + value);
-            return numericSample(update, (Float) null, name);
+            return numericSample(update, (Float) null, metric_id);
         }
     }
 
@@ -90,12 +89,12 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
             // flush
             if (code instanceof Enum<?>) {
-                Integer name = waveforms.get(code);
-                if (null != name) {
+                String metric_id = waveforms.get(code);
+                if (null != metric_id) {
                     sampleArrayUpdates.put(
                             (Enum<?>) code,
                             sampleArraySample(sampleArrayUpdates.get(code), realtimeBuffer[streamIndex], (int) (1.0
-                                    * config.interval * multiplier / 1000.0), name));
+                                    * config.interval * multiplier / 1000.0), metric_id));
                 } else {
                     log.trace("No nomenclature code for enum code=" + code + " class=" + code.getClass().getName());
                 }
@@ -119,7 +118,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     protected void process(Object code, Object data) {
         if (code instanceof Enum<?>) {
-            Integer name = numerics.get(code);
+            String name = numerics.get(code);
             if (null != name) {
                 numericUpdates.put((Enum<?>) code, doNumericUpdate(numericUpdates.get(code), data, name));
             } else {
@@ -310,6 +309,13 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                         medibus.sendCommand(Command.ReqDateTime);
                         return;
                     }
+
+                    // Data is sparse in standby mode; trying to keep alive
+                    // TODO need to externalize all these timing settings eventually
+                    if( (now - timeAwareInputStream.getLastReadTime()) >= (getMaximumQuietTime()/2L) ) {
+                        medibus.sendCommand(Command.NoOperation);
+                        return;
+                    }
                 } catch (Throwable t) {
                     log.error(t.getMessage(), t);
                 }
@@ -344,7 +350,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         writeDeviceIdentity();
     }
 
-    private static void loadMap(Map<Enum<?>, Integer> numerics, Map<Enum<?>, Integer> waveforms) {
+    protected static void loadMap(Map<Enum<?>, String> numerics, Map<Enum<?>, String> waveforms) {
 
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(
@@ -364,7 +370,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                         @SuppressWarnings({ "unchecked", "rawtypes" })
                         Enum<?> draeger = (Enum<?>) Enum.valueOf(
                                 (Class<? extends Enum>) Class.forName(draegerPrefix + c[0]), c[1]);
-                        Integer tag = getValue(v[1]);
+                        String tag = getValue(v[1]);
                         if (tag == null) {
                             log.warn("cannot find value for " + v[1]);
                             continue;
@@ -410,39 +416,29 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     private synchronized void startRequestSlowData() {
         if (null == requestSlowData) {
             requestSlowData = executor
-                    .scheduleWithFixedDelay(new RequestSlowData(), 0L, 1000L, TimeUnit.MILLISECONDS);
+                    .scheduleWithFixedDelay(new RequestSlowData(), 0L, 250L, TimeUnit.MILLISECONDS);
             log.trace("Scheduled slow data request task");
         } else {
             log.trace("Slow data request already scheduled");
         }
     }
 
-    private static Integer getValue(String name) throws IllegalArgumentException, IllegalAccessException,
-            NoSuchFieldException, SecurityException, ClassNotFoundException, InvocationTargetException,
-            NoSuchMethodException {
+    private static String getValue(String name) throws Exception {
         try {
             Class<?> cls = Class.forName(name);
-            return cls.getField("VALUE").getInt(null);
+            return (String) cls.getField("VALUE").get(null);
         } catch (ClassNotFoundException e) {
             // If it's not a class then maybe it's a static member
             int lastIndexOfDot = name.lastIndexOf('.');
             if (lastIndexOfDot < 0) {
-                return null;
+                throw e;
             }
             Class<?> cls = Class.forName(name.substring(0, lastIndexOfDot));
             Object obj = cls.getField(name.substring(lastIndexOfDot + 1, name.length())).get(null);
-            return (Integer) obj.getClass().getMethod("value").invoke(obj);
+            return (String) obj.getClass().getMethod("value").invoke(obj);
 
         }
 
-    }
-
-    public static void main(String[] args) {
-        Map<Enum<?>, Integer> numerics = new HashMap<Enum<?>, Integer>();
-        Map<Enum<?>, Integer> waveforms = new HashMap<Enum<?>, Integer>();
-        loadMap(numerics, waveforms);
-        System.out.println(numerics);
-        System.out.println(waveforms);
     }
 
     public AbstractDraegerVent(int domainId, EventLoop eventLoop) {
@@ -522,7 +518,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     @Override
     protected long getMaximumQuietTime() {
-        return 1500L;
+        return 2000L;
     }
 
     @Override

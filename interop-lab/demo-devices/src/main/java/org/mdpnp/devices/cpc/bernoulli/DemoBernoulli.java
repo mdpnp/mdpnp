@@ -7,7 +7,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -141,39 +140,40 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
         }
     }
 
-    protected void addWaveform(String name, int tagName) {
+    protected void addWaveform(String name, String tagName) {
         waveforms.put(name, createSampleArrayInstance(tagName));
         log.trace("Added Waveform:" + name + " tag=" + tagName);
     }
 
-    protected void addNumeric(String name, int tagName) {
+    protected void addNumeric(String name, String tagName) {
         numerics.put(name, createNumericInstance(tagName));
         log.trace("Added Numeric:" + name + " tag=" + tagName);
     }
 
-    private static Integer getValue(String name) throws IllegalArgumentException, IllegalAccessException,
-            NoSuchFieldException, SecurityException, ClassNotFoundException, InvocationTargetException,
-            NoSuchMethodException {
+    private static String getValue(String name) throws Exception {
         try {
             Class<?> cls = Class.forName(name);
-            return cls.getField("VALUE").getInt(null);
-        } catch (ClassNotFoundException e) {
+            return (String) cls.getField("VALUE").get(null);
+        } catch (Exception e) {
             // If it's not a class then maybe it's a static member
             int lastIndexOfDot = name.lastIndexOf('.');
             if (lastIndexOfDot < 0) {
-                return null;
+                throw new ClassNotFoundException("Cannot find " + name, e);
             }
-            Class<?> cls = Class.forName(name.substring(0, lastIndexOfDot));
-            Object obj = cls.getField(name.substring(lastIndexOfDot + 1, name.length())).get(null);
-            return (Integer) obj.getClass().getMethod("value").invoke(obj);
+            try {
+                Class<?> cls = Class.forName(name.substring(0, lastIndexOfDot));
+                Object obj = cls.getField(name.substring(lastIndexOfDot + 1, name.length())).get(null);
+                return (String) obj.getClass().getMethod("value").invoke(obj);
+            } catch (Exception e1) {
+                throw new ClassNotFoundException("Cannot find " + name, e1);
+            }
 
         }
 
     }
 
-    private static void populateMap(Map<String, Integer> numerics, Map<String, Integer> waveforms)
-            throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException,
-            SecurityException, IOException, InvocationTargetException, NoSuchMethodException {
+    protected static void populateMap(Map<String, String> numerics, Map<String, String> waveforms)
+            throws Exception {
         BufferedReader br = new BufferedReader(new InputStreamReader(
                 DemoBernoulli.class.getResourceAsStream("bernoulli.map")));
         String line = null;
@@ -185,7 +185,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
                     log.warn("Bad line in bernoulli.map:" + line);
                 } else {
                     v[2] = v[2].trim();
-                    Integer value = getValue(v[1]);
+                    String value = getValue(v[1]);
                     if (null == value) {
                         log.warn("Cannot find value for " + v[1]);
                         continue;
@@ -210,16 +210,6 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
         }
     }
 
-    public static void main(String[] args) throws ClassNotFoundException, IllegalArgumentException,
-            IllegalAccessException, NoSuchFieldException, SecurityException, IOException, InvocationTargetException,
-            NoSuchMethodException {
-        Map<String, Integer> numerics = new HashMap<String, Integer>();
-        Map<String, Integer> waveforms = new HashMap<String, Integer>();
-        populateMap(numerics, waveforms);
-        System.out.println(numerics);
-        System.out.println(waveforms);
-    }
-
     public DemoBernoulli(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
@@ -232,8 +222,8 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
         writeDeviceIdentity();
 
         try {
-            Map<String, Integer> numerics = new HashMap<String, Integer>();
-            Map<String, Integer> waveforms = new HashMap<String, Integer>();
+            Map<String, String> numerics = new HashMap<String, String>();
+            Map<String, String> waveforms = new HashMap<String, String>();
             populateMap(numerics, waveforms);
             for (String name : numerics.keySet()) {
                 addNumeric(name, numerics.get(name));

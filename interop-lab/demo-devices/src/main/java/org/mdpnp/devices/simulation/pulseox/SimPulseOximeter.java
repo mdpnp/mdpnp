@@ -43,9 +43,9 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
     public SimPulseOximeter(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
-        pulse = createNumericInstance(ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
-        SpO2 = createNumericInstance(ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
-        pleth = createSampleArrayInstance(ice.Physio.MDC_PULS_OXIM_PLETH.value());
+        pulse = createNumericInstance(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
+        SpO2 = createNumericInstance(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
+        pleth = createSampleArrayInstance(rosetta.MDC_PULS_OXIM_PLETH.VALUE);
 
         deviceIdentity.model = "Pulse Ox (Simulated)";
         writeDeviceIdentity();

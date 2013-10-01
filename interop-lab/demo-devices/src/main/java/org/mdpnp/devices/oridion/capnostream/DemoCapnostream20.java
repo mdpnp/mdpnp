@@ -10,8 +10,6 @@ package org.mdpnp.devices.oridion.capnostream;
 import ice.AlarmSettings;
 import ice.AlarmSettingsObjective;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -37,20 +35,6 @@ import org.slf4j.LoggerFactory;
 
 
 public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostream> {
-
-    // public static final Numeric FAST_STATUS = new
-    // NumericImpl(DemoCapnostream20.class, "FAST_STATUS");
-    // public static final Numeric SLOW_STATUS = new
-    // NumericImpl(DemoCapnostream20.class, "SLOW_STATUS");
-    // public static final Numeric CO2_ACTIVE_ALARMS = new
-    // NumericImpl(DemoCapnostream20.class, "FAST_STATUS");
-    // public static final Numeric SPO2_ACTIVE_ALARMS = new
-    // NumericImpl(DemoCapnostream20.class, "FAST_STATUS");
-    // public static final Enumeration CAPNOSTREAM_UNITS = new
-    // EnumerationImpl(DemoCapnostream20.class, "CAPNOSTREAM_UNITS");
-    // public static final Numeric EXTENDED_CO2_STATUS = new
-    // NumericImpl(DemoCapnostream20.class, "EXTENDED_CO2_STATUS");
-
     @Override
     protected long getMaximumQuietTime() {
         return 800L;
@@ -79,18 +63,11 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
     protected InstanceHolder<ice.Numeric> rr;
     protected InstanceHolder<ice.Numeric> etco2;
-    protected InstanceHolder<ice.Numeric> fastStatus; // = new
-                                                      // MutableNumericUpdateImpl(DemoCapnostream20.FAST_STATUS);
-    protected InstanceHolder<ice.Numeric> slowStatus; // = new
-                                                      // MutableNumericUpdateImpl(DemoCapnostream20.SLOW_STATUS);
-    protected InstanceHolder<ice.Numeric> co2ActiveAlarms; // = new
-                                                           // MutableNumericUpdateImpl(DemoCapnostream20.CO2_ACTIVE_ALARMS);
-    protected InstanceHolder<ice.Numeric> spo2ActiveAlarms; // = new
-                                                            // MutableNumericUpdateImpl(DemoCapnostream20.SPO2_ACTIVE_ALARMS);
-    protected InstanceHolder<ice.Numeric> extendedCO2Status; // = new
-                                                             // MutableNumericUpdateImpl(DemoCapnostream20.EXTENDED_CO2_STATUS);
-    // protected final MutableEnumerationUpdate capnostreamUnits = new
-    // MutableEnumerationUpdateImpl(DemoCapnostream20.CAPNOSTREAM_UNITS);
+    protected InstanceHolder<ice.Numeric> fastStatus;
+    protected InstanceHolder<ice.Numeric> slowStatus;
+    protected InstanceHolder<ice.Numeric> co2ActiveAlarms;
+    protected InstanceHolder<ice.Numeric> spo2ActiveAlarms;
+    protected InstanceHolder<ice.Numeric> extendedCO2Status;
 
     protected InstanceHolder<ice.AlarmSettings> spo2AlarmSettings, pulserateAlarmSettings, rrAlarmSettings, etco2AlarmSettings;
 
@@ -101,6 +78,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             if(ice.ConnectionState.Connected.equals(getState())) {
                 // The specification is a bit vague on how quickly unacknowledged commands can be sent
                 getDelegate().sendCommand(Command.LinkIsActive);
+                getDelegate().sendHostMonitoringId("ICE");
 
             }
         } catch (IOException e) {
@@ -108,22 +86,22 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         }
     }
 
-    private final Map<Integer, Integer> currentLow = new HashMap<Integer, Integer>();
-    private final Map<Integer, Integer> currentHigh = new HashMap<Integer, Integer>();
+    private final Map<String, Integer> currentLow = new HashMap<String, Integer>();
+    private final Map<String, Integer> currentHigh = new HashMap<String, Integer>();
 
-    private final Map<Integer, Integer> priorSafeLow = new HashMap<Integer, Integer>();
-    private final Map<Integer, Integer> priorSafeHigh = new HashMap<Integer, Integer>();
+    private final Map<String, Integer> priorSafeLow = new HashMap<String, Integer>();
+    private final Map<String, Integer> priorSafeHigh = new HashMap<String, Integer>();
 
     @Override
     protected InstanceHolder<AlarmSettings> alarmSettingsSample(InstanceHolder<AlarmSettings> holder, Float newLower,
-            Float newUpper, int name) {
+            Float newUpper, String metric_id) {
         if(newLower != null) {
-            currentLow.put(name, (int)(float)newLower);
+            currentLow.put(metric_id, (int)(float)newLower);
         }
         if(newUpper != null) {
-            currentHigh.put(name, (int)(float)newUpper);
+            currentHigh.put(metric_id, (int)(float)newUpper);
         }
-        return super.alarmSettingsSample(holder, newLower, newUpper, name);
+        return super.alarmSettingsSample(holder, newLower, newUpper, metric_id);
     }
 
     public DemoCapnostream20(int domainId, EventLoop eventLoop) {
@@ -131,32 +109,30 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         init();
     }
 
-    public static SetupItem lowerAlarm(int name) {
-        switch(name) {
-        case ice.Physio._MDC_PULS_OXIM_SAT_O2:
+    public static SetupItem lowerAlarm(String metric_id) {
+        if(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(metric_id)) {
             return SetupItem.SpO2Low;
-        case ice.Physio._MDC_PULS_OXIM_PULS_RATE:
+        } else if(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
             return SetupItem.PulseRateLow;
-        case ice.Physio._MDC_RESP_RATE:
+        } else if(rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
             return SetupItem.respiratoryRateLow;
-        case ice.Physio._MDC_AWAY_CO2_EXP:
+        } else if(rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(metric_id)) {
             return SetupItem.EtCO2Low;
-        default:
+        } else {
             return null;
         }
     }
 
-    public static SetupItem upperAlarm(int name) {
-        switch(name) {
-        case ice.Physio._MDC_PULS_OXIM_SAT_O2:
+    public static SetupItem upperAlarm(String metric_id) {
+        if(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(metric_id)) {
             return SetupItem.SpO2High;
-        case ice.Physio._MDC_PULS_OXIM_PULS_RATE:
+        } else if(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
             return SetupItem.PulseRateHigh;
-        case ice.Physio._MDC_RESP_RATE:
+        } else if(rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
             return SetupItem.respiratoryRateHigh;
-        case ice.Physio._MDC_AWAY_CO2_EXP:
+        } else if(rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(metric_id)) {
             return SetupItem.EtCO2High;
-        default:
+        } else {
             return null;
         }
     }
@@ -244,18 +220,18 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     @Override
     public void unsetAlarmSettings(AlarmSettingsObjective obj) {
         super.unsetAlarmSettings(obj);
-        log.warn("Resetting " + obj.name + " to [" + priorSafeLow.get(obj.name) + " , " + priorSafeHigh.get(obj.name));
-        setupItemHandler.send(lowerAlarm(obj.name), priorSafeLow.get(obj.name));
-        setupItemHandler.send(upperAlarm(obj.name), priorSafeHigh.get(obj.name));
+        log.warn("Resetting " + obj.metric_id + " to [" + priorSafeLow.get(obj.metric_id) + " , " + priorSafeHigh.get(obj.metric_id));
+        setupItemHandler.send(lowerAlarm(obj.metric_id), priorSafeLow.get(obj.metric_id));
+        setupItemHandler.send(upperAlarm(obj.metric_id), priorSafeHigh.get(obj.metric_id));
     }
 
     @Override
     public void setAlarmSettings(AlarmSettingsObjective obj) {
         super.setAlarmSettings(obj);
-        priorSafeHigh.put(obj.name, currentHigh.get(obj.name));
-        priorSafeLow.put(obj.name, currentLow.get(obj.name));
-        setupItemHandler.send(lowerAlarm(obj.name), (int) obj.lower);
-        setupItemHandler.send(upperAlarm(obj.name), (int) obj.upper);
+        priorSafeHigh.put(obj.metric_id, currentHigh.get(obj.metric_id));
+        priorSafeLow.put(obj.metric_id, currentLow.get(obj.metric_id));
+        setupItemHandler.send(lowerAlarm(obj.metric_id), (int) obj.lower);
+        setupItemHandler.send(upperAlarm(obj.metric_id), (int) obj.upper);
     }
 
     private void init() {
@@ -276,7 +252,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         init();
     }
 
-    private static final int BUFFER_SAMPLES = 10;
+    private static final int BUFFER_SAMPLES = 5;
     private final Number[] realtimeBuffer = new Number[BUFFER_SAMPLES];
     private int realtimeBufferCount = 0;
 
@@ -295,14 +271,14 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             // We have an SpO2 value
 
             DemoCapnostream20.this.spo2 = numericSample(DemoCapnostream20.this.spo2, 0xFF == spo2 ? null : spo2,
-                    ice.Physio.MDC_PULS_OXIM_SAT_O2.value());
+                    rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
 
-            rr = numericSample(rr, 0xFF == respiratoryRate ? null : respiratoryRate, ice.Physio.MDC_RESP_RATE.value());
+            rr = numericSample(rr, 0xFF == respiratoryRate ? null : respiratoryRate, rosetta.MDC_RESP_RATE.VALUE);
 
-            etco2 = numericSample(etco2, 0xFF == etCO2 ? null : etCO2, ice.Physio.MDC_AWAY_CO2_EXP.value());
+            etco2 = numericSample(etco2, 0xFF == etCO2 ? null : etCO2, rosetta.MDC_AWAY_CO2_EXP.VALUE);
 
             DemoCapnostream20.this.pulserate = numericSample(DemoCapnostream20.this.pulserate, 0xFF == pulserate ? null
-                    : pulserate, ice.Physio.MDC_PULS_OXIM_PULS_RATE.value());
+                    : pulserate, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
 
             DemoCapnostream20.this.extendedCO2Status = numericSample(DemoCapnostream20.this.extendedCO2Status,
                     0xFF == extendedCO2Status ? null : extendedCO2Status, oridion.MDC_EXTENDED_CO2_STATUS.VALUE);
@@ -317,13 +293,13 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
                     0xFF == SpO2ActiveAlarms ? null : SpO2ActiveAlarms, oridion.MDC_SPO2_ACTIVE_ALARMS.VALUE);
 
             DemoCapnostream20.this.spo2AlarmSettings = alarmSettingsSample(DemoCapnostream20.this.spo2AlarmSettings,
-                    0xFF == spo2AlarmLow ? null : (float)spo2AlarmLow, 0xFF == spo2AlarmHigh ? null : (float)spo2AlarmHigh, ice.Physio._MDC_PULS_OXIM_SAT_O2);
+                    0xFF == spo2AlarmLow ? null : (float)spo2AlarmLow, 0xFF == spo2AlarmHigh ? null : (float)spo2AlarmHigh, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
 
             DemoCapnostream20.this.etco2AlarmSettings = alarmSettingsSample(DemoCapnostream20.this.etco2AlarmSettings,
-                    0xFF == etCo2AlarmLow ? null : (float)etCo2AlarmLow, 0xFF == etCo2AlarmHigh  ? null : (float) spo2AlarmLow, ice.Physio._MDC_AWAY_CO2_EXP);
+                    0xFF == etCo2AlarmLow ? null : (float)etCo2AlarmLow, 0xFF == etCo2AlarmHigh  ? null : (float) spo2AlarmLow, rosetta.MDC_AWAY_CO2_EXP.VALUE);
 
             DemoCapnostream20.this.pulserateAlarmSettings = alarmSettingsSample(DemoCapnostream20.this.pulserateAlarmSettings,
-                    0xFF == pulseAlarmLow ? null : (float)pulseAlarmLow, 0xFF == pulseAlarmHigh ? null : (float) pulseAlarmHigh, ice.Physio._MDC_PULS_OXIM_PULS_RATE);
+                    0xFF == pulseAlarmLow ? null : (float)pulseAlarmLow, 0xFF == pulseAlarmHigh ? null : (float) pulseAlarmHigh, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
 
             return true;
         }
@@ -361,10 +337,10 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             }
             if(0 != (0x40 & status)) {
                 // filter line not connected
-//                if(null != DemoCapnostream20.this.co2) {
-//                    unregisterSampleArrayInstance(DemoCapnostream20.this.co2);
-//                    DemoCapnostream20.this.co2 = null;
-//                }
+                if(null != DemoCapnostream20.this.co2) {
+                    unregisterSampleArrayInstance(DemoCapnostream20.this.co2);
+                    DemoCapnostream20.this.co2 = null;
+                }
                 log.warn("Filterline indicates disconnected " + co2 + " with fast status " + Integer.toHexString(status));
                 return true;
             }
@@ -389,18 +365,14 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             deviceIdentity.serial_number = serial_number;
             writeDeviceIdentity();
             setupItemHandler.send(SetupItem.CommIntIndication, 2);
+
             executor.schedule(new Runnable() {
                 public void run() {
                     try {
-                        getDelegate().sendHostMonitoringId("ICE");
-                        Thread.sleep(100L);
                         getDelegate().sendCommand(Command.StartRTComm);
                     } catch (IOException e) {
                         log.error("error", e);
-                    } catch (InterruptedException e) {
-                        log.error("interrupted", e);
                     }
-
                 }
             }, 0L, TimeUnit.MILLISECONDS);
             return true;

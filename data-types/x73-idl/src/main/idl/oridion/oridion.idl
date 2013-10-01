@@ -1,9 +1,9 @@
 module oridion {
 
-    const long MDC_FAST_STATUS = 66000; 
-    const long MDC_SLOW_STATUS = 66001;
-    const long MDC_CO2_ACTIVE_ALARMS = 66002;
-    const long MDC_SPO2_ACTIVE_ALARMS = 66003;
-    const long MDC_EXTENDED_CO2_STATUS = 66004;
+    const string MDC_FAST_STATUS = "MDC_FAST_STATUS";
+    const string MDC_SLOW_STATUS = "MDC_SLOW_STATUS";
+    const string MDC_CO2_ACTIVE_ALARMS = "MDC_CO2_ACTIVE_ALARMS";
+    const string MDC_SPO2_ACTIVE_ALARMS = "MDC_SPO2_ACTIVE_ALARMS";
+    const string MDC_EXTENDED_CO2_STATUS = "MDC_EXTENDED_CO2_STATUS";
 
 };

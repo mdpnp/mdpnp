@@ -79,7 +79,7 @@ public class VitalModelImpl implements VitalModel {
                                 Numeric keyHolder = new Numeric();
                                 numericReader.get_key_value(keyHolder, sampleInfo.instance_handle);
                                 Log.debug("Numeric NOT ALIVE:"+keyHolder);
-                                removeNumeric(keyHolder.unique_device_identifier, keyHolder.name);
+                                removeNumeric(keyHolder.unique_device_identifier, keyHolder.metric_id, keyHolder.instance_id);
                             } else {
                                 if (sampleInfo.valid_data) {
                                     Numeric n = (Numeric) num_seq.get(i);
@@ -99,19 +99,19 @@ public class VitalModelImpl implements VitalModel {
         }
     };
 
-    protected void removeNumeric(String udi, int name) {
+    protected void removeNumeric(String udi, String metric_id, int instance_id) {
         Vital[] vitals = vitalBuffer.get();
         vitals = this.vitals.toArray(vitals);
         vitalBuffer.set(vitals);
         for (Vital v : vitals) {
             boolean updated = false;
             if(v != null) {
-                for (int x : v.getNames()) {
-                    if (x == name) {
+                for (String x : v.getMetricIds()) {
+                    if (x.equals(metric_id)) {
                         ListIterator<Value> li = v.getValues().listIterator();
                         while (li.hasNext()) {
                             Value va = li.next();
-                            if (va.getUniversalDeviceIdentifier().equals(udi)) {
+                            if (va.getUniversalDeviceIdentifier().equals(udi) && va.getInstanceId() == instance_id) {
                                 va.unregisterCriticalLimits(getWriter());
                                 li.remove();
                                 updated = true;
@@ -147,18 +147,18 @@ public class VitalModelImpl implements VitalModel {
         // or maybe these should be hashed because creating myriad QueryConditions is not advisable
         for (Vital v : vitals) {
             if(v != null) {
-                for (int x : v.getNames()) {
+                for (String x : v.getMetricIds()) {
                     // Change to this vital from a source
-                    if (x == n.name) {
+                    if (x.equals(n.metric_id) ) {
                         boolean updated = false;
                         for (Value va : v.getValues()) {
-                            if (va.getName() == n.name && va.getUniversalDeviceIdentifier().equals(n.unique_device_identifier)) {
+                            if (va.getInstanceId()==n.instance_id && va.getMetricId().equals(n.metric_id) && va.getUniversalDeviceIdentifier().equals(n.unique_device_identifier)) {
                                 va.updateFrom(n, si);
                                 updated = true;
                             }
                         }
                         if (!updated) {
-                            Value va = new ValueImpl(n.unique_device_identifier, n.name, v);
+                            Value va = new ValueImpl(n.unique_device_identifier, n.metric_id, n.instance_id, v);
                             va.updateFrom(n, si);
                             v.getValues().add(va);
                             va.writeCriticalLimitsToDevice(getWriter());
@@ -181,7 +181,7 @@ public class VitalModelImpl implements VitalModel {
     }
 
     @Override
-    public Vital addVital(String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
+    public Vital addVital(String label, String units, String[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
         Vital v = new VitalImpl(this, label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow, valueMsWarningHigh, color);
         vitals.add(v);
         addQueryConditions(v);
@@ -194,6 +194,14 @@ public class VitalModelImpl implements VitalModel {
         boolean r = vitals.remove(vital);
         if (r) {
             removeQueryConditions(vital);
+
+            ListIterator<Value> li = vital.getValues().listIterator();
+            while(li.hasNext()) {
+                Value v = li.next();
+                li.remove();
+                v.unregisterCriticalLimits(getWriter());
+            }
+
             fireVitalRemoved(vital);
         }
         return r;
@@ -204,6 +212,14 @@ public class VitalModelImpl implements VitalModel {
         Vital v = vitals.remove(i);
         if (v != null) {
             removeQueryConditions(v);
+
+            ListIterator<Value> li = v.getValues().listIterator();
+            while(li.hasNext()) {
+                Value va = li.next();
+                li.remove();
+                va.unregisterCriticalLimits(getWriter());
+            }
+
             fireVitalRemoved(v);
         }
         return v;
@@ -309,11 +325,11 @@ public class VitalModelImpl implements VitalModel {
 
             Set<QueryCondition> set = queryConditions.get(v);
             set = null == set ? new HashSet<QueryCondition>() : set;
-            for (int x : v.getNames()) {
+            for (String x : v.getMetricIds()) {
                 StringSeq params = new StringSeq();
-                params.add(Integer.toString(x));
+                params.add("'"+x+"'");
                 QueryCondition qc = numericReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
-                        ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "name = %0", params);
+                        ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "metric_id = %0", params);
                 set.add(qc);
                 eventLoop.addHandler(qc, numericHandler);
             }
@@ -353,6 +369,10 @@ public class VitalModelImpl implements VitalModel {
     public void stop() {
         eventLoop.doLater(new Runnable() {
             public void run() {
+                while(!vitals.isEmpty()) {
+                    removeVital(0);
+                }
+
                 subscriber.get_participant().delete_datawriter(writer);
 
                 for (Vital v : queryConditions.keySet()) {

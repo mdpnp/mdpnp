@@ -28,7 +28,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -115,9 +117,11 @@ public abstract class AbstractDevice implements ThreadFactory {
         return domainParticipant;
     }
 
+    protected InstanceHolder<Numeric> createNumericInstance(String metric_id) {
+        return createNumericInstance(metric_id, 0);
+    }
 
-
-    protected InstanceHolder<Numeric> createNumericInstance(int name) {
+    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, int instance_id) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null
                 || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException(
@@ -127,13 +131,14 @@ public abstract class AbstractDevice implements ThreadFactory {
         InstanceHolder<Numeric> holder = new InstanceHolder<Numeric>();
         holder.data = new Numeric();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
-        holder.data.name = name;
+        holder.data.metric_id = metric_id;
+        holder.data.instance_id = instance_id;
         holder.handle = numericDataWriter.register_instance(holder.data);
         registeredNumericInstances.add(holder);
         return holder;
     }
 
-    protected InstanceHolder<ice.AlarmSettings> createAlarmSettingsInstance(int name) {
+    protected InstanceHolder<ice.AlarmSettings> createAlarmSettingsInstance(String metric_id) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null
                 || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException(
@@ -143,7 +148,7 @@ public abstract class AbstractDevice implements ThreadFactory {
         InstanceHolder<ice.AlarmSettings> holder = new InstanceHolder<ice.AlarmSettings>();
         holder.data = new ice.AlarmSettings();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
-        holder.data.name = name;
+        holder.data.metric_id = metric_id;
         holder.handle = alarmSettingsDataWriter.register_instance(holder.data);
         registeredAlarmSettingsInstances.add(holder);
         return holder;
@@ -194,7 +199,11 @@ public abstract class AbstractDevice implements ThreadFactory {
     private List<InstanceHolder<Numeric>> registeredNumericInstances = new ArrayList<InstanceHolder<Numeric>>();
     private List<InstanceHolder<ice.AlarmSettings>> registeredAlarmSettingsInstances = new ArrayList<InstanceHolder<ice.AlarmSettings>>();
 
-    protected InstanceHolder<SampleArray> createSampleArrayInstance(int name) {
+    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id) {
+        return createSampleArrayInstance(metric_id, 0);
+    }
+
+    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null
                 || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException(
@@ -204,7 +213,8 @@ public abstract class AbstractDevice implements ThreadFactory {
         InstanceHolder<SampleArray> holder = new InstanceHolder<SampleArray>();
         holder.data = new SampleArray();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
-        holder.data.name = name;
+        holder.data.metric_id = metric_id;
+        holder.data.instance_id = instance_id;
         holder.handle = sampleArrayDataWriter.register_instance(holder.data);
         registeredSampleArrayInstances.add(holder);
         return holder;
@@ -221,43 +231,22 @@ public abstract class AbstractDevice implements ThreadFactory {
         alarmSettingsDataWriter.write(holder.data, holder.handle);
     }
 
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, int name) {
-        if (holder != null && holder.data.name != name) {
-            unregisterNumericInstance(holder);
-            holder = null;
-        }
-        if (null != newValue) {
-            if (null == holder) {
-                holder = createNumericInstance(name);
-            }
-            numericSample(holder, (int) newValue);
-        } else {
-            if (null != holder) {
-                unregisterNumericInstance(holder);
-                holder = null;
-            }
-        }
-        return holder;
-    }
-
-
-
-    protected InstanceHolder<ice.AlarmSettings> alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper, int name) {
-        if (holder != null && holder.data.name != name) {
+    protected InstanceHolder<ice.AlarmSettings> alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper, String metric_id) {
+        if (holder != null && !holder.data.metric_id.equals(metric_id)) {
             unregisterAlarmSettingsInstance(holder);
             holder = null;
         }
         if (null != newLower && null != newUpper) {
             if (null == holder) {
-                holder = createAlarmSettingsInstance(name);
+                holder = createAlarmSettingsInstance(metric_id);
             }
             alarmSettingsSample(holder, newLower, newUpper);
         } else {
             if(null != newLower) {
-                log.warn("Not setting only a lower limit on " + name + " for " + holder.data.unique_device_identifier);
+                log.warn("Not setting only a lower limit on " + metric_id + " for " + holder.data.unique_device_identifier);
             }
             if(null != newUpper) {
-                log.warn("Not setting only an upper limit on " + name + " for " + holder.data.unique_device_identifier);
+                log.warn("Not setting only an upper limit on " + metric_id + " for " + holder.data.unique_device_identifier);
             }
             if (null != holder) {
                 unregisterAlarmSettingsInstance(holder);
@@ -269,14 +258,29 @@ public abstract class AbstractDevice implements ThreadFactory {
         return holder;
     }
 
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, int name) {
-        if (holder != null && holder.data.name != name) {
+
+    // For convenience
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id) {
+        return numericSample(holder, null==newValue?((Float)null):((Float)(float)(int)newValue), metric_id);
+    }
+
+    // For convenience
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, int instance_id) {
+        return numericSample(holder, null==newValue?((Float)null):((Float)(float)(int)newValue), metric_id, instance_id);
+    }
+
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id) {
+        return numericSample(holder, newValue, metric_id, 0);
+    }
+
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, int instance_id) {
+        if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
             unregisterNumericInstance(holder);
             holder = null;
         }
         if (null != newValue) {
             if (null == holder) {
-                holder = createNumericInstance(name);
+                holder = createNumericInstance(metric_id, instance_id);
             }
             numericSample(holder, newValue);
         } else {
@@ -299,14 +303,19 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues,
-            int msPerSample, int name) {
-        if (null != holder && holder.data.name != name) {
+            int msPerSample, String metric_id) {
+        return sampleArraySample(holder, newValues, msPerSample, metric_id, 0);
+    }
+
+    protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues,
+            int msPerSample, String metric_id, int instance_id) {
+        if (null != holder && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
             unregisterSampleArrayInstance(holder);
             holder = null;
         }
         if (null != newValues) {
             if (null == holder) {
-                holder = createSampleArrayInstance(name);
+                holder = createSampleArrayInstance(metric_id, instance_id);
             }
             sampleArraySample(holder, newValues, msPerSample);
         } else {
@@ -329,16 +338,21 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues,
-            int count, int msPerSample, int name) {
+            int count, int msPerSample, String metric_id) {
+        return sampleArraySample(holder, newValues, count, msPerSample, metric_id, 0);
+    }
+
+    protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues,
+            int count, int msPerSample, String metric_id, int instance_id) {
         // if the specified holder doesn't match the specified name
-        if (holder != null && holder.data.name != name) {
+        if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
             unregisterSampleArrayInstance(holder);
             holder = null;
         }
 
         if (null != newValues) {
             if (null == holder) {
-                holder = createSampleArrayInstance(name);
+                holder = createSampleArrayInstance(metric_id, instance_id);
             }
             sampleArraySample(holder, newValues, count, msPerSample);
         } else {
@@ -453,7 +467,6 @@ public abstract class AbstractDevice implements ThreadFactory {
         DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
         pQos.participant_name.name = "Device";
 
-
         domainParticipant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null,
                 StatusKind.STATUS_MASK_NONE);
         publisher = domainParticipant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null,
@@ -526,6 +539,8 @@ public abstract class AbstractDevice implements ThreadFactory {
 
     }
 
+    private Map<InstanceHandle_t, String> instanceMetrics = new HashMap<InstanceHandle_t, String>();
+
 
     protected void writeDeviceIdentity() {
         if(null==deviceIdentity.unique_device_identifier||"".equals(deviceIdentity.unique_device_identifier)) {
@@ -561,16 +576,26 @@ public abstract class AbstractDevice implements ThreadFactory {
                                 SampleInfo si = (SampleInfo) info_seq.get(i);
                                 ice.AlarmSettingsObjective obj = (AlarmSettingsObjective) data_seq.get(i);
 
+                                if(0 != (si.view_state & ViewStateKind.NEW_VIEW_STATE) && si.valid_data) {
+                                    log.warn("Handle for metric_id="+obj.metric_id+" is " + si.instance_handle);
+                                    instanceMetrics.put(new InstanceHandle_t(si.instance_handle), obj.metric_id);
+                                }
+
                                 if(0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
                                     if(si.valid_data) {
-                                        log.warn("Setting " + obj.name + " to [ " + obj.lower + " , " + obj.upper + "]");
+                                        log.warn("Setting " + obj.metric_id + " to [ " + obj.lower + " , " + obj.upper + "]");
                                         setAlarmSettings(obj);
 
                                     }
                                 } else {
                                     obj = new ice.AlarmSettingsObjective();
-                                    alarmSettingsObjectiveReader.get_key_value(obj, si.instance_handle);
-                                    log.warn("Unsetting " + obj.name);
+                                    log.warn("Unsetting handle " + si.instance_handle);
+                                    // TODO 1-Oct-2013 JP This call to get_key_value fails consistently on ARM platforms
+                                    // so I'm tracking instances externally for the time being
+//                                    alarmSettingsObjectiveReader.get_key_value(obj, si.instance_handle);
+                                    obj.unique_device_identifier = deviceIdentity.unique_device_identifier;
+                                    obj.metric_id = instanceMetrics.get(si.instance_handle);
+                                    log.warn("Unsetting " + obj.metric_id);
                                     unsetAlarmSettings(obj);
 
                                 }

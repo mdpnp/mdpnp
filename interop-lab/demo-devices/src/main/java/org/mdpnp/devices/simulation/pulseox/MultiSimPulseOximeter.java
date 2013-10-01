@@ -52,7 +52,7 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
         for(int i = 0; i < pleth.length; i++) {
             this.pulseox[i] = new MySimulatedPulseOximeter(i);
-            pleth[i] = createSampleArrayInstance(ice.MDC_PULS_OXIM_PLETH1.VALUE + i);
+            pleth[i] = createSampleArrayInstance(rosetta.MDC_PULS_OXIM_PLETH.VALUE, i);
         }
 
         deviceIdentity.model = "Pulse Ox (Simulated)";

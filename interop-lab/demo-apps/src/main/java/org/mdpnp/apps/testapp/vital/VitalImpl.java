@@ -9,7 +9,7 @@ class VitalImpl implements Vital {
 
     private final VitalModelImpl parent;
     private final String label, units;
-    private final int[] names;
+    private final String[] metric_ids;
     private final float minimum, maximum;
     private Color color;
     private Float warningLow, warningHigh;
@@ -20,11 +20,11 @@ class VitalImpl implements Vital {
     private long warningAgeBecomesAlarm = Long.MAX_VALUE;
 
 
-    VitalImpl(VitalModelImpl parent, String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
+    VitalImpl(VitalModelImpl parent, String label, String units, String[] metric_ids, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
         this.parent = parent;
         this.label = label;
         this.units = units;
-        this.names = names;
+        this.metric_ids = metric_ids;
         this.minimum =  minimum;
         this.maximum =  maximum;
         setCriticalLow(criticalLow);
@@ -42,8 +42,8 @@ class VitalImpl implements Vital {
     }
 
     @Override
-    public int[] getNames() {
-        return names;
+    public String[] getMetricIds() {
+        return metric_ids;
     }
 
     @Override
@@ -203,7 +203,7 @@ class VitalImpl implements Vital {
     }
     @Override
     public String toString() {
-        return "[label="+label+",names="+Arrays.toString(names)+",minimum="+minimum+",maximum="+maximum+",low="+warningLow+",high="+warningHigh+",values="+values.toString()+"]";
+        return "[label="+label+",names="+Arrays.toString(metric_ids)+",minimum="+minimum+",maximum="+maximum+",low="+warningLow+",high="+warningHigh+",values="+values.toString()+"]";
     }
     @Override
     public boolean isAnyOutOfBounds() {

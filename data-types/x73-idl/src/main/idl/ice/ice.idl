@@ -1,6 +1,8 @@
 module ice {
 
-  typedef string<128> UDI;
+  typedef string<128> UniqueDeviceIdentifier;
+  typedef string<64>  MetricIdentifier;
+  typedef long InstanceIdentifier;
 
   struct Image {
     sequence<octet, 65530> raster;
@@ -9,7 +11,7 @@ module ice {
   };
 
   struct DeviceIdentity {
-    UDI unique_device_identifier; //@key
+    UniqueDeviceIdentifier unique_device_identifier; //@key
     string<128> manufacturer;
     string<128> model;
     string<128> serial_number;
@@ -32,7 +34,7 @@ module ice {
   };
 
   struct DeviceConnectivity {
-    UDI unique_device_identifier; //@key
+    UniqueDeviceIdentifier unique_device_identifier; //@key
     ConnectionState state;
     ConnectionType type;
     string<128> info;
@@ -40,7 +42,7 @@ module ice {
   };
 
   struct DeviceConnectivityObjective {
-    UDI unique_device_identifier; //@key
+    UniqueDeviceIdentifier unique_device_identifier; //@key
     boolean connected;
     string<128> target;
   };
@@ -53,69 +55,55 @@ module ice {
 
 
   // SPECULATIVE
-  const long MDC_PRESS_CUFF_NEXT_INFLATION = 65536;
-  const long MDC_PRESS_CUFF_INFLATION = 65537;
+  const MetricIdentifier MDC_PRESS_CUFF_NEXT_INFLATION = "MDC_PRESS_CUFF_NEXT_INFLATION";
+  const MetricIdentifier MDC_PRESS_CUFF_INFLATION = "MDC_PRESS_CUFF_INFLATION";
 
-  const long MDC_PULS_OXIM_PLETH1 = 65600;
-  const long MDC_PULS_OXIM_PLETH2 = 65601;
-  const long MDC_PULS_OXIM_PLETH3 = 65602;
-  const long MDC_PULS_OXIM_PLETH4 = 65603;
-  const long MDC_PULS_OXIM_PLETH5 = 65604;
-  const long MDC_PULS_OXIM_PLETH6 = 65605;
-  const long MDC_PULS_OXIM_PLETH7 = 65606;
-  const long MDC_PULS_OXIM_PLETH8 = 65607;
-  const long MDC_PULS_OXIM_PLETH9 = 65608;
-  const long MDC_PULS_OXIM_PLETH10 = 65609;
-  const long MDC_PULS_OXIM_PLETH11 = 65610;
-  const long MDC_PULS_OXIM_PLETH12 = 65611;
-
-
-
-
-  const long MDC_HR_ECG_MODE = 65538;
-  const long MDC_RR_APNEA = 65539;
-  const long MDC_SPO2_C_LOCK = 65540;
-  const long MDC_TIME_PD_INSPIRATORY = 65547;
-  const long MDC_TIME_MSEC_SINCE_EPOCH = 65548;
-  const long MDC_CAPNOGRAPH = 65549;
-  const long MDC_START_OF_BREATH = 65550;
+  const MetricIdentifier MDC_HR_ECG_MODE = "MDC_HR_ECG_MODE";
+  const MetricIdentifier MDC_RR_APNEA = "MDC_RR_APNEA";
+  const MetricIdentifier MDC_SPO2_C_LOCK = "MDC_SPO2_C_LOCK";
+  const MetricIdentifier MDC_TIME_PD_INSPIRATORY = "MDC_TIME_PD_INSPIRATORY";
+  const MetricIdentifier MDC_TIME_MSEC_SINCE_EPOCH = "MDC_TIME_MSEC_SINCE_EPOCH";
+  const MetricIdentifier MDC_CAPNOGRAPH = "MDC_CAPNOGRAPH";
+  const MetricIdentifier MDC_START_OF_BREATH = "MDC_START_OF_BREATH";
+  const MetricIdentifier MDC_VENT_TIME_PD_PPV = "MDC_VENT_TIME_PD_PPV";
 
   const long MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP = 6250;
   const long MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS = 6222;
   const long MDC_EVT_STAT_OFF = 6226;
-  const long MDC_VENT_TIME_PD_PPV = 21344;
-
 
   struct Numeric {
-    UDI unique_device_identifier; //@key
-    long name; //@key
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    MetricIdentifier metric_id; //@key
+    InstanceIdentifier instance_id; //@key
     float value;
   };
   const string NumericTopic = "ice::Numeric";
 
   struct SampleArray {
-    UDI unique_device_identifier; //@key
-    long name; //@key
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    MetricIdentifier metric_id; //@key
+    InstanceIdentifier instance_id; //@key
     sequence<float,400> values;
     long millisecondsPerSample;
   };
   const string SampleArrayTopic = "ice::SampleArray";
 
   struct Text {
-    UDI unique_device_identifier; //@key
-    long name; //@key
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    MetricIdentifier metric_id; //@key
+    InstanceIdentifier instance_id;
     string<256> value;
   };
   const string TextTopic = "ice::Text";
 
   struct InfusionObjective {
-    UDI unique_device_identifier; //@key
+    UniqueDeviceIdentifier unique_device_identifier; //@key
     string<128> requestor;
     boolean stopInfusion;
   };
   const string InfusionObjectiveTopic = "ice::InfusionObjective";
   struct InfusionStatus {
-    UDI unique_device_identifier; //@key
+    UniqueDeviceIdentifier unique_device_identifier; //@key
     // is the pump actively infusing?
     boolean infusionActive;
 
@@ -140,9 +128,12 @@ module ice {
   };
   const string InfusionStatusTopic = "ice::InfusionStatus";
 
+
+// Assumes all instances of a given metric have the same alarm settings
+// is this true?
   struct AlarmSettings {
-    UDI unique_device_identifier; //@key
-    long name; //@key
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    MetricIdentifier metric_id; //@key
     float lower;
     float upper;
 
@@ -150,8 +141,8 @@ module ice {
   const string AlarmSettingsTopic = "ice::AlarmSettings";
 
   struct AlarmSettingsObjective {
-    UDI unique_device_identifier; //@key
-    long name; //@key
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    MetricIdentifier metric_id; //@key
     string<256> requestor_udi;
     float lower;
     float upper;

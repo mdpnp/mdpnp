@@ -6,11 +6,9 @@ import ice.SampleArray;
 
 import java.awt.Color;
 import java.awt.GridLayout;
-import java.util.Date;
 import java.util.Set;
 
 import org.mdpnp.guis.waveform.WaveformPanel;
-import org.mdpnp.guis.waveform.WaveformPanelFactory;
 import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 import org.slf4j.Logger;
@@ -22,7 +20,7 @@ import com.rti.dds.subscription.SampleInfo;
 public class MultiPulseOximeterPanel extends DevicePanel {
     private WaveformPanel[] plethPanel;
     private final WaveformUpdateWaveformSource[] plethWave;
-    
+
     private static final int N = 12;
     protected void buildComponents() {
 //        WaveformPanelFactory fact = new WaveformPanelFactory();
@@ -49,7 +47,7 @@ public class MultiPulseOximeterPanel extends DevicePanel {
             plethPanel[i].start();
         }
     }
-    
+
     @Override
     public void destroy() {
         for(int i = 0; i < N; i++) {
@@ -58,19 +56,18 @@ public class MultiPulseOximeterPanel extends DevicePanel {
         }
         super.destroy();
     }
-    
-    public static boolean supported(Set<Integer> names) {
-        return names.contains(ice.MDC_PULS_OXIM_PLETH1.VALUE);
+
+    public static boolean supported(Set<String> names) {
+        return names.contains(rosetta.MDC_PULS_OXIM_PLETH.VALUE);
     }
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
-    private final Date date = new Date();
+//    private final Date date = new Date();
 
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
-        int i = sampleArray.name - ice.MDC_PULS_OXIM_PLETH1.VALUE;
-        if(i>=0&&i<N) {
-            plethWave[i].applyUpdate(sampleArray);
+        if(sampleArray.instance_id>=0&&sampleArray.instance_id<N) {
+            plethWave[sampleArray.instance_id].applyUpdate(sampleArray);
         }
     }
 

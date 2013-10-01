@@ -33,8 +33,8 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     }
 
     @Override
-    public Vital addVital(String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
-        return model.addVital(label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow, valueMsWarningHigh, color);
+    public Vital addVital(String label, String units, String[] metric_ids, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
+        return model.addVital(label, units, metric_ids, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow, valueMsWarningHigh, color);
     }
 
     @Override

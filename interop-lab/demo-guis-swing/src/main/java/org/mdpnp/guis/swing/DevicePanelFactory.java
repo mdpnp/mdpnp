@@ -18,41 +18,41 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DevicePanelFactory {
-	private DevicePanelFactory() {}
-	
-	public static final Class<?>[] PANELS = new Class[] {
-	    PulseOximeterPanel.class,
-	    BloodPressurePanel.class,
-	    ElectroCardioGramPanel.class,
-	    VentilatorPanel.class,
-	    InfusionPumpPanel.class,
-	    MultiPulseOximeterPanel.class,
-	};
-	private final static Logger log = LoggerFactory.getLogger(DevicePanelFactory.class);
-	public static final Method[] PANEL_SUPPORTED = new Method[PANELS.length];
-	static {
-	    for(int i = 0; i < PANELS.length; i++) {
-	        try {
+    private DevicePanelFactory() {}
+
+    public static final Class<?>[] PANELS = new Class[] {
+        PulseOximeterPanel.class,
+        BloodPressurePanel.class,
+        ElectroCardioGramPanel.class,
+        VentilatorPanel.class,
+        InfusionPumpPanel.class,
+        MultiPulseOximeterPanel.class,
+    };
+    private final static Logger log = LoggerFactory.getLogger(DevicePanelFactory.class);
+    public static final Method[] PANEL_SUPPORTED = new Method[PANELS.length];
+    static {
+        for(int i = 0; i < PANELS.length; i++) {
+            try {
                 PANEL_SUPPORTED[i] = PANELS[i].getDeclaredMethod("supported", Set.class);
             } catch (Exception e) {
                 log.error("Exception checking supported method", e);
 //                throw new ExceptionInInitializerError(e);
             }
-	    }
-	}
-	
+        }
+    }
 
-	
-	
-	
-	public static <T extends Component> void resolvePanels(Set<Integer> tags, Collection<T> container, Set<String> pumps) {
+
+
+
+
+    public static <T extends Component> void resolvePanels(Set<String> tags, Collection<T> container, Set<String> pumps) {
         log.trace("resolvePanels tags="+tags+" container="+container);
         Map<Class<?>, T> byClass = new HashMap<Class<?>, T>();
-        
+
         for(T c : container) {
             byClass.put(c.getClass(), c);
         }
-        
+
         container.clear();
         try {
             if(!pumps.isEmpty()) {
@@ -65,7 +65,7 @@ public class DevicePanelFactory {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        
+
         for(int i = 0; i < PANELS.length; i++) {
             try {
                 if((Boolean)PANEL_SUPPORTED[i].invoke(null, tags)) {
@@ -83,10 +83,10 @@ public class DevicePanelFactory {
                 throw new RuntimeException(e);
             }
         }
-        
+
         for(Component c : byClass.values()) {
             if(c instanceof DevicePanel) {
-                
+
                 ((DevicePanel)c).destroy();
                 log.trace("Destroyed a " + c.getClass());
             } else {
@@ -94,5 +94,5 @@ public class DevicePanelFactory {
             }
         }
         byClass.clear();
-	}
+    }
 }

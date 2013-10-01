@@ -46,11 +46,11 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
     public SimElectroCardioGram(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
-        i = createSampleArrayInstance(ice.Physio.MDC_ECG_AMPL_ST_I.value());
-        ii = createSampleArrayInstance(ice.Physio.MDC_ECG_AMPL_ST_II.value());
-        iii = createSampleArrayInstance(ice.Physio.MDC_ECG_AMPL_ST_III.value());
-        respiratoryRate = createNumericInstance(ice.Physio.MDC_RESP_RATE.value());
-        heartRate = createNumericInstance(ice.Physio.MDC_PULS_RATE.value());
+        i = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_I.VALUE);
+        ii = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_II.VALUE);
+        iii = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_III.VALUE);
+        respiratoryRate = createNumericInstance(rosetta.MDC_RESP_RATE.VALUE);
+        heartRate = createNumericInstance(rosetta.MDC_PULS_RATE.VALUE);
 
         deviceIdentity.model = "ECG (Simulated)";
         writeDeviceIdentity();

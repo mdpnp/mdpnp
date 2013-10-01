@@ -32,169 +32,168 @@ import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
 public class BloodPressurePanel extends DevicePanel {
-	
-	private JLabel systolicLabel, diastolicLabel, pulseLabel;
-	private JLabel systolic, diastolic, pulse;
-	private JPanel systolicPanel, diastolicPanel, pulsePanel;
-	private JLabel time;
-	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-	private JLabel nextInflation;
-	private final Date date = new Date();
-//	private JButton inflate = new JButton("Inflate"); 
-	
-	protected void buildComponents() {
-		systolicLabel = new JLabel("mmHg");
-				
-		systolicPanel = new JPanel();
-		systolicPanel.setOpaque(false);
-		systolicPanel.setLayout(new BorderLayout());
-		systolicPanel.add(systolic = new JLabel("---"), BorderLayout.CENTER);
-		systolic.setHorizontalAlignment(JLabel.RIGHT);
-		systolic.setBorder(new EmptyBorder(5, 5, 5, 5));
-		systolicPanel.add(systolicLabel, BorderLayout.EAST);
-		
-		diastolicLabel = new JLabel("mmHg");
-		
-		diastolicPanel = new JPanel();
-		diastolicPanel.setOpaque(false);
-		diastolicPanel.setLayout(new BorderLayout());
-		diastolicPanel.add(diastolic = new JLabel("---"), BorderLayout.CENTER);
-		diastolic.setBorder(new EmptyBorder(5, 5, 5, 5));
-		diastolic.setHorizontalAlignment(JLabel.RIGHT);
-		diastolicPanel.add(diastolicLabel, BorderLayout.EAST);
 
-		pulseLabel = new JLabel("BPM");
-		
-		pulsePanel = new JPanel();
-		pulsePanel.setOpaque(false);
-		pulsePanel.setLayout(new BorderLayout());
-		pulsePanel.add(pulse = new JLabel("---"), BorderLayout.CENTER);
-		pulse.setBorder(new EmptyBorder(5, 5, 5, 5));
-		pulse.setHorizontalAlignment(JLabel.RIGHT);
-		pulsePanel.add(pulseLabel, BorderLayout.EAST);
-		
-		nextInflation = new JLabel("...");
-		nextInflation.setHorizontalAlignment(JLabel.CENTER);
-		
-		JPanel upper = new JPanel();
-		upper.setOpaque(false);
-		upper.setLayout(new GridLayout(4, 1));
-		
-		upper.add(systolicPanel);
-		upper.add(diastolicPanel);
-		upper.add(pulsePanel);
-		upper.add(nextInflation);
-		setLayout(new BorderLayout());
-		add(upper, BorderLayout.CENTER);
-				
-		add(time = new JLabel(""), BorderLayout.SOUTH);
-		time.setHorizontalAlignment(JLabel.RIGHT);
-		
+    private JLabel systolicLabel, diastolicLabel, pulseLabel;
+    private JLabel systolic, diastolic, pulse;
+    private JPanel systolicPanel, diastolicPanel, pulsePanel;
+    private JLabel time;
+    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private JLabel nextInflation;
+    private final Date date = new Date();
+//	private JButton inflate = new JButton("Inflate");
+
+    protected void buildComponents() {
+        systolicLabel = new JLabel("mmHg");
+
+        systolicPanel = new JPanel();
+        systolicPanel.setOpaque(false);
+        systolicPanel.setLayout(new BorderLayout());
+        systolicPanel.add(systolic = new JLabel("---"), BorderLayout.CENTER);
+        systolic.setHorizontalAlignment(JLabel.RIGHT);
+        systolic.setBorder(new EmptyBorder(5, 5, 5, 5));
+        systolicPanel.add(systolicLabel, BorderLayout.EAST);
+
+        diastolicLabel = new JLabel("mmHg");
+
+        diastolicPanel = new JPanel();
+        diastolicPanel.setOpaque(false);
+        diastolicPanel.setLayout(new BorderLayout());
+        diastolicPanel.add(diastolic = new JLabel("---"), BorderLayout.CENTER);
+        diastolic.setBorder(new EmptyBorder(5, 5, 5, 5));
+        diastolic.setHorizontalAlignment(JLabel.RIGHT);
+        diastolicPanel.add(diastolicLabel, BorderLayout.EAST);
+
+        pulseLabel = new JLabel("BPM");
+
+        pulsePanel = new JPanel();
+        pulsePanel.setOpaque(false);
+        pulsePanel.setLayout(new BorderLayout());
+        pulsePanel.add(pulse = new JLabel("---"), BorderLayout.CENTER);
+        pulse.setBorder(new EmptyBorder(5, 5, 5, 5));
+        pulse.setHorizontalAlignment(JLabel.RIGHT);
+        pulsePanel.add(pulseLabel, BorderLayout.EAST);
+
+        nextInflation = new JLabel("...");
+        nextInflation.setHorizontalAlignment(JLabel.CENTER);
+
+        JPanel upper = new JPanel();
+        upper.setOpaque(false);
+        upper.setLayout(new GridLayout(4, 1));
+
+        upper.add(systolicPanel);
+        upper.add(diastolicPanel);
+        upper.add(pulsePanel);
+        upper.add(nextInflation);
+        setLayout(new BorderLayout());
+        add(upper, BorderLayout.CENTER);
+
+        add(time = new JLabel(""), BorderLayout.SOUTH);
+        time.setHorizontalAlignment(JLabel.RIGHT);
+
 //		inflate.addActionListener(new ActionListener() {
 //		    @Override
 //		    public void actionPerformed(ActionEvent e) {
 //		        MutableTextUpdate mtu = new MutableTextUpdateImpl(NoninvasiveBloodPressure.REQUEST_NIBP, guid);
 //		        mtu.setSource("*");
 //		        mtu.setTarget(BloodPressurePanel.this.source);
-//		        
+//
 //		        gateway.update(BloodPressurePanel.this, mtu);
 //		    }
 //		});
-		setForeground(Color.green);
-		setBackground(Color.black);
-		setOpaque(true);
-	}
-	
-	
-	protected static float maxFontSize(JLabel label) {
-		Font labelFont = label.getFont();
-		String labelText = label.getText();
+        setForeground(Color.green);
+        setBackground(Color.black);
+        setOpaque(true);
+    }
 
-		int stringWidth = label.getFontMetrics(labelFont).stringWidth(labelText);
-		int stringHeight = label.getFontMetrics(labelFont).getHeight();
-		int componentWidth = label.getWidth();
-		int componentHeight = label.getHeight();
 
-		// Find out how much the font can grow in width.
-		double widthRatio = (double)componentWidth / (double)stringWidth;
-		double heightRatio = 1.0 * componentHeight / stringHeight;
+    protected static float maxFontSize(JLabel label) {
+        Font labelFont = label.getFont();
+        String labelText = label.getText();
 
-		double smallerRatio = Math.min(widthRatio, heightRatio) - 0.5f;
-		
-		return (float) (labelFont.getSize2D() * smallerRatio);
-	}
-	
-	protected static void resizeFontToFill(JLabel... label) {
-		float fontSize = Float.MAX_VALUE;
-		
-		for(JLabel l : label) {
-			fontSize = Math.min(fontSize, maxFontSize(l));
-		}
-		
-		for(JLabel l : label) {
-			l.setFont(l.getFont().deriveFont(fontSize));
-		}
-	}
-	
-	
-	
-	@Override
-	protected void processComponentEvent(ComponentEvent e) {
-		if(e.getID() == ComponentEvent.COMPONENT_RESIZED) {
-			resizeFontToFill(systolic, diastolic, pulse);
-		}
-		super.processComponentEvent(e);
-	}
-	
-	public BloodPressurePanel() {
-		buildComponents();
-		enableEvents(ComponentEvent.COMPONENT_RESIZED);
-	}
+        int stringWidth = label.getFontMetrics(labelFont).stringWidth(labelText);
+        int stringHeight = label.getFontMetrics(labelFont).getHeight();
+        int componentWidth = label.getWidth();
+        int componentHeight = label.getHeight();
 
-	   
-    public static boolean supported(Set<Integer> names) {
-        return names.contains(ice.Physio.MDC_PRESS_CUFF.value());
+        // Find out how much the font can grow in width.
+        double widthRatio = (double)componentWidth / (double)stringWidth;
+        double heightRatio = 1.0 * componentHeight / stringHeight;
+
+        double smallerRatio = Math.min(widthRatio, heightRatio) - 0.5f;
+
+        return (float) (labelFont.getSize2D() * smallerRatio);
+    }
+
+    protected static void resizeFontToFill(JLabel... label) {
+        float fontSize = Float.MAX_VALUE;
+
+        for(JLabel l : label) {
+            fontSize = Math.min(fontSize, maxFontSize(l));
+        }
+
+        for(JLabel l : label) {
+            l.setFont(l.getFont().deriveFont(fontSize));
+        }
+    }
+
+
+
+    @Override
+    protected void processComponentEvent(ComponentEvent e) {
+        if(e.getID() == ComponentEvent.COMPONENT_RESIZED) {
+            resizeFontToFill(systolic, diastolic, pulse);
+        }
+        super.processComponentEvent(e);
+    }
+
+    public BloodPressurePanel() {
+        buildComponents();
+        enableEvents(ComponentEvent.COMPONENT_RESIZED);
+    }
+
+
+    public static boolean supported(Set<String> names) {
+        return names.contains(rosetta.MDC_PRESS_CUFF.VALUE);
     }
 
     // TODO manage state better
     /* jplourde June 19, 2013
      * The "entire" blood pressure state is constructed incrementally
      * through calls to numeric(Numeric,SampleInfo)
-     * 
+     *
      * I need the "entire" blood pressure state to render a meaningful GUI
-     * 
+     *
      * so the end result is storing state here.
-     * 
+     *
      * An alternative would be to give this component visibility "down" "into"
      * the associated DataReader to get relevant instances on-demand and the
      * DataReader can manage state per the QoS parameters.
-     * 
+     *
      *
      */
-    
+
     enum State {
         Inflating,
         Deflating,
         Waiting,
         Uninited
     }
-    
+
     private State state = State.Uninited;
-    
+
     private final Numeric systolicN = new Numeric();
     private final Numeric diastolicN = new Numeric();
     private final Numeric pulseN = new Numeric();
     private final Numeric inflationN = new Numeric();
     private final Numeric nextInflationN = new Numeric();
-    
+
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(BloodPressurePanel.class);
-    
+
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
 //        log.debug("N:"+numeric);
-        switch(numeric.name) {
-        case ice.Physio._MDC_PRESS_CUFF:
+        if(rosetta.MDC_PRESS_CUFF.VALUE.equals(numeric.metric_id)) {
             switch((int)numeric.value) {
             case ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE:
                 state = State.Deflating;
@@ -206,25 +205,19 @@ public class BloodPressurePanel extends DevicePanel {
                 this.state = State.Waiting;
                 break;
             }
-            break;
-        case ice.Physio._MDC_PRESS_CUFF_SYS:
+        } else if(rosetta.MDC_PRESS_CUFF_SYS.VALUE.equals(numeric.metric_id)) {
             systolicN.copy_from(numeric);
-            break;
-        case ice.Physio._MDC_PRESS_CUFF_DIA:
+        } else if(rosetta.MDC_PRESS_CUFF_DIA.VALUE.equals(numeric.metric_id)) {
             diastolicN.copy_from(numeric);
-            break;
-        case ice.Physio._MDC_PULS_RATE_NON_INV:
+        } else if(rosetta.MDC_PULS_RATE_NON_INV.VALUE.equals(numeric.metric_id)) {
             pulseN.copy_from(numeric);
-            break;
-        case ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE:
+        } else if(ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE.equals(numeric.metric_id)) {
             nextInflationN.copy_from(numeric);
-            break;
-        case ice.MDC_PRESS_CUFF_INFLATION.VALUE:
+        } else if(ice.MDC_PRESS_CUFF_INFLATION.VALUE.equals(numeric.metric_id)) {
             inflationN.copy_from(numeric);
-            break;
         }
 //        log.debug("State:"+state);
-        
+
         switch(state) {
         case Inflating:
             nextInflation.setText("Inflating...");
@@ -259,13 +252,13 @@ public class BloodPressurePanel extends DevicePanel {
 
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
-        
+
     }
 
 
     @Override
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
-        
+
     }
 
 }

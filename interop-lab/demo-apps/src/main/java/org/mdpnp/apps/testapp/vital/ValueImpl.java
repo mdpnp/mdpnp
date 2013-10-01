@@ -10,7 +10,8 @@ import ice.Numeric;
 public class ValueImpl implements Value {
 
     private final String universalDeviceIdentifier;
-    private final int name;
+    private final String metric_id;
+    private final int instance_id;
     private final Numeric numeric = (Numeric) Numeric.create();
     private final SampleInfo sampleInfo = new SampleInfo();
     private final Vital parent;
@@ -28,11 +29,12 @@ public class ValueImpl implements Value {
 
     private final InstanceHolder<ice.AlarmSettingsObjective> objective = new InstanceHolder<ice.AlarmSettingsObjective>();
 
-    public ValueImpl(String universalDeviceIdentifier, int name, Vital parent) {
+    public ValueImpl(String universalDeviceIdentifier, String metric_id, int instance_id, Vital parent) {
         objective.data = (AlarmSettingsObjective) ice.AlarmSettingsObjective.create();
-        objective.data.name = name;
+        objective.data.metric_id = metric_id;
         objective.data.unique_device_identifier = universalDeviceIdentifier;
-        this.name = name;
+        this.metric_id = metric_id;
+        this.instance_id = instance_id;
         this.universalDeviceIdentifier = universalDeviceIdentifier;
         this.parent = parent;
 
@@ -131,10 +133,10 @@ public class ValueImpl implements Value {
     }
 
     public void writeCriticalLimitsToDevice(ice.AlarmSettingsObjectiveDataWriter writer) {
-        boolean newObj = false;
+//        boolean newObj = false;
         if(null == objective.handle) {
             objective.handle = writer.register_instance(objective.data);
-            newObj = true;
+//            newObj = true;
         }
 //        if(newObj || getParent().getCriticalLow() != objective.data.lower || getParent().getCriticalHigh() != objective.data.upper) {
             objective.data.lower = getParent().getCriticalLow() == null ? Float.MIN_VALUE : getParent().getCriticalLow();
@@ -205,8 +207,13 @@ public class ValueImpl implements Value {
 
     }
     @Override
-    public int getName() {
-        return name;
+    public String getMetricId() {
+        return metric_id;
+    }
+
+    @Override
+    public int getInstanceId() {
+        return instance_id;
     }
 
     @Override

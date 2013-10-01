@@ -39,7 +39,7 @@ public class SimThermometer extends AbstractSimulatedConnectedDevice {
 
     public SimThermometer(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
-        temperature = createNumericInstance(ice.Physio.MDC_TEMP_BLD.value());
+        temperature = createNumericInstance(rosetta.MDC_TEMP_BLD.VALUE);
 
         deviceIdentity.model = "Thermometer (Simulated)";
         writeDeviceIdentity();

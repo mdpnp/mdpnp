@@ -62,7 +62,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
         void updateRate(float rate) {
             // TODO clearly a synchronization issue here.
             // enforce a singular calling thread or synchronize accesses
-            this.rate = numericSample(this.rate, (int)Math.round(rate), ice.Physio._MDC_RESP_RATE);
+            this.rate = numericSample(this.rate, (int)Math.round(rate), rosetta.MDC_RESP_RATE.VALUE);
         }
     }
 

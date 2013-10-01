@@ -449,18 +449,14 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
                 seenInstances.add(si.instance_handle);
                 ice.Numeric n = (Numeric) nu_seq.get(i);
                 long previousPeriod = this.period;
-                switch(n.name) {
-                case ice.MDC_TIME_PD_INSPIRATORY.VALUE:
+                if(ice.MDC_TIME_PD_INSPIRATORY.VALUE.equals(n.metric_id)) {
                     inspiratoryTime = (long) (1000.0 * n.value);
-                    break;
-                case ice.MDC_VENT_TIME_PD_PPV.VALUE:
-
+                } else if(ice.MDC_VENT_TIME_PD_PPV.VALUE.equals(n.metric_id)) {
                     period = (long)( 60000.0 / n.value );
                     if(period != previousPeriod) {
                         log.debug("FrequencyIPPV="+n.value+" period="+period);
                     }
-                    break;
-                case ice.MDC_START_OF_BREATH.VALUE:
+                } else if(ice.MDC_START_OF_BREATH.VALUE.equals(n.metric_id)) {
 //                  log.trace("START_INSPIRATORY_CYCLE");
                   Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
                   TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
@@ -486,10 +482,8 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
             if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
                 seenInstances.add(si.instance_handle);
                 ice.SampleArray sa = (SampleArray) sa_seq.get(i);
-                switch(sa.name) {
-                case ice.Physio._MDC_FLOW_AWAY:
+                if(rosetta.MDC_FLOW_AWAY.VALUE.equals(sa.metric_id)) {
                     wuws.applyUpdate(sa);
-                    break;
                 }
             }
         }

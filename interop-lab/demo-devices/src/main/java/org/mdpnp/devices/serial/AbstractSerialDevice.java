@@ -171,6 +171,12 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 
     private String portIdentifier;
 
+    private final ThreadGroup threadGroup = new ThreadGroup("AbstractSerialDevice group") {
+        public void uncaughtException(Thread t, Throwable e) {
+            log.error("Unexpected in thread " + t.getId() + ":"+ t.getName(), e);
+        };
+    };
+
     @Override
     public void connect(String portIdentifier) {
         log.trace("connect requested to " + portIdentifier);
@@ -184,7 +190,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
                       ice.ConnectionState.Disconnecting.equals(state)) {
                 stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting);
 
-                currentThread = new Thread(this, "AbstractSerialDevice Processing");
+                currentThread = new Thread(threadGroup, this, "AbstractSerialDevice Processing");
                 currentThread.setDaemon(true);
                 currentThread.start();
             }

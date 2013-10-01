@@ -392,12 +392,12 @@ public class DemoMP70 extends AbstractConnectedDevice {
 
 //	private final Map<Identifier, IdentifiableUpdate> updates = new HashMap<Identifier, IdentifiableUpdate>();
 
-    private void addSampleArray(ObservedValue ov, int tag, Label l) {
+    private void addSampleArray(ObservedValue ov, String tag, Label l) {
         waveformUpdates.put(ov, new MyWaveform(createSampleArrayInstance(tag)));
         waveformLabels.put(ov, l);
     }
 
-    private void addNumeric(ObservedValue ov, int tag, Label l) {
+    private void addNumeric(ObservedValue ov, String tag, Label l) {
         numericUpdates.put(ov, createNumericInstance(tag));
         numericLabels.put(ov, l);
     }
@@ -407,22 +407,22 @@ public class DemoMP70 extends AbstractConnectedDevice {
 //	}
 
     private void configureData() {
-        addNumeric(ObservedValue.NOM_PULS_OXIM_SAT_O2, ice.Physio.MDC_PULS_OXIM_SAT_O2.value(), Label.NLS_NOM_PULS_OXIM_SAT_O2);
-        addNumeric(ObservedValue.NOM_PLETH_PULS_RATE, ice.Physio.MDC_PULS_OXIM_PULS_RATE.value(), Label.NLS_NOM_PULS_OXIM_PULS_RATE);
-        addNumeric(ObservedValue.NOM_PRESS_BLD_NONINV_DIA, ice.Physio.MDC_PRESS_CUFF_DIA.value(), Label.NLS_NOM_PRESS_BLD_NONINV);
-        addNumeric(ObservedValue.NOM_PRESS_BLD_NONINV_SYS, ice.Physio.MDC_PRESS_CUFF_SYS.value(), Label.NLS_NOM_PRESS_BLD_NONINV);
-        addNumeric(ObservedValue.NOM_PRESS_BLD_NONINV_PULS_RATE, ice.Physio.MDC_PULS_RATE_NON_INV.value(), Label.NLS_NOM_PRESS_BLD_NONINV_PULS_RATE);
+        addNumeric(ObservedValue.NOM_PULS_OXIM_SAT_O2, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, Label.NLS_NOM_PULS_OXIM_SAT_O2);
+        addNumeric(ObservedValue.NOM_PLETH_PULS_RATE, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, Label.NLS_NOM_PULS_OXIM_PULS_RATE);
+        addNumeric(ObservedValue.NOM_PRESS_BLD_NONINV_DIA, rosetta.MDC_PRESS_CUFF_DIA.VALUE, Label.NLS_NOM_PRESS_BLD_NONINV);
+        addNumeric(ObservedValue.NOM_PRESS_BLD_NONINV_SYS, rosetta.MDC_PRESS_CUFF_SYS.VALUE, Label.NLS_NOM_PRESS_BLD_NONINV);
+        addNumeric(ObservedValue.NOM_PRESS_BLD_NONINV_PULS_RATE, rosetta.MDC_PULS_RATE_NON_INV.VALUE, Label.NLS_NOM_PRESS_BLD_NONINV_PULS_RATE);
 
 
-        addSampleArray(ObservedValue.NOM_PLETH, ice.Physio.MDC_PULS_OXIM_PLETH.value(), Label.NLS_NOM_PULS_OXIM_PLETH);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_I, ice.Physio.MDC_ECG_AMPL_ST_I.value(), Label.NLS_NOM_ECG_ELEC_POTL_I);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_II, ice.Physio.MDC_ECG_AMPL_ST_II.value(), Label.NLS_NOM_ECG_ELEC_POTL_II);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_III, ice.Physio.MDC_ECG_AMPL_ST_III.value(), Label.NLS_NOM_ECG_ELEC_POTL_III);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_AVF, ice.Physio.MDC_ECG_AMPL_ST_AVF.value(), Label.NLS_NOM_ECG_ELEC_POTL_AVF);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_AVL, ice.Physio.MDC_ECG_AMPL_ST_AVL.value(), Label.NLS_NOM_ECG_ELEC_POTL_AVL);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_AVR, ice.Physio.MDC_ECG_AMPL_ST_AVR.value(), Label.NLS_NOM_ECG_ELEC_POTL_AVR);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_V2, ice.Physio.MDC_ECG_AMPL_ST_V2.value(), Label.NLS_NOM_ECG_ELEC_POTL_V2);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_V5, ice.Physio.MDC_ECG_AMPL_ST_V5.value(), Label.NLS_NOM_ECG_ELEC_POTL_V5);
+        addSampleArray(ObservedValue.NOM_PLETH, rosetta.MDC_PULS_OXIM_PLETH.VALUE, Label.NLS_NOM_PULS_OXIM_PLETH);
+        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_I, rosetta.MDC_ECG_AMPL_ST_I.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_I);
+        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_II, rosetta.MDC_ECG_AMPL_ST_II.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_II);
+        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_III, rosetta.MDC_ECG_AMPL_ST_III.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_III);
+        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_AVF, rosetta.MDC_ECG_AMPL_ST_AVF.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_AVF);
+        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_AVL, rosetta.MDC_ECG_AMPL_ST_AVL.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_AVL);
+        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_AVR, rosetta.MDC_ECG_AMPL_ST_AVR.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_AVR);
+        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_V2, rosetta.MDC_ECG_AMPL_ST_V2.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_V2);
+        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_V5, rosetta.MDC_ECG_AMPL_ST_V5.VALUE, Label.NLS_NOM_ECG_ELEC_POTL_V5);
 
 //		stateUpdate.setValue(ConnectedDevice.State.Disconnected);
 //		connectionTypeUpdate.setValue(ConnectionType.Network);

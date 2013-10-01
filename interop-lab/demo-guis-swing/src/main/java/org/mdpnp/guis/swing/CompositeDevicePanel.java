@@ -39,55 +39,55 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
    private final JLabel manufacturer = new JLabel("MANUFACTURER");
    private final JLabel model = new JLabel("MODEL");
    private final JLabel serial_number = new JLabel("SERIAL#");
-   
+
    private final JLabel connectionState = new JLabel("CONN");
    private final JLabel unique_device_identifier = new JLabel("UDI");
    private final JLabel icon = new JLabel("ICON");
-   
+
    private static final Logger log = LoggerFactory.getLogger(CompositeDevicePanel.class);
-   
+
    private final JPanel data = new JPanel(new BorderLayout());
    private final JLabel WAITING = new JLabel("Waiting for data...");
    private final Collection<DevicePanel> dataComponents = new ArrayList<DevicePanel>();
-   
-   private final Set<Integer> knownIdentifiers = new HashSet<Integer>();
+
+   private final Set<String> knownIdentifiers = new HashSet<String>();
    private final Set<String> knownPumps = new HashSet<String>();
 
-    
+
     public CompositeDevicePanel() {
         super(new BorderLayout());
         JComponent header = new JPanel();
         header.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.BASELINE,GridBagConstraints.BOTH, new Insets(1,1,1,1), 1,1);
-        
+
         header.add(new JLabel("Manufacturer"), gbc);
         gbc.gridx++;
         header.add(manufacturer, gbc);
-        
+
         gbc.gridy++;
         gbc.gridx--;
         header.add(new JLabel("Model"), gbc);
         gbc.gridx++;
         header.add(model, gbc);
-        
+
         gbc.gridy++;
         gbc.gridx--;
         header.add(new JLabel("Serial Number"), gbc);
         gbc.gridx++;
         header.add(serial_number, gbc);
-        
+
         gbc.gridy++;
         gbc.gridx--;
         header.add(new JLabel("Universal Device Id"), gbc);
         gbc.gridx++;
         header.add(unique_device_identifier, gbc);
-        
+
         gbc.gridy++;
         gbc.gridx--;
         header.add(new JLabel("Connection State"), gbc);
         gbc.gridx++;
         header.add(connectionState, gbc);
-        
+
         gbc.gridy++;
         gbc.gridheight = gbc.gridy;
         gbc.gridy = 0;
@@ -98,7 +98,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
         add(data, BorderLayout.CENTER);
     }
 
-    
+
     private final Set<InstanceHandle_t> seenInstances = new HashSet<InstanceHandle_t>();
     @Override
     public void deviceIdentity(ice.DeviceIdentityDataReader reader, ice.DeviceIdentitySeq di_seq, SampleInfoSeq info_seq) {
@@ -124,8 +124,8 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
 
     }
 
-    
-    
+
+
     @Override
     public void deviceConnectivity(ice.DeviceConnectivityDataReader reader, ice.DeviceConnectivitySeq dc_seq, SampleInfoSeq info_seq) {
         seenInstances.clear();
@@ -138,7 +138,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
             }
         }
     }
-    
+
     private void replaceDataPanels() {
         DevicePanel[] _dataComponents;
         synchronized(dataComponents) {
@@ -146,7 +146,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
             _dataComponents = dataComponents.toArray(new DevicePanel[0]);
         }
         final DevicePanel[] __dataComponents = _dataComponents;
-        
+
         Runnable r = new Runnable() {
             public void run() {
                 data.removeAll();
@@ -175,7 +175,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
             }
         }
     }
-    
+
     @Override
     public void numeric(ice.NumericDataReader reader, ice.NumericSeq nu_seq, SampleInfoSeq info_seq) {
         seenInstances.clear();
@@ -184,9 +184,9 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
             if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
                 seenInstances.add(si.instance_handle);
                 ice.Numeric n = (Numeric) nu_seq.get(i);
-                if(!knownIdentifiers.contains(n.name)) {
+                if(!knownIdentifiers.contains(n.metric_id)) {
                     // avoid reboxing ... also tells us if something is new
-                    knownIdentifiers.add(n.name);
+                    knownIdentifiers.add(n.metric_id);
                     log.trace("New numeric, new set:"+knownIdentifiers);
                     replaceDataPanels();
                 }
@@ -210,8 +210,8 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
             if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
                 seenInstances.add(si.instance_handle);
                 ice.SampleArray sampleArray = (SampleArray) sa_seq.get(i);
-                if(!knownIdentifiers.contains(sampleArray.name)) {
-                    knownIdentifiers.add(sampleArray.name);
+                if(!knownIdentifiers.contains(sampleArray.metric_id)) {
+                    knownIdentifiers.add(sampleArray.metric_id);
                     log.trace("New SampleArray, new set:"+knownIdentifiers);
                     replaceDataPanels();
                 }
@@ -223,21 +223,21 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
             }
         }
     }
-    
+
     public void reset() {
         knownIdentifiers.clear();
         knownPumps.clear();
         replaceDataPanels();
     }
     private DeviceMonitor deviceMonitor;
-    
+
     public void setModel(DeviceMonitor deviceMonitor) {
         if(null != this.deviceMonitor) {
             this.deviceMonitor.removeListener(this);
         }
         this.deviceMonitor = deviceMonitor;
         reset();
-        if(null != this.deviceMonitor) { 
+        if(null != this.deviceMonitor) {
             this.deviceMonitor.addListener(this);
         }
     }
@@ -265,6 +265,6 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
                 }
             }
         }
-        
+
     }
 }

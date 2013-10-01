@@ -6,7 +6,8 @@ import ice.Numeric;
 
 public interface Value {
     String getUniversalDeviceIdentifier();
-    int getName();
+    String getMetricId();
+    int getInstanceId();
     Numeric getNumeric();
     SampleInfo getSampleInfo();
     Vital getParent();

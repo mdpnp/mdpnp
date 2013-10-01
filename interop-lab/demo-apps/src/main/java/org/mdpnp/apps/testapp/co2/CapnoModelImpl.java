@@ -29,12 +29,12 @@ public class CapnoModelImpl implements CapnoModel {
 
     private ice.SampleArrayDataReader capnoReader;
     private QueryCondition capnoCondition;
-    
+
     private Subscriber subscriber;
     private EventLoop eventLoop;
-    
-    
-    
+
+
+
     private final EventLoop.ConditionHandler capnoHandler = new EventLoop.ConditionHandler() {
         private final ice.SampleArraySeq sa_seq = new ice.SampleArraySeq();
         private final SampleInfoSeq info_seq = new SampleInfoSeq();
@@ -70,13 +70,13 @@ public class CapnoModelImpl implements CapnoModel {
             }
         }
     };
-    
-    
-    protected final int sa_name;
-    public CapnoModelImpl(final int name) {
+
+
+    protected final String sa_name;
+    public CapnoModelImpl(final String name) {
         this.sa_name = name;
     }
-    
+
     @Override
     public int getCount() {
         return capnos.size();
@@ -91,16 +91,16 @@ public class CapnoModelImpl implements CapnoModel {
     public void start(Subscriber subscriber, EventLoop eventLoop) {
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
-        
+
 //      ice.InfusionStatusTypeSupport.register_type(subscriber.get_participant(), ice.InfusionStatusTypeSupport.get_type_name());
       TopicDescription saTopic = TopicUtil.lookupOrCreateTopic(subscriber.get_participant(), ice.SampleArrayTopic.VALUE, ice.SampleArrayTypeSupport.class);
       capnoReader = (ice.SampleArrayDataReader) subscriber.create_datareader(saTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
       StringSeq params = new StringSeq();
-      params.add(Integer.toString(sa_name));
-      capnoCondition = capnoReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "name = %0", params);
-      
+      params.add("'"+sa_name+"'");
+      capnoCondition = capnoReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "metric_id = %0", params);
+
       eventLoop.addHandler(capnoCondition, capnoHandler);
-        
+
     }
 
     @Override
@@ -113,7 +113,7 @@ public class CapnoModelImpl implements CapnoModel {
         subscriber = null;
         eventLoop = null;
     }
-    
+
     protected void removeCapno(String udi) {
         List<Capno> removed = new ArrayList<Capno>();
         synchronized(capnos) {
@@ -130,7 +130,7 @@ public class CapnoModelImpl implements CapnoModel {
             fireCapnoRemoved(c);
         }
     }
-    
+
     protected void updateCapno(ice.SampleArray sampleArray, SampleInfo sampleInfo) {
         Capno capno = null;
         synchronized(capnos) {
@@ -153,7 +153,7 @@ public class CapnoModelImpl implements CapnoModel {
             capnos.add(capno);
             fireCapnoAdded(capno);
         }
-        
+
     }
 
     @Override
