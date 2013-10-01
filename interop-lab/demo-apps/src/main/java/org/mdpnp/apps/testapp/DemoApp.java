@@ -17,6 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.imageio.ImageIO;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
 import org.mdpnp.apps.testapp.co2.CapnoModel;
@@ -41,10 +42,13 @@ import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
 import com.rti.dds.domain.DomainParticipantQos;
+import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicDataTypeSupport;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.ViewStateKind;
 //
 public class DemoApp {
 
@@ -123,7 +127,14 @@ public class DemoApp {
         DomainParticipantFactory.get_instance().set_qos(qos);
         final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final Publisher publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop);
+        @SuppressWarnings("serial")
+        final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop) {
+            protected void notADevice(SampleInfo si, ParticipantBuiltinTopicData participant_info) {
+                if("Supervisor".equals(participant_info.participant_name.name) && 0 != (ViewStateKind.NEW_VIEW_STATE & si.view_state)) {
+                    JOptionPane.showMessageDialog(panel, "Another supervisor has been detected on the domain", "Multiple Supervisors", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
         final ScheduledExecutorService refreshScheduler = Executors.newSingleThreadScheduledExecutor();
 
         final DemoFrame frame = new DemoFrame("ICE Supervisor");
