@@ -14,23 +14,30 @@ import java.util.concurrent.TimeUnit;
 
 public class SimulatedThermometer {
 
-        
+
     private final class MyTask implements Runnable {
         @Override
         public void run() {
-            receiveTemp(temperature);
+            receiveTemp1(temperature1);
+            receiveTemp2(temperature2);
         }
-        
+
     };
-    
-    protected void receiveTemp(float temperature) {
-        
+
+    protected void receiveTemp1(float temperature1) {
+
     }
+
+    protected void receiveTemp2(float temperature2) {
+
+    }
+
     private static final long UPDATE_PERIOD = 1000L;
-    protected int temperature = 37;
-    
+    protected int temperature1 = 37;
+    protected int temperature2 = 39;
+
     private ScheduledFuture<?> task;
-    
+
     public void connect(ScheduledExecutorService executor) {
         if(task != null) {
             task.cancel(false);
@@ -38,15 +45,15 @@ public class SimulatedThermometer {
         }
         task = executor.scheduleAtFixedRate(new MyTask(), 0L, UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
-    
+
     public void disconnect() {
         if(task != null) {
-            task.cancel(false); 
+            task.cancel(false);
             task = null;
         }
     }
-    
+
     public SimulatedThermometer() {
     }
-    
+
 }
