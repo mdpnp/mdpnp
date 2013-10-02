@@ -62,6 +62,7 @@ import org.slf4j.LoggerFactory;
 
 public class DemoMP70 extends AbstractConnectedDevice {
     private class MyIntellivue extends Intellivue {
+        private final Logger log = LoggerFactory.getLogger(MyIntellivue.class);
         public MyIntellivue() throws IOException {
             super();
         }
@@ -558,7 +559,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
                     state(ice.ConnectionState.Connecting, "listening  on " + Arrays.toString(hosts));
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("Awaiting beacon", e);
             }
 
         } else {
@@ -576,9 +577,9 @@ public class DemoMP70 extends AbstractConnectedDevice {
                 myIntellivue.connect(addr, -1, port);
                 state(ice.ConnectionState.Connecting, "trying " + address + ":"+port);
             } catch (UnknownHostException e) {
-                e.printStackTrace();
+                log.error("Trying to connect to address", e);
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("Trying to connect to address", e);
             }
         }
 
@@ -649,12 +650,12 @@ public class DemoMP70 extends AbstractConnectedDevice {
             state(ice.ConnectionState.Disconnecting, "disassociating");
         } catch (RuntimeException re) {
             // TODO make this temporary
-            re.printStackTrace();
+            log.error("", re);
         }
         try {
             myIntellivue.disconnect();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("in disconnect", e);
         }
     }
 
