@@ -139,11 +139,11 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
         }
         @Override
-        protected void receiveTemperature1(Integer value, String label) {
+        protected void receiveTemperature1(Float value, String label) {
             t1 = numericSample(t1, value, rosetta.MDC_TEMP_BLD.VALUE, 0);
         }
         @Override
-        protected void receiveTemperature2(Integer value, String label) {
+        protected void receiveTemperature2(Float value, String label) {
             t2 = numericSample(t2, value, rosetta.MDC_TEMP_BLD.VALUE, 1);
         }
     }
