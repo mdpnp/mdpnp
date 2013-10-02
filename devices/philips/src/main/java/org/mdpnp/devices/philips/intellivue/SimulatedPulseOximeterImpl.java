@@ -173,8 +173,8 @@ public class SimulatedPulseOximeterImpl extends IntellivueAcceptor {
 
     }
 
-    public SimulatedPulseOximeterImpl(NetworkLoop networkLoop, int port) throws IOException {
-        super(networkLoop, port);
+    public SimulatedPulseOximeterImpl(int port) throws IOException {
+        super(port);
 
         cnov.getValue().getList().add(pulse);
         cnov.getValue().getList().add(spo2);
@@ -211,9 +211,7 @@ public class SimulatedPulseOximeterImpl extends IntellivueAcceptor {
             task.cancel(false);
             task = null;
         }
-        MyTask task = new MyTask();
-        task.setInterval(334L);
-        networkLoop.add(task);
+
     }
 
     private static class State {
@@ -279,16 +277,23 @@ public class SimulatedPulseOximeterImpl extends IntellivueAcceptor {
     private final Date myDate = new Date();
 
     @Override
-    protected synchronized void handle(SocketAddress sockaddr, AssociationFinish message) {
+    protected synchronized void handle(SocketAddress sockaddr, AssociationFinish message) throws IOException {
         invoke = null;
         super.handle(sockaddr, message);
+    }
+
+    public MyTask createMyTask() {
+        return new MyTask();
     }
 
     public static void main(String[] args) throws IOException {
         final int port = args.length > 0 ? Integer.parseInt(args[0]) : Intellivue.DEFAULT_UNICAST_PORT;
         final NetworkLoop networkLoop = new NetworkLoop();
-        final IntellivueAcceptor ia = new SimulatedPulseOximeterImpl(networkLoop, port);
-        ia.accept();
+        final SimulatedPulseOximeterImpl ia = new SimulatedPulseOximeterImpl(port);
+        ia.accept(networkLoop);
+        MyTask task = ia.createMyTask();
+        task.setInterval(334L);
+        networkLoop.add(task);
         networkLoop.runLoop();
 
 //		DataExportResult der = new DataExportResultImpl();

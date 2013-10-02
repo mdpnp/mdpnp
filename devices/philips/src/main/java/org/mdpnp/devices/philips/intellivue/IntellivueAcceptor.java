@@ -91,7 +91,7 @@ public class IntellivueAcceptor extends  Intellivue {
         }
     };
     @Override
-    protected void handle(Set set, boolean confirmed) {
+    protected void handle(Set set, boolean confirmed) throws IOException {
         super.handle(set, confirmed);
         if(confirmed) {
         }
@@ -102,7 +102,11 @@ public class IntellivueAcceptor extends  Intellivue {
         super.handle(sockaddr, message);
         AssociationAccept acc = new AssociationAcceptImpl();
         log.debug("Sending accept:"+acc);
-        send(acc);
+        try {
+            send(acc);
+        } catch (IOException e1) {
+            throw new RuntimeException(e1);
+        }
         MdsCreateEventImpl m = new MdsCreateEventImpl();
         Attribute<SystemModel> asm = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_MODEL, SystemModel.class);
         Attribute<org.mdpnp.devices.philips.intellivue.data.String> as = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_BED_LABEL, org.mdpnp.devices.philips.intellivue.data.String.class);
@@ -127,19 +131,23 @@ public class IntellivueAcceptor extends  Intellivue {
         der.setCommandType(CommandType.EventReport);
         der.setCommand(er);
 
-        send(der);
+        try {
+            send(der);
+        } catch (IOException e1) {
+            throw new RuntimeException(e1);
+        }
     };
-    public IntellivueAcceptor(NetworkLoop networkLoop) throws IOException {
-        this(networkLoop, DEFAULT_UNICAST_PORT);
+    public IntellivueAcceptor() throws IOException {
+        this(DEFAULT_UNICAST_PORT);
     }
-    public IntellivueAcceptor(NetworkLoop networkLoop, int port) throws IOException {
-        super(networkLoop);
+    public IntellivueAcceptor(int port) throws IOException {
+        super();
         beacon.setInterval(10000L);
         this.port = port;
 
     }
 
-    public void accept() throws IOException {
+    public void accept(final NetworkLoop networkLoop) throws IOException {
         networkLoop.add(new TaskQueue.TaskImpl<Void>() {
             @Override
             public Void doExecute(TaskQueue queue) {
@@ -148,9 +156,8 @@ public class IntellivueAcceptor extends  Intellivue {
                     channel.configureBlocking(false);
                     channel.socket().setReuseAddress(true);
                     channel.socket().bind(new InetSocketAddress(port));
-                    register(channel);
+                    networkLoop.register(IntellivueAcceptor.this, channel);
                     networkLoop.add(beacon);
-
                 } catch (IOException e) {
                     log.error(e.getMessage(), e);
                 }
@@ -165,8 +172,8 @@ public class IntellivueAcceptor extends  Intellivue {
     public static void main(String[] args) throws IOException {
         final int port = args.length > 0 ? Integer.parseInt(args[0]) : Intellivue.DEFAULT_UNICAST_PORT;
         final NetworkLoop networkLoop = new NetworkLoop();
-        final IntellivueAcceptor ia = new IntellivueAcceptor(networkLoop, port);
-        ia.accept();
+        final IntellivueAcceptor ia = new IntellivueAcceptor( port);
+        ia.accept(networkLoop);
         networkLoop.runLoop();
 
     }

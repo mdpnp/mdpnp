@@ -57,7 +57,7 @@ public class NetworkLoop {
         this.select = select;
     }
 
-    public synchronized SelectionKey register(NetworkConnection conn, SelectableChannel channel) throws ClosedChannelException {
+    private synchronized void pause(String action) {
         long start = System.currentTimeMillis();
         if(!Thread.currentThread().equals(myThread)) {
             while(!LoopState.Paused.equals(loopState)) {
@@ -70,7 +70,7 @@ public class NetworkLoop {
                     break;
                 case Terminating:
                 case Terminated:
-                    throw new IllegalStateException("Cannot register a new connection; runLoop is " + loopState);
+                    throw new IllegalStateException("Cannot " + action +"; runLoop is " + loopState);
                 case Resuming:
                 case Pausing:
                 case Paused:
@@ -88,13 +88,27 @@ public class NetworkLoop {
                 }
             }
         }
-        SelectionKey key = channel.register(select, SelectionKey.OP_READ, conn);
+    }
+
+    private synchronized void resume() {
         loopState = LoopState.Resuming;
         this.notifyAll();
+    }
+
+    public SelectionKey register(NetworkConnection conn, SelectableChannel channel) throws ClosedChannelException {
+        pause("register a new connection");
+        SelectionKey key = channel.register(select, SelectionKey.OP_READ, conn);
+        conn.registered(this, key);
+        resume();
         return key;
     }
 
-
+    public void unregister(SelectionKey key, NetworkConnection conn) {
+        pause("unregister a connection");
+        key.cancel();
+        conn.unregistered(this, key);
+        resume();
+    }
 
 
 
