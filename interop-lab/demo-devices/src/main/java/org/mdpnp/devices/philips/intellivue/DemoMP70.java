@@ -34,6 +34,7 @@ import org.mdpnp.devices.philips.intellivue.action.SinglePollDataResult;
 import org.mdpnp.devices.philips.intellivue.association.AssociationAbort;
 import org.mdpnp.devices.philips.intellivue.association.AssociationAccept;
 import org.mdpnp.devices.philips.intellivue.association.AssociationDisconnect;
+import org.mdpnp.devices.philips.intellivue.association.AssociationFinish;
 import org.mdpnp.devices.philips.intellivue.association.AssociationRefuse;
 import org.mdpnp.devices.philips.intellivue.association.impl.AssociationFinishImpl;
 import org.mdpnp.devices.philips.intellivue.attribute.Attribute;
@@ -77,9 +78,79 @@ public class DemoMP70 extends AbstractConnectedDevice {
     protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
         super.stateChanged(newState, oldState);
         if (ice.ConnectionState.Connected.equals(oldState) && !ice.ConnectionState.Connected.equals(newState)) {
-
+            lastKeepAliveRecvInvokeId = -1;
+            lastKeepAliveSentInvokeId = -1;
+            lastAssociationRequest = 0L;
+            lastFinishRequest = 0L;
+            lastKeepAlive = 0L;
+            keepAliveTimeout = 1000L;
+            lastDataPoll = 0L;
         }
+    }
+    protected final static long WATCHDOG_INTERVAL = 500L;
+    private int lastKeepAliveSentInvokeId = -1;
+    private int lastKeepAliveRecvInvokeId = -1;
 
+    private long lastAssociationRequest = 0L;
+    private long lastFinishRequest = 0L;
+    private long lastKeepAlive = 0L;
+    private long keepAliveTimeout = 1000L;
+    private long lastDataPoll = 0L;
+
+    protected void watchdog() {
+        long now = System.currentTimeMillis();
+        switch(stateMachine.getState().ordinal()) {
+        case ice.ConnectionState._Negotiating:
+            if(now - lastAssociationRequest >= 2000L) {
+                try {
+                    myIntellivue.requestAssociation();
+                    lastAssociationRequest = now;
+                } catch (IOException e1) {
+                    log.error("requesting association", e1);
+                }
+            }
+            break;
+        case ice.ConnectionState._Disconnecting:
+            if(now - lastFinishRequest >= 500L) {
+                try {
+                    myIntellivue.send(new AssociationFinishImpl());
+                    lastFinishRequest = now;
+                } catch (IOException e1) {
+                    log.error("sending association finish", e1);
+                }
+            }
+            break;
+        case ice.ConnectionState._Connected:
+            if(now - lastKeepAlive >= keepAliveTimeout) {
+                // Check that the last was acknowledged
+                if (lastKeepAliveSentInvokeId >= 0 && lastKeepAliveSentInvokeId >= 0 && lastKeepAliveSentInvokeId != lastKeepAliveRecvInvokeId) {
+                    log.error("lastKeepAliveSentInvokeId=" + lastKeepAliveSentInvokeId
+                            + " != lastKeepAliveRecvInvokeId=" + lastKeepAliveSentInvokeId);
+                    state(ice.ConnectionState.Negotiating, "timeout receiving keepalive messages");
+                    return;
+                } else {
+                    try {
+                        lastKeepAliveSentInvokeId = myIntellivue.requestSinglePoll(ObjectClass.NOM_MOC_VMO_AL_MON,
+                                AttributeId.NOM_ATTR_GRP_VMO_STATIC);
+                        lastKeepAlive = now;
+                    } catch (IOException e) {
+                        state(ice.ConnectionState.Negotiating, "failure to send a keepalive");
+                        log.error("requesting a keep alive (static attributes of the alarm monitor object)", e);
+                    }
+                }
+            }
+            if(now - lastDataPoll >= CONTINUOUS_POLL_INTERVAL) {
+                try {
+                    myIntellivue.requestExtendedPoll(ObjectClass.NOM_MOC_VMO_METRIC_NU, CONTINUOUS_POLL_INTERVAL);
+                    myIntellivue.requestExtendedPoll(ObjectClass.NOM_MOC_VMO_METRIC_SA_RT, CONTINUOUS_POLL_INTERVAL);
+                    myIntellivue.requestSinglePoll(ObjectClass.NOM_MOC_PT_DEMOG, AttributeId.NOM_ATTR_GRP_PT_DEMOG);
+                    lastDataPoll = now;
+                } catch (IOException e) {
+                    log.error("requesting data polls", e);
+                }
+            }
+            break;
+        }
     }
 
     private class MyIntellivue extends Intellivue {
@@ -97,20 +168,6 @@ public class DemoMP70 extends AbstractConnectedDevice {
 
             if (result.getAttributes().get(ati)
                     && ati.getValue().containsAll(numericLabels.values().toArray(new Label[0]))) {
-
-                TaskQueue.Task<Object> nuTask = new TaskQueue.TaskImpl<Object>() {
-                    @Override
-                    public Object doExecute(TaskQueue queue) {
-                        try {
-                            requestExtendedPoll(ObjectClass.NOM_MOC_VMO_METRIC_NU, CONTINUOUS_POLL_INTERVAL);
-                        } catch (IOException e) {
-                            log.error("requesting extended poll of numeric data", e);
-                        }
-                        return null;
-                    };
-                };
-                nuTask.setInterval(CONTINUOUS_POLL_INTERVAL);
-                networkLoop.add(nuTask);
             } else {
                 log.warn("Numerics priority list does not contain all of our requested labels:" + ati);
             }
@@ -118,20 +175,6 @@ public class DemoMP70 extends AbstractConnectedDevice {
             ati = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_POLL_RTSA_PRIO_LIST, TextIdList.class);
             if (result.getAttributes().get(ati)
                     && ati.getValue().containsAll(waveformLabels.values().toArray(new Label[0]))) {
-                TaskQueue.Task<Object> saTask = new TaskQueue.TaskImpl<Object>() {
-                    @Override
-                    public Object doExecute(TaskQueue queue) {
-                        try {
-                            requestExtendedPoll(ObjectClass.NOM_MOC_VMO_METRIC_SA_RT, CONTINUOUS_POLL_INTERVAL);
-                        } catch (IOException e) {
-                            log.error("requesting extended poll of samplearray data", e);
-                        }
-                        return null;
-                    }
-
-                };
-                saTask.setInterval(CONTINUOUS_POLL_INTERVAL);
-                networkLoop.add(saTask);
             } else {
                 log.warn("SampleArray priority list does not contain all requested labels:" + ati);
             }
@@ -170,21 +213,9 @@ public class DemoMP70 extends AbstractConnectedDevice {
                     writeDeviceIdentity();
                 }
 
-                state(ice.ConnectionState.Connected, null);
+
                 requestSinglePoll(ObjectClass.NOM_MOC_VMS_MDS, AttributeId.NOM_ATTR_GRP_SYS_PROD);
-                TaskQueue.Task<Object> nuTask = new TaskQueue.TaskImpl<Object>() {
-                    @Override
-                    public Object doExecute(TaskQueue queue) {
-                        try {
-                            requestSinglePoll(ObjectClass.NOM_MOC_PT_DEMOG, AttributeId.NOM_ATTR_GRP_PT_DEMOG);
-                        } catch (IOException e) {
-                            log.error("single poll for patient demographic data");
-                        }
-                        return null;
-                    };
-                };
-                nuTask.setInterval(CONTINUOUS_POLL_INTERVAL);
-                networkLoop.add(nuTask);
+
                 requestSet(numericLabels.values().toArray(new Label[0]), waveformLabels.values().toArray(new Label[0]));
 
                 break;
@@ -196,25 +227,57 @@ public class DemoMP70 extends AbstractConnectedDevice {
 
         @Override
         protected void handle(SocketAddress sockaddr, AssociationRefuse message) {
-            state(ice.ConnectionState.Disconnected, "refused");
+            switch(stateMachine.getState().ordinal()) {
+            case ice.ConnectionState._Connected:
+                state(ice.ConnectionState.Negotiating, "reconnecting after active association is later refused");
+                break;
+            case ice.ConnectionState._Disconnecting:
+                state(ice.ConnectionState.Disconnected, "association refused!");
+                break;
+            }
+
             super.handle(sockaddr, message);
         }
 
         @Override
         protected void handle(SocketAddress sockaddr, AssociationAbort message) {
-            state(ice.ConnectionState.Disconnected, "aborted");
+            switch(stateMachine.getState().ordinal()) {
+            case ice.ConnectionState._Connected:
+                state(ice.ConnectionState.Negotiating, "reconnecting after active association is later aborted");
+                break;
+            case ice.ConnectionState._Disconnecting:
+                state(ice.ConnectionState.Disconnected, "association aborted!");
+                break;
+            }
             super.handle(sockaddr, message);
         }
 
         @Override
         protected void handle(SocketAddress sockaddr, AssociationDisconnect message) {
-            state(ice.ConnectionState.Disconnected, "disconnected");
+            switch(stateMachine.getState().ordinal()) {
+            case ice.ConnectionState._Connected:
+                state(ice.ConnectionState.Negotiating, "unexpected disconnect message");
+                break;
+            case ice.ConnectionState._Disconnecting:
+                state(ice.ConnectionState.Disconnected, "association disconnected");
+                break;
+            }
             super.handle(sockaddr, message);
         }
 
-        private int lastKeepAliveSentInvokeId = -1;
-        private int lastKeepAliveRecvInvokeId = -1;
-        private TaskQueue.Task<Object> keepAliveTask;
+        @Override
+        protected void handle(SocketAddress sockaddr, AssociationFinish message) throws IOException {
+            super.handle(sockaddr, message);
+            switch(stateMachine.getState().ordinal()) {
+            case ice.ConnectionState._Connected:
+                state(ice.ConnectionState.Negotiating, "unexpected disconnect message");
+                break;
+            case ice.ConnectionState._Disconnecting:
+                state(ice.ConnectionState.Disconnected, "association disconnected");
+                break;
+            }
+        }
+
 
         @Override
         protected void handle(ConnectIndication connectIndication, SelectionKey sk) {
@@ -238,35 +301,16 @@ public class DemoMP70 extends AbstractConnectedDevice {
 
         @Override
         protected void handle(SocketAddress sockaddr, AssociationAccept message) {
-            state(ice.ConnectionState.Negotiating, "accepted");
+            switch(stateMachine.getState().ordinal()) {
+            case ice.ConnectionState._Negotiating:
+                state(ice.ConnectionState.Connected, "");
+                break;
+            }
             PollProfileSupport pps = message.getUserInfo().getPollProfileSupport();
+            keepAliveTimeout = minPollPeriodToTimeout(pps.getMinPollPeriod().toMilliseconds());
             log.debug("Negotiated " + pps.getMinPollPeriod().toMilliseconds() + "ms min poll period, timeout="
-                    + minPollPeriodToTimeout(pps.getMinPollPeriod().toMilliseconds()));
+                    + keepAliveTimeout);
             log.debug("Negotiated " + pps.getMaxMtuTx() + " " + pps.getMaxMtuRx() + " " + pps.getMaxBwTx());
-            keepAliveTask = new TaskQueue.TaskImpl<Object>() {
-                public Object doExecute(TaskQueue queue) {
-                    if (lastKeepAliveSentInvokeId >= 0) {
-                        if (lastKeepAliveSentInvokeId >= 0) {
-                            if (lastKeepAliveSentInvokeId != lastKeepAliveRecvInvokeId) {
-                                log.error("lastKeepAliveSentInvokeId=" + lastKeepAliveSentInvokeId
-                                        + " != lastKeepAliveRecvInvokeId=" + lastKeepAliveSentInvokeId);
-                                return null;
-                            }
-                        }
-                    }
-                    try {
-                        lastKeepAliveSentInvokeId = requestSinglePoll(ObjectClass.NOM_MOC_VMO_AL_MON,
-                                AttributeId.NOM_ATTR_GRP_VMO_STATIC);
-                    } catch (IOException e) {
-                        log.error("requesting a keep alive (static attributes of the alarm monitor object)", e);
-                    }
-                    return null;
-                }
-            };
-
-            keepAliveTask.setInterval(minPollPeriodToTimeout(pps.getMinPollPeriod().toMilliseconds()) - 100L);
-            keepAliveTask.setScheduledTime(System.currentTimeMillis() + keepAliveTask.getInterval() - 100L);
-            networkLoop.add(keepAliveTask);
             super.handle(sockaddr, message);
         }
 
@@ -278,7 +322,11 @@ public class DemoMP70 extends AbstractConnectedDevice {
                 case NOM_ATTR_GRP_VMO_STATIC:
                     lastKeepAliveRecvInvokeId = result.getAction().getMessage().getInvoke();
                     break;
+                default:
+                    break;
                 }
+            default:
+                break;
             }
 
             for (SingleContextPoll sop : result.getPollInfoList()) {
@@ -486,6 +534,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 
     private final NetworkLoop networkLoop;
     private final Thread networkLoopThread;
+    private final TaskQueue.Task<?> watchdogTask;
 
     public DemoMP70(int domainId, EventLoop eventLoop) throws IOException {
         this(domainId, eventLoop, null);
@@ -520,6 +569,15 @@ public class DemoMP70 extends AbstractConnectedDevice {
 
         myIntellivue = new MyIntellivue();
         configureData();
+        watchdogTask = new TaskQueue.TaskImpl<Object>() {
+            @Override
+            public Object doExecute(TaskQueue queue) {
+                watchdog();
+                return null;
+            };
+        };
+        watchdogTask.setInterval(WATCHDOG_INTERVAL);
+        networkLoop.add(watchdogTask);
     }
 
     protected static class MyWaveform {
@@ -614,7 +672,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
                 InetAddress addr = InetAddress.getByName(address);
 
                 connect(addr, -1, port);
-                state(ice.ConnectionState.Connecting, "trying " + address + ":" + port);
+
             } catch (UnknownHostException e) {
                 log.error("Trying to connect to address", e);
             } catch (IOException e) {
@@ -733,12 +791,21 @@ public class DemoMP70 extends AbstractConnectedDevice {
     }
 
     public void connect(InetAddress remote, int prefixLength, int port) throws IOException {
+        switch(stateMachine.getState().ordinal()) {
+        case ice.ConnectionState._Disconnected:
+        case ice.ConnectionState._Connecting:
+            break;
+        default:
+            return;
+        }
         InetAddress local = null;
 
         lastRemote = remote;
         lastPrefixLength = prefixLength;
 
         unregisterAll();
+
+        state(ice.ConnectionState.Connecting, "trying " + remote.getHostAddress() + ":" + port);
 
         final DatagramChannel channel = DatagramChannel.open();
         channel.configureBlocking(false);
@@ -753,7 +820,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 
         registrationKeys.add(networkLoop.register(myIntellivue, channel));
 
-        myIntellivue.requestAssociation();
+        state(ice.ConnectionState.Negotiating, "");
     }
 
     @Override
@@ -765,11 +832,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
         networkLoop.clearTasks();
         while (!ice.ConnectionState.Disconnected.equals(stateMachine.getState())
                 && (System.currentTimeMillis() - start) <= 5000L) {
-            try {
-                myIntellivue.send(new AssociationFinishImpl());
-            } catch (IOException e1) {
-                log.error("sending association finish", e1);
-            }
+
             try {
                 Thread.sleep(500L);
             } catch (InterruptedException e) {
@@ -780,6 +843,7 @@ public class DemoMP70 extends AbstractConnectedDevice {
 
     @Override
     public void shutdown() {
+        networkLoop.clearTasks();
         networkLoop.cancelThread();
         if (null != networkLoopThread) {
             try {
