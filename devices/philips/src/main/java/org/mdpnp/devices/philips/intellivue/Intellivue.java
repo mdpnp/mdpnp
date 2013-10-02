@@ -1,16 +1,10 @@
 package org.mdpnp.devices.philips.intellivue;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
-import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -34,12 +28,10 @@ import org.mdpnp.devices.philips.intellivue.association.AssociationMessage;
 import org.mdpnp.devices.philips.intellivue.association.AssociationRefuse;
 import org.mdpnp.devices.philips.intellivue.association.impl.AssociationConnectImpl;
 import org.mdpnp.devices.philips.intellivue.association.impl.AssociationDisconnectImpl;
-import org.mdpnp.devices.philips.intellivue.association.impl.AssociationFinishImpl;
 import org.mdpnp.devices.philips.intellivue.attribute.Attribute;
 import org.mdpnp.devices.philips.intellivue.attribute.AttributeFactory;
 import org.mdpnp.devices.philips.intellivue.connectindication.ConnectIndication;
 import org.mdpnp.devices.philips.intellivue.data.AttributeId;
-import org.mdpnp.devices.philips.intellivue.data.IPAddressInformation;
 import org.mdpnp.devices.philips.intellivue.data.Label;
 import org.mdpnp.devices.philips.intellivue.data.MdibObjectSupport;
 import org.mdpnp.devices.philips.intellivue.data.NomPartition;
@@ -74,87 +66,17 @@ public class Intellivue implements NetworkConnection {
     public static final int DEFAULT_UNICAST_PORT = 24105;
     public static final int BUFFER_SIZE = 5000;
 
-    protected final NetworkLoop networkLoop;
     private final ByteBuffer inBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
     private final ByteBuffer outBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
     private final Protocol protocol = new CompoundProtocol();
 
-    private SelectionKey conn;
-//	private final java.util.Set<SelectionKey> beacons = new HashSet<SelectionKey>();
-
-    public Intellivue(NetworkLoop networkLoop) {
-        this.networkLoop = networkLoop;
-
+    public Intellivue() {
         inBuffer.order(ByteOrder.BIG_ENDIAN);
         outBuffer.order(ByteOrder.BIG_ENDIAN);
 
     }
     private static final Logger log = LoggerFactory.getLogger(Intellivue.class);
-    public Intellivue() throws IOException {
-        this(new NetworkLoop());
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                networkLoop.runLoop();
-                log.debug("runLoop ended");
-            }
-        }, "Network Loop");
-        t.setDaemon(true);
-        t.start();
-    }
 
-
-    private SocketAddress associated = null;
-
-
-    protected void transientDisassociation(InetAddress lastRemote, int prefixLength) {
-
-    }
-    private int connected_port;
-    public void reconnect() throws IOException {
-        long start = System.currentTimeMillis();
-
-        // Send a few finished messages and maybe we'll get a disconnect
-        synchronized(this) {
-            networkLoop.clearTasks();
-            while(associated!=null && (System.currentTimeMillis()-start) <= 2000L) {
-                send(new AssociationFinishImpl());
-
-                try {
-
-                    wait(500L);
-                } catch (InterruptedException e) {
-                    log.error("Interrupted", e);
-                }
-            }
-            // In this case we'll call it disassociation
-            this.associated = null;
-        }
-
-        this.lastKeepAliveRecvInvokeId = -1;
-        this.lastKeepAliveSentInvokeId = -1;
-        transientDisassociation(lastRemote, lastPrefixLength);
-        connect(lastRemote, lastPrefixLength, connected_port);
-    }
-
-
-    public void disconnect() throws IOException {
-        long start = System.currentTimeMillis();
-
-        synchronized(this) {
-            networkLoop.clearTasks();
-            while(associated!=null && (System.currentTimeMillis()-start) <= 5000L) {
-                send(new AssociationFinishImpl());
-                try {
-                    wait(500L);
-                } catch (InterruptedException e) {
-                    log.error("Interrupted", e);
-                }
-            }
-        }
-        // TODO I'm not sure I want to put the NetworkLoop in a final state
-//		networkLoop.cancelThreadAndWait();
-    }
     protected static final String lineWrap(String str) {
         return lineWrap(str, CHARS_PER_LINE);
     }
@@ -168,7 +90,7 @@ public class Intellivue implements NetworkConnection {
 
     private static final int CHARS_PER_LINE = 140;
 
-    protected void handle(SocketAddress sockaddr, Message message, SelectionKey sk) {
+    protected void handle(SocketAddress sockaddr, Message message, SelectionKey sk) throws IOException {
         if(null == message) {
             return;
         }
@@ -186,77 +108,28 @@ public class Intellivue implements NetworkConnection {
             handle((ConnectIndication)message, sk);
         }
     }
-    private int lastKeepAliveSentInvokeId = -1;
-    private int lastKeepAliveRecvInvokeId = -1;
+
     protected void handle(SocketAddress sockaddr, AssociationAccept message) {
-        PollProfileSupport pps = message.getUserInfo().getPollProfileSupport();
-        log.debug("Negotiated " + pps.getMinPollPeriod().toMilliseconds() + "ms min poll period, timeout="+minPollPeriodToTimeout(pps.getMinPollPeriod().toMilliseconds()));
-        log.debug("Negotiated " + pps.getMaxMtuTx() + " " + pps.getMaxMtuRx() + " " + pps.getMaxBwTx());
-        keepAliveTask = new TaskQueue.TaskImpl<Object>() {
-            public Object doExecute(TaskQueue queue) {
-                if(lastKeepAliveSentInvokeId >= 0) {
-                    if(lastKeepAliveSentInvokeId>=0) {
-                        if(lastKeepAliveSentInvokeId != lastKeepAliveRecvInvokeId) {
-                            log.error("lastKeepAliveSentInvokeId="+lastKeepAliveSentInvokeId+" != lastKeepAliveRecvInvokeId="+lastKeepAliveSentInvokeId);
-                            log.error("NOT FAILING ON MISMATCHED KEEPALIVES");
-//							try {
-//								reconnect();
-//							} catch (IOException e) {
-//								throw new RuntimeException(e);
-//							}
-                            return null;
-                        }
-                    }
-                }
-                lastKeepAliveSentInvokeId = requestKeepAlive();
-                return null;
-            }
-        };
-
-        synchronized(this) {
-            associated = sockaddr;
-            this.notifyAll();
-        }
-
-        keepAliveTask.setInterval(minPollPeriodToTimeout(pps.getMinPollPeriod().toMilliseconds())-100L);
-        keepAliveTask.setScheduledTime(System.currentTimeMillis()+keepAliveTask.getInterval()-100L);
-        networkLoop.add(keepAliveTask);
-
     }
 
-    protected synchronized void handle(SocketAddress sockaddr, AssociationFinish message) {
+    protected void handle(SocketAddress sockaddr, AssociationFinish message) throws IOException {
         AssociationDisconnect disconn = new AssociationDisconnectImpl();
         send(disconn);
-        associated = null;
-        this.notifyAll();
-
     }
 
-    protected synchronized void handle(SocketAddress sockaddr, AssociationRefuse message) {
-        associated = null;
-        this.notifyAll();
+    protected void handle(SocketAddress sockaddr, AssociationRefuse message) {
     }
 
-    protected synchronized void handle(SocketAddress sockaddr, AssociationDisconnect message) {
-        associated = null;
-        this.notifyAll();
+    protected void handle(SocketAddress sockaddr, AssociationDisconnect message) {
     }
 
-    protected synchronized void handle(SocketAddress sockaddr, AssociationAbort message) {
-        associated = null;
-        this.notifyAll();
+    protected void handle(SocketAddress sockaddr, AssociationAbort message) {
     }
 
-    protected synchronized void handle(SocketAddress sockaddr, AssociationConnect message) {
-        associated = sockaddr;
-        this.notifyAll();
-        log.debug("Received connect:"+message);
-
-
-
+    protected void handle(SocketAddress sockaddr, AssociationConnect message) {
     }
 
-    protected void handle(SocketAddress sockaddr, AssociationMessage message) {
+    protected void handle(SocketAddress sockaddr, AssociationMessage message) throws IOException {
 
         switch(message.getType()) {
         case Connect:
@@ -279,25 +152,6 @@ public class Intellivue implements NetworkConnection {
             break;
         default:
             break;
-        }
-    }
-
-    public String[] listenForConnectIndication() throws IOException {
-        List<Network.AddressSubnet> broadcastAddresses = Network.getBroadcastAddresses();
-        if(broadcastAddresses.isEmpty()) {
-            return null;
-        } else {
-            List<String> hosts = new ArrayList<String>();
-            for(Network.AddressSubnet address : broadcastAddresses) {
-                final DatagramChannel channel = DatagramChannel.open();
-                channel.configureBlocking(false);
-                channel.socket().setReuseAddress(true);
-                channel.socket().bind(new InetSocketAddress(address.getInetAddress(), BROADCAST_PORT));
-                networkLoop.register(this, channel);
-
-                hosts.add(address.getInetAddress().getHostAddress());
-            }
-            return hosts.toArray(new String[0]);
         }
     }
 
@@ -332,28 +186,6 @@ public class Intellivue implements NetworkConnection {
     }
 
     protected void handle(ConnectIndication connectIndication, SelectionKey sk) {
-        log.trace("REceived a connectindication:"+connectIndication);
-        IPAddressInformation ipinfo = connectIndication.getIpAddressInformation();
-        ProtocolSupportEntry pse = acceptable(connectIndication);
-        if(null != ipinfo && null != pse) {
-            try {
-                InetAddress remote = ipinfo.getInetAddress();
-                int prefixLength = Network.prefixCount(connectIndication.getIpAddressInformation().getSubnetMask());
-                synchronized(this) {
-                    if(associated!=null) {
-                        return;
-                    }
-                }
-                connect(remote, prefixLength, pse.getPortNumber());
-            } catch (UnknownHostException e) {
-                log.error("Trying to connect to " + ipinfo + " after receiving a beacon", e);
-            } catch (IOException e) {
-                log.error("Trying to connect to " + ipinfo + " after receiving a beacon", e);
-            }
-
-
-
-        }
     }
 
     private int invoke = 0;
@@ -374,13 +206,13 @@ public class Intellivue implements NetworkConnection {
         return poll;
     }
 
-    private TaskQueue.Task<Object> keepAliveTask;
 
-    public int requestKeepAlive() {
+
+    public int requestKeepAlive() throws IOException {
         return requestSinglePoll(ObjectClass.NOM_MOC_VMO_AL_MON, AttributeId.NOM_ATTR_GRP_VMO_STATIC);
     }
 
-    public int requestSinglePoll(ObjectClass objectType, AttributeId attrGroup) {
+    public int requestSinglePoll(ObjectClass objectType, AttributeId attrGroup) throws IOException {
         int invoke = nextInvoke();
         DataExportInvoke message = new DataExportInvokeImpl();
         message.setCommandType(CommandType.ConfirmedAction);
@@ -408,10 +240,10 @@ public class Intellivue implements NetworkConnection {
         return invoke;
     }
 
-    public int requestExtendedPoll(ObjectClass objectType, Long time) {
+    public int requestExtendedPoll(ObjectClass objectType, Long time) throws IOException {
         return requestExtendedPoll(objectType, time, null);
     }
-    public int requestExtendedPoll(ObjectClass objectType, Long time, AttributeId attrGroup) {
+    public int requestExtendedPoll(ObjectClass objectType, Long time, AttributeId attrGroup) throws IOException {
 
         int invoke = nextInvoke();
         DataExportInvoke message = new DataExportInvokeImpl();
@@ -449,15 +281,15 @@ public class Intellivue implements NetworkConnection {
         return invoke;
     }
 
-    public int requestGet(OIDType oids) {
+    public int requestGet(OIDType oids) throws IOException {
         return requestGet(Arrays.asList(new OIDType[] {oids}));
     }
 
-    public int requestGet(OIDType[] oids) {
+    public int requestGet(OIDType[] oids) throws IOException {
         return requestGet(Arrays.asList(oids));
     }
 
-    public int requestGet(List<OIDType> oids) {
+    public int requestGet(List<OIDType> oids) throws IOException {
         int invoke = nextInvoke();
 
         DataExportInvoke message = new DataExportInvokeImpl();
@@ -474,7 +306,7 @@ public class Intellivue implements NetworkConnection {
         return invoke;
     }
 
-    public int requestSet(Label[] numerics, Label[] realtimeSampleArrays) {
+    public int requestSet(Label[] numerics, Label[] realtimeSampleArrays) throws IOException {
         int invoke;
         DataExportInvoke message = new DataExportInvokeImpl();
         message.setCommandType(CommandType.ConfirmedSet);
@@ -507,7 +339,7 @@ public class Intellivue implements NetworkConnection {
         return invoke;
     }
 
-    protected void handle(EventReport eventReport, boolean confirm) {
+    protected void handle(EventReport eventReport, boolean confirm) throws IOException {
         if(confirm) {
             {
                 DataExportResult message = new DataExportResultImpl();
@@ -523,17 +355,7 @@ public class Intellivue implements NetworkConnection {
         }
     }
 
-    @SuppressWarnings("incomplete-switch")
     protected void handle(SinglePollDataResult result) {
-        switch(ObjectClass.valueOf(result.getPolledObjType().getOidType().getType())) {
-            case NOM_MOC_VMO_AL_MON:
-                switch(AttributeId.valueOf(result.getPolledAttributeGroup().getType())) {
-                case NOM_ATTR_GRP_VMO_STATIC:
-                    lastKeepAliveRecvInvokeId = result.getAction().getMessage().getInvoke();
-                    break;
-                }
-        }
-
     }
 
     protected void handle(ExtendedPollDataResult result) {
@@ -547,7 +369,7 @@ public class Intellivue implements NetworkConnection {
     protected void handle(Get get) {
 
     }
-    protected void handle(Set set, boolean confirmed) {
+    protected void handle(Set set, boolean confirmed) throws IOException {
         if(confirmed) {
             DataExportResult message = new DataExportResultImpl();
             message.setCommandType(CommandType.ConfirmedSet);
@@ -625,7 +447,7 @@ public class Intellivue implements NetworkConnection {
         }
     }
 
-    protected void handle(DataExportInvoke message) {
+    protected void handle(DataExportInvoke message) throws IOException {
         switch(message.getCommandType()) {
         case ConfirmedEventReport:
             handle((EventReport) message.getCommand(), true);
@@ -651,7 +473,7 @@ public class Intellivue implements NetworkConnection {
         }
     }
 
-    protected void handle(DataExportMessage message) {
+    protected void handle(DataExportMessage message) throws IOException {
         if(null == message) {
             return;
         }
@@ -670,17 +492,9 @@ public class Intellivue implements NetworkConnection {
 
     }
 
-    private static long minPollPeriodToTimeout(long minPollPeriod) {
-        if(minPollPeriod<=3300L) {
-            return 10000L;
-        } else if(minPollPeriod <= 43000L) {
-            return 3 * minPollPeriod;
-        } else {
-            return 130000L;
-        }
-    }
 
-    private void requestAssociation() {
+
+    public void requestAssociation() throws IOException {
         AssociationConnect req = new AssociationConnectImpl();
         PollProfileSupport pps = req.getUserInfo().getPollProfileSupport();
 
@@ -711,115 +525,22 @@ public class Intellivue implements NetworkConnection {
 
 
     private List<Message> messageQueue = new ArrayList<Message>();
-    public void connect(InetAddress remote) throws IOException {
-        connect(remote, -1, DEFAULT_UNICAST_PORT);
-    }
-
-    private InetAddress lastRemote;
-    private int lastPrefixLength;
-
-
-    public void register(SelectableChannel channel) throws ClosedChannelException {
-        this.conn = networkLoop.register(this, channel);
-    }
-
-    public void connect(InetAddress remote, int prefixLength, int port) throws IOException {
-        InetAddress local = null;
-
-        lastRemote = remote;
-        lastPrefixLength = prefixLength;
-
-        this.connected_port = port;
-
-        final DatagramChannel channel = DatagramChannel.open();
-        channel.configureBlocking(false);
-        channel.socket().setReuseAddress(true);
-
-        if(prefixLength >= 0) {
-            local = Network.getLocalAddresses(remote, (short)prefixLength, true).get(0);
-            channel.socket().bind(new InetSocketAddress(local, 0));
-        }
-
-        channel.connect(associated = new InetSocketAddress(remote, port));
-
-        conn = networkLoop.register(this, channel);
-
-        requestAssociation();
-    }
-
-    public static void main(String[] args) throws IOException {
-//		System.setProperty("java.net.preferIPv4Stack","true");
-//		NetworkLoop loop = new NetworkLoop();
-//		final Intellivue intellivue = new Intellivue();
-//		JFrame frame = new JFrame("INTELLIVUE");
-//		frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-//		frame.addWindowListener(new WindowAdapter() {
-//			@Override
-//			public void windowClosing(WindowEvent e) {
-//				super.windowClosing(e);
-//				try {
-//					intellivue.disconnect();
-//				} catch (IOException e1) {
-//					e1.printStackTrace();
-//				}
-//			}
-//		});
-//		frame.setSize(640, 480);
-//
-//		frame.setVisible(true);
-//
-////		intellivue.listenForConnectIndication();
-//		intellivue.connect(InetAddress.getByAddress(new byte[] {-64, -88, 1, -57}), 24);
-//
-//
-//		loop.runLoop();
-//
-//		System.exit(0);
-    }
-
-    private static final Method getRemoteAddress;
-    static {
-        Method m = null;
-        try {
-            m = DatagramChannel.class.getMethod("getRemoteAddress");
-        } catch(Exception e) {
-            try {
-                m = DatagramChannel.class.getMethod("getRemoteSocketAddress");
-            } catch(Exception e1) {
-                m = null;
-            }
-        }
-        getRemoteAddress = m;
-    }
-
-    private static final SocketAddress getRemoteAddress(DatagramChannel channel) {
-        try {
-            return (SocketAddress) getRemoteAddress.invoke(channel);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
 
     private final synchronized int write(DatagramChannel channel, Message message) throws IOException {
         outBuffer.clear();
         protocol.format(message, outBuffer);
         outBuffer.flip();
         outBuffer.mark();
-        if(associated != null) {
-            int cnt = channel.send(outBuffer, associated);
 
-            if(cnt > 0 && log.isTraceEnabled()) {
-                outBuffer.reset();
-                time.setTime(System.currentTimeMillis());
-                log.trace("To " + associated + " at " + simpleDateformat.format(time));
-                log.trace(Util.dump(outBuffer, 20));
-            }
-            return cnt;
-        } else {
-            return -1;
+        int cnt = channel.write(outBuffer);
+
+        if(cnt > 0 && log.isTraceEnabled()) {
+            outBuffer.reset();
+            time.setTime(System.currentTimeMillis());
+            log.trace("To " + channel.getRemoteAddress() + " at " + simpleDateformat.format(time));
+            log.trace(Util.dump(outBuffer, 20));
         }
-
+        return cnt;
     }
 
     @Override
@@ -842,48 +563,68 @@ public class Intellivue implements NetworkConnection {
         }
     }
 
+    protected void readyToWrite()  {}
+
     /**
      * Called externally to send a message
      * @param message
      * @return
      * @throws IOException
      */
-    public synchronized boolean send(Message message) {
+    public synchronized boolean send(Message message) throws IOException {
         if(null == message) {
             return false;
         }
-        if(null == associated) {
-            return false;
-        }
+
         if(log.isTraceEnabled()) {
             time.setTime(System.currentTimeMillis());
             log.trace("Out Message(" + simpleDateformat.format(time) + "):\n"+lineWrap(message.toString()));
         }
 
-        // Try to write the datagram, if unavailable then set interestOps
-        try {
-            int cnt = write((DatagramChannel) conn.channel(), message);
-            if(cnt==0) {
-                conn.interestOps(conn.interestOps() | SelectionKey.OP_WRITE);
-                messageQueue.add(message);
-                networkLoop.wakeup();
-                return false;
-            } else {
-                return true;
-            }
-        } catch (IOException e) {
-            try {
-                reconnect();
-            } catch (IOException e1) {
-                log.error("Trying to reconnect after a failed datagram write", e1);
-            }
-            return false;
-        }
 
+        // Try to write the datagram, if unavailable then set interestOps
+
+        int cnt = write(registeredChannel, message);
+        if(cnt==0) {
+            registeredKey.interestOps(registeredKey.interestOps() | SelectionKey.OP_WRITE);
+            messageQueue.add(message);
+            registeredNetworkLoop.wakeup();
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private final Date time = new Date();
     private final DateFormat simpleDateformat = new SimpleDateFormat("HH:mm:ss.SSS");
+
+    protected SelectionKey registeredKey;
+    protected NetworkLoop registeredNetworkLoop;
+    protected DatagramChannel registeredChannel;
+
+    @Override
+    public void registered(NetworkLoop networkLoop, SelectionKey key) {
+        if(null != registeredKey && !registeredKey.equals(key)) {
+            log.warn("Replacing existing key registration (" + registeredKey + ") with " + key);
+        }
+        if(null != registeredNetworkLoop && !registeredNetworkLoop.equals(networkLoop)) {
+            log.warn("Replacing existing NetworkLoop registration (" + registeredNetworkLoop + ") with " + networkLoop);
+        }
+        if(!(key.channel() instanceof DatagramChannel)) {
+            throw new IllegalArgumentException("Please register only SelectionKeys for DatagramChannels, not " + key.channel().getClass());
+        }
+
+        this.registeredChannel = (DatagramChannel) key.channel();
+        this.registeredKey = key;
+        this.registeredNetworkLoop = networkLoop;
+    }
+
+    @Override
+    public void unregistered(NetworkLoop networkLoop, SelectionKey key) {
+        this.registeredChannel = null;
+        this.registeredKey = null;
+        this.registeredNetworkLoop = null;
+    }
 
 
     @Override
@@ -897,7 +638,7 @@ public class Intellivue implements NetworkConnection {
             if(inBuffer.hasRemaining()) {
                 if(log.isTraceEnabled()) {
                     time.setTime(System.currentTimeMillis());
-                    log.trace("From " + getRemoteAddress(channel) + " on " + channel.socket().getLocalAddress() + " at " + simpleDateformat.format(time));
+                    log.trace("From " + channel.getRemoteAddress() + " on " + channel.socket().getLocalAddress() + " at " + simpleDateformat.format(time));
                     log.trace(Util.dump(inBuffer, 20));
                 }
                 handle(sockaddr, protocol.parse(inBuffer), sk);
