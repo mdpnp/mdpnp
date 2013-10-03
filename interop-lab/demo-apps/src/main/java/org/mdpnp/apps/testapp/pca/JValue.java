@@ -98,7 +98,7 @@ public class JValue extends JComponent {
         this.deviceName.setText(deviceName);
         if(si != null && numeric != null) {
             date.setTime(1000L * si.source_timestamp.sec + si.source_timestamp.nanosec / 1000000L);
-            String s = Integer.toString((int)numeric.value);
+            String s = Integer.toString(Math.round(numeric.value));
             while(s.length()<3) {
                 s = " "+s;
             }
