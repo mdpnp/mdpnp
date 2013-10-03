@@ -8,7 +8,7 @@
 package org.mdpnp.devices.oridion.capnostream;
 
 import ice.AlarmSettings;
-import ice.AlarmSettingsObjective;
+import ice.LocalAlarmSettingsObjective;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -218,20 +218,29 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
 
     @Override
-    public void unsetAlarmSettings(AlarmSettingsObjective obj) {
-        super.unsetAlarmSettings(obj);
-        log.warn("Resetting " + obj.metric_id + " to [" + priorSafeLow.get(obj.metric_id) + " , " + priorSafeHigh.get(obj.metric_id));
-        setupItemHandler.send(lowerAlarm(obj.metric_id), priorSafeLow.get(obj.metric_id));
-        setupItemHandler.send(upperAlarm(obj.metric_id), priorSafeHigh.get(obj.metric_id));
+    public void unsetAlarmSettings(String metricId) {
+        super.unsetAlarmSettings(metricId);
+        log.warn("Resetting " + metricId + " to [" + priorSafeLow.get(metricId) + " , " + priorSafeHigh.get(metricId));
+        setupItemHandler.send(lowerAlarm(metricId), priorSafeLow.get(metricId));
+        setupItemHandler.send(upperAlarm(metricId), priorSafeHigh.get(metricId));
+    }
+
+    private Map<String, InstanceHolder<ice.LocalAlarmSettingsObjective>> localAlarmSettings = new HashMap<String, InstanceHolder<ice.LocalAlarmSettingsObjective>>();
+    @Override
+    protected void unregisterAlarmSettingsObjectiveInstance(InstanceHolder<LocalAlarmSettingsObjective> holder) {
+        localAlarmSettings.clear();
+        super.unregisterAlarmSettingsObjectiveInstance(holder);
     }
 
     @Override
-    public void setAlarmSettings(AlarmSettingsObjective obj) {
+    public void setAlarmSettings(ice.GlobalAlarmSettingsObjective obj) {
         super.setAlarmSettings(obj);
         priorSafeHigh.put(obj.metric_id, currentHigh.get(obj.metric_id));
         priorSafeLow.put(obj.metric_id, currentLow.get(obj.metric_id));
         setupItemHandler.send(lowerAlarm(obj.metric_id), (int) obj.lower);
         setupItemHandler.send(upperAlarm(obj.metric_id), (int) obj.upper);
+        // TODO Does this really below here?
+        localAlarmSettings.put(obj.metric_id, alarmSettingsObjectiveSample(localAlarmSettings.get(obj.metric_id), obj.lower, obj.upper, obj.metric_id));
     }
 
     private void init() {
