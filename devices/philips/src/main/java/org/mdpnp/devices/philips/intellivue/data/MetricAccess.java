@@ -6,7 +6,7 @@ import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.Message;
 
 public class MetricAccess implements Message {
-    
+
     private static final int AVAIL_INTERMITTENT = 0x8000;
     private static final int UPD_PERIODIC = 0x4000;
     private static final int UPD_EPISODIC = 0x2000;
@@ -19,9 +19,9 @@ public class MetricAccess implements Message {
     private static final int SC_OPT_EXTENSIVE = 0x0010;
     private static final int SC_OPT_LONG_PD_AVAIL = 0x0008;
     private static final int SC_OPT_CONFIRM = 0x0004;
-	
+
     private int value;
-    
+
     public boolean isAvailIntermittent() {
         return 0 != (AVAIL_INTERMITTENT & value);
     }
@@ -58,7 +58,50 @@ public class MetricAccess implements Message {
     public boolean isScOptConfirm() {
         return 0 != (SC_OPT_CONFIRM & value);
     }
-    
+
+    @Override
+    public java.lang.String toString() {
+        StringBuilder sb = new StringBuilder("[");
+        if(isAvailIntermittent()) {
+            sb.append("AVAIL_INTERMITTENT|");
+        }
+        if(isUpdPeriodic()) {
+            sb.append("UPD_PERIODIC|");
+        }
+        if(isMsmtNoncontinuous()) {
+            sb.append("MSMT_NONCONTINUOUS|");
+        }
+        if(isAccEvRep()) {
+            sb.append("ACC_EVREP|");
+        }
+        if(isAccGet()) {
+            sb.append("ACC_GET|");
+        }
+        if(isAccScan()) {
+            sb.append("ACC_SCAN|");
+        }
+        if(isGenOptSync()) {
+            sb.append("GEN_OPT_SYNC|");
+        }
+        if(isScOptNormal()) {
+            sb.append("SC_OPT_NORMAL|");
+        }
+        if(isScOptExtensive()) {
+            sb.append("SC_OPT_EXTENSIVE|");
+        }
+        if(isScOptLongPdAvail()) {
+            sb.append("SC_OPT_LONG_PD_AVAIL|");
+        }
+        if(isScOptConfirm()) {
+            sb.append("SC_OPT_CONFIRM|");
+        }
+        if(sb.length()>1) {
+            sb.delete(sb.length()-1, sb.length());
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
     @Override
     public void parse(ByteBuffer bb) {
         value = Bits.getUnsignedShort(bb);
