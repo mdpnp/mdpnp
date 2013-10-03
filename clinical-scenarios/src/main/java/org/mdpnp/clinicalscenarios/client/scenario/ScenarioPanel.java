@@ -802,7 +802,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		proposedStateEditor.setReadOnly(true);
 	}
 	
-	private void enableSaveScenario(){		
+	private void enableSaveScenario(){				
+		status.setVisible(true);//TICKET-176
 		algorithmDescription.setReadOnly(false);
 		clinicalProcesses.setReadOnly(false);
 		risks.setReadOnly(false);
@@ -846,8 +847,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	                    ScenarioPanel.this.currentScenario = currentScenario;
                   	                    
 	                    //after the Entity has been succesfully created, we populate the widgets w/ the entity info and draw it
-	                    buildTabsTables(true);
-	        			configureComponents();   			  
+//	                    buildTabsTables(true);
+	        			configureComponents();  
+	        			buildTabsTables(true);//Ticket-175 build tables AFTER "editable" has been checked on configureComponents()
 	    			    status.setText("");
 	    			    uniqueId.setText("");	
 	    			    
@@ -868,11 +870,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		    currentScenario = context.edit(currentScenario); 
             driver.edit(currentScenario, context);
             this.currentScenario = currentScenario;
-            buildTabsTables(false);
+//            buildTabsTables(false);
     		if(currentScenario.getId()!=null)
     			uniqueId.setText("Scenario Unique ID: "+String.valueOf(currentScenario.getId()));  		
 
     		configureComponents();
+    		buildTabsTables(false);//Ticket-175 build tables AFTER "editable" has been checked on configureComponents()
 		}
 		
 		//select first tab
