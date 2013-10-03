@@ -43,6 +43,7 @@ import org.mdpnp.devices.philips.intellivue.attribute.Attribute;
 import org.mdpnp.devices.philips.intellivue.attribute.AttributeFactory;
 import org.mdpnp.devices.philips.intellivue.connectindication.ConnectIndication;
 import org.mdpnp.devices.philips.intellivue.data.AttributeId;
+import org.mdpnp.devices.philips.intellivue.data.AttributeValueList;
 import org.mdpnp.devices.philips.intellivue.data.ComponentId;
 import org.mdpnp.devices.philips.intellivue.data.CompoundNumericObservedValue;
 import org.mdpnp.devices.philips.intellivue.data.DisplayResolution;
@@ -68,6 +69,7 @@ import org.mdpnp.devices.philips.intellivue.data.TextId;
 import org.mdpnp.devices.philips.intellivue.data.TextIdList;
 import org.mdpnp.devices.philips.intellivue.data.Type;
 import org.mdpnp.devices.philips.intellivue.data.VariableLabel;
+import org.mdpnp.devices.philips.intellivue.dataexport.DataExportMessage;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.EventReport;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.SetResult;
 import org.mdpnp.devices.philips.intellivue.dataexport.event.MdsCreateEvent;
@@ -80,31 +82,40 @@ public class DemoIntellivue extends AbstractConnectedDevice {
     protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
         super.stateChanged(newState, oldState);
         if (ice.ConnectionState.Connected.equals(oldState) && !ice.ConnectionState.Connected.equals(newState)) {
-            unregisterAllInstances();
-            lastKeepAliveRecvInvokeId = -1;
-            lastKeepAliveSentInvokeId = -1;
-            lastAssociationRequest = 0L;
-            lastFinishRequest = 0L;
-            lastKeepAlive = 0L;
-            keepAliveTimeout = 1000L;
             lastDataPoll = 0L;
+            lastMessageReceived = 0L;
+            lastMessageSent = 0L;
+            lastKeepAlive = 0L;
         }
     }
-    protected final static long WATCHDOG_INTERVAL = 500L;
-    private int lastKeepAliveSentInvokeId = -1;
-    private int lastKeepAliveRecvInvokeId = -1;
+    protected final static long WATCHDOG_INTERVAL = 200L;
+    // Maximum time between message receipt
+    protected final static long IN_CONNECTION_TIMEOUT = 5000L;
+    // Assert a keepalive if no message received for this long
+    protected final static long IN_CONNECTION_ASSERT = 4000L;
+
+    protected static long OUT_CONNECTION_ASSERT = 8000L;
+
+
+    protected final static long CONTINUOUS_POLL_INTERVAL = 60000L;
+    protected final static long CONTINUOUS_POLL_ASSERT = 50000L;
+
+    protected final static long ASSOCIATION_REQUEST_INTERVAL = 2000L;
+    protected final static long FINISH_REQUEST_INTERVAL = 500L;
+
 
     private long lastAssociationRequest = 0L;
     private long lastFinishRequest = 0L;
-    private long lastKeepAlive = 0L;
-    private long keepAliveTimeout = 1000L;
     private long lastDataPoll = 0L;
+    private long lastMessageReceived = 0L;
+    private long lastKeepAlive = 0L;
+    private long lastMessageSent = 0L;
 
     protected void watchdog() {
         long now = System.currentTimeMillis();
         switch(stateMachine.getState().ordinal()) {
         case ice.ConnectionState._Negotiating:
-            if(now - lastAssociationRequest >= 2000L) {
+            if(now - lastAssociationRequest >= ASSOCIATION_REQUEST_INTERVAL) {
                 try {
                     myIntellivue.requestAssociation();
                     lastAssociationRequest = now;
@@ -114,7 +125,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             }
             break;
         case ice.ConnectionState._Disconnecting:
-            if(now - lastFinishRequest >= 500L) {
+            if(now - lastFinishRequest >= FINISH_REQUEST_INTERVAL) {
                 try {
                     myIntellivue.send(new AssociationFinishImpl());
                     lastFinishRequest = now;
@@ -124,25 +135,20 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             }
             break;
         case ice.ConnectionState._Connected:
-            if(now - lastKeepAlive >= keepAliveTimeout) {
+            if(now - lastMessageReceived >= IN_CONNECTION_TIMEOUT) {
                 // Check that the last was acknowledged
-                if (lastKeepAliveSentInvokeId >= 0 && lastKeepAliveSentInvokeId >= 0 && lastKeepAliveSentInvokeId != lastKeepAliveRecvInvokeId) {
-                    log.error("lastKeepAliveSentInvokeId=" + lastKeepAliveSentInvokeId
-                            + " != lastKeepAliveRecvInvokeId=" + lastKeepAliveSentInvokeId);
-                    state(ice.ConnectionState.Negotiating, "timeout receiving keepalive messages");
-                    return;
-                } else {
-                    try {
-                        lastKeepAliveSentInvokeId = myIntellivue.requestSinglePoll(ObjectClass.NOM_MOC_VMO_AL_MON,
-                                AttributeId.NOM_ATTR_GRP_VMO_STATIC);
-                        lastKeepAlive = now;
-                    } catch (IOException e) {
-                        state(ice.ConnectionState.Negotiating, "failure to send a keepalive");
-                        log.error("requesting a keep alive (static attributes of the alarm monitor object)", e);
-                    }
+                state(ice.ConnectionState.Negotiating, "timeout receiving  messages");
+                return;
+            } else if( (now - lastMessageReceived >= IN_CONNECTION_ASSERT || now - lastMessageSent >= OUT_CONNECTION_ASSERT) && now - lastKeepAlive >= Math.min(OUT_CONNECTION_ASSERT, IN_CONNECTION_ASSERT)) {
+                try {
+                    myIntellivue.requestSinglePoll(ObjectClass.NOM_MOC_VMO_AL_MON,
+                            AttributeId.NOM_ATTR_GRP_VMO_STATIC);
+                    lastKeepAlive = now;
+                } catch (IOException e) {
+                    state(ice.ConnectionState.Negotiating, "failure to send a keepalive");
+                    log.error("requesting a keep alive (static attributes of the alarm monitor object)", e);
                 }
-            }
-            if(now - lastDataPoll >= CONTINUOUS_POLL_INTERVAL) {
+            } else if(now - lastDataPoll >= CONTINUOUS_POLL_ASSERT) {
                 try {
                     myIntellivue.requestExtendedPoll(ObjectClass.NOM_MOC_VMO_METRIC_NU, CONTINUOUS_POLL_INTERVAL);
                     myIntellivue.requestExtendedPoll(ObjectClass.NOM_MOC_VMO_METRIC_SA_RT, CONTINUOUS_POLL_INTERVAL);
@@ -164,19 +170,32 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         }
 
         @Override
+        public synchronized boolean send(Message message) throws IOException {
+            lastMessageSent = System.currentTimeMillis();
+            return super.send(message);
+        }
+
+        @Override
+        protected void handle(DataExportMessage message) throws IOException {
+            lastMessageReceived = System.currentTimeMillis();
+            super.handle(message);
+        }
+
+        @Override
         protected void handle(SetResult result, boolean confirmed) {
             super.handle(result, confirmed);
-            Attribute<TextIdList> ati = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_POLL_NU_PRIO_LIST,
+            AttributeValueList attrs = result.getAttributes();
+            Attribute<TextIdList> ati = attrs.getAttribute(AttributeId.NOM_ATTR_POLL_NU_PRIO_LIST,
                     TextIdList.class);
 
-            if (result.getAttributes().get(ati)
+            if (null != ati
                     && ati.getValue().containsAll(numericLabels.values().toArray(new Label[0]))) {
             } else {
                 log.warn("Numerics priority list does not contain all of our requested labels:" + ati);
             }
 
-            ati = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_POLL_RTSA_PRIO_LIST, TextIdList.class);
-            if (result.getAttributes().get(ati)
+            ati = attrs.getAttribute(AttributeId.NOM_ATTR_POLL_RTSA_PRIO_LIST, TextIdList.class);
+            if (null != ati
                     && ati.getValue().containsAll(sampleArrayLabels.values().toArray(new Label[0]))) {
             } else {
                 log.warn("SampleArray priority list does not contain all requested labels:" + ati);
@@ -189,14 +208,15 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             switch (ObjectClass.valueOf(eventReport.getEventType().getType())) {
             case NOM_NOTI_MDS_CREAT:
                 MdsCreateEvent createEvent = (MdsCreateEvent) eventReport.getEvent();
-                Attribute<SystemModel> asm = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_MODEL,
+                AttributeValueList attrs = createEvent.getAttributes();
+                Attribute<SystemModel> asm = attrs.getAttribute(AttributeId.NOM_ATTR_ID_MODEL,
                         SystemModel.class);
-                Attribute<org.mdpnp.devices.philips.intellivue.data.String> as = AttributeFactory.getAttribute(
+                Attribute<org.mdpnp.devices.philips.intellivue.data.String> as = attrs.getAttribute(
                         AttributeId.NOM_ATTR_ID_BED_LABEL, org.mdpnp.devices.philips.intellivue.data.String.class);
-                Attribute<ProductionSpecification> ps = AttributeFactory.getAttribute(
+                Attribute<ProductionSpecification> ps = attrs.getAttribute(
                         AttributeId.NOM_ATTR_ID_PROD_SPECN, ProductionSpecification.class);
 
-                if (createEvent.getAttributes().get(ps)) {
+                if (ps != null) {
                     log.info("ProductionSpecification");
                     log.info("" + ps.getValue());
                     VariableLabel vl = ps.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER,
@@ -207,15 +227,13 @@ public class DemoIntellivue extends AbstractConnectedDevice {
                     }
                 }
 
-                if (createEvent.getAttributes().get(asm)) {
+                if (null != asm) {
                     deviceIdentity.manufacturer = asm.getValue().getManufacturer().getString();
-                    writeDeviceIdentity();
-                }
-                if (createEvent.getAttributes().get(as)) {
                     deviceIdentity.model = asm.getValue().getModelNumber().getString();
                     writeDeviceIdentity();
                 }
-
+                if (null != as) {
+                }
 
                 requestSinglePoll(ObjectClass.NOM_MOC_VMS_MDS, AttributeId.NOM_ATTR_GRP_SYS_PROD);
 
@@ -313,9 +331,10 @@ public class DemoIntellivue extends AbstractConnectedDevice {
                 break;
             }
             PollProfileSupport pps = message.getUserInfo().getPollProfileSupport();
-            keepAliveTimeout = minPollPeriodToTimeout(pps.getMinPollPeriod().toMilliseconds());
+            long timeout = minPollPeriodToTimeout(pps.getMinPollPeriod().toMilliseconds());
+            OUT_CONNECTION_ASSERT = Math.max(200L, timeout - 1000L);
             log.debug("Negotiated " + pps.getMinPollPeriod().toMilliseconds() + "ms min poll period, timeout="
-                    + keepAliveTimeout);
+                    + timeout);
             log.debug("Negotiated " + pps.getMaxMtuTx() + " " + pps.getMaxMtuRx() + " " + pps.getMaxBwTx());
             super.handle(sockaddr, message);
         }
@@ -326,7 +345,9 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             case NOM_MOC_VMO_AL_MON:
                 switch (AttributeId.valueOf(result.getPolledAttributeGroup().getType())) {
                 case NOM_ATTR_GRP_VMO_STATIC:
-                    lastKeepAliveRecvInvokeId = result.getAction().getMessage().getInvoke();
+                    // This is what we're using as a keepalive
+                    // but currently only tracking the receipt of any DataExport message
+//                    lastKeepAliveRecvInvokeId = result.getAction().getMessage().getInvoke();
                     break;
                 default:
                     break;
@@ -337,7 +358,10 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
             for (SingleContextPoll sop : result.getPollInfoList()) {
                 for (ObservationPoll op : sop.getPollInfo()) {
-                    if (op.getAttributes().get(prodSpec)) {
+                    AttributeValueList attrs = op.getAttributes();
+                    Attribute<ProductionSpecification> prodSpec = attrs.getAttribute(
+                            AttributeId.NOM_ATTR_ID_PROD_SPECN, ProductionSpecification.class);
+                    if (null != prodSpec) {
                         log.info("ProductionSpecification");
                         log.info("" + prodSpec.getValue());
                         VariableLabel vlabel = prodSpec.getValue().getByComponentId(
@@ -349,11 +373,19 @@ public class DemoIntellivue extends AbstractConnectedDevice {
                         vlabel = prodSpec.getValue().getByComponentId(ProductionSpecificationType.PART_NUMBER,
                                 ComponentId.ID_COMP_PRODUCT);
                     }
-                    if (op.getAttributes().get(firstName)) {
+
+                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> firstName = attrs
+                            .getAttribute(AttributeId.NOM_ATTR_PT_NAME_GIVEN, org.mdpnp.devices.philips.intellivue.data.String.class);
+                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> lastName = attrs
+                            .getAttribute(AttributeId.NOM_ATTR_PT_NAME_FAMILY, org.mdpnp.devices.philips.intellivue.data.String.class);
+                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> patientId = attrs
+                            .getAttribute(AttributeId.NOM_ATTR_PT_ID, org.mdpnp.devices.philips.intellivue.data.String.class);
+
+                    if (null != firstName) {
                     }
-                    if (op.getAttributes().get(lastName)) {
+                    if (null != lastName) {
                     }
-                    if (op.getAttributes().get(patientId)) {
+                    if (null != patientId) {
                     }
                 }
             }
@@ -362,68 +394,85 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
         @Override
         protected void handle(ExtendedPollDataResult result) {
-            log.debug("ExtendedPollDataResult");
+//            log.debug("ExtendedPollDataResult");
             // log.debug(lineWrap(result.toString()));
             for (SingleContextPoll sop : result.getPollInfoList()) {
                 for (ObservationPoll op : sop.getPollInfo()) {
                     int handle = op.getHandle().getHandle();
+                    AttributeValueList attrs = op.getAttributes();
 
-                    if (op.getAttributes().get(observed)) {
-                        log.debug(observed.toString());
+                    Attribute<NumericObservedValue> observed = attrs.getAttribute(DemoIntellivue.this.observed);
+                    Attribute<CompoundNumericObservedValue> compoundObserved = attrs.getAttribute(DemoIntellivue.this.compoundObserved);
+//                    Attribute<Type> type = attrs.getAttribute(DemoIntellivue.this.type);
+//                    Attribute<MetricSpecification> metricSpecification = attrs.getAttribute(DemoIntellivue.this.metricSpecification);
+//                    Attribute<TextId> idLabel  = attrs.getAttribute(DemoIntellivue.this.idLabel);
+//                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> idLabelString = attrs.getAttribute(DemoIntellivue.this.idLabelString);
+//                    Attribute<DisplayResolution> displayResolution = attrs.getAttribute(DemoIntellivue.this.displayResolution);
+//                    Attribute<EnumValue<SimpleColor>> color = attrs.getAttribute(DemoIntellivue.this.color);
+                    Attribute<Handle> objectHandle = attrs.getAttribute(DemoIntellivue.this.handle);
+                    Attribute<RelativeTime> period = attrs.getAttribute(DemoIntellivue.this.period);
+                    Attribute<SampleArraySpecification> spec = attrs.getAttribute(DemoIntellivue.this.spec);
+                    Attribute<SampleArrayCompoundObservedValue> cov = attrs.getAttribute(DemoIntellivue.this.cov);
+                    Attribute<SampleArrayObservedValue> v = attrs.getAttribute(DemoIntellivue.this.v);
+
+                    if (null != observed) {
+//                        log.debug(observed.toString());
                         handle(handle, observed.getValue());
                     }
 
-                    if (op.getAttributes().get(compoundObserved)) {
+                    if (null != compoundObserved) {
                         for (NumericObservedValue nov : compoundObserved.getValue().getList()) {
                             handle(handle, nov);
                         }
                     }
 
-                    if (op.getAttributes().get(type)) {
-                        log.debug(type.toString());
-                    }
-                    if (op.getAttributes().get(metricSpecification)) {
-                        log.debug(metricSpecification.toString());
-                    }
+//                    if (null != type) {
+//                        log.debug(type.toString());
+//                    }
 
-                    if (op.getAttributes().get(idLabel)) {
-                        log.debug(idLabel.toString());
-                    }
 
-                    if (op.getAttributes().get(idLabelString)) {
-                        log.debug(idLabelString.toString());
-                    }
+//                    if (null != metricSpecification) {
+//                        log.debug(metricSpecification.toString());
+//                    }
 
-                    if (op.getAttributes().get(displayResolution)) {
-                        log.debug(displayResolution.toString());
-                    }
+//                    if (null != idLabel) {
+//                        log.debug(idLabel.toString());
+//                    }
 
-                    if (op.getAttributes().get(color)) {
-                        log.debug(color.toString());
-                    }
+//                    if (null != idLabelString) {
+//                        log.debug(idLabelString.toString());
+//                    }
 
-                    if (op.getAttributes().get(period)) {
-                        log.debug(period.toString());
+//                    if (null != displayResolution) {
+//                        log.debug(displayResolution.toString());
+//                    }
+
+//                    if (null != color) {
+//                        log.debug(color.toString());
+//                    }
+
+                    if (null != period) {
+//                        log.debug(period.toString());
                         handle(handle, period.getValue());
                     }
 
-                    if (op.getAttributes().get(DemoIntellivue.this.handle)) {
-                        log.debug(DemoIntellivue.this.handle.toString());
-                        handle(handle, DemoIntellivue.this.handle.getValue());
+                    if (null != objectHandle) {
+//                        log.debug(objectHandle.toString());
+                        handle(handle, objectHandle.getValue());
                     }
 
-                    if (op.getAttributes().get(spec)) {
-                        log.debug(spec.toString());
+                    if (null != spec) {
+//                        log.debug(spec.toString());
                         handle(handle, spec.getValue());
 
                     }
-                    if (op.getAttributes().get(cov)) {
-                        for (SampleArrayObservedValue v : cov.getValue().getList()) {
-                            handle(handle, v);
+                    if (null != cov) {
+                        for (SampleArrayObservedValue saov : cov.getValue().getList()) {
+                            handle(handle, saov);
                         }
                     }
-                    if (op.getAttributes().get(v)) {
-                        log.debug(v.toString());
+                    if (null != v) {
+//                        log.debug(v.toString());
                         handle(handle, v.getValue());
                     }
                 }
@@ -443,7 +492,11 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             if (null != ov) {
                 String metricId = numericMetricIds.get(ov);
                 if(null != metricId) {
-                    numericUpdates.put(ov, numericSample(numericUpdates.get(ov), observed.getValue().floatValue(), metricId));
+                    if(observed.getMsmtState().isUnavailable()) {
+                        numericUpdates.put(ov, numericSample(numericUpdates.get(ov), (Float) null, metricId));
+                    } else {
+                        numericUpdates.put(ov, numericSample(numericUpdates.get(ov), observed.getValue().floatValue(), metricId));
+                    }
                 } else {
                     log.debug("Unknown numeric:" + observed);
                 }
@@ -576,7 +629,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         super(domainId, eventLoop);
         loadMap(numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
         deviceIdentity.manufacturer = "Philips";
-        deviceIdentity.model = "Unknown Intellivue Device";
+        deviceIdentity.model = "Intellivue Device";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         writeDeviceIdentity();
 
@@ -730,7 +783,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
     protected final Map<Integer, RelativeTime> handleToRelativeTime = new HashMap<Integer, RelativeTime>();
     protected final Map<Integer, SampleArraySpecification> handleToSampleArraySpecification = new HashMap<Integer, SampleArraySpecification>();
 
-    protected final static long CONTINUOUS_POLL_INTERVAL = 60000L;
+
 
     protected final Attribute<CompoundNumericObservedValue> compoundObserved = AttributeFactory.getAttribute(
             AttributeId.NOM_ATTR_NU_CMPD_VAL_OBS, CompoundNumericObservedValue.class);
@@ -740,16 +793,6 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             AttributeId.NOM_ATTR_SA_VAL_OBS, SampleArrayObservedValue.class);
     protected final Attribute<SampleArrayCompoundObservedValue> cov = AttributeFactory.getAttribute(
             AttributeId.NOM_ATTR_SA_CMPD_VAL_OBS, SampleArrayCompoundObservedValue.class);
-    protected final Attribute<ProductionSpecification> prodSpec = AttributeFactory.getAttribute(
-            AttributeId.NOM_ATTR_ID_PROD_SPECN, ProductionSpecification.class);
-
-    protected final Attribute<org.mdpnp.devices.philips.intellivue.data.String> firstName = AttributeFactory
-            .getAttribute(AttributeId.NOM_ATTR_PT_NAME_GIVEN, org.mdpnp.devices.philips.intellivue.data.String.class);
-    protected final Attribute<org.mdpnp.devices.philips.intellivue.data.String> lastName = AttributeFactory
-            .getAttribute(AttributeId.NOM_ATTR_PT_NAME_FAMILY, org.mdpnp.devices.philips.intellivue.data.String.class);
-    protected final Attribute<org.mdpnp.devices.philips.intellivue.data.String> patientId = AttributeFactory
-            .getAttribute(AttributeId.NOM_ATTR_PT_ID, org.mdpnp.devices.philips.intellivue.data.String.class);
-
 
 
     protected final Attribute<Type> type = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_TYPE, Type.class);
