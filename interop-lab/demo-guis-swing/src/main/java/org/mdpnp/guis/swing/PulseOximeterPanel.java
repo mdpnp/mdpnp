@@ -133,7 +133,9 @@ public class PulseOximeterPanel extends DevicePanel {
         plethPanel.setSource(plethWave);
 
         pulsePanel.setSource(pulseWave);
-        pulsePanel.cachingSource().setFixedTimeDomain(120000L);
+        if(null != pulsePanel.cachingSource()) {
+            pulsePanel.cachingSource().setFixedTimeDomain(120000L);
+        }
 
         plethPanel.start();
         pulsePanel.start();
