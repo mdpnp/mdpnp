@@ -576,7 +576,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         super(domainId, eventLoop);
         loadMap(numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
         deviceIdentity.manufacturer = "Philips";
-        deviceIdentity.model = "MP70";
+        deviceIdentity.model = "Unknown Intellivue Device";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         writeDeviceIdentity();
 
@@ -822,7 +822,10 @@ public class DemoIntellivue extends AbstractConnectedDevice {
     public void connect(InetAddress remote, int prefixLength, int port) throws IOException {
         switch(stateMachine.getState().ordinal()) {
         case ice.ConnectionState._Disconnected:
+            state(ice.ConnectionState.Connecting, "trying " + remote.getHostAddress() + ":" + port);
+            break;
         case ice.ConnectionState._Connecting:
+            setConnectionInfo("trying " + remote.getHostAddress() + ":" + port);
             break;
         default:
             return;
@@ -833,8 +836,6 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         lastPrefixLength = prefixLength;
 
         unregisterAll();
-
-        state(ice.ConnectionState.Connecting, "trying " + remote.getHostAddress() + ":" + port);
 
         final DatagramChannel channel = DatagramChannel.open();
         channel.configureBlocking(false);
