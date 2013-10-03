@@ -1,0 +1,309 @@
+/**
+ * @file    MindrayA5.idl
+ *
+ * @brief   Defines transport structure to exchange Mindray A5 data
+ *   through DDS.
+ *
+ */
+//=============================================================================
+
+module ice
+{
+
+  typedef string<128> UDI;
+
+
+  struct Image
+  {
+    sequence<octet, 65530> raster;
+    long width;
+    long height;
+  };
+
+
+  struct DeviceIdentity
+  {
+    UDI unique_device_identifier; //@key
+    string<128> manufacturer;
+    string<128> model;
+    string<128> serial_number;
+    Image icon;
+  };
+
+
+  const string DeviceIdentityTopic = "ice::DeviceIdentity";
+
+
+  enum ConnectionState
+  {
+    Connected,
+    Connecting,
+    Negotiating,
+    Disconnecting,
+    Disconnected
+  };
+
+
+  enum ConnectionType
+  {
+    Serial,
+    Simulated,
+    Network
+  };
+
+
+  struct DeviceConnectivity
+  {
+    UDI unique_device_identifier; //@key
+    ConnectionState state;
+    ConnectionType type;
+    string<128> info;
+    sequence<string<128>, 128> valid_targets;
+  };
+
+
+  struct DeviceConnectivityObjective
+  {
+    UDI unique_device_identifier; //@key
+    boolean connected;
+    string<128> target;
+  };
+
+
+  const string DeviceConnectivityTopic = "ice::DeviceConnectivity";
+  const string DeviceConnectivityObjectiveTopic = "ice::DeviceConnectivityObjective";
+
+
+  struct AbsoluteTime
+  {
+    long century;
+    long year;
+    long month;
+    long day;
+    long hour;
+    long minute;
+    long second;
+    long sec_fractions; // 1/10 and 1/100 of second if available
+  };
+
+
+  // Units of measure
+  // Numeric unit_code field
+  const long MDC_DIM_X_L_PER_MIN = 3072;
+  const long MDC_DIM_MILLI_L = 1618;
+  const long MDC_DIM_CM_H2O = 3904;
+  const long MDC_DIM_X_SEC = 2176;
+  const long MDC_DIM_KILO_G = 1731;
+  const long MDC_DIM_CM_H2O_PER_L_PER_SEC = 5920;
+  const long MDC_DIM_MILLI_L_PER_CM_H2O = 5906;
+  const long MDC_DIM_MMHG = 3872;
+  const long MDC_DIM_HZ = 2496;
+  const long MDC_DIM_PER_MIN = 2528;
+  const long MDC_DIM_RESP_PER_MIN = 2784;
+  const long MDC_DIM_BEAT_PER_MIN = 2720;
+  const long MDC_DIM_DECIBEL = 6432;
+  const long MDC_DIM_DIMLESS = 512;
+  const long MDC_DIM_PERCENT = 544;
+  const long MDC_DIM_MICRO_VOLT = 4275;
+
+  // Ventilator / Anesthesia Machine Settings IDs
+  // Numeric name field
+  const long MDC_RATIO_IE_SETTING = 20000; // not 11073
+  const long MDC_VENT_PRESS_TRIG_SENS_SETTING = 21356; 
+  const long MDC_VOL_AWAY_TIDAL_SETTING = 20796;
+  const long MDC_VENT_RESP_RATE_SETTING = 20514;
+  const long MNDRY_RESP_RATE_MIN_SETTING = 20001; // not 11073
+  const long MDC_PRESS_AWAY_END_EXP_POS_SETTING = 20904;
+  const long MNDRY_VENT_PRESS_LIMIT_SETTING = 20001; // not 11073
+  const long MNDRY_VENT_PRESS_INSP_SETTING = 20002; // not 11073
+  const long MNDRY_VENT_DELTA_PRESS_SETTING = 20003; // not 11073
+  const long MNDRY_VENT_INSP_TIME_SETTING = 20004; // not 11073
+  const long MNDRY_VENT_SLOPE_TIME_SETTING = 20005; // not 11073
+  const long MNDRY_VENT_TIDAL_VOL_GUARANTEED_SETTING = 20006; // not 11073
+  const long MNDRY_VENT_PAUSE_TIME_PERCENT_SETTING = 20007; // not 11073
+  const long MNDRY_VENT_PRESS_LIMIT_VOL_GUARANTEE_SETTING = 20008; // not 11073
+  const long MNDRY_VENT_APNEA_TIME_SETTING = 20009; // not 11073
+  const long MDC_FLOW_O2_FG_SETTING = 20010; // not 11073
+  const long MDC_FLOW_N20_FG_SETTING = 20011; // not 11073
+  const long MDC_FLOW_AIR_FG_SETTING = 20012; // not 11073
+
+  // Ventilation Modes
+  // Numeric name field
+  const long MDC_VENT_MODE = 53280;
+
+  // Ventilation Modes
+  // Numeric value field
+  const long MNDRY_MODE_MANUAL = 50000; // not 11073
+  const long MNDRY_MODE_ACGO = 50001; // not 11073
+  const long MNDRY_MODE_MANUAL_PLUS_ALM_OFF = 50002; // not 11073
+  const long MNDRY_MODE_MANUAL_PLUS_BYPASS = 50003; // not 11073
+  const long MNDRY_MODE_MANUAL_PLUS_MONITOR = 50004; // not 11073
+  const long MNDRY_MODE_VCV = 50005; // not 11073
+  const long MNDRY_MODE_PS = 50006; // not 11073
+  const long MNDRY_MODE_SIMVVC = 50007; // not 11073
+  const long MNDRY_SIMVVC_PLUS_PS = 50008; // not 11073
+  const long MNDRY_MODE_SIMVPC = 50009; // not 11073
+  const long MNDRY_MODE_SIMVPC_PLUS_PS = 50010; // not 11073
+  const long MNDRY_MODE_PCV = 50011; // not 11073
+  const long MNDRY_MODE_PCV_PLUS_VG = 50012; // not 11073
+  const long MNDRY_MODE_AVNF = 50013; // not 11073
+
+  // System Status
+  // Numeric name field
+  const long MDC_EVT_STAT_DEV = 6278;
+  const long MNDRY_EVT_STAT_MODE_DEV = 30002; // not 11073
+  const long MNDRY_EVT_PATIENT_TYPE = 30005; // not 11073
+  const long MNDRY_EVT_STAT_WARMER_ON_BOOL = 30007; // not 11073
+
+  // System Status
+  // Numeric value field
+  const long MDC_EVT_STAT_OFF = 6226;
+  const long MDC_EVT_STAT_RUNNING = 6294;
+  const long MDC_EVT_STAT_STANDBY = 6228;
+  const long MDC_EVT_STAT_MODE_TEST = 6232;
+  const long MNDRY_EVT_STAT_MODE_NORMAL = 30003; // not 11073
+  const long MNDRY_EVT_STAT_MODE_DEMO = 30004; // not 11073
+  const long MDC_EVT_STAT_DEV_MODE_ADULT = 6282;
+  const long MDC_EVT_STAT_DEV_MODE_PEDIATRIC = 6280;
+  const long MNDRY_EVT_STAT_DEV_MODE_INFANT = 30006; // not 11073
+  const long MDC_TRUE = 30000; // not 11073
+  const long MDC_FALSE = 30001; // not 11073
+ 
+  // System Demographics
+  // Numeric name field
+  const long MDC_MASS_BODY_ACTUAL = 57664;
+
+  // Ventilator / Anesthesia Machine Measurement IDs
+  // Numeric name field
+  const long MDC_RATIO_IE = 20760;
+  const long MDC_VENT_PRESS_MAX = 20885;
+  const long MDC_PRESS_AWAY_INSP_MEAN = 20747;
+  const long MDC_PRESS_RESP_PLAT = 20712;
+  const long MDC_PRESS_AWAY_END_EXP_POS = 20904;
+  const long MDC_VOL_MINUTE_AWAY = 20808;
+  const long MDC_VOL_AWAY_TIDAL = 20796;
+  const long MDC_VENT_RESP_RATE = 20514;
+  const long MDC_RES_AWAY = 20768;
+  const long MDC_COMPL_LUNG = 20616;
+  const long MDC_FLOW_O2_FG = 113; // not 11073
+  const long MDC_FLOW_N2O_FG = 114; // not 11073
+  const long MDC_FLOW_AIR_FG = 115; // not 11073
+
+  // Airway Gas Analyzer Measurement IDs
+  // Numeric name field
+  const long MDC_CONC_AWAY_O2_ET = 21368;
+  const long MDC_CONC_AWAY_O2_INSP = 21124;
+  const long MDC_CONC_AWAY_CO2_ET = 20636;
+  const long MDC_CONC_AWAY_CO2_INSP = 20644;
+  const long MDC_CONC_AWAY_N2O_ET = 21036;
+  const long MDC_CONC_AWAY_N2O_INSP = 21120;
+  const long MDC_CONC_AWAY_AGENT_ET = 21388;
+  const long MDC_CONC_AWAY_AGENT_INSP = 21392;
+  const long MDC_VOL_DELIV_AGENT_LIQUID_CASE = 125; // not 11073
+  const long MDC_CONC_AWAY_HAL_ET = 21020;
+  const long MDC_CONC_AWAY_HAL_INSP = 21104;
+  const long MDC_VOL_DELIV_HALOTH_LIQUID_CASE = 126; // not 11073
+  const long MDC_CONC_AWAY_ENF_ET = 21016;
+  const long MDC_CONC_AWAY_ENF_INSP = 2110;
+  const long MDC_VOL_DELIV_ENFL_LIQUID_CASE = 127; // not 11073
+  const long MDC_CONC_AWAY_ISO_ET = 21028;
+  const long MDC_CONC_AWAY_ISO_INSP = 21112;
+  const long MDC_VOL_DELIV_ISOFL_LIQUID_CASE = 128; // not 11073
+  const long MDC_CONC_AWAY_SEV_ET = 21024;
+  const long MDC_CONC_AWAY_SEV_INSP = 21108;
+  const long MDC_VOL_DELIV_SEVOFL_LIQUID_CASE = 129; // not 11073
+  const long MDC_CONC_AWAY_DES_ET = 21012;
+  const long MDC_CONC_AWAY_DES_INSP = 21096;
+  const long MDC_VOL_DELIV_DESFL_LIQUID_CASE = 130; // not 11073
+  const long MDC_CONC_MAC = 119; // not 11073
+
+  // BIS Module Measurement IDs
+  // Numeric name field
+  const long MDC_EEG_BISPECTRAL_INDEX_BIS = 120; // not 11073
+  const long MNDRY_EEG_BISPECTRAL_INDEX_STD_DEV = 121; // not 11073
+  const long MDC_EEG_SIGNAL_QUALITY_INDEX = 122; // not 11073
+  const long MDC_EMG_ELEC_POTL_MUSCL = 22844;
+  const long MNDRY_EMG_ELEC_POTL_MUSCL_STD_DEV = 123; // not 11073
+  const long MDC_EEG_PAROX_CRTX_BURST_SUPPRN = 23952;
+  const long MDC_EEG_FREQ_PWR_SPEC_CRTX_SPECTRAL_EDGE = 22920;
+  const long MDC_EEG_PWR_SPEC_TOT = 22968;
+  const long MDC_EEG_NOM_SPK = 22956;
+  const long MNDRY_EEG_BISPECTRAL_INDEX_ASYM = 124; // not 11073
+
+  // A series Waveform IDs
+  // Numeric name field
+  const long MDC_VENT_PRESS_AIRWAY = 20900;
+  const long MDC_VENT_FLOW = 20868;
+  const long MDC_CONC_AWAY_CO2 = 20628;
+  const long MDC_EEG_BISPECTRAL_INDEX_WAV = 60000; // not 11073
+
+
+  struct Numeric
+  {
+    UDI unique_device_identifier; //@key
+    long name; //@key
+    float value;
+    long unit_code;
+    AbsoluteTime absolute_time_stamp;
+  };
+
+
+  const string NumericTopic = "ice::Numeric";
+
+
+  enum PatientSex
+  {
+    sex_unknown = 0,
+    male = 1,
+    female = 2,
+    sex_unspecified = 9
+  };
+
+
+  enum PatientRace
+  {
+    race_unspecified = 0,
+    race_caucasian = 1,
+    race_black = 2,
+    race_oriental = 3
+  };
+
+
+  struct Date
+  {
+    long century;
+    long year;
+    long month;
+    long day;
+  };
+
+
+  struct PatientDemographics
+  {
+    UDI unique_device_identifier; //@key
+    string<128> patient_id; //@key
+    string<128> name;
+    string<128> given_name;
+    string<128> family_name;
+    PatientSex sex;
+    PatientRace race;
+    Date date_of_birth;
+    string<2048> patient_gen_info;
+    string<128> bed_id;
+    string<128> attending_physician;
+  };
+
+
+  const string PatientDemographicsTopic = "ice::PatientDemographics";
+
+
+  struct Text
+  {
+    UDI unique_device_identifier; //@key
+    long name; //@key
+    string<256> value;
+  };
+
+
+  const string TextTopic = "ice::Text";
+};

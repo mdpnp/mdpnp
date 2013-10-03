@@ -178,7 +178,7 @@ public class UserInfoBanner extends Composite {
 
 				if(null == response.getEmail()) {
 					MenuBar signIn = new MenuBar(true);
-					System.out.println(""+response.getLoginURL());
+//					System.out.println(""+response.getLoginURL());
 					for(final LoginProviderProxy lpp : response.getLoginURL()) {
 					    MenuItem mi = new MenuItem(lpp.getName(), new Command() {
 					        @Override

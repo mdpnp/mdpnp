@@ -17,7 +17,7 @@
 	<h2>Welcome to the Clinical Scenario Repository.</h2>  
 
 	<p class="welcomeText">A <em>clinical scenario</em> is a brief description of a clinical situation or event. The purpose of the clinical scenario is 
-	to provide a background and ilustrate the need for the development of technical solutions. Solutions for these 
+	to provide a background and illustrate the need for the development of technical solutions. Solutions for these 
 	scenarios will be generalizable and will create building blocks for interoperability to address many other healthcare needs.</p>
 
 	<p class="welcomeText">The aim of this open repository of Clinical Scenarios Website is to provide a web-based user interface that will allow clinicians, clinical engineers, and other users to enter, revise, annotate, and maintain clinical scenarios, thus identifying specific clinical and technical challenges.</p>
