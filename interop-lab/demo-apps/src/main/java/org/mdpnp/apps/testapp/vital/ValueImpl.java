@@ -1,11 +1,8 @@
 package org.mdpnp.apps.testapp.vital;
 
-import org.mdpnp.devices.AbstractDevice.InstanceHolder;
+import ice.Numeric;
 
 import com.rti.dds.subscription.SampleInfo;
-
-import ice.AlarmSettingsObjective;
-import ice.Numeric;
 
 public class ValueImpl implements Value {
 
@@ -27,12 +24,10 @@ public class ValueImpl implements Value {
     private float[] historyValue = new float[HISTORY_SAMPLES];
 
 
-    private final InstanceHolder<ice.AlarmSettingsObjective> objective = new InstanceHolder<ice.AlarmSettingsObjective>();
+
 
     public ValueImpl(String uniqueDeviceIdentifier, String metric_id, int instance_id, Vital parent) {
-        objective.data = (AlarmSettingsObjective) ice.AlarmSettingsObjective.create();
-        objective.data.metric_id = metric_id;
-        objective.data.unique_device_identifier = uniqueDeviceIdentifier;
+
         this.metric_id = metric_id;
         this.instance_id = instance_id;
         this.uniqueDeviceIdentifier = uniqueDeviceIdentifier;
@@ -130,27 +125,6 @@ public class ValueImpl implements Value {
     @Override
     public int getHistoryCurrent() {
         return historyCount;
-    }
-
-    public void writeCriticalLimitsToDevice(ice.AlarmSettingsObjectiveDataWriter writer) {
-//        boolean newObj = false;
-        if(null == objective.handle) {
-            objective.handle = writer.register_instance(objective.data);
-//            newObj = true;
-        }
-//        if(newObj || getParent().getCriticalLow() != objective.data.lower || getParent().getCriticalHigh() != objective.data.upper) {
-            objective.data.lower = getParent().getCriticalLow() == null ? Float.MIN_VALUE : getParent().getCriticalLow();
-            objective.data.upper = getParent().getCriticalHigh() == null ? Float.MAX_VALUE : getParent().getCriticalHigh();
-            writer.write(objective.data, objective.handle);
-//        }
-    }
-
-    @Override
-    public void unregisterCriticalLimits(ice.AlarmSettingsObjectiveDataWriter writer) {
-         if(null != objective.handle) {
-             writer.unregister_instance(objective.data, objective.handle);
-             objective.handle = null;
-         }
     }
 
     @Override

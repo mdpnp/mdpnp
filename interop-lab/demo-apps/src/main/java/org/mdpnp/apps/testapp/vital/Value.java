@@ -28,8 +28,6 @@ public interface Value {
     long getAgeInMilliseconds();
 
     void updateFrom(Numeric numeric, SampleInfo sampleInfo);
-    void writeCriticalLimitsToDevice(ice.AlarmSettingsObjectiveDataWriter writer);
-    void unregisterCriticalLimits(ice.AlarmSettingsObjectiveDataWriter writer);
 
     long getValueMsBelowLow();
     long getValueMsAboveHigh();

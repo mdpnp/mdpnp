@@ -29,7 +29,7 @@ public interface VitalModel {
     ice.DeviceConnectivity getDeviceConnectivity(String udi);
     DeviceIcon getDeviceIcon(String udi);
 
-    ice.AlarmSettingsObjectiveDataWriter getWriter();
+    ice.GlobalAlarmSettingsObjectiveDataWriter getWriter();
 
     void start(Subscriber subscriber, EventLoop eventLoop);
     void stop();

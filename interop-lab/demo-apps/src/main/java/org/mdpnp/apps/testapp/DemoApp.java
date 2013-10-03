@@ -182,13 +182,14 @@ public class DemoApp {
         final VitalModel vitalModel = new VitalModelImpl(nc);
         final PumpModel pumpModel = new PumpModelImpl();
         final CapnoModel capnoModel = new CapnoModelImpl(ice.MDC_CAPNOGRAPH.VALUE);
-        VitalSign.HeartRate.addToModel(vitalModel);
-        VitalSign.SpO2.addToModel(vitalModel);
-        VitalSign.RespiratoryRate.addToModel(vitalModel);
+
 //      VitalSign.EndTidalCO2.addToModel(vitalModel);
         vitalModel.start(subscriber, eventLoop);
         pumpModel.start(subscriber, publisher, eventLoop);
         capnoModel.start(subscriber, eventLoop);
+        VitalSign.HeartRate.addToModel(vitalModel);
+        VitalSign.SpO2.addToModel(vitalModel);
+        VitalSign.RespiratoryRate.addToModel(vitalModel);
         PCAPanel _pcaPanel = null;
         if(!AppType.PCA.isDisabled()) {
             UIManager.put("TabbedPane.contentOpaque", false);

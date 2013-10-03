@@ -140,13 +140,20 @@ module ice {
   };
   const string AlarmSettingsTopic = "ice::AlarmSettings";
 
-  struct AlarmSettingsObjective {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+  struct GlobalAlarmSettingsObjective {
     MetricIdentifier metric_id; //@key
-    string<256> requestor_udi;
     float lower;
     float upper;
 
   };
-  const string AlarmSettingsObjectiveTopic = "ice:AlarmSettingsObjective";
+  const string GlobalAlarmSettingsObjectiveTopic = "ice:GlobalAlarmSettingsObjective";
+
+  struct LocalAlarmSettingsObjective {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    MetricIdentifier metric_id; //@key
+    float lower;
+    float upper;
+  };
+  const string LocalAlarmSettingsObjectiveTopic = "ice::LocalAlarmSettingsObjective";
+
 };

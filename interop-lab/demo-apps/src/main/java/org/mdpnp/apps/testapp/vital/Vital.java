@@ -109,7 +109,7 @@ public interface Vital {
 
     void setWarningAgeBecomesAlarm(long warningAgeBecomesAlarm);
 
-
+    void destroy();
 
     void setWarningLow(Float low);
     void setWarningHigh(Float high);

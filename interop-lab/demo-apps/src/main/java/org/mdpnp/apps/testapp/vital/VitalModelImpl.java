@@ -1,6 +1,6 @@
 package org.mdpnp.apps.testapp.vital;
 
-import ice.AlarmSettingsObjectiveDataWriter;
+
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
 import ice.Numeric;
@@ -112,7 +112,6 @@ public class VitalModelImpl implements VitalModel {
                         while (li.hasNext()) {
                             Value va = li.next();
                             if (va.getUniqueDeviceIdentifier().equals(udi) && va.getInstanceId() == instance_id) {
-                                va.unregisterCriticalLimits(getWriter());
                                 li.remove();
                                 updated = true;
                             }
@@ -133,9 +132,9 @@ public class VitalModelImpl implements VitalModel {
         }
     };
 
-    private ice.AlarmSettingsObjectiveDataWriter writer;
+    private ice.GlobalAlarmSettingsObjectiveDataWriter writer;
 
-    public ice.AlarmSettingsObjectiveDataWriter getWriter() {
+    public ice.GlobalAlarmSettingsObjectiveDataWriter getWriter() {
         return writer;
     }
 
@@ -161,7 +160,6 @@ public class VitalModelImpl implements VitalModel {
                             Value va = new ValueImpl(n.unique_device_identifier, n.metric_id, n.instance_id, v);
                             va.updateFrom(n, si);
                             v.getValues().add(va);
-                            va.writeCriticalLimitsToDevice(getWriter());
                         }
                         fireVitalChanged(v);
                     }
@@ -199,9 +197,8 @@ public class VitalModelImpl implements VitalModel {
             while(li.hasNext()) {
                 Value v = li.next();
                 li.remove();
-                v.unregisterCriticalLimits(getWriter());
             }
-
+            vital.destroy();
             fireVitalRemoved(vital);
         }
         return r;
@@ -217,9 +214,8 @@ public class VitalModelImpl implements VitalModel {
             while(li.hasNext()) {
                 Value va = li.next();
                 li.remove();
-                va.unregisterCriticalLimits(getWriter());
             }
-
+            v.destroy();
             fireVitalRemoved(v);
         }
         return v;
@@ -346,10 +342,10 @@ public class VitalModelImpl implements VitalModel {
                 VitalModelImpl.this.eventLoop = eventLoop;
                 DomainParticipant participant = subscriber.get_participant();
 
-                ice.AlarmSettingsObjectiveTypeSupport.register_type(participant, ice.AlarmSettingsObjectiveTypeSupport.get_type_name());
+                ice.GlobalAlarmSettingsObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name());
 //                TopicDescription topic = TopicUtil.lookupOrCreateTopic(participant, ice.AlarmSettingsObjectiveTopic.VALUE, ice.AlarmSettingsObjectiveTypeSupport.class);
-                Topic topic = participant.create_topic(ice.AlarmSettingsObjectiveTopic.VALUE, ice.AlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-                writer = (AlarmSettingsObjectiveDataWriter) participant.create_datawriter(topic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+                Topic topic = participant.create_topic(ice.GlobalAlarmSettingsObjectiveTopic.VALUE, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+                writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) participant.create_datawriter(topic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
                 NumericTypeSupport.register_type(participant, NumericTypeSupport.get_type_name());
                 TopicDescription nTopic = TopicUtil.lookupOrCreateTopic(participant, NumericTopic.VALUE,

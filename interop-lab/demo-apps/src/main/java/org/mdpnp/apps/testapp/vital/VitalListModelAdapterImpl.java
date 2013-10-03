@@ -1,10 +1,9 @@
 package org.mdpnp.apps.testapp.vital;
 
-import java.awt.Color;
-
-import ice.AlarmSettingsObjectiveDataWriter;
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
+
+import java.awt.Color;
 
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -226,7 +225,7 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     }
 
     @Override
-    public AlarmSettingsObjectiveDataWriter getWriter() {
+    public ice.GlobalAlarmSettingsObjectiveDataWriter getWriter() {
         return model.getWriter();
     }
 
