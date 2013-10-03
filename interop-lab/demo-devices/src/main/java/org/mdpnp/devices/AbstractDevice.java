@@ -7,11 +7,10 @@
  ******************************************************************************/
 package org.mdpnp.devices;
 
-import ice.AlarmSettingsObjective;
-import ice.AlarmSettingsObjectiveDataReader;
 import ice.DeviceIdentity;
 import ice.DeviceIdentityDataWriter;
 import ice.DeviceIdentityTypeSupport;
+import ice.LocalAlarmSettingsObjectiveDataWriter;
 import ice.Numeric;
 import ice.NumericDataWriter;
 import ice.NumericTypeSupport;
@@ -47,10 +46,10 @@ import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.QueryCondition;
+import com.rti.dds.subscription.ReadCondition;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
@@ -83,8 +82,11 @@ public abstract class AbstractDevice implements ThreadFactory {
     protected final Topic alarmSettingsTopic;
     protected final ice.AlarmSettingsDataWriter alarmSettingsDataWriter;
 
-    protected ice.AlarmSettingsObjectiveDataReader alarmSettingsObjectiveReader;
-    protected QueryCondition alarmSettingsObjectiveCondition;
+    protected final Topic alarmSettingsObjectiveTopic;
+    protected final ice.LocalAlarmSettingsObjectiveDataWriter alarmSettingsObjectiveWriter;
+
+    protected ice.GlobalAlarmSettingsObjectiveDataReader alarmSettingsObjectiveReader;
+    protected ReadCondition alarmSettingsObjectiveCondition;
 
     public Subscriber getSubscriber() {
         return subscriber;
@@ -154,10 +156,33 @@ public abstract class AbstractDevice implements ThreadFactory {
         return holder;
     }
 
+    protected InstanceHolder<ice.LocalAlarmSettingsObjective> createAlarmSettingsObjectiveInstance(String metric_id) {
+        if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null
+                || "".equals(deviceIdentity.unique_device_identifier)) {
+            throw new IllegalStateException(
+                    "Please populate deviceIdentity.unique_device_identifier before calling createAlarmInstance");
+        }
+
+        InstanceHolder<ice.LocalAlarmSettingsObjective> holder = new InstanceHolder<ice.LocalAlarmSettingsObjective>();
+        holder.data = new ice.LocalAlarmSettingsObjective();
+        holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
+        holder.data.metric_id = metric_id;
+        holder.handle = alarmSettingsObjectiveWriter.register_instance(holder.data);
+        registeredAlarmSettingsObjectiveInstances.add(holder);
+        return holder;
+    }
+
     protected void unregisterAllInstances() {
         unregisterAllNumericInstances();
         unregisterAllSampleArrayInstances();
         unregisterAllAlarmSettingsInstances();
+        unregisterAllAlarmSettingsObjectiveInstances();
+    }
+
+    protected void unregisterAllAlarmSettingsObjectiveInstances() {
+        while(!registeredAlarmSettingsObjectiveInstances.isEmpty()) {
+            unregisterAlarmSettingsObjectiveInstance(registeredAlarmSettingsObjectiveInstances.get(0));
+        }
     }
 
     protected void unregisterAllAlarmSettingsInstances() {
@@ -195,9 +220,15 @@ public abstract class AbstractDevice implements ThreadFactory {
         alarmSettingsDataWriter.unregister_instance(holder.data, holder.handle);
     }
 
+    protected void unregisterAlarmSettingsObjectiveInstance(InstanceHolder<ice.LocalAlarmSettingsObjective> holder) {
+        registeredAlarmSettingsObjectiveInstances.remove(holder);
+        alarmSettingsObjectiveWriter.unregister_instance(holder.data, holder.handle);
+    }
+
     private List<InstanceHolder<SampleArray>> registeredSampleArrayInstances = new ArrayList<InstanceHolder<SampleArray>>();
     private List<InstanceHolder<Numeric>> registeredNumericInstances = new ArrayList<InstanceHolder<Numeric>>();
     private List<InstanceHolder<ice.AlarmSettings>> registeredAlarmSettingsInstances = new ArrayList<InstanceHolder<ice.AlarmSettings>>();
+    private List<InstanceHolder<ice.LocalAlarmSettingsObjective>> registeredAlarmSettingsObjectiveInstances = new ArrayList<InstanceHolder<ice.LocalAlarmSettingsObjective>>();
 
     protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id) {
         return createSampleArrayInstance(metric_id, 0);
@@ -231,6 +262,12 @@ public abstract class AbstractDevice implements ThreadFactory {
         alarmSettingsDataWriter.write(holder.data, holder.handle);
     }
 
+    protected void alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, float newLower, float newUpper) {
+        holder.data.lower = newLower;
+        holder.data.upper = newUpper;
+        alarmSettingsObjectiveWriter.write(holder.data, holder.handle);
+    }
+
     protected InstanceHolder<ice.AlarmSettings> alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper, String metric_id) {
         if (holder != null && !holder.data.metric_id.equals(metric_id)) {
             unregisterAlarmSettingsInstance(holder);
@@ -250,6 +287,27 @@ public abstract class AbstractDevice implements ThreadFactory {
             }
             if (null != holder) {
                 unregisterAlarmSettingsInstance(holder);
+                holder = null;
+            }
+
+        }
+
+        return holder;
+    }
+
+    protected InstanceHolder<ice.LocalAlarmSettingsObjective> alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, Float newLower, Float newUpper, String metric_id) {
+        if (holder != null && !holder.data.metric_id.equals(metric_id)) {
+            unregisterAlarmSettingsObjectiveInstance(holder);
+            holder = null;
+        }
+        if (null != newLower && null != newUpper) {
+            if (null == holder) {
+                holder = createAlarmSettingsObjectiveInstance(metric_id);
+            }
+            alarmSettingsObjectiveSample(holder, newLower, newUpper);
+        } else {
+            if (null != holder) {
+                unregisterAlarmSettingsObjectiveInstance(holder);
                 holder = null;
             }
 
@@ -426,6 +484,7 @@ public abstract class AbstractDevice implements ThreadFactory {
         // inheritor may have registered... perhaps they should be responsible
         // in their override of shutdown?
 
+
         if(null != alarmSettingsObjectiveCondition) {
             eventLoop.removeHandler(alarmSettingsObjectiveCondition);
             alarmSettingsObjectiveReader.delete_readcondition(alarmSettingsObjectiveCondition);
@@ -434,6 +493,10 @@ public abstract class AbstractDevice implements ThreadFactory {
 
         subscriber.delete_datareader(alarmSettingsObjectiveReader);
 
+
+        publisher.delete_datawriter(alarmSettingsObjectiveWriter);
+        domainParticipant.delete_topic(alarmSettingsObjectiveTopic);
+        ice.LocalAlarmSettingsObjectiveTypeSupport.unregister_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
 
         publisher.delete_datawriter(alarmSettingsDataWriter);
         domainParticipant.delete_topic(alarmSettingsTopic);
@@ -514,8 +577,12 @@ public abstract class AbstractDevice implements ThreadFactory {
                 DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         alarmSettingsDataWriter = (ice.AlarmSettingsDataWriter) publisher.create_datawriter(alarmSettingsTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
-        TopicDescription alarmSettingsObjectiveTopic = TopicUtil.lookupOrCreateTopic(domainParticipant, ice.AlarmSettingsObjectiveTopic.VALUE, ice.AlarmSettingsObjectiveTypeSupport.class);
-        alarmSettingsObjectiveReader = (AlarmSettingsObjectiveDataReader) subscriber.create_datareader(alarmSettingsObjectiveTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        ice.LocalAlarmSettingsObjectiveTypeSupport.register_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
+        alarmSettingsObjectiveTopic = domainParticipant.create_topic(ice.LocalAlarmSettingsObjectiveTopic.VALUE, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        alarmSettingsObjectiveWriter = (LocalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter(alarmSettingsObjectiveTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+
+        TopicDescription alarmSettingsObjectiveTopic = TopicUtil.lookupOrCreateTopic(domainParticipant, ice.GlobalAlarmSettingsObjectiveTopic.VALUE, ice.GlobalAlarmSettingsObjectiveTypeSupport.class);
+        alarmSettingsObjectiveReader = (ice.GlobalAlarmSettingsObjectiveDataReader) subscriber.create_datareader(alarmSettingsObjectiveTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
 
         threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "AbstractDevice") {
@@ -531,11 +598,11 @@ public abstract class AbstractDevice implements ThreadFactory {
         this.eventLoop = eventLoop;
     }
 
-    public void setAlarmSettings(ice.AlarmSettingsObjective obj) {
+    public void setAlarmSettings(ice.GlobalAlarmSettingsObjective obj) {
 
     }
 
-    public void unsetAlarmSettings(ice.AlarmSettingsObjective obj) {
+    public void unsetAlarmSettings(String metricId) {
 
     }
 
@@ -562,19 +629,17 @@ public abstract class AbstractDevice implements ThreadFactory {
         deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 
         if(null == alarmSettingsObjectiveCondition) {
-            StringSeq udiSeq = new StringSeq();
-            udiSeq.add("'"+deviceIdentity.unique_device_identifier+"'");
             final SampleInfoSeq info_seq = new SampleInfoSeq();
-            final ice.AlarmSettingsObjectiveSeq data_seq = new ice.AlarmSettingsObjectiveSeq();
-            eventLoop.addHandler(alarmSettingsObjectiveCondition = alarmSettingsObjectiveReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "unique_device_identifier = %0", udiSeq),
+            final ice.GlobalAlarmSettingsObjectiveSeq data_seq = new ice.GlobalAlarmSettingsObjectiveSeq();
+            eventLoop.addHandler(alarmSettingsObjectiveCondition = alarmSettingsObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE),
                 new ConditionHandler() {
                     @Override
                     public void conditionChanged(Condition condition) {
                         try {
-                            alarmSettingsObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            alarmSettingsObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (ReadCondition) condition);
                             for(int i = 0; i < data_seq.size(); i++) {
                                 SampleInfo si = (SampleInfo) info_seq.get(i);
-                                ice.AlarmSettingsObjective obj = (AlarmSettingsObjective) data_seq.get(i);
+                                ice.GlobalAlarmSettingsObjective obj = (ice.GlobalAlarmSettingsObjective) data_seq.get(i);
 
                                 if(0 != (si.view_state & ViewStateKind.NEW_VIEW_STATE) && si.valid_data) {
                                     log.warn("Handle for metric_id="+obj.metric_id+" is " + si.instance_handle);
@@ -585,18 +650,18 @@ public abstract class AbstractDevice implements ThreadFactory {
                                     if(si.valid_data) {
                                         log.warn("Setting " + obj.metric_id + " to [ " + obj.lower + " , " + obj.upper + "]");
                                         setAlarmSettings(obj);
-
                                     }
                                 } else {
-                                    obj = new ice.AlarmSettingsObjective();
+                                    obj = new ice.GlobalAlarmSettingsObjective();
                                     log.warn("Unsetting handle " + si.instance_handle);
                                     // TODO 1-Oct-2013 JP This call to get_key_value fails consistently on ARM platforms
                                     // so I'm tracking instances externally for the time being
 //                                    alarmSettingsObjectiveReader.get_key_value(obj, si.instance_handle);
-                                    obj.unique_device_identifier = deviceIdentity.unique_device_identifier;
-                                    obj.metric_id = instanceMetrics.get(si.instance_handle);
-                                    log.warn("Unsetting " + obj.metric_id);
-                                    unsetAlarmSettings(obj);
+                                    String metricId = instanceMetrics.get(si.instance_handle);
+                                    log.warn("Unsetting " + metricId);
+                                    if(null != metricId) {
+                                        unsetAlarmSettings(metricId);
+                                    }
 
                                 }
                             }

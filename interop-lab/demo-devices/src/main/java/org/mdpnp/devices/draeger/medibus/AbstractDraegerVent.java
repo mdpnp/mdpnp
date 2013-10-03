@@ -394,13 +394,14 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
-        super.stateChanged(newState, oldState);
+
         if (ice.ConnectionState.Connected.equals(newState) && !ice.ConnectionState.Connected.equals(oldState)) {
             startRequestSlowData();
         }
         if (!ice.ConnectionState.Connected.equals(newState) && ice.ConnectionState.Connected.equals(oldState)) {
             stopRequestSlowData();
         }
+        super.stateChanged(newState, oldState);
     }
 
     private synchronized void stopRequestSlowData() {
