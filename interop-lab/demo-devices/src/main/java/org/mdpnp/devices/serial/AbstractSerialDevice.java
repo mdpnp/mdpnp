@@ -275,11 +275,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
                 if(null != tais) {
                     long quietTime = System.currentTimeMillis() - timeAwareInputStream.getLastReadTime();
                     if(quietTime > getMaximumQuietTime()) {
-                        eventLoop.doLater(new Runnable() {
-                            public void run() {
-                                unregisterAllInstances();
-                            }
-                        });
+
 
                         log.warn("WATCHDOG - back to Negotiating after " + quietTime + "ms quiet time (exceeds " + getMaximumQuietTime()+")");
                         if(!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating)) {
