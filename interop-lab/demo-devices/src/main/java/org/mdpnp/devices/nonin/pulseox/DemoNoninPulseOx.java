@@ -19,9 +19,9 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
+public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 
-    private static final Logger log = LoggerFactory.getLogger(DemoPulseOx.class);
+    private static final Logger log = LoggerFactory.getLogger(DemoNoninPulseOx.class);
 
     public enum Perfusion {
         Red,
@@ -48,7 +48,7 @@ public class DemoPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 //    public static final Numeric FIRMWARE_REVISION = new NumericImpl(DemoPulseOx.class, "FIRMWARE_REVISION");
 //
 
-    public DemoPulseOx(int domainId, EventLoop eventLoop) {
+    public DemoNoninPulseOx(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
         AbstractSimulatedDevice.randomUDI(deviceIdentity);

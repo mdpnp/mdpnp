@@ -73,7 +73,7 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DemoMP70 extends AbstractConnectedDevice {
+public class DemoIntellivue extends AbstractConnectedDevice {
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
         super.stateChanged(newState, oldState);
@@ -401,9 +401,9 @@ public class DemoMP70 extends AbstractConnectedDevice {
                         handle(handle, period.getValue());
                     }
 
-                    if (op.getAttributes().get(DemoMP70.this.handle)) {
-                        log.debug(DemoMP70.this.handle.toString());
-                        handle(handle, DemoMP70.this.handle.getValue());
+                    if (op.getAttributes().get(DemoIntellivue.this.handle)) {
+                        log.debug(DemoIntellivue.this.handle.toString());
+                        handle(handle, DemoIntellivue.this.handle.getValue());
                     }
 
                     if (op.getAttributes().get(spec)) {
@@ -530,17 +530,17 @@ public class DemoMP70 extends AbstractConnectedDevice {
 
     private final MyIntellivue myIntellivue;
 
-    private static final Logger log = LoggerFactory.getLogger(DemoMP70.class);
+    private static final Logger log = LoggerFactory.getLogger(DemoIntellivue.class);
 
     private final NetworkLoop networkLoop;
     private final Thread networkLoopThread;
     private final TaskQueue.Task<?> watchdogTask;
 
-    public DemoMP70(int domainId, EventLoop eventLoop) throws IOException {
+    public DemoIntellivue(int domainId, EventLoop eventLoop) throws IOException {
         this(domainId, eventLoop, null);
     }
 
-    public DemoMP70(int domainId, EventLoop eventLoop, NetworkLoop loop) throws IOException {
+    public DemoIntellivue(int domainId, EventLoop eventLoop, NetworkLoop loop) throws IOException {
         super(domainId, eventLoop);
 
         deviceIdentity.manufacturer = "Philips";
@@ -769,7 +769,9 @@ public class DemoMP70 extends AbstractConnectedDevice {
         }
     }
 
+    @SuppressWarnings("unused")
     private InetAddress lastRemote;
+    @SuppressWarnings("unused")
     private int lastPrefixLength;
     private Set<SelectionKey> registrationKeys = new HashSet<SelectionKey>();
 

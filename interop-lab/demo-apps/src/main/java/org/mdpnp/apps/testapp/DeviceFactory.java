@@ -10,12 +10,12 @@ import org.mdpnp.devices.draeger.medibus.DemoApollo;
 import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
 import org.mdpnp.devices.draeger.medibus.DemoV500;
 import org.mdpnp.devices.hospira.symbiq.DemoSymbiq;
-import org.mdpnp.devices.ivy._450c.Ivy450C;
+import org.mdpnp.devices.ivy._450c.DemoIvy450C;
 import org.mdpnp.devices.masimo.radical.DemoRadical7;
 import org.mdpnp.devices.nellcor.pulseox.DemoN595;
-import org.mdpnp.devices.nonin.pulseox.DemoPulseOx;
+import org.mdpnp.devices.nonin.pulseox.DemoNoninPulseOx;
 import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
-import org.mdpnp.devices.philips.intellivue.DemoMP70;
+import org.mdpnp.devices.philips.intellivue.DemoIntellivue;
 import org.mdpnp.devices.simulation.co2.SimCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
 import org.mdpnp.devices.simulation.nibp.DemoSimulatedBloodPressure;
@@ -29,7 +29,7 @@ public class DeviceFactory {
             throws NoSuchFieldException, SecurityException, IOException {
         switch (type) {
         case Nonin:
-            return new DemoPulseOx(domainId, eventLoop);
+            return new DemoNoninPulseOx(domainId, eventLoop);
         case NellcorN595:
             return new DemoN595(domainId, eventLoop);
         case MasimoRadical7:
@@ -38,8 +38,8 @@ public class DeviceFactory {
             return new SimPulseOximeter(domainId, eventLoop);
         case NIBP_Simulator:
             return new DemoSimulatedBloodPressure(domainId, eventLoop);
-        case PhilipsMP70:
-            return new DemoMP70(domainId, eventLoop);
+        case Intellivue:
+            return new DemoIntellivue(domainId, eventLoop);
         case Dr\u00E4gerApollo:
             return new DemoApollo(domainId, eventLoop);
         case Dr\u00E4gerEvitaXL:
@@ -61,7 +61,7 @@ public class DeviceFactory {
         case Pump_Simulator:
             return new SimInfusionPump(domainId, eventLoop);
         case Ivy450C:
-            return new Ivy450C(domainId, eventLoop);
+            return new DemoIvy450C(domainId, eventLoop);
         case MultiPO_Simulator:
             return new MultiSimPulseOximeter(domainId, eventLoop);
         default:

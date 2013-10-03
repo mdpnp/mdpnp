@@ -15,7 +15,7 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
+public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
     private static final String ECG_I_PREFIX = "ECG-I", ECG_II_PREFIX = "ECG-II", ECG_III_PREFIX = "ECG-III";
 
@@ -34,9 +34,9 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
             return null;
         }
     }
-    private static final Logger log = LoggerFactory.getLogger(Ivy450C.class);
+    private static final Logger log = LoggerFactory.getLogger(DemoIvy450C.class);
 
-    public Ivy450C(int domainId, EventLoop eventLoop) {
+    public DemoIvy450C(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
         deviceIdentity.manufacturer = "Ivy";
         deviceIdentity.model = "450C";
@@ -135,7 +135,7 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         @Override
         protected void receiveSpO2(Integer value, String label, Integer pulseRate) {
             spo2 = numericSample(spo2, value, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
-            Ivy450C.this.pulseRate = numericSample(Ivy450C.this.pulseRate, pulseRate, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
+            DemoIvy450C.this.pulseRate = numericSample(DemoIvy450C.this.pulseRate, pulseRate, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
 
         }
         @Override
