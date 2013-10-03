@@ -120,7 +120,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 
     public void changeSource(String source, DomainParticipant participant, EventLoop eventLoop) {
         if(null != deviceMonitor) {
-            if(deviceMonitor.getUniversalDeviceIdentifier().equals(source)) {
+            if(deviceMonitor.getUniqueDeviceIdentifier().equals(source)) {
                 return;
             } else {
                 deviceMonitor.stop();

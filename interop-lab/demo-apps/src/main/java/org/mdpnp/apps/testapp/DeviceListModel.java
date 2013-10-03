@@ -400,7 +400,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
      * @param udi
      * @return
      */
-    public Device getByUniversalDeviceIdentifier(String udi) {
+    public Device getByUniqueDeviceIdentifier(String udi) {
         if(null == udi) {
             return null;
         }

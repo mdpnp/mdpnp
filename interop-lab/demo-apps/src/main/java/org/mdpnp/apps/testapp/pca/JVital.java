@@ -254,8 +254,8 @@ public final class JVital extends JPanel {
                     Value val = vital.getValues().get(i);
                     JValue lbl = (JValue) vitalValues.getComponent(i);
 
-                    ice.DeviceIdentity di = vital.getParent().getDeviceIdentity(val.getUniversalDeviceIdentifier());
-                    DeviceIcon dicon = vital.getParent().getDeviceIcon(val.getUniversalDeviceIdentifier());
+                    ice.DeviceIdentity di = vital.getParent().getDeviceIdentity(val.getUniqueDeviceIdentifier());
+                    DeviceIcon dicon = vital.getParent().getDeviceIcon(val.getUniqueDeviceIdentifier());
 //                    dicon = null == dicon ? null : new ScaledDeviceIcon(dicon, 0.5);
                     if(null != di) {
                         String s = di.manufacturer.equals(di.model) ? di.manufacturer : (di.manufacturer + " " + di.model);

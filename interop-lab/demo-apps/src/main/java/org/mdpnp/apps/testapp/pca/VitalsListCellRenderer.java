@@ -79,7 +79,7 @@ public class VitalsListCellRenderer extends JPanel implements ListCellRenderer {
                 deviceName.setText("");
                 udi.setText("");
             } else {
-                Device device = deviceListModel.getByUniversalDeviceIdentifier(vital.getValues().get(0).getUniversalDeviceIdentifier());
+                Device device = deviceListModel.getByUniqueDeviceIdentifier(vital.getValues().get(0).getUniqueDeviceIdentifier());
                 if(null != device) {
                     DeviceIcon di = device.getIcon();
                   if(null != di) {
@@ -90,7 +90,7 @@ public class VitalsListCellRenderer extends JPanel implements ListCellRenderer {
                 } else {
                     icon.setIcon(null);
                     deviceName.setText("");
-                    udi.setText(vital.getValues().get(0).getUniversalDeviceIdentifier().substring(0, Device.SHORT_UDI_LENGTH));
+                    udi.setText(vital.getValues().get(0).getUniqueDeviceIdentifier().substring(0, Device.SHORT_UDI_LENGTH));
                 }
                 for(Value v : vital.getValues()) {
                     s += v.getNumeric().value + " ";

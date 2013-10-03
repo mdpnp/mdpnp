@@ -8,8 +8,11 @@
 package org.mdpnp.devices.philips.intellivue;
 
 import ice.ConnectionState;
+import ice.SampleArray;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -18,7 +21,6 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -78,6 +80,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
     protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
         super.stateChanged(newState, oldState);
         if (ice.ConnectionState.Connected.equals(oldState) && !ice.ConnectionState.Connected.equals(newState)) {
+            unregisterAllInstances();
             lastKeepAliveRecvInvokeId = -1;
             lastKeepAliveSentInvokeId = -1;
             lastAssociationRequest = 0L;
@@ -174,7 +177,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
             ati = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_POLL_RTSA_PRIO_LIST, TextIdList.class);
             if (result.getAttributes().get(ati)
-                    && ati.getValue().containsAll(waveformLabels.values().toArray(new Label[0]))) {
+                    && ati.getValue().containsAll(sampleArrayLabels.values().toArray(new Label[0]))) {
             } else {
                 log.warn("SampleArray priority list does not contain all requested labels:" + ati);
             }
@@ -216,7 +219,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
                 requestSinglePoll(ObjectClass.NOM_MOC_VMS_MDS, AttributeId.NOM_ATTR_GRP_SYS_PROD);
 
-                requestSet(numericLabels.values().toArray(new Label[0]), waveformLabels.values().toArray(new Label[0]));
+                requestSet(numericLabels.values().toArray(new Label[0]), sampleArrayLabels.values().toArray(new Label[0]));
 
                 break;
             default:
@@ -435,9 +438,9 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             // log.debug(observed.toString());
             ObservedValue ov = ObservedValue.valueOf(observed.getPhysioId().getType());
             if (null != ov) {
-                InstanceHolder<ice.Numeric> mnu = numericUpdates.get(ov);
-                if (null != mnu) {
-                    numericSample(mnu, observed.getValue().floatValue());
+                String metricId = numericMetricIds.get(ov);
+                if(null != metricId) {
+                    numericUpdates.put(ov, numericSample(numericUpdates.get(ov), observed.getValue().floatValue(), metricId));
                 } else {
                     log.debug("Unknown numeric:" + observed);
                 }
@@ -451,11 +454,27 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             if (null == ov) {
                 log.warn("No ObservedValue for " + v.getPhysioId().getType());
             } else {
-                MyWaveform w = waveformUpdates.get(ov);
-                if (null == w) {
-                    log.warn("No waveform for " + ov);
+                String metricId = sampleArrayMetricIds.get(ov);
+                if(null == metricId) {
+                    log.warn("No metricId for " + ov);
                 } else {
-                    getByHandle(handle).add(w);
+                    MySampleArray w = sampleArrayUpdates.get(ov);
+                    if(null == w) {
+                        SampleArraySpecification sas = handleToSampleArraySpecification.get(handle);
+                        RelativeTime rt = handleToRelativeTime.get(handle);
+                        if(null != sas && null != rt) {
+                            w = new MySampleArray(createSampleArrayInstance(metricId));
+                            w.setSampleSize(sas.getSampleSize());
+                            w.setSignificantBits(sas.getSignificantBits());
+                            w.holder.data.values.setSize(sas.getArraySize());
+                            w.holder.data.millisecondsPerSample = (int) rt.toMilliseconds();
+                            sampleArrayUpdates.put(ov, w);
+                        } else {
+                            log.warn("No SampleArraySpecification or RelativeTime for handle="+handle);
+                            return;
+                        }
+                    }
+
                     int cnt = w.holder.data.values.size();
                     for (int i = 0; i < cnt; i++) {
                         w.applyValue(i, bytes);
@@ -466,66 +485,76 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         }
 
         protected void handle(int handle, SampleArraySpecification spec) {
-            int cnt = spec.getArraySize();
-            short sampleSize = spec.getSampleSize();
-            short significantBits = spec.getSignificantBits();
+            SampleArraySpecification sas = new SampleArraySpecification();
+            sas.setArraySize(spec.getArraySize());
+            sas.setSampleSize(spec.getSampleSize());
+            sas.setSignificantBits(spec.getSignificantBits());
 
-            for (MyWaveform w : getByHandle(handle)) {
-
-                w.setSampleSize(sampleSize);
-                w.setSignificantBits(significantBits);
-                w.holder.data.values.setSize(cnt);
-
-            }
+            handleToSampleArraySpecification.put(handle, sas);
         }
 
         protected void handle(int handle, RelativeTime period) {
-            for (MyWaveform w : getByHandle(handle)) {
-                w.holder.data.millisecondsPerSample = (int) period.toMilliseconds();
-            }
+            RelativeTime newPeriod = new RelativeTime();
+            newPeriod.fromMicroseconds(period.toMicroseconds());
+            handleToRelativeTime.put(handle, newPeriod);
         }
     }
 
-    private void addSampleArray(ObservedValue ov, String tag, Label l) {
-        waveformUpdates.put(ov, new MyWaveform(createSampleArrayInstance(tag)));
-        waveformLabels.put(ov, l);
+    @Override
+    protected void unregisterAllNumericInstances() {
+        numericUpdates.clear();
+        super.unregisterAllNumericInstances();
     }
 
-    private void addNumeric(ObservedValue ov, String tag, Label l) {
-        numericUpdates.put(ov, createNumericInstance(tag));
-        numericLabels.put(ov, l);
+    @Override
+    protected void unregisterSampleArrayInstance(InstanceHolder<SampleArray> holder) {
+        sampleArrayUpdates.clear();
+        super.unregisterSampleArrayInstance(holder);
     }
 
-    private void configureData() {
-        addNumeric(ObservedValue.NOM_PULS_OXIM_SAT_O2, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE,
-                Label.NLS_NOM_PULS_OXIM_SAT_O2);
-        addNumeric(ObservedValue.NOM_PLETH_PULS_RATE, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE,
-                Label.NLS_NOM_PULS_OXIM_PULS_RATE);
-        addNumeric(ObservedValue.NOM_PRESS_BLD_NONINV_DIA, rosetta.MDC_PRESS_CUFF_DIA.VALUE,
-                Label.NLS_NOM_PRESS_BLD_NONINV);
-        addNumeric(ObservedValue.NOM_PRESS_BLD_NONINV_SYS, rosetta.MDC_PRESS_CUFF_SYS.VALUE,
-                Label.NLS_NOM_PRESS_BLD_NONINV);
-        addNumeric(ObservedValue.NOM_PRESS_BLD_NONINV_PULS_RATE, rosetta.MDC_PULS_RATE_NON_INV.VALUE,
-                Label.NLS_NOM_PRESS_BLD_NONINV_PULS_RATE);
+    protected final Map<ObservedValue, String> numericMetricIds = new HashMap<ObservedValue, String>();
+    protected final Map<ObservedValue, String> sampleArrayMetricIds = new HashMap<ObservedValue, String>();
 
-        addSampleArray(ObservedValue.NOM_PLETH, rosetta.MDC_PULS_OXIM_PLETH.VALUE, Label.NLS_NOM_PULS_OXIM_PLETH);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_I, rosetta.MDC_ECG_AMPL_ST_I.VALUE,
-                Label.NLS_NOM_ECG_ELEC_POTL_I);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_II, rosetta.MDC_ECG_AMPL_ST_II.VALUE,
-                Label.NLS_NOM_ECG_ELEC_POTL_II);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_III, rosetta.MDC_ECG_AMPL_ST_III.VALUE,
-                Label.NLS_NOM_ECG_ELEC_POTL_III);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_AVF, rosetta.MDC_ECG_AMPL_ST_AVF.VALUE,
-                Label.NLS_NOM_ECG_ELEC_POTL_AVF);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_AVL, rosetta.MDC_ECG_AMPL_ST_AVL.VALUE,
-                Label.NLS_NOM_ECG_ELEC_POTL_AVL);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_AVR, rosetta.MDC_ECG_AMPL_ST_AVR.VALUE,
-                Label.NLS_NOM_ECG_ELEC_POTL_AVR);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_V2, rosetta.MDC_ECG_AMPL_ST_V2.VALUE,
-                Label.NLS_NOM_ECG_ELEC_POTL_V2);
-        addSampleArray(ObservedValue.NOM_ECG_ELEC_POTL_V5, rosetta.MDC_ECG_AMPL_ST_V5.VALUE,
-                Label.NLS_NOM_ECG_ELEC_POTL_V5);
+    protected final Map<ObservedValue, Label> numericLabels = new HashMap<ObservedValue, Label>();
+    protected final Map<ObservedValue, Label> sampleArrayLabels = new HashMap<ObservedValue, Label>();
 
+    protected final Map<ObservedValue, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<ObservedValue, InstanceHolder<ice.Numeric>>();
+    protected final Map<ObservedValue, MySampleArray> sampleArrayUpdates = new HashMap<ObservedValue, MySampleArray>();
+
+    protected static void loadMap(Map<ObservedValue, String> numericMetricIds, Map<ObservedValue, Label> numericLabels, Map<ObservedValue, String> sampleArrayMetricIds, Map<ObservedValue, Label> sampleArrayLabels) {
+
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(
+                    DemoIntellivue.class.getResourceAsStream("intellivue.map")));
+            String line = null;
+
+            while (null != (line = br.readLine())) {
+                line = line.trim();
+                if ('#' != line.charAt(0)) {
+                    String v[] = line.split("\t");
+
+                    if (v.length < 4) {
+                        log.debug("Bad line:" + line);
+                    } else {
+                        ObservedValue ov = ObservedValue.valueOf(v[0]);
+                        String metric_id = v[1];
+                        Label label = Label.valueOf(v[2]);
+
+                        log.trace("Adding " + ov + " mapped to " + metric_id + " with label " + label);
+                        v[3] = v[3].trim();
+                        if ("W".equals(v[3])) {
+                            sampleArrayLabels.put(ov, label);
+                            sampleArrayMetricIds.put(ov, metric_id);
+                        } else if ("N".equals(v[3])) {
+                            numericLabels.put(ov, label);
+                            numericMetricIds.put(ov, metric_id);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private final MyIntellivue myIntellivue;
@@ -542,7 +571,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
     public DemoIntellivue(int domainId, EventLoop eventLoop, NetworkLoop loop) throws IOException {
         super(domainId, eventLoop);
-
+        loadMap(numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
         deviceIdentity.manufacturer = "Philips";
         deviceIdentity.model = "MP70";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
@@ -568,7 +597,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         }
 
         myIntellivue = new MyIntellivue();
-        configureData();
+
         watchdogTask = new TaskQueue.TaskImpl<Object>() {
             @Override
             public Object doExecute(TaskQueue queue) {
@@ -580,11 +609,11 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         networkLoop.add(watchdogTask);
     }
 
-    protected static class MyWaveform {
+    protected static class MySampleArray {
         private short sampleSize, significantBits;
         private final InstanceHolder<ice.SampleArray> holder;
 
-        public MyWaveform(InstanceHolder<ice.SampleArray> holder) {
+        public MySampleArray(InstanceHolder<ice.SampleArray> holder) {
             this.holder = holder;
         }
 
@@ -689,16 +718,8 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         setConnectionInfo(connectionInfo);
     }
 
-    protected final Map<Integer, Set<MyWaveform>> waveHandle = new HashMap<Integer, Set<MyWaveform>>();
-
-    protected Collection<MyWaveform> getByHandle(int h) {
-        Set<MyWaveform> set = waveHandle.get(h);
-        if (null == set) {
-            set = new HashSet<MyWaveform>();
-            waveHandle.put(h, set);
-        }
-        return set;
-    }
+    protected final Map<Integer, RelativeTime> handleToRelativeTime = new HashMap<Integer, RelativeTime>();
+    protected final Map<Integer, SampleArraySpecification> handleToSampleArraySpecification = new HashMap<Integer, SampleArraySpecification>();
 
     protected final static long CONTINUOUS_POLL_INTERVAL = 60000L;
 
@@ -720,10 +741,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
     protected final Attribute<org.mdpnp.devices.philips.intellivue.data.String> patientId = AttributeFactory
             .getAttribute(AttributeId.NOM_ATTR_PT_ID, org.mdpnp.devices.philips.intellivue.data.String.class);
 
-    protected final Map<ObservedValue, Label> waveformLabels = new HashMap<ObservedValue, Label>();
-    protected final Map<ObservedValue, Label> numericLabels = new HashMap<ObservedValue, Label>();
-    protected final Map<ObservedValue, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<ObservedValue, InstanceHolder<ice.Numeric>>();
-    protected final Map<ObservedValue, MyWaveform> waveformUpdates = new HashMap<ObservedValue, MyWaveform>();
+
 
     protected final Attribute<Type> type = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_TYPE, Type.class);
     protected final Attribute<MetricSpecification> metricSpecification = AttributeFactory.getAttribute(

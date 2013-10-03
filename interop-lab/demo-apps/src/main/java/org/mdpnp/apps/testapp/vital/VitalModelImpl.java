@@ -111,7 +111,7 @@ public class VitalModelImpl implements VitalModel {
                         ListIterator<Value> li = v.getValues().listIterator();
                         while (li.hasNext()) {
                             Value va = li.next();
-                            if (va.getUniversalDeviceIdentifier().equals(udi) && va.getInstanceId() == instance_id) {
+                            if (va.getUniqueDeviceIdentifier().equals(udi) && va.getInstanceId() == instance_id) {
                                 va.unregisterCriticalLimits(getWriter());
                                 li.remove();
                                 updated = true;
@@ -152,7 +152,7 @@ public class VitalModelImpl implements VitalModel {
                     if (x.equals(n.metric_id) ) {
                         boolean updated = false;
                         for (Value va : v.getValues()) {
-                            if (va.getInstanceId()==n.instance_id && va.getMetricId().equals(n.metric_id) && va.getUniversalDeviceIdentifier().equals(n.unique_device_identifier)) {
+                            if (va.getInstanceId()==n.instance_id && va.getMetricId().equals(n.metric_id) && va.getUniqueDeviceIdentifier().equals(n.unique_device_identifier)) {
                                 va.updateFrom(n, si);
                                 updated = true;
                             }
@@ -279,7 +279,7 @@ public class VitalModelImpl implements VitalModel {
             return null;
         }
         DeviceListModel deviceListModel = this.deviceListModel;
-        return null == deviceListModel ? null : deviceListModel.getByUniversalDeviceIdentifier(udi);
+        return null == deviceListModel ? null : deviceListModel.getByUniqueDeviceIdentifier(udi);
     }
     public DeviceIcon getDeviceIcon(String udi) {
         Device device = getDevice(udi);
