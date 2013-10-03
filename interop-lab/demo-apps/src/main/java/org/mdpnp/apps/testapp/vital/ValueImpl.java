@@ -9,7 +9,7 @@ import ice.Numeric;
 
 public class ValueImpl implements Value {
 
-    private final String universalDeviceIdentifier;
+    private final String uniqueDeviceIdentifier;
     private final String metric_id;
     private final int instance_id;
     private final Numeric numeric = (Numeric) Numeric.create();
@@ -29,20 +29,20 @@ public class ValueImpl implements Value {
 
     private final InstanceHolder<ice.AlarmSettingsObjective> objective = new InstanceHolder<ice.AlarmSettingsObjective>();
 
-    public ValueImpl(String universalDeviceIdentifier, String metric_id, int instance_id, Vital parent) {
+    public ValueImpl(String uniqueDeviceIdentifier, String metric_id, int instance_id, Vital parent) {
         objective.data = (AlarmSettingsObjective) ice.AlarmSettingsObjective.create();
         objective.data.metric_id = metric_id;
-        objective.data.unique_device_identifier = universalDeviceIdentifier;
+        objective.data.unique_device_identifier = uniqueDeviceIdentifier;
         this.metric_id = metric_id;
         this.instance_id = instance_id;
-        this.universalDeviceIdentifier = universalDeviceIdentifier;
+        this.uniqueDeviceIdentifier = uniqueDeviceIdentifier;
         this.parent = parent;
 
     }
 
     @Override
-    public String getUniversalDeviceIdentifier() {
-        return universalDeviceIdentifier;
+    public String getUniqueDeviceIdentifier() {
+        return uniqueDeviceIdentifier;
     }
 
     @Override
@@ -61,7 +61,7 @@ public class ValueImpl implements Value {
     }
     @Override
     public String toString() {
-        return "[udi="+universalDeviceIdentifier+",numeric="+numeric+",sampleInfo="+sampleInfo+"]";
+        return "[udi="+uniqueDeviceIdentifier+",numeric="+numeric+",sampleInfo="+sampleInfo+"]";
     }
     @Override
     public boolean isIgnore() {

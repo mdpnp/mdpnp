@@ -36,13 +36,13 @@ import com.rti.dds.subscription.SampleInfoSeq;
 
 @SuppressWarnings("serial")
 public class CompositeDevicePanel extends JPanel implements DeviceMonitorListener {
-   private final JLabel manufacturer = new JLabel("MANUFACTURER");
-   private final JLabel model = new JLabel("MODEL");
-   private final JLabel serial_number = new JLabel("SERIAL#");
+   private final JLabel manufacturer = new JLabel(" ");
+   private final JLabel model = new JLabel(" ");
+   private final JLabel serial_number = new JLabel(" ");
 
-   private final JLabel connectionState = new JLabel("CONN");
-   private final JLabel unique_device_identifier = new JLabel("UDI");
-   private final JLabel icon = new JLabel("ICON");
+   private final JLabel connectionState = new JLabel(" ");
+   private final JLabel unique_device_identifier = new JLabel(" ");
+   private final JLabel icon = new JLabel(" ");
 
    private static final Logger log = LoggerFactory.getLogger(CompositeDevicePanel.class);
 
@@ -78,7 +78,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
 
         gbc.gridy++;
         gbc.gridx--;
-        header.add(new JLabel("Universal Device Id"), gbc);
+        header.add(new JLabel("Unique Device Identifier"), gbc);
         gbc.gridx++;
         header.add(unique_device_identifier, gbc);
 

@@ -5,7 +5,7 @@ import com.rti.dds.subscription.SampleInfo;
 import ice.Numeric;
 
 public interface Value {
-    String getUniversalDeviceIdentifier();
+    String getUniqueDeviceIdentifier();
     String getMetricId();
     int getInstanceId();
     Numeric getNumeric();

@@ -77,7 +77,7 @@ public class DeviceMonitor {
         return c;
     }
 
-    public String getUniversalDeviceIdentifier() {
+    public String getUniqueDeviceIdentifier() {
         return udi;
     }
 
