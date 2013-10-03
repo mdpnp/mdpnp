@@ -98,7 +98,7 @@ public class Intellivue implements NetworkConnection {
 
         if(log.isTraceEnabled()) {
             time.setTime(System.currentTimeMillis());
-//			log.trace("In Message("+simpleDateformat.format(time)+"):\n"+lineWrap(message.toString()));
+            log.trace("In Message("+simpleDateformat.format(time)+"):\n"+lineWrap(message.toString()));
         }
         if(message instanceof DataExportMessage) {
             handle((DataExportMessage)message);
@@ -499,6 +499,7 @@ public class Intellivue implements NetworkConnection {
         PollProfileSupport pps = req.getUserInfo().getPollProfileSupport();
 
         pps.getMinPollPeriod().fromMilliseconds(500L);
+
         MdibObjectSupport obj = req.getUserInfo().getMdibObjectSupport();
         obj.addClass(ObjectClass.NOM_MOC_VMS_MDS, 1);
         obj.addClass(ObjectClass.NOM_MOC_VMO_METRIC_NU, 0xC9);
@@ -538,7 +539,7 @@ public class Intellivue implements NetworkConnection {
             outBuffer.reset();
             time.setTime(System.currentTimeMillis());
             log.trace("To " + channel.getRemoteAddress() + " at " + simpleDateformat.format(time));
-            log.trace(Util.dump(outBuffer, 20));
+            log.trace(Util.dump(outBuffer, 50));
         }
         return cnt;
     }
@@ -639,7 +640,7 @@ public class Intellivue implements NetworkConnection {
                 if(log.isTraceEnabled()) {
                     time.setTime(System.currentTimeMillis());
                     log.trace("From " + channel.getRemoteAddress() + " on " + channel.socket().getLocalAddress() + " at " + simpleDateformat.format(time));
-                    log.trace(Util.dump(inBuffer, 20));
+                    log.trace(Util.dump(inBuffer, 50));
                 }
                 handle(sockaddr, protocol.parse(inBuffer), sk);
             }
