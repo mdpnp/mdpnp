@@ -237,6 +237,9 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             case ice.ConnectionState._Disconnecting:
                 state(ice.ConnectionState.Disconnected, "association refused!");
                 break;
+            case ice.ConnectionState._Negotiating:
+                setConnectionInfo("association refused, retrying...");
+                break;
             }
 
             super.handle(sockaddr, message);
@@ -712,9 +715,15 @@ public class DemoIntellivue extends AbstractConnectedDevice {
     }
 
     protected final void state(ice.ConnectionState state, String connectionInfo) {
+        // So actually the state transition will emit the connection info
+        deviceConnectivity.info = connectionInfo;
+
         if (!stateMachine.transitionWhenLegal(state, 5000L)) {
             throw new RuntimeException("timed out changing state");
         }
+
+        // If we didn't actually transition state then this will fire the info change
+        // If we already did fire it this will be a no op
         setConnectionInfo(connectionInfo);
     }
 
@@ -846,18 +855,8 @@ public class DemoIntellivue extends AbstractConnectedDevice {
     @Override
     public void disconnect() {
         state(ice.ConnectionState.Disconnecting, "disassociating");
-
-        long start = System.currentTimeMillis();
-
-        networkLoop.clearTasks();
-        while (!ice.ConnectionState.Disconnected.equals(stateMachine.getState())
-                && (System.currentTimeMillis() - start) <= 5000L) {
-
-            try {
-                Thread.sleep(500L);
-            } catch (InterruptedException e) {
-                log.error("Interrupted", e);
-            }
+        if(!stateMachine.wait(ice.ConnectionState.Disconnected, 5000L)) {
+            log.trace("No disconnect received in response to finish");
         }
     }
 
