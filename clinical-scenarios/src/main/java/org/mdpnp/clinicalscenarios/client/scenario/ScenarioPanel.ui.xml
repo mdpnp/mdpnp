@@ -37,7 +37,7 @@
 	<g:Dock direction="NORTH" size="100px">		
 	<g:FlowPanel>
 	    <g:HTML><br/><span style="font-size:16pt; margin-top: 20px;">Scenario Title</span></g:HTML>
-	    <g:TextBox text='Scenario Title' ui:field='titleEditor' styleName='scenarioTitle' visibleLength='50' maxLength='100'/>
+	    <g:TextBox ui:field='titleEditor' styleName='scenarioTitle' visibleLength='50' maxLength='100'/>
 	    <g:Label ui:field='uniqueId' styleName='important'/>
 	    <g:Label ui:field='status'/>
 	    <!-- <g:Label text='Remember to SAVE your changes' styleName='important'/> TICKET-125 -->

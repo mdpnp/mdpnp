@@ -53,16 +53,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static final int EQUIPMENT_MODEL_COL = 2;
 	private static final int EQUIPMENT_ROSSETAID_COL = 3;
 //	private static final int EQUIPMENT_DElETEBUTTON_COL = 4;//ticket-140
-	private static final int EQUIPMENT_GAPINTRAINING_COL  = 4;
-	private static final int EQUIPMENT_LACKINSTRUCTION_COL  = 5;
-	private static final int EQUIPMENT_LACKTRAINING_COL  = 6;
-	private static final int EQUIPMENT_CONFUSINGINTERFACES_COL  = 7;
-	private static final int EQUIPMENT_CONFUSINGSETTINGS_COL  = 8;
-	private static final int EQUIPMENT_SWPROBLEM_COL = 9;
-	private static final int EQUIPMENT_HWPROBLEM_COL = 10;
-	private static final int EQUIPMENT_DElETEBUTTON_COL = 11;//ticket-140
-	
-	
+	private static final int EQUIPMENT_EXPLANATION_COL  = 4;
+	private static final int EQUIPMENT_TRAINING_PROBLEM_COL  = 5;
+	private static final int EQUIPMENT_INSTRUCTION_PROBLEM_COL  = 6;
+	private static final int EQUIPMENT_CONFUSING_USAGE_COL  = 7;
+	private static final int EQUIPMENT_SW_PROBLEM_COL = 8;
+	private static final int EQUIPMENT_HW_PROBLEM_COL = 9;
+	private static final int EQUIPMENT_DElETEBUTTON_COL = 10;//ticket-140
 	
 	//hazards tab panel
 	private static final int HAZARDS_DESCRIPTION_COL = 0;
@@ -123,6 +120,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * Feedback-->Approve or reject
 	 */	
 	private final static int APPRV_SCN_TAB_POS = 7;//position of the tab to approve or reject scn
+	private final static int HAZARDS_TAB_POS = 1;
+	private final static int EQUIPMENT_TAB_POS = 3;
 	
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
@@ -291,6 +290,33 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 	}
 	
+	//labels for the HEADERS row of the Devices tab table. we use the following static block to initialize some of
+	// their properties, such as their title/tooltip TICKET-176; TICKET-140
+	private static Label labelEquipmentDeviceType = new Label("Device Type");
+	private static Label labelEquipmentManufacturer = new Label("Manufacturer");
+	private static Label labelEquipmentModel = new Label("Model");
+	private static Label labelEquipmentRosettaId = new Label("Rosetta ID");
+	private static Label labelEquipmentProblemDescrp = new Label("Problem Description");
+	private static Label labelEquipmentTrainingProblem = new  Label("Training Related Problem");
+	private static Label labelEquipmentInstructionsProblem = new  Label("Instructions Related Problem");
+	private static Label labelEquipmentConfusingUsage = new Label("Confusing device Usage");
+	private static Label labelEquipmentSoftWProblem = new Label("Software related problem"); 
+	private static Label labelEquipmentHardWProblem = new Label("Hardware related problem"); 
+	
+	{
+		labelEquipmentDeviceType.setTitle("Type of device, such as \"ventilator\" or \"Infusion pump\" ");
+		labelEquipmentManufacturer.setTitle("Manufacturer/company or device provider");
+		labelEquipmentModel.setTitle("Model of the device");
+		labelEquipmentRosettaId.setTitle("Unique identifier of this device");
+		labelEquipmentProblemDescrp.setTitle("Brief description of the device malfunctioning");
+		labelEquipmentTrainingProblem.setTitle("A gap, lack of or inadequate training with this device contributted to the problem");
+		labelEquipmentInstructionsProblem.setTitle("Instructions or documentation for this device were confusing, unavailable or outdated" +
+				"contributting to the problem");
+		labelEquipmentConfusingUsage.setTitle("Confusing interfaces, settings, controls, o general usage procedure of the device contributted to the problem");
+		labelEquipmentSoftWProblem.setTitle("A software problem contributed to the problem");
+		labelEquipmentHardWProblem.setTitle("A hardware problem contributed to the problem");	
+	}
+	
 	/**
 	 * Prints/draws the Equipment tab table.
 	 * @param isDrawNew indicates if we are drawing a new/empty table or we are going to
@@ -302,76 +328,32 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 		//HEADERS
 		equipmentTable.insertRow(0);
-		equipmentTable.setText(0, EQUIPMENT_DEVICETYPE_COL, "Device Type");
-		equipmentTable.setText(0, EQUIPMENT_MANUFACTURER_COL, "Manufacturer");
-		equipmentTable.setText(0, EQUIPMENT_MODEL_COL, "Model");
-		equipmentTable.setText(0, EQUIPMENT_ROSSETAID_COL, "Rosetta ID");
-		
-		equipmentTable.setText(0, EQUIPMENT_GAPINTRAINING_COL, "Gap in training");
-		equipmentTable.setText(0, EQUIPMENT_LACKINSTRUCTION_COL, "Lack of access to instructions");
-//		equipmentTable.setText(0, EQUIPMENT_LACKTRAINING_COL, "Lack of / inadecuate training");
-		equipmentTable.setWidget(0, EQUIPMENT_LACKTRAINING_COL, new Label("Lack of / inadecuate training"));
-		equipmentTable.setText(0, EQUIPMENT_CONFUSINGINTERFACES_COL, "Confusing interfaces");
-		equipmentTable.setText(0, EQUIPMENT_CONFUSINGSETTINGS_COL, "Confusing settings");
-		equipmentTable.setText(0, EQUIPMENT_SWPROBLEM_COL, "Software problem");
-//		equipmentTable.setText(0, EQUIPMENT_HWPROBLEM_COL, "Hardware problem");
-		equipmentTable.setWidget(0, EQUIPMENT_HWPROBLEM_COL, new Label("Hardware problem"));
+		equipmentTable.setWidget(0, EQUIPMENT_DEVICETYPE_COL, labelEquipmentDeviceType);
+		equipmentTable.setWidget(0, EQUIPMENT_MANUFACTURER_COL, labelEquipmentManufacturer);
+		equipmentTable.setWidget(0, EQUIPMENT_MODEL_COL, labelEquipmentModel);
+		equipmentTable.setWidget(0, EQUIPMENT_ROSSETAID_COL, labelEquipmentRosettaId);
+		equipmentTable.setWidget(0, EQUIPMENT_EXPLANATION_COL, labelEquipmentProblemDescrp);
+		equipmentTable.setWidget(0, EQUIPMENT_TRAINING_PROBLEM_COL, labelEquipmentTrainingProblem);
+		equipmentTable.setWidget(0, EQUIPMENT_INSTRUCTION_PROBLEM_COL, labelEquipmentInstructionsProblem);
+		equipmentTable.setWidget(0, EQUIPMENT_CONFUSING_USAGE_COL, labelEquipmentConfusingUsage);
+		equipmentTable.setWidget(0, EQUIPMENT_SW_PROBLEM_COL, labelEquipmentSoftWProblem);
+		equipmentTable.setWidget(0, EQUIPMENT_HW_PROBLEM_COL, labelEquipmentHardWProblem);
 
-
+		//draw the tables
 		if(isDrawNew || currentScenario.getEquipment().getEntries().isEmpty()){
 			addNewEquipmentRow();
 		
 		}else{
 			//populate the table w/ the data from the equipment list of the scenario
 			List<EquipmentEntryProxy> eqEntries = currentScenario.getEquipment().getEntries();
-			for(int i=0; i<eqEntries.size();i++){
-				final int row = i+1;
-				equipmentTable.insertRow(row);
-				equipmentTable.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
-				EquipmentEntryProxy eep = (EquipmentEntryProxy) eqEntries.get(i);
-				TextBox dtTextbox = new TextBox();
-				dtTextbox.setText(eep.getDeviceType());
-				dtTextbox.setReadOnly(!editable);
-				dtTextbox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
-//				dtTextbox.set
-				equipmentTable.setWidget(row, EQUIPMENT_DEVICETYPE_COL, dtTextbox);
-				TextBox manufTextBox = new TextBox(); 
-				manufTextBox.setText(eep.getManufacturer());
-				manufTextBox.setReadOnly(!editable);
-				manufTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
-				equipmentTable.setWidget(row, EQUIPMENT_MANUFACTURER_COL, manufTextBox);
-				TextBox modelTextBox = new TextBox(); 
-				modelTextBox.setText(eep.getModel());
-				modelTextBox.setReadOnly(!editable);
-				modelTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
-				equipmentTable.setWidget(row, EQUIPMENT_MODEL_COL, modelTextBox);
-				TextBox rossTextBox = new TextBox(); 
-				rossTextBox.setText(eep.getRosettaId());
-				rossTextBox.setReadOnly(!editable);
-				rossTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
-				equipmentTable.setWidget(i+1, EQUIPMENT_ROSSETAID_COL, rossTextBox);
-				
-				for(int j = 4; j < EQUIPMENT_DElETEBUTTON_COL; j++) {//add four check boxes
-					equipmentTable.setWidget(i+1, j, new CheckBox());
-				}
-				
-				Button deleteButton = new Button("Delete");
-				if(editable)
-					equipmentTable.setWidget(row, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
-				
-				//add click handler to the delete button
-				deleteButton.addClickHandler(new ClickHandler() {				
-					@Override
-					public void onClick(ClickEvent event) {
-						equipmentTable.removeRow(row);
-					}
-				});
-			}			
-		
-		
+			for(EquipmentEntryProxy eep : eqEntries){
+				addNewEquipmentRow(eep);
+			}
 		}
 	}
 	
+	//Labels for the header row of the HAZARDS table. We are using the static block
+	// to initialize some of the labels properties, such as the title/tooltip of them
 	private final static Label labelHazardDescription = new Label("Description");
 	private final static Label labelHazardFactors = new Label("Factors");
 	private final static Label labelHazardsExpected = new Label("Expected Risk");
@@ -396,15 +378,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		});
 		labelHazardsSeverity.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
-//				MyDialog md = new MyDialog("Severity level definition",
-//						"Mild: Barely noticeable, does not influence functioning, causing no limitations of usual activities.\n" +
-//						"Moderate: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities. \n" +
-//						"Severe: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities. \n" +
-//						"Life Threatening: Immediate risk of death, life threatening or disabling. \n" +
-//						"Fatal: Causes death of the patient.");
 				DialogBox md = new DialogBox(true);
-				md.setHTML("<ul><li><b>Mild</b>: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li><li><b>Moderate</b>: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li><li><b>Severe</b>: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li><li><b>Life Threatening</b>: Immediate risk of death, life threatening or disabling</li><li><b>Fatal</b>: Causes death of the patient</li></ul>");
-//				md.setAutoHideEnabled(true);
+				md.setHTML("<ul><li><b>Mild</b>: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li>" +
+						"<li><b>Moderate</b>: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li>" +
+						"<li><b>Severe</b>: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li>" +
+						"<li><b>Life Threatening</b>: Immediate risk of death, life threatening or disabling</li>" +
+						"<li><b>Fatal</b>: Causes death of the patient</li></ul>");
 				md.showRelativeTo(labelHazardsSeverity);
 			}
 		});
@@ -482,10 +461,17 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			currentScenario.getEquipment().getEntries().clear();//clear equipment list entries. We will re-populate 
 			for(int row = 1; row < equipmentTable.getRowCount(); row++) {//Row 0 is HEADERS
 				
-				Widget wDevType = equipmentTable.getWidget(row, EQUIPMENT_DEVICETYPE_COL);//getWidget row column		
-				Widget wManu = equipmentTable.getWidget(row, EQUIPMENT_MANUFACTURER_COL);//getWidget row column		
-				Widget wModel = equipmentTable.getWidget(row, EQUIPMENT_MODEL_COL);//getWidget row column		
-				Widget wRoss = equipmentTable.getWidget(row, EQUIPMENT_ROSSETAID_COL);//getWidget row column		
+				Widget wDevType = equipmentTable.getWidget(row, EQUIPMENT_DEVICETYPE_COL);		
+				Widget wManu = equipmentTable.getWidget(row, EQUIPMENT_MANUFACTURER_COL);	
+				Widget wModel = equipmentTable.getWidget(row, EQUIPMENT_MODEL_COL);	
+				Widget wRoss = equipmentTable.getWidget(row, EQUIPMENT_ROSSETAID_COL);	
+				Widget wExplanation = equipmentTable.getWidget(row, EQUIPMENT_EXPLANATION_COL);	
+				Widget wTraining = equipmentTable.getWidget(row, EQUIPMENT_TRAINING_PROBLEM_COL);	
+				Widget wInstruction = equipmentTable.getWidget(row, EQUIPMENT_INSTRUCTION_PROBLEM_COL);	
+				Widget wUsage = equipmentTable.getWidget(row, EQUIPMENT_CONFUSING_USAGE_COL);	
+				Widget wSoftProblem = equipmentTable.getWidget(row, EQUIPMENT_SW_PROBLEM_COL);	
+				Widget wHardProblem = equipmentTable.getWidget(row, EQUIPMENT_HW_PROBLEM_COL);					
+				
 				EquipmentEntryProxy eep = rc.create(EquipmentEntryProxy.class);
 				
 				boolean isAdding = false;
@@ -512,6 +498,19 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					if(!text.equals(""))
 					{eep.setRosettaId(text); isAdding=true;}		
 				}
+				if(wExplanation instanceof TextArea) {
+					text = ((TextArea)wExplanation).getText().trim();
+					if(!text.equals(""))
+					{eep.setProblemDescription(text); isAdding=true;}		
+				}
+				
+				//The ckeckboxes by themselves don't mofify the "adding" condition.
+				// At least any other ot fields must be non-empty
+				eep.setTrainingRelatedProblem(((CheckBox) wTraining).getValue());
+				eep.setInstructionsRelatedProblem(((CheckBox) wInstruction).getValue());
+				eep.setConfusingDeviceUsage(((CheckBox) wUsage).getValue());
+				eep.setSoftwareRelatedProblem(((CheckBox) wSoftProblem).getValue());
+				eep.setHardwareRelatedProblem(((CheckBox) wHardProblem).getValue());
 				
 				if(isAdding)
 					currentScenario.getEquipment().getEntries().add(eep);
@@ -730,7 +729,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					
 				}
 				//TICKET-165
-				if(event.getSelectedItem().equals(new Integer(1)) ||event.getSelectedItem().equals(new Integer(3))){
+				if(event.getSelectedItem().equals(new Integer(HAZARDS_TAB_POS)) ){
+//						||event.getSelectedItem().equals(EQUIPMENT_TAB_POS)){//XXXX ???
 					tabPanel.setWidth("80%"); 
 				}else{
 					tabPanel.setWidth("60%"); //TICKET-165
@@ -1215,14 +1215,21 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		final int rows = equipmentTable.getRowCount();
 		equipmentTable.insertRow(rows);
 
-		
-		for(int j = 0; j < 4; j++) {//add four text boxes
+		//Textboxes for type, manufacturer, model and Id
+		for(int j = 0; j < EQUIPMENT_EXPLANATION_COL; j++) {//add four text boxes
 			TextBox textbox = new TextBox();
 			textbox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
 			textbox.setReadOnly(!editable);
 			equipmentTable.setWidget(rows, j, textbox);
 		}
-		for(int j = 4; j < EQUIPMENT_DElETEBUTTON_COL; j++) {//add four check boxes
+		
+		//Add problem explanation column
+		TextArea textArea = new TextArea();
+		textArea.setReadOnly(!editable);
+		equipmentTable.setWidget(rows, EQUIPMENT_EXPLANATION_COL, textArea);
+		
+		//checkboxes for training, instructions, usage, SW and HW problems
+		for(int j = EQUIPMENT_TRAINING_PROBLEM_COL; j < EQUIPMENT_DElETEBUTTON_COL; j++) {//add four check boxes
 			CheckBox cb = new CheckBox();
 			cb.setEnabled(editable);
 			equipmentTable.setWidget(rows, j, cb);
@@ -1235,6 +1242,77 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 		//click handler that deletes the current row
 		deleteButton.addClickHandler(new ClickHandler() {	
+			@Override
+			public void onClick(ClickEvent event) {
+				equipmentTable.removeRow(rows);
+			}
+		});
+	}
+	
+	private void addNewEquipmentRow(EquipmentEntryProxy eep){
+		final int rows = equipmentTable.getRowCount();
+		equipmentTable.insertRow(rows);
+
+		TextBox dtTextbox = new TextBox();
+		dtTextbox.setText(eep.getDeviceType());
+		dtTextbox.setReadOnly(!editable);
+		dtTextbox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+		equipmentTable.setWidget(rows, EQUIPMENT_DEVICETYPE_COL, dtTextbox);
+		
+		TextBox manufTextBox = new TextBox(); 
+		manufTextBox.setText(eep.getManufacturer());
+		manufTextBox.setReadOnly(!editable);
+		manufTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+		equipmentTable.setWidget(rows, EQUIPMENT_MANUFACTURER_COL, manufTextBox);
+		
+		TextBox modelTextBox = new TextBox(); 
+		modelTextBox.setText(eep.getModel());
+		modelTextBox.setReadOnly(!editable);
+		modelTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+		equipmentTable.setWidget(rows, EQUIPMENT_MODEL_COL, modelTextBox);
+		
+		TextBox rossTextBox = new TextBox(); 
+		rossTextBox.setText(eep.getRosettaId());
+		rossTextBox.setReadOnly(!editable);
+		rossTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+		equipmentTable.setWidget(rows, EQUIPMENT_ROSSETAID_COL, rossTextBox);
+		
+		TextArea explanationTextArea = new TextArea();
+		explanationTextArea.setText(eep.getProblemDescription());
+		explanationTextArea.setReadOnly(!editable);
+		equipmentTable.setWidget(rows, EQUIPMENT_EXPLANATION_COL, explanationTextArea);
+		
+		CheckBox trainingCheckBox = new CheckBox();
+		trainingCheckBox.setEnabled(editable);
+		trainingCheckBox.setValue(eep.getTrainingRelatedProblem());
+		equipmentTable.setWidget(rows, EQUIPMENT_TRAINING_PROBLEM_COL, trainingCheckBox);
+		
+		CheckBox instructionsCheckBox = new CheckBox();
+		instructionsCheckBox.setEnabled(editable);
+		instructionsCheckBox.setValue(eep.getInstructionsRelatedProblem());
+		equipmentTable.setWidget(rows, EQUIPMENT_INSTRUCTION_PROBLEM_COL, instructionsCheckBox);
+		
+		CheckBox usageCheckBox = new CheckBox();
+		usageCheckBox.setEnabled(editable);
+		usageCheckBox.setValue(eep.getConfusingDeviceUsage());
+		equipmentTable.setWidget(rows, EQUIPMENT_CONFUSING_USAGE_COL, usageCheckBox);	
+		
+		CheckBox softProblemCheckBox = new CheckBox();
+		softProblemCheckBox.setEnabled(editable);
+		softProblemCheckBox.setValue(eep.getSoftwareRelatedProblem());
+		equipmentTable.setWidget(rows, EQUIPMENT_SW_PROBLEM_COL, softProblemCheckBox);
+		
+		CheckBox hardProblemCheckBox = new CheckBox();
+		hardProblemCheckBox.setEnabled(editable);
+		hardProblemCheckBox.setValue(eep.getHardwareRelatedProblem());
+		equipmentTable.setWidget(rows, EQUIPMENT_HW_PROBLEM_COL, hardProblemCheckBox);
+		
+		Button deleteButton = new Button("Delete");
+		if(editable)
+			equipmentTable.setWidget(rows, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
+		
+		//add click handler to the delete button
+		deleteButton.addClickHandler(new ClickHandler() {				
 			@Override
 			public void onClick(ClickEvent event) {
 				equipmentTable.removeRow(rows);
@@ -1898,6 +1976,22 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 */
 	private boolean isEmptyScenario(){
 		
+		/*
+		 * TODO Maybe all this CHAOS and coded could be spared if we had a flag Empty, 
+		 * that is true for "new born" scenarios and false for any other recovered from a query 
+		 * (if its in the GAE, must have been persisted because it was not empty.
+		 * --> the constructor and setCurrentScenario would modifiy the flag
+		 * 
+		 * This flag would be checked on this method, or its used sustituded wherever we are using the function
+		 * isEmptyScenario().
+		 * 
+		 * To update the value of the flag (from true to false) we could use the event handlers that detect
+		 * we changed the textboxes.
+		 * 
+		 * It could be tricky, since I could edit the title (it would be not empty) and then delete, leaving
+		 * the scenario information empty again.
+		 */
+		
 		final int FIRST_ROW_HAZARDS_EQUIPMENT = 1;
 		final int FIRST_ROW_CLINICIANS_ENV = 0;
 		
@@ -1932,14 +2026,18 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		}
 		if(!isEmpty) return false;
 
-		//equipment
-		for(int j=0; j<EQUIPMENT_GAPINTRAINING_COL; j++){
+		//equipment TODO update for ticket-140
+		for(int j=0; j<EQUIPMENT_EXPLANATION_COL; j++){
 			Widget widget = equipmentTable.getWidget(FIRST_ROW_HAZARDS_EQUIPMENT, j);
 			text = ((TextBox)widget).getText().trim();
 			if(!text.equals(""))
 				isEmpty=false;
 		}
 		if(!isEmpty) return false;
+		
+		Widget wExplain = equipmentTable.getWidget(FIRST_ROW_HAZARDS_EQUIPMENT, EQUIPMENT_EXPLANATION_COL);
+		text = ((TextArea)wExplain).getText().trim();
+		if(!text.equals("")) return false;
 		
 		//clinicians
 		Widget widget = cliniciansTable.getWidget(FIRST_ROW_CLINICIANS_ENV, 0);

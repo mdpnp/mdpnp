@@ -15,4 +15,22 @@ public interface EquipmentEntryProxy extends ValueProxy {
     void setModel(String model);
     String getRosettaId();
     void setRosettaId(String rosettaId);
+    
+    public String getProblemDescription();
+	public void setProblemDescription(String problemDescription);
+	
+	public Boolean getTrainingRelatedProblem();
+	public void setTrainingRelatedProblem(Boolean trainingRelatedProblem);
+	
+	public Boolean getInstructionsRelatedProblem();
+	public void setInstructionsRelatedProblem(Boolean instructionsRelatedProblem);
+	
+	public Boolean getConfusingDeviceUsage();
+	public void setConfusingDeviceUsage(Boolean confusingDeviceUsage);
+	
+	public Boolean getSoftwareRelatedProblem();
+	public void setSoftwareRelatedProblem(Boolean softwareRelatedProblem);
+	
+	public Boolean getHardwareRelatedProblem();
+	public void setHardwareRelatedProblem(Boolean hardwareRelatedProblem);
 }
