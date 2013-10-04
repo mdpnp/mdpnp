@@ -586,7 +586,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
             while (null != (line = br.readLine())) {
                 line = line.trim();
-                if ('#' != line.charAt(0)) {
+                if (line.length() > 0 && '#' != line.charAt(0)) {
                     String v[] = line.split("\t");
 
                     if (v.length < 4) {
