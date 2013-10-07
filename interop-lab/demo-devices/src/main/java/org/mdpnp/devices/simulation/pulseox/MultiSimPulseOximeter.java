@@ -16,7 +16,7 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
         @Override
         protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, double msPerSample) {
-            sampleArraySample(pleth[ordinal], plethValues, (int) msPerSample);
+            sampleArraySample(pleth[ordinal], plethValues, (int) msPerSample, null);
         }
     }
 

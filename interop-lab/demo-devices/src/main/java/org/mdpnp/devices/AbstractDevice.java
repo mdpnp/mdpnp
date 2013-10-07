@@ -27,6 +27,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,9 +48,9 @@ import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.Time_t;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.InstanceStateKind;
-import com.rti.dds.subscription.QueryCondition;
 import com.rti.dds.subscription.ReadCondition;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
@@ -251,9 +253,13 @@ public abstract class AbstractDevice implements ThreadFactory {
         return holder;
     }
 
-    protected void numericSample(InstanceHolder<Numeric> holder, float newValue) {
+    protected void numericSample(InstanceHolder<Numeric> holder, float newValue, Time_t time) {
         holder.data.value = newValue;
-        numericDataWriter.write(holder.data, holder.handle);
+        if(null != time) {
+            numericDataWriter.write_w_timestamp(holder.data, holder.handle, time);
+        } else {
+            numericDataWriter.write(holder.data, holder.handle);
+        }
     }
 
     protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, float newLower, float newUpper) {
@@ -318,20 +324,20 @@ public abstract class AbstractDevice implements ThreadFactory {
 
 
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id) {
-        return numericSample(holder, null==newValue?((Float)null):((Float)(float)(int)newValue), metric_id);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, Time_t time) {
+        return numericSample(holder, null==newValue?((Float)null):((Float)(float)(int)newValue), metric_id, time);
     }
 
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, int instance_id) {
-        return numericSample(holder, null==newValue?((Float)null):((Float)(float)(int)newValue), metric_id, instance_id);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, int instance_id, Time_t time) {
+        return numericSample(holder, null==newValue?((Float)null):((Float)(float)(int)newValue), metric_id, instance_id, time);
     }
 
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id) {
-        return numericSample(holder, newValue, metric_id, 0);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, Time_t time) {
+        return numericSample(holder, newValue, metric_id, 0, time);
     }
 
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, int instance_id) {
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, int instance_id, Time_t time) {
         if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
             unregisterNumericInstance(holder);
             holder = null;
@@ -340,7 +346,7 @@ public abstract class AbstractDevice implements ThreadFactory {
             if (null == holder) {
                 holder = createNumericInstance(metric_id, instance_id);
             }
-            numericSample(holder, newValue);
+            numericSample(holder, newValue, time);
         } else {
             if (null != holder) {
                 unregisterNumericInstance(holder);
@@ -350,23 +356,32 @@ public abstract class AbstractDevice implements ThreadFactory {
         return holder;
     }
 
-    protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, int msPerSample) {
+
+    protected void sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues, int msPerSample, Time_t timestamp) {
         holder.data.values.clear();
         for (Number n : newValues) {
             holder.data.values.addFloat(n.floatValue());
         }
         holder.data.millisecondsPerSample = msPerSample;
+//        log.info("Source:"+holder.data);
+        if(null != timestamp) {
+            sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, timestamp);
+        } else {
+            sampleArrayDataWriter.write(holder.data, holder.handle);
+        }
+    }
 
-        sampleArrayDataWriter.write(holder.data, holder.handle);
+    protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, int msPerSample, Time_t timestamp) {
+        sampleArraySample(holder, Arrays.asList(newValues), msPerSample, timestamp);
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues,
-            int msPerSample, String metric_id) {
-        return sampleArraySample(holder, newValues, msPerSample, metric_id, 0);
+            int msPerSample, String metric_id, Time_t timestamp) {
+        return sampleArraySample(holder, newValues, msPerSample, metric_id, 0, timestamp);
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues,
-            int msPerSample, String metric_id, int instance_id) {
+            int msPerSample, String metric_id, int instance_id, Time_t timestamp) {
         if (null != holder && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
             unregisterSampleArrayInstance(holder);
             holder = null;
@@ -375,7 +390,7 @@ public abstract class AbstractDevice implements ThreadFactory {
             if (null == holder) {
                 holder = createSampleArrayInstance(metric_id, instance_id);
             }
-            sampleArraySample(holder, newValues, msPerSample);
+            sampleArraySample(holder, newValues, msPerSample, timestamp);
         } else {
             if (holder != null) {
                 unregisterSampleArrayInstance(holder);
@@ -398,6 +413,28 @@ public abstract class AbstractDevice implements ThreadFactory {
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues,
             int count, int msPerSample, String metric_id) {
         return sampleArraySample(holder, newValues, count, msPerSample, metric_id, 0);
+    }
+
+    protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues,
+           int msPerSample, String metric_id, int instance_id, Time_t timestamp) {
+        // if the specified holder doesn't match the specified name
+        if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
+            unregisterSampleArrayInstance(holder);
+            holder = null;
+        }
+
+        if (null != newValues) {
+            if (null == holder) {
+                holder = createSampleArrayInstance(metric_id, instance_id);
+            }
+            sampleArraySample(holder, newValues, msPerSample, timestamp);
+        } else {
+            if (holder != null) {
+                unregisterSampleArrayInstance(holder);
+                holder = null;
+            }
+        }
+        return holder;
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues,

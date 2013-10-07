@@ -21,6 +21,7 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +43,7 @@ import org.mdpnp.devices.philips.intellivue.association.impl.AssociationFinishIm
 import org.mdpnp.devices.philips.intellivue.attribute.Attribute;
 import org.mdpnp.devices.philips.intellivue.attribute.AttributeFactory;
 import org.mdpnp.devices.philips.intellivue.connectindication.ConnectIndication;
+import org.mdpnp.devices.philips.intellivue.data.AbsoluteTime;
 import org.mdpnp.devices.philips.intellivue.data.AttributeId;
 import org.mdpnp.devices.philips.intellivue.data.AttributeValueList;
 import org.mdpnp.devices.philips.intellivue.data.ComponentId;
@@ -77,6 +79,8 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.infrastructure.Time_t;
+
 public class DemoIntellivue extends AbstractConnectedDevice {
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
@@ -88,6 +92,9 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             lastKeepAlive = 0L;
         }
     }
+
+    protected long clockOffset;
+
     protected final static long WATCHDOG_INTERVAL = 200L;
     // Maximum time between message receipt
     protected final static long IN_CONNECTION_TIMEOUT = 5000L;
@@ -97,11 +104,15 @@ public class DemoIntellivue extends AbstractConnectedDevice {
     protected static long OUT_CONNECTION_ASSERT = 8000L;
 
 
-    protected final static long CONTINUOUS_POLL_INTERVAL = 60000L;
-    protected final static long CONTINUOUS_POLL_ASSERT = 50000L;
+    protected final static long CONTINUOUS_POLL_INTERVAL = 10 * 60000L;
+    protected final static long CONTINUOUS_POLL_ASSERT = 9 * 60000L;
 
     protected final static long ASSOCIATION_REQUEST_INTERVAL = 2000L;
     protected final static long FINISH_REQUEST_INTERVAL = 500L;
+
+    // TODO this is a memory leak .. in here for diagnosis only
+    // otherwise poll numbers need to be expired
+    private final Map<Integer, Integer> pollSequenceNumber = new HashMap<Integer, Integer>();
 
 
     private long lastAssociationRequest = 0L;
@@ -215,6 +226,20 @@ public class DemoIntellivue extends AbstractConnectedDevice {
                         AttributeId.NOM_ATTR_ID_BED_LABEL, org.mdpnp.devices.philips.intellivue.data.String.class);
                 Attribute<ProductionSpecification> ps = attrs.getAttribute(
                         AttributeId.NOM_ATTR_ID_PROD_SPECN, ProductionSpecification.class);
+
+                Attribute<AbsoluteTime> clockTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_ABS, AbsoluteTime.class);
+                Attribute<RelativeTime> offsetTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_REL, RelativeTime.class);
+
+                if(null == clockTime) {
+                    log.warn("No NOM_ATTR_TIME_ABS in MDS Create");
+                } else if(null == offsetTime) {
+                    log.warn("No NOM_ATTR_TIME_REL in MDS Create");
+                } else {
+                    long currentTime = clockTime.getValue().getDate().getTime();
+                    long runTime = offsetTime.getValue().toMilliseconds();
+                    clockOffset = currentTime - runTime;
+                    log.info("Device started at " + new Date(clockOffset));
+                }
 
                 if (ps != null) {
                     log.info("ProductionSpecification");
@@ -394,6 +419,14 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
         @Override
         protected void handle(ExtendedPollDataResult result) {
+            if(result.getSequenceNumber() != 0) {
+                Integer lastSequenceNumber = pollSequenceNumber.get(result.getPollNumber());
+                if(null == lastSequenceNumber || lastSequenceNumber != (result.getSequenceNumber()-1)) {
+                    log.warn("gap in poll results sequenceNumber="+result.getSequenceNumber()+" lastSequenceNumber="+lastSequenceNumber + " for poll="+result.getPollNumber());
+                }
+            }
+            pollSequenceNumber.put(result.getPollNumber(), result.getSequenceNumber());
+//            log.info("Poll:"+result.getPollNumber()+" Sequence:"+result.getSequenceNumber() + " Time:"+result.getRelativeTime());
 //            log.debug("ExtendedPollDataResult");
             // log.debug(lineWrap(result.toString()));
             for (SingleContextPoll sop : result.getPollInfoList()) {
@@ -417,12 +450,12 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
                     if (null != observed) {
 //                        log.debug(observed.toString());
-                        handle(handle, observed.getValue());
+                        handle(handle, result.getRelativeTime(), observed.getValue());
                     }
 
                     if (null != compoundObserved) {
                         for (NumericObservedValue nov : compoundObserved.getValue().getList()) {
-                            handle(handle, nov);
+                            handle(handle, result.getRelativeTime(), nov);
                         }
                     }
 
@@ -468,12 +501,12 @@ public class DemoIntellivue extends AbstractConnectedDevice {
                     }
                     if (null != cov) {
                         for (SampleArrayObservedValue saov : cov.getValue().getList()) {
-                            handle(handle, saov);
+                            handle(handle, result.getRelativeTime(), saov);
                         }
                     }
                     if (null != v) {
 //                        log.debug(v.toString());
-                        handle(handle, v.getValue());
+                        handle(handle, result.getRelativeTime(), v.getValue());
                     }
                 }
             }
@@ -486,16 +519,19 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             // log.debug(value.toString());
         }
 
-        private final void handle(int handle, NumericObservedValue observed) {
+        private final void handle(int handle, RelativeTime time, NumericObservedValue observed) {
             // log.debug(observed.toString());
             ObservedValue ov = ObservedValue.valueOf(observed.getPhysioId().getType());
             if (null != ov) {
                 String metricId = numericMetricIds.get(ov);
                 if(null != metricId) {
+                    long tm = clockOffset + time.toMilliseconds();
+                    sampleTime.sec = (int)(tm / 1000L);
+                    sampleTime.nanosec = (int)( (tm % 1000L) * 1000000L);
                     if(observed.getMsmtState().isUnavailable()) {
-                        numericUpdates.put(ov, numericSample(numericUpdates.get(ov), (Float) null, metricId));
+                        numericUpdates.put(handle, numericSample(numericUpdates.get(ov), (Float) null, metricId, sampleTime));
                     } else {
-                        numericUpdates.put(ov, numericSample(numericUpdates.get(ov), observed.getValue().floatValue(), metricId));
+                        numericUpdates.put(handle, numericSample(numericUpdates.get(ov), observed.getValue().floatValue(), metricId, sampleTime));
                     }
                 } else {
                     log.debug("Unknown numeric:" + observed);
@@ -503,8 +539,8 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             }
 
         }
-
-        protected void handle(int handle, SampleArrayObservedValue v) {
+        protected Time_t sampleTime = new Time_t(0, 0);
+        protected void handle(int handle, RelativeTime time, SampleArrayObservedValue v) {
             short[] bytes = v.getValue();
             ObservedValue ov = ObservedValue.valueOf(v.getPhysioId().getType());
             if (null == ov) {
@@ -514,28 +550,28 @@ public class DemoIntellivue extends AbstractConnectedDevice {
                 if(null == metricId) {
                     log.warn("No metricId for " + ov);
                 } else {
-                    MySampleArray w = sampleArrayUpdates.get(ov);
-                    if(null == w) {
-                        SampleArraySpecification sas = handleToSampleArraySpecification.get(handle);
-                        RelativeTime rt = handleToRelativeTime.get(handle);
-                        if(null != sas && null != rt) {
-                            w = new MySampleArray(createSampleArrayInstance(metricId));
-                            w.setSampleSize(sas.getSampleSize());
-                            w.setSignificantBits(sas.getSignificantBits());
-                            w.holder.data.values.setSize(sas.getArraySize());
-                            w.holder.data.millisecondsPerSample = (int) rt.toMilliseconds();
-                            sampleArrayUpdates.put(ov, w);
-                        } else {
-                            log.warn("No SampleArraySpecification or RelativeTime for handle="+handle);
-                            return;
-                        }
-                    }
+                    SampleArraySpecification sas = handleToSampleArraySpecification.get(handle);
+                    RelativeTime rt = handleToRelativeTime.get(handle);
+                    if(null == sas || null == rt) {
+                        log.warn("No SampleArraySpecification or RelativeTime for handle="+handle + " rt=" + rt + " sas="+sas);
+                    } else {
 
-                    int cnt = w.holder.data.values.size();
-                    for (int i = 0; i < cnt; i++) {
-                        w.applyValue(i, bytes);
+                        MySampleArray w = mySampleArrays.get(handle);
+                        if(null == w) {
+                            w = new MySampleArray();
+                            mySampleArrays.put(handle, w);
+                            w.setSampleArraySpecification(sas);
+                        }
+
+                        int cnt = sas.getArraySize();
+                        for (int i = 0; i < cnt; i++) {
+                            w.applyValue(i, bytes);
+                        }
+                        long tm = clockOffset + time.toMilliseconds();
+                        sampleTime.sec = (int)(tm / 1000L);
+                        sampleTime.nanosec = (int)( (tm % 1000L) * 1000000L);
+                        sampleArrayUpdates.put(handle, sampleArraySample(sampleArrayUpdates.get(handle), w.getNumbers(), (int) rt.toMilliseconds(), metricId, handle, sampleTime));
                     }
-                    sampleArrayDataWriter.write(w.holder.data, w.holder.handle);
                 }
             }
         }
@@ -574,8 +610,9 @@ public class DemoIntellivue extends AbstractConnectedDevice {
     protected final Map<ObservedValue, Label> numericLabels = new HashMap<ObservedValue, Label>();
     protected final Map<ObservedValue, Label> sampleArrayLabels = new HashMap<ObservedValue, Label>();
 
-    protected final Map<ObservedValue, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<ObservedValue, InstanceHolder<ice.Numeric>>();
-    protected final Map<ObservedValue, MySampleArray> sampleArrayUpdates = new HashMap<ObservedValue, MySampleArray>();
+    protected final Map<Integer, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Integer, InstanceHolder<ice.Numeric>>();
+    protected final Map<Integer, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Integer, InstanceHolder<ice.SampleArray>>();
+    protected final Map<Integer, MySampleArray> mySampleArrays = new HashMap<Integer, MySampleArray>();
 
     protected static void loadMap(Map<ObservedValue, String> numericMetricIds, Map<ObservedValue, Label> numericLabels, Map<ObservedValue, String> sampleArrayMetricIds, Map<ObservedValue, Label> sampleArrayLabels) {
 
@@ -667,10 +704,14 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
     protected static class MySampleArray {
         private short sampleSize, significantBits;
-        private final InstanceHolder<ice.SampleArray> holder;
+        private final List<Number> numbers = new ArrayList<Number>();
 
-        public MySampleArray(InstanceHolder<ice.SampleArray> holder) {
-            this.holder = holder;
+        public MySampleArray() {
+
+        }
+
+        public List<Number> getNumbers() {
+            return numbers;
         }
 
         private int[] mask = new int[0];
@@ -681,7 +722,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             for (int i = 0; i < sampleSize; i++) {
                 value |= (mask[i] & values[sampleNumber * sampleSize + i]) << shift[i];
             }
-            holder.data.values.setFloat(sampleNumber, value);
+            numbers.set(sampleNumber, value);
         }
 
         public static final int createMask(int prefix) {
@@ -719,12 +760,34 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         }
 
         public void setSampleSize(short s) {
-            this.sampleSize = (short) (s / Byte.SIZE);
-            buildMaskAndShift();
+            s /= Byte.SIZE;
+            if(sampleSize != s) {
+                this.sampleSize = s;
+                buildMaskAndShift();
+            }
         }
 
         public void setSignificantBits(short s) {
-            this.significantBits = s;
+            if(significantBits != s) {
+                this.significantBits = s;
+                buildMaskAndShift();
+            }
+        }
+
+        public void setArraySize(int size) {
+            if(size != numbers.size()) {
+                while(numbers.size() < size) {
+                    numbers.add(0);
+                }
+            }
+        }
+
+        public void setSampleArraySpecification(SampleArraySpecification sas) {
+            this.sampleSize = (short) (sas.getSampleSize() / Byte.SIZE);
+            this.significantBits = sas.getSignificantBits();
+            while(numbers.size() < sas.getArraySize()) {
+                numbers.add(0);
+            }
             buildMaskAndShift();
         }
     }

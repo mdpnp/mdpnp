@@ -20,11 +20,11 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
         @Override
         protected void receiveECG(Number[] iValues, Number[] iiValues, Number[] iiiValues, int heartRateValue, int respiratoryRateValue,
                 double msPerSample) {
-            sampleArraySample(i, iValues, (int) msPerSample);
-            sampleArraySample(ii, iiValues, (int) msPerSample);
-            sampleArraySample(iii, iiiValues, (int) msPerSample);
-            numericSample(heartRate, heartRateValue);
-            numericSample(respiratoryRate, respiratoryRateValue);
+            sampleArraySample(i, iValues, (int) msPerSample, null);
+            sampleArraySample(ii, iiValues, (int) msPerSample, null);
+            sampleArraySample(iii, iiiValues, (int) msPerSample, null);
+            numericSample(heartRate, heartRateValue, null);
+            numericSample(respiratoryRate, respiratoryRateValue, null);
         }
     }
 

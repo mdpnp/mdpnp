@@ -18,9 +18,9 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
     private class MySimulatedCapnometer extends SimulatedCapnometer {
         @Override
         protected void receiveCO2(Number[] co2Values, int respiratoryRateValue, int etCO2Value, double msPerSample) {
-            sampleArraySample(co2, co2Values, (int) msPerSample);
-            numericSample(respiratoryRate, respiratoryRateValue);
-            numericSample(etCO2, etCO2Value);
+            sampleArraySample(co2, co2Values, (int) msPerSample, null);
+            numericSample(respiratoryRate, respiratoryRateValue, null);
+            numericSample(etCO2, etCO2Value, null);
 
         }
     }

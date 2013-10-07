@@ -33,6 +33,8 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.infrastructure.Time_t;
+
 
 public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostream> {
     @Override
@@ -270,6 +272,8 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             super(in, out);
         }
 
+        private final Time_t sampleTime = new Time_t(0,0);
+
         @Override
         public boolean receiveNumerics(long date, int etCO2, int FiCO2, int respiratoryRate, int spo2, int pulserate,
                 int slowStatus, int CO2ActiveAlarms, int SpO2ActiveAlarms, int noBreathPeriodSeconds,
@@ -277,29 +281,33 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
                 int spo2AlarmHigh, int spo2AlarmLow, int pulseAlarmHigh, int pulseAlarmLow, CO2Units units,
                 int extendedCO2Status) {
 
+            sampleTime.sec = (int)(date / 1000L);
+            sampleTime.nanosec = (int)(date % 1000L * 1000000L);
+
             // We have an SpO2 value
 
+
             DemoCapnostream20.this.spo2 = numericSample(DemoCapnostream20.this.spo2, 0xFF == spo2 ? null : spo2,
-                    rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
+                    rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, sampleTime);
 
-            rr = numericSample(rr, 0xFF == respiratoryRate ? null : respiratoryRate, rosetta.MDC_RESP_RATE.VALUE);
+            rr = numericSample(rr, 0xFF == respiratoryRate ? null : respiratoryRate, rosetta.MDC_RESP_RATE.VALUE, sampleTime);
 
-            etco2 = numericSample(etco2, 0xFF == etCO2 ? null : etCO2, rosetta.MDC_AWAY_CO2_EXP.VALUE);
+            etco2 = numericSample(etco2, 0xFF == etCO2 ? null : etCO2, rosetta.MDC_AWAY_CO2_EXP.VALUE, sampleTime);
 
             DemoCapnostream20.this.pulserate = numericSample(DemoCapnostream20.this.pulserate, 0xFF == pulserate ? null
-                    : pulserate, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
+                    : pulserate, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, sampleTime);
 
             DemoCapnostream20.this.extendedCO2Status = numericSample(DemoCapnostream20.this.extendedCO2Status,
-                    0xFF == extendedCO2Status ? null : extendedCO2Status, oridion.MDC_EXTENDED_CO2_STATUS.VALUE);
+                    0xFF == extendedCO2Status ? null : extendedCO2Status, oridion.MDC_EXTENDED_CO2_STATUS.VALUE, sampleTime);
 
             DemoCapnostream20.this.slowStatus = numericSample(DemoCapnostream20.this.slowStatus,
-                    0xFF == slowStatus ? null : slowStatus, oridion.MDC_SLOW_STATUS.VALUE);
+                    0xFF == slowStatus ? null : slowStatus, oridion.MDC_SLOW_STATUS.VALUE, sampleTime);
 
             DemoCapnostream20.this.co2ActiveAlarms = numericSample(DemoCapnostream20.this.co2ActiveAlarms,
-                    0xFF == CO2ActiveAlarms ? null : CO2ActiveAlarms, oridion.MDC_CO2_ACTIVE_ALARMS.VALUE);
+                    0xFF == CO2ActiveAlarms ? null : CO2ActiveAlarms, oridion.MDC_CO2_ACTIVE_ALARMS.VALUE, sampleTime);
 
             DemoCapnostream20.this.spo2ActiveAlarms = numericSample(DemoCapnostream20.this.spo2ActiveAlarms,
-                    0xFF == SpO2ActiveAlarms ? null : SpO2ActiveAlarms, oridion.MDC_SPO2_ACTIVE_ALARMS.VALUE);
+                    0xFF == SpO2ActiveAlarms ? null : SpO2ActiveAlarms, oridion.MDC_SPO2_ACTIVE_ALARMS.VALUE, sampleTime);
 
             DemoCapnostream20.this.spo2AlarmSettings = alarmSettingsSample(DemoCapnostream20.this.spo2AlarmSettings,
                     0xFF == spo2AlarmLow ? null : (float)spo2AlarmLow, 0xFF == spo2AlarmHigh ? null : (float)spo2AlarmHigh, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
@@ -317,7 +325,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         public boolean receiveCO2Wave(int messageNumber, double co2, int status) {
             reportConnected();
             DemoCapnostream20.this.fastStatus = numericSample(DemoCapnostream20.this.fastStatus,
-                    status, oridion.MDC_FAST_STATUS.VALUE);
+                    status, oridion.MDC_FAST_STATUS.VALUE, null);
 
             if (0 != (0x01 & status)) {
                 log.warn("invalid CO2 value ignored " + co2 + " with fast status " + Integer.toHexString(status));
@@ -362,7 +370,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             if (realtimeBufferCount == realtimeBuffer.length) {
                 realtimeBufferCount = 0;
                 DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, realtimeBuffer, 50,
-                        ice.MDC_CAPNOGRAPH.VALUE);
+                        ice.MDC_CAPNOGRAPH.VALUE, null);
 
             }
             return true;
