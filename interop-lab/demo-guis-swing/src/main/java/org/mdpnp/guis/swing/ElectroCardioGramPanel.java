@@ -7,6 +7,7 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import ice.DeviceConnectivity;
 import ice.InfusionStatus;
 import ice.Numeric;
 import ice.SampleArray;
@@ -113,7 +114,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
         WaveformUpdateWaveformSource wuws = panelMap.get(sampleArray.metric_id);
         if(null != wuws) {
-            wuws.applyUpdate(sampleArray);
+            wuws.applyUpdate(sampleArray, sampleInfo);
         }
         date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
         time.setText(dateFormat.format(date));
@@ -123,5 +124,12 @@ public class ElectroCardioGramPanel extends DevicePanel {
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
 
     }
+    private boolean connected = false;
 
+    @Override
+    public void connected() {
+        for(WaveformUpdateWaveformSource wuws : panelMap.values()) {
+            wuws.reset();
+        }
+    }
 }

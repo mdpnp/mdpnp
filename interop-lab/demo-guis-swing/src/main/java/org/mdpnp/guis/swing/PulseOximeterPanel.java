@@ -166,7 +166,7 @@ public class PulseOximeterPanel extends DevicePanel {
         setInt(numeric, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
         setInt(numeric, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
         if(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(numeric.metric_id)) {
-            pulseWave.applyUpdate(numeric);
+            pulseWave.applyUpdate(numeric, sampleInfo);
         }
         date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
         time.setText(dateFormat.format(date));
@@ -175,7 +175,7 @@ public class PulseOximeterPanel extends DevicePanel {
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
         if(rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(sampleArray.metric_id)) {
-            plethWave.applyUpdate(sampleArray);
+            plethWave.applyUpdate(sampleArray, sampleInfo);
         }
         date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
         time.setText(dateFormat.format(date));
@@ -184,5 +184,10 @@ public class PulseOximeterPanel extends DevicePanel {
     @Override
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
 
+    }
+    @Override
+    public void connected() {
+        plethWave.reset();
+        pulseWave.reset();
     }
 }

@@ -113,11 +113,11 @@ public class VentilatorPanel extends DevicePanel {
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
         if(rosetta.MDC_FLOW_AWAY.VALUE.equals(sampleArray.metric_id)) {
-            flowWave.applyUpdate(sampleArray);
+            flowWave.applyUpdate(sampleArray, sampleInfo);
         } else if(rosetta.MDC_PRESS_AWAY.VALUE.equals(sampleArray.metric_id)) {
-            pressureWave.applyUpdate(sampleArray);
+            pressureWave.applyUpdate(sampleArray, sampleInfo);
         } else if(ice.MDC_CAPNOGRAPH.VALUE.equals(sampleArray.metric_id)) {
-            etco2Wave.applyUpdate(sampleArray);
+            etco2Wave.applyUpdate(sampleArray, sampleInfo);
         }
         date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
 
@@ -126,6 +126,13 @@ public class VentilatorPanel extends DevicePanel {
     @Override
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
 
+    }
+
+    @Override
+    public void connected() {
+        etco2Wave.reset();
+        flowWave.reset();
+        pressureWave.reset();
     }
 
 }

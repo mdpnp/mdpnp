@@ -145,6 +145,9 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
                 this.dct_source = new SwingDCTSource(this.source);
                 this.renderer.addOtherSource(255, 0, 0, 255, dct_source);
             }
+            if(null != dataTable2) {
+                dataTable2.setModel(new WaveformSourceTableModel(SwingWaveformPanel.this.source));
+            }
         } else {
             this.renderer = null;
             this.dct_source = null;
@@ -156,6 +159,7 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 
     public void setEvenTempo(boolean evenTempo) {
         this.evenTempo = evenTempo;
+
     }
 
     public void setCaching(boolean caching) {
@@ -181,6 +185,7 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
     }
 
     private JFrame dataFrame, cacheFrame, coeffFrame, dataFrame2;
+    private JTable dataTable, dataTable2;
 
     public SwingWaveformPanel(WaveformSource source) {
         this.popup = new JPopupMenu("Options");
@@ -242,8 +247,8 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
             public void actionPerformed(ActionEvent arg0) {
                 if (null == dataFrame) {
                     dataFrame = new JFrame("Waveform Data");
-                    JTable table = new JTable(dct_source);
-                    dataFrame.getContentPane().add(new JScrollPane(table));
+                    dataTable = new JTable(dct_source);
+                    dataFrame.getContentPane().add(new JScrollPane(dataTable));
                     dataFrame.setSize(640, 480);
                 }
                 dataFrame.setLocationRelativeTo(SwingWaveformPanel.this);
@@ -290,6 +295,46 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
             }
         });
 
+        final JCheckBoxMenuItem caching = new JCheckBoxMenuItem("Cache History");
+        caching.setSelected(this.caching);
+        caching.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(SwingWaveformPanel.this.caching ^ caching.isSelected()) {
+                    setCaching(caching.isSelected());
+                    WaveformSource src = SwingWaveformPanel.this.source;
+                    while (src instanceof NestedWaveformSource) {
+                        src = ((NestedWaveformSource) src).getTarget();
+                    }
+                    setSource(null);
+                    setSource(src);
+                }
+            }
+
+        });
+        this.popup.add(caching);
+
+        final JCheckBoxMenuItem tempoing = new JCheckBoxMenuItem("Even Tempo");
+        tempoing.setSelected(evenTempo);
+        tempoing.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(evenTempo ^ tempoing.isSelected()) {
+                    setEvenTempo(tempoing.isSelected());
+                    WaveformSource src = SwingWaveformPanel.this.source;
+                    while (src instanceof NestedWaveformSource) {
+                        src = ((NestedWaveformSource) src).getTarget();
+                    }
+                    setSource(null);
+                    setSource(src);
+                }
+            }
+
+        });
+        this.popup.add(tempoing);
+
         this.popup.add(cacheItem);
         this.popup.addPopupMenuListener(new PopupMenuListener() {
 
@@ -324,17 +369,17 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
         realdata.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
-                if (null == dataFrame) {
+                if (null == dataFrame2) {
                     dataFrame = new JFrame("Waveform Data");
                     dataFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-                    final JTable table = new JTable(new WaveformSourceTableModel(SwingWaveformPanel.this.source));
-                    dataFrame.getContentPane().add(new JScrollPane(table));
+                    dataTable2 = new JTable(new WaveformSourceTableModel(SwingWaveformPanel.this.source));
+                    dataFrame.getContentPane().add(new JScrollPane(dataTable2));
                     dataFrame.setSize(640, 480);
                     dataFrame.addWindowListener(new WindowAdapter() {
                         @Override
                         public void windowClosing(WindowEvent e) {
-                            SwingWaveformPanel.this.source.removeListener((WaveformSourceListener) table.getModel());
-                            table.getModel().removeTableModelListener(table);
+                            SwingWaveformPanel.this.source.removeListener((WaveformSourceListener) dataTable2.getModel());
+                            dataTable2.getModel().removeTableModelListener(dataTable2);
                             super.windowClosing(e);
                         }
                     });

@@ -485,7 +485,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
                 seenInstances.add(si.instance_handle);
                 ice.SampleArray sa = (SampleArray) sa_seq.get(i);
                 if(rosetta.MDC_FLOW_AWAY.VALUE.equals(sa.metric_id)) {
-                    wuws.applyUpdate(sa);
+                    wuws.applyUpdate(sa, si);
                 }
             }
         }

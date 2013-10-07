@@ -13,36 +13,38 @@ package org.mdpnp.guis.waveform;
  * getCount() is indicative of the most recently updated point
  * For two invocations of getCount(), x0 and x1 it is implied that all domain
  * values between x0 and x1 have been updated between the invocations
- *  
+ *
  *
  */
 public interface WaveformSource {
-	/**
-	 * The waveform at position x
-	 * @param x
-	 * @return
-	 */
-	float getValue(int x);
-	
-	/**
-	 * The maximum extent of the waveform domain
-	 * @return
-	 */
-	int getMax();
-	
-	/**
-	 * The most recently updated point
-	 * @return
-	 */
-	int getCount();
-	
-	
-	/**
-	 * Resolution of the sample array
-	 * @return
-	 */
-	double getMillisecondsPerSample();
-	
-	void addListener(WaveformSourceListener listener);
-	void removeListener(WaveformSourceListener listener);
+    /**
+     * The waveform at position x
+     * @param x
+     * @return
+     */
+    float getValue(int x);
+
+    /**
+     * The maximum extent of the waveform domain
+     * @return
+     */
+    int getMax();
+
+    /**
+     * The most recently updated point
+     * @return
+     */
+    int getCount();
+
+
+    /**
+     * Resolution of the sample array
+     * @return
+     */
+    double getMillisecondsPerSample();
+
+    long getStartTime();
+
+    void addListener(WaveformSourceListener listener);
+    void removeListener(WaveformSourceListener listener);
 }

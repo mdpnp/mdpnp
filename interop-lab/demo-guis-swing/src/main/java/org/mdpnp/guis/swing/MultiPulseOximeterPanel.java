@@ -67,13 +67,20 @@ public class MultiPulseOximeterPanel extends DevicePanel {
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
         if(sampleArray.instance_id>=0&&sampleArray.instance_id<N) {
-            plethWave[sampleArray.instance_id].applyUpdate(sampleArray);
+            plethWave[sampleArray.instance_id].applyUpdate(sampleArray, sampleInfo);
         }
     }
 
     @Override
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
 
+    }
+
+    @Override
+    public void connected() {
+        for(WaveformUpdateWaveformSource wuws : plethWave) {
+            wuws.reset();
+        }
     }
 
     @Override
