@@ -17,8 +17,8 @@ public class InfusionPumpPanel extends DevicePanel {
            drugMass = new JLabel(), solutionVolume = new JLabel(),
            vtbiMl = new JLabel(), durationSec = new JLabel(),
            fracComplete = new JLabel();
- 
-    
+
+
     public InfusionPumpPanel() {
         super(new GridLayout(7, 2));
         add(new JLabel("Active"));
@@ -36,23 +36,23 @@ public class InfusionPumpPanel extends DevicePanel {
         add(new JLabel("Percent complete"));
         add(fracComplete);
     }
-    
+
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
         // TODO Auto-generated method stub
-        
+
     }
 
-    public static boolean supported(Set<Integer> numerics) {
+    public static boolean supported(Set<String> numerics) {
         return false;
     }
-    
+
     @Override
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
         if(sampleInfo.valid_data) {

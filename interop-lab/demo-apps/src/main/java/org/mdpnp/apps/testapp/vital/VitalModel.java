@@ -18,7 +18,7 @@ public interface VitalModel {
 
     int getCount();
     Vital getVital(int i);
-    Vital addVital(String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color);
+    Vital addVital(String label, String units, String[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color);
     boolean removeVital(Vital vital);
     Vital removeVital(int i);
 
@@ -29,7 +29,7 @@ public interface VitalModel {
     ice.DeviceConnectivity getDeviceConnectivity(String udi);
     DeviceIcon getDeviceIcon(String udi);
 
-    ice.AlarmSettingsObjectiveDataWriter getWriter();
+    ice.GlobalAlarmSettingsObjectiveDataWriter getWriter();
 
     void start(Subscriber subscriber, EventLoop eventLoop);
     void stop();

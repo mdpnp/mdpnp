@@ -35,8 +35,8 @@ public class DemoN595 extends AbstractSerialDevice {
 
         @Override
         public void firePulseOximeter() {
-            pulseUpdate = numericSample(pulseUpdate, getHeartRate(), ice.Physio._MDC_PULS_OXIM_PULS_RATE);
-            spo2Update = numericSample(spo2Update, getSpO2(), ice.Physio._MDC_PULS_OXIM_SAT_O2);
+            pulseUpdate = numericSample(pulseUpdate, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
+            spo2Update = numericSample(spo2Update, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
         }
         @Override
         public void fireAlarmPulseOximeter() {

@@ -7,14 +7,15 @@ targetCompatibility = JAVA_VERSION_CLASSES
 dependencies {
     //compile project(':interop-lab:demo-datamodel')
 //    compile project(':interop-lab:demo-messaging')
-	compile project(':devices:philips')
-	compile project(':devices:oridion')
-	compile project(':devices:draeger')
-	compile project(':devices:cpc')
-	compile project(':devices:masimo')
-	compile project(':devices:nellcor')
-	compile project(':devices:nonin')
-    compile project(':devices:simulated')
-    compile project(':data-types:x73-idl-rti-dds')
+  compile project(':devices:philips')
+  compile project(':devices:oridion')
+  compile project(':devices:draeger')
+  compile project(':devices:cpc')
+  compile project(':devices:masimo')
+  compile project(':devices:nellcor')
+  compile project(':devices:nonin')
+  compile project(':devices:simulated')
+  compile project(':data-types:x73-idl-rti-dds')
+  testCompile group: 'junit', name: 'junit', version: '4.11'
 
 }

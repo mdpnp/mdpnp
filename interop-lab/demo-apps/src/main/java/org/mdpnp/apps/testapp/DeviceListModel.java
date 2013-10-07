@@ -357,6 +357,10 @@ public class DeviceListModel extends AbstractListModel<Device> {
         });
     }
 
+    protected void notADevice(SampleInfo si, ParticipantBuiltinTopicData participant_info) {
+
+    }
+
     private final void seeAnInstance(ParticipantBuiltinTopicData pbtd, SampleInfo si) {
         if(0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
             if(si.valid_data) {
@@ -364,6 +368,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                 if("Device".equals(pbtd.participant_name.name)) {
                     addOrUpdate(si.instance_handle, pbtd);
                 } else {
+                    notADevice(si, pbtd);
                     remove(si.instance_handle);
                 }
             } else {
@@ -395,7 +400,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
      * @param udi
      * @return
      */
-    public Device getByUniversalDeviceIdentifier(String udi) {
+    public Device getByUniqueDeviceIdentifier(String udi) {
         if(null == udi) {
             return null;
         }

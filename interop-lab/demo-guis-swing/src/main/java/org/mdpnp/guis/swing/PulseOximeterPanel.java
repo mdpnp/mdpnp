@@ -133,7 +133,9 @@ public class PulseOximeterPanel extends DevicePanel {
         plethPanel.setSource(plethWave);
 
         pulsePanel.setSource(pulseWave);
-        pulsePanel.cachingSource().setFixedTimeDomain(120000L);
+        if(null != pulsePanel.cachingSource()) {
+            pulsePanel.cachingSource().setFixedTimeDomain(120000L);
+        }
 
         plethPanel.start();
         pulsePanel.start();
@@ -151,9 +153,9 @@ public class PulseOximeterPanel extends DevicePanel {
         super.destroy();
     }
 
-    public static boolean supported(Set<Integer> names) {
-        return names.contains(ice.Physio._MDC_PULS_OXIM_SAT_O2) &&
-               names.contains(ice.Physio._MDC_PULS_OXIM_PULS_RATE);// &&
+    public static boolean supported(Set<String> names) {
+        return names.contains(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE) &&
+               names.contains(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);// &&
 //	           names.contains(ice.Physio._MDC_PULS_OXIM_PLETH);
     }
     @SuppressWarnings("unused")
@@ -161,9 +163,9 @@ public class PulseOximeterPanel extends DevicePanel {
     private final Date date = new Date();
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
-        setInt(numeric, ice.Physio._MDC_PULS_OXIM_SAT_O2, spo2, null);
-        setInt(numeric, ice.Physio._MDC_PULS_OXIM_PULS_RATE, heartrate, null);
-        if(ice.Physio._MDC_PULS_OXIM_PULS_RATE == numeric.name) {
+        setInt(numeric, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
+        setInt(numeric, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
+        if(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(numeric.metric_id)) {
             pulseWave.applyUpdate(numeric);
         }
         date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
@@ -172,10 +174,8 @@ public class PulseOximeterPanel extends DevicePanel {
 
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
-        switch(sampleArray.name) {
-        case ice.Physio._MDC_PULS_OXIM_PLETH:
+        if(rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(sampleArray.metric_id)) {
             plethWave.applyUpdate(sampleArray);
-            break;
         }
         date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
         time.setText(dateFormat.format(date));

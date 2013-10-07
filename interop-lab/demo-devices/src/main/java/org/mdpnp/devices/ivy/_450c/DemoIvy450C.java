@@ -15,28 +15,28 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
+public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
     private static final String ECG_I_PREFIX = "ECG-I", ECG_II_PREFIX = "ECG-II", ECG_III_PREFIX = "ECG-III";
 
-    private final static Integer nameOfECGWave(String lbl) {
+    private final static String nameOfECGWave(String lbl) {
         if(lbl==null || lbl.isEmpty()) {
             return null;
         }
         if(lbl.startsWith(ECG_III_PREFIX)) {
-            return ice.Physio._MDC_ECG_AMPL_ST_III;
+            return rosetta.MDC_ECG_AMPL_ST_III.VALUE;
         } else if(lbl.startsWith(ECG_II_PREFIX)) {
-            return ice.Physio._MDC_ECG_AMPL_ST_II;
+            return rosetta.MDC_ECG_AMPL_ST_II.VALUE;
         } else if(lbl.startsWith(ECG_I_PREFIX)) {
-            return ice.Physio._MDC_ECG_AMPL_ST_I;
+            return rosetta.MDC_ECG_AMPL_ST_I.VALUE;
         } else {
             log.warn("Unknown ECG:"+lbl);
             return null;
         }
     }
-    private static final Logger log = LoggerFactory.getLogger(Ivy450C.class);
+    private static final Logger log = LoggerFactory.getLogger(DemoIvy450C.class);
 
-    public Ivy450C(int domainId, EventLoop eventLoop) {
+    public DemoIvy450C(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
         deviceIdentity.manufacturer = "Ivy";
         deviceIdentity.model = "450C";
@@ -44,9 +44,9 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         writeDeviceIdentity();
     }
 
-    private InstanceHolder<ice.Numeric> heartRate, respiratoryRate, spo2, etco2, t1, /*t2,*/ pulseRate, nibpSystolic, nibpDiastolic, nibpMean, nibpPulse, ibpSystolic, ibpDiastolic, ibpMean;
+    private InstanceHolder<ice.Numeric> heartRate, respiratoryRate, spo2, etco2, t1, t2, pulseRate, nibpSystolic, nibpDiastolic, nibpMean, nibpPulse, ibpSystolic1, ibpDiastolic1, ibpMean1, ibpSystolic2, ibpDiastolic2, ibpMean2;
 
-    private InstanceHolder<ice.SampleArray> ecgWave, respWave, plethWave, p1Wave/*, p2Wave*/;
+    private InstanceHolder<ice.SampleArray> ecgWave, respWave, plethWave, p1Wave, p2Wave;
     @Override
     protected String iconResourceName() {
         return "450c.png";
@@ -65,12 +65,12 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
         @Override
         protected void receiveEndTidalCO2(Integer value, String label) {
-            etco2 = numericSample(etco2, value, ice.Physio._MDC_AWAY_CO2_EXP);
+            etco2 = numericSample(etco2, value, rosetta.MDC_AWAY_CO2_EXP.VALUE);
         }
 
         @Override
         protected void receiveECGWave(int[] data, int count, int msPerSample, String label) {
-            Integer ecg = nameOfECGWave(label);
+            String ecg = nameOfECGWave(label);
             if(ecg != null) {
                 ecgWave = sampleArraySample(ecgWave, data, count, msPerSample, ecg);
             } else {
@@ -88,17 +88,17 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
         @Override
         protected void receivePlethWave(int[] data, int count, int msPerSample) {
-            plethWave = sampleArraySample(plethWave, data, count, msPerSample, ice.Physio._MDC_PULS_OXIM_PLETH);
+            plethWave = sampleArraySample(plethWave, data, count, msPerSample, rosetta.MDC_PULS_OXIM_PLETH.VALUE);
         }
 
         @Override
         protected void receiveP1Wave(int[] data, int count, int msPerSample) {
-            p1Wave = sampleArraySample(p1Wave, data, count, msPerSample, ice.Physio._MDC_PRESS_BLD);
+            p1Wave = sampleArraySample(p1Wave, data, count, msPerSample, rosetta.MDC_PRESS_BLD.VALUE, 0);
         }
 
         @Override
         protected void receiveP2Wave(int[] data, int count, int msPerSample) {
-            // TODO Don't know what nomenclature tag ... multiple instances needs to be enabled?
+            p2Wave = sampleArraySample(p2Wave, data, count, msPerSample, rosetta.MDC_PRESS_BLD.VALUE, 1);
         }
 
 
@@ -106,43 +106,45 @@ public class Ivy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         @Override
         protected void receiveHeartRate(Integer value, String label) {
             // should be ECG heart rate?  or should it .. depends upon mode
-            heartRate = numericSample(heartRate, value, ice.Physio._MDC_PULS_RATE);
+            heartRate = numericSample(heartRate, value, rosetta.MDC_PULS_RATE.VALUE);
 
         }
         @Override
         protected void receiveNIBP(Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label) {
-            nibpSystolic = numericSample(nibpSystolic, systolic, ice.Physio._MDC_PRESS_CUFF_SYS);
-            nibpDiastolic = numericSample(nibpDiastolic, diastolic, ice.Physio._MDC_PRESS_CUFF_DIA);
-            nibpPulse = numericSample(nibpPulse, pulse, ice.Physio._MDC_PULS_RATE_NON_INV);
-            nibpMean = numericSample(nibpMean, mean, ice.Physio._MDC_PRESS_CUFF_MEAN);
+            nibpSystolic = numericSample(nibpSystolic, systolic, rosetta.MDC_PRESS_CUFF_SYS.VALUE);
+            nibpDiastolic = numericSample(nibpDiastolic, diastolic, rosetta.MDC_PRESS_CUFF_DIA.VALUE);
+            nibpPulse = numericSample(nibpPulse, pulse, rosetta.MDC_PULS_RATE_NON_INV.VALUE);
+            nibpMean = numericSample(nibpMean, mean, rosetta.MDC_PRESS_CUFF_MEAN.VALUE);
         }
         @Override
         protected void receivePressure1(Integer systolic, Integer diastolic, Integer mean, String label) {
-            ibpSystolic = numericSample(ibpSystolic, systolic, ice.Physio._MDC_PRESS_BLD_SYS);
-            ibpDiastolic = numericSample(ibpDiastolic, diastolic, ice.Physio._MDC_PRESS_BLD_DIA);
-            ibpMean = numericSample(ibpMean, mean, ice.Physio._MDC_PRESS_BLD_MEAN);
+            ibpSystolic1 = numericSample(ibpSystolic1, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, 0);
+            ibpDiastolic1 = numericSample(ibpDiastolic1, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, 0);
+            ibpMean1 = numericSample(ibpMean1, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, 0);
         }
         @Override
         protected void receivePressure2(Integer systolic, Integer diastolic, Integer mean, String label) {
-            // TODO enable multiple instances of the same type of physiological identifier in future iterations
+            ibpSystolic2 = numericSample(ibpSystolic2, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, 1);
+            ibpDiastolic2 = numericSample(ibpDiastolic2, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, 1);
+            ibpMean2 = numericSample(ibpMean2, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, 1);
         }
         @Override
         protected void receiveRespiratoryRate(Integer value, String label) {
-            respiratoryRate = numericSample(respiratoryRate, value, ice.Physio._MDC_RESP_RATE);
+            respiratoryRate = numericSample(respiratoryRate, value, rosetta.MDC_RESP_RATE.VALUE);
         }
         @Override
         protected void receiveSpO2(Integer value, String label, Integer pulseRate) {
-            spo2 = numericSample(spo2, value, ice.Physio._MDC_PULS_OXIM_SAT_O2);
-            Ivy450C.this.pulseRate = numericSample(Ivy450C.this.pulseRate, pulseRate, ice.Physio._MDC_PULS_OXIM_PULS_RATE);
+            spo2 = numericSample(spo2, value, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
+            DemoIvy450C.this.pulseRate = numericSample(DemoIvy450C.this.pulseRate, pulseRate, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
 
         }
         @Override
-        protected void receiveTemperature1(Integer value, String label) {
-            t1 = numericSample(t1, value, ice.Physio._MDC_TEMP_BLD);
+        protected void receiveTemperature1(Float value, String label) {
+            t1 = numericSample(t1, value, rosetta.MDC_TEMP_BLD.VALUE, 0);
         }
         @Override
-        protected void receiveTemperature2(Integer value, String label) {
-            // TODO enable multiple instances of the same type of physiological identifier in future iterations
+        protected void receiveTemperature2(Float value, String label) {
+            t2 = numericSample(t2, value, rosetta.MDC_TEMP_BLD.VALUE, 1);
         }
     }
 

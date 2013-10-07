@@ -1,3 +1,4 @@
+apply plugin: 'maven'
 defaultTasks 'build'
 
 // builds a gradle wrapper
@@ -47,6 +48,7 @@ group 'org.mdpnp'
 version '0.1.3-SNAPSHOT'
 
 subprojects {
+    apply plugin: 'maven'
     group 'org.mdpnp'
     version '0.1.3-SNAPSHOT'
     buildscript {
@@ -104,5 +106,19 @@ subprojects {
 
         // Fall back to maven central actual as necessary
         mavenCentral();
+    }
+    if(project.hasProperty('MDPNP_WRITE_USER') && project.hasProperty('MDPNP_WRITE_PASSWORD')) {
+        uploadArchives {
+            repositories {
+                mavenDeployer {
+                    repository(url: 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-release-local') {
+                        authentication(userName: MDPNP_WRITE_USER, password: MDPNP_WRITE_PASSWORD)
+                    }
+                    snapshotRepository(url: 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-snapshot-local') {
+                        authentication(userName: MDPNP_WRITE_USER, password: MDPNP_WRITE_PASSWORD)
+                    }
+                }
+            }
+        }
     }
 }

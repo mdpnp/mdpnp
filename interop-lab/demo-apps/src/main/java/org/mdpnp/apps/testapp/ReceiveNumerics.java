@@ -103,7 +103,7 @@ public class ReceiveNumerics implements DataReaderListener {
                     if(si.valid_data) {
                         source_time.setTime(si.source_timestamp.sec*1000L+si.source_timestamp.nanosec/1000000L);
                         receipt_time.setTime(si.reception_timestamp.sec*1000L+si.source_timestamp.nanosec/1000000L);
-                        System.out.println("Source Time:"+dateFormat.format(source_time)+" Receipt Time:"+dateFormat.format(receipt_time)+" name="+numeric.name+" value="+numeric.value+" udi="+numeric.unique_device_identifier);
+                        System.out.println("Source Time:"+dateFormat.format(source_time)+" Receipt Time:"+dateFormat.format(receipt_time)+" name="+numeric.metric_id+" value="+numeric.value+" udi="+numeric.unique_device_identifier);
                     }
                 }
                 // I don't like that they use this to report no more data

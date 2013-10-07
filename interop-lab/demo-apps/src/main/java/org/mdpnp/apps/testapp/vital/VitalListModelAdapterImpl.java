@@ -1,10 +1,9 @@
 package org.mdpnp.apps.testapp.vital;
 
-import java.awt.Color;
-
-import ice.AlarmSettingsObjectiveDataWriter;
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
+
+import java.awt.Color;
 
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -33,8 +32,8 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     }
 
     @Override
-    public Vital addVital(String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
-        return model.addVital(label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow, valueMsWarningHigh, color);
+    public Vital addVital(String label, String units, String[] metric_ids, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
+        return model.addVital(label, units, metric_ids, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow, valueMsWarningHigh, color);
     }
 
     @Override
@@ -226,7 +225,7 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     }
 
     @Override
-    public AlarmSettingsObjectiveDataWriter getWriter() {
+    public ice.GlobalAlarmSettingsObjectiveDataWriter getWriter() {
         return model.getWriter();
     }
 

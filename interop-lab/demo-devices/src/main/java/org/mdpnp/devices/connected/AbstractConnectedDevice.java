@@ -70,7 +70,13 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
     }
 
     protected void stateChanged(ice.ConnectionState newState, ice.ConnectionState oldState) {
-
+        if(ice.ConnectionState.Connected.equals(oldState) && !ice.ConnectionState.Connected.equals(newState)) {
+            eventLoop.doLater(new Runnable() {
+                public void run() {
+                    unregisterAllInstances();
+                }
+            });
+        }
     }
 
     private static final Logger log = LoggerFactory.getLogger(AbstractConnectedDevice.class);

@@ -57,13 +57,13 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
         deviceIdentity.model = "NIBP (Simulated)";
         writeDeviceIdentity();
 
-        state = createNumericInstance(ice.Physio.MDC_PRESS_CUFF.value());
-        systolic = createNumericInstance(ice.Physio.MDC_PRESS_CUFF_SYS.value());
-        diastolic = createNumericInstance(ice.Physio.MDC_PRESS_CUFF_DIA.value());
+        state = createNumericInstance(rosetta.MDC_PRESS_CUFF.VALUE);
+        systolic = createNumericInstance(rosetta.MDC_PRESS_CUFF_SYS.VALUE);
+        diastolic = createNumericInstance(rosetta.MDC_PRESS_CUFF_DIA.VALUE);
         nextInflationTime = createNumericInstance(ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE);
         inflation = createNumericInstance(ice.MDC_PRESS_CUFF_INFLATION.VALUE);
         // TODO temporarily more interesting
-        pulse = createNumericInstance(ice.Physio.MDC_PULS_RATE_NON_INV.value());
+        pulse = createNumericInstance(rosetta.MDC_PULS_RATE_NON_INV.VALUE);
         // pulse = createNumericInstance(ice.Physio.MDC_PULS_RATE_NON_INV.value());
 
         numericSample(state, ice.MDC_EVT_STAT_OFF.VALUE);

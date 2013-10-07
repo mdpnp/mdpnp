@@ -181,7 +181,10 @@ public class UserInfo implements java.io.Serializable {
         openIdProviders.put("Yahoo", "yahoo.com");
         openIdProviders.put("MySpace", "myspace.com");
         openIdProviders.put("AOL", "aol.com");
-        openIdProviders.put("MyOpenId.com", "myopenid.com");
+        openIdProviders.put("MyOpenId", "myopenid.com"); //- slated to be shut down Feb 2014
+//        openIdProviders.put("Linked In", "linkedin.com");
+//        Wordpress https://username.wordpress.com/ 
+//        check http://twiki.org/cgi-bin/view/Codev/OpenIDProviderList
     }
 
     public static List<UserInfo> findAllUserInfo() {

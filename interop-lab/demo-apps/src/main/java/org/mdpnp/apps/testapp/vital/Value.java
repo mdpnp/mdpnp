@@ -5,8 +5,9 @@ import com.rti.dds.subscription.SampleInfo;
 import ice.Numeric;
 
 public interface Value {
-    String getUniversalDeviceIdentifier();
-    int getName();
+    String getUniqueDeviceIdentifier();
+    String getMetricId();
+    int getInstanceId();
     Numeric getNumeric();
     SampleInfo getSampleInfo();
     Vital getParent();
@@ -27,8 +28,6 @@ public interface Value {
     long getAgeInMilliseconds();
 
     void updateFrom(Numeric numeric, SampleInfo sampleInfo);
-    void writeCriticalLimitsToDevice(ice.AlarmSettingsObjectiveDataWriter writer);
-    void unregisterCriticalLimits(ice.AlarmSettingsObjectiveDataWriter writer);
 
     long getValueMsBelowLow();
     long getValueMsAboveHigh();

@@ -25,36 +25,36 @@ import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
 public class VentilatorPanel extends DevicePanel {
-	private WaveformPanel flowPanel, pressurePanel, co2Panel;
-	private final JLabel time = new JLabel(" "), respiratoryRate = new JLabel(" "), endTidalCO2 = new JLabel(" ");
-	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		
-	@Override
-	public void destroy() {
-	    flowPanel.stop();
+    private WaveformPanel flowPanel, pressurePanel, co2Panel;
+    private final JLabel time = new JLabel(" "), respiratoryRate = new JLabel(" "), endTidalCO2 = new JLabel(" ");
+    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    @Override
+    public void destroy() {
+        flowPanel.stop();
         pressurePanel.stop();
         co2Panel.stop();
-	    super.destroy();
-	}
-	protected void buildComponents() {
-	    WaveformPanelFactory fact = new WaveformPanelFactory();
-		flowPanel = fact.createWaveformPanel();
-		pressurePanel = fact.createWaveformPanel();
-		co2Panel = fact.createWaveformPanel();
-		
-		JPanel waves = new JPanel(new GridLayout(3,1));
-		waves.setOpaque(false);
-		
-		waves.add(label("Flow", flowPanel.asComponent()));
-		waves.add(label("Pressure", pressurePanel.asComponent()));
-		waves.add(label("CO\u2082", co2Panel.asComponent()));
-		
-		add(waves, BorderLayout.CENTER);
-		
-		add(label("Last Sample: ", time, BorderLayout.WEST), BorderLayout.SOUTH);
-		
-		SpaceFillLabel.attachResizeFontToFill(this, endTidalCO2, respiratoryRate);
-		
+        super.destroy();
+    }
+    protected void buildComponents() {
+        WaveformPanelFactory fact = new WaveformPanelFactory();
+        flowPanel = fact.createWaveformPanel();
+        pressurePanel = fact.createWaveformPanel();
+        co2Panel = fact.createWaveformPanel();
+
+        JPanel waves = new JPanel(new GridLayout(3,1));
+        waves.setOpaque(false);
+
+        waves.add(label("Flow", flowPanel.asComponent()));
+        waves.add(label("Pressure", pressurePanel.asComponent()));
+        waves.add(label("CO\u2082", co2Panel.asComponent()));
+
+        add(waves, BorderLayout.CENTER);
+
+        add(label("Last Sample: ", time, BorderLayout.WEST), BorderLayout.SOUTH);
+
+        SpaceFillLabel.attachResizeFontToFill(this, endTidalCO2, respiratoryRate);
+
         JPanel numerics = new JPanel(new GridLayout(2, 1));
         SpaceFillLabel.attachResizeFontToFill(this, endTidalCO2, respiratoryRate);
         JPanel t;
@@ -63,77 +63,69 @@ public class VentilatorPanel extends DevicePanel {
         numerics.add(t = label("RespiratoryRate", respiratoryRate));
         t.add(new JLabel("BPM"), BorderLayout.EAST);
         add(numerics, BorderLayout.EAST);
-		
+
         add(numerics, BorderLayout.EAST);
 
         flowPanel.setSource(flowWave);
         pressurePanel.setSource(pressureWave);
         co2Panel.setSource(etco2Wave);
-        
+
         flowPanel.start();
         pressurePanel.start();
         co2Panel.start();
-        
-        
+
+
         setForeground(Color.green);
         setBackground(Color.black);
         setOpaque(true);
 
-	}	
+    }
 
-	public VentilatorPanel() {
-		super(new BorderLayout());
-		buildComponents();
+    public VentilatorPanel() {
+        super(new BorderLayout());
+        buildComponents();
 
-	}
-		
-	private final WaveformUpdateWaveformSource flowWave = new WaveformUpdateWaveformSource();
-	private final WaveformUpdateWaveformSource pressureWave = new WaveformUpdateWaveformSource();
-	private final WaveformUpdateWaveformSource etco2Wave = new WaveformUpdateWaveformSource();
-	
+    }
 
-	@SuppressWarnings("unused")
+    private final WaveformUpdateWaveformSource flowWave = new WaveformUpdateWaveformSource();
+    private final WaveformUpdateWaveformSource pressureWave = new WaveformUpdateWaveformSource();
+    private final WaveformUpdateWaveformSource etco2Wave = new WaveformUpdateWaveformSource();
+
+
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(VentilatorPanel.class);
 
-	public static boolean supported(Set<Integer> identifiers) {
-		return identifiers.contains(ice.Physio._MDC_PRESS_AWAY) || identifiers.contains(ice.MDC_CAPNOGRAPH.VALUE);
-	}
+    public static boolean supported(Set<String> identifiers) {
+        return identifiers.contains(rosetta.MDC_PRESS_AWAY.VALUE) || identifiers.contains(ice.MDC_CAPNOGRAPH.VALUE);
+    }
 
 
     @Override
     public void numeric(Numeric numeric, SampleInfo sampleInfo) {
-        switch(numeric.name) {
-        case ice.Physio._MDC_RESP_RATE:
+        if(rosetta.MDC_RESP_RATE.VALUE.equals(numeric.metric_id)) {
             respiratoryRate.setText(Integer.toString((int)numeric.value));
-            break;
-        case ice.Physio._MDC_AWAY_CO2_EXP:
+        } else if(rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(numeric.metric_id)) {
             endTidalCO2.setText(Integer.toString((int)numeric.value));
-            break;
         }
     }
 
     private final Date date = new Date();
     @Override
     public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
-
-        switch(sampleArray.name) {
-        case ice.Physio._MDC_FLOW_AWAY:
+        if(rosetta.MDC_FLOW_AWAY.VALUE.equals(sampleArray.metric_id)) {
             flowWave.applyUpdate(sampleArray);
-            break;
-        case ice.Physio._MDC_PRESS_AWAY:
+        } else if(rosetta.MDC_PRESS_AWAY.VALUE.equals(sampleArray.metric_id)) {
             pressureWave.applyUpdate(sampleArray);
-            break;
-        case ice.MDC_CAPNOGRAPH.VALUE:
+        } else if(ice.MDC_CAPNOGRAPH.VALUE.equals(sampleArray.metric_id)) {
             etco2Wave.applyUpdate(sampleArray);
-            break;
         }
         date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
-        
+
         time.setText(dateFormat.format(date));
     }
     @Override
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
-        
+
     }
 
 }

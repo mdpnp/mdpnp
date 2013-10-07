@@ -2,6 +2,8 @@ package org.mdpnp.devices.oridion.capnostream;
 
 import static org.mdpnp.devices.io.util.Bits.getUnsignedInt;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,14 +32,16 @@ public class Capnostream {
     private final InputStream inputStream;
     private final SplitBytesOutputStream outputStream;
 
+    // Header + 2-byte length + 255 2-byte body + 2-byte checksum
+    private static final int WORST_CASE_MSG_LENGTH = 1 + 2 + 2 * 255 + 2;
+
     public Capnostream(InputStream is, OutputStream os) {
-        this.inputStream = new MergeBytesInputStream(is);
-        this.outputStream = new SplitBytesOutputStream(os);
+        this.inputStream = new MergeBytesInputStream(new BufferedInputStream(is, WORST_CASE_MSG_LENGTH));
+        this.outputStream = new SplitBytesOutputStream(new BufferedOutputStream(os, WORST_CASE_MSG_LENGTH));
     }
 
-    private byte[] inBuffer = new byte[2048];
-    private byte[] outBuffer = new byte[1024];
-    private byte[] wholeCmdBuffer = new byte[1030];
+    private final byte[] inBuffer = new byte[WORST_CASE_MSG_LENGTH];
+    private final byte[] outBuffer = new byte[WORST_CASE_MSG_LENGTH];
 
     protected static final Map<Integer, Command> cmdMapping = new HashMap<Integer, Command>();
     protected static final Map<Integer, Response> resMapping = new HashMap<Integer, Response>();
@@ -426,6 +430,7 @@ public class Capnostream {
             }
         }
         outputStream.write(checksum);
+        outputStream.flush();
 
         return true;
     }
@@ -685,13 +690,6 @@ public class Capnostream {
         }
 
         int checksum = inputStream.read();
-
-        while(checksum == 0 && my_checksum != 0) {
-            // TODO this is likely fixed but it needs testing
-//             Not likely to be a valid checksum value
-//             Empirically some messages seem to be padded with an extra mysterious 0
-            checksum = inputStream.read();
-        }
 
         if (checksum < 0) {
             return false;

@@ -18,11 +18,11 @@ my $Standard_Table;
 for(my $i = 0; $i <= $#headers; $i++) {
 #    print "$i \t $headers[$i]\n";
     if("REFID" eq $headers[$i]) {
-	$REFID = $i;
+  $REFID = $i;
     } elsif("CODE10" eq $headers[$i]) {
-	$CODE10 = $i;
+  $CODE10 = $i;
     } elsif("Standard_Table" eq $headers[$i]) {
-	$Standard_Table = $i;
+  $Standard_Table = $i;
     }
 }
 
@@ -31,14 +31,12 @@ my %codes;
 
 #print "REFID=$REFID CODE10=$CODE10 Standard_Table=$Standard_Table\n";
 
-print "#ifndef _NOMENCLATURE_IDL_\n";
-print "#define _NOMENCLATURE_IDL_\n";
+print "#ifndef _ROSETTA_IDL_\n";
+print "#define _ROSETTA_IDL_\n";
 print "\n";
-print "module org {\n";
-print "  module mdpnp {\n";
-print "    module types {\n";
-print "      enum Physio {\n";
+print "module rosetta {\n";
 
+my $mlen = 0;
 
 while(<>) {
     my @data = Text::ParseWords::parse_line(',', 0, $_);
@@ -46,7 +44,9 @@ while(<>) {
     my $r = $data[$REFID];
     my $c = $data[$CODE10];
 
-
+    if($mlen < length($r)) {
+	$mlen = length($r);
+	}
 
 #    print "$stdtable $r $c\n";
 
@@ -55,31 +55,31 @@ while(<>) {
     ($c =~ /^$/) && next;
 
     if(exists $nomenclature{$r}) {
-	if(!$nomenclature{$r} eq $c) {
-	    print STDERR "Redefinition of $r; was $nomenclature{$r}, now $c\n";
-	} else {
+  if(!$nomenclature{$r} eq $c) {
+      print STDERR "Redefinition of $r; was $nomenclature{$r}, now $c\n";
+  } else {
 #	    print STDERR "Redefinition of $r; harmless\n";
-	}
-	next;
+  }
+  next;
     }
     if(exists $codes{$c}) {
-	if(!$codes{$c} eq $r) {
-	    print STDERR "Redefinition of $c; was $codes{$c}, now $r\n";
-	}
-	next;
+  if(!$codes{$c} eq $r) {
+      print STDERR "Redefinition of $c; was $codes{$c}, now $r\n";
+  }
+  next;
     }
 
     $codes{$c} = $r;
     $nomenclature{$r} = $c;
-    print "        // from $stdtable\n";
-#    print "        const unsigned long $r = $c;\n";
-    print "        $r = $c,\n";
+    print "  // from $stdtable\n";
+#    print "  const unsigned long $r = $c;\n";
+#    print "  $r = $c,\n";
+     print "  const string $r = \"$r\";\n";
 
 }
 
-print "      };\n";
-print "    };\n";
-print "  };\n";
 print "};\n";
 print "#endif\n";
 print "\n";
+
+print STDERR "$mlen\n";

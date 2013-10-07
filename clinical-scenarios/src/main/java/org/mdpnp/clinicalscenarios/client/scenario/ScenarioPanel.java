@@ -1,6 +1,5 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -30,7 +29,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
@@ -55,23 +53,20 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static final int EQUIPMENT_MODEL_COL = 2;
 	private static final int EQUIPMENT_ROSSETAID_COL = 3;
 //	private static final int EQUIPMENT_DElETEBUTTON_COL = 4;//ticket-140
-	private static final int EQUIPMENT_GAPINTRAINING_COL  = 4;
-	private static final int EQUIPMENT_LACKINSTRUCTION_COL  = 5;
-	private static final int EQUIPMENT_LACKTRAINING_COL  = 6;
-	private static final int EQUIPMENT_CONFUSINGINTERFACES_COL  = 7;
-	private static final int EQUIPMENT_CONFUSINGSETTINGS_COL  = 8;
-	private static final int EQUIPMENT_SWPROBLEM_COL = 9;
-	private static final int EQUIPMENT_HWPROBLEM_COL = 10;
-	private static final int EQUIPMENT_DElETEBUTTON_COL = 11;//ticket-140
-	
-	
+	private static final int EQUIPMENT_EXPLANATION_COL  = 4;
+	private static final int EQUIPMENT_TRAINING_PROBLEM_COL  = 5;
+	private static final int EQUIPMENT_INSTRUCTION_PROBLEM_COL  = 6;
+	private static final int EQUIPMENT_CONFUSING_USAGE_COL  = 7;
+	private static final int EQUIPMENT_SW_PROBLEM_COL = 8;
+	private static final int EQUIPMENT_HW_PROBLEM_COL = 9;
+	private static final int EQUIPMENT_DElETEBUTTON_COL = 10;//ticket-140
 	
 	//hazards tab panel
 	private static final int HAZARDS_DESCRIPTION_COL = 0;
 	private static final int HAZARDS_FACTORS_COL = 1;
 	private static final int HAZARDS_EXPECTED_COL = 2;
 	private static final int HAZARDS_SEVERITY_COL = 3;
-	private static final int HAZARDS_DELETEBUTTON_COL = 5;
+	private static final int HAZARDS_DELETEBUTTON_COL = 4;
 	
 	//clinicians table
 	private static final int CLINICIANS_TYPE_COL = 0;
@@ -108,6 +103,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	
 	private final static String STYLE_ROW_EQUIPMENT = "styleRowEquipment";
 	private final static String EQUIPMENT_TEXTBOX_WIDTH = "100px";
+	private final static String STYLE_WIDTH_90_PERCENT = "90%";
+	
+	private final static int STYLE_HAZARDS_TEXT_LINES = 5;
 	
 	/**
 	 * Tabs for our CConOps (Clinical concept of Operations)
@@ -122,6 +120,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * Feedback-->Approve or reject
 	 */	
 	private final static int APPRV_SCN_TAB_POS = 7;//position of the tab to approve or reject scn
+	private final static int HAZARDS_TAB_POS = 1;
+	private final static int EQUIPMENT_TAB_POS = 3;
 	
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
@@ -199,7 +199,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		      add(fp);
 		    }
 		  }
-	private static final String[] hazardExpected = new String[] {"Expected", "Unexpected", "Unknown"};
+	private static final String[] hazardExpected = new String[] {"Unknown", "Expected", "Unexpected"};
 	/**
 	 * Returns the associated index or a word of the hazardExpected array
 	 * @param word
@@ -212,7 +212,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		return -1;	
 	}
 	
-	private static final String[] hazardSeverity = new String[] {"Mild", "Moderate", "Severe", "Life Threatening", "Fatal", "Unknown"};
+	private static final String[] hazardSeverity = new String[] {"Unknown", "Mild", "Moderate", "Severe", "Life Threatening", "Fatal"};
 	public static String[] getHazardSeverityValues(){
 		return hazardSeverity;
 	}
@@ -235,6 +235,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		}
 		return box;
 	}
+	
 	
 	
 //	private static final String[] testCasesHeader = new String[] {"Id", "Description", "Step/Order", "Author", "Requirements", "Configuration", "Remarks", "Summary"};
@@ -289,6 +290,33 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 	}
 	
+	//labels for the HEADERS row of the Devices tab table. we use the following static block to initialize some of
+	// their properties, such as their title/tooltip TICKET-176; TICKET-140
+	private static Label labelEquipmentDeviceType = new Label("Device Type");
+	private static Label labelEquipmentManufacturer = new Label("Manufacturer");
+	private static Label labelEquipmentModel = new Label("Model");
+	private static Label labelEquipmentRosettaId = new Label("Rosetta ID");
+	private static Label labelEquipmentProblemDescrp = new Label("Problem Description");
+	private static Label labelEquipmentTrainingProblem = new  Label("Training Related Problem");
+	private static Label labelEquipmentInstructionsProblem = new  Label("Instructions Related Problem");
+	private static Label labelEquipmentConfusingUsage = new Label("Confusing device Usage");
+	private static Label labelEquipmentSoftWProblem = new Label("Software related problem"); 
+	private static Label labelEquipmentHardWProblem = new Label("Hardware related problem"); 
+	
+	{
+		labelEquipmentDeviceType.setTitle("Type of device, such as \"ventilator\" or \"Infusion pump\" ");
+		labelEquipmentManufacturer.setTitle("Manufacturer/company or device provider");
+		labelEquipmentModel.setTitle("Model of the device");
+		labelEquipmentRosettaId.setTitle("Unique identifier of this device");
+		labelEquipmentProblemDescrp.setTitle("Brief description of the device malfunctioning");
+		labelEquipmentTrainingProblem.setTitle("A gap, lack of or inadequate training with this device contributted to the problem");
+		labelEquipmentInstructionsProblem.setTitle("Instructions or documentation for this device were confusing, unavailable or outdated" +
+				"contributting to the problem");
+		labelEquipmentConfusingUsage.setTitle("Confusing interfaces, settings, controls, o general usage procedure of the device contributted to the problem");
+		labelEquipmentSoftWProblem.setTitle("A software problem contributed to the problem");
+		labelEquipmentHardWProblem.setTitle("A hardware problem contributed to the problem");	
+	}
+	
 	/**
 	 * Prints/draws the Equipment tab table.
 	 * @param isDrawNew indicates if we are drawing a new/empty table or we are going to
@@ -300,71 +328,66 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 		//HEADERS
 		equipmentTable.insertRow(0);
-		equipmentTable.setText(0, EQUIPMENT_DEVICETYPE_COL, "Device Type");
-		equipmentTable.setText(0, EQUIPMENT_MANUFACTURER_COL, "Manufacturer");
-		equipmentTable.setText(0, EQUIPMENT_MODEL_COL, "Model");
-		equipmentTable.setText(0, EQUIPMENT_ROSSETAID_COL, "Rosetta ID");
-		
-		equipmentTable.setText(0, EQUIPMENT_GAPINTRAINING_COL, "Gap in trainig");
-		equipmentTable.setText(0, EQUIPMENT_LACKINSTRUCTION_COL, "Lack of access to instructions");
-		equipmentTable.setText(0, EQUIPMENT_LACKTRAINING_COL, "Lack of / inadecuate training");
-		equipmentTable.setText(0, EQUIPMENT_CONFUSINGINTERFACES_COL, "Confusing interfaces");
-		equipmentTable.setText(0, EQUIPMENT_CONFUSINGSETTINGS_COL, "Confusing settings");
-		equipmentTable.setText(0, EQUIPMENT_SWPROBLEM_COL, "Software problem");
-		equipmentTable.setText(0, EQUIPMENT_HWPROBLEM_COL, "Hardware problem");
+		equipmentTable.setWidget(0, EQUIPMENT_DEVICETYPE_COL, labelEquipmentDeviceType);
+		equipmentTable.setWidget(0, EQUIPMENT_MANUFACTURER_COL, labelEquipmentManufacturer);
+		equipmentTable.setWidget(0, EQUIPMENT_MODEL_COL, labelEquipmentModel);
+		equipmentTable.setWidget(0, EQUIPMENT_ROSSETAID_COL, labelEquipmentRosettaId);
+		equipmentTable.setWidget(0, EQUIPMENT_EXPLANATION_COL, labelEquipmentProblemDescrp);
+		equipmentTable.setWidget(0, EQUIPMENT_TRAINING_PROBLEM_COL, labelEquipmentTrainingProblem);
+		equipmentTable.setWidget(0, EQUIPMENT_INSTRUCTION_PROBLEM_COL, labelEquipmentInstructionsProblem);
+		equipmentTable.setWidget(0, EQUIPMENT_CONFUSING_USAGE_COL, labelEquipmentConfusingUsage);
+		equipmentTable.setWidget(0, EQUIPMENT_SW_PROBLEM_COL, labelEquipmentSoftWProblem);
+		equipmentTable.setWidget(0, EQUIPMENT_HW_PROBLEM_COL, labelEquipmentHardWProblem);
 
-
+		//draw the tables
 		if(isDrawNew || currentScenario.getEquipment().getEntries().isEmpty()){
 			addNewEquipmentRow();
 		
 		}else{
 			//populate the table w/ the data from the equipment list of the scenario
 			List<EquipmentEntryProxy> eqEntries = currentScenario.getEquipment().getEntries();
-			for(int i=0; i<eqEntries.size();i++){
-				final int row = i+1;
-				equipmentTable.insertRow(row);
-				EquipmentEntryProxy eep = (EquipmentEntryProxy) eqEntries.get(i);
-				TextBox dtTextbox = new TextBox();
-				dtTextbox.setText(eep.getDeviceType());
-				dtTextbox.setReadOnly(!editable);
-				dtTextbox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
-//				dtTextbox.set
-				equipmentTable.setWidget(row, EQUIPMENT_DEVICETYPE_COL, dtTextbox);
-				TextBox manufTextBox = new TextBox(); 
-				manufTextBox.setText(eep.getManufacturer());
-				manufTextBox.setReadOnly(!editable);
-				manufTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
-				equipmentTable.setWidget(row, EQUIPMENT_MANUFACTURER_COL, manufTextBox);
-				TextBox modelTextBox = new TextBox(); 
-				modelTextBox.setText(eep.getModel());
-				modelTextBox.setReadOnly(!editable);
-				modelTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
-				equipmentTable.setWidget(row, EQUIPMENT_MODEL_COL, modelTextBox);
-				TextBox rossTextBox = new TextBox(); 
-				rossTextBox.setText(eep.getRosettaId());
-				rossTextBox.setReadOnly(!editable);
-				rossTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
-				equipmentTable.setWidget(i+1, EQUIPMENT_ROSSETAID_COL, rossTextBox);
-				
-				for(int j = 4; j < EQUIPMENT_DElETEBUTTON_COL; j++) {//add four check boxes
-					equipmentTable.setWidget(i+1, j, new CheckBox());
-				}
-				
-				Button deleteButton = new Button("Delete");
-				if(editable)
-					equipmentTable.setWidget(row, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
-				
-				//add click handler to the delete button
-				deleteButton.addClickHandler(new ClickHandler() {				
-					@Override
-					public void onClick(ClickEvent event) {
-						equipmentTable.removeRow(row);
-					}
-				});
-			}			
-		
-		
+			for(EquipmentEntryProxy eep : eqEntries){
+				addNewEquipmentRow(eep);
+			}
 		}
+	}
+	
+	//Labels for the header row of the HAZARDS table. We are using the static block
+	// to initialize some of the labels properties, such as the title/tooltip of them
+	private final static Label labelHazardDescription = new Label("Description");
+	private final static Label labelHazardFactors = new Label("Factors");
+	private final static Label labelHazardsExpected = new Label("Expected Risk");
+	private final static Label labelHazardsSeverity = new Label("Severity");
+	
+	{
+		
+		labelHazardDescription.setTitle("Describe the risk. Make sure to point out if this risk results in death, is life threatening, requires inpatient hospitalization or prolongation of existing hospitalization, results in persistent or significant disability/incapacity, is a congenital anomaly/birth defect");
+		labelHazardFactors.setTitle("Determine which factors are contributing to the risk described below. Examples may be a clinician, a specific device, an aspect of the clinical envirnomnet, etc.");		
+		labelHazardsExpected.setTitle("Click to see definition and examples");
+		labelHazardsExpected.setStyleName("clickableTitle");
+		labelHazardsSeverity.setTitle("Click to see risk severity definition");
+		labelHazardsSeverity.setStyleName("clickableTitle");
+		
+		labelHazardsExpected.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				MyDialog md = new MyDialog("Unexpected: Risk is not consistent with the any of risks known (from a manual, label, protocol, instructions, brochure, etc) in the Current State. If these documents are not required or available, the risk is unexpected if specificity or severity is not consistent with the risk information described in the protocol, or it is more severe to the specified risk",
+						"Example, Hepatic necrosis would be unexpected (by virtue of greater severity) if the investigator brochure only referred to elevated hepatic enzymes or hepatitis. Similarly, cerebral vasculitis would be unexpected (by virtue of greater specificity) if the investigator brochure only listed cerebral vascular accidents.");
+				md.setAutoHideEnabled(true);
+				md.showRelativeTo(labelHazardsExpected);
+			}
+		});
+		labelHazardsSeverity.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				DialogBox md = new DialogBox(true);
+				md.setHTML("<ul><li><b>Mild</b>: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li>" +
+						"<li><b>Moderate</b>: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li>" +
+						"<li><b>Severe</b>: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li>" +
+						"<li><b>Life Threatening</b>: Immediate risk of death, life threatening or disabling</li>" +
+						"<li><b>Fatal</b>: Causes death of the patient</li></ul>");
+				md.showRelativeTo(labelHazardsSeverity);
+			}
+		});
+		
 	}
 	
 	/**
@@ -374,20 +397,26 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 		hazardsTable.removeAllRows();//clear and re-populate
 		
-		//headers
-		hazardsTable.insertRow(0);
-		hazardsTable.setText(0, HAZARDS_DESCRIPTION_COL, "Description");
-		hazardsTable.setText(0, HAZARDS_FACTORS_COL, "Factors");
-		hazardsTable.setText(0,  HAZARDS_EXPECTED_COL, "Expected Risk");
-		hazardsTable.setText(0,  HAZARDS_SEVERITY_COL, "Severity");
-		
-		//description
-		hazardsTable.insertRow(1);
-		hazardsTable.setHTML(1, HAZARDS_DESCRIPTION_COL, "<div style=\"font-size: 8pt; width:350px;\">Make sure to point out if this risk results in death, is life threatening, requires inpatient hospitalization or prolongation of existing hospitalization, results in persistent or significant disability/incapacity, is a congenital anomaly/birth defect</div>");
-		hazardsTable.setHTML(1, HAZARDS_FACTORS_COL, "<div style=\"font-size: 8pt; width:350px;\">Determine which factors are contributing to the risk described below. Examples may be a clinician, a specific device, or an aspect of the clinical envirnomnet etc.</div>");
-		hazardsTable.setHTML(1,  HAZARDS_EXPECTED_COL, "<div style=\"width:350px; font-size:8pt;\">Unexpected: Risk is not consistent with the any of risks known (from a manual, label, protocol, instructions, brochure, etc) in the Current State. If the above documents are not required or available, the risk is unexpected if specificity or severity is not consistent with the risk information described in the protocol or it is more severe to the specified risk. Example, Hepatic necrosis would be unexpected (by virtue of greater severity) if the investigator brochure only referred to elevated hepatic enzymes or hepatitis. Similarly, cerebral vasculitis would be unexpected (by virtue of greater specificity) if the investigator brochure only listed cerebral vascular accidents.</div>");
-		hazardsTable.setHTML(1,  HAZARDS_SEVERITY_COL, "<div style=\"width:350px; font-size:8pt;\"><ul><li><b>Mild</b>: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li><li><b>Moderate</b>: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li><li><b>Severe</b>: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li><li><b>Life Threatening</b>: Immediate risk of deat, life threatening or disabling</li><li><b>Fatal</b>: Causes death of the patient</li></ul></div>");
+//		//headers
+//		hazardsTable.insertRow(0);
+//		hazardsTable.setText(0, HAZARDS_DESCRIPTION_COL, "Description");
+//		hazardsTable.setText(0, HAZARDS_FACTORS_COL, "Factors");
+//		hazardsTable.setText(0,  HAZARDS_EXPECTED_COL, "Expected Risk");
+//		hazardsTable.setText(0,  HAZARDS_SEVERITY_COL, "Severity");
+//		
+//		//description
+//		hazardsTable.insertRow(1);
+//		hazardsTable.setHTML(1, HAZARDS_DESCRIPTION_COL, "<div style=\"font-size: 8pt; width:350px;\">Make sure to point out if this risk results in death, is life threatening, requires inpatient hospitalization or prolongation of existing hospitalization, results in persistent or significant disability/incapacity, is a congenital anomaly/birth defect</div>");
+//		hazardsTable.setHTML(1, HAZARDS_FACTORS_COL, "<div style=\"font-size: 8pt; width:350px;\">Determine which factors are contributing to the risk described below. Examples may be a clinician, a specific device, or an aspect of the clinical envirnomnet etc.</div>");
+//		hazardsTable.setHTML(1,  HAZARDS_EXPECTED_COL, "<div style=\"width:350px; font-size:8pt;\">Unexpected: Risk is not consistent with the any of risks known (from a manual, label, protocol, instructions, brochure, etc) in the Current State. If the above documents are not required or available, the risk is unexpected if specificity or severity is not consistent with the risk information described in the protocol or it is more severe to the specified risk. Example, Hepatic necrosis would be unexpected (by virtue of greater severity) if the investigator brochure only referred to elevated hepatic enzymes or hepatitis. Similarly, cerebral vasculitis would be unexpected (by virtue of greater specificity) if the investigator brochure only listed cerebral vascular accidents.</div>");
+//		hazardsTable.setHTML(1,  HAZARDS_SEVERITY_COL, "<div style=\"width:350px; font-size:8pt;\"><ul><li><b>Mild</b>: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li><li><b>Moderate</b>: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li><li><b>Severe</b>: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li><li><b>Life Threatening</b>: Immediate risk of death, life threatening or disabling</li><li><b>Fatal</b>: Causes death of the patient</li></ul></div>");
 
+		hazardsTable.insertRow(0);
+		hazardsTable.setWidget(0, HAZARDS_DESCRIPTION_COL, labelHazardDescription);
+		hazardsTable.setWidget(0, HAZARDS_FACTORS_COL, labelHazardFactors);
+		hazardsTable.setWidget(0,  HAZARDS_EXPECTED_COL, labelHazardsExpected);
+		hazardsTable.setWidget(0,  HAZARDS_SEVERITY_COL, labelHazardsSeverity);
+		
 		//table data
 		if(isDrawNew || currentScenario.getHazards().getEntries().isEmpty())
 			addNewHazardTableRow();
@@ -432,10 +461,17 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			currentScenario.getEquipment().getEntries().clear();//clear equipment list entries. We will re-populate 
 			for(int row = 1; row < equipmentTable.getRowCount(); row++) {//Row 0 is HEADERS
 				
-				Widget wDevType = equipmentTable.getWidget(row, EQUIPMENT_DEVICETYPE_COL);//getWidget row column		
-				Widget wManu = equipmentTable.getWidget(row, EQUIPMENT_MANUFACTURER_COL);//getWidget row column		
-				Widget wModel = equipmentTable.getWidget(row, EQUIPMENT_MODEL_COL);//getWidget row column		
-				Widget wRoss = equipmentTable.getWidget(row, EQUIPMENT_ROSSETAID_COL);//getWidget row column		
+				Widget wDevType = equipmentTable.getWidget(row, EQUIPMENT_DEVICETYPE_COL);		
+				Widget wManu = equipmentTable.getWidget(row, EQUIPMENT_MANUFACTURER_COL);	
+				Widget wModel = equipmentTable.getWidget(row, EQUIPMENT_MODEL_COL);	
+				Widget wRoss = equipmentTable.getWidget(row, EQUIPMENT_ROSSETAID_COL);	
+				Widget wExplanation = equipmentTable.getWidget(row, EQUIPMENT_EXPLANATION_COL);	
+				Widget wTraining = equipmentTable.getWidget(row, EQUIPMENT_TRAINING_PROBLEM_COL);	
+				Widget wInstruction = equipmentTable.getWidget(row, EQUIPMENT_INSTRUCTION_PROBLEM_COL);	
+				Widget wUsage = equipmentTable.getWidget(row, EQUIPMENT_CONFUSING_USAGE_COL);	
+				Widget wSoftProblem = equipmentTable.getWidget(row, EQUIPMENT_SW_PROBLEM_COL);	
+				Widget wHardProblem = equipmentTable.getWidget(row, EQUIPMENT_HW_PROBLEM_COL);					
+				
 				EquipmentEntryProxy eep = rc.create(EquipmentEntryProxy.class);
 				
 				boolean isAdding = false;
@@ -462,6 +498,19 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					if(!text.equals(""))
 					{eep.setRosettaId(text); isAdding=true;}		
 				}
+				if(wExplanation instanceof TextArea) {
+					text = ((TextArea)wExplanation).getText().trim();
+					if(!text.equals(""))
+					{eep.setProblemDescription(text); isAdding=true;}		
+				}
+				
+				//The ckeckboxes by themselves don't mofify the "adding" condition.
+				// At least any other ot fields must be non-empty
+				eep.setTrainingRelatedProblem(((CheckBox) wTraining).getValue());
+				eep.setInstructionsRelatedProblem(((CheckBox) wInstruction).getValue());
+				eep.setConfusingDeviceUsage(((CheckBox) wUsage).getValue());
+				eep.setSoftwareRelatedProblem(((CheckBox) wSoftProblem).getValue());
+				eep.setHardwareRelatedProblem(((CheckBox) wHardProblem).getValue());
 				
 				if(isAdding)
 					currentScenario.getEquipment().getEntries().add(eep);
@@ -475,7 +524,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 */
 	private void checkHazardsListForPersistence(ScenarioRequest rc){
 			currentScenario.getHazards().getEntries().clear();//clean and re-populate
-			for(int row =2; row<hazardsTable.getRowCount();row++){//row 0 headers; row 1 description
+//			for(int row =2; row<hazardsTable.getRowCount();row++){//row 0 headers; row 1 description
+			for(int row =1; row<hazardsTable.getRowCount();row++){//row 0 headers+description
 				
 				Widget wDescription = hazardsTable.getWidget(row, HAZARDS_DESCRIPTION_COL);	
 				Widget wFactor = hazardsTable.getWidget(row, HAZARDS_FACTORS_COL);	
@@ -678,8 +728,18 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					save();
 					
 				}
+				//TICKET-165
+				if(event.getSelectedItem().equals(new Integer(HAZARDS_TAB_POS)) ){
+//						||event.getSelectedItem().equals(EQUIPMENT_TAB_POS)){//XXXX ???
+					tabPanel.setWidth("80%"); 
+				}else{
+					tabPanel.setWidth("60%"); //TICKET-165
+				}
+					
 			}
 		});
+//		tabPanel.setWidth("80%"); //TICKET-165
+		hazardsTable.setWidth("100%");
 		
 		//select first tab
 		selectFirstTab();
@@ -742,7 +802,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		proposedStateEditor.setReadOnly(true);
 	}
 	
-	private void enableSaveScenario(){		
+	private void enableSaveScenario(){				
+		status.setVisible(true);//TICKET-176
 		algorithmDescription.setReadOnly(false);
 		clinicalProcesses.setReadOnly(false);
 		risks.setReadOnly(false);
@@ -786,8 +847,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	                    ScenarioPanel.this.currentScenario = currentScenario;
                   	                    
 	                    //after the Entity has been succesfully created, we populate the widgets w/ the entity info and draw it
-	                    buildTabsTables(true);
-	        			configureComponents();   			  
+//	                    buildTabsTables(true);
+	        			configureComponents();  
+	        			buildTabsTables(true);//Ticket-175 build tables AFTER "editable" has been checked on configureComponents()
 	    			    status.setText("");
 	    			    uniqueId.setText("");	
 	    			    
@@ -808,11 +870,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		    currentScenario = context.edit(currentScenario); 
             driver.edit(currentScenario, context);
             this.currentScenario = currentScenario;
-            buildTabsTables(false);
+//            buildTabsTables(false);
     		if(currentScenario.getId()!=null)
     			uniqueId.setText("Scenario Unique ID: "+String.valueOf(currentScenario.getId()));  		
 
     		configureComponents();
+    		buildTabsTables(false);//Ticket-175 build tables AFTER "editable" has been checked on configureComponents()
 		}
 		
 		//select first tab
@@ -882,65 +945,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				selectFirstTab();
 			}
 		}
+//		//5- Export to file button
+//		if(currentScenario.getStatus().equals(SCN_STATUS_REJECTED) )
+//			exportScenario.setVisible(false);
+//		else
+//			exportScenario.setVisible(true);
 	}
 	
-	/**
-	 * Configures the different components of the panel according to the 
-	 * user role and Scenario status
-	 */
-/*	private void configureComponents(){
-		//XXX this would be a good place to do tabPanel.selectTab(0)???;
-		// if we also wanted to return to this tab after submitting a scn
-		enableSaveScenario();
-		//1- Unsubmitted
-		// only the scenario owner could submit the scn. 
-		// only owner + admin could modify the scn
-		if(currentScenario.getStatus().equals(SCN_STATUS_UNSUBMITTED)){
-			if(!currentScenario.getSubmitter().equals(userEmail)){
-				submitButton.setVisible(false);
-				saveButton.setVisible(false);
-			}else{
-				submitButton.setVisible(true);
-				saveButton.setVisible(true);
-			}
-			if(userRole == UserRole.Administrator)
-				saveButton.setVisible(true);
-			//Don't show FeedBack Panel
-			if(tabPanel.getWidgetCount() > APPRV_SCN_TAB_POS){
-				tabPanel.remove(APPRV_SCN_TAB_POS);
-				selectFirstTab();
-			}
-		}else if(currentScenario.getStatus().equals(SCN_STATUS_SUBMITTED)){ 
-		//2- Submitted. Not editable except for administrators
-			submitButton.setVisible(false);
-			if(userRole == UserRole.Administrator)
-				saveButton.setVisible(true);
-			else{
-				saveButton.setVisible(false);
-				disableSaveScenario();
-			}
-			
-			//administrators can see feedback panel for approval / rejection
-			if(userRole!=UserRole.Administrator){
-				//if the tab is already showing we remove it
-				if(tabPanel.getWidgetCount() > APPRV_SCN_TAB_POS){
-					tabPanel.remove(APPRV_SCN_TAB_POS);
-					selectFirstTab();
-				}
-			}else{//admin sees the feedback tab
-				if(tabPanel.getWidgetCount() <= APPRV_SCN_TAB_POS)//add it if is not there
-					tabPanel.add(manageScnStatus, "Approve or Reject");
-			}
-		}else if(currentScenario.getStatus().equals(SCN_STATUS_APPROVED)){//Ticket-103
-				//3- Approved. No one can edit the scn
-			 disableSaveScenario();
-				//Don't show FeedBack Panel
-			if(tabPanel.getWidgetCount() > APPRV_SCN_TAB_POS){
-				tabPanel.remove(APPRV_SCN_TAB_POS);
-				selectFirstTab();
-			}
-		}
-	}*/
 	
 	@UiField
 	TabPanel tabPanel;
@@ -1203,21 +1214,105 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private void addNewEquipmentRow(){
 		final int rows = equipmentTable.getRowCount();
 		equipmentTable.insertRow(rows);
-		
-		for(int j = 0; j < 4; j++) {//add four text boxes
+
+		//Textboxes for type, manufacturer, model and Id
+		for(int j = 0; j < EQUIPMENT_EXPLANATION_COL; j++) {//add four text boxes
 			TextBox textbox = new TextBox();
 			textbox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+			textbox.setReadOnly(!editable);
 			equipmentTable.setWidget(rows, j, textbox);
 		}
-		for(int j = 4; j < EQUIPMENT_DElETEBUTTON_COL; j++) {//add four check boxes
-			equipmentTable.setWidget(rows, j, new CheckBox());
+		
+		//Add problem explanation column
+		TextArea textArea = new TextArea();
+		textArea.setReadOnly(!editable);
+		equipmentTable.setWidget(rows, EQUIPMENT_EXPLANATION_COL, textArea);
+		
+		//checkboxes for training, instructions, usage, SW and HW problems
+		for(int j = EQUIPMENT_TRAINING_PROBLEM_COL; j < EQUIPMENT_DElETEBUTTON_COL; j++) {//add four check boxes
+			CheckBox cb = new CheckBox();
+			cb.setEnabled(editable);
+			equipmentTable.setWidget(rows, j, cb);
 		}
+		
 		//add delete button
 		Button deleteButton = new Button("Delete");
-		equipmentTable.setWidget(rows, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
+		if(editable)
+			equipmentTable.setWidget(rows, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
 
 		//click handler that deletes the current row
 		deleteButton.addClickHandler(new ClickHandler() {	
+			@Override
+			public void onClick(ClickEvent event) {
+				equipmentTable.removeRow(rows);
+			}
+		});
+	}
+	
+	private void addNewEquipmentRow(EquipmentEntryProxy eep){
+		final int rows = equipmentTable.getRowCount();
+		equipmentTable.insertRow(rows);
+
+		TextBox dtTextbox = new TextBox();
+		dtTextbox.setText(eep.getDeviceType());
+		dtTextbox.setReadOnly(!editable);
+		dtTextbox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+		equipmentTable.setWidget(rows, EQUIPMENT_DEVICETYPE_COL, dtTextbox);
+		
+		TextBox manufTextBox = new TextBox(); 
+		manufTextBox.setText(eep.getManufacturer());
+		manufTextBox.setReadOnly(!editable);
+		manufTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+		equipmentTable.setWidget(rows, EQUIPMENT_MANUFACTURER_COL, manufTextBox);
+		
+		TextBox modelTextBox = new TextBox(); 
+		modelTextBox.setText(eep.getModel());
+		modelTextBox.setReadOnly(!editable);
+		modelTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+		equipmentTable.setWidget(rows, EQUIPMENT_MODEL_COL, modelTextBox);
+		
+		TextBox rossTextBox = new TextBox(); 
+		rossTextBox.setText(eep.getRosettaId());
+		rossTextBox.setReadOnly(!editable);
+		rossTextBox.setWidth(EQUIPMENT_TEXTBOX_WIDTH);
+		equipmentTable.setWidget(rows, EQUIPMENT_ROSSETAID_COL, rossTextBox);
+		
+		TextArea explanationTextArea = new TextArea();
+		explanationTextArea.setText(eep.getProblemDescription());
+		explanationTextArea.setReadOnly(!editable);
+		equipmentTable.setWidget(rows, EQUIPMENT_EXPLANATION_COL, explanationTextArea);
+		
+		CheckBox trainingCheckBox = new CheckBox();
+		trainingCheckBox.setEnabled(editable);
+		trainingCheckBox.setValue(eep.getTrainingRelatedProblem());
+		equipmentTable.setWidget(rows, EQUIPMENT_TRAINING_PROBLEM_COL, trainingCheckBox);
+		
+		CheckBox instructionsCheckBox = new CheckBox();
+		instructionsCheckBox.setEnabled(editable);
+		instructionsCheckBox.setValue(eep.getInstructionsRelatedProblem());
+		equipmentTable.setWidget(rows, EQUIPMENT_INSTRUCTION_PROBLEM_COL, instructionsCheckBox);
+		
+		CheckBox usageCheckBox = new CheckBox();
+		usageCheckBox.setEnabled(editable);
+		usageCheckBox.setValue(eep.getConfusingDeviceUsage());
+		equipmentTable.setWidget(rows, EQUIPMENT_CONFUSING_USAGE_COL, usageCheckBox);	
+		
+		CheckBox softProblemCheckBox = new CheckBox();
+		softProblemCheckBox.setEnabled(editable);
+		softProblemCheckBox.setValue(eep.getSoftwareRelatedProblem());
+		equipmentTable.setWidget(rows, EQUIPMENT_SW_PROBLEM_COL, softProblemCheckBox);
+		
+		CheckBox hardProblemCheckBox = new CheckBox();
+		hardProblemCheckBox.setEnabled(editable);
+		hardProblemCheckBox.setValue(eep.getHardwareRelatedProblem());
+		equipmentTable.setWidget(rows, EQUIPMENT_HW_PROBLEM_COL, hardProblemCheckBox);
+		
+		Button deleteButton = new Button("Delete");
+		if(editable)
+			equipmentTable.setWidget(rows, EQUIPMENT_DElETEBUTTON_COL, deleteButton);
+		
+		//add click handler to the delete button
+		deleteButton.addClickHandler(new ClickHandler() {				
 			@Override
 			public void onClick(ClickEvent event) {
 				equipmentTable.removeRow(rows);
@@ -1245,14 +1340,16 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		final int row = hazardsTable.getRowCount();
 		hazardsTable.insertRow(row);
 		final TextArea hazardDescription = new TextArea();
-		hazardDescription.setVisibleLines(10);
+		hazardDescription.setVisibleLines(STYLE_HAZARDS_TEXT_LINES);
 		hazardDescription.setCharacterWidth(40);
 		hazardDescription.setReadOnly(!editable);
-		
+		hazardDescription.setWidth(STYLE_WIDTH_90_PERCENT);
+
 		final TextArea hazardFactors = new TextArea();
-		hazardFactors.setVisibleLines(10);
+		hazardFactors.setVisibleLines(STYLE_HAZARDS_TEXT_LINES);
 		hazardFactors.setCharacterWidth(40);
 		hazardFactors.setReadOnly(!editable);
+		hazardFactors.setWidth(STYLE_WIDTH_90_PERCENT);
 		
 		hazardsTable.setWidget(row, HAZARDS_DESCRIPTION_COL, hazardDescription);
 		hazardsTable.setWidget(row, HAZARDS_FACTORS_COL, hazardFactors);
@@ -1283,15 +1380,17 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		hazardsTable.insertRow(row);
 		final TextArea hazardDescription = new TextArea();
 		hazardDescription.setText(description);
-		hazardDescription.setVisibleLines(10);
+		hazardDescription.setVisibleLines(STYLE_HAZARDS_TEXT_LINES);
 		hazardDescription.setCharacterWidth(40);
 		hazardDescription.setReadOnly(!editable);
+		hazardDescription.setWidth(STYLE_WIDTH_90_PERCENT);
 		
 		final TextArea hazardFactors = new TextArea();
 		hazardFactors.setText(factors);
-		hazardFactors.setVisibleLines(10);
+		hazardFactors.setVisibleLines(STYLE_HAZARDS_TEXT_LINES);
 		hazardFactors.setCharacterWidth(40);
 		hazardFactors.setReadOnly(!editable);
+		hazardFactors.setWidth(STYLE_WIDTH_90_PERCENT);
 		
 		final ListBox hazardsExpected = buildListBox(hazardExpected);
 		int indexExpected = getHazardExpectedIndex(expected);
@@ -1614,6 +1713,17 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	@UiField
 	Button lockButton; //persist the Scn info
 	
+//	@UiField
+//	Button exportScenario; //export the Scn info to file
+//	Button b = new Button("Download", new ClickListener() { 
+//
+//        public void onClick(Widget sender) { 
+//                Window.open(GWT.getModuleBaseURL() +"/downloadServlet?fileId=123", 
+//"123", ""); 
+//        } 
+//
+//}); 
+	
 	@UiHandler("lockButton")
 	public void onClickLock(ClickEvent clickEvent) {
 		ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
@@ -1697,6 +1807,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	public void onClickSave(ClickEvent clickEvent) {
 		save();//persist our entities
 	}
+	
+//	@UiHandler("exportScenario")
+//	public void onClickExport(ClickEvent clickEvent) {
+//		//generate file and
+//		// Window.open(GWT.getHostPageBaseURL() + "FileRepository/doDownload?docId=" + dokument.getId(), "", "");
+////		Window.open(url, name, features)
+//		Window.open("./mdpnp.jpg", "_blank", ""); 
+//	}
 	
 	@UiField
 	Button approveScnButton; 	//button to approve the scn
@@ -1858,6 +1976,25 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 */
 	private boolean isEmptyScenario(){
 		
+		/*
+		 * TODO Maybe all this CHAOS and coded could be spared if we had a flag Empty, 
+		 * that is true for "new born" scenarios and false for any other recovered from a query 
+		 * (if its in the GAE, must have been persisted because it was not empty.
+		 * --> the constructor and setCurrentScenario would modifiy the flag
+		 * 
+		 * This flag would be checked on this method, or its used sustituded wherever we are using the function
+		 * isEmptyScenario().
+		 * 
+		 * To update the value of the flag (from true to false) we could use the event handlers that detect
+		 * we changed the textboxes.
+		 * 
+		 * It could be tricky, since I could edit the title (it would be not empty) and then delete, leaving
+		 * the scenario information empty again.
+		 */
+		
+		final int FIRST_ROW_HAZARDS_EQUIPMENT = 1;
+		final int FIRST_ROW_CLINICIANS_ENV = 0;
+		
 		//Text Areas
 		if(!titleEditor.getText().trim().equals("")) return false;
 		if(!currentStateEditor.getText().trim().equals("") ||
@@ -1867,10 +2004,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		if(!clinicalProcesses.getText().trim().equals("") ||
 				!algorithmDescription.getText().trim().equals("")) return false;
 		//Flextables
-		if(hazardsTable.getRowCount()>3 ) return false;
-		if(equipmentTable.getRowCount()>2) return false;
-		if(cliniciansTable.getRowCount()>1) return false;
-		if(environmentsTable.getRowCount()>1) return false;
+		if(hazardsTable.getRowCount()>FIRST_ROW_HAZARDS_EQUIPMENT+1) return false;
+		if(equipmentTable.getRowCount()>FIRST_ROW_HAZARDS_EQUIPMENT+1) return false;
+		if(cliniciansTable.getRowCount()>FIRST_ROW_CLINICIANS_ENV+1) return false;
+		if(environmentsTable.getRowCount()>FIRST_ROW_CLINICIANS_ENV+1) return false;
 		
 		/**
 		 * We could still have the problem of persisting Scn that have multiple empty hazards/equipment rows
@@ -1881,31 +2018,35 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 		//find at least a non-empty element
 		//Hazards
-		for(int j=0; j<2; j++){
-			Widget widget = hazardsTable.getWidget(2, j);
+		for(int j=0; j<HAZARDS_EXPECTED_COL; j++){
+			Widget widget = hazardsTable.getWidget(FIRST_ROW_HAZARDS_EQUIPMENT, j);
 			text = ((TextArea)widget).getText().trim();
 			if(!text.equals(""))
 				isEmpty=false;
 		}
 		if(!isEmpty) return false;
 
-		//equipment
-		for(int j=0; j<4; j++){
-			Widget widget = equipmentTable.getWidget(1, j);
+		//equipment TODO update for ticket-140
+		for(int j=0; j<EQUIPMENT_EXPLANATION_COL; j++){
+			Widget widget = equipmentTable.getWidget(FIRST_ROW_HAZARDS_EQUIPMENT, j);
 			text = ((TextBox)widget).getText().trim();
 			if(!text.equals(""))
 				isEmpty=false;
 		}
 		if(!isEmpty) return false;
 		
+		Widget wExplain = equipmentTable.getWidget(FIRST_ROW_HAZARDS_EQUIPMENT, EQUIPMENT_EXPLANATION_COL);
+		text = ((TextArea)wExplain).getText().trim();
+		if(!text.equals("")) return false;
+		
 		//clinicians
-		Widget widget = cliniciansTable.getWidget(0, 0);
+		Widget widget = cliniciansTable.getWidget(FIRST_ROW_CLINICIANS_ENV, 0);
 		text = ((SuggestBox)widget).getText().trim();
 		if(!text.equals(""))
 			return false;
 		
 		//environments
-		widget = environmentsTable.getWidget(0, 0);
+		widget = environmentsTable.getWidget(FIRST_ROW_CLINICIANS_ENV, 0);
 		text = ((SuggestBox)widget).getText().trim();
 		if(!text.equals(""))
 			return false;

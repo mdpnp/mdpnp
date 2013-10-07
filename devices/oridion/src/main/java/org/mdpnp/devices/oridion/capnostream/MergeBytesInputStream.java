@@ -65,7 +65,6 @@ public final class MergeBytesInputStream extends java.io.FilterInputStream {
                     return HEADER;
                 case 0x80:
                     b1 = super.read();
-                    log.trace("0x80 + read:"+Integer.toHexString(b1));
                     if(b1 < 0) {
                         return EOF;
                     } else {

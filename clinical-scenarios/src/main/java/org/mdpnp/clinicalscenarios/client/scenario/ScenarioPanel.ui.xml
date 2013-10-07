@@ -33,18 +33,18 @@
 
 	</ui:style>
 	<g:DockPanel>
-	<g:Dock direction="NORTH" size="100px">
-		
+	
+	<g:Dock direction="NORTH" size="100px">		
 	<g:FlowPanel>
 	    <g:HTML><br/><span style="font-size:16pt; margin-top: 20px;">Scenario Title</span></g:HTML>
-	    <g:TextBox text='Scenario Title' ui:field='titleEditor' styleName='scenarioTitle' visibleLength='50' maxLength='100'/>
+	    <g:TextBox ui:field='titleEditor' styleName='scenarioTitle' visibleLength='50' maxLength='100'/>
 	    <g:Label ui:field='uniqueId' styleName='important'/>
 	    <g:Label ui:field='status'/>
 	    <!-- <g:Label text='Remember to SAVE your changes' styleName='important'/> TICKET-125 -->
-	    </g:FlowPanel>
+	</g:FlowPanel>
 	</g:Dock>
 	
-	<g:Dock direction="CENTER" size="400px">
+	<g:Dock direction="CENTER" size="100%">
 	<g:TabPanel ui:field="tabPanel">
 	<g:Tab text="Scenario Description">
 		<g:FlowPanel>
@@ -183,6 +183,7 @@
 	    <g:Button text='Submit for Approval' ui:field='submitButton' styleName='{style.givemespace}'/>
 	    <g:Button text='Save For Later' ui:field='saveButton' styleName='{style.givemespace}'/>
 	    <g:Button text='Lock' ui:field='lockButton' styleName='{style.givemespace}'/>
+<!-- 	     <g:Button text='Export to file' ui:field='exportScenario' styleName='{style.givemespace}'/> -->
 	</g:FlowPanel>
 	</g:Dock>
 	</g:DockPanel>

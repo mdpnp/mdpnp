@@ -1,15 +1,19 @@
 package org.mdpnp.apps.testapp.vital;
 
+import ice.GlobalAlarmSettingsObjective;
+
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.mdpnp.devices.AbstractDevice.InstanceHolder;
+
 class VitalImpl implements Vital {
 
     private final VitalModelImpl parent;
     private final String label, units;
-    private final int[] names;
+    private final String[] metric_ids;
     private final float minimum, maximum;
     private Color color;
     private Float warningLow, warningHigh;
@@ -20,19 +24,34 @@ class VitalImpl implements Vital {
     private long warningAgeBecomesAlarm = Long.MAX_VALUE;
 
 
-    VitalImpl(VitalModelImpl parent, String label, String units, int[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
+    private final InstanceHolder<ice.GlobalAlarmSettingsObjective>[] alarmObjectives;
+
+    @SuppressWarnings("unchecked")
+    VitalImpl(VitalModelImpl parent, String label, String units, String[] metric_ids, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
         this.parent = parent;
         this.label = label;
         this.units = units;
-        this.names = names;
+        this.metric_ids = metric_ids;
         this.minimum =  minimum;
         this.maximum =  maximum;
+
+        alarmObjectives = new InstanceHolder[metric_ids.length];
+        for(int i = 0; i < metric_ids.length; i++) {
+            alarmObjectives[i] = new InstanceHolder<ice.GlobalAlarmSettingsObjective>();
+            alarmObjectives[i].data = (GlobalAlarmSettingsObjective) ice.GlobalAlarmSettingsObjective.create();
+            alarmObjectives[i].data.metric_id = metric_ids[i];
+            alarmObjectives[i].handle = getParent().getWriter().register_instance(alarmObjectives[i].data);
+        }
+
         setCriticalLow(criticalLow);
         setCriticalHigh(criticalHigh);
         setWarningLow(low);
         setWarningHigh(high);
         setValueMsWarningLow(valueMsWarningLow);
         setValueMsWarningHigh(valueMsWarningHigh);
+
+
+
     }
 
 
@@ -42,8 +61,8 @@ class VitalImpl implements Vital {
     }
 
     @Override
-    public int[] getNames() {
-        return names;
+    public String[] getMetricIds() {
+        return metric_ids;
     }
 
     @Override
@@ -166,10 +185,17 @@ class VitalImpl implements Vital {
             }
         }
         this.criticalLow = low;
-        for(Value v : values) {
-            v.writeCriticalLimitsToDevice(getParent().getWriter());
-        }
+        writeCriticalLimits();
+
         parent.fireVitalChanged(this);
+    }
+
+    private void writeCriticalLimits() {
+        for(int i = 0; i < alarmObjectives.length; i++) {
+            alarmObjectives[i].data.lower = null == criticalLow ? Float.MIN_VALUE : criticalLow;
+            alarmObjectives[i].data.upper = null == criticalHigh ? Float.MAX_VALUE : criticalHigh;
+            getParent().getWriter().write(alarmObjectives[i].data, alarmObjectives[i].handle);
+        }
     }
 
     @Override
@@ -182,10 +208,14 @@ class VitalImpl implements Vital {
             }
         }
         this.criticalHigh = high;
-        for(Value v : values) {
-            v.writeCriticalLimitsToDevice(getParent().getWriter());
-        }
+        writeCriticalLimits();
         parent.fireVitalChanged(this);
+    }
+
+    public void destroy() {
+        for(int i = 0; i < alarmObjectives.length; i++) {
+            getParent().getWriter().unregister_instance(alarmObjectives[i].data, alarmObjectives[i].handle);
+        }
     }
 
     @Override
@@ -203,7 +233,7 @@ class VitalImpl implements Vital {
     }
     @Override
     public String toString() {
-        return "[label="+label+",names="+Arrays.toString(names)+",minimum="+minimum+",maximum="+maximum+",low="+warningLow+",high="+warningHigh+",values="+values.toString()+"]";
+        return "[label="+label+",names="+Arrays.toString(metric_ids)+",minimum="+minimum+",maximum="+maximum+",low="+warningLow+",high="+warningHigh+",values="+values.toString()+"]";
     }
     @Override
     public boolean isAnyOutOfBounds() {

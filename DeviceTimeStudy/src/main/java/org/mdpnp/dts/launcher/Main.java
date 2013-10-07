@@ -23,9 +23,6 @@ import org.mdpnp.dts.io.Reader;
 import org.mdpnp.dts.statistics.OffsetStatisticsImpl;
 import org.mdpnp.dts.utils.UtilsDTS;
 
-import com.sun.org.apache.bcel.internal.generic.DSTORE;
-
-
 
 public class Main {
 
