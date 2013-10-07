@@ -75,7 +75,8 @@ public abstract class DevicePanel extends JPanel {
     }
 
 //	public abstract deviceIdentity(DeviceIdentity di);
-//	public abstract deviceConnectivity(DeviceConnectivity dc);
+//    public abstract void deviceConnectivity(ice.DeviceConnectivity dc, SampleInfo sampleInfo);
+    public void connected() {}
     public abstract void numeric(ice.Numeric numeric, SampleInfo sampleInfo);
     public abstract void sampleArray(ice.SampleArray sampleArray, SampleInfo sampleInfo);
     public abstract void infusionStatus(ice.InfusionStatus infusionStatus, SampleInfo sampleInfo);

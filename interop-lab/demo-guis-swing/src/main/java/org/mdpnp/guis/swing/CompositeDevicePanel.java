@@ -125,7 +125,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
     }
 
 
-
+    private boolean connected = false;
     @Override
     public void deviceConnectivity(ice.DeviceConnectivityDataReader reader, ice.DeviceConnectivitySeq dc_seq, SampleInfoSeq info_seq) {
         seenInstances.clear();
@@ -135,6 +135,18 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
                 seenInstances.add(si.instance_handle);
                 DeviceConnectivity dc = (DeviceConnectivity) dc_seq.get(i);
                 connectionState.setText(dc.state.name() + (!"".equals(dc.info)?(" ("+dc.info+")"):""));
+                if(ice.ConnectionState.Connected.equals(dc.state)) {
+                    if(!connected) {
+                        synchronized(dataComponents) {
+                            for(DevicePanel d : dataComponents) {
+                                d.connected();
+                            }
+                        }
+                        connected = true;
+                    }
+                } else {
+                    connected = false;
+                }
             }
         }
     }
@@ -178,11 +190,9 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
 
     @Override
     public void numeric(ice.NumericDataReader reader, ice.NumericSeq nu_seq, SampleInfoSeq info_seq) {
-        seenInstances.clear();
-        for(int i = info_seq.size() - 1; i >= 0; i--) {
+        for(int i = 0; i < info_seq.size(); i++) {
             SampleInfo si = (SampleInfo) info_seq.get(i);
-            if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
-                seenInstances.add(si.instance_handle);
+            if(si.valid_data) {
                 ice.Numeric n = (Numeric) nu_seq.get(i);
                 if(!knownIdentifiers.contains(n.metric_id)) {
                     // avoid reboxing ... also tells us if something is new
@@ -204,11 +214,9 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
 
     @Override
     public void sampleArray(ice.SampleArrayDataReader reader, ice.SampleArraySeq sa_seq, SampleInfoSeq info_seq) {
-        seenInstances.clear();
-        for(int i = info_seq.size() - 1; i >= 0; i--) {
+        for(int i = 0; i < info_seq.size(); i++) {
             SampleInfo si = (SampleInfo) info_seq.get(i);
-            if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
-                seenInstances.add(si.instance_handle);
+            if(si.valid_data) {
                 ice.SampleArray sampleArray = (SampleArray) sa_seq.get(i);
                 if(!knownIdentifiers.contains(sampleArray.metric_id)) {
                     knownIdentifiers.add(sampleArray.metric_id);
