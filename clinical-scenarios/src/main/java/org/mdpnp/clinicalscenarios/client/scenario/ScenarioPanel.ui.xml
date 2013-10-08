@@ -184,6 +184,8 @@
 	    <g:Button text='Save For Later' ui:field='saveButton' styleName='{style.givemespace}'/>
 	    <g:Button text='Lock' ui:field='lockButton' styleName='{style.givemespace}'/>
 <!-- 	     <g:Button text='Export to file' ui:field='exportScenario' styleName='{style.givemespace}'/> -->
+		<g:Button text='Acknowledge' ui:field='ackButton' styleName='{style.givemespace}'/>
+		<g:Label ui:field='ackLabel' styleName='important'/>
 	</g:FlowPanel>
 	</g:Dock>
 	</g:DockPanel>

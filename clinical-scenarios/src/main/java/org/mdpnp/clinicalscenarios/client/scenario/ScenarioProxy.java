@@ -1,6 +1,7 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
 import java.util.Date;
+import java.util.Set;
 
 import org.mdpnp.clinicalscenarios.server.scenario.ScenarioEntity;
 import org.mdpnp.clinicalscenarios.server.scenario.ScenarioLocator;
@@ -17,6 +18,8 @@ public interface ScenarioProxy extends EntityProxy {
 	Date getCreationDate();
 	void setModificationDate(Date d);
 	Date getModificationDate();
+	void setAcknowledgers(Set<String> acknowledgers); 
+	Set<String> getAcknowledgers();
 	
 	BackgroundProxy getBackground();
 	HazardsProxy getHazards();

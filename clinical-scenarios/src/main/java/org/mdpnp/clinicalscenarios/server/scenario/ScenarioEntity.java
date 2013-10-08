@@ -5,6 +5,7 @@ import static org.mdpnp.clinicalscenarios.server.OfyService.ofy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -49,6 +50,9 @@ public class ScenarioEntity implements java.io.Serializable {
 	private String lastActionTaken;  //description of last action taken
 	private String lastActionUser;   //name of the last user to perform an action with the scenario
 	private String lockOwner; //name of user who has lock ownership over this scenario
+	
+	//TICKET-163  "like" scenarios
+	private Set<String> acknowledgers; //set with the IDs of the users who clicked the button to ack/like this scenario 
 	
 
 	@OnSave
@@ -206,6 +210,14 @@ public class ScenarioEntity implements java.io.Serializable {
 	public void setLockOwner(String lockOwner) {
 		this.lockOwner = lockOwner;
 	}
+	
+	public Set<String> getAcknowledgers() {
+		return acknowledgers;
+	}
+
+	public void setAcknowledgers(Set<String> acknowledgers) {
+		this.acknowledgers = acknowledgers;
+	}
 
 	public static ScenarioEntity create() /*throws Exception*/ {
 		try{
@@ -213,6 +225,7 @@ public class ScenarioEntity implements java.io.Serializable {
 		    s.setStatus(ScenarioPanel.SCN_STATUS_UNSUBMITTED);//By default, pending of submission
 		    s.setLastActionTaken("created new");
 		    s.setLastActionUser(s.getSubmitter());
+		    s.acknowledgers = new HashSet<String>(); //Ticket-163
 			//to ID the current user
 		    UserService userService = UserServiceFactory.getUserService();
 		    User user = userService.getCurrentUser();
@@ -393,60 +406,7 @@ public class ScenarioEntity implements java.io.Serializable {
 		}
 		return matchingScenarios;		
 	}
-	
-	/**
-	 * Searches for scenarios that have all the provided keywords in the appropriate field 
-	 * @param sBackground
-	 * @param sProposed
-	 * @return
-	 */
-//	public static List<ScenarioEntity> searchByFilter_AndBehavior(String sBackground, String sProposed,
-//			String sProcess, String sAlgorithm, String sBenefits, String sRisks, String sTitle) {
-//		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
-//		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
-//		
-//		boolean isAdd = true;//and
-//		boolean isAllNull = true;//Or 
-//
-//		try{
-//		for(ScenarioEntity s : scenarios) {
-//			isAdd = true;//and
-//			isAllNull = false;//Or 
-//			//1- check title
-//			if(sTitle!=null && s.getTitle()!=null && s.getTitle().toUpperCase().contains(sTitle)) {
-//				isAdd &= true;
-//				isAllNull &= false;
-//			}else if(sTitle!=null){
-//				isAdd &= false;
-//				isAllNull &= true;
-//			}else{
-//				isAdd &= false;
-//			}
-//			//2- check background
-//			 if (sBackground!=null && s.getBackground().getCurrentState()!=null && s.getBackground().getCurrentState().toUpperCase().contains(sBackground.toUpperCase()))
-//			//3- check proposed state
-//			 if(sProposed!=null && s.getBackground().getProposedState()!=null && s.getBackground().getProposedState().toUpperCase().contains(sProposed.toUpperCase()))
-//			//4- check process
-//			 if(sProcess!=null && s.getProposedSolution().getProcess()!=null && s.getProposedSolution().getProcess().toUpperCase().contains(sProcess.toUpperCase()))
-//			//5- check Algorithm
-//			 if(sAlgorithm!=null && s.getProposedSolution().getAlgorithm()!=null && s.getProposedSolution().getAlgorithm().toUpperCase().contains(sAlgorithm.toUpperCase()))
-//			//6- check benefits
-//			 if(sBenefits!=null && s.getBenefitsAndRisks().getBenefits()!=null && s.getBenefitsAndRisks().getBenefits().toUpperCase().contains(sBenefits.toUpperCase()))
-//			//7- check risks
-//			 if(sRisks!=null && s.getBenefitsAndRisks().getRisks()!=null && s.getBenefitsAndRisks().getRisks().toUpperCase().contains(sRisks.toUpperCase()))
-//
-//			
-//			 if(isAdd && !isAllNull)
-//				 matchingScenarios.add(s);
-//		}
-//		
-//		}catch(Exception e){
-//			e.printStackTrace();
-//		}
-//		return matchingScenarios;
-//		
-//	}
-	
+		
 	
 	/**
 	 * List Scn by status type 

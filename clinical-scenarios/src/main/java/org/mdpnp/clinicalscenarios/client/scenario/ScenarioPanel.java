@@ -2,7 +2,9 @@ package org.mdpnp.clinicalscenarios.client.scenario;
 
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -100,6 +102,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	public final static String SCN_LAST_ACTION_RETURNED = "returned"; //after scenario has been returned for clarification
 	public final static String SCN_LAST_ACTION_LOCKED = "locked";     //after scenario has been locked
 	public final static String SCN_LAST_ACTION_UNLOCKED = "unlocked"; //after scenario has been unlocked
+	public final static String SCN_LAST_ACTION_ACK = "acknowledged"; //after scenario has been unlocked
 	
 	private final static String STYLE_ROW_EQUIPMENT = "styleRowEquipment";
 	private final static String EQUIPMENT_TEXTBOX_WIDTH = "100px";
@@ -120,7 +123,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * Feedback-->Approve or reject
 	 */	
 	private final static int APPRV_SCN_TAB_POS = 7;//position of the tab to approve or reject scn
-	private final static int HAZARDS_TAB_POS = 1;
+	private final static int HAZARDS_TAB_POS = 1;//hazards tab
 	private final static int EQUIPMENT_TAB_POS = 3;
 	
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
@@ -130,6 +133,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private enum UserRole {Administrator, RegisteredUser, AnonymousUser}
 	private UserRole userRole;	
 	private String userEmail;
+	private String userId; //TICKET-163
 	
 	private boolean editable = false; //indicates if the scenario is editable
 	
@@ -757,6 +761,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				@Override
 				public void onSuccess(UserInfoProxy response) {
 					userEmail = response.getEmail();
+					userId =response.getUserId();
 
 					if(response.getEmail()==null ||response.getEmail().trim().equals("") ){
 						//Anonymous user
@@ -950,6 +955,36 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 //			exportScenario.setVisible(false);
 //		else
 //			exportScenario.setVisible(true);
+		//5- Acknowledge Scenario
+		//if this user has previously acknowledged the scenario, we hide the button
+		//ack button only present for REGISTERED users on APRROVED scenarios
+		Set<String> ackEdgers = currentScenario.getAcknowledgers();
+		if(userRole!= UserRole.AnonymousUser && (currentScenario.getStatus().equals(SCN_STATUS_APPROVED) 
+				|| currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST)
+				|| currentScenario.getStatus().equals(SCN_STATUS_MODIFIED))){		
+			if(ackEdgers == null){
+				//can be null because is a new field, and the previous entities on the GAE don't have this field 
+				ackButton.setVisible(true);//because is obvious that this user didn't ack the scenario
+			}else{
+				ackButton.setVisible(!currentScenario.getAcknowledgers().contains(userId));
+			}
+//			ackButton.setVisible(currentScenario.getAcknowledgers().contains(userId));
+			//XXX display the above information only if the current scenarios already has acks?
+
+		}else{
+			ackButton.setVisible(false);//either unregistered user or scn not approved
+		}
+		
+		if(ackEdgers != null && currentScenario.getAcknowledgers().size()>0){
+			//we show ack feedback in all cases
+			ackLabel.setVisible(true);
+			ackLabel.setText(currentScenario.getAcknowledgers().size()+ " Users have acknowledged this scenario");
+			ackLabel.setTitle(currentScenario.getAcknowledgers().size()+" Users confirmed the importance and genuinity of this scenario"+
+					" by having experienced or known of similar problems to the ones described in it.");
+		}else{
+			ackLabel.setVisible(false);
+		}
+
 	}
 	
 	
@@ -1477,7 +1512,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		referencesTable.setWidget(rows, REFERENCE_FOLLOWBUTTON_COL, followLink);
 		followLink.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
-				System.out.println(reference.getText());
+//				System.out.println(reference.getText());
 				if(!reference.getText().trim().equals(""))
 					Window.open("http://"+reference.getText(), "_blank", "");//use "enabled" as third argument to open in new tab	
 //				Window.open("http://www.google.com/", "_blank", "");
@@ -1711,7 +1746,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	Button saveButton; //persist the Scn info
 	
 	@UiField
-	Button lockButton; //persist the Scn info
+	Button lockButton; //lock/unlock for editing
+	
+	@UiField
+	Button ackButton; //TICKET-163; "Like" and acknowledge my scenario
+	
+	@UiField
+	@Ignore
+	Label ackLabel;//TICKET-163;
 	
 //	@UiField
 //	Button exportScenario; //export the Scn info to file
@@ -1789,7 +1831,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					@Override
 					public void onSuccess(ScenarioProxy response) {
 						Window.alert("This Clinical Scenario has been submitted for approval");	
-						setCurrentScenario(currentScenario);
+						setCurrentScenario(response);
 					}
 					
 					public void onFailure(ServerFailure error) {
@@ -1853,7 +1895,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					@Override
 					public void onSuccess(ScenarioProxy response) {
 						Window.alert("This Clinical Scenario has been approved");	
-						setCurrentScenario(currentScenario);
+						setCurrentScenario(response);
 					}
 					
 					public void onFailure(ServerFailure error) {
@@ -1868,7 +1910,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					@Override
 					public void onSuccess(ScenarioProxy response) {
 						Window.alert("This Clinical Scenario has been approved");	
-						setCurrentScenario(currentScenario);
+						setCurrentScenario(response);
 					}
 					
 					public void onFailure(ServerFailure error) {
@@ -1911,7 +1953,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				@Override
 				public void onSuccess(ScenarioProxy response) {
 					Window.alert("This Clinical Scenario has been returned for clarification");	
-					setCurrentScenario(currentScenario);
+					setCurrentScenario(response);
 				}
 				
 				public void onFailure(ServerFailure error) {
@@ -1948,7 +1990,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				@Override
 				public void onSuccess(ScenarioProxy response) {
 					Window.alert("This Clinical Scenario has been rejected");	
-					setCurrentScenario(currentScenario);
+					setCurrentScenario(response);
 				}
 				
 				public void onFailure(ServerFailure error) {
@@ -2053,6 +2095,42 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 		//if not, means the scenario has no meaningful info
 		return true;
+	}
+	
+	@UiHandler("ackButton")
+	public void onClickAcknowledge(ClickEvent clickEvent) {
+		final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+		
+		boolean confirm = Window.confirm("Click Ok to acknowledge the content of this scenario.");
+		if(confirm){
+			Set<String> ackedgers = currentScenario.getAcknowledgers()==null? new HashSet<String>() : currentScenario.getAcknowledgers();
+			ackedgers.add(userId);
+			currentScenario.setAcknowledgers(ackedgers);
+			currentScenario.setLastActionTaken(SCN_LAST_ACTION_ACK);
+			currentScenario.setLastActionUser(userEmail);			
+			checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
+			
+//			Window.alert(ackedgers.size()+" unserID:"+userId);
+			scnReq.persist()
+			.using(currentScenario).with(driver.getPaths())
+			.fire(new Receiver<ScenarioProxy>() {
+	
+				@Override
+				public void onSuccess(ScenarioProxy response) {
+					setCurrentScenario(response);
+				}
+				
+				public void onFailure(ServerFailure error) {
+					super.onFailure(error);
+					//undo
+					Set<String> ackedgers = currentScenario.getAcknowledgers();
+					ackedgers.remove(userId);
+					currentScenario.setAcknowledgers(ackedgers);
+				}
+				
+			});
+			
+		}
 	}
 	
 
