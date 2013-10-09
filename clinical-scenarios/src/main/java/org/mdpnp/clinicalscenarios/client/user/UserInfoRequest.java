@@ -9,7 +9,8 @@ import com.google.web.bindery.requestfactory.shared.ServiceName;
 
 @ServiceName("org.mdpnp.clinicalscenarios.server.user.UserInfo")
 public interface UserInfoRequest extends RequestContext { 
-	Request<UserInfoProxy> findCurrentUserInfo(String urlDestination);
+	Request<UserInfoProxy> findCurrentUserInfo(String urlDestination, boolean updateLastLogin);
 	InstanceRequest<UserInfoProxy, UserInfoProxy> persist();
 	Request<List<UserInfoProxy>> findAllUserInfo();
+	InstanceRequest<UserInfoProxy, UserInfoProxy> updateLastLoginDate();
 }

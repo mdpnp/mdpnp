@@ -26,11 +26,11 @@
 	</g:HTMLPanel>	
 	<g:Grid styleName='{style.dialog}'>
 	<g:row>
-	   <g:customCell><g:Label text="Email:"/></g:customCell>
+	   <g:customCell><g:Label text="Email:" /></g:customCell>
 	   <g:customCell><g:Label ui:field="emailEditor"/></g:customCell>
 	</g:row>
 	<g:row>
-	   <g:customCell><g:Label text='Salutation:'/></g:customCell>
+	   <g:customCell><g:Label text='Salutation:' title='Mr., Mrs., Dr., etc.'/></g:customCell>
 	   <g:customCell><g:TextBox ui:field='titleEditor'/></g:customCell>
 	</g:row>
 	<g:row>
@@ -57,6 +57,10 @@
 	   <g:customCell><g:Label text='Phone Number:'/></g:customCell>
 	   <g:customCell><g:TextBox ui:field='phoneNumberEditor'/></g:customCell>
 	</g:row>	
+		<g:row>
+	   <g:customCell><g:Label text='Do you agree to be contacted?:'/></g:customCell>
+	   <g:customCell><g:CheckBox ui:field='agreeToBeContactedEditor'/></g:customCell>
+	</g:row>
 	<g:row>
 	   <g:cell></g:cell>
 	   <g:customCell><g:Button text='Save' ui:field='saveButton'/>	</g:customCell>

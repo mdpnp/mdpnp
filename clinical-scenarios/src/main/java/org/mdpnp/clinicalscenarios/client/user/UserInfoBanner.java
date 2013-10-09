@@ -1,7 +1,6 @@
 package org.mdpnp.clinicalscenarios.client.user;
 
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
-import org.mortbay.log.Log;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -66,7 +65,7 @@ public class UserInfoBanner extends Composite {
 	private UserInfoProxy userInfo;
 	
 	private String userEmail;
-	private boolean isAdmin;//DAG
+//	private boolean isAdmin;//DAG
 	
 	public MenuItem getListTags(){
 		return listTags;
@@ -163,19 +162,16 @@ public class UserInfoBanner extends Composite {
 		search.addItem(showLatestSearch);
 
 		UserInfoRequest userInfoRequest = userInfoRequestFactory.userInfoRequest();
-		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).with("loginURL").to(new Receiver<UserInfoProxy>() {
+		userInfoRequest.findCurrentUserInfo(Window.Location.getHref(), true).with("loginURL").to(new Receiver<UserInfoProxy>() {
 
 			@Override
 			public void onSuccess(final UserInfoProxy response) {
 				//DAG
-				userEmail = response.getEmail();
-				
+				userEmail = response.getEmail();				
 				UserInfoBanner.this.userInfo = response;
-				
-				
+								
 				username.addItem("Search Scenarios", search);
 				
-
 				if(null == response.getEmail()) {
 					MenuBar signIn = new MenuBar(true);
 //					System.out.println(""+response.getLoginURL());
@@ -259,8 +255,8 @@ public class UserInfoBanner extends Composite {
 					logoutMenu.addItem(signOut);
 					
 					username.addItem(response.getEmail(), logoutMenu);
-					if(null == response.getGivenName() && null != newUserHandler) {
-						newUserHandler.onNewUser(response);
+					if(null == response.getGivenName() && null != newUserHandler) {//TICKET-181 
+						newUserHandler.onNewUser(response);//display userInfoPanel
 					}
 					
 				}

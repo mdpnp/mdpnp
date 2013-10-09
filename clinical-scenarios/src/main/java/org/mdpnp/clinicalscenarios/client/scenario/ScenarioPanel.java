@@ -756,7 +756,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			userInfoRequestFactory.initialize(eventBus);
 		
 		UserInfoRequest userInfoRequest = userInfoRequestFactory.userInfoRequest();
-		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).with("loginURL").to(new Receiver<UserInfoProxy>() {
+		userInfoRequest.findCurrentUserInfo(Window.Location.getHref(), false).with("loginURL").to(new Receiver<UserInfoProxy>() {
 
 				@Override
 				public void onSuccess(UserInfoProxy response) {

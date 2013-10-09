@@ -1,6 +1,5 @@
 package org.mdpnp.clinicalscenarios.client.user;
 
-import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.List;
 
