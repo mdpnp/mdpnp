@@ -181,15 +181,19 @@ public class DeviceListModel extends AbstractListModel<Device> {
         }
 
         try    {
-            idReader.read_instance(data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+            idReader.read_instance(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
             log.trace("read_instance for getIdentityForUdi("+udi+")...");
+            boolean found = false;
             for(int i = 0; i < info_seq.size(); i++) {
                 SampleInfo si = (SampleInfo) info_seq.get(i);
                 DeviceIdentity dc = (DeviceIdentity) data_seq.get(i);
                 if(si.valid_data) {
                     keyHolder.copy_from(dc);
-                    return keyHolder;
+                    found = true;
                 }
+            }
+            if(found) {
+                return keyHolder;
             }
         } catch (RETCODE_NO_DATA noData) {
 
@@ -212,15 +216,19 @@ public class DeviceListModel extends AbstractListModel<Device> {
         }
 
         try    {
-            connReader.read_instance(data_seq, info_seq, 1, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+            connReader.read_instance(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
             log.trace("read_instance for getConnectivityForUdi("+udi+")...");
+            boolean found = false;
             for(int i = 0; i < info_seq.size(); i++) {
                 SampleInfo si = (SampleInfo) info_seq.get(i);
                 DeviceConnectivity dc = (DeviceConnectivity) data_seq.get(i);
                 if(si.valid_data) {
                     keyHolder.copy_from(dc);
-                    return keyHolder;
+                    found = true;
                 }
+            }
+            if(found) {
+                return keyHolder;
             }
         } catch (RETCODE_NO_DATA noData) {
 
