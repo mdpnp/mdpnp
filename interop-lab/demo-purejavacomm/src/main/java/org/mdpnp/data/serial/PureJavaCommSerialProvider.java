@@ -155,6 +155,7 @@ public class PureJavaCommSerialProvider implements SerialProvider {
                 CommPortIdentifier cpi = (CommPortIdentifier) e.nextElement();
                 if(cpi.getName().equals(portIdentifier)) {
                     SerialPort serialPort = (SerialPort) cpi.open("", Long.MAX_VALUE==timeout?Integer.MAX_VALUE:(int)timeout);
+                    serialPort.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
                     SerialSocket socket = new SocketImpl(serialPort, portIdentifier);
                     doConfigurePort(socket);
 
