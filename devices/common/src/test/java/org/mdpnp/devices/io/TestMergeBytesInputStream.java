@@ -1,4 +1,4 @@
-package org.mdpnp.devices.oridion.capnostream;
+package org.mdpnp.devices.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

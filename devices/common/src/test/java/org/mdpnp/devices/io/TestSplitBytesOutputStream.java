@@ -1,9 +1,7 @@
-package org.mdpnp.devices.oridion.capnostream;
+package org.mdpnp.devices.io;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-
-import groovy.transform.TimedInterrupt;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
