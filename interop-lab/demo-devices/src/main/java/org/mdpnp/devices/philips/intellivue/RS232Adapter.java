@@ -9,6 +9,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.DatagramChannel;
 
 import org.mdpnp.devices.io.MergeBytesInputStream;
@@ -46,7 +47,9 @@ public class RS232Adapter {
         return serialSideAddress;
     }
 
-    public RS232Adapter(String serialPort, SocketAddress serialSideAddress, SocketAddress remoteSideAddress) throws IOException {
+    private final Thread udpToSerial, serialToUDP;
+
+    public RS232Adapter(String serialPort, SocketAddress serialSideAddress, SocketAddress remoteSideAddress, ThreadGroup threadGroup) throws IOException {
         this.serialSideAddress = serialSideAddress;
         this.remoteSideAddress = remoteSideAddress;
         SerialProvider sp = SerialProviderFactory.getDefaultProvider();
@@ -63,23 +66,29 @@ public class RS232Adapter {
             channel.connect(remoteSideAddress);
         }
 
-        Thread t1 = new Thread(new Runnable() {
+        udpToSerial = new Thread(threadGroup, new Runnable() {
             public void run() {
-                processSerial();
-                log.warn("Thread Ended");
+                try {
+                    processUDPToSerial();
+                } finally {
+                    log.warn("Thread Ended");
+                }
             }
-        });
-        t1.setDaemon(true);
-        t1.start();
+        }, "UDP->RS232");
+        udpToSerial.setDaemon(true);
+        udpToSerial.start();
 
-        Thread t2 = new Thread(new Runnable() {
+        serialToUDP = new Thread(threadGroup, new Runnable() {
             public void run() {
-                processNetwork();
-                log.warn("Thread Ended");
+                try {
+                    processSerialToUDP();
+                } finally {
+                    log.warn("Thread Ended");
+                }
             }
-        });
-        t2.setDaemon(true);
-        t2.start();
+        }, "RS232->UDP");
+        serialToUDP.setDaemon(true);
+        serialToUDP.start();
     }
 
 //    public void start() {
@@ -87,7 +96,28 @@ public class RS232Adapter {
 //    }
 
     public void shutdown() {
-
+        try {
+            serialSocket.close();
+            serialToUDP.join(2000L);
+            if(serialToUDP.isAlive()) {
+                log.warn("RS232->UDP thread did not exit");
+            }
+        } catch (IOException e) {
+            log.error("closing the serial port", e);
+        } catch (InterruptedException e) {
+            log.error("interrupted", e);
+        }
+        try {
+            channel.close();
+            udpToSerial.join(2000L);
+            if(udpToSerial.isAlive()) {
+                log.warn("UDP->RS232 thread did not exit");
+            }
+        } catch (IOException e) {
+            log.error("closing UDP channel", e);
+        } catch (InterruptedException e) {
+            log.error("interrupted", e);
+        }
     }
 
 
@@ -159,7 +189,7 @@ public class RS232Adapter {
         return count;
     }
 
-    protected void processNetwork() {
+    protected void processSerialToUDP() {
         InputStream is = new MergeBytesInputStream(serialIn, 0xC0, 0xC1, 0x7D, new MergeBytesInputStream.Merger() {
 
             @Override
@@ -170,36 +200,46 @@ public class RS232Adapter {
         });
         FCSInputStream fcsin = new FCSInputStream(is);
         int r = 0;
-        for(;;) {
-            try {
+        boolean eof = false;
+
+        try {
+            while(!eof) {
                 r = is.read();
-                if(r == MergeBytesInputStream.BEGIN_FRAME) {
+                switch(r) {
+                case MergeBytesInputStream.END_OF_FILE:
+                    eof = true;
+                    continue;
+                case MergeBytesInputStream.BEGIN_FRAME:
                     readFrame(fcsin, channel);
                     if(MergeBytesInputStream.END_FRAME != is.read()) {
                         log.warn("Frame not properly ended");
                     }
-                } else {
-//                  System.out.println("READ:"+Integer.toHexString(0xFF&r));
+                    break;
+                default:
+                    // Unknown byte
                 }
-            } catch (IOException e) {
-                log.error("Reading serial", e);
             }
-
-
+            try {
+                fcsin.close();
+            } catch (IOException e) {
+                log.error("closing serial port", e);
+            }
+        } catch (IOException e) {
+            log.debug("Reading serial", e);
         }
+
     }
 
-    protected void processSerial() {
+    protected void processUDPToSerial() {
         final SplitBytesOutputStream sbos = new SplitBytesOutputStream(serialOut, new IntellivueByteSplitter());
         long lastMessage = 0L;
 
         // FCS is calculated without escape sequences
         final FCSOutputStream fcsout = new FCSOutputStream(sbos);
         ByteBuffer bb = ByteBuffer.allocate(8192);
-        for(;;) {
+        while(channel.isOpen()) {
             SocketAddress addr;
             try {
-
                 addr = channel.receive(bb);
                 if(channel.isConnected()) {
                     if(null == remoteSideAddress || !addr.equals(remoteSideAddress)) {
@@ -248,15 +288,21 @@ public class RS232Adapter {
                 fcsout.flush();
                 lastMessage = System.currentTimeMillis();
                 log.trace("Wrote the datagram of length " + length);
+            } catch (AsynchronousCloseException ace) {
+                log.debug("The channel was closed", ace);
             } catch (IOException e) {
                 log.error("writing datagram", e);
             }
         }
-//        sbos.close();
+//        try {
+//            fcsout.close();
+//        } catch (IOException e) {
+//            log.error("Closing the FCSOutputStream", e);
+//        }
     }
 
     public static void main(String[] args) throws IOException {
         String portId = "cu.PL2303-00002014";
-        RS232Adapter adapter = new RS232Adapter(portId, new InetSocketAddress(InetAddress.getLoopbackAddress(), Intellivue.DEFAULT_UNICAST_PORT), null);
+        new RS232Adapter(portId, new InetSocketAddress(InetAddress.getLoopbackAddress(), Intellivue.DEFAULT_UNICAST_PORT), null, null);
     }
 }

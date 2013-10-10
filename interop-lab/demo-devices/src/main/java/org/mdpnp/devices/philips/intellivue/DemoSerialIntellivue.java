@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.SocketAddress;
 
 import org.mdpnp.devices.EventLoop;
 
@@ -30,16 +29,23 @@ public class DemoSerialIntellivue extends AbstractDemoIntellivue {
     }
 
     @Override
+    public void shutdown() {
+        super.shutdown();
+        adapter.shutdown();
+    }
+
+    protected RS232Adapter adapter;
+
+    @Override
     public void connect(String str) {
-
-
-
-
+        if(null != adapter) {
+            throw new IllegalStateException("Multiple calls to connect are not currently supported");
+        }
         try {
             int [] ports = getAvailablePorts(2);
             InetSocketAddress serialSide = new InetSocketAddress(InetAddress.getLoopbackAddress(), ports[0]);
             InetSocketAddress networkSide = new InetSocketAddress(InetAddress.getLoopbackAddress(), ports[1]);
-            RS232Adapter adapter = new RS232Adapter(str, serialSide, networkSide);
+            adapter = new RS232Adapter(str, serialSide, networkSide, threadGroup);
             connect(serialSide, networkSide);
         } catch (IOException e) {
             throw new RuntimeException(e);

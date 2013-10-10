@@ -16,7 +16,6 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
@@ -909,10 +908,18 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
     @Override
     public void disconnect() {
-        state(ice.ConnectionState.Disconnecting, "disassociating");
+        synchronized(stateMachine) {
+            if(!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
+                state(ice.ConnectionState.Disconnected, "");
+                return;
+            } else {
+                state(ice.ConnectionState.Disconnecting, "disassociating");
+            }
+        }
         if(!stateMachine.wait(ice.ConnectionState.Disconnected, 5000L)) {
             log.trace("No disconnect received in response to finish");
         }
+
     }
 
     @Override
