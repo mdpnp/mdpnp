@@ -191,67 +191,69 @@ public class BloodPressurePanel extends DevicePanel {
     private static final Logger log = LoggerFactory.getLogger(BloodPressurePanel.class);
 
     @Override
-    public void numeric(Numeric numeric, SampleInfo sampleInfo) {
-//        log.debug("N:"+numeric);
-        if(rosetta.MDC_PRESS_CUFF.VALUE.equals(numeric.metric_id)) {
-            switch((int)numeric.value) {
-            case ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE:
-                state = State.Deflating;
+    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
+        if(aliveAndValidData(sampleInfo)) {
+    //        log.debug("N:"+numeric);
+            if(rosetta.MDC_PRESS_CUFF.VALUE.equals(metric_id)) {
+                switch((int)numeric.value) {
+                case ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE:
+                    state = State.Deflating;
+                    break;
+                case ice.MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS.VALUE:
+                    this.state = State.Inflating;
+                    break;
+                case ice.MDC_EVT_STAT_OFF.VALUE:
+                    this.state = State.Waiting;
+                    break;
+                }
+            } else if(rosetta.MDC_PRESS_CUFF_SYS.VALUE.equals(metric_id)) {
+                systolicN.copy_from(numeric);
+            } else if(rosetta.MDC_PRESS_CUFF_DIA.VALUE.equals(metric_id)) {
+                diastolicN.copy_from(numeric);
+            } else if(rosetta.MDC_PULS_RATE_NON_INV.VALUE.equals(metric_id)) {
+                pulseN.copy_from(numeric);
+            } else if(ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE.equals(metric_id)) {
+                nextInflationN.copy_from(numeric);
+            } else if(ice.MDC_PRESS_CUFF_INFLATION.VALUE.equals(metric_id)) {
+                inflationN.copy_from(numeric);
+            }
+    //        log.debug("State:"+state);
+
+            switch(state) {
+            case Inflating:
+                nextInflation.setText("Inflating...");
+                systolic.setText(Integer.toString((int)inflationN.value));
+                diastolic.setText("");
+                pulse.setText("");
                 break;
-            case ice.MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS.VALUE:
-                this.state = State.Inflating;
+            case Deflating:
+                nextInflation.setText("Deflating...");
+                systolic.setText(Integer.toString((int)inflationN.value));
+                diastolic.setText("");
+                pulse.setText("");
                 break;
-            case ice.MDC_EVT_STAT_OFF.VALUE:
-                this.state = State.Waiting;
+            case Waiting:
+                long  seconds = ((long)nextInflationN.value % 60000L / 1000L);
+                this.nextInflation.setText((int)Math.floor(1.0 * nextInflationN.value / 60000.0) + ":" + (seconds<10?"0":"") + seconds + " MIN");
+                systolic.setText(Integer.toString((int)systolicN.value));
+                diastolic.setText(Integer.toString((int)diastolicN.value));
+                pulse.setText(Integer.toString((int)pulseN.value));
+                break;
+            case Uninited:
+                nextInflation.setText("");
+                systolic.setText("");
+                diastolic.setText("");
+                pulse.setText("");
                 break;
             }
-        } else if(rosetta.MDC_PRESS_CUFF_SYS.VALUE.equals(numeric.metric_id)) {
-            systolicN.copy_from(numeric);
-        } else if(rosetta.MDC_PRESS_CUFF_DIA.VALUE.equals(numeric.metric_id)) {
-            diastolicN.copy_from(numeric);
-        } else if(rosetta.MDC_PULS_RATE_NON_INV.VALUE.equals(numeric.metric_id)) {
-            pulseN.copy_from(numeric);
-        } else if(ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE.equals(numeric.metric_id)) {
-            nextInflationN.copy_from(numeric);
-        } else if(ice.MDC_PRESS_CUFF_INFLATION.VALUE.equals(numeric.metric_id)) {
-            inflationN.copy_from(numeric);
+            date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
+            time.setText(dateFormat.format(date));
         }
-//        log.debug("State:"+state);
-
-        switch(state) {
-        case Inflating:
-            nextInflation.setText("Inflating...");
-            systolic.setText(Integer.toString((int)inflationN.value));
-            diastolic.setText("");
-            pulse.setText("");
-            break;
-        case Deflating:
-            nextInflation.setText("Deflating...");
-            systolic.setText(Integer.toString((int)inflationN.value));
-            diastolic.setText("");
-            pulse.setText("");
-            break;
-        case Waiting:
-            long  seconds = ((long)nextInflationN.value % 60000L / 1000L);
-            this.nextInflation.setText((int)Math.floor(1.0 * nextInflationN.value / 60000.0) + ":" + (seconds<10?"0":"") + seconds + " MIN");
-            systolic.setText(Integer.toString((int)systolicN.value));
-            diastolic.setText(Integer.toString((int)diastolicN.value));
-            pulse.setText(Integer.toString((int)pulseN.value));
-            break;
-        case Uninited:
-            nextInflation.setText("");
-            systolic.setText("");
-            diastolic.setText("");
-            pulse.setText("");
-            break;
-        }
-        date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
-        time.setText(dateFormat.format(date));
     }
 
 
     @Override
-    public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
+    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
 
     }
 

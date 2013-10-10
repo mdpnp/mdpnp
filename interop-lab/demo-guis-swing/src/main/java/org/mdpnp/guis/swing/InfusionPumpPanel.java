@@ -1,13 +1,13 @@
 package org.mdpnp.guis.swing;
 
+import ice.InfusionStatus;
+import ice.Numeric;
+import ice.SampleArray;
+
 import java.awt.GridLayout;
 import java.util.Set;
 
 import javax.swing.JLabel;
-
-import ice.InfusionStatus;
-import ice.Numeric;
-import ice.SampleArray;
 
 import com.rti.dds.subscription.SampleInfo;
 
@@ -38,13 +38,13 @@ public class InfusionPumpPanel extends DevicePanel {
     }
 
     @Override
-    public void numeric(Numeric numeric, SampleInfo sampleInfo) {
+    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
+    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
         // TODO Auto-generated method stub
 
     }
@@ -55,7 +55,7 @@ public class InfusionPumpPanel extends DevicePanel {
 
     @Override
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
-        if(sampleInfo.valid_data) {
+        if(aliveAndValidData(sampleInfo)) {
             active.setText(Boolean.toString(infusionStatus.infusionActive));
             drugMass.setText(Integer.toString(infusionStatus.drug_mass_mcg) + " mcg");
             drugName.setText(infusionStatus.drug_name);

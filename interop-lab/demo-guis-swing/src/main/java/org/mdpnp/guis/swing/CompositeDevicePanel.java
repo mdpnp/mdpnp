@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 
@@ -187,46 +188,60 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
             }
         }
     }
-
+    private final ice.Numeric numericKeyHolder = (Numeric) ice.Numeric.create();
     @Override
     public void numeric(ice.NumericDataReader reader, ice.NumericSeq nu_seq, SampleInfoSeq info_seq) {
         for(int i = 0; i < info_seq.size(); i++) {
             SampleInfo si = (SampleInfo) info_seq.get(i);
+            ice.Numeric n = (Numeric) nu_seq.get(i);
+
+            String metric_id = null;
+
             if(si.valid_data) {
-                ice.Numeric n = (Numeric) nu_seq.get(i);
-                if(!knownIdentifiers.contains(n.metric_id)) {
-                    // avoid reboxing ... also tells us if something is new
-                    knownIdentifiers.add(n.metric_id);
-                    log.trace("New numeric, new set:"+knownIdentifiers);
-                    replaceDataPanels();
-                }
-                // TODO this should probably be handled by replaying the contents of the reader for any new gui panels
-                synchronized(dataComponents) {
-                    for(DevicePanel d : dataComponents) {
-                        d.numeric(n, si);
-                    }
+                metric_id = n.metric_id;
+            } else {
+                reader.get_key_value(numericKeyHolder, si.instance_handle);
+                metric_id = numericKeyHolder.metric_id;
+            }
+
+            if(0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & si.instance_state) && !knownIdentifiers.contains(metric_id)) {
+                // avoid reboxing ... also tells us if something is new
+                knownIdentifiers.add(metric_id);
+                log.trace("New numeric, new set:"+knownIdentifiers);
+                replaceDataPanels();
+            }
+            // TODO this should probably be handled by replaying the contents of the reader for any new gui panels
+            synchronized(dataComponents) {
+                for(DevicePanel d : dataComponents) {
+                    d.numeric(n, metric_id, si);
                 }
             }
         }
 
 //        log.trace(n.toString());
     }
+    private final ice.SampleArray sampleArrayKeyHolder = new ice.SampleArray();
 
     @Override
     public void sampleArray(ice.SampleArrayDataReader reader, ice.SampleArraySeq sa_seq, SampleInfoSeq info_seq) {
         for(int i = 0; i < info_seq.size(); i++) {
             SampleInfo si = (SampleInfo) info_seq.get(i);
+            ice.SampleArray sampleArray = (SampleArray) sa_seq.get(i);
+            String metric_id = null;
             if(si.valid_data) {
-                ice.SampleArray sampleArray = (SampleArray) sa_seq.get(i);
-                if(!knownIdentifiers.contains(sampleArray.metric_id)) {
-                    knownIdentifiers.add(sampleArray.metric_id);
-                    log.trace("New SampleArray, new set:"+knownIdentifiers);
-                    replaceDataPanels();
-                }
-                synchronized(dataComponents) {
-                    for(DevicePanel d : dataComponents) {
-                        d.sampleArray(sampleArray, si);
-                    }
+                metric_id = sampleArray.metric_id;
+            } else {
+                reader.get_key_value(sampleArrayKeyHolder, si.instance_handle);
+                metric_id = sampleArrayKeyHolder.metric_id;
+            }
+            if(0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & si.instance_state) && !knownIdentifiers.contains(metric_id)) {
+                knownIdentifiers.add(metric_id);
+                log.trace("New SampleArray, new set:"+knownIdentifiers);
+                replaceDataPanels();
+            }
+            synchronized(dataComponents) {
+                for(DevicePanel d : dataComponents) {
+                    d.sampleArray(sampleArray, metric_id, si);
                 }
             }
         }
