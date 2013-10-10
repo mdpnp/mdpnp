@@ -9,7 +9,7 @@ public class TestEventLoop {
 
     @Before
     public void setUp() {
-        eventLoop = new EventLoop();
+//        eventLoop = new EventLoop();
     }
     @After
     public void tearDown() {
