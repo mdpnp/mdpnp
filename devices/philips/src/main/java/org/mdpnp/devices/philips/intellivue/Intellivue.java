@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataRequest;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataResult;
 import org.mdpnp.devices.philips.intellivue.action.SinglePollDataRequest;
@@ -539,7 +540,7 @@ public class Intellivue implements NetworkConnection {
             outBuffer.reset();
             time.setTime(System.currentTimeMillis());
             log.trace("To " + channel.getRemoteAddress() + " at " + simpleDateformat.format(time));
-            log.trace(Util.dump(outBuffer, 50));
+            log.trace(HexUtil.dump(outBuffer, 50));
         }
         return cnt;
     }
@@ -640,7 +641,7 @@ public class Intellivue implements NetworkConnection {
                 if(log.isTraceEnabled()) {
                     time.setTime(System.currentTimeMillis());
                     log.trace("From " + channel.getRemoteAddress() + " on " + channel.socket().getLocalAddress() + " at " + simpleDateformat.format(time));
-                    log.trace(Util.dump(inBuffer, 50));
+                    log.trace(HexUtil.dump(inBuffer, 50));
                 }
                 handle(sockaddr, protocol.parse(inBuffer), sk);
             }

@@ -102,7 +102,7 @@
         <history>
           <!-- samples kept in the writer ... see durability -->
           <kind>KEEP_LAST_HISTORY_QOS</kind>
-          <depth>1</depth>
+          <depth>10</depth>
           <refilter>DDS_NONE_REFILTER_QOS</refilter>
         </history>
         <!-- UDI is typical in the instance key so instances are owned exclusively
@@ -160,7 +160,7 @@
         <history>
           <kind>KEEP_LAST_HISTORY_QOS</kind>
           <!-- samples kept in the writer ... see durability -->
-          <depth>1</depth>
+          <depth>10</depth>
           <refilter>DDS_NONE_REFILTER_QOS</refilter>
         </history>
         <!-- UDI is typical in the instance key so instances are owned exclusively
@@ -178,6 +178,20 @@
                 true
             </serialize_key_with_dispose>
         </protocol>
+        <!--
+        <batch>
+            <enable>true</enable>
+            <max_samples>10</max_samples>
+            <max_flush_delay>
+                <sec>1</sec>
+                <nanosec>0</nanosec>
+            </max_flush_delay>
+            <source_timestamp_resolution>
+                <sec>0</sec>
+                <nanosec>0</nanosec>
+            </source_timestamp_resolution>
+        </batch>
+        -->
       </datawriter_qos>
     </qos_profile>
   </qos_library>

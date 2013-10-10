@@ -2,6 +2,7 @@ package org.mdpnp.devices.philips.intellivue;
 
 import java.nio.ByteBuffer;
 
+import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.philips.intellivue.association.AssociationMessage;
 import org.mdpnp.devices.philips.intellivue.association.AssociationProtocol;
 import org.mdpnp.devices.philips.intellivue.association.AssociationProtocolImpl;
@@ -39,7 +40,7 @@ public class CompoundProtocol implements Protocol {
             }
         } catch (RuntimeException re) {
             bb.position(0);
-            log.trace("Offending buffer:\n"+Util.dump(bb, 20));
+            log.trace("Offending buffer:\n"+HexUtil.dump(bb, 20));
             throw new RuntimeException(re);
         }
     }

@@ -100,9 +100,17 @@ public class IntellivueAcceptor extends  Intellivue {
 
     protected synchronized void handle(SocketAddress sockaddr, org.mdpnp.devices.philips.intellivue.association.AssociationConnect message) {
         super.handle(sockaddr, message);
+
         AssociationAccept acc = new AssociationAcceptImpl();
         log.debug("Sending accept:"+acc);
         try {
+            final DatagramChannel channel = DatagramChannel.open();
+            channel.configureBlocking(false);
+            channel.socket().setReuseAddress(true);
+
+            channel.connect(new InetSocketAddress( ((InetSocketAddress) sockaddr).getAddress(), port));
+
+            networkLoop.register(this, channel);
             send(acc);
         } catch (IOException e1) {
             throw new RuntimeException(e1);
@@ -147,7 +155,10 @@ public class IntellivueAcceptor extends  Intellivue {
 
     }
 
+    private NetworkLoop networkLoop;
+
     public void accept(final NetworkLoop networkLoop) throws IOException {
+        this.networkLoop = networkLoop;
         networkLoop.add(new TaskQueue.TaskImpl<Void>() {
             @Override
             public Void doExecute(TaskQueue queue) {
@@ -165,6 +176,23 @@ public class IntellivueAcceptor extends  Intellivue {
             }
 
         });
+        networkLoop.add(new TaskQueue.TaskImpl<Void>() {
+            @Override
+            public Void doExecute(TaskQueue queue) {
+                try {
+                    final DatagramChannel channel = DatagramChannel.open();
+                    channel.configureBlocking(false);
+                    channel.socket().setReuseAddress(true);
+                    channel.socket().bind(new InetSocketAddress(DEFAULT_UNICAST_PORT));
+
+                    networkLoop.register(IntellivueAcceptor.this, channel);
+                } catch (IOException e) {
+                    log.error(e.getMessage(), e);
+                }
+                return null;
+            }
+        });
+
 
     }
     protected final int port;

@@ -3,16 +3,21 @@ package org.mdpnp.devices.oridion.capnostream;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+import groovy.transform.TimedInterrupt;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mdpnp.devices.io.MergeBytesInputStream;
+import org.mdpnp.devices.io.SplitBytesOutputStream;
 
 public class TestSplitBytesOutputStream {
     @Before
@@ -28,69 +33,84 @@ public class TestSplitBytesOutputStream {
 
     private byte[] TEST_DATA, EXPECTED_DATA;
 
+    private static final long TIMEOUT = 2000L;
 
-
-    @Test
+    @Test(timeout = TIMEOUT)
     public void testSingleByteWrite() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         SplitBytesOutputStream os = new SplitBytesOutputStream(baos);
-        os.writeHeader();
+        os.writeProtected(0x85);
         for(int i = 0; i < TEST_DATA.length; i++) {
             os.write(0xFF&TEST_DATA[i]);
         }
-        os.writeHeader();
+        os.writeProtected(0x85);
         os.write(0x00);
         os.close();
         assertArrayEquals(EXPECTED_DATA, baos.toByteArray());
     }
 
-    @Test
+    @Test(timeout=TIMEOUT)
     public void testWriteArray() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         SplitBytesOutputStream os = new SplitBytesOutputStream(baos);
-        os.writeHeader();
+        os.writeProtected(0x85);
         os.write(TEST_DATA);
-        os.writeHeader();
+        os.writeProtected(0x85);
         os.write(0x00);
         os.close();
         assertArrayEquals(EXPECTED_DATA, baos.toByteArray());
     }
 
-    @Test
+    @Test(timeout=TIMEOUT)
     public void testBothSingleByte() throws IOException {
         PipedInputStream pis = new PipedInputStream(EXPECTED_DATA.length);
         InputStream is = new MergeBytesInputStream(pis);
         SplitBytesOutputStream os = new SplitBytesOutputStream(new PipedOutputStream(pis));
-        os.writeHeader();
+        os.writeProtected(0x85);
         os.write(TEST_DATA);
-        os.writeHeader();
+        os.writeProtected(0x85);
         os.write(0x00);
         os.close();
-        assertEquals(MergeBytesInputStream.HEADER, is.read());
+        assertEquals(MergeBytesInputStream.BEGIN_FRAME, is.read());
         for(int i = 0; i < TEST_DATA.length; i++) {
             assertEquals(0xFF&TEST_DATA[i], is.read());
         }
-        assertEquals(MergeBytesInputStream.HEADER, is.read());
+        assertEquals(MergeBytesInputStream.BEGIN_FRAME, is.read());
         assertEquals(0x00, is.read());
         is.close();
     }
 
+    private static final void printArray(String prefix, byte[] arr, int off, int len) {
+        System.err.print(prefix +" [0x"+Integer.toHexString(0xFF&arr[0]));
+        for(int q = off+1; q < (off+len); q++) {
+            System.err.print(", 0x"+Integer.toHexString(0xFF&arr[q]));
+        }
+        System.err.println("]");
+    }
 
-    @Test
-    public void testBothArray() throws IOException {
+    @Test(timeout=TIMEOUT)
+    public void testBothArray() throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        System.err.println("testBothArray");
         PipedInputStream pis = new PipedInputStream(EXPECTED_DATA.length);
         InputStream is = new MergeBytesInputStream(pis);
         SplitBytesOutputStream os = new SplitBytesOutputStream(new PipedOutputStream(pis));
-        os.writeHeader();
+        os.writeProtected(0x85);
         os.write(TEST_DATA);
-        os.writeHeader();
+        os.writeProtected(0x85);
         os.write(0x00);
         os.close();
-        assertEquals(MergeBytesInputStream.HEADER, is.read());
+        Field f = PipedInputStream.class.getDeclaredField("buffer");
+        f.setAccessible(true);
+        printArray("TEST_DATA", TEST_DATA, 0, TEST_DATA.length);
+        printArray("EXPECTED_DATA", EXPECTED_DATA, 0, EXPECTED_DATA.length);
+        printArray("pis Data", (byte[])f.get(pis), 0, ((byte[])f.get(pis)).length);
+
+        assertArrayEquals(EXPECTED_DATA, (byte[])f.get(pis));
+        assertEquals(MergeBytesInputStream.BEGIN_FRAME, is.read());
         byte[] data = new byte[EXPECTED_DATA.length];
         assertEquals(6, is.read(data, 0, 8));
         assertArrayEquals(TEST_DATA, Arrays.copyOfRange(data, 0, 6));
-        assertEquals(MergeBytesInputStream.HEADER, is.read());
+        assertEquals(MergeBytesInputStream.BEGIN_FRAME, is.read());
         assertEquals(0x00, is.read());
         is.close();
     }
