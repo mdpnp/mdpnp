@@ -35,6 +35,10 @@ public class HexUtil {
         return dump(bb, Integer.MAX_VALUE);
     }
 
+    public static final String dump(byte[] bb, int bytesPerLine) {
+        return dump(ByteBuffer.wrap(bb), bytesPerLine);
+    }
+
     public static final String dump(ByteBuffer bb, int bytesPerLine) {
         StringBuilder sb = new StringBuilder("[");
         bb.mark();
