@@ -146,7 +146,6 @@ public class CachingWaveformSource extends AbstractNestedWaveformSource {
         long msPerSample = (long) source.getMillisecondsPerSample();
         // Indicating there is no cursor, just a bunch of new data
         if(sourceCount < 0) {
-            log.debug(sourceMax + " samples added to cache with no cursor");
             long startTime = source.getStartTime();
             for(int i = 0; i < sourceMax; i++) {
                 sampleCache[postIncrCacheCount(startTime + i * msPerSample)] = source.getValue(i);
@@ -156,13 +155,11 @@ public class CachingWaveformSource extends AbstractNestedWaveformSource {
         } else {
             if(lastSourceCount < 0) {
                 // base case
-                log.debug(sourceCount + " is the initial sourceCount");
                 int i = decr(sourceCount, sourceMax);
                 sampleCache[postIncrCacheCount(startTime + i * msPerSample)] = source.getValue(i);
                 this.lastSourceCount = sourceCount;
                 fireWaveform();
             } else {
-                log.debug("lastSourceCount="+lastSourceCount+" sourceCount="+sourceCount);
                 while(lastSourceCount != sourceCount) {
                     int i = postIncrLastSourceCount(sourceMax);
                     sampleCache[postIncrCacheCount(startTime + i * msPerSample)] = source.getValue(i);
