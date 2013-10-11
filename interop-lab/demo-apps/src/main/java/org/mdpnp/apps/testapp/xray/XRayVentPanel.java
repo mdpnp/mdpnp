@@ -250,7 +250,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
         waveformPanel.setEvenTempo(false);
         waveformPanel.setSource(wuws);
         if(null != waveformPanel.cachingSource()) {
-            waveformPanel.cachingSource().setFixedTimeDomain(12000L);
+            waveformPanel.cachingSource().setFixedTimeDomain(20000L);
         }
 
         enclosingWaveformPanel.add(waveformPanel.asComponent(), BorderLayout.CENTER);
