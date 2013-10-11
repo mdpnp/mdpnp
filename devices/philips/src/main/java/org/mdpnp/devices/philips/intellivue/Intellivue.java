@@ -44,6 +44,7 @@ import org.mdpnp.devices.philips.intellivue.data.ProtocolSupport.ProtocolSupport
 import org.mdpnp.devices.philips.intellivue.data.RelativeTime;
 import org.mdpnp.devices.philips.intellivue.data.TextIdList;
 import org.mdpnp.devices.philips.intellivue.dataexport.CommandType;
+import org.mdpnp.devices.philips.intellivue.dataexport.DataExportError;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportInvoke;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportMessage;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportResult;
@@ -58,7 +59,6 @@ import org.mdpnp.devices.philips.intellivue.dataexport.command.Set;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.SetResult;
 import org.mdpnp.devices.philips.intellivue.dataexport.impl.DataExportInvokeImpl;
 import org.mdpnp.devices.philips.intellivue.dataexport.impl.DataExportResultImpl;
-import org.mdpnp.devices.philips.intellivue.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +103,7 @@ public class Intellivue implements NetworkConnection {
         }
         if(message instanceof DataExportMessage) {
             handle((DataExportMessage)message);
-        } else 	if(message instanceof AssociationMessage) {
+        } else if(message instanceof AssociationMessage) {
             handle(sockaddr, (AssociationMessage)message);
         } else if(message instanceof ConnectIndication) {
             handle((ConnectIndication)message, sk);
@@ -344,15 +344,12 @@ public class Intellivue implements NetworkConnection {
         if(confirm) {
             {
                 DataExportResult message = new DataExportResultImpl();
+
                 message.setCommandType(CommandType.ConfirmedEventReport);
                 message.setInvoke(eventReport.getMessage().getInvoke());
                 message.setCommand(eventReport.createConfirm());
-
                 send(message);
             }
-        }
-        if(log.isTraceEnabled()) {
-            log.trace(eventReport.toString());
         }
     }
 
@@ -474,6 +471,10 @@ public class Intellivue implements NetworkConnection {
         }
     }
 
+    protected void handle(DataExportError error) throws IOException {
+
+    }
+
     protected void handle(DataExportMessage message) throws IOException {
         if(null == message) {
             return;
@@ -485,6 +486,9 @@ public class Intellivue implements NetworkConnection {
         case Result:
         case LinkedResult:
             handle((DataExportResult) message);
+            break;
+        case Error:
+            handle((DataExportError) message);
             break;
         default:
             log.warn("Unknown remoteOperation:"+message.getRemoteOperation());
@@ -539,8 +543,7 @@ public class Intellivue implements NetworkConnection {
         if(cnt > 0 && log.isTraceEnabled()) {
             outBuffer.reset();
             time.setTime(System.currentTimeMillis());
-            log.trace("To " + channel.getRemoteAddress() + " at " + simpleDateformat.format(time));
-            log.trace(HexUtil.dump(outBuffer, 50));
+            log.trace("To " + channel.getRemoteAddress() + "\n" + HexUtil.dump(outBuffer, 50));
         }
         return cnt;
     }
@@ -640,8 +643,7 @@ public class Intellivue implements NetworkConnection {
             if(inBuffer.hasRemaining()) {
                 if(log.isTraceEnabled()) {
                     time.setTime(System.currentTimeMillis());
-                    log.trace("From " + channel.getRemoteAddress() + " on " + channel.socket().getLocalAddress() + " at " + simpleDateformat.format(time));
-                    log.trace(HexUtil.dump(inBuffer, 50));
+                    log.trace("From " + channel.getRemoteAddress() + " on " + channel.socket().getLocalAddress() + "\n" + HexUtil.dump(inBuffer, 50));
                 }
                 handle(sockaddr, protocol.parse(inBuffer), sk);
             }

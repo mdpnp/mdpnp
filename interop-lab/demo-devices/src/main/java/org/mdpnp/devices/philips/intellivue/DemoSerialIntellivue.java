@@ -30,8 +30,8 @@ public class DemoSerialIntellivue extends AbstractDemoIntellivue {
 
     @Override
     public void shutdown() {
-        super.shutdown();
         adapter.shutdown();
+        super.shutdown();
     }
 
     protected RS232Adapter adapter;
@@ -45,7 +45,7 @@ public class DemoSerialIntellivue extends AbstractDemoIntellivue {
             int [] ports = getAvailablePorts(2);
             InetSocketAddress serialSide = new InetSocketAddress(InetAddress.getLoopbackAddress(), ports[0]);
             InetSocketAddress networkSide = new InetSocketAddress(InetAddress.getLoopbackAddress(), ports[1]);
-            adapter = new RS232Adapter(str, serialSide, networkSide, threadGroup);
+            adapter = new RS232Adapter(str, serialSide, networkSide, threadGroup, networkLoop);
             connect(serialSide, networkSide);
         } catch (IOException e) {
             throw new RuntimeException(e);

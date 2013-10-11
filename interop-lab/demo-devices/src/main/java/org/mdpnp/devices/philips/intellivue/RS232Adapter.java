@@ -1,19 +1,20 @@
 package org.mdpnp.devices.philips.intellivue;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectionKey;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.mdpnp.devices.io.MergeBytesInputStream;
 import org.mdpnp.devices.io.SplitBytesOutputStream;
+import org.mdpnp.devices.io.TeeInputStream;
+import org.mdpnp.devices.io.TeeOutputStream;
 import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialProviderFactory;
@@ -24,19 +25,62 @@ import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RS232Adapter {
+/**
+ * Translates between serial frames and UDP datagrams
+ *
+ * A DatagramChannel is registered on the NetworkLoop which monitors
+ * UDP datagrams.  When datagrams are received they are placed into writeToSerial.
+ * When the channel is available for writing the contents of writeToChannel are written.
+ *
+ * A separate thread monitors the inbound side of the serial connection.  As frames are read
+ * they are deposited into writeToChannel.
+ *
+ * A separate thread handles the outbound side of the serial connection.  Every 256ms it writes
+ * up to four frames with contents from writeToSerial.  The Philips monitor seems to prefer this
+ * to sparse commands and this technique ensures we do not send too many frames (the spec allows up to
+ * 4 frames in a 128ms period so we stay far under the limit)
+ * @author jplourde
+ *
+ */
+public class RS232Adapter implements NetworkConnection {
     private static final int BOF = 0xC0;
     private static final int EOF = 0xC1;
 
     private final byte[] header = new byte[4];
-    private final ByteBuffer body = ByteBuffer.allocate(8192);
+
+    private final List<ByteBuffer> writeToChannel = new ArrayList<ByteBuffer>();
+    private final List<ByteBuffer> writeToSerial = new ArrayList<ByteBuffer>();
+    private final List<ByteBuffer> recycleBin = new ArrayList<ByteBuffer>();
+
+    private final ByteBuffer newBuffer() {
+        synchronized(recycleBin) {
+            if(recycleBin.isEmpty()) {
+                log.trace("ALLOCATING A NEW ByteBuffer");
+                return ByteBuffer.allocate(2048);
+            } else {
+                ByteBuffer bb = recycleBin.remove(0);
+                bb.clear();
+                return bb;
+            }
+        }
+    }
+
+    private final void deleteBuffer(ByteBuffer bb) {
+        recycleBin.add(bb);
+    }
 
     private SocketAddress serialSideAddress;
     private SocketAddress remoteSideAddress;
     private final DatagramChannel channel;
+    private final SelectionKey selectionKey;
     private final SerialSocket serialSocket;
     private final OutputStream serialOut;
     private final InputStream serialIn;
+
+    private final ByteArrayOutputStream traceOut;
+    private final ByteArrayOutputStream traceIn;
+
+    private volatile boolean writingSerial = true;
 
     private static final Logger log = LoggerFactory.getLogger(RS232Adapter.class);
 
@@ -48,30 +92,45 @@ public class RS232Adapter {
     }
 
     private final Thread udpToSerial, serialToUDP;
+    private final NetworkLoop networkLoop;
 
-    public RS232Adapter(String serialPort, SocketAddress serialSideAddress, SocketAddress remoteSideAddress, ThreadGroup threadGroup) throws IOException {
+    public RS232Adapter(String serialPort, SocketAddress serialSideAddress, SocketAddress remoteSideAddress, ThreadGroup threadGroup, NetworkLoop networkLoop) throws IOException {
+        this.networkLoop = networkLoop;
         this.serialSideAddress = serialSideAddress;
         this.remoteSideAddress = remoteSideAddress;
         SerialProvider sp = SerialProviderFactory.getDefaultProvider();
         sp.setDefaultSerialSettings(115200, DataBits.Eight, Parity.None, StopBits.One);
         serialSocket = sp.connect(serialPort, 1000L);
-        serialOut = new BufferedOutputStream(serialSocket.getOutputStream());
-        serialIn = new BufferedInputStream(serialSocket.getInputStream());
+
+        if(log.isTraceEnabled()) {
+            traceOut = new ByteArrayOutputStream();
+            traceIn = new ByteArrayOutputStream();
+            serialOut = new TeeOutputStream(serialSocket.getOutputStream(), traceOut);
+            serialIn = new TeeInputStream(serialSocket.getInputStream(), traceIn);
+        } else {
+            traceOut = null;
+            traceIn = null;
+            serialOut = serialSocket.getOutputStream();
+            serialIn = serialSocket.getInputStream();
+        }
+
 
         channel = DatagramChannel.open();
+        channel.configureBlocking(false);
         channel.socket().setReuseAddress(true);
         channel.bind(serialSideAddress);
         this.serialSideAddress = channel.getLocalAddress();
-        if(null != remoteSideAddress) {
-            channel.connect(remoteSideAddress);
-        }
+        channel.connect(remoteSideAddress);
+
+        selectionKey = networkLoop.register(this, channel);
+        selectionKey.interestOps(SelectionKey.OP_READ);
 
         udpToSerial = new Thread(threadGroup, new Runnable() {
             public void run() {
                 try {
                     processUDPToSerial();
                 } finally {
-                    log.warn("Thread Ended");
+                    log.info("Thread Ended");
                 }
             }
         }, "UDP->RS232");
@@ -83,7 +142,7 @@ public class RS232Adapter {
                 try {
                     processSerialToUDP();
                 } finally {
-                    log.warn("Thread Ended");
+                    log.info("Thread Ended");
                 }
             }
         }, "RS232->UDP");
@@ -91,30 +150,26 @@ public class RS232Adapter {
         serialToUDP.start();
     }
 
-//    public void start() {
-//
-//    }
-
     public void shutdown() {
+        networkLoop.unregister(selectionKey, this);
+        writingSerial = false;
+
+
         try {
             serialSocket.close();
+            channel.close();
+        } catch (IOException e) {
+            log.error("closing the serial port or channel", e);
+        }
+        try {
             serialToUDP.join(2000L);
             if(serialToUDP.isAlive()) {
                 log.warn("RS232->UDP thread did not exit");
             }
-        } catch (IOException e) {
-            log.error("closing the serial port", e);
-        } catch (InterruptedException e) {
-            log.error("interrupted", e);
-        }
-        try {
-            channel.close();
             udpToSerial.join(2000L);
             if(udpToSerial.isAlive()) {
                 log.warn("UDP->RS232 thread did not exit");
             }
-        } catch (IOException e) {
-            log.error("closing UDP channel", e);
         } catch (InterruptedException e) {
             log.error("interrupted", e);
         }
@@ -140,9 +195,16 @@ public class RS232Adapter {
         int length = 0xFF00 & (header[2] << 8);
         length += (0xFF & header[3]);
 
-        body.clear();
+
+        ByteBuffer body = newBuffer();
+
+        if(length <= 0) {
+            log.warn("Invalid frame length:"+length);
+            return count;
+        }
 
         body.limit(length);
+
 
         while(body.hasRemaining()) {
             r = is.read(body.array(), body.arrayOffset()+body.position(), body.remaining());
@@ -179,13 +241,14 @@ public class RS232Adapter {
         if( (0xFFFF^receivedFCS) != calculatedFCS) {
             log.warn("Invalid CRC Received:"+Integer.toHexString((0xFFFF^receivedFCS)) + " but calculated: " + Integer.toHexString(calculatedFCS));
         }
-        body.mark();
-        channel.write(body);
-        body.reset();
+
         if(log.isTraceEnabled()) {
-            log.trace("Got a frame:"+HexUtil.dump(body));
+            log.trace("Received frame from RS232 len="+ body.remaining() + "\n" + HexUtil.dump(body, 50));
         }
-        // TODO check for trailer validity .. CRC .. etc
+        synchronized(writeToChannel) {
+            writeToChannel.add(body);
+        }
+        selectionKey.interestOps(selectionKey.interestOps() | SelectionKey.OP_WRITE);
         return count;
     }
 
@@ -204,6 +267,9 @@ public class RS232Adapter {
 
         try {
             while(!eof) {
+                if(null != traceIn) {
+                    traceIn.reset();
+                }
                 r = is.read();
                 switch(r) {
                 case MergeBytesInputStream.END_OF_FILE:
@@ -213,6 +279,10 @@ public class RS232Adapter {
                     readFrame(fcsin, channel);
                     if(MergeBytesInputStream.END_FRAME != is.read()) {
                         log.warn("Frame not properly ended");
+                    }
+                    if(null != traceIn && log.isTraceEnabled()) {
+                        byte[] bytes = traceIn.toByteArray();
+                        log.trace("from raw RS232 len=" + bytes.length + "\n" + HexUtil.dump(bytes, 50));
                     }
                     break;
                 default:
@@ -227,82 +297,128 @@ public class RS232Adapter {
         } catch (IOException e) {
             log.debug("Reading serial", e);
         }
-
     }
+
 
     protected void processUDPToSerial() {
         final SplitBytesOutputStream sbos = new SplitBytesOutputStream(serialOut, new IntellivueByteSplitter());
-        long lastMessage = 0L;
 
         // FCS is calculated without escape sequences
+        // This is closed elsewhere
+        @SuppressWarnings("resource")
         final FCSOutputStream fcsout = new FCSOutputStream(sbos);
-        ByteBuffer bb = ByteBuffer.allocate(8192);
-        while(channel.isOpen()) {
-            SocketAddress addr;
+
+        ByteBuffer[] buffers = new ByteBuffer[0];
+
+        while(writingSerial) {
+            synchronized(writeToSerial) {
+                buffers = writeToSerial.toArray(buffers);
+                writeToSerial.clear();
+            }
+            if(traceOut != null) {
+                traceOut.reset();
+            }
+            int i = 0;
+            for(ByteBuffer bb : buffers) {
+                if(null != bb) {
+                    if(i++ < 4) {
+                        int length = bb.remaining();
+                        if(log.isTraceEnabled()) {
+                            log.trace("Datagram len=" + length + "\n" + HexUtil.dump(bb, 50));
+                        }
+                        try {
+                            serialOut.write(BOF);
+                            fcsout.resetFCS();
+                            fcsout.write(0x11);
+                            fcsout.write(0x01);
+
+                            fcsout.write( 0xFF & (length >> 8) );
+                            fcsout.write( 0xFF & length);
+                            fcsout.write(bb.array(), bb.arrayOffset() + bb.position(), bb.remaining());
+                            // CRC
+                            fcsout.writeFCS();
+                            serialOut.write(EOF);
+
+
+                        } catch (IOException ioe) {
+                            log.error("Writing to the serial", ioe);
+                        } finally {
+                            deleteBuffer(bb);
+                        }
+                    } else {
+                        synchronized(writeToSerial) {
+                            writeToSerial.add(bb);
+                        }
+                    }
+                } else {
+                    break;
+                }
+            }
             try {
-                addr = channel.receive(bb);
-                if(channel.isConnected()) {
-                    if(null == remoteSideAddress || !addr.equals(remoteSideAddress)) {
-                        log.warn("Previously connected to " + channel.getRemoteAddress());
-                        channel.disconnect();
-                    }
-                }
-
-                if(!channel.isConnected()) {
-                    remoteSideAddress = addr;
-                    log.info("Connected to " + remoteSideAddress);
-                    channel.connect(remoteSideAddress);
-                }
-
-                bb.flip();
-                if(log.isTraceEnabled()) {
-                    log.trace("Got a datagram from " + addr + " " + HexUtil.dump(bb, 50));
-                }
-                long now = System.currentTimeMillis();
-                while(now-lastMessage<128L) {
-                    try {
-                        Thread.sleep(lastMessage+128L-now);
-                        log.trace("sleep");
-                        now = System.currentTimeMillis();
-                    } catch (InterruptedException e) {
-                        log.warn("Interrupted", e);
-                    }
-                }
-
-                if(!channel.isConnected()) {
-                    channel.connect(addr);
-                }
-                serialOut.write(BOF);
-                fcsout.resetFCS();
-                fcsout.write(0x11);
-                fcsout.write(0x01);
-                int length = bb.remaining();
-                // TODO is this little or big endian?
-                // TODO does this get escapes or not?
-                fcsout.write( 0xFF & (length >> 8) );
-                fcsout.write( 0xFF & length);
-                fcsout.write(bb.array(), bb.arrayOffset() + bb.position(), bb.remaining());
-                // CRC
-                fcsout.writeFCS();
-                serialOut.write(EOF);
                 fcsout.flush();
-                lastMessage = System.currentTimeMillis();
-                log.trace("Wrote the datagram of length " + length);
-            } catch (AsynchronousCloseException ace) {
-                log.debug("The channel was closed", ace);
-            } catch (IOException e) {
-                log.error("writing datagram", e);
+            } catch (IOException e1) {
+                log.error("flushing serial", e1);
+            }
+            if(log.isTraceEnabled()) {
+                byte[] bytes = traceOut.toByteArray();
+                if(bytes.length > 0) {
+                    log.trace("to raw RS232 len=" + bytes.length + "\n" + HexUtil.dump(bytes, 50));
+                }
+            }
+            try {
+                Thread.sleep(256L);
+            } catch (InterruptedException e) {
+                log.warn("interrupted", e);
             }
         }
-//        try {
-//            fcsout.close();
-//        } catch (IOException e) {
-//            log.error("Closing the FCSOutputStream", e);
-//        }
     }
 
-    public static void main(String[] args) throws IOException {
-        String portId = "cu.PL2303-00002014";
-        new RS232Adapter(portId, new InetSocketAddress(InetAddress.getLoopbackAddress(), Intellivue.DEFAULT_UNICAST_PORT), null, null);
+    @Override
+    public void read(SelectionKey sk) throws IOException {
+        ByteBuffer bb = newBuffer();
+        int n = channel.read(bb);
+        if(n > 0) {
+            bb.flip();
+            log.debug("Read " + bb.remaining() + " bytes from UDP " + n);
+            synchronized(writeToSerial) {
+                writeToSerial.add(bb);
+            }
+        } else {
+            deleteBuffer(bb);
+        }
+
+    }
+    @Override
+    public void write(SelectionKey sk) throws IOException {
+        ByteBuffer toWrite = null;
+        synchronized(writeToChannel) {
+            if(!writeToChannel.isEmpty()) {
+                toWrite = writeToChannel.remove(0);
+            }
+            if(writeToChannel.isEmpty()) {
+                selectionKey.interestOps(selectionKey.interestOps() & ~SelectionKey.OP_WRITE);
+            } else {
+                selectionKey.interestOps(selectionKey.interestOps() | SelectionKey.OP_WRITE);
+            }
+        }
+
+        if(null != toWrite) {
+            int n = channel.write(toWrite);
+            if(n > 0) {
+                deleteBuffer(toWrite);
+            } else {
+                synchronized(writeToChannel) {
+                    writeToChannel.add(0, toWrite);
+                }
+            }
+        }
+    }
+    @Override
+    public void registered(NetworkLoop networkLoop, SelectionKey sk) {
+
+    }
+    @Override
+    public void unregistered(NetworkLoop networkLoop, SelectionKey sk) {
+
     }
 }
