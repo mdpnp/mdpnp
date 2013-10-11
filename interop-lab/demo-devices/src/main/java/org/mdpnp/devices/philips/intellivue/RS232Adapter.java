@@ -59,14 +59,23 @@ public class RS232Adapter implements NetworkConnection {
                 return ByteBuffer.allocate(2048);
             } else {
                 ByteBuffer bb = recycleBin.remove(0);
-                bb.clear();
-                return bb;
+                if(null == bb) {
+                    log.trace("ALLOCATING A NEW ByteBuffer");
+                    return ByteBuffer.allocate(2048);
+                } else {
+                    bb.clear();
+                    return bb;
+                }
             }
         }
     }
 
     private final void deleteBuffer(ByteBuffer bb) {
-        recycleBin.add(bb);
+        if(null != bb) {
+            synchronized(recycleBin) {
+                recycleBin.add(bb);
+            }
+        }
     }
 
     private SocketAddress serialSideAddress;
@@ -127,11 +136,18 @@ public class RS232Adapter implements NetworkConnection {
 
         udpToSerial = new Thread(threadGroup, new Runnable() {
             public void run() {
-                try {
-                    processUDPToSerial();
-                } finally {
-                    log.info("Thread Ended");
+                while(writingSerial) {
+                    try {
+                        processUDPToSerial();
+                    } catch(Throwable t) {
+                        if(writingSerial) {
+                            log.error("serious error in processUDPToSerial, restarting", t);
+                        } else {
+                            log.debug("error but closing anyway", t);
+                        }
+                    }
                 }
+                log.info("Thread Ended");
             }
         }, "UDP->RS232");
         udpToSerial.setDaemon(true);
@@ -139,11 +155,19 @@ public class RS232Adapter implements NetworkConnection {
 
         serialToUDP = new Thread(threadGroup, new Runnable() {
             public void run() {
-                try {
-                    processSerialToUDP();
-                } finally {
-                    log.info("Thread Ended");
+                while(writingSerial) {
+                    try {
+                        processSerialToUDP();
+                    } catch(Throwable t) {
+                        if(writingSerial) {
+                            log.error("serious error in processSerialToUDP, restarting", t);
+                        } else {
+                            log.debug("error but closing anyway", t);
+                        }
+
+                    }
                 }
+                log.info("Thread Ended");
             }
         }, "RS232->UDP");
         serialToUDP.setDaemon(true);
@@ -153,7 +177,6 @@ public class RS232Adapter implements NetworkConnection {
     public void shutdown() {
         networkLoop.unregister(selectionKey, this);
         writingSerial = false;
-
 
         try {
             serialSocket.close();
