@@ -185,7 +185,7 @@ public class RS232Adapter implements NetworkConnection {
         while(count < header.length) {
             r = is.read(header, count, header.length - count);
             if(r < 0) {
-                return -1;
+                return r;
             }
             count += r;
         }
@@ -209,9 +209,13 @@ public class RS232Adapter implements NetworkConnection {
         while(body.hasRemaining()) {
             r = is.read(body.array(), body.arrayOffset()+body.position(), body.remaining());
             if(r < 0) {
-                return -1;
+                return r;
             } else {
                 count += r;
+                if(r > body.remaining()) {
+                    log.warn("Read of length=" + body.remaining() + " returned " + r + " bytes ... forced to extend the buffer limit");
+                    body.limit(body.position()+r);
+                }
                 body.position(body.position()+r);
             }
         }
@@ -219,11 +223,11 @@ public class RS232Adapter implements NetworkConnection {
         int calculatedFCS = is.currentFCS();
 
         if((r = is.read()) < 0) {
-            return -1;
+            return r;
         }
         int receivedFCS = 0xFF & r;
         if((r = is.read()) < 0) {
-            return -1;
+            return r;
         }
         receivedFCS |= 0xFF00 & (r << 8);
 
@@ -276,10 +280,20 @@ public class RS232Adapter implements NetworkConnection {
                     eof = true;
                     continue;
                 case MergeBytesInputStream.BEGIN_FRAME:
-                    readFrame(fcsin, channel);
-                    if(MergeBytesInputStream.END_FRAME != is.read()) {
-                        log.warn("Frame not properly ended");
+                    switch(readFrame(fcsin, channel)) {
+                    case MergeBytesInputStream.END_OF_FILE:
+                        eof = true;
+                        continue;
+                    case MergeBytesInputStream.END_FRAME:
+                        log.info("Aborted Frame");
+                        break;
+                    default:
+                        if(MergeBytesInputStream.END_FRAME != is.read()) {
+                            log.warn("Frame not properly ended");
+                        }
+                        break;
                     }
+
                     if(null != traceIn && log.isTraceEnabled()) {
                         byte[] bytes = traceIn.toByteArray();
                         log.trace("from raw RS232 len=" + bytes.length + "\n" + HexUtil.dump(bytes, 50));

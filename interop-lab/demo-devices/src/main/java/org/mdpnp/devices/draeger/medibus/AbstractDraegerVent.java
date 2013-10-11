@@ -520,7 +520,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     @Override
     protected long getMaximumQuietTime() {
-        return 2000L;
+        return 3000L;
     }
 
     @Override
