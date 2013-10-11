@@ -66,8 +66,18 @@ public final class MergeBytesInputStream extends java.io.FilterInputStream {
                         if(n < 0) {
                             return n;
                         }
-                        b[off+i] += n;
+                        if(n == endFrame) {
+                            return END_FRAME;
+                        }
+                        byte merged = merger.merge(b[off+i], (byte)n);
+                        log.trace("Merged " + Integer.toHexString(0xFF & b[off+i]) + " + " + Integer.toHexString(0xFF & n) + " => " + Integer.toHexString(0xFF&merged));
+                        b[off+i] = merged;
+
                     } else {
+                        if(b[off+i+1] == endFrame) {
+                            return END_FRAME;
+                        }
+
                         // Add the second byte to the first
                         byte merged = merger.merge(b[off+i], b[off+i+1]);
                         log.trace("Merged " + Integer.toHexString(0xFF & b[off+i]) + " + " + Integer.toHexString(0xFF & b[off + i + 1]) + " => " + Integer.toHexString(0xFF&merged));
@@ -97,6 +107,8 @@ public final class MergeBytesInputStream extends java.io.FilterInputStream {
                     b1 = in.read();
                     if(b1 < 0) {
                         return END_OF_FILE;
+                    } else if(b1 == endFrame) {
+                        return END_FRAME;
                     } else {
                         return 0xFF & merger.merge((byte)b, (byte)b1);
                     }
