@@ -1,4 +1,4 @@
-PARCEL=demo-apps-0.1.2-linux-arm
+PARCEL=demo-apps-0.1.3-linux-arm
 TARGETS=`cat targets | sed '/^\s*#/d'`
 
 ./gradlew -POS_NAME=linux -POS_ARCH=arm :interop-lab:demo-apps:distZip
@@ -22,6 +22,8 @@ wait
 
 for TARGET in $TARGETS
 do
+  echo Stopping device-adapter on $TARGET
+  ssh ubuntu@$TARGET sudo service device-adapter stop
   echo Copying more files to $TARGET
   scp interop-lab/demo-apps/src/main/resources/USER_QOS_PROFILES.xml ubuntu@$TARGET:
   scp log4j.properties ubuntu@$TARGET:
@@ -29,4 +31,6 @@ do
   ssh ubuntu@$TARGET chmod 777 $PARCEL/bin/demo-apps
   rm $TARGET.scp.out
   rm $TARGET.unzip.out
+  echo Restarting device-adapter on $TARGET
+  ssh ubuntu@$TARGET sudo service device-adapter start
 done
