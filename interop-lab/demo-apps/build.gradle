@@ -14,7 +14,7 @@ if(MAC == localOsName) {
         //certIdentity = 'E279LP5667'
         mainClassName = "org.mdpnp.apps.testapp.Main"
         icon = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns"
-        appName = "MDPnP Demo Apps " + project.version
+        appName = "MDPnP Demo Apps"
         volumeName = "MDPnP Demo Apps " + project.version
         backgroundImage = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/mdpnp.png"
         dmgName = project.name + '-' + project.version + '-mac'
