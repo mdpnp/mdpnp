@@ -53,6 +53,8 @@ public class ScenarioEntity implements java.io.Serializable {
 	
 	//TICKET-163  "like" scenarios
 	private Set<String> acknowledgers; //set with the IDs of the users who clicked the button to ack/like this scenario 
+	//TICKET-157
+	private Set<String> associatedTags; //set of tag Names associated to the scenario
 	
 
 	@OnSave
@@ -217,6 +219,14 @@ public class ScenarioEntity implements java.io.Serializable {
 
 	public void setAcknowledgers(Set<String> acknowledgers) {
 		this.acknowledgers = acknowledgers;
+	}
+
+	public Set<String> getAssociatedTags() {
+		return associatedTags;
+	}
+
+	public void setAssociatedTags(Set<String> associatedTags) {
+		this.associatedTags = associatedTags;
 	}
 
 	public static ScenarioEntity create() /*throws Exception*/ {

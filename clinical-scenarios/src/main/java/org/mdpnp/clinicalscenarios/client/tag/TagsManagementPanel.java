@@ -2,10 +2,11 @@ package org.mdpnp.clinicalscenarios.client.tag;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.mdpnp.clinicalscenarios.client.tag.comparator.TagComparator;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
@@ -289,19 +290,19 @@ public class TagsManagementPanel extends Composite implements Editor<TagProxy> {
 	}
 
 
-	// ----------------------------------------------------------
-	/**
-	 * compares Tags lexicographically by tag name
-	 * @author diego@mdpnp.org
-	 *
-	 */
-	private class TagComparator implements Comparator<TagProxy> {
-
-		public int compare(TagProxy o1, TagProxy o2) {
-			o1.getName().compareToIgnoreCase(o2.getName());
-			return o1.getName().compareToIgnoreCase(o2.getName());
-		}
-		
-	}
+//	// ----------------------------------------------------------
+//	/**
+//	 * compares Tags lexicographically by tag name
+//	 * @author diego@mdpnp.org
+//	 *
+//	 */
+//	private class TagComparator implements Comparator<TagProxy> {
+//
+//		public int compare(TagProxy o1, TagProxy o2) {
+//			o1.getName().compareToIgnoreCase(o2.getName());
+//			return o1.getName().compareToIgnoreCase(o2.getName());
+//		}
+//		
+//	}
 
 }
