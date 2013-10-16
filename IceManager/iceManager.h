@@ -6,7 +6,7 @@
 #include <QImage>
 #include <QAbstractTableModel>
 #include <ndds/ndds_cpp.h>
-#include "device.h"
+#include "ice.h"
 
 class DeviceIdentityManager : public QAbstractTableModel
 {

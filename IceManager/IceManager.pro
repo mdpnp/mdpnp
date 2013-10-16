@@ -13,22 +13,22 @@ TEMPLATE = app
 CONFIG += static
 
 SOURCES += main.cpp\
-        device.cxx\
-        deviceSupport.cxx\
-        devicePlugin.cxx \
     DeviceIdentityManager.cpp \
     form.cpp \
     Manager.cpp \
-    PubManager.cpp
+    PubManager.cpp \
+    iceSupport.cxx \
+    ice.cxx \
+    icePlugin.cxx
 
 HEADERS  +=\
-         device.h\
-         devicePlugin.h\
-         deviceSupport.h \
-    DeviceIdentityManager.h \
     form.h \
     Manager.h \
-    PubManager.h
+    PubManager.h \
+    iceSupport.h \
+    icePlugin.h \
+    ice.h \
+    iceManager.h
 
 FORMS    += widget.ui \
     form.ui
@@ -45,7 +45,7 @@ unix {
 
 # http://stackoverflow.com/questions/3984104/qmake-how-to-copy-a-file-to-the-output
 OTHER_FILES += USER_QOS_PROFILES.xml \
-device.idl
+ice.idl
 
 # Copy qml files post build
 win32 {
