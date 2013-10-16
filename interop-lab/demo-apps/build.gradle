@@ -73,6 +73,16 @@ if(localOsName == MAC) {
         workingDir "$buildDir/"
         commandLine 'productbuild', '--component', 'MDPnP Demo Apps.app', '/Applications', '--sign', 'Developer ID Installer: JEFFREY PLOURDE', '--identifier', 'org.mdpnp.apps.testapp.Main', '--version', project.version, 'demo-apps-'+project.version+'-mac.pkg'
     }
+
+    task verifySignedApp(type:Exec, dependsOn: createSignedApp) {
+        workingDir "$buildDir/"
+        commandLine 'codesign', '-v', '-v', 'MDPnP Demo Apps.app'
+    }
+
+    task verifySignedPkg(type:Exec, dependsOn: createSignedPkg) {
+        workingDir "$buildDir/"
+        commandLine 'spctl', '--verbose', '--assess', '--type', 'install', 'demo-apps-'+project.version+'-mac.pkg'
+    }
 }
 task downloadLaunch4j(dependsOn: createBuildToolsDir) << {
     def f = file("build-tools/"+launch4jName)
