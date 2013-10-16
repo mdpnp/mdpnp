@@ -92,7 +92,6 @@ public class UserInfoBanner extends Composite {
 		return listApprvScn;
 	}
 	
-	
 	public MenuItem getListAllScenarios(){
 		return listAllScn;
 	}

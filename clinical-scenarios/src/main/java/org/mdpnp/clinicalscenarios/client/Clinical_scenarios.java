@@ -259,7 +259,11 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getlistApprvScn().setScheduledCommand(new Command() {			
 			@Override
 			public void execute() {
-				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
+				Set<String> status = new HashSet<String>();
+				status.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+				status.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+				status.add(ScenarioPanel.SCN_STATUS_APPROVED);
+				scenarioListPanel.listScnByStatus(status);
 				showWidget(scenarioListPanel);
 			}
 		});
