@@ -164,6 +164,20 @@
 	  	<g:Anchor text='Add New...' href='#' ui:field='addNewLinkedReference'/>
 	    </g:FlowPanel>
 	</g:Tab>
+	
+	<g:Tab text="Tags">
+	    <g:FlowPanel>
+	     <g:HTML><span style="font-size:16pt;">Tag the scenario with meaningful keywords</span><br/>
+	     </g:HTML>
+	     <g:Label ui:field='tagsLabel'/>
+<!-- 	     <g:VerticalPanel ui:field='tagsVerticalPanel'></g:VerticalPanel> -->
+		<g:ScrollPanel ui:field='tagsScrollPanel'>
+		    <g:FlexTable ui:field='tagsAssociatedTable'></g:FlexTable>
+		</g:ScrollPanel>
+		<g:Button text='Attach Tags' ui:field='saveTagsButton' styleName='{style.givemespace}' />
+	  	
+	    </g:FlowPanel>
+	</g:Tab>
 	    
 	<g:Tab text="Approve or Reject">
 	  <g:FlowPanel>

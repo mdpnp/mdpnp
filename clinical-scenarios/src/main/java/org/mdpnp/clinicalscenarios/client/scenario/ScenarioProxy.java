@@ -18,8 +18,12 @@ public interface ScenarioProxy extends EntityProxy {
 	Date getCreationDate();
 	void setModificationDate(Date d);
 	Date getModificationDate();
-	void setAcknowledgers(Set<String> acknowledgers); 
+	
+	void setAcknowledgers(Set<String> acknowledgers); //Ticket-163
 	Set<String> getAcknowledgers();
+	
+	Set<String> getAssociatedTags();//Ticket-157
+	void setAssociatedTags(Set<String> associatedTags);
 	
 	BackgroundProxy getBackground();
 	HazardsProxy getHazards();

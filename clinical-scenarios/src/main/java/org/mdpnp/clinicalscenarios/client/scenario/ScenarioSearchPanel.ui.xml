@@ -51,6 +51,14 @@
 		    <g:FlexTable ui:field='dateRangeSearchComponentsTable'/>	
 		    <g:Button text='Search' ui:field='buttonSearchByDates'/>
 		</g:FlowPanel>
+		
+		<!-- 		Search by Tags -->
+		<g:FlowPanel ui:field='searchByTags' >
+		    <g:Label text='Search by Tags' styleName='heading'/>
+		     <g:Label text='Search scenarions containing the selected tags'/>
+		    <g:FlexTable ui:field='tagSearchTable'/>	
+		    <g:Button text='Search' ui:field='buttonSearchByTags'/>
+		</g:FlowPanel>
 
 		<g:FlexTable ui:field='searchResult'/>
 			

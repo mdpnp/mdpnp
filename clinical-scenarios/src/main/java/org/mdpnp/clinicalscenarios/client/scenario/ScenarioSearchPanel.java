@@ -13,6 +13,10 @@ import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioComparator
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioStatusComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioSubmitterComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioTitleComparator;
+import org.mdpnp.clinicalscenarios.client.tag.TagProxy;
+import org.mdpnp.clinicalscenarios.client.tag.TagRequest;
+import org.mdpnp.clinicalscenarios.client.tag.TagRequestFactory;
+import org.mdpnp.clinicalscenarios.client.tag.comparator.TagComparator;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoProxy;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequest;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequestFactory;
@@ -32,6 +36,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -60,6 +65,8 @@ public class ScenarioSearchPanel extends Composite {
 	private static int SCN_TABLE_EIGTH_COL = 7;
 	private static int SCN_TABLE_NINTH_COL = 8;
 	
+	private static int TAGS_SEARCH_NUM_COLS = 8;
+	
 	private final int SCN_GRIDLIST_ROWS = 10; //rows in the table showing the Scn List
 	private final int SCN_GRIDLIST_COLUMNS_admin = 9;//title, uniqueID, #acks, status, submitter, created, lastAction, lockebBy, deleteButton
 	private final int SCN_GRIDLIST_COLUMNS_RegUser = 6;//title, uniqueID, #acks, status, creationDate, lastAction
@@ -84,6 +91,7 @@ public class ScenarioSearchPanel extends Composite {
 
 	
 	private static ScenarioSearchPanelUiBinder uiBinder = GWT.create(ScenarioSearchPanelUiBinder.class);
+	private TagRequestFactory tagRequestFactory = GWT.create(TagRequestFactory.class);//TICKET-157
 	
 	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
 	private enum UserRole {Administrator, RegisteredUser, AnonymousUser}
@@ -107,6 +115,12 @@ public class ScenarioSearchPanel extends Composite {
 		advancedSearchHazardSeverityListbox.addItem(" ");// to ad no-filter option
 		for(String s : ScenarioPanel.getHazardSeverityValues()){
 			advancedSearchHazardSeverityListbox.addItem(s);
+		}
+		
+		//Ticket-157
+		if(tagRequestFactory != null){
+			final EventBus eventBus = new SimpleEventBus();
+			tagRequestFactory.initialize(eventBus);
 		}
 		
 		//check user role
@@ -314,7 +328,7 @@ public class ScenarioSearchPanel extends Composite {
 	/**
 	 * Advanced Search; Gets the list of approved scn with the keywords and then filters using the other fields 
 	 */
-	public void doAdvancedSearch(){
+	private void doAdvancedSearch(){
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByKeywords(advancedSearchKeywordsTextBox.getText())
 			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
@@ -324,6 +338,8 @@ public class ScenarioSearchPanel extends Composite {
 				public void onSuccess(List<ScenarioProxy> response) {
 					if(null==response || response.size()==0){ 
 						status.setVisible(false); 
+						resetGridAuxVar(new ArrayList<ScenarioProxy>());
+						drawScenariosListGrid(new ArrayList<ScenarioProxy>());
 						return;
 					}
 					
@@ -443,6 +459,7 @@ public class ScenarioSearchPanel extends Composite {
 						filteredResult.add(it.next());
 					}
 					
+					Window.alert(" "+filteredResult.size());
 					resetGridAuxVar(filteredResult);
 					drawScenariosListGrid(filteredResult);
 					
@@ -459,7 +476,10 @@ public class ScenarioSearchPanel extends Composite {
 	
 	@UiField
 	Label searchResultCaption; //"results from search: blablabla"
-			
+	
+	/**
+	 * Hides navigation buttons and appropriate labels and clears the results table.
+	 */
 	private void cleanScenarioTable(){
 		hideNavigationButtons();
 		searchResult2.clear();
@@ -471,7 +491,7 @@ public class ScenarioSearchPanel extends Composite {
 	 * Basic search or listAll
 	 * @param text
 	 */
-	public void doSearch(final String text) {
+	private void doSearch(final String text) {
 //		hideAllSearchPanels();
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
@@ -540,8 +560,14 @@ public class ScenarioSearchPanel extends Composite {
 		@Override
 		public void onSuccess(List<ScenarioProxy> response) {
 			//drawScenariosListTable(response);//DAG Older way to print the table using FleaxTable and not limiting results shown
-			resetGridAuxVar(response);
-			drawScenariosListGrid(response);
+			if(null!=response){
+				resetGridAuxVar(response);
+				drawScenariosListGrid(response);
+			}else{
+				resetGridAuxVar(new ArrayList<ScenarioProxy>());
+				drawScenariosListGrid(new ArrayList<ScenarioProxy>());
+			}
+
 			
 		}
 		@Override
@@ -558,7 +584,8 @@ public class ScenarioSearchPanel extends Composite {
 		@Override
 		public void onSuccess(ScenarioProxy result) {
 			List<ScenarioProxy> response = new ArrayList<ScenarioProxy>();
-			response.add(result);
+			if(null!=result)
+				response.add(result);
 			resetGridAuxVar(response);
 			drawScenariosListGrid(response);
 			
@@ -568,7 +595,6 @@ public class ScenarioSearchPanel extends Composite {
 			super.onFailure(error);
 		}
 	};
-	//----
 	//----------------------------------------------------------------------------------------
 	
 	//Aux var to print the scn list, move thru the scenarios of the list (navigation buttons) and 
@@ -667,6 +693,11 @@ public class ScenarioSearchPanel extends Composite {
 		drawScenariosListGrid(scnList);
 	}
 	
+	
+	/**
+	 * Draws the table with the scenario information
+	 * @param response
+	 */
 	private void drawScenariosListGrid(final List<ScenarioProxy> response){
 		
 		this.scnList = response;//update aux var
@@ -1121,6 +1152,7 @@ public class ScenarioSearchPanel extends Composite {
 		status.setVisible(true);
 		hideSearchById();// Search by ID
 		hideSearchByDates();// Search by dates
+		hideSearchByTags();
 	}
 	
 	//---------------------------------------
@@ -1186,10 +1218,10 @@ public class ScenarioSearchPanel extends Composite {
 	}
 	
 	/**
-	 * Searches a Scenario by its unique ID. Checks the user has priviledger to see this Scn.
+	 * Searches a Scenario by its unique ID. Checks the user has privileges to see this Scenario.
 	 * @param scnId
 	 */
-	public void doSearchById(Long scnId) {
+	private void doSearchById(Long scnId) {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.findById(scnId)
@@ -1198,11 +1230,11 @@ public class ScenarioSearchPanel extends Composite {
 
 			@Override
 			public void onSuccess(ScenarioProxy result) {
-				if(null==result){ 
-					status.setVisible(false); 
-					return;}
-				
 				List<ScenarioProxy> response = new ArrayList<ScenarioProxy>();
+				
+				if(null==result){ 
+					status.setVisible(false); 					
+				}else{
 				/**
 				 * Unregistered user: can see scn only is it is APPROVED
 				 * Registered user: can see Scn if is APPROVED or if they own it
@@ -1213,8 +1245,11 @@ public class ScenarioSearchPanel extends Composite {
 				else if (userRole==UserRole.RegisteredUser){
 					if(result.getSubmitter().equals(submitterName))
 						response.add(result);
-				}else if (result.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED))
+				}else if (result.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED) 
+						|| result.getStatus().equals(ScenarioPanel.SCN_STATUS_UNLOCKED_POST) //TICKET-186
+						|| result.getStatus().equals(ScenarioPanel.SCN_STATUS_MODIFIED))
 					response.add(result);
+				}
 				
 				resetGridAuxVar(response);
 				drawScenariosListGrid(response);
@@ -1243,6 +1278,7 @@ public class ScenarioSearchPanel extends Composite {
 	private void hideSearchByDates(){
 		searchByDates.setVisible(false);
 	}
+	
 	public void showSearchByDates(){
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		searchByDates.setVisible(true);
@@ -1287,7 +1323,7 @@ public class ScenarioSearchPanel extends Composite {
 		//XXX For Search by dates, which date do we use? creation date, modification date, auditing date???
 	}
 	
-	public void doSearchByDates(Date dateFrom, Date dateUntil){
+	private void doSearchByDates(Date dateFrom, Date dateUntil){
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByCreationDateRange(dateFrom, dateUntil)
@@ -1298,7 +1334,10 @@ public class ScenarioSearchPanel extends Composite {
 			public void onSuccess(List<ScenarioProxy> result) {
 				if(null==result){ 
 					status.setVisible(false); 
-					return;}
+					resetGridAuxVar(new ArrayList<ScenarioProxy>());
+					drawScenariosListGrid(new ArrayList<ScenarioProxy>());
+				
+				}else{
 				
 //				List<ScenarioProxy> response = new ArrayList<ScenarioProxy>();
 //				/**
@@ -1314,8 +1353,106 @@ public class ScenarioSearchPanel extends Composite {
 //				}else if (result.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED))
 //					response.add(result);
 				
-				resetGridAuxVar(result);
-				drawScenariosListGrid(result);
+					resetGridAuxVar(result);
+					drawScenariosListGrid(result);
+				}
+				
+			}
+			@Override
+			public void onFailure(ServerFailure error) {
+				super.onFailure(error);
+			}
+		}).fire();
+	}
+	
+	//-------------------------------------------------------
+	// search by tags
+	@UiField
+	FlowPanel searchByTags;
+	
+	@UiField
+	@Ignore
+	FlexTable tagSearchTable;
+	
+	@UiField
+	Button buttonSearchByTags;
+	
+	private void hideSearchByTags(){
+		searchByTags.setVisible(false);
+	}
+	
+	public void showSearchByTags(){
+		hideAllSearchPanels();//HIDE all the others; SHOW this one
+		searchByTags.setVisible(true);
+		status.setVisible(false);
+		tagSearchTable.clear();
+		if(tagRequestFactory != null){
+			TagRequest tagRequest = tagRequestFactory.tagRequest();
+			tagRequest.findAll().to(new Receiver<List<TagProxy>>() {
+				
+				@Override
+				public void onSuccess(List<TagProxy> response) {
+					int indexRow = 0;
+					int indexCol = 0;
+					Collections.sort(response, new TagComparator());
+					for(TagProxy tagProxy : response){
+						String tagName = tagProxy.getName();
+						CheckBox cb = new CheckBox();
+						Label lb = new Label(tagName);
+						tagSearchTable.setWidget(indexRow/TAGS_SEARCH_NUM_COLS, indexCol%(2*TAGS_SEARCH_NUM_COLS), cb);	
+						tagSearchTable.setWidget(indexRow/TAGS_SEARCH_NUM_COLS, (indexCol%(2*TAGS_SEARCH_NUM_COLS))+1, lb);
+						tagSearchTable.getCellFormatter().setStyleName(indexRow/TAGS_SEARCH_NUM_COLS, (indexCol%(2*TAGS_SEARCH_NUM_COLS))+1, "paddingRight");
+						indexRow++;
+						indexCol+=2;
+					}					
+				}
+				
+			}).fire();
+		}
+	}
+	
+	@UiHandler("buttonSearchByTags")
+	public void onClickButtonSearchByTags(ClickEvent clickEvent) {	
+		Set<String> associatedTags = new HashSet<String>() ;
+		for(int i=0;i<tagSearchTable.getRowCount();i++){
+			for(int j=0;j<(TAGS_SEARCH_NUM_COLS*2);j+=2){
+				//even numbers are checkboxes, odd are labels
+				if(tagSearchTable.isCellPresent(i, j)){//make sure the column exists
+					Widget wCheck = tagSearchTable.getWidget(i, j);
+					Widget wLabel = tagSearchTable.getWidget(i, j+1);
+					if(wCheck instanceof CheckBox && ((CheckBox) wCheck).getValue()){
+						if(wLabel instanceof Label){
+							associatedTags.add(((Label) wLabel).getText());
+						}
+					}
+				}
+
+			}			
+		}
+		doSearchByTags(associatedTags);
+	}
+	
+	private void doSearchByTags(Set<String> associatedTags){
+		cleanScenarioTable();
+		hideAllSearchPanels();
+		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
+		scenarioRequest.searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED)
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.to(new Receiver<List<ScenarioProxy>> () {
+
+			@Override
+			public void onSuccess(List<ScenarioProxy> result) {
+				List <ScenarioProxy> filteredResults = new ArrayList<ScenarioProxy>();
+				if(null==result){ 
+					status.setVisible(false); 
+				}else{
+					for(ScenarioProxy scn : result)
+						filteredResults.add(scn);
+				}
+				//TODO filter approved scenarios containing the selected tags
+				//filter results whose tags are not in associatedTags
+				resetGridAuxVar(filteredResults);
+				drawScenariosListGrid(filteredResults);
 				
 			}
 			@Override
