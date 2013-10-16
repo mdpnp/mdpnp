@@ -175,6 +175,16 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 				
 			}
 		});
+		
+		//find scenarios by tags
+		userInfoBanner.getSearchByTags().setScheduledCommand(new Command() {
+			@Override
+			public void execute() {
+				scenarioSearchPanel.showSearchByTags();
+				showWidget(scenarioSearchPanel);	
+				
+			}
+		});
 
 		
 //		userInfoBanner.getList().setScheduledCommand(new Command() {
@@ -217,6 +227,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getListScnApproved().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
+				//XXX should this look for approved only or also unlocked_post and dirty???
 				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 				showWidget(scenarioListPanel);
 			}

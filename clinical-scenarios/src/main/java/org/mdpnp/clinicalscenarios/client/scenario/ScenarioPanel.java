@@ -470,6 +470,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * @param isDrawnNew
 	 */
 	private final void buildTagsTable(boolean isDrawnNew){
+		tagsAssociatedTable.clear();
+		tagsScrollPanel.setHeight("0px");
 		if(isDrawnNew ||userRole==UserRole.AnonymousUser
 				|| !(currentScenario.getStatus().equals(SCN_STATUS_APPROVED) ||
 				currentScenario.getStatus().equals(SCN_STATUS_MODIFIED) ||
@@ -478,10 +480,15 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			tagsLabel.setText("The scenario needs to be APPROVED before any keyword can be tagged");
 		}else{
 			tagsLabel.setText("Loading Keywords...");
+			final boolean tagable = editable && userRole==UserRole.Administrator 
+					&&(currentScenario.getStatus().equals(SCN_STATUS_APPROVED) ||
+							currentScenario.getStatus().equals(SCN_STATUS_MODIFIED) ||
+							currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST) );
 						
 			if(tagRequestFactory != null){
 				TagRequest tagRequest = tagRequestFactory.tagRequest();
 				tagRequest.findAll().to(new Receiver<List<TagProxy>>() {
+					
 
 					@Override
 					public void onSuccess(List<TagProxy> response) {
@@ -489,13 +496,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 						Set<String> associatedTags = currentScenario.getAssociatedTags();
 						int indexRow = 0;
 						int indexCol = 0;
-//						int index =0;
-						tagsAssociatedTable.clear();
+//						tagsAssociatedTable.clear();
 						//sort the response w/ the appropriate comparator before traversing
 						Collections.sort(response, new TagComparator());
 						for(TagProxy tagProxy : response){
 							String tagName = tagProxy.getName();
 							CheckBox cb = new CheckBox();
+							cb.setEnabled(tagable);
 							if(associatedTags!=null && associatedTags.size()>0){
 								cb.setValue(associatedTags.contains(tagName));
 							}else{
@@ -505,11 +512,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 							tagsAssociatedTable.setWidget(indexRow/TAGS_TAB_NUM_COL, indexCol%(2*TAGS_TAB_NUM_COL), cb);	
 							tagsAssociatedTable.setWidget(indexRow/TAGS_TAB_NUM_COL, (indexCol%(2*TAGS_TAB_NUM_COL))+1, lb);
 							tagsAssociatedTable.getCellFormatter().setStyleName(indexRow/TAGS_TAB_NUM_COL, (indexCol%(2*TAGS_TAB_NUM_COL))+1, "paddingRight");
-//							tagsAssociatedTable.setWidget(index, 0, cb);	
-//							tagsAssociatedTable.setWidget(index, 1, lb);	
 							indexRow++;
 							indexCol+=2;
-//							index++;
 						}
 						tagsScrollPanel.setWidget(tagsAssociatedTable);
 						tagsScrollPanel.setHeight("150px");
@@ -1034,6 +1038,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 //			exportScenario.setVisible(false);
 //		else
 //			exportScenario.setVisible(true);
+		
 		//5- Acknowledge Scenario
 		//if this user has previously acknowledged the scenario, we hide the button
 		//ack button only present for REGISTERED users on APRROVED scenarios
@@ -1063,6 +1068,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		}else{
 			ackLabel.setVisible(false);
 		}
+		//6 Add Tags to Scenario
+		//XXX This condition could be approved (or post approved) + no unregistered user 
+		boolean tagable = editable && userRole==UserRole.Administrator 
+				&&(currentScenario.getStatus().equals(SCN_STATUS_APPROVED) ||
+						currentScenario.getStatus().equals(SCN_STATUS_MODIFIED) ||
+						currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST) );
+		saveTagsButton.setVisible(tagable);
 
 	}
 	
@@ -2249,8 +2261,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					}
 				}
 
-			}
-			
+			}			
 		}
 		
 		currentScenario.setAssociatedTags(associatedTags);

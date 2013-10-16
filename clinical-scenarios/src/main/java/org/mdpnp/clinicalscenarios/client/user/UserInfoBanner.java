@@ -43,6 +43,7 @@ public class UserInfoBanner extends Composite {
 	private MenuItem showLatestSearch = new MenuItem("Latest Search Results", NOOP);
 	private MenuItem searchById = new MenuItem("Search Scenario by Id", NOOP);
 	private MenuItem searchByDates= new MenuItem("Search Scenarios by Dates", NOOP);
+	private MenuItem searchByTags= new MenuItem("Search Scenarios by Tags", NOOP);
 	
 	private MenuItem listTags = new MenuItem("List Tags", NOOP);//list the tags
 	//list scenarios
@@ -131,9 +132,11 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getSearchByDates(){
 		return searchByDates;
 	}
+	public MenuItem getSearchByTags() {
+		return searchByTags;
+	}
 	
-	
-//	XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
+	//	XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
 //	public MenuItem getListScnRejected(){
 //		return scnRejected;
 //	}
@@ -158,6 +161,8 @@ public class UserInfoBanner extends Composite {
 		//XXX SEarch by dates not yet - consider which date of the scenario to use
 		searchByDates.setTitle("Find scenarios in a date range");
 		search.addItem(searchByDates);
+		searchByTags.setTitle("Fing scenarios tagged with the selected keywords");
+		search.addItem(searchByTags);
 		showLatestSearch.setTitle("Retrieve the previous search results");
 		search.addItem(showLatestSearch);
 
