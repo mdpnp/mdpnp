@@ -1423,7 +1423,7 @@ public class ScenarioSearchPanel extends Composite {
 					Widget wLabel = tagSearchTable.getWidget(i, j+1);
 					if(wCheck instanceof CheckBox && ((CheckBox) wCheck).getValue()){
 						if(wLabel instanceof Label){
-							checkedTags.add(((Label) wLabel).getText());
+							checkedTags.add(((Label) wLabel).getText().toLowerCase());
 							headline += " "+((Label) wLabel).getText() +",";
 						}
 					}

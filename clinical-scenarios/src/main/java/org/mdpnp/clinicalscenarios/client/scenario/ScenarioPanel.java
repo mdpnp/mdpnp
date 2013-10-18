@@ -2260,7 +2260,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					Widget wLabel = tagsAssociatedTable.getWidget(i, j+1);
 					if(wCheck instanceof CheckBox && ((CheckBox) wCheck).getValue()){
 						if(wLabel instanceof Label){
-							associatedTags.add(((Label) wLabel).getText());
+							associatedTags.add(((Label) wLabel).getText().toLowerCase());
 						}
 					}
 				}
