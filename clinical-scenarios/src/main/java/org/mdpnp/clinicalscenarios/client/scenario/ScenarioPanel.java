@@ -1,5 +1,6 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -12,7 +13,6 @@ import java.util.logging.Logger;
 import org.mdpnp.clinicalscenarios.client.tag.TagProxy;
 import org.mdpnp.clinicalscenarios.client.tag.TagRequest;
 import org.mdpnp.clinicalscenarios.client.tag.TagRequestFactory;
-import org.mdpnp.clinicalscenarios.client.tag.TagsManagementPanel;
 import org.mdpnp.clinicalscenarios.client.tag.comparator.TagComparator;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoProxy;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequest;
@@ -45,7 +45,6 @@ import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
@@ -497,7 +496,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					@Override
 					public void onSuccess(List<TagProxy> response) {
 						tagsLabel.setText("");
-						Set<String> associatedTags = currentScenario.getAssociatedTags();
+						Set<String> associatedTags = currentScenario.getAssociatedTags().getAssociatedTagNames();
 						int indexRow = 0;
 						int indexCol = 0;
 //						tagsAssociatedTable.clear();
@@ -743,7 +742,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			
 		//persist scenario entity
 		rc.persist().using(currentScenario)
-		.with(driver.getPaths()).with("equipment", "hazards", "environments")
+		.with(driver.getPaths()).with("equipment", "hazards", "environments")//references?
 //		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
 		.to(new Receiver<ScenarioProxy>() {
 
@@ -922,7 +921,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
 		if(null == currentScenario) {		
 			    context.create()
-			    .with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+			    .with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
 			    .to(new Receiver<ScenarioProxy>() {
 		    	
 	                @Override
@@ -1046,7 +1045,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		//5- Acknowledge Scenario
 		//if this user has previously acknowledged the scenario, we hide the button
 		//ack button only present for REGISTERED users on APRROVED scenarios
-		Set<String> ackEdgers = currentScenario.getAcknowledgers();
+		Set<String> ackEdgers = currentScenario.getAcknowledgers().getAcknowledgersIDs();
+//		List<String> auxAckEdgers = currentScenario.getAcknowledgers().getAcknowledgersIDs();
+//		Set<String> ackEdgers = new HashSet<String>(auxAckEdgers);
 		if(userRole!= UserRole.AnonymousUser && (currentScenario.getStatus().equals(SCN_STATUS_APPROVED) 
 				|| currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST)
 				|| currentScenario.getStatus().equals(SCN_STATUS_MODIFIED))){		
@@ -1054,7 +1055,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				//can be null because is a new field, and the previous entities on the GAE don't have this field 
 				ackButton.setVisible(true);//because is obvious that this user didn't ack the scenario
 			}else{
-				ackButton.setVisible(!currentScenario.getAcknowledgers().contains(userId));
+				ackButton.setVisible(!currentScenario.getAcknowledgers().getAcknowledgersIDs().contains(userId));
 			}
 //			ackButton.setVisible(currentScenario.getAcknowledgers().contains(userId));
 			//XXX display the above information only if the current scenarios already has acks?
@@ -1063,11 +1064,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			ackButton.setVisible(false);//either unregistered user or scn not approved
 		}
 		
-		if(ackEdgers != null && currentScenario.getAcknowledgers().size()>0){
+		if(ackEdgers != null && currentScenario.getAcknowledgers().getAcknowledgersIDs().size()>0){
 			//we show ack feedback in all cases
 			ackLabel.setVisible(true);
-			ackLabel.setText(currentScenario.getAcknowledgers().size()+ " Users have acknowledged this scenario");
-			ackLabel.setTitle(currentScenario.getAcknowledgers().size()+" Users confirmed the importance and genuinity of this scenario"+
+			ackLabel.setText(currentScenario.getAcknowledgers().getAcknowledgersIDs().size()+ " Users have acknowledged this scenario");
+			ackLabel.setTitle(currentScenario.getAcknowledgers().getAcknowledgersIDs().size()+" Users confirmed the importance and genuinity of this scenario"+
 					" by having experienced or known of similar problems to the ones described in it.");
 		}else{
 			ackLabel.setVisible(false);
@@ -2218,9 +2219,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 		boolean confirm = Window.confirm("Click Ok to acknowledge the content of this scenario.");
 		if(confirm){
-			Set<String> ackedgers = currentScenario.getAcknowledgers()==null? new HashSet<String>() : currentScenario.getAcknowledgers();
+			Set<String> ackedgers = currentScenario.getAcknowledgers().getAcknowledgersIDs()==null? new HashSet<String>() : currentScenario.getAcknowledgers().getAcknowledgersIDs();
 			ackedgers.add(userId);
-			currentScenario.setAcknowledgers(ackedgers);
+			currentScenario.getAcknowledgers().setAcknowledgersIDs(ackedgers);
 			currentScenario.setLastActionTaken(SCN_LAST_ACTION_ACK);
 			currentScenario.setLastActionUser(userEmail);			
 			checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
@@ -2238,9 +2239,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				public void onFailure(ServerFailure error) {
 					super.onFailure(error);
 					//undo
-					Set<String> ackedgers = currentScenario.getAcknowledgers();
+					Set<String> ackedgers = currentScenario.getAcknowledgers().getAcknowledgersIDs();
 					ackedgers.remove(userId);
-					currentScenario.setAcknowledgers(ackedgers);
+					currentScenario.getAcknowledgers().setAcknowledgersIDs(ackedgers);
 				}
 				
 			});
@@ -2268,7 +2269,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			}			
 		}
 		
-		currentScenario.setAssociatedTags(associatedTags);
+		currentScenario.getAssociatedTags().setAssociatedTagNames(associatedTags);
 		currentScenario.setLastActionTaken(SCN_LAST_ACTION_TAG);
 		currentScenario.setLastActionUser(userEmail);			
 //		checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab

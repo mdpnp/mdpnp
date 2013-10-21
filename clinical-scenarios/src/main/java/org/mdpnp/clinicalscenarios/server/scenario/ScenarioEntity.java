@@ -51,11 +51,6 @@ public class ScenarioEntity implements java.io.Serializable {
 	private String lastActionUser;   //name of the last user to perform an action with the scenario
 	private String lockOwner; //name of user who has lock ownership over this scenario
 	
-	//TICKET-163  "like" scenarios
-	private Set<String> acknowledgers; //set with the IDs of the users who clicked the button to ack/like this scenario 
-	//TICKET-157
-	private Set<String> associatedTags; //set of tag Names associated to the scenario
-	
 
 	@OnSave
 	void onPersist() {
@@ -70,7 +65,8 @@ public class ScenarioEntity implements java.io.Serializable {
 	private ProposedSolutionValue proposedSolution = new ProposedSolutionValue();
 	private BenefitsAndRisksValue benefitsAndRisks = new BenefitsAndRisksValue();
 	private References references = new References();
-	
+	private Acknowledgers acknowledgers = new Acknowledgers();
+	private AssociatedTags associatedTags = new AssociatedTags();
 
 
 
@@ -213,30 +209,29 @@ public class ScenarioEntity implements java.io.Serializable {
 		this.lockOwner = lockOwner;
 	}
 	
-	public Set<String> getAcknowledgers() {
+	public Acknowledgers getAcknowledgers() {
 		return acknowledgers;
 	}
 
-	public void setAcknowledgers(Set<String> acknowledgers) {
+	public void setAcknowledgers(Acknowledgers acknowledgers) {
 		this.acknowledgers = acknowledgers;
 	}
 
-	public Set<String> getAssociatedTags() {
+	public AssociatedTags getAssociatedTags() {
 		return associatedTags;
 	}
 
-	public void setAssociatedTags(Set<String> associatedTags) {
+	public void setAssociatedTags(AssociatedTags associatedTags) {
 		this.associatedTags = associatedTags;
 	}
 
+	//constructor
 	public static ScenarioEntity create() /*throws Exception*/ {
 		try{
 		    ScenarioEntity s = new ScenarioEntity();
 		    s.setStatus(ScenarioPanel.SCN_STATUS_UNSUBMITTED);//By default, pending of submission
 		    s.setLastActionTaken("created new");
 		    s.setLastActionUser(s.getSubmitter());
-		    s.acknowledgers = new HashSet<String>(); //Ticket-163
-		    s.associatedTags = new HashSet<String>(); //Ticket-153
 			//to ID the current user
 		    UserService userService = UserServiceFactory.getUserService();
 		    User user = userService.getCurrentUser();

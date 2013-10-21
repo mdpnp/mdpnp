@@ -23,8 +23,8 @@ public class ScenarioAcksComparator implements Comparator<ScenarioProxy>{
 	}
 	
 	  private  int doCompare(ScenarioProxy scn1, ScenarioProxy scn2) {
-		  int scn1_Acks = scn1.getAcknowledgers()==null? 0 : scn1.getAcknowledgers().size();
-		  int scn2_Acks = scn2.getAcknowledgers()==null? 0 : scn2.getAcknowledgers().size();
+		  int scn1_Acks = scn1.getAcknowledgers()==null? 0 : scn1.getAcknowledgers().getAcknowledgersIDs().size();
+		  int scn2_Acks = scn2.getAcknowledgers()==null? 0 : scn2.getAcknowledgers().getAcknowledgersIDs().size();
 		  	  
 		  if(scn1_Acks < scn2_Acks )
 			  return -1;

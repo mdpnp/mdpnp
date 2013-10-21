@@ -827,7 +827,11 @@ public class ScenarioSearchPanel extends Composite {
 		lbl.setText(title);
 		searchResult2.setWidget(row, SCN_TABLE_FIRST_COL, lbl);
 		searchResult2.setWidget(row, SCN_TABLE_SECOND_COL, new Label(String.valueOf(sp.getId())));
-		Set<String> ackEdgers = sp.getAcknowledgers();
+		Set<String> ackEdgers = sp.getAcknowledgers().getAcknowledgersIDs();
+//		List<String> auxAckEdgers = sp.getAcknowledgers().getAcknowledgersIDs();
+//		Set<String> ackEdgers = new HashSet<String>(auxAckEdgers);
+//		if(null==ackEdgers)
+//			ackEdgers = new HashSet<String>();
 		Label acksLabel = ackEdgers==null? new Label("0"):new Label(String.valueOf(ackEdgers.size()));
 		searchResult2.setWidget(row, SCN_TABLE_THIRD_COL, acksLabel);//ticket-163
 
@@ -1461,7 +1465,7 @@ public class ScenarioSearchPanel extends Composite {
 					//TODO filter approved scenarios containing the selected tags
 					//filter results whose tags are not in associatedTags
 					for(ScenarioProxy scn : result){
-						Set<String> associatedTags = scn.getAssociatedTags();						
+						Set<String> associatedTags = scn.getAssociatedTags().getAssociatedTagNames();						
 						if(null!=associatedTags && associatedTags.size()>0){
 							associatedTags.retainAll(checkedTags);//associatedTags has now the INTERSECTION of both sets
 							if(associatedTags.size() >0){
