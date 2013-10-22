@@ -1978,7 +1978,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		boolean confirm = Window.confirm("Are you sure you want to APPROVE this scenario?");
 		if(confirm){
 			String subject ="Your scenario "+currentScenario.getTitle()+" has been approved";
-			String message = "Your scenario "+currentScenario.getTitle()+" submission has been approved by the MD PnP Clinical Scenario Repository Administrators.\n"
+			String message = "Your scenario \""+currentScenario.getTitle()+"\" has been approved by the MD PnP Clinical Scenario Repository Administrators.\n"
 			+"Thank you for your submission.";
 			message += "\n\n"+feedback.getText();
 			message += "\n The MD PnP Team \n www.mdpnp.org";
