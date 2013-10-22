@@ -1,9 +1,7 @@
 package org.mdpnp.clinicalscenarios.server.scenario;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.googlecode.objectify.annotation.Embed;
@@ -23,9 +21,6 @@ import com.googlecode.objectify.annotation.Embed;
 @Embed
 public class Acknowledgers implements Serializable{
 	
-
-//	private static final long serialVersionUID = 1L;
-	
 	private Set<String> acknowledgersIDs = new HashSet<String>(); //set with the IDs of the users who clicked the button to ack/like this scenario 
 	
 	public Set<String> getAcknowledgersIDs() {
@@ -35,10 +30,5 @@ public class Acknowledgers implements Serializable{
 	public void setAcknowledgersIDs(Set<String> acknowledgersIDs) {
 		this.acknowledgersIDs = acknowledgersIDs;
 	}
-	
-	public Integer getSize(){
-		return acknowledgersIDs.size();
-	}
-	
 
 }

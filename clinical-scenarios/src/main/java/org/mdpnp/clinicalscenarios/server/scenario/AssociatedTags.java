@@ -14,7 +14,7 @@ import com.googlecode.objectify.annotation.Embed;
  * <p> This feature is the implementation of TICKET-157
  *
  */
-@SuppressWarnings("serial")
+//@SuppressWarnings("serial")
 @Embed
 public class AssociatedTags implements Serializable{
 	
@@ -38,6 +38,10 @@ public class AssociatedTags implements Serializable{
 	 * Still, it would be something tricky anyway to tag a keyword depending on votes, 
 	 * since each scenario can have different amount of visitors and scenarios could have
 	 * different amount of visitors along the lifespan of the repository.
+	 * 
+	 * UPDATE: have in mind the freaking restriction of the TRANSPORTABLE TYPES.
+	 * Types used as proxy properties must be primitives, boxed primitives, sets/list, 
+	 * or entity/value object
 	 * 
 	 */
 	

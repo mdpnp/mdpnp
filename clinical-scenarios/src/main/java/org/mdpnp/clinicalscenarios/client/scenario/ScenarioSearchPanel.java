@@ -330,7 +330,7 @@ public class ScenarioSearchPanel extends Composite {
 	private void doAdvancedSearch(){
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByKeywords(advancedSearchKeywordsTextBox.getText())
-			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
 			.to(new Receiver<List<ScenarioProxy>> () {
 
 				@Override
@@ -495,7 +495,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByKeywords(text)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
 		.to(listScnReceiver).fire();
 	}	
 	
@@ -505,7 +505,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.findAllScenarios()
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
 		.to(listScnReceiver).fire();
 	}
 
@@ -519,7 +519,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchScnBySubmitter(submitter)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
 		.to(listScnReceiver).fire();
 	}
 	
@@ -532,7 +532,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();		
 		scenarioRequest.searchByStatus(status)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
 		.to(listScnReceiver).fire();		
 	}
 	
@@ -545,7 +545,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();		
 		scenarioRequest.searchByStatus(status)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
 		.to(listScnReceiver).fire();		
 	}
 	
@@ -877,7 +877,7 @@ public class ScenarioSearchPanel extends Composite {
 			}
 		});
 
-		if(userRole==userRole.Administrator)//Only Admins should be able to delete Scn
+		if(userRole==UserRole.Administrator)//Only Admins should be able to delete Scn
 			searchResult2.setWidget(row, SCN_TABLE_NINTH_COL, deleteButton);
 		
 		//style table rows
@@ -1228,7 +1228,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.findById(scnId)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
 		.to(new Receiver<ScenarioProxy>() {
 
 			@Override

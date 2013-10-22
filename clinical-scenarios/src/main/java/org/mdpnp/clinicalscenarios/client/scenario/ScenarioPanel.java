@@ -1,6 +1,5 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -128,8 +127,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * Environments
 	 * Equipment
 	 * Proposed State
-	 * Benefists+Risks -->tab(5)
+	 * Benefits+Risks -->tab(5)
 	 * References (links)
+	 * Tags (Associated Keywords)
 	 * 
 	 * Feedback-->Approve or reject
 	 */	
@@ -145,7 +145,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private enum UserRole {Administrator, RegisteredUser, AnonymousUser}
 	private UserRole userRole;	
 	private String userEmail;
-	private String userId; //TICKET-163
+	private String userId; //TICKET-163 identify user
 	
 	private boolean editable = false; //indicates if the scenario is editable
 	
@@ -158,7 +158,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			return;
 		}
 		editable = true;
-		//1- Only states unsubmitted, unloked_pre y unlocked_post are editables
+		//Only states unsubmitted, unlocked_pre and unlocked_post are editables
 		if (!(currentScenario.getStatus().equals(SCN_STATUS_UNSUBMITTED) || 
 				currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE) ||
 				currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST))) editable = false;
@@ -169,7 +169,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		if((currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE) || currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST)) 
 				&& !currentScenario.getLockOwner().equals(userEmail)) editable = false;
 		
-		if(userRole==UserRole.AnonymousUser) editable = false;//Anonymous users can't modify the Scn information
+		//Anonymous users can't modify the scenario information
+		if(userRole==UserRole.AnonymousUser) editable = false;
 	}
 
 
@@ -188,7 +189,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private Receiver<ScenarioProxy> singleScenarioReceiver = new Receiver<ScenarioProxy>() {
 		@Override
 		public void onSuccess(ScenarioProxy response) {
-			setCurrentScenario(currentScenario);
+			setCurrentScenario(response);
 		}
 		
 		@Override
@@ -214,8 +215,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		      fp.add(ok);
 		      add(fp);
 		    }
-		  }
+	}
+	 
+	 /**
+	  * Level of knowledge of hazard occurrence
+	  */
 	private static final String[] hazardExpected = new String[] {"Unknown", "Expected", "Unexpected"};
+	
 	/**
 	 * Returns the associated index or a word of the hazardExpected array
 	 * @param word
@@ -229,10 +235,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	}
 	
 //	private static final String[] hazardSeverity = new String[] {"Unknown", "Mild", "Moderate", "Severe", "Life Threatening", "Fatal"};
+	/**
+	 * List of different types/degree of hazards
+	 */
 	private static final String[] hazardSeverity = new String[] {"Unknown", "No Harm", "Mild", "Moderate", "Severe", "Permanent Harm", "Life Threatening", "Fatal"};
 	public static String[] getHazardSeverityValues(){
 		return hazardSeverity;
 	}
+	
 	/**
 	 * Returns the associated index or a word of the hazardSeverity array
 	 * @param word
@@ -254,7 +264,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	}
 	
 	
-	
+	//XXX Legacy code, investigate what these were ment for
 //	private static final String[] testCasesHeader = new String[] {"Id", "Description", "Step/Order", "Author", "Requirements", "Configuration", "Remarks", "Summary"};
 //	private final void buildTestCasesTable() {
 //		testCasesTable.insertRow(0);
@@ -285,7 +295,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				addNewClinicianRow(text);
 			}
 		}
-		
 	}
 	
 	/**
@@ -303,8 +312,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				String text = environments.get(i);
 				addNewEnvironmentRow(text);
 			}
-		}
-		
+		}		
 	}
 	
 	//labels for the HEADERS row of the Devices tab table. we use the following static block to initialize some of
@@ -321,6 +329,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static Label labelEquipmentHardWProblem = new Label("Hardware related problem"); 
 	
 	{
+		//initialize the labels
 		labelEquipmentDeviceType.setTitle("Type of device, such as \"ventilator\" or \"Infusion pump\" ");
 		labelEquipmentManufacturer.setTitle("Manufacturer/company or device provider");
 		labelEquipmentModel.setTitle("Model of the device");
@@ -377,7 +386,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private final static Label labelHazardsSeverity = new Label("Severity");
 	
 	{
-		
+		//initialize te labels
 		labelHazardDescription.setTitle("Describe the risk. Make sure to point out if this risk results in death, is life threatening, requires inpatient hospitalization or prolongation of existing hospitalization, results in persistent or significant disability/incapacity, is a congenital anomaly/birth defect");
 		labelHazardFactors.setTitle("Determine which factors are contributing to the risk described below. Examples may be a clinician, a specific device, an aspect of the clinical envirnomnet, etc.");		
 		labelHazardsExpected.setTitle("Click to see definition and examples");
@@ -406,8 +415,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 						"<li><b>Fatal</b>: Causes death of the patient</li></ul>");
 				md.showRelativeTo(labelHazardsSeverity);
 			}
-		});
-		
+		});		
 	}
 	
 	/**
@@ -416,21 +424,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private final void buildHazardsTable(boolean isDrawNew) {
 		
 		hazardsTable.removeAllRows();//clear and re-populate
-		
-//		//headers
-//		hazardsTable.insertRow(0);
-//		hazardsTable.setText(0, HAZARDS_DESCRIPTION_COL, "Description");
-//		hazardsTable.setText(0, HAZARDS_FACTORS_COL, "Factors");
-//		hazardsTable.setText(0,  HAZARDS_EXPECTED_COL, "Expected Risk");
-//		hazardsTable.setText(0,  HAZARDS_SEVERITY_COL, "Severity");
-//		
-//		//description
-//		hazardsTable.insertRow(1);
-//		hazardsTable.setHTML(1, HAZARDS_DESCRIPTION_COL, "<div style=\"font-size: 8pt; width:350px;\">Make sure to point out if this risk results in death, is life threatening, requires inpatient hospitalization or prolongation of existing hospitalization, results in persistent or significant disability/incapacity, is a congenital anomaly/birth defect</div>");
-//		hazardsTable.setHTML(1, HAZARDS_FACTORS_COL, "<div style=\"font-size: 8pt; width:350px;\">Determine which factors are contributing to the risk described below. Examples may be a clinician, a specific device, or an aspect of the clinical envirnomnet etc.</div>");
-//		hazardsTable.setHTML(1,  HAZARDS_EXPECTED_COL, "<div style=\"width:350px; font-size:8pt;\">Unexpected: Risk is not consistent with the any of risks known (from a manual, label, protocol, instructions, brochure, etc) in the Current State. If the above documents are not required or available, the risk is unexpected if specificity or severity is not consistent with the risk information described in the protocol or it is more severe to the specified risk. Example, Hepatic necrosis would be unexpected (by virtue of greater severity) if the investigator brochure only referred to elevated hepatic enzymes or hepatitis. Similarly, cerebral vasculitis would be unexpected (by virtue of greater specificity) if the investigator brochure only listed cerebral vascular accidents.</div>");
-//		hazardsTable.setHTML(1,  HAZARDS_SEVERITY_COL, "<div style=\"width:350px; font-size:8pt;\"><ul><li><b>Mild</b>: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li><li><b>Moderate</b>: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li><li><b>Severe</b>: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li><li><b>Life Threatening</b>: Immediate risk of death, life threatening or disabling</li><li><b>Fatal</b>: Causes death of the patient</li></ul></div>");
-
+		//headers
 		hazardsTable.insertRow(0);
 		hazardsTable.setWidget(0, HAZARDS_DESCRIPTION_COL, labelHazardDescription);
 		hazardsTable.setWidget(0, HAZARDS_FACTORS_COL, labelHazardFactors);
@@ -442,7 +436,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			addNewHazardTableRow();
 		else{
 			//populate the table
-			List hazards = currentScenario.getHazards().getEntries();
+			List<HazardsEntryProxy> hazards = currentScenario.getHazards().getEntries();
 			for(int i=0;i<hazards.size();i++){
 				HazardsEntryProxy hep = (HazardsEntryProxy) hazards.get(i);
 				addNewHazardTableRow(hep.getDescription(), hep.getFactors(), hep.getExpected(), hep.getSeverity());
@@ -474,7 +468,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 */
 	private final void buildTagsTable(boolean isDrawnNew){
 		tagsAssociatedTable.clear();
-		tagsScrollPanel.setHeight("0px");
+		tagsScrollPanel.setHeight("0px");//hide
 		if(isDrawnNew //||userRole==UserRole.AnonymousUser
 				|| !(currentScenario.getStatus().equals(SCN_STATUS_APPROVED) ||
 				currentScenario.getStatus().equals(SCN_STATUS_MODIFIED) ||
@@ -492,14 +486,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				TagRequest tagRequest = tagRequestFactory.tagRequest();
 				tagRequest.findAll().to(new Receiver<List<TagProxy>>() {
 					
-
 					@Override
 					public void onSuccess(List<TagProxy> response) {
 						tagsLabel.setText("");
 						Set<String> associatedTags = currentScenario.getAssociatedTags().getAssociatedTagNames();
 						int indexRow = 0;
 						int indexCol = 0;
-//						tagsAssociatedTable.clear();
 						//sort the response w/ the appropriate comparator before traversing
 						Collections.sort(response, new TagComparator());
 						for(TagProxy tagProxy : response){
@@ -507,7 +499,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 							CheckBox cb = new CheckBox();
 							cb.setEnabled(tagable);
 							if(associatedTags!=null && associatedTags.size()>0){
-								cb.setValue(associatedTags.contains(tagName));
+								cb.setValue(associatedTags.contains(tagName.toLowerCase()));
 							}else{
 								cb.setValue(false);
 							}
@@ -520,10 +512,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 						}
 						tagsScrollPanel.setWidget(tagsAssociatedTable);
 						tagsScrollPanel.setHeight("150px");
-						
 					}
-					
-					
+		
 				}).fire();
 			}
 			
@@ -598,7 +588,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				if(isAdding)
 					currentScenario.getEquipment().getEntries().add(eep);
 			}
-//		}
+//		}//currente scen null
 	}
 	
 	/**
@@ -656,7 +646,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private void checkCliniciansListForPersistence(/*ScenarioRequest scn*/){
 			currentScenario.getEnvironments().getCliniciansInvolved().clear();
 			//delete the list and repopulate w/ data from the table
-//			List clinicians = currentScenario.getEnvironments().getCliniciansInvolved();
 			for(int row=0; row<cliniciansTable.getRowCount();row++){
 				Widget wClinician = cliniciansTable.getWidget(row, CLINICIANS_TYPE_COL);
 				if(wClinician instanceof SuggestBox){
@@ -742,7 +731,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			
 		//persist scenario entity
 		rc.persist().using(currentScenario)
-		.with(driver.getPaths()).with("equipment", "hazards", "environments")//references?
+		.with(driver.getPaths()).with("equipment", "hazards", "environments", "references", "acknowledgers", "associatedTags")
 //		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
 		.to(new Receiver<ScenarioProxy>() {
 
@@ -753,8 +742,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				status.setText("SAVED");
 				scenarioRequestFactory.getEventBus().fireEvent(new EntityProxyChange<ScenarioProxy>(response, WriteOperation.UPDATE));
 //				logger.info("DURING:"+response.getTitle());
-//				setCurrentScenario(response);//XXX diego@mdpnp.org if setting the 'response', due to the event delay we have a funny behaviour
-				setCurrentScenario(currentScenario);
+				setCurrentScenario(response);
 //				logger.info("AFTER:"+currentScenario.getTitle());
 				logger.info("SAVED "+currentScenario.toString()+" @ "+ (new Date()));
 			}
@@ -779,6 +767,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			tabPanel.selectTab(0);
 	}
 	
+	//constructor
 	public ScenarioPanel(final ScenarioRequestFactory scenarioRequestFactory) {
 		logger.setLevel(Level.INFO);
 		
@@ -869,7 +858,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			tagRequestFactory.initialize(eventBus);
 		}
 		
-		rejectScnButton.setTitle("Reject this scenario if is not even woth asking submiter's calification. Can NOT be undone");
+		rejectScnButton.setTitle("Reject this scenario if is not even worth asking for submiter's clarification, but want to keep it instead of delete. Can NOT be undone");
 		returnScnButton.setTitle("Return this scenario to the submitter for clarification.");
 		approveScnButton.setTitle("Validate this scenario and make it available to all users.");
 					
@@ -892,6 +881,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		proposedStateEditor.setReadOnly(true);
 	}
 	
+	/**
+	 * Enables the different fields of the panels to allow editing information
+	 */
 	private void enableSaveScenario(){				
 		status.setVisible(true);//TICKET-176
 		algorithmDescription.setReadOnly(false);
@@ -903,7 +895,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		proposedStateEditor.setReadOnly(false);	
 	}
 	
-	
+	/**
+	 * builds the tables of the different panels and fills them with the appropriate information
+	 */
 	private void buildTabsTables(boolean drawNew){
 	    buildEquipmentTable(drawNew);//new scn. No equipment list
 	    buildHazardsTable(drawNew);
@@ -934,17 +928,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	                    ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
 	                    ScenarioProxy currentScenario = context.edit(response); 
 	                    driver.edit(currentScenario, context);  
-//	                    currentScenario.setTitle("Scenario Title");
 	                    ScenarioPanel.this.currentScenario = currentScenario;
                   	                    
 	                    //after the Entity has been succesfully created, we populate the widgets w/ the entity info and draw it
-//	                    buildTabsTables(true);
 	        			configureComponents();  
 	        			buildTabsTables(true);//Ticket-175 build tables AFTER "editable" has been checked on configureComponents()
 	    			    status.setText("");
 	    			    uniqueId.setText("");	
-	    			    
-
 	                }
 	                
 					public void onFailure(ServerFailure error) {
@@ -954,18 +944,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			        
 			    }).fire();
 
-
-			    
-
 		} else {
 		    currentScenario = context.edit(currentScenario); 
             driver.edit(currentScenario, context);
             this.currentScenario = currentScenario;
-//            buildTabsTables(false);
     		if(currentScenario.getId()!=null)
     			uniqueId.setText("Scenario Unique ID: "+String.valueOf(currentScenario.getId()));  		
 
-    		configureComponents();
+    		configureComponents();//XXX Maybe configureComponents() should be called inside buildTabsTables
     		buildTabsTables(false);//Ticket-175 build tables AFTER "editable" has been checked on configureComponents()
 		}
 		
@@ -977,6 +963,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 	}
 	
+	/**
+	 * Configures the different components (status label, buttons, etc.) according to scenario status, user role...
+	 */
 	private void configureComponents(){
 		checkEditable();
 		//1- Save button
@@ -1043,11 +1032,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 //			exportScenario.setVisible(true);
 		
 		//5- Acknowledge Scenario
-		//if this user has previously acknowledged the scenario, we hide the button
-		//ack button only present for REGISTERED users on APRROVED scenarios
+		//If this user has previously acknowledged the scenario, we hide the button
+		//Ack button only present for REGISTERED users on APRROVED scenarios
 		Set<String> ackEdgers = currentScenario.getAcknowledgers().getAcknowledgersIDs();
-//		List<String> auxAckEdgers = currentScenario.getAcknowledgers().getAcknowledgersIDs();
-//		Set<String> ackEdgers = new HashSet<String>(auxAckEdgers);
 		if(userRole!= UserRole.AnonymousUser && (currentScenario.getStatus().equals(SCN_STATUS_APPROVED) 
 				|| currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST)
 				|| currentScenario.getStatus().equals(SCN_STATUS_MODIFIED))){		
@@ -1275,6 +1262,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		}
 		
 	}
+	
 	private final ClinicianSuggestOracle clinicianSuggestOracle = new ClinicianSuggestOracle();
 	public static ClinicianSuggestOracle getClinicianSuggestOracle(){
 		return new ClinicianSuggestOracle();
@@ -1569,7 +1557,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	}
 	
 	/**
-	 * add a new empty reference box
+	 * Add a new empty reference box
 	 */
 	private void addNewLinkedReference(){
 		final int rows = referencesTable.getRowCount();
@@ -1906,7 +1894,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				currentScenario.setStatus(SCN_STATUS_MODIFIED);
 			editable = false;
 		}
-		scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(singleScenarioReceiver);
+		scnReq.persist()
+		.using(currentScenario)
+		.with(driver.getPaths())
+		.with("equipment", "hazards", "environments", "references", "acknowledgers", "associatedTags")
+		.fire(singleScenarioReceiver);
 		
 	}
 	
@@ -1942,7 +1934,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				currentScenario.setLastActionTaken(SCN_LAST_ACTION_SUBMITTED);
 				currentScenario.setLastActionUser(userEmail);
 				checkScenarioFields(scnReq);
-				scnReq.persist().using(currentScenario).with(driver.getPaths()).fire(new Receiver<ScenarioProxy>() {
+				scnReq.persist().using(currentScenario)
+				.with(driver.getPaths()).with("equipment", "hazards", "environments", "references", "acknowledgers", "associatedTags")
+				.fire(new Receiver<ScenarioProxy>() {
 	
 					@Override
 					public void onSuccess(ScenarioProxy response) {
@@ -1989,7 +1983,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			message += "\n\n"+feedback.getText();
 			message += "\n The MD PnP Team \n www.mdpnp.org";
 			
-			boolean sendEmail = false; //FIXME MAil servce as its own entity w/ services
+			boolean sendEmail = false; //FIXME Mail servce as its own entity w/ services
 			
 			if(currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST)){
 				currentScenario.setLastActionTaken(SCN_LAST_ACTION_REAPPROVED);
@@ -2005,7 +1999,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			
 			if(sendEmail){
 				scnReq.persistWithNotification(currentScenario.getSubmitter(), subject, message)
-				.using(currentScenario).with(driver.getPaths())
+				.using(currentScenario)
+				.with(driver.getPaths()).with("equipment", "hazards", "environments", "references", "acknowledgers", "associatedTags")
 				.fire(new Receiver<ScenarioProxy>() {
 		
 					@Override
@@ -2020,7 +2015,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				});
 			}else{
 				scnReq.persist()
-				.using(currentScenario).with(driver.getPaths())
+				.using(currentScenario)
+				.with(driver.getPaths()).with("equipment", "hazards", "environments", "references", "acknowledgers", "associatedTags")
 				.fire(new Receiver<ScenarioProxy>() {
 		
 					@Override
@@ -2045,7 +2041,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	public void onClickReturnScn(ClickEvent clickEvent) {
 		final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
 
-		//XXX
 		boolean confirm = Window.confirm("Are you sure you want to RETURN this scenario?");
 		if(confirm){
 			String subject ="Requested clarification for your scenario "+currentScenario.getTitle();
@@ -2055,7 +2050,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			message += "\n \n"+feedback.getText();
 			message += "\n The MD PnP Team \n www.mdpnp.org";
 			
-//			currentScenario.setStatus(SCN_STATUS_REJECTED);//XXX 07/22/13 diego@mdpnp.org, rejected Scn = pending of submission
 			currentScenario.setStatus(SCN_STATUS_UNSUBMITTED);//update entity information
 			currentScenario.setLockOwner(null);
 			currentScenario.setLastActionTaken(SCN_LAST_ACTION_RETURNED);
@@ -2063,7 +2057,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
 			
 			scnReq.persistWithNotification(currentScenario.getSubmitter(), subject, message)
-			.using(currentScenario).with(driver.getPaths())
+			.using(currentScenario)
+			.with(driver.getPaths())
+			.with("equipment", "hazards", "environments", "references", "acknowledgers", "associatedTags")
 			.fire(new Receiver<ScenarioProxy>() {
 	
 				@Override
@@ -2089,7 +2085,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	public void onClickRejectScn(ClickEvent clickEvent) {
 		final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
 
-		//XXX
 		boolean confirm = Window.confirm("Are you sure you want to REJECT this scenario?");
 		if(confirm){
 			
@@ -2100,7 +2095,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
 			
 			scnReq.persist()
-			.using(currentScenario).with(driver.getPaths())
+			.using(currentScenario)
+			.with(driver.getPaths())
+			.with("equipment", "hazards", "environments", "references", "acknowledgers", "associatedTags")
 			.fire(new Receiver<ScenarioProxy>() {
 	
 				@Override
@@ -2226,25 +2223,28 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			currentScenario.setLastActionUser(userEmail);			
 			checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
 			
-//			Window.alert(ackedgers.size()+" unserID:"+userId);
-			scnReq.persist()
-			.using(currentScenario).with(driver.getPaths())
-			.fire(new Receiver<ScenarioProxy>() {
-	
-				@Override
-				public void onSuccess(ScenarioProxy response) {
-					setCurrentScenario(response);
-				}
-				
-				public void onFailure(ServerFailure error) {
-					super.onFailure(error);
-					//undo
-					Set<String> ackedgers = currentScenario.getAcknowledgers().getAcknowledgersIDs();
-					ackedgers.remove(userId);
-					currentScenario.getAcknowledgers().setAcknowledgersIDs(ackedgers);
-				}
-				
-			});
+			scnReq.persist().using(currentScenario)
+			.with(driver.getPaths())
+			.with("equipment", "hazards", "environments", "references", "acknowledgers", "associatedTags")
+			.fire(singleScenarioReceiver);
+//			scnReq.persist()
+//			.using(currentScenario).with(driver.getPaths())
+//			.fire(new Receiver<ScenarioProxy>() {
+//	
+//				@Override
+//				public void onSuccess(ScenarioProxy response) {
+//					setCurrentScenario(response);
+//				}
+//				
+//				public void onFailure(ServerFailure error) {
+//					super.onFailure(error);
+//					//undo
+//					Set<String> ackedgers = currentScenario.getAcknowledgers().getAcknowledgersIDs();
+//					ackedgers.remove(userId);
+//					currentScenario.getAcknowledgers().setAcknowledgersIDs(ackedgers);
+//				}
+//				
+//			});
 			
 		}
 	}
@@ -2275,7 +2275,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 //		checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
 			
 		scnReq.persist()
-		.using(currentScenario).with(driver.getPaths())
+		.using(currentScenario)
+		.with(driver.getPaths())
+		.with("equipment", "hazards", "environments", "references", "acknowledgers", "associatedTags")
 		.fire(new Receiver<ScenarioProxy>() {
 			@Override
 			public void onSuccess(ScenarioProxy response) {

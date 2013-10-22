@@ -11,6 +11,4 @@ import com.google.web.bindery.requestfactory.shared.ValueProxy;
 public interface AcknowledgersProxy extends ValueProxy {
 	Set<String> getAcknowledgersIDs();
 	void setAcknowledgersIDs(Set<String> acknowledgersIDs);
-	
-	Integer getSize();
 }
