@@ -21,6 +21,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.mdpnp.devices.io.MergeBytesInputStream;
+import org.mdpnp.devices.io.SplitBytesOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -396,7 +398,7 @@ public class Capnostream {
 
     public boolean sendCommand(Object command, byte[] payload, int length)
             throws IOException {
-        outputStream.writeHeader();
+        outputStream.writeProtected(0x85);
 
         int code;
         if (command instanceof Command) {
@@ -708,8 +710,8 @@ public class Capnostream {
 
         while (true) {
             b = inputStream.read();
-            while (b != MergeBytesInputStream.HEADER) {
-                if (b == MergeBytesInputStream.EOF) {
+            while (b != MergeBytesInputStream.BEGIN_FRAME) {
+                if (b == MergeBytesInputStream.END_OF_FILE) {
                     log.trace("received EOF instead of cmd header");
                     return false;
                 }

@@ -15,7 +15,8 @@ import org.mdpnp.devices.masimo.radical.DemoRadical7;
 import org.mdpnp.devices.nellcor.pulseox.DemoN595;
 import org.mdpnp.devices.nonin.pulseox.DemoNoninPulseOx;
 import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
-import org.mdpnp.devices.philips.intellivue.DemoIntellivue;
+import org.mdpnp.devices.philips.intellivue.DemoEthernetIntellivue;
+import org.mdpnp.devices.philips.intellivue.DemoSerialIntellivue;
 import org.mdpnp.devices.simulation.co2.SimCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
 import org.mdpnp.devices.simulation.nibp.DemoSimulatedBloodPressure;
@@ -38,8 +39,10 @@ public class DeviceFactory {
             return new SimPulseOximeter(domainId, eventLoop);
         case NIBP_Simulator:
             return new DemoSimulatedBloodPressure(domainId, eventLoop);
-        case Intellivue:
-            return new DemoIntellivue(domainId, eventLoop);
+        case IntellivueEthernet:
+            return new DemoEthernetIntellivue(domainId, eventLoop);
+        case IntellivueSerial:
+            return new DemoSerialIntellivue(domainId, eventLoop);
         case Dr\u00E4gerApollo:
             return new DemoApollo(domainId, eventLoop);
         case Dr\u00E4gerEvitaXL:

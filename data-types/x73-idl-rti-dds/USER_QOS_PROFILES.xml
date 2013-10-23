@@ -1,19 +1,20 @@
 <dds>
-	<qos_library name="UDPv4TransportLibrary">
-		<qos_profile name="DefaultProfile" is_default_qos="true">
-			<participant_qos>
-				<discovery>
-					<accept_unknown_peers>true</accept_unknown_peers>
-					<initial_peers>
-						<element>udpv4://239.255.0.1</element>
-					</initial_peers>
-				</discovery>
-				<transport_builtin>
-					<mask>
-						DDS_TRANSPORTBUILTIN_UDPv4
-					</mask>
-				</transport_builtin>
-			</participant_qos>
-		</qos_profile>
-	</qos_library>
+  <qos_library name="UDPv4TransportLibrary">
+    <qos_profile name="DefaultProfile" is_default_qos="true">
+      <participant_qos>
+        <discovery>
+          <accept_unknown_peers>true</accept_unknown_peers>
+          <initial_peers>
+            <!--  otherwise unit tests in this project can be affected by others on the domain -->
+            <element>udpv4://127.0.0.1</element>
+          </initial_peers>
+        </discovery>
+        <transport_builtin>
+          <mask>
+            DDS_TRANSPORTBUILTIN_UDPv4
+          </mask>
+        </transport_builtin>
+      </participant_qos>
+    </qos_profile>
+  </qos_library>
 </dds>

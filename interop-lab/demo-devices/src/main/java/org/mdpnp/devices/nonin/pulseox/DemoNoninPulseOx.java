@@ -140,15 +140,14 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             }
             pleth = sampleArraySample(pleth, plethBuffer, plethBuffer.length, (int)NoninPulseOx.MILLISECONDS_PER_SAMPLE, rosetta.MDC_PULS_OXIM_PLETH.VALUE);
 
-
             if(currentPacket.getCurrentStatus().isArtifact()||currentPacket.getCurrentStatus().isSensorAlarm()||currentPacket.getCurrentStatus().isOutOfTrack()) {
-                pulse = numericSample(pulse, (Integer)null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
-                SpO2 = numericSample(SpO2, (Integer)null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
+                pulse = numericSample(pulse, (Integer)null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, null);
+                SpO2 = numericSample(SpO2, (Integer)null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, null);
             } else {
                 Integer heartRate = getHeartRate();
                 Integer spo2 = getSpO2();
-                pulse = numericSample(pulse, heartRate != null ? (heartRate < 895 ? heartRate : null) : null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
-                SpO2 = numericSample(SpO2, spo2 != null ? (spo2 <= 100 ? spo2 : null) : null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
+                pulse = numericSample(pulse, heartRate != null ? (heartRate < 511 ? heartRate : null) : null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, null);
+                SpO2 = numericSample(SpO2, spo2 != null ? (spo2 <= 100 ? spo2 : null) : null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, null);
             }
 
 

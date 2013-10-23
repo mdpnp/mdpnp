@@ -65,9 +65,15 @@ public class MultiPulseOximeterPanel extends DevicePanel {
 //    private final Date date = new Date();
 
     @Override
-    public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
-        if(sampleArray.instance_id>=0&&sampleArray.instance_id<N) {
-            plethWave[sampleArray.instance_id].applyUpdate(sampleArray);
+    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
+        if(aliveAndValidData(sampleInfo)) {
+            if(sampleArray.instance_id>=0&&sampleArray.instance_id<N) {
+                plethWave[sampleArray.instance_id].applyUpdate(sampleArray, sampleInfo);
+            }
+        } else {
+            if(sampleArray.instance_id>=0&&sampleArray.instance_id<N) {
+                plethWave[sampleArray.instance_id].reset();
+            }
         }
     }
 
@@ -77,7 +83,14 @@ public class MultiPulseOximeterPanel extends DevicePanel {
     }
 
     @Override
-    public void numeric(Numeric numeric, SampleInfo sampleInfo) {
+    public void connected() {
+        for(WaveformUpdateWaveformSource wuws : plethWave) {
+            wuws.reset();
+        }
+    }
+
+    @Override
+    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
         // NO OP
     }
 }

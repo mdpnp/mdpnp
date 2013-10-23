@@ -1,11 +1,19 @@
 package org.mdpnp.clinicalscenarios.client.scenario;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.mdpnp.clinicalscenarios.client.tag.TagProxy;
+import org.mdpnp.clinicalscenarios.client.tag.TagRequest;
+import org.mdpnp.clinicalscenarios.client.tag.TagRequestFactory;
+import org.mdpnp.clinicalscenarios.client.tag.TagsManagementPanel;
+import org.mdpnp.clinicalscenarios.client.tag.comparator.TagComparator;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoProxy;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequest;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequestFactory;
@@ -32,10 +40,12 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
@@ -82,6 +92,9 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static final int REFERENCE_DELETEBUTTON_COL = 2;
 	private static final int REFERENCE_FOLLOWBUTTON_COL = 3;
 	
+	//tags tab
+	private static final int TAGS_TAB_NUM_COL = 6; //number of columns for this panel
+	
 	//scenario status
 	public final static String SCN_STATUS_UNSUBMITTED = 	"unsubmitted";//created and/or modified, but not yet submitted for approval. Only modificable by owner
 	public final static String SCN_STATUS_SUBMITTED = 		"submitted"; //submitted for approval, not yet revised nor approved 
@@ -96,10 +109,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	public final static String SCN_LAST_ACTION_SUBMITTED = "submitted"; //after submission for approval
 	public final static String SCN_LAST_ACTION_APPROVED = "approved"; //after FIRST approval by admin
 	public final static String SCN_LAST_ACTION_REAPPROVED = "reapproved"; //after the second and sucesive approvals
-	public final static String SCN_LAST_ACTION_REJECTED = "rejected"; //after scenarion has been definitely rejected or killed
+	public final static String SCN_LAST_ACTION_REJECTED = "rejected"; //after scenario has been definitely rejected or killed
 	public final static String SCN_LAST_ACTION_RETURNED = "returned"; //after scenario has been returned for clarification
 	public final static String SCN_LAST_ACTION_LOCKED = "locked";     //after scenario has been locked
 	public final static String SCN_LAST_ACTION_UNLOCKED = "unlocked"; //after scenario has been unlocked
+	public final static String SCN_LAST_ACTION_ACK = "acknowledged"; //after scenario has been unlocked
+	public final static String SCN_LAST_ACTION_TAG = "tagged"; //after scenario has been unlocked
 	
 	private final static String STYLE_ROW_EQUIPMENT = "styleRowEquipment";
 	private final static String EQUIPMENT_TEXTBOX_WIDTH = "100px";
@@ -119,17 +134,19 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * 
 	 * Feedback-->Approve or reject
 	 */	
-	private final static int APPRV_SCN_TAB_POS = 7;//position of the tab to approve or reject scn
-	private final static int HAZARDS_TAB_POS = 1;
+	private final static int APPRV_SCN_TAB_POS = 8;//position of the tab to approve or reject scn
+	private final static int HAZARDS_TAB_POS = 1;//hazards tab
 	private final static int EQUIPMENT_TAB_POS = 3;
 	
 	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
 	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
+	private TagRequestFactory tagRequestFactory = GWT.create(TagRequestFactory.class);//TICKET-157
 	
 	//to Id our user
 	private enum UserRole {Administrator, RegisteredUser, AnonymousUser}
 	private UserRole userRole;	
 	private String userEmail;
+	private String userId; //TICKET-163
 	
 	private boolean editable = false; //indicates if the scenario is editable
 	
@@ -212,7 +229,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		return -1;	
 	}
 	
-	private static final String[] hazardSeverity = new String[] {"Unknown", "Mild", "Moderate", "Severe", "Life Threatening", "Fatal"};
+//	private static final String[] hazardSeverity = new String[] {"Unknown", "Mild", "Moderate", "Severe", "Life Threatening", "Fatal"};
+	private static final String[] hazardSeverity = new String[] {"Unknown", "No Harm", "Mild", "Moderate", "Severe", "Permanent Harm", "Life Threatening", "Fatal"};
 	public static String[] getHazardSeverityValues(){
 		return hazardSeverity;
 	}
@@ -295,7 +313,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static Label labelEquipmentDeviceType = new Label("Device Type");
 	private static Label labelEquipmentManufacturer = new Label("Manufacturer");
 	private static Label labelEquipmentModel = new Label("Model");
-	private static Label labelEquipmentRosettaId = new Label("Rosetta ID");
+	private static Label labelEquipmentRosettaId = new Label("Rosetta/Unique ID");
 	private static Label labelEquipmentProblemDescrp = new Label("Problem Description");
 	private static Label labelEquipmentTrainingProblem = new  Label("Training Related Problem");
 	private static Label labelEquipmentInstructionsProblem = new  Label("Instructions Related Problem");
@@ -355,7 +373,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	//Labels for the header row of the HAZARDS table. We are using the static block
 	// to initialize some of the labels properties, such as the title/tooltip of them
 	private final static Label labelHazardDescription = new Label("Description");
-	private final static Label labelHazardFactors = new Label("Factors");
+	private final static Label labelHazardFactors = new Label("Contributing Factors");
 	private final static Label labelHazardsExpected = new Label("Expected Risk");
 	private final static Label labelHazardsSeverity = new Label("Severity");
 	
@@ -379,9 +397,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		labelHazardsSeverity.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
 				DialogBox md = new DialogBox(true);
-				md.setHTML("<ul><li><b>Mild</b>: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li>" +
+				md.setHTML("<ul>" +
+						"<li><b>No Harm</b>: An undesiderable event occurred, but either did not reach the patient or no harm was evident</li>" +
+						"<li><b>Mild</b>: Barely noticeable, transient anxiety, pain, or physical discomfort that does not influence functioning or causes limitations of usual activities</li>" +
 						"<li><b>Moderate</b>: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li>" +
-						"<li><b>Severe</b>: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li>" +
+						"<li><b>Severe</b>: Severe discomfort, aditional intervention or treatment needed, severe and undesirable harm, causing inability to carry out usual activities</li>" +
+						"<li><b>Permanent Harm</b>: Lifelong bodily or psychological injury or increased susceptibility to disease</li>" +
 						"<li><b>Life Threatening</b>: Immediate risk of death, life threatening or disabling</li>" +
 						"<li><b>Fatal</b>: Causes death of the patient</li></ul>");
 				md.showRelativeTo(labelHazardsSeverity);
@@ -446,6 +467,69 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			}
 		}
 
+	}
+	
+	/**
+	 * TICKET-157. Build the panel with the associated keywords
+	 * @param isDrawnNew
+	 */
+	private final void buildTagsTable(boolean isDrawnNew){
+		tagsAssociatedTable.clear();
+		tagsScrollPanel.setHeight("0px");
+		if(isDrawnNew //||userRole==UserRole.AnonymousUser
+				|| !(currentScenario.getStatus().equals(SCN_STATUS_APPROVED) ||
+				currentScenario.getStatus().equals(SCN_STATUS_MODIFIED) ||
+				currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST) )){
+			//XXX needs to be just approved or unlocked too? WHO can tag? Any user?
+			tagsLabel.setText("The scenario needs to be APPROVED before any keyword can be tagged");
+		}else{
+			tagsLabel.setText("Loading Keywords...");
+			final boolean tagable = editable && userRole==UserRole.Administrator 
+					&&(currentScenario.getStatus().equals(SCN_STATUS_APPROVED) ||
+							currentScenario.getStatus().equals(SCN_STATUS_MODIFIED) ||
+							currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST) );
+						
+			if(tagRequestFactory != null){
+				TagRequest tagRequest = tagRequestFactory.tagRequest();
+				tagRequest.findAll().to(new Receiver<List<TagProxy>>() {
+					
+
+					@Override
+					public void onSuccess(List<TagProxy> response) {
+						tagsLabel.setText("");
+						Set<String> associatedTags = currentScenario.getAssociatedTags();
+						int indexRow = 0;
+						int indexCol = 0;
+//						tagsAssociatedTable.clear();
+						//sort the response w/ the appropriate comparator before traversing
+						Collections.sort(response, new TagComparator());
+						for(TagProxy tagProxy : response){
+							String tagName = tagProxy.getName();
+							CheckBox cb = new CheckBox();
+							cb.setEnabled(tagable);
+							if(associatedTags!=null && associatedTags.size()>0){
+								cb.setValue(associatedTags.contains(tagName));
+							}else{
+								cb.setValue(false);
+							}
+							Label lb = new Label(tagName);
+							tagsAssociatedTable.setWidget(indexRow/TAGS_TAB_NUM_COL, indexCol%(2*TAGS_TAB_NUM_COL), cb);	
+							tagsAssociatedTable.setWidget(indexRow/TAGS_TAB_NUM_COL, (indexCol%(2*TAGS_TAB_NUM_COL))+1, lb);
+							tagsAssociatedTable.getCellFormatter().setStyleName(indexRow/TAGS_TAB_NUM_COL, (indexCol%(2*TAGS_TAB_NUM_COL))+1, "paddingRight");
+							indexRow++;
+							indexCol+=2;
+						}
+						tagsScrollPanel.setWidget(tagsAssociatedTable);
+						tagsScrollPanel.setHeight("150px");
+						
+					}
+					
+					
+				}).fire();
+			}
+			
+		}
+		
 	}
 	
 	private Logger logger = Logger.getLogger(ScenarioPanel.class.getName());
@@ -752,11 +836,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			userInfoRequestFactory.initialize(eventBus);
 		
 		UserInfoRequest userInfoRequest = userInfoRequestFactory.userInfoRequest();
-		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).with("loginURL").to(new Receiver<UserInfoProxy>() {
+		userInfoRequest.findCurrentUserInfo(Window.Location.getHref(), false).with("loginURL").to(new Receiver<UserInfoProxy>() {
 
 				@Override
 				public void onSuccess(UserInfoProxy response) {
 					userEmail = response.getEmail();
+					userId =response.getUserId();
 
 					if(response.getEmail()==null ||response.getEmail().trim().equals("") ){
 						//Anonymous user
@@ -777,6 +862,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				}
 			}).fire();
 		
+		}
+		
+		//Ticket-157
+		if(tagRequestFactory != null){
+			final EventBus eventBus = new SimpleEventBus();
+			tagRequestFactory.initialize(eventBus);
 		}
 		
 		rejectScnButton.setTitle("Reject this scenario if is not even woth asking submiter's calification. Can NOT be undone");
@@ -820,6 +911,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		buildCliniciansTable(drawNew);
 		buildEnvironmentsTable(drawNew);
 		buildReferencesTable(drawNew);
+		buildTagsTable(drawNew);//Ticket-157
 	}
 
 	
@@ -950,6 +1042,44 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 //			exportScenario.setVisible(false);
 //		else
 //			exportScenario.setVisible(true);
+		
+		//5- Acknowledge Scenario
+		//if this user has previously acknowledged the scenario, we hide the button
+		//ack button only present for REGISTERED users on APRROVED scenarios
+		Set<String> ackEdgers = currentScenario.getAcknowledgers();
+		if(userRole!= UserRole.AnonymousUser && (currentScenario.getStatus().equals(SCN_STATUS_APPROVED) 
+				|| currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST)
+				|| currentScenario.getStatus().equals(SCN_STATUS_MODIFIED))){		
+			if(ackEdgers == null){
+				//can be null because is a new field, and the previous entities on the GAE don't have this field 
+				ackButton.setVisible(true);//because is obvious that this user didn't ack the scenario
+			}else{
+				ackButton.setVisible(!currentScenario.getAcknowledgers().contains(userId));
+			}
+//			ackButton.setVisible(currentScenario.getAcknowledgers().contains(userId));
+			//XXX display the above information only if the current scenarios already has acks?
+
+		}else{
+			ackButton.setVisible(false);//either unregistered user or scn not approved
+		}
+		
+		if(ackEdgers != null && currentScenario.getAcknowledgers().size()>0){
+			//we show ack feedback in all cases
+			ackLabel.setVisible(true);
+			ackLabel.setText(currentScenario.getAcknowledgers().size()+ " Users have acknowledged this scenario");
+			ackLabel.setTitle(currentScenario.getAcknowledgers().size()+" Users confirmed the importance and genuinity of this scenario"+
+					" by having experienced or known of similar problems to the ones described in it.");
+		}else{
+			ackLabel.setVisible(false);
+		}
+		//6 Add Tags to Scenario
+		//XXX This condition could be approved (or post approved) + no unregistered user 
+		boolean tagable = editable && userRole==UserRole.Administrator 
+				&&(currentScenario.getStatus().equals(SCN_STATUS_APPROVED) ||
+						currentScenario.getStatus().equals(SCN_STATUS_MODIFIED) ||
+						currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST) );
+		saveTagsButton.setVisible(tagable);
+
 	}
 	
 	
@@ -1045,6 +1175,26 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	@UiField
 	@Ignore
 	Anchor addNewLinkedReference;//adds a new reference row
+	
+	@UiField
+	@Ignore
+	Button saveTagsButton;
+	
+	@UiField
+	@Ignore
+	FlexTable tagsAssociatedTable; //tagsTable (tagsTab) TICKET-157
+	
+	@UiField
+	@Ignore
+	ScrollPanel tagsScrollPanel; //tagsTable (tagsTab) TICKET-157
+	
+//	@UiField
+//	@Ignore
+//	VerticalPanel tagsVerticalPanel; //tagsTable (tagsTab) TICKET-157
+	
+	@UiField
+	@Ignore
+	Label tagsLabel; // (tagsTable)
 	
 	
 	private static class ClinicianSuggestOracle extends MultiWordSuggestOracle {
@@ -1477,7 +1627,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		referencesTable.setWidget(rows, REFERENCE_FOLLOWBUTTON_COL, followLink);
 		followLink.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
-				System.out.println(reference.getText());
+//				System.out.println(reference.getText());
 				if(!reference.getText().trim().equals(""))
 					Window.open("http://"+reference.getText(), "_blank", "");//use "enabled" as third argument to open in new tab	
 //				Window.open("http://www.google.com/", "_blank", "");
@@ -1711,7 +1861,14 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	Button saveButton; //persist the Scn info
 	
 	@UiField
-	Button lockButton; //persist the Scn info
+	Button lockButton; //lock/unlock for editing
+	
+	@UiField
+	Button ackButton; //TICKET-163; "Like" and acknowledge my scenario
+	
+	@UiField
+	@Ignore
+	Label ackLabel;//TICKET-163;
 	
 //	@UiField
 //	Button exportScenario; //export the Scn info to file
@@ -1789,7 +1946,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					@Override
 					public void onSuccess(ScenarioProxy response) {
 						Window.alert("This Clinical Scenario has been submitted for approval");	
-						setCurrentScenario(currentScenario);
+						setCurrentScenario(response);
 					}
 					
 					public void onFailure(ServerFailure error) {
@@ -1853,7 +2010,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					@Override
 					public void onSuccess(ScenarioProxy response) {
 						Window.alert("This Clinical Scenario has been approved");	
-						setCurrentScenario(currentScenario);
+						setCurrentScenario(response);
 					}
 					
 					public void onFailure(ServerFailure error) {
@@ -1868,7 +2025,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					@Override
 					public void onSuccess(ScenarioProxy response) {
 						Window.alert("This Clinical Scenario has been approved");	
-						setCurrentScenario(currentScenario);
+						setCurrentScenario(response);
 					}
 					
 					public void onFailure(ServerFailure error) {
@@ -1911,7 +2068,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				@Override
 				public void onSuccess(ScenarioProxy response) {
 					Window.alert("This Clinical Scenario has been returned for clarification");	
-					setCurrentScenario(currentScenario);
+					setCurrentScenario(response);
 				}
 				
 				public void onFailure(ServerFailure error) {
@@ -1948,7 +2105,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				@Override
 				public void onSuccess(ScenarioProxy response) {
 					Window.alert("This Clinical Scenario has been rejected");	
-					setCurrentScenario(currentScenario);
+					setCurrentScenario(response);
 				}
 				
 				public void onFailure(ServerFailure error) {
@@ -2053,6 +2210,83 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 		//if not, means the scenario has no meaningful info
 		return true;
+	}
+	
+	@UiHandler("ackButton")
+	public void onClickAcknowledge(ClickEvent clickEvent) {
+		final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+		
+		boolean confirm = Window.confirm("Click Ok to acknowledge the content of this scenario.");
+		if(confirm){
+			Set<String> ackedgers = currentScenario.getAcknowledgers()==null? new HashSet<String>() : currentScenario.getAcknowledgers();
+			ackedgers.add(userId);
+			currentScenario.setAcknowledgers(ackedgers);
+			currentScenario.setLastActionTaken(SCN_LAST_ACTION_ACK);
+			currentScenario.setLastActionUser(userEmail);			
+			checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
+			
+//			Window.alert(ackedgers.size()+" unserID:"+userId);
+			scnReq.persist()
+			.using(currentScenario).with(driver.getPaths())
+			.fire(new Receiver<ScenarioProxy>() {
+	
+				@Override
+				public void onSuccess(ScenarioProxy response) {
+					setCurrentScenario(response);
+				}
+				
+				public void onFailure(ServerFailure error) {
+					super.onFailure(error);
+					//undo
+					Set<String> ackedgers = currentScenario.getAcknowledgers();
+					ackedgers.remove(userId);
+					currentScenario.setAcknowledgers(ackedgers);
+				}
+				
+			});
+			
+		}
+	}
+	
+	@UiHandler("saveTagsButton")
+	public void onClickSaveTagsButton(ClickEvent clickEvent) {
+		final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
+		Set<String> associatedTags = new HashSet<String>() ;
+		for(int i=0;i<tagsAssociatedTable.getRowCount();i++){
+			for(int j=0;j<(TAGS_TAB_NUM_COL*2);j+=2){
+				//even numbers are checkboxes, odd are labels
+				if(tagsAssociatedTable.isCellPresent(i, j)){//make sure the column exists
+					Widget wCheck = tagsAssociatedTable.getWidget(i, j);
+					Widget wLabel = tagsAssociatedTable.getWidget(i, j+1);
+					if(wCheck instanceof CheckBox && ((CheckBox) wCheck).getValue()){
+						if(wLabel instanceof Label){
+							associatedTags.add(((Label) wLabel).getText().toLowerCase());
+						}
+					}
+				}
+
+			}			
+		}
+		
+		currentScenario.setAssociatedTags(associatedTags);
+		currentScenario.setLastActionTaken(SCN_LAST_ACTION_TAG);
+		currentScenario.setLastActionUser(userEmail);			
+//		checkScenarioFields(scnReq);//not really that necessary, because it would be updated when clicking the FeedBack tab
+			
+		scnReq.persist()
+		.using(currentScenario).with(driver.getPaths())
+		.fire(new Receiver<ScenarioProxy>() {
+			@Override
+			public void onSuccess(ScenarioProxy response) {
+				Window.alert("The tags have been associated to the scenario");
+				setCurrentScenario(response);
+			}
+			
+			public void onFailure(ServerFailure error) {
+				super.onFailure(error);
+			}
+			
+		});
 	}
 	
 

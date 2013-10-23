@@ -65,7 +65,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
         @Override
         protected void receiveEndTidalCO2(Integer value, String label) {
-            etco2 = numericSample(etco2, value, rosetta.MDC_AWAY_CO2_EXP.VALUE);
+            etco2 = numericSample(etco2, value, rosetta.MDC_AWAY_CO2_EXP.VALUE, null);
         }
 
         @Override
@@ -106,45 +106,45 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         @Override
         protected void receiveHeartRate(Integer value, String label) {
             // should be ECG heart rate?  or should it .. depends upon mode
-            heartRate = numericSample(heartRate, value, rosetta.MDC_PULS_RATE.VALUE);
+            heartRate = numericSample(heartRate, value, rosetta.MDC_PULS_RATE.VALUE, null);
 
         }
         @Override
         protected void receiveNIBP(Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label) {
-            nibpSystolic = numericSample(nibpSystolic, systolic, rosetta.MDC_PRESS_CUFF_SYS.VALUE);
-            nibpDiastolic = numericSample(nibpDiastolic, diastolic, rosetta.MDC_PRESS_CUFF_DIA.VALUE);
-            nibpPulse = numericSample(nibpPulse, pulse, rosetta.MDC_PULS_RATE_NON_INV.VALUE);
-            nibpMean = numericSample(nibpMean, mean, rosetta.MDC_PRESS_CUFF_MEAN.VALUE);
+            nibpSystolic = numericSample(nibpSystolic, systolic, rosetta.MDC_PRESS_CUFF_SYS.VALUE, null);
+            nibpDiastolic = numericSample(nibpDiastolic, diastolic, rosetta.MDC_PRESS_CUFF_DIA.VALUE, null);
+            nibpPulse = numericSample(nibpPulse, pulse, rosetta.MDC_PULS_RATE_NON_INV.VALUE, null);
+            nibpMean = numericSample(nibpMean, mean, rosetta.MDC_PRESS_CUFF_MEAN.VALUE, null);
         }
         @Override
         protected void receivePressure1(Integer systolic, Integer diastolic, Integer mean, String label) {
-            ibpSystolic1 = numericSample(ibpSystolic1, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, 0);
-            ibpDiastolic1 = numericSample(ibpDiastolic1, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, 0);
-            ibpMean1 = numericSample(ibpMean1, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, 0);
+            ibpSystolic1 = numericSample(ibpSystolic1, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, 0, null);
+            ibpDiastolic1 = numericSample(ibpDiastolic1, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, 0, null);
+            ibpMean1 = numericSample(ibpMean1, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, 0, null);
         }
         @Override
         protected void receivePressure2(Integer systolic, Integer diastolic, Integer mean, String label) {
-            ibpSystolic2 = numericSample(ibpSystolic2, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, 1);
-            ibpDiastolic2 = numericSample(ibpDiastolic2, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, 1);
-            ibpMean2 = numericSample(ibpMean2, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, 1);
+            ibpSystolic2 = numericSample(ibpSystolic2, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, 1, null);
+            ibpDiastolic2 = numericSample(ibpDiastolic2, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, 1, null);
+            ibpMean2 = numericSample(ibpMean2, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, 1, null);
         }
         @Override
         protected void receiveRespiratoryRate(Integer value, String label) {
-            respiratoryRate = numericSample(respiratoryRate, value, rosetta.MDC_RESP_RATE.VALUE);
+            respiratoryRate = numericSample(respiratoryRate, value, rosetta.MDC_RESP_RATE.VALUE, null);
         }
         @Override
         protected void receiveSpO2(Integer value, String label, Integer pulseRate) {
-            spo2 = numericSample(spo2, value, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
-            DemoIvy450C.this.pulseRate = numericSample(DemoIvy450C.this.pulseRate, pulseRate, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
+            spo2 = numericSample(spo2, value, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, null);
+            DemoIvy450C.this.pulseRate = numericSample(DemoIvy450C.this.pulseRate, pulseRate, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, null);
 
         }
         @Override
         protected void receiveTemperature1(Float value, String label) {
-            t1 = numericSample(t1, value, rosetta.MDC_TEMP_BLD.VALUE, 0);
+            t1 = numericSample(t1, value, rosetta.MDC_TEMP_BLD.VALUE, 0, null);
         }
         @Override
         protected void receiveTemperature2(Float value, String label) {
-            t2 = numericSample(t2, value, rosetta.MDC_TEMP_BLD.VALUE, 1);
+            t2 = numericSample(t2, value, rosetta.MDC_TEMP_BLD.VALUE, 1, null);
         }
     }
 

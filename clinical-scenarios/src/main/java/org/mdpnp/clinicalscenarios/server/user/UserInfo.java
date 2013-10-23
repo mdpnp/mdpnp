@@ -122,7 +122,7 @@ public class UserInfo implements java.io.Serializable {
     private String title;
     private String givenName;
     private String familyName;
-    private String highestLevelOfEducation;
+    private String highestLevelOfEducation;//XXX ??What's this for?
     private String company;
     private String jobTitle;
     private String yearsInField;
@@ -191,7 +191,7 @@ public class UserInfo implements java.io.Serializable {
         return ofy().load().type(UserInfo.class).list();
     }
 
-    public static UserInfo findCurrentUserInfo(String url) {
+    public static UserInfo findCurrentUserInfo(String url, boolean updateLastLogin) {
         UserService userService = UserServiceFactory.getUserService();
         User user = userService.getCurrentUser();
         UserInfo ui = null;
@@ -218,7 +218,7 @@ public class UserInfo implements java.io.Serializable {
                 ui.setUserId(user.getUserId());
                 ui.setEmail(user.getEmail());
                 ofy().save().entity(ui).now();
-            } else {
+            } else if(updateLastLogin){
                 // This is an authenticated user that we know
             	updateLastLoginDate(ui);
             }
@@ -257,10 +257,15 @@ public class UserInfo implements java.io.Serializable {
 	public void setLastLoginDate(Date lastLoginDate) {
 		this.lastLoginDate = lastLoginDate;
 	}
-
-	/** updates user lastLogin date */
+	
 	private static void updateLastLoginDate(UserInfo ui) {
 		ui.lastLoginDate = new Date();
-		ui.persist();
+		ui.persist();		
+	}
+
+	/** updates user lastLogin date */
+	public UserInfo updateLastLoginDate() {
+		this.lastLoginDate = new Date();
+		return persist();
 	}
 }

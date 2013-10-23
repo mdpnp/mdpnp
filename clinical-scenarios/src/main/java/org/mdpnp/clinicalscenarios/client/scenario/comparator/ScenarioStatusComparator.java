@@ -31,7 +31,7 @@ public class ScenarioStatusComparator implements Comparator<ScenarioProxy> {
 	
 	
 	  private  int doCompare(ScenarioProxy scn1, ScenarioProxy scn2) {
-		  if(scn1.getStatus()==null) return 1;//XXX we shouldn't need this two lines because every Scn MUST have a Satus
+		  if(scn1.getStatus()==null) return 1;//XXX we shouldn't need this two lines because every Scn MUST have a Status
 		  if(scn2.getStatus()==null) return -1;
 		  
 	        if(scn1.getStatus().equalsIgnoreCase(scn2.getStatus())){	       

@@ -19,6 +19,8 @@ import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 
+import com.rti.dds.infrastructure.Time_t;
+
 public class DemoN595 extends AbstractSerialDevice {
     private InstanceHolder<ice.Numeric> pulseUpdate;
     private InstanceHolder<ice.Numeric> spo2Update;
@@ -33,10 +35,14 @@ public class DemoN595 extends AbstractSerialDevice {
             super();
         }
 
+        private final Time_t sampleTime = new Time_t(0,0);
         @Override
         public void firePulseOximeter() {
-            pulseUpdate = numericSample(pulseUpdate, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
-            spo2Update = numericSample(spo2Update, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
+            long tm = getTimestamp().getTime();
+            sampleTime.sec = (int)(tm / 1000L);
+            sampleTime.nanosec = (int)(tm % 1000L * 1000000L);
+            pulseUpdate = numericSample(pulseUpdate, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, sampleTime);
+            spo2Update = numericSample(spo2Update, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, sampleTime);
         }
         @Override
         public void fireAlarmPulseOximeter() {

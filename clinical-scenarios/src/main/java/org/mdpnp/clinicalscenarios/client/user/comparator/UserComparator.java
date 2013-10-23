@@ -98,7 +98,13 @@ public class UserComparator implements Comparator<UserInfoProxy> {
 				    	  return -1*( new Boolean (user1.getAdmin()).compareTo((Boolean)user2.getAdmin()) );  
 				      else
 				    	  return new Boolean(user1.getAdmin()).compareTo((Boolean) user2.getAdmin()); 
-				     
+				      
+				}else if(userProperty.equals("agree")){
+				      if(reverseOrder)
+				    	  return -1*( new Boolean(user1.isAgreeToBeContacted()).compareTo(new Boolean(user2.isAgreeToBeContacted())) );  
+				      else
+				    	  return new Boolean(user1.isAgreeToBeContacted()).compareTo(new Boolean(user2.isAgreeToBeContacted())); 
+				        
 				}else if(userProperty.equals("creationDate")){
 				      if(reverseOrder)
 				    	  return -1*( user1.getCreationDate().compareTo(user2.getCreationDate()) );  

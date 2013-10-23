@@ -162,27 +162,44 @@ public class PulseOximeterPanel extends DevicePanel {
     private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
     private final Date date = new Date();
     @Override
-    public void numeric(Numeric numeric, SampleInfo sampleInfo) {
-        setInt(numeric, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
-        setInt(numeric, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
-        if(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(numeric.metric_id)) {
-            pulseWave.applyUpdate(numeric);
+    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
+        if(aliveAndValidData(sampleInfo)) {
+            setInt(numeric, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
+            setInt(numeric, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
+            if(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
+                pulseWave.applyUpdate(numeric, sampleInfo);
+            }
+            date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
+            time.setText(dateFormat.format(date));
+        } else {
+            if(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
+                pulseWave.reset();
+            }
         }
-        date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
-        time.setText(dateFormat.format(date));
     }
 
     @Override
-    public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
-        if(rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(sampleArray.metric_id)) {
-            plethWave.applyUpdate(sampleArray);
+    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
+        if(aliveAndValidData(sampleInfo)) {
+            if(rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(metric_id)) {
+                plethWave.applyUpdate(sampleArray, sampleInfo);
+            }
+            date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
+            time.setText(dateFormat.format(date));
+        } else {
+            if(rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(metric_id)) {
+                plethWave.reset();
+            }
         }
-        date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
-        time.setText(dateFormat.format(date));
     }
 
     @Override
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
 
+    }
+    @Override
+    public void connected() {
+        plethWave.reset();
+        pulseWave.reset();
     }
 }

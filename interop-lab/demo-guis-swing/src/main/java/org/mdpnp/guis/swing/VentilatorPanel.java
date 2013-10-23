@@ -101,31 +101,50 @@ public class VentilatorPanel extends DevicePanel {
 
 
     @Override
-    public void numeric(Numeric numeric, SampleInfo sampleInfo) {
-        if(rosetta.MDC_RESP_RATE.VALUE.equals(numeric.metric_id)) {
-            respiratoryRate.setText(Integer.toString((int)numeric.value));
-        } else if(rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(numeric.metric_id)) {
-            endTidalCO2.setText(Integer.toString((int)numeric.value));
+    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
+        if(aliveAndValidData(sampleInfo)) {
+            if(rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
+                respiratoryRate.setText(Integer.toString((int)numeric.value));
+            } else if(rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(metric_id)) {
+                endTidalCO2.setText(Integer.toString((int)numeric.value));
+            }
         }
     }
 
     private final Date date = new Date();
     @Override
-    public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
-        if(rosetta.MDC_FLOW_AWAY.VALUE.equals(sampleArray.metric_id)) {
-            flowWave.applyUpdate(sampleArray);
-        } else if(rosetta.MDC_PRESS_AWAY.VALUE.equals(sampleArray.metric_id)) {
-            pressureWave.applyUpdate(sampleArray);
-        } else if(ice.MDC_CAPNOGRAPH.VALUE.equals(sampleArray.metric_id)) {
-            etco2Wave.applyUpdate(sampleArray);
-        }
-        date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
+        if(aliveAndValidData(sampleInfo)) {
+            if(rosetta.MDC_FLOW_AWAY.VALUE.equals(metric_id)) {
+                flowWave.applyUpdate(sampleArray, sampleInfo);
+            } else if(rosetta.MDC_PRESS_AWAY.VALUE.equals(metric_id)) {
+                pressureWave.applyUpdate(sampleArray, sampleInfo);
+            } else if(ice.MDC_CAPNOGRAPH.VALUE.equals(metric_id)) {
+                etco2Wave.applyUpdate(sampleArray, sampleInfo);
+            }
+            date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
 
-        time.setText(dateFormat.format(date));
+            time.setText(dateFormat.format(date));
+        } else {
+            if(rosetta.MDC_FLOW_AWAY.VALUE.equals(metric_id)) {
+                flowWave.reset();
+            } else if(rosetta.MDC_PRESS_AWAY.VALUE.equals(metric_id)) {
+                pressureWave.reset();
+            } else if(ice.MDC_CAPNOGRAPH.VALUE.equals(metric_id)) {
+                etco2Wave.reset();
+            }
+        }
     }
     @Override
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
 
+    }
+
+    @Override
+    public void connected() {
+        etco2Wave.reset();
+        flowWave.reset();
+        pressureWave.reset();
     }
 
 }

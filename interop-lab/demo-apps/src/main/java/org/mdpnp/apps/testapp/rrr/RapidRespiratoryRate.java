@@ -62,7 +62,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
         void updateRate(float rate) {
             // TODO clearly a synchronization issue here.
             // enforce a singular calling thread or synchronize accesses
-            this.rate = numericSample(this.rate, (int)Math.round(rate), rosetta.MDC_RESP_RATE.VALUE);
+            this.rate = numericSample(this.rate, (int)Math.round(rate), rosetta.MDC_RESP_RATE.VALUE, null);
         }
     }
 
@@ -199,7 +199,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
     @Override
     public void capnoChanged(CapnoModel model, Capno capno) {
         if(null != capno && capno.equals(capnoSources.getSelectedValue())) {
-            wuws.applyUpdate(capno.getSampleArray());
+            wuws.applyUpdate(capno.getSampleArray(), capno.getSampleInfo());
             // sample arrays ... why?  it's just obnoxious having data samples
             // artificially batched like this
             long src_time = capno.getSampleInfo().source_timestamp.sec * 1000L + capno.getSampleInfo().source_timestamp.nanosec / 1000000L;

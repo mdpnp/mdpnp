@@ -28,3 +28,4 @@ clinical_scenarios/
 *build-*Debug/
 *.jar
 hs_err*
+.nddshome/

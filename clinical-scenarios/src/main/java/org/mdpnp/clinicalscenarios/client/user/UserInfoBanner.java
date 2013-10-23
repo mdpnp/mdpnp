@@ -1,7 +1,6 @@
 package org.mdpnp.clinicalscenarios.client.user;
 
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
-import org.mortbay.log.Log;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -44,6 +43,7 @@ public class UserInfoBanner extends Composite {
 	private MenuItem showLatestSearch = new MenuItem("Latest Search Results", NOOP);
 	private MenuItem searchById = new MenuItem("Search Scenario by Id", NOOP);
 	private MenuItem searchByDates= new MenuItem("Search Scenarios by Dates", NOOP);
+	private MenuItem searchByTags= new MenuItem("Search Scenarios by Tags", NOOP);
 	
 	private MenuItem listTags = new MenuItem("List Tags", NOOP);//list the tags
 	//list scenarios
@@ -66,7 +66,7 @@ public class UserInfoBanner extends Composite {
 	private UserInfoProxy userInfo;
 	
 	private String userEmail;
-	private boolean isAdmin;//DAG
+//	private boolean isAdmin;//DAG
 	
 	public MenuItem getListTags(){
 		return listTags;
@@ -91,7 +91,6 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getlistApprvScn(){
 		return listApprvScn;
 	}
-	
 	
 	public MenuItem getListAllScenarios(){
 		return listAllScn;
@@ -132,9 +131,11 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getSearchByDates(){
 		return searchByDates;
 	}
+	public MenuItem getSearchByTags() {
+		return searchByTags;
+	}
 	
-	
-//	XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
+	//	XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
 //	public MenuItem getListScnRejected(){
 //		return scnRejected;
 //	}
@@ -159,23 +160,22 @@ public class UserInfoBanner extends Composite {
 		//XXX SEarch by dates not yet - consider which date of the scenario to use
 		searchByDates.setTitle("Find scenarios in a date range");
 		search.addItem(searchByDates);
+		searchByTags.setTitle("Fing scenarios tagged with the selected keywords");
+		search.addItem(searchByTags);
 		showLatestSearch.setTitle("Retrieve the previous search results");
 		search.addItem(showLatestSearch);
 
 		UserInfoRequest userInfoRequest = userInfoRequestFactory.userInfoRequest();
-		userInfoRequest.findCurrentUserInfo(Window.Location.getHref()).with("loginURL").to(new Receiver<UserInfoProxy>() {
+		userInfoRequest.findCurrentUserInfo(Window.Location.getHref(), true).with("loginURL").to(new Receiver<UserInfoProxy>() {
 
 			@Override
 			public void onSuccess(final UserInfoProxy response) {
 				//DAG
-				userEmail = response.getEmail();
-				
+				userEmail = response.getEmail();				
 				UserInfoBanner.this.userInfo = response;
-				
-				
+								
 				username.addItem("Search Scenarios", search);
 				
-
 				if(null == response.getEmail()) {
 					MenuBar signIn = new MenuBar(true);
 //					System.out.println(""+response.getLoginURL());
@@ -259,8 +259,8 @@ public class UserInfoBanner extends Composite {
 					logoutMenu.addItem(signOut);
 					
 					username.addItem(response.getEmail(), logoutMenu);
-					if(null == response.getGivenName() && null != newUserHandler) {
-						newUserHandler.onNewUser(response);
+					if(null == response.getGivenName() && null != newUserHandler) {//TICKET-181 
+						newUserHandler.onNewUser(response);//display userInfoPanel
 					}
 					
 				}

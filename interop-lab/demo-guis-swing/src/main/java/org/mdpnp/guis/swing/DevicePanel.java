@@ -16,6 +16,7 @@ import java.awt.LayoutManager;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
@@ -63,6 +64,10 @@ public abstract class DevicePanel extends JPanel {
         }
     }
 
+   protected static boolean aliveAndValidData(SampleInfo si) {
+       return (0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & si.instance_state)) && si.valid_data;
+   }
+
     @Override
     public void setForeground(Color fg) {
         super.setForeground(fg);
@@ -75,9 +80,10 @@ public abstract class DevicePanel extends JPanel {
     }
 
 //	public abstract deviceIdentity(DeviceIdentity di);
-//	public abstract deviceConnectivity(DeviceConnectivity dc);
-    public abstract void numeric(ice.Numeric numeric, SampleInfo sampleInfo);
-    public abstract void sampleArray(ice.SampleArray sampleArray, SampleInfo sampleInfo);
+//    public abstract void deviceConnectivity(ice.DeviceConnectivity dc, SampleInfo sampleInfo);
+    public void connected() {}
+    public abstract void numeric(ice.Numeric numeric, String metric_id, SampleInfo sampleInfo);
+    public abstract void sampleArray(ice.SampleArray sampleArray, String metric_id, SampleInfo sampleInfo);
     public abstract void infusionStatus(ice.InfusionStatus infusionStatus, SampleInfo sampleInfo);
     public void destroy() {
     }

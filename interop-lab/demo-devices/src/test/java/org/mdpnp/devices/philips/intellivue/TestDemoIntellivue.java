@@ -14,7 +14,7 @@ public class TestDemoIntellivue {
         Map<ObservedValue, Label> numericLabels = new HashMap<ObservedValue, Label>();
         Map<ObservedValue, String> sampleArrayMetricIds = new HashMap<ObservedValue, String>();
         Map<ObservedValue, Label> sampleArrayLabels = new HashMap<ObservedValue, Label>();
-        DemoIntellivue.loadMap(numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
+        DemoEthernetIntellivue.loadMap(numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
         System.out.println(numericMetricIds);
         System.out.println(numericLabels);
         System.out.println(sampleArrayMetricIds);

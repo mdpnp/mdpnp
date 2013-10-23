@@ -5,8 +5,6 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.concurrent.Executors;
@@ -30,6 +28,11 @@ public class LabeledFramePanel extends FramePanel {
     private static final String ACQUIRING_IMAGE = "Acquiring image...";
     private static final String IMAGE_ACQUIRED = "Image Acquired";
     private static final String LIVE_VIDEO = "Live Video";
+
+    private static String acquiringImage = ACQUIRING_IMAGE;
+    private static String imageAcquired = IMAGE_ACQUIRED;
+    private static String liveVideo = LIVE_VIDEO;
+
     private static final Color transparentWhite = new Color(1.0f, 1.0f, 1.0f, 0.8f);
     private static final Color transparentRed = new Color(1.0f, 0.0f, 0.0f, 0.8f);
     private static Font bigFont;
@@ -63,28 +66,33 @@ public class LabeledFramePanel extends FramePanel {
         switch(stateMachine.getState()) {
         case Freezing:
             g.setColor(transparentWhite);
-            g.fillRect(X, y, fontMetrics.stringWidth(ACQUIRING_IMAGE), fontMetrics.getHeight());
+            g.fillRect(X, y, fontMetrics.stringWidth(acquiringImage), fontMetrics.getHeight());
             g.setColor(Color.black);
-            g.drawString(ACQUIRING_IMAGE, X, Y);
+            g.drawString(acquiringImage, X, Y);
             break;
         case Frozen:
             g.setColor(transparentRed);
-            g.fillRect(X, y, fontMetrics.stringWidth(IMAGE_ACQUIRED), fontMetrics.getHeight());
+            g.fillRect(X, y, fontMetrics.stringWidth(imageAcquired), fontMetrics.getHeight());
             g.setColor(Color.black);
-            g.drawString(IMAGE_ACQUIRED, X, Y);
+            g.drawString(imageAcquired, X, Y);
             break;
         case Thawed:
             g.setColor(transparentWhite);
-            g.fillRect(X, y, fontMetrics.stringWidth(LIVE_VIDEO), fontMetrics.getHeight());
-            g.setColor(Color.black);
-            g.drawString(LIVE_VIDEO, X, Y);
+            if(liveVideo != null) {
+                g.fillRect(X, y, fontMetrics.stringWidth(liveVideo), fontMetrics.getHeight());
+                g.setColor(Color.black);
+                g.drawString(liveVideo, X, Y);
+            }
             break;
         default:
         }
     }
 
     public static void main(String[] args) throws WebcamException, TimeoutException {
-        JFrame top = new JFrame("FramePanel test");
+        liveVideo = null;
+        JFrame top = new JFrame("Live Video");
+
+        top.setAlwaysOnTop(true);
         Webcam webcam = Webcam.getDefault(5000L);
         final FramePanel panel = new LabeledFramePanel(Executors.newSingleThreadScheduledExecutor());
         panel.setWebcam(webcam);
@@ -100,13 +108,13 @@ public class LabeledFramePanel extends FramePanel {
             }
         });
 
-        panel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                panel.toggle();
-                super.mouseReleased(e);
-            }
-        });
+//        panel.addMouseListener(new MouseAdapter() {
+//            @Override
+//            public void mouseReleased(MouseEvent e) {
+//                panel.toggle();
+//                super.mouseReleased(e);
+//            }
+//        });
 
         top.addWindowListener(new WindowAdapter() {
             @Override

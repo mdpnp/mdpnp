@@ -5,6 +5,7 @@ import static org.mdpnp.clinicalscenarios.server.OfyService.ofy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -49,6 +50,11 @@ public class ScenarioEntity implements java.io.Serializable {
 	private String lastActionTaken;  //description of last action taken
 	private String lastActionUser;   //name of the last user to perform an action with the scenario
 	private String lockOwner; //name of user who has lock ownership over this scenario
+	
+	//TICKET-163  "like" scenarios
+	private Set<String> acknowledgers; //set with the IDs of the users who clicked the button to ack/like this scenario 
+	//TICKET-157
+	private Set<String> associatedTags; //set of tag Names associated to the scenario
 	
 
 	@OnSave
@@ -206,6 +212,22 @@ public class ScenarioEntity implements java.io.Serializable {
 	public void setLockOwner(String lockOwner) {
 		this.lockOwner = lockOwner;
 	}
+	
+	public Set<String> getAcknowledgers() {
+		return acknowledgers;
+	}
+
+	public void setAcknowledgers(Set<String> acknowledgers) {
+		this.acknowledgers = acknowledgers;
+	}
+
+	public Set<String> getAssociatedTags() {
+		return associatedTags;
+	}
+
+	public void setAssociatedTags(Set<String> associatedTags) {
+		this.associatedTags = associatedTags;
+	}
 
 	public static ScenarioEntity create() /*throws Exception*/ {
 		try{
@@ -213,6 +235,8 @@ public class ScenarioEntity implements java.io.Serializable {
 		    s.setStatus(ScenarioPanel.SCN_STATUS_UNSUBMITTED);//By default, pending of submission
 		    s.setLastActionTaken("created new");
 		    s.setLastActionUser(s.getSubmitter());
+		    s.acknowledgers = new HashSet<String>(); //Ticket-163
+		    s.associatedTags = new HashSet<String>(); //Ticket-153
 			//to ID the current user
 		    UserService userService = UserServiceFactory.getUserService();
 		    User user = userService.getCurrentUser();
@@ -224,6 +248,10 @@ public class ScenarioEntity implements java.io.Serializable {
 		}
 	}
 	
+	/**
+	 * Returns all the scenario IDs
+	 * @return All the scenario IDs as a list of Long
+	 */
 	public static List<Long> findAllIds() {
 	    QueryResultIterator<ScenarioEntity> itr = ofy().load().type(ScenarioEntity.class).iterator();
 	    List<Long> ids = new ArrayList<Long>();
@@ -233,13 +261,19 @@ public class ScenarioEntity implements java.io.Serializable {
 	    return ids;
 	}
 	
+	/**
+	 * Finds a scenario by its unique ID
+	 * @param id
+	 * @return
+	 */
 	public static ScenarioEntity findById(Long id) {
 	    return ofy().load().type(ScenarioEntity.class).id(id).now();
 	}
 	
 		
 	/**
-	 * Auxiliary method that returns true if the param line contains any of the words included in the keyWordList
+	 * Auxiliary method that returns true if the first parameter contains any of the words included in the keyWordList 
+	 * that is the second parameter
 	 * @param line
 	 * @param keyWordsList
 	 * @return
@@ -253,14 +287,19 @@ public class ScenarioEntity implements java.io.Serializable {
 	
 	/**
 	 * Returns a list of scenario entities within the approved scenarios that contain in their fields title, background, proposed state,
-	 * algorithm, process, benefits or risks any of the words included in the param 'keywords' (either a single word or more than one
+	 * algorithm, process, benefits or risks any of the words included in the parameter 'keywords' (either a single word or more than one
 	 * using whitespace as separator).
 	 * @param keywords one or more strings (whitespace is the separator)
 	 * @return
 	 */
 	public static List<ScenarioEntity> searchByKeywords(String keywords) {
 		keywords = keywords.trim();
-		List<ScenarioEntity> approvedScenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);//starting point
+//		List<ScenarioEntity> approvedScenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);//starting point
+		Set<String> states = new HashSet<String>();
+		states.add(ScenarioPanel.SCN_STATUS_APPROVED);
+		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+		List<ScenarioEntity> approvedScenarios = searchByStatus(states);//TICKET-186
 		List<String> keyWordsList = new ArrayList<String>();
 		List<ScenarioEntity> result = new ArrayList<ScenarioEntity>();
 		
@@ -298,18 +337,19 @@ public class ScenarioEntity implements java.io.Serializable {
 		return result;
 	}
 	
-	/**
-	 * Searches scenarios using the keywords
-	 * @param keywords
-	 * @return
-	 */
+//	/**
+//	 * Searches scenarios using the keywords
+//	 * @param keywords
+//	 * @return
+//	 */
+//	All this legacy code has been left here to study different approaches for filtering results
 //	public static List<ScenarioEntity> searchByKeywords(String keywords) {
 ////		List<ScenarioEntity> scenarios = findAllScenarios();//diego@mdpnp.org The basic search should be among APPROVED Scn, and not all of them
 //		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 //		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
 //		
 //		String str = keywords.toUpperCase(); //String comparison in UPPERCASE ******
-//		//TODO Declare a keyword separator (WHITESPACE) and tokenize elements to use several Keywords
+//		//Declare a keyword separator (WHITESPACE) and tokenize elements to use several Keywords
 //		try{
 //
 //		for(ScenarioEntity s : scenarios) {
@@ -357,7 +397,12 @@ public class ScenarioEntity implements java.io.Serializable {
 	 */
 	public static List<ScenarioEntity> searchByFilter_OrBehavior(String sBackground, String sProposed,
 			String sProcess, String sAlgorithm, String sBenefits, String sRisks, String sTitle) {
-		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
+//		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
+		Set<String> states = new HashSet<String>();
+		states.add(ScenarioPanel.SCN_STATUS_APPROVED);
+		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+		List<ScenarioEntity> scenarios = searchByStatus(states);//TICKET-186
 		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
 
 		try{
@@ -393,60 +438,7 @@ public class ScenarioEntity implements java.io.Serializable {
 		}
 		return matchingScenarios;		
 	}
-	
-	/**
-	 * Searches for scenarios that have all the provided keywords in the appropriate field 
-	 * @param sBackground
-	 * @param sProposed
-	 * @return
-	 */
-//	public static List<ScenarioEntity> searchByFilter_AndBehavior(String sBackground, String sProposed,
-//			String sProcess, String sAlgorithm, String sBenefits, String sRisks, String sTitle) {
-//		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
-//		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
-//		
-//		boolean isAdd = true;//and
-//		boolean isAllNull = true;//Or 
-//
-//		try{
-//		for(ScenarioEntity s : scenarios) {
-//			isAdd = true;//and
-//			isAllNull = false;//Or 
-//			//1- check title
-//			if(sTitle!=null && s.getTitle()!=null && s.getTitle().toUpperCase().contains(sTitle)) {
-//				isAdd &= true;
-//				isAllNull &= false;
-//			}else if(sTitle!=null){
-//				isAdd &= false;
-//				isAllNull &= true;
-//			}else{
-//				isAdd &= false;
-//			}
-//			//2- check background
-//			 if (sBackground!=null && s.getBackground().getCurrentState()!=null && s.getBackground().getCurrentState().toUpperCase().contains(sBackground.toUpperCase()))
-//			//3- check proposed state
-//			 if(sProposed!=null && s.getBackground().getProposedState()!=null && s.getBackground().getProposedState().toUpperCase().contains(sProposed.toUpperCase()))
-//			//4- check process
-//			 if(sProcess!=null && s.getProposedSolution().getProcess()!=null && s.getProposedSolution().getProcess().toUpperCase().contains(sProcess.toUpperCase()))
-//			//5- check Algorithm
-//			 if(sAlgorithm!=null && s.getProposedSolution().getAlgorithm()!=null && s.getProposedSolution().getAlgorithm().toUpperCase().contains(sAlgorithm.toUpperCase()))
-//			//6- check benefits
-//			 if(sBenefits!=null && s.getBenefitsAndRisks().getBenefits()!=null && s.getBenefitsAndRisks().getBenefits().toUpperCase().contains(sBenefits.toUpperCase()))
-//			//7- check risks
-//			 if(sRisks!=null && s.getBenefitsAndRisks().getRisks()!=null && s.getBenefitsAndRisks().getRisks().toUpperCase().contains(sRisks.toUpperCase()))
-//
-//			
-//			 if(isAdd && !isAllNull)
-//				 matchingScenarios.add(s);
-//		}
-//		
-//		}catch(Exception e){
-//			e.printStackTrace();
-//		}
-//		return matchingScenarios;
-//		
-//	}
-	
+		
 	
 	/**
 	 * List Scn by status type 
@@ -458,6 +450,11 @@ public class ScenarioEntity implements java.io.Serializable {
 		return listScn;
 	}
 	
+	/**
+	 * Searches for scenarios in one of the states contained in the parameter 
+	 * @param nStatus Set of status to filter
+	 * @return
+	 */
 	public static List<ScenarioEntity> searchByStatus(Set<String> nStatus){
 		List<ScenarioEntity> listAllScn = ofy().load().type(ScenarioEntity.class).list();
 		List<ScenarioEntity> filteredList = new ArrayList<ScenarioEntity>();
@@ -470,22 +467,37 @@ public class ScenarioEntity implements java.io.Serializable {
 		return filteredList;
 	}
 	
+	/**
+	 * Returns all the scenarios of the submitter provided by parameter
+	 * @param submitter
+	 * @return
+	 */
 	public static List<ScenarioEntity> searchScnBySubmitter(String submitter){
 		List<ScenarioEntity> listScn = ofy().load().type(ScenarioEntity.class).filter("submitter", submitter).list();
 		return listScn;
 	}
 	
+	/**
+	 * Returns all the scenarios
+	 * @return
+	 */
 	public static List<ScenarioEntity> findAllScenarios() {
 	    return ofy().load().type(ScenarioEntity.class).list();
 	}
 	
 //	private static Logger logger = Logger.getLogger(Scenario.class.getName());
+	/**
+	 * Persists (saves) this entity in the GAE
+	 * @return
+	 */
 	public ScenarioEntity persist() {
-//		if(username!= null && !username.trim().equals("") && username.equals(lockOwner))
 		ofy().save().entity(this).now();
 	    return this;
 	}
 	
+	/**
+	 * Deletes this entity from the GAE
+	 */
 	public void remove() {
 	    ofy().delete().entity(this).now();
 	}
@@ -517,6 +529,13 @@ public class ScenarioEntity implements java.io.Serializable {
 		return this;
 	}
 	
+	/**
+	 * Returns all the scenario whose creation date matches the filtering criteria provided by the parameters. 
+	 * Both parameters can't be null.
+	 * @param dateFrom
+	 * @param dateUntil
+	 * @return
+	 */
 	public static List<ScenarioEntity> searchByCreationDateRange(Date dateFrom, Date dateUntil){
 		/*
 		Query<ScenarioEntity> queryScn =  ofy().load().type(ScenarioEntity.class)
@@ -530,8 +549,13 @@ public class ScenarioEntity implements java.io.Serializable {
 		
 		return queryScn.list();
 		*/
-		List<ScenarioEntity> scnList = ofy().load().type(ScenarioEntity.class)
-				.filter("status", ScenarioPanel.SCN_STATUS_APPROVED).list(); //get only approved Scn		
+		Set<String> states = new HashSet<String>();
+		states.add(ScenarioPanel.SCN_STATUS_APPROVED);
+		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+		List<ScenarioEntity> scnList = searchByStatus(states);//TICKET-186
+//		List<ScenarioEntity> scnList = ofy().load().type(ScenarioEntity.class)
+//				.filter("status", ScenarioPanel.SCN_STATUS_APPROVED).list(); //get only approved Scn		
 		List<ScenarioEntity> filteredList = new ArrayList<ScenarioEntity>();
 		
 		for(ScenarioEntity scn : scnList){

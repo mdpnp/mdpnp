@@ -102,21 +102,29 @@ public class ElectroCardioGramPanel extends DevicePanel {
     }
 
     @Override
-    public void numeric(Numeric numeric, SampleInfo sampleInfo) {
-        if(rosetta.MDC_RESP_RATE.VALUE.equals(numeric.metric_id)) {
-            respiratoryRate.setText(Integer.toString((int)numeric.value));
-        } else if(rosetta.MDC_PULS_RATE.VALUE.equals(numeric.metric_id)) {
-            heartRate.setText(Integer.toString((int)numeric.value));
+    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
+        if(aliveAndValidData(sampleInfo)) {
+            if(rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
+                respiratoryRate.setText(Integer.toString((int)numeric.value));
+            } else if(rosetta.MDC_PULS_RATE.VALUE.equals(metric_id)) {
+                heartRate.setText(Integer.toString((int)numeric.value));
+            }
         }
     }
     @Override
-    public void sampleArray(SampleArray sampleArray, SampleInfo sampleInfo) {
-        WaveformUpdateWaveformSource wuws = panelMap.get(sampleArray.metric_id);
-        if(null != wuws) {
-            wuws.applyUpdate(sampleArray);
+    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
+        WaveformUpdateWaveformSource wuws = panelMap.get(metric_id);
+        if(aliveAndValidData(sampleInfo)) {
+            if(null != wuws) {
+                wuws.applyUpdate(sampleArray, sampleInfo);
+            }
+            date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+            time.setText(dateFormat.format(date));
+        } else {
+            if(null != wuws) {
+                wuws.reset();
+            }
         }
-        date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
-        time.setText(dateFormat.format(date));
     }
 
     @Override
@@ -124,4 +132,10 @@ public class ElectroCardioGramPanel extends DevicePanel {
 
     }
 
+    @Override
+    public void connected() {
+        for(WaveformUpdateWaveformSource wuws : panelMap.values()) {
+            wuws.reset();
+        }
+    }
 }

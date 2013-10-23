@@ -1,1 +1,1 @@
-$NDDSHOME/scripts/rtiddsgen -replace -namespace -language C++ device.idl
+$NDDSHOME/scripts/rtiddsgen -replace -namespace -language C++ ice.idl

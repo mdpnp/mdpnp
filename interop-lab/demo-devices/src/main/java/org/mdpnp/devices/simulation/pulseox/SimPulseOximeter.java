@@ -10,18 +10,24 @@ package org.mdpnp.devices.simulation.pulseox;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 
+import com.rti.dds.infrastructure.Time_t;
+
 public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
     protected final InstanceHolder<ice.Numeric> pulse;
     protected final InstanceHolder<ice.Numeric> SpO2;
     protected final InstanceHolder<ice.SampleArray> pleth;
 
+    private final Time_t sampleTime = new Time_t(0,0);
+
     private class MySimulatedPulseOximeter extends SimulatedPulseOximeter {
         @Override
         protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, double msPerSample) {
-            numericSample(pulse, heartRate);
-            numericSample(SimPulseOximeter.this.SpO2, SpO2);
-            sampleArraySample(pleth, plethValues, (int) msPerSample);
+            sampleTime.sec = (int)(timestamp/1000L);
+            sampleTime.nanosec = (int)(timestamp % 1000L * 1000000L);
+            numericSample(pulse, heartRate, sampleTime);
+            numericSample(SimPulseOximeter.this.SpO2, SpO2, sampleTime);
+            sampleArraySample(pleth, plethValues, (int) msPerSample, sampleTime);
         }
     }
 

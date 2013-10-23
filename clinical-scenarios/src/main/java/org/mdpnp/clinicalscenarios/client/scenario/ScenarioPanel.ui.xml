@@ -164,6 +164,20 @@
 	  	<g:Anchor text='Add New...' href='#' ui:field='addNewLinkedReference'/>
 	    </g:FlowPanel>
 	</g:Tab>
+	
+	<g:Tab text="Tags">
+	    <g:FlowPanel>
+	     <g:HTML><span style="font-size:16pt;">Tag the scenario with meaningful keywords</span><br/>
+	     </g:HTML>
+	     <g:Label ui:field='tagsLabel'/>
+<!-- 	     <g:VerticalPanel ui:field='tagsVerticalPanel'></g:VerticalPanel> -->
+		<g:ScrollPanel ui:field='tagsScrollPanel'>
+		    <g:FlexTable ui:field='tagsAssociatedTable'></g:FlexTable>
+		</g:ScrollPanel>
+		<g:Button text='Attach Tags' ui:field='saveTagsButton' styleName='{style.givemespace}' />
+	  	
+	    </g:FlowPanel>
+	</g:Tab>
 	    
 	<g:Tab text="Approve or Reject">
 	  <g:FlowPanel>
@@ -184,6 +198,8 @@
 	    <g:Button text='Save For Later' ui:field='saveButton' styleName='{style.givemespace}'/>
 	    <g:Button text='Lock' ui:field='lockButton' styleName='{style.givemespace}'/>
 <!-- 	     <g:Button text='Export to file' ui:field='exportScenario' styleName='{style.givemespace}'/> -->
+		<g:Button text='Acknowledge' ui:field='ackButton' styleName='{style.givemespace}'/>
+		<g:Label ui:field='ackLabel' styleName='important'/>
 	</g:FlowPanel>
 	</g:Dock>
 	</g:DockPanel>

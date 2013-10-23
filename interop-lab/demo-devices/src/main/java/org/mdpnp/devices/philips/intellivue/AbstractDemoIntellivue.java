@@ -21,6 +21,7 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,11 +38,13 @@ import org.mdpnp.devices.philips.intellivue.association.AssociationAbort;
 import org.mdpnp.devices.philips.intellivue.association.AssociationAccept;
 import org.mdpnp.devices.philips.intellivue.association.AssociationDisconnect;
 import org.mdpnp.devices.philips.intellivue.association.AssociationFinish;
+import org.mdpnp.devices.philips.intellivue.association.AssociationMessage;
 import org.mdpnp.devices.philips.intellivue.association.AssociationRefuse;
 import org.mdpnp.devices.philips.intellivue.association.impl.AssociationFinishImpl;
 import org.mdpnp.devices.philips.intellivue.attribute.Attribute;
 import org.mdpnp.devices.philips.intellivue.attribute.AttributeFactory;
 import org.mdpnp.devices.philips.intellivue.connectindication.ConnectIndication;
+import org.mdpnp.devices.philips.intellivue.data.AbsoluteTime;
 import org.mdpnp.devices.philips.intellivue.data.AttributeId;
 import org.mdpnp.devices.philips.intellivue.data.AttributeValueList;
 import org.mdpnp.devices.philips.intellivue.data.ComponentId;
@@ -69,7 +72,9 @@ import org.mdpnp.devices.philips.intellivue.data.TextId;
 import org.mdpnp.devices.philips.intellivue.data.TextIdList;
 import org.mdpnp.devices.philips.intellivue.data.Type;
 import org.mdpnp.devices.philips.intellivue.data.VariableLabel;
+import org.mdpnp.devices.philips.intellivue.dataexport.DataExportError;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportMessage;
+import org.mdpnp.devices.philips.intellivue.dataexport.DataExportResult;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.EventReport;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.SetResult;
 import org.mdpnp.devices.philips.intellivue.dataexport.event.MdsCreateEvent;
@@ -77,17 +82,22 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DemoIntellivue extends AbstractConnectedDevice {
+import com.rti.dds.infrastructure.Time_t;
+
+public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
         super.stateChanged(newState, oldState);
         if (ice.ConnectionState.Connected.equals(oldState) && !ice.ConnectionState.Connected.equals(newState)) {
             lastDataPoll = 0L;
             lastMessageReceived = 0L;
-            lastMessageSent = 0L;
+            lastMessageSentTime = 0L;
             lastKeepAlive = 0L;
         }
     }
+
+    protected long clockOffset;
+
     protected final static long WATCHDOG_INTERVAL = 200L;
     // Maximum time between message receipt
     protected final static long IN_CONNECTION_TIMEOUT = 5000L;
@@ -96,26 +106,25 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
     protected static long OUT_CONNECTION_ASSERT = 8000L;
 
-
-    protected final static long CONTINUOUS_POLL_INTERVAL = 60000L;
-    protected final static long CONTINUOUS_POLL_ASSERT = 50000L;
+    protected final static long CONTINUOUS_POLL_INTERVAL = 10 * 60000L;
+    protected final static long CONTINUOUS_POLL_ASSERT = 9 * 60000L;
 
     protected final static long ASSOCIATION_REQUEST_INTERVAL = 2000L;
     protected final static long FINISH_REQUEST_INTERVAL = 500L;
-
 
     private long lastAssociationRequest = 0L;
     private long lastFinishRequest = 0L;
     private long lastDataPoll = 0L;
     private long lastMessageReceived = 0L;
     private long lastKeepAlive = 0L;
-    private long lastMessageSent = 0L;
+    private long lastMessageSentTime = 0L;
 
     protected void watchdog() {
         long now = System.currentTimeMillis();
-        switch(stateMachine.getState().ordinal()) {
+        switch (stateMachine.getState().ordinal()) {
         case ice.ConnectionState._Negotiating:
-            if(now - lastAssociationRequest >= ASSOCIATION_REQUEST_INTERVAL) {
+            // In the negotiating state we are emitted association requests
+            if (now - lastAssociationRequest >= ASSOCIATION_REQUEST_INTERVAL) {
                 try {
                     myIntellivue.requestAssociation();
                     lastAssociationRequest = now;
@@ -124,8 +133,11 @@ public class DemoIntellivue extends AbstractConnectedDevice {
                 }
             }
             break;
+
         case ice.ConnectionState._Disconnecting:
-            if(now - lastFinishRequest >= FINISH_REQUEST_INTERVAL) {
+            // In the disconnecting state we are emitting association finish
+            // requests
+            if (now - lastFinishRequest >= FINISH_REQUEST_INTERVAL) {
                 try {
                     myIntellivue.send(new AssociationFinishImpl());
                     lastFinishRequest = now;
@@ -135,20 +147,24 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             }
             break;
         case ice.ConnectionState._Connected:
-            if(now - lastMessageReceived >= IN_CONNECTION_TIMEOUT) {
-                // Check that the last was acknowledged
+            if (now - lastMessageReceived >= IN_CONNECTION_TIMEOUT) {
+                // Been too long since the last message was received, revert to
+                // new association requests (Negotiation)
                 state(ice.ConnectionState.Negotiating, "timeout receiving  messages");
                 return;
-            } else if( (now - lastMessageReceived >= IN_CONNECTION_ASSERT || now - lastMessageSent >= OUT_CONNECTION_ASSERT) && now - lastKeepAlive >= Math.min(OUT_CONNECTION_ASSERT, IN_CONNECTION_ASSERT)) {
+            } else if ((now - lastMessageReceived >= IN_CONNECTION_ASSERT || now - lastMessageSentTime >= OUT_CONNECTION_ASSERT)
+                    && now - lastKeepAlive >= Math.min(OUT_CONNECTION_ASSERT, IN_CONNECTION_ASSERT)) {
+                // Either side (or both) has not asserted themselves in the time
+                // required AND we haven't recently sent a keep alive message
                 try {
-                    myIntellivue.requestSinglePoll(ObjectClass.NOM_MOC_VMO_AL_MON,
-                            AttributeId.NOM_ATTR_GRP_VMO_STATIC);
+                    myIntellivue.requestSinglePoll(ObjectClass.NOM_MOC_VMO_AL_MON, AttributeId.NOM_ATTR_GRP_VMO_STATIC);
                     lastKeepAlive = now;
                 } catch (IOException e) {
                     state(ice.ConnectionState.Negotiating, "failure to send a keepalive");
                     log.error("requesting a keep alive (static attributes of the alarm monitor object)", e);
                 }
-            } else if(now - lastDataPoll >= CONTINUOUS_POLL_ASSERT) {
+            } else if (now - lastDataPoll >= CONTINUOUS_POLL_ASSERT) {
+                // Time to request a new data poll
                 try {
                     myIntellivue.requestExtendedPoll(ObjectClass.NOM_MOC_VMO_METRIC_NU, CONTINUOUS_POLL_INTERVAL);
                     myIntellivue.requestExtendedPoll(ObjectClass.NOM_MOC_VMO_METRIC_SA_RT, CONTINUOUS_POLL_INTERVAL);
@@ -170,9 +186,40 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         }
 
         @Override
+        protected void handle(DataExportResult message) {
+            // if we were checking for confirmation of outgoing confirmed
+            // messages this would be the place to find confirmations
+            super.handle(message);
+        }
+
+        @Override
         public synchronized boolean send(Message message) throws IOException {
-            lastMessageSent = System.currentTimeMillis();
+            lastMessageSentTime = System.currentTimeMillis();
             return super.send(message);
+        }
+
+        @Override
+        protected void handle(SocketAddress sockaddr, Message message, SelectionKey sk) throws IOException {
+            // This will capture DataExport, Association, and ConnectIndication
+            // messages...
+            // Opting not to update lastMessageREceived for ConnectIndications
+            // .. since they are beacons and not part of the session
+            super.handle(sockaddr, message, sk);
+        }
+
+        @Override
+        protected void handle(SocketAddress sockaddr, AssociationMessage message) throws IOException {
+            lastMessageReceived = System.currentTimeMillis();
+            super.handle(sockaddr, message);
+        }
+
+        @Override
+        protected void handle(DataExportError error) throws IOException {
+            // Could do something context-sensitive here when a confirmed action
+            // fails
+            // Such as when setting the priority list returns "access denied"
+            // for waveforms because another client is already receiving waves
+            super.handle(error);
         }
 
         @Override
@@ -185,18 +232,15 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         protected void handle(SetResult result, boolean confirmed) {
             super.handle(result, confirmed);
             AttributeValueList attrs = result.getAttributes();
-            Attribute<TextIdList> ati = attrs.getAttribute(AttributeId.NOM_ATTR_POLL_NU_PRIO_LIST,
-                    TextIdList.class);
+            Attribute<TextIdList> ati = attrs.getAttribute(AttributeId.NOM_ATTR_POLL_NU_PRIO_LIST, TextIdList.class);
 
-            if (null != ati
-                    && ati.getValue().containsAll(numericLabels.values().toArray(new Label[0]))) {
+            if (null != ati && ati.getValue().containsAll(numericLabels.values().toArray(new Label[0]))) {
             } else {
                 log.warn("Numerics priority list does not contain all of our requested labels:" + ati);
             }
 
             ati = attrs.getAttribute(AttributeId.NOM_ATTR_POLL_RTSA_PRIO_LIST, TextIdList.class);
-            if (null != ati
-                    && ati.getValue().containsAll(sampleArrayLabels.values().toArray(new Label[0]))) {
+            if (null != ati && ati.getValue().containsAll(sampleArrayLabels.values().toArray(new Label[0]))) {
             } else {
                 log.warn("SampleArray priority list does not contain all requested labels:" + ati);
             }
@@ -204,17 +248,33 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
         @Override
         protected void handle(EventReport eventReport, boolean confirm) throws IOException {
+            // The super sends confirmations where appropriate by default
             super.handle(eventReport, confirm);
             switch (ObjectClass.valueOf(eventReport.getEventType().getType())) {
             case NOM_NOTI_MDS_CREAT:
                 MdsCreateEvent createEvent = (MdsCreateEvent) eventReport.getEvent();
                 AttributeValueList attrs = createEvent.getAttributes();
-                Attribute<SystemModel> asm = attrs.getAttribute(AttributeId.NOM_ATTR_ID_MODEL,
-                        SystemModel.class);
+                Attribute<SystemModel> asm = attrs.getAttribute(AttributeId.NOM_ATTR_ID_MODEL, SystemModel.class);
                 Attribute<org.mdpnp.devices.philips.intellivue.data.String> as = attrs.getAttribute(
                         AttributeId.NOM_ATTR_ID_BED_LABEL, org.mdpnp.devices.philips.intellivue.data.String.class);
-                Attribute<ProductionSpecification> ps = attrs.getAttribute(
-                        AttributeId.NOM_ATTR_ID_PROD_SPECN, ProductionSpecification.class);
+                Attribute<ProductionSpecification> ps = attrs.getAttribute(AttributeId.NOM_ATTR_ID_PROD_SPECN,
+                        ProductionSpecification.class);
+
+                Attribute<AbsoluteTime> clockTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_ABS,
+                        AbsoluteTime.class);
+                Attribute<RelativeTime> offsetTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_REL,
+                        RelativeTime.class);
+
+                if (null == clockTime) {
+                    log.warn("No NOM_ATTR_TIME_ABS in MDS Create");
+                } else if (null == offsetTime) {
+                    log.warn("No NOM_ATTR_TIME_REL in MDS Create");
+                } else {
+                    long currentTime = clockTime.getValue().getDate().getTime();
+                    long runTime = offsetTime.getValue().toMilliseconds();
+                    clockOffset = currentTime - runTime;
+                    log.info("Device started at " + new Date(clockOffset));
+                }
 
                 if (ps != null) {
                     log.info("ProductionSpecification");
@@ -234,10 +294,16 @@ public class DemoIntellivue extends AbstractConnectedDevice {
                 }
                 if (null != as) {
                 }
+                switch (stateMachine.getState().ordinal()) {
+                case ice.ConnectionState._Negotiating:
+                    state(ice.ConnectionState.Connected, "");
+                    break;
+                }
 
                 requestSinglePoll(ObjectClass.NOM_MOC_VMS_MDS, AttributeId.NOM_ATTR_GRP_SYS_PROD);
 
-                requestSet(numericLabels.values().toArray(new Label[0]), sampleArrayLabels.values().toArray(new Label[0]));
+                requestSet(numericLabels.values().toArray(new Label[0]),
+                        sampleArrayLabels.values().toArray(new Label[0]));
 
                 break;
             default:
@@ -248,7 +314,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
         @Override
         protected void handle(SocketAddress sockaddr, AssociationRefuse message) {
-            switch(stateMachine.getState().ordinal()) {
+            switch (stateMachine.getState().ordinal()) {
             case ice.ConnectionState._Connected:
                 state(ice.ConnectionState.Negotiating, "reconnecting after active association is later refused");
                 break;
@@ -265,7 +331,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
         @Override
         protected void handle(SocketAddress sockaddr, AssociationAbort message) {
-            switch(stateMachine.getState().ordinal()) {
+            switch (stateMachine.getState().ordinal()) {
             case ice.ConnectionState._Connected:
                 state(ice.ConnectionState.Negotiating, "reconnecting after active association is later aborted");
                 break;
@@ -278,7 +344,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
         @Override
         protected void handle(SocketAddress sockaddr, AssociationDisconnect message) {
-            switch(stateMachine.getState().ordinal()) {
+            switch (stateMachine.getState().ordinal()) {
             case ice.ConnectionState._Connected:
                 state(ice.ConnectionState.Negotiating, "unexpected disconnect message");
                 break;
@@ -292,7 +358,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         @Override
         protected void handle(SocketAddress sockaddr, AssociationFinish message) throws IOException {
             super.handle(sockaddr, message);
-            switch(stateMachine.getState().ordinal()) {
+            switch (stateMachine.getState().ordinal()) {
             case ice.ConnectionState._Connected:
                 state(ice.ConnectionState.Negotiating, "unexpected disconnect message");
                 break;
@@ -301,7 +367,6 @@ public class DemoIntellivue extends AbstractConnectedDevice {
                 break;
             }
         }
-
 
         @Override
         protected void handle(ConnectIndication connectIndication, SelectionKey sk) {
@@ -325,11 +390,6 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
         @Override
         protected void handle(SocketAddress sockaddr, AssociationAccept message) {
-            switch(stateMachine.getState().ordinal()) {
-            case ice.ConnectionState._Negotiating:
-                state(ice.ConnectionState.Connected, "");
-                break;
-            }
             PollProfileSupport pps = message.getUserInfo().getPollProfileSupport();
             long timeout = minPollPeriodToTimeout(pps.getMinPollPeriod().toMilliseconds());
             OUT_CONNECTION_ASSERT = Math.max(200L, timeout - 1000L);
@@ -345,9 +405,8 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             case NOM_MOC_VMO_AL_MON:
                 switch (AttributeId.valueOf(result.getPolledAttributeGroup().getType())) {
                 case NOM_ATTR_GRP_VMO_STATIC:
-                    // This is what we're using as a keepalive
-                    // but currently only tracking the receipt of any DataExport message
-//                    lastKeepAliveRecvInvokeId = result.getAction().getMessage().getInvoke();
+                    // Responses to our "keep alive" messages occur here
+                    // Currently we track any incoming message as proof of life ... so nothing special to do here
                     break;
                 default:
                     break;
@@ -374,18 +433,22 @@ public class DemoIntellivue extends AbstractConnectedDevice {
                                 ComponentId.ID_COMP_PRODUCT);
                     }
 
-                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> firstName = attrs
-                            .getAttribute(AttributeId.NOM_ATTR_PT_NAME_GIVEN, org.mdpnp.devices.philips.intellivue.data.String.class);
+                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> firstName = attrs.getAttribute(
+                            AttributeId.NOM_ATTR_PT_NAME_GIVEN, org.mdpnp.devices.philips.intellivue.data.String.class);
                     Attribute<org.mdpnp.devices.philips.intellivue.data.String> lastName = attrs
-                            .getAttribute(AttributeId.NOM_ATTR_PT_NAME_FAMILY, org.mdpnp.devices.philips.intellivue.data.String.class);
-                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> patientId = attrs
-                            .getAttribute(AttributeId.NOM_ATTR_PT_ID, org.mdpnp.devices.philips.intellivue.data.String.class);
+                            .getAttribute(AttributeId.NOM_ATTR_PT_NAME_FAMILY,
+                                    org.mdpnp.devices.philips.intellivue.data.String.class);
+                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> patientId = attrs.getAttribute(
+                            AttributeId.NOM_ATTR_PT_ID, org.mdpnp.devices.philips.intellivue.data.String.class);
 
                     if (null != firstName) {
+
                     }
                     if (null != lastName) {
+
                     }
                     if (null != patientId) {
+
                     }
                 }
             }
@@ -394,108 +457,72 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
         @Override
         protected void handle(ExtendedPollDataResult result) {
-//            log.debug("ExtendedPollDataResult");
-            // log.debug(lineWrap(result.toString()));
+            // we could track gaps in poll sequence numbers but instead we're relying on consumers of the data
+            // to observe a gap in the data timestamps
+
             for (SingleContextPoll sop : result.getPollInfoList()) {
                 for (ObservationPoll op : sop.getPollInfo()) {
                     int handle = op.getHandle().getHandle();
                     AttributeValueList attrs = op.getAttributes();
 
-                    Attribute<NumericObservedValue> observed = attrs.getAttribute(DemoIntellivue.this.observed);
-                    Attribute<CompoundNumericObservedValue> compoundObserved = attrs.getAttribute(DemoIntellivue.this.compoundObserved);
-//                    Attribute<Type> type = attrs.getAttribute(DemoIntellivue.this.type);
-//                    Attribute<MetricSpecification> metricSpecification = attrs.getAttribute(DemoIntellivue.this.metricSpecification);
-//                    Attribute<TextId> idLabel  = attrs.getAttribute(DemoIntellivue.this.idLabel);
-//                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> idLabelString = attrs.getAttribute(DemoIntellivue.this.idLabelString);
-//                    Attribute<DisplayResolution> displayResolution = attrs.getAttribute(DemoIntellivue.this.displayResolution);
-//                    Attribute<EnumValue<SimpleColor>> color = attrs.getAttribute(DemoIntellivue.this.color);
-                    Attribute<Handle> objectHandle = attrs.getAttribute(DemoIntellivue.this.handle);
-                    Attribute<RelativeTime> period = attrs.getAttribute(DemoIntellivue.this.period);
-                    Attribute<SampleArraySpecification> spec = attrs.getAttribute(DemoIntellivue.this.spec);
-                    Attribute<SampleArrayCompoundObservedValue> cov = attrs.getAttribute(DemoIntellivue.this.cov);
-                    Attribute<SampleArrayObservedValue> v = attrs.getAttribute(DemoIntellivue.this.v);
+                    Attribute<NumericObservedValue> observed = attrs.getAttribute(AbstractDemoIntellivue.this.observed);
+                    Attribute<CompoundNumericObservedValue> compoundObserved = attrs
+                            .getAttribute(AbstractDemoIntellivue.this.compoundObserved);
+                    Attribute<RelativeTime> period = attrs.getAttribute(AbstractDemoIntellivue.this.period);
+                    Attribute<SampleArraySpecification> spec = attrs.getAttribute(AbstractDemoIntellivue.this.spec);
+                    Attribute<SampleArrayCompoundObservedValue> cov = attrs
+                            .getAttribute(AbstractDemoIntellivue.this.cov);
+                    Attribute<SampleArrayObservedValue> v = attrs.getAttribute(AbstractDemoIntellivue.this.v);
 
                     if (null != observed) {
-//                        log.debug(observed.toString());
-                        handle(handle, observed.getValue());
+                        handle(handle, result.getRelativeTime(), observed.getValue());
                     }
 
                     if (null != compoundObserved) {
                         for (NumericObservedValue nov : compoundObserved.getValue().getList()) {
-                            handle(handle, nov);
+                            handle(handle, result.getRelativeTime(), nov);
                         }
                     }
 
-//                    if (null != type) {
-//                        log.debug(type.toString());
-//                    }
-
-
-//                    if (null != metricSpecification) {
-//                        log.debug(metricSpecification.toString());
-//                    }
-
-//                    if (null != idLabel) {
-//                        log.debug(idLabel.toString());
-//                    }
-
-//                    if (null != idLabelString) {
-//                        log.debug(idLabelString.toString());
-//                    }
-
-//                    if (null != displayResolution) {
-//                        log.debug(displayResolution.toString());
-//                    }
-
-//                    if (null != color) {
-//                        log.debug(color.toString());
-//                    }
 
                     if (null != period) {
-//                        log.debug(period.toString());
                         handle(handle, period.getValue());
                     }
 
-                    if (null != objectHandle) {
-//                        log.debug(objectHandle.toString());
-                        handle(handle, objectHandle.getValue());
-                    }
-
                     if (null != spec) {
-//                        log.debug(spec.toString());
                         handle(handle, spec.getValue());
 
                     }
                     if (null != cov) {
                         for (SampleArrayObservedValue saov : cov.getValue().getList()) {
-                            handle(handle, saov);
+                            handle(handle, result.getRelativeTime(), saov);
                         }
                     }
                     if (null != v) {
-//                        log.debug(v.toString());
-                        handle(handle, v.getValue());
+                        handle(handle, result.getRelativeTime(), v.getValue());
                     }
                 }
             }
-            // lastPoint.setTime(System.currentTimeMillis());
-
             super.handle(result);
         }
 
-        private void handle(int handle, Handle value) {
-            // log.debug(value.toString());
-        }
-
-        private final void handle(int handle, NumericObservedValue observed) {
+        private final void handle(int handle, RelativeTime time, NumericObservedValue observed) {
             // log.debug(observed.toString());
             ObservedValue ov = ObservedValue.valueOf(observed.getPhysioId().getType());
             if (null != ov) {
                 String metricId = numericMetricIds.get(ov);
-                if(null != metricId) {
-                    if(observed.getMsmtState().isUnavailable()) {
-                        numericUpdates.put(ov, numericSample(numericUpdates.get(ov), (Float) null, metricId));
+                if (null != metricId) {
+                    long tm = clockOffset + time.toMilliseconds();
+                    sampleTime.sec = (int) (tm / 1000L);
+                    sampleTime.nanosec = (int) ((tm % 1000L) * 1000000L);
+                    if (observed.getMsmtState().isUnavailable()) {
+                        numericUpdates.put(handle,
+                                numericSample(numericUpdates.get(ov), (Float) null, metricId, sampleTime));
                     } else {
-                        numericUpdates.put(ov, numericSample(numericUpdates.get(ov), observed.getValue().floatValue(), metricId));
+                        numericUpdates.put(
+                                handle,
+                                numericSample(numericUpdates.get(ov), observed.getValue().floatValue(), metricId,
+                                        sampleTime));
                     }
                 } else {
                     log.debug("Unknown numeric:" + observed);
@@ -504,38 +531,44 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
         }
 
-        protected void handle(int handle, SampleArrayObservedValue v) {
+        protected Time_t sampleTime = new Time_t(0, 0);
+
+        protected void handle(int handle, RelativeTime time, SampleArrayObservedValue v) {
             short[] bytes = v.getValue();
             ObservedValue ov = ObservedValue.valueOf(v.getPhysioId().getType());
             if (null == ov) {
                 log.warn("No ObservedValue for " + v.getPhysioId().getType());
             } else {
                 String metricId = sampleArrayMetricIds.get(ov);
-                if(null == metricId) {
+                if (null == metricId) {
                     log.warn("No metricId for " + ov);
                 } else {
-                    MySampleArray w = sampleArrayUpdates.get(ov);
-                    if(null == w) {
-                        SampleArraySpecification sas = handleToSampleArraySpecification.get(handle);
-                        RelativeTime rt = handleToRelativeTime.get(handle);
-                        if(null != sas && null != rt) {
-                            w = new MySampleArray(createSampleArrayInstance(metricId));
-                            w.setSampleSize(sas.getSampleSize());
-                            w.setSignificantBits(sas.getSignificantBits());
-                            w.holder.data.values.setSize(sas.getArraySize());
-                            w.holder.data.millisecondsPerSample = (int) rt.toMilliseconds();
-                            sampleArrayUpdates.put(ov, w);
-                        } else {
-                            log.warn("No SampleArraySpecification or RelativeTime for handle="+handle);
-                            return;
-                        }
-                    }
+                    SampleArraySpecification sas = handleToSampleArraySpecification.get(handle);
+                    RelativeTime rt = handleToRelativeTime.get(handle);
+                    if (null == sas || null == rt) {
+                        log.warn("No SampleArraySpecification or RelativeTime for handle=" + handle + " rt=" + rt
+                                + " sas=" + sas);
+                    } else {
 
-                    int cnt = w.holder.data.values.size();
-                    for (int i = 0; i < cnt; i++) {
-                        w.applyValue(i, bytes);
+                        MySampleArray w = mySampleArrays.get(handle);
+                        if (null == w) {
+                            w = new MySampleArray();
+                            mySampleArrays.put(handle, w);
+                            w.setSampleArraySpecification(sas);
+                        }
+
+                        int cnt = sas.getArraySize();
+                        for (int i = 0; i < cnt; i++) {
+                            w.applyValue(i, bytes);
+                        }
+                        long tm = clockOffset + time.toMilliseconds();
+                        sampleTime.sec = (int) (tm / 1000L);
+                        sampleTime.nanosec = (int) ((tm % 1000L) * 1000000L);
+                        sampleArrayUpdates.put(
+                                handle,
+                                sampleArraySample(sampleArrayUpdates.get(handle), w.getNumbers(),
+                                        (int) rt.toMilliseconds(), metricId, handle, sampleTime));
                     }
-                    sampleArrayDataWriter.write(w.holder.data, w.holder.handle);
                 }
             }
         }
@@ -574,14 +607,16 @@ public class DemoIntellivue extends AbstractConnectedDevice {
     protected final Map<ObservedValue, Label> numericLabels = new HashMap<ObservedValue, Label>();
     protected final Map<ObservedValue, Label> sampleArrayLabels = new HashMap<ObservedValue, Label>();
 
-    protected final Map<ObservedValue, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<ObservedValue, InstanceHolder<ice.Numeric>>();
-    protected final Map<ObservedValue, MySampleArray> sampleArrayUpdates = new HashMap<ObservedValue, MySampleArray>();
+    protected final Map<Integer, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Integer, InstanceHolder<ice.Numeric>>();
+    protected final Map<Integer, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Integer, InstanceHolder<ice.SampleArray>>();
+    protected final Map<Integer, MySampleArray> mySampleArrays = new HashMap<Integer, MySampleArray>();
 
-    protected static void loadMap(Map<ObservedValue, String> numericMetricIds, Map<ObservedValue, Label> numericLabels, Map<ObservedValue, String> sampleArrayMetricIds, Map<ObservedValue, Label> sampleArrayLabels) {
+    protected static void loadMap(Map<ObservedValue, String> numericMetricIds, Map<ObservedValue, Label> numericLabels,
+            Map<ObservedValue, String> sampleArrayMetricIds, Map<ObservedValue, Label> sampleArrayLabels) {
 
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(
-                    DemoIntellivue.class.getResourceAsStream("intellivue.map")));
+                    DemoEthernetIntellivue.class.getResourceAsStream("intellivue.map")));
             String line = null;
 
             while (null != (line = br.readLine())) {
@@ -613,19 +648,19 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         }
     }
 
-    private final MyIntellivue myIntellivue;
+    protected final MyIntellivue myIntellivue;
 
-    private static final Logger log = LoggerFactory.getLogger(DemoIntellivue.class);
+    private static final Logger log = LoggerFactory.getLogger(DemoEthernetIntellivue.class);
 
-    private final NetworkLoop networkLoop;
+    protected final NetworkLoop networkLoop;
     private final Thread networkLoopThread;
     private final TaskQueue.Task<?> watchdogTask;
 
-    public DemoIntellivue(int domainId, EventLoop eventLoop) throws IOException {
+    public AbstractDemoIntellivue(int domainId, EventLoop eventLoop) throws IOException {
         this(domainId, eventLoop, null);
     }
 
-    public DemoIntellivue(int domainId, EventLoop eventLoop, NetworkLoop loop) throws IOException {
+    public AbstractDemoIntellivue(int domainId, EventLoop eventLoop, NetworkLoop loop) throws IOException {
         super(domainId, eventLoop);
         loadMap(numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
         deviceIdentity.manufacturer = "Philips";
@@ -667,10 +702,14 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
     protected static class MySampleArray {
         private short sampleSize, significantBits;
-        private final InstanceHolder<ice.SampleArray> holder;
+        private final List<Number> numbers = new ArrayList<Number>();
 
-        public MySampleArray(InstanceHolder<ice.SampleArray> holder) {
-            this.holder = holder;
+        public MySampleArray() {
+
+        }
+
+        public List<Number> getNumbers() {
+            return numbers;
         }
 
         private int[] mask = new int[0];
@@ -681,7 +720,7 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             for (int i = 0; i < sampleSize; i++) {
                 value |= (mask[i] & values[sampleNumber * sampleSize + i]) << shift[i];
             }
-            holder.data.values.setFloat(sampleNumber, value);
+            numbers.set(sampleNumber, value);
         }
 
         public static final int createMask(int prefix) {
@@ -719,52 +758,36 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         }
 
         public void setSampleSize(short s) {
-            this.sampleSize = (short) (s / Byte.SIZE);
-            buildMaskAndShift();
+            s /= Byte.SIZE;
+            if (sampleSize != s) {
+                this.sampleSize = s;
+                buildMaskAndShift();
+            }
         }
 
         public void setSignificantBits(short s) {
-            this.significantBits = s;
+            if (significantBits != s) {
+                this.significantBits = s;
+                buildMaskAndShift();
+            }
+        }
+
+        public void setArraySize(int size) {
+            if (size != numbers.size()) {
+                while (numbers.size() < size) {
+                    numbers.add(0);
+                }
+            }
+        }
+
+        public void setSampleArraySpecification(SampleArraySpecification sas) {
+            this.sampleSize = (short) (sas.getSampleSize() / Byte.SIZE);
+            this.significantBits = sas.getSignificantBits();
+            while (numbers.size() < sas.getArraySize()) {
+                numbers.add(0);
+            }
             buildMaskAndShift();
         }
-    }
-
-    @Override
-    public void connect(String address) {
-        if (null == address || "".equals(address)) {
-            try {
-                String[] hosts = listenForConnectIndication();
-
-                if (null == hosts) {
-                    state(ice.ConnectionState.Disconnected, "no broadcast addresses");
-                } else {
-                    state(ice.ConnectionState.Connecting, "listening  on " + Arrays.toString(hosts));
-                }
-            } catch (IOException e) {
-                log.error("Awaiting beacon", e);
-            }
-
-        } else {
-            try {
-                int port = Intellivue.DEFAULT_UNICAST_PORT;
-
-                int colon = address.lastIndexOf(':');
-                if (colon >= 0) {
-                    port = Integer.parseInt(address.substring(colon + 1, address.length()));
-                    address = address.substring(0, colon);
-                }
-
-                InetAddress addr = InetAddress.getByName(address);
-
-                connect(addr, -1, port);
-
-            } catch (UnknownHostException e) {
-                log.error("Trying to connect to address", e);
-            } catch (IOException e) {
-                log.error("Trying to connect to address", e);
-            }
-        }
-
     }
 
     protected final void state(ice.ConnectionState state, String connectionInfo) {
@@ -775,15 +798,14 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             throw new RuntimeException("timed out changing state");
         }
 
-        // If we didn't actually transition state then this will fire the info change
+        // If we didn't actually transition state then this will fire the info
+        // change
         // If we already did fire it this will be a no op
         setConnectionInfo(connectionInfo);
     }
 
     protected final Map<Integer, RelativeTime> handleToRelativeTime = new HashMap<Integer, RelativeTime>();
     protected final Map<Integer, SampleArraySpecification> handleToSampleArraySpecification = new HashMap<Integer, SampleArraySpecification>();
-
-
 
     protected final Attribute<CompoundNumericObservedValue> compoundObserved = AttributeFactory.getAttribute(
             AttributeId.NOM_ATTR_NU_CMPD_VAL_OBS, CompoundNumericObservedValue.class);
@@ -793,7 +815,6 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             AttributeId.NOM_ATTR_SA_VAL_OBS, SampleArrayObservedValue.class);
     protected final Attribute<SampleArrayCompoundObservedValue> cov = AttributeFactory.getAttribute(
             AttributeId.NOM_ATTR_SA_CMPD_VAL_OBS, SampleArrayCompoundObservedValue.class);
-
 
     protected final Attribute<Type> type = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_TYPE, Type.class);
     protected final Attribute<MetricSpecification> metricSpecification = AttributeFactory.getAttribute(
@@ -814,38 +835,9 @@ public class DemoIntellivue extends AbstractConnectedDevice {
     protected final Attribute<SampleArraySpecification> spec = AttributeFactory.getAttribute(
             AttributeId.NOM_ATTR_SA_SPECN, SampleArraySpecification.class);
 
-    public void connect(InetAddress remote) throws IOException {
-        connect(remote, -1, Intellivue.DEFAULT_UNICAST_PORT);
-    }
+    protected Set<SelectionKey> registrationKeys = new HashSet<SelectionKey>();
 
-    public String[] listenForConnectIndication() throws IOException {
-        unregisterAll();
-
-        List<Network.AddressSubnet> broadcastAddresses = Network.getBroadcastAddresses();
-        if (broadcastAddresses.isEmpty()) {
-            return null;
-        } else {
-            List<String> hosts = new ArrayList<String>();
-            for (Network.AddressSubnet address : broadcastAddresses) {
-                final DatagramChannel channel = DatagramChannel.open();
-                channel.configureBlocking(false);
-                channel.socket().setReuseAddress(true);
-                channel.socket().bind(new InetSocketAddress(address.getInetAddress(), Intellivue.BROADCAST_PORT));
-                registrationKeys.add(networkLoop.register(myIntellivue, channel));
-
-                hosts.add(address.getInetAddress().getHostAddress());
-            }
-            return hosts.toArray(new String[0]);
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private InetAddress lastRemote;
-    @SuppressWarnings("unused")
-    private int lastPrefixLength;
-    private Set<SelectionKey> registrationKeys = new HashSet<SelectionKey>();
-
-    private void unregisterAll() {
+    protected void unregisterAll() {
         for (SelectionKey key : registrationKeys) {
             networkLoop.unregister(key, myIntellivue);
         }
@@ -862,34 +854,45 @@ public class DemoIntellivue extends AbstractConnectedDevice {
         }
     }
 
-    public void connect(InetAddress remote, int prefixLength, int port) throws IOException {
-        switch(stateMachine.getState().ordinal()) {
+    public void connect(InetAddress remote) throws IOException {
+        connect(remote, -1, Intellivue.DEFAULT_UNICAST_PORT);
+    }
+
+    public void connect(InetAddress r, int prefixLength, int port) throws IOException {
+        InetSocketAddress local = null;
+
+        if (prefixLength >= 0) {
+            InetAddress l = Network.getLocalAddresses(r, (short) prefixLength, true).get(0);
+            local = new InetSocketAddress(l, 0);
+        } else {
+            local = new InetSocketAddress(0);
+        }
+
+        InetSocketAddress remote = new InetSocketAddress(r, port);
+        connect(remote, local);
+
+    }
+
+    public void connect(InetSocketAddress remote, InetSocketAddress local) throws IOException {
+        switch (stateMachine.getState().ordinal()) {
         case ice.ConnectionState._Disconnected:
-            state(ice.ConnectionState.Connecting, "trying " + remote.getHostAddress() + ":" + port);
+            state(ice.ConnectionState.Connecting,
+                    "trying " + remote.getAddress().getHostAddress() + ":" + remote.getPort());
             break;
         case ice.ConnectionState._Connecting:
-            setConnectionInfo("trying " + remote.getHostAddress() + ":" + port);
+            setConnectionInfo("trying " + remote.getAddress().getHostAddress() + ":" + remote.getPort());
             break;
         default:
             return;
         }
-        InetAddress local = null;
-
-        lastRemote = remote;
-        lastPrefixLength = prefixLength;
 
         unregisterAll();
 
         final DatagramChannel channel = DatagramChannel.open();
         channel.configureBlocking(false);
         channel.socket().setReuseAddress(true);
-
-        if (prefixLength >= 0) {
-            local = Network.getLocalAddresses(remote, (short) prefixLength, true).get(0);
-            channel.socket().bind(new InetSocketAddress(local, 0));
-        }
-
-        channel.connect(new InetSocketAddress(remote, port));
+        channel.bind(local);
+        channel.connect(remote);
 
         registrationKeys.add(networkLoop.register(myIntellivue, channel));
 
@@ -898,10 +901,18 @@ public class DemoIntellivue extends AbstractConnectedDevice {
 
     @Override
     public void disconnect() {
-        state(ice.ConnectionState.Disconnecting, "disassociating");
-        if(!stateMachine.wait(ice.ConnectionState.Disconnected, 5000L)) {
+        synchronized (stateMachine) {
+            if (!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
+                state(ice.ConnectionState.Disconnected, "");
+                return;
+            } else {
+                state(ice.ConnectionState.Disconnecting, "disassociating");
+            }
+        }
+        if (!stateMachine.wait(ice.ConnectionState.Disconnected, 5000L)) {
             log.trace("No disconnect received in response to finish");
         }
+
     }
 
     @Override
@@ -916,11 +927,6 @@ public class DemoIntellivue extends AbstractConnectedDevice {
             }
         }
         super.shutdown();
-    }
-
-    @Override
-    protected ice.ConnectionType getConnectionType() {
-        return ice.ConnectionType.Network;
     }
 
     @Override

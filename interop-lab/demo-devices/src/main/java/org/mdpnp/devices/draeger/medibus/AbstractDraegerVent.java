@@ -46,25 +46,25 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             // TODO There are weird number formats in medibus .. this will need
             // enhancement
             if (value instanceof Number) {
-                return numericSample(update, ((Number) value).floatValue(), metric_id);
+                return numericSample(update, ((Number) value).floatValue(), metric_id, null);
             } else {
                 String s = null == value ? null : value.toString().trim();
                 if (null != s) {
-                    return numericSample(update, Float.parseFloat(s), metric_id);
+                    return numericSample(update, Float.parseFloat(s), metric_id, null);
                 } else {
-                    return numericSample(update, (Float) null, metric_id);
+                    return numericSample(update, (Float) null, metric_id, null);
                 }
             }
 
         } catch (NumberFormatException nfe) {
             log.trace("Invalid number:" + value);
-            return numericSample(update, (Float) null, metric_id);
+            return numericSample(update, (Float) null, metric_id, null);
         }
     }
 
     protected void processStartInspCycle() {
         // TODO This should not be triggered as a numeric; it's a bad idea
-        startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0, ice.MDC_START_OF_BREATH.VALUE);
+        startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0, ice.MDC_START_OF_BREATH.VALUE, null);
     }
 
     private static final int BUFFER_SAMPLES = 10;
@@ -94,7 +94,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     sampleArrayUpdates.put(
                             (Enum<?>) code,
                             sampleArraySample(sampleArrayUpdates.get(code), realtimeBuffer[streamIndex], (int) (1.0
-                                    * config.interval * multiplier / 1000.0), metric_id));
+                                    * config.interval * multiplier / 1000.0), metric_id, null));
                 } else {
                     log.trace("No nomenclature code for enum code=" + code + " class=" + code.getClass().getName());
                 }
@@ -145,7 +145,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     protected void process(Date date) {
         // TODO Don't do this
-        timeUpdate = numericSample(timeUpdate, (int) date.getTime(), ice.MDC_TIME_MSEC_SINCE_EPOCH.VALUE);
+        // TODO store this timestamp as an offset from the local clock to send meaningful timestamp messages
+        timeUpdate = numericSample(timeUpdate, (int) date.getTime(), ice.MDC_TIME_MSEC_SINCE_EPOCH.VALUE, null);
 
     }
 
@@ -519,7 +520,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     @Override
     protected long getMaximumQuietTime() {
-        return 2000L;
+        return 3000L;
     }
 
     @Override

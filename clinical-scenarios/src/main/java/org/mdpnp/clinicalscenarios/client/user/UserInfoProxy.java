@@ -51,7 +51,6 @@ public interface UserInfoProxy extends EntityProxy {
 	void setPhoneNumber(String phoneNumber);
 
 	boolean isAgreeToBeContacted();
-
 	void setAgreeToBeContacted(boolean agreeToBeContacted);
 
 	String getEmail();

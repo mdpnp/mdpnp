@@ -1,26 +1,8 @@
 apply plugin: 'java'
 apply plugin: 'application'
-
-// macAppBundle adds the createDmg task as a dependency of the assemble task
-// which will fail if not run on a macintosh
-if(MAC == localOsName) apply plugin: 'macAppBundle'
 apply plugin: 'launch4j'
 
 defaultTasks 'build'
-
-if(MAC == localOsName) {
-    macAppBundle {
-        //keyChain = 'login'
-        //certIdentity = 'E279LP5667'
-        mainClassName = "org.mdpnp.apps.testapp.Main"
-        icon = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns"
-        appName = "MDPnP Demo Apps " + project.version
-        volumeName = "MDPnP Demo Apps " + project.version
-        backgroundImage = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/mdpnp.png"
-        dmgName = project.name + '-' + project.version + '-mac'
-    }
-//    createDmg.dependsOn('codesign')
-}
 
 launch4j {
     mainClassName = "org.mdpnp.apps.testapp.Main"
@@ -31,12 +13,8 @@ launch4j {
     opt = '-Dsun.java2d.noddraw=true'
 }
 
-
-
-
 buildscript {
     dependencies {
-        classpath 'edu.sc.seis:gradle-macappbundle:1.0.8'
         classpath 'edu.sc.seis:gradle-launch4j:1.0.5'
     }
 }
@@ -55,18 +33,67 @@ switch(localOsName) {
     break
 }
 
+// Create a directory for launch4j and appbundler to be stored semi-permanently
+// so we don't re-download after every clean
+task createBuildToolsDir << {
+    file("build-tools/").mkdir()
+}
 
-task downloadLaunch4j {
-    outputs.file "$buildDir/"+launch4jName
-    doLast {
-        def f = file("$buildDir/"+launch4jName)
+// Brings together dependencies for the benefit of the appbuilder
+task copyDeps(type: Copy) {
+    from configurations.runtime
+    from jar.archivePath
+    into "${buildDir}/deps"
+}
+
+task downloadAppBundler(dependsOn: createBuildToolsDir) << {
+    def f = file("build-tools/appbundler-1.0.jar");
+    if(!f.exists() || f.length() == 0) {
+        println 'Downloading appbundler-1.0.jar'
+        new URL('https://java.net/projects/appbundler/downloads/download/appbundler-1.0.jar').withInputStream{ i-> f.withOutputStream{ it << i }}
+    }
+    buildscript.dependencies.create(files('build-tools/appbundler-1.0.jar'))
+}
+
+task createApp(dependsOn: [downloadAppBundler, copyDeps]) << {
+    ant.taskdef(name: 'bundleapp', classname: 'com.oracle.appbundler.AppBundlerTask', classpath: file("build-tools/appbundler-1.0.jar"))
+    ant.bundleapp(outputdirectory: "$buildDir/", name: "MDPnP Demo Apps", displayName: "MDPnP Demo Apps", identifier: "org.mdpnp.apps.testapp.Main", mainclassname: "org.mdpnp.apps.testapp.Main", icon: "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns") {
+        classpath(dir: "$buildDir/deps")
+        // Can optionally bundle a JRE but it adds a LOT of size
+        /*runtime(dir: "$System.env.JAVA_HOME")*/
+    }
+}
+
+if(localOsName == MAC) {
+    task createSignedApp(type:Exec, dependsOn: createApp) {
+        workingDir "$buildDir/"
+        commandLine 'codesign', '-f', '-s', 'Mac Developer: JEFFREY PLOURDE', 'MDPnP Demo Apps.app/'
+    }
+    task createSignedPkg(type:Exec, dependsOn: createSignedApp) {
+        workingDir "$buildDir/"
+        commandLine 'productbuild', '--component', 'MDPnP Demo Apps.app', '/Applications', '--sign', 'Developer ID Installer: JEFFREY PLOURDE', '--identifier', 'org.mdpnp.apps.testapp.Main', '--version', project.version, 'demo-apps-'+project.version+'-mac.pkg'
+    }
+
+    task verifySignedApp(type:Exec, dependsOn: createSignedApp) {
+        workingDir "$buildDir/"
+        commandLine 'codesign', '-v', '-v', 'MDPnP Demo Apps.app'
+    }
+
+    task verifySignedPkg(type:Exec, dependsOn: createSignedPkg) {
+        workingDir "$buildDir/"
+        commandLine 'spctl', '--verbose', '--assess', '--type', 'install', 'demo-apps-'+project.version+'-mac.pkg'
+    }
+}
+task downloadLaunch4j(dependsOn: createBuildToolsDir) << {
+    def f = file("build-tools/"+launch4jName)
+    if(!f.exists()) {
         println 'Downloading ' + launch4jPath + launch4jName
         new URL(launch4jPath+launch4jName).withInputStream{ i -> f.withOutputStream{ it << i }}
     }
 }
 
 task explodeLaunch4j(dependsOn: downloadLaunch4j, type: Copy) {
-    from launch4jName.endsWith("tgz") ? tarTree("$buildDir/"+launch4jName) : zipTree("$buildDir/"+launch4jName)
+    from launch4jName.endsWith("tgz") ? tarTree("build-tools/"+launch4jName) : zipTree("build-tools/"+launch4jName)
     into "$buildDir/launch4j-install/"
 }
 

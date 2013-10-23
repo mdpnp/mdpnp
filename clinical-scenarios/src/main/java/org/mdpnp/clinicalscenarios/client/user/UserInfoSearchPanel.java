@@ -1,6 +1,5 @@
 package org.mdpnp.clinicalscenarios.client.user;
 
-import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,8 +32,9 @@ public class UserInfoSearchPanel extends Composite {
 	private static final int YEARS_IN_FIELD_COL = 6;
 	private static final int PHONE_NUMBER_COL = 7;
 	private static final int ADMIN_STATUS_COL = 10;//currently not used
-	private static final int CREATION_DATE_COL = 8;
-	private static final int LATEST_LOGIN_COL = 9;
+	private static final int AGREE_CONTACTED__COL = 8;
+	private static final int CREATION_DATE_COL = 9;
+	private static final int LATEST_LOGIN_COL = 10;
 	
 	private static final String STYLE_TABLEROWOTHER = "tableRowOther";
 //	private SimpleDateFormat sdf = new SimpleDateFormat("MM/DD/yyyy");
@@ -60,7 +60,7 @@ public class UserInfoSearchPanel extends Composite {
 	
 	private static final String[] headers = new String[] {
 		"Email", "Salutation", "First Name", "Last Name", "Organization",
-		"Job Title", "Years In Field", "Phone Number", /*"Admin Status",*/ "Created", "Last Loggin"};
+		"Job Title", "Years In Field", "Phone Number", "Agrees to be contacted", "Created", "Last Loggin"};
 
 	
 	
@@ -144,7 +144,8 @@ public class UserInfoSearchPanel extends Composite {
 			list.setText(row, JOB_TITLE_COL, u.getJobTitle());
 			list.setText(row, YEARS_IN_FIELD_COL, u.getYearsInField());
 			list.setText(row, PHONE_NUMBER_COL, u.getPhoneNumber());
-//			list.setText(row, ADMIN_STATUS_COL, String.valueOf(u.getAdmin()));					
+//			list.setText(row, ADMIN_STATUS_COL, String.valueOf(u.getAdmin()));	
+ 			list.setText(row, AGREE_CONTACTED__COL,u.isAgreeToBeContacted()?"Yes":"No");	
 			list.setText(row, CREATION_DATE_COL, dateFormatter.format(u.getCreationDate()));
 			list.setText(row, LATEST_LOGIN_COL, dateFormatter.format(u.getLastLoginDate()));
 			if(row%2==0)
@@ -157,6 +158,7 @@ public class UserInfoSearchPanel extends Composite {
 	/**
 	 * Gets a table column header and returns the according property in the proxy
 	 * @return
+	 * @deprecated
 	 */
 	private String getUserInfoProperty(String prop){
 		if(prop.equalsIgnoreCase(headers[EMAIL_COL])) return "email";
@@ -184,6 +186,7 @@ public class UserInfoSearchPanel extends Composite {
 		else if(prop.equalsIgnoreCase(headers[YEARS_IN_FIELD_COL])) comparator.setProperty("yearsInField");
 		else if(prop.equalsIgnoreCase(headers[PHONE_NUMBER_COL])) comparator.setProperty("phoneNumber");
 		else if(prop.equalsIgnoreCase(headers[ADMIN_STATUS_COL])) comparator.setProperty("admin");
+		else if(prop.equalsIgnoreCase(headers[AGREE_CONTACTED__COL])) comparator.setProperty("agree");
 		else if(prop.equalsIgnoreCase(headers[CREATION_DATE_COL])) comparator.setProperty("creationDate");
 		else if(prop.equalsIgnoreCase(headers[LATEST_LOGIN_COL])) comparator.setProperty("lastLoginDate");
 		else  comparator.setProperty("email");//DEFAULT

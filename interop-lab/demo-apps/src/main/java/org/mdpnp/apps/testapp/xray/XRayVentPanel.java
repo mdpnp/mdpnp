@@ -250,7 +250,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
         waveformPanel.setEvenTempo(false);
         waveformPanel.setSource(wuws);
         if(null != waveformPanel.cachingSource()) {
-            waveformPanel.cachingSource().setFixedTimeDomain(12000L);
+            waveformPanel.cachingSource().setFixedTimeDomain(20000L);
         }
 
         enclosingWaveformPanel.add(waveformPanel.asComponent(), BorderLayout.CENTER);
@@ -485,7 +485,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
                 seenInstances.add(si.instance_handle);
                 ice.SampleArray sa = (SampleArray) sa_seq.get(i);
                 if(rosetta.MDC_FLOW_AWAY.VALUE.equals(sa.metric_id)) {
-                    wuws.applyUpdate(sa);
+                    wuws.applyUpdate(sa, si);
                 }
             }
         }
