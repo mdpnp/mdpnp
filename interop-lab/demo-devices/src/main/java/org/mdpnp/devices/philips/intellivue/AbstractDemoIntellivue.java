@@ -30,6 +30,8 @@ import java.util.Set;
 
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
+import org.mdpnp.devices.net.NetworkLoop;
+import org.mdpnp.devices.net.TaskQueue;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataResult;
 import org.mdpnp.devices.philips.intellivue.action.ObservationPoll;
 import org.mdpnp.devices.philips.intellivue.action.SingleContextPoll;

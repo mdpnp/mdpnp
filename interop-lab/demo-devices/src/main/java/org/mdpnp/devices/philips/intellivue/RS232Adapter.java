@@ -16,6 +16,8 @@ import org.mdpnp.devices.io.SplitBytesOutputStream;
 import org.mdpnp.devices.io.TeeInputStream;
 import org.mdpnp.devices.io.TeeOutputStream;
 import org.mdpnp.devices.io.util.HexUtil;
+import org.mdpnp.devices.net.NetworkConnection;
+import org.mdpnp.devices.net.NetworkLoop;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.SerialSocket;
