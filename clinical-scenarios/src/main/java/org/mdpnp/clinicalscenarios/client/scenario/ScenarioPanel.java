@@ -869,7 +869,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * we can't interact w/ the panels
 	 */
 	private void disableSaveScenario(){
-		status.setText("You dont have permission to modify the scenario");
+//		status.setText("You don't have permission to modify the scenario");
 		status.setVisible(false);
 				
 		algorithmDescription.setReadOnly(true);

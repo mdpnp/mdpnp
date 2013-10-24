@@ -228,6 +228,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			@Override
 			public void execute() {
 				//XXX should this look for approved only or also unlocked_post and dirty???
+				// Does not make much sense to have the re-approval process if we let users see "dirty" scenarios
 				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 				showWidget(scenarioListPanel);
 			}
@@ -259,11 +260,14 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getlistApprvScn().setScheduledCommand(new Command() {			
 			@Override
 			public void execute() {
-				Set<String> status = new HashSet<String>();
-				status.add(ScenarioPanel.SCN_STATUS_MODIFIED);
-				status.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
-				status.add(ScenarioPanel.SCN_STATUS_APPROVED);
-				scenarioListPanel.listScnByStatus(status);
+//				Set<String> status = new HashSet<String>();
+//				status.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+//				status.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+//				status.add(ScenarioPanel.SCN_STATUS_APPROVED);
+//				scenarioListPanel.listScnByStatus(status);
+				//XXX should this look for approved only or also unlocked_post and dirty???
+				// Does not make much sense to have the re-approval process if we let users see "dirty" scenarios
+				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 				showWidget(scenarioListPanel);
 			}
 		});
