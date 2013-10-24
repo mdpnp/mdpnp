@@ -8,9 +8,9 @@
 package org.mdpnp.devices.simulation;
 
 import ice.DeviceIdentity;
-import ice.DeviceIdentityTypeCode;
 
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.EventLoop;
@@ -48,7 +48,7 @@ public abstract class AbstractSimulatedDevice extends AbstractDevice {
         log.debug("Created Random UDI:"+di.unique_device_identifier);
     }
 
-    public AbstractSimulatedDevice(int domainId, EventLoop eventLoop) {
+    public AbstractSimulatedDevice(int domainId, EventLoop eventLoop) throws TimeoutException {
         super(domainId, eventLoop);
         randomUDI(deviceIdentity);
         writeDeviceIdentity();

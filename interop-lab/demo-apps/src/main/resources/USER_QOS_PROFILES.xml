@@ -4,9 +4,11 @@
     <!-- Using a singular default profile for now -->
     <qos_profile name="DefaultProfile" is_default_qos="true">
       <participant_qos>
+          <!--
         <receiver_pool>
           <buffer_size>65530</buffer_size>
         </receiver_pool>
+        -->
         <!-- <default_unicast> <element> 127.0.0.1 </element> </default_unicast> -->
         <discovery>
           <!-- promiscuous for the lab environment -->
@@ -59,6 +61,7 @@
               <propagate>false</propagate>
             </element>
             -->
+            <!--
             <element>
               <name>dds.transport.UDPv4.builtin.recv_socket_buffer_size</name>
               <value>65530</value>
@@ -69,6 +72,7 @@
               <value>65530</value>
               <propagate>false</propagate>
             </element>
+            -->
           </value>
         </property>
       </participant_qos>
@@ -112,7 +116,7 @@
         </ownership>
         <!-- Enabling lots of RTPS level fragmentation -->
         <reader_resource_limits>
-          <max_fragments_per_sample>5000</max_fragments_per_sample>
+          <max_fragments_per_sample>50</max_fragments_per_sample>
           <max_query_condition_filters>32</max_query_condition_filters>
         </reader_resource_limits>
         <!-- JP 30-Sep-2013 get_key_value is failing on unalive instances

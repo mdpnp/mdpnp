@@ -1,18 +1,33 @@
 package org.mdpnp.apps.testapp;
 
+import ice.Numeric;
+
 import java.awt.Image;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.lang.reflect.Method;
+import java.net.NetworkInterface;
+import java.util.Enumeration;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 
+import org.omg.dds.core.ServiceEnvironment;
+import org.omg.dds.core.policy.Durability;
+import org.omg.dds.core.policy.History;
+import org.omg.dds.core.policy.Liveliness;
+import org.omg.dds.core.policy.Ownership;
+import org.omg.dds.core.policy.PolicyFactory;
+import org.omg.dds.core.policy.Reliability;
+import org.omg.dds.domain.DomainParticipant;
+import org.omg.dds.domain.DomainParticipantFactory;
+import org.omg.dds.sub.DataReader;
+import org.omg.dds.sub.Subscriber;
+import org.omg.dds.topic.Topic;
+import org.omg.dds.type.TypeSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantFactoryQos;
 
 public class Main {
 
@@ -98,15 +113,15 @@ public class Main {
                 throw new Exception("Unable to DDS.init");
             }
             {
-                    DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
-                    DomainParticipantFactory.get_instance().get_qos(qos);
-                    qos.resource_limits.max_objects_per_thread = 8192;
-                    DomainParticipantFactory.get_instance().set_qos(qos);
+//                    DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
+//                    DomainParticipantFactory.get_instance().get_qos(qos);
+//                    qos.resource_limits.max_objects_per_thread = 8192;
+//                    DomainParticipantFactory.get_instance().set_qos(qos);
             }
 
             switch(runConf.getApplication()) {
             case ICE_Device_Interface:
-                new DeviceAdapter().start(runConf.getDeviceType(), runConf.getDomainId(), runConf.getAddress(), !cmdline);
+                new DeviceAdapter().start(configureOSPLM(), runConf.getDeviceType(), runConf.getDomainId(), runConf.getAddress(), !cmdline);
                 break;
             case ICE_Supervisor:
                 DemoApp.start(runConf.getDomainId());
@@ -118,5 +133,36 @@ public class Main {
 
         }
         log.trace("This is the end of Main");
+    }
+    private static ServiceEnvironment configureJeff() {
+        System.setProperty(ServiceEnvironment.IMPLEMENTATION_CLASS_NAME_PROPERTY,
+                "com.jeffplourde.dds.ServiceEnvironmentImpl");
+
+            // Instantiate a DDS ServiceEnvironment
+            ServiceEnvironment env = ServiceEnvironment.createInstance(
+                Main.class.getClassLoader());
+
+            return env;
+    }
+
+    private static ServiceEnvironment configureOSPLM() {
+        System.setProperty("java.net.preferIPv4Stack","true");
+        System.setProperty("ddsi.participant.leaseDuration", "3.0");
+        System.setProperty("ddsi.spdp.writer.resendPeriod", "0.250");
+//        System.setProperty("ddsi.participant.discoveryWaitPeriod", "0.0");
+
+
+
+        // Set "serviceClassName" property to OpenSplice Mobile implementation
+        System.setProperty(ServiceEnvironment.IMPLEMENTATION_CLASS_NAME_PROPERTY,
+            "org.opensplice.mobile.core.ServiceEnvironmentImpl");
+
+        // Instantiate a DDS ServiceEnvironment
+        ServiceEnvironment env = ServiceEnvironment.createInstance(
+            Main.class.getClassLoader());
+
+        return env;
+
+
     }
 }

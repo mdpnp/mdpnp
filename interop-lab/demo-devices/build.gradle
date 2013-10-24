@@ -15,7 +15,9 @@ dependencies {
   compile project(':devices:nellcor')
   compile project(':devices:nonin')
   compile project(':devices:simulated')
-  compile project(':data-types:x73-idl-rti-dds')
+  compile group: 'org.omg.dds', name: 'omgdds', version: '1.0-Beta3'
+//  compile project(':data-types:x73-idl-rti-dds')
+  compile project(':data-types:x73-idl-osplm-dds')
   testCompile group: 'junit', name: 'junit', version: '4.11'
 
 }

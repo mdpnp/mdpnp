@@ -1,5 +1,3 @@
-#ifndef  _KEYSIZE_IDL_
-#define  _KEYSIZE_IDL_
 
 /***
    This IDL is maintained for the sake of a unit test
@@ -29,4 +27,4 @@ module org {
     };
   };
 };
-#endif /* _KEYSIZE_IDL_ */
+

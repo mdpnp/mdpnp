@@ -23,6 +23,7 @@ import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
+import org.omg.dds.core.ServiceEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,18 +97,18 @@ public class DeviceAdapter {
 
     private static final Logger log = LoggerFactory.getLogger(DeviceAdapter.class);
 
-    public void start(DeviceType type, int domainId, final String address, boolean gui) throws Exception {
-        start(type, domainId, address, gui, true, null);
+    public void start(ServiceEnvironment env, DeviceType type, int domainId, final String address, boolean gui) throws Exception {
+        start(env, type, domainId, address, gui, true, null);
     }
 
-    public void start(DeviceType type, int domainId, final String address, boolean gui, boolean exit, EventLoop eventLoop) throws Exception {
+    public void start(ServiceEnvironment env, DeviceType type, int domainId, final String address, boolean gui, boolean exit, EventLoop eventLoop) throws Exception {
         log.trace("Starting DeviceAdapter with type="+type);
         if (null != address && address.contains(":")) {
             SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
             log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
         }
         if(null == eventLoop) {
-            eventLoop = new EventLoop();
+            eventLoop = new EventLoop(env);
             handler = new EventLoopHandler(eventLoop);
         } else {
             handler = null;
@@ -116,10 +117,10 @@ public class DeviceAdapter {
         device = DeviceFactory.buildDevice(type, domainId, eventLoop);
 
         if (gui) {
-            final CompositeDevicePanel cdp = new CompositeDevicePanel();
-            final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getDeviceIdentity().unique_device_identifier);
-            deviceMonitor.addListener(cdp);
-            deviceMonitor.start(device.getParticipant(), eventLoop);
+//            final CompositeDevicePanel cdp = new CompositeDevicePanel();
+//            final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getDeviceIdentity().unique_device_identifier);
+//            deviceMonitor.addListener(cdp);
+//            deviceMonitor.start(device.getParticipant(), eventLoop);
 
             frame = new DemoFrame("ICE Device Adapter - " + type);
             frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
@@ -147,9 +148,9 @@ public class DeviceAdapter {
                         public void run() {
                             try {
                                 setString(progressBar, "Shut down local monitoring client", 10);
-                                deviceMonitor.stop();
+//                                deviceMonitor.stop();
                                 setString(progressBar, "Shut down local user interface", 20);
-                                cdp.reset();
+//                                cdp.reset();
                             } finally {
                                 killAdapter(progressBar);
                             }
@@ -185,7 +186,7 @@ public class DeviceAdapter {
             }
 
             frame.getContentPane().add(new JScrollPane(descriptionText), BorderLayout.NORTH);
-            frame.getContentPane().add(cdp, BorderLayout.CENTER);
+//            frame.getContentPane().add(cdp, BorderLayout.CENTER);
 
             frame.getContentPane().validate();
             frame.setVisible(true);

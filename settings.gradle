@@ -24,8 +24,9 @@ if(hasProperty('sdk.dir') || null != System.getenv().get("ANDROID_HOME")) {
 //  println 'Not building android projects'
 }
 
-
+include 'data-types:rti-omg-psm'
 include 'data-types:x73-idl-rti-dds'
+include 'data-types:x73-idl-osplm-dds'
 include 'data-types:x73-prototype'
 include 'interop-lab:demo-devices'
 include 'interop-lab:demo-apps'

@@ -1,0 +1,3 @@
+struct VendorId_t {
+  octet vendorId[2];
+};

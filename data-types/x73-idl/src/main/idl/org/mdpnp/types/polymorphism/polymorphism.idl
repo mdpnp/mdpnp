@@ -1,5 +1,3 @@
-#ifndef  _POLYMORPHISM_IDL_
-#define  _POLYMORPHISM_IDL_
 
 /***
    This IDL is maintained for the sake of a unit test
@@ -10,7 +8,7 @@
 
 /*************
 Elements of a numeric
-**** TOP 
+**** TOP
 Class	MDC_ATTR_CLASS	OIDType
 Name-Binding	MDC_ATTR_NAME_BINDING	OIDType
 **** VMO
@@ -58,82 +56,81 @@ Accuracy	MDC_ATTR_NU_ACCUR_MSMT	FLOAT-Type	O
 **************/
 
 module org {
-	module mdpnp {
-			module types {
-				module polymorphism {
-					typedef unsigned short INTU16;
-					typedef INTU16 OIDType;
+  module mdpnp {
+      module types {
+        module polymorphism {
+          typedef unsigned short INTU16;
+          typedef INTU16 OIDType;
 
-					valuetype Attr {
-						
-					};
+          valuetype Attr {
 
-					/**
-					 * Top object.
-					 * The Top object is the common inheritance base for all objects in the DIM.
-					 */
-					valuetype DIMT_Top {
-					  /// Define the ID of the class.
-					  /// IDs come from the object-oriented nomenclature partition.
-					  public OIDType  class_id; //@key
-					
-					  /// Define ID of Name Binding attribute, e.g., DIMHANDLE.
-					  /// IDs come from the object-oriented nomenclature partition.
-					  public OIDType  name_binding_id; //@key
-					};
-					
-					typedef INTU16 NomPartition;
-					
-					struct TTYPE {
-					  NomPartition partition;
-					  OIDType code;
-					}; //@top-level false
-					
-					typedef INTU16 DIMHANDLE;
-					
-					typedef string OCTET_STRING;
-					
-					struct AttributeValueAssertion {
-						OIDType attribute_id;
-						Attr attribute_value;
-					};
-					
-					typedef sequence<AttributeValueAssertion> AttributeList;
-					
-					struct ExtObjRelationEntry {
-						OIDType relation_type;
-						OIDType related_object;
-						AttributeList relation_attributes;
-					};
-					
-					valuetype Foo : Attr {
-						public long fooValue;
-					};
-					
-					valuetype Bar : Attr {
-						public string barValue;
-					};
-					
-					typedef sequence<ExtObjRelationEntry> ExtObjRelationList;
-					
-					valuetype DIMT_VMO : DIMT_Top
-					{
-					  /// Define a specific static type of this object, as defined in the
-					  /// object-oriented or metric nomenclature partition.
-					  public TTYPE object_type; //@key
-					
-					  /// Locally unique short-hand identification.
-					  public DIMHANDLE dimhandle; //@key
-					
-					  /// Text representation of type ID.
-					  public OCTET_STRING label_string; 
-					
-					  public ExtObjRelationList ext_obj_relations;
-					
-					  
-					}; 
-				};
-			};
-	};
+          };
+
+          /**
+           * Top object.
+           * The Top object is the common inheritance base for all objects in the DIM.
+           */
+          valuetype DIMT_Top {
+            /// Define the ID of the class.
+            /// IDs come from the object-oriented nomenclature partition.
+            public OIDType  class_id; //@key
+
+            /// Define ID of Name Binding attribute, e.g., DIMHANDLE.
+            /// IDs come from the object-oriented nomenclature partition.
+            public OIDType  name_binding_id; //@key
+          };
+
+          typedef INTU16 NomPartition;
+
+          struct TTYPE {
+            NomPartition partition;
+            OIDType code;
+          }; //@top-level false
+
+          typedef INTU16 DIMHANDLE;
+
+          typedef string OCTET_STRING;
+
+          struct AttributeValueAssertion {
+            OIDType attribute_id;
+            Attr attribute_value;
+          };
+
+          typedef sequence<AttributeValueAssertion> AttributeList;
+
+          struct ExtObjRelationEntry {
+            OIDType relation_type;
+            OIDType related_object;
+            AttributeList relation_attributes;
+          };
+
+          valuetype Foo : Attr {
+            public long fooValue;
+          };
+
+          valuetype Bar : Attr {
+            public string barValue;
+          };
+
+          typedef sequence<ExtObjRelationEntry> ExtObjRelationList;
+
+          valuetype DIMT_VMO : DIMT_Top
+          {
+            /// Define a specific static type of this object, as defined in the
+            /// object-oriented or metric nomenclature partition.
+            public TTYPE object_type; //@key
+
+            /// Locally unique short-hand identification.
+            public DIMHANDLE dimhandle; //@key
+
+            /// Text representation of type ID.
+            public OCTET_STRING label_string;
+
+            public ExtObjRelationList ext_obj_relations;
+
+
+          };
+        };
+      };
+  };
 };
-#endif /* _POLYMORPHISM_IDL_ */

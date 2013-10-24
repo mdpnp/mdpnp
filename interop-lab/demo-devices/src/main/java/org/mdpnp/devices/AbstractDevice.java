@@ -8,18 +8,13 @@
 package org.mdpnp.devices;
 
 import ice.DeviceIdentity;
-import ice.DeviceIdentityDataWriter;
-import ice.DeviceIdentityTypeSupport;
-import ice.LocalAlarmSettingsObjectiveDataWriter;
+import ice.GlobalAlarmSettingsObjective;
 import ice.Numeric;
-import ice.NumericDataWriter;
-import ice.NumericTypeSupport;
 import ice.SampleArray;
-import ice.SampleArrayDataWriter;
-import ice.SampleArrayTypeSupport;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -30,35 +25,45 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.mdpnp.devices.EventLoop.ConditionHandler;
+import org.omg.dds.core.Condition;
+import org.omg.dds.core.InstanceHandle;
+import org.omg.dds.core.ServiceEnvironment;
+import org.omg.dds.core.Time;
+import org.omg.dds.core.policy.Durability;
+import org.omg.dds.core.policy.History;
+import org.omg.dds.core.policy.Liveliness;
+import org.omg.dds.core.policy.Ownership;
+import org.omg.dds.core.policy.PolicyFactory;
+import org.omg.dds.core.policy.Reliability;
+import org.omg.dds.domain.DomainParticipant;
+import org.omg.dds.domain.DomainParticipantFactory;
+import org.omg.dds.domain.DomainParticipantQos;
+import org.omg.dds.pub.DataWriter;
+import org.omg.dds.pub.DataWriterQos;
+import org.omg.dds.pub.Publisher;
+import org.omg.dds.sub.DataReader;
+import org.omg.dds.sub.DataReader.Selector;
+import org.omg.dds.sub.DataReaderQos;
+import org.omg.dds.sub.InstanceState;
+import org.omg.dds.sub.ReadCondition;
+import org.omg.dds.sub.Sample;
+import org.omg.dds.sub.SampleState;
+import org.omg.dds.sub.Subscriber;
+import org.omg.dds.sub.ViewState;
+import org.omg.dds.topic.Topic;
+import org.omg.dds.topic.TopicDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantQos;
-import com.rti.dds.infrastructure.Condition;
-import com.rti.dds.infrastructure.InstanceHandle_t;
-import com.rti.dds.infrastructure.RETCODE_NO_DATA;
-import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
-import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.infrastructure.Time_t;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.InstanceStateKind;
-import com.rti.dds.subscription.ReadCondition;
-import com.rti.dds.subscription.SampleInfo;
-import com.rti.dds.subscription.SampleInfoSeq;
-import com.rti.dds.subscription.SampleStateKind;
-import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.ViewStateKind;
-import com.rti.dds.topic.Topic;
-import com.rti.dds.topic.TopicDescription;
 
 public abstract class AbstractDevice implements ThreadFactory {
     protected final ThreadGroup threadGroup;
@@ -70,25 +75,25 @@ public abstract class AbstractDevice implements ThreadFactory {
     protected final DomainParticipant domainParticipant;
     protected final Publisher publisher;
     protected final Subscriber subscriber;
-    protected final Topic deviceIdentityTopic;
-    private final DeviceIdentityDataWriter deviceIdentityWriter;
+    protected final Topic<DeviceIdentity> deviceIdentityTopic;
+    private final DataWriter<DeviceIdentity> deviceIdentityWriter;
     protected final DeviceIdentity deviceIdentity;
-    private InstanceHandle_t deviceIdentityHandle;
+    private InstanceHandle deviceIdentityHandle;
 
-    protected final Topic numericTopic;
-    protected final NumericDataWriter numericDataWriter;
+    protected final Topic<Numeric> numericTopic;
+    protected final DataWriter<Numeric> numericDataWriter;
 
-    protected final Topic sampleArrayTopic;
-    protected final SampleArrayDataWriter sampleArrayDataWriter;
+    protected final Topic<SampleArray> sampleArrayTopic;
+    protected final DataWriter<ice.SampleArray> sampleArrayDataWriter;
 
-    protected final Topic alarmSettingsTopic;
-    protected final ice.AlarmSettingsDataWriter alarmSettingsDataWriter;
+    protected final Topic<ice.AlarmSettings> alarmSettingsTopic;
+    protected final DataWriter<ice.AlarmSettings> alarmSettingsDataWriter;
 
-    protected final Topic alarmSettingsObjectiveTopic;
-    protected final ice.LocalAlarmSettingsObjectiveDataWriter alarmSettingsObjectiveWriter;
+    protected final Topic<ice.LocalAlarmSettingsObjective> alarmSettingsObjectiveTopic;
+    protected final DataWriter<ice.LocalAlarmSettingsObjective> alarmSettingsObjectiveWriter;
 
-    protected ice.GlobalAlarmSettingsObjectiveDataReader alarmSettingsObjectiveReader;
-    protected ReadCondition alarmSettingsObjectiveCondition;
+    protected DataReader<ice.GlobalAlarmSettingsObjective> alarmSettingsObjectiveReader;
+    protected Selector<ice.GlobalAlarmSettingsObjective> alarmSettingsObjectiveSelector;
 
     public Subscriber getSubscriber() {
         return subscriber;
@@ -96,13 +101,13 @@ public abstract class AbstractDevice implements ThreadFactory {
 
     public static class InstanceHolder<T> {
         public T data;
-        public InstanceHandle_t handle;
+        public InstanceHandle handle;
 
         public InstanceHolder() {
 
         }
 
-        public InstanceHolder(T t, InstanceHandle_t handle) {
+        public InstanceHolder(T t, InstanceHandle handle) {
             this.data = t;
             this.handle = handle;
         }
@@ -121,11 +126,11 @@ public abstract class AbstractDevice implements ThreadFactory {
         return domainParticipant;
     }
 
-    protected InstanceHolder<Numeric> createNumericInstance(String metric_id) {
+    protected InstanceHolder<Numeric> createNumericInstance(String metric_id) throws TimeoutException {
         return createNumericInstance(metric_id, 0);
     }
 
-    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, int instance_id) {
+    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, int instance_id) throws TimeoutException {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null
                 || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException(
@@ -137,12 +142,12 @@ public abstract class AbstractDevice implements ThreadFactory {
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
         holder.data.instance_id = instance_id;
-        holder.handle = numericDataWriter.register_instance(holder.data);
+        holder.handle = numericDataWriter.registerInstance(holder.data);
         registeredNumericInstances.add(holder);
         return holder;
     }
 
-    protected InstanceHolder<ice.AlarmSettings> createAlarmSettingsInstance(String metric_id) {
+    protected InstanceHolder<ice.AlarmSettings> createAlarmSettingsInstance(String metric_id) throws TimeoutException {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null
                 || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException(
@@ -153,12 +158,12 @@ public abstract class AbstractDevice implements ThreadFactory {
         holder.data = new ice.AlarmSettings();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
-        holder.handle = alarmSettingsDataWriter.register_instance(holder.data);
+        holder.handle = alarmSettingsDataWriter.registerInstance(holder.data);
         registeredAlarmSettingsInstances.add(holder);
         return holder;
     }
 
-    protected InstanceHolder<ice.LocalAlarmSettingsObjective> createAlarmSettingsObjectiveInstance(String metric_id) {
+    protected InstanceHolder<ice.LocalAlarmSettingsObjective> createAlarmSettingsObjectiveInstance(String metric_id) throws TimeoutException {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null
                 || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException(
@@ -169,62 +174,62 @@ public abstract class AbstractDevice implements ThreadFactory {
         holder.data = new ice.LocalAlarmSettingsObjective();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
-        holder.handle = alarmSettingsObjectiveWriter.register_instance(holder.data);
+        holder.handle = alarmSettingsObjectiveWriter.registerInstance(holder.data);
         registeredAlarmSettingsObjectiveInstances.add(holder);
         return holder;
     }
 
-    protected void unregisterAllInstances() {
+    protected void unregisterAllInstances() throws TimeoutException {
         unregisterAllNumericInstances();
         unregisterAllSampleArrayInstances();
         unregisterAllAlarmSettingsInstances();
         unregisterAllAlarmSettingsObjectiveInstances();
     }
 
-    protected void unregisterAllAlarmSettingsObjectiveInstances() {
+    protected void unregisterAllAlarmSettingsObjectiveInstances() throws TimeoutException {
         while(!registeredAlarmSettingsObjectiveInstances.isEmpty()) {
             unregisterAlarmSettingsObjectiveInstance(registeredAlarmSettingsObjectiveInstances.get(0));
         }
     }
 
-    protected void unregisterAllAlarmSettingsInstances() {
+    protected void unregisterAllAlarmSettingsInstances() throws TimeoutException {
         while(!registeredAlarmSettingsInstances.isEmpty()) {
             unregisterAlarmSettingsInstance(registeredAlarmSettingsInstances.get(0));
         }
     }
 
-    protected void unregisterAllNumericInstances() {
+    protected void unregisterAllNumericInstances() throws TimeoutException {
         while (!registeredNumericInstances.isEmpty()) {
             unregisterNumericInstance(registeredNumericInstances.get(0));
         }
     }
 
-    protected void unregisterAllSampleArrayInstances() {
+    protected void unregisterAllSampleArrayInstances() throws TimeoutException {
         while (!registeredSampleArrayInstances.isEmpty()) {
             unregisterSampleArrayInstance(registeredSampleArrayInstances.get(0));
         }
     }
 
-    protected void unregisterNumericInstance(InstanceHolder<Numeric> holder) {
+    protected void unregisterNumericInstance(InstanceHolder<Numeric> holder) throws TimeoutException {
         if (null != holder) {
             registeredNumericInstances.remove(holder);
-            numericDataWriter.unregister_instance(holder.data, holder.handle);
+            numericDataWriter.unregisterInstance(holder.handle, holder.data);
         }
     }
 
-    protected void unregisterSampleArrayInstance(InstanceHolder<SampleArray> holder) {
+    protected void unregisterSampleArrayInstance(InstanceHolder<SampleArray> holder) throws TimeoutException {
         registeredSampleArrayInstances.remove(holder);
-        sampleArrayDataWriter.unregister_instance(holder.data, holder.handle);
+        sampleArrayDataWriter.unregisterInstance(holder.handle, holder.data);
     }
 
-    protected void unregisterAlarmSettingsInstance(InstanceHolder<ice.AlarmSettings> holder) {
+    protected void unregisterAlarmSettingsInstance(InstanceHolder<ice.AlarmSettings> holder) throws TimeoutException {
         registeredAlarmSettingsInstances.remove(holder);
-        alarmSettingsDataWriter.unregister_instance(holder.data, holder.handle);
+        alarmSettingsDataWriter.unregisterInstance(holder.handle, holder.data);
     }
 
-    protected void unregisterAlarmSettingsObjectiveInstance(InstanceHolder<ice.LocalAlarmSettingsObjective> holder) {
+    protected void unregisterAlarmSettingsObjectiveInstance(InstanceHolder<ice.LocalAlarmSettingsObjective> holder) throws TimeoutException {
         registeredAlarmSettingsObjectiveInstances.remove(holder);
-        alarmSettingsObjectiveWriter.unregister_instance(holder.data, holder.handle);
+        alarmSettingsObjectiveWriter.unregisterInstance(holder.handle, holder.data);
     }
 
     private List<InstanceHolder<SampleArray>> registeredSampleArrayInstances = new ArrayList<InstanceHolder<SampleArray>>();
@@ -232,11 +237,11 @@ public abstract class AbstractDevice implements ThreadFactory {
     private List<InstanceHolder<ice.AlarmSettings>> registeredAlarmSettingsInstances = new ArrayList<InstanceHolder<ice.AlarmSettings>>();
     private List<InstanceHolder<ice.LocalAlarmSettingsObjective>> registeredAlarmSettingsObjectiveInstances = new ArrayList<InstanceHolder<ice.LocalAlarmSettingsObjective>>();
 
-    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id) {
+    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id) throws TimeoutException {
         return createSampleArrayInstance(metric_id, 0);
     }
 
-    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id) {
+    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id) throws TimeoutException {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null
                 || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException(
@@ -248,33 +253,33 @@ public abstract class AbstractDevice implements ThreadFactory {
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
         holder.data.instance_id = instance_id;
-        holder.handle = sampleArrayDataWriter.register_instance(holder.data);
+        holder.handle = sampleArrayDataWriter.registerInstance(holder.data);
         registeredSampleArrayInstances.add(holder);
         return holder;
     }
 
-    protected void numericSample(InstanceHolder<Numeric> holder, float newValue, Time_t time) {
+    protected void numericSample(InstanceHolder<Numeric> holder, float newValue, Time time) throws TimeoutException {
         holder.data.value = newValue;
         if(null != time) {
-            numericDataWriter.write_w_timestamp(holder.data, holder.handle, time);
+            numericDataWriter.write(holder.data, holder.handle, time);
         } else {
             numericDataWriter.write(holder.data, holder.handle);
         }
     }
 
-    protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, float newLower, float newUpper) {
+    protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, float newLower, float newUpper) throws TimeoutException {
         holder.data.lower = newLower;
         holder.data.upper = newUpper;
         alarmSettingsDataWriter.write(holder.data, holder.handle);
     }
 
-    protected void alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, float newLower, float newUpper) {
+    protected void alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, float newLower, float newUpper) throws TimeoutException {
         holder.data.lower = newLower;
         holder.data.upper = newUpper;
         alarmSettingsObjectiveWriter.write(holder.data, holder.handle);
     }
 
-    protected InstanceHolder<ice.AlarmSettings> alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper, String metric_id) {
+    protected InstanceHolder<ice.AlarmSettings> alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper, String metric_id) throws TimeoutException {
         if (holder != null && !holder.data.metric_id.equals(metric_id)) {
             unregisterAlarmSettingsInstance(holder);
             holder = null;
@@ -301,7 +306,7 @@ public abstract class AbstractDevice implements ThreadFactory {
         return holder;
     }
 
-    protected InstanceHolder<ice.LocalAlarmSettingsObjective> alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, Float newLower, Float newUpper, String metric_id) {
+    protected InstanceHolder<ice.LocalAlarmSettingsObjective> alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, Float newLower, Float newUpper, String metric_id) throws TimeoutException {
         if (holder != null && !holder.data.metric_id.equals(metric_id)) {
             unregisterAlarmSettingsObjectiveInstance(holder);
             holder = null;
@@ -324,20 +329,20 @@ public abstract class AbstractDevice implements ThreadFactory {
 
 
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, Time_t time) {
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, Time time) throws TimeoutException {
         return numericSample(holder, null==newValue?((Float)null):((Float)(float)(int)newValue), metric_id, time);
     }
 
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, int instance_id, Time_t time) {
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, int instance_id, Time time) throws TimeoutException {
         return numericSample(holder, null==newValue?((Float)null):((Float)(float)(int)newValue), metric_id, instance_id, time);
     }
 
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, Time_t time) {
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, Time time) throws TimeoutException {
         return numericSample(holder, newValue, metric_id, 0, time);
     }
 
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, int instance_id, Time_t time) {
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, int instance_id, Time time) throws TimeoutException {
         if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
             unregisterNumericInstance(holder);
             holder = null;
@@ -357,31 +362,33 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
 
-    protected void sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues, int msPerSample, Time_t timestamp) {
-        holder.data.values.clear();
-        for (Number n : newValues) {
-            holder.data.values.addFloat(n.floatValue());
+    protected void sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues, int msPerSample, Time timestamp) throws TimeoutException {
+        holder.data.values = new float[newValues.size()];
+        Iterator<Number> itr = newValues.iterator();
+        int i = 0;
+        while(itr.hasNext()) {
+            holder.data.values[i++] = itr.next().floatValue();
         }
         holder.data.millisecondsPerSample = msPerSample;
 //        log.info("Source:"+holder.data);
         if(null != timestamp) {
-            sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, timestamp);
+            sampleArrayDataWriter.write(holder.data, holder.handle, timestamp);
         } else {
             sampleArrayDataWriter.write(holder.data, holder.handle);
         }
     }
 
-    protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, int msPerSample, Time_t timestamp) {
+    protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, int msPerSample, Time timestamp) throws TimeoutException {
         sampleArraySample(holder, Arrays.asList(newValues), msPerSample, timestamp);
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues,
-            int msPerSample, String metric_id, Time_t timestamp) {
+            int msPerSample, String metric_id, Time timestamp) throws TimeoutException {
         return sampleArraySample(holder, newValues, msPerSample, metric_id, 0, timestamp);
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues,
-            int msPerSample, String metric_id, int instance_id, Time_t timestamp) {
+            int msPerSample, String metric_id, int instance_id, Time timestamp) throws TimeoutException {
         if (null != holder && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
             unregisterSampleArrayInstance(holder);
             holder = null;
@@ -400,10 +407,10 @@ public abstract class AbstractDevice implements ThreadFactory {
         return holder;
     }
 
-    protected void sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues, int count, int msPerSample) {
-        holder.data.values.clear();
+    protected void sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues, int count, int msPerSample) throws TimeoutException {
+        holder.data.values = new float[newValues.length];
         for (int i = 0; i < count; i++) {
-            holder.data.values.addFloat(newValues[i]);
+            holder.data.values[i] = newValues[i];
         }
         holder.data.millisecondsPerSample = msPerSample;
 
@@ -411,12 +418,12 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues,
-            int count, int msPerSample, String metric_id) {
+            int count, int msPerSample, String metric_id) throws TimeoutException {
         return sampleArraySample(holder, newValues, count, msPerSample, metric_id, 0);
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues,
-           int msPerSample, String metric_id, int instance_id, Time_t timestamp) {
+           int msPerSample, String metric_id, int instance_id, Time timestamp) throws TimeoutException {
         // if the specified holder doesn't match the specified name
         if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
             unregisterSampleArrayInstance(holder);
@@ -438,7 +445,7 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues,
-            int count, int msPerSample, String metric_id, int instance_id) {
+            int count, int msPerSample, String metric_id, int instance_id) throws TimeoutException {
         // if the specified holder doesn't match the specified name
         if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
             unregisterSampleArrayInstance(holder);
@@ -488,8 +495,7 @@ public abstract class AbstractDevice implements ThreadFactory {
                         // bb.put(bi.getRGB(x, y));
                     }
                 }
-                di.icon.raster.clear();
-                di.icon.raster.addAllByte(raster);
+                di.icon.raster = raster;
                 return true;
             } catch (InvocationTargetException e) {
                 if (e.getCause() instanceof IOException) {
@@ -522,64 +528,66 @@ public abstract class AbstractDevice implements ThreadFactory {
         // in their override of shutdown?
 
 
-        if(null != alarmSettingsObjectiveCondition) {
-            eventLoop.removeHandler(alarmSettingsObjectiveCondition);
-            alarmSettingsObjectiveReader.delete_readcondition(alarmSettingsObjectiveCondition);
-            alarmSettingsObjectiveCondition = null;
+        if(null != alarmSettingsObjectiveSelector) {
+            eventLoop.removeHandler(alarmSettingsObjectiveSelector.getCondition());
+            alarmSettingsObjectiveSelector.getCondition().close();
+            alarmSettingsObjectiveSelector = null;
         }
 
-        subscriber.delete_datareader(alarmSettingsObjectiveReader);
+        alarmSettingsObjectiveReader.close();
 
+        alarmSettingsObjectiveWriter.close();
 
-        publisher.delete_datawriter(alarmSettingsObjectiveWriter);
-        domainParticipant.delete_topic(alarmSettingsObjectiveTopic);
-        ice.LocalAlarmSettingsObjectiveTypeSupport.unregister_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
+        alarmSettingsObjectiveTopic.close();
 
-        publisher.delete_datawriter(alarmSettingsDataWriter);
-        domainParticipant.delete_topic(alarmSettingsTopic);
-        ice.AlarmSettingsTypeSupport.unregister_type(domainParticipant, ice.AlarmSettingsTypeSupport.get_type_name());
+        alarmSettingsDataWriter.close();
+        alarmSettingsTopic.close();
 
-        publisher.delete_datawriter(sampleArrayDataWriter);
-        domainParticipant.delete_topic(sampleArrayTopic);
-        SampleArrayTypeSupport.unregister_type(domainParticipant, SampleArrayTypeSupport.get_type_name());
+        sampleArrayDataWriter.close();
+        sampleArrayTopic.close();
 
-        publisher.delete_datawriter(numericDataWriter);
-        domainParticipant.delete_topic(numericTopic);
-        NumericTypeSupport.unregister_type(domainParticipant, NumericTypeSupport.get_type_name());
+        numericDataWriter.close();
+        numericTopic.close();
 
-        publisher.delete_datawriter(deviceIdentityWriter);
-        domainParticipant.delete_topic(deviceIdentityTopic);
-        DeviceIdentityTypeSupport.unregister_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
+        deviceIdentityWriter.close();
+        deviceIdentityTopic.close();
 
-        domainParticipant.delete_publisher(publisher);
-        domainParticipant.delete_subscriber(subscriber);
+        publisher.close();
+        subscriber.close();
 
-        domainParticipant.delete_contained_entities();
+        domainParticipant.closeContainedEntities();
 
-        DomainParticipantFactory.get_instance().delete_participant(domainParticipant);
+        domainParticipant.close();
 
         executor.shutdown();
         log.info("AbstractDevice shutdown complete");
     }
 
     public AbstractDevice(int domainId, EventLoop eventLoop) {
-        DomainParticipantQos pQos = new DomainParticipantQos();
-        DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-        pQos.participant_name.name = "Device";
+        ServiceEnvironment env = eventLoop.getServiceEnvironment();
+        DomainParticipantFactory factory = DomainParticipantFactory.getInstance(eventLoop.getServiceEnvironment());
 
-        domainParticipant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null,
-                StatusKind.STATUS_MASK_NONE);
-        publisher = domainParticipant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null,
-                StatusKind.STATUS_MASK_NONE);
-        subscriber = domainParticipant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null,
-                StatusKind.STATUS_MASK_NONE);
+        Reliability r = PolicyFactory.getPolicyFactory(env).Reliability().withReliable();
+        Durability  d = PolicyFactory.getPolicyFactory(env).Durability().withTransientLocal();
+        Ownership o = PolicyFactory.getPolicyFactory(env).Ownership().withExclusive();
+        Liveliness l = PolicyFactory.getPolicyFactory(env).Liveliness().withAutomatic().withLeaseDuration(2, TimeUnit.SECONDS);
+        History h = PolicyFactory.getPolicyFactory(env).History().withKeepLast(10);
 
-        DeviceIdentityTypeSupport.register_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
-        deviceIdentityTopic = domainParticipant.create_topic(ice.DeviceIdentityTopic.VALUE,
-                DeviceIdentityTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
-                StatusKind.STATUS_MASK_NONE);
-        deviceIdentityWriter = (DeviceIdentityDataWriter) publisher.create_datawriter(deviceIdentityTopic,
-                Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+
+
+        domainParticipant = factory.createParticipant(domainId);
+
+        publisher = domainParticipant.createPublisher();
+
+        DataWriterQos dwQos = publisher.getDefaultDataWriterQos();
+        publisher.setDefaultDataWriterQos(dwQos.withPolicies(r, d, o, l, h));
+        subscriber = domainParticipant.createSubscriber();
+        DataReaderQos drQos = subscriber.getDefaultDataReaderQos();
+        subscriber.setDefaultDataReaderQos(drQos.withPolicies(r, d, o, l, h));
+
+        deviceIdentityTopic = domainParticipant.createTopic(ice.DeviceIdentityTopic.value, ice.DeviceIdentity.class);
+        deviceIdentityWriter = publisher.createDataWriter(deviceIdentityTopic);
+
         if (null == deviceIdentityWriter) {
             throw new RuntimeException("deviceIdentityWriter not created");
         }
@@ -590,37 +598,26 @@ public abstract class AbstractDevice implements ThreadFactory {
             log.warn("", e1);
         }
 
-        NumericTypeSupport.register_type(domainParticipant, NumericTypeSupport.get_type_name());
-        numericTopic = domainParticipant.create_topic(ice.NumericTopic.VALUE, NumericTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        numericDataWriter = (NumericDataWriter) publisher.create_datawriter(numericTopic,
-                Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        numericTopic = domainParticipant.createTopic(ice.NumericTopic.value, ice.Numeric.class);
+        numericDataWriter = publisher.createDataWriter(numericTopic);
         if (null == numericDataWriter) {
             throw new RuntimeException("numericDataWriter not created");
         }
 
-        SampleArrayTypeSupport.register_type(domainParticipant, SampleArrayTypeSupport.get_type_name());
-        sampleArrayTopic = domainParticipant.create_topic(ice.SampleArrayTopic.VALUE,
-                SampleArrayTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
-                StatusKind.STATUS_MASK_NONE);
-        sampleArrayDataWriter = (SampleArrayDataWriter) publisher.create_datawriter(sampleArrayTopic,
-                Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        sampleArrayTopic = domainParticipant.createTopic(ice.SampleArrayTopic.value, ice.SampleArray.class);
+        sampleArrayDataWriter = publisher.createDataWriter(sampleArrayTopic);
         if (null == sampleArrayDataWriter) {
             throw new RuntimeException("sampleArrayDataWriter not created");
         }
+        alarmSettingsTopic = domainParticipant.createTopic(ice.AlarmSettingsTopic.value,  ice.AlarmSettings.class);
+        alarmSettingsDataWriter = publisher.createDataWriter(alarmSettingsTopic);
 
-        ice.AlarmSettingsTypeSupport.register_type(domainParticipant, ice.AlarmSettingsTypeSupport.get_type_name());
-        alarmSettingsTopic = domainParticipant.create_topic(ice.AlarmSettingsTopic.VALUE, ice.AlarmSettingsTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        alarmSettingsDataWriter = (ice.AlarmSettingsDataWriter) publisher.create_datawriter(alarmSettingsTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        alarmSettingsObjectiveTopic = domainParticipant.createTopic(ice.LocalAlarmSettingsObjectiveTopic.value, ice.LocalAlarmSettingsObjective.class);
+        alarmSettingsObjectiveWriter = publisher.createDataWriter(alarmSettingsObjectiveTopic);
 
-        ice.LocalAlarmSettingsObjectiveTypeSupport.register_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
-        alarmSettingsObjectiveTopic = domainParticipant.create_topic(ice.LocalAlarmSettingsObjectiveTopic.VALUE, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        alarmSettingsObjectiveWriter = (LocalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter(alarmSettingsObjectiveTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-
-        TopicDescription alarmSettingsObjectiveTopic = TopicUtil.lookupOrCreateTopic(domainParticipant, ice.GlobalAlarmSettingsObjectiveTopic.VALUE, ice.GlobalAlarmSettingsObjectiveTypeSupport.class);
-        alarmSettingsObjectiveReader = (ice.GlobalAlarmSettingsObjectiveDataReader) subscriber.create_datareader(alarmSettingsObjectiveTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-
+        Topic<ice.GlobalAlarmSettingsObjective> alarmSettingsObjectiveTopic = domainParticipant.createTopic(ice.GlobalAlarmSettingsObjectiveTopic.value, ice.GlobalAlarmSettingsObjective.class);
+//        TopicDescription<ice.GlobalAlarmSettingsObjective> alarmSettingsObjectiveTopic = TopicUtil.lookupOrCreateTopic(domainParticipant, ice.GlobalAlarmSettingsObjectiveTopic.value, ice.GlobalAlarmSettingsObjective.class);
+        subscriber.createDataReader(alarmSettingsObjectiveTopic);
 
         threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "AbstractDevice") {
             @Override
@@ -643,58 +640,55 @@ public abstract class AbstractDevice implements ThreadFactory {
 
     }
 
-    private Map<InstanceHandle_t, String> instanceMetrics = new HashMap<InstanceHandle_t, String>();
+    private Map<InstanceHandle, String> instanceMetrics = new HashMap<InstanceHandle, String>();
 
 
-    protected void writeDeviceIdentity() {
+    protected void writeDeviceIdentity() throws TimeoutException {
         if(null==deviceIdentity.unique_device_identifier||"".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("cannot write deviceIdentity without a UDI");
         }
-        DomainParticipantQos qos = new DomainParticipantQos();
-        domainParticipant.get_qos(qos);
+
+        DomainParticipantQos qos = domainParticipant.getQos();
+
         try {
-            qos.user_data.value.clear();
-            qos.user_data.value.addAllByte(deviceIdentity.unique_device_identifier.getBytes("ASCII"));
+            byte[] udiAscii = deviceIdentity.unique_device_identifier.getBytes("ASCII");
+            qos.withPolicy(qos.getPolicyFactory().UserData().withValue(udiAscii, 0, udiAscii.length));
         } catch (UnsupportedEncodingException e) {
             log.error(e.getMessage(), e);
         }
-        domainParticipant.set_qos(qos);
+        domainParticipant.setQos(qos);
 
         if(null == deviceIdentityHandle) {
-            deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
+            deviceIdentityHandle = deviceIdentityWriter.registerInstance(deviceIdentity);
         }
         deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
 
-        if(null == alarmSettingsObjectiveCondition) {
-            final SampleInfoSeq info_seq = new SampleInfoSeq();
-            final ice.GlobalAlarmSettingsObjectiveSeq data_seq = new ice.GlobalAlarmSettingsObjectiveSeq();
-            eventLoop.addHandler(alarmSettingsObjectiveCondition = alarmSettingsObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE),
-                new ConditionHandler() {
+        if(null == alarmSettingsObjectiveSelector) {
+            eventLoop.addHandler((alarmSettingsObjectiveSelector = alarmSettingsObjectiveReader.select().dataState(subscriber.createDataState().with(SampleState.NOT_READ).withAnyViewState().withAnyInstanceState())).getCondition(),
+                    new ConditionHandler() {
                     @Override
                     public void conditionChanged(Condition condition) {
+                        Sample.Iterator<ice.GlobalAlarmSettingsObjective> itr = alarmSettingsObjectiveReader.read(alarmSettingsObjectiveSelector);
                         try {
-                            alarmSettingsObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (ReadCondition) condition);
-                            for(int i = 0; i < data_seq.size(); i++) {
-                                SampleInfo si = (SampleInfo) info_seq.get(i);
-                                ice.GlobalAlarmSettingsObjective obj = (ice.GlobalAlarmSettingsObjective) data_seq.get(i);
 
-                                if(0 != (si.view_state & ViewStateKind.NEW_VIEW_STATE) && si.valid_data) {
-                                    log.warn("Handle for metric_id="+obj.metric_id+" is " + si.instance_handle);
-                                    instanceMetrics.put(new InstanceHandle_t(si.instance_handle), obj.metric_id);
+                            while(itr.hasNext()) {
+                                Sample<ice.GlobalAlarmSettingsObjective> sample = itr.next();
+
+                                if(ViewState.NEW.equals(sample.getViewState()) && sample.getData() != null) {
+                                    log.warn("Handle for metric_id="+sample.getData().metric_id+" is " + sample.getInstanceHandle());
+                                    instanceMetrics.put(sample.getInstanceHandle(), sample.getData().metric_id);
                                 }
 
-                                if(0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
-                                    if(si.valid_data) {
-                                        log.warn("Setting " + obj.metric_id + " to [ " + obj.lower + " , " + obj.upper + "]");
-                                        setAlarmSettings(obj);
-                                    }
+                                if(InstanceState.ALIVE.equals(sample.getInstanceState()) && sample.getData() != null) {
+                                    log.warn("Setting " + sample.getData().metric_id + " to [ " + sample.getData().lower + " , " + sample.getData().upper + "]");
+                                    setAlarmSettings(sample.getData());
                                 } else {
-                                    obj = new ice.GlobalAlarmSettingsObjective();
-                                    log.warn("Unsetting handle " + si.instance_handle);
+                                    ice.GlobalAlarmSettingsObjective obj = new ice.GlobalAlarmSettingsObjective();
+                                    log.warn("Unsetting handle " + sample.getInstanceHandle());
                                     // TODO 1-Oct-2013 JP This call to get_key_value fails consistently on ARM platforms
                                     // so I'm tracking instances externally for the time being
 //                                    alarmSettingsObjectiveReader.get_key_value(obj, si.instance_handle);
-                                    String metricId = instanceMetrics.get(si.instance_handle);
+                                    String metricId = instanceMetrics.get(sample.getInstanceHandle());
                                     log.warn("Unsetting " + metricId);
                                     if(null != metricId) {
                                         unsetAlarmSettings(metricId);
@@ -702,10 +696,12 @@ public abstract class AbstractDevice implements ThreadFactory {
 
                                 }
                             }
-                        } catch (RETCODE_NO_DATA noData) {
-
                         } finally {
-                            alarmSettingsObjectiveReader.return_loan(data_seq, info_seq);
+                            try {
+                                itr.close();
+                            } catch (IOException e) {
+                                log.error("error closing iterator", e);
+                            }
                         }
                     }
                 });

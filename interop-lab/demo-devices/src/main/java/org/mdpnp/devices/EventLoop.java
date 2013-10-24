@@ -1,20 +1,23 @@
 package org.mdpnp.devices;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import org.omg.CORBA.ServiceInformation;
+import org.omg.dds.core.Condition;
+import org.omg.dds.core.Duration;
+import org.omg.dds.core.GuardCondition;
+import org.omg.dds.core.ServiceEnvironment;
+import org.omg.dds.core.WaitSet;
+import org.omg.dds.domain.DomainParticipant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.rti.dds.infrastructure.Condition;
-import com.rti.dds.infrastructure.ConditionSeq;
-import com.rti.dds.infrastructure.Duration_t;
-import com.rti.dds.infrastructure.GuardCondition;
-import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
-import com.rti.dds.infrastructure.WaitSet;
-import com.rti.dds.infrastructure.WaitSetProperty_t;
 
 public class EventLoop  {
 
@@ -28,14 +31,13 @@ public class EventLoop  {
     private final List<Mutation> queuedMutations = new ArrayList<Mutation>();
     private final List<Runnable> queuedRunnables = new ArrayList<Runnable>();
     private final WaitSet waitSet;
-    private final GuardCondition mutate = new GuardCondition();
-    private final GuardCondition runnable = new GuardCondition();
+//    private final GuardCondition mutate, runnable;
 
     protected void handleMutation(Mutation m) {
         if(m.isAdd()) {
 //          log.debug("Handling an add mutation for " + m.getCondition());
           conditionHandlers.put(m.getCondition(), m.getConditionHandler());
-          waitSet.attach_condition(m.getCondition());
+          waitSet.attachCondition(m.getCondition());
       } else {
 //          log.debug("Handling a remove mutation for " + m.getCondition());
           if(null == conditionHandlers.remove(m.getCondition())) {
@@ -44,7 +46,7 @@ public class EventLoop  {
                   log.warn("\tat "+m.getTrace()[i]);
               }
           } else {
-              waitSet.detach_condition(m.getCondition());
+              waitSet.detachCondition(m.getCondition());
           }
       }
       m.done();
@@ -57,7 +59,9 @@ public class EventLoop  {
             synchronized(queuedMutations) {
                 mutations = queuedMutations.toArray(mutations);
                 queuedMutations.clear();
-                ((GuardCondition)condition).set_trigger_value(false);
+                if(null != condition) {
+                    ((GuardCondition)condition).setTriggerValue(false);
+                }
             }
             for(Mutation m : mutations) {
                 handleMutation(m);
@@ -74,7 +78,9 @@ public class EventLoop  {
             synchronized(queuedRunnables) {
                 runnables = queuedRunnables.toArray(runnables);
                 queuedRunnables.clear();
-                ((GuardCondition)condition).set_trigger_value(false);
+                if(null != condition) {
+                    ((GuardCondition)condition).setTriggerValue(false);
+                }
             }
             for(Runnable r : runnables) {
                 r.run();
@@ -126,29 +132,33 @@ public class EventLoop  {
         }
     }
 
+    private final ServiceEnvironment env;
 
-
-    public EventLoop() {
-        this(null);
+    public final ServiceEnvironment getServiceEnvironment() {
+        return env;
     }
 
-    public EventLoop(WaitSetProperty_t properties) {
-        waitSet = null == properties ? new WaitSet() : new WaitSet(properties);
-        waitSet.attach_condition(mutate);
-        waitSet.attach_condition(runnable);
-        conditionHandlers.put(mutate, mutateHandler);
-        conditionHandlers.put(runnable, runnableHandler);
+    public EventLoop(ServiceEnvironment env) {
+        this.env = env;
+        waitSet = WaitSet.newWaitSet(env);
+//        mutate = GuardCondition.newGuardCondition(env);
+//        runnable = GuardCondition.newGuardCondition(env);
+//        waitSet.attachCondition(mutate);
+//        waitSet.attachCondition(runnable);
+//        conditionHandlers.put(mutate, mutateHandler);
+//        conditionHandlers.put(runnable, runnableHandler);
     }
 
-    public boolean waitAndHandle(ConditionSeq condSeq, Duration_t dur) {
+    public boolean waitAndHandle(Duration dur) throws TimeoutException {
         // Only one thread at a time can currently service the event loop
-        long giveup = dur.is_infinite() ? Long.MAX_VALUE : (System.currentTimeMillis() + dur.sec * 1000L + dur.nanosec / 1000000L);
+        long giveup = dur.isInfinite() ? Long.MAX_VALUE : (System.currentTimeMillis() + dur.getDuration(TimeUnit.MILLISECONDS));
 
         long now = System.currentTimeMillis();
         synchronized(this) {
             while(currentServiceThread != null && now < giveup) {
-                if(dur.is_zero()) {
-                    throw new RETCODE_TIMEOUT("Timed out waiting to become service thread");
+                if(dur.isZero()) {
+                    log.debug("Timed out waiting to become service thread");
+                    return false;
                 }
                 try {
                     this.wait(giveup-now);
@@ -160,15 +170,16 @@ public class EventLoop  {
             currentServiceThread = Thread.currentThread();
         }
 
-        if(!dur.is_zero() && now >= giveup) {
-            throw new RETCODE_TIMEOUT("Timed out waiting to become service thread");
+        if(!dur.isZero() && now >= giveup) {
+            log.debug("Timed out waiting to become service thread");
+            return false;
         }
 
-        condSeq.clear();
         try {
-            waitSet.wait(condSeq, dur);
-            for(int i = 0; i < condSeq.size(); i++) {
-                Condition c = (Condition) condSeq.get(i);
+            Collection<Condition> activeConditions = waitSet.waitForConditions(dur);
+            Iterator<Condition> itr = activeConditions.iterator();
+            while(itr.hasNext()) {
+                Condition c = itr.next();
                 ConditionHandler ch = conditionHandlers.get(c);
                 if(null != ch) {
                     ch.conditionChanged(c);
@@ -176,8 +187,10 @@ public class EventLoop  {
                     log.warn("No ConditionHandler for Condition " + c);
                 }
             }
+            mutateHandler.conditionChanged(null);
+            runnableHandler.conditionChanged(null);
             return true;
-        } catch(RETCODE_TIMEOUT timeout) {
+        } catch(TimeoutException timeout) {
             return false;
         } finally {
             synchronized(this) {
@@ -200,7 +213,7 @@ public class EventLoop  {
             synchronized(queuedMutations) {
     //            log.debug("Queue add condition:"+condition);
                 queuedMutations.add(m);
-                mutate.set_trigger_value(true);
+//                mutate.setTriggerValue(true);
             }
             m.await();
         }
@@ -216,7 +229,7 @@ public class EventLoop  {
             synchronized(queuedMutations) {
     //            log.debug("Queue remove condition:"+condition);
                 queuedMutations.add(m);
-                mutate.set_trigger_value(true);
+//                mutate.setTriggerValue(true);
             }
             m.await();
         }
@@ -226,7 +239,7 @@ public class EventLoop  {
     public void doLater(Runnable r) {
         synchronized(queuedRunnables) {
             queuedRunnables.add(r);
-            runnable.set_trigger_value(true);
+//            runnable.setTriggerValue(true);
         }
     }
 

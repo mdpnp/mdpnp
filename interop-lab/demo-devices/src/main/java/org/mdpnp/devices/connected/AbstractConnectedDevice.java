@@ -7,49 +7,41 @@
  ******************************************************************************/
 package org.mdpnp.devices.connected;
 
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
+
 import ice.DeviceConnectivity;
-import ice.DeviceConnectivityDataWriter;
 import ice.DeviceConnectivityObjective;
-import ice.DeviceConnectivityObjectiveDataReader;
-import ice.DeviceConnectivityObjectiveSeq;
 import ice.DeviceConnectivityObjectiveTopic;
-import ice.DeviceConnectivityObjectiveTypeSupport;
 import ice.DeviceConnectivityTopic;
-import ice.DeviceConnectivityTypeSupport;
 
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.io.util.StateMachine;
+import org.omg.dds.core.Condition;
+import org.omg.dds.core.InstanceHandle;
+import org.omg.dds.pub.DataWriter;
+import org.omg.dds.sub.DataReader;
+import org.omg.dds.sub.ReadCondition;
+import org.omg.dds.sub.Sample;
+import org.omg.dds.sub.DataReader.Selector;
+import org.omg.dds.sub.SampleState;
+import org.omg.dds.topic.Topic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.infrastructure.Condition;
-import com.rti.dds.infrastructure.InstanceHandle_t;
-import com.rti.dds.infrastructure.RETCODE_NO_DATA;
-import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
-import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.InstanceStateKind;
-import com.rti.dds.subscription.ReadCondition;
-import com.rti.dds.subscription.SampleInfo;
-import com.rti.dds.subscription.SampleInfoSeq;
-import com.rti.dds.subscription.SampleStateKind;
-import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.ViewStateKind;
-import com.rti.dds.topic.Topic;
 
 public abstract class AbstractConnectedDevice extends AbstractDevice {
     protected final DeviceConnectivity deviceConnectivity;
-    protected final Topic deviceConnectivityTopic;
-    private InstanceHandle_t deviceConnectivityHandle;
-    private final DeviceConnectivityDataWriter deviceConnectivityWriter;
+    protected final Topic<ice.DeviceConnectivity> deviceConnectivityTopic;
+    private InstanceHandle deviceConnectivityHandle;
+    private final DataWriter<ice.DeviceConnectivity> deviceConnectivityWriter;
 
     protected final DeviceConnectivityObjective deviceConnectivityObjective;
-    protected final DeviceConnectivityObjectiveDataReader deviceConnectivityObjectiveReader;
+    protected final DataReader<ice.DeviceConnectivityObjective> deviceConnectivityObjectiveReader;
 //	protected final InstanceHandle_t deviceConnectivityObjectiveHandle;
-    protected final Topic deviceConnectivityObjectiveTopic;
-    private final ReadCondition rc;
+    protected final Topic<ice.DeviceConnectivityObjective> deviceConnectivityObjectiveTopic;
+    private final Selector<ice.DeviceConnectivityObjective> rc;
 
     protected final StateMachine<ice.ConnectionState> stateMachine = new StateMachine<ice.ConnectionState>(legalTransitions, ice.ConnectionState.Disconnected) {
         @Override
@@ -57,9 +49,13 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
             stateChanging(newState, oldState);
             log.debug(oldState + "==>"+newState);
             deviceConnectivity.state = newState;
-            InstanceHandle_t handle = deviceConnectivityHandle;
+            InstanceHandle handle = deviceConnectivityHandle;
             if(handle != null) {
-                writeDeviceConnectivity();
+                try {
+                    writeDeviceConnectivity();
+                } catch (TimeoutException e) {
+                    log.error("timed out writing device connectivity on change", e);
+                }
             }
             stateChanged(newState, oldState);
         };
@@ -73,7 +69,11 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         if(ice.ConnectionState.Connected.equals(oldState) && !ice.ConnectionState.Connected.equals(newState)) {
             eventLoop.doLater(new Runnable() {
                 public void run() {
-                    unregisterAllInstances();
+                    try {
+                        unregisterAllInstances();
+                    } catch (TimeoutException e) {
+                        log.error("Unable to unregister all instances where no longer in Connected state", e);
+                    }
                 }
             });
         }
@@ -83,30 +83,31 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 
     @Override
     public void shutdown() {
-        eventLoop.removeHandler(rc);
-        deviceConnectivityObjectiveReader.delete_readcondition(rc);
-        subscriber.delete_datareader(deviceConnectivityObjectiveReader);
-        domainParticipant.delete_topic(deviceConnectivityObjectiveTopic);
-        DeviceConnectivityObjectiveTypeSupport.unregister_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
+        eventLoop.removeHandler(rc.getCondition());
+        rc.getCondition().close();
+        deviceConnectivityObjectiveReader.close();
+        deviceConnectivityObjectiveTopic.close();
 
         if(null != deviceConnectivityHandle) {
-            InstanceHandle_t handle = deviceConnectivityHandle;
+            InstanceHandle handle = deviceConnectivityHandle;
             deviceConnectivityHandle = null;
-            deviceConnectivityWriter.dispose(deviceConnectivity, handle);
+            try {
+                deviceConnectivityWriter.dispose(handle, deviceConnectivity);
+            } catch (TimeoutException e) {
+                log.error("timed out disposing of deviceConnectivity", e);
+            }
 
         }
-        publisher.delete_datawriter(deviceConnectivityWriter);
-        domainParticipant.delete_topic(deviceConnectivityTopic);
-        DeviceConnectivityTypeSupport.unregister_type(domainParticipant, DeviceConnectivityTypeSupport.get_type_name());
+        deviceConnectivityWriter.close();
+        deviceConnectivityTopic.close();
         super.shutdown();
     }
 
 
     public AbstractConnectedDevice(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
-        DeviceConnectivityTypeSupport.register_type(domainParticipant, DeviceConnectivityTypeSupport.get_type_name());
-        deviceConnectivityTopic = domainParticipant.create_topic(DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        deviceConnectivityWriter = (DeviceConnectivityDataWriter) publisher.create_datawriter(deviceConnectivityTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceConnectivityTopic = domainParticipant.createTopic(ice.DeviceConnectivityTopic.value, ice.DeviceConnectivity.class);
+        deviceConnectivityWriter = publisher.createDataWriter(deviceConnectivityTopic);
 
         if(null == deviceConnectivityWriter) {
             throw new RuntimeException("unable to create writer");
@@ -116,31 +117,27 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         deviceConnectivity.type = getConnectionType();
         deviceConnectivity.state = ice.ConnectionState.Disconnected;
 
-        deviceConnectivityObjective = (DeviceConnectivityObjective) DeviceConnectivityObjective.create();
-        DeviceConnectivityObjectiveTypeSupport.register_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
-        deviceConnectivityObjectiveTopic = domainParticipant.create_topic(DeviceConnectivityObjectiveTopic.VALUE, DeviceConnectivityObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        deviceConnectivityObjectiveReader = (DeviceConnectivityObjectiveDataReader) subscriber.create_datareader(deviceConnectivityObjectiveTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceConnectivityObjective = new DeviceConnectivityObjective();
+        deviceConnectivityObjectiveTopic = domainParticipant.createTopic(ice.DeviceConnectivityObjectiveTopic.value, ice.DeviceConnectivityObjective.class);
+        deviceConnectivityObjectiveReader = subscriber.createDataReader(deviceConnectivityObjectiveTopic);
 
-        rc = deviceConnectivityObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+        rc = deviceConnectivityObjectiveReader.select().dataState(subscriber.createDataState().withAnyInstanceState().withAnyViewState().with(SampleState.NOT_READ));
+        ReadCondition<ice.DeviceConnectivityObjective> read = deviceConnectivityObjectiveReader.createReadCondition(rc.getDataState());
 
-        final DeviceConnectivityObjectiveSeq data_seq = new DeviceConnectivityObjectiveSeq();
-        final SampleInfoSeq info_seq = new SampleInfoSeq();
-
-        eventLoop.addHandler(rc, new EventLoop.ConditionHandler() {
+        eventLoop.addHandler(read, new EventLoop.ConditionHandler() {
 
             @Override
             public void conditionChanged(Condition condition) {
+                Sample.Iterator<ice.DeviceConnectivityObjective> itr = rc.read();
                 try {
-                    deviceConnectivityObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, rc);
-                    for(int i = 0; i < info_seq.size(); i++) {
-                        SampleInfo si = (SampleInfo) info_seq.get(i);
-                        if(si.valid_data) {
-                            DeviceConnectivityObjective dco = (DeviceConnectivityObjective) data_seq.get(i);
-                            if(deviceIdentity.unique_device_identifier.equals(dco.unique_device_identifier)) {
+                    while(itr.hasNext()) {
+                        Sample<ice.DeviceConnectivityObjective> sample = itr.next();
+                        if(null != sample.getData()) {
+                            if(deviceIdentity.unique_device_identifier.equals(sample.getData().unique_device_identifier)) {
 
-                                if(dco.connected) {
-                                    log.info("Issuing connect for " + deviceIdentity.unique_device_identifier + " to " + dco.target);
-                                    connect(dco.target);
+                                if(sample.getData().connected) {
+                                    log.info("Issuing connect for " + deviceIdentity.unique_device_identifier + " to " + sample.getData().target);
+                                    connect(sample.getData().target);
 
                                 } else {
                                     log.info("Issuing disconnect for " + deviceIdentity.unique_device_identifier);
@@ -149,11 +146,12 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
                             }
                         }
                     }
-
-                } catch (RETCODE_NO_DATA noData) {
-
                 } finally {
-                    deviceConnectivityObjectiveReader.return_loan(data_seq, info_seq);
+                    try {
+                        itr.close();
+                    } catch (IOException e) {
+                        log.error("unable to close DeviceConnectivity iterator", e);
+                    }
                 }
             }
 
@@ -202,7 +200,7 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         return stateMachine.wait(state, timeout);
     }
 
-    protected void setConnectionInfo(String connectionInfo) {
+    protected void setConnectionInfo(String connectionInfo) throws TimeoutException {
         if(null == connectionInfo) {
             // TODO work on nullity semantics
             log.warn("Attempt to set connectionInfo null");
@@ -215,20 +213,20 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
     }
 
     @Override
-    protected void writeDeviceIdentity() {
+    protected void writeDeviceIdentity() throws TimeoutException {
         super.writeDeviceIdentity();
         if(null == deviceConnectivityHandle) {
             writeDeviceConnectivity();
         }
     }
 
-    protected void writeDeviceConnectivity() {
+    protected void writeDeviceConnectivity() throws TimeoutException {
         deviceConnectivity.unique_device_identifier = deviceIdentity.unique_device_identifier;
         if(null == deviceConnectivity.unique_device_identifier || "".equals(deviceConnectivity.unique_device_identifier)) {
             throw new IllegalStateException("No UDI");
         }
         if(null == deviceConnectivityHandle) {
-            deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
+            deviceConnectivityHandle = deviceConnectivityWriter.registerInstance(deviceConnectivity);
         }
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
     }

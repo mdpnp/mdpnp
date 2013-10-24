@@ -7,13 +7,15 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
+import java.util.concurrent.TimeoutException;
+
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 
 public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice {
     protected Throwable t;
 
-    public AbstractSimulatedConnectedDevice(int domainId, EventLoop eventLoop) {
+    public AbstractSimulatedConnectedDevice(int domainId, EventLoop eventLoop) throws TimeoutException {
         super(domainId, eventLoop);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         writeDeviceIdentity();

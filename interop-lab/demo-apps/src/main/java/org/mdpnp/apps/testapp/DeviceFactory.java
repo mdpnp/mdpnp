@@ -1,6 +1,7 @@
 package org.mdpnp.apps.testapp;
 
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.devices.AbstractDevice;
@@ -27,7 +28,7 @@ import org.mdpnp.devices.simulation.temp.SimThermometer;
 
 public class DeviceFactory {
     public static final AbstractDevice buildDevice(DeviceType type, int domainId, EventLoop eventLoop)
-            throws NoSuchFieldException, SecurityException, IOException {
+            throws NoSuchFieldException, SecurityException, IOException, TimeoutException {
         switch (type) {
         case Nonin:
             return new DemoNoninPulseOx(domainId, eventLoop);
