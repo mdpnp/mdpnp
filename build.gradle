@@ -53,10 +53,9 @@ subprojects {
     version '0.1.4-SNAPSHOT'
     buildscript {
         repositories {
+
             // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
             maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-release-local' }
-
-            ivy {  artifactPattern 'http://gradle-macappbundle.googlecode.com/files/[module]-[revision].[ext]' }
 
             ivy {  artifactPattern 'http://gradle-launch4j.googlecode.com/files/[module]-[revision].[ext]' }
 
@@ -102,10 +101,15 @@ subprojects {
         // specifically javax.transaction.jta 1.0.1B only exists here in jar form (pom only in maven central)
         maven {  url 'http://download.java.net/maven/2/' }
 
-        maven {  url 'http://maven.eclipse.org' }
+
+
+        mavenLocal()
 
         // Fall back to maven central actual as necessary
-        mavenCentral();
+        mavenCentral()
+
+        // Is this a VERY slow maven repo?
+        // maven {  url 'http://maven.eclipse.org' }
     }
     if(project.hasProperty('MDPNP_WRITE_USER') && project.hasProperty('MDPNP_WRITE_PASSWORD')) {
         uploadArchives {

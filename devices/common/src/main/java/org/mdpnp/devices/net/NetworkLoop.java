@@ -1,4 +1,4 @@
-package org.mdpnp.devices.philips.intellivue;
+package org.mdpnp.devices.net;
 
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
@@ -9,7 +9,7 @@ import java.nio.channels.Selector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NetworkLoop {
+public class NetworkLoop implements Runnable {
     public enum LoopState {
         /**
          * No thread has invoked runLoop
@@ -96,18 +96,40 @@ public class NetworkLoop {
     }
 
     public SelectionKey register(NetworkConnection conn, SelectableChannel channel) throws ClosedChannelException {
-        pause("register a new connection");
-        SelectionKey key = channel.register(select, SelectionKey.OP_READ, conn);
-        conn.registered(this, key);
-        resume();
-        return key;
+        SelectionKey key = null;
+        synchronized(this) {
+            if(LoopState.New.equals(loopState)) {
+                key = channel.register(select, SelectionKey.OP_READ, conn);
+            }
+        }
+        if(null != key) {
+            conn.registered(this, key);
+            return key;
+        } else {
+            pause("register a new connection");
+            key = channel.register(select, SelectionKey.OP_READ, conn);
+            conn.registered(this, key);
+            resume();
+            return key;
+        }
     }
 
     public void unregister(SelectionKey key, NetworkConnection conn) {
-        pause("unregister a connection");
-        key.cancel();
-        conn.unregistered(this, key);
-        resume();
+        boolean canceled = false;
+        synchronized(this) {
+            if(LoopState.New.equals(loopState)) {
+                key.cancel();
+                canceled = true;
+            }
+        }
+        if(canceled) {
+            conn.unregistered(this, key);
+        } else {
+            pause("unregister a connection");
+            key.cancel();
+            conn.unregistered(this, key);
+            resume();
+        }
     }
 
 
@@ -261,5 +283,10 @@ public class NetworkLoop {
     }
     public void wakeup() {
         select.wakeup();
+    }
+
+    @Override
+    public void run() {
+        runLoop();
     }
 }

@@ -1,4 +1,4 @@
-package org.mdpnp.devices.philips.intellivue;
+package org.mdpnp.devices.net;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;

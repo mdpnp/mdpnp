@@ -14,6 +14,8 @@ import java.util.Date;
 import java.util.List;
 
 import org.mdpnp.devices.io.util.HexUtil;
+import org.mdpnp.devices.net.NetworkConnection;
+import org.mdpnp.devices.net.NetworkLoop;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataRequest;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataResult;
 import org.mdpnp.devices.philips.intellivue.action.SinglePollDataRequest;
