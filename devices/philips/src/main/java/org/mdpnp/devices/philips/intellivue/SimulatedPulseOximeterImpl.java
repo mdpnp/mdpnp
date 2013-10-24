@@ -8,6 +8,8 @@ import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 
 import org.mdpnp.devices.math.DCT;
+import org.mdpnp.devices.net.NetworkLoop;
+import org.mdpnp.devices.net.TaskQueue;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataRequest;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataResult;
 import org.mdpnp.devices.philips.intellivue.action.ObservationPoll;
