@@ -88,7 +88,6 @@ public class ScenarioSearchPanel extends Composite {
 	private static final String STYLE_TABLEROWOTHER = "tableRowOther";
 	private static final String STYLE_USERLISTHEADER = "userListHeader";
 	
-
 	
 	private static ScenarioSearchPanelUiBinder uiBinder = GWT.create(ScenarioSearchPanelUiBinder.class);
 	private TagRequestFactory tagRequestFactory = GWT.create(TagRequestFactory.class);//TICKET-157
@@ -1413,7 +1412,9 @@ public class ScenarioSearchPanel extends Composite {
 	
 	@UiHandler("buttonSearchByTags")
 	public void onClickButtonSearchByTags(ClickEvent clickEvent) {	
-		Set<String> associatedTags = new HashSet<String>() ;
+		hideAllSearchPanels();
+		Set<String> checkedTags = new HashSet<String>() ;
+		String headline = "Search results for scenaros tagged with:"; 
 		for(int i=0;i<tagSearchTable.getRowCount();i++){
 			for(int j=0;j<(TAGS_SEARCH_NUM_COLS*2);j+=2){
 				//even numbers are checkboxes, odd are labels
@@ -1422,35 +1423,55 @@ public class ScenarioSearchPanel extends Composite {
 					Widget wLabel = tagSearchTable.getWidget(i, j+1);
 					if(wCheck instanceof CheckBox && ((CheckBox) wCheck).getValue()){
 						if(wLabel instanceof Label){
-							associatedTags.add(((Label) wLabel).getText());
+							checkedTags.add(((Label) wLabel).getText().toLowerCase());
+							headline += " "+((Label) wLabel).getText() +",";
 						}
 					}
 				}
 
 			}			
 		}
-		doSearchByTags(associatedTags);
+		if(headline.indexOf(",")>0)
+			headline = headline.substring(0, headline.length()-1)+".";
+		else
+			headline += " <no tag selected>";
+		searchResultCaption.setText(headline);
+		searchResultCaption.setVisible(true);
+		doSearchByTags(checkedTags);
 	}
 	
-	private void doSearchByTags(Set<String> associatedTags){
+	private void doSearchByTags(final Set<String> checkedTags){
 		cleanScenarioTable();
-		hideAllSearchPanels();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
-		scenarioRequest.searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED)
+		
+		Set<String> statusSet = new HashSet<String>();
+		statusSet.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+		statusSet.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+		statusSet.add(ScenarioPanel.SCN_STATUS_APPROVED);
+		scenarioRequest.searchByStatus(statusSet)
 		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
 		.to(new Receiver<List<ScenarioProxy>> () {
 
 			@Override
 			public void onSuccess(List<ScenarioProxy> result) {
 				List <ScenarioProxy> filteredResults = new ArrayList<ScenarioProxy>();
-				if(null==result){ 
+				if(null==result || result.size()==0){ 
 					status.setVisible(false); 
 				}else{
-					for(ScenarioProxy scn : result)
-						filteredResults.add(scn);
+					//TODO filter approved scenarios containing the selected tags
+					//filter results whose tags are not in associatedTags
+					for(ScenarioProxy scn : result){
+						Set<String> associatedTags = scn.getAssociatedTags();						
+						if(null!=associatedTags && associatedTags.size()>0){
+							associatedTags.retainAll(checkedTags);//associatedTags has now the INTERSECTION of both sets
+							if(associatedTags.size() >0){
+								filteredResults.add(scn);
+							}
+						}
+					}
+						
 				}
-				//TODO filter approved scenarios containing the selected tags
-				//filter results whose tags are not in associatedTags
+
 				resetGridAuxVar(filteredResults);
 				drawScenariosListGrid(filteredResults);
 				

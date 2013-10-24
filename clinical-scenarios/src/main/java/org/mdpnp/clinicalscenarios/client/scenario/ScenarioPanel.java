@@ -229,7 +229,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		return -1;	
 	}
 	
-	private static final String[] hazardSeverity = new String[] {"Unknown", "Mild", "Moderate", "Severe", "Life Threatening", "Fatal"};
+//	private static final String[] hazardSeverity = new String[] {"Unknown", "Mild", "Moderate", "Severe", "Life Threatening", "Fatal"};
+	private static final String[] hazardSeverity = new String[] {"Unknown", "No Harm", "Mild", "Moderate", "Severe", "Permanent Harm", "Life Threatening", "Fatal"};
 	public static String[] getHazardSeverityValues(){
 		return hazardSeverity;
 	}
@@ -312,7 +313,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private static Label labelEquipmentDeviceType = new Label("Device Type");
 	private static Label labelEquipmentManufacturer = new Label("Manufacturer");
 	private static Label labelEquipmentModel = new Label("Model");
-	private static Label labelEquipmentRosettaId = new Label("Rosetta ID");
+	private static Label labelEquipmentRosettaId = new Label("Rosetta/Unique ID");
 	private static Label labelEquipmentProblemDescrp = new Label("Problem Description");
 	private static Label labelEquipmentTrainingProblem = new  Label("Training Related Problem");
 	private static Label labelEquipmentInstructionsProblem = new  Label("Instructions Related Problem");
@@ -372,7 +373,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	//Labels for the header row of the HAZARDS table. We are using the static block
 	// to initialize some of the labels properties, such as the title/tooltip of them
 	private final static Label labelHazardDescription = new Label("Description");
-	private final static Label labelHazardFactors = new Label("Factors");
+	private final static Label labelHazardFactors = new Label("Contributing Factors");
 	private final static Label labelHazardsExpected = new Label("Expected Risk");
 	private final static Label labelHazardsSeverity = new Label("Severity");
 	
@@ -396,9 +397,12 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		labelHazardsSeverity.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
 				DialogBox md = new DialogBox(true);
-				md.setHTML("<ul><li><b>Mild</b>: Barely noticeable, does not influence functioning, causing no limitations of usual activities</li>" +
+				md.setHTML("<ul>" +
+						"<li><b>No Harm</b>: An undesiderable event occurred, but either did not reach the patient or no harm was evident</li>" +
+						"<li><b>Mild</b>: Barely noticeable, transient anxiety, pain, or physical discomfort that does not influence functioning or causes limitations of usual activities</li>" +
 						"<li><b>Moderate</b>: Makes patient uncomfortable, influences functioning, causing some limitations of usual activities</li>" +
-						"<li><b>Severe</b>: Severe discomfort, treatment needed, severe and undesirable, causing inability to carry out usual activities</li>" +
+						"<li><b>Severe</b>: Severe discomfort, aditional intervention or treatment needed, severe and undesirable harm, causing inability to carry out usual activities</li>" +
+						"<li><b>Permanent Harm</b>: Lifelong bodily or psychological injury or increased susceptibility to disease</li>" +
 						"<li><b>Life Threatening</b>: Immediate risk of death, life threatening or disabling</li>" +
 						"<li><b>Fatal</b>: Causes death of the patient</li></ul>");
 				md.showRelativeTo(labelHazardsSeverity);
@@ -472,7 +476,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private final void buildTagsTable(boolean isDrawnNew){
 		tagsAssociatedTable.clear();
 		tagsScrollPanel.setHeight("0px");
-		if(isDrawnNew ||userRole==UserRole.AnonymousUser
+		if(isDrawnNew //||userRole==UserRole.AnonymousUser
 				|| !(currentScenario.getStatus().equals(SCN_STATUS_APPROVED) ||
 				currentScenario.getStatus().equals(SCN_STATUS_MODIFIED) ||
 				currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST) )){
@@ -2256,7 +2260,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					Widget wLabel = tagsAssociatedTable.getWidget(i, j+1);
 					if(wCheck instanceof CheckBox && ((CheckBox) wCheck).getValue()){
 						if(wLabel instanceof Label){
-							associatedTags.add(((Label) wLabel).getText());
+							associatedTags.add(((Label) wLabel).getText().toLowerCase());
 						}
 					}
 				}

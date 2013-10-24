@@ -122,7 +122,7 @@ public class UserInfo implements java.io.Serializable {
     private String title;
     private String givenName;
     private String familyName;
-    private String highestLevelOfEducation;
+    private String highestLevelOfEducation;//XXX ??What's this for?
     private String company;
     private String jobTitle;
     private String yearsInField;
