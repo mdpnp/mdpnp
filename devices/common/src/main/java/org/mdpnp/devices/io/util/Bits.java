@@ -1,6 +1,7 @@
 package org.mdpnp.devices.io.util;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public class Bits {
     private Bits() {
@@ -68,5 +69,9 @@ public class Bits {
         System.out.println("Style 1 took " + (System.currentTimeMillis()-one) + "ms");
 
 
+    }
+
+    public static void putUnsignedInt(byte[] bytes, long address) {
+        ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).putInt((int)(0xFFFFFFFF&address));
     }
 }
