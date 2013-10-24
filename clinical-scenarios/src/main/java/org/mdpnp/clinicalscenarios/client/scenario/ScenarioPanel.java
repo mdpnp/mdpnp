@@ -1779,7 +1779,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	}
 	@UiHandler("benefitsExample")
 	void onBClick(ClickEvent click) {
-		String header = "\"Benefits\" describes obstales to efficiency, temawork or safety that could be aliminated with the proposed system.";
+		String header = "\"Benefits\" describes obstacles to efficiency, teamwork or safety that could be aliminated with the proposed system.";
 		String example ="Example: Add error resistance to the x-ray procedure by eliminating the dependence on the operator (e.g. anesthesia provider) to remember to turn the ventilator back on. Shorten or eliminate the period of apnea, thereby reducing potentially adverse responses to apnea; and Provide the ability to synchronize x-ray exposure with inspiratory hold, without requiring anyone to be present in the x-ray exposure area to manually generate sustained inspiration.";
 		MyDialog md = new MyDialog(header, example);
 //		MyDialog md = new MyDialog("Benefits Example", "Add error resistance to the x-ray procedure by eliminating the dependence on the operator (e.g. anesthesia provider) to remember to turn the ventilator back on. Shorten or eliminate the period of apnea, thereby reducing potentially adverse responses to apnea; and Provide the ability to synchronize x-ray exposure with inspiratory hold, without requiring anyone to be present in the x-ray exposure area to manually generate sustained inspiration");
