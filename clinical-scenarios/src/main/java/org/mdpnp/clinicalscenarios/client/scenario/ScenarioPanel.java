@@ -477,7 +477,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			tagsLabel.setText("The scenario needs to be APPROVED before any keyword can be tagged");
 		}else{
 			tagsLabel.setText("Loading Keywords...");
-			final boolean tagable = editable && userRole==UserRole.Administrator 
+			final boolean tagable = /* editable && TICKET-192 */ userRole==UserRole.Administrator 
 					&&(currentScenario.getStatus().equals(SCN_STATUS_APPROVED) ||
 							currentScenario.getStatus().equals(SCN_STATUS_MODIFIED) ||
 							currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST) );
@@ -1062,7 +1062,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		}
 		//6 Add Tags to Scenario
 		//XXX This condition could be approved (or post approved) + no unregistered user 
-		boolean tagable = editable && userRole==UserRole.Administrator 
+		boolean tagable = /* editable && XXX TICKET-192 */ userRole==UserRole.Administrator 
 				&&(currentScenario.getStatus().equals(SCN_STATUS_APPROVED) ||
 						currentScenario.getStatus().equals(SCN_STATUS_MODIFIED) ||
 						currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_POST) );

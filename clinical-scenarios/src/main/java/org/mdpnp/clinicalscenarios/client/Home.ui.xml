@@ -22,19 +22,19 @@
 
 	<p class="welcomeText">The aim of this open repository of Clinical Scenarios Website is to provide a web-based user interface that will allow clinicians, clinical engineers, and other users to enter, revise, annotate, and maintain clinical scenarios, thus identifying specific clinical and technical challenges.</p>
 	
-	<p class="welcomeText">The Clinical Scenario Repository, developed by the <a href="http://www.mdpnp.org/" target="_blank">MD PnP</a> Program under TATRC award W81XWH-09-1-0705, is currently a <em>beta</em> version. This pilot repository is still assessing stability, usability and is being upgraded regularly (Any feedback is appreciated).</p>
+	<p class="welcomeText">The Clinical Scenario Repository, developed by the <a href="http://www.mdpnp.org/" target="_blank">MD PnP</a> Program under TATRC award W81XWH-09-1-0705, is currently a <em>beta</em> version. This pilot repository is still assessing stability, usability and is being upgraded regularly (Any feedback is welcomed and appreciated).</p>
 
 	<p class="welcomeText">Current repository version is Version 0.9.6. Latest update on 10/28/2013</p>
 	
-	<h3>Benefits of registration.</h3> 
+	<h3>Benefits of Registration</h3> 
 	<p class="welcomeText">Registering is easy and free. All you need is and openId provider (Right now, you can use your Google, Yahoo, Aol, MySpace or MyOpenId account). You can use that provider when clicking "Sign In". We don't request from it anything beyond your email, but rest assured we won't share your email or any other information with third parties.</p>
 	<p class="welcomeText">Although any visitor can view the approved scenarios without logging into the website, <em>registered users</em> are allowed enhanced functionality such as submitting a scenario for approval or exporting search results or specific scenarios. Use the "Sign in" button on the webpage to log in/register.</p>
 
-	<h3>Disclaimer.</h3> 
+	<h3>Disclaimer</h3> 
 	<p class="welcomeText">The MD PnP program hosts this website to promote a shareable data base of clinical scenarios. Users are responsible for the content they submit or retrieve from this website and the consequences of the use of such information. No protected health information, such as names of individuals or institutions, or defamatory information is allowed in the submission of clinical scenarios.</p>
-	<p class="welcomeText">This website does not substitute other websites or organizations for hazards reporting obligations, such as the FDA's reporting system. We appreciate all collaborations, but depending on the implications of the hazard discovered, you may want to or may be legally obliged to report them to the appropriate organisms.</p>
+	<p class="welcomeText">This website does not substitute, nor intends to substitute, other websites or medico-legal regulatory organizations’ procedures for event or hazard reporting obligations, such as the FDA's reporting system. We appreciate all collaborations, but depending on the implications of the hazard discovered or nature of the event, you may want to or may be legally obliged to report them to the appropriate organisms.</p>
 	
-	<h3>Contact us.</h3> 
+	<h3>Contact us</h3> 
 	<p class="welcomeText">Click 
 	    <a href="mailto:md.pnp.team@gmail.com?Subject=Clincical%20Scenario%20Repository" target="_top">here</a> 
 	    to contact the Clinical Scenario Repository Administrators</p>
