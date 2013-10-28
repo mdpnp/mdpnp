@@ -763,9 +763,42 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * XXX Careful with circular calls selectTab->save->setScenario->selectTab(0)
 	 */
 	public void selectFirstTab(){
+		editable = false;//prevent save() call due to SelectionHandler and so funny behavior
+		/**
+		 * This editable = false condition is here to prevent the following behavior:
+		 *  In case that we are in an editable scenario, in a tab different from the first one, when
+		 *  we move to a different scenario this selectFirstTab() method is called. Since we have a 
+		 *  SelectionHandler attached to the tabPanel, this method will fire the handler event.
+		 *  
+		 *  The effect is that we see the new selected scenario briefly and the it changes to the old one,
+		 *  because the save() method from the tabSelection also performs a setCurrentScenario, with the information
+		 *  of the (old/previous) scenario being saved.
+		 */
+		
 		if(tabPanel.getTabBar().getSelectedTab()!=0)
 			tabPanel.selectTab(0);
+
 	}
+	/**
+	 * Listener for when the tabs are clicked (user moves to a different tab).
+	 * Should save the current scenario. Dependig on the tab we are some properties (style) change
+	 */
+	SelectionHandler<Integer> tabPanelSelectionHandler = new SelectionHandler<Integer>() {			
+		@Override
+		public void onSelection(SelectionEvent<Integer> event) {
+			if(currentScenario != null){					 
+				save();
+			}
+			//TICKET-165
+			if(event.getSelectedItem().equals(new Integer(HAZARDS_TAB_POS)) ){
+//					||event.getSelectedItem().equals(EQUIPMENT_TAB_POS)){//XXXX ???
+				tabPanel.setWidth("80%"); 
+			}else{
+				tabPanel.setWidth("60%"); //TICKET-165
+			}
+				
+		}
+	};
 	
 	//constructor
 	public ScenarioPanel(final ScenarioRequestFactory scenarioRequestFactory) {
@@ -793,23 +826,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		algorithmDescription.addChangeHandler(saveOnChange);
 		
 		//Listener for when the tabs are clicked (user moves to a different tab)
-		tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {			
-			@Override
-			public void onSelection(SelectionEvent<Integer> event) {
-				if(currentScenario != null){					 
-					save();
-					
-				}
-				//TICKET-165
-				if(event.getSelectedItem().equals(new Integer(HAZARDS_TAB_POS)) ){
-//						||event.getSelectedItem().equals(EQUIPMENT_TAB_POS)){//XXXX ???
-					tabPanel.setWidth("80%"); 
-				}else{
-					tabPanel.setWidth("60%"); //TICKET-165
-				}
-					
-			}
-		});
+		tabPanel.addSelectionHandler(tabPanelSelectionHandler);
 //		tabPanel.setWidth("80%"); //TICKET-165
 		hazardsTable.setWidth("100%");
 		
@@ -1013,9 +1030,17 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			if(currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE)){
 				returnScnButton.setVisible(true);
 				rejectScnButton.setVisible(true);
+				feedbackBodyLabel.setVisible(true);//ticket-190
+				feedbackSubjectLabel.setVisible(true);
+				feedback.setVisible(true);
+				feedbackLabel.setVisible(true);
 			}else{
 				returnScnButton.setVisible(false);
 				rejectScnButton.setVisible(false);
+				feedbackBodyLabel.setVisible(false);//ticket-190
+				feedbackSubjectLabel.setVisible(false);
+				feedback.setVisible(false);
+				feedbackLabel.setVisible(false);
 			}
 
 		}else{
@@ -1079,6 +1104,18 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	@UiField
 	@Ignore
 	TextArea feedback;//feedback for Scn approval / rejection
+	
+	@UiField
+	@Ignore
+	Label feedbackSubjectLabel;//Ticket-190
+	
+	@UiField
+	@Ignore
+	Label feedbackBodyLabel;//Ticket-190
+	
+	@UiField
+	@Ignore
+	Label feedbackLabel;//Ticket-190
 		
 	@UiField
 	@Path("background.currentState")
@@ -1968,6 +2005,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 //		Window.open("./mdpnp.jpg", "_blank", ""); 
 //	}
 	
+
 	@UiField
 	Button approveScnButton; 	//button to approve the scn
 	
@@ -1977,7 +2015,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 		boolean confirm = Window.confirm("Are you sure you want to APPROVE this scenario?");
 		if(confirm){
-			String subject ="Your scenario "+currentScenario.getTitle()+" has been approved";
+			String subject ="Your scenario \""+currentScenario.getTitle()+"\" has been approved";
 			String message = "Your scenario \""+currentScenario.getTitle()+"\" has been approved by the MD PnP Clinical Scenario Repository Administrators.\n"
 			+"Thank you for your submission.";
 			message += "\n\n"+feedback.getText();
@@ -2043,7 +2081,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 		boolean confirm = Window.confirm("Are you sure you want to RETURN this scenario?");
 		if(confirm){
-			String subject ="Requested clarification for your scenario "+currentScenario.getTitle();
+			String subject ="Requested clarification for your scenario \""+currentScenario.getTitle()+"\".";
 			String message = "The MD PnP Clinical Scenario Repository Administrators " +
 					"have requested further clarification for your scenario "+currentScenario.getTitle()
 					+".\n Please see the comments below \n";

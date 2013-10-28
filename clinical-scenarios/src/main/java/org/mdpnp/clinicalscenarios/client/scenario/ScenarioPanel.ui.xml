@@ -30,6 +30,9 @@
 			font-weight: bold;
 			font-size:16pt;
 		}
+		.paddingTop{
+			padding-top:10px;
+		}
 
 	</ui:style>
 	<g:DockPanel>
@@ -181,8 +184,12 @@
 	    
 	<g:Tab text="Approve or Reject">
 	  <g:FlowPanel>
-	    <g:HTML><h2>Approve or Reject Scenario</h2></g:HTML>
-	    <g:Label text='Feedback for submitter (if any):'/>
+	    <g:HTML><h2>Approve / Return / Reject the Scenario</h2></g:HTML>
+
+	    <g:Label ui:field='feedbackSubjectLabel' text='Subject: Your scenario XYZ has been approved - OR - Requested clarification for your scenario XYZ' />
+	    <g:Label ui:field='feedbackBodyLabel' text='Body: Your scenario XYZ has been approved by the MD PnP Clinical Scenario Repository Administrators. - OR - The MD PnP Clinical Scenario Repository Administrators have requested further clarification for your scenario XYZ'/>
+	    
+	    <g:Label ui:field='feedbackLabel' text='Feedback for submitter (if any):' styleName='{style.paddingTop}'/>
 	    <g:TextArea ui:field='feedback' visibleLines='10' characterWidth='50' styleName='{style.verywide}'/>                
 	    <g:Button text='Approve Scenario' ui:field='approveScnButton' styleName='{style.givemespace}'/>
 	    <g:Button text='Return Scenario' ui:field='returnScnButton' styleName='{style.givemespace}'/>
