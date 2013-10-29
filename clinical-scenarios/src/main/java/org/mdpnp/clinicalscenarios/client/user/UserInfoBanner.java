@@ -163,7 +163,7 @@ public class UserInfoBanner extends Composite {
 		searchByTags.setTitle("Fing scenarios tagged with the selected keywords");
 		search.addItem(searchByTags);
 		showLatestSearch.setTitle("Retrieve the previous search results");
-		search.addItem(showLatestSearch);
+//		search.addItem(showLatestSearch); TODO Fix ticket-146 before allowing this functionality
 
 		UserInfoRequest userInfoRequest = userInfoRequestFactory.userInfoRequest();
 		userInfoRequest.findCurrentUserInfo(Window.Location.getHref(), true).with("loginURL").to(new Receiver<UserInfoProxy>() {

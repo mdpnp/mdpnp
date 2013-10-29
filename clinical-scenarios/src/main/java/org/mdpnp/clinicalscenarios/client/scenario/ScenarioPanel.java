@@ -488,7 +488,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 					
 					@Override
 					public void onSuccess(List<TagProxy> response) {
-						tagsLabel.setText("");
+						if(userRole==UserRole.Administrator)
+							tagsLabel.setText("");
+						else
+							tagsLabel.setText("Only Repository Administrators can tag a scenario");
+						
 						Set<String> associatedTags = currentScenario.getAssociatedTags().getAssociatedTagNames();
 						int indexRow = 0;
 						int indexCol = 0;
@@ -1951,10 +1955,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			return;
 		}
 		//TICKET-115
-		if(titleEditor.getText().trim().equals("") ||
-				currentStateEditor.getText().trim().equals("") ||
-				proposedStateEditor.getText().trim().equals("")){
-			String t = "The sceanrio \"Title\", \"Current State\" and \"Proposed State\" (see the \"Sceanrio Description\" tab) are MANDATORY fields." +
+		if(titleEditor.getText().trim().equals("") 
+				|| currentStateEditor.getText().trim().equals("")
+				/* || proposedStateEditor.getText().trim().equals("") TICKET-189*/ ){
+			String t = "The sceanrio \"Title\" and the \"Current State\" (see the \"Scenario Description\" tab) are MANDATORY fields." +
 					" \nPlease complete this information";
 			Window.alert(t);
 			return;
