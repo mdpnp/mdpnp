@@ -1,0 +1,25 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+ 	/*	.tableHeader { 
+   			background-color: #2062B8;
+  			color: white;
+   			font-style: italic; 
+ 		} */
+
+		.verywide {
+			width:98%;
+		}
+		.givemespace {
+			margin:10px;
+		}
+	</ui:style>
+	<g:FlowPanel>
+		<g:Label text='Feedback' styleName='heading'/>
+		<g:Label text='Please, give us your opinion and/or advice about the Clinical Scenario Repository'/>
+		<g:TextArea ui:field="feedbackEditor" visibleLines="10" characterWidth="80" styleName='{style.verywide}'/>
+		<g:Button text='Send' ui:field='sendFeedbackButton' styleName='{style.givemespace}' />
+	</g:FlowPanel>
+	
+</ui:UiBinder> 
