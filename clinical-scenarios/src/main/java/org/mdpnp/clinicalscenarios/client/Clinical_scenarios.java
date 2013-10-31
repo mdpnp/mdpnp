@@ -3,6 +3,9 @@ package org.mdpnp.clinicalscenarios.client;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.mdpnp.clinicalscenarios.client.feedback.FeedbackProxy;
+import org.mdpnp.clinicalscenarios.client.feedback.FeedbackRequestFactory;
+import org.mdpnp.clinicalscenarios.client.feedback.UserFeedbackPanel;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioProxy;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioRequestFactory;
@@ -33,6 +36,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 	private final UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
 	private final ScenarioRequestFactory scenarioRequestFactory = GWT.create(ScenarioRequestFactory.class);
 	private final TagRequestFactory tagRequestFactory = GWT.create(TagRequestFactory.class);
+	private final FeedbackRequestFactory feedbackRequestFactory = GWT.create(FeedbackRequestFactory.class);
 	
 	private ScenarioPanel scenarioPanel;
 	private UserInfoBanner userInfoBanner;
@@ -41,6 +45,8 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 	private ScenarioSearchPanel scenarioSearchPanel;
 	private ScenarioSearchPanel scenarioListPanel;
 	private TagsManagementPanel tagsManagementPanel;
+	private UserFeedbackPanel userFeedbackPanel;
+	
 	private Home homePanel = new Home();
 	private DockPanel wholeApp = new DockPanel();
 	private DeckPanel contents = new DeckPanel();
@@ -63,6 +69,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		scenarioRequestFactory.initialize(eventBus);
 		userInfoRequestFactory.initialize(eventBus);
 		tagRequestFactory.initialize(eventBus);
+		feedbackRequestFactory.initialize(eventBus);
 		
 		scenarioPanel = new ScenarioPanel(scenarioRequestFactory);
 		
@@ -73,12 +80,22 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoSearchPanel = new UserInfoSearchPanel(userInfoRequestFactory);
 		userInfoBanner = new UserInfoBanner(userInfoRequestFactory, this);
 		
+		
 		tagsManagementPanel = new TagsManagementPanel(tagRequestFactory);// Tags
 		tagsManagementPanel.setSaveHandler(new TagsManagementPanel.SaveHandler(){
 			@Override
 			public void onSave(TagProxy tagProxy) {
 				tagsManagementPanel.setCurrentTag(tagProxy);
 			}			
+		});
+		
+		userFeedbackPanel = new UserFeedbackPanel(feedbackRequestFactory);//User feedback panel
+		userFeedbackPanel.setSaveHandler(new UserFeedbackPanel.SaveHandler() {
+			@Override
+			public void onSave(FeedbackProxy feedbackProxy) {
+				userFeedbackPanel.setCurrentFeedbackProxy(feedbackProxy);
+				
+			}
 		});
 
 
@@ -285,6 +302,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		contents.add(scenarioListPanel);
 		contents.add(userInfoPanel);
 		contents.add(tagsManagementPanel);
+		contents.add(userFeedbackPanel);
 
 		userInfoBanner.getListUsers().setScheduledCommand(new Command() {
 
@@ -305,9 +323,23 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 				
 			}
 		});
+		
+		//User Feedback Button Panel
+		userInfoBanner.getSendFeedback().setScheduledCommand(new Command() {
+			
+			@Override
+			public void execute() {
+				String userEmail = userInfoBanner.getUserEmail();
+				if(null!=userEmail && !userEmail.trim().equals(""))
+					userFeedbackPanel.setUserEmail(userEmail);
+				else
+					userFeedbackPanel.setUserEmail("Anonymous user");
+				userFeedbackPanel.initialize();
+				showWidget(userFeedbackPanel);	
+			}
+		});
+		
 		showWidget(homePanel);
-		
-		
 		RootPanel.get().add(wholeApp);
 	}
 
@@ -320,6 +352,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 	@Override
 	public void onSearchResult(ScenarioProxy sp) {
 		scenarioPanel.selectFirstTab();
+		scenarioPanel.cleanStatusLabel();
 		scenarioPanel.setCurrentScenario(sp);
 		showWidget(scenarioPanel);
 	}

@@ -458,7 +458,7 @@ public class ScenarioSearchPanel extends Composite {
 						filteredResult.add(it.next());
 					}
 					
-					Window.alert(" "+filteredResult.size());
+//					Window.alert(" "+filteredResult.size());
 					resetGridAuxVar(filteredResult);
 					drawScenariosListGrid(filteredResult);
 					
@@ -768,7 +768,7 @@ public class ScenarioSearchPanel extends Composite {
 	    
 	    //TICKET-163
 	    Label lbl_acks = new Label("# ACKs");
-	    lbl_acks.setTitle("Displays nunber of registered users that aclnowledge the content of the scenario");
+	    lbl_acks.setTitle("Displays number of registered users that acknowledged the content of the scenario");
 	    lbl_acks.addStyleName(STYLE_CLICKABLE);
 	    lbl_acks.addClickHandler(new ClickHandler() {			
 			@Override

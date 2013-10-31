@@ -24,7 +24,7 @@
 	
 	<p class="welcomeText">The Clinical Scenario Repository, developed by the <a href="http://www.mdpnp.org/" target="_blank">MD PnP</a> Program under TATRC award W81XWH-09-1-0705, is currently a <em>beta</em> version. This pilot repository is still assessing stability, usability and is being upgraded regularly (Any feedback is welcomed and appreciated).</p>
 
-	<p class="welcomeText">Current repository version is Version 0.9.6.2. Latest update on 10/29/2013</p>
+	<p class="welcomeText">Current repository version is Version 0.9.6.3. Latest update on 10/31/2013</p>
 	
 	<h3>Benefits of Registration</h3> 
 	<p class="welcomeText">Registering is easy and free. All you need is and openId provider (Right now, you can use your Google, Yahoo, Aol, MySpace or MyOpenId account). You can use that provider when clicking "Sign In". We don't request from it anything beyond your email, but rest assured we won't share your email or any other information with third parties.</p>

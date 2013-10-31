@@ -686,8 +686,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			Widget w = referencesTable.getWidget(row, REFERENCE_TEXT_COL);
 			if(w instanceof TextArea){
 				String ref = ((TextArea) w).getText();
-				if(!ref.trim().equals(""))
-					currentScenario.getReferences().getLinkedRefenrences().add(ref);
+				if(!ref.trim().equals("")){
+//					XXX trim initial "http://"
+					int pos = ref.indexOf("http://");
+					String reference = pos>= 0 ? ref.substring(pos+7) : ref; 
+//					currentScenario.getReferences().getLinkedRefenrences().add(ref);
+					currentScenario.getReferences().getLinkedRefenrences().add(reference);
+				}
 			}
 		}
 	}
@@ -767,6 +772,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	 * XXX Careful with circular calls selectTab->save->setScenario->selectTab(0)
 	 */
 	public void selectFirstTab(){
+		boolean tempEditable = editable;
 		editable = false;//prevent save() call due to SelectionHandler and so funny behavior
 		/**
 		 * This editable = false condition is here to prevent the following behavior:
@@ -781,11 +787,13 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		
 		if(tabPanel.getTabBar().getSelectedTab()!=0)
 			tabPanel.selectTab(0);
-
+		
+		editable = tempEditable;//return original value
 	}
+	
 	/**
 	 * Listener for when the tabs are clicked (user moves to a different tab).
-	 * Should save the current scenario. Dependig on the tab we are some properties (style) change
+	 * Should save the current scenario. Depending on the tab we are some properties (style) change
 	 */
 	SelectionHandler<Integer> tabPanelSelectionHandler = new SelectionHandler<Integer>() {			
 		@Override
@@ -882,7 +890,16 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		rejectScnButton.setTitle("Reject this scenario if is not even worth asking for submiter's clarification, but want to keep it instead of delete. Can NOT be undone");
 		returnScnButton.setTitle("Return this scenario to the submitter for clarification.");
 		approveScnButton.setTitle("Validate this scenario and make it available to all users.");
+		ackButton.setTitle("Click this button to acknowledge the importance of this scenario or if you have experienced or heard of a vary similar problem");
+		lockButton.setTitle("Locks/Unlocks the scenario to allow modification of its content");
 					
+	}
+	
+	/**
+	 * Cleans / erases the value of the status label
+	 */
+	public void cleanStatusLabel(){
+		status.setText("");
 	}
 	
 	/**
@@ -945,6 +962,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	                		Window.alert("Please, Sign In to create new Scenarios");
 	                		titleEditor.setText("Please sign in to create new Clinical Scenarios");
 	                	}
+	                	
 	                    logger.info(""+response.getBackground());
 	                    ScenarioRequest context = scenarioRequestFactory.scenarioRequest();
 	                    ScenarioProxy currentScenario = context.edit(response); 
@@ -954,7 +972,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	                    //after the Entity has been succesfully created, we populate the widgets w/ the entity info and draw it
 	        			configureComponents();  
 	        			buildTabsTables(true);//Ticket-175 build tables AFTER "editable" has been checked on configureComponents()
-	    			    status.setText("");
 	    			    uniqueId.setText("");	
 	                }
 	                
@@ -971,7 +988,6 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
             this.currentScenario = currentScenario;
     		if(currentScenario.getId()!=null)
     			uniqueId.setText("Scenario Unique ID: "+String.valueOf(currentScenario.getId()));  		
-
     		configureComponents();//XXX Maybe configureComponents() should be called inside buildTabsTables
     		buildTabsTables(false);//Ticket-175 build tables AFTER "editable" has been checked on configureComponents()
 		}

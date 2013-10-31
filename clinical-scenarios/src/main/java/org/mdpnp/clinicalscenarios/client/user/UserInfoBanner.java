@@ -60,7 +60,8 @@ public class UserInfoBanner extends Composite {
 	private MenuItem listMyScn = new MenuItem("My Scenarios", NOOP);//List Scn for registered users
 	private MenuItem listApprvScn = new MenuItem("All Approved Scenarios", NOOP);//list of Approved Scn for Anonymous/registered users
 	private MenuItem createNewScn = new MenuItem("Create New Scenario", NOOP);//Ticket-102 Must be independent in the menu bar
-		 
+	private MenuItem sendFeedback = new MenuItem("Feedback", NOOP);
+	
 	private MenuItem goBackHome = new MenuItem("Go to Homepage", NOOP);//go back to home page
 	
 	private UserInfoProxy userInfo;
@@ -118,6 +119,9 @@ public class UserInfoBanner extends Composite {
 	
 	public MenuItem getCreateNewScenario(){
 		return createNewScn;
+	}
+	public MenuItem getSendFeedback(){
+		return sendFeedback;
 	}
 	public MenuItem getGoBackHome(){
 		return goBackHome;
@@ -190,6 +194,8 @@ public class UserInfoBanner extends Composite {
 					}
 					
 					username.addItem(listApprvScn);
+					sendFeedback.setTitle("Give Feedback about the Repository");
+					username.addItem(sendFeedback);
 					username.addItem("Sign In", signIn);
 					
 				} else {
@@ -241,6 +247,8 @@ public class UserInfoBanner extends Composite {
 					//Ticket-102
 					createNewScn.setTitle("Create a new Clinical Scenario");
 					username.addItem(createNewScn);
+					sendFeedback.setTitle("Give Feedback about the Repository");//XXX Move to Registered users (not admin)
+					username.addItem(sendFeedback);
 					
 					MenuBar logoutMenu = new MenuBar(true);
 					
