@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioAcksComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioComparator;
+import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioDateComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioStatusComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioSubmitterComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioTitleComparator;
@@ -77,6 +78,8 @@ public class ScenarioSearchPanel extends Composite {
 	private ScenarioStatusComparator scnStatusComparator = new ScenarioStatusComparator();
 	private ScenarioComparator scnComparator = new ScenarioComparator(ScenarioComparator.PROPERTY_TITLE);
 	private ScenarioAcksComparator scnAcksComparator = new ScenarioAcksComparator();
+	private ScenarioDateComparator scnCreationDateComparator = new ScenarioDateComparator(ScenarioDateComparator.TypeOfDate.CreationDate);
+	private ScenarioDateComparator scnModificationDateComparator = new ScenarioDateComparator(ScenarioDateComparator.TypeOfDate.ModificationDate);
 	
 	//TODO add style names as constants too
 	private final static String STYLE_SELECTEDROW = "selectedRow";
@@ -791,17 +794,39 @@ public class ScenarioSearchPanel extends Composite {
 		searchResult2.setWidget(0, SCN_TABLE_THIRD_COL, lbl_acks);//Ticket-163
 		//TODO: 1- sorting for this label; 2- find a better caption; 3-use title/tooltip to describe this field
 		
+		Label lbl_creationDate = new Label("Created");
+		lbl_creationDate.addStyleName(STYLE_CLICKABLE);
+		lbl_creationDate.addClickHandler(new ClickHandler() {			
+			@Override
+			public void onClick(ClickEvent event) {//on click we sort by status
+				Collections.sort(response, scnCreationDateComparator);//sort list of scn
+				scnCreationDateComparator.switchOrder();
+				resetGridAuxVar(response);
+				drawScenariosListGrid(response);					
+			}
+		});
+		Label lbl_ModificationDate = new Label("Last Modified");
+		lbl_ModificationDate.addStyleName(STYLE_CLICKABLE);
+		lbl_ModificationDate.addClickHandler(new ClickHandler() {			
+			@Override
+			public void onClick(ClickEvent event) {//on click we sort by status
+				Collections.sort(response, scnModificationDateComparator);//sort list of scn
+				scnModificationDateComparator.switchOrder();
+				resetGridAuxVar(response);
+				drawScenariosListGrid(response);					
+			}
+		});
 		if(userRole == UserRole.Administrator){
 			searchResult2.setWidget(0, SCN_TABLE_FOURTH_COL, lbl_status);
 			searchResult2.setWidget(0, SCN_TABLE_FIFTH_COL, lbl_submitter);
-			searchResult2.setWidget(0, SCN_TABLE_SIXTH_COL, new Label("Created"));
-			searchResult2.setWidget(0, SCN_TABLE_SEVENTH_COL, new Label("Last Modified"));
+			searchResult2.setWidget(0, SCN_TABLE_SIXTH_COL, lbl_creationDate);
+			searchResult2.setWidget(0, SCN_TABLE_SEVENTH_COL, lbl_ModificationDate);
 			searchResult2.setWidget(0, SCN_TABLE_EIGTH_COL, new Label("Locked by"));
 		}
 		if(userRole == UserRole.RegisteredUser){
 			searchResult2.setWidget(0, SCN_TABLE_FOURTH_COL, lbl_status);
-			searchResult2.setWidget(0, SCN_TABLE_FIFTH_COL, new Label("Created"));
-			searchResult2.setWidget(0, SCN_TABLE_SIXTH_COL, new Label("Last Modified"));
+			searchResult2.setWidget(0, SCN_TABLE_FIFTH_COL, lbl_creationDate);
+			searchResult2.setWidget(0, SCN_TABLE_SIXTH_COL, lbl_ModificationDate);
 		}
 		searchResult2.getRowFormatter().addStyleName(0, STYLE_USERLISTHEADER); //TODO Style this table
 		searchResult2.getColumnFormatter().addStyleName(0, "titleColumn");
