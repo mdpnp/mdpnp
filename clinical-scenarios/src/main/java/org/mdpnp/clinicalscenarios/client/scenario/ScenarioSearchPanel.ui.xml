@@ -55,9 +55,19 @@
 		<!-- 		Search by Tags -->
 		<g:FlowPanel ui:field='searchByTags' >
 		    <g:Label text='Search by Tags' styleName='heading'/>
-		    <g:Label text='Search scenarions containing the selected tags'/>
+		    <g:Label text='Search scenarios containing the selected tags'/>
 		    <g:FlexTable ui:field='tagSearchTable'/>	
 		    <g:Button text='Search' ui:field='buttonSearchByTags'/>
+		</g:FlowPanel>
+		
+		<!-- 		Search by user/submitter TICKET-195 -->
+		<g:FlowPanel ui:field='searchBySubmitter' >
+		    <g:Label text='Search by User' styleName='heading'/>
+		    <g:Label text='Search scenarios submitted by a user'/>
+<!-- 		    <g:InlineLabel text="User's email"/> -->
+<!-- 			<g:TextBox ui:field='userEmailBox' text="Enter User's email"/> -->
+		    <g:FlexTable ui:field='submitterSearchTable'/>	
+		    <g:Button text='Search' ui:field='buttonSearchBySubmitter'/>
 		</g:FlowPanel>
 
 		<g:FlexTable ui:field='searchResult'/>

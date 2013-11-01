@@ -22,7 +22,6 @@ import org.mdpnp.clinicalscenarios.client.user.UserInfoRequest;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequestFactory;
 
 import com.google.gwt.core.client.GWT;
-//import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.editor.client.Editor.Ignore;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -51,6 +50,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
+//import com.google.gwt.dev.util.collect.HashSet;
 
 public class ScenarioSearchPanel extends Composite {
 	
@@ -359,6 +359,11 @@ public class ScenarioSearchPanel extends Composite {
 //						response.add(result);
 					Date dateFrom = advancedSearchDateBoxFrom.getValue();
 					Date dateUntil = advancedSearchDateBoxUntil.getValue();
+					if(dateUntil != null){
+						dateUntil.setHours(23);//XXX I know, I know. They are deprecated.
+						dateUntil.setMinutes(59);
+						dateUntil.setSeconds(59);
+					}
 					String hazardSeverity = advancedSearchHazardSeverityListbox.getValue(advancedSearchHazardSeverityListbox.getSelectedIndex());
 					String clinicianInvolved = advancedSearchCliniciansTextBox.getText();
 					String environmentInvolved = advancedSearchEnvironmentsTextBox.getText();
@@ -1091,6 +1096,8 @@ public class ScenarioSearchPanel extends Composite {
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		advancedSearch.setVisible(true);
 		status.setVisible(false);
+		advancedSearchDateBoxFrom.setValue(null);
+		advancedSearchDateBoxUntil.setValue(null);
 		searchResult2.setVisible(false);	
 //		radioButtonOr.setValue(true);
 		initializeAdvancedSearchPanel();
@@ -1156,6 +1163,7 @@ public class ScenarioSearchPanel extends Composite {
 		hideSearchById();// Search by ID
 		hideSearchByDates();// Search by dates
 		hideSearchByTags();
+		hideSearchBySubmitter();//TICKET-195
 	}
 	
 	//---------------------------------------
@@ -1286,6 +1294,8 @@ public class ScenarioSearchPanel extends Composite {
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		searchByDates.setVisible(true);
 		status.setVisible(false);
+		advancedSearchDateBoxFrom.setValue(null);
+		advancedSearchDateBoxUntil.setValue(null);
 		//one row, four columns
 		dateRangeSearchComponentsTable.setWidget(1, 1, new Label("Search: from date "));
 		dateRangeSearchComponentsTable.setWidget(1, 2, advancedSearchDateBoxFrom);
@@ -1298,6 +1308,7 @@ public class ScenarioSearchPanel extends Composite {
 
 		Date dateFrom = advancedSearchDateBoxFrom.getValue();
 		Date dateUntil = advancedSearchDateBoxUntil.getValue();
+
 
 		//1- validation that not both dates are NULL
 		if(dateFrom==null && dateUntil==null){
@@ -1320,6 +1331,12 @@ public class ScenarioSearchPanel extends Composite {
 			headline += " after "+dtf.format(advancedSearchDateBoxFrom.getValue())+".";
 		else 	
 			headline += " before "+dtf.format(advancedSearchDateBoxUntil.getValue())+".";
+		
+		if(dateUntil != null){
+			dateUntil.setHours(23);//XXX I know, I know. They are deprecated.
+			dateUntil.setMinutes(59);
+			dateUntil.setSeconds(59);
+		}
 		searchResultCaption.setText(headline);
 		searchResultCaption.setVisible(true);
 		doSearchByDates(dateFrom, dateUntil);
@@ -1330,7 +1347,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByCreationDateRange(dateFrom, dateUntil)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
 		.to(new Receiver<List<ScenarioProxy>> () {
 
 			@Override
@@ -1448,12 +1465,13 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		
+		//XXX Search only between approved scenarios or approved+beyond???
 		Set<String> statusSet = new HashSet<String>();
 		statusSet.add(ScenarioPanel.SCN_STATUS_MODIFIED);
 		statusSet.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
 		statusSet.add(ScenarioPanel.SCN_STATUS_APPROVED);
 		scenarioRequest.searchByStatus(statusSet)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
 		.to(new Receiver<List<ScenarioProxy>> () {
 
 			@Override
@@ -1479,6 +1497,115 @@ public class ScenarioSearchPanel extends Composite {
 				resetGridAuxVar(filteredResults);
 				drawScenariosListGrid(filteredResults);
 				
+			}
+			@Override
+			public void onFailure(ServerFailure error) {
+				super.onFailure(error);
+			}
+		}).fire();
+	}
+	
+	//-------------------------------------------------------
+	// search by user/submitter TICKET-195
+	@UiField
+	FlowPanel searchBySubmitter;
+	
+	@UiField
+	@Ignore
+	FlexTable submitterSearchTable;
+	
+	@UiField
+	Button buttonSearchBySubmitter;
+	
+//	@UiField
+	TextBox userEmailBox = new TextBox();
+	{
+		userEmailBox.addClickHandler(new ClickHandler() {
+			
+			@Override
+			public void onClick(ClickEvent event) {
+				userEmailBox.setText("");
+			}
+		});
+	}
+	
+	private void hideSearchBySubmitter(){
+		searchBySubmitter.setVisible(false);
+	}
+	
+	public void showSearchBySubmitter(){
+		hideAllSearchPanels();//HIDE all the others; SHOW this one
+		searchBySubmitter.setVisible(true);
+		status.setVisible(false);
+		userEmailBox.setText("Enter user's email"); 
+		advancedSearchDateBoxFrom.setValue(null);
+		advancedSearchDateBoxUntil.setValue(null);
+		
+		submitterSearchTable.setWidget(1, 1, new Label("User's email "));
+		submitterSearchTable.setWidget(1, 2, userEmailBox);
+		
+		//one row, four columns
+		submitterSearchTable.setWidget(2, 1, new Label("Search from date "));
+		submitterSearchTable.setWidget(2, 2, advancedSearchDateBoxFrom);
+		submitterSearchTable.setWidget(2, 3, new Label(" up to date "));
+		submitterSearchTable.setWidget(2, 4, advancedSearchDateBoxUntil);
+	}
+	
+//	@UiHandler("userEmailBox")
+//	public void onFocusSearchBySubmitter(FocusEvent focusEvent) {
+//		userEmailBox.setText("");
+//	}
+	
+	@UiHandler("buttonSearchBySubmitter")
+	public void onClickButtonSearchBySubmitter(ClickEvent clickEvent) {	
+		//the user email can't be null
+		String userMail = userEmailBox.getText();
+		if(null == userMail || userMail.trim().equals("")){
+			Window.alert("The user's email cant be empty");
+			return;
+		}
+//		try {
+//		      InternetAddress emailAddr = new InternetAddress(userMail);
+//		      emailAddr.validate();
+//		} catch (AddressException ex) {
+//			   Window.alert("The user's email cant be empty");
+//			   return;
+//		}
+		Date dateFrom = advancedSearchDateBoxFrom.getValue();
+		Date dateUntil = advancedSearchDateBoxUntil.getValue();
+		if(dateUntil != null){
+			dateUntil.setHours(23);//XXX I know, I know. They are deprecated.
+			dateUntil.setMinutes(59);
+			dateUntil.setSeconds(59);
+		}
+
+		//Validation that date-from in not after date-until
+		if(dateFrom!=null && dateUntil!=null && dateFrom.after(dateUntil)){
+			String msg = "Date \"from\" can not be after date \"until\"";
+			Window.alert(msg);	
+			return;
+		}
+
+		hideAllSearchPanels();
+		doSearchBySubmitter(userMail, dateFrom, dateUntil);
+	}
+	
+	
+	private void doSearchBySubmitter(String userEmail, Date initDate, Date endDate){
+		cleanScenarioTable();
+		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
+		
+		scenarioRequest.searchScnBySubmitter(userEmail, initDate, endDate)
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
+		.to(new Receiver<List<ScenarioProxy>> () {
+
+			@Override
+			public void onSuccess(List<ScenarioProxy> result) {
+				if(null==result || result.size()==0){ 
+					status.setVisible(false); 
+				}
+				resetGridAuxVar(result);
+				drawScenariosListGrid(result);
 			}
 			@Override
 			public void onFailure(ServerFailure error) {

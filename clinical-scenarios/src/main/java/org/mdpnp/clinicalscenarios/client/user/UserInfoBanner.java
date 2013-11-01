@@ -44,6 +44,7 @@ public class UserInfoBanner extends Composite {
 	private MenuItem searchById = new MenuItem("Search Scenario by Id", NOOP);
 	private MenuItem searchByDates= new MenuItem("Search Scenarios by Dates", NOOP);
 	private MenuItem searchByTags= new MenuItem("Search Scenarios by Tags", NOOP);
+	private MenuItem searchBySubmitter= new MenuItem("Search Scenarios by Submitter", NOOP);//Ticket-195
 	
 	private MenuItem listTags = new MenuItem("List Tags", NOOP);//list the tags
 	//list scenarios
@@ -137,8 +138,13 @@ public class UserInfoBanner extends Composite {
 	}
 	public MenuItem getSearchByTags() {
 		return searchByTags;
+	}	
+	public MenuItem getSearchBySubmitter() {
+		return searchBySubmitter;
 	}
-	
+	public void setSearchBySubmitter(MenuItem searchBySubmitter) {
+		this.searchBySubmitter = searchBySubmitter;
+	}
 	//	XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
 //	public MenuItem getListScnRejected(){
 //		return scnRejected;
@@ -164,7 +170,7 @@ public class UserInfoBanner extends Composite {
 		//XXX SEarch by dates not yet - consider which date of the scenario to use
 		searchByDates.setTitle("Find scenarios in a date range");
 		search.addItem(searchByDates);
-		searchByTags.setTitle("Fing scenarios tagged with the selected keywords");
+		searchByTags.setTitle("Find scenarios tagged with the selected keywords");
 		search.addItem(searchByTags);
 		showLatestSearch.setTitle("Retrieve the previous search results");
 //		search.addItem(showLatestSearch); TODO Fix ticket-146 before allowing this functionality
@@ -231,10 +237,11 @@ public class UserInfoBanner extends Composite {
 						listMyScn.setTitle("All scenarios created by this user");
 
 						username.addItem("List Scenarios", listScenarios);
-						
-						
 						username.addItem(listUsers);
 						username.addItem(listTags);//add tag search
+						
+						searchBySubmitter.setTitle("Find scenarios by user");//TICKET-195
+						search.addItem(searchBySubmitter);
 					}else{//registered user (NOT ADMIN)
 						listScenarios.setTitle("List Scenarios");
 						listScenarios.addItem(listApprvScn);

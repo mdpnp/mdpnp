@@ -202,6 +202,16 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 				
 			}
 		});
+		
+		//find scenarios by user/submitter TICKET-195
+		userInfoBanner.getSearchBySubmitter().setScheduledCommand(new Command() {
+			@Override
+			public void execute() {
+				scenarioSearchPanel.showSearchBySubmitter();
+				showWidget(scenarioSearchPanel);	
+				
+			}
+		});
 
 		
 //		userInfoBanner.getList().setScheduledCommand(new Command() {

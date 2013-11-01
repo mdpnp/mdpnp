@@ -473,6 +473,38 @@ public class ScenarioEntity implements java.io.Serializable {
 	}
 	
 	/**
+	 *  Returns all the scenarios of the submitter provided by parameter
+	 * @param submitter email of the user
+	 * @param dateFrom filter for creation date starting date. Can be null
+	 * @param dateUntil filter for creation date end date. Can be null
+	 * @return
+	 */
+	public static List<ScenarioEntity> searchScnBySubmitter(String submitter, Date dateFrom, Date dateUntil){
+		List<ScenarioEntity> listScn = ofy().load().type(ScenarioEntity.class).filter("submitter", submitter).list();
+		if(null == dateFrom && null == dateUntil)
+			return listScn;
+
+		List<ScenarioEntity> filteredList = new ArrayList<ScenarioEntity>();		
+		for(ScenarioEntity scn : listScn){
+			/*
+			 * 1- if none of filter dates is null --> between
+			 * 2- if dateFrom is null --> before dateUntil
+			 * 3- if dateUntil is null --> after dateFrom
+			 */
+			if(null != dateFrom && null != dateUntil){
+				if(!scn.getCreationDate().before(dateFrom) && !scn.getCreationDate().after(dateUntil))
+					filteredList.add(scn);
+			}else if(null != dateFrom && !scn.getCreationDate().before(dateFrom)){
+				filteredList.add(scn);
+			}else if(null != dateUntil && !scn.getCreationDate().after(dateUntil)){
+				filteredList.add(scn);
+			}
+		}
+				
+		return filteredList;
+	}
+	
+	/**
 	 * Returns all the scenarios
 	 * @return
 	 */
@@ -560,11 +592,11 @@ public class ScenarioEntity implements java.io.Serializable {
 			 * 3- if dateUntil is null --> after dateFrom
 			 */
 			if(null != dateFrom && null != dateUntil){
-				if(scn.getCreationDate().after(dateFrom) && scn.getCreationDate().before(dateUntil))
+				if(!scn.getCreationDate().before(dateFrom) && !scn.getCreationDate().after(dateUntil))
 					filteredList.add(scn);
-			}else if(null != dateFrom && scn.getCreationDate().after(dateFrom)){
+			}else if(null != dateFrom && !scn.getCreationDate().before(dateFrom)){
 				filteredList.add(scn);
-			}else if(null != dateUntil && scn.getCreationDate().before(dateUntil)){
+			}else if(null != dateUntil && !scn.getCreationDate().after(dateUntil)){
 				filteredList.add(scn);
 			}
 		}
@@ -595,6 +627,8 @@ public class ScenarioEntity implements java.io.Serializable {
 		ofy().save().entity(this).now();
 	    return this;
 	}
+	
+	
 	
 	
 }
