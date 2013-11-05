@@ -43,7 +43,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 	private UserInfoPanel userInfoPanel;
 	private UserInfoSearchPanel userInfoSearchPanel;
 	private ScenarioSearchPanel scenarioSearchPanel;
-	private ScenarioSearchPanel scenarioListPanel;
+	private ScenarioSearchPanel scenarioListPanel;//XXX Do we really need two of this?
 	private TagsManagementPanel tagsManagementPanel;
 	private UserFeedbackPanel userFeedbackPanel;
 	
@@ -71,7 +71,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		tagRequestFactory.initialize(eventBus);
 		feedbackRequestFactory.initialize(eventBus);
 		
-		scenarioPanel = new ScenarioPanel(scenarioRequestFactory);
+		scenarioPanel = new ScenarioPanel(scenarioRequestFactory);		
 		
 		scenarioSearchPanel = new ScenarioSearchPanel(scenarioRequestFactory);
 		scenarioSearchPanel.setSearchHandler(this);
@@ -228,8 +228,10 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getListAllScenarios().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
-				scenarioListPanel.findAllScn();
-				showWidget(scenarioListPanel);
+//				scenarioListPanel.findAllScn();
+//				showWidget(scenarioListPanel);
+				scenarioSearchPanel.findAllScn();
+				showWidget(scenarioSearchPanel);
 			}
 		});
 		
@@ -360,9 +362,11 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 	}
 
 	@Override
-	public void onSearchResult(ScenarioProxy sp) {
+	public void onSearchResult(ScenarioProxy sp, int relativePosition) {
 		scenarioPanel.selectFirstTab();
 		scenarioPanel.cleanStatusLabel();
+		scenarioPanel.setPositionInSearchResultsList(relativePosition);
+		scenarioPanel.setScenarioSearchResultsList(scenarioSearchPanel.getScnList());
 		scenarioPanel.setCurrentScenario(sp);
 		showWidget(scenarioPanel);
 	}
@@ -371,4 +375,5 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 	public void onAnyUser(UserInfoProxy userInfo) {
 		scenarioSearchPanel.setUserInfo(userInfo);
 	}
+	
 }

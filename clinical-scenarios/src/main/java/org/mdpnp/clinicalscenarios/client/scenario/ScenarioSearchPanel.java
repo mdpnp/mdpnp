@@ -188,7 +188,7 @@ public class ScenarioSearchPanel extends Composite {
 	}
 	
 	public interface SearchHandler {
-		void onSearchResult(ScenarioProxy sp);
+		void onSearchResult(ScenarioProxy sp, int relativePosition);
 	}
 	
 	private SearchHandler searchHandler;
@@ -606,11 +606,13 @@ public class ScenarioSearchPanel extends Composite {
 	
 	//Aux var to print the scn list, move thru the scenarios of the list (navigation buttons) and 
 	// fetch the previous search results
-	private static List<ScenarioProxy> scnList = null;
-	private static int scn_search_index = 0;
-	private static int scn_list_size = 0;
+	private List<ScenarioProxy> scnList = null;
+	private int scn_search_index = 0;
+	private int scn_list_size = 0;
 
-		
+	public List<ScenarioProxy> getScnList() {
+		return scnList;
+	}
 	@UiField
 	FlowPanel navigationButtons;
 	@UiField
@@ -834,19 +836,22 @@ public class ScenarioSearchPanel extends Composite {
 		ScenarioProxy[] responseArray = new ScenarioProxy[response.size()];
 		responseArray = response.toArray(responseArray);
 		int arrayIndex = scn_search_index;
+		final int arrayIndex2 = scn_search_index;
 		
 		//draw table rows
 		while(row<=SCN_GRIDLIST_ROWS && arrayIndex<responseArray.length){
-				final ScenarioProxy sp = 	responseArray[arrayIndex];///it.next();
-		Label lbl = new Label();
-		lbl.setStyleName(STYLE_CLICKABLE);
-		lbl.addClickHandler(new ClickHandler() {
+		
+		final ScenarioProxy sp = responseArray[arrayIndex];///it.next();
+		final int relPos = arrayIndex2+row-1;//because numeration system for the flexTable is not zero based
+		Label lbl_scnTitle = new Label();
+		lbl_scnTitle.setStyleName(STYLE_CLICKABLE);
+		lbl_scnTitle.addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
 				if(null != searchHandler) {
 					searchResult2.clear();
-					searchHandler.onSearchResult(sp);
+					searchHandler.onSearchResult(sp, relPos);
 				}
 			}
 			
@@ -854,8 +859,8 @@ public class ScenarioSearchPanel extends Composite {
 		String title = sp.getTitle();
 		title = null == title || "".equals(title) ? "<none>" : title;//XXX title.trim() ??
 		final String auxTitle = title;
-		lbl.setText(title);
-		searchResult2.setWidget(row, SCN_TABLE_FIRST_COL, lbl);
+		lbl_scnTitle.setText(title);
+		searchResult2.setWidget(row, SCN_TABLE_FIRST_COL, lbl_scnTitle);
 		searchResult2.setWidget(row, SCN_TABLE_SECOND_COL, new Label(String.valueOf(sp.getId())));
 		Set<String> ackEdgers = sp.getAcknowledgers().getAcknowledgersIDs();
 //		List<String> auxAckEdgers = sp.getAcknowledgers().getAcknowledgersIDs();
@@ -884,7 +889,7 @@ public class ScenarioSearchPanel extends Composite {
 			searchResult2.setWidget(row, SCN_TABLE_SIXTH_COL, new Label(modifDate));
 		}
 
-		final int arrayIndex2 = arrayIndex;
+//		final int arrayIndex2 = arrayIndex;
 		Button deleteButton = new Button("Delete");
 		deleteButton.addClickHandler(new ClickHandler() {
 				
@@ -1054,7 +1059,8 @@ public class ScenarioSearchPanel extends Composite {
 		if(userRole==UserRole.AnonymousUser){
 			Window.alert("Please, Log In to create new Clinical Scenarios");
 		}else if(null != searchHandler) {
-			searchHandler.onSearchResult(null);
+			//XXX la lista de previus search sera null o empty
+			searchHandler.onSearchResult(null, 0);
 		}
 		
 	}

@@ -17,6 +17,10 @@
 		.verywide {
 			width:98%;
 		}
+		.halfwide {
+			width:50%;
+			background-color:red;
+		}
 		.givemespace {
 			margin:10px;
 		}
@@ -32,6 +36,11 @@
 		}
 		.paddingTop{
 			padding-top:10px;
+		}
+		.rightButton {
+			margin:10px;
+			position:absolute; 
+			left:700px;
 		}
 
 	</ui:style>
@@ -191,9 +200,9 @@
 	    
 	    <g:Label ui:field='feedbackLabel' text='Feedback for submitter (if any):' styleName='{style.paddingTop}'/>
 	    <g:TextArea ui:field='feedback' visibleLines='10' characterWidth='50' styleName='{style.verywide}'/>                
-	    <g:Button text='Approve Scenario' ui:field='approveScnButton' styleName='{style.givemespace}'/>
-	    <g:Button text='Return Scenario' ui:field='returnScnButton' styleName='{style.givemespace}'/>
-	    <g:Button text='Reject Scenario' ui:field='rejectScnButton' styleName='{style.givemespace}'/>
+	    <g:Button text='Approve Scenario' ui:field='approveScnButton' styleName='{style.givemespace}' title="Validate this scenario and make it available to all users."/>
+	    <g:Button text='Return Scenario' ui:field='returnScnButton' styleName='{style.givemespace}' title="Return this scenario to the submitter for clarification."/>
+	    <g:Button text='Reject Scenario' ui:field='rejectScnButton' styleName='{style.givemespace}' title="Reject this scenario if is not even worth asking for submiter's clarification, but want to keep it instead of delete. Can NOT be undone"/>
 	  </g:FlowPanel>
 	</g:Tab>
 	</g:TabPanel>
@@ -201,11 +210,14 @@
 	
 	<g:Dock direction="SOUTH" size="100px">
 	<g:FlowPanel>
-	    <g:Button text='Submit for Approval' ui:field='submitButton' styleName='{style.givemespace}'/>
-	    <g:Button text='Save for Later' ui:field='saveButton' styleName='{style.givemespace}'/>
-	    <g:Button text='Lock' ui:field='lockButton' styleName='{style.givemespace}'/>
+	    <g:Button text='Previous Scenario' ui:field='prevScenarioButton' styleName='{style.givemespace}' title='Previous scenario from your latest search results'/>
+	    <g:Button text='Submit for Approval' ui:field='submitButton' styleName='{style.givemespace}' title="Submit your scenario for revision and approval"/>
+	    <g:Button text='Save for Later' ui:field='saveButton' styleName='{style.givemespace}' title="Save your progress completing this scenario"/>
+	    <g:Button text='Lock' ui:field='lockButton' styleName='{style.givemespace}' title="Locks/Unlocks the scenario to protect/allow modification of its content"/>
 <!-- 	     <g:Button text='Export to file' ui:field='exportScenario' styleName='{style.givemespace}'/> -->
-		<g:Button text='Acknowledge' ui:field='ackButton' styleName='{style.givemespace}'/>
+		<g:Button text='Acknowledge' ui:field='ackButton' styleName='{style.givemespace}' title="Click this button to acknowledge the importance of this scenario or if you have experienced or heard of a very similar problem."/>
+		
+		<g:Button text='Next Scenario' ui:field='nextScenarioButton' styleName='{style.rightButton}' title='Next scenario from your latest search results'/>
 		<g:Label ui:field='ackLabel' styleName='important'/>
 	</g:FlowPanel>
 	</g:Dock>
