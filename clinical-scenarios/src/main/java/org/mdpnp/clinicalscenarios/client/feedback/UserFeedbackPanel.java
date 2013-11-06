@@ -35,26 +35,20 @@ public class UserFeedbackPanel extends Composite implements Editor<FeedbackProxy
 		driver.initialize(feedbackRequestFactory, this);
 	}
 	
-	public void initialize(){
-		//TODO this should be done automatically with the driver paths FLUSH
-		rateThisWebsiteEditor.setText("");
-		navigationOkEditor.setText("");
-		logicallyOrganizedEditor.setText("");
-		troubleLoginInEditor.setText("");
-		unclearQuestionsEditor.setText("");
-		missingFieldsEditor.setText("");
-		usefulIfDepartmentAvailableEditor.setText("");
-		websiteLooksProfessionalEditor.setText("");
-		goodVisualDesignEditor.setText("");
-		generalSuggestionsEditor.setText("");
-		
+	public void initialize(){	
 		feedbackRequestFactory.feedbackRequest().create()
 //		.with(driver.getPaths())
 		.fire(new Receiver<FeedbackProxy>(){
 
 			@Override
 			public void onSuccess(FeedbackProxy response) {
-				currentFeedbackEntity = response;				
+				currentFeedbackEntity = response;		
+				FeedbackRequest request = feedbackRequestFactory.feedbackRequest();
+				response = request.edit(response);
+				driver.edit(response, request);
+				currentFeedbackEntity = response;
+				if(userEmail != null)
+					currentFeedbackEntity.setUsersEmail(userEmail);
 			}
 			
 			@Override
@@ -128,31 +122,14 @@ public class UserFeedbackPanel extends Composite implements Editor<FeedbackProxy
 		}
 		
 		FeedbackRequest request = this.feedbackRequestFactory.feedbackRequest();
-		currentFeedbackEntity = request.edit(currentFeedbackEntity);
-		//driver.edit(currentFeedbackEntity, request);
-
-		if(userEmail != null)
-			currentFeedbackEntity.setUsersEmail(userEmail);
 		
-//		request = (FeedbackRequest) driver.flush();//update the object with the current state of the editor
-		//XXX FLUSH is not working, but it should be the best way instead of explicity setting each field
-		currentFeedbackEntity.setRateThisWebsite(rateThisWebsiteEditor.getText());
-		currentFeedbackEntity.setNavigationOk(navigationOkEditor.getText());
-		currentFeedbackEntity.setLogicallyOrganized(logicallyOrganizedEditor.getText());
-		currentFeedbackEntity.setTroubleLoginIn(troubleLoginInEditor.getText());
-		currentFeedbackEntity.setUnclearQuestions(unclearQuestionsEditor.getText());
-		currentFeedbackEntity.setMissingFields(missingFieldsEditor.getText());
-		currentFeedbackEntity.setUsefulIfDepartmentAvailable(usefulIfDepartmentAvailableEditor.getText());
-		currentFeedbackEntity.setWebsiteLooksProfessional(websiteLooksProfessionalEditor.getText());
-		currentFeedbackEntity.setGoodVisualDesign(goodVisualDesignEditor.getText());
-		currentFeedbackEntity.setGeneralSuggestions(generalSuggestionsEditor.getText());
-		
-		request.persist().using(currentFeedbackEntity)//.with(driver.getPaths())
+		request = (FeedbackRequest) driver.flush();//update the object with the current state of the editor
+		request.persist().using(currentFeedbackEntity).with(driver.getPaths())
 		.fire(new Receiver<FeedbackProxy>(){
 			@Override
 			public void onSuccess(FeedbackProxy response) {
 				saveHandler.onSave(response);
-				Window.alert("Thank you for your feedback.");
+				Window.alert("Thank you. We appreciate your feedback and your help to improve this repository.");
 				saveHandler.onSendFeedback();//redirect user to home panel
 			}
 			
