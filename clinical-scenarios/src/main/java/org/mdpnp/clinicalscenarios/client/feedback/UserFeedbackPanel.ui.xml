@@ -14,11 +14,38 @@
 		.givemespace {
 			margin:10px;
 		}
+		.paddingTop{
+			padding-top:10px;
+		}
 	</ui:style>
 	<g:FlowPanel>
 		<g:Label text='Feedback' styleName='heading'/>
-		<g:Label text='Please, give us your opinion and/or advice about the Clinical Scenario Repository'/>
-		<g:TextArea ui:field="feedbackEditor" visibleLines="10" characterWidth="80" styleName='{style.verywide}'/>
+		<g:Label text='As part of the Clinical Scenario Repository beta testing process we would like to know you opinion.'/>
+		
+		 <g:Label text="How would you rate this website?" styleName='{style.paddingTop}'/>
+		 <g:TextArea ui:field="rateThisWebsiteEditor" visibleLines="3" characterWidth="80" styleName='{style.verywide}'/>
+		 <g:Label text="Is the repository easy to navigate?"/>
+		 <g:TextArea ui:field="navigationOkEditor" visibleLines="3" characterWidth="80" styleName='{style.verywide}'/>
+		 
+		 <g:Label text="Is the information/functionality logically organized?"/>
+		 <g:TextArea ui:field="logicallyOrganizedEditor" visibleLines="3" characterWidth="80" styleName='{style.verywide}'/>
+		 <g:Label text="Did you have trouble loggin in?"/>
+		 <g:TextArea ui:field="troubleLoginInEditor" visibleLines="3" characterWidth="80" styleName='{style.verywide}'/>
+		 
+		 <g:Label text="Are there any unclear questions/fields?"/>
+		 <g:TextArea ui:field="unclearQuestionsEditor" visibleLines="3" characterWidth="80" styleName='{style.verywide}'/>
+		 <g:Label text="Are the any missing fields/tabs/information?"/>
+		 <g:TextArea ui:field="missingFieldsEditor" visibleLines="3" characterWidth="80" styleName='{style.verywide}'/>
+		 
+		 <g:Label text="Would you find this useful if it was available to your department? Who would find it useful?"/>
+		 <g:TextArea ui:field="usefulIfDepartmentAvailableEditor" visibleLines="3" characterWidth="80" styleName='{style.verywide}'/>
+		 <g:Label text="Does the website appear professional/trustworthy?"/>
+		 <g:TextArea ui:field="websiteLooksProfessionalEditor" visibleLines="3" characterWidth="80" styleName='{style.verywide}'/>
+		 
+		 <g:Label text="Do you like the visual design of the website?"/>
+		 <g:TextArea ui:field="goodVisualDesignEditor" visibleLines="3" characterWidth="80" styleName='{style.verywide}'/>
+		 <g:Label text="Do you have any other suggestions/requests/complaints?"/>
+		 <g:TextArea ui:field="generalSuggestionsEditor" visibleLines="10" characterWidth="80" styleName='{style.verywide}'/>
 		<g:Button text='Send' ui:field='sendFeedbackButton' styleName='{style.givemespace}' />
 	</g:FlowPanel>
 	

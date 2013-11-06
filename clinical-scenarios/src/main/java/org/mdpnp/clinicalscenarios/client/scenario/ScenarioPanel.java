@@ -9,13 +9,10 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.mdpnp.clinicalscenarios.client.feedback.FeedbackProxy;
-import org.mdpnp.clinicalscenarios.client.feedback.UserFeedbackPanel;
 import org.mdpnp.clinicalscenarios.client.tag.TagProxy;
 import org.mdpnp.clinicalscenarios.client.tag.TagRequest;
 import org.mdpnp.clinicalscenarios.client.tag.TagRequestFactory;
 import org.mdpnp.clinicalscenarios.client.tag.comparator.TagComparator;
-import org.mdpnp.clinicalscenarios.client.user.UserInfoBanner;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoProxy;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequest;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequestFactory;
@@ -124,22 +121,22 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	private final static int STYLE_HAZARDS_TEXT_LINES = 5;
 
 	/**
-	 * Tabs for our CConOps (Clinical concept of Operations) Background -->tab
-	 * (0) Hazards Environments Equipment Proposed State Benefits+Risks
-	 * -->tab(5) References (links) Tags (Associated Keywords)
+	 * Tabs for our CConOps (Clinical concept of Operations) 
+	 * Background -->tab (0) 
+	 * Hazards (1), Environments (2), Equipment (3), Proposed Solution(4), Benefits+Risks (5)
+	 * References (links) (6), 
+	 * --User Feedback (7) TICKET-197
+	 * Tags (Associated Keywords) (8)
 	 * 
-	 * Feedback-->Approve or reject
+	 * Administration (Approve or reject) (9)
 	 */
-	private final static int APPRV_SCN_TAB_POS = 8;// position of the tab to approve or reject scn
+	private final static int APPRV_SCN_TAB_POS = 9;// position of the tab to approve or reject scn
 	private final static int HAZARDS_TAB_POS = 1;// hazards tab
 	private final static int EQUIPMENT_TAB_POS = 3;
 
-	private static ScenarioPanelUiBinder uiBinder = GWT
-			.create(ScenarioPanelUiBinder.class);
-	private UserInfoRequestFactory userInfoRequestFactory = GWT
-			.create(UserInfoRequestFactory.class);
-	private TagRequestFactory tagRequestFactory = GWT
-			.create(TagRequestFactory.class);// TICKET-157
+	private static ScenarioPanelUiBinder uiBinder = GWT.create(ScenarioPanelUiBinder.class);
+	private UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
+	private TagRequestFactory tagRequestFactory = GWT.create(TagRequestFactory.class);// TICKET-157
 
 	// to Id our user
 	private enum UserRole {
@@ -1126,6 +1123,8 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		titleEditor.setReadOnly(true);
 		currentStateEditor.setReadOnly(true);
 		proposedStateEditor.setReadOnly(true);
+		
+		setFeedbackPanelReadOnly(true);//TICKET-197
 	}
 
 	/**
@@ -1140,6 +1139,27 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 		titleEditor.setReadOnly(false);
 		currentStateEditor.setReadOnly(false);
 		proposedStateEditor.setReadOnly(false);
+		
+		setFeedbackPanelReadOnly(false);//TICKET-197
+	}
+	
+	/**
+	 * Enables and disables the feedback panel textboxes
+	 * @param enable
+	 */
+	private void setFeedbackPanelReadOnly(boolean readOnly){
+		navigationOkEditor.setReadOnly(readOnly);
+		logicallyOrganizedEditor.setReadOnly(readOnly);
+		troubleLoginInEditor.setReadOnly(readOnly);
+		
+		unclearQuestionsEditor.setReadOnly(readOnly);
+		missingFieldsEditor.setReadOnly(readOnly);
+		usefulIfDepartmentAvailableEditor.setReadOnly(readOnly);
+		
+		websiteLooksProfessionalEditor.setReadOnly(readOnly);
+		rateThisWebsiteEditor.setReadOnly(readOnly);
+		goodVisualDesignEditor.setReadOnly(readOnly);
+		generalSuggestionsEditor.setReadOnly(readOnly);
 	}
 
 	/**
@@ -1174,7 +1194,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			context.create()
 					.with("background", "benefitsAndRisks", "environments",
 							"equipment", "hazards", "proposedSolution",
-							"references", "acknowledgers", "associatedTags")
+							"references", "acknowledgers", "associatedTags", "feedback")
 					.to(new Receiver<ScenarioProxy>() {
 
 						@Override
@@ -2269,22 +2289,26 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			Window.alert(t);
 			return;
 		}
+		
+		//TICKET-197
+		if(!hasValidFeedback()){
+			Window.confirm("Please, complete the feedback tab, as part of the repository beta testing process");
+			return;
+		}
 
 		// if(!currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_APPROVED)){
-		if (!isEmptyScenario()
-				&& currentScenario.getStatus().equals(
-						ScenarioPanel.SCN_STATUS_UNSUBMITTED)) {
+		if (!isEmptyScenario()	&& currentScenario.getStatus().equals(ScenarioPanel.SCN_STATUS_UNSUBMITTED)) {
 			final ScenarioRequest scnReq = (ScenarioRequest) driver.flush();
 
-			boolean confirm = Window
-					.confirm("Are you sure you want to SUBMIT this scenario?");
+			boolean confirm = Window.confirm("Are you sure you want to SUBMIT this scenario?");
 			if (confirm) {
 
 				currentScenario.setStatus(SCN_STATUS_SUBMITTED);
 				currentScenario.setLastActionTaken(SCN_LAST_ACTION_SUBMITTED);
 				currentScenario.setLastActionUser(userEmail);
 				checkScenarioFields(scnReq);
-				scnReq.persist()
+//				scnReq.persist()
+				scnReq.submit()
 						.using(currentScenario)
 						.with(driver.getPaths())
 						.with("equipment", "hazards", "environments",
@@ -2293,7 +2317,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 
 							@Override
 							public void onSuccess(ScenarioProxy response) {
-								Window.alert("This Clinical Scenario has been submitted for approval. Please give us some feedback about this process.");
+								Window.alert("This Clinical Scenario has been submitted for approval. Thank you for your contribution.");
 								setCurrentScenario(response);
 							}
 
@@ -2736,4 +2760,56 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 				.get(positionInSearchResultsList));
 	}
 
+	
+	//-----------------------------------------------
+	//Feeedback. Ticket-197
+	@UiField
+	@Path("feedback.navigationOk")
+	TextArea navigationOkEditor;
+	
+	@UiField
+	@Path("feedback.logicallyOrganized")
+	TextArea logicallyOrganizedEditor;
+	
+	@UiField
+	@Path("feedback.troubleLoginIn")
+	TextArea troubleLoginInEditor;
+	
+	@UiField
+	@Path("feedback.unclearQuestions")
+	TextArea unclearQuestionsEditor;
+	
+	@UiField
+	@Path("feedback.missingFields")
+	TextArea missingFieldsEditor;
+	
+	@UiField
+	@Path("feedback.usefulIfDepartmentAvailable")
+	TextArea usefulIfDepartmentAvailableEditor;
+	
+	@UiField
+	@Path("feedback.websiteLooksProfessional")
+	TextArea websiteLooksProfessionalEditor;
+	
+	@UiField
+	@Path("feedback.rateThisWebsite")
+	TextArea rateThisWebsiteEditor;
+	
+	@UiField
+	@Path("feedback.goodVisualDesign")
+	TextArea goodVisualDesignEditor;
+	
+	@UiField
+	@Path("feedback.generalSuggestions")
+	TextArea generalSuggestionsEditor;
+	
+	/**
+	 * Indicates if the scenario has feedback enough to be submitted
+	 * @return
+	 */
+	private boolean hasValidFeedback(){
+		if(rateThisWebsiteEditor.getText().trim().equals("")) return false;
+		
+		return true;
+	}
 }

@@ -16,6 +16,7 @@ public interface ScenarioRequest extends RequestContext {
 	Request<List<ScenarioProxy>>  searchByCreationDateRange(Date dateFrom, Date dateUntil);
 	Request<List<Long>> findAllIds();
 	InstanceRequest<ScenarioProxy, ScenarioProxy> persist();
+	InstanceRequest<ScenarioProxy, ScenarioProxy> submit();
 	InstanceRequest<ScenarioProxy, ScenarioProxy> lock(String username);
 	InstanceRequest<ScenarioProxy, ScenarioProxy> unlock();
 	InstanceRequest<ScenarioProxy, Void> remove();

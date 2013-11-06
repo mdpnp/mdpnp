@@ -333,7 +333,7 @@ public class ScenarioSearchPanel extends Composite {
 	private void doAdvancedSearch(){
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByKeywords(advancedSearchKeywordsTextBox.getText())
-			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
+			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 			.to(new Receiver<List<ScenarioProxy>> () {
 
 				@Override
@@ -503,7 +503,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByKeywords(text)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(listScnReceiver).fire();
 	}	
 	
@@ -513,7 +513,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.findAllScenarios()
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(listScnReceiver).fire();
 	}
 
@@ -527,7 +527,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchScnBySubmitter(submitter)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(listScnReceiver).fire();
 	}
 	
@@ -540,7 +540,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();		
 		scenarioRequest.searchByStatus(status)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(listScnReceiver).fire();		
 	}
 	
@@ -553,7 +553,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();		
 		scenarioRequest.searchByStatus(status)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(listScnReceiver).fire();		
 	}
 	
@@ -1267,7 +1267,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.findById(scnId)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(new Receiver<ScenarioProxy>() {
 
 			@Override
@@ -1378,7 +1378,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByCreationDateRange(dateFrom, dateUntil)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(new Receiver<List<ScenarioProxy>> () {
 
 			@Override
@@ -1502,7 +1502,7 @@ public class ScenarioSearchPanel extends Composite {
 		statusSet.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
 		statusSet.add(ScenarioPanel.SCN_STATUS_APPROVED);
 		scenarioRequest.searchByStatus(statusSet)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(new Receiver<List<ScenarioProxy>> () {
 
 			@Override
@@ -1627,7 +1627,7 @@ public class ScenarioSearchPanel extends Composite {
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		
 		scenarioRequest.searchScnBySubmitter(userEmail, initDate, endDate)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(new Receiver<List<ScenarioProxy>> () {
 
 			@Override

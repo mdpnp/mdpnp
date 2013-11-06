@@ -27,6 +27,7 @@ public interface ScenarioProxy extends EntityProxy {
 	ReferencesProxy  getReferences() ;
 	AcknowledgersProxy getAcknowledgers();//TICKET-163
 	AssociatedTagsProxy getAssociatedTags();//TICKET-157
+	FeedbackProxy getFeedback();//TICKET-197
 	
 	//
 	public String getSubmitter();

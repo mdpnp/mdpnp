@@ -94,7 +94,11 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			@Override
 			public void onSave(FeedbackProxy feedbackProxy) {
 				userFeedbackPanel.setCurrentFeedbackProxy(feedbackProxy);
-				
+			}
+			
+			@Override
+			public void  onSendFeedback() {
+				showWidget(homePanel);	
 			}
 		});
 

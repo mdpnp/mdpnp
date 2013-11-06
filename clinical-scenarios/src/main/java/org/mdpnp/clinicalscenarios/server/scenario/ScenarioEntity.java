@@ -67,6 +67,7 @@ public class ScenarioEntity implements java.io.Serializable {
 	private References references = new References();
 	private Acknowledgers acknowledgers = new Acknowledgers();
 	private AssociatedTags associatedTags = new AssociatedTags();
+	private FeedbackValue feedback = new FeedbackValue();//TICKET-197
 
 
 
@@ -223,6 +224,14 @@ public class ScenarioEntity implements java.io.Serializable {
 
 	public void setAssociatedTags(AssociatedTags associatedTags) {
 		this.associatedTags = associatedTags;
+	}
+	
+	public FeedbackValue getFeedback() {
+		return feedback;
+	}
+
+	public void setFeedback(FeedbackValue feedback) {
+		this.feedback = feedback;
 	}
 
 	//constructor
@@ -629,6 +638,50 @@ public class ScenarioEntity implements java.io.Serializable {
 	}
 	
 	
+	public ScenarioEntity submit(){
+		ofy().save().entity(this).now();
+		sendScenarioReceivedMail();
+		return this;
+	}
+	
+	/**
+	 * Sends an email to warn administrators that they have a new Scenario submission
+	 */
+	private void sendScenarioReceivedMail(){
+		String subject = "Scenario "+this.id+" submitted by "+this.submitter;
+		
+		String messageText = "Feedback accompanying this scenario \n";
+		messageText += "How would you rate this website? \n" + this.feedback.getRateThisWebsite() + "\n";
+		messageText += "Is the repository easy to navigate? \n" + this.feedback.getNavigationOk() + "\n";
+		messageText += "Is the information/functionality logically organized? \n" + this.feedback.getLogicallyOrganized() + "\n";
+		
+		messageText += "Did you have trouble loggin in? \n" + this.feedback.getTroubleLoginIn() + "\n";
+		messageText += "Are there any unclear questions/fields? \n" + this.feedback.getUnclearQuestions() + "\n";
+		messageText += "Are the any missing fields/tabs/information? \n" + this.feedback.getMissingFields() + "\n";
+		
+		messageText += "Would you find this useful if it was available to your department? Who would find it useful? \n" 
+				+ this.feedback.getUsefulIfDepartmentAvailable() + "\n";
+		messageText += "Does the website appear professional/trustworthy? \n" + this.feedback.getWebsiteLooksProfessional() + "\n";
+		messageText += "Do you like the visual design of the website? \n" + this.feedback.getGoodVisualDesign() + "\n";
+		messageText += "Do you have any other suggestions/requests/complaints? \n" + this.feedback.getGeneralSuggestions() + "\n";
+	
+		sendMail(RepositoryMailService.ADMIN_GMAIL_ACCOUNT, subject, messageText);
+	}
+	
+	/**
+	 * Sends an email
+	 * @param toWho
+	 * @param subject
+	 * @param message
+	 */
+	private void sendMail(String toWho, String subject, String message){
+		RepositoryMailService mailservice = new RepositoryMailService(toWho, subject, message);
+		try{
+			mailservice.send();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
 	
 	
 }
