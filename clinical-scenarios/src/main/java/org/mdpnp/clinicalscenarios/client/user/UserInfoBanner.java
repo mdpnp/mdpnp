@@ -275,7 +275,7 @@ public class UserInfoBanner extends Composite {
 					logoutMenu.addItem(signOut);
 					
 					username.addItem(response.getEmail(), logoutMenu);
-					if(null == response.getGivenName() && null != newUserHandler) {//TICKET-181 
+					if(null == response.getJobTitle() /*response.getGivenName()*/ && null != newUserHandler) {//TICKET-181 
 						newUserHandler.onNewUser(response);//display userInfoPanel
 					}
 					
