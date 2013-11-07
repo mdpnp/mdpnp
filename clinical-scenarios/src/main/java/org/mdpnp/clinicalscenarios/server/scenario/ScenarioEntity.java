@@ -301,8 +301,9 @@ public class ScenarioEntity implements java.io.Serializable {
 //		List<ScenarioEntity> approvedScenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);//starting point
 		Set<String> states = new HashSet<String>();
 		states.add(ScenarioPanel.SCN_STATUS_APPROVED);
-		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
-		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+		//XXX Search should show approved only, and not approved + beyond
+//		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+//		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
 		List<ScenarioEntity> approvedScenarios = searchByStatus(states);//TICKET-186
 		List<String> keyWordsList = new ArrayList<String>();
 		List<ScenarioEntity> result = new ArrayList<ScenarioEntity>();
@@ -404,8 +405,8 @@ public class ScenarioEntity implements java.io.Serializable {
 //		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 		Set<String> states = new HashSet<String>();
 		states.add(ScenarioPanel.SCN_STATUS_APPROVED);
-		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
-		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+//		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+//		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
 		List<ScenarioEntity> scenarios = searchByStatus(states);//TICKET-186
 		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
 
@@ -585,13 +586,14 @@ public class ScenarioEntity implements java.io.Serializable {
 		
 		return queryScn.list();
 		*/
-		Set<String> states = new HashSet<String>();
-		states.add(ScenarioPanel.SCN_STATUS_APPROVED);
-		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
-		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
-		List<ScenarioEntity> scnList = searchByStatus(states);//TICKET-186
-//		List<ScenarioEntity> scnList = ofy().load().type(ScenarioEntity.class)
-//				.filter("status", ScenarioPanel.SCN_STATUS_APPROVED).list(); //get only approved Scn		
+		
+//		Set<String> states = new HashSet<String>();
+//		states.add(ScenarioPanel.SCN_STATUS_APPROVED);
+//		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+//		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+//		List<ScenarioEntity> scnList = searchByStatus(states);//TICKET-186
+		List<ScenarioEntity> scnList = ofy().load().type(ScenarioEntity.class)
+				.filter("status", ScenarioPanel.SCN_STATUS_APPROVED).list(); //get only approved Scn		
 		List<ScenarioEntity> filteredList = new ArrayList<ScenarioEntity>();
 		
 		for(ScenarioEntity scn : scnList){
@@ -637,8 +639,12 @@ public class ScenarioEntity implements java.io.Serializable {
 	    return this;
 	}
 	
-	
+	/**
+	 * Submitting a scenario means persisting + sending a warning email
+	 * @return
+	 */
 	public ScenarioEntity submit(){
+		//XXX Maybe we should change the status of the scenario to "SUBMITED" here, instead of on client side
 		ofy().save().entity(this).now();
 		sendScenarioReceivedMail();
 		return this;

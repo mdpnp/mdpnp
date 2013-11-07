@@ -1312,6 +1312,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 			// feedbak tab buttons
 			// 4.1 Approve button: always visible
 			approveScnButton.setVisible(true);
+			userNameLabel.setText("Scenario submitted by "+currentScenario.getSubmitter());
 			// 4.2 and 4.3 Return and reject scenario, only possible for
 			// unlocked pre-approved scenarios.
 			if (currentScenario.getStatus().equals(SCN_STATUS_UNLOCKED_PRE)) {
@@ -2223,6 +2224,10 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 	@UiField
 	@Ignore
 	Label ackLabel;// TICKET-163;
+	
+	@UiField
+	@Ignore
+	Label userNameLabel;
 
 	// @UiField
 	// Button exportScenario; //export the Scn info to file

@@ -1,6 +1,7 @@
 package org.mdpnp.clinicalscenarios.client;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.mdpnp.clinicalscenarios.client.feedback.FeedbackProxy;
@@ -232,10 +233,10 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getListAllScenarios().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
-//				scenarioListPanel.findAllScn();
-//				showWidget(scenarioListPanel);
-				scenarioSearchPanel.findAllScn();
-				showWidget(scenarioSearchPanel);
+				scenarioListPanel.findAllScn();
+				showWidget(scenarioListPanel);
+//				scenarioSearchPanel.findAllScn();
+//				showWidget(scenarioSearchPanel);
 			}
 		});
 		
@@ -286,10 +287,10 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoBanner.getListMyScn().setScheduledCommand(new Command(){
 			@Override
 			public void execute() {
-//				scenarioListPanel.listScnBySubmitter(userInfoBanner.getUserEmail());
-//				showWidget(scenarioListPanel);
-				scenarioSearchPanel.listScnBySubmitter(userInfoBanner.getUserEmail());
-				showWidget(scenarioSearchPanel);
+				scenarioListPanel.listScnBySubmitter(userInfoBanner.getUserEmail());
+				showWidget(scenarioListPanel);
+//				scenarioSearchPanel.listScnBySubmitter(userInfoBanner.getUserEmail());
+//				showWidget(scenarioSearchPanel);
 			}
 		});
 		userInfoBanner.getlistApprvScn().setScheduledCommand(new Command() {			
@@ -368,11 +369,11 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 	}
 
 	@Override
-	public void onSearchResult(ScenarioProxy sp, int relativePosition) {
+	public void onSearchResult(ScenarioProxy sp, int relativePosition, List<ScenarioProxy> scenarioList) {
 		scenarioPanel.selectFirstTab();
 		scenarioPanel.cleanStatusLabel();
 		scenarioPanel.setPositionInSearchResultsList(relativePosition);
-		scenarioPanel.setScenarioSearchResultsList(scenarioSearchPanel.getScnList());
+		scenarioPanel.setScenarioSearchResultsList(scenarioList);
 		scenarioPanel.setCurrentScenario(sp);
 		showWidget(scenarioPanel);
 	}

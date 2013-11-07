@@ -87,6 +87,8 @@ public class ScenarioSearchPanel extends Composite {
 	private final static String STYLE_SUBMITTEDSCN =  "submittedScn";
 	private final static String STYLE_UNSUBMITTEDSCN =  "unsubmittedScn";
 	private final static String STYLE_REJECTEDSCN =  "rejectedScn";
+	private final static String STYLE_UNLOCKED_PRE_SCN =  "unlockedPreScn";
+	private final static String STYLE_UNLOCKED_POST_SCN =  "unlockedPostScn";
 	
 	private static final String STYLE_TABLEROWOTHER = "tableRowOther";
 	private static final String STYLE_USERLISTHEADER = "userListHeader";
@@ -188,7 +190,7 @@ public class ScenarioSearchPanel extends Composite {
 	}
 	
 	public interface SearchHandler {
-		void onSearchResult(ScenarioProxy sp, int relativePosition);
+		void onSearchResult(ScenarioProxy sp, int relativePosition, List<ScenarioProxy> scenarioList);
 	}
 	
 	private SearchHandler searchHandler;
@@ -606,13 +608,14 @@ public class ScenarioSearchPanel extends Composite {
 	
 	//Aux var to print the scn list, move thru the scenarios of the list (navigation buttons) and 
 	// fetch the previous search results
-	private List<ScenarioProxy> scnList = null;
-	private int scn_search_index = 0;
+	private List<ScenarioProxy> scenarioList = null;//result from the scenario search / listing
+	private int scn_search_index = 0; //pointer tio the beggining of tyhe search results shown
 	private int scn_list_size = 0;
 
-	public List<ScenarioProxy> getScnList() {
-		return scnList;
-	}
+//	public List<ScenarioProxy> getScnList() {
+//		return scenarioList;
+//	}
+	
 	@UiField
 	FlowPanel navigationButtons;
 	@UiField
@@ -657,9 +660,9 @@ public class ScenarioSearchPanel extends Composite {
 	private void resetGridAuxVar(List<ScenarioProxy> response){
 //		showNavigationButtons();
 		hideNavigationButtons();
-		scnList = response;
+		scenarioList = response;
 		scn_search_index = 0; //beginning of the search
-		scn_list_size =scnList.size();
+		scn_list_size =scenarioList.size();
 		buttonFirst.setEnabled(false);
 		buttonPrev.setEnabled(false);
 		//FIXME Do I need to do this or can I rely that is checked later?
@@ -688,7 +691,7 @@ public class ScenarioSearchPanel extends Composite {
 	public void showLatestSearch(){			
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		status.setVisible(false);
-		if(scnList!= null && scnList.size()>0){			
+		if(scenarioList!= null && scenarioList.size()>0){			
 			onClickGoToFirst(null);
 		}else{
 			searchResultCaption.setText("No previous search information available");
@@ -699,7 +702,7 @@ public class ScenarioSearchPanel extends Composite {
 	
 	/** XXX Experimental */
 	private void drawScenariosListGrid(){
-		drawScenariosListGrid(scnList);
+		drawScenariosListGrid(scenarioList);
 	}
 	
 	
@@ -709,7 +712,7 @@ public class ScenarioSearchPanel extends Composite {
 	 */
 	private void drawScenariosListGrid(final List<ScenarioProxy> response){
 		
-		this.scnList = response;//update aux var
+		this.scenarioList = response;//update aux var
 		
 //		hideAllSearchPanels();//updates status label to "visible"
 		status.setVisible(false);
@@ -851,7 +854,7 @@ public class ScenarioSearchPanel extends Composite {
 			public void onClick(ClickEvent event) {
 				if(null != searchHandler) {
 					searchResult2.clear();
-					searchHandler.onSearchResult(sp, relPos);
+					searchHandler.onSearchResult(sp, relPos, scenarioList);
 				}
 			}
 			
@@ -905,9 +908,9 @@ public class ScenarioSearchPanel extends Composite {
 					//update rows shown
 					if(arrayIndex2==scn_search_index && arrayIndex2==scn_list_size-1)//show previous
 						scn_search_index-=SCN_GRIDLIST_ROWS;
-					scnList.remove(arrayIndex2);
+					scenarioList.remove(arrayIndex2);
 					scn_list_size -=1;
-					drawScenariosListGrid(scnList);
+					drawScenariosListGrid(scenarioList);
 				}
 			}
 		});
@@ -917,15 +920,24 @@ public class ScenarioSearchPanel extends Composite {
 		
 		//style table rows
 		if(sp.getStatus()!=null){
-			searchResult2.getRowFormatter().removeStyleName(row, STYLE_UNSUBMITTEDSCN);
+			//remove any style
+			searchResult2.getRowFormatter().removeStyleName(row, STYLE_UNSUBMITTEDSCN);//there's no really this style
 			searchResult2.getRowFormatter().removeStyleName(row, STYLE_SUBMITTEDSCN);
 			searchResult2.getRowFormatter().removeStyleName(row, STYLE_REJECTEDSCN);
+			searchResult2.getRowFormatter().removeStyleName(row, STYLE_UNLOCKED_PRE_SCN);
+			searchResult2.getRowFormatter().removeStyleName(row, STYLE_UNLOCKED_POST_SCN);
+			
 			if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_SUBMITTED)){
 				searchResult2.getRowFormatter().addStyleName(row, STYLE_SUBMITTEDSCN);
-			}else if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_REJECTED)){
+			}
+			if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_REJECTED)){
 				searchResult2.getRowFormatter().addStyleName(row, STYLE_REJECTEDSCN);
-			}else{
-				searchResult2.getRowFormatter().addStyleName(row, STYLE_UNSUBMITTEDSCN);
+			}
+//			if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_UNLOCKED_PRE)){
+//				searchResult2.getRowFormatter().addStyleName(row, STYLE_UNLOCKED_PRE_SCN);
+//			}
+			if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_UNLOCKED_POST)){
+				searchResult2.getRowFormatter().addStyleName(row, STYLE_UNLOCKED_POST_SCN);
 			}
 		}
         //print pijama
@@ -1059,8 +1071,8 @@ public class ScenarioSearchPanel extends Composite {
 		if(userRole==UserRole.AnonymousUser){
 			Window.alert("Please, Log In to create new Clinical Scenarios");
 		}else if(null != searchHandler) {
-			//XXX la lista de previus search sera null o empty
-			searchHandler.onSearchResult(null, 0);
+			//XXX la lista de previous search sera null o empty
+			searchHandler.onSearchResult(null, 0, null);
 		}
 		
 	}
@@ -1498,8 +1510,9 @@ public class ScenarioSearchPanel extends Composite {
 		
 		//XXX Search only between approved scenarios or approved+beyond???
 		Set<String> statusSet = new HashSet<String>();
-		statusSet.add(ScenarioPanel.SCN_STATUS_MODIFIED);
-		statusSet.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+		//XXX Should we show approved+beyond or just approved
+//		statusSet.add(ScenarioPanel.SCN_STATUS_MODIFIED); 
+//		statusSet.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
 		statusSet.add(ScenarioPanel.SCN_STATUS_APPROVED);
 		scenarioRequest.searchByStatus(statusSet)
 		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
