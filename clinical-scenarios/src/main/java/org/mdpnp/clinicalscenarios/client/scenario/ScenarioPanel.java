@@ -2324,6 +2324,7 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 							public void onSuccess(ScenarioProxy response) {
 								Window.alert("This Clinical Scenario has been submitted for approval. Thank you for your contribution.");
 								setCurrentScenario(response);
+								//XXX Should we redirect the user to the main (home) page or the first tab?
 							}
 
 							public void onFailure(ServerFailure error) {

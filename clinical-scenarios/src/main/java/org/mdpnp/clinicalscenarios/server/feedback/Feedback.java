@@ -84,7 +84,7 @@ public class Feedback  implements Serializable{
 	private void sendWarningMail(){
 		String messageText = "Feedback sent by "+this.usersEmail+"\n";
 		
-		messageText += "How would you rate this website? \n" + this.rateThisWebsite + "\n";
+		messageText += "\nHow would you rate this website? \n" + this.rateThisWebsite + "\n";
 		messageText += "Is the repository easy to navigate? \n" + this.navigationOk + "\n";
 		messageText += "Is the information/functionality logically organized? \n" + this.logicallyOrganized + "\n";
 		

@@ -657,7 +657,7 @@ public class ScenarioEntity implements java.io.Serializable {
 		String subject = "Scenario "+this.id+" submitted by "+this.submitter;
 		
 		String messageText = "Feedback accompanying this scenario \n";
-		messageText += "How would you rate this website? \n" + this.feedback.getRateThisWebsite() + "\n";
+		messageText += "\nHow would you rate this website? \n" + this.feedback.getRateThisWebsite() + "\n";
 		messageText += "Is the repository easy to navigate? \n" + this.feedback.getNavigationOk() + "\n";
 		messageText += "Is the information/functionality logically organized? \n" + this.feedback.getLogicallyOrganized() + "\n";
 		

@@ -352,7 +352,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 				if(null!=userEmail && !userEmail.trim().equals(""))
 					userFeedbackPanel.setUserEmail(userEmail);
 				else
-					userFeedbackPanel.setUserEmail("Anonymous user");
+					userFeedbackPanel.setUserEmail("Anonymous User");
 				userFeedbackPanel.initialize();
 				showWidget(userFeedbackPanel);	
 			}
