@@ -620,20 +620,11 @@ public class ScenarioPanel extends Composite implements Editor<ScenarioProxy> {
 								cb.setValue(false);
 							}
 							Label lb = new Label(tagName);
-							tagsAssociatedTable.setWidget(indexRow
-									/ TAGS_TAB_NUM_COL, indexCol
-									% (2 * TAGS_TAB_NUM_COL), cb);
-							tagsAssociatedTable
-									.setWidget(
-											indexRow / TAGS_TAB_NUM_COL,
-											(indexCol % (2 * TAGS_TAB_NUM_COL)) + 1,
-											lb);
+							tagsAssociatedTable.setWidget(indexRow/ TAGS_TAB_NUM_COL, indexCol% (2 * TAGS_TAB_NUM_COL), cb);
+							tagsAssociatedTable.setWidget(indexRow / TAGS_TAB_NUM_COL,(indexCol % (2 * TAGS_TAB_NUM_COL)) + 1,lb);
 							tagsAssociatedTable
 									.getCellFormatter()
-									.setStyleName(
-											indexRow / TAGS_TAB_NUM_COL,
-											(indexCol % (2 * TAGS_TAB_NUM_COL)) + 1,
-											"paddingRight");
+									.setStyleName(indexRow / TAGS_TAB_NUM_COL,(indexCol % (2 * TAGS_TAB_NUM_COL)) + 1,"paddingRight");
 							indexRow++;
 							indexCol += 2;
 						}

@@ -176,3 +176,8 @@ h1 {
 .paddingRight{
 	padding-right:15px;
 }
+
+.tagCellDark{
+	background-color: #ADD8E6;
+	margin: 2px;
+}

@@ -64,6 +64,7 @@ public class TagsManagementPanel extends Composite implements Editor<TagProxy> {
 	private Button buttonAddTag = new Button("Add tag");
 	
 	private final static String STYLE_HOVER_CROSS = "hoverCross";
+	private final static String STYLE_TAG_CELL_DARK = "tagCellDark";
 	private final int COLUMNS_NUMBER = 5;
 	private final String COLUMN_WIDTH = "100px";
 
@@ -229,6 +230,7 @@ public class TagsManagementPanel extends Composite implements Editor<TagProxy> {
 		list.setWidget(0, 0, newTagTextbox);
 		list.setWidget(0, 1, buttonAddTag);
 		int position = 0;
+		boolean shadeCell =false; //for style
 		if(null!=listTags && listTags.size()>0){
 			for(TagProxy tag: listTags){
 				final TagProxy tagProxy = tag;
@@ -237,9 +239,13 @@ public class TagsManagementPanel extends Composite implements Editor<TagProxy> {
 				}
 				allTagNames.add(tagProxy.getName().toLowerCase());
 				Label lName = new Label(tagProxy.getName());
-				lName.setWidth(COLUMN_WIDTH);
+//				lName.setWidth(COLUMN_WIDTH);//TICKET-198: Tags overlap
 				list.setWidget(position/COLUMNS_NUMBER+1, position%COLUMNS_NUMBER, lName);
 				lName.setStyleName(STYLE_HOVER_CROSS);
+				if(shadeCell)
+//					list.getWidget(position/COLUMNS_NUMBER+1, position%COLUMNS_NUMBER).setStyleName(STYLE_TAG_CELL_DARK);
+					list.getWidget(position/COLUMNS_NUMBER+1, position%COLUMNS_NUMBER).addStyleName(STYLE_TAG_CELL_DARK);
+				shadeCell = !shadeCell;
 				lName.setTitle("click to delete \""+ tagProxy.getName() +"\" tag");
 				
 				//on click, ask for confirmation, delete the tag
