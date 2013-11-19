@@ -29,3 +29,4 @@ clinical_scenarios/
 *.jar
 hs_err*
 .nddshome/
+.metadata/
