@@ -51,11 +51,6 @@ public class ScenarioEntity implements java.io.Serializable {
 	private String lastActionUser;   //name of the last user to perform an action with the scenario
 	private String lockOwner; //name of user who has lock ownership over this scenario
 	
-	//TICKET-163  "like" scenarios
-	private Set<String> acknowledgers; //set with the IDs of the users who clicked the button to ack/like this scenario 
-	//TICKET-157
-	private Set<String> associatedTags; //set of tag Names associated to the scenario
-	
 
 	@OnSave
 	void onPersist() {
@@ -70,7 +65,9 @@ public class ScenarioEntity implements java.io.Serializable {
 	private ProposedSolutionValue proposedSolution = new ProposedSolutionValue();
 	private BenefitsAndRisksValue benefitsAndRisks = new BenefitsAndRisksValue();
 	private References references = new References();
-	
+	private Acknowledgers acknowledgers = new Acknowledgers();
+	private AssociatedTags associatedTags = new AssociatedTags();
+	private FeedbackValue feedback = new FeedbackValue();//TICKET-197
 
 
 
@@ -213,30 +210,37 @@ public class ScenarioEntity implements java.io.Serializable {
 		this.lockOwner = lockOwner;
 	}
 	
-	public Set<String> getAcknowledgers() {
+	public Acknowledgers getAcknowledgers() {
 		return acknowledgers;
 	}
 
-	public void setAcknowledgers(Set<String> acknowledgers) {
+	public void setAcknowledgers(Acknowledgers acknowledgers) {
 		this.acknowledgers = acknowledgers;
 	}
 
-	public Set<String> getAssociatedTags() {
+	public AssociatedTags getAssociatedTags() {
 		return associatedTags;
 	}
 
-	public void setAssociatedTags(Set<String> associatedTags) {
+	public void setAssociatedTags(AssociatedTags associatedTags) {
 		this.associatedTags = associatedTags;
 	}
+	
+	public FeedbackValue getFeedback() {
+		return feedback;
+	}
 
+	public void setFeedback(FeedbackValue feedback) {
+		this.feedback = feedback;
+	}
+
+	//constructor
 	public static ScenarioEntity create() /*throws Exception*/ {
 		try{
 		    ScenarioEntity s = new ScenarioEntity();
 		    s.setStatus(ScenarioPanel.SCN_STATUS_UNSUBMITTED);//By default, pending of submission
 		    s.setLastActionTaken("created new");
 		    s.setLastActionUser(s.getSubmitter());
-		    s.acknowledgers = new HashSet<String>(); //Ticket-163
-		    s.associatedTags = new HashSet<String>(); //Ticket-153
 			//to ID the current user
 		    UserService userService = UserServiceFactory.getUserService();
 		    User user = userService.getCurrentUser();
@@ -297,8 +301,9 @@ public class ScenarioEntity implements java.io.Serializable {
 //		List<ScenarioEntity> approvedScenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);//starting point
 		Set<String> states = new HashSet<String>();
 		states.add(ScenarioPanel.SCN_STATUS_APPROVED);
-		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
-		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+		//XXX Search should show approved only, and not approved + beyond
+//		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+//		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
 		List<ScenarioEntity> approvedScenarios = searchByStatus(states);//TICKET-186
 		List<String> keyWordsList = new ArrayList<String>();
 		List<ScenarioEntity> result = new ArrayList<ScenarioEntity>();
@@ -400,8 +405,8 @@ public class ScenarioEntity implements java.io.Serializable {
 //		List<ScenarioEntity> scenarios = searchByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 		Set<String> states = new HashSet<String>();
 		states.add(ScenarioPanel.SCN_STATUS_APPROVED);
-		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
-		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+//		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+//		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
 		List<ScenarioEntity> scenarios = searchByStatus(states);//TICKET-186
 		List<ScenarioEntity> matchingScenarios = new ArrayList<ScenarioEntity>();
 
@@ -478,6 +483,38 @@ public class ScenarioEntity implements java.io.Serializable {
 	}
 	
 	/**
+	 *  Returns all the scenarios of the submitter provided by parameter
+	 * @param submitter email of the user
+	 * @param dateFrom filter for creation date starting date. Can be null
+	 * @param dateUntil filter for creation date end date. Can be null
+	 * @return
+	 */
+	public static List<ScenarioEntity> searchScnBySubmitter(String submitter, Date dateFrom, Date dateUntil){
+		List<ScenarioEntity> listScn = ofy().load().type(ScenarioEntity.class).filter("submitter", submitter).list();
+		if(null == dateFrom && null == dateUntil)
+			return listScn;
+
+		List<ScenarioEntity> filteredList = new ArrayList<ScenarioEntity>();		
+		for(ScenarioEntity scn : listScn){
+			/*
+			 * 1- if none of filter dates is null --> between
+			 * 2- if dateFrom is null --> before dateUntil
+			 * 3- if dateUntil is null --> after dateFrom
+			 */
+			if(null != dateFrom && null != dateUntil){
+				if(!scn.getCreationDate().before(dateFrom) && !scn.getCreationDate().after(dateUntil))
+					filteredList.add(scn);
+			}else if(null != dateFrom && !scn.getCreationDate().before(dateFrom)){
+				filteredList.add(scn);
+			}else if(null != dateUntil && !scn.getCreationDate().after(dateUntil)){
+				filteredList.add(scn);
+			}
+		}
+				
+		return filteredList;
+	}
+	
+	/**
 	 * Returns all the scenarios
 	 * @return
 	 */
@@ -549,13 +586,14 @@ public class ScenarioEntity implements java.io.Serializable {
 		
 		return queryScn.list();
 		*/
-		Set<String> states = new HashSet<String>();
-		states.add(ScenarioPanel.SCN_STATUS_APPROVED);
-		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
-		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
-		List<ScenarioEntity> scnList = searchByStatus(states);//TICKET-186
-//		List<ScenarioEntity> scnList = ofy().load().type(ScenarioEntity.class)
-//				.filter("status", ScenarioPanel.SCN_STATUS_APPROVED).list(); //get only approved Scn		
+		
+//		Set<String> states = new HashSet<String>();
+//		states.add(ScenarioPanel.SCN_STATUS_APPROVED);
+//		states.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+//		states.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+//		List<ScenarioEntity> scnList = searchByStatus(states);//TICKET-186
+		List<ScenarioEntity> scnList = ofy().load().type(ScenarioEntity.class)
+				.filter("status", ScenarioPanel.SCN_STATUS_APPROVED).list(); //get only approved Scn		
 		List<ScenarioEntity> filteredList = new ArrayList<ScenarioEntity>();
 		
 		for(ScenarioEntity scn : scnList){
@@ -565,11 +603,11 @@ public class ScenarioEntity implements java.io.Serializable {
 			 * 3- if dateUntil is null --> after dateFrom
 			 */
 			if(null != dateFrom && null != dateUntil){
-				if(scn.getCreationDate().after(dateFrom) && scn.getCreationDate().before(dateUntil))
+				if(!scn.getCreationDate().before(dateFrom) && !scn.getCreationDate().after(dateUntil))
 					filteredList.add(scn);
-			}else if(null != dateFrom && scn.getCreationDate().after(dateFrom)){
+			}else if(null != dateFrom && !scn.getCreationDate().before(dateFrom)){
 				filteredList.add(scn);
-			}else if(null != dateUntil && scn.getCreationDate().before(dateUntil)){
+			}else if(null != dateUntil && !scn.getCreationDate().after(dateUntil)){
 				filteredList.add(scn);
 			}
 		}
@@ -599,6 +637,56 @@ public class ScenarioEntity implements java.io.Serializable {
 		this.lockOwner = null;
 		ofy().save().entity(this).now();
 	    return this;
+	}
+	
+	/**
+	 * Submitting a scenario means persisting + sending a warning email
+	 * @return
+	 */
+	public ScenarioEntity submit(){
+		//XXX Maybe we should change the status of the scenario to "SUBMITED" here, instead of on client side
+		ofy().save().entity(this).now();
+		sendScenarioReceivedMail();
+		return this;
+	}
+	
+	/**
+	 * Sends an email to warn administrators that they have a new Scenario submission
+	 */
+	private void sendScenarioReceivedMail(){
+		String subject = "Scenario "+this.id+" submitted by "+this.submitter;
+		
+		String messageText = "Feedback accompanying this scenario \n";
+		messageText += "\nHow would you rate this website? \n" + this.feedback.getRateThisWebsite() + "\n";
+		messageText += "Is the repository easy to navigate? \n" + this.feedback.getNavigationOk() + "\n";
+		messageText += "Is the information/functionality logically organized? \n" + this.feedback.getLogicallyOrganized() + "\n";
+		
+		messageText += "Did you have trouble loggin in? \n" + this.feedback.getTroubleLoginIn() + "\n";
+		messageText += "Are there any unclear questions/fields? \n" + this.feedback.getUnclearQuestions() + "\n";
+		messageText += "Are the any missing fields/tabs/information? \n" + this.feedback.getMissingFields() + "\n";
+		
+		messageText += "Would you find this useful if it was available to your department? Who would find it useful? \n" 
+				+ this.feedback.getUsefulIfDepartmentAvailable() + "\n";
+		messageText += "Does the website appear professional/trustworthy? \n" + this.feedback.getWebsiteLooksProfessional() + "\n";
+		messageText += "Do you like the visual design of the website? \n" + this.feedback.getGoodVisualDesign() + "\n";
+		messageText += "Do you have any other suggestions/requests/complaints? \n" + this.feedback.getGeneralSuggestions() + "\n";
+	
+		sendMail(RepositoryMailService.ADMIN_GMAIL_ACCOUNT, subject, messageText);
+	}
+	
+	/**
+	 * Sends an email
+	 * @param toWho
+	 * @param subject
+	 * @param message
+	 */
+	private void sendMail(String toWho, String subject, String message){
+		RepositoryMailService mailservice = new RepositoryMailService(toWho, subject, message);
+		try{
+			mailservice.send();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 	}
 	
 	

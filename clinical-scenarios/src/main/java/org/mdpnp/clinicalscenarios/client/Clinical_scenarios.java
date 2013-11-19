@@ -1,8 +1,12 @@
 package org.mdpnp.clinicalscenarios.client;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.mdpnp.clinicalscenarios.client.feedback.FeedbackProxy;
+import org.mdpnp.clinicalscenarios.client.feedback.FeedbackRequestFactory;
+import org.mdpnp.clinicalscenarios.client.feedback.UserFeedbackPanel;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioPanel;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioProxy;
 import org.mdpnp.clinicalscenarios.client.scenario.ScenarioRequestFactory;
@@ -33,14 +37,17 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 	private final UserInfoRequestFactory userInfoRequestFactory = GWT.create(UserInfoRequestFactory.class);
 	private final ScenarioRequestFactory scenarioRequestFactory = GWT.create(ScenarioRequestFactory.class);
 	private final TagRequestFactory tagRequestFactory = GWT.create(TagRequestFactory.class);
+	private final FeedbackRequestFactory feedbackRequestFactory = GWT.create(FeedbackRequestFactory.class);
 	
 	private ScenarioPanel scenarioPanel;
 	private UserInfoBanner userInfoBanner;
 	private UserInfoPanel userInfoPanel;
 	private UserInfoSearchPanel userInfoSearchPanel;
 	private ScenarioSearchPanel scenarioSearchPanel;
-	private ScenarioSearchPanel scenarioListPanel;
+	private ScenarioSearchPanel scenarioListPanel;//XXX Do we really need two of this?
 	private TagsManagementPanel tagsManagementPanel;
+	private UserFeedbackPanel userFeedbackPanel;
+	
 	private Home homePanel = new Home();
 	private DockPanel wholeApp = new DockPanel();
 	private DeckPanel contents = new DeckPanel();
@@ -63,8 +70,9 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		scenarioRequestFactory.initialize(eventBus);
 		userInfoRequestFactory.initialize(eventBus);
 		tagRequestFactory.initialize(eventBus);
+		feedbackRequestFactory.initialize(eventBus);
 		
-		scenarioPanel = new ScenarioPanel(scenarioRequestFactory);
+		scenarioPanel = new ScenarioPanel(scenarioRequestFactory);		
 		
 		scenarioSearchPanel = new ScenarioSearchPanel(scenarioRequestFactory);
 		scenarioSearchPanel.setSearchHandler(this);
@@ -73,12 +81,26 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		userInfoSearchPanel = new UserInfoSearchPanel(userInfoRequestFactory);
 		userInfoBanner = new UserInfoBanner(userInfoRequestFactory, this);
 		
+		
 		tagsManagementPanel = new TagsManagementPanel(tagRequestFactory);// Tags
 		tagsManagementPanel.setSaveHandler(new TagsManagementPanel.SaveHandler(){
 			@Override
 			public void onSave(TagProxy tagProxy) {
 				tagsManagementPanel.setCurrentTag(tagProxy);
 			}			
+		});
+		
+		userFeedbackPanel = new UserFeedbackPanel(feedbackRequestFactory);//User feedback panel
+		userFeedbackPanel.setSaveHandler(new UserFeedbackPanel.SaveHandler() {
+			@Override
+			public void onSave(FeedbackProxy feedbackProxy) {
+				userFeedbackPanel.setCurrentFeedbackProxy(feedbackProxy);
+			}
+			
+			@Override
+			public void  onSendFeedback() {
+				showWidget(homePanel);	
+			}
 		});
 
 
@@ -185,6 +207,16 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 				
 			}
 		});
+		
+		//find scenarios by user/submitter TICKET-195
+		userInfoBanner.getSearchBySubmitter().setScheduledCommand(new Command() {
+			@Override
+			public void execute() {
+				scenarioSearchPanel.showSearchBySubmitter();
+				showWidget(scenarioSearchPanel);	
+				
+			}
+		});
 
 		
 //		userInfoBanner.getList().setScheduledCommand(new Command() {
@@ -203,6 +235,8 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			public void execute() {
 				scenarioListPanel.findAllScn();
 				showWidget(scenarioListPanel);
+//				scenarioSearchPanel.findAllScn();
+//				showWidget(scenarioSearchPanel);
 			}
 		});
 		
@@ -228,6 +262,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			@Override
 			public void execute() {
 				//XXX should this look for approved only or also unlocked_post and dirty???
+				// Does not make much sense to have the re-approval process if we let users see "dirty" scenarios
 				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 				showWidget(scenarioListPanel);
 			}
@@ -254,16 +289,21 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 			public void execute() {
 				scenarioListPanel.listScnBySubmitter(userInfoBanner.getUserEmail());
 				showWidget(scenarioListPanel);
+//				scenarioSearchPanel.listScnBySubmitter(userInfoBanner.getUserEmail());
+//				showWidget(scenarioSearchPanel);
 			}
 		});
 		userInfoBanner.getlistApprvScn().setScheduledCommand(new Command() {			
 			@Override
 			public void execute() {
-				Set<String> status = new HashSet<String>();
-				status.add(ScenarioPanel.SCN_STATUS_MODIFIED);
-				status.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
-				status.add(ScenarioPanel.SCN_STATUS_APPROVED);
-				scenarioListPanel.listScnByStatus(status);
+//				Set<String> status = new HashSet<String>();
+//				status.add(ScenarioPanel.SCN_STATUS_MODIFIED);
+//				status.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+//				status.add(ScenarioPanel.SCN_STATUS_APPROVED);
+//				scenarioListPanel.listScnByStatus(status);
+				//XXX should this look for approved only or also unlocked_post and dirty???
+				// Does not make much sense to have the re-approval process if we let users see "dirty" scenarios
+				scenarioListPanel.listScnByStatus(ScenarioPanel.SCN_STATUS_APPROVED);
 				showWidget(scenarioListPanel);
 			}
 		});
@@ -281,6 +321,7 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 		contents.add(scenarioListPanel);
 		contents.add(userInfoPanel);
 		contents.add(tagsManagementPanel);
+		contents.add(userFeedbackPanel);
 
 		userInfoBanner.getListUsers().setScheduledCommand(new Command() {
 
@@ -301,9 +342,23 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 				
 			}
 		});
+		
+		//User Feedback Button Panel
+		userInfoBanner.getSendFeedback().setScheduledCommand(new Command() {
+			
+			@Override
+			public void execute() {
+				String userEmail = userInfoBanner.getUserEmail();
+				if(null!=userEmail && !userEmail.trim().equals(""))
+					userFeedbackPanel.setUserEmail(userEmail);
+				else
+					userFeedbackPanel.setUserEmail("Anonymous User");
+				userFeedbackPanel.initialize();
+				showWidget(userFeedbackPanel);	
+			}
+		});
+		
 		showWidget(homePanel);
-		
-		
 		RootPanel.get().add(wholeApp);
 	}
 
@@ -314,8 +369,11 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 	}
 
 	@Override
-	public void onSearchResult(ScenarioProxy sp) {
+	public void onSearchResult(ScenarioProxy sp, int relativePosition, List<ScenarioProxy> scenarioList) {
 		scenarioPanel.selectFirstTab();
+		scenarioPanel.cleanStatusLabel();
+		scenarioPanel.setPositionInSearchResultsList(relativePosition);
+		scenarioPanel.setScenarioSearchResultsList(scenarioList);
 		scenarioPanel.setCurrentScenario(sp);
 		showWidget(scenarioPanel);
 	}
@@ -324,4 +382,5 @@ public class Clinical_scenarios implements EntryPoint, NewUserHandler, SearchHan
 	public void onAnyUser(UserInfoProxy userInfo) {
 		scenarioSearchPanel.setUserInfo(userInfo);
 	}
+	
 }

@@ -1,5 +1,6 @@
 package org.mdpnp.clinicalscenarios.server;
 
+import org.mdpnp.clinicalscenarios.server.feedback.Feedback;
 import org.mdpnp.clinicalscenarios.server.scenario.ScenarioEntity;
 import org.mdpnp.clinicalscenarios.server.tag.Tag;
 import org.mdpnp.clinicalscenarios.server.user.UserInfo;
@@ -14,6 +15,7 @@ public class OfyService {
         factory().register(ScenarioEntity.class);
         factory().register(UserInfo.class);
         factory().register(Tag.class);
+        factory().register(Feedback.class);
     }
 
     public static Objectify ofy() {

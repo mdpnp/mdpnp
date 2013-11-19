@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioAcksComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioComparator;
+import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioDateComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioStatusComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioSubmitterComparator;
 import org.mdpnp.clinicalscenarios.client.scenario.comparator.ScenarioTitleComparator;
@@ -22,7 +23,6 @@ import org.mdpnp.clinicalscenarios.client.user.UserInfoRequest;
 import org.mdpnp.clinicalscenarios.client.user.UserInfoRequestFactory;
 
 import com.google.gwt.core.client.GWT;
-//import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.editor.client.Editor.Ignore;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -51,6 +51,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
+//import com.google.gwt.dev.util.collect.HashSet;
 
 public class ScenarioSearchPanel extends Composite {
 	
@@ -77,6 +78,8 @@ public class ScenarioSearchPanel extends Composite {
 	private ScenarioStatusComparator scnStatusComparator = new ScenarioStatusComparator();
 	private ScenarioComparator scnComparator = new ScenarioComparator(ScenarioComparator.PROPERTY_TITLE);
 	private ScenarioAcksComparator scnAcksComparator = new ScenarioAcksComparator();
+	private ScenarioDateComparator scnCreationDateComparator = new ScenarioDateComparator(ScenarioDateComparator.TypeOfDate.CreationDate);
+	private ScenarioDateComparator scnModificationDateComparator = new ScenarioDateComparator(ScenarioDateComparator.TypeOfDate.ModificationDate);
 	
 	//TODO add style names as constants too
 	private final static String STYLE_SELECTEDROW = "selectedRow";
@@ -84,6 +87,8 @@ public class ScenarioSearchPanel extends Composite {
 	private final static String STYLE_SUBMITTEDSCN =  "submittedScn";
 	private final static String STYLE_UNSUBMITTEDSCN =  "unsubmittedScn";
 	private final static String STYLE_REJECTEDSCN =  "rejectedScn";
+	private final static String STYLE_UNLOCKED_PRE_SCN =  "unlockedPreScn";
+	private final static String STYLE_UNLOCKED_POST_SCN =  "unlockedPostScn";
 	
 	private static final String STYLE_TABLEROWOTHER = "tableRowOther";
 	private static final String STYLE_USERLISTHEADER = "userListHeader";
@@ -185,7 +190,7 @@ public class ScenarioSearchPanel extends Composite {
 	}
 	
 	public interface SearchHandler {
-		void onSearchResult(ScenarioProxy sp);
+		void onSearchResult(ScenarioProxy sp, int relativePosition, List<ScenarioProxy> scenarioList);
 	}
 	
 	private SearchHandler searchHandler;
@@ -330,7 +335,7 @@ public class ScenarioSearchPanel extends Composite {
 	private void doAdvancedSearch(){
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByKeywords(advancedSearchKeywordsTextBox.getText())
-			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+			.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 			.to(new Receiver<List<ScenarioProxy>> () {
 
 				@Override
@@ -359,6 +364,11 @@ public class ScenarioSearchPanel extends Composite {
 //						response.add(result);
 					Date dateFrom = advancedSearchDateBoxFrom.getValue();
 					Date dateUntil = advancedSearchDateBoxUntil.getValue();
+					if(dateUntil != null){
+						dateUntil.setHours(23);//XXX I know, I know. They are deprecated.
+						dateUntil.setMinutes(59);
+						dateUntil.setSeconds(59);
+					}
 					String hazardSeverity = advancedSearchHazardSeverityListbox.getValue(advancedSearchHazardSeverityListbox.getSelectedIndex());
 					String clinicianInvolved = advancedSearchCliniciansTextBox.getText();
 					String environmentInvolved = advancedSearchEnvironmentsTextBox.getText();
@@ -458,7 +468,7 @@ public class ScenarioSearchPanel extends Composite {
 						filteredResult.add(it.next());
 					}
 					
-					Window.alert(" "+filteredResult.size());
+//					Window.alert(" "+filteredResult.size());
 					resetGridAuxVar(filteredResult);
 					drawScenariosListGrid(filteredResult);
 					
@@ -495,7 +505,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByKeywords(text)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(listScnReceiver).fire();
 	}	
 	
@@ -505,7 +515,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.findAllScenarios()
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(listScnReceiver).fire();
 	}
 
@@ -519,7 +529,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchScnBySubmitter(submitter)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(listScnReceiver).fire();
 	}
 	
@@ -532,7 +542,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();		
 		scenarioRequest.searchByStatus(status)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(listScnReceiver).fire();		
 	}
 	
@@ -545,7 +555,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();		
 		scenarioRequest.searchByStatus(status)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(listScnReceiver).fire();		
 	}
 	
@@ -598,11 +608,14 @@ public class ScenarioSearchPanel extends Composite {
 	
 	//Aux var to print the scn list, move thru the scenarios of the list (navigation buttons) and 
 	// fetch the previous search results
-	private static List<ScenarioProxy> scnList = null;
-	private static int scn_search_index = 0;
-	private static int scn_list_size = 0;
+	private List<ScenarioProxy> scenarioList = null;//result from the scenario search / listing
+	private int scn_search_index = 0; //pointer tio the beggining of tyhe search results shown
+	private int scn_list_size = 0;
 
-		
+//	public List<ScenarioProxy> getScnList() {
+//		return scenarioList;
+//	}
+	
 	@UiField
 	FlowPanel navigationButtons;
 	@UiField
@@ -647,9 +660,9 @@ public class ScenarioSearchPanel extends Composite {
 	private void resetGridAuxVar(List<ScenarioProxy> response){
 //		showNavigationButtons();
 		hideNavigationButtons();
-		scnList = response;
+		scenarioList = response;
 		scn_search_index = 0; //beginning of the search
-		scn_list_size =scnList.size();
+		scn_list_size =scenarioList.size();
 		buttonFirst.setEnabled(false);
 		buttonPrev.setEnabled(false);
 		//FIXME Do I need to do this or can I rely that is checked later?
@@ -678,7 +691,7 @@ public class ScenarioSearchPanel extends Composite {
 	public void showLatestSearch(){			
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		status.setVisible(false);
-		if(scnList!= null && scnList.size()>0){			
+		if(scenarioList!= null && scenarioList.size()>0){			
 			onClickGoToFirst(null);
 		}else{
 			searchResultCaption.setText("No previous search information available");
@@ -689,7 +702,7 @@ public class ScenarioSearchPanel extends Composite {
 	
 	/** XXX Experimental */
 	private void drawScenariosListGrid(){
-		drawScenariosListGrid(scnList);
+		drawScenariosListGrid(scenarioList);
 	}
 	
 	
@@ -699,7 +712,7 @@ public class ScenarioSearchPanel extends Composite {
 	 */
 	private void drawScenariosListGrid(final List<ScenarioProxy> response){
 		
-		this.scnList = response;//update aux var
+		this.scenarioList = response;//update aux var
 		
 //		hideAllSearchPanels();//updates status label to "visible"
 		status.setVisible(false);
@@ -768,7 +781,7 @@ public class ScenarioSearchPanel extends Composite {
 	    
 	    //TICKET-163
 	    Label lbl_acks = new Label("# ACKs");
-	    lbl_acks.setTitle("Displays nunber of registered users that aclnowledge the content of the scenario");
+	    lbl_acks.setTitle("Displays number of registered users that acknowledged the content of the scenario");
 	    lbl_acks.addStyleName(STYLE_CLICKABLE);
 	    lbl_acks.addClickHandler(new ClickHandler() {			
 			@Override
@@ -786,17 +799,39 @@ public class ScenarioSearchPanel extends Composite {
 		searchResult2.setWidget(0, SCN_TABLE_THIRD_COL, lbl_acks);//Ticket-163
 		//TODO: 1- sorting for this label; 2- find a better caption; 3-use title/tooltip to describe this field
 		
+		Label lbl_creationDate = new Label("Created");
+		lbl_creationDate.addStyleName(STYLE_CLICKABLE);
+		lbl_creationDate.addClickHandler(new ClickHandler() {			
+			@Override
+			public void onClick(ClickEvent event) {//on click we sort by status
+				Collections.sort(response, scnCreationDateComparator);//sort list of scn
+				scnCreationDateComparator.switchOrder();
+				resetGridAuxVar(response);
+				drawScenariosListGrid(response);					
+			}
+		});
+		Label lbl_ModificationDate = new Label("Last Modified");
+		lbl_ModificationDate.addStyleName(STYLE_CLICKABLE);
+		lbl_ModificationDate.addClickHandler(new ClickHandler() {			
+			@Override
+			public void onClick(ClickEvent event) {//on click we sort by status
+				Collections.sort(response, scnModificationDateComparator);//sort list of scn
+				scnModificationDateComparator.switchOrder();
+				resetGridAuxVar(response);
+				drawScenariosListGrid(response);					
+			}
+		});
 		if(userRole == UserRole.Administrator){
 			searchResult2.setWidget(0, SCN_TABLE_FOURTH_COL, lbl_status);
 			searchResult2.setWidget(0, SCN_TABLE_FIFTH_COL, lbl_submitter);
-			searchResult2.setWidget(0, SCN_TABLE_SIXTH_COL, new Label("Created"));
-			searchResult2.setWidget(0, SCN_TABLE_SEVENTH_COL, new Label("Last Modified"));
+			searchResult2.setWidget(0, SCN_TABLE_SIXTH_COL, lbl_creationDate);
+			searchResult2.setWidget(0, SCN_TABLE_SEVENTH_COL, lbl_ModificationDate);
 			searchResult2.setWidget(0, SCN_TABLE_EIGTH_COL, new Label("Locked by"));
 		}
 		if(userRole == UserRole.RegisteredUser){
 			searchResult2.setWidget(0, SCN_TABLE_FOURTH_COL, lbl_status);
-			searchResult2.setWidget(0, SCN_TABLE_FIFTH_COL, new Label("Created"));
-			searchResult2.setWidget(0, SCN_TABLE_SIXTH_COL, new Label("Last Modified"));
+			searchResult2.setWidget(0, SCN_TABLE_FIFTH_COL, lbl_creationDate);
+			searchResult2.setWidget(0, SCN_TABLE_SIXTH_COL, lbl_ModificationDate);
 		}
 		searchResult2.getRowFormatter().addStyleName(0, STYLE_USERLISTHEADER); //TODO Style this table
 		searchResult2.getColumnFormatter().addStyleName(0, "titleColumn");
@@ -804,19 +839,22 @@ public class ScenarioSearchPanel extends Composite {
 		ScenarioProxy[] responseArray = new ScenarioProxy[response.size()];
 		responseArray = response.toArray(responseArray);
 		int arrayIndex = scn_search_index;
+		final int arrayIndex2 = scn_search_index;
 		
 		//draw table rows
 		while(row<=SCN_GRIDLIST_ROWS && arrayIndex<responseArray.length){
-				final ScenarioProxy sp = 	responseArray[arrayIndex];///it.next();
-		Label lbl = new Label();
-		lbl.setStyleName(STYLE_CLICKABLE);
-		lbl.addClickHandler(new ClickHandler() {
+		
+		final ScenarioProxy sp = responseArray[arrayIndex];///it.next();
+		final int relPos = arrayIndex2+row-1;//because numeration system for the flexTable is not zero based
+		Label lbl_scnTitle = new Label();
+		lbl_scnTitle.setStyleName(STYLE_CLICKABLE);
+		lbl_scnTitle.addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
 				if(null != searchHandler) {
 					searchResult2.clear();
-					searchHandler.onSearchResult(sp);
+					searchHandler.onSearchResult(sp, relPos, scenarioList);
 				}
 			}
 			
@@ -824,10 +862,14 @@ public class ScenarioSearchPanel extends Composite {
 		String title = sp.getTitle();
 		title = null == title || "".equals(title) ? "<none>" : title;//XXX title.trim() ??
 		final String auxTitle = title;
-		lbl.setText(title);
-		searchResult2.setWidget(row, SCN_TABLE_FIRST_COL, lbl);
+		lbl_scnTitle.setText(title);
+		searchResult2.setWidget(row, SCN_TABLE_FIRST_COL, lbl_scnTitle);
 		searchResult2.setWidget(row, SCN_TABLE_SECOND_COL, new Label(String.valueOf(sp.getId())));
-		Set<String> ackEdgers = sp.getAcknowledgers();
+		Set<String> ackEdgers = sp.getAcknowledgers().getAcknowledgersIDs();
+//		List<String> auxAckEdgers = sp.getAcknowledgers().getAcknowledgersIDs();
+//		Set<String> ackEdgers = new HashSet<String>(auxAckEdgers);
+//		if(null==ackEdgers)
+//			ackEdgers = new HashSet<String>();
 		Label acksLabel = ackEdgers==null? new Label("0"):new Label(String.valueOf(ackEdgers.size()));
 		searchResult2.setWidget(row, SCN_TABLE_THIRD_COL, acksLabel);//ticket-163
 
@@ -850,7 +892,7 @@ public class ScenarioSearchPanel extends Composite {
 			searchResult2.setWidget(row, SCN_TABLE_SIXTH_COL, new Label(modifDate));
 		}
 
-		final int arrayIndex2 = arrayIndex;
+//		final int arrayIndex2 = arrayIndex;
 		Button deleteButton = new Button("Delete");
 		deleteButton.addClickHandler(new ClickHandler() {
 				
@@ -866,27 +908,36 @@ public class ScenarioSearchPanel extends Composite {
 					//update rows shown
 					if(arrayIndex2==scn_search_index && arrayIndex2==scn_list_size-1)//show previous
 						scn_search_index-=SCN_GRIDLIST_ROWS;
-					scnList.remove(arrayIndex2);
+					scenarioList.remove(arrayIndex2);
 					scn_list_size -=1;
-					drawScenariosListGrid(scnList);
+					drawScenariosListGrid(scenarioList);
 				}
 			}
 		});
 
-		if(userRole==userRole.Administrator)//Only Admins should be able to delete Scn
+		if(userRole==UserRole.Administrator)//Only Admins should be able to delete Scn
 			searchResult2.setWidget(row, SCN_TABLE_NINTH_COL, deleteButton);
 		
 		//style table rows
 		if(sp.getStatus()!=null){
-			searchResult2.getRowFormatter().removeStyleName(row, STYLE_UNSUBMITTEDSCN);
+			//remove any style
+			searchResult2.getRowFormatter().removeStyleName(row, STYLE_UNSUBMITTEDSCN);//there's no really this style
 			searchResult2.getRowFormatter().removeStyleName(row, STYLE_SUBMITTEDSCN);
 			searchResult2.getRowFormatter().removeStyleName(row, STYLE_REJECTEDSCN);
+			searchResult2.getRowFormatter().removeStyleName(row, STYLE_UNLOCKED_PRE_SCN);
+			searchResult2.getRowFormatter().removeStyleName(row, STYLE_UNLOCKED_POST_SCN);
+			
 			if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_SUBMITTED)){
 				searchResult2.getRowFormatter().addStyleName(row, STYLE_SUBMITTEDSCN);
-			}else if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_REJECTED)){
+			}
+			if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_REJECTED)){
 				searchResult2.getRowFormatter().addStyleName(row, STYLE_REJECTEDSCN);
-			}else{
-				searchResult2.getRowFormatter().addStyleName(row, STYLE_UNSUBMITTEDSCN);
+			}
+//			if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_UNLOCKED_PRE)){
+//				searchResult2.getRowFormatter().addStyleName(row, STYLE_UNLOCKED_PRE_SCN);
+//			}
+			if(sp.getStatus().equals(ScenarioPanel.SCN_STATUS_UNLOCKED_POST)){
+				searchResult2.getRowFormatter().addStyleName(row, STYLE_UNLOCKED_POST_SCN);
 			}
 		}
         //print pijama
@@ -1020,7 +1071,8 @@ public class ScenarioSearchPanel extends Composite {
 		if(userRole==UserRole.AnonymousUser){
 			Window.alert("Please, Log In to create new Clinical Scenarios");
 		}else if(null != searchHandler) {
-			searchHandler.onSearchResult(null);
+			//XXX la lista de previous search sera null o empty
+			searchHandler.onSearchResult(null, 0, null);
 		}
 		
 	}
@@ -1087,6 +1139,8 @@ public class ScenarioSearchPanel extends Composite {
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		advancedSearch.setVisible(true);
 		status.setVisible(false);
+		advancedSearchDateBoxFrom.setValue(null);
+		advancedSearchDateBoxUntil.setValue(null);
 		searchResult2.setVisible(false);	
 //		radioButtonOr.setValue(true);
 		initializeAdvancedSearchPanel();
@@ -1152,6 +1206,7 @@ public class ScenarioSearchPanel extends Composite {
 		hideSearchById();// Search by ID
 		hideSearchByDates();// Search by dates
 		hideSearchByTags();
+		hideSearchBySubmitter();//TICKET-195
 	}
 	
 	//---------------------------------------
@@ -1224,7 +1279,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.findById(scnId)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(new Receiver<ScenarioProxy>() {
 
 			@Override
@@ -1282,6 +1337,8 @@ public class ScenarioSearchPanel extends Composite {
 		hideAllSearchPanels();//HIDE all the others; SHOW this one
 		searchByDates.setVisible(true);
 		status.setVisible(false);
+		advancedSearchDateBoxFrom.setValue(null);
+		advancedSearchDateBoxUntil.setValue(null);
 		//one row, four columns
 		dateRangeSearchComponentsTable.setWidget(1, 1, new Label("Search: from date "));
 		dateRangeSearchComponentsTable.setWidget(1, 2, advancedSearchDateBoxFrom);
@@ -1294,6 +1351,7 @@ public class ScenarioSearchPanel extends Composite {
 
 		Date dateFrom = advancedSearchDateBoxFrom.getValue();
 		Date dateUntil = advancedSearchDateBoxUntil.getValue();
+
 
 		//1- validation that not both dates are NULL
 		if(dateFrom==null && dateUntil==null){
@@ -1316,6 +1374,12 @@ public class ScenarioSearchPanel extends Composite {
 			headline += " after "+dtf.format(advancedSearchDateBoxFrom.getValue())+".";
 		else 	
 			headline += " before "+dtf.format(advancedSearchDateBoxUntil.getValue())+".";
+		
+		if(dateUntil != null){
+			dateUntil.setHours(23);//XXX I know, I know. They are deprecated.
+			dateUntil.setMinutes(59);
+			dateUntil.setSeconds(59);
+		}
 		searchResultCaption.setText(headline);
 		searchResultCaption.setVisible(true);
 		doSearchByDates(dateFrom, dateUntil);
@@ -1326,7 +1390,7 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		scenarioRequest.searchByCreationDateRange(dateFrom, dateUntil)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(new Receiver<List<ScenarioProxy>> () {
 
 			@Override
@@ -1444,12 +1508,14 @@ public class ScenarioSearchPanel extends Composite {
 		cleanScenarioTable();
 		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
 		
+		//XXX Search only between approved scenarios or approved+beyond???
 		Set<String> statusSet = new HashSet<String>();
-		statusSet.add(ScenarioPanel.SCN_STATUS_MODIFIED);
-		statusSet.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
+		//XXX Should we show approved+beyond or just approved
+//		statusSet.add(ScenarioPanel.SCN_STATUS_MODIFIED); 
+//		statusSet.add(ScenarioPanel.SCN_STATUS_UNLOCKED_POST);
 		statusSet.add(ScenarioPanel.SCN_STATUS_APPROVED);
 		scenarioRequest.searchByStatus(statusSet)
-		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution")
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
 		.to(new Receiver<List<ScenarioProxy>> () {
 
 			@Override
@@ -1461,7 +1527,7 @@ public class ScenarioSearchPanel extends Composite {
 					//TODO filter approved scenarios containing the selected tags
 					//filter results whose tags are not in associatedTags
 					for(ScenarioProxy scn : result){
-						Set<String> associatedTags = scn.getAssociatedTags();						
+						Set<String> associatedTags = scn.getAssociatedTags().getAssociatedTagNames();						
 						if(null!=associatedTags && associatedTags.size()>0){
 							associatedTags.retainAll(checkedTags);//associatedTags has now the INTERSECTION of both sets
 							if(associatedTags.size() >0){
@@ -1475,6 +1541,115 @@ public class ScenarioSearchPanel extends Composite {
 				resetGridAuxVar(filteredResults);
 				drawScenariosListGrid(filteredResults);
 				
+			}
+			@Override
+			public void onFailure(ServerFailure error) {
+				super.onFailure(error);
+			}
+		}).fire();
+	}
+	
+	//-------------------------------------------------------
+	// search by user/submitter TICKET-195
+	@UiField
+	FlowPanel searchBySubmitter;
+	
+	@UiField
+	@Ignore
+	FlexTable submitterSearchTable;
+	
+	@UiField
+	Button buttonSearchBySubmitter;
+	
+//	@UiField
+	TextBox userEmailBox = new TextBox();
+	{
+		userEmailBox.addClickHandler(new ClickHandler() {
+			
+			@Override
+			public void onClick(ClickEvent event) {
+				userEmailBox.setText("");
+			}
+		});
+	}
+	
+	private void hideSearchBySubmitter(){
+		searchBySubmitter.setVisible(false);
+	}
+	
+	public void showSearchBySubmitter(){
+		hideAllSearchPanels();//HIDE all the others; SHOW this one
+		searchBySubmitter.setVisible(true);
+		status.setVisible(false);
+		userEmailBox.setText("Enter user's email"); 
+		advancedSearchDateBoxFrom.setValue(null);
+		advancedSearchDateBoxUntil.setValue(null);
+		
+		submitterSearchTable.setWidget(1, 1, new Label("User's email "));
+		submitterSearchTable.setWidget(1, 2, userEmailBox);
+		
+		//one row, four columns
+		submitterSearchTable.setWidget(2, 1, new Label("Search from date "));
+		submitterSearchTable.setWidget(2, 2, advancedSearchDateBoxFrom);
+		submitterSearchTable.setWidget(2, 3, new Label(" up to date "));
+		submitterSearchTable.setWidget(2, 4, advancedSearchDateBoxUntil);
+	}
+	
+//	@UiHandler("userEmailBox")
+//	public void onFocusSearchBySubmitter(FocusEvent focusEvent) {
+//		userEmailBox.setText("");
+//	}
+	
+	@UiHandler("buttonSearchBySubmitter")
+	public void onClickButtonSearchBySubmitter(ClickEvent clickEvent) {	
+		//the user email can't be null
+		String userMail = userEmailBox.getText();
+		if(null == userMail || userMail.trim().equals("")){
+			Window.alert("The user's email cant be empty");
+			return;
+		}
+//		try {
+//		      InternetAddress emailAddr = new InternetAddress(userMail);
+//		      emailAddr.validate();
+//		} catch (AddressException ex) {
+//			   Window.alert("The user's email cant be empty");
+//			   return;
+//		}
+		Date dateFrom = advancedSearchDateBoxFrom.getValue();
+		Date dateUntil = advancedSearchDateBoxUntil.getValue();
+		if(dateUntil != null){
+			dateUntil.setHours(23);//XXX I know, I know. They are deprecated.
+			dateUntil.setMinutes(59);
+			dateUntil.setSeconds(59);
+		}
+
+		//Validation that date-from in not after date-until
+		if(dateFrom!=null && dateUntil!=null && dateFrom.after(dateUntil)){
+			String msg = "Date \"from\" can not be after date \"until\"";
+			Window.alert(msg);	
+			return;
+		}
+
+		hideAllSearchPanels();
+		doSearchBySubmitter(userMail, dateFrom, dateUntil);
+	}
+	
+	
+	private void doSearchBySubmitter(String userEmail, Date initDate, Date endDate){
+		cleanScenarioTable();
+		ScenarioRequest scenarioRequest = scenarioRequestFactory.scenarioRequest();
+		
+		scenarioRequest.searchScnBySubmitter(userEmail, initDate, endDate)
+		.with("background", "benefitsAndRisks", "environments", "equipment", "hazards", "proposedSolution", "references", "acknowledgers", "associatedTags", "feedback")
+		.to(new Receiver<List<ScenarioProxy>> () {
+
+			@Override
+			public void onSuccess(List<ScenarioProxy> result) {
+				if(null==result || result.size()==0){ 
+					status.setVisible(false); 
+				}
+				resetGridAuxVar(result);
+				drawScenariosListGrid(result);
 			}
 			@Override
 			public void onFailure(ServerFailure error) {

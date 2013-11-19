@@ -14,6 +14,8 @@ import javax.mail.internet.MimeMessage;
 
 public class RepositoryMailService {
 	
+	public static final String ADMIN_GMAIL_ACCOUNT = "md.pnp.team@gmail.com";
+	
 	String host = "smtp.google.com";
 	String to = "md.pnp.team@gmail.com";
 	String from = "md.pnp.team@gmail.com";

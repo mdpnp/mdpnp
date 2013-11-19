@@ -129,6 +129,16 @@ h1 {
 	font-weight:bold;
 }
 
+.unlockedPreScn {
+	color: #008000;
+	font-weight:bold;
+}
+
+.unlockedPostScn {
+	color: #006400;
+	font-weight:bold;
+}
+
 /* A selected row from a table*/
 .selectedRow{
 	background-color:#316AC5;
@@ -165,4 +175,9 @@ h1 {
 
 .paddingRight{
 	padding-right:15px;
+}
+
+.tagCellDark{
+	background-color: #ADD8E6;
+	margin: 2px;
 }

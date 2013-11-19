@@ -40,10 +40,11 @@ public class UserInfoBanner extends Composite {
 	private MenuItem listUsers = new MenuItem("List Users", NOOP);
 	private MenuItem basicSearch = new MenuItem("Basic Search", NOOP);
 	private MenuItem advancedSearch = new MenuItem("Advanced Search", NOOP);
-	private MenuItem showLatestSearch = new MenuItem("Latest Search Results", NOOP);
+	private MenuItem showLatestSearch = new MenuItem("Go Back to the Latest Search Results", NOOP);
 	private MenuItem searchById = new MenuItem("Search Scenario by Id", NOOP);
 	private MenuItem searchByDates= new MenuItem("Search Scenarios by Dates", NOOP);
 	private MenuItem searchByTags= new MenuItem("Search Scenarios by Tags", NOOP);
+	private MenuItem searchBySubmitter= new MenuItem("Search Scenarios by Submitter", NOOP);//Ticket-195
 	
 	private MenuItem listTags = new MenuItem("List Tags", NOOP);//list the tags
 	//list scenarios
@@ -60,7 +61,8 @@ public class UserInfoBanner extends Composite {
 	private MenuItem listMyScn = new MenuItem("My Scenarios", NOOP);//List Scn for registered users
 	private MenuItem listApprvScn = new MenuItem("All Approved Scenarios", NOOP);//list of Approved Scn for Anonymous/registered users
 	private MenuItem createNewScn = new MenuItem("Create New Scenario", NOOP);//Ticket-102 Must be independent in the menu bar
-		 
+	private MenuItem sendFeedback = new MenuItem("Feedback", NOOP);
+	
 	private MenuItem goBackHome = new MenuItem("Go to Homepage", NOOP);//go back to home page
 	
 	private UserInfoProxy userInfo;
@@ -119,6 +121,9 @@ public class UserInfoBanner extends Composite {
 	public MenuItem getCreateNewScenario(){
 		return createNewScn;
 	}
+	public MenuItem getSendFeedback(){
+		return sendFeedback;
+	}
 	public MenuItem getGoBackHome(){
 		return goBackHome;
 	}
@@ -133,8 +138,13 @@ public class UserInfoBanner extends Composite {
 	}
 	public MenuItem getSearchByTags() {
 		return searchByTags;
+	}	
+	public MenuItem getSearchBySubmitter() {
+		return searchBySubmitter;
 	}
-	
+	public void setSearchBySubmitter(MenuItem searchBySubmitter) {
+		this.searchBySubmitter = searchBySubmitter;
+	}
 	//	XXX 07/22/13 diego@mdpnp.org Rejected is considered the same state as pending of submission
 //	public MenuItem getListScnRejected(){
 //		return scnRejected;
@@ -160,10 +170,8 @@ public class UserInfoBanner extends Composite {
 		//XXX SEarch by dates not yet - consider which date of the scenario to use
 		searchByDates.setTitle("Find scenarios in a date range");
 		search.addItem(searchByDates);
-		searchByTags.setTitle("Fing scenarios tagged with the selected keywords");
+		searchByTags.setTitle("Find scenarios tagged with the selected keywords");
 		search.addItem(searchByTags);
-		showLatestSearch.setTitle("Retrieve the previous search results");
-		search.addItem(showLatestSearch);
 
 		UserInfoRequest userInfoRequest = userInfoRequestFactory.userInfoRequest();
 		userInfoRequest.findCurrentUserInfo(Window.Location.getHref(), true).with("loginURL").to(new Receiver<UserInfoProxy>() {
@@ -190,6 +198,8 @@ public class UserInfoBanner extends Composite {
 					}
 					
 					username.addItem(listApprvScn);
+					sendFeedback.setTitle("Give Feedback about the Repository");
+					username.addItem(sendFeedback);
 					username.addItem("Sign In", signIn);
 					
 				} else {
@@ -225,10 +235,11 @@ public class UserInfoBanner extends Composite {
 						listMyScn.setTitle("All scenarios created by this user");
 
 						username.addItem("List Scenarios", listScenarios);
-						
-						
 						username.addItem(listUsers);
 						username.addItem(listTags);//add tag search
+						
+						searchBySubmitter.setTitle("Find scenarios by user");//TICKET-195
+						search.addItem(searchBySubmitter);
 					}else{//registered user (NOT ADMIN)
 						listScenarios.setTitle("List Scenarios");
 						listScenarios.addItem(listApprvScn);
@@ -238,9 +249,14 @@ public class UserInfoBanner extends Composite {
 
 						username.addItem("List Scenarios", listScenarios);
 					}
+					
+					showLatestSearch.setTitle("Retrieve the previous search results");
+					search.addItem(showLatestSearch); //TODO Fix ticket-146 before allowing this functionality
 					//Ticket-102
 					createNewScn.setTitle("Create a new Clinical Scenario");
 					username.addItem(createNewScn);
+					sendFeedback.setTitle("Give Feedback about the Repository");//XXX Move to Registered users (not admin)
+					username.addItem(sendFeedback);
 					
 					MenuBar logoutMenu = new MenuBar(true);
 					
@@ -259,7 +275,7 @@ public class UserInfoBanner extends Composite {
 					logoutMenu.addItem(signOut);
 					
 					username.addItem(response.getEmail(), logoutMenu);
-					if(null == response.getGivenName() && null != newUserHandler) {//TICKET-181 
+					if(null == response.getJobTitle() /*response.getGivenName()*/ && null != newUserHandler) {//TICKET-181 
 						newUserHandler.onNewUser(response);//display userInfoPanel
 					}
 					
