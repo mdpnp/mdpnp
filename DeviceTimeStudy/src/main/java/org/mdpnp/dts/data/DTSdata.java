@@ -17,7 +17,7 @@ public class DTSdata {
 //		"Offset more than 15 min", "Offset more than 30 min", "Offset more than 1 hour", "Offset more than 2 hours"};
 	
 	//Version 2: shorter names that can be used as categories names in the charts 
-	public static String[] thresholdCategories ={"< 2 sec.",
+	public static String[] thresholdCategories ={"No offset", "< 2 sec.",
 		"[2s. - 1m.)", "[1m. - 5m.)", "[5m - 10m.)", "[10m. - 15m.)",
 		"[15m. - 30m.)", "[30m. - 1h.)", "[1h. - 2h.)", ">= 2 hours"};
 	
@@ -55,6 +55,7 @@ public class DTSdata {
     private String absDeviceOffset; //Take absolute values of Device Offset (Convert Negative Values into Positive)
     private String offsetSign; //Note the Offset Sign of the Device Offset (Positive Offset or Negative Offset or No Offset)
    
+    private boolean threshold_noOffset; //displays seconds, offset is 0
     private boolean thresholdGT_2sec; //displays seconds, threshold is greater than 2 seconds
     private boolean thresholdGT_1min; //displays minutes, threshold is greater than ONE minute
     private boolean thresholdGT_5min; //displays minutes, threshold is greater than FIVE minutes
@@ -64,9 +65,7 @@ public class DTSdata {
     private boolean thresholdGT_1Hour; //displays minutes, threshold is greater than ONE HOUR
     private boolean thresholdGT_2Hour; //displays minutes, threshold is greater than TWO Hours
     private String threshold;//actual threshold value
-    
-    //TODO Could be desiderable to have a Threshold_0Sec range too, for devices that don't show offset.
-    
+        
     //cons
     public DTSdata(){
     	
@@ -280,6 +279,14 @@ public class DTSdata {
 	public void setOffsetSign(String offsetSign) {
 		this.offsetSign = offsetSign;
 	}
+	
+	public boolean isThreshold_noOffset() {
+		return threshold_noOffset;
+	}
+
+	public void setThreshold_noOffset(boolean threshold_noOffset) {
+		this.threshold_noOffset = threshold_noOffset;
+	}
 
 	public boolean isThresholdGT_2sec() {
 		return thresholdGT_2sec;
@@ -381,15 +388,16 @@ public class DTSdata {
 	 * @return Threshold for this offset
 	 */
 	public String getThresholdCategory(){
-		if(!thresholdGT_2sec) return thresholdCategories[0]; //"Offset less than 2 sec";
-		else if (!thresholdGT_1min) return thresholdCategories[1]; //"Offset more than 2 sec";
-		else if (!thresholdGT_5min) return thresholdCategories[2]; //"Offset more than 1 min";
-		else if (!thresholdGT_10min) return thresholdCategories[3]; //"Offset more than 5 min";
-		else if (!thresholdGT_15min) return thresholdCategories[4]; //"Offset more than 10 min";
-		else if (!thresholdGT_30min) return thresholdCategories[5]; //"Offset more than 15 min";
-		else if (!thresholdGT_1Hour) return thresholdCategories[6]; //"Offset more than 30 min";
-		else if (!thresholdGT_2Hour) return thresholdCategories[7]; //"Offset more than 1 hour";
-		else return thresholdCategories[8]; //"Offset more than 2 hours";
+		if(threshold_noOffset) return thresholdCategories[0];//no offset
+		else if(!thresholdGT_2sec) return thresholdCategories[1]; //"Offset less than 2 sec";
+		else if (!thresholdGT_1min) return thresholdCategories[2]; //"Offset more than 2 sec";
+		else if (!thresholdGT_5min) return thresholdCategories[3]; //"Offset more than 1 min";
+		else if (!thresholdGT_10min) return thresholdCategories[4]; //"Offset more than 5 min";
+		else if (!thresholdGT_15min) return thresholdCategories[5]; //"Offset more than 10 min";
+		else if (!thresholdGT_30min) return thresholdCategories[6]; //"Offset more than 15 min";
+		else if (!thresholdGT_1Hour) return thresholdCategories[7]; //"Offset more than 30 min";
+		else if (!thresholdGT_2Hour) return thresholdCategories[8]; //"Offset more than 1 hour";
+		else return thresholdCategories[9]; //"Offset more than 2 hours";
  	}
  
 

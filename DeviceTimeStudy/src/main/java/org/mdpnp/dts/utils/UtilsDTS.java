@@ -157,6 +157,16 @@ public class UtilsDTS {
 	}
 	
 	/**
+	 * Return true if the two dates provided, hh:mm:ss are in the same minute
+	 * @param date1
+	 * @param date2
+	 * @return
+	 */
+	public static boolean isSameMinute(String date1, String date2){
+		return date1.substring(0, 6).equals(date2.substring(0, 6));
+	}
+	
+	/**
 	 * NumberFormatter for more pretty printing
 	 */
     public static final NumberFormat milisecTimeFomatter = new NumberFormat(){

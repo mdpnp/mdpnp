@@ -1,7 +1,6 @@
 package org.mdpnp;
 
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -14,6 +13,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -47,7 +47,7 @@ public class QRBasicForm extends JFrame{
     JTextField tfFileName = new JTextField("filename",25);
     //extension of the file
     String[] extension ={"gif", "png", "jpg"};
-    JComboBox jcExt = new JComboBox(extension);
+    JComboBox<String> jcExt = new JComboBox<String>(extension);
 
     //info on the file to generate
     JLabel labelQRInfo= new JLabel("QR info / link:");
@@ -63,7 +63,7 @@ public class QRBasicForm extends JFrame{
 
     
     //button
-    JButton buttonGenerate = new JButton("Generate QR file");
+    JButton buttonSelectPath = new JButton("Select QR file path");
       
     private void init(){
 
@@ -111,9 +111,9 @@ public class QRBasicForm extends JFrame{
 				  //will disable the "Generate QR" button if we have no file_name or qr_link
 				  public void checkText() {
 					if(tfFileName.getText().trim().equals("") || tflink.getText().trim().equals(""))
-						buttonGenerate.setEnabled(false);						
+						buttonSelectPath.setEnabled(false);						
 					else
-						buttonGenerate.setEnabled(true);
+						buttonSelectPath.setEnabled(true);
 				     }
 		});
 		
@@ -157,9 +157,9 @@ public class QRBasicForm extends JFrame{
 				  //will disable the "Generate QR" button if we have no file_name or qr_link
 				  public void checkText() {
 					if(tfFileName.getText().trim().equals("") ||tflink.getText().trim().equals(""))
-						buttonGenerate.setEnabled(false);						
+						buttonSelectPath.setEnabled(false);						
 					else
-						buttonGenerate.setEnabled(true);
+						buttonSelectPath.setEnabled(true);
 				     }
 		});
 		
@@ -191,13 +191,14 @@ public class QRBasicForm extends JFrame{
 		gridConst.gridx = 1;
 		gridConst.gridy = 3;
 		gridConst.gridwidth = 2;
-		panel.add(buttonGenerate, gridConst);
+		panel.add(buttonSelectPath, gridConst);
 
 		
 		/**
 		 * Action listener for the GEnerate QR Button
 		 */
-	    buttonGenerate.addActionListener(new ActionListener() {
+	    buttonSelectPath.addActionListener(new ActionListener() {
+	    	File file = null;
 			/**action is:
 			 * 1: Launch file chooser to allow image PATH SELECTION
 			 * 2: Fetch data and generate QR
@@ -205,9 +206,11 @@ public class QRBasicForm extends JFrame{
 			 */
 			public void actionPerformed(ActionEvent e) {
 				// Launch file chooser 
-				int returnVal = fc.showDialog(getContentPane(), "Select path for file "+tfFileName.getText()+"."+jcExt.getSelectedItem().toString());
+				if(null!=file)
+					fc.setCurrentDirectory(file);
+				int returnVal = fc.showDialog(/*getContentPane()*/null, "Generate "+tfFileName.getText()+"."+jcExt.getSelectedItem().toString());
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
-		            File file = fc.getSelectedFile();
+		            /*File*/ file = fc.getSelectedFile();//directory
 		            String path = file.getAbsolutePath();
 		            
 					QRGenerator qrGen;
@@ -220,6 +223,7 @@ public class QRBasicForm extends JFrame{
 					qrGen.setHeight(Math.abs(iHeigth));
 					
 					qrGen.generateQR();
+					JOptionPane.showMessageDialog(null, tfFileName.getText()+"."+jcExt.getSelectedItem().toString()+" successfully generated");
 					
 				}
 
