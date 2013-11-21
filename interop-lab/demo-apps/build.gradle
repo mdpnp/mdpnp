@@ -50,7 +50,7 @@ task downloadAppBundler(dependsOn: createBuildToolsDir) << {
     def f = file("build-tools/appbundler-1.0.jar");
     if(!f.exists() || f.length() == 0) {
         println 'Downloading appbundler-1.0.jar'
-        new URL('https://java.net/projects/appbundler/downloads/download/appbundler-1.0.jar').withInputStream{ i-> f.withOutputStream{ it << i }}
+        new URL('http://java.net/downloads/appbundler/appbundler-1.0.jar').withInputStream{ i-> f.withOutputStream{ it << i }}
     }
     buildscript.dependencies.create(files('build-tools/appbundler-1.0.jar'))
 }
