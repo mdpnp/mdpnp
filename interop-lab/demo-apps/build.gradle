@@ -46,11 +46,31 @@ task copyDeps(type: Copy) {
     into "${buildDir}/deps"
 }
 
+// http://stackoverflow.com/questions/14474973/how-to-download-a-file-groovy
+def redirectFollowingDownload( String url, File f ) {
+    while( url ) {
+      new URL( url ).openConnection().with { conn ->
+        conn.instanceFollowRedirects = false
+        url = conn.getHeaderField( "Location" )
+        if( !url ) {
+          f.withOutputStream { out ->
+            conn.inputStream.with { inp ->
+              out << inp
+              inp.close()
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+
 task downloadAppBundler(dependsOn: createBuildToolsDir) << {
-    def f = file("build-tools/appbundler-1.0.jar");
+    File f = file("build-tools/appbundler-1.0.jar");
     if(!f.exists() || f.length() == 0) {
         println 'Downloading appbundler-1.0.jar'
-        new URL('http://java.net/downloads/appbundler/appbundler-1.0.jar').withInputStream{ i-> f.withOutputStream{ it << i }}
+        redirectFollowingDownload('http://java.net/downloads/appbundler/appbundler-1.0.jar', f)
     }
     buildscript.dependencies.create(files('build-tools/appbundler-1.0.jar'))
 }
