@@ -44,7 +44,7 @@ public class WaveformUpdateWaveformSource extends AbstractWaveformSource {
 
     @Override
     public float getValue(int x) {
-        return lastUpdate.values.getFloat(x);
+        return lastUpdate.values.userData.getFloat(x);
 //		if(null == lastUpdate) {
 //			return 0;
 //		} else {
@@ -64,7 +64,7 @@ public class WaveformUpdateWaveformSource extends AbstractWaveformSource {
 
     @Override
     public int getMax() {
-        return lastUpdate.values.size();
+        return lastUpdate.values.userData.size();
 //		return null == lastUpdate.getValues() ? 0 : lastUpdate.getValues().length;
     }
 

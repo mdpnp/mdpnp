@@ -73,7 +73,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 
         executor.scheduleAtFixedRate(new Watchdog(), 0L, 100L, TimeUnit.MILLISECONDS);
 
-        deviceConnectivity.valid_targets.addAll(getSerialProvider().getPortNames());
+        deviceConnectivity.valid_targets.userData.addAll(getSerialProvider().getPortNames());
     }
 
     public AbstractSerialDevice(int domainId, EventLoop eventLoop, SerialSocket sock) {

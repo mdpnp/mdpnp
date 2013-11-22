@@ -204,11 +204,11 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
             // artificially batched like this
             long src_time = capno.getSampleInfo().source_timestamp.sec * 1000L + capno.getSampleInfo().source_timestamp.nanosec / 1000000L;
             long msPerSample = capno.getSampleArray().millisecondsPerSample;
-            final int sz  =capno.getSampleArray().values.size();
+            final int sz  =capno.getSampleArray().values.userData.size();
             int startedAtCurrent = current;
             for(int i = 0; i  < sz; i++) {
                 times[current] = src_time + (i - sz) * msPerSample;
-                values[current] = capno.getSampleArray().values.getFloat(i);
+                values[current] = capno.getSampleArray().values.userData.getFloat(i);
                 if(values[minus(current)] <= thresholdSlider.getValue() && values[current] > thresholdSlider.getValue()) {
                     if(lastBreathTime != null) {
                         rr = 60000.0 / (times[current] - lastBreathTime);

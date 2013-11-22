@@ -95,7 +95,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
                         iconFromResource(deviceIdentity, "9650.png");
                     } catch (IOException e) {
                         log.error("Error loading icon resource", e);
-                        deviceIdentity.icon.raster.clear();
+                        deviceIdentity.icon.raster.userData.clear();
                         deviceIdentity.icon.height = 0;
                         deviceIdentity.icon.width = 0;
                     }
@@ -117,7 +117,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
                         iconFromResource(deviceIdentity, "3150.png");
                     } catch (IOException e) {
                         log.error("Error loading icon resource", e);
-                        deviceIdentity.icon.raster.clear();
+                        deviceIdentity.icon.raster.userData.clear();
                         deviceIdentity.icon.height = 0;
                         deviceIdentity.icon.width = 0;
                     }

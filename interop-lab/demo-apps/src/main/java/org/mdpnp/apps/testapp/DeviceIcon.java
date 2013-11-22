@@ -51,8 +51,8 @@ public class DeviceIcon extends ImageIcon {
    public void setImage(ice.Image image, double scale) {
         int width = image.width;
         int height = image.height;
-        byte[] raster = new byte[image.raster.size()];
-        image.raster.toArrayByte(raster);
+        byte[] raster = new byte[image.raster.userData.size()];
+        image.raster.userData.toArrayByte(raster);
 
         if(raster.length < (width * height * 4)) {
             throw new IllegalArgumentException("the specified image is " + width + "x" + height + " and only " + raster.length + " bytes");

@@ -3,20 +3,26 @@ module ice {
   typedef string<64> UniqueDeviceIdentifier;
   typedef string<64>  MetricIdentifier;
   typedef long InstanceIdentifier;
+  typedef string<128> LongString;
+  typedef sequence<LongString, 128> ValidTargets;
+  typedef string<256> TextString;
+  typedef sequence<octet, 65530> Raster;
+  typedef sequence<float, 400> Values;
 
   struct Image {
-    sequence<octet, 65530> raster;
+    Raster raster;
     long width;
     long height;
   };
 
   struct DeviceIdentity {
     UniqueDeviceIdentifier unique_device_identifier; //@key
-    string<128> manufacturer;
-    string<128> model;
-    string<128> serial_number;
+    LongString manufacturer;
+    LongString model;
+    LongString serial_number;
     Image icon;
   };
+  #pragma keylist DeviceIdentity unique_device_identifier
   const string DeviceIdentityTopic = "ice::DeviceIdentity";
 
   enum ConnectionState {
@@ -37,15 +43,17 @@ module ice {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     ConnectionState state;
     ConnectionType type;
-    string<128> info;
-    sequence<string<128>, 128> valid_targets;
+    LongString info;
+    ValidTargets valid_targets;
   };
+  #pragma keylist DeviceConnectivity unique_device_identifier
 
   struct DeviceConnectivityObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     boolean connected;
-    string<128> target;
+    LongString target;
   };
+  #pragma keylist DeviceConnectivityObjective unique_device_identifier
 
 
   const string DeviceConnectivityTopic = "ice::DeviceConnectivity";
@@ -55,21 +63,21 @@ module ice {
 
 
   // SPECULATIVE
-  const MetricIdentifier MDC_PRESS_CUFF_NEXT_INFLATION = "MDC_PRESS_CUFF_NEXT_INFLATION";
-  const MetricIdentifier MDC_PRESS_CUFF_INFLATION = "MDC_PRESS_CUFF_INFLATION";
+  const string MDC_PRESS_CUFF_NEXT_INFLATION = "MDC_PRESS_CUFF_NEXT_INFLATION";
+  const string MDC_PRESS_CUFF_INFLATION = "MDC_PRESS_CUFF_INFLATION";
 
-  const MetricIdentifier MDC_HR_ECG_MODE = "MDC_HR_ECG_MODE";
-  const MetricIdentifier MDC_RR_APNEA = "MDC_RR_APNEA";
-  const MetricIdentifier MDC_SPO2_C_LOCK = "MDC_SPO2_C_LOCK";
-  const MetricIdentifier MDC_TIME_PD_INSPIRATORY = "MDC_TIME_PD_INSPIRATORY";
-  const MetricIdentifier MDC_TIME_MSEC_SINCE_EPOCH = "MDC_TIME_MSEC_SINCE_EPOCH";
-  const MetricIdentifier MDC_CAPNOGRAPH = "MDC_CAPNOGRAPH";
-  const MetricIdentifier MDC_START_OF_BREATH = "MDC_START_OF_BREATH";
-  const MetricIdentifier MDC_VENT_TIME_PD_PPV = "MDC_VENT_TIME_PD_PPV";
+  const string MDC_HR_ECG_MODE = "MDC_HR_ECG_MODE";
+  const string MDC_RR_APNEA = "MDC_RR_APNEA";
+  const string MDC_SPO2_C_LOCK = "MDC_SPO2_C_LOCK";
+  const string MDC_TIME_PD_INSPIRATORY = "MDC_TIME_PD_INSPIRATORY";
+  const string MDC_TIME_MSEC_SINCE_EPOCH = "MDC_TIME_MSEC_SINCE_EPOCH";
+  const string MDC_CAPNOGRAPH = "MDC_CAPNOGRAPH";
+  const string MDC_START_OF_BREATH = "MDC_START_OF_BREATH";
+  const string MDC_VENT_TIME_PD_PPV = "MDC_VENT_TIME_PD_PPV";
 
-  const long MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP = 6250;
-  const long MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS = 6222;
-  const long MDC_EVT_STAT_OFF = 6226;
+//  const long MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP = 6250;
+//  const long MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS = 6222;
+//  const long MDC_EVT_STAT_OFF = 6226;
 
   struct Numeric {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -77,30 +85,34 @@ module ice {
     InstanceIdentifier instance_id; //@key
     float value;
   };
+  #pragma keylist Numeric unique_device_identifier metric_id instance_id
   const string NumericTopic = "ice::Numeric";
 
   struct SampleArray {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
     InstanceIdentifier instance_id; //@key
-    sequence<float,400> values;
+    Values values;
     long millisecondsPerSample;
   };
+  #pragma keylist SampleArray unique_device_identifier metric_id instance_id
   const string SampleArrayTopic = "ice::SampleArray";
 
   struct Text {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
-    InstanceIdentifier instance_id;
-    string<256> value;
+    InstanceIdentifier instance_id; //@key
+    TextString value;
   };
+  #pragma keylist Text unique_device_identifier metric_id instance_id
   const string TextTopic = "ice::Text";
 
   struct InfusionObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
-    string<128> requestor;
+    LongString requestor;
     boolean stopInfusion;
   };
+  #pragma keylist InfusionObjective unique_device_identifier
   const string InfusionObjectiveTopic = "ice::InfusionObjective";
   struct InfusionStatus {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -113,7 +125,7 @@ module ice {
     // derived values are omitted to avoid inconsistent states
 
     // what's in the bag
-    string<256> drug_name;
+    TextString drug_name;
     long drug_mass_mcg;
     long solution_volume_ml;
     // concentration can be derived
@@ -126,6 +138,7 @@ module ice {
     // what is the progress through the program?
     float infusion_fraction_complete;
   };
+  #pragma keylist InfusionStatus unique_device_identifier
   const string InfusionStatusTopic = "ice::InfusionStatus";
 
 
@@ -138,6 +151,7 @@ module ice {
     float upper;
 
   };
+  #pragma keylist AlarmSettings unique_device_identifier metric_id
   const string AlarmSettingsTopic = "ice::AlarmSettings";
 
   struct GlobalAlarmSettingsObjective {
@@ -146,6 +160,7 @@ module ice {
     float upper;
 
   };
+  #pragma keylist GlobalAlarmSettingsObjective metric_id
   const string GlobalAlarmSettingsObjectiveTopic = "ice:GlobalAlarmSettingsObjective";
 
   struct LocalAlarmSettingsObjective {
@@ -154,6 +169,7 @@ module ice {
     float lower;
     float upper;
   };
+  #pragma keylist LocalAlarmSettingsObjective unique_device_identifier metric_id
   const string LocalAlarmSettingsObjectiveTopic = "ice::LocalAlarmSettingsObjective";
 
 };

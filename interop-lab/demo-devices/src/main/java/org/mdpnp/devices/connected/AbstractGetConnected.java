@@ -183,7 +183,7 @@ public abstract class AbstractGetConnected {
         }
         try {
             System.out.println(deviceConnectivity.state);
-            if("".equals(deviceConnectivityObjective.target) && !closing && deviceConnectivity.type != null && (isFixedAddress() || !deviceConnectivity.valid_targets.isEmpty() || !ice.ConnectionType.Serial.equals(deviceConnectivity.type)) && ice.ConnectionState.Disconnected.equals(deviceConnectivity.state)) {
+            if("".equals(deviceConnectivityObjective.target) && !closing && deviceConnectivity.type != null && (isFixedAddress() || !deviceConnectivity.valid_targets.userData.isEmpty() || !ice.ConnectionType.Serial.equals(deviceConnectivity.type)) && ice.ConnectionState.Disconnected.equals(deviceConnectivity.state)) {
                 if(ice.ConnectionType.Network.equals(deviceConnectivity.type)) {
                     deviceConnectivityObjective.target = addressFromUser();
                     if(null == deviceConnectivityObjective.target) {
@@ -191,7 +191,7 @@ public abstract class AbstractGetConnected {
                         return;
                     }
                 } else if(ice.ConnectionType.Serial.equals(deviceConnectivity.type)) {
-                    deviceConnectivityObjective.target = addressFromUserList((String[]) deviceConnectivity.valid_targets.toArray(new String[0]));
+                    deviceConnectivityObjective.target = addressFromUserList((String[]) deviceConnectivity.valid_targets.userData.toArray(new String[0]));
                     if(null == deviceConnectivityObjective.target) {
                         abortConnect();
                         return;

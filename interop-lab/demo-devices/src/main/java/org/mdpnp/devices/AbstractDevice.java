@@ -358,9 +358,9 @@ public abstract class AbstractDevice implements ThreadFactory {
 
 
     protected void sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues, int msPerSample, Time_t timestamp) {
-        holder.data.values.clear();
+        holder.data.values.userData.clear();
         for (Number n : newValues) {
-            holder.data.values.addFloat(n.floatValue());
+            holder.data.values.userData.addFloat(n.floatValue());
         }
         holder.data.millisecondsPerSample = msPerSample;
 //        log.info("Source:"+holder.data);
@@ -401,9 +401,9 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
     protected void sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues, int count, int msPerSample) {
-        holder.data.values.clear();
+        holder.data.values.userData.clear();
         for (int i = 0; i < count; i++) {
-            holder.data.values.addFloat(newValues[i]);
+            holder.data.values.userData.addFloat(newValues[i]);
         }
         holder.data.millisecondsPerSample = msPerSample;
 
@@ -488,8 +488,8 @@ public abstract class AbstractDevice implements ThreadFactory {
                         // bb.put(bi.getRGB(x, y));
                     }
                 }
-                di.icon.raster.clear();
-                di.icon.raster.addAllByte(raster);
+                di.icon.raster.userData.clear();
+                di.icon.raster.userData.addAllByte(raster);
                 return true;
             } catch (InvocationTargetException e) {
                 if (e.getCause() instanceof IOException) {
