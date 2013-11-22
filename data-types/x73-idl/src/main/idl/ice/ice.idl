@@ -75,9 +75,9 @@ module ice {
   const string MDC_START_OF_BREATH = "MDC_START_OF_BREATH";
   const string MDC_VENT_TIME_PD_PPV = "MDC_VENT_TIME_PD_PPV";
 
-//  const long MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP = 6250;
-//  const long MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS = 6222;
-//  const long MDC_EVT_STAT_OFF = 6226;
+  const long MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP = 6250;
+  const long MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS = 6222;
+  const long MDC_EVT_STAT_OFF = 6226;
 
   struct Numeric {
     UniqueDeviceIdentifier unique_device_identifier; //@key
