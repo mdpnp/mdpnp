@@ -35,15 +35,17 @@ public class PureJavaCommSerialProvider implements SerialProvider {
         private final SerialSocket.DataBits dataBits;
         private final SerialSocket.Parity parity;
         private final SerialSocket.StopBits stopBits;
+        private final SerialSocket.FlowControl flowControl;
 
-        public DefaultSerialSettings(int baud, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits) {
+        public DefaultSerialSettings(int baud, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits, SerialSocket.FlowControl flowControl) {
             this.baud = baud;
             this.dataBits = dataBits;
             this.parity = parity;
             this.stopBits = stopBits;
+            this.flowControl = flowControl;
         }
         public void configurePort(SerialSocket socket) {
-            socket.setSerialParams(baud, dataBits, parity, stopBits);
+            socket.setSerialParams(baud, dataBits, parity, stopBits, flowControl);
         }
     }
 
@@ -74,7 +76,7 @@ public class PureJavaCommSerialProvider implements SerialProvider {
             return portIdentifier;
         }
         @Override
-        public void setSerialParams(int baud, DataBits dataBits, Parity parity, StopBits stopBits) {
+        public void setSerialParams(int baud, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits, SerialSocket.FlowControl flowControl) {
             int db = 0;
             switch(dataBits) {
             case Eight:
@@ -108,9 +110,22 @@ public class PureJavaCommSerialProvider implements SerialProvider {
                 sb = SerialPort.STOPBITS_2;
                 break;
             }
+            int fc = SerialPort.FLOWCONTROL_NONE;
+            switch(flowControl) {
+            case Hardware:
+                fc = SerialPort.FLOWCONTROL_RTSCTS_IN | SerialPort.FLOWCONTROL_RTSCTS_OUT;
+                break;
+            case Software:
+                fc = SerialPort.FLOWCONTROL_XONXOFF_IN | SerialPort.FLOWCONTROL_XONXOFF_OUT;
+                break;
+            case None:
+                fc = SerialPort.FLOWCONTROL_NONE;
+                break;
+            }
             try {
 
                 serialPort.setSerialPortParams(baud, db, sb, p);
+                serialPort.setFlowControlMode(fc);
             } catch (UnsupportedCommOperationException e) {
                 throw new RuntimeException(e);
             }
@@ -130,10 +145,15 @@ public class PureJavaCommSerialProvider implements SerialProvider {
         return list;
     }
 
-    private DefaultSerialSettings defaultSettings = new DefaultSerialSettings(9600, SerialSocket.DataBits.Eight, SerialSocket.Parity.None, SerialSocket.StopBits.One);
+    private DefaultSerialSettings defaultSettings = new DefaultSerialSettings(9600, SerialSocket.DataBits.Eight, SerialSocket.Parity.None, SerialSocket.StopBits.One, SerialSocket.FlowControl.None);
 
-    public void setDefaultSerialSettings(int baud, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits) {
-        defaultSettings = new DefaultSerialSettings(baud, dataBits, parity, stopBits);
+    public void setDefaultSerialSettings(int baud, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits, SerialSocket.FlowControl flowControl) {
+        defaultSettings = new DefaultSerialSettings(baud, dataBits, parity, stopBits, flowControl);
+    }
+
+    @Override
+    public void setDefaultSerialSettings(int baudrate, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits) {
+        setDefaultSerialSettings(baudrate, dataBits, parity, stopBits, SerialSocket.FlowControl.None);
     }
 
     protected void doConfigurePort(SerialSocket serialPort) throws UnsupportedCommOperationException {
