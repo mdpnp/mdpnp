@@ -29,6 +29,7 @@ public class Configuration {
         CO2_Simulator(ice.ConnectionType.Simulated, "Simulated", "Capnometer"),
         Temp_Simulator(ice.ConnectionType.Simulated, "Simulated", "Temperature Probe"),
         Pump_Simulator(ice.ConnectionType.Simulated, "Simulated", "Infusion Pump"),
+        FlukeProsim68(ice.ConnectionType.Serial, "Fluke", "Prosim 6/8"),
         Bernoulli(ice.ConnectionType.Network, "CardioPulmonaryCorp", "Bernoulli"),
         Ivy450C(ice.ConnectionType.Serial, "Ivy", "450C Monitor"),
         Nonin(ice.ConnectionType.Serial, "Nonin", "Bluetooth Pulse Oximeter"),

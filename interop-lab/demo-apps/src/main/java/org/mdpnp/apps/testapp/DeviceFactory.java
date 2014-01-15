@@ -9,6 +9,7 @@ import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
 import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
 import org.mdpnp.devices.draeger.medibus.DemoV500;
+import org.mdpnp.devices.fluke.prosim68.DemoProsim68;
 import org.mdpnp.devices.hospira.symbiq.DemoSymbiq;
 import org.mdpnp.devices.ivy._450c.DemoIvy450C;
 import org.mdpnp.devices.masimo.radical.DemoRadical7;
@@ -67,6 +68,8 @@ public class DeviceFactory {
             return new DemoIvy450C(domainId, eventLoop);
         case MultiPO_Simulator:
             return new MultiSimPulseOximeter(domainId, eventLoop);
+        case FlukeProsim68:
+            return new DemoProsim68(domainId, eventLoop);
         default:
             throw new RuntimeException("Unknown type:" + type);
         }
