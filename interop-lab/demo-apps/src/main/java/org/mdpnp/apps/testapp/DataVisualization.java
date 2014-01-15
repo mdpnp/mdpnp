@@ -19,8 +19,8 @@ public class DataVisualization extends JSplitPane {
         super(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(new PCAConfig(executor)), new VitalMonitoring(executor));
         this.pcaConfig = (PCAConfig) ((JScrollPane)getLeftComponent()).getViewport().getComponent(0);
         this.vitalMonitoring = (VitalMonitoring) getRightComponent();
-        setDividerLocation(0.5);
-        setDividerSize(1);
+        setDividerLocation(0.2);
+        setDividerSize(10);
     }
 
     public void setModel(VitalModel vitalModel, PumpModel pumpModel) {
