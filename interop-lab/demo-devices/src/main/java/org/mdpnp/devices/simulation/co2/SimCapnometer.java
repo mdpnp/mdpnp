@@ -7,6 +7,8 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation.co2;
 
+import ice.GlobalSimulationObjective;
+
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 
@@ -54,5 +56,14 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
     @Override
     protected String iconResourceName() {
         return "co2.png";
+    }
+
+    @Override
+    public void simulatedNumeric(GlobalSimulationObjective obj) {
+        if(rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id.userData)) {
+            capnometer.setRespirationRate((int)obj.value);
+        } else if(rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(obj.metric_id.userData)) {
+            capnometer.setEndTidalCO2((int)obj.value);
+        }
     }
 }

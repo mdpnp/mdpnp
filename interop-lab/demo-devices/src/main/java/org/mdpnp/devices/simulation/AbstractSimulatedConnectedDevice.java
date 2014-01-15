@@ -7,16 +7,23 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
+import ice.GlobalSimulationObjective;
+
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 
-public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice {
+public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice implements GlobalSimulationObjectiveListener {
     protected Throwable t;
+
+    protected final GlobalSimulationObjectiveMonitor monitor;
 
     public AbstractSimulatedConnectedDevice(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         writeDeviceIdentity();
+
+        monitor = new GlobalSimulationObjectiveMonitor(this);
+        monitor.register(domainParticipant, eventLoop);
     }
 
     public Throwable getLastError() {
@@ -64,5 +71,10 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
 
     public String getConnectionInfo() {
         return null;
+    }
+
+    @Override
+    public void simulatedNumeric(GlobalSimulationObjective obj) {
+        // TODO remove this default implementation to check that inheritors are properly implementing this
     }
 }

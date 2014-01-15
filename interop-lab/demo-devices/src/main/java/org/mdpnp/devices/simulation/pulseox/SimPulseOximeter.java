@@ -7,6 +7,8 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation.pulseox;
 
+import ice.GlobalSimulationObjective;
+
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 
@@ -60,5 +62,14 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
     @Override
     protected String iconResourceName() {
         return "pulseox.png";
+    }
+
+    @Override
+    public void simulatedNumeric(GlobalSimulationObjective obj) {
+        if(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(obj.metric_id.userData)) {
+            pulseox.setTargetHeartRate((double)obj.value);
+        } else if(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(obj.metric_id.userData)) {
+            pulseox.setTargetSpO2((double)obj.value);
+        }
     }
 }
