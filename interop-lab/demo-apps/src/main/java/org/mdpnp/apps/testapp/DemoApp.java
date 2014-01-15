@@ -27,6 +27,7 @@ import org.mdpnp.apps.testapp.pca.VitalSign;
 import org.mdpnp.apps.testapp.pump.PumpModel;
 import org.mdpnp.apps.testapp.pump.PumpModelImpl;
 import org.mdpnp.apps.testapp.rrr.RapidRespiratoryRate;
+import org.mdpnp.apps.testapp.sim.SimControl;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
@@ -220,6 +221,20 @@ public class DemoApp {
         }
         final RapidRespiratoryRate rrr = _rrr;
 
+        JFrame _sim = null;
+        if(!AppType.SimControl.isDisabled()) {
+            SimControl simControl = new SimControl(participant);
+            _sim = new JFrame("Sim Control");
+            _sim.getContentPane().add(simControl);
+            _sim.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+            _sim.setAlwaysOnTop(true);
+            _sim.pack();
+
+//            panel.getContent().add(_sim, AppType.SimControl.getId());
+        }
+        final JFrame sim = _sim;
+
+
       frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -227,6 +242,9 @@ public class DemoApp {
                 if(goBackAction != null) {
                     goBackAction.run();
                     goBackAction = null;
+                }
+                if(null != sim) {
+                    // TODO things
                 }
                 if(pcaPanel != null) {
                     pcaPanel.setModel(null, null);
@@ -362,6 +380,18 @@ public class DemoApp {
                             xrayVentPanel.start();
                         }
                         break;
+                    case SimControl:
+                        if(null != sim) {
+                            sim.setLocationRelativeTo(frame);
+                            sim.setVisible(true);
+//                            setGoBack(AppType.Main.getId(), new Runnable() {
+//                                public void run() {
+//                                    sim.stop();
+//                                }
+//                            });
+//                            ol.show(panel.getContent(), AppType.SimControl.getId());
+//                            sim.start();
+                        }
                     case Device:
                         break;
                     case Main:

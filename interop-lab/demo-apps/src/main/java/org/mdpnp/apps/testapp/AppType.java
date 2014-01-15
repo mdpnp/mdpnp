@@ -19,15 +19,16 @@ public enum AppType {
     PCA("pca", "Infusion Safety", "NOPCA", true, "infusion-safety.png", 0.75),
     PCAViz("pcaviz", "Data Visualization", null, true, "data-viz.png", 0.75),
     XRay("xray", "X-Ray Ventilator Sync", "NOXRAYVENT", true, "xray-vent.png", 0.75),
-    RRR("rrr", "Rapid Respiratory Rate", "NORRR", true, RapidRespiratoryRate.class.getResource("rrr.png"), 0.75)
+    RRR("rrr", "Rapid Respiratory Rate", "NORRR", true, RapidRespiratoryRate.class.getResource("rrr.png"), 0.75),
+    SimControl("sim", "Simulation Control", "NOSIM", true, "sim.png", 0.75)
     ;
-    
+
     private final String id;
     private final String name;
     private final String disableProperty;
     private final boolean listed;
     private final Icon icon;
-    
+
     private static final BufferedImage read(URL url) {
          try {
             return ImageIO.read(url);
@@ -52,12 +53,12 @@ public enum AppType {
         BufferedImage after = new BufferedImage((int)(scale * width), (int)(scale * height), BufferedImage.TYPE_INT_ARGB);
         java.awt.geom.AffineTransform at = new java.awt.geom.AffineTransform();
         at.scale(scale, scale);
-        
+
         AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
         after = scaleOp.filter(before, after);
         return after;
     }
-    
+
     private AppType(final String id, final String name, final String disableProperty, final boolean listed, final BufferedImage icon, double scale) {
         this.id = id;
         this.name = name;
@@ -65,18 +66,18 @@ public enum AppType {
         this.listed = listed;
         this.icon = null == icon ? null : new ImageIcon(scale(icon, scale));
     }
-    
+
     private AppType(final String id, final String name, final String disableProperty, final boolean listed, final URL icon, double scale) {
         this(id, name, disableProperty, listed, read(icon), scale);
     }
-    
+
     private AppType(final String id, final String name, final String disableProperty, final boolean listed, final String icon, double scale) {
         this(id, name, disableProperty, listed, read((icon)), scale);
     }
     private AppType(final String id, final String name, final String disableProperty, final boolean listed) {
         this(id, name, disableProperty, listed, (BufferedImage) null, 1.0);
     }
-    
+
     public String getId() {
         return id;
     }
@@ -86,11 +87,11 @@ public enum AppType {
     public boolean isListed() {
         return listed;
     }
-    
+
     public Icon getIcon() {
         return icon;
     }
-    
+
     @Override
     public String toString() {
         return name;
@@ -113,9 +114,9 @@ public enum AppType {
                 ats.add(at);
             }
         }
-        return ats.toArray(new AppType[0]);   
+        return ats.toArray(new AppType[0]);
     }
-    
+
     public static String[] getListedNames() {
         List<String> names = new ArrayList<String>();
         for(AppType at : getListedTypes()) {
