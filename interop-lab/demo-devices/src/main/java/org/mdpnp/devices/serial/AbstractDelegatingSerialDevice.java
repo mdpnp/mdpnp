@@ -12,9 +12,6 @@ public abstract class AbstractDelegatingSerialDevice<T> extends AbstractSerialDe
     public AbstractDelegatingSerialDevice(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
     }
-    public AbstractDelegatingSerialDevice(int domainId, EventLoop eventLoop, SerialSocket serialSocket) {
-        super(domainId, eventLoop, serialSocket);
-    }
     private InputStream  inputStream;
     private OutputStream outputStream;
     private T delegate;

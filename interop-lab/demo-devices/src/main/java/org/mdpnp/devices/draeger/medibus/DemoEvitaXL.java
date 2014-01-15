@@ -9,22 +9,19 @@ import org.mdpnp.devices.serial.SerialSocket.StopBits;
 
 public class DemoEvitaXL extends AbstractDraegerVent {
 
-	public DemoEvitaXL(int domainId, EventLoop eventLoop) {
-		super(domainId, eventLoop);
-	}
-	public DemoEvitaXL(int domainId, EventLoop eventLoop, SerialSocket socket) {
-		super(domainId, eventLoop, socket);
-	}
-	
-	@Override
-	public SerialProvider getSerialProvider() {
-		SerialProvider serialProvider =  super.getSerialProvider();
-		serialProvider.setDefaultSerialSettings(19200, DataBits.Eight, Parity.None, StopBits.One);
-		return serialProvider;
-	}
-	
-	@Override
-	protected String iconResourceName() {
-		return "evitaxl.png";
-	}
+    public DemoEvitaXL(int domainId, EventLoop eventLoop) {
+        super(domainId, eventLoop);
+    }
+
+    @Override
+    public SerialProvider getSerialProvider() {
+        SerialProvider serialProvider =  super.getSerialProvider();
+        serialProvider.setDefaultSerialSettings(19200, DataBits.Eight, Parity.None, StopBits.One);
+        return serialProvider;
+    }
+
+    @Override
+    protected String iconResourceName() {
+        return "evitaxl.png";
+    }
 }

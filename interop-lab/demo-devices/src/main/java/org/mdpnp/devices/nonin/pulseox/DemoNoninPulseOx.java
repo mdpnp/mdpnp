@@ -15,6 +15,11 @@ import java.io.OutputStream;
 
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
+import org.mdpnp.devices.serial.SerialProvider;
+import org.mdpnp.devices.serial.SerialSocket.DataBits;
+import org.mdpnp.devices.serial.SerialSocket.FlowControl;
+import org.mdpnp.devices.serial.SerialSocket.Parity;
+import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -260,5 +265,12 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
     @Override
     protected String iconResourceName() {
         return "3150.png";
+    }
+
+    @Override
+    public SerialProvider getSerialProvider() {
+        SerialProvider serialProvider =  super.getSerialProvider();
+        serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
+        return serialProvider;
     }
 }

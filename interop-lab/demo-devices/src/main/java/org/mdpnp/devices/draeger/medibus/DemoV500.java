@@ -11,17 +11,14 @@ public class DemoV500 extends AbstractDraegerVent {
     public DemoV500(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
     }
-    public DemoV500(int domainId, EventLoop eventLoop, SerialSocket socket) {
-        super(domainId, eventLoop, socket);
-    }
-    
+
     @Override
     public SerialProvider getSerialProvider() {
         SerialProvider serialProvider =  super.getSerialProvider();
         serialProvider.setDefaultSerialSettings(19200, DataBits.Eight, Parity.None, StopBits.One);
         return serialProvider;
     }
-    
+
     @Override
     protected String iconResourceName() {
         return "v500.png";

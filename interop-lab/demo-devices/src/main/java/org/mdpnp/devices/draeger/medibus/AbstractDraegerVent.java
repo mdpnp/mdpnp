@@ -449,12 +449,6 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         loadMap(numerics, waveforms);
     }
 
-    public AbstractDraegerVent(int domainId, EventLoop eventLoop, SerialSocket serialSocket) {
-        super(domainId, eventLoop, serialSocket);
-        init();
-        loadMap(numerics, waveforms);
-    }
-
     @Override
     protected RTMedibus buildDelegate(InputStream in, OutputStream out) {
         log.trace("Creating an RTMedibus");

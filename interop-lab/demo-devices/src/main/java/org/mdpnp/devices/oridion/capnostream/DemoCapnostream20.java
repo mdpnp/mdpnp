@@ -258,11 +258,6 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         }, 5000L, 5000L, TimeUnit.MILLISECONDS);
     }
 
-    public DemoCapnostream20(int domainId, EventLoop eventLoop, SerialSocket serialSocket) {
-        super(domainId, eventLoop, serialSocket);
-        init();
-    }
-
     private static final int BUFFER_SAMPLES = 5;
     private final Number[] realtimeBuffer = new Number[BUFFER_SAMPLES];
     private int realtimeBufferCount = 0;

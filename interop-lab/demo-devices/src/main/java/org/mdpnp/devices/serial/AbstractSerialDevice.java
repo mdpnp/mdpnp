@@ -76,23 +76,6 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
         deviceConnectivity.valid_targets.userData.addAll(getSerialProvider().getPortNames());
     }
 
-    public AbstractSerialDevice(int domainId, EventLoop eventLoop, SerialSocket sock) {
-        super(domainId, eventLoop);
-
-        if(getMaximumQuietTime() <= 0L) {
-            throw new RuntimeException("A positive maximumQuietTime is required");
-        }
-
-        if(getMaximumQuietTime() < 100L || 0L != getMaximumQuietTime() % 100L) {
-            log.warn("Watchdog interrupts at 10Hz, consider a different getMaximumQuietTime()");
-        }
-
-        executor.scheduleAtFixedRate(new Watchdog(), 0L, 100L, TimeUnit.MILLISECONDS);
-        if(null != sock) {
-            this.portIdentifier = sock.getPortIdentifier();
-        }
-    }
-
     public void setSerialProvider(SerialProvider serialProvider) {
         this.serialProvider = serialProvider;
     }
