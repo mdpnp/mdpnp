@@ -21,6 +21,11 @@ public abstract class AbstractSimulatedDevice extends AbstractDevice {
     private static final Logger log = LoggerFactory.getLogger(AbstractSimulatedDevice.class);
     private static final int UDI_LENGTH = 36;
     private static final char[] UDI_CHARS = new char[26*2+10];
+
+    public static void main(String[] args) {
+        System.out.println(randomUDI());
+    }
+
     static {
         int x = 0;
         for(char i = 'A'; i <= 'Z'; i++) {
@@ -35,12 +40,17 @@ public abstract class AbstractSimulatedDevice extends AbstractDevice {
     }
 
     public static String randomUDI() {
-        StringBuilder sb = new StringBuilder();
-        java.util.Random random = new java.util.Random(System.currentTimeMillis());
-        for(int i = 0; i < UDI_LENGTH; i++) {
-            sb.append(UDI_CHARS[random.nextInt(UDI_CHARS.length)]);
+        String udi = System.getProperty("randomUDI");
+        if(null != udi && !"".equals(udi)) {
+            return udi;
+        } else {
+            StringBuilder sb = new StringBuilder();
+            java.util.Random random = new java.util.Random(System.currentTimeMillis());
+            for(int i = 0; i < UDI_LENGTH; i++) {
+                sb.append(UDI_CHARS[random.nextInt(UDI_CHARS.length)]);
+            }
+            return sb.toString();
         }
-        return sb.toString();
     }
 
     public static void randomUDI(DeviceIdentity di) {
