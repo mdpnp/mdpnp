@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.fluke.prosim8.FlukeProSim8;
+import org.mdpnp.devices.fluke.prosim8.FlukeProSim8.Wave;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
@@ -177,10 +178,31 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
         super.shutdown();
     }
 
+    // TODO Bit of a hack.. no full lifecycle implemented for these instances
+    private Integer invasiveSystolic, invasiveDiastolic;
+    private Integer noninvasiveSystolic, noninvasiveDiastolic;
+
     @Override
     protected String iconResourceName() {
         return "prosim8.png";
     }
+    private final void setInvasive() throws IOException {
+        if(null != invasiveSystolic && null != invasiveDiastolic) {
+            if(invasiveSystolic==0) {
+                getDelegate().invasiveBloodPressureStatic(1, 0);
+            } else {
+                getDelegate().invasiveBloodPressureWave(1, Wave.Arterial);
+                getDelegate().invasiveBloodPressureDynamic(1, invasiveSystolic, invasiveDiastolic);
+            }
+        }
+    }
+
+    private final void setNoninvasive() throws IOException {
+        if(null != noninvasiveSystolic && null != noninvasiveDiastolic) {
+            getDelegate().nonInvasiveBloodPressureDynamic(noninvasiveSystolic, noninvasiveDiastolic);
+        }
+    }
+
     @Override
     public void simulatedNumeric(GlobalSimulationObjective gso) {
         try {
@@ -190,6 +212,18 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
                 getDelegate().saturation((int) gso.value);
             } else if(rosetta.MDC_RESP_RATE.VALUE.equals(gso.metric_id.userData)) {
                 getDelegate().respirationRate((int)gso.value);
+            } else if(rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE.equals(gso.metric_id.userData)) {
+                invasiveDiastolic = (int) gso.value;
+                setInvasive();
+            } else if(rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE.equals(gso.metric_id.userData)) {
+                invasiveSystolic = (int) gso.value;
+                setInvasive();
+            } else if(rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE.equals(gso.metric_id.userData)) {
+                noninvasiveDiastolic = (int) gso.value;
+                setNoninvasive();
+            } else if(rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE.equals(gso.metric_id.userData)) {
+                noninvasiveSystolic = (int) gso.value;
+                setNoninvasive();
             }
         } catch (IOException e) {
             log.error(e.getMessage(), e);

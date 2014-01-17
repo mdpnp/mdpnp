@@ -4,8 +4,11 @@ import ice.GlobalSimulationObjective;
 import ice.GlobalSimulationObjectiveDataWriter;
 
 import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 
+import javax.media.nativewindow.util.Insets;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -40,6 +43,10 @@ public class SimControl extends JPanel {
       new NumericValue("Heart Rate", rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 10, 360, 60, 50),
       new NumericValue("etCO2", rosetta.MDC_AWAY_CO2_EXP.VALUE, 0, 140, 30, 20),
       new NumericValue("RespRate", rosetta.MDC_RESP_RATE.VALUE, 0, 60, 15, 10),
+      new NumericValue("ABP Systolic", rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 0, 300, 120, 40),
+      new NumericValue("ABP Diastolic", rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 0, 300, 80, 40),
+//      new NumericValue("NIBP Systolic", rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE, 0, 400, 120, 40),
+//      new NumericValue("NIBP Diastolic", rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE, 0, 400, 80, 40)
     };
 
     private final DomainParticipant participant;
@@ -51,7 +58,7 @@ public class SimControl extends JPanel {
 
 
     public SimControl(final DomainParticipant participant) {
-        super(new GridLayout(numericValues.length, 1));
+        super(new GridBagLayout());
         this.participant = participant;
         publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         ice.GlobalSimulationObjectiveTypeSupport.register_type(participant, ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
@@ -61,7 +68,10 @@ public class SimControl extends JPanel {
         final JSlider[] sliders = new JSlider[numericValues.length];
         final JLabel[] labels = new JLabel[numericValues.length];
         final JLabel[] currentValues = new JLabel[numericValues.length];
-        final JPanel[] panels = new JPanel[numericValues.length];
+//        final JPanel[] panels = new JPanel[numericValues.length];
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy = 0;
 
         for(int i = 0; i < objectives.length; i++) {
             objectives[i] = (GlobalSimulationObjective) ice.GlobalSimulationObjective.create();
@@ -75,13 +85,19 @@ public class SimControl extends JPanel {
             sliders[i].setPaintTicks(true);
             labels[i] = new JLabel(numericValues[i].name);
             currentValues[i] = new JLabel(""+sliders[i].getValue());
+            gbc.gridx = 0;
+            add(labels[i], gbc);
+            gbc.gridx = 1;
+            add(sliders[i], gbc);
+            gbc.gridx = 2;
+            add(currentValues[i], gbc);
 
-            panels[i] = new JPanel(new BorderLayout());
-            panels[i].add(labels[i], BorderLayout.WEST);
-            panels[i].add(sliders[i], BorderLayout.CENTER);
-            panels[i].add(currentValues[i], BorderLayout.EAST);
+//            panels[i] = new JPanel(new BorderLayout());
+//            panels[i].add(labels[i], BorderLayout.WEST);
+//            panels[i].add(sliders[i], BorderLayout.CENTER);
+//            panels[i].add(currentValues[i], BorderLayout.EAST);
 
-            add(panels[i]);
+//            add(panels[i]);
 
             writer.write(objectives[i], handles[i]);
 
@@ -100,6 +116,8 @@ public class SimControl extends JPanel {
                     writer.write(obj, handle);
                 }
             });
+
+            gbc.gridy++;
         }
 
     }

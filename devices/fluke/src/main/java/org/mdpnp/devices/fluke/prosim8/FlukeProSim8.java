@@ -134,40 +134,95 @@ public class FlukeProSim8 {
     }
 
     public String saturation(int sat) throws IOException {
-        if(sat < 0 || sat > 100) {
-            throw new IllegalArgumentException("Invalid Sat:"+sat);
+        rangeCheck("sat", sat, 0, 100);
+
+        return sendCommand("SAT", 1, leadingZeroes(false, 3, sat))[0];
+    }
+
+    public enum Wave {
+        Arterial("ART"),
+        RadialArtery("RART"),
+        LeftVentricle("LV"),
+        LeftAtrium("LA"),
+        RightVentricle("RV"),
+        PulmonaryArtery("PA"),
+        PAWedge("PAW"),
+        RightAtriumCVP("RA")
+        ;
+        public final String code;
+        Wave(final String code) {
+            this.code = code;
         }
-        if(sat < 1) {
-            return sendCommand("SAT", 1, "000")[0];
-        } else if (sat < 10) {
-            return sendCommand("SAT", 1, "00" + sat)[0];
-        } else if (sat < 100) {
-            return sendCommand("SAT", 1, "0" + sat)[0];
-        } else {
-            return sendCommand("SAT", 1, ""+sat)[0];
+    }
+
+    private static final void rangeCheck(String s, int value, int min, int max) {
+        if(value < min || value > max) {
+            throw new IllegalArgumentException("Invalid " + s + " value:"+value);
         }
+    }
+
+    private static final void channelCheck(int channel) {
+        if(channel < 1 || channel > 2) {
+            throw new IllegalArgumentException("Invalid channel:"+channel);
+        }
+    }
+
+    private static final ThreadLocal<StringBuilder> builder = new ThreadLocal<StringBuilder>() {
+        protected StringBuilder initialValue() {
+            return new StringBuilder();
+        };
+    };
+    private static final String leadingZeroes(boolean sign, int places, int value) {
+        StringBuilder b = builder.get();
+        b.delete(0, b.length());
+        b.append(value);
+        while(b.length() < places) {
+            b.insert(0, "0");
+        }
+        if(sign) {
+            if(value >= 0) {
+                b.insert(0, "+");
+            } else {
+                b.insert(0, "-");
+            }
+        }
+        return b.toString();
+    }
+
+    public String nonInvasiveBloodPressureDynamic(int systolic, int diastolic) throws IOException {
+        rangeCheck("systolic", systolic, 0, 400);
+        rangeCheck("diastolic", diastolic, 0, 400);
+        return sendCommand("NIBPP", 1, leadingZeroes(false, 3, systolic), leadingZeroes(false, 3, diastolic))[0];
+    }
+
+    public String invasiveBloodPressureDynamic(int channel, int systolic, int diastolic) throws IOException {
+        channelCheck(channel);
+        rangeCheck("systolic", systolic, 0, 300);
+        rangeCheck("diastolic", diastolic, 0, 300);
+
+        return sendCommand("IBPP", 1, ""+channel, leadingZeroes(false, 3, systolic), leadingZeroes(false,  3, diastolic))[0];
+    }
+
+    public String invasiveBloodPressureWave(int channel, Wave wave) throws IOException {
+        channelCheck(channel);
+        return sendCommand("IBPW", 1, ""+channel, wave.code)[0];
+    }
+
+    public String invasiveBloodPressureStatic(int channel, int value) throws IOException {
+        channelCheck(channel);
+        rangeCheck("pressure", value, -10, 300);
+
+        return sendCommand("IBPS", 1, ""+channel, leadingZeroes(true, 3, value))[0];
     }
 
     public String respirationRate(int rate) throws IOException {
-        if(rate < 10 || rate > 150) {
-            throw new IllegalArgumentException("Invalid Rate:"+rate);
-        }
-        if(rate < 100) {
-            return sendCommand("RESPRATE", 1, "0"+rate)[0];
-        } else {
-            return sendCommand("RESPRATE", 1, ""+rate)[0];
-        }
+        rangeCheck("rate", rate, 10, 150);
+        return sendCommand("RESPRATE", 1, leadingZeroes(false, 2, rate))[0];
     }
 
     public String normalSinusRhythmAdult(int rate) throws IOException {
-        if(rate < 10 || rate > 360) {
-            throw new IllegalArgumentException("Invalid Rate:"+rate);
-        }
-        if(rate < 100) {
-            return sendCommand("NSRA", 1, "0"+rate)[0];
-        } else {
-            return sendCommand("NSRA", 1, ""+rate)[0];
-        }
+        rangeCheck("rate", rate, 10, 360);
+        return sendCommand("NSRA", 1, leadingZeroes(false, 2, rate))[0];
     }
 
     public String sendKey(KeyCode code, int cycles) throws IOException {

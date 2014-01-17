@@ -18,6 +18,7 @@ import javax.imageio.ImageIO;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.UIManager;
 
 import org.mdpnp.apps.testapp.co2.CapnoModel;
@@ -225,7 +226,7 @@ public class DemoApp {
         if(!AppType.SimControl.isDisabled()) {
             SimControl simControl = new SimControl(participant);
             _sim = new JFrame("Sim Control");
-            _sim.getContentPane().add(simControl);
+            _sim.getContentPane().add(new JScrollPane(simControl));
             _sim.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
             _sim.setAlwaysOnTop(true);
             _sim.pack();
