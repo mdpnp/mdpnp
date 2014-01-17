@@ -188,12 +188,8 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
     }
     private final void setInvasive() throws IOException {
         if(null != invasiveSystolic && null != invasiveDiastolic) {
-            if(invasiveSystolic==0) {
-                getDelegate().invasiveBloodPressureStatic(1, 0);
-            } else {
-                getDelegate().invasiveBloodPressureWave(1, Wave.Arterial);
-                getDelegate().invasiveBloodPressureDynamic(1, invasiveSystolic, invasiveDiastolic);
-            }
+            getDelegate().invasiveBloodPressureDynamic(1, invasiveSystolic, invasiveDiastolic);
+            getDelegate().invasiveBloodPressureWave(1, Wave.Arterial);
         }
     }
 
