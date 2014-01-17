@@ -244,11 +244,14 @@ public class DeviceMonitor {
     }
 
     public void stop() {
-        eventLoop.doLater(new Runnable() {
-            public void run() {
-                _stop();
-            }
-        });
+        EventLoop eventLoop = this.eventLoop;
+        if(eventLoop != null) {
+            eventLoop.doLater(new Runnable() {
+                public void run() {
+                    _stop();
+                }
+            });
+        }
     }
 
     protected void _stop() {
