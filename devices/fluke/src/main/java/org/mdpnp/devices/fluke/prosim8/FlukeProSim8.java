@@ -217,12 +217,12 @@ public class FlukeProSim8 {
 
     public String respirationRate(int rate) throws IOException {
         rangeCheck("rate", rate, 10, 150);
-        return sendCommand("RESPRATE", 1, leadingZeroes(false, 2, rate))[0];
+        return sendCommand("RESPRATE", 1, leadingZeroes(false, 3, rate))[0];
     }
 
     public String normalSinusRhythmAdult(int rate) throws IOException {
         rangeCheck("rate", rate, 10, 360);
-        return sendCommand("NSRA", 1, leadingZeroes(false, 2, rate))[0];
+        return sendCommand("NSRA", 1, leadingZeroes(false, 3, rate))[0];
     }
 
     public String sendKey(KeyCode code, int cycles) throws IOException {
