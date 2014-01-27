@@ -14,10 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.io.util.HexUtil;
@@ -32,8 +29,6 @@ import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
 
 public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 
@@ -54,9 +49,6 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         synchronized(stateLock) {
             currentPhase = phases[0];
             currentState = State.Failure;
-//            for(int i = 0; i < states.length; i++) {
-//                states[i] = State.Failure;
-//            }
             stateLock.notifyAll();
         }
     }
@@ -100,15 +92,11 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         writeDeviceIdentity();
     }
 
-    protected long connectedAt = 0L;
-
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
         super.stateChanged(newState, oldState);
         if(ConnectionState.Connected.equals(oldState) && !ConnectionState.Connected.equals(newState)) {
             failAll();
-        } else if(ConnectionState.Connected.equals(newState) && !ConnectionState.Connected.equals(oldState)) {
-            connectedAt = System.currentTimeMillis();
         }
     }
     private class MyNoninPulseOx extends NoninPulseOx {
@@ -165,6 +153,8 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
         @Override
         public void receivePacket(Packet currentPacket) {
+            // Changed because data will begin flowing even when negotiation is incomplete
+            // Instead reportConnected() when all phases have succeeded
 //            reportConnected();
 
             for(int i = 0; i < Packet.FRAMES; i++) {
@@ -219,23 +209,18 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
 
 
+    // Negotiation must proceed through these phases
     protected static final Phase[] phases = new Phase[] { Phase.SetFormat, Phase.GetSerial, Phase.GetDeviceType };
+
+    // The current phase we are negotiating
     protected Phase currentPhase = phases[0];
-//    protected final State[] states = new State[phases.length];
+    // The state of the current phase of negotiation
     protected State currentState = State.Failure;
     protected long issuedTime = 0L;
-
+    // Synchronized accesses to currentPhase/currentState
     protected final Object stateLock = new Object();
 
 
-    private int ordinal(Phase phase) {
-        for(int i = 0; i < phases.length; i++) {
-            if(phase.equals(phases[i])) {
-                return i;
-            }
-        }
-        return -1;
-    }
 
     protected void received(Phase phase, boolean success) {
         synchronized(stateLock) {
@@ -247,7 +232,6 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             } else {
                 currentState = State.Failure;
             }
-//            setConnectionInfo(currentPhase + " " + currentState);
             log.debug("Received:" + phase + " " + currentState);
             stateLock.notifyAll();
         }
@@ -270,7 +254,6 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
     protected void send() throws IOException {
         boolean reportConnected = false;
         Phase issueConnectForPhase = null;
-//        List<Phase> issueConnectForPhase = new ArrayList<Phase>();
         synchronized(stateLock) {
             Phase lastPhase = currentPhase;
             switch(currentState) {
@@ -298,31 +281,11 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
                     setConnectionInfo(lastPhase + " Success");
                 }
             }
-//            for(int i = 0; i < states.length; i++) {
-//                switch(states[i]) {
-//                case Issued:
-//                    // Do nothing .. eventually maybe retry?
-//                    reportConnected = false;
-//                    break;
-//                case Success:
-//                    // This is already done
-//                    break;
-//                case Failure:
-//                    if(issueConnectForPhase.isEmpty()) {
-//                        issueConnectForPhase.add(phases[i]);
-//                        states[i] = State.Issued;
-//                    }
-//                    reportConnected = false;
-//                    break;
-//                }
-//            }
             stateLock.notifyAll();
         }
-//        for(Phase p : issueConnectForPhase) {
         if(null != issueConnectForPhase) {
             makeRequest(getDelegate(), issueConnectForPhase);
         }
-//        }
         if(reportConnected) {
             log.info("Connection negotiated");
             reportConnected();
@@ -353,9 +316,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
     public void doInitCommands() throws IOException {
         super.doInitCommands();
-//        if(System.currentTimeMillis() > (connectedAt+1000L)) {
-            send();
-//        }
+        send();
     }
 
 
@@ -393,7 +354,9 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         return serialProvider;
     }
 
+
     protected static boolean response = false;
+    // This main program resets the device to data type 13 (which is the default)
     public static void main(String[] args) throws IOException {
         SerialProvider serialProvider = SerialProviderFactory.getDefaultProvider();
         serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None,  StopBits.One, FlowControl.None);
