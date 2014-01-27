@@ -3,8 +3,11 @@ package org.mdpnp.devices.nonin.pulseox;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.Calendar;
 import java.util.Date;
 
+import org.mdpnp.devices.io.util.HexUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,12 +138,23 @@ public class NoninPulseOx {
     }
 
     protected static final byte OPCODE_SETFORMAT = 0x70;
+    protected static final byte OPCODE_SETDATETIME = 0x72;
     protected static final byte OPCODE_GETSERIAL = 0x74;
+    protected static final byte OPCODE_SETBLUETOOTHTIMEOUT = 0x75;
+    protected static final byte OPCODE_RECVDATETIME = (byte) 0xF2;
     protected static final byte OPCODE_RECVSERIAL = (byte) 0xF4;
+    protected static final byte OPCODE_BLUETOOTHTIMEOUT_RESPONSE = (byte) 0xF5;
 
     protected void sendOperation(byte opCode, byte[] data) throws IOException {
         sendOperation(opCode, data, 0, data.length);
     }
+
+
+//    public void sendAck(boolean success) throws IOException {
+//        log.debug("Wrote:"+(success?"0x06":"0x15"));
+//        out.write(success?0x06:0x15);
+//        out.flush();
+//    }
 
     protected void sendOperation(byte opCode, byte[] data, int off, int len) throws IOException {
         byte[] buf = new byte[4 + len];
@@ -150,8 +164,34 @@ public class NoninPulseOx {
         System.arraycopy(data, off, buf, 3, len);
         buf[3+len] = 0x03;
 
+        log.debug("Wrote:"+HexUtil.dump(buf));
         out.write(buf);
         out.flush();
+    }
+
+    protected void sendSetBluetoothTimeout(int minutes) throws IOException {
+        if(minutes < 0 || minutes > 255) {
+            throw new IllegalArgumentException("Invalid minutes value:"+minutes);
+        }
+        sendOperation(OPCODE_SETBLUETOOTHTIMEOUT, new byte[] {0x04, 0x00, (byte)(0xFF & minutes), (byte) (0x04 + 0x00 + minutes)});
+    }
+
+
+
+    protected void sendGetDateTime() throws IOException {
+        sendOperation(OPCODE_SETDATETIME, new byte[0]);
+    }
+
+    protected void sendSetDateTime(Date date) throws IOException {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        sendOperation(OPCODE_SETDATETIME, new byte[] {
+                (byte) (cal.get(Calendar.YEAR) - 2000),
+                (byte) (cal.get(Calendar.MONTH) + 1),
+                (byte) cal.get(Calendar.DAY_OF_MONTH),
+                (byte) cal.get(Calendar.HOUR_OF_DAY),
+                (byte) cal.get(Calendar.MINUTE),
+                (byte) cal.get(Calendar.SECOND)});
     }
 
     protected void sendGetSerial() throws IOException {
@@ -160,14 +200,6 @@ public class NoninPulseOx {
 
     protected  void sendGetSerial(int id) throws IOException {
         sendOperation(OPCODE_GETSERIAL, new byte[] { (byte)id, (byte)id});
-    }
-
-    protected void sendSetOnyxFormat() throws IOException {
-        sendSetFormat(0x07);
-    }
-
-    protected void sendSetWristOxFormat() throws IOException {
-        sendSetFormat(0x07, true, true);
     }
 
     protected void sendSetFormat(int format, boolean spotCheckMode, boolean bluetoothEnabledAtPowerOn) throws IOException {
@@ -207,16 +239,42 @@ public class NoninPulseOx {
     }
 
     protected synchronized void recvAcknowledged(boolean success) {
+        log.info(success?"ACK":"NAK");
+    }
+
+    protected synchronized void receiveBluetoothTimeoutResponse(boolean success) {
+        log.info(success?"Bluetooth Timeout Success":"Bluetooth Timeout Failure");
+
     }
 
     protected synchronized void receiveSerialNumber(String serial) {
+        log.info("Serial Number Received:"+serial);
+    }
 
+    protected synchronized void receiveDateTime(Date date) {
+        log.info("DateTime:"+date);
     }
 
     protected synchronized void recvOperation(byte opCode, byte[] source, int off, int len) {
         switch(opCode) {
         case OPCODE_RECVSERIAL:
             receiveSerialNumber(new String(source, off+1, 9));
+            break;
+        case OPCODE_BLUETOOTHTIMEOUT_RESPONSE:
+            receiveBluetoothTimeoutResponse(source[off+1]==0);
+            break;
+        case OPCODE_RECVDATETIME:
+            {
+                Calendar cal = Calendar.getInstance();
+                cal.set(Calendar.YEAR, 2000 + source[0]);
+                cal.set(Calendar.MONTH, source[1]-1);
+                cal.set(Calendar.DAY_OF_MONTH, source[2]);
+                cal.set(Calendar.HOUR_OF_DAY, source[3]);
+                cal.set(Calendar.MINUTE, source[4]);
+                cal.set(Calendar.SECOND, source[5]);
+                cal.set(Calendar.MILLISECOND, 0);
+                receiveDateTime(cal.getTime());
+            }
             break;
         default:
             log.warn("Unknown incoming operation code:"+Integer.toHexString(opCode));
@@ -385,6 +443,7 @@ public class NoninPulseOx {
     private int[] len = new int[] {0};
 
     protected boolean receive() throws IOException {
+        int startPos = len[0];
         b = in.read(buffer, len[0], buffer.length - len[0]);
 
         // Read EOF, we're done
@@ -393,9 +452,11 @@ public class NoninPulseOx {
             return false;
         } else {
             len[0] += b;
+            log.info("Read:"+HexUtil.dump(ByteBuffer.wrap(buffer, startPos, b)));
         }
 
         consume(buffer, len);
+
         return true;
     }
 }

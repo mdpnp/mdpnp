@@ -7,13 +7,20 @@
  ******************************************************************************/
 package org.mdpnp.devices.nonin.pulseox;
 
+import ice.ConnectionState;
 import ice.SampleArray;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 import org.mdpnp.devices.EventLoop;
+import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
@@ -23,6 +30,8 @@ import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
 
 public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 
@@ -39,37 +48,65 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         False
     }
 
-//    public static final Enumeration PERFUSION = new EnumerationImpl(DemoPulseOx.class, "PERFUSION");
-
-
-
-
-//    public static final Enumeration ARTIFACT = new EnumerationImpl(DemoPulseOx.class, "ARTIFACT");
-//    public static final Enumeration SENSOR_ALARM = new EnumerationImpl(DemoPulseOx.class, "SENSOR_ALARM");
-//    public static final Enumeration SMART_POINT = new EnumerationImpl(DemoPulseOx.class, "SMART_POINT");
-//    public static final Enumeration OUT_OF_TRACK = new EnumerationImpl(DemoPulseOx.class, "OUT_OF_TRACK");
-
-//    public static final Enumeration LOW_BATTERY = new EnumerationImpl(DemoPulseOx.class, "LOW_BATTERY");
-//    public static final Numeric FIRMWARE_REVISION = new NumericImpl(DemoPulseOx.class, "FIRMWARE_REVISION");
-//
+    protected void failAll() {
+        synchronized(stateLock) {
+            currentPhase = phases[0];
+            currentState = State.Failure;
+//            for(int i = 0; i < states.length; i++) {
+//                states[i] = State.Failure;
+//            }
+            stateLock.notifyAll();
+        }
+    }
 
     public DemoNoninPulseOx(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
+
+        failAll();
 
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Nonin";
         writeDeviceIdentity();
 
-//	    add(firmwareRevisionUpdate);
-//		add(pulseUpdate, spo2Update, plethUpdate);
-//		add(perfusionUpdate, artifactUpdate, smartPointUpdate, lowBatteryUpdate, outOfTrackUpdate);
     }
 
-    protected enum Format {
-        Onyx, WristOx
-    };
-    protected Format formatRequested;
+    protected static final byte[] WRISTOX = new byte[] { 0x18, 0x05, 0x09 };
+    protected static final byte[] ONYX = new byte[] { (byte) 0x9E, 0x09 };
 
+    protected static final boolean equals(byte[] a, int offa, int lena, byte[] b, int offb, int lenb) {
+        if(lena != lenb) {
+            return false;
+        }
+        for(int i = 0; i < lena; i++) {
+            if(a[offa+i]!=b[offb+i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected void iconOrBlank(String model, String icon) {
+        deviceIdentity.model = model;
+        try {
+            iconFromResource(deviceIdentity, icon);
+        } catch (IOException e) {
+            log.error("Error loading icon resource", e);
+            deviceIdentity.icon.raster.userData.clear();
+            deviceIdentity.icon.height = 0;
+            deviceIdentity.icon.width = 0;
+        }
+        writeDeviceIdentity();
+    }
+
+
+
+    @Override
+    protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
+        super.stateChanged(newState, oldState);
+        if(ConnectionState.Connected.equals(oldState) && !ConnectionState.Connected.equals(newState)) {
+            failAll();
+        }
+    }
     private class MyNoninPulseOx extends NoninPulseOx {
 
         public MyNoninPulseOx(InputStream in, OutputStream out) {
@@ -80,65 +117,51 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         protected synchronized void receiveSerialNumber(String serial) {
             super.receiveSerialNumber(serial);
 
-            formatRequested = Format.Onyx;
-            try {
-                getDelegate().sendSetOnyxFormat();
-            } catch (IOException e) {
-                log.error("Error sending set onyx format", e);
+            log.info("Received serial number:"+serial);
+            deviceIdentity.serial_number = serial;
+            writeDeviceIdentity();
+
+            received(Phase.GetSerial, true);
+        }
+
+        @Override
+        protected synchronized void recvOperation(byte opCode, byte[] source, int off, int len) {
+            switch(opCode) {
+            case (byte) 0xF3:
+                if(DemoNoninPulseOx.equals(source, off, len, WRISTOX, 0, WRISTOX.length)) {
+                    iconOrBlank("WristOx2", "3150.png");
+                } else if(DemoNoninPulseOx.equals(source, off, len, ONYX, 0, ONYX.length)) {
+                    iconOrBlank("Onyx II", "9650.png");
+                } else {
+                    log.warn("Unrecognized response to 0x73:"+HexUtil.dump(ByteBuffer.wrap(source, off, len)));
+                }
+
+                received(Phase.GetDeviceType, true);
+
+                break;
+            default:
+                super.recvOperation(opCode, source, off, len);
+                break;
             }
         }
 
         @Override
         protected synchronized void recvAcknowledged(boolean success) {
             super.recvAcknowledged(success);
-            if(Format.Onyx.equals(formatRequested)) {
-                formatRequested = null;
-                if(success) {
-                    deviceIdentity.model = "Onyx II";
+            received(null, success);
+        }
 
-                    try {
-                        iconFromResource(deviceIdentity, "9650.png");
-                    } catch (IOException e) {
-                        log.error("Error loading icon resource", e);
-                        deviceIdentity.icon.raster.userData.clear();
-                        deviceIdentity.icon.height = 0;
-                        deviceIdentity.icon.width = 0;
-                    }
-                    writeDeviceIdentity();
-                    getDelegate().readyFlag = true;
-                } else {
-                    formatRequested = Format.WristOx;
-                    try {
-                        sendSetWristOxFormat();
-                    } catch (IOException e) {
-                        log.error("Error sending set wristox format", e);
-                    }
-                }
-            } else if(Format.WristOx.equals(formatRequested)) {
-                formatRequested = null;
-                if(success) {
-                    deviceIdentity.model = "WristOx2";
-                    try {
-                        iconFromResource(deviceIdentity, "3150.png");
-                    } catch (IOException e) {
-                        log.error("Error loading icon resource", e);
-                        deviceIdentity.icon.raster.userData.clear();
-                        deviceIdentity.icon.height = 0;
-                        deviceIdentity.icon.width = 0;
-                    }
-                    writeDeviceIdentity();
-                    getDelegate().readyFlag = true;
-                } else {
-                    log.warn("Onyx and WristOx formats rejected; nothing left to try");
-                }
-            }
+        @Override
+        protected synchronized void receiveDateTime(Date date) {
+            super.receiveDateTime(date);
+            received(Phase.GetTime, true);
         }
 
         private int[] plethBuffer = new int[Packet.FRAMES];
 
         @Override
         public void receivePacket(Packet currentPacket) {
-            reportConnected();
+//            reportConnected();
 
             for(int i = 0; i < Packet.FRAMES; i++) {
                 plethBuffer[i] = currentPacket.getPleth(i);
@@ -156,48 +179,6 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             }
 
 
-//			Perfusion perfusion = perfusion(currentPacket.getCurrentStatus());
-//			if(perfusion == null) {
-//				if(null != perfusionUpdate.getValue()) {
-//					perfusionUpdate.setValue(null);
-//					gateway.update(DemoPulseOx.this, perfusionUpdate);
-//				}
-//			} else if(perfusionUpdate.getValue() == null) {
-//				perfusionUpdate.setValue(perfusion);
-//				gateway.update(DemoPulseOx.this, perfusionUpdate);
-//			} else if(!perfusion.equals(perfusionUpdate.getValue())) {
-//				perfusionUpdate.setValue(perfusion);
-//				gateway.update(DemoPulseOx.this, perfusionUpdate);
-//			}
-//
-//			if(null == firmwareRevisionUpdate.getValue() || !firmwareRevisionUpdate.getValue().equals(currentPacket.getFirmwareRevision())) {
-//				firmwareRevisionUpdate.setValue(currentPacket.getFirmwareRevision());
-//				gateway.update(DemoPulseOx.this, firmwareRevisionUpdate);
-//			}
-//
-//			Bool artifact = currentPacket.getCurrentStatus().isArtifact() ? Bool.True : Bool.False;
-//			if(null == artifactUpdate.getValue() || !artifactUpdate.getValue().equals(artifact)) {
-//				artifactUpdate.setValue(artifact);
-//				gateway.update(DemoPulseOx.this, artifactUpdate);
-//			}
-//
-//			Bool smartPoint = currentPacket.isSmartPoint() ? Bool.True : Bool.False;
-//			if(null == smartPointUpdate.getValue() || !smartPointUpdate.getValue().equals(smartPoint)) {
-//				smartPointUpdate.setValue(smartPoint);
-//				gateway.update(DemoPulseOx.this, smartPointUpdate);
-//			}
-//
-//			Bool lowBattery = currentPacket.isLowBattery() ? Bool.True : Bool.False;
-//			if(null == lowBatteryUpdate.getValue() || !lowBatteryUpdate.getValue().equals(lowBattery)) {
-//				lowBatteryUpdate.setValue(lowBattery);
-//				gateway.update(DemoPulseOx.this, lowBatteryUpdate);
-//			}
-//
-//			Bool outOfTrack = currentPacket.getCurrentStatus().isOutOfTrack() ? Bool.True : Bool.False;
-//			if(null == outOfTrackUpdate.getValue() || !outOfTrackUpdate.getValue().equals(outOfTrack)) {
-//				outOfTrackUpdate.setValue(outOfTrack);
-//				gateway.update(DemoPulseOx.this, outOfTrackUpdate);
-//			}
         }
     }
     public static final Perfusion perfusion(Status status) {
@@ -219,24 +200,149 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
     protected InstanceHolder<ice.Numeric> SpO2;
     protected InstanceHolder<SampleArray> pleth;
 
-//	private final MutableNumericUpdate pulseUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE);
-//	private final MutableNumericUpdate spo2Update = new MutableNumericUpdateImpl(PulseOximeter.SPO2);
-//	private final MutableWaveformUpdate plethUpdate = new MutableWaveformUpdateImpl(PulseOximeter.PLETH);
-//	private final MutableEnumerationUpdate perfusionUpdate = new MutableEnumerationUpdateImpl(DemoPulseOx.PERFUSION);
-//	private final MutableEnumerationUpdate artifactUpdate = new MutableEnumerationUpdateImpl(DemoPulseOx.ARTIFACT);
-//	private final MutableEnumerationUpdate smartPointUpdate = new MutableEnumerationUpdateImpl(DemoPulseOx.SMART_POINT);
-//	private final MutableEnumerationUpdate lowBatteryUpdate = new MutableEnumerationUpdateImpl(DemoPulseOx.LOW_BATTERY);
-//	private final MutableNumericUpdate firmwareRevisionUpdate = new MutableNumericUpdateImpl(DemoPulseOx.FIRMWARE_REVISION);
-//	private final MutableEnumerationUpdate outOfTrackUpdate = new MutableEnumerationUpdateImpl(DemoPulseOx.OUT_OF_TRACK);
+    enum Phase {
+        GetSerial,
+        GetDeviceType,
+        SetFormat,
+        GetTime,
+    }
+
+    enum State {
+        Issued,
+        Success,
+        Failure
+    }
 
 
 
+    protected static final Phase[] phases = new Phase[] { Phase.SetFormat, Phase.GetSerial, Phase.GetDeviceType };
+    protected Phase currentPhase = phases[0];
+//    protected final State[] states = new State[phases.length];
+    protected State currentState = State.Failure;
+
+    protected final Object stateLock = new Object();
+
+
+    private int ordinal(Phase phase) {
+        for(int i = 0; i < phases.length; i++) {
+            if(phase.equals(phases[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    protected void received(Phase phase, boolean success) {
+        synchronized(stateLock) {
+            if(!State.Issued.equals(currentState)) {
+                log.warn("Received a response but not in issued state");
+            }
+            if(success) {
+                currentState = State.Success;
+            } else {
+                currentState = State.Failure;
+            }
+            log.debug("Received:" + phase + " " + currentState);
+            stateLock.notifyAll();
+        }
+    }
+
+    protected final static Phase nextPhase(Phase currentPhase) {
+        for(int i = 0; i < phases.length; i++) {
+            if(currentPhase.equals(phases[i])) {
+                if( (i+1)<phases.length) {
+                    return phases[i+1];
+                } else {
+                    return null;
+                }
+            }
+        }
+        log.error("Shouldn't ever be in phase:"+currentPhase);
+        return null;
+    }
+
+    protected void send() throws IOException {
+        boolean reportConnected = false;
+        Phase issueConnectForPhase = null;
+//        List<Phase> issueConnectForPhase = new ArrayList<Phase>();
+        synchronized(stateLock) {
+            switch(currentState) {
+            case Failure:
+                issueConnectForPhase = currentPhase;
+                currentState = State.Issued;
+                break;
+            case Issued:
+                break;
+            case Success:
+                issueConnectForPhase = currentPhase = nextPhase(currentPhase);
+                if(null == issueConnectForPhase) {
+                    reportConnected = true;
+                } else {
+                    currentState = State.Issued;
+                }
+            }
+//            for(int i = 0; i < states.length; i++) {
+//                switch(states[i]) {
+//                case Issued:
+//                    // Do nothing .. eventually maybe retry?
+//                    reportConnected = false;
+//                    break;
+//                case Success:
+//                    // This is already done
+//                    break;
+//                case Failure:
+//                    if(issueConnectForPhase.isEmpty()) {
+//                        issueConnectForPhase.add(phases[i]);
+//                        states[i] = State.Issued;
+//                    }
+//                    reportConnected = false;
+//                    break;
+//                }
+//            }
+            stateLock.notifyAll();
+        }
+//        for(Phase p : issueConnectForPhase) {
+        if(null != issueConnectForPhase) {
+            makeRequest(getDelegate(), issueConnectForPhase);
+        }
+//        }
+        if(reportConnected) {
+            log.info("Connection negotiated");
+            reportConnected();
+            getDelegate().readyFlag = true;
+        }
+    }
+
+    protected static final void makeRequest(NoninPulseOx delegate, Phase phase) throws IOException {
+        log.debug("makeRequest for " + phase);
+
+        switch(phase) {
+        case SetFormat:
+            delegate.sendSetFormat(0x07, false, true);
+            break;
+        case GetDeviceType:
+            delegate.sendOperation((byte) 0x73, new byte[0]);
+            break;
+        case GetTime:
+            delegate.sendGetDateTime();
+            break;
+        case GetSerial:
+            delegate.sendGetSerial(2);
+            break;
+        default:
+        }
+
+    }
 
     public void doInitCommands() throws IOException {
         super.doInitCommands();
-        if(null == formatRequested) {
-            getDelegate().sendGetSerial();
-        }
+//        try {
+//            Thread.sleep(1000L);
+//        } catch (InterruptedException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+        send();
     }
 
 
@@ -247,19 +353,19 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
     @Override
     protected long getConnectInterval() {
-        return 4000L;
+        return 5000L;
     }
 
     @Override
     protected long getNegotiateInterval() {
-        return 2000L;
+        return 500L;
     }
 
 
     @Override
     // 3 packets per second mean the theoretical max quiet time is 333ms
     protected long getMaximumQuietTime() {
-        return 750L;
+        return 3000L;
     }
 
     @Override
