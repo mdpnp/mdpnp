@@ -23,6 +23,8 @@ import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
+import org.mdpnp.devices.serial.SerialProviderFactory;
+import org.mdpnp.devices.serial.SerialSocket;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
 import org.mdpnp.devices.serial.SerialSocket.FlowControl;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
@@ -98,13 +100,15 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         writeDeviceIdentity();
     }
 
-
+    protected long connectedAt = 0L;
 
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
         super.stateChanged(newState, oldState);
         if(ConnectionState.Connected.equals(oldState) && !ConnectionState.Connected.equals(newState)) {
             failAll();
+        } else if(ConnectionState.Connected.equals(newState) && !ConnectionState.Connected.equals(oldState)) {
+            connectedAt = System.currentTimeMillis();
         }
     }
     private class MyNoninPulseOx extends NoninPulseOx {
@@ -219,6 +223,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
     protected Phase currentPhase = phases[0];
 //    protected final State[] states = new State[phases.length];
     protected State currentState = State.Failure;
+    protected long issuedTime = 0L;
 
     protected final Object stateLock = new Object();
 
@@ -242,6 +247,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             } else {
                 currentState = State.Failure;
             }
+//            setConnectionInfo(currentPhase + " " + currentState);
             log.debug("Received:" + phase + " " + currentState);
             stateLock.notifyAll();
         }
@@ -266,19 +272,30 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         Phase issueConnectForPhase = null;
 //        List<Phase> issueConnectForPhase = new ArrayList<Phase>();
         synchronized(stateLock) {
+            Phase lastPhase = currentPhase;
             switch(currentState) {
             case Failure:
                 issueConnectForPhase = currentPhase;
                 currentState = State.Issued;
+                issuedTime = System.currentTimeMillis();
+                setConnectionInfo("Issuing " + currentPhase);
                 break;
             case Issued:
+                if(System.currentTimeMillis() >= (issuedTime + 5000L)) {
+                    log.warn("Reissuing:"+currentPhase);
+                    setConnectionInfo("Re-Issuing " + currentPhase);
+                    issueConnectForPhase = currentPhase;
+                }
                 break;
             case Success:
                 issueConnectForPhase = currentPhase = nextPhase(currentPhase);
                 if(null == issueConnectForPhase) {
                     reportConnected = true;
+                    setConnectionInfo("");
                 } else {
                     currentState = State.Issued;
+                    issuedTime = System.currentTimeMillis();
+                    setConnectionInfo(lastPhase + " Success");
                 }
             }
 //            for(int i = 0; i < states.length; i++) {
@@ -318,7 +335,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
         switch(phase) {
         case SetFormat:
-            delegate.sendSetFormat(0x07, false, true);
+            delegate.sendSetFormat(7, false, true);
             break;
         case GetDeviceType:
             delegate.sendOperation((byte) 0x73, new byte[0]);
@@ -336,13 +353,9 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
     public void doInitCommands() throws IOException {
         super.doInitCommands();
-//        try {
-//            Thread.sleep(1000L);
-//        } catch (InterruptedException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
+//        if(System.currentTimeMillis() > (connectedAt+1000L)) {
+            send();
 //        }
-        send();
     }
 
 
@@ -378,5 +391,60 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         SerialProvider serialProvider =  super.getSerialProvider();
         serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
         return serialProvider;
+    }
+
+    protected static boolean response = false;
+    public static void main(String[] args) throws IOException {
+        SerialProvider serialProvider = SerialProviderFactory.getDefaultProvider();
+        serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None,  StopBits.One, FlowControl.None);
+        SerialSocket sock = serialProvider.connect(args[0], 5000L);
+
+        final NoninPulseOx pulseox = new NoninPulseOx(sock.getInputStream(), sock.getOutputStream()) {
+            protected synchronized void recvAcknowledged(boolean success) {
+                System.out.println(success?"ACK":"NAK");
+                synchronized(DemoNoninPulseOx.class) {
+                    response = true;
+                    DemoNoninPulseOx.class.notifyAll();
+                }
+                super.recvAcknowledged(success);
+            };
+        };
+        Thread t = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    for(;;) {
+                        pulseox.receive();
+                    }
+                } catch (IOException e) {
+                    if(!response) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        t.setDaemon(true);
+        t.start();
+
+        System.out.println("Requesting dataformat 13...");
+        pulseox.sendSetFormat(13, true, true);
+        long waitUntil = System.currentTimeMillis() + 5000L;
+        synchronized(DemoNoninPulseOx.class) {
+            while(!response) {
+                try {
+                    DemoNoninPulseOx.class.wait(500L);
+                    if(!response && System.currentTimeMillis() >= waitUntil) {
+                        // try again
+                        System.out.println("Re-issuing dataformat 13");
+                        pulseox.sendSetFormat(13, true, true);
+                        waitUntil = System.currentTimeMillis() + 5000L;
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            System.out.println("Response received, exit...");
+        }
+        sock.close();
+        System.exit(0);
     }
 }

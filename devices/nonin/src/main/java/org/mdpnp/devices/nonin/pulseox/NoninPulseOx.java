@@ -277,7 +277,7 @@ public class NoninPulseOx {
             }
             break;
         default:
-            log.warn("Unknown incoming operation code:"+Integer.toHexString(opCode));
+            log.warn("Unknown incoming operation code:"+Integer.toHexString(0xFF&opCode));
         }
     }
 
