@@ -164,7 +164,9 @@ public class NoninPulseOx {
         System.arraycopy(data, off, buf, 3, len);
         buf[3+len] = 0x03;
 
-        log.debug("Wrote:"+HexUtil.dump(buf));
+        if(log.isTraceEnabled()) {
+            log.trace("Wrote:"+HexUtil.dump(buf));
+        }
         out.write(buf);
         out.flush();
     }
@@ -452,7 +454,9 @@ public class NoninPulseOx {
             return false;
         } else {
             len[0] += b;
-            log.info("Read:"+HexUtil.dump(ByteBuffer.wrap(buffer, startPos, b)));
+            if(log.isTraceEnabled()) {
+                log.trace("Read:"+HexUtil.dump(ByteBuffer.wrap(buffer, startPos, b)));
+            }
         }
 
         consume(buffer, len);
