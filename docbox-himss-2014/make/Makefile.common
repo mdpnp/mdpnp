@@ -1,0 +1,157 @@
+###############################################################################
+# This Makefile contains the common rules to build for all the architectures.
+# It is included from the architecture-specific Makefile.
+# This Makefile requires the following variables:
+# - ARCH: Architecture to build (for example i86Linux)
+#
+# Optional variables:
+# - DEBUG: If set to '1', it turns on debugging information
+# - SHAREDLIB: If set to '1', shared libraries will be used
+# - CXX: compiler name.
+# - CXXFLAGS: compiler flags: will be appended to $CXX command-line
+# - CXXLD: linker name.
+# - CXXLDFLAGS: linker flags: will be inserted at the beginning of CXXLD cmdline
+# - SYSLIBS: additional system libraries to append to the CXXLD command-line
+
+###############################################################################
+# Ensure this Makefile is invoked with the right variable set
+
+ifeq ($(ARCH), )
+all:
+	@echo "***************************************************************"
+	@echo "You cannot use this Makefile directly, instead use the"
+	@echo "architecture-specific Makefile. For example:"
+	@echo "         gmake -f make/Makefile.i86Linux"
+	@echo "***************************************************************"
+	@false
+else
+###############################################################################
+# Ensure $NDDSHOME is defined
+
+ifeq ($(NDDSHOME), )
+all:
+	@echo "***************************************************************"
+	@echo "The environment variable 'NDDSHOME' is not set!"
+	@echo "To use this makefile you need to set NDDSHOME to the directory"
+	@echo "where you have RTI Data Distribution Service installed."
+	@echo "***************************************************************"
+	@false
+endif
+endif
+
+BINDIRROOT   := bin/$(ARCH)
+BINDIR        = $(BINDIRROOT)
+IDLDIR       := idl
+OBJDIRROOT   := obj/$(ARCH)
+OBJDIR        = $(OBJDIRROOT)
+QOSDIR       := qos
+SRCDIR       := src
+TYPEDIR      := src_dds
+
+MIDLFLAGS := -I $(IDLDIR) -replace -namespace -language C++ -d $(TYPEDIR)
+MIDL := $(NDDSHOME)/scripts/rtiddsgen $(MIDLFLAGS) $(RTIDDSGEN_PREPROCESSOR)
+
+###############################################################################
+# Modify build flags for debug/release
+
+ifeq ($(DEBUG),1)
+CXXFLAGS += -g -O0
+ifeq ($(SHAREDLIB),1)
+NDDSLIBS = -lnddscppd -lnddscd -lnddscored
+else
+NDDSLIBS = -lnddscppzd -lnddsczd -lnddscorezd
+endif
+else
+CXXFLAGS += -O2
+ifeq ($(SHAREDLIB),1)
+NDDSLIBS = -lnddscpp -lnddsc -lnddscore
+else
+NDDSLIBS = -lnddscppz -lnddscz -lnddscorez
+endif
+endif
+
+###############################################################################
+
+INCLUDES  += \
+  -I$(SRCDIR) \
+  -I$(TYPEDIR) \
+  -I$(NDDSHOME)/include \
+  -I$(NDDSHOME)/include/ndds
+
+LIBS += \
+  -L$(NDDSHOME)/lib/$(shell ls --ignore=*jdk $(NDDSHOME)/lib/) \
+    $(NDDSLIBS) \
+    $(SYSLIBS)
+
+###############################################################################
+EXEC = PatAssessmentExample
+
+APPSOURCESCXX = \
+	$(wildcard $(SRCDIR)/*.cxx)
+
+APPHEADERS = \
+	$(wildcard $(SRCDIR)/*.h)
+
+IDLFILES = \
+	$(wildcard $(IDLDIR)/*.idl)
+
+TYPEHEADERS_BASE = \
+	$(patsubst $(IDLDIR)%.idl,$(TYPEDIR)%.h,$(IDLFILES))
+
+TYPESOURCES_BASE = \
+	$(patsubst $(IDLDIR)%.idl,$(TYPEDIR)%.cxx,$(IDLFILES))
+
+TYPESOURCES = \
+	$(TYPESOURCES_BASE) \
+	$(patsubst %.cxx,%Plugin.cxx,$(TYPESOURCES_BASE)) \
+    $(patsubst %.cxx,%Support.cxx,$(TYPESOURCES_BASE))
+
+TYPEOBJS   = $(TYPESOURCES:$(TYPEDIR)/%.cxx=$(OBJDIR)/%.o)
+APPOBJSCXX = $(APPSOURCESCXX:$(SRCDIR)/%.cxx=$(OBJDIR)/%.o)
+APPOBJS    = $(APPOBJSCXX)
+ALLOBJS    = $(TYPEOBJS) $(APPOBJS)
+DIRECTORIES = $(OBJDIR).dir $(BINDIR).dir
+
+###############################################################################
+# Place objects in a sub directory.
+all : $(ARCH)
+
+$(ARCH) : $(DIRECTORIES) $(ALLOBJS) $(EXEC:%=$(OBJDIR)/%.o) $(EXEC:%=$(BINDIR)/%)
+
+$(BINDIR)/$(EXEC) : $(ALLOBJS)
+	$(CXXLD) $(CXXLDFLAGS) -o $(BINDIR)/$(EXEC) $(ALLOBJS) $(LIBS)
+
+$(APPOBJS)  : $(OBJDIR)/%.o : $(SRCDIR)/%.cxx \
+  $(TYPEHEADERS_BASE) \
+  $(APPHEADERS)
+	$(CXX) $(CXXFLAGS)  -o $@ $(DEFINES) $(INCLUDES) -c $<
+
+# Use the RTI IDL compiler rtiddsgen to compile IDL files
+$(TYPEDIR)/%.cxx :
+	$(foreach var, $(IDLFILES), $(MIDL) $(var);)
+
+$(TYPEOBJS) : $(OBJDIR)/%.o : $(TYPEDIR)/%.cxx \
+ 	$(TYPEHEADERS_BASE)
+	$(CXX) $(CXXFLAGS)  -o $@ $(DEFINES) $(INCLUDES) -c $<
+
+clean:
+	rm $(OBJDIR)/*.o
+	rm $(BINDIR)/$(EXEC)
+
+clean:
+	-rm -f $(EXEC:%=$(BINDIR)/%)
+	-rm -f $(OBJDIRROOT)/*.o
+	-rm -f $(TYPEDIR)/*.*
+
+mostlyclean:
+	-rm -f $(BINDIR)/$(EXEC)
+	-rm -f $(OBJDIRROOT)/*.o
+
+dist: 
+	tar -cvzf $(EXEC)_$(shell date +%Y%m%d).tar.gz $(SRCDIR)/* $(IDLDIR)/* $(QOSDIR)/* $(INIDIR)/* doc/* make/* *.dtd
+	
+# Create subdirectories automatically.
+%.dir : 
+	@if [ ! -d $* ]; then \
+		mkdir -p $* ; \
+	fi;

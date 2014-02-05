@@ -1,0 +1,375 @@
+/**
+ * @file    common.idl
+ * @author  WMS
+ * @date    SEP 2013
+ * @brief   DICES DIM common data types.
+ * @see     ISO/IEEE 11073 Health informatics - Point-of-care medical device
+ *          communication - Parts 10101 and 10201
+ * @note    x73 = "ISO/IEEE 11073"
+ */
+
+module ice
+{
+/**
+ * DDS definitions
+ */
+const long DDS_DOMAIN_ID_COORDINATOR  = 1;
+const long DDS_DOMAIN_ID_MANAGER      = 2;
+
+/**
+ * Integer and bit string types
+ */
+typedef octet INTU8;
+typedef short INT16;
+typedef unsigned short INTU16;
+typedef long INT32;
+typedef unsigned long INTU32;
+typedef INTU16 BITS16;
+typedef INTU32 BITS32;
+typedef long TIME_T;
+
+/**
+ * Identification types
+ */
+typedef INTU16 OIDType;     // See x73-10101 for set of valid OIDs
+typedef INTU16 PrivateOid;  // For IDs not part of the standard nomenclature
+
+typedef INTU16 HANDLE;
+
+/**
+ * Use the instance number data type to distinguish class or object instances
+ * of the same type or object instances that are not directly manageable.
+ */
+typedef INTU16 InstNumber;
+
+typedef float FLOATType;
+
+/**
+ * Unique Device Identification (see FDA).
+ */
+const long MAX_UDI_LENGTH = 100;
+typedef string<MAX_UDI_LENGTH> UDI;
+
+/**
+ * MDS Context ID
+ */
+typedef INTU16 MdsContext;
+
+/**
+ * Use the global handle to distinguish objects within multiple device system.
+ */
+struct GLBHANDLE
+{
+  MdsContext context_id;
+  HANDLE handle;
+}; //@top-level false
+
+/**
+ * Managed OID as a type for complete global object identification
+ */
+struct ManagedObjectId
+{
+  OIDType m_obj_class;
+  GLBHANDLE m_obj_inst;
+}; //@top-level false
+
+/**
+ * Example: A medical device may interface with further medical devices (ie,
+ * sub-devices). In the MDIB, this device may model these sub-devices as
+ * individual MDS objects with their own naming context. In this way, name
+ * space collisions (e.g., duplicate handle values, duplicate nomenclature
+ * codes) can be avoided without reassigning handle values. A manager system 
+ * needs to interpret the MDS context IDs together with handle values to
+ * uniquely identify object instances within this composite MDIB. The context
+ * IDs are assigned when the MDIB is created by Context Scanner object create
+ * notifications.
+ */
+
+enum NomPartition
+{
+  nom_part_unspec = 0,
+  nom_part_obj = 1,
+  nom_part_metric = 2,
+  nom_part_alert = 3,
+  nom_part_dim = 4,
+  nom_part_vattr = 5, 
+  nom_part_pgrp = 6, 
+  nom_part_sites = 7, 
+  nom_part_infrastruct = 8, 
+  nom_part_fef = 9,
+  nom_part_ecg_extn = 10, 
+  nom_part_ext_nom = 256,
+  nom_part_priv = 1024
+}; //@top-level false
+
+struct TYPE
+{
+  NomPartition partition;
+  OIDType code;
+}; //@top-level false
+
+//#define USE_X73_TIME_DEFINITIONS
+#ifdef USE_X73_TIME_DEFINITIONS
+/**
+ * A value in which each increment represents 125 microseconds (or an 8 kHz
+ * counter). Total duration of 6.2 days.
+ */
+typedef INTU32 RelativeTime;
+
+struct HighResRelativeTime
+{
+  INTU8 value[8];   // LSB = 1 microsecond
+}; //@top-level false
+
+struct AbsoluteTime
+{
+  // x73-10201, section 7.1.2.13
+
+  // NOT BCD encoded.
+  INTU8 century;  /// Zero-based. For year 2012, century = 20 (not 21)
+  INTU8 year;     /// For 2012, year = 12
+  INTU8 month;    /// 1 - 12
+  INTU8 day;      /// 1 - 31
+  INTU8 hour;     /// 0 - 23
+  INTU8 minute;
+  INTU8 second;
+  INTU8 sec_fractions;  /// hundredths of second
+}; //@top-level false
+
+#else  /* USE_X73_TIME_DEFINITIONS is not defined */
+
+/**
+ * Time in seconds and nanoseconds since the Epoch. For Unix and POSIX:
+ * 1 JAN 1970 to 19 JAN 2038 (32-bit systems), or some far future year (64-bit)
+ */
+struct Timespec
+{
+  TIME_T seconds;
+  INT32 nanoseconds;
+}; //@top-level false
+
+typedef Timespec AbsoluteTime;
+typedef Timespec RelativeTime;
+typedef Timespec HighResRelativeTime;
+#endif
+
+/**
+ * The date data type specifies a certain calendar date. (NOT BCD-encoded.)
+ */
+struct Date
+{
+  INTU8 century;  // Ex: for year 2011, century = 20, ...
+  INTU8 year;     // and year = 11
+  INTU8 month;    // January = 1
+  INTU8 day;
+}; //@top-level false
+
+enum SimpleColor
+{
+  // The color data type represents basic RGB colors
+  //                   R G B
+  col_black = 0,    // 0 0 0
+  col_red = 1,      // 1 0 0
+  col_green = 2,    // 0 1 0
+  col_yellow = 3,   // 1 1 0
+  col_blue = 4,     // 0 0 1
+  col_magenta = 5,  // 1 0 1
+  col_cyan = 6,     // 0 1 1
+  col_white = 7     // 1 1 1
+}; //@top-level false
+
+/**
+ *  Locale data type
+ *
+ *  @see notes in 11073-10201, section 7.1.2.18 "Locale data type"
+ */
+enum CharSet
+{
+  charset_unspec = 0,
+  charset_iso_10646_ucs_2 = 1000, // ISO 10646 two-octet character encoding scheme big endian
+  charset_iso_10646_ucs_4 = 1001, // ISO 10646 four-octet character encoding scheme, big endian
+  charset_iso_8859_1 = 4, // encoding according to ISO/IEC 8859 Part 1
+  charset_iso_8859_2 = 5, // encoding according to ISO/IEC 8859 Part 2
+
+  charset_iso_8859_3 = 6, // encoding according to ISO/IEC 8859 Part 3
+  charset_iso_8859_4 = 7, // encoding according to ISO/IEC 8859 Part 4
+  charset_iso_8859_5 = 8, // encoding according to ISO/IEC 8859 Part 5
+  charset_iso_8859_6 = 9, // encoding according to ISO/IEC 8859 Part 6
+  charset_iso_8859_7 = 10, // encoding according to ISO/IEC 8859 Part 7
+  charset_iso_8859_8 = 11, // encoding according to ISO/IEC 8859 Part 8
+  charset_iso_8859_9 = 12, // encoding according to ISO/IEC 8859 Part 9
+  charset_iso_8859_10 = 13, // encoding according to ISO/IEC 8859 Part 10
+  charset_iso_8859_13 = 109, // encoding according to ISO/IEC 8859 Part 13
+  charset_iso_8859_14 = 110, // encoding according to ISO/IEC 8859 Part 14
+  charset_iso_8859_15 = 111, // encoding according to ISO/IEC 8859 Part 15
+  charset_iso_2022_kr = 37, // encoding according to RFC 1557 (Korean Character Encoding)
+  charset_ks_c_5601 = 36, // encoding according to Korean Industrial Standard, KSC 5601-1987
+  charset_iso_2022_jp = 39, // encoding according to RFC 1468 (Japanese Character Encoding)
+  charset_iso_2022_jp_2 = 40, // encoding according to RFC 1554 (Japanese Character Encoding)
+  charset_jis_x0208 = 63,     // encoding according to JIS X0208:1983,1990
+  charset_iso_2022_cn = 104,  // encoding according to RFC 1922 (Chinese Character Encoding)
+  charset_gb_2312 = 2025  // encoding according to Chinese Graphic Character Set, GB 2312:1980
+}; //@top-level false
+
+typedef BITS16 StringFlags;
+enum StringFlagsBits
+{
+  str_flag_nt = 0x1 // strings are null terminated
+}; //@top-level false
+
+struct StringSpec
+{
+  INTU16 str_max_len; // maximum string length
+  StringFlags str_flags;  // specific flags for string representation & coding
+}; //@top-level false
+
+struct Locale
+{
+  INTU32 language;
+  INTU32 country;
+  CharSet charset;
+  StringSpec str_spec;
+}; //@top-level false
+
+/*
+ * Locale constants for current implementation
+ */
+const INTU32 LocaleLanguageEnglish  = 0x656E0000; // "en"
+const INTU32 LocaleCountryUSA       = 0x55530000; // "US"
+const CharSet LocaleCharSetUTF8     = charset_iso_8859_1; // this ok?
+const INTU16 LocaleStrMaxLen = 256; // this ok?
+const BITS16 LocaleStrFlagNt = str_flag_nt;
+
+struct ExtNomenRef
+{
+  OIDType nomenclature_id;  // External nomenclature ID from external
+                            // nomenclature partition
+  string<128> nomenclature_code;
+}; //@top-level false
+
+struct ExtObjRelationEntry
+{
+  OIDType relation_type;
+  OIDType related_object;
+  string<128> relation_attributes; // DIM defines as type AttributeList
+}; //@top-level false
+typedef sequence<ExtObjRelationEntry> ExtObjRelationList;
+
+struct SystemModel
+{
+  string<128> manufacturer;
+  string<128> model_number;
+}; //@top-level false
+
+enum ProdSpecType
+{
+  unspecified = 0x1,
+  serial_number = 0x2,
+  part_number = 0x4,
+  hw_revision = 0x8,
+  sw_revision = 0x10,
+  fw_revision = 0x20,
+  protocol_revision = 0x40,
+  prod_spec_gmdn = 0x80    // Global Medical Device Nomenclature
+}; //@top-level false
+
+struct ProdSpecEntry
+{
+  ProdSpecType spec_type;
+  PrivateOid component_id;
+  string <128> prod_spec;
+}; //@top-level false
+typedef sequence<ProdSpecEntry> ProductionSpec;
+
+enum PatientType
+{
+  pt_unspecified = 0,
+  adult = 1,
+  pediatric = 2,
+  neonatal = 3
+}; //@top-level false
+
+struct BatMeasure
+{
+  /**
+   * Measures about the battery are values with their dimensions
+   */
+  FLOATType value;
+  OIDType unit;   // from dimensions nomenclature partition
+}; //@top-level false
+
+/**
+ * Alert-Op-State attribute defines the current limit alert state
+ * NOTE--The bits refer to the limit alarm only, not to the global alert
+ * state of the metric
+ */
+typedef BITS16 CurLimAlStat;
+enum CurLimAlStatBits
+{
+  lim_alert_off = 0x1,  // if this bit is set, all alerts (high & low) are off
+  lim_low_off = 0x2,  // low-limit violation detection is off
+  lim_high_off = 0x4  // high-limit violation detection is off
+}; //@top-level false
+
+/**
+ * Current-Limits attribute
+ */
+struct CurLimAlVal
+{
+  FLOATType lower;
+  FLOATType upper;
+}; //@top-level false
+
+struct EventReport
+{
+  OIDType object_class; //@key
+  HANDLE object_instance; //@key
+};
+
+union Timestamp switch(long)
+{
+  case 1:
+    RelativeTime relative_time;
+  case 2:
+    HighResRelativeTime hi_res_relative_time;
+  default:
+    AbsoluteTime absolute_time;
+}; //@top-level false
+
+//=============================================================================
+/**
+ *  Top object
+ */
+struct Top
+{
+  MdsContext context_id;  //@key
+  HANDLE handle;          //@key
+  HANDLE parent_handle;   //@key
+}; //@top-level false
+
+//=============================================================================
+/**
+ * VMO
+ *
+ * The VMO is the base class for all medical-related objects in the x73 DIM. It
+ * provides consistent naming and identification across the x73 Medical Package
+ * model.
+ */
+
+/**
+ * Note: The VMO defines the Label-String attribute as the sole member of
+ * the object's VMO Dynamic Context Group. You must implement the attribute as
+ * a member of derived object's Dynamic Context Group object.
+ */
+
+struct VMO : Top
+{
+  TYPE type;
+
+  /**
+   * Relationship Attribute Group
+   *  - Not yet implmented
+   */
+}; //@top-level false
+
+};
