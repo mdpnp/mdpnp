@@ -25,7 +25,7 @@ enum PatDemoState
   pre_admitted = 1,
   admitted = 2,
   discharged = 8
-};
+}; //@top-level false
 
 /**
  * Patient sex according to ISO / IEC 5218
@@ -36,7 +36,7 @@ enum PatientSex
   male = 1,
   female = 2,
   sex_unspecified = 9
-};
+}; //@top-level false
 
 struct PatientDemographics : Top
 {
@@ -54,7 +54,7 @@ struct PatientDemographics : Top
   string<100> attending_physician;
   string<128> procedure_description;
 
-};
+}; //@top-level true
 const string PatientDemographicsTopic = "ice::PatientDemographics";
 
 };
