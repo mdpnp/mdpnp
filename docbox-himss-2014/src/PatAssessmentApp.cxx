@@ -159,14 +159,19 @@ int PatAssessmentApp::PublisherMain()
 	sprintf(pat_assessment_instance.demographics.diagnostic_info, "%s", "");
 	sprintf(pat_assessment_instance.demographics.attending_physician, "%s", "");
 	sprintf(pat_assessment_instance.demographics.procedure_description, "%s", "");
-    pat_assessment_instance.glascow_assessment.eye_opening_score = voice_response;
-    pat_assessment_instance.glascow_assessment.verbal_score = oriented;
-    pat_assessment_instance.glascow_assessment.motor_score = obeys;
+	sprintf(pat_assessment_instance.demographics.mrn, "%s", "10101");
+    pat_assessment_instance.demographics.height = 1.8;
+    pat_assessment_instance.demographics.weight = 90;
+    //pat_assessment_instance.glascow_assessment.eye_opening_score = voice_response;
+    //pat_assessment_instance.glascow_assessment.verbal_score = oriented;
+    //pat_assessment_instance.glascow_assessment.motor_score = obeys;
     pat_assessment_instance.pain_assessment = noticeable;
     pat_assessment_instance.sedation_assessment._d = alert;
     pat_assessment_instance.sedation_assessment._u.alert_sedation_score = calm;
     pat_assessment_instance.activity_assessment = limited_walking;
     pat_assessment_instance.nutrition_assessment = eats_most_meals_offered;
+	sprintf(pat_assessment_instance.clinician_name, "%s", "Jane Smith, RN");
+	sprintf(pat_assessment_instance.notes, "%s", "Patient is on X medication.");
 
     while (true)
     {
