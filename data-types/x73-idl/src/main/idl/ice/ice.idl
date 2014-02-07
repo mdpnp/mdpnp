@@ -172,4 +172,23 @@ module ice {
   #pragma keylist LocalAlarmSettingsObjective unique_device_identifier metric_id
   const string LocalAlarmSettingsObjectiveTopic = "ice::LocalAlarmSettingsObjective";
 
+  // Experimental alarm info... highly speculative
+  struct DeviceAlertCondition {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    string<256> alert_state;
+  };
+  #pragma keylist DeviceAlertCondition unique_device_identifier
+  const string DeviceAlertConditionTopic = "ice::DeviceAlertCondition";
+
+  struct Alert {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    // This is a placeholder for something more harmonized
+    string<256> identifier; //@key
+    string<256> text;
+  };
+  #pragma keylist DeviceAlert unique_device_identifier identifier
+  const string PatientAlertTopic = "ice::PatientAlert";
+  const string TechnicalAlertTopic = "ice::TechnicalAlert";
 };
+
+
