@@ -535,6 +535,41 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
         protected Time_t sampleTime = new Time_t(0, 0);
 
+        private final MySampleArray getSampleArray(ObservedValue ov, int handle) {
+            Map<Integer, MySampleArray> forObservedValue = mySampleArrays.get(ov);
+            if(null == forObservedValue) {
+                return null;
+            } else {
+                return forObservedValue.get(handle);
+            }
+
+        }
+        private final void putSampleArray(ObservedValue ov, int handle, MySampleArray value) {
+            Map<Integer, MySampleArray> forObservedValue = mySampleArrays.get(ov);
+            if(null == forObservedValue) {
+                forObservedValue = new HashMap<Integer, MySampleArray>();
+                mySampleArrays.put(ov, forObservedValue);
+            }
+            forObservedValue.put(handle, value);
+        }
+
+        private final InstanceHolder<SampleArray> getSampleArrayUpdate(ObservedValue ov, int handle) {
+            Map<Integer, InstanceHolder<SampleArray>> forObservedValue = sampleArrayUpdates.get(ov);
+            if(null == forObservedValue) {
+                return null;
+            } else {
+                return forObservedValue.get(handle);
+            }
+        }
+        private final void putSampleArrayUpdate(ObservedValue ov, int handle, InstanceHolder<SampleArray> value) {
+            Map<Integer, InstanceHolder<SampleArray>> forObservedValue = sampleArrayUpdates.get(ov);
+            if(null == forObservedValue) {
+                forObservedValue = new HashMap<Integer, InstanceHolder<SampleArray>>();
+                sampleArrayUpdates.put(ov, forObservedValue);
+            }
+            forObservedValue.put(handle, value);
+        }
+
         protected void handle(int handle, RelativeTime time, SampleArrayObservedValue v) {
             short[] bytes = v.getValue();
             ObservedValue ov = ObservedValue.valueOf(v.getPhysioId().getType());
@@ -552,10 +587,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 + " sas=" + sas);
                     } else {
 
-                        MySampleArray w = mySampleArrays.get(handle);
+                        MySampleArray w = getSampleArray(ov, handle);
                         if (null == w) {
                             w = new MySampleArray();
-                            mySampleArrays.put(handle, w);
+                            putSampleArray(ov, handle, w);
                             w.setSampleArraySpecification(sas);
                         }
 
@@ -566,9 +601,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         long tm = clockOffset + time.toMilliseconds();
                         sampleTime.sec = (int) (tm / 1000L);
                         sampleTime.nanosec = (int) ((tm % 1000L) * 1000000L);
-                        sampleArrayUpdates.put(
-                                handle,
-                                sampleArraySample(sampleArrayUpdates.get(handle), w.getNumbers(),
+                        putSampleArrayUpdate(ov, handle,
+                                sampleArraySample(getSampleArrayUpdate(ov, handle), w.getNumbers(),
                                         (int) rt.toMilliseconds(), metricId, handle, sampleTime));
                     }
                 }
@@ -610,8 +644,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     protected final Map<ObservedValue, Label> sampleArrayLabels = new HashMap<ObservedValue, Label>();
 
     protected final Map<Integer, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Integer, InstanceHolder<ice.Numeric>>();
-    protected final Map<Integer, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Integer, InstanceHolder<ice.SampleArray>>();
-    protected final Map<Integer, MySampleArray> mySampleArrays = new HashMap<Integer, MySampleArray>();
+    protected final Map<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>> sampleArrayUpdates = new HashMap<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>>();
+    protected final Map<ObservedValue, Map<Integer, MySampleArray>> mySampleArrays = new HashMap<ObservedValue, Map<Integer, MySampleArray>>();
 
     protected static void loadMap(Map<ObservedValue, String> numericMetricIds, Map<ObservedValue, Label> numericLabels,
             Map<ObservedValue, String> sampleArrayMetricIds, Map<ObservedValue, Label> sampleArrayLabels) {
