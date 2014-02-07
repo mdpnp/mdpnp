@@ -1,0 +1,45 @@
+###############################################################################
+# Note:
+# - You must invoke the make command from the root directory of this project.
+#
+# - To enable debugging information, set the Makefile variable 'DEBUG' to '1'.
+# Example:
+#   make -f make/Makefile.i86Linux DEBUG=1
+###############################################################################
+
+# Define required Make variables. The common make file will use them to define
+# build process rules for this application.
+
+UNAME_OS := $(shell uname -s)
+ifeq ($(UNAME_OS), Linux)
+LONGBIT =  $(shell getconf LONG_BIT)
+CXX = g++
+
+ifeq ($(LONGBIT), 32)
+ARCH=i86Linux
+endif
+ifeq  ($(LONGBIT), 64)
+ARCH=x64Linux
+endif
+ifndef ARCH
+all:
+	@echo "***************************************************************"
+	@echo "*******************  Unknown Linux system.  *******************"
+	@echo "***************************************************************"
+	@false
+endif	
+#CXXFLAGS = -std=c++0x 
+CXXFLAGS = -DRTI_UNIX -DRTI_LINUX -m$(LONGBIT) -Wno-deprecated -std=c++0x
+CXXLD = g++
+CXXLDFLAGS = -m$(LONGBIT) -static-libgcc 
+SYSLIBS := -ldl -lnsl -lm -lpthread -lrt
+
+
+include make/Makefile.common
+else
+all:
+	@echo "***************************************************************"
+	@echo "You cannot use this Makefile if you are not on a Linux system."
+	@echo "***************************************************************"
+	@false
+endif

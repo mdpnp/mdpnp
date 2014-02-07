@@ -1,0 +1,136 @@
+/**
+ * @file    himss_2014_patassessment.idl
+ * @author  AF
+ * @date    JAN 2014
+ * @brief   Patient Assessment Data used for HIMSS 2014 Demo
+ * @see     ISO/IEEE 11073 Health informatics - Point-of-care medical device
+ *          communication - Parts 10101 and 10201
+ *
+ */
+
+#include <himss_2014_patdemo.idl>
+
+module ice
+{
+//=============================================================================
+/**
+ *  Patient Assessment object
+ */
+
+enum GlascowEyeOpeningScore
+{
+  no_eye_opening = 1,  // no eye opening
+  pain_response = 2,  // opens in response to pain
+  voice_response = 3,  // opens in response to voice
+  spontaneous = 4,  // spontaneous eye opening
+  swollen_shut = 5,  // swollen shut
+  eye_chemically_paralyzed = 6  // chemically paralyzed
+}; //@top-level false
+
+enum GlascowVerbalScore
+{
+  none = 1,
+  incomprehensible = 2,
+  inappropriate = 3,
+  confused = 4,
+  oriented = 5,
+  intubated = 6
+}; //@top-level false
+
+enum GlascowMotorScore
+{
+  no_motor = 1,  // none
+  extends = 2,  // extends to pain
+  flexes = 3,  // flexes to pain
+  withdraws = 4,  // withdraws to pain
+  localizes = 5,  // localizes pain
+  obeys = 6,  // obeys commands
+  chemically_paralyzed = 7  // chemically paralyzed
+}; //@top-level false
+
+struct GlascowComaScaleAssessment
+{
+  GlascowEyeOpeningScore eye_opening_score;
+  GlascowVerbalScore  verbal_score;
+  GlascowMotorScore  motor_score;
+}; //@top-level false  
+
+enum PainScore
+{
+  free = 0,  // pain free
+  barely_noticeable = 1,  // barely noticeable
+  minor = 2,  // minor pain
+  noticeable = 3,  // pain noticeable but "gets used to it"
+  distracts = 4,  // pain distracts but can be ignored
+  unable_to_ignore = 5,  // pain can't be ignored, but patient socially active
+  interferes_with_activities = 6,  // pain interferes with daily activities
+  dominates_senses = 7, // pain dominates senses, interferes with sleep
+  intense = 8, // intense pain, conversing difficult
+  excruciating = 9, // excrutiating pain, crying out uncomfortably
+  unspeakable = 10  // unspeakable pain, bedridden  
+}; //@top-level false
+
+enum AlertSedationScore
+{
+  calm = 0,  // alert and calm
+  restless = 1,  // restless
+  agitated = 2,  // agitated
+  aggressive = 3,  // very agitated aggressive
+  combative = 4  // combative
+}; //@top-level false
+
+enum AsleepSedationScore
+{
+  drowsy = 1,  // drowsy
+  light = 2,  // light sedation
+  moderate = 3,  // moderate sedation
+  deep = 4,  // deep sedation
+  unarousable = 5  // unarousable
+}; //@top-level false
+
+enum SedationState
+{
+  alert = 0,
+  asleep = 1
+}; //@top-level false
+
+union SedationScore switch (SedationState)
+{
+  case alert:
+    AlertSedationScore  alert_sedation_score;
+
+  case asleep:
+    AsleepSedationScore asleep_sedation_score;
+}; //@top-level false
+
+enum ActivityScore
+{
+  confined_to_bed = 1,
+  cannot_bear_weight = 2,
+  limited_walking = 3,
+  walks_often = 4
+}; //@top-level false
+
+enum NutritionScore
+{
+  eats_one_third_meals_offered = 1,
+  eats_one_half_meals_offered = 2,
+  eats_most_meals_offered = 3,
+  eats_meals_and_snacks = 4
+}; //@top-level false
+
+struct PatientAssessment
+{
+  Timespec timestamp;
+  PatientDemographics demographics;
+  PainScore pain_assessment;
+  SedationScore sedation_assessment;
+  ActivityScore activity_assessment;
+  NutritionScore nutrition_assessment;
+  string<100> clinician_name;   // Unstructured clinician name
+  string<128> notes;
+}; //@top-level true
+
+const string PatientAssessmentTopic = "ice::PatientAssessment";
+
+};

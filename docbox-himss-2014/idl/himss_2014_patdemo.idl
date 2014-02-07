@@ -1,0 +1,62 @@
+/**
+ * @file    patdemo.idl
+ * @author  WMS
+ * @date    OCT 2013
+ * @brief   DICES DIM Patient Demographics object.
+ * @see     ISO/IEEE 11073 Health informatics - Point-of-care medical device
+ *          communication - Parts 10101 and 10201
+ *
+ * Important Note: The PatientDemographics object will change substantially in
+ * early 2014.
+ */
+
+#include <common.idl>
+
+module ice
+{
+//=============================================================================
+/**
+ *  Patient Demographics object
+ */
+
+enum PatDemoState
+{
+  empty = 0,
+  pre_admitted = 1,
+  admitted = 2,
+  discharged = 8
+}; //@top-level false
+
+/**
+ * Patient sex according to ISO / IEC 5218
+ */
+enum PatientSex
+{
+  sex_unknown = 0,
+  male = 1,
+  female = 2,
+  sex_unspecified = 9
+}; //@top-level false
+
+struct PatientDemographics : Top
+{
+  PatDemoState pat_demo_state;
+  string<64> patient_id;
+  string<100> name;   // Unstructured patient name.
+  string<32> given_name;
+  string<32> family_name;
+  string<32> middle_name;
+  PatientSex sex;
+  Date date_of_birth;
+  string<128> patient_general_info;
+  string<64> bed_id;
+  string<128> diagnostic_info;
+  string<100> attending_physician;
+  string<128> procedure_description;
+  string<64> mrn;   // medical record number
+  float height; // meters
+  float weight; // kg
+}; //@top-level true
+const string PatientDemographicsTopic = "ice::PatientDemographics";
+
+};
