@@ -106,7 +106,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         @Override
         protected void receiveHeartRate(Integer value, String label) {
             // should be ECG heart rate?  or should it .. depends upon mode
-            heartRate = numericSample(heartRate, value, rosetta.MDC_PULS_RATE.VALUE, null);
+            heartRate = numericSample(heartRate, value, rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE, null);
 
         }
         @Override
