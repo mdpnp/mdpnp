@@ -148,4 +148,12 @@ public class HexUtil {
         return false;
     }
 
+    public static int[] btoi(byte[] array) {
+        int[] ints = new int[array.length];
+        for(int i = 0; i < ints.length; i++) {
+            ints[i] = 0xFF & array[i];
+        }
+        return ints;
+    }
+
 }
