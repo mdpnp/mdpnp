@@ -8,6 +8,8 @@ import org.mdpnp.devices.philips.intellivue.data.ApplicationArea;
 import org.mdpnp.devices.philips.intellivue.data.AttributeId;
 import org.mdpnp.devices.philips.intellivue.data.ByteArray;
 import org.mdpnp.devices.philips.intellivue.data.CompoundNumericObservedValue;
+import org.mdpnp.devices.philips.intellivue.data.DevAlarmList;
+import org.mdpnp.devices.philips.intellivue.data.DeviceAlertCondition;
 import org.mdpnp.devices.philips.intellivue.data.DisplayResolution;
 import org.mdpnp.devices.philips.intellivue.data.EnumMessage;
 import org.mdpnp.devices.philips.intellivue.data.EnumValue;
@@ -69,15 +71,15 @@ public class AttributeFactory {
         return getAttribute(0x102, MdibObjectSupport.class);
     }
 
-	public static final <T extends Value> Attribute<T> getAttribute(int oid, Class<T> valueClass) {
+    public static final <T extends Value> Attribute<T> getAttribute(int oid, Class<T> valueClass) {
         return getAttribute(OIDType.lookup(oid), valueClass);
     }
-	
-	public static final <T extends Value> Attribute<T> getAttribute(AttributeId aid, Class<T> valueClass) {
-		return getAttribute(aid.asOid(), valueClass);
-	}
-	
-	public static final <T extends Value> Attribute<T> getAttribute(OIDType oid, Class<T> valueClass) {
+
+    public static final <T extends Value> Attribute<T> getAttribute(AttributeId aid, Class<T> valueClass) {
+        return getAttribute(aid.asOid(), valueClass);
+    }
+
+    public static final <T extends Value> Attribute<T> getAttribute(OIDType oid, Class<T> valueClass) {
         try {
             return new AttributeImpl<T>(oid, valueClass.newInstance());
         } catch (InstantiationException e) {
@@ -225,6 +227,11 @@ public class AttributeFactory {
                 return PatientBSAFormula.class;
             case NOM_ATTR_SYS_SPECN:
                 return SystemSpecification.class;
+            case NOM_ATTR_DEV_AL_COND:
+                return DeviceAlertCondition.class;
+            case NOM_ATTR_AL_MON_T_AL_LIST:
+            case NOM_ATTR_AL_MON_P_AL_LIST:
+                return DevAlarmList.class;
             default:
                 return null;
             }
@@ -236,13 +243,13 @@ public class AttributeFactory {
 
     @SuppressWarnings("unchecked")
     public static final <T extends EnumMessage<T>> Attribute<?> getAttribute(OIDType oid) {
-		Class<?> valueType = valueType(oid);
-		if(null == valueType) {
-		    return null;
-		} else if(valueType.isEnum()) {
-			return getEnumAttribute(oid, (Class<T>)valueType);
-		} else {
-			return getAttribute(oid, ((Class<Value>)valueType(oid)));
-		}
+        Class<?> valueType = valueType(oid);
+        if(null == valueType) {
+            return null;
+        } else if(valueType.isEnum()) {
+            return getEnumAttribute(oid, (Class<T>)valueType);
+        } else {
+            return getAttribute(oid, ((Class<Value>)valueType(oid)));
+        }
     }
 }
