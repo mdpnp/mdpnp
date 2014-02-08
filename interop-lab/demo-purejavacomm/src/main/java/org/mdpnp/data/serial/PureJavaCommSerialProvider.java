@@ -30,6 +30,18 @@ public class PureJavaCommSerialProvider implements SerialProvider {
         System.setProperty("purejavacomm.usenudgepipe", "true");
     }
 
+    private static final int flowControl(SerialSocket.FlowControl flowControl) {
+        switch(flowControl) {
+        case Hardware:
+            return SerialPort.FLOWCONTROL_RTSCTS_IN | SerialPort.FLOWCONTROL_RTSCTS_OUT;
+        case Software:
+            return SerialPort.FLOWCONTROL_XONXOFF_IN | SerialPort.FLOWCONTROL_XONXOFF_OUT;
+        default:
+        case None:
+            return SerialPort.FLOWCONTROL_NONE;
+        }
+    }
+
     private static class DefaultSerialSettings {
         private final int baud;
         private final SerialSocket.DataBits dataBits;
@@ -110,20 +122,9 @@ public class PureJavaCommSerialProvider implements SerialProvider {
                 sb = SerialPort.STOPBITS_2;
                 break;
             }
-            int fc = SerialPort.FLOWCONTROL_NONE;
-            switch(flowControl) {
-            case Hardware:
-                fc = SerialPort.FLOWCONTROL_RTSCTS_IN | SerialPort.FLOWCONTROL_RTSCTS_OUT;
-                break;
-            case Software:
-                fc = SerialPort.FLOWCONTROL_XONXOFF_IN | SerialPort.FLOWCONTROL_XONXOFF_OUT;
-                break;
-            case None:
-                fc = SerialPort.FLOWCONTROL_NONE;
-                break;
-            }
-            try {
+            int fc = flowControl(flowControl);
 
+            try {
                 serialPort.setSerialPortParams(baud, db, sb, p);
                 serialPort.setFlowControlMode(fc);
             } catch (UnsupportedCommOperationException e) {
