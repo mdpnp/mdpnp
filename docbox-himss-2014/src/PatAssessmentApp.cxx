@@ -143,28 +143,15 @@ int PatAssessmentApp::PublisherMain()
     DdsAutoType<PatientAssessment> pat_assessment_instance;
  
     // assign assessment data
-    pat_assessment_instance.demographics.pat_demo_state = admitted;
-	sprintf(pat_assessment_instance.demographics.patient_id, "%d", 1);
-	sprintf(pat_assessment_instance.demographics.name, "%s", "Randall Jones");
 	sprintf(pat_assessment_instance.demographics.given_name, "%s", "Randall");
 	sprintf(pat_assessment_instance.demographics.family_name, "%s", "Jones");
-	sprintf(pat_assessment_instance.demographics.middle_name, "%s", "");
-    pat_assessment_instance.demographics.sex = male;
     pat_assessment_instance.demographics.date_of_birth.century = 19;
     pat_assessment_instance.demographics.date_of_birth.year = 80;
     pat_assessment_instance.demographics.date_of_birth.month = 1;
     pat_assessment_instance.demographics.date_of_birth.day = 1;
-	sprintf(pat_assessment_instance.demographics.patient_general_info, "%s", "");
-	sprintf(pat_assessment_instance.demographics.bed_id, "%s", "");
-	sprintf(pat_assessment_instance.demographics.diagnostic_info, "%s", "");
-	sprintf(pat_assessment_instance.demographics.attending_physician, "%s", "");
-	sprintf(pat_assessment_instance.demographics.procedure_description, "%s", "");
 	sprintf(pat_assessment_instance.demographics.mrn, "%s", "10101");
     pat_assessment_instance.demographics.height = 1.8;
     pat_assessment_instance.demographics.weight = 90;
-    //pat_assessment_instance.glascow_assessment.eye_opening_score = voice_response;
-    //pat_assessment_instance.glascow_assessment.verbal_score = oriented;
-    //pat_assessment_instance.glascow_assessment.motor_score = obeys;
     pat_assessment_instance.pain_assessment = noticeable;
     pat_assessment_instance.sedation_assessment._d = alert;
     pat_assessment_instance.sedation_assessment._u.alert_sedation_score = calm;

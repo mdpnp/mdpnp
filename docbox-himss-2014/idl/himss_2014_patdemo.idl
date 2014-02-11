@@ -38,25 +38,15 @@ enum PatientSex
   sex_unspecified = 9
 }; //@top-level false
 
-struct PatientDemographics : Top
+struct PatientDemographics
 {
-  PatDemoState pat_demo_state;
-  string<64> patient_id;
-  string<100> name;   // Unstructured patient name.
-  string<32> given_name;
-  string<32> family_name;
-  string<32> middle_name;
-  PatientSex sex;
+  string<32> given_name;  // first name
+  string<32> family_name;  // last name
   Date date_of_birth;
-  string<128> patient_general_info;
-  string<64> bed_id;
-  string<128> diagnostic_info;
-  string<100> attending_physician;
-  string<128> procedure_description;
   string<64> mrn;   // medical record number
   float height; // meters
   float weight; // kg
-}; //@top-level true
+}; //@top-level false
 const string PatientDemographicsTopic = "ice::PatientDemographics";
 
 };

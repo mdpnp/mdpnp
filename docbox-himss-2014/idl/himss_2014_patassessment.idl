@@ -123,12 +123,12 @@ struct PatientAssessment
 {
   Timespec timestamp;
   PatientDemographics demographics;
-  PainScore pain_assessment;
-  SedationScore sedation_assessment;
   ActivityScore activity_assessment;
   NutritionScore nutrition_assessment;
-  string<100> clinician_name;   // Unstructured clinician name
+  PainScore pain_assessment;
+  SedationScore sedation_assessment;
   string<128> notes;
+  string<100> clinician_name;   // Unstructured clinician name
 }; //@top-level true
 
 const string PatientAssessmentTopic = "ice::PatientAssessment";
