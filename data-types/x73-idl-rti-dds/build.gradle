@@ -1,6 +1,6 @@
 apply plugin: 'java'
 
-// jplourde hacked this together March 13 with 
+// jplourde hacked this together March 13 with
 
 // By default we build (no task specified)
 defaultTasks 'build'
@@ -15,66 +15,66 @@ def GENERATED_JAVA_SOURCES = new File(project.projectDir, 'build/generated/src/m
 def GENERATED_CPP_SOURCES  = new File(project.projectDir, 'build/generated/src/main/cpp').getAbsolutePath()
 
 // add generated source code to the main java sourceset
-sourceSets { 
-  main { 
-    java { 
+sourceSets {
+  main {
+    java {
       srcDirs += GENERATED_JAVA_SOURCES
     }
   }
 }
 
 // include java source code in the assembled jar
-jar.doFirst { 
-  sourceSets.main.java.srcDirs.each { 
+jar.doFirst {
+  sourceSets.main.java.srcDirs.each {
     from it
   }
 }
 
-dependencies { 
+dependencies {
   // nddsjava.jar is the java binding library for RTI DDS
 
-  compile group: 'org.mdpnp.rti.dds', name: 'nddsjava-rt', version: '5.0'
-  
+  compile group: 'org.mdpnp.rti.dds', name: 'nddsjava-rt', version: '5.1'
+
   switch(localOsName) {
       case MAC:
-          testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'darwin'
+          testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'darwin'
           break
       case WINDOWS:
           switch(localOsArch) {
               case X64:
-                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32amd64'
+                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'win32amd64'
                   break
               case X86:
-                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32x86'
+                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'win32x86'
                   break
           }
       case LINUX:
           switch(localOsArch) {
               case X64:
-                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxamd64'
+                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'linuxamd64'
                   break
               case X86:
-                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxi386'
+                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'linuxi386'
                   break
               case ARM:
               case ARMHF:
-                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxarm'
+                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'linuxarm'
                   break
           }
   }
-  
-  
-  
-  
-  
-    
-  
+
+
+
+
+
+
+
   compile project(':data-types:x73-idl')
   testCompile group: 'junit', name: 'junit', version: '4.11'
 
   // all these dependencies are for the code generator
-  rtiddsgen group: 'com.rti.dds', name: 'rtiddsgen-resource', version: '5.0'
-  rtiddsgen group: 'com.rti.dds', name: 'rtiddsgen', version: '5.0'
+  rtiddsgen group: 'com.rti.dds', name: 'rtiddsgen-resource', version: '5.1'
+  rtiddsgen group: 'com.rti.dds', name: 'rtiddsgen', version: '5.1'
   rtiddsgen group: 'org.anarres', name: 'cpp-bin', version: '1.2.8-SNAPSHOT'
   rtiddsgen group: 'xalan', name: 'xalan', version: '2.7.1'
   rtiddsgen group: 'org.antlr', name: 'antlr', version: '3.5'
@@ -82,23 +82,23 @@ dependencies {
 }
 
 // makes output directories for the code generator
-task mkdirs << { 
+task mkdirs << {
   file(GENERATED_JAVA_SOURCES).mkdirs()
   file(GENERATED_CPP_SOURCES).mkdirs()
 }
 
 // explodes resources (xml schema, etc) used by rtiddsgen
-task rtiddsgenExplodeResources(type: Copy) { 
+task rtiddsgenExplodeResources(type: Copy) {
   //  dirMode = 0755
   //  fileMode = 0644
-  configurations.rtiddsgen.filter { 
-    it.toString().endsWith(".zip")}.each { 
+  configurations.rtiddsgen.filter {
+    it.toString().endsWith(".zip")}.each {
     from zipTree(it)}
   into new File(project.projectDir, 'build/rtiddsgen').getAbsolutePath()
 }
 
 // Runs the RTI DDS Generate code generator for all idl files under src/main/idl
-task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) << { 
+task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) << {
   //println project(':x73-idl').build.source
   //println project(':x73-idl').projectDir
   //  FileCollection idlFiles = project(':x73-idl').build.source
@@ -118,11 +118,11 @@ task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) << {
   myArgs.addAll(['-ppOption', '-I'+project(':data-types:x73-idl').projectDir.getAbsolutePath()+'/src/main/idl'])
   myArgs.add('-replace')
   myArgs.add('-inputIdl')
-  
-  for(File f : idlFiles) { 
+
+  for(File f : idlFiles) {
     println 'Generating from ' + f.name
     myArgs.add(f.getAbsolutePath())
-    javaexec { 
+    javaexec {
       classpath = configurations.rtiddsgen
       jvmArgs = ['-DNDDS_RESOURCE_DIR=build/rtiddsgen/resource/']
       main = myMain
@@ -133,7 +133,7 @@ task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) << {
 }
 
 // Deletes the java code generated by the RTI DDS code generator
-task cleanRtiddsgenJava(type: Delete) { 
+task cleanRtiddsgenJava(type: Delete) {
   delete GENERATED_JAVA_SOURCES, GENERATED_CPP_SOURCES
 }
 
@@ -149,4 +149,3 @@ compileJava.dependsOn 'rtiddsgenJava'
 
 // before cleaning generated sources should be cleaned
 clean.dependsOn 'cleanRtiddsgenJava'
-									   

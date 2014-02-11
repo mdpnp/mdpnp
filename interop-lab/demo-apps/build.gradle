@@ -80,14 +80,15 @@ task createApp(dependsOn: [downloadAppBundler, copyDeps]) << {
     ant.bundleapp(outputdirectory: "$buildDir/", name: "MDPnP Demo Apps", displayName: "MDPnP Demo Apps", identifier: "org.mdpnp.apps.testapp.Main", mainclassname: "org.mdpnp.apps.testapp.Main", icon: "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns") {
         classpath(dir: "$buildDir/deps")
         // Can optionally bundle a JRE but it adds a LOT of size
-        /*runtime(dir: "$System.env.JAVA_HOME")*/
+        runtime(dir: "$System.env.JAVA_HOME")
     }
 }
+//createApp.outputs.dir("$buildDir/MDPnP Demo Apps.app")
 
 if(localOsName == MAC) {
     task createSignedApp(type:Exec, dependsOn: createApp) {
         workingDir "$buildDir/"
-        commandLine 'codesign', '-f', '-s', 'Mac Developer: JEFFREY PLOURDE', 'MDPnP Demo Apps.app/'
+        commandLine 'codesign', '--deep', '-f', '-s', 'Mac Developer: JEFFREY PLOURDE', 'MDPnP Demo Apps.app/'
     }
     task createSignedPkg(type:Exec, dependsOn: createSignedApp) {
         workingDir "$buildDir/"
@@ -177,18 +178,18 @@ dependencies {
         }
 
         if(ALL == targetOsArch || X64 == targetOsArch) {
-            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32amd64'
+            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'win32amd64'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-windows-amd64'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-windows-amd64'
         }
         if(ALL == targetOsArch || X86 == targetOsArch) {
-            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'win32x86'
+            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'win32x86'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-windows-i586'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-windows-i586'
         }
     }
     if(MAC == targetOsName || ALL == targetOsName) {
-        runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'darwin'
+        runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'darwin'
         runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-macosx-universal'
         runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-macosx-universal'
     }
@@ -204,17 +205,17 @@ dependencies {
                 break
         }
         if(ALL == targetOsArch || X64 == targetOsArch) {
-            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxamd64'
+            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'linuxamd64'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-linux-amd64'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-linux-amd64'
         }
         if(ALL == targetOsArch || X86 == targetOsArch) {
-            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxi386'
+            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'linuxi386'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-linux-i586'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-linux-i586'
         }
         if(ALL == targetOsArch || ARM == targetOsArch || ARMHF == targetOsArch) {
-            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.0', classifier: 'linuxarm'
+            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'linuxarm'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-android-armv6'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-android-armv6'
         }

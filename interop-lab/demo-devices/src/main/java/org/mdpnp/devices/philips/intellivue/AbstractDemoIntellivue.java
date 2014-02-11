@@ -7,7 +7,11 @@
  ******************************************************************************/
 package org.mdpnp.devices.philips.intellivue;
 
+import ice.Alert;
 import ice.ConnectionState;
+import ice.DeviceConnectivityDataWriter;
+import ice.DeviceConnectivityTopic;
+import ice.DeviceConnectivityTypeSupport;
 import ice.SampleArray;
 
 import java.io.BufferedReader;
@@ -19,6 +23,7 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -51,18 +56,23 @@ import org.mdpnp.devices.philips.intellivue.data.AttributeId;
 import org.mdpnp.devices.philips.intellivue.data.AttributeValueList;
 import org.mdpnp.devices.philips.intellivue.data.ComponentId;
 import org.mdpnp.devices.philips.intellivue.data.CompoundNumericObservedValue;
+import org.mdpnp.devices.philips.intellivue.data.DevAlarmEntry;
+import org.mdpnp.devices.philips.intellivue.data.DevAlarmList;
+import org.mdpnp.devices.philips.intellivue.data.DeviceAlertCondition;
 import org.mdpnp.devices.philips.intellivue.data.DisplayResolution;
 import org.mdpnp.devices.philips.intellivue.data.EnumValue;
 import org.mdpnp.devices.philips.intellivue.data.Handle;
 import org.mdpnp.devices.philips.intellivue.data.IPAddressInformation;
 import org.mdpnp.devices.philips.intellivue.data.Label;
 import org.mdpnp.devices.philips.intellivue.data.MetricSpecification;
+import org.mdpnp.devices.philips.intellivue.data.NomPartition;
 import org.mdpnp.devices.philips.intellivue.data.NumericObservedValue;
 import org.mdpnp.devices.philips.intellivue.data.ObjectClass;
 import org.mdpnp.devices.philips.intellivue.data.ObservedValue;
 import org.mdpnp.devices.philips.intellivue.data.PollProfileSupport;
 import org.mdpnp.devices.philips.intellivue.data.ProductionSpecification;
 import org.mdpnp.devices.philips.intellivue.data.ProductionSpecificationType;
+import org.mdpnp.devices.philips.intellivue.data.StrAlMonInfo;
 import org.mdpnp.devices.philips.intellivue.data.ProtocolSupport.ProtocolSupportEntry;
 import org.mdpnp.devices.philips.intellivue.data.RelativeTime;
 import org.mdpnp.devices.philips.intellivue.data.SampleArrayCompoundObservedValue;
@@ -84,7 +94,12 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.topic.Topic;
 
 public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     @Override
@@ -170,6 +185,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 try {
                     myIntellivue.requestExtendedPoll(ObjectClass.NOM_MOC_VMO_METRIC_NU, CONTINUOUS_POLL_INTERVAL);
                     myIntellivue.requestExtendedPoll(ObjectClass.NOM_MOC_VMO_METRIC_SA_RT, CONTINUOUS_POLL_INTERVAL);
+                    myIntellivue.requestExtendedPoll(ObjectClass.NOM_MOC_VMO_AL_MON, CONTINUOUS_POLL_INTERVAL, AttributeId.NOM_ATTR_GRP_AL_MON);
                     myIntellivue.requestSinglePoll(ObjectClass.NOM_MOC_PT_DEMOG, AttributeId.NOM_ATTR_GRP_PT_DEMOG);
                     lastDataPoll = now;
                 } catch (IOException e) {
@@ -410,6 +426,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     // Responses to our "keep alive" messages occur here
                     // Currently we track any incoming message as proof of life ... so nothing special to do here
                     break;
+                case NOM_ATTR_GRP_AL_MON:
+                    log.debug("Alert Monitor Information has arrived:"+result);
+                    break;
                 default:
                     break;
                 }
@@ -461,47 +480,134 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         protected void handle(ExtendedPollDataResult result) {
             // we could track gaps in poll sequence numbers but instead we're relying on consumers of the data
             // to observe a gap in the data timestamps
+            if(result.getPolledObjType().getNomPartition().equals(NomPartition.Object) &&
+               result.getPolledObjType().getOidType().getType() == ObjectClass.NOM_MOC_VMO_AL_MON.asInt()) {
+                for (SingleContextPoll sop : result.getPollInfoList()) {
+                    for (ObservationPoll op : sop.getPollInfo()) {
+                        int handle = op.getHandle().getHandle();
+                        AttributeValueList attrs = op.getAttributes();
+                        Attribute<DeviceAlertCondition> deviceAlertCondition = attrs.getAttribute(AbstractDemoIntellivue.this.deviceAlertCondition);
+                        Attribute<DevAlarmList> patientAlertList = attrs.getAttribute(AbstractDemoIntellivue.this.patientAlertList);
+                        Attribute<DevAlarmList> technicalAlertList = attrs.getAttribute(AbstractDemoIntellivue.this.technicalAlertList);
 
-            for (SingleContextPoll sop : result.getPollInfoList()) {
-                for (ObservationPoll op : sop.getPollInfo()) {
-                    int handle = op.getHandle().getHandle();
-                    AttributeValueList attrs = op.getAttributes();
+                        if(null != deviceAlertCondition) {
+                            deviceAlertConditionInstance.data.alert_state = deviceAlertCondition.getValue().getDeviceAlertState().toString();
+                            deviceAlertConditionWriter.write(deviceAlertConditionInstance.data, deviceAlertConditionInstance.handle);
+                        }
 
-                    Attribute<NumericObservedValue> observed = attrs.getAttribute(AbstractDemoIntellivue.this.observed);
-                    Attribute<CompoundNumericObservedValue> compoundObserved = attrs
-                            .getAttribute(AbstractDemoIntellivue.this.compoundObserved);
-                    Attribute<RelativeTime> period = attrs.getAttribute(AbstractDemoIntellivue.this.period);
-                    Attribute<SampleArraySpecification> spec = attrs.getAttribute(AbstractDemoIntellivue.this.spec);
-                    Attribute<SampleArrayCompoundObservedValue> cov = attrs
-                            .getAttribute(AbstractDemoIntellivue.this.cov);
-                    Attribute<SampleArrayObservedValue> v = attrs.getAttribute(AbstractDemoIntellivue.this.v);
+                        if(null != patientAlertList) {
 
-                    if (null != observed) {
-                        handle(handle, result.getRelativeTime(), observed.getValue());
-                    }
+                            Set<String> oldPatientAlerts = new HashSet<String>(AbstractDemoIntellivue.this.patientAlertInstances.keySet());
 
-                    if (null != compoundObserved) {
-                        for (NumericObservedValue nov : compoundObserved.getValue().getList()) {
-                            handle(handle, result.getRelativeTime(), nov);
+
+                            for(DevAlarmEntry dae : patientAlertList.getValue().getValue()) {
+                                if(dae.getAlMonInfo() instanceof StrAlMonInfo) {
+                                    StrAlMonInfo info = (StrAlMonInfo)dae.getAlMonInfo();
+                                    String key = dae.getAlCode().getType() + "-"+dae.getAlSource().getType()+"-"+dae.getObject().getGlobalHandle().getMdsContext()+"-"+dae.getObject().getGlobalHandle().getHandle()+"-"+dae.getObject().getOidType().getType();
+                                    oldPatientAlerts.remove(key);
+                                    InstanceHolder<ice.Alert> alert = patientAlertInstances.get(key);
+                                    if(null == alert) {
+                                        alert = new InstanceHolder<ice.Alert>();
+                                        alert.data = (Alert) ice.Alert.create();
+                                        alert.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
+                                        alert.data.identifier = key;
+                                        alert.handle = patientAlertWriter.register_instance(alert.data);
+                                        patientAlertInstances.put(key, alert);
+                                    }
+                                    alert.data.text = info.getString().getString();
+                                    alert.data.text =
+                                            Normalizer
+                                                .normalize(alert.data.text, Normalizer.Form.NFD)
+                                                .replaceAll("[^\\p{ASCII}]", "");
+                                    patientAlertWriter.write(alert.data, alert.handle);
+                                }
+                            }
+                            for(String key : oldPatientAlerts) {
+                                InstanceHolder<ice.Alert> alert = patientAlertInstances.remove(key);
+                                if(null != alert) {
+                                    patientAlertWriter.dispose(alert.data, alert.handle);
+                                }
+                            }
+                        }
+                        if(null != technicalAlertList) {
+                            Set<String> oldTechnicalAlerts = new HashSet<String>(AbstractDemoIntellivue.this.technicalAlertInstances.keySet());
+                            for(DevAlarmEntry dae : technicalAlertList.getValue().getValue()) {
+                                if(dae.getAlMonInfo() instanceof StrAlMonInfo) {
+                                    StrAlMonInfo info = (StrAlMonInfo)dae.getAlMonInfo();
+                                    String key = dae.getAlCode().getType() + "-"+dae.getAlSource().getType()+"-"+dae.getObject().getGlobalHandle().getMdsContext()+"-"+dae.getObject().getGlobalHandle().getHandle()+"-"+dae.getObject().getOidType().getType();
+                                    oldTechnicalAlerts.remove(key);
+                                    InstanceHolder<ice.Alert> alert = technicalAlertInstances.get(key);
+                                    if(null == alert) {
+                                        alert = new InstanceHolder<ice.Alert>();
+                                        alert.data = (Alert) ice.Alert.create();
+                                        alert.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
+                                        alert.data.identifier = key;
+                                        alert.handle = technicalAlertWriter.register_instance(alert.data);
+                                        technicalAlertInstances.put(key, alert);
+                                    }
+                                    alert.data.text = info.getString().getString();
+                                    alert.data.text =
+                                            Normalizer
+                                                .normalize(alert.data.text, Normalizer.Form.NFD)
+                                                .replaceAll("[^\\p{ASCII}]", "");
+                                    technicalAlertWriter.write(alert.data, alert.handle);
+                                }
+                            }
+
+
+
+                            for(String key : oldTechnicalAlerts) {
+                                InstanceHolder<ice.Alert> alert = technicalAlertInstances.remove(key);
+                                if(null != alert) {
+                                    technicalAlertWriter.dispose(alert.data, alert.handle);
+                                }
+                            }
                         }
                     }
+                }
+            } else {
 
+                for (SingleContextPoll sop : result.getPollInfoList()) {
+                    for (ObservationPoll op : sop.getPollInfo()) {
+                        int handle = op.getHandle().getHandle();
+                        AttributeValueList attrs = op.getAttributes();
 
-                    if (null != period) {
-                        handle(handle, period.getValue());
-                    }
+                        Attribute<NumericObservedValue> observed = attrs.getAttribute(AbstractDemoIntellivue.this.observed);
+                        Attribute<CompoundNumericObservedValue> compoundObserved = attrs
+                                .getAttribute(AbstractDemoIntellivue.this.compoundObserved);
+                        Attribute<RelativeTime> period = attrs.getAttribute(AbstractDemoIntellivue.this.period);
+                        Attribute<SampleArraySpecification> spec = attrs.getAttribute(AbstractDemoIntellivue.this.spec);
+                        Attribute<SampleArrayCompoundObservedValue> cov = attrs
+                                .getAttribute(AbstractDemoIntellivue.this.cov);
+                        Attribute<SampleArrayObservedValue> v = attrs.getAttribute(AbstractDemoIntellivue.this.v);
 
-                    if (null != spec) {
-                        handle(handle, spec.getValue());
-
-                    }
-                    if (null != cov) {
-                        for (SampleArrayObservedValue saov : cov.getValue().getList()) {
-                            handle(handle, result.getRelativeTime(), saov);
+                        if (null != observed) {
+                            handle(handle, result.getRelativeTime(), observed.getValue());
                         }
-                    }
-                    if (null != v) {
-                        handle(handle, result.getRelativeTime(), v.getValue());
+
+                        if (null != compoundObserved) {
+                            for (NumericObservedValue nov : compoundObserved.getValue().getList()) {
+                                handle(handle, result.getRelativeTime(), nov);
+                            }
+                        }
+
+
+                        if (null != period) {
+                            handle(handle, period.getValue());
+                        }
+
+                        if (null != spec) {
+                            handle(handle, spec.getValue());
+
+                        }
+                        if (null != cov) {
+                            for (SampleArrayObservedValue saov : cov.getValue().getList()) {
+                                handle(handle, result.getRelativeTime(), saov);
+                            }
+                        }
+                        if (null != v) {
+                            handle(handle, result.getRelativeTime(), v.getValue());
+                        }
                     }
                 }
             }
@@ -519,11 +625,11 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     sampleTime.nanosec = (int) ((tm % 1000L) * 1000000L);
                     if (observed.getMsmtState().isUnavailable()) {
                         numericUpdates.put(handle,
-                                numericSample(numericUpdates.get(ov), (Float) null, metricId, sampleTime));
+                                numericSample(numericUpdates.get(ov), (Float) null, metricId, handle, sampleTime));
                     } else {
                         numericUpdates.put(
                                 handle,
-                                numericSample(numericUpdates.get(ov), observed.getValue().floatValue(), metricId,
+                                numericSample(numericUpdates.get(ov), observed.getValue().floatValue(), metricId, handle,
                                         sampleTime));
                     }
                 } else {
@@ -534,6 +640,41 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         }
 
         protected Time_t sampleTime = new Time_t(0, 0);
+
+        private final MySampleArray getSampleArray(ObservedValue ov, int handle) {
+            Map<Integer, MySampleArray> forObservedValue = mySampleArrays.get(ov);
+            if(null == forObservedValue) {
+                return null;
+            } else {
+                return forObservedValue.get(handle);
+            }
+
+        }
+        private final void putSampleArray(ObservedValue ov, int handle, MySampleArray value) {
+            Map<Integer, MySampleArray> forObservedValue = mySampleArrays.get(ov);
+            if(null == forObservedValue) {
+                forObservedValue = new HashMap<Integer, MySampleArray>();
+                mySampleArrays.put(ov, forObservedValue);
+            }
+            forObservedValue.put(handle, value);
+        }
+
+        private final InstanceHolder<SampleArray> getSampleArrayUpdate(ObservedValue ov, int handle) {
+            Map<Integer, InstanceHolder<SampleArray>> forObservedValue = sampleArrayUpdates.get(ov);
+            if(null == forObservedValue) {
+                return null;
+            } else {
+                return forObservedValue.get(handle);
+            }
+        }
+        private final void putSampleArrayUpdate(ObservedValue ov, int handle, InstanceHolder<SampleArray> value) {
+            Map<Integer, InstanceHolder<SampleArray>> forObservedValue = sampleArrayUpdates.get(ov);
+            if(null == forObservedValue) {
+                forObservedValue = new HashMap<Integer, InstanceHolder<SampleArray>>();
+                sampleArrayUpdates.put(ov, forObservedValue);
+            }
+            forObservedValue.put(handle, value);
+        }
 
         protected void handle(int handle, RelativeTime time, SampleArrayObservedValue v) {
             short[] bytes = v.getValue();
@@ -552,10 +693,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 + " sas=" + sas);
                     } else {
 
-                        MySampleArray w = mySampleArrays.get(handle);
+                        MySampleArray w = getSampleArray(ov, handle);
                         if (null == w) {
                             w = new MySampleArray();
-                            mySampleArrays.put(handle, w);
+                            putSampleArray(ov, handle, w);
                             w.setSampleArraySpecification(sas);
                         }
 
@@ -566,9 +707,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         long tm = clockOffset + time.toMilliseconds();
                         sampleTime.sec = (int) (tm / 1000L);
                         sampleTime.nanosec = (int) ((tm % 1000L) * 1000000L);
-                        sampleArrayUpdates.put(
-                                handle,
-                                sampleArraySample(sampleArrayUpdates.get(handle), w.getNumbers(),
+                        putSampleArrayUpdate(ov, handle,
+                                sampleArraySample(getSampleArrayUpdate(ov, handle), w.getNumbers(),
                                         (int) rt.toMilliseconds(), metricId, handle, sampleTime));
                     }
                 }
@@ -610,8 +750,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     protected final Map<ObservedValue, Label> sampleArrayLabels = new HashMap<ObservedValue, Label>();
 
     protected final Map<Integer, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Integer, InstanceHolder<ice.Numeric>>();
-    protected final Map<Integer, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Integer, InstanceHolder<ice.SampleArray>>();
-    protected final Map<Integer, MySampleArray> mySampleArrays = new HashMap<Integer, MySampleArray>();
+    protected final Map<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>> sampleArrayUpdates = new HashMap<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>>();
+    protected final Map<ObservedValue, Map<Integer, MySampleArray>> mySampleArrays = new HashMap<ObservedValue, Map<Integer, MySampleArray>>();
 
     protected static void loadMap(Map<ObservedValue, String> numericMetricIds, Map<ObservedValue, Label> numericLabels,
             Map<ObservedValue, String> sampleArrayMetricIds, Map<ObservedValue, Label> sampleArrayLabels) {
@@ -658,6 +798,14 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     private final Thread networkLoopThread;
     private final TaskQueue.Task<?> watchdogTask;
 
+    protected Topic deviceAlertConditionTopic, patientAlertTopic, technicalAlertTopic;
+    protected ice.DeviceAlertConditionDataWriter deviceAlertConditionWriter;
+    protected ice.AlertDataWriter patientAlertWriter, technicalAlertWriter;
+
+    protected final InstanceHolder<ice.DeviceAlertCondition> deviceAlertConditionInstance;
+    protected final Map<String, InstanceHolder<ice.Alert>> patientAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>(), technicalAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>();
+
+
     public AbstractDemoIntellivue(int domainId, EventLoop eventLoop) throws IOException {
         this(domainId, eventLoop, null);
     }
@@ -665,10 +813,30 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     public AbstractDemoIntellivue(int domainId, EventLoop eventLoop, NetworkLoop loop) throws IOException {
         super(domainId, eventLoop);
         loadMap(numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
+
+        ice.DeviceAlertConditionTypeSupport.register_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
+        deviceAlertConditionTopic = domainParticipant.create_topic(ice.DeviceAlertConditionTopic.VALUE, ice.DeviceAlertConditionTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+
+        deviceAlertConditionWriter = (ice.DeviceAlertConditionDataWriter) publisher.create_datawriter(deviceAlertConditionTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+
+        ice.AlertTypeSupport.register_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
+        patientAlertTopic = domainParticipant.create_topic(ice.PatientAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        technicalAlertTopic = domainParticipant.create_topic(ice.TechnicalAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+
+        patientAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter(patientAlertTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        technicalAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter(technicalAlertTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+
         deviceIdentity.manufacturer = "Philips";
         deviceIdentity.model = "Intellivue Device";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         writeDeviceIdentity();
+        {
+            ice.DeviceAlertCondition alertCondition = (ice.DeviceAlertCondition) ice.DeviceAlertCondition.create();
+            alertCondition.unique_device_identifier = deviceIdentity.unique_device_identifier;
+            alertCondition.alert_state = "";
+            InstanceHandle_t deviceAlertHandle = deviceAlertConditionWriter.register_instance(alertCondition);
+            deviceAlertConditionInstance = new InstanceHolder<ice.DeviceAlertCondition>(alertCondition, deviceAlertHandle);
+        }
 
         if (null == loop) {
             networkLoop = new NetworkLoop();
@@ -809,6 +977,15 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     protected final Map<Integer, RelativeTime> handleToRelativeTime = new HashMap<Integer, RelativeTime>();
     protected final Map<Integer, SampleArraySpecification> handleToSampleArraySpecification = new HashMap<Integer, SampleArraySpecification>();
 
+    protected final Attribute<DeviceAlertCondition> deviceAlertCondition = AttributeFactory.getAttribute(
+            AttributeId.NOM_ATTR_DEV_AL_COND, DeviceAlertCondition.class);
+
+    protected final Attribute<DevAlarmList> patientAlertList = AttributeFactory.getAttribute(
+            AttributeId.NOM_ATTR_AL_MON_P_AL_LIST, DevAlarmList.class);
+
+    protected final Attribute<DevAlarmList> technicalAlertList = AttributeFactory.getAttribute(
+            AttributeId.NOM_ATTR_AL_MON_T_AL_LIST, DevAlarmList.class);
+
     protected final Attribute<CompoundNumericObservedValue> compoundObserved = AttributeFactory.getAttribute(
             AttributeId.NOM_ATTR_NU_CMPD_VAL_OBS, CompoundNumericObservedValue.class);
     protected final Attribute<NumericObservedValue> observed = AttributeFactory.getAttribute(
@@ -928,6 +1105,23 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 log.error("Interrupted", e);
             }
         }
+        publisher.delete_datawriter(deviceAlertConditionWriter);
+        deviceAlertConditionWriter = null;
+        domainParticipant.delete_topic(deviceAlertConditionTopic);
+        deviceAlertConditionTopic = null;
+        ice.DeviceAlertConditionTypeSupport.unregister_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
+
+        publisher.delete_datawriter(patientAlertWriter);
+        publisher.delete_datawriter(technicalAlertWriter);
+        patientAlertWriter = technicalAlertWriter = null;
+
+        domainParticipant.delete_topic(patientAlertTopic);
+        domainParticipant.delete_topic(technicalAlertTopic);
+
+        patientAlertTopic = technicalAlertTopic = null;
+
+        ice.AlertTypeSupport.unregister_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
+
         super.shutdown();
     }
 

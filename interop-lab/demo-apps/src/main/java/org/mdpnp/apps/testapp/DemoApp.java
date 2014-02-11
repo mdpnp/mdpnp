@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp;
 
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -189,9 +190,10 @@ public class DemoApp {
         vitalModel.start(subscriber, eventLoop);
         pumpModel.start(subscriber, publisher, eventLoop);
         capnoModel.start(subscriber, eventLoop);
-        VitalSign.HeartRate.addToModel(vitalModel);
+//        VitalSign.HeartRate.addToModel(vitalModel);
         VitalSign.SpO2.addToModel(vitalModel);
         VitalSign.RespiratoryRate.addToModel(vitalModel);
+        VitalSign.EndTidalCO2.addToModel(vitalModel);
         PCAPanel _pcaPanel = null;
         if(!AppType.PCA.isDisabled()) {
             UIManager.put("TabbedPane.contentOpaque", false);
@@ -230,6 +232,10 @@ public class DemoApp {
             _sim.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
             _sim.setAlwaysOnTop(true);
             _sim.pack();
+            Dimension d = new Dimension();
+            _sim.getSize(d);
+            d.width = 2 * d.width;
+            _sim.setSize(d);
 
 //            panel.getContent().add(_sim, AppType.SimControl.getId());
         }

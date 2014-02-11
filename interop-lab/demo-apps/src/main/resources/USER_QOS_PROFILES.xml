@@ -45,6 +45,8 @@
         <resource_limits>
           <type_code_max_serialized_length>4096
           </type_code_max_serialized_length>
+          <type_object_max_serialized_length>4096
+          </type_object_max_serialized_length>
         </resource_limits>
         <property>
           <value>
@@ -52,13 +54,11 @@
               There's a great chance these are less than optimal because fragmented IP
               packets are terribly noisy ... and it's better to keep it to one IP frame
               per UDP datagram -->
-            <!--
             <element>
               <name>dds.transport.UDPv4.builtin.parent.message_size_max</name>
-              <value>65530</value>
+              <value>65507</value>
               <propagate>false</propagate>
             </element>
-            -->
             <element>
               <name>dds.transport.UDPv4.builtin.recv_socket_buffer_size</name>
               <value>65530</value>
@@ -69,6 +69,11 @@
               <value>65530</value>
               <propagate>false</propagate>
             </element>
+            <element>
+              <name>dds.transport.shmem.builtin.parent.message_size_max</name>
+              <value>65536</value>
+            </element>
+
           </value>
         </property>
       </participant_qos>
