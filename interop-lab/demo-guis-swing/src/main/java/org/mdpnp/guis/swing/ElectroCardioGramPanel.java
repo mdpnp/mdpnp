@@ -106,7 +106,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
         if(aliveAndValidData(sampleInfo)) {
             if(rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
                 respiratoryRate.setText(Integer.toString((int)numeric.value));
-            } else if(rosetta.MDC_PULS_RATE.VALUE.equals(metric_id)) {
+            } else if(rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE.equals(metric_id)) {
                 heartRate.setText(Integer.toString((int)numeric.value));
             }
         }
