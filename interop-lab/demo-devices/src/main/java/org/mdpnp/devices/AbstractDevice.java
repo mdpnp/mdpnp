@@ -18,14 +18,12 @@ import ice.SampleArray;
 import ice.SampleArrayDataWriter;
 import ice.SampleArrayTypeSupport;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -464,32 +462,27 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
     protected boolean iconFromResource(DeviceIdentity di, String iconResourceName) throws IOException {
-        if (null != iconResourceName) {
+        InputStream is = getClass().getResourceAsStream(iconResourceName);
+        if(null != is) {
             try {
-
-                Method read = Class.forName("javax.imageio.ImageIO").getMethod("read", URL.class);
-                Object bi = read.invoke(null, getClass().getResource(iconResourceName));
-                // BufferedImage bi =
-                // ImageIO.read(getClass().getResource(iconResourceName));
+                {
+                    byte[] xfer = new byte[1024];
+                    int len = is.read(xfer);
+                
+                    di.icon.raster.userData.clear();
+                    
+                    while(len>=0) {
+                        di.icon.raster.userData.addAllByte(xfer, 0, len);
+                        len = is.read(xfer);
+                    }
+                    is.close();
+                }
+                
+                Method read = Class.forName("javax.imageio.ImageIO").getMethod("read", InputStream.class);
+                Object bi = read.invoke(null, new ByteArrayInputStream(di.icon.raster.userData.toArrayByte(new byte[di.icon.raster.userData.size()])));
                 Class<?> bufferedImage = Class.forName("java.awt.image.BufferedImage");
                 di.icon.width = (Integer) bufferedImage.getMethod("getWidth").invoke(bi);
-                // int width = bi.getWidth();
                 di.icon.height = (Integer) bufferedImage.getMethod("getHeight").invoke(bi);
-
-                // int height = bi.getHeight();
-                Method getRGB = bufferedImage.getMethod("getRGB", int.class, int.class);
-
-                byte[] raster = new byte[di.icon.width * di.icon.height * 4];
-                log.trace("Image w=" + di.icon.width + " h=" + di.icon.height + " raster.length=" + raster.length);
-                IntBuffer bb = ByteBuffer.wrap(raster).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
-                for (int y = 0; y < di.icon.height; y++) {
-                    for (int x = 0; x < di.icon.width; x++) {
-                        bb.put((Integer) getRGB.invoke(bi, x, y));
-                        // bb.put(bi.getRGB(x, y));
-                    }
-                }
-                di.icon.raster.userData.clear();
-                di.icon.raster.userData.addAllByte(raster);
                 return true;
             } catch (InvocationTargetException e) {
                 if (e.getCause() instanceof IOException) {
@@ -498,11 +491,8 @@ public abstract class AbstractDevice implements ThreadFactory {
             } catch (Exception e) {
                 log.error("error in iconUpdateFromResource", e);
             }
-            return false;
-        } else {
-            return false;
         }
-
+        return false;
     }
 
     private int threadOrdinal = 0;

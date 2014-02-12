@@ -9,10 +9,13 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
 import org.slf4j.Logger;
@@ -48,37 +51,55 @@ public class DeviceIcon extends ImageIcon {
        return WHITE_SQUARE.equals(getImage());
    }
 
+   private static final BufferedImage readOrRaster(ice.Image image) throws IOException {
+       BufferedImage bi;
+       Exception e_read = null, e_raster = null;
+       try {
+           bi = ImageIO.read(new ByteArrayInputStream(image.raster.userData.toArrayByte(new byte[image.raster.userData.size()])));
+           if(bi.getWidth()>0&&bi.getHeight()>0) {
+               return bi;
+           }
+       } catch(Exception e) {
+           e_read = e;
+       }
+       // The following is for backwards compatibility
+       try {
+           bi = new BufferedImage(image.width, image.height, BufferedImage.TYPE_INT_ARGB);
+           IntBuffer ib = ByteBuffer.wrap(image.raster.userData.toArrayByte(new byte[image.raster.userData.size()])).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
+           for(int y = 0; y < image.height; y++) {
+               for(int x = 0; x < image.width; x++) {
+                   bi.setRGB(x, y, ib.get());
+               }
+           }
+           return bi;
+       } catch(Exception e) {
+           e_raster = e;
+       }
+       log.error("Previous non-fatal Exception loading icon as PNG", e_read);
+       throw new IOException(e_raster);
+   }
+   
    public void setImage(ice.Image image, double scale) {
-        int width = image.width;
-        int height = image.height;
-        byte[] raster = new byte[image.raster.userData.size()];
-        image.raster.userData.toArrayByte(raster);
+        if(!image.raster.userData.isEmpty()) {
+            BufferedImage bi;
+            try {
+                bi = readOrRaster(image);
+                BufferedImage after = new BufferedImage((int)(scale * bi.getWidth()), (int)(scale * bi.getHeight()), BufferedImage.TYPE_INT_ARGB);
+                java.awt.geom.AffineTransform at = new java.awt.geom.AffineTransform();
+                at.scale(scale, scale);
 
-        if(raster.length < (width * height * 4)) {
-            throw new IllegalArgumentException("the specified image is " + width + "x" + height + " and only " + raster.length + " bytes");
-        }
-
-        if(raster != null && width > 0 && height > 0) {
-            BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            IntBuffer ib = ByteBuffer.wrap(raster).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
-            for(int y = 0; y < height; y++) {
-                for(int x = 0; x < width; x++) {
-                    bi.setRGB(x, y, ib.get());
-                }
+                AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+                after = scaleOp.filter(bi, after);
+                setImage(after);
+                log.debug("New image is width="+bi.getWidth()+", height="+bi.getHeight());
+                return;
+            } catch (IOException e) {
+                log.error("error loading icon image", e);
             }
-            BufferedImage after = new BufferedImage((int)(scale * width), (int)(scale * height), BufferedImage.TYPE_INT_ARGB);
-            java.awt.geom.AffineTransform at = new java.awt.geom.AffineTransform();
-            at.scale(scale, scale);
-
-            AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
-            after = scaleOp.filter(bi, after);
-            setImage(after);
-            log.debug("New image is width="+width+", height="+height);
-//	          setImage(bi.getScaledInstance(63, 63, Image.SCALE_SMOOTH));
-        } else {
-            log.warn("width="+width+", height="+height+(raster==null?", raster is null":"")+", using WHITE_SQUARE");
-            setImage(WHITE_SQUARE);
         }
+
+        log.warn("width="+image.width+", height="+image.height+(image.raster.userData==null?", raster is null":"")+", using WHITE_SQUARE");
+        setImage(WHITE_SQUARE);
     }
 
    public DeviceIcon(ice.Image image) {
