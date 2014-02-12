@@ -143,13 +143,13 @@ int PatAssessmentApp::PublisherMain()
     DdsAutoType<PatientAssessment> pat_assessment_instance;
  
     // assign assessment data
-	sprintf(pat_assessment_instance.demographics.given_name, "%s", "Randall");
-	sprintf(pat_assessment_instance.demographics.family_name, "%s", "Jones");
+    sprintf(pat_assessment_instance.demographics.given_name, "%s", "Randall");
+    sprintf(pat_assessment_instance.demographics.family_name, "%s", "Jones");
     pat_assessment_instance.demographics.date_of_birth.century = 19;
     pat_assessment_instance.demographics.date_of_birth.year = 80;
     pat_assessment_instance.demographics.date_of_birth.month = 1;
     pat_assessment_instance.demographics.date_of_birth.day = 1;
-	sprintf(pat_assessment_instance.demographics.mrn, "%s", "10101");
+    sprintf(pat_assessment_instance.demographics.mrn, "%s", "10101");
     pat_assessment_instance.demographics.height = 1.8;
     pat_assessment_instance.demographics.weight = 90;
     pat_assessment_instance.pain_assessment = noticeable;
@@ -157,8 +157,8 @@ int PatAssessmentApp::PublisherMain()
     pat_assessment_instance.sedation_assessment._u.alert_sedation_score = calm;
     pat_assessment_instance.activity_assessment = limited_walking;
     pat_assessment_instance.nutrition_assessment = eats_most_meals_offered;
-	sprintf(pat_assessment_instance.clinician_name, "%s", "Jane Smith, RN");
-	sprintf(pat_assessment_instance.notes, "%s", "Patient is on X medication.");
+    sprintf(pat_assessment_instance.clinician_name, "%s", "Jane Smith, RN");
+    sprintf(pat_assessment_instance.notes, "%s", "Patient is on X medication.");
 
     while (true)
     {

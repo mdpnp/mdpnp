@@ -1,0 +1,174 @@
+<?xml version="1.0"?>
+
+<!--
+For more information about XML QoS Profiles see Chapter 15 in the 
+RTI Connext user manual.
+-->
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:noNamespaceSchemaLocation="/opt/RTI/ndds.5.0.0/scripts/../resource/rtiddsgen/../qos_profiles_5.0.0/schema/rti_dds_qos_profiles.xsd"
+     version="5.0.0">
+
+    <qos_library name="dices_dim_library">
+
+        <qos_profile name="default_profile" is_default_qos="true">
+
+            <participant_qos>
+
+                <discovery_config>
+
+                    <!-- Note: The heartbeat_period should not be less than the
+                    rtps_reliable_reader.heartbeat_suppression_duration in the
+                    DATA_READER_PROTOCOL QosPolicy; otherwise those HBs will be
+                    lost.
+                    -->
+                    <publication_writer>
+                        <heartbeat_period>
+                            <sec>0</sec>
+                            <nanosec>500000000</nanosec>
+                        </heartbeat_period>
+                        <fast_heartbeat_period>
+                            <sec>0</sec>
+                            <nanosec>500000000</nanosec>
+                        </fast_heartbeat_period>
+                        <late_joiner_heartbeat_period>
+                            <sec>0</sec>
+                            <nanosec>500000000</nanosec>
+                        </late_joiner_heartbeat_period>
+                    </publication_writer>
+
+                    <subscription_writer>
+                        <heartbeat_period>
+                            <sec>0</sec>
+                            <nanosec>500000000</nanosec>
+                        </heartbeat_period>
+                        <fast_heartbeat_period>
+                            <sec>0</sec>
+                            <nanosec>500000000</nanosec>
+                        </fast_heartbeat_period>
+                        <late_joiner_heartbeat_period>
+                            <sec>0</sec>
+                            <nanosec>500000000</nanosec>
+                        </late_joiner_heartbeat_period>
+                    </subscription_writer>
+
+                    <participant_message_writer>
+                        <heartbeat_period>
+                            <sec>0</sec>
+                            <nanosec>500000000</nanosec>
+                        </heartbeat_period>
+                        <fast_heartbeat_period>
+                            <sec>0</sec>
+                            <nanosec>500000000</nanosec>
+                        </fast_heartbeat_period>
+                        <late_joiner_heartbeat_period>
+                            <sec>0</sec>
+                            <nanosec>500000000</nanosec>
+                        </late_joiner_heartbeat_period>
+                    </participant_message_writer>
+
+                    <participant_liveliness_lease_duration>
+                        <sec>3</sec>
+                        <nanosec>0</nanosec>
+                    </participant_liveliness_lease_duration>
+
+                    <participant_liveliness_assert_period>
+                        <sec>0</sec>
+                        <nanosec>250000000</nanosec>
+                    </participant_liveliness_assert_period>
+
+                    <max_liveliness_loss_detection_period>
+                        <sec>3</sec>
+                        <nanosec>0</nanosec>
+                    </max_liveliness_loss_detection_period>
+
+                </discovery_config>
+
+                <resource_limits>
+                    <type_code_max_serialized_length>4096
+                    </type_code_max_serialized_length>
+                    <type_object_max_serialized_length>4096
+                    </type_object_max_serialized_length>
+               </resource_limits>
+
+            </participant_qos>
+
+        </qos_profile>
+
+        <qos_profile name="dices_dim_profile" is_default_qos="false">
+
+            <datawriter_qos>
+
+                <reliability>
+                    <kind>BEST_EFFORT_RELIABILITY_QOS</kind>
+                    <max_blocking_time>
+                        <sec>60</sec>
+                    </max_blocking_time>
+                </reliability>                
+
+                <history>
+                    <kind>KEEP_LAST_HISTORY_QOS</kind>
+                    <depth>1</depth>
+                </history>
+
+            </datawriter_qos>
+
+            <datareader_qos>
+
+            <reliability>
+                <kind>BEST_EFFORT_RELIABILITY_QOS</kind>
+            </reliability>
+
+            <history>
+                <kind>KEEP_LAST_HISTORY_QOS</kind>
+                <depth>1</depth>
+            </history>
+
+            </datareader_qos>
+
+        </qos_profile>
+
+        <qos_profile name="dices_dim_durable_profile" is_default_qos="false">
+
+            <datawriter_qos>
+
+                <reliability>
+                    <kind>RELIABLE_RELIABILITY_QOS</kind>
+                    <max_blocking_time>
+                        <sec>60</sec>
+                    </max_blocking_time>
+                </reliability>                
+
+                <history>
+                    <kind>KEEP_LAST_HISTORY_QOS</kind>
+                    <depth>1</depth>
+                </history>
+
+                <durability>
+                    <kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+                </durability>
+
+            </datawriter_qos>
+
+            <datareader_qos>
+
+		        <reliability>
+                    <kind>RELIABLE_RELIABILITY_QOS</kind>
+                </reliability>
+
+                <history>
+                    <kind>KEEP_LAST_HISTORY_QOS</kind>
+                    <depth>1</depth>
+                </history>
+
+                <durability>
+                    <kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+                </durability>
+
+            </datareader_qos>
+
+        </qos_profile>
+
+    </qos_library>
+
+</dds>
+

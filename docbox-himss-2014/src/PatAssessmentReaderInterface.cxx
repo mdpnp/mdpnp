@@ -41,15 +41,13 @@ PatAssessmentReaderInterface::PatAssessmentReaderInterface(long domain_id)
   DDS::Topic *topic = _communicator->CreateTopic<PatientAssessment>(ice::PatientAssessmentTopic); 
 
   // Create DataReader
-  DDS_DataReaderQos reader_qos;
-  sub->get_default_datareader_qos(reader_qos);
-  reader_qos.reliability.kind = DDS::RELIABLE_RELIABILITY_QOS;
-  reader_qos.durability.kind = DDS::TRANSIENT_LOCAL_DURABILITY_QOS;
-  reader_qos.history.kind =  DDS::KEEP_ALL_HISTORY_QOS;
-  reader_qos.history.depth = 1;
+  DDS::DataReader *reader = sub->create_datareader_with_profile(topic, 
+    "dices_dim_library", 
+    "dices_dim_durable_profile",
+    NULL, 
+    DDS::STATUS_MASK_NONE);
 
-  DDS::DataReader *reader = sub->create_datareader(topic, reader_qos, NULL, DDS::STATUS_MASK_NONE);
-  if (_pat_assessment_reader == NULL)
+  if (reader == NULL)
   {
     std::stringstream errss;
     errss << "Failed to create DataReader";
@@ -72,7 +70,7 @@ PatAssessmentReaderInterface::PatAssessmentReaderInterface(long domain_id)
   if (_waitSet == NULL) 
   {
     std::stringstream errss;
-    errss << "FlightPlanReader(): failure to create WaitSet.";
+    errss << "PatAssessmentReaderInterface(): failure to create WaitSet.";
     throw errss.str();
   }
 
@@ -85,7 +83,7 @@ PatAssessmentReaderInterface::PatAssessmentReaderInterface(long domain_id)
   if (_condition == NULL) 
   {
     std::stringstream errss;
-    errss << "FlightPlanReader(): failure to initialize condition.";
+    errss << "PatAssessmentReaderInterface(): failure to initialize condition.";
     throw errss.str();
   }
 

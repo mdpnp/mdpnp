@@ -39,13 +39,18 @@ PatAssessmentWriterInterface::PatAssessmentWriterInterface(long domain_id)
   DDS::Topic *topic = _communicator->CreateTopic<PatientAssessment>(ice::PatientAssessmentTopic); 
 
   // Create DataWriter
-  DDS::DataWriterQos writer_qos;
-  pub->get_default_datawriter_qos(writer_qos);
-  writer_qos.reliability.kind = DDS::RELIABLE_RELIABILITY_QOS;
-  writer_qos.durability.kind = DDS::TRANSIENT_LOCAL_DURABILITY_QOS;
-  writer_qos.history.kind =  DDS::KEEP_ALL_HISTORY_QOS;
-  writer_qos.history.depth = 1;
-  DDS::DataWriter *writer = pub->create_datawriter(topic, writer_qos, NULL, DDS::STATUS_MASK_NONE);
+  DDS::DataWriter *writer = pub->create_datawriter_with_profile(topic, 
+    "dices_dim_library", 
+    "dices_dim_durable_profile",
+    NULL,
+    DDS::STATUS_MASK_NONE);
+
+  if (writer == NULL)
+  {
+    std::stringstream errss;
+    errss << "Failed to create DataWriter";
+    throw errss.str();
+  }
 
   // Downcast the generic datawriter to a patient assessment DataWriter 
   _pat_assessment_writer = PatientAssessmentDataWriter::narrow(writer);
