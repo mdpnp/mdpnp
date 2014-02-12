@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<dds version="5.0.0">
+<dds version="5.1.0">
   <qos_library name="UDPv4TransportLibrary">
     <!-- Using a singular default profile for now -->
     <qos_profile name="DefaultProfile" is_default_qos="true">
@@ -14,11 +14,17 @@
           <!-- multicast discovery -->
           <initial_peers>
             <element>udpv4://239.255.0.1</element>
-            <!--<element>udpv4://127.0.0.1</element> -->
-            <!--<element>192.168.1.183</element> -->
+            <!--  not using localhost by default -->
+            <!-- <element>udpv4://127.0.0.1</element> -->
+            <!-- Regarding shared memory see the note under transport builtins -->
+            <!--  <element>shmem://</element>  -->
           </initial_peers>
-          <!-- wow this setting was terribly problematic on 6/6/2013 <enabled_transports>
-            <element>UDPv4</element> </enabled_transports> -->
+          <!-- wow this setting was terribly problematic on 6/6/2013 --> 
+          <!-- 
+          <enabled_transports>
+            <element>UDPv4</element> 
+          </enabled_transports>
+          -->
         </discovery>
         <discovery_config>
           <participant_liveliness_lease_duration>
@@ -35,7 +41,17 @@
           </max_liveliness_loss_detection_period>
         </discovery_config>
         <!-- mainly to disable shared memory transport because I have a lot of
-          trouble with it -->
+          trouble with it.
+          To make shared memory work on OS X 10.9 (Mavericks) you need to (at least)
+          sudo sysctl -w kern.sysv.shmmax=8388608
+          sudo sysctl -w kern.sysv.shmall=1024
+          sudo sysctl -w kern.sysv.shmmni=???
+          
+          The RTI knowledge base suggests settings for a server-class linux machine but not for OS X.
+          Since these settings cannot be changed at runtime without super-user privileges I exclude shared memory transport.
+          RTPS (DDS-I) protocol is only standardized over UDPv4 and UDPv6 anyway.
+          -->
+           
         <transport_builtin>
           <mask>DDS_TRANSPORTBUILTIN_UDPv4
           </mask>
@@ -73,7 +89,34 @@
               <name>dds.transport.shmem.builtin.parent.message_size_max</name>
               <value>65536</value>
             </element>
-
+            <!-- 
+            <element>
+                <name>dds.transport.UDPv4.builtin.ignore_loopback_interface</name>
+                <value>0</value>
+            </element>
+            -->
+            <!-- 
+            <element>
+                <name>dds.transport.UDPv4.builtin.parent.allow_interfaces</name>
+                <value>127.0.0.1</value>
+            </element>
+            -->
+            <!--
+            <element>
+                <name>dds.transport.UDPv4.builtin.parent.allow_interfaces_list_length</name>
+                <value>1</value>
+            </element>
+            -->
+            <!--
+            <element>
+                <name>dds.transport.UDPv4.builtin.parent.allow_multicast_interfaces</name>
+                <value>127.0.0.1</value>
+            </element>
+            <element>
+                <name>dds.transport.UDPv4.builtin.multicast_loopback_disabled</name>
+                <value>0</value>
+            </element>
+            -->
           </value>
         </property>
       </participant_qos>
