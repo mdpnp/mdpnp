@@ -26,6 +26,7 @@ public class DevicePanelFactory {
         ElectroCardioGramPanel.class,
         VentilatorPanel.class,
         InfusionPumpPanel.class,
+        InvasiveBloodPressurePanel.class
 //        MultiPulseOximeterPanel.class,
     };
     private final static Logger log = LoggerFactory.getLogger(DevicePanelFactory.class);
