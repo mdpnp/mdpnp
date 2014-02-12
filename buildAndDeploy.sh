@@ -1,4 +1,4 @@
-PARCEL=demo-apps-0.1.4-SNAPSHOT-linux-arm
+PARCEL=demo-apps-0.1.5-SNAPSHOT-linux-arm
 TARGETS=`cat targets | sed '/^\s*#/d'`
 # Add --offline to the following line if no internet access
 ./gradlew  -POS_NAME=linux -POS_ARCH=arm :interop-lab:demo-apps:distZip

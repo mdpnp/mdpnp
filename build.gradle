@@ -4,7 +4,7 @@ defaultTasks 'build'
 // builds a gradle wrapper
 // http://www.gradle.org/docs/current/userguide/gradle_wrapper.html
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.6'
+    gradleVersion = '1.11'
 }
 
 ext {
@@ -45,12 +45,12 @@ ext {
     targetOsArch = project.hasProperty('OS_ARCH') ? fromOsArch(OS_ARCH) : localOsArch
 }
 group 'org.mdpnp'
-version '0.1.4-SNAPSHOT'
+version '0.1.5-SNAPSHOT'
 
 subprojects {
     apply plugin: 'maven'
     group 'org.mdpnp'
-    version '0.1.4-SNAPSHOT'
+    version '0.1.5-SNAPSHOT'
     buildscript {
         repositories {
 

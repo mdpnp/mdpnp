@@ -30,3 +30,7 @@ clinical_scenarios/
 hs_err*
 .nddshome/
 .metadata/
+docbox-himss-2014/obj
+docbox-himss-2014/src_dds
+**/.idea/
+**/*.log*
