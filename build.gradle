@@ -45,12 +45,12 @@ ext {
     targetOsArch = project.hasProperty('OS_ARCH') ? fromOsArch(OS_ARCH) : localOsArch
 }
 group 'org.mdpnp'
-version '0.1.4'
+version '0.1.5-SNAPSHOT'
 
 subprojects {
     apply plugin: 'maven'
     group 'org.mdpnp'
-    version '0.1.4'
+    version '0.1.5-SNAPSHOT'
     buildscript {
         repositories {
 
