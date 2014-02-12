@@ -158,9 +158,9 @@ public class DemoApp {
         String version = BuildInfo.getVersion();
 
         if(null == version) {
-            panel.getVersion().setText("Development Version");
+            panel.getVersion().setText("Development Version on "+System.getProperty("java.version"));
         } else {
-            panel.getVersion().setText("v"+version+" built:"+BuildInfo.getDate()+" "+BuildInfo.getTime());
+            panel.getVersion().setText("v"+version+" built:"+BuildInfo.getDate()+" "+BuildInfo.getTime()+" on "+System.getProperty("java.version"));
         }
 
 
