@@ -80,8 +80,9 @@ INCLUDES  += \
 
 LIBS += \
   -L$(NDDSHOME)/lib/$(shell ls --ignore=*jdk $(NDDSHOME)/lib/) \
-    $(NDDSLIBS) \
-    $(SYSLIBS)
+  -L$(NDDSHOME)/lib/$(ARCH)/ \
+  $(NDDSLIBS) \
+  $(SYSLIBS)
 
 ###############################################################################
 EXEC = PatAssessmentExample
