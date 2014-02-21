@@ -1,0 +1,20 @@
+###############################################################################
+# Note:
+# - You must invoke the make command from the root directory of this project.
+#
+# - To enable debugging information, set the Makefile variable 'DEBUG' to '1'.
+# Example:
+#   make -f make/Makefile.Darwin
+###############################################################################
+
+# Define required Make variables. The common make file will use them to define
+# build process rules for this application.
+
+ARCH=x64Darwin12clang4.1
+CXXFLAGS = -DRTI_UNIX -DRTI_DARWIN -DRTI_DARWIN10 -DRTI_64BIT -m64
+CXXLD = g++
+CXXLDFLAGS = -m64  
+SYSLIBS := -ldl -lm -lpthread
+
+
+include make/Makefile.common
