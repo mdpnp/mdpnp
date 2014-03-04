@@ -80,6 +80,16 @@ private:
    */
   DDSCondition* CreateReadCondition(DDSDataReader* reader);
 
+  /**
+   * Load defaults
+   */
+  void LoadDefaults(DdsAutoType<ice::PatientAssessment> & patient_assessment);
+ 
+  /**
+   * Load information from a configuration file.
+   */
+  int LoadConfiguration(const char* file, DdsAutoType<ice::PatientAssessment> & patient_assessment);
+
   std::string _statusmsg;
   long _domain_id;
   bool _is_pub;
