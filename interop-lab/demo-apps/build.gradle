@@ -166,8 +166,6 @@ dependencies {
     runtime group: 'log4j', name: 'log4j', version: '1.2.17'
     runtime group: 'org.mdpnp.apps.testapp.pca', name: 'mdpnp-sounds', version: '0.1.0'
 
-    compile group: 'org.jfree', name:'jfreechart', version: '1.0.14'
-    compile group: 'com.jeffplourde', name: 'Utility', version: '0.0.1'
 
     // Default capture device is a trimmed down piece of OpenIMAJ
     compile group: 'com.github.sarxos', name: 'webcam-capture', version: '0.3.9'
