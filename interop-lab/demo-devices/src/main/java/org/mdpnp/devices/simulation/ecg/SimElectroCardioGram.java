@@ -50,7 +50,7 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
         ii = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_II.VALUE);
         iii = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_III.VALUE);
         respiratoryRate = createNumericInstance(rosetta.MDC_RESP_RATE.VALUE);
-        heartRate = createNumericInstance(rosetta.MDC_PULS_RATE.VALUE);
+        heartRate = createNumericInstance(rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE);
 
         deviceIdentity.model = "ECG (Simulated)";
         writeDeviceIdentity();
