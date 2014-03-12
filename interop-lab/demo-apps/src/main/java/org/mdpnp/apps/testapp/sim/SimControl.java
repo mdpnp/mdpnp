@@ -3,13 +3,9 @@ package org.mdpnp.apps.testapp.sim;
 import ice.GlobalSimulationObjective;
 import ice.GlobalSimulationObjectiveDataWriter;
 
-import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 
-import javax.media.nativewindow.util.Dimension;
-import javax.media.nativewindow.util.Insets;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -43,7 +39,9 @@ public class SimControl extends JPanel {
       new NumericValue("SpO2", rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 0, 100, 98, 10),
       new NumericValue("Heart Rate", rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 10, 360, 60, 50),
       new NumericValue("etCO2", rosetta.MDC_AWAY_CO2_EXP.VALUE, 0, 140, 30, 20),
-      new NumericValue("RespRate", rosetta.MDC_RESP_RATE.VALUE, 10, 60, 15, 10),
+      // The Fluke ProSim does not support respiratory rates less than 10
+      // but we'll allow settings down to zero for other simulators
+      new NumericValue("RespRate", rosetta.MDC_RESP_RATE.VALUE, 0, 60, 15, 10),
       new NumericValue("ABP Systolic", rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 0, 300, 120, 40),
       new NumericValue("ABP Diastolic", rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 0, 300, 80, 40),
       new NumericValue("NIBP Systolic", rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE, 0, 400, 120, 40),
@@ -113,13 +111,16 @@ public class SimControl extends JPanel {
             final JLabel currentValue = currentValues[i];
             final InstanceHandle_t handle = handles[i];
 
-            sliders[i].getModel().addChangeListener(new ChangeListener() {
+            sliders[i].addChangeListener(new ChangeListener() {
 
                 @Override
                 public void stateChanged(ChangeEvent e) {
-                    obj.value = slider.getValue();
-                    currentValue.setText(""+obj.value);
-                    writer.write(obj, handle);
+                    // For now I would rather publish changes as the slider is dragged
+//                  if(! ((JSlider)e.getSource()).getValueIsAdjusting()) {
+                        obj.value = slider.getValue();
+                        currentValue.setText(""+obj.value);
+                        writer.write(obj, handle);
+//                  }
                 }
             });
 
