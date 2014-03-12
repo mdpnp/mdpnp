@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum MetricCategory implements OrdinalEnum.IntType {
     /**
      * not specified

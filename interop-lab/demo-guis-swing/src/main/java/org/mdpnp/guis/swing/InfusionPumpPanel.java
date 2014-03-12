@@ -23,6 +23,10 @@ import javax.swing.JLabel;
 
 import com.rti.dds.subscription.SampleInfo;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class InfusionPumpPanel extends DevicePanel {
 
     private final JLabel active = new JLabel(), drugName = new JLabel(), drugMass = new JLabel(), solutionVolume = new JLabel(),

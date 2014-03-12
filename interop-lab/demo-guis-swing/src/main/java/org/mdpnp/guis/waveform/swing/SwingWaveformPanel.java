@@ -55,6 +55,10 @@ import org.mdpnp.guis.waveform.WaveformSource;
 import org.mdpnp.guis.waveform.WaveformSourceListener;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SwingWaveformPanel extends javax.swing.JComponent implements WaveformCanvas, WaveformSourceListener, WaveformPanel {
     private WaveformRenderer renderer;
     private WaveformSource source;

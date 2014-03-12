@@ -26,6 +26,10 @@ import org.mdpnp.devices.philips.intellivue.data.Type;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.ActionResult;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SinglePollDataResultImpl implements SinglePollDataResult {
     private int pollNumber;
     private final RelativeTime relativeTime = new RelativeTime();

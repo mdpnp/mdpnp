@@ -48,6 +48,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.RemoteOperationLinkedStat
 import org.mdpnp.devices.philips.intellivue.dataexport.error.ErrorStatus;
 import org.mdpnp.devices.philips.intellivue.dataexport.error.RemoteError;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class OrdinalEnumTest {
     @SuppressWarnings("unchecked")
     @Test

@@ -16,6 +16,10 @@ import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PollProfileExtensions implements Value {
 
     private long pollProfileExtOptions = POLL_EXT_PERIOD_NU_1SEC | POLL_EXT_PERIOD_RTSA | POLL_EXT_NU_PRIO_LIST | POLL_EXT_ENUM;

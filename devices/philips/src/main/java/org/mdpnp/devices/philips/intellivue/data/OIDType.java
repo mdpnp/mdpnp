@@ -19,6 +19,10 @@ import java.util.Map;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.Formatable;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class OIDType implements Formatable {
     private final int type;
 

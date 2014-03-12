@@ -19,6 +19,10 @@ import org.mdpnp.devices.philips.intellivue.association.AssociationMessageType;
 import org.mdpnp.devices.philips.intellivue.association.MDSEUserInfoStd;
 import org.mdpnp.devices.philips.intellivue.data.ASNLength;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AssociationConnectImpl extends AbstractAssociationMessage implements AssociationConnect {
     private final ASNLength length = new ASNLength();
     private final MDSEUserInfoStd userInfo = new MDSEUserInfoStd();

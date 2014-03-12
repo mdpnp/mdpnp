@@ -19,6 +19,10 @@ import java.nio.ByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class FCSOutputStream extends java.io.FilterOutputStream {
     public FCSOutputStream(OutputStream out) {
         super(out);

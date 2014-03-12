@@ -17,6 +17,10 @@ import java.nio.ByteBuffer;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.data.OIDType;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ErrorDetailProcessingFailureImpl implements ErrorDetailProcessingFailure {
 
     private OIDType errorId;

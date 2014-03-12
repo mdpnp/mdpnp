@@ -15,6 +15,10 @@ package org.mdpnp.devices.simulation.temp;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SimThermometer extends AbstractSimulatedConnectedDevice {
 
     protected InstanceHolder<ice.Numeric> temperature1, temperature2;

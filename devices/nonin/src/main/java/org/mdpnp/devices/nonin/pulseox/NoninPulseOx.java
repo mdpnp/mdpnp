@@ -23,6 +23,10 @@ import org.mdpnp.devices.io.util.HexUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class NoninPulseOx {
 
     private final InputStream in;

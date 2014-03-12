@@ -1,5 +1,9 @@
 package org.mdpnp.gip.ui.units;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class RatioUnitsFactory {
 	public final static RatioUnits mLPerHour = new RatioUnitsImpl(VolumeUnitsFactory.milliliters, TimeUnitsFactory.hours);
 	public final static RatioUnits mcgPerMinute = new RatioUnitsImpl(MassUnitsFactory.micrograms, TimeUnitsFactory.minutes);

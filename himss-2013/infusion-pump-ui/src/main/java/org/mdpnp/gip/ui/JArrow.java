@@ -12,6 +12,10 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class JArrow extends JComponent {
 	public JArrow() {
 		setMinimumSize(new Dimension(50,50));

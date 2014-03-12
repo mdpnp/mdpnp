@@ -17,6 +17,10 @@ import java.util.Map;
 
 import org.junit.Test;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TestAbstractDraegerVent {
     @Test
     public void testLoadMap() throws Exception {

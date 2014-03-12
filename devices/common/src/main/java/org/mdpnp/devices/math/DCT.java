@@ -12,6 +12,10 @@
  ******************************************************************************/
 package org.mdpnp.devices.math;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DCT {
 
     public static double[] idct(double[] coeffs, double[] results) {

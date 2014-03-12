@@ -34,6 +34,10 @@ import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 
 @SuppressWarnings({ "serial", "rawtypes" })
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class VitalsListCellRenderer extends JPanel implements ListCellRenderer {
 
     private final JLabel name = new JLabel(" ");

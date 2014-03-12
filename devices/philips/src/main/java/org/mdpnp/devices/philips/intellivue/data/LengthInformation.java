@@ -18,6 +18,10 @@ import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.philips.intellivue.Formatable;
 import org.mdpnp.devices.philips.intellivue.Parseable;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class LengthInformation implements Parseable, Formatable {
     private int length;
 

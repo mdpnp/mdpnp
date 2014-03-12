@@ -17,6 +17,10 @@ import java.util.Arrays;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SampleArrayObservedValue implements Value {
     private OIDType physioId;
     private final MeasurementState state = new MeasurementState();

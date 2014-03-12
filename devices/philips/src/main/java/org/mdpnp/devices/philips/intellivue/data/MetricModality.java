@@ -19,6 +19,10 @@ import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
 // ought this be a bitfield and not an enum?
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum MetricModality implements EnumMessage<MetricModality>, OrdinalEnum.IntType {
     MANUAL(0x4000), APERIODIC(0x2000), VERIFIED(0x1000);
 

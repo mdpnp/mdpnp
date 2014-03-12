@@ -35,6 +35,10 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class GIPPanel extends JPanel {
 //	private int img_src_x1, img_src_y1;
 	

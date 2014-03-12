@@ -19,6 +19,10 @@ import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 
 import com.rti.dds.infrastructure.Time_t;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
     protected final InstanceHolder<ice.Numeric> pulse;

@@ -24,6 +24,10 @@ import javax.imageio.ImageIO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class IconUtil {
     public static BufferedImage image(ice.Image image) throws IOException {
         BufferedImage bi;

@@ -12,6 +12,10 @@
  ******************************************************************************/
 package org.mdpnp.guis.waveform;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ExtentImpl implements WaveformCanvas.Extent {
     private int minX, maxX, minY, maxY;
 

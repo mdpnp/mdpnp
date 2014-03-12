@@ -16,6 +16,10 @@ import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class WaveformPanelFactory {
     private final Logger log = LoggerFactory.getLogger(WaveformPanelFactory.class);
 

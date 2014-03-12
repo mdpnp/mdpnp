@@ -38,6 +38,10 @@ import org.mdpnp.devices.io.SplitBytesOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Capnostream {
     private final Set<CapnostreamListener> listeners = new CopyOnWriteArraySet<CapnostreamListener>();
     private static final Logger log = LoggerFactory.getLogger(Capnostream.class);

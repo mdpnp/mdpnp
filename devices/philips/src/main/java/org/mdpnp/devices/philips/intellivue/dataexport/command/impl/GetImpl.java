@@ -22,6 +22,10 @@ import org.mdpnp.devices.philips.intellivue.data.OIDType;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportMessage;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.Get;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class GetImpl implements Get {
     private final ManagedObjectIdentifier managedObject = new ManagedObjectIdentifier();
     private long scope;

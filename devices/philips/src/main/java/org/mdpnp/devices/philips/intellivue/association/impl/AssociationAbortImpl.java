@@ -15,6 +15,10 @@ package org.mdpnp.devices.philips.intellivue.association.impl;
 import org.mdpnp.devices.philips.intellivue.association.AssociationAbort;
 import org.mdpnp.devices.philips.intellivue.association.AssociationMessageType;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AssociationAbortImpl extends AbstractAssociationMessage implements AssociationAbort {
 
     @Override

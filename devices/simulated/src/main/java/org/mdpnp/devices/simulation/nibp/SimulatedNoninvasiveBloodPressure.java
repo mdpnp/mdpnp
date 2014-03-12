@@ -17,6 +17,10 @@ import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SimulatedNoninvasiveBloodPressure implements Runnable {
 
     private final Random random = new Random();

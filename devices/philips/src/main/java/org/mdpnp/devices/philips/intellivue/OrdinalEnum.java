@@ -15,6 +15,10 @@ package org.mdpnp.devices.philips.intellivue;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class OrdinalEnum {
     public interface ShortType {
         short asShort();

@@ -19,6 +19,10 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class GenericInfusionPumpApp {
 	public final static Color darkBlue = new Color(51, 0, 101);
 	public final static Color lightBlue = new Color(1, 153, 203);

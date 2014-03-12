@@ -12,6 +12,10 @@
  ******************************************************************************/
 package org.mdpnp.devices.philips.intellivue.data;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AlMonGenInfo extends AlMonInfo {
 
 }

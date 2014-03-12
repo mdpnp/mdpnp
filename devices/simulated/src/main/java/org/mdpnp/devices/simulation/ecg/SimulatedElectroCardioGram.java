@@ -18,6 +18,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.math.DCT;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SimulatedElectroCardioGram {
     private int counti = 0, countii = 0, countiii = 0;
 

@@ -18,6 +18,10 @@ import java.util.List;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SampleArrayFixedValueSpecification implements Value {
     public static class Entry implements Value {
         private SampleArrayFixedValId valId;

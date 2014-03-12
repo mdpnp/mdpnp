@@ -31,6 +31,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.error.ErrorDetailSetListI
 import org.mdpnp.devices.philips.intellivue.dataexport.error.RemoteError;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DataExportErrorImpl implements DataExportError {
 
     private int invoke;

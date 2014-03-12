@@ -41,6 +41,10 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PulseOximeterPanel extends DevicePanel {
 
     private JLabel spo2, heartrate, spo2Label, heartrateLabel;

@@ -16,6 +16,10 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SplitBytesOutputStream extends FilterOutputStream {
 
     public interface Splitter {

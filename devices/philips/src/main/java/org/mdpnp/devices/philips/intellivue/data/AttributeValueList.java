@@ -26,6 +26,10 @@ import org.mdpnp.devices.philips.intellivue.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AttributeValueList implements Parseable, Formatable, Util.PrefixLengthShort.Builder<Attribute<?>> {
     private final List<Attribute<?>> list = new java.util.ArrayList<Attribute<?>>();
     private final List<AttributeValueAssertion> recycle = new java.util.ArrayList<AttributeValueAssertion>();

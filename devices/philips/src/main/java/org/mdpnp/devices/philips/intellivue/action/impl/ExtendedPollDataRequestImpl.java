@@ -21,6 +21,10 @@ import org.mdpnp.devices.philips.intellivue.data.OIDType;
 import org.mdpnp.devices.philips.intellivue.data.Type;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.ActionResult;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ExtendedPollDataRequestImpl implements ExtendedPollDataRequest {
     private int pollNumber;
     private final Type polledObjectType = new Type();

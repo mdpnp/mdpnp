@@ -3,6 +3,10 @@ package org.mdpnp.gip.ui.values;
 import org.mdpnp.gip.ui.units.VolumeUnits;
 import org.mdpnp.gip.ui.units.VolumeUnitsFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class VolumeValueImpl extends AbstractValueImpl<VolumeUnits> implements VolumeValue {
 	public VolumeValueImpl() {
 		super(VolumeUnitsFactory.milliliters);

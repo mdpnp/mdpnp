@@ -18,6 +18,10 @@ import java.util.Map;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum MDSStatus implements EnumMessage<MDSStatus>, OrdinalEnum.IntType {
     Disconnected(0), Unassociated(1), Operating(6);
 

@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum AttributeId implements OrdinalEnum.IntType {
     /**
      * MetricObservedValueGroup Hex: 0x801 Dec: 2049

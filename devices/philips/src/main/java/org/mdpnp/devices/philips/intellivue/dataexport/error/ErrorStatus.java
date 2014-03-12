@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum ErrorStatus implements OrdinalEnum.IntType {
     AccessDenied(2), NoSuchAttribute(5), InvalidAttributeValue(6), InvalidOperation(24), InvalidOperator(25);
 

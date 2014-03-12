@@ -12,6 +12,10 @@
  ******************************************************************************/
 package org.mdpnp.devices;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TestEventLoopHandler {
 
 }

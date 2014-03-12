@@ -45,6 +45,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({ "serial", "rawtypes", "unchecked" })
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ConfigurationDialog extends JDialog {
     private final JTextArea welcomeText = new JTextArea(8, 50);
     private final JScrollPane welcomeScroll = new JScrollPane(welcomeText);

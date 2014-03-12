@@ -36,6 +36,10 @@ import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
 
     private ice.InfusionStatus infusionStatus = (ice.InfusionStatus) ice.InfusionStatus.create();

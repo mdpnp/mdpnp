@@ -32,6 +32,10 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AndroidPulseOxActivity extends Activity {
     /** Called when the activity is first created. */
 	private static final int REQUEST_ENABLE_BT = 1;

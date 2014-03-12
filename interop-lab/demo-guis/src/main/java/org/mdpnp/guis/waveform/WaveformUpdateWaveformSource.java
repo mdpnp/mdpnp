@@ -18,6 +18,10 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class WaveformUpdateWaveformSource extends AbstractWaveformSource {
     private final ice.SampleArray lastUpdate = new ice.SampleArray();
     private final SampleInfo lastSampleInfo = new SampleInfo();

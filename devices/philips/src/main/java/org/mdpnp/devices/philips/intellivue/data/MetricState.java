@@ -16,6 +16,10 @@ import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class MetricState implements Value {
     private int bitfield;
 

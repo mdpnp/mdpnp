@@ -16,6 +16,10 @@ import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SystemLocalization implements Value {
 
     private long syslocal_revision;

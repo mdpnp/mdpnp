@@ -16,6 +16,10 @@ import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DisplayResolution implements Value {
     private short prePoint, postPoint;
 

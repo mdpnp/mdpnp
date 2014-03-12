@@ -20,6 +20,10 @@ import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class VitalBoundedRangeMulti implements BoundedRangeMultiModel {
     private final Vital vital;
 

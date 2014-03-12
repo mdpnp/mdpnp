@@ -16,6 +16,10 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TimeAwareInputStream extends FilterInputStream {
     private long lastRead = 0L;
 

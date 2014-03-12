@@ -33,6 +33,10 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.topic.Topic;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SimControl extends JPanel {
 
     private static final class NumericValue {

@@ -1,6 +1,10 @@
 package org.mdpnp.gip.ui;
 
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class InfusionPumpModelImpl implements InfusionPumpModel {
 	private final DrugModel drug = new DrugModel();
 	private final PatientModel patient = new PatientModel();

@@ -21,6 +21,10 @@ import org.mdpnp.devices.philips.intellivue.action.ObservationPoll;
 import org.mdpnp.devices.philips.intellivue.action.SingleContextPoll;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SingleContextPollImpl implements SingleContextPoll {
     private int mdsContext;
     private final List<ObservationPoll> pollInfo = new ArrayList<ObservationPoll>();

@@ -14,6 +14,10 @@ package org.mdpnp.guis.waveform;
 
 import java.util.List;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class WaveformRenderer {
     private WaveformSource source;
 

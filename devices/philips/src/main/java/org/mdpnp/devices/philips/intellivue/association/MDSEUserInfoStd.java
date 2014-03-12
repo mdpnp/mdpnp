@@ -23,6 +23,10 @@ import org.mdpnp.devices.philips.intellivue.data.AttributeValueList;
 import org.mdpnp.devices.philips.intellivue.data.MdibObjectSupport;
 import org.mdpnp.devices.philips.intellivue.data.PollProfileSupport;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class MDSEUserInfoStd implements Formatable, Parseable {
     public static final long MDDL_VERSION1 = 0x80000000L;
     private long protocolVersion = MDDL_VERSION1;

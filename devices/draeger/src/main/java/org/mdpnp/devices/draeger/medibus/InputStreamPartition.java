@@ -30,14 +30,14 @@ import org.slf4j.LoggerFactory;
  * behavior is currently undefined; data must be continuously drained from the
  * demuxed InputStreams.
  * 
- * @author jplourde
+ * @author Jeff Plourde
  * 
  */
 public class InputStreamPartition implements Runnable {
     /**
      * Filter for evaluating the bytes of the muxed InputStream
      * 
-     * @author jplourde
+     * @author Jeff Plourde
      * 
      */
     public interface Filter {

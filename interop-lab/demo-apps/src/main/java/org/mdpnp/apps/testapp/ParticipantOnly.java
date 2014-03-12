@@ -57,6 +57,10 @@ import com.rti.dds.subscription.SubscriptionMatchedStatus;
 import com.rti.dds.subscription.ViewStateKind;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ParticipantOnly extends JPanel implements TableModel, DataReaderListener {
     public static void start(int domainId, boolean cmdline) {
         final ParticipantOnly panel = new ParticipantOnly(domainId);

@@ -20,6 +20,10 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class BluetoothUtils {
 	public static final BluetoothSocket connectRfcommSocket(BluetoothDevice device, int channel) {
 		try {

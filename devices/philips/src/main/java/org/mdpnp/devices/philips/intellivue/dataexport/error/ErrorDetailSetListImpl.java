@@ -22,6 +22,10 @@ import org.mdpnp.devices.philips.intellivue.data.OIDType;
 import org.mdpnp.devices.philips.intellivue.dataexport.ModifyOperator;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ErrorDetailSetListImpl implements ErrorDetailSetList {
     private final ManagedObjectIdentifier managedObject = new ManagedObjectIdentifier();
     private final List<SetError> list = new ArrayList<SetError>();

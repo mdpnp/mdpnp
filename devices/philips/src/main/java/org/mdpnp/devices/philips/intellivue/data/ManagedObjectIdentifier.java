@@ -18,6 +18,10 @@ import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.Formatable;
 import org.mdpnp.devices.philips.intellivue.Parseable;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ManagedObjectIdentifier implements Parseable, Formatable {
     private OIDType oidType = OIDType.lookup(0);
     private final GlobalHandle globalHandle = new GlobalHandle();

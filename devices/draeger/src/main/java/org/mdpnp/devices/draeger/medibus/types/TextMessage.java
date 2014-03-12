@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.EnumHelper;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum TextMessage {
     VentModeIPPV, VentModeIPPVAssist, VentModeCPPV, VentModeCPPVAssist, VentModeSIMV, VentModeSIMVASB, SB, ASB, CPAP, CPAP_ASB, MMV, MMV_ASB, BIPAP, SYNCHRON_MASTER, SYNCHRON_SLAVE, APNEA_VENTILATION, DS, BIPAP_SMV, BIPAP_SMV_ASB, BIPAP_APRV, Adults, Neonates, CO2InmmHg, CO2InkPa, CO2InPercent, VentStandby, AnesGasHalothane, AnesGasEnflurane, AnesGasIsoflurane, AnesGasDesflurane, AnesGasSevoflurane, NoAnesGas, VentModeManualSpont, SelectedLanguage, VentModePCV, VentModeFreshGasExt, CarrierGasAir, CarrierGasN2O, AnesGas2Halothane, AnesGas2Enflurane, AnesGas2Isoflurane, AnesGas2Desflurane, AnesGas2Sevoflurane, NoAnesGas2, PerformingLeakageTest, DeviceInStandby, AgentUnitkPa, AgentUnitPct, HLMModeActive, VolumeMode, PressureMode, PressureSupportMode, PressureSupportAdded, SyncIntermittentVent;
 

@@ -27,6 +27,10 @@ import org.mdpnp.gip.ui.values.ValueAdapter;
 import org.mdpnp.gip.ui.values.ValueListener;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class InfusionPanel extends javax.swing.JPanel {
 	private InfusionModel infusion;
 	

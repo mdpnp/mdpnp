@@ -1,5 +1,9 @@
 package org.mdpnp.gip.ui.units;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class LengthUnitsFactory {
 	public final static LengthUnits millimeters = new LengthUnitsMultiplierImpl("millimeters","mm", 1.0);
 	public final static LengthUnits centimeters = new LengthUnitsMultiplierImpl("centimeters","cm", 10.0);

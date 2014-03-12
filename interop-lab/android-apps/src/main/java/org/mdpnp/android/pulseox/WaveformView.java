@@ -32,6 +32,10 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.OnScaleGestureListener;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class WaveformView extends android.view.View implements WaveformSourceListener, WaveformCanvas,
         WaveformCanvas.Extent, WaveformRepresentation, OnScaleGestureListener {
 

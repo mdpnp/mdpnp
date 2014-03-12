@@ -29,6 +29,10 @@ import java.util.TimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class FlukeProSim8 {
 
     private static final byte CR = 0x0D, LF = 0x0A, SP = 0x20, BS = 0x08, ESC = 0x1B, STX = 0x02, ETX = 0x03, ACK = 0x06, NAK = 0x15;

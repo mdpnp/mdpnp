@@ -9,6 +9,10 @@ import gov.hhs.fha.nhinc.common.nhinccommon.UserType;
 import java.io.IOException;
 import java.util.Properties;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AssertionCreator {
     private static final String PROPERTY_FILE_NAME = "assertion.properties";
     private static final String PROPERTY_KEY_PURPOSE_CODE = "AssertionPurposeCode";

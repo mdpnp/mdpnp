@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum CommandType implements OrdinalEnum.IntType {
     EventReport(0), ConfirmedEventReport(1), Get(3), Set(4), ConfirmedSet(5), ConfirmedAction(7);
 

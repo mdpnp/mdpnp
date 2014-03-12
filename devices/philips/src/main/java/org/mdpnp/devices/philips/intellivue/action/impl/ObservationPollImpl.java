@@ -18,6 +18,10 @@ import org.mdpnp.devices.philips.intellivue.action.ObservationPoll;
 import org.mdpnp.devices.philips.intellivue.data.AttributeValueList;
 import org.mdpnp.devices.philips.intellivue.data.Handle;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ObservationPollImpl implements ObservationPoll {
     private final Handle handle = new Handle();
     private final AttributeValueList attrList = new AttributeValueList();

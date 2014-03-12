@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum ProductionSpecificationType implements OrdinalEnum.IntType {
     UNSPECIFIED(0), SERIAL_NUMBER(1), PART_NUMBER(2), HW_REVISION(3), SW_REVISION(4), FW_REVISION(5), PROTOCOL_REVISION(6), ;
 

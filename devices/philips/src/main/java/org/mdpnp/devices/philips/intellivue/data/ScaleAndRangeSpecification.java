@@ -16,6 +16,10 @@ import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ScaleAndRangeSpecification implements Value {
 
     private final Float lowerAbsoluteValue = new Float();

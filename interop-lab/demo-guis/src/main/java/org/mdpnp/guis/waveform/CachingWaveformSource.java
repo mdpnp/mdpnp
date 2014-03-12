@@ -15,6 +15,10 @@ package org.mdpnp.guis.waveform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class CachingWaveformSource extends AbstractNestedWaveformSource {
 
     private float[] sampleCache = new float[100];

@@ -36,6 +36,10 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class VentilatorPanel extends DevicePanel {
     private WaveformPanel flowPanel, pressurePanel, co2Panel;
     private final JLabel time = new JLabel(" "), respiratoryRate = new JLabel(" "), endTidalCO2 = new JLabel(" ");

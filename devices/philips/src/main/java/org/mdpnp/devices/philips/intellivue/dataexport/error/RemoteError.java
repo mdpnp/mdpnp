@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum RemoteError implements OrdinalEnum.IntType {
     NoSuchObjectClass(0), NoSuchObjectInstance(1), AccessDenied(2), GetListError(7), SetListError(8), NoSuchAction(9), ProcessingFailure(10), InvalidArgumentValue(
             15), InvalidScope(16), InvalidObjectInstance(17);

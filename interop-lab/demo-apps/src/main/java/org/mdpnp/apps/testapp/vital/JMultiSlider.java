@@ -37,6 +37,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class JMultiSlider extends JComponent implements ChangeListener {
 
     private final Dimension size = new Dimension();

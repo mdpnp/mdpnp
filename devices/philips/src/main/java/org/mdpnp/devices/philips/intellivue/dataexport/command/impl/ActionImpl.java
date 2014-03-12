@@ -23,6 +23,10 @@ import org.mdpnp.devices.philips.intellivue.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ActionImpl extends ActionResultImpl implements Action {
     private long scope;
 

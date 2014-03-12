@@ -37,6 +37,10 @@ import org.mdpnp.devices.simulation.GlobalSimulationObjectiveMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> implements GlobalSimulationObjectiveListener {
 
     private final static Logger log = LoggerFactory.getLogger(DemoProsim68.class);

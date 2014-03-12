@@ -18,6 +18,10 @@ import java.util.Map;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum SimpleColor implements EnumMessage<SimpleColor>, OrdinalEnum.IntType {
     Black(0), Red(1), Green(2), Yellow(3), Blue(4), Magenta(5), Cyan(6), White(7), Pink(20), Orange(35), LightGreen(50), LightRed(65), ;
 

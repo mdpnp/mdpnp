@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum ObjectClass implements OrdinalEnum.IntType {
     /**
      * VMO Hex: 0x01 Dec: 1

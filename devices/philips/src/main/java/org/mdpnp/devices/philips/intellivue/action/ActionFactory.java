@@ -20,6 +20,10 @@ import org.mdpnp.devices.philips.intellivue.data.OIDType;
 import org.mdpnp.devices.philips.intellivue.data.ObjectClass;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportAction;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ActionFactory {
     public static final DataExportAction buildAction(OIDType actionType, boolean request) {
         switch (ObjectClass.valueOf(actionType.getType())) {

@@ -19,6 +19,10 @@ import java.io.ByteArrayOutputStream;
 import org.junit.Test;
 import org.mdpnp.devices.io.SplitBytesOutputStream;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TestFCSOutputStream {
     @Test
     public void testOutput() throws Exception {

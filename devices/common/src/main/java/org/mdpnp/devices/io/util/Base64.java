@@ -93,6 +93,10 @@ import java.util.Arrays;
  * @author Mikael Grev Date: 2004-aug-02 Time: 11:31:11
  */
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Base64 {
     private static final char[] CA = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();
     private static final int[] IA = new int[256];

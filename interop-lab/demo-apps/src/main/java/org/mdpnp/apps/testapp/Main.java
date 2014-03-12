@@ -26,6 +26,10 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);

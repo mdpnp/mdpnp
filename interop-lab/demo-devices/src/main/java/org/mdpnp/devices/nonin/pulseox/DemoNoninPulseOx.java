@@ -35,6 +35,10 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseOx> {
 
     private static final Logger log = LoggerFactory.getLogger(DemoNoninPulseOx.class);

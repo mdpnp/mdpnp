@@ -14,6 +14,10 @@ package org.mdpnp.devices.philips.intellivue.data;
 
 import java.nio.ByteBuffer;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class NumericObservedValue implements Value {
 
     private OIDType physioId;

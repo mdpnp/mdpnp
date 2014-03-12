@@ -26,6 +26,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.command.Set;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.SetResult;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SetImpl implements Set {
 
     private final ManagedObjectIdentifier managedObject = new ManagedObjectIdentifier();

@@ -26,6 +26,10 @@ import org.mdpnp.devices.philips.intellivue.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ActionResultImpl implements ActionResult {
     protected final ManagedObjectIdentifier managedObject = new ManagedObjectIdentifier();
     protected OIDType actionType;

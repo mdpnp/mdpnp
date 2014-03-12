@@ -25,6 +25,10 @@ import javax.swing.ImageIcon;
 
 import org.mdpnp.apps.testapp.rrr.RapidRespiratoryRate;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum AppType {
     Main("main", "Main Menu", null, false), Device("device", "Device Info", null, false), PCA("pca", "Infusion Safety", "NOPCA", true,
             "infusion-safety.png", 0.75), PCAViz("pcaviz", "Data Visualization", null, true, "data-viz.png", 0.75), XRay("xray",

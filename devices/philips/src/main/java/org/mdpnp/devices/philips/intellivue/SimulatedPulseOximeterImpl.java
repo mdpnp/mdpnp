@@ -50,6 +50,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.impl.DataExportResultImpl
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SimulatedPulseOximeterImpl extends IntellivueAcceptor {
     private int count = 0;
 

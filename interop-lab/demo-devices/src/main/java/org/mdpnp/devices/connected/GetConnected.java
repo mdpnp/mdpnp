@@ -19,6 +19,10 @@ import javax.swing.JOptionPane;
 
 import org.mdpnp.devices.EventLoop;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class GetConnected extends AbstractGetConnected {
     private final JFrame frame;
 

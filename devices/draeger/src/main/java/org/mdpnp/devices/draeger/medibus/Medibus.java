@@ -63,7 +63,7 @@ import org.slf4j.LoggerFactory;
  * returns false processing has stopped and the connection is no longer viable.
  * 
  * 
- * @author jplourde
+ * @author Jeff Plourde
  * 
  */
 public class Medibus {

@@ -31,6 +31,10 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.OnScaleGestureListener;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class GLWaveformView extends GLView implements WaveformRepresentation, OnScaleGestureListener {
 	
 	@Override

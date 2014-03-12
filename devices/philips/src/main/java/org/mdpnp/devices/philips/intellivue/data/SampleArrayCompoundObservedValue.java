@@ -18,6 +18,10 @@ import java.util.List;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SampleArrayCompoundObservedValue implements Value {
 
     private final List<SampleArrayObservedValue> list = new ArrayList<SampleArrayObservedValue>();

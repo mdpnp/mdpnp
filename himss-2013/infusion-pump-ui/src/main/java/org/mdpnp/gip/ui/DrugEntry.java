@@ -1,6 +1,10 @@
 package org.mdpnp.gip.ui;
 
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DrugEntry {
 	private final String name;
 	

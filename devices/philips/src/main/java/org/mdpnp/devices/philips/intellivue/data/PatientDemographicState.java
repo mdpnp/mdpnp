@@ -18,6 +18,10 @@ import java.util.Map;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum PatientDemographicState implements EnumMessage<PatientDemographicState>, OrdinalEnum.IntType {
     EMPTY(0), PRE_ADMITTED(1), ADMITTED(2), DISCHARGED(8);
 

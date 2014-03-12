@@ -21,6 +21,10 @@ import org.mdpnp.devices.philips.intellivue.data.ManagedObjectIdentifier;
 import org.mdpnp.devices.philips.intellivue.data.OIDType;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ErrorDetailGetListImpl implements ErrorDetailGetList {
     private final ManagedObjectIdentifier managedObject = new ManagedObjectIdentifier();
     private final List<GetError> list = new ArrayList<GetError>();

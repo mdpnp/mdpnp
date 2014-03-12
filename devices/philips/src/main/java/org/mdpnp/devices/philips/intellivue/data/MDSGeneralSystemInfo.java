@@ -19,6 +19,10 @@ import java.util.List;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.io.util.HexUtil;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class MDSGeneralSystemInfo implements Value {
     public static class Entry implements Value {
         protected int choice;

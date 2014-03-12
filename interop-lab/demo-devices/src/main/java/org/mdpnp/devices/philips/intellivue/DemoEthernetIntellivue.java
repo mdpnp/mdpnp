@@ -25,6 +25,10 @@ import org.mdpnp.devices.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoEthernetIntellivue extends AbstractDemoIntellivue {
 
     public DemoEthernetIntellivue(int domainId, EventLoop eventLoop) throws IOException {

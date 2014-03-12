@@ -14,6 +14,10 @@ package org.mdpnp.devices.philips.intellivue.dataexport.command.impl;
 
 import org.mdpnp.devices.philips.intellivue.dataexport.command.EventReportResult;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class EventReportResultImpl extends EventReportImpl implements EventReportResult {
 
 }

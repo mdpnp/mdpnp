@@ -18,6 +18,10 @@ import java.io.OutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TeeOutputStream extends java.io.FilterOutputStream {
 
     private final OutputStream tee;

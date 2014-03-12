@@ -17,6 +17,10 @@ import java.nio.ByteBuffer;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.data.Value;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Nomenclature implements Value {
 
     private short majorVersion, minorVersion;

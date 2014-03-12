@@ -15,6 +15,10 @@ package org.mdpnp.devices.io.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class StateMachine<T> {
 
     private final T[][] legalTransitions;

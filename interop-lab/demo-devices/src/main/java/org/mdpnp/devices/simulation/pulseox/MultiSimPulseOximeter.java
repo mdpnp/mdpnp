@@ -15,6 +15,10 @@ package org.mdpnp.devices.simulation.pulseox;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
     protected final InstanceHolder<ice.SampleArray> pleth[];

@@ -18,6 +18,10 @@ import java.util.Map;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum PatientSex implements EnumMessage<PatientSex>, OrdinalEnum.IntType {
     SEX_UNKNOWN(0), MALE(1), FEMALE(2), SEX_UNSPECIFIED(9);
 

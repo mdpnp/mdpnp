@@ -16,6 +16,10 @@ import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class RelativeTime implements Value {
     private long relativeTime;
     private static final long RESOLUTION_MICROSECONDS = 125L;

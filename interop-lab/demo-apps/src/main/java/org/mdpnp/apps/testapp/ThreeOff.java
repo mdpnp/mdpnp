@@ -31,6 +31,10 @@ import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.ViewStateKind;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ThreeOff {
     public static void main(String[] args) {
         DDS.init();

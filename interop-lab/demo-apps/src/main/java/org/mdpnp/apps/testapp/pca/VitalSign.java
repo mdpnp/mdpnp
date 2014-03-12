@@ -17,6 +17,10 @@ import java.awt.Color;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum VitalSign {
     HeartRate("Heart Rate", "bpm", new String[] { rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, rosetta.MDC_PULS_RATE_NON_INV.VALUE,
             rosetta.MDC_BLD_PULS_RATE_INV.VALUE, rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE }, 40f, 140f, 20f, 160f, 0f, 250f, 5000L, 5000L, Color.green), SpO2(

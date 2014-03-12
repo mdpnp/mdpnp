@@ -1,5 +1,9 @@
 package org.mdpnp.gip.ui.units;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class RatioUnitsImpl implements RatioUnits {
 
 	private final Units[] units;

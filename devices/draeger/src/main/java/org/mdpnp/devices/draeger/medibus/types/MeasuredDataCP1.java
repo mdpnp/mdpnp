@@ -17,6 +17,10 @@ import java.util.Map;
 import org.mdpnp.devices.EnumHelper;
 import org.mdpnp.devices.Unit;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum MeasuredDataCP1 {
     /**
      * Compliance L/bar

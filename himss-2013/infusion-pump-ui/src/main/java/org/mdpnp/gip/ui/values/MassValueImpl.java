@@ -3,6 +3,10 @@ package org.mdpnp.gip.ui.values;
 import org.mdpnp.gip.ui.units.MassUnits;
 import org.mdpnp.gip.ui.units.MassUnitsFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class MassValueImpl extends AbstractValueImpl<MassUnits> implements MassValue {
 	public MassValueImpl() {
 		super(MassUnitsFactory.micrograms);

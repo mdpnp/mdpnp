@@ -27,6 +27,10 @@ import purejavacomm.CommPortIdentifier;
 import purejavacomm.SerialPort;
 import purejavacomm.UnsupportedCommOperationException;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PureJavaCommSerialProvider implements SerialProvider {
 
     static {

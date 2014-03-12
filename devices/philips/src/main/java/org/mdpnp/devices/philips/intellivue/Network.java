@@ -26,6 +26,10 @@ import java.util.List;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.io.util.HexUtil;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Network {
     public static class AddressSubnet {
         private final InetAddress inetAddress;

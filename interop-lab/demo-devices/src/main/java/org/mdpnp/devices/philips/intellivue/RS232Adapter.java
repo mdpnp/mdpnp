@@ -57,7 +57,7 @@ import org.slf4j.LoggerFactory;
  * ensures we do not send too many frames (the spec allows up to 4 frames in a
  * 128ms period so we stay far under the limit)
  * 
- * @author jplourde
+ * @author Jeff Plourde
  * 
  */
 public class RS232Adapter implements NetworkConnection {

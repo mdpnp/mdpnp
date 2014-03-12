@@ -27,6 +27,10 @@ import com.rti.dds.publication.PublicationMatchedStatus;
 import com.rti.dds.publication.ReliableReaderActivityChangedStatus;
 import com.rti.dds.publication.ReliableWriterCacheChangedStatus;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class LogStatus implements DataWriterListener {
     private final Logger log;
 

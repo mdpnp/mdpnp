@@ -19,6 +19,10 @@ import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.topic.TopicDescription;
 import com.rti.dds.topic.TypeSupport;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TopicUtil {
     public static TopicDescription lookupOrCreateTopic(DomainParticipant participant, String topicName, Class<? extends TypeSupport> clazz) {
         TopicDescription topic = participant.lookup_topicdescription(topicName);

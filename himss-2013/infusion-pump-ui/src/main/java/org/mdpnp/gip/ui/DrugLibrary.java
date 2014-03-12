@@ -7,6 +7,10 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DrugLibrary {
 	private final List<CareArea> careAreas = new ArrayList<CareArea>();
 	

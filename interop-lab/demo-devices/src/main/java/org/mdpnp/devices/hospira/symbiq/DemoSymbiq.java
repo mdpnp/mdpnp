@@ -22,6 +22,10 @@ import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoSymbiq extends SimInfusionPump {
 
     private final File pumpControlFile = new File("C:\\pump_control_1.txt");

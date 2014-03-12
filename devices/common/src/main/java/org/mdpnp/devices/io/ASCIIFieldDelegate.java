@@ -32,6 +32,10 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ASCIIFieldDelegate implements Runnable {
     private final Object target;
     private final LineInfo[] lineInfo;

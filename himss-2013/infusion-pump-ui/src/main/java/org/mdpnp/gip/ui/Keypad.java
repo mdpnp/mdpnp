@@ -19,6 +19,10 @@ import javax.swing.border.BevelBorder;
 import javax.swing.text.JTextComponent;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Keypad extends javax.swing.JComponent {
 	private JButton[] digits = new JButton[10];
 	private JButton decimal = createButton(".");

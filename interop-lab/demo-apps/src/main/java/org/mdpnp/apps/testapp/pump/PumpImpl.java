@@ -14,6 +14,10 @@ package org.mdpnp.apps.testapp.pump;
 
 import com.rti.dds.subscription.SampleInfo;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PumpImpl implements Pump {
     private final PumpModel parent;
     private final ice.InfusionStatus infusionStatus = new ice.InfusionStatus();

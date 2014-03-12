@@ -32,6 +32,10 @@ import org.mdpnp.apps.testapp.vital.Value;
 import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class JValue extends JComponent {
     private final JLabel icon = new JLabel();
     private final JLabel deviceName = new JLabel();

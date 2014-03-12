@@ -19,6 +19,10 @@ import java.net.ServerSocket;
 
 import org.mdpnp.devices.EventLoop;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoSerialIntellivue extends AbstractDemoIntellivue {
 
     public DemoSerialIntellivue(int domainId, EventLoop eventLoop) throws IOException {

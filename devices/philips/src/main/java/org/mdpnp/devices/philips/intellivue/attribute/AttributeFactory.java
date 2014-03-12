@@ -71,6 +71,10 @@ import org.mdpnp.devices.philips.intellivue.data.VisualGrid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AttributeFactory {
     public static final Attribute<PollProfileExtensions> getPollProfileExtensions() {
         return getAttribute(0xF001, PollProfileExtensions.class);

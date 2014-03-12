@@ -20,6 +20,10 @@ import javax.xml.ws.WebServiceContext;
  *
  */
 @javax.jws.WebService(serviceName = "AdapterComponentXDR_Service", portName = "AdapterComponentXDR_Port", targetNamespace = "urn:gov:hhs:fha:nhinc:adaptercomponentxdr", endpointInterface = "gov.hhs.fha.nhinc.adaptercomponentxdr.AdapterComponentXDRPortType")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AdapterComponentXDRPortTypeImpl implements AdapterComponentXDRPortType {
 	@Resource
 	private WebServiceContext context;

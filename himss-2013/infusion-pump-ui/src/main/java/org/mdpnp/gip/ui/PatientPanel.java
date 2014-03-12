@@ -22,6 +22,10 @@ import org.mdpnp.gip.ui.units.LengthUnits;
 import org.mdpnp.gip.ui.units.MassUnits;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PatientPanel extends JPanel implements PatientListener {
 	
 	private static final JLabel rightLabel(String txt) {

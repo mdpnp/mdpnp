@@ -17,6 +17,10 @@ import java.util.Map;
 import org.mdpnp.devices.EnumHelper;
 import org.mdpnp.devices.Unit;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum Setting {
     Oxygen, MaxInpirationFlow, InspTidalVolume, IPart, EPart, FrequencyIMV, FrequencyIPPV, PEEP, IntermittentPEEP, BIPAPLowPressure, BIPAPHighPressure, BIPAPLowTime, BIPAPHighTime, ApneaTime, PressureSupportPressure, MaxInspirationAirwayPressure, TriggerPressure, TachyapneaFrequency, TachyapneaDuration, FlowTrigger, ASBRamp, InspiratoryTime, FreshgasFlow, MinimalFrequency, InspiratoryPressure, Age, Weight, InspPause_InspTime;
 

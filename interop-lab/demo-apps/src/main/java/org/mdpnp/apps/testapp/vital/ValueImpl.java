@@ -16,6 +16,10 @@ import ice.Numeric;
 
 import com.rti.dds.subscription.SampleInfo;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ValueImpl implements Value {
 
     private final String uniqueDeviceIdentifier;

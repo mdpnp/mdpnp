@@ -28,6 +28,10 @@ import javax.swing.JTextField;
 import org.mdpnp.devices.philips.intellivue.Intellivue;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TestIntellivue extends JPanel {
 
     private class MyIntellivue extends Intellivue {

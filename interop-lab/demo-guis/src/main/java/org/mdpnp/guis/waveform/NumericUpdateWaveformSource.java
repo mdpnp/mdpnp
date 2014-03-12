@@ -14,6 +14,10 @@ package org.mdpnp.guis.waveform;
 
 import com.rti.dds.subscription.SampleInfo;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class NumericUpdateWaveformSource extends AbstractWaveformSource {
     private final ice.Numeric lastUpdate = new ice.Numeric();
     private final SampleInfo lastSampleInfo = new SampleInfo();

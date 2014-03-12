@@ -38,6 +38,10 @@ import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DeviceFactory {
     public static final AbstractDevice buildDevice(DeviceType type, int domainId, EventLoop eventLoop) throws NoSuchFieldException,
             SecurityException, IOException {

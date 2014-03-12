@@ -18,6 +18,10 @@ import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.data.ManagedObjectIdentifier;
 import org.mdpnp.devices.philips.intellivue.data.OIDType;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ErrorDetailInvalidArgumentValueImpl implements ErrorDetailInvalidArgumentValue {
     private final ManagedObjectIdentifier managedObject = new ManagedObjectIdentifier();
     private OIDType actionType;

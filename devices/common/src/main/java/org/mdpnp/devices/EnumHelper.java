@@ -23,6 +23,11 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * 
+ * @author Jeff Plourde
+ * 
+ */
 public class EnumHelper {
     private static final Logger log = LoggerFactory.getLogger(EnumHelper.class);
 

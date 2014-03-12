@@ -19,6 +19,10 @@ import org.junit.Test;
 import org.mdpnp.devices.philips.intellivue.data.Label;
 import org.mdpnp.devices.philips.intellivue.data.ObservedValue;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TestDemoIntellivue {
     @Test
     public void testLoadMap() throws Exception {

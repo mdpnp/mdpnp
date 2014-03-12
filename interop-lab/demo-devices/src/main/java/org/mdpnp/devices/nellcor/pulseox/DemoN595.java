@@ -26,6 +26,10 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 
 import com.rti.dds.infrastructure.Time_t;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoN595 extends AbstractSerialDevice {
     private InstanceHolder<ice.Numeric> pulseUpdate;
     private InstanceHolder<ice.Numeric> spo2Update;

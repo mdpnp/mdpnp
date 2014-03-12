@@ -24,6 +24,10 @@ import org.mdpnp.guis.waveform.EvenTempoWaveformSource;
 import org.mdpnp.guis.waveform.WaveformSource;
 import org.mdpnp.guis.waveform.WaveformSourceListener;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
 
     private long[] startTime = new long[FRAME_SAMPLE];

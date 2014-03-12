@@ -22,6 +22,10 @@ import com.github.sarxos.webcam.WebcamDiscoveryEvent;
 import com.github.sarxos.webcam.WebcamDiscoveryListener;
 
 @SuppressWarnings({ "serial", "rawtypes", "unchecked" })
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class CameraComboBoxModel extends DefaultComboBoxModel implements WebcamDiscoveryListener {
 
     @SuppressWarnings("unused")

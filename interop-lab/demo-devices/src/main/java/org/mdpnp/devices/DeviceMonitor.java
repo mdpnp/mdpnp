@@ -49,6 +49,10 @@ import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.TopicDescription;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DeviceMonitor {
     private Subscriber subscriber;
     private final Set<Condition> conditions = new HashSet<Condition>();

@@ -21,6 +21,10 @@ import java.util.Collection;
 import org.mdpnp.devices.philips.intellivue.Formatable;
 import org.mdpnp.devices.philips.intellivue.Parseable;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Util {
     private Util() {
 

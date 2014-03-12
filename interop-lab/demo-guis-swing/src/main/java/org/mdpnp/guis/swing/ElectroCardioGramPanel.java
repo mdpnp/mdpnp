@@ -36,6 +36,10 @@ import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ElectroCardioGramPanel extends DevicePanel {
 
     private final WaveformPanel[] panel;

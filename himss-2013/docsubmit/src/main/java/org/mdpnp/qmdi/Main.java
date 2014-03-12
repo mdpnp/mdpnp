@@ -2,6 +2,10 @@ package org.mdpnp.qmdi;
 
 import java.lang.reflect.InvocationTargetException;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Main {
     public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
 	if(args.length <= 0) {

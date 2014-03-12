@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum NomPartition implements OrdinalEnum.ShortType {
     Object(1), Scada(2), Event(3), Dimension(4), ParameterGroup(6), Infrastructure(8);
 

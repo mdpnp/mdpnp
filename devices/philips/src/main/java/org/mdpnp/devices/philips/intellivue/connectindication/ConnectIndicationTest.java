@@ -38,6 +38,10 @@ import javax.swing.JTextArea;
 import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.philips.intellivue.Network;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ConnectIndicationTest {
     private interface ConnectIndicationCallback {
         void beacon(ConnectIndication ci);

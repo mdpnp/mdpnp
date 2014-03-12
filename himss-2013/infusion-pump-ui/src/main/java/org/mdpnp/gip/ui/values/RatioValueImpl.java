@@ -3,6 +3,10 @@ package org.mdpnp.gip.ui.values;
 import org.mdpnp.gip.ui.units.RatioUnits;
 import org.mdpnp.gip.ui.units.RatioUnitsFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class RatioValueImpl extends AbstractValueImpl<RatioUnits> implements RatioValue {
 	public RatioValueImpl() {
 		super(RatioUnitsFactory.mLPerHour);

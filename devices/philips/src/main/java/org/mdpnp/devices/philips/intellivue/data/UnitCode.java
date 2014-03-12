@@ -18,6 +18,10 @@ import java.util.Map;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum UnitCode implements EnumMessage<UnitCode>, OrdinalEnum.IntType {
     /**
      * (/) Hex: 0x00 Dec: 0

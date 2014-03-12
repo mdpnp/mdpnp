@@ -11,6 +11,10 @@ import org.mdpnp.gip.ui.values.MassValueImpl;
 import org.mdpnp.gip.ui.values.Value;
 import org.mdpnp.gip.ui.values.ValueAdapter;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PatientModel extends AbstractModel<PatientListener> {
 	private String id;
 	private CareArea careArea;

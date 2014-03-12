@@ -25,6 +25,10 @@ import org.mdpnp.devices.serial.SerialSocket.FlowControl;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TCPSerialProvider implements SerialProvider {
 
     private static class TCPSerialSocket implements SerialSocket {

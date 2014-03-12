@@ -42,6 +42,10 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Bernoulli implements ContentHandler, ErrorHandler {
     public Bernoulli() {
 

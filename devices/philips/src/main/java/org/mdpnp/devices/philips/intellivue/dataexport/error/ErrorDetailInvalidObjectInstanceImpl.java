@@ -16,6 +16,10 @@ import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.philips.intellivue.data.ManagedObjectIdentifier;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ErrorDetailInvalidObjectInstanceImpl implements ErrorDetailInvalidObjectInstance {
 
     private final ManagedObjectIdentifier managedObject = new ManagedObjectIdentifier();

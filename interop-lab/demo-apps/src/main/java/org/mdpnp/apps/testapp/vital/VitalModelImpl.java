@@ -61,6 +61,10 @@ import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicDescription;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class VitalModelImpl implements VitalModel {
 
     private final List<Vital> vitals = Collections.synchronizedList(new ArrayList<Vital>());

@@ -19,6 +19,10 @@ import java.util.regex.Pattern;
 
 import org.mdpnp.devices.io.ASCIIFieldDelegate;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class NellcorN595 extends ASCIIFieldDelegate {
     public NellcorN595() throws NoSuchFieldException, SecurityException, IOException {
         super(NellcorN595.class.getResource("nellcor-n595.spec"));

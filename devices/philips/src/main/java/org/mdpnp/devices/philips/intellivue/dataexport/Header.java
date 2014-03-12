@@ -18,6 +18,10 @@ import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.Formatable;
 import org.mdpnp.devices.philips.intellivue.Parseable;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Header implements Parseable, Formatable {
 
     private int sessionId = 0xE100;

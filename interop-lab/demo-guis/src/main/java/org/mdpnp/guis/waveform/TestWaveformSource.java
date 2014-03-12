@@ -14,6 +14,10 @@ package org.mdpnp.guis.waveform;
 
 import java.util.Set;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TestWaveformSource implements WaveformSource, Runnable {
 
     public TestWaveformSource() {

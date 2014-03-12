@@ -25,6 +25,10 @@ import org.mdpnp.devices.EventLoop;
 
 import com.rti.dds.subscription.Subscriber;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class VitalListModelAdapterImpl implements VitalListModelAdapter {
 
     private final VitalModel model;

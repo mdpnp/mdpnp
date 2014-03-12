@@ -21,6 +21,10 @@ import com.rti.dds.infrastructure.ConditionSeq;
 import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.infrastructure.GuardCondition;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class EventLoopHandler implements Runnable, ConditionHandler {
 
     private final EventLoop eventLoop;

@@ -41,6 +41,10 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoPanel extends JPanel implements Runnable {
     private final ImageIcon ice_cubes = new ImageIcon(DemoPanel.class.getResource("blue_ice_cubes.jpg"));
     private final ImageIcon mdpnp = new ImageIcon(DemoPanel.class.getResource("mdpnp-small.png"));

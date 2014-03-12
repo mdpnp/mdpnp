@@ -16,6 +16,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TestEventLoop {
     private EventLoop eventLoop;
 

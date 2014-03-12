@@ -29,6 +29,10 @@ import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Configuration {
     enum Application {
         ICE_Supervisor, ICE_Device_Interface, ICE_ParticipantOnly;

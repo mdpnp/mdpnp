@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum RemoteOperationLinkedState implements OrdinalEnum.ShortType {
     First(1), NotFirstNotLast(2), Last(3);
 

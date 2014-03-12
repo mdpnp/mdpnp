@@ -30,6 +30,10 @@ import org.mdpnp.gip.ui.values.Value;
 import org.mdpnp.gip.ui.values.ValueListener;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ValueField<U extends Units> extends javax.swing.JPanel implements ValueListener<U> {
 	private final JSpinner spinner = new JSpinner();
 	private final JComboBox units = new JComboBox();

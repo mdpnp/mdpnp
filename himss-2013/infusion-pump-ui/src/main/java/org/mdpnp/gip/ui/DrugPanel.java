@@ -26,6 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DrugPanel extends javax.swing.JPanel implements DrugListener, PatientListener {
 	private final DefaultComboBoxModel drugEntryModel = new DefaultComboBoxModel();
 	private final JComboBox drugName = new JComboBox(drugEntryModel);

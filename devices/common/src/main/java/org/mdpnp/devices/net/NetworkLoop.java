@@ -21,6 +21,10 @@ import java.nio.channels.Selector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class NetworkLoop implements Runnable {
     public enum LoopState {
         /**

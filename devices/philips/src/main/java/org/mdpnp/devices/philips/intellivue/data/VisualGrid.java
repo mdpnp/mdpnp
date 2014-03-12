@@ -18,6 +18,10 @@ import java.util.List;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class VisualGrid implements Value {
     public static class Entry implements Value {
         private final Float absoluteValue = new Float();

@@ -17,6 +17,10 @@ import java.util.Calendar;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AbsoluteTime implements Value {
 
     private final java.util.Date date = new java.util.Date();

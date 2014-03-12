@@ -54,6 +54,10 @@ import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.TopicDescription;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DeviceListModel extends AbstractListModel<Device> {
 
     private final void update(DeviceConnectivity dc, boolean alive) {

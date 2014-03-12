@@ -19,7 +19,7 @@ import org.mdpnp.devices.EnumHelper;
 /**
  * Available Medibus commands
  * 
- * @author jplourde
+ * @author Jeff Plourde
  * 
  */
 public enum Command {

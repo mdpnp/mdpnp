@@ -18,6 +18,10 @@ import org.mdpnp.devices.serial.SerialSocket.DataBits;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoApollo extends AbstractDraegerVent {
 
     public DemoApollo(int domainId, EventLoop eventLoop) {

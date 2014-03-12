@@ -21,6 +21,10 @@ import javax.swing.JTable;
 import com.rti.dds.subscription.Subscriber;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class RoomSyncPanel extends JPanel {
 
     public RoomSyncPanel(Subscriber subscriber) {

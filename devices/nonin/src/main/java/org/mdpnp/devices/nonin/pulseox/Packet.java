@@ -15,6 +15,10 @@ package org.mdpnp.devices.nonin.pulseox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Packet {
 
     private final Logger log = LoggerFactory.getLogger(Packet.class);

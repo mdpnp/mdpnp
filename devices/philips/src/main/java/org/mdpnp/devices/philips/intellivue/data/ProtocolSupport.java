@@ -19,6 +19,10 @@ import java.util.List;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ProtocolSupport implements Value {
     private final List<ProtocolSupportEntry> list = new ArrayList<ProtocolSupportEntry>();
 

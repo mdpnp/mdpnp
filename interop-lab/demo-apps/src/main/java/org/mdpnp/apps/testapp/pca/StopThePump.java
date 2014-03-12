@@ -42,6 +42,10 @@ import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class StopThePump {
     public static void main(String[] args) {
         int domainId = 0;

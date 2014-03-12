@@ -22,6 +22,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.command.impl.GetResultImp
 import org.mdpnp.devices.philips.intellivue.dataexport.command.impl.SetImpl;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.impl.SetResultImpl;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class CommandFactory {
     public static final DataExportCommand buildCommand(CommandType commandType, boolean result) {
         switch (commandType) {

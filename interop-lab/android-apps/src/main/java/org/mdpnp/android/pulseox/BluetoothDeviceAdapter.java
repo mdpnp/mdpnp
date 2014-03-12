@@ -19,6 +19,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class BluetoothDeviceAdapter extends ArrayAdapter<MyBluetoothDevice> {
 
 	public BluetoothDeviceAdapter(Context context, int textViewResourceId) {

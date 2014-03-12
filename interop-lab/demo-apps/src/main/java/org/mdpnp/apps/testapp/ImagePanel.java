@@ -21,6 +21,10 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ImagePanel extends JPanel {
 
     private BufferedImage image;

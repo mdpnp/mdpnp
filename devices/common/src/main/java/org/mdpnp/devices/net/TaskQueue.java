@@ -17,6 +17,10 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TaskQueue {
 
     private final ThreadLocal<List<Task<?>>> tasksToDo = new ThreadLocal<List<Task<?>>>() {

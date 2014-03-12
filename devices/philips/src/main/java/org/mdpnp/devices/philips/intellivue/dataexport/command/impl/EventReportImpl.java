@@ -25,6 +25,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.command.EventReportResult
 import org.mdpnp.devices.philips.intellivue.dataexport.event.EventFactory;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class EventReportImpl implements EventReport {
     private final ManagedObjectIdentifier managedObject = new ManagedObjectIdentifier();
     private final RelativeTime eventTime = new RelativeTime();

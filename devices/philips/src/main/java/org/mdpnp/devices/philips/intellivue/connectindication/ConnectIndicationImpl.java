@@ -33,6 +33,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.Nomenclature;
 import org.mdpnp.devices.philips.intellivue.dataexport.RemoteOperation;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ConnectIndicationImpl implements ConnectIndication {
     private final Nomenclature nomenclature = new Nomenclature();
     private RemoteOperation remoteOperation = RemoteOperation.Invoke;

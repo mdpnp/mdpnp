@@ -26,6 +26,10 @@ import org.mdpnp.devices.philips.intellivue.data.Type;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.ActionResult;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ExtendedPollDataResultImpl implements ExtendedPollDataResult {
     private int pollNumber;
     private int sequenceNumber;

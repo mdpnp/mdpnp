@@ -15,6 +15,10 @@ package org.mdpnp.devices.io.util;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Bits {
     private Bits() {
 

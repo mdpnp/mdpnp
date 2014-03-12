@@ -16,6 +16,10 @@ import javax.swing.JFrame;
 
 import org.mdpnp.devices.EventLoop;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class GetConnectedToFixedAddress extends GetConnected {
     private final String address;
 

@@ -39,6 +39,10 @@ import org.slf4j.LoggerFactory;
 
 import com.rti.dds.infrastructure.Time_t;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostream> {
     @Override
     protected long getMaximumQuietTime() {

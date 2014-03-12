@@ -6,6 +6,10 @@ import org.restlet.Component;
 import org.restlet.data.Protocol;
 import org.restlet.resource.ServerResource;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Await extends ServerResource implements AcknowledgmentResource {
     public static void main(String[] args) throws Exception {
     	String url = "http://localhost:8083/acknowledgment";

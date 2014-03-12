@@ -31,6 +31,10 @@ import android.util.Log;
 import android.view.WindowManager.LayoutParams;
 import android.widget.TextView;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PulseOxActivity extends Activity implements GatewayListener {
 	private AbstractDevice pulseox;
 	private WaveformRepresentation wave;

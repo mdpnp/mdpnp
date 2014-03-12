@@ -49,6 +49,10 @@ import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.subscription.Subscriber;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class VitalMonitoring extends JComponent implements VitalModelListener, Runnable {
 
     private final Dimension size = new Dimension();

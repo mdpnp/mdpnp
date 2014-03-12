@@ -43,6 +43,10 @@ import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicDescription;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PumpModelImpl implements PumpModel {
 
     private final List<Pump> pumps = Collections.synchronizedList(new ArrayList<Pump>());

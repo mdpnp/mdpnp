@@ -22,6 +22,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.RemoteOperation;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.CommandFactory;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DataExportInvokeImpl implements DataExportInvoke {
 
     private int invokeId;

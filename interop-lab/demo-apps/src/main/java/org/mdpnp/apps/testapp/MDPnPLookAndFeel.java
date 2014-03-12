@@ -15,6 +15,10 @@ package org.mdpnp.apps.testapp;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class MDPnPLookAndFeel extends MetalLookAndFeel {
 
     @Override

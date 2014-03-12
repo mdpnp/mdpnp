@@ -15,6 +15,10 @@ import javax.swing.JFrame;
 
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class JKnob 
     extends JComponent {
 

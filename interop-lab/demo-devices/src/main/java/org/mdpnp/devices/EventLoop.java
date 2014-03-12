@@ -28,6 +28,10 @@ import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.WaitSet;
 import com.rti.dds.infrastructure.WaitSetProperty_t;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class EventLoop {
 
     private static final Logger log = LoggerFactory.getLogger(EventLoop.class);

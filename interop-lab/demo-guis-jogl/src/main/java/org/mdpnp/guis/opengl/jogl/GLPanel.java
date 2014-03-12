@@ -17,6 +17,10 @@ import javax.media.opengl.awt.GLCanvas;
 import org.mdpnp.guis.opengl.GLRenderer;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class GLPanel extends GLCanvas {
     private final JOGLGLRendererAdapter adapter;
 

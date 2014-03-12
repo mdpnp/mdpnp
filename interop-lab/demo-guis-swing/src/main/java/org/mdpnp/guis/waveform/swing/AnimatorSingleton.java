@@ -23,7 +23,7 @@ import com.jogamp.opengl.util.FPSAnimator;
  * This might be temporary but the GUIs are not mature enough to need anything
  * but a rudimentary animator ... and it's cheaper to share.
  * 
- * @author jplourde
+ * @author Jeff Plourde
  * 
  */
 public class AnimatorSingleton {

@@ -46,6 +46,10 @@ import com.rti.dds.subscription.SubscriptionMatchedStatus;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ReceiveNumerics implements DataReaderListener {
     public static void main(String[] args) throws IOException {
         DDS.init();

@@ -18,6 +18,10 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
 @SuppressWarnings({ "serial", "rawtypes" })
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PumpListModel extends AbstractListModel implements ListModel {
     private final PumpModel model;
 

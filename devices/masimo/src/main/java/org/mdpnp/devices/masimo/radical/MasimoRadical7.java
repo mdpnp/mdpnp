@@ -19,6 +19,10 @@ import java.util.regex.Pattern;
 
 import org.mdpnp.devices.io.ASCIIFieldDelegate;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class MasimoRadical7 extends ASCIIFieldDelegate {
 
     private Integer heartRate, spo2, perfusionIndex, spco, spmet, desat, pidelta, pvi;

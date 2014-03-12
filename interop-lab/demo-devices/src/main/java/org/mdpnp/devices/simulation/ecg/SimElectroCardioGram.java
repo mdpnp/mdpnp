@@ -15,6 +15,10 @@ package org.mdpnp.devices.simulation.ecg;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
 
     protected final InstanceHolder<ice.SampleArray> i, ii, iii;

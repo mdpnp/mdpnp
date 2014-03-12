@@ -3,6 +3,10 @@ package org.mdpnp.gip.ui.values;
 import org.mdpnp.gip.ui.units.TimeUnits;
 import org.mdpnp.gip.ui.units.TimeUnitsFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TimeValueImpl extends AbstractValueImpl<TimeUnits> implements TimeValue {
 	public TimeValueImpl() {
 		super(TimeUnitsFactory.hours);

@@ -17,6 +17,10 @@ import java.util.Map;
 import org.mdpnp.devices.EnumHelper;
 import org.mdpnp.devices.Unit;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum RealtimeData {
     AirwayPressure, FlowInspExp, RespiratoryVolumeSinceInspBegin, ExpiratoryVolume, ExpiratoryCO2mmHg, ExpiratoryCO2kPa, ExpiratoryCO2Percent, Pleth, InspiratoryFlow, ExpiratoryFlow, O2InspExp, AgentInspExpPercent, HalothaneInspExpPercent, EnfluraneInspExpPercent, IsofluraneInspExpPercent, DesfluraneInspExpPercent, SevofluraneInspExpPercent, AgentInspExpkPa, HalothaneInspExpkPa, EnfluraneInspExpkPa, IsofluraneInspExpkPa, DesfluraneInspExpkPa, SevofluraneInspExpkPa;
 

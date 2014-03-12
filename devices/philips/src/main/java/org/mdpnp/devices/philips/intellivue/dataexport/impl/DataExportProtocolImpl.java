@@ -25,6 +25,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.Header;
 import org.mdpnp.devices.philips.intellivue.dataexport.RemoteOperation;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DataExportProtocolImpl implements DataExportProtocol {
 
     private final Header header = new Header();

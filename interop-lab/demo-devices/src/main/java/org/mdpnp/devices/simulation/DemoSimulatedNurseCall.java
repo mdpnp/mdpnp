@@ -14,6 +14,10 @@ package org.mdpnp.devices.simulation;
 
 import org.mdpnp.devices.EventLoop;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoSimulatedNurseCall extends AbstractSimulatedDevice {
 
     public DemoSimulatedNurseCall(int domainId, EventLoop eventLoop) {

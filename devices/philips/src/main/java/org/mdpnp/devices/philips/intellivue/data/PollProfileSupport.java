@@ -18,6 +18,10 @@ import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.attribute.Attribute;
 import org.mdpnp.devices.philips.intellivue.attribute.AttributeFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PollProfileSupport implements Value {
     private long pollProfileRevision = POLL_PROFILE_REV_0;
     public static final long POLL_PROFILE_REV_0 = 0x80000000L;

@@ -41,6 +41,10 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class JProgressAnimation extends JComponent implements Runnable {
 
     private final Line2D[] lines = new Line2D[18];

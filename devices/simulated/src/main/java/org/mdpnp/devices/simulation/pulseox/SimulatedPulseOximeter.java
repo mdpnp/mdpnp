@@ -19,6 +19,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.math.DCT;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SimulatedPulseOximeter {
     private int count = 0;
 

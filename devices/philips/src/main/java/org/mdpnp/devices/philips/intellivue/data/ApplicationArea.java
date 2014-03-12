@@ -18,6 +18,10 @@ import java.util.Map;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum ApplicationArea implements EnumMessage<ApplicationArea>, OrdinalEnum.IntType {
     AREA_UNSPEC(0), AREA_OPERATING_ROOM(1), AREA_INTENSIVE_CARE(2), AREA_NEONATAL_INTENSIVE_CARE(3), AREA_CARDIOLOGY_CARE(4);
 

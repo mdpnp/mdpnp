@@ -23,6 +23,10 @@ import org.mdpnp.apps.testapp.pump.PumpModel;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DataVisualization extends JSplitPane {
     private final PCAConfig pcaConfig;
     private final VitalMonitoring vitalMonitoring;

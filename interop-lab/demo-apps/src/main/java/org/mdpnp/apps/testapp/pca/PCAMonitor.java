@@ -36,6 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PCAMonitor extends JPanel implements VitalModelListener {
     @SuppressWarnings("rawtypes")
     private final JList list;

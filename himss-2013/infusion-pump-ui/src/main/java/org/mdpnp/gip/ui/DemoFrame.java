@@ -14,6 +14,10 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoFrame extends JFrame {
 	public DemoFrame() {
 		this("");

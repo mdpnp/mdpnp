@@ -80,6 +80,10 @@ import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.Subscriber;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
     private final FramePanel cameraPanel;
     private CameraComboBoxModel cameraModel = new CameraComboBoxModel();

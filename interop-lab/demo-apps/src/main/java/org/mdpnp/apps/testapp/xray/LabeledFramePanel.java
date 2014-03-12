@@ -32,6 +32,10 @@ import com.github.sarxos.webcam.Webcam;
 import com.github.sarxos.webcam.WebcamException;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class LabeledFramePanel extends FramePanel {
 
     public LabeledFramePanel(ScheduledExecutorService executor) {

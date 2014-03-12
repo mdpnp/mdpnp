@@ -19,6 +19,10 @@ import org.mdpnp.devices.philips.intellivue.data.ManagedObjectIdentifier;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportMessage;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.SetResult;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SetResultImpl implements SetResult {
 
     private final ManagedObjectIdentifier managedObject = new ManagedObjectIdentifier();

@@ -22,6 +22,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.command.CommandFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DataExportLinkedResultImpl extends DataExportResultImpl implements DataExportLinkedResult {
     private RemoteOperationLinkedState state;
     private short count;

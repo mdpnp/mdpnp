@@ -17,6 +17,10 @@ import java.awt.Graphics;
 import java.awt.Image;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ScaledDeviceIcon extends DeviceIcon {
     private final DeviceIcon source;
     private Image lastImage;

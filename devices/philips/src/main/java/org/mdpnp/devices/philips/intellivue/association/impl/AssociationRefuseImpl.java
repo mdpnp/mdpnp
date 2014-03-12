@@ -15,6 +15,10 @@ package org.mdpnp.devices.philips.intellivue.association.impl;
 import org.mdpnp.devices.philips.intellivue.association.AssociationMessageType;
 import org.mdpnp.devices.philips.intellivue.association.AssociationRefuse;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AssociationRefuseImpl extends AbstractAssociationMessage implements AssociationRefuse {
 
     @Override

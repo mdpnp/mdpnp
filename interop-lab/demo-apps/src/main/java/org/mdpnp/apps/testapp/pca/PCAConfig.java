@@ -56,6 +56,10 @@ import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PCAConfig extends JComponent implements VitalModelListener, PumpModelListener {
 
     JCheckBox configureModeBox = new JCheckBox("Configuration Mode");

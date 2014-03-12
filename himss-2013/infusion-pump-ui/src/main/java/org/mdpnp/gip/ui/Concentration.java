@@ -12,6 +12,10 @@ import org.mdpnp.gip.ui.values.ValueAdapter;
 import org.mdpnp.gip.ui.values.VolumeValue;
 import org.mdpnp.gip.ui.values.VolumeValueImpl;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Concentration extends AbstractModel<ConcentrationListener> {
 	
 	private final MassValue mass = new MassValueImpl(MassUnitsFactory.micrograms, MassUnitsFactory.milligrams, MassUnitsFactory.grams);

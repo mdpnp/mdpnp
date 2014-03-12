@@ -18,7 +18,7 @@ import org.mdpnp.devices.EnumHelper;
 
 /**
  * 
- * @author jplourde
+ * @author Jeff Plourde
  * 
  */
 public enum DataType {

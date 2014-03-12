@@ -12,6 +12,10 @@
  ******************************************************************************/
 package org.mdpnp.devices.math;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DistributionImpl implements Distribution {
 
     private double m1 = 0.0;

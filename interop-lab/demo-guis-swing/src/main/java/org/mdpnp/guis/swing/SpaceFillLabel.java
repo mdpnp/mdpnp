@@ -20,6 +20,10 @@ import java.awt.event.ComponentListener;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SpaceFillLabel extends JLabel {
     public SpaceFillLabel() {
         this("");

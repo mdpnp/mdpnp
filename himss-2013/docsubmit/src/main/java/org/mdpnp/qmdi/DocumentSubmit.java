@@ -35,6 +35,10 @@ import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ValueListType;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DocumentSubmit {
 
 	private static final LocalizedStringType[] local(String... str) {

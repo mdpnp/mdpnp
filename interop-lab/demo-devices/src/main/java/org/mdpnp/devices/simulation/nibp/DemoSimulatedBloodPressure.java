@@ -17,6 +17,10 @@ import ice.Numeric;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice {
 
     protected InstanceHolder<Numeric> systolic, diastolic, pulse, inflation, nextInflationTime, state;

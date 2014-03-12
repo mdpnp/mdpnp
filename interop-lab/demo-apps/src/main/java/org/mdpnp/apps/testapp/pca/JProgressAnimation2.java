@@ -32,6 +32,10 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JComponent;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class JProgressAnimation2 extends JComponent implements Runnable {
 
     private final Polygon arrowPolygon = new Polygon();

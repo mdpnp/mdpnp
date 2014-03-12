@@ -29,6 +29,10 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class MultiPulseOximeterPanel extends DevicePanel {
     private WaveformPanel[] plethPanel;
     private final WaveformUpdateWaveformSource[] plethWave;

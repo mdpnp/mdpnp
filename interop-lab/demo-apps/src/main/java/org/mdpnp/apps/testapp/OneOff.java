@@ -36,7 +36,7 @@ import com.rti.dds.topic.Topic;
 /**
  * A quick "one off" example of how to consume Numeric data from the ICE
  * 
- * @author jplourde
+ * @author Jeff Plourde
  * 
  */
 public class OneOff {

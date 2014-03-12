@@ -16,6 +16,10 @@ import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DeviceAlertCondition implements Value {
     private final AlertState deviceAlertState = new AlertState();
     private int alStatChgCount;

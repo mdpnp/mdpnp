@@ -18,6 +18,10 @@ import java.util.Enumeration;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class BuildInfo {
 
     private static final String version;

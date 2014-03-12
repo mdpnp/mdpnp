@@ -20,6 +20,10 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class EvenTempoWaveformSource extends AbstractNestedWaveformSource implements Runnable {
     public EvenTempoWaveformSource(WaveformSource target) {
         super(target);

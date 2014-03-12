@@ -14,6 +14,10 @@ package org.mdpnp.guis.waveform;
 
 import java.util.Collection;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SimpleWaveformSource implements WaveformSource, Runnable {
 
     public SimpleWaveformSource() {

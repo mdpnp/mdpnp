@@ -21,6 +21,10 @@ import org.mdpnp.devices.philips.intellivue.data.ManagedObjectIdentifier;
 import org.mdpnp.devices.philips.intellivue.data.OIDType;
 import org.mdpnp.devices.philips.intellivue.data.RelativeTime;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class EventReport implements Parseable, Formatable {
     private final ManagedObjectIdentifier identifier = new ManagedObjectIdentifier();
     private final RelativeTime time = new RelativeTime();

@@ -12,6 +12,10 @@
  ******************************************************************************/
 package org.mdpnp.devices.nonin.pulseox;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Status {
     public boolean isArtifact() {
         return artifact;

@@ -50,6 +50,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.impl.DataExportInvokeImpl
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class IntellivueAcceptor extends Intellivue {
 
     private static final Logger log = LoggerFactory.getLogger(IntellivueAcceptor.class);

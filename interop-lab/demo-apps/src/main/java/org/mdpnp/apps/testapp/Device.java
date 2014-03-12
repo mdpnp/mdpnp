@@ -34,7 +34,7 @@ import com.rti.dds.infrastructure.Property_t;
  * constructed from the DeviceIdentity raster is also maintained (and
  * reconstructed on demand).
  * 
- * @author jplourde
+ * @author Jeff Plourde
  * 
  */
 public class Device {

@@ -24,6 +24,10 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 
 @SuppressWarnings({ "serial", "rawtypes" })
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AppListCellRenderer extends JComponent implements ListCellRenderer {
 
     private final JLabel icon = new JLabel();

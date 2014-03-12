@@ -17,6 +17,10 @@ import java.util.Map;
 
 import org.junit.Test;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TestDemoBernoulli {
     @Test
     public void testMappingFileContents() throws Exception {

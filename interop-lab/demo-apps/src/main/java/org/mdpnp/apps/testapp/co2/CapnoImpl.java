@@ -16,6 +16,10 @@ import ice.SampleArray;
 
 import com.rti.dds.subscription.SampleInfo;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class CapnoImpl implements Capno {
     private final CapnoModel parent;
     private final ice.SampleArray sampleArray = new ice.SampleArray();

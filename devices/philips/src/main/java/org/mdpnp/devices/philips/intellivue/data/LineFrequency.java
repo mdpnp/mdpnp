@@ -18,6 +18,10 @@ import java.util.Map;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum LineFrequency implements EnumMessage<LineFrequency>, OrdinalEnum.IntType {
     LINE_F_UNSPEC(0), LINE_F_50HZ(1), LINE_F_60HZ(2);
     @Override

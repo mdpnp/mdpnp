@@ -2,6 +2,10 @@ package org.mdpnp.gip.ui;
 
 import java.lang.reflect.Field;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Util {
 	public static final String toString(Object o) {
 		StringBuilder sb = new StringBuilder("[");

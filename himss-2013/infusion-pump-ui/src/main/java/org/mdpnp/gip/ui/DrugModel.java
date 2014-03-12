@@ -1,5 +1,9 @@
 package org.mdpnp.gip.ui;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DrugModel extends AbstractModel<DrugListener> implements ConcentrationListener {
 	private String name;
 	private final Concentration concentration = new Concentration();

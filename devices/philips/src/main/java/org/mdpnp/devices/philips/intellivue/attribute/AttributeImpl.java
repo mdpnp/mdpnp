@@ -20,6 +20,10 @@ import org.mdpnp.devices.philips.intellivue.data.OIDType;
 import org.mdpnp.devices.philips.intellivue.data.Value;
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AttributeImpl<T extends Value> implements Attribute<T> {
 
     private T value;

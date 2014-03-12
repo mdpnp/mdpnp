@@ -27,6 +27,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.impl.DataExportProtocolIm
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class CompoundProtocol implements Protocol {
     private final static Logger log = LoggerFactory.getLogger(CompoundProtocol.class);
     private final DataExportProtocol dataExportProtocol = new DataExportProtocolImpl();

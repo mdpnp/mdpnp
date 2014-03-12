@@ -15,6 +15,10 @@ package org.mdpnp.devices.philips.intellivue;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class FCSInputStream extends java.io.FilterInputStream {
 
     protected FCSInputStream(InputStream in) {

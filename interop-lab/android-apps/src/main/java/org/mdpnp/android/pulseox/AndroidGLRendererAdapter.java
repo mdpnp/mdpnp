@@ -23,6 +23,10 @@ import org.mdpnp.guis.opengl.OpenGL;
 import android.opengl.GLES10;
 import android.opengl.GLSurfaceView;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AndroidGLRendererAdapter implements GLSurfaceView.Renderer, OpenGL {
 
 	private final GLRenderer renderer;

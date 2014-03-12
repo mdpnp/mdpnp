@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum ModifyOperator implements OrdinalEnum.IntType {
     Replace(0), AddValues(1), RemoveValues(2), SetToDefault(3);
 

@@ -34,6 +34,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
     protected final Map<String, InstanceHolder<Numeric>> numerics = new HashMap<String, InstanceHolder<Numeric>>();
     private final Map<String, InstanceHolder<SampleArray>> waveforms = new HashMap<String, InstanceHolder<SampleArray>>();

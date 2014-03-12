@@ -38,6 +38,10 @@ import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class PCAPanel extends JPanel implements VitalModelListener {
 
     private final PCAConfig pcaConfig;

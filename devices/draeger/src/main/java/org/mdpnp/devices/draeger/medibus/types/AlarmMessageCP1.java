@@ -19,7 +19,7 @@ import org.mdpnp.devices.EnumHelper;
 /**
  * Alarm messages of Codepage 1
  * 
- * @author jplourde
+ * @author Jeff Plourde
  * 
  */
 public enum AlarmMessageCP1 {

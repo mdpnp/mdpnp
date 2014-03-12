@@ -18,6 +18,10 @@ import java.util.List;
 
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TextIdList implements Value {
 
     private final List<TextId> list = new ArrayList<TextId>();

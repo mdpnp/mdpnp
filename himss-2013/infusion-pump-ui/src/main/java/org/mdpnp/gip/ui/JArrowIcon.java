@@ -12,6 +12,10 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class JArrowIcon implements Icon {
 
 	public JArrowIcon() {

@@ -17,6 +17,10 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class IPAddressInformation implements Value {
 
     private final byte[] macAddress = new byte[6];

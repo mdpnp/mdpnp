@@ -16,6 +16,10 @@ import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.philips.intellivue.Message;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ConnectIndicationProtocolImpl implements ConnectIndicationProtocol {
     private final ConnectIndication ci = new ConnectIndicationImpl();
 

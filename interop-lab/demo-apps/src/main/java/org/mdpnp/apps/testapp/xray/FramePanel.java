@@ -33,6 +33,10 @@ import org.slf4j.LoggerFactory;
 import com.github.sarxos.webcam.Webcam;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class FramePanel extends JComponent implements Runnable {
 
     public enum State {

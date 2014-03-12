@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum Dimension implements OrdinalEnum.IntType {
     NOM_DIM_DIMLESS(0x0200), NOM_DIM_PERCENT(0x0220), NOM_DIM_MILLI_M(0x0512), NOM_DIM_MILLI_L_PER_M_SQ(0x0592), NOM_DIM_MILLI_L(0x0652), NOM_DIM_X_G_PER_L(
             0x0800), NOM_DIM_MILLI_G_PER_L(0x0812), NOM_DIM_NANO_G_PER_L(0x0814), NOM_DIM_X_G_PER_DL(0x0840), NOM_DIM_MILLI_G_PER_DL(0x0852), NOM_DIM_PICO_G_PER_ML(

@@ -21,6 +21,10 @@ import javax.media.opengl.GLEventListener;
 import org.mdpnp.guis.opengl.GLRenderer;
 import org.mdpnp.guis.opengl.OpenGL;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class JOGLGLRendererAdapter implements GLEventListener, OpenGL {
 
     @Override

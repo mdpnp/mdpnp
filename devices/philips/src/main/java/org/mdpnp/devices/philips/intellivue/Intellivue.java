@@ -76,6 +76,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.impl.DataExportResultImpl
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Intellivue implements NetworkConnection {
     public static final int BROADCAST_PORT = 24005;
     public static final int DEFAULT_UNICAST_PORT = 24105;

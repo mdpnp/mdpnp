@@ -15,7 +15,7 @@ package org.mdpnp.devices;
 /**
  * Some useful bytes named from the ASCII character set.
  * 
- * @author jplourde
+ * @author Jeff Plourde
  * 
  */
 public class ASCIIByte {

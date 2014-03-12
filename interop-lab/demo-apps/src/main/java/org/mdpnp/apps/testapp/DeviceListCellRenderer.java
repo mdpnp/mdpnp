@@ -35,6 +35,10 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
 @SuppressWarnings({ "serial", "rawtypes" })
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DeviceListCellRenderer extends JComponent implements ListCellRenderer {
 
     private final JLabel icon = new JLabel();

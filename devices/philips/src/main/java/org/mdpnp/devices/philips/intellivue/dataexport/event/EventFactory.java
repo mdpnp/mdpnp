@@ -19,6 +19,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.event.impl.MdsCreateEvent
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class EventFactory {
     private static final Logger log = LoggerFactory.getLogger(EventFactory.class);
 

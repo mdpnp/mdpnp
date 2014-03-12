@@ -16,6 +16,10 @@ import java.nio.ByteBuffer;
 
 import org.mdpnp.devices.philips.intellivue.data.ManagedObjectIdentifier;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ErrorDetailNoSuchObjectInstanceImpl implements ErrorDetailNoSuchObjectInstance {
     private final ManagedObjectIdentifier managedObject = new ManagedObjectIdentifier();
 

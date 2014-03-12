@@ -31,6 +31,10 @@ import com.rti.dds.type.builtin.KeyedString;
 import com.rti.dds.type.builtin.KeyedStringDataWriter;
 import com.rti.dds.type.builtin.KeyedStringTypeSupport;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TwoOff {
     public static void main(String[] args) throws IOException {
         DDS.init();

@@ -3,6 +3,10 @@ package org.mdpnp.qmdi.ack;
 import java.util.Date;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class Acknowledgment implements java.io.Serializable {
 	private String documentId;
 	private String userId;

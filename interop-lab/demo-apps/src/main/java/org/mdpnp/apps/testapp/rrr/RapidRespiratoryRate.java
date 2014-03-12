@@ -43,6 +43,10 @@ import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
 
     @SuppressWarnings("rawtypes")

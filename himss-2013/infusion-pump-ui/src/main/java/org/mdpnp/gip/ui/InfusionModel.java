@@ -15,6 +15,10 @@ import org.mdpnp.gip.ui.values.ValueAdapter;
 import org.mdpnp.gip.ui.values.VolumeValue;
 import org.mdpnp.gip.ui.values.VolumeValueImpl;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class InfusionModel extends AbstractModel<InfusionListener> {
 	private final VolumeValue volumeToBeInfused = new VolumeValueImpl(VolumeUnitsFactory.milliliters);
 	private final TimeValue duration = new TimeValueImpl(TimeUnitsFactory.minutes, TimeUnitsFactory.hours);

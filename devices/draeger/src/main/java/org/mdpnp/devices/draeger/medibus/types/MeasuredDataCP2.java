@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.EnumHelper;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum MeasuredDataCP2 {
     ;
     private static final Map<java.lang.Byte, MeasuredDataCP2> fromByte;

@@ -49,6 +49,10 @@ import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class CompositeDevicePanel extends JPanel implements DeviceMonitorListener {
     private final JLabel manufacturer = new JLabel(" ");
     private final JLabel model = new JLabel(" ");

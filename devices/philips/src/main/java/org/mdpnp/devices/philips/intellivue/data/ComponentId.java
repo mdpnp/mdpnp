@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum ComponentId implements OrdinalEnum.IntType {
     ID_COMP_PRODUCT(0x0008), ID_COMP_CONFIG(0x0010), ID_COMP_BOOT(0x0018), ID_COMP_MAIN_BD(0x0050), ID_COMP_APPL_SW(0x0058);
 

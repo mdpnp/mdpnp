@@ -66,6 +66,10 @@ import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
 
 //
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoApp {
 
     private static String goback = null;

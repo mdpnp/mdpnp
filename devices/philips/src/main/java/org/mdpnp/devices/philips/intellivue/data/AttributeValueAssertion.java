@@ -18,6 +18,10 @@ import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.philips.intellivue.attribute.Attribute;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class AttributeValueAssertion implements Value, Attribute<ByteArray> {
     private OIDType oidType;
     private ByteArray value;

@@ -23,6 +23,10 @@ import org.mdpnp.devices.draeger.medibus.types.RealtimeData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class RTMedibus extends Medibus {
 
     public RTMedibus(InputStream in, OutputStream out) {

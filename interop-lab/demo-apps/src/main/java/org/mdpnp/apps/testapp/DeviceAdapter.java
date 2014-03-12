@@ -38,6 +38,10 @@ import org.mdpnp.guis.swing.CompositeDevicePanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DeviceAdapter {
 
     private JFrame frame;

@@ -14,6 +14,10 @@ package org.mdpnp.devices.philips.intellivue.data;
 
 import java.nio.ByteBuffer;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class StrAlMonInfo extends AlMonInfo {
     private final String string = new String();
 

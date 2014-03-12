@@ -27,6 +27,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TestSplitBytesOutputStream {
     @Before
     public void setUp() {

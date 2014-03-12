@@ -14,6 +14,10 @@ package org.mdpnp.devices.philips.intellivue.dataexport.error;
 
 import java.nio.ByteBuffer;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class ErrorDetailAccessDeniedImpl implements ErrorDetailAccessDenied {
 
     @Override

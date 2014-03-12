@@ -18,6 +18,10 @@ import java.util.Map;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum PatientPacedMode implements EnumMessage<PatientPacedMode>, OrdinalEnum.IntType {
     PAT_NOT_PACED(0), PAT_PACED_GEN(1);
 

@@ -17,6 +17,10 @@ import java.util.Arrays;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DefaultBoundedRangeMultiModel implements BoundedRangeMultiModel {
 
     private int minimum = 0, maximum = 100;

@@ -33,10 +33,14 @@ import org.slf4j.LoggerFactory;
  * Encodes raw image raster data from ice.Image as an ImageIcon suitable for use
  * in Swing. Also reflects connectivity state when applicable
  * 
- * @author jplourde
+ * @author Jeff Plourde
  * 
  */
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DeviceIcon extends ImageIcon {
     private static final Logger log = LoggerFactory.getLogger(DeviceIcon.class);
 

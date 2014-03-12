@@ -25,6 +25,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TestMergeBytesInputStream {
     @Before
     public void setUp() {

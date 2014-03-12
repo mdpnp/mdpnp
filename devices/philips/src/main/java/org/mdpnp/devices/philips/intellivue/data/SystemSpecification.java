@@ -17,6 +17,10 @@ import java.nio.ByteBuffer;
 import org.mdpnp.devices.philips.intellivue.attribute.Attribute;
 import org.mdpnp.devices.philips.intellivue.attribute.AttributeFactory;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SystemSpecification implements Value {
     private final AttributeValueList attrs = new AttributeValueList();
 

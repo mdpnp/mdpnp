@@ -16,6 +16,10 @@ import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class MyBluetoothDevice implements Parcelable {
 	private final BluetoothDevice device;
 	

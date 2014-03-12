@@ -17,6 +17,10 @@ import java.nio.ByteBuffer;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.Message;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class MetricAccess implements Message {
 
     private static final int AVAIL_INTERMITTENT = 0x8000;

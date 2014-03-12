@@ -3,6 +3,10 @@ package org.mdpnp.gip.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class CareArea {
 	private final String name;
 	private final List<DrugEntry> drugEntries = new ArrayList<DrugEntry>();

@@ -18,6 +18,10 @@ import java.util.Map;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum PatientBSAFormula implements EnumMessage<PatientBSAFormula>, OrdinalEnum.IntType {
     BSA_FORMULA_UNSPEC(0), BSA_FORMULA_BOYD(1), BSA_FORMULA_DUBOIS(2);
 

@@ -1,5 +1,9 @@
 package org.mdpnp.gip.ui.units;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class TimeUnitsFactory {
 	public final static TimeUnits hours = new TimeUnitsMultiplierImpl("hours", "hr", 3600000.0);
 	public final static TimeUnits minutes = new TimeUnitsMultiplierImpl("minutes", "min", 60000.0);

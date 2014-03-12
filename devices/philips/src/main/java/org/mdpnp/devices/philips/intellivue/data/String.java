@@ -18,6 +18,10 @@ import java.nio.charset.Charset;
 
 import org.mdpnp.devices.io.util.Bits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class String implements Value {
     private java.lang.String string = "";
 

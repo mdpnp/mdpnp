@@ -1,6 +1,10 @@
 package org.mdpnp.gip.ui.units;
 
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class MassUnitsFactory {
 	public final static MassUnits pounds = new MassUnitsMultiplierImpl("pounds", "lbs"     ,  2204620000000000.0);
 	public final static MassUnits kilograms = new MassUnitsMultiplierImpl("kilograms", "kg", 1000000000000000.0);

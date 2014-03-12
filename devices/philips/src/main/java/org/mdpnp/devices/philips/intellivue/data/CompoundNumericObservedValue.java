@@ -18,6 +18,10 @@ import java.util.List;
 
 import org.mdpnp.devices.philips.intellivue.util.Util;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class CompoundNumericObservedValue implements Value {
 
     private final List<NumericObservedValue> list = new ArrayList<NumericObservedValue>();

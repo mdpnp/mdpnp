@@ -18,6 +18,10 @@ import java.util.Map;
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum PatientType implements EnumMessage<PatientType>, OrdinalEnum.IntType {
     PAT_TYPE_UNSPECIFIED(0), ADULT(1), PEDIATRIC(2), NEONATAL(3);
 

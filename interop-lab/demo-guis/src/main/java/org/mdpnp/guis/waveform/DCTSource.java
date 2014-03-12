@@ -16,6 +16,10 @@ import java.util.Set;
 
 import org.mdpnp.devices.math.DCT;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DCTSource implements WaveformSource, WaveformSourceListener {
     private double[] sourceData;
     private double[] data;

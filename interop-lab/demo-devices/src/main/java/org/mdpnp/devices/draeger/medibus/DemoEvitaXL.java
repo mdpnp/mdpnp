@@ -18,6 +18,10 @@ import org.mdpnp.devices.serial.SerialSocket.DataBits;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class DemoEvitaXL extends AbstractDraegerVent {
 
     public DemoEvitaXL(int domainId, EventLoop eventLoop) {

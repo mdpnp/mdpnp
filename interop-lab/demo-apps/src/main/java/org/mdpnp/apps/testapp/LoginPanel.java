@@ -20,6 +20,10 @@ import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
 
 @SuppressWarnings("serial")
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class LoginPanel extends JPanel {
     private JTextField clinicianId;
 

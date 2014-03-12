@@ -22,6 +22,10 @@ import org.mdpnp.guis.waveform.DCTSource;
 import org.mdpnp.guis.waveform.WaveformSource;
 import org.mdpnp.guis.waveform.WaveformSourceListener;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public class SwingDCTSource extends DCTSource implements WaveformSource, WaveformSourceListener, TableModel {
 
     public SwingDCTSource(WaveformSource source) {

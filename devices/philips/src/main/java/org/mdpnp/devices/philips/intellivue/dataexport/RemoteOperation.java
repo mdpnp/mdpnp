@@ -16,6 +16,10 @@ import java.util.Map;
 
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
+/**
+ * @author Jeff Plourde
+ *
+ */
 public enum RemoteOperation implements OrdinalEnum.IntType {
     Invoke(1), Result(2), Error(3), LinkedResult(5);
 
