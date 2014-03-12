@@ -7,129 +7,68 @@
  ******************************************************************************/
 package org.mdpnp.guis.waveform;
 
-import org.mdpnp.devices.math.Distribution;
-import org.mdpnp.devices.math.DistributionImpl;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EvenTempoWaveformSource extends AbstractNestedWaveformSource implements Runnable {
-    private boolean running = true;
-    private Thread thread;
-
     public EvenTempoWaveformSource(WaveformSource target) {
         super(target);
     }
 
-    Distribution timeIntervals = new DistributionImpl();
-    Distribution bigTimeIntervals = new DistributionImpl();
-    Distribution countBigTime = new DistributionImpl();
-
-
-    private int lastCount = -1;
-    private long lastTime = -1L;
-
-    private int countSinceLastGap = 0;
-
     private int reportingCount;
-    private int realCount;
+    
+    private long microsecondsPerSample = 50000L;
 
-    private long sleepInterval = 0L;
+    private ScheduledFuture<?> scheduledFuture;
+    
     @Override
-    public void reset(WaveformSource source) {
-        timeIntervals.reset();
-        bigTimeIntervals.reset();
-        countBigTime.reset();
-
-        lastCount = -1;
-        lastTime = -1L;
-        countSinceLastGap = 0;
+    public synchronized void reset(WaveformSource source) {
         reportingCount = 0;
-        realCount = 0;
-        sleepInterval = 0L;
         fireReset();
-    }
-
-    private void catchup() {
-        boolean fire = false;
-        synchronized(this) {
-            if(reportingCount != realCount) {
-                reportingCount = realCount;
-                fire = true;
-            }
-        }
-        if(fire) {
-            fireWaveform();
-        }
     }
 
     @Override
     public void waveform(WaveformSource source) {
-        this.realCount = source.getCount();
-        long now = System.currentTimeMillis();
-
-        if(lastTime > 0 && lastCount >= 0) {
-            int max = source.getMax();
-            int n = lastCount <= realCount ? (realCount-lastCount) : (max-lastCount+realCount);
-
-            long interval = now - lastTime;
-
-            timeIntervals.newPoint(interval);
-
-
-            // do we have data to start evaluating timeliness?
-            // if not catchup
-            if(timeIntervals.getRealSamples() > 10) {
-                // Is this an extraordinarily large interval?
-                if(interval > 3.0 * timeIntervals.getStdDev()) {
-
-                    bigTimeIntervals.newPoint(interval);
-                    countBigTime.newPoint(countSinceLastGap);
-                    countSinceLastGap = 0;
-                    sleepInterval = (long) (bigTimeIntervals.getAverage() / countBigTime.getAverage());
-                    catchup();
-                    synchronized(this) {
-                        this.notify();
-                    }
-                } else {
-                    if(sleepInterval <= 0L) {
-                        catchup();
-                    }
-                    countSinceLastGap+=n;
-                    // regular sized interval between points
-                }
-            } else {
-                catchup();
-            }
-
-        } else {
-            catchup();
-        }
-
-        lastTime = now;
-        lastCount = realCount<0?0:realCount;
     }
 
-
-
+    private long priorInvocation;
+    private static final Logger log = LoggerFactory.getLogger(EvenTempoWaveformSource.class);
     @Override
     public void run() {
-        while(running) {
-            boolean fire = false;
-
-            synchronized(this) {
-                try {
-                    this.wait(sleepInterval);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        synchronized(this) {
+            long now = System.currentTimeMillis();
+            if(0L!=priorInvocation) {
+                // Number of samples we should play since the last invocation
+                int samples = (int) Math.round((now-priorInvocation)/getTarget().getMillisecondsPerSample());
+                
+                // putative updated reportingCount
+                int max = getTarget().getMax();
+                int count = getTarget().getCount();
+                
+                int oldReportingCount = this.reportingCount;
+                int reportingCount = oldReportingCount + samples;
+                // wrap around
+                reportingCount = reportingCount >= max?(reportingCount-max):reportingCount;
+                
+                if(count >= 0) {
+                    boolean crossedTheCount = (oldReportingCount<count&&count<reportingCount) || (count<reportingCount&&reportingCount<oldReportingCount);
+                    if(crossedTheCount) {
+                        log.info("Reported count got ahead of real count");
+                        reportingCount = count;
+                    }
                 }
-                if(reportingCount != realCount) {
-                    reportingCount = ++reportingCount==getTarget().getMax()?0:reportingCount;
-                    fire = true;
-                }
+                this.reportingCount = reportingCount;
+                
             }
-
-            if(fire) {
-                fireWaveform();
-            }
+            priorInvocation = now;
         }
+
+        fireWaveform();
     }
 
     @Override
@@ -137,36 +76,44 @@ public class EvenTempoWaveformSource extends AbstractNestedWaveformSource implem
         return reportingCount;
     }
 
+    private static ScheduledExecutorService executorService;
+    private static int executorServiceReferences = 0;
+    private synchronized static ScheduledExecutorService reference() {
+        if(0 == executorServiceReferences) {
+            executorService = Executors.newScheduledThreadPool(1);
+        }
+        executorServiceReferences++;
+        return executorService;
+    }
+    
+    private synchronized static void release() {
+        executorServiceReferences--;
+        if(0 == executorServiceReferences) {
+            executorService.shutdown();
+            executorService = null;
+        }
+    }
+    
     @Override
     public synchronized void addListener(WaveformSourceListener listener) {
-        if(getListeners().isEmpty()) {
-            running = true;
-            thread = new Thread(this, "EvenTempoWaveformSource");
-            thread.setDaemon(true);
-            thread.start();
-        }
+        boolean wasEmpty = getListeners().isEmpty();
+
         super.addListener(listener);
+        if(wasEmpty) {
+            reference();
+            scheduledFuture = executorService.scheduleAtFixedRate(this, microsecondsPerSample, microsecondsPerSample, TimeUnit.MICROSECONDS);
+        }
     }
 
     @Override
-    public void removeListener(WaveformSourceListener listener) {
-        Thread joinThread = null;
-        synchronized(this) {
-            super.removeListener(listener);
-            if(getListeners().isEmpty()) {
-                running = false;
-                notifyAll();
-                joinThread = thread;
-                thread = null;
+    public synchronized void removeListener(WaveformSourceListener listener) {
+        super.removeListener(listener);
+        if(getListeners().isEmpty()) {
+            if(null != scheduledFuture) {
+                scheduledFuture.cancel(true);
+                scheduledFuture = null;
             }
-        }
-        if(null != joinThread) {
-            try {
-                joinThread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
+            release();
         }
     }
 }
