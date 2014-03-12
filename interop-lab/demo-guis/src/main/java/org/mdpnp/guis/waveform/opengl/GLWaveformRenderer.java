@@ -9,7 +9,6 @@ import org.mdpnp.guis.opengl.OpenGL;
 import org.mdpnp.guis.waveform.AbstractNestedWaveformSource;
 import org.mdpnp.guis.waveform.CachingWaveformSource;
 import org.mdpnp.guis.waveform.EvenTempoWaveformSource;
-import org.mdpnp.guis.waveform.WaveformRenderer;
 import org.mdpnp.guis.waveform.WaveformSource;
 import org.mdpnp.guis.waveform.WaveformSourceListener;
 
@@ -37,7 +36,7 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
     }
 
     public void setForeground(Color color) {
-        this.background = color;
+        this.foreground = color;
     }
 
     private WaveformSource source;
@@ -64,7 +63,7 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
             setRawSource(null);
         } else {
             if(caching) {
-                source = new CachingWaveformSource(source, 10000L);
+                source = new CachingWaveformSource(source, 5000L);
             }
             if(evenTempo) {
                 source = new EvenTempoWaveformSource(source);
@@ -118,7 +117,7 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
 
         // gl.glEnable(OpenGL.GL_LINE_SMOOTH);
         // gl.glHint(OpenGL.GL_LINE_SMOOTH_HINT, OpenGL.GL_NICEST);
-        // gl.glLineWidth(2.0f);
+         gl.glLineWidth(3.0f);
 
         gl.glEnableClientState(OpenGL.GL_VERTEX_ARRAY);
 
@@ -147,7 +146,7 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
 
             gl.glEnable(OpenGL.GL_LINE_SMOOTH);
             gl.glHint(OpenGL.GL_LINE_SMOOTH_HINT, OpenGL.GL_NICEST);
-            // gl.glLineWidth(2);
+             gl.glLineWidth(4);
             gl.glEnableClientState(OpenGL.GL_VERTEX_ARRAY);
 
             gl.glVertexPointer(2, OpenGL.GL_FLOAT, 0, unitCircle);
@@ -314,6 +313,10 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
 
     public WaveformSource getSource() {
         return source;
+    }
+
+    public Color getForeground() {
+        return foreground;
     }
 
 }
