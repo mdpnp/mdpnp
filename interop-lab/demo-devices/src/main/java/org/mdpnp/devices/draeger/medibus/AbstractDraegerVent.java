@@ -23,10 +23,11 @@ import org.mdpnp.devices.draeger.medibus.types.Command;
 import org.mdpnp.devices.draeger.medibus.types.MeasuredDataCP1;
 import org.mdpnp.devices.draeger.medibus.types.RealtimeData;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
-import org.mdpnp.devices.serial.SerialSocket;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rti.dds.infrastructure.Time_t;
 
 public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice<RTMedibus> {
 
@@ -39,20 +40,44 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected Map<Enum<?>, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Enum<?>, InstanceHolder<ice.SampleArray>>();
 
     protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate;
-    protected InstanceHolder<ice.Numeric> timeUpdate;
-
+    
+    protected long deviceClockOffset = 0L;
+    private final ThreadLocal<Time_t> currentTime = new ThreadLocal<Time_t>() {
+        protected Time_t initialValue() {
+            return new Time_t(0,0);
+        };
+    };
+    
+    protected Time_t currentTime() {
+        long now = System.currentTimeMillis() + deviceClockOffset;
+        Time_t currentTime = this.currentTime.get();
+        long then = currentTime.sec * 1000L + currentTime.nanosec / 1000000L;
+        
+        if(then - now > 0L) {
+            // This happens too routinely to expend the I/O here
+            // tried using the desination_order.source_timestamp_tolerance but that was even too tight
+            // TODO reconsider how we are deriving a device timestamp
+//            log.warn("Not emitting timestamp="+new Date(now)+" where last timestamp was "+new Date(then));
+        } else {
+            currentTime.sec = (int) (now / 1000L);
+            currentTime.nanosec = (int) (now % 1000L * 1000000L);
+        }
+        return currentTime;
+    }
+    
     protected InstanceHolder<ice.Numeric> doNumericUpdate(InstanceHolder<ice.Numeric> update, Object value, String metric_id) {
         try {
             // TODO There are weird number formats in medibus .. this will need
             // enhancement
+            
             if (value instanceof Number) {
-                return numericSample(update, ((Number) value).floatValue(), metric_id, null);
+                return numericSample(update, ((Number) value).floatValue(), metric_id, currentTime());
             } else {
                 String s = null == value ? null : value.toString().trim();
                 if (null != s) {
-                    return numericSample(update, Float.parseFloat(s), metric_id, null);
+                    return numericSample(update, Float.parseFloat(s), metric_id, currentTime());
                 } else {
-                    return numericSample(update, (Float) null, metric_id, null);
+                    return numericSample(update, (Float) null, metric_id, currentTime());
                 }
             }
 
@@ -94,7 +119,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     sampleArrayUpdates.put(
                             (Enum<?>) code,
                             sampleArraySample(sampleArrayUpdates.get(code), realtimeBuffer[streamIndex], (int) (1.0
-                                    * config.interval * multiplier / 1000.0), metric_id, null));
+                                    * config.interval * multiplier / 1000.0), metric_id, currentTime()));
                 } else {
                     log.trace("No nomenclature code for enum code=" + code + " class=" + code.getClass().getName());
                 }
@@ -144,10 +169,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     protected void process(Date date) {
-        // TODO Don't do this
-        // TODO store this timestamp as an offset from the local clock to send meaningful timestamp messages
-        timeUpdate = numericSample(timeUpdate, (int) date.getTime(), ice.MDC_TIME_MSEC_SINCE_EPOCH.VALUE, null);
-
+        deviceClockOffset = date.getTime() - System.currentTimeMillis();
+        log.debug("Local clock offset " + deviceClockOffset + "ms from device");
     }
 
     protected void processCorrupt() {
