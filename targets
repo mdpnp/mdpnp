@@ -1,7 +1,11 @@
 bbb-capnostream
 bbb-evitaxl
-bbb-apollo
-bbb-bernoulli
+#bbb-apollo
+#bbb-bernoulli
 bbb-ivy
 bbb-mp70
+192.168.1.211
 #10.0.1.200
+#192.168.1.207
+#192.168.17.102
+#bbb-0007
