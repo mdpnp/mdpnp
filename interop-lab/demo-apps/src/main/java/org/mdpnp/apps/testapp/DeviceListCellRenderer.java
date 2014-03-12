@@ -18,6 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
+import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
@@ -28,6 +29,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
     private final JLabel modelName = new JLabel(" ");
     private final JLabel connectionStatus = new JLabel(" ");
     private final JLabel udi = new JLabel(" ");
+    private final JLabel hostname = new JLabel(" ");
 
     private Dimension myDimension = null;
 
@@ -64,7 +66,15 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         text.add(connectionStatus, gbc);
 
         gbc.gridx++;
+        udi.setHorizontalTextPosition(SwingConstants.RIGHT);
         text.add(udi, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        hostname.setHorizontalTextPosition(SwingConstants.RIGHT);
+        text.add(hostname, gbc);
+        
         add(text, BorderLayout.CENTER);
 
     }
@@ -88,6 +98,8 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
                 udi.setText(shortUDI);
             }
 
+            hostname.setText(device.getHostname());
+            
             DeviceIcon icon = device.getIcon();
 
             DeviceConnectivity dc = device.getDeviceConnectivity();
@@ -122,6 +134,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         } else {
             udi.setText("<awaiting UDI>");
             connectionStatus.setText("");
+            hostname.setText("");
             modelName.setText("<unknown>");
             this.icon.setIcon(null);
         }
