@@ -410,7 +410,7 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
             if (e.isPopupTrigger()) {
                 popup.show(this, e.getX(), e.getY());
             } else {
-                renderer.forceRescale();
+                renderer.rescaleValue();
             }
         }
     }

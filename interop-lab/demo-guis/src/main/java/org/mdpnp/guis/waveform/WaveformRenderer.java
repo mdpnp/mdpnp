@@ -66,13 +66,17 @@ public class WaveformRenderer {
         this.continuousRescale = continuousRescale;
     }
 
+    public CachingWaveformSource cachingSource() {
+        return AbstractNestedWaveformSource.source(CachingWaveformSource.class, source);
+    }
+    
     private int minimumClearLines = 10;
-    public void forceRescale() {
+    public void rescaleValue() {
         lastCount = 0;
         minY = Integer.MAX_VALUE;
         maxY = Integer.MIN_VALUE;
     }
-
+    
     public void render(WaveformCanvas canvas, Rect rect) {
 
         long start = System.currentTimeMillis();
