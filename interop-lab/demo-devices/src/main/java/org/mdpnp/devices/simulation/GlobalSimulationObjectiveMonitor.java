@@ -2,8 +2,6 @@ package org.mdpnp.devices.simulation;
 
 import ice.GlobalSimulationObjective;
 
-import java.io.IOException;
-
 import org.mdpnp.devices.EventLoop;
 
 import com.rti.dds.domain.DomainParticipant;
