@@ -121,7 +121,7 @@ public class PulseOximeterPanel extends DevicePanel {
 
         add(label("Last Sample: ", time = new JLabel("TIME"), BorderLayout.WEST), BorderLayout.SOUTH);
 
-        setForeground(Color.green);
+        setForeground(Color.cyan);
         setBackground(Color.black);
         setOpaque(true);
     }

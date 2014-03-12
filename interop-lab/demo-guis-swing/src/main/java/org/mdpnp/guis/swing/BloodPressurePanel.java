@@ -100,7 +100,7 @@ public class BloodPressurePanel extends DevicePanel {
 //		        gateway.update(BloodPressurePanel.this, mtu);
 //		    }
 //		});
-        setForeground(Color.green);
+        setForeground(Color.magenta);
         setBackground(Color.black);
         setOpaque(true);
     }

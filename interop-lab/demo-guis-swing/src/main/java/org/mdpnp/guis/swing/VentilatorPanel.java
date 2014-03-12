@@ -75,7 +75,7 @@ public class VentilatorPanel extends DevicePanel {
         co2Panel.start();
 
 
-        setForeground(Color.green);
+        setForeground(Color.white);
         setBackground(Color.black);
         setOpaque(true);
 

@@ -73,7 +73,7 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
 //        t.add(new JLabel("BPM"), BorderLayout.EAST);
 //        add(numerics, BorderLayout.EAST);
 
-        setForeground(Color.green);
+        setForeground(Color.red);
         setBackground(Color.black);
         setOpaque(true);
     }
