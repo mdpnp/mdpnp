@@ -25,7 +25,6 @@ import org.mdpnp.devices.oridion.capnostream.Capnostream.Command;
 import org.mdpnp.devices.oridion.capnostream.Capnostream.SetupItem;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
-import org.mdpnp.devices.serial.SerialSocket;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
@@ -67,8 +66,6 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     protected InstanceHolder<ice.Numeric> etco2;
     protected InstanceHolder<ice.Numeric> fastStatus;
     protected InstanceHolder<ice.Numeric> slowStatus;
-    protected InstanceHolder<ice.Numeric> co2ActiveAlarms;
-    protected InstanceHolder<ice.Numeric> spo2ActiveAlarms;
     protected InstanceHolder<ice.Numeric> extendedCO2Status;
 
     protected InstanceHolder<ice.AlarmSettings> spo2AlarmSettings, pulserateAlarmSettings, rrAlarmSettings, etco2AlarmSettings;
@@ -297,12 +294,6 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
             DemoCapnostream20.this.slowStatus = numericSample(DemoCapnostream20.this.slowStatus,
                     0xFF == slowStatus ? null : slowStatus, oridion.MDC_SLOW_STATUS.VALUE, sampleTime);
-
-            DemoCapnostream20.this.co2ActiveAlarms = numericSample(DemoCapnostream20.this.co2ActiveAlarms,
-                    0xFF == CO2ActiveAlarms ? null : CO2ActiveAlarms, oridion.MDC_CO2_ACTIVE_ALARMS.VALUE, sampleTime);
-
-            DemoCapnostream20.this.spo2ActiveAlarms = numericSample(DemoCapnostream20.this.spo2ActiveAlarms,
-                    0xFF == SpO2ActiveAlarms ? null : SpO2ActiveAlarms, oridion.MDC_SPO2_ACTIVE_ALARMS.VALUE, sampleTime);
 
             DemoCapnostream20.this.spo2AlarmSettings = alarmSettingsSample(DemoCapnostream20.this.spo2AlarmSettings,
                     0xFF == spo2AlarmLow ? null : (float)spo2AlarmLow, 0xFF == spo2AlarmHigh ? null : (float)spo2AlarmHigh, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
