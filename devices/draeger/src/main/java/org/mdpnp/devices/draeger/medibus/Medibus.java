@@ -1,6 +1,5 @@
 package org.mdpnp.devices.draeger.medibus;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -498,8 +497,15 @@ public class Medibus {
         germanMonths.put("NOV", Calendar.NOVEMBER);
         germanMonths.put("DEZ", Calendar.DECEMBER);
     }
+    
+    private final ThreadLocal<Calendar> calendar = new ThreadLocal<Calendar>() {
+        protected Calendar initialValue() {
+            return Calendar.getInstance();
+        };
+    };
+    
     protected void receiveDateTime(byte[] response, int len) {
-        Calendar cal = Calendar.getInstance();
+        Calendar cal = this.calendar.get();
         String s = null;
         Matcher m = timePattern.matcher(s = new String(response, 1, 8));
         if(m.matches()) {
@@ -511,7 +517,8 @@ public class Medibus {
             if(m.matches()) {
                 cal.set(Calendar.DATE, Integer.parseInt(m.group(1)));
                 cal.set(Calendar.MONTH, germanMonths.get(m.group(2)));
-                cal.set(Calendar.YEAR, 1900 + Integer.parseInt(m.group(3)));
+                // Note the V500 as of 12-Mar-2014 emits "14" as the year
+                cal.set(Calendar.YEAR, 2000 + Integer.parseInt(m.group(3)));
                 receiveDateTime(cal.getTime());
             } else {
                 log.warn("Received a bad date:"+s);
