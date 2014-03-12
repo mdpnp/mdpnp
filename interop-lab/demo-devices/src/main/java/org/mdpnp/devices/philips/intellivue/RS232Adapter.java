@@ -22,6 +22,7 @@ import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.SerialSocket;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
+import org.mdpnp.devices.serial.SerialSocket.FlowControl;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.slf4j.Logger;
@@ -110,7 +111,7 @@ public class RS232Adapter implements NetworkConnection {
         this.serialSideAddress = serialSideAddress;
         this.remoteSideAddress = remoteSideAddress;
         SerialProvider sp = SerialProviderFactory.getDefaultProvider();
-        sp.setDefaultSerialSettings(115200, DataBits.Eight, Parity.None, StopBits.One);
+        sp.setDefaultSerialSettings(115200, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
         serialSocket = sp.connect(serialPort, 1000L);
 
         if(log.isTraceEnabled()) {
