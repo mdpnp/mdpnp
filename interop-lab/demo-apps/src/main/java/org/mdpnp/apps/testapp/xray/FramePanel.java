@@ -258,6 +258,10 @@ public class FramePanel extends JComponent implements Runnable {
 
         repaint();
     }
+    
+    public BufferedImage getBufferedCameraImage() {
+        return bufferedCameraImage;
+    }
 
     @Override
     protected void processComponentEvent(ComponentEvent e) {
