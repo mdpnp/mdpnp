@@ -59,7 +59,7 @@ public class SimulatedElectroCardioGram {
 	protected void receiveECG(Number[] i, Number[] ii, Number[] iii, int heartRate, int respiratoryRate, double msPerSample) {
 	    
 	}
-	protected static final long UPDATE_PERIOD = 50L;
+	protected static final long UPDATE_PERIOD = 1000L;
 	protected static final double MILLISECONDS_PER_SAMPLE = 5;
     protected static final int SAMPLES_PER_UPDATE = (int) Math.floor(UPDATE_PERIOD/MILLISECONDS_PER_SAMPLE);
     
