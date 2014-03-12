@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 public class Configuration {
     enum Application {
-        ICE_Supervisor, ICE_Device_Interface;
+        ICE_Supervisor, ICE_Device_Interface, ICE_ParticipantOnly;
     }
 
     public enum DeviceType {

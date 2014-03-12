@@ -109,6 +109,7 @@ public class ConfigurationDialog extends JDialog {
             }
             break;
         case ICE_Supervisor:
+        case ICE_ParticipantOnly:
             this.deviceType.setVisible(false);
             deviceTypeLabel.setVisible(false);
             addressLabel.setVisible(false);

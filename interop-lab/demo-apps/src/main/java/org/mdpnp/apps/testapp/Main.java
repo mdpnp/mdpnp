@@ -117,6 +117,9 @@ public class Main {
             case ICE_Supervisor:
                 DemoApp.start(runConf.getDomainId());
                 break;
+            case ICE_ParticipantOnly:
+                ParticipantOnly.start(runConf.getDomainId(), cmdline);
+                break;
             }
         } else if(cmdline) {
             Configuration.help(Main.class, System.out);
