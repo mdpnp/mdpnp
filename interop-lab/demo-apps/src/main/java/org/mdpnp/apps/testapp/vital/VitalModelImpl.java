@@ -22,7 +22,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.jfree.util.Log;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.apps.testapp.DeviceListModel;
@@ -30,6 +29,8 @@ import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.TopicUtil;
 import org.mdpnp.rti.dds.DDS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
@@ -62,6 +63,8 @@ public class VitalModelImpl implements VitalModel {
     protected EventLoop eventLoop;
     private State state = State.Normal;
 
+    private static final Logger log = LoggerFactory.getLogger(VitalModelImpl.class);
+
     private final EventLoop.ConditionHandler numericHandler = new EventLoop.ConditionHandler() {
         private final NumericSeq num_seq = new NumericSeq();
         private final SampleInfoSeq info_seq = new SampleInfoSeq();
@@ -78,7 +81,7 @@ public class VitalModelImpl implements VitalModel {
                             if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
                                 Numeric keyHolder = new Numeric();
                                 numericReader.get_key_value(keyHolder, sampleInfo.instance_handle);
-                                Log.debug("Numeric NOT ALIVE:"+keyHolder);
+                                log.debug("Numeric NOT ALIVE:"+keyHolder);
                                 removeNumeric(keyHolder.unique_device_identifier, keyHolder.metric_id, keyHolder.instance_id);
                             } else {
                                 if (sampleInfo.valid_data) {
