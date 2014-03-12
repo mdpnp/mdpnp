@@ -34,3 +34,4 @@ docbox-himss-2014/obj
 docbox-himss-2014/src_dds
 **/.idea/
 **/*.log*
+.keystore
