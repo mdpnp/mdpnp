@@ -98,10 +98,16 @@ public class Main {
                 throw new Exception("Unable to DDS.init");
             }
             {
+                // Unfortunately this throws an Exception if there are errors in XML profiles
+                // which Exception prevents a more useful Exception throwing later
+                try {
                     DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
                     DomainParticipantFactory.get_instance().get_qos(qos);
                     qos.resource_limits.max_objects_per_thread = 8192;
                     DomainParticipantFactory.get_instance().set_qos(qos);
+                } catch(Exception e) {
+                    log.error("Unable to set max_objects_per_thread", e);
+                }
             }
 
             switch(runConf.getApplication()) {
