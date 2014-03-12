@@ -149,8 +149,8 @@ public class CachingWaveformSource extends AbstractNestedWaveformSource {
             long startTime = source.getStartTime();
             for(int i = 0; i < sourceMax; i++) {
                 sampleCache[postIncrCacheCount(startTime + i * msPerSample)] = source.getValue(i);
-                fireWaveform();
             }
+            fireWaveform();
 
         } else {
             if(lastSourceCount < 0) {
@@ -163,8 +163,8 @@ public class CachingWaveformSource extends AbstractNestedWaveformSource {
                 while(lastSourceCount != sourceCount) {
                     int i = postIncrLastSourceCount(sourceMax);
                     sampleCache[postIncrCacheCount(startTime + i * msPerSample)] = source.getValue(i);
-                    fireWaveform();
                 }
+                fireWaveform();
             }
         }
     }
