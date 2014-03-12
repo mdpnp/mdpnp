@@ -9,9 +9,6 @@ package org.mdpnp.devices.philips.intellivue;
 
 import ice.Alert;
 import ice.ConnectionState;
-import ice.DeviceConnectivityDataWriter;
-import ice.DeviceConnectivityTopic;
-import ice.DeviceConnectivityTypeSupport;
 import ice.SampleArray;
 
 import java.io.BufferedReader;
@@ -73,13 +70,13 @@ import org.mdpnp.devices.philips.intellivue.data.ObservedValue;
 import org.mdpnp.devices.philips.intellivue.data.PollProfileSupport;
 import org.mdpnp.devices.philips.intellivue.data.ProductionSpecification;
 import org.mdpnp.devices.philips.intellivue.data.ProductionSpecificationType;
-import org.mdpnp.devices.philips.intellivue.data.StrAlMonInfo;
 import org.mdpnp.devices.philips.intellivue.data.ProtocolSupport.ProtocolSupportEntry;
 import org.mdpnp.devices.philips.intellivue.data.RelativeTime;
 import org.mdpnp.devices.philips.intellivue.data.SampleArrayCompoundObservedValue;
 import org.mdpnp.devices.philips.intellivue.data.SampleArrayObservedValue;
 import org.mdpnp.devices.philips.intellivue.data.SampleArraySpecification;
 import org.mdpnp.devices.philips.intellivue.data.SimpleColor;
+import org.mdpnp.devices.philips.intellivue.data.StrAlMonInfo;
 import org.mdpnp.devices.philips.intellivue.data.SystemModel;
 import org.mdpnp.devices.philips.intellivue.data.TextId;
 import org.mdpnp.devices.philips.intellivue.data.TextIdList;
@@ -99,7 +96,6 @@ import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.Time_t;
-import com.rti.dds.publication.Publisher;
 import com.rti.dds.topic.Topic;
 
 public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
@@ -625,12 +621,11 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     sampleTime.sec = (int) (tm / 1000L);
                     sampleTime.nanosec = (int) ((tm % 1000L) * 1000000L);
                     if (observed.getMsmtState().isUnavailable()) {
-                        numericUpdates.put(handle,
-                                numericSample(numericUpdates.get(ov), (Float) null, metricId, handle, sampleTime));
+                        putNumericUpdate(ov, handle, 
+                                numericSample(getNumericUpdate(ov, handle), (Float) null, metricId, handle, sampleTime));
                     } else {
-                        numericUpdates.put(
-                                handle,
-                                numericSample(numericUpdates.get(ov), observed.getValue().floatValue(), metricId, handle,
+                        putNumericUpdate(ov, handle, 
+                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), metricId, handle,
                                         sampleTime));
                     }
                 } else {
@@ -668,11 +663,29 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 return forObservedValue.get(handle);
             }
         }
+        private final InstanceHolder<ice.Numeric> getNumericUpdate(ObservedValue ov, int handle) {
+            Map<Integer, InstanceHolder<ice.Numeric>> forObservedValue = numericUpdates.get(ov);
+            if(null == forObservedValue) {
+                return null;
+            } else {
+                return forObservedValue.get(handle);
+            }            
+        }
+        
         private final void putSampleArrayUpdate(ObservedValue ov, int handle, InstanceHolder<SampleArray> value) {
             Map<Integer, InstanceHolder<SampleArray>> forObservedValue = sampleArrayUpdates.get(ov);
             if(null == forObservedValue) {
                 forObservedValue = new HashMap<Integer, InstanceHolder<SampleArray>>();
                 sampleArrayUpdates.put(ov, forObservedValue);
+            }
+            forObservedValue.put(handle, value);
+        }
+
+        private final void putNumericUpdate(ObservedValue ov, int handle, InstanceHolder<ice.Numeric> value) {
+            Map<Integer, InstanceHolder<ice.Numeric>> forObservedValue = numericUpdates.get(ov);
+            if(null == forObservedValue) {
+                forObservedValue = new HashMap<Integer, InstanceHolder<ice.Numeric>>();
+                numericUpdates.put(ov, forObservedValue);
             }
             forObservedValue.put(handle, value);
         }
@@ -702,9 +715,28 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         }
 
                         int cnt = sas.getArraySize();
+                        int cnt_sa = v.getLength()/(sas.getSampleSize()/Byte.SIZE);
+                        
+                        if(cnt_sa < cnt) {
+                        	log.info("Ignoring insufficient data ("+cnt_sa+") in the samplearray observation when " + cnt + " expected for " + ov + " " + handle + " v.getLength()="+v.getLength() + " sampleSize="+sas.getSampleSize());
+                        	return;
+                        } else {
+                        	if(cnt < cnt_sa) { 
+                        		log.info("Expanding to accomodate " + cnt_sa + " samples where only " + cnt + " were expected");
+                        		w.setArraySize(cnt_sa);
+                        		cnt = cnt_sa;
+                        	}
+                        	if(w.getArraySize()<cnt) {
+                        		log.info("Expanding to accomodate " + cnt + " samples where " + w.getArraySize() + " were expected");
+                        		w.setArraySize(cnt);
+                        	}
+                        	
                         for (int i = 0; i < cnt; i++) {
                             w.applyValue(i, bytes);
                         }
+                        }
+                        
+                        
                         long tm = clockOffset + time.toMilliseconds();
                         sampleTime.sec = (int) (tm / 1000L);
                         sampleTime.nanosec = (int) ((tm % 1000L) * 1000000L);
@@ -750,7 +782,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     protected final Map<ObservedValue, Label> numericLabels = new HashMap<ObservedValue, Label>();
     protected final Map<ObservedValue, Label> sampleArrayLabels = new HashMap<ObservedValue, Label>();
 
-    protected final Map<Integer, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Integer, InstanceHolder<ice.Numeric>>();
+    protected final Map<ObservedValue, Map<Integer, InstanceHolder<ice.Numeric>>> numericUpdates = new HashMap<ObservedValue, Map<Integer, InstanceHolder<ice.Numeric>>>();
     protected final Map<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>> sampleArrayUpdates = new HashMap<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>>();
     protected final Map<ObservedValue, Map<Integer, MySampleArray>> mySampleArrays = new HashMap<ObservedValue, Map<Integer, MySampleArray>>();
 
@@ -889,9 +921,26 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         public void applyValue(int sampleNumber, short[] values) {
             int value = 0;
             for (int i = 0; i < sampleSize; i++) {
-                value |= (mask[i] & values[sampleNumber * sampleSize + i]) << shift[i];
+            	int idx = sampleNumber * sampleSize + i;
+            	if(idx >= values.length) {
+            		log.warn("Cannot locate index " + idx + " where values.length="+values.length+" sampleSize="+sampleSize+" sampleNumber="+sampleNumber+" i="+i);
+            	} else {
+            		if(i >= mask.length) {
+            			log.warn("Cannot access i="+i+" where mask.length="+mask.length);
+            		} else {
+            			if(i>=shift.length) {
+            				log.warn("Cannot access i="+i+" where shift.length="+shift.length);
+            			} else {
+            				value |= (mask[i] & values[idx]) << shift[i];
+            			}
             }
+            	}
+            }
+            if(sampleNumber>=numbers.size()) {
+            	log.warn("Received sampleNumber="+sampleNumber+" where expected size was "+numbers.size());
+            } else {
             numbers.set(sampleNumber, value);
+        }
         }
 
         public static final int createMask(int prefix) {
@@ -943,20 +992,25 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             }
         }
 
+        public int getArraySize() {
+        	return numbers.size();
+        }
+        
         public void setArraySize(int size) {
             if (size != numbers.size()) {
                 while (numbers.size() < size) {
                     numbers.add(0);
                 }
+                while(numbers.size() > size) {
+                	numbers.remove(0);
+                }
             }
         }
 
         public void setSampleArraySpecification(SampleArraySpecification sas) {
-            this.sampleSize = (short) (sas.getSampleSize() / Byte.SIZE);
-            this.significantBits = sas.getSignificantBits();
-            while (numbers.size() < sas.getArraySize()) {
-                numbers.add(0);
-            }
+            setSampleSize(sas.getSampleSize());
+            setSignificantBits(sas.getSignificantBits());
+            setArraySize(sas.getArraySize());
             buildMaskAndShift();
         }
     }
