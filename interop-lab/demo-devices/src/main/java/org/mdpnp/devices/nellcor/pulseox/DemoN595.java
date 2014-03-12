@@ -30,43 +30,53 @@ public class DemoN595 extends AbstractSerialDevice {
     private InstanceHolder<ice.Numeric> pulseUpdate;
     private InstanceHolder<ice.Numeric> spo2Update;
 
-//	private final MutableNumericUpdate pulseUpperUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE_UPPER);
-//	private final MutableNumericUpdate pulseLowerUpdate = new MutableNumericUpdateImpl(PulseOximeter.PULSE_LOWER);
-//	private final MutableNumericUpdate spo2UpperUpdate = new MutableNumericUpdateImpl(PulseOximeter.SPO2_UPPER);
-//	private final MutableNumericUpdate spo2LowerUpdate = new MutableNumericUpdateImpl(PulseOximeter.SPO2_LOWER);
+    // private final MutableNumericUpdate pulseUpperUpdate = new
+    // MutableNumericUpdateImpl(PulseOximeter.PULSE_UPPER);
+    // private final MutableNumericUpdate pulseLowerUpdate = new
+    // MutableNumericUpdateImpl(PulseOximeter.PULSE_LOWER);
+    // private final MutableNumericUpdate spo2UpperUpdate = new
+    // MutableNumericUpdateImpl(PulseOximeter.SPO2_UPPER);
+    // private final MutableNumericUpdate spo2LowerUpdate = new
+    // MutableNumericUpdateImpl(PulseOximeter.SPO2_LOWER);
 
     private class MyNellcorN595 extends NellcorN595 {
         public MyNellcorN595() throws NoSuchFieldException, SecurityException, IOException {
             super();
         }
 
-        private final Time_t sampleTime = new Time_t(0,0);
+        private final Time_t sampleTime = new Time_t(0, 0);
+
         @Override
         public void firePulseOximeter() {
             long tm = getTimestamp().getTime();
-            sampleTime.sec = (int)(tm / 1000L);
-            sampleTime.nanosec = (int)(tm % 1000L * 1000000L);
+            sampleTime.sec = (int) (tm / 1000L);
+            sampleTime.nanosec = (int) (tm % 1000L * 1000000L);
             pulseUpdate = numericSample(pulseUpdate, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, sampleTime);
             spo2Update = numericSample(spo2Update, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, sampleTime);
         }
+
         @Override
         public void fireAlarmPulseOximeter() {
-//			pulseLowerUpdate.set(getPRLower(), getTimestamp());
-//			pulseUpperUpdate.set(getPRUpper(), getTimestamp());
-//			spo2LowerUpdate.set(getSpO2Lower(), getTimestamp());
-//			spo2UpperUpdate.set(getSpO2Upper(), getTimestamp());
-//			gateway.update(pulseLowerUpdate, pulseUpperUpdate, spo2LowerUpdate, spo2UpperUpdate);
+            // pulseLowerUpdate.set(getPRLower(), getTimestamp());
+            // pulseUpperUpdate.set(getPRUpper(), getTimestamp());
+            // spo2LowerUpdate.set(getSpO2Lower(), getTimestamp());
+            // spo2UpperUpdate.set(getSpO2Upper(), getTimestamp());
+            // gateway.update(pulseLowerUpdate, pulseUpperUpdate,
+            // spo2LowerUpdate, spo2UpperUpdate);
         }
+
         @Override
         public void fireDevice() {
             reportConnected();
             writeDeviceIdentity();
 
         }
+
         @Override
         protected void setName(String name) {
             deviceIdentity.model = name;
         }
+
         @Override
         protected void setGuid(String guid) {
             deviceIdentity.serial_number = guid;
@@ -75,6 +85,7 @@ public class DemoN595 extends AbstractSerialDevice {
 
     private final MyNellcorN595 fieldDelegate;
     private OutputStream outputStream;
+
     @Override
     protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
         this.outputStream = outputStream;
@@ -82,16 +93,14 @@ public class DemoN595 extends AbstractSerialDevice {
         fieldDelegate.run();
     }
 
-
-    private static final byte[] enterInteractiveMode = new byte[] {0x03, 0x03};
-    private static final byte[] dumpInstrumentInfo = new byte[] {0x31, 0x0D, 0x0A};
-    private static final byte[] exitInteractiveMode = new byte[] {0x30, 0x0D, 0x0A};
-
+    private static final byte[] enterInteractiveMode = new byte[] { 0x03, 0x03 };
+    private static final byte[] dumpInstrumentInfo = new byte[] { 0x31, 0x0D, 0x0A };
+    private static final byte[] exitInteractiveMode = new byte[] { 0x30, 0x0D, 0x0A };
 
     @Override
     protected void doInitCommands() throws IOException {
         OutputStream outputStream = this.outputStream;
-        if(null != outputStream) {
+        if (null != outputStream) {
             outputStream.write(enterInteractiveMode);
             outputStream.flush();
             outputStream.write(dumpInstrumentInfo);
@@ -100,8 +109,6 @@ public class DemoN595 extends AbstractSerialDevice {
             outputStream.flush();
         }
     }
-
-
 
     public DemoN595(int domainId, EventLoop eventLoop) throws NoSuchFieldException, SecurityException, IOException {
         super(domainId, eventLoop);
@@ -130,10 +137,11 @@ public class DemoN595 extends AbstractSerialDevice {
 
     @Override
     public SerialProvider getSerialProvider() {
-        SerialProvider serialProvider =  super.getSerialProvider();
+        SerialProvider serialProvider = super.getSerialProvider();
         serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One);
         return serialProvider;
     }
+
     @Override
     protected String iconResourceName() {
         return "n595.png";

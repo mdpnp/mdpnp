@@ -65,26 +65,26 @@ public class AlertFlags implements Formatable, Parseable {
     @Override
     public java.lang.String toString() {
         StringBuilder sb = new StringBuilder("[");
-        if(isBedsideAudible()) {
+        if (isBedsideAudible()) {
             sb.append("BEDSIDE_AUDIBLE ");
         }
-        if(isCentralAudible()) {
+        if (isCentralAudible()) {
             sb.append("CENTRAL_AUDIBLE ");
         }
-        if(isVisualLatching()) {
+        if (isVisualLatching()) {
             sb.append("VISUAL_LATCHING ");
         }
-        if(isAudibleLatching()) {
+        if (isAudibleLatching()) {
             sb.append("AUDIBLE_LATCHING ");
         }
-        if(isShortYellowExtension()) {
+        if (isShortYellowExtension()) {
             sb.append("SHORT_YELLOW_EXTENSION ");
         }
-        if(isDerived()) {
+        if (isDerived()) {
             sb.append("DERIVED ");
         }
-        if(sb.charAt(sb.length()-1)==' ') {
-            sb.delete(sb.length()-1, sb.length());
+        if (sb.charAt(sb.length() - 1) == ' ') {
+            sb.delete(sb.length() - 1, sb.length());
         }
         sb.append("]");
         return sb.toString();

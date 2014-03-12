@@ -24,6 +24,7 @@ public class SimThermometer extends AbstractSimulatedConnectedDevice {
         protected void receiveTemp1(float temperature1) {
             SimThermometer.this.temperature1 = numericSample(SimThermometer.this.temperature1, temperature1, rosetta.MDC_TEMP_BLD.VALUE, 0, null);
         }
+
         @Override
         protected void receiveTemp2(float temperature2) {
             SimThermometer.this.temperature2 = numericSample(SimThermometer.this.temperature2, temperature2, rosetta.MDC_TEMP_BLD.VALUE, 1, null);
@@ -31,7 +32,6 @@ public class SimThermometer extends AbstractSimulatedConnectedDevice {
     }
 
     private final MySimulatedThermometer thermometer = new MySimulatedThermometer();
-
 
     @Override
     public void connect(String str) {

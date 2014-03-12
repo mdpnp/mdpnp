@@ -30,13 +30,15 @@ import purejavacomm.UnsupportedCommOperationException;
 public class PureJavaCommSerialProvider implements SerialProvider {
 
     static {
-        // nudgepipe allows us to use polling / selecting with an indefinite timeout
-        // by adding an extra file descriptor that gets written to in the "close" case
+        // nudgepipe allows us to use polling / selecting with an indefinite
+        // timeout
+        // by adding an extra file descriptor that gets written to in the
+        // "close" case
         System.setProperty("purejavacomm.usenudgepipe", "true");
     }
 
     private static final int flowControl(SerialSocket.FlowControl flowControl) {
-        switch(flowControl) {
+        switch (flowControl) {
         case Hardware:
             return SerialPort.FLOWCONTROL_RTSCTS_IN | SerialPort.FLOWCONTROL_RTSCTS_OUT;
         case Software:
@@ -54,13 +56,15 @@ public class PureJavaCommSerialProvider implements SerialProvider {
         private final SerialSocket.StopBits stopBits;
         private final SerialSocket.FlowControl flowControl;
 
-        public DefaultSerialSettings(int baud, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits, SerialSocket.FlowControl flowControl) {
+        public DefaultSerialSettings(int baud, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits,
+                SerialSocket.FlowControl flowControl) {
             this.baud = baud;
             this.dataBits = dataBits;
             this.parity = parity;
             this.stopBits = stopBits;
             this.flowControl = flowControl;
         }
+
         public void configurePort(SerialSocket socket) {
             socket.setSerialParams(baud, dataBits, parity, stopBits, flowControl);
         }
@@ -75,14 +79,17 @@ public class PureJavaCommSerialProvider implements SerialProvider {
             this.serialPort = serialPort;
 
         }
+
         @Override
         public InputStream getInputStream() throws IOException {
             return serialPort.getInputStream();
         }
+
         @Override
         public OutputStream getOutputStream() throws IOException {
             return serialPort.getOutputStream();
         }
+
         @Override
         public void close() throws IOException {
             serialPort.close();
@@ -92,10 +99,12 @@ public class PureJavaCommSerialProvider implements SerialProvider {
         public String getPortIdentifier() {
             return portIdentifier;
         }
+
         @Override
-        public void setSerialParams(int baud, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits, SerialSocket.FlowControl flowControl) {
+        public void setSerialParams(int baud, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits,
+                SerialSocket.FlowControl flowControl) {
             int db = 0;
-            switch(dataBits) {
+            switch (dataBits) {
             case Eight:
                 db = SerialPort.DATABITS_8;
                 break;
@@ -104,7 +113,7 @@ public class PureJavaCommSerialProvider implements SerialProvider {
                 break;
             }
             int p = 0;
-            switch(parity) {
+            switch (parity) {
             case None:
                 p = SerialPort.PARITY_NONE;
                 break;
@@ -116,7 +125,7 @@ public class PureJavaCommSerialProvider implements SerialProvider {
                 break;
             }
             int sb = 0;
-            switch(stopBits) {
+            switch (stopBits) {
             case One:
                 sb = SerialPort.STOPBITS_1;
                 break;
@@ -141,19 +150,21 @@ public class PureJavaCommSerialProvider implements SerialProvider {
     public List<String> getPortNames() {
         List<String> list = new ArrayList<String>();
         Enumeration<?> e = purejavacomm.CommPortIdentifier.getPortIdentifiers();
-        while(e.hasMoreElements()) {
+        while (e.hasMoreElements()) {
             Object o = e.nextElement();
-            if(o instanceof purejavacomm.CommPortIdentifier) {
-                list.add( ((purejavacomm.CommPortIdentifier)o).getName() );
+            if (o instanceof purejavacomm.CommPortIdentifier) {
+                list.add(((purejavacomm.CommPortIdentifier) o).getName());
             }
         }
         Collections.sort(list);
         return list;
     }
 
-    private DefaultSerialSettings defaultSettings = new DefaultSerialSettings(9600, SerialSocket.DataBits.Eight, SerialSocket.Parity.None, SerialSocket.StopBits.One, SerialSocket.FlowControl.None);
+    private DefaultSerialSettings defaultSettings = new DefaultSerialSettings(9600, SerialSocket.DataBits.Eight, SerialSocket.Parity.None,
+            SerialSocket.StopBits.One, SerialSocket.FlowControl.None);
 
-    public void setDefaultSerialSettings(int baud, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits, SerialSocket.FlowControl flowControl) {
+    public void setDefaultSerialSettings(int baud, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits,
+            SerialSocket.FlowControl flowControl) {
         defaultSettings = new DefaultSerialSettings(baud, dataBits, parity, stopBits, flowControl);
     }
 
@@ -177,10 +188,10 @@ public class PureJavaCommSerialProvider implements SerialProvider {
         try {
             // getPortIdentifiers does some initialization that we desire
             Enumeration<?> e = CommPortIdentifier.getPortIdentifiers();
-            while(e.hasMoreElements()) {
+            while (e.hasMoreElements()) {
                 CommPortIdentifier cpi = (CommPortIdentifier) e.nextElement();
-                if(cpi.getName().equals(portIdentifier)) {
-                    SerialPort serialPort = (SerialPort) cpi.open("", Long.MAX_VALUE==timeout?Integer.MAX_VALUE:(int)timeout);
+                if (cpi.getName().equals(portIdentifier)) {
+                    SerialPort serialPort = (SerialPort) cpi.open("", Long.MAX_VALUE == timeout ? Integer.MAX_VALUE : (int) timeout);
                     serialPort.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
                     SerialSocket socket = new SocketImpl(serialPort, portIdentifier);
                     doConfigurePort(socket);

@@ -21,11 +21,15 @@ import org.mdpnp.devices.philips.intellivue.data.OIDType;
 import org.mdpnp.devices.philips.intellivue.dataexport.ModifyOperator;
 
 public interface ErrorDetailSetList extends ErrorDetail {
-	interface SetError extends Parseable, Formatable {
-		ErrorStatus getErrorStatus();
-		ModifyOperator getModifyOperator();
-		OIDType getOid();
-	};
-	ManagedObjectIdentifier getManagedObject();
-	List<SetError> getList();
+    interface SetError extends Parseable, Formatable {
+        ErrorStatus getErrorStatus();
+
+        ModifyOperator getModifyOperator();
+
+        OIDType getOid();
+    };
+
+    ManagedObjectIdentifier getManagedObject();
+
+    List<SetError> getList();
 }

@@ -37,7 +37,7 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
     }
 
     private AttributeValueAssertion newAVA() {
-        if(recycle.isEmpty()) {
+        if (recycle.isEmpty()) {
             return new AttributeValueAssertion();
         } else {
             return recycle.remove(0);
@@ -45,8 +45,8 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
     }
 
     public void reset() {
-        for(Formatable f : list) {
-            if(f instanceof AttributeValueAssertion) {
+        for (Formatable f : list) {
+            if (f instanceof AttributeValueAssertion) {
                 recycle.add((AttributeValueAssertion) f);
             }
         }
@@ -58,8 +58,6 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
     public void format(ByteBuffer bb) {
         Util.PrefixLengthShort.write(bb, list);
     }
-
-
 
     @Override
     public void parse(ByteBuffer bb) {
@@ -73,8 +71,7 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
     private void parse(ByteBuffer bb, boolean clear) {
         Util.PrefixLengthShort.read(bb, list, clear, this);
 
-
-        for(Attribute<?> a : list) {
+        for (Attribute<?> a : list) {
             map.put(a.getOid(), a);
         }
 
@@ -84,23 +81,22 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
         list.add(a);
         map.put(type, a);
 
-
         // TODO this is ugly
-//		ByteBuffer bb = ByteBuffer.allocate(5000);
-//		bb.order(ByteOrder.BIG_ENDIAN);
-//		f.format(bb);
-//		bb.flip();
-//		byte[] buf = new byte[bb.remaining()];
-//		bb.get(buf);
-//		add(type, buf);
+        // ByteBuffer bb = ByteBuffer.allocate(5000);
+        // bb.order(ByteOrder.BIG_ENDIAN);
+        // f.format(bb);
+        // bb.flip();
+        // byte[] buf = new byte[bb.remaining()];
+        // bb.get(buf);
+        // add(type, buf);
     }
 
     public boolean remove(OIDType type) {
         Attribute<?> a = map.remove(type);
-        if(null != a) {
+        if (null != a) {
             list.remove(a);
-            if(a instanceof AttributeValueAssertion) {
-                recycle.add((AttributeValueAssertion)a);
+            if (a instanceof AttributeValueAssertion) {
+                recycle.add((AttributeValueAssertion) a);
             }
             return true;
         } else {
@@ -117,7 +113,7 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
     @SuppressWarnings("unchecked")
     public <T extends Value> Attribute<T> getAttribute(OIDType oid, Class<T> valueClass, Attribute<T> attr) {
         Attribute<?> a = get(oid);
-        if(a != null && valueClass.isInstance(a.getValue())) {
+        if (a != null && valueClass.isInstance(a.getValue())) {
             return (Attribute<T>) a;
         } else {
             attr = null == attr ? AttributeFactory.getAttribute(oid, valueClass) : attr;
@@ -131,9 +127,8 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
 
     @SuppressWarnings("unchecked")
     public <T extends Value> Attribute<T> getAttribute(Attribute<T> attr) {
-        return getAttribute(attr.getOid(), (Class<T>)attr.getValue().getClass(), attr);
+        return getAttribute(attr.getOid(), (Class<T>) attr.getValue().getClass(), attr);
     }
-
 
     public Attribute<?> get(OIDType type) {
         return map.get(type);
@@ -145,14 +140,14 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
 
     public boolean get(OIDType type, Attribute<?> p) {
         Attribute<?> a = map.get(type);
-        if(a == null) {
+        if (a == null) {
             return false;
-        } else if(a instanceof AttributeValueAssertion) {
-            if(p == null) {
+        } else if (a instanceof AttributeValueAssertion) {
+            if (p == null) {
                 return false;
             } else {
                 int idx = list.indexOf(a);
-                ByteBuffer bb = ByteBuffer.wrap(((AttributeValueAssertion)a).getValue().getArray());
+                ByteBuffer bb = ByteBuffer.wrap(((AttributeValueAssertion) a).getValue().getArray());
                 bb.order(ByteOrder.BIG_ENDIAN);
                 p.parse(bb);
                 list.set(idx, p);
@@ -160,7 +155,7 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
                 recycle.add((AttributeValueAssertion) a);
                 return true;
             }
-        } else if(a.getValue() instanceof ByteArray) {
+        } else if (a.getValue() instanceof ByteArray) {
             int idx = list.indexOf(a);
             ByteArray ba = (ByteArray) a.getValue();
             p.parse(ByteBuffer.wrap(ba.getArray()).order(ByteOrder.BIG_ENDIAN));
@@ -191,6 +186,7 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
     public Collection<Attribute<?>> getList() {
         return list;
     }
+
     public Map<OIDType, Attribute<?>> getMap() {
         return map;
     }
@@ -198,16 +194,16 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
     @Override
     public java.lang.String toString() {
         StringBuilder sb = new StringBuilder("{");
-        for(Attribute<?> a : list) {
-            if(null == a) {
+        for (Attribute<?> a : list) {
+            if (null == a) {
                 sb.append(a).append(",");
             } else {
-                if(a instanceof AttributeValueAssertion) {
+                if (a instanceof AttributeValueAssertion) {
                     Class<?> cls = AttributeFactory.valueType(a.getOid());
-                    if(!ByteArray.class.equals(cls)) {
+                    if (!ByteArray.class.equals(cls)) {
                         Attribute<?> _a = AttributeFactory.getAttribute(a.getOid());
-                        if(null != _a) {
-                            if(get(_a)) {
+                        if (null != _a) {
+                            if (get(_a)) {
                                 a = _a;
                             }
                         }
@@ -218,13 +214,11 @@ public class AttributeValueList implements Parseable, Formatable, Util.PrefixLen
                 sb.append(",");
             }
         }
-        if(sb.length() > 1) {
+        if (sb.length() > 1) {
             sb.delete(sb.length() - 1, sb.length());
         }
         sb.append("}");
         return sb.toString();
     }
-
-
 
 }

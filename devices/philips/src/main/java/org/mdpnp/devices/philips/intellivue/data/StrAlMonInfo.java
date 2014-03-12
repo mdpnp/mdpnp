@@ -35,6 +35,7 @@ public class StrAlMonInfo extends AlMonInfo {
 
     @Override
     public java.lang.String toString() {
-        return "[al_inst_no="+getAlInstNo()+",al_text="+getAlText()+",priority="+getPriority()+",flags="+getFlags()+",string="+string+"]";
+        return "[al_inst_no=" + getAlInstNo() + ",al_text=" + getAlText() + ",priority=" + getPriority() + ",flags=" + getFlags() + ",string="
+                + string + "]";
     }
 }

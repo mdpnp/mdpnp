@@ -39,8 +39,6 @@ import org.slf4j.LoggerFactory;
 
 public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> implements GlobalSimulationObjectiveListener {
 
-
-
     private final static Logger log = LoggerFactory.getLogger(DemoProsim68.class);
 
     private class MyFlukeProSim8 extends FlukeProSim8 {
@@ -51,7 +49,7 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
 
         @Override
         public void receiveString(String line) {
-            log.debug("Received:"+line);
+            log.debug("Received:" + line);
         }
     }
 
@@ -77,14 +75,16 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
     private ScheduledFuture<?> linkIsActive;
 
     public SerialProvider getSerialProvider() {
-        SerialProvider serialProvider =  super.getSerialProvider();
+        SerialProvider serialProvider = super.getSerialProvider();
         serialProvider.setDefaultSerialSettings(115200, DataBits.Eight, Parity.None, StopBits.One, FlowControl.Hardware);
         return serialProvider;
     }
+
     @Override
     protected FlukeProSim8 buildDelegate(InputStream in, OutputStream out) {
         return new MyFlukeProSim8(in, out);
     }
+
     @Override
     protected boolean delegateReceive(FlukeProSim8 delegate) throws IOException {
         delegate.receiveCommand();
@@ -94,7 +94,7 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
 
     protected void pollTime() {
         try {
-            if(ice.ConnectionState.Connected.equals(getState())) {
+            if (ice.ConnectionState.Connected.equals(getState())) {
                 Date date = getDelegate().getRealTimeClock();
             }
         } catch (IOException e) {
@@ -108,41 +108,41 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
     protected void doInitCommands() throws IOException {
         log.debug("Ident");
         String identifier = getDelegate().ident();
-        if(null == identifier) {
+        if (null == identifier) {
             return;
         }
         String s[] = identifier.split(",");
         deviceIdentity.model = s[0];
         writeDeviceIdentity();
 
-//        log.debug("localModel");
-//        getDelegate().localMode();
+        // log.debug("localModel");
+        // getDelegate().localMode();
         log.debug("validationOn");
-        if(null == getDelegate().validationOn()) {
+        if (null == getDelegate().validationOn()) {
             return;
         }
 
-//        log.debug("Press SpO2 key");
-//        getDelegate().sendKey(KeyCode.SpO2, 100);
+        // log.debug("Press SpO2 key");
+        // getDelegate().sendKey(KeyCode.SpO2, 100);
         log.debug("Remote mode");
-        if(null == getDelegate().remoteMode()) {
+        if (null == getDelegate().remoteMode()) {
             return;
         }
 
-//        try {
-//            log.debug("GETRTC="+getDelegate().getRealTimeClock());
-//        } catch (ParseException e) {
-//            e.printStackTrace();
-//        }
-//
-//        log.debug("SETRTC="+getDelegate().setRealTimeClock(new Date()));
-//
-//
-//        try {
-//            log.debug("GETRTC="+getDelegate().getRealTimeClock());
-//        } catch (ParseException e) {
-//            e.printStackTrace();
-//        }
+        // try {
+        // log.debug("GETRTC="+getDelegate().getRealTimeClock());
+        // } catch (ParseException e) {
+        // e.printStackTrace();
+        // }
+        //
+        // log.debug("SETRTC="+getDelegate().setRealTimeClock(new Date()));
+        //
+        //
+        // try {
+        // log.debug("GETRTC="+getDelegate().getRealTimeClock());
+        // } catch (ParseException e) {
+        // e.printStackTrace();
+        // }
         reportConnected();
         super.doInitCommands();
     }
@@ -162,15 +162,13 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
         return 1000L;
     }
 
-
-
     @Override
     public void disconnect() {
         boolean shouldSend = false;
-        synchronized(stateMachine) {
+        synchronized (stateMachine) {
             shouldSend = ice.ConnectionState.Connected.equals(getState());
         }
-        if(shouldSend) {
+        if (shouldSend) {
             try {
                 getDelegate().validationOff();
                 log.debug("Validation Off");
@@ -198,15 +196,16 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
     protected String iconResourceName() {
         return "prosim8.png";
     }
+
     private final void setInvasive() throws IOException {
-        if(null != invasiveSystolic && null != invasiveDiastolic) {
+        if (null != invasiveSystolic && null != invasiveDiastolic) {
             getDelegate().invasiveBloodPressureDynamic(1, invasiveSystolic, invasiveDiastolic);
             getDelegate().invasiveBloodPressureWave(1, Wave.Arterial);
         }
     }
 
     private final void setNoninvasive() throws IOException {
-        if(null != noninvasiveSystolic && null != noninvasiveDiastolic) {
+        if (null != noninvasiveSystolic && null != noninvasiveDiastolic) {
             getDelegate().nonInvasiveBloodPressureDynamic(noninvasiveSystolic, noninvasiveDiastolic);
         }
     }
@@ -214,22 +213,22 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
     @Override
     public void simulatedNumeric(GlobalSimulationObjective gso) {
         try {
-            if(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(gso.metric_id.userData)) {
+            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(gso.metric_id.userData)) {
                 getDelegate().normalSinusRhythmAdult((int) gso.value);
-            } else if(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(gso.metric_id.userData)) {
+            } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(gso.metric_id.userData)) {
                 getDelegate().saturation((int) gso.value);
-            } else if(rosetta.MDC_RESP_RATE.VALUE.equals(gso.metric_id.userData)) {
-                getDelegate().respirationRate((int)gso.value);
-            } else if(rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE.equals(gso.metric_id.userData)) {
+            } else if (rosetta.MDC_RESP_RATE.VALUE.equals(gso.metric_id.userData)) {
+                getDelegate().respirationRate((int) gso.value);
+            } else if (rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE.equals(gso.metric_id.userData)) {
                 invasiveDiastolic = (int) gso.value;
                 setInvasive();
-            } else if(rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE.equals(gso.metric_id.userData)) {
+            } else if (rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE.equals(gso.metric_id.userData)) {
                 invasiveSystolic = (int) gso.value;
                 setInvasive();
-            } else if(rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE.equals(gso.metric_id.userData)) {
+            } else if (rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE.equals(gso.metric_id.userData)) {
                 noninvasiveDiastolic = (int) gso.value;
                 setNoninvasive();
-            } else if(rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE.equals(gso.metric_id.userData)) {
+            } else if (rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE.equals(gso.metric_id.userData)) {
                 noninvasiveSystolic = (int) gso.value;
                 setNoninvasive();
             }

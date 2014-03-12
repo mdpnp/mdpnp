@@ -34,10 +34,9 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
     private final MySimulatedPulseOximeter pulseox[];
 
-
     @Override
     public void connect(String str) {
-        for(int i = 0; i < pulseox.length; i++) {
+        for (int i = 0; i < pulseox.length; i++) {
             pulseox[i].connect(executor);
         }
         super.connect(str);
@@ -45,7 +44,7 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
     @Override
     public void disconnect() {
-        for(int i = 0; i < pulseox.length; i++) {
+        for (int i = 0; i < pulseox.length; i++) {
             pulseox[i].disconnect();
         }
         super.disconnect();
@@ -57,12 +56,10 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
     public MultiSimPulseOximeter(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
-
-
         this.pulseox = new MySimulatedPulseOximeter[N];
         this.pleth = new InstanceHolder[N];
 
-        for(int i = 0; i < pleth.length; i++) {
+        for (int i = 0; i < pleth.length; i++) {
             this.pulseox[i] = new MySimulatedPulseOximeter(i);
             pleth[i] = createSampleArrayInstance(rosetta.MDC_PULS_OXIM_PLETH.VALUE, i);
         }

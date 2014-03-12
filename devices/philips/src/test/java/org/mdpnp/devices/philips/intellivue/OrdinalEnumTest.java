@@ -51,77 +51,55 @@ import org.mdpnp.devices.philips.intellivue.dataexport.error.RemoteError;
 public class OrdinalEnumTest {
     @SuppressWarnings("unchecked")
     @Test
-    public void testEnumValues() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        for(Class<?> cls : shortTypes) {
-            testOrdinalEnumShort((Class<? extends OrdinalEnum.ShortType>)cls);
+    public void testEnumValues() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+            InvocationTargetException {
+        for (Class<?> cls : shortTypes) {
+            testOrdinalEnumShort((Class<? extends OrdinalEnum.ShortType>) cls);
         }
-        for(Class<?> cls : intTypes) {
-            testOrdinalEnumInt((Class<? extends OrdinalEnum.IntType>)cls);
+        for (Class<?> cls : intTypes) {
+            testOrdinalEnumInt((Class<? extends OrdinalEnum.IntType>) cls);
         }
-        for(Class<?> cls : longTypes) {
-            testOrdinalEnumLong((Class<? extends OrdinalEnum.LongType>)cls);
+        for (Class<?> cls : longTypes) {
+            testOrdinalEnumLong((Class<? extends OrdinalEnum.LongType>) cls);
         }
     }
-    
+
     @SuppressWarnings("rawtypes")
-    private static final Class[] intTypes = new Class[] {
-        MetricCategory.class,
-        ApplicationArea.class,
-        AttributeId.class,
-        ComponentId.class,
-        Dimension.class,
-        LineFrequency.class,
-        MDSStatus.class,
-        MetricModality.class,
-        ObjectClass.class,
-        PatientBSAFormula.class,
-        PatientDemographicState.class,
-        PatientPacedMode.class,
-        PatientSex.class,
-        PatientType.class,
-        ProductionSpecificationType.class,
-        SampleArrayFixedValId.class,
-        SimpleColor.class,
-        ErrorStatus.class,
-        RemoteError.class,
-        CommandType.class,
-        ModifyOperator.class,
-        RemoteOperation.class,
-        UnitCode.class,
-        ObservedValue.class,
-        
+    private static final Class[] intTypes = new Class[] { MetricCategory.class, ApplicationArea.class, AttributeId.class, ComponentId.class,
+            Dimension.class, LineFrequency.class, MDSStatus.class, MetricModality.class, ObjectClass.class, PatientBSAFormula.class,
+            PatientDemographicState.class, PatientPacedMode.class, PatientSex.class, PatientType.class, ProductionSpecificationType.class,
+            SampleArrayFixedValId.class, SimpleColor.class, ErrorStatus.class, RemoteError.class, CommandType.class, ModifyOperator.class,
+            RemoteOperation.class, UnitCode.class, ObservedValue.class,
+
     };
     @SuppressWarnings("rawtypes")
-    private static final Class[] shortTypes = new Class[] {
-        AssociationMessageType.class,
-        Language.class,
-        NomPartition.class,
-        RemoteOperationLinkedState.class,
-        
+    private static final Class[] shortTypes = new Class[] { AssociationMessageType.class, Language.class, NomPartition.class,
+            RemoteOperationLinkedState.class,
+
     };
     @SuppressWarnings("rawtypes")
-    private static final Class[] longTypes = new Class[] {
-        Label.class
-    };
-    
-    
-    private <T extends OrdinalEnum.IntType> void testOrdinalEnumInt(Class<T> cls) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    private static final Class[] longTypes = new Class[] { Label.class };
+
+    private <T extends OrdinalEnum.IntType> void testOrdinalEnumInt(Class<T> cls) throws NoSuchMethodException, SecurityException,
+            IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         Method valueOf = cls.getMethod("valueOf", int.class);
-        for(T t : cls.getEnumConstants()) {
+        for (T t : cls.getEnumConstants()) {
             assertEquals(t, valueOf.invoke(null, t.asInt()));
         }
     }
-    
-    private <T extends OrdinalEnum.ShortType> void testOrdinalEnumShort(Class<T> cls) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+
+    private <T extends OrdinalEnum.ShortType> void testOrdinalEnumShort(Class<T> cls) throws NoSuchMethodException, SecurityException,
+            IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         Method valueOf = cls.getMethod("valueOf", short.class);
-        for(T t : cls.getEnumConstants()) {
+        for (T t : cls.getEnumConstants()) {
             assertEquals(t, valueOf.invoke(null, t.asShort()));
         }
     }
-    
-    private <T extends OrdinalEnum.LongType> void testOrdinalEnumLong(Class<T> cls) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+
+    private <T extends OrdinalEnum.LongType> void testOrdinalEnumLong(Class<T> cls) throws NoSuchMethodException, SecurityException,
+            IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         Method valueOf = cls.getMethod("valueOf", long.class);
-        for(T t : cls.getEnumConstants()) {
+        for (T t : cls.getEnumConstants()) {
             assertEquals(t, valueOf.invoke(null, t.asLong()));
         }
     }

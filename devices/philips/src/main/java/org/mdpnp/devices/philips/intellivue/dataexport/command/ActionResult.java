@@ -18,8 +18,11 @@ import org.mdpnp.devices.philips.intellivue.dataexport.DataExportCommand;
 
 public interface ActionResult extends DataExportCommand {
 
-	OIDType getActionType();
-	void setActionType(OIDType type);
-	DataExportAction getAction();
-	void setAction(DataExportAction action);
+    OIDType getActionType();
+
+    void setActionType(OIDType type);
+
+    DataExportAction getAction();
+
+    void setAction(DataExportAction action);
 }

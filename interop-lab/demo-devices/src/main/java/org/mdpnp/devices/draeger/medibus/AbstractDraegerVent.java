@@ -52,36 +52,38 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected Map<Enum<?>, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Enum<?>, InstanceHolder<ice.SampleArray>>();
 
     protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate;
-    
+
     protected long deviceClockOffset = 0L;
     private final ThreadLocal<Time_t> currentTime = new ThreadLocal<Time_t>() {
         protected Time_t initialValue() {
-            return new Time_t(0,0);
+            return new Time_t(0, 0);
         };
     };
-    
+
     protected Time_t currentTime() {
         long now = System.currentTimeMillis() + deviceClockOffset;
         Time_t currentTime = this.currentTime.get();
         long then = currentTime.sec * 1000L + currentTime.nanosec / 1000000L;
-        
-        if(then - now > 0L) {
+
+        if (then - now > 0L) {
             // This happens too routinely to expend the I/O here
-            // tried using the desination_order.source_timestamp_tolerance but that was even too tight
+            // tried using the desination_order.source_timestamp_tolerance but
+            // that was even too tight
             // TODO reconsider how we are deriving a device timestamp
-//            log.warn("Not emitting timestamp="+new Date(now)+" where last timestamp was "+new Date(then));
+            // log.warn("Not emitting timestamp="+new
+            // Date(now)+" where last timestamp was "+new Date(then));
         } else {
             currentTime.sec = (int) (now / 1000L);
             currentTime.nanosec = (int) (now % 1000L * 1000000L);
         }
         return currentTime;
     }
-    
+
     protected InstanceHolder<ice.Numeric> doNumericUpdate(InstanceHolder<ice.Numeric> update, Object value, String metric_id) {
         try {
             // TODO There are weird number formats in medibus .. this will need
             // enhancement
-            
+
             if (value instanceof Number) {
                 return numericSample(update, ((Number) value).floatValue(), metric_id, currentTime());
             } else {
@@ -113,8 +115,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     private final int[] realtimeBufferCount = new int[16];
     private long lastRealtime;
 
-    protected void processRealtime(RTMedibus.RTDataConfig config, int multiplier, int streamIndex, Object code,
-            double value) {
+    protected void processRealtime(RTMedibus.RTDataConfig config, int multiplier, int streamIndex, Object code, double value) {
         lastRealtime = System.currentTimeMillis();
         if (streamIndex >= realtimeBuffer.length) {
             log.warn("Invalid realtime streamIndex=" + streamIndex);
@@ -130,8 +131,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                 if (null != metric_id) {
                     sampleArrayUpdates.put(
                             (Enum<?>) code,
-                            sampleArraySample(sampleArrayUpdates.get(code), realtimeBuffer[streamIndex], (int) (1.0
-                                    * config.interval * multiplier / 1000.0), metric_id, currentTime()));
+                            sampleArraySample(sampleArrayUpdates.get(code), realtimeBuffer[streamIndex],
+                                    (int) (1.0 * config.interval * multiplier / 1000.0), metric_id, currentTime()));
                 } else {
                     log.trace("No nomenclature code for enum code=" + code + " class=" + code.getClass().getName());
                 }
@@ -211,7 +212,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         @Override
         protected void receiveRealtimeConfig(RTDataConfig[] currentRTDataConfig) {
             super.receiveRealtimeConfig(currentRTDataConfig);
-            if(ice.ConnectionState.Connected.equals(getState())) {
+            if (ice.ConnectionState.Connected.equals(getState())) {
                 List<RTTransmit> transmits = new ArrayList<RTTransmit>();
                 for (RealtimeData rd : REQUEST_REALTIME) {
                     RTDataConfig config = currentRTConfig(rd, currentRTDataConfig);
@@ -235,8 +236,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         protected void receiveResponse(byte[] response, int len) {
             super.receiveResponse(response, len);
             Object cmdEcho = Command.fromByteIf(response[0]);
-            if(cmdEcho instanceof Command) {
-                switch((Command)cmdEcho) {
+            if (cmdEcho instanceof Command) {
+                switch ((Command) cmdEcho) {
                 case InitializeComm:
                     initializeCommAcknowledged();
                     break;
@@ -287,8 +288,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
 
         @Override
-        public void receiveDataValue(RTMedibus.RTDataConfig config, int multiplier, int streamIndex,
-                Object realtimeData, double data) {
+        public void receiveDataValue(RTMedibus.RTDataConfig config, int multiplier, int streamIndex, Object realtimeData, double data) {
             processRealtime(config, multiplier, streamIndex, realtimeData, data);
         }
 
@@ -315,8 +315,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     }
 
-    private static final RealtimeData[] REQUEST_REALTIME = new RealtimeData[] { RealtimeData.AirwayPressure,
-            RealtimeData.FlowInspExp, RealtimeData.ExpiratoryCO2mmHg, RealtimeData.O2InspExp };
+    private static final RealtimeData[] REQUEST_REALTIME = new RealtimeData[] { RealtimeData.AirwayPressure, RealtimeData.FlowInspExp,
+            RealtimeData.ExpiratoryCO2mmHg, RealtimeData.O2InspExp };
 
     private long lastDateTime, lastReqDeviceSetting, lastReqMeasuredDataCP1;
 
@@ -326,8 +326,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                 try {
                     RTMedibus medibus = AbstractDraegerVent.this.getDelegate();
                     if ((System.currentTimeMillis() - lastRealtime) >= 10000L) {
-                        log.warn("" + (System.currentTimeMillis() - lastRealtime)
-                                + "ms since realtime data, requesting realtime config");
+                        log.warn("" + (System.currentTimeMillis() - lastRealtime) + "ms since realtime data, requesting realtime config");
                         // Starts a process by requesting the realtime
                         // configuration
                         // see receiveRealtimeConfig(...)
@@ -337,9 +336,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     }
                     long now = System.currentTimeMillis();
 
-                    if(now - lastDateTime >= 10000L ||
-                       now - lastReqDeviceSetting >= 10000L ||
-                       now - lastReqMeasuredDataCP1 >= 10000L) {
+                    if (now - lastDateTime >= 10000L || now - lastReqDeviceSetting >= 10000L || now - lastReqMeasuredDataCP1 >= 10000L) {
                         log.debug("Slow data too old, requesting DateTime");
                         lastDateTime = lastReqDeviceSetting = lastReqMeasuredDataCP1 = now;
                         medibus.sendCommand(Command.ReqDateTime);
@@ -347,8 +344,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     }
 
                     // Data is sparse in standby mode; trying to keep alive
-                    // TODO need to externalize all these timing settings eventually
-                    if( (now - timeAwareInputStream.getLastReadTime()) >= (getMaximumQuietTime()/2L) ) {
+                    // TODO need to externalize all these timing settings
+                    // eventually
+                    if ((now - timeAwareInputStream.getLastReadTime()) >= (getMaximumQuietTime() / 2L)) {
                         medibus.sendCommand(Command.NoOperation);
                         return;
                     }
@@ -389,8 +387,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected static void loadMap(Map<Enum<?>, String> numerics, Map<Enum<?>, String> waveforms) {
 
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    AbstractDraegerVent.class.getResourceAsStream("draeger.map")));
+            BufferedReader br = new BufferedReader(new InputStreamReader(AbstractDraegerVent.class.getResourceAsStream("draeger.map")));
             String line = null;
             String draegerPrefix = MeasuredDataCP1.class.getPackage().getName() + ".";
 
@@ -404,8 +401,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     } else {
                         String c[] = v[0].split("\\.");
                         @SuppressWarnings({ "unchecked", "rawtypes" })
-                        Enum<?> draeger = (Enum<?>) Enum.valueOf(
-                                (Class<? extends Enum>) Class.forName(draegerPrefix + c[0]), c[1]);
+                        Enum<?> draeger = (Enum<?>) Enum.valueOf((Class<? extends Enum>) Class.forName(draegerPrefix + c[0]), c[1]);
                         String tag = getValue(v[1]);
                         if (tag == null) {
                             log.warn("cannot find value for " + v[1]);
@@ -452,8 +448,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     private synchronized void startRequestSlowData() {
         if (null == requestSlowData) {
-            requestSlowData = executor
-                    .scheduleWithFixedDelay(new RequestSlowData(), 0L, 250L, TimeUnit.MILLISECONDS);
+            requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 0L, 250L, TimeUnit.MILLISECONDS);
             log.trace("Scheduled slow data request task");
         } else {
             log.trace("Slow data request already scheduled");
@@ -523,7 +518,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     protected void realtimeTransmitAcknowledged() {
-        if(ice.ConnectionState.Connected.equals(getState())) {
+        if (ice.ConnectionState.Connected.equals(getState())) {
             RTTransmit[] lastTransmitted = getDelegate().getLastTransmitted();
             int[] traces = new int[lastTransmitted.length];
             for (int i = 0; i < traces.length; i++) {

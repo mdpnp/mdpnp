@@ -17,7 +17,7 @@ import java.util.Map;
 import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
 public enum ObservedValue implements OrdinalEnum.IntType {
-	   /**
+    /**
      * ECG Unspecific ECG wave
      */
     NOM_ECG_ELEC_POTL(0x0100),
@@ -2526,7 +2526,8 @@ public enum ObservedValue implements OrdinalEnum.IntType {
      */
     NOM_SETT_VENT_PRESS_AWAY_END_EXP_POS_INTERMIT(0xF92C),
     /**
-     * sPlow Setting: part of the Evita 4 Airway Pressure Release Ventilation Mode
+     * sPlow Setting: part of the Evita 4 Airway Pressure Release Ventilation
+     * Mode
      */
     NOM_SETT_VENT_PRESS_AWAY_EXP_APRV(0xF92D),
     /**
@@ -2574,7 +2575,8 @@ public enum ObservedValue implements OrdinalEnum.IntType {
      */
     NOM_SETT_VENT_TIME_PD_EXP(0xF93F),
     /**
-     * sTlow Setting: part of the Evita 4 Airway Pressure Release Ventilation Mode
+     * sTlow Setting: part of the Evita 4 Airway Pressure Release Ventilation
+     * Mode
      */
     NOM_SETT_VENT_TIME_PD_EXP_APRV(0xF940),
     /**
@@ -2582,7 +2584,8 @@ public enum ObservedValue implements OrdinalEnum.IntType {
      */
     NOM_SETT_VENT_TIME_PD_INSP(0xF941),
     /**
-     * sThigh Setting: part of the Evita 4 Airway Pressure Release Ventilation Mode
+     * sThigh Setting: part of the Evita 4 Airway Pressure Release Ventilation
+     * Mode
      */
     NOM_SETT_VENT_TIME_PD_INSP_APRV(0xF942),
     /**
@@ -2788,24 +2791,25 @@ public enum ObservedValue implements OrdinalEnum.IntType {
     /**
      * RSBInm
      */
-    NOM_BREATH_RAPID_SHALLOW_INDEX_NORM(0xF996),
-;
-    
+    NOM_BREATH_RAPID_SHALLOW_INDEX_NORM(0xF996), ;
+
     private final int x;
-    
+
     private ObservedValue(final int x) {
         this.x = x;
     }
-    
+
     private static final Map<Integer, ObservedValue> map = OrdinalEnum.buildInt(ObservedValue.class);
 
     public static final ObservedValue valueOf(int x) {
         return map.get(x);
     }
+
     public final OIDType asOID() {
-    	return OIDType.lookup(asInt());
+        return OIDType.lookup(asInt());
     }
-    public final int asInt()  {
+
+    public final int asInt() {
         return x;
     }
 

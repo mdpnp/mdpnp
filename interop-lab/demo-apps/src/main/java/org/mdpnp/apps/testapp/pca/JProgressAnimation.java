@@ -56,14 +56,14 @@ public class JProgressAnimation extends JComponent implements Runnable {
         switch (e.getID()) {
         case ComponentEvent.COMPONENT_RESIZED:
             getSize(size);
-            if(size.width != 0 && size.height != 0) {
+            if (size.width != 0 && size.height != 0) {
                 BufferedImage newImage = (BufferedImage) createImage(size.width, size.height);
-    
+
                 Graphics g = newImage.createGraphics();
                 if (this.image != null) {
-    
+
                     g.drawImage(this.image, 0, 0, size.width, size.height, this);
-    
+
                 } else {
                     g.setColor(getBackground());
                     g.fillRect(0, 0, size.width, size.height);
@@ -93,8 +93,7 @@ public class JProgressAnimation extends JComponent implements Runnable {
         radiansPerLine = 2.0 * Math.PI / 8.0;
         double offset = 2.0 * Math.PI / 16.0;
         for (int i = 0; i < 8; i++) {
-            octagon.addPoint((int) (LINE_R2 * Math.cos(offset + i * radiansPerLine)),
-                    (int) (LINE_R2 * Math.sin(offset + i * radiansPerLine)));
+            octagon.addPoint((int) (LINE_R2 * Math.cos(offset + i * radiansPerLine)), (int) (LINE_R2 * Math.sin(offset + i * radiansPerLine)));
             innerOctagon.addPoint((int) ((LINE_R2 - 4) * Math.cos(offset + i * radiansPerLine)),
                     (int) ((LINE_R2 - 4) * Math.sin(offset + i * radiansPerLine)));
         }
@@ -113,10 +112,10 @@ public class JProgressAnimation extends JComponent implements Runnable {
 
     public void start() {
         if (null == future) {
-            if(null != image) {
+            if (null != image) {
                 Graphics g = image.createGraphics();
                 g.setColor(getBackground());
-                g.fillRect(0,0,size.width,size.height);
+                g.fillRect(0, 0, size.width, size.height);
                 g.dispose();
             }
             repaint();
@@ -147,9 +146,9 @@ public class JProgressAnimation extends JComponent implements Runnable {
     @Override
     protected void paintComponent(Graphics g_) {
         super.paintComponent(g_);
-        if(image != null) {
+        if (image != null) {
             Graphics g = image.getGraphics();
-    
+
             if (g instanceof Graphics2D) {
                 Graphics2D g2d = (Graphics2D) g;
                 if (null == future) {
@@ -160,7 +159,7 @@ public class JProgressAnimation extends JComponent implements Runnable {
                     g2d.setComposite(AlphaComposite.SrcAtop.derive(.4f));
                     g.fillRect(0, 0, size.width, size.height);
                 }
-    
+
                 g2d.setComposite(AlphaComposite.Src);
                 AffineTransform transform = g2d.getTransform();
                 center.y = size.height / 2;
@@ -170,7 +169,7 @@ public class JProgressAnimation extends JComponent implements Runnable {
                 g2d.scale(radius / SCALE_RADIUS, radius / SCALE_RADIUS);
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                
+
                 if (null == future) {
                     g.setColor(Color.red);
                     g.fillPolygon(octagon);
@@ -183,21 +182,23 @@ public class JProgressAnimation extends JComponent implements Runnable {
                     int height = g.getFontMetrics().getHeight();
                     height *= SCALE_RADIUS / radius;
                     // height is not scaled
-                    g.drawString(stop, -width/2, height / 2);
+                    g.drawString(stop, -width / 2, height / 2);
                 } else {
                     g2d.setColor(Color.green);
-    
+
                     g2d.setStroke(LINE_STROKE);
-    
+
                     // int radius = (int) (0.8 * Math.min(center.x, center.y));
                     // g2d.drawOval( (int)(radius *
-                    // Math.cos(Math.toRadians(positionInDegrees)))-5, (int)(radius
-                    // * Math.sin(Math.toRadians(positionInDegrees)))-5, 10, 10);
+                    // Math.cos(Math.toRadians(positionInDegrees)))-5,
+                    // (int)(radius
+                    // * Math.sin(Math.toRadians(positionInDegrees)))-5, 10,
+                    // 10);
                     g2d.draw(lines[drawLine]);
                 }
                 g2d.setTransform(transform);
             }
-    
+
             g.dispose();
             g_.drawImage(image, 0, 0, this);
         }

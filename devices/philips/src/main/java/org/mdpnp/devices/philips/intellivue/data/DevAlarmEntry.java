@@ -33,31 +33,39 @@ public class DevAlarmEntry implements Value {
     public OIDType getAlSource() {
         return alSource;
     }
+
     public OIDType getAlCode() {
         return alCode;
     }
+
     public AlertType getAlType() {
         return alType;
     }
+
     public AlertState getAlState() {
         return alState;
     }
+
     public ManagedObjectIdentifier getObject() {
         return object;
     }
+
     public PrivateOID getAlertInfoId() {
         return alert_info_id;
     }
+
     public int getLength() {
         return length;
     }
+
     public AlMonInfo getAlMonInfo() {
         return alMonInfo;
     }
 
     @Override
     public java.lang.String toString() {
-        return "[al_source="+alSource+",al_code="+alCode+",al_type="+alType+",al_state="+alState+",object="+object+",alert_info_id="+alert_info_id+",length="+length+",al_mon_info="+alMonInfo+"]";
+        return "[al_source=" + alSource + ",al_code=" + alCode + ",al_type=" + alType + ",al_state=" + alState + ",object=" + object
+                + ",alert_info_id=" + alert_info_id + ",length=" + length + ",al_mon_info=" + alMonInfo + "]";
     }
 
     @Override
@@ -81,21 +89,21 @@ public class DevAlarmEntry implements Value {
         object.parse(bb);
         alert_info_id.parse(bb);
         length = Bits.getUnsignedShort(bb);
-        switch(alert_info_id.getOid()) {
+        switch (alert_info_id.getOid()) {
         case GEN_ALMON_INFO:
-            if(alMonInfo == null || !(alMonInfo instanceof AlMonGenInfo)) {
+            if (alMonInfo == null || !(alMonInfo instanceof AlMonGenInfo)) {
                 this.alMonInfo = new AlMonGenInfo();
             }
             alMonInfo.parse(bb);
             break;
         case STR_ALMON_INFO:
-            if(alMonInfo == null || !(alMonInfo instanceof StrAlMonInfo)) {
+            if (alMonInfo == null || !(alMonInfo instanceof StrAlMonInfo)) {
                 this.alMonInfo = new StrAlMonInfo();
             }
             alMonInfo.parse(bb);
             break;
         default:
-            bb.position(bb.position()+length);
+            bb.position(bb.position() + length);
             break;
         }
     }

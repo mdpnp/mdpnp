@@ -53,17 +53,21 @@ public class ReceiveNumerics implements DataReaderListener {
         ReceiveNumerics receiver = new ReceiveNumerics();
 
         // For testing we use 0
-        // For our ICU devices (Ivy Monitor, Capnograph, etc.) we use 15 ... this is probably the one you want for DC but a way to change it on the fly would be great
+        // For our ICU devices (Ivy Monitor, Capnograph, etc.) we use 15 ...
+        // this is probably the one you want for DC but a way to change it on
+        // the fly would be great
         // For our OR devices (not bring all of them to DC) we use 3
         int domainId = 0;
 
-
-        DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null,  StatusKind.STATUS_MASK_NONE);
+        DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId,
+                DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         ice.NumericTypeSupport.register_type(participant, ice.NumericTypeSupport.get_type_name());
-        Topic topic = participant.create_topic(ice.NumericTopic.VALUE, ice.NumericTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        Topic topic = participant.create_topic(ice.NumericTopic.VALUE, ice.NumericTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT,
+                null, StatusKind.STATUS_MASK_NONE);
 
-        ice.NumericDataReader reader = (NumericDataReader) subscriber.create_datareader_with_profile(topic, QosProfiles.ice_library, QosProfiles.numeric_data, receiver, StatusKind.DATA_AVAILABLE_STATUS);
+        ice.NumericDataReader reader = (NumericDataReader) subscriber.create_datareader_with_profile(topic, QosProfiles.ice_library,
+                QosProfiles.numeric_data, receiver, StatusKind.DATA_AVAILABLE_STATUS);
 
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 
@@ -89,7 +93,6 @@ public class ReceiveNumerics implements DataReaderListener {
 
         DomainParticipantFactory.finalize_instance();
 
-
     }
 
     private final ice.NumericSeq numeric_seq = new ice.NumericSeq();
@@ -100,30 +103,40 @@ public class ReceiveNumerics implements DataReaderListener {
     @Override
     public void on_data_available(DataReader arg0) {
         ice.NumericDataReader reader = (NumericDataReader) arg0;
-        // I tend to loop to make sure the reader is completely drained but I don't think it's strictly necessary
-        for(;;) {
+        // I tend to loop to make sure the reader is completely drained but I
+        // don't think it's strictly necessary
+        for (;;) {
             try {
-                // The shortcut versions of read and take can be confusing so I find myself using the fully expressed ones a lot
-                // "read"ing samples leaves them in the reader (as opposed to take)
-                // There are practical limits on the length of the result but I don't have any limit in mind so I use LENGTH_UNLIMITED
-                // Specifying the NOT_READ_SAMPLE_STATE is important or else we'd keep reading the same samples!
-                // The viewstate refers to this reader's view of the instance (new or not)
-                // The instancestate tells the liveliness of the writers of the instance
-                reader.read(numeric_seq, sampleinfo_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
-                for(int i = 0; i < sampleinfo_seq.size(); i++) {
+                // The shortcut versions of read and take can be confusing so I
+                // find myself using the fully expressed ones a lot
+                // "read"ing samples leaves them in the reader (as opposed to
+                // take)
+                // There are practical limits on the length of the result but I
+                // don't have any limit in mind so I use LENGTH_UNLIMITED
+                // Specifying the NOT_READ_SAMPLE_STATE is important or else
+                // we'd keep reading the same samples!
+                // The viewstate refers to this reader's view of the instance
+                // (new or not)
+                // The instancestate tells the liveliness of the writers of the
+                // instance
+                reader.read(numeric_seq, sampleinfo_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE,
+                        ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                for (int i = 0; i < sampleinfo_seq.size(); i++) {
                     SampleInfo si = (SampleInfo) sampleinfo_seq.get(i);
                     ice.Numeric numeric = (Numeric) numeric_seq.get(i);
-                    if(si.valid_data) {
-                        source_time.setTime(si.source_timestamp.sec*1000L+si.source_timestamp.nanosec/1000000L);
-                        receipt_time.setTime(si.reception_timestamp.sec*1000L+si.source_timestamp.nanosec/1000000L);
-                        System.out.println("Source Time:"+dateFormat.format(source_time)+" Receipt Time:"+dateFormat.format(receipt_time)+" name="+numeric.metric_id+" value="+numeric.value+" udi="+numeric.unique_device_identifier);
+                    if (si.valid_data) {
+                        source_time.setTime(si.source_timestamp.sec * 1000L + si.source_timestamp.nanosec / 1000000L);
+                        receipt_time.setTime(si.reception_timestamp.sec * 1000L + si.source_timestamp.nanosec / 1000000L);
+                        System.out.println("Source Time:" + dateFormat.format(source_time) + " Receipt Time:" + dateFormat.format(receipt_time)
+                                + " name=" + numeric.metric_id + " value=" + numeric.value + " udi=" + numeric.unique_device_identifier);
                     }
                 }
                 // I don't like that they use this to report no more data
-            } catch(RETCODE_NO_DATA noData) {
+            } catch (RETCODE_NO_DATA noData) {
                 break;
             } finally {
-                // important to allow DDS to reuse the resources it lent out to us when we read samples from the reader
+                // important to allow DDS to reuse the resources it lent out to
+                // us when we read samples from the reader
                 reader.return_loan(numeric_seq, sampleinfo_seq);
             }
         }

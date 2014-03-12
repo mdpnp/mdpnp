@@ -44,7 +44,7 @@ import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings( { "serial", "rawtypes", "unchecked" } )
+@SuppressWarnings({ "serial", "rawtypes", "unchecked" })
 public class ConfigurationDialog extends JDialog {
     private final JTextArea welcomeText = new JTextArea(8, 50);
     private final JScrollPane welcomeScroll = new JScrollPane(welcomeText);
@@ -67,9 +67,11 @@ public class ConfigurationDialog extends JDialog {
     public JComboBox getApplications() {
         return applications;
     }
+
     public JLabel getApplicationsLabel() {
         return applicationsLabel;
     }
+
     public JTextField getDomainId() {
         return domainId;
     }
@@ -81,35 +83,38 @@ public class ConfigurationDialog extends JDialog {
     public JButton getQuit() {
         return quit;
     }
+
     public JScrollPane getWelcomeScroll() {
         return welcomeScroll;
     }
+
     public JTextArea getWelcomeText() {
         return welcomeText;
     }
+
     protected void set(Application app, DeviceType deviceType) {
-        switch(app) {
+        switch (app) {
         case ICE_Device_Interface:
             this.deviceType.setVisible(true);
             deviceTypeLabel.setVisible(true);
-            start.setText("Start " +deviceType);
+            start.setText("Start " + deviceType);
             ice.ConnectionType selected = deviceType.getConnectionType();
-            if(ice.ConnectionType.Serial.equals(selected)) {
+            if (ice.ConnectionType.Serial.equals(selected)) {
                 addressLabel.setVisible(true);
                 addressLabel.setText("Serial Port:");
                 addressPanel.setVisible(true);
-                if(null == serialPorts) {
+                if (null == serialPorts) {
                     serialPorts = new JComboBox(SerialProviderFactory.getDefaultProvider().getPortNames().toArray());
                     addressPanel.add(serialPorts, "serial");
                 }
-                if(SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
+                if (SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
                     addressCards.show(addressPanel, "address");
                     addressLabel.setText("IP/Port:");
                 } else {
                     addressCards.show(addressPanel, "serial");
                 }
 
-            } else if(ice.ConnectionType.Network.equals(selected)) {
+            } else if (ice.ConnectionType.Network.equals(selected)) {
                 addressLabel.setVisible(true);
                 addressLabel.setText("IP Address:");
                 addressPanel.setVisible(true);
@@ -139,11 +144,9 @@ public class ConfigurationDialog extends JDialog {
 
     private final static Logger log = LoggerFactory.getLogger(ConfigurationDialog.class);
 
-
-
     private static boolean ddsInit(boolean debug) {
         try {
-            if((Boolean)Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init", boolean.class).invoke(null, debug)) {
+            if ((Boolean) Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init", boolean.class).invoke(null, debug)) {
                 return true;
             } else {
                 throw new Exception("Unable to init");
@@ -167,6 +170,7 @@ public class ConfigurationDialog extends JDialog {
     private final void addLabel(JComponent c, GridBagConstraints gbc) {
         addWithAnchor(c, gbc, GridBagConstraints.EAST, GridBagConstraints.NONE);
     }
+
     private final void addOption(JComponent c, GridBagConstraints gbc) {
         addWithAnchor(c, gbc, GridBagConstraints.WEST, GridBagConstraints.NONE);
     }
@@ -180,31 +184,31 @@ public class ConfigurationDialog extends JDialog {
     }
 
     public ConfigurationDialog(Configuration conf, boolean ddsDebug) {
-        super( (JDialog)null, true);
+        super((JDialog) null, true);
 
         // Why does this occur here and not outside?
-        if(!ddsInit(ddsDebug)) {
+        if (!ddsInit(ddsDebug)) {
             throw new IllegalStateException("DDS not available");
         }
 
-        if(null != conf) {
-            if(null != conf.getApplication()) {
+        if (null != conf) {
+            if (null != conf.getApplication()) {
                 applications.setSelectedItem(conf.getApplication());
             }
-            if(null != conf.getDeviceType()) {
+            if (null != conf.getDeviceType()) {
                 deviceType.setSelectedItem(conf.getDeviceType());
             }
             domainId.setText(Integer.toString(conf.getDomainId()));
 
-            if(null != conf.getApplication() && null != conf.getAddress()) {
-                switch(conf.getApplication()) {
+            if (null != conf.getApplication() && null != conf.getAddress()) {
+                switch (conf.getApplication()) {
                 case ICE_Device_Interface:
-                    if(null != conf.getDeviceType()) {
+                    if (null != conf.getDeviceType()) {
                         ice.ConnectionType connType = conf.getDeviceType().getConnectionType();
-                        if(ice.ConnectionType.Network.equals(connType)) {
+                        if (ice.ConnectionType.Network.equals(connType)) {
                             this.address.setText(conf.getAddress());
-                        } else if(ice.ConnectionType.Serial.equals(connType)) {
-                            if(null == this.serialPorts) {
+                        } else if (ice.ConnectionType.Serial.equals(connType)) {
+                            if (null == this.serialPorts) {
                                 this.serialPorts = new JComboBox(SerialProviderFactory.getDefaultProvider().getPortNames().toArray());
                                 addressPanel.add(serialPorts, "serial");
                             }
@@ -220,23 +224,23 @@ public class ConfigurationDialog extends JDialog {
             }
         }
 
-
         setTitle("MD PnP Demo Apps");
 
         setLayout(new GridBagLayout());
 
         domainId.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(2,0,2,0), 2, 2);
+        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+                new Insets(2, 0, 2, 0), 2, 2);
 
         InputStream is = ConfigurationDialog.class.getResourceAsStream("welcome");
-        if(null != is) {
+        if (null != is) {
             try {
 
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
                 StringBuffer sb = new StringBuffer();
                 String line = null;
-                while(null != (line = br.readLine())) {
+                while (null != (line = br.readLine())) {
                     sb.append(line).append("\n");
                 }
                 br.close();
@@ -246,15 +250,14 @@ public class ConfigurationDialog extends JDialog {
                 welcomeText.setWrapStyleWord(true);
                 welcomeText.setEditable(false);
                 welcomeText.setText(sb.toString());
-                addWithAnchor(welcomeScroll,  gbc, GridBagConstraints.CENTER, GridBagConstraints.BOTH);
+                addWithAnchor(welcomeScroll, gbc, GridBagConstraints.CENTER, GridBagConstraints.BOTH);
                 gbc.gridwidth = 1;
                 gbc.gridheight = 1;
-                gbc.gridy+=4;
+                gbc.gridy += 4;
             } catch (IOException ioe) {
                 log.warn("No welcome text", ioe);
             }
         }
-
 
         gbc.gridx = 0;
         addLabel(applicationsLabel, gbc);
@@ -267,14 +270,12 @@ public class ConfigurationDialog extends JDialog {
         gbc.gridx++;
         addOption(deviceType, gbc);
 
-
         addressPanel.add(address, "address");
         gbc.gridy++;
         gbc.gridx = 0;
         addLabel(addressLabel, gbc);
         gbc.gridx++;
         addOption(addressPanel, gbc);
-
 
         gbc.gridy++;
         gbc.gridx = 0;
@@ -310,23 +311,23 @@ public class ConfigurationDialog extends JDialog {
 
             @Override
             public void itemStateChanged(ItemEvent e) {
-                if(e.getStateChange()==ItemEvent.SELECTED) {
-                    set((Application)e.getItem(), (DeviceType)deviceType.getSelectedItem());
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    set((Application) e.getItem(), (DeviceType) deviceType.getSelectedItem());
                 }
             }
 
         });
 
         deviceType.addItemListener(new ItemListener() {
-           @Override
+            @Override
             public void itemStateChanged(ItemEvent e) {
-               if(e.getStateChange()==ItemEvent.SELECTED) {
-                   set((Application)applications.getSelectedItem(),(DeviceType)e.getItem());
-               }
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    set((Application) applications.getSelectedItem(), (DeviceType) e.getItem());
+                }
             }
         });
 
-        set((Application)applications.getSelectedItem(), (DeviceType)deviceType.getSelectedItem());
+        set((Application) applications.getSelectedItem(), (DeviceType) deviceType.getSelectedItem());
     }
 
     private Configuration lastConf;
@@ -341,13 +342,13 @@ public class ConfigurationDialog extends JDialog {
         setVisible(true);
 
         String address = null;
-        switch((Application)applications.getSelectedItem()) {
+        switch ((Application) applications.getSelectedItem()) {
         case ICE_Device_Interface:
-            ice.ConnectionType selected = ((DeviceType)deviceType.getSelectedItem()).getConnectionType();
-            if(ice.ConnectionType.Network.equals(selected)) {
+            ice.ConnectionType selected = ((DeviceType) deviceType.getSelectedItem()).getConnectionType();
+            if (ice.ConnectionType.Network.equals(selected)) {
                 address = this.address.getText();
-            } else if(ice.ConnectionType.Serial.equals(selected)) {
-                if(SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
+            } else if (ice.ConnectionType.Serial.equals(selected)) {
+                if (SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
                     address = this.address.getText();
                 } else {
                     address = this.serialPorts.getSelectedItem().toString();
@@ -359,7 +360,8 @@ public class ConfigurationDialog extends JDialog {
             break;
 
         }
-        lastConf = new Configuration((Application)applications.getSelectedItem(), Integer.parseInt(domainId.getText()), (DeviceType) deviceType.getSelectedItem(), address);
+        lastConf = new Configuration((Application) applications.getSelectedItem(), Integer.parseInt(domainId.getText()),
+                (DeviceType) deviceType.getSelectedItem(), address);
 
         dispose();
         return quitPressed ? null : lastConf;

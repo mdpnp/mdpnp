@@ -142,8 +142,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 
             // In DDS world continually republishing the same sample is JUST
             // NOISE
-            if (!bid.equals(deviceIdentity.serial_number) || !make.equals(deviceIdentity.manufacturer)
-                    || !model.equals(deviceIdentity.model)) {
+            if (!bid.equals(deviceIdentity.serial_number) || !make.equals(deviceIdentity.manufacturer) || !model.equals(deviceIdentity.model)) {
                 deviceIdentity.serial_number = bid;
                 deviceIdentity.manufacturer = make;
                 deviceIdentity.model = model;
@@ -184,10 +183,8 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
 
     }
 
-    protected static void populateMap(Map<String, String> numerics, Map<String, String> waveforms)
-            throws Exception {
-        BufferedReader br = new BufferedReader(new InputStreamReader(
-                DemoBernoulli.class.getResourceAsStream("bernoulli.map")));
+    protected static void populateMap(Map<String, String> numerics, Map<String, String> waveforms) throws Exception {
+        BufferedReader br = new BufferedReader(new InputStreamReader(DemoBernoulli.class.getResourceAsStream("bernoulli.map")));
         String line = null;
         while (null != (line = br.readLine())) {
             line = line.trim();
@@ -204,14 +201,12 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
                     }
                     if ("W".equals(v[2])) {
                         if (waveforms.containsKey(v[0])) {
-                            throw new RuntimeException("Duplicate values for waveform " + v[0] + " "
-                                    + waveforms.get(v[0]) + " and " + value);
+                            throw new RuntimeException("Duplicate values for waveform " + v[0] + " " + waveforms.get(v[0]) + " and " + value);
                         }
                         waveforms.put(v[0], value);
                     } else if ("N".equals(v[2])) {
                         if (numerics.containsKey(v[0])) {
-                            throw new RuntimeException("Duplicate values for numeric " + v[0] + " "
-                                    + numerics.get(v[0]) + " and " + value);
+                            throw new RuntimeException("Duplicate values for numeric " + v[0] + " " + numerics.get(v[0]) + " and " + value);
                         }
                         numerics.put(v[0], value);
                     } else {

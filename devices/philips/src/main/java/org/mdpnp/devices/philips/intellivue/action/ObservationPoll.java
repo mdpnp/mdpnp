@@ -18,6 +18,7 @@ import org.mdpnp.devices.philips.intellivue.data.AttributeValueList;
 import org.mdpnp.devices.philips.intellivue.data.Handle;
 
 public interface ObservationPoll extends Parseable, Formatable {
-	Handle getHandle();
-	AttributeValueList getAttributes();
+    Handle getHandle();
+
+    AttributeValueList getAttributes();
 }

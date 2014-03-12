@@ -33,21 +33,20 @@ public class DemoSymbiq extends SimInfusionPump {
         deviceIdentity.serial_number = "xxx";
         writeDeviceIdentity();
     }
+
     private static final Logger log = LoggerFactory.getLogger(DemoSymbiq.class);
 
     private Boolean lastStopThePumpWritten = null;
 
-
     @Override
     protected void stopThePump(boolean stopThePump) {
         super.stopThePump(stopThePump);
-        if(null == lastStopThePumpWritten || (stopThePump ^ lastStopThePumpWritten)) {
-
+        if (null == lastStopThePumpWritten || (stopThePump ^ lastStopThePumpWritten)) {
 
             Writer w;
             try {
                 w = new FileWriter(pumpControlFile);
-                if(stopThePump) {
+                if (stopThePump) {
                     w.write("Stop, \n");
                 } else {
                     w.write("Start, 10\n");
@@ -66,6 +65,7 @@ public class DemoSymbiq extends SimInfusionPump {
         super(domainId, eventLoop);
 
     }
+
     @Override
     protected String iconResourceName() {
         return "symbiq.png";

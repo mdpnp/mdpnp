@@ -38,17 +38,16 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
     @Override
     public void connect(String str) {
         ice.ConnectionState state = getState();
-        if(ice.ConnectionState.Connected.equals(state) ||
-           ice.ConnectionState.Connecting.equals(state) ||
-           ice.ConnectionState.Negotiating.equals(state)) {
+        if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Connecting.equals(state)
+                || ice.ConnectionState.Negotiating.equals(state)) {
         } else {
-            if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting, 1000L)) {
+            if (!stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting, 1000L)) {
                 throw new RuntimeException("Unable to enter Connecting State");
             }
-            if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Negotiating, 1000L)) {
+            if (!stateMachine.transitionWhenLegal(ice.ConnectionState.Negotiating, 1000L)) {
                 throw new RuntimeException("Unable to enter Negotiating State");
             }
-            if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Connected, 1000L)) {
+            if (!stateMachine.transitionWhenLegal(ice.ConnectionState.Connected, 1000L)) {
                 throw new RuntimeException("Unable to enter Connected State");
             }
         }
@@ -57,13 +56,12 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
     @Override
     public void disconnect() {
         ice.ConnectionState state = getState();
-        if(ice.ConnectionState.Disconnected.equals(state) ||
-           ice.ConnectionState.Disconnecting.equals(state)) {
+        if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
         } else {
-            if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnecting, 1000L)) {
+            if (!stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnecting, 1000L)) {
                 throw new RuntimeException("Unable to enter Disconnecting State");
             }
-            if(!stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnected, 1000L)) {
+            if (!stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnected, 1000L)) {
                 throw new RuntimeException("Unable to enter Disconnected State");
             }
         }
@@ -80,6 +78,7 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
 
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
-        // TODO remove this default implementation to check that inheritors are properly implementing this
+        // TODO remove this default implementation to check that inheritors are
+        // properly implementing this
     }
 }

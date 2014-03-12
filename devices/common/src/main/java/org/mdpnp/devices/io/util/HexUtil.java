@@ -23,7 +23,7 @@ public class HexUtil {
     }
 
     public static final char toHexChar(int b) {
-        switch(0XF & b) {
+        switch (0XF & b) {
         case 0xF:
             return 'F';
         case 0xE:
@@ -37,13 +37,13 @@ public class HexUtil {
         case 0xA:
             return 'A';
         default:
-            return (char)('0'+(0xF&b));
+            return (char) ('0' + (0xF & b));
 
         }
     }
 
     public static final String toHexString(int b) {
-        return ""+toHexChar(b>>4)+toHexChar(b);
+        return "" + toHexChar(b >> 4) + toHexChar(b);
     }
 
     public static final String dump(ByteBuffer bb) {
@@ -52,7 +52,7 @@ public class HexUtil {
 
     public static final byte[] itob(int[] ii) {
         byte[] bb = new byte[ii.length];
-        for(int i = 0; i < ii.length; i++) {
+        for (int i = 0; i < ii.length; i++) {
             bb[i] = (byte) ii[i];
         }
         return bb;
@@ -93,8 +93,8 @@ public class HexUtil {
         CharBuffer charBuffer = null == charset ? null : CharBuffer.allocate(1);
         bb.mark();
         int c = 0;
-        while(bb.hasRemaining()) {
-            if(null != charset) {
+        while (bb.hasRemaining()) {
+            if (null != charset) {
                 int pos = bb.position();
                 cd.decode(bb, charBuffer, true);
                 bb.position(pos);
@@ -108,8 +108,8 @@ public class HexUtil {
             sb.append(toHexString(b)).append(" ");
 
             c++;
-            if(c == bytesPerLine) {
-                if(null != charset) {
+            if (c == bytesPerLine) {
+                if (null != charset) {
                     sb.append(" ").append(lineEncoder.toString());
                     lineEncoder.delete(0, lineEncoder.length());
                 }
@@ -117,8 +117,8 @@ public class HexUtil {
                 c = 0;
             }
         }
-        if(sb.length()>1) {
-            sb.delete(sb.length()-1, sb.length());
+        if (sb.length() > 1) {
+            sb.delete(sb.length() - 1, sb.length());
         }
 
         bb.reset();
@@ -131,27 +131,28 @@ public class HexUtil {
     }
 
     public static final boolean startsWith(ByteBuffer haystack, byte[] needle) {
-        if(needle == null || needle.length == 0) {
+        if (needle == null || needle.length == 0) {
             return true;
         }
 
-        if(haystack.remaining() < needle.length) {
+        if (haystack.remaining() < needle.length) {
             return false;
         }
 
-        for(int i = 0; i < needle.length; i++) {
-            if(haystack.get(haystack.position()+i) != needle[i]) {
+        for (int i = 0; i < needle.length; i++) {
+            if (haystack.get(haystack.position() + i) != needle[i]) {
                 return false;
             }
         }
         return true;
     }
+
     // CRUDE
     public static final boolean advancePast(ByteBuffer haystack, byte[][] needle) {
-        while(haystack.hasRemaining()) {
-            for(int i = 0; i < needle.length; i++) {
-                if(startsWith(haystack, needle[i])) {
-                    haystack.position(haystack.position()+needle[i].length);
+        while (haystack.hasRemaining()) {
+            for (int i = 0; i < needle.length; i++) {
+                if (startsWith(haystack, needle[i])) {
+                    haystack.position(haystack.position() + needle[i].length);
                     return true;
                 }
             }
@@ -162,7 +163,7 @@ public class HexUtil {
 
     public static int[] btoi(byte[] array) {
         int[] ints = new int[array.length];
-        for(int i = 0; i < ints.length; i++) {
+        for (int i = 0; i < ints.length; i++) {
             ints[i] = 0xFF & array[i];
         }
         return ints;

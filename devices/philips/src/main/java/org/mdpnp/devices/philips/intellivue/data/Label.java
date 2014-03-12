@@ -2674,11 +2674,13 @@ public enum Label implements OrdinalEnum.LongType {
      */
     NLS_NOM_SETT_VENT_PRESS_AWAY_END_EXP_POS_INTERMIT(0x0402F92CL),
     /**
-     * sPlow Setting: part of the Evita 4 Airway Pressure Release Ventilation Mode
+     * sPlow Setting: part of the Evita 4 Airway Pressure Release Ventilation
+     * Mode
      */
     NLS_NOM_SETT_VENT_PRESS_AWAY_EXP_APRV(0x0402F92DL),
     /**
-     * sPhigh Setting: part of the Evita 4 Airway Pressure Release Ventilation Mode
+     * sPhigh Setting: part of the Evita 4 Airway Pressure Release Ventilation
+     * Mode
      */
     NLS_NOM_SETT_VENT_PRESS_AWAY_INSP_APRV(0x0402F92EL),
     /**
@@ -2726,7 +2728,8 @@ public enum Label implements OrdinalEnum.LongType {
      */
     NLS_NOM_SETT_VENT_TIME_PD_EXP(0x0402F93FL),
     /**
-     * sTlow Setting: part of the Evita 4 Airway Pressure Release Ventilation Mode
+     * sTlow Setting: part of the Evita 4 Airway Pressure Release Ventilation
+     * Mode
      */
     NLS_NOM_SETT_VENT_TIME_PD_EXP_APRV(0x0402F940L),
     /**
@@ -2734,7 +2737,8 @@ public enum Label implements OrdinalEnum.LongType {
      */
     NLS_NOM_SETT_VENT_TIME_PD_INSP(0x0402F941L),
     /**
-     * sThigh Setting: part of the Evita 4 Airway Pressure Release Ventilation Mode
+     * sThigh Setting: part of the Evita 4 Airway Pressure Release Ventilation
+     * Mode
      */
     NLS_NOM_SETT_VENT_TIME_PD_INSP_APRV(0x0402F942L),
     /**
@@ -2784,20 +2788,20 @@ public enum Label implements OrdinalEnum.LongType {
     /**
      * sMVDel Setting: Minute Volume Alarm Delay
      */
-    NLS_NOM_SETT_VOL_MINUTE_ALARM_DELAY(0x0402F953L),
-;
+    NLS_NOM_SETT_VOL_MINUTE_ALARM_DELAY(0x0402F953L), ;
 
     private final long x;
-    
+
     private Label(long x) {
         this.x = x;
     }
-    
-    private final static Map<Long, Label> map = OrdinalEnum.buildLong(Label.class); 
-    
-    public final long asLong()  {
+
+    private final static Map<Long, Label> map = OrdinalEnum.buildLong(Label.class);
+
+    public final long asLong() {
         return x;
     }
+
     public static final Label valueOf(long x) {
         return map.get(x);
     }

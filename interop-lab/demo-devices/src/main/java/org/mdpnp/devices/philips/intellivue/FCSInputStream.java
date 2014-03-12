@@ -34,17 +34,19 @@ public class FCSInputStream extends java.io.FilterInputStream {
     @Override
     public int read() throws IOException {
         int b = in.read();
-        if(b >= 0) {
+        if (b >= 0) {
             fcs = FCSOutputStream.pppfcs(fcs, (byte) b);
         }
         return b;
     }
+
     public int read(byte[] b) throws IOException {
         return read(b, 0, b.length);
     };
+
     public int read(byte[] b, int off, int len) throws IOException {
         int n = in.read(b, off, len);
-        if(n >= 0) {
+        if (n >= 0) {
             fcs = FCSOutputStream.pppfcs(fcs, b, off, n);
         }
         return n;

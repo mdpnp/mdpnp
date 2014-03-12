@@ -39,7 +39,7 @@ public class ASCIIFieldDelegate implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(ASCIIFieldDelegate.class);
 
     private Class<?> componentType(Class<?> cls) {
-        if(cls.isArray()) {
+        if (cls.isArray()) {
             return componentType(cls.getComponentType());
         } else {
             return cls;
@@ -61,26 +61,26 @@ public class ASCIIFieldDelegate implements Runnable {
         List<LineInfo> lineInfo = new ArrayList<LineInfo>();
         Class<?> targetType = target.getClass();
 
-        while(null != (line = br.readLine())) {
+        while (null != (line = br.readLine())) {
             line = line.replaceAll("\\#.*$", "");
-            if(line.startsWith("\t\t")) {
-                LineInfo.Field f = lineInfo.get(lineInfo.size()-1).getCurrentField();
+            if (line.startsWith("\t\t")) {
+                LineInfo.Field f = lineInfo.get(lineInfo.size() - 1).getCurrentField();
                 line = line.substring(2, line.length());
                 Class<?> type = componentType(f.getField().getType());
-                if(type.isEnum()) {
-                    String [] vals = line.split("\t");
-                    f.putEnumValue(vals[0], Enum.valueOf( (Class<? extends Enum>) type, vals[1]));
-                } else if(Date.class.equals(type)) {
+                if (type.isEnum()) {
+                    String[] vals = line.split("\t");
+                    f.putEnumValue(vals[0], Enum.valueOf((Class<? extends Enum>) type, vals[1]));
+                } else if (Date.class.equals(type)) {
                     f.setDateFormat(new SimpleDateFormat(line));
                 } else {
-                    log.warn("Not parsing:"+line);
+                    log.warn("Not parsing:" + line);
                 }
-            } else if(line.startsWith("\t")) {
+            } else if (line.startsWith("\t")) {
                 line = line.substring(1, line.length());
-                if(!lineInfo.get(lineInfo.size()-1).setFireMethod(targetType, line)) {
-                    lineInfo.get(lineInfo.size()-1).addField(targetType, line);
+                if (!lineInfo.get(lineInfo.size() - 1).setFireMethod(targetType, line)) {
+                    lineInfo.get(lineInfo.size() - 1).addField(targetType, line);
                 }
-            } else if(line.length() > 0){
+            } else if (line.length() > 0) {
                 lineInfo.add(new LineInfo(line));
             }
         }
@@ -97,23 +97,23 @@ public class ASCIIFieldDelegate implements Runnable {
 
         }
         Class<?> parent = type.getSuperclass();
-        if(null != parent) {
+        if (null != parent) {
             return fieldIfAvailable(parent, fieldName);
         } else {
             return null;
         }
     }
 
-    protected final static Method methodIfAvailable(Class<?> type, String name, Class<?> [] params, Class<?> returnType) {
+    protected final static Method methodIfAvailable(Class<?> type, String name, Class<?>[] params, Class<?> returnType) {
         try {
             java.lang.reflect.Method method = type.getDeclaredMethod(name, params);
-            if(null != returnType) {
-                if(!returnType.equals(method.getReturnType())) {
+            if (null != returnType) {
+                if (!returnType.equals(method.getReturnType())) {
                     return null;
                 }
             }
             return method;
-        } catch(Throwable t) {
+        } catch (Throwable t) {
             return null;
         }
     }
@@ -129,21 +129,19 @@ public class ASCIIFieldDelegate implements Runnable {
             private java.util.Map<String, Object> enumValues;
             private DateFormat dateFormat;
 
-
-
             public Field(Class<?> type, String fieldName) throws NoSuchFieldException, SecurityException {
                 String[] fieldFilter = fieldName.split("\t");
-                if(fieldFilter.length>1) {
-                    this.filter = methodIfAvailable(type, fieldFilter[1], new Class<?>[] {String.class}, String.class);
+                if (fieldFilter.length > 1) {
+                    this.filter = methodIfAvailable(type, fieldFilter[1], new Class<?>[] { String.class }, String.class);
                 } else {
                     this.filter = null;
                 }
                 fieldName = fieldFilter[0];
 
-                this.method = methodIfAvailable(type, fieldName, new Class<?>[] {String.class}, null);
-                if(null == this.method) {
+                this.method = methodIfAvailable(type, fieldName, new Class<?>[] { String.class }, null);
+                if (null == this.method) {
                     this.field = fieldIfAvailable(type, fieldName);
-                    if(null != this.field) {
+                    if (null != this.field) {
                         this.field.setAccessible(true);
                     }
                 } else {
@@ -153,16 +151,16 @@ public class ASCIIFieldDelegate implements Runnable {
             }
 
             public String applyFilter(Object target, String val) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-                if(null != filter) {
+                if (null != filter) {
                     return (String) filter.invoke(target, val);
                 } else {
                     return val;
                 }
             }
 
-//			public java.lang.reflect.Method getFilter() {
-//				return filter;
-//			}
+            // public java.lang.reflect.Method getFilter() {
+            // return filter;
+            // }
 
             public DateFormat getDateFormat() {
                 return dateFormat;
@@ -173,7 +171,7 @@ public class ASCIIFieldDelegate implements Runnable {
             }
 
             public Object getEnumValue(String s) {
-                if(null == enumValues) {
+                if (null == enumValues) {
                     return null;
                 } else {
                     return enumValues.get(s);
@@ -181,14 +179,16 @@ public class ASCIIFieldDelegate implements Runnable {
             }
 
             public void putEnumValue(String s, Object o) {
-                if(null == enumValues) {
+                if (null == enumValues) {
                     enumValues = new HashMap<String, Object>();
                 }
                 enumValues.put(s, o);
             }
+
             public java.lang.reflect.Field getField() {
                 return field;
             }
+
             public java.lang.reflect.Method getMethod() {
                 return method;
             }
@@ -203,10 +203,10 @@ public class ASCIIFieldDelegate implements Runnable {
 
         public final boolean setFireMethod(Class<?> type, String name) {
             Method fireMethod = methodIfAvailable(type, name, new Class<?>[0], null);
-            if(null == fireMethod) {
-                fireMethod = methodIfAvailable(type, name, new Class<?>[] {type}, null);
+            if (null == fireMethod) {
+                fireMethod = methodIfAvailable(type, name, new Class<?>[] { type }, null);
             }
-            if(null != fireMethod) {
+            if (null != fireMethod) {
                 fireMethod.setAccessible(true);
                 this.fireMethod = fireMethod;
                 return true;
@@ -224,73 +224,78 @@ public class ASCIIFieldDelegate implements Runnable {
         }
 
         private static final Object map(String val, Class<?> fieldType, Object enumValue, DateFormat dateFormat) throws ParseException {
-            if(null == val) {
+            if (null == val) {
                 return null;
             } else {
-                if(String.class.equals(fieldType)) {
+                if (String.class.equals(fieldType)) {
                     return val;
-                } else if(Integer.class.equals(fieldType)) {
+                } else if (Integer.class.equals(fieldType)) {
                     return Integer.parseInt(val);
-                } else if(Long.class.equals(fieldType)) {
+                } else if (Long.class.equals(fieldType)) {
                     return Long.parseLong(val);
-                } else if(Short.class.equals(fieldType)) {
+                } else if (Short.class.equals(fieldType)) {
                     return Short.parseShort(val);
-                } else if(Character.class.equals(fieldType)) {
-                    if(val.length()>0) {
+                } else if (Character.class.equals(fieldType)) {
+                    if (val.length() > 0) {
                         return val.charAt(0);
                     } else {
                         return null;
                     }
-                } else if(Byte.class.equals(fieldType)) {
+                } else if (Byte.class.equals(fieldType)) {
                     return Byte.parseByte(val);
-                } else if(Double.class.equals(fieldType)) {
+                } else if (Double.class.equals(fieldType)) {
                     return Double.parseDouble(val);
-                } else if(Float.class.equals(fieldType)) {
+                } else if (Float.class.equals(fieldType)) {
                     return Float.parseFloat(val);
-                } else if(fieldType.isEnum()) {
+                } else if (fieldType.isEnum()) {
                     return enumValue;
-                } else if(Date.class.equals(fieldType)) {
+                } else if (Date.class.equals(fieldType)) {
                     return dateFormat.parse(val);
                 } else {
-                    log.warn("Unsupported field type:"+fieldType);
+                    log.warn("Unsupported field type:" + fieldType);
                     return null;
                 }
             }
         }
-        private static final Object[] NULL = new Object[] {null};
-        private static final void setNullField(Object target, Field field) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-            if(null != field.getMethod()) {
+
+        private static final Object[] NULL = new Object[] { null };
+
+        private static final void setNullField(Object target, Field field) throws IllegalArgumentException, IllegalAccessException,
+                InvocationTargetException {
+            if (null != field.getMethod()) {
                 field.getMethod().invoke(target, NULL);
-            } else if(field.getField() != null) {
+            } else if (field.getField() != null) {
                 field.getField().set(target, null);
             }
         }
 
-        private static final void setField(String val, Field field, Object target) throws IllegalArgumentException, IllegalAccessException, ParseException, InvocationTargetException {
+        private static final void setField(String val, Field field, Object target) throws IllegalArgumentException, IllegalAccessException,
+                ParseException, InvocationTargetException {
             java.lang.reflect.Field f = field.getField();
             java.lang.reflect.Method m = field.getMethod();
-            if(null != m) {
-                m.invoke(target,  map(val, m.getParameterTypes()[0], field.getEnumValue(val), field.getDateFormat()));
-            } else if(null != f) {
+            if (null != m) {
+                m.invoke(target, map(val, m.getParameterTypes()[0], field.getEnumValue(val), field.getDateFormat()));
+            } else if (null != f) {
                 f.set(target, map(val, field.getField().getType(), field.getEnumValue(val), field.getDateFormat()));
             }
         }
 
         public boolean parseLine(String line, Object target) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
             Matcher m;
-            if( (m=pattern.matcher(line)).matches()) {
-                for(int i = 0; i < fields.size(); i++) {
+            if ((m = pattern.matcher(line)).matches()) {
+                for (int i = 0; i < fields.size(); i++) {
                     try {
-                        String val = m.group(i+1);
+                        String val = m.group(i + 1);
                         val = fields.get(i).applyFilter(target, val);
-                        if(fields.get(i).getField() != null && fields.get(i).getField().getType().isArray()) {
+                        if (fields.get(i).getField() != null && fields.get(i).getField().getType().isArray()) {
                             Class<?> arrayType = fields.get(i).getField().getType();
                             Object array = fields.get(i).getField().get(target);
                             int len = java.lang.reflect.Array.getLength(array);
-                            for(int j = 0; j < len; j++) {
-                                if(m.groupCount()>=(i+1+j)) {
-                                    val = fields.get(i).applyFilter(target, m.group(i+1+j));
-                                    java.lang.reflect.Array.set(array, j, map(val, arrayType.getComponentType(), fields.get(i).getEnumValue(val), fields.get(i).getDateFormat()));
+                            for (int j = 0; j < len; j++) {
+                                if (m.groupCount() >= (i + 1 + j)) {
+                                    val = fields.get(i).applyFilter(target, m.group(i + 1 + j));
+                                    java.lang.reflect.Array.set(array, j,
+                                            map(val, arrayType.getComponentType(), fields.get(i).getEnumValue(val), fields.get(i).getDateFormat()));
                                 } else {
                                     java.lang.reflect.Array.set(array, j, null);
                                 }
@@ -300,14 +305,14 @@ public class ASCIIFieldDelegate implements Runnable {
                         }
                     } catch (Throwable t) {
                         setNullField(target, fields.get(i));
-//						t.printStackTrace();
+                        // t.printStackTrace();
                     }
                 }
-                if(null != fireMethod) {
+                if (null != fireMethod) {
                     try {
-                        if(fireMethod.getParameterTypes().length == 1) {
+                        if (fireMethod.getParameterTypes().length == 1) {
                             fireMethod.invoke(target, target);
-                        } else if(fireMethod.getParameterTypes().length == 0) {
+                        } else if (fireMethod.getParameterTypes().length == 0) {
                             fireMethod.invoke(target);
                         }
                     } catch (InvocationTargetException e) {
@@ -322,8 +327,8 @@ public class ASCIIFieldDelegate implements Runnable {
     }
 
     public boolean parseLine(String line) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-        for(LineInfo li : lineInfo) {
-            if(li.parseLine(line, target)) {
+        for (LineInfo li : lineInfo) {
+            if (li.parseLine(line, target)) {
                 return true;
             }
         }
@@ -342,13 +347,13 @@ public class ASCIIFieldDelegate implements Runnable {
 
         String line = null;
         try {
-            while(null != (line = reader.readLine())) {
-                if(!parseLine(line)) {
-                    log.info("Unknown line:"+line);
+            while (null != (line = reader.readLine())) {
+                if (!parseLine(line)) {
+                    log.info("Unknown line:" + line);
                 }
             }
 
-        } catch(Throwable t) {
+        } catch (Throwable t) {
             t.printStackTrace();
         }
     }

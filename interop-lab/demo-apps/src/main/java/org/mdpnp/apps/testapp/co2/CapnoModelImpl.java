@@ -46,8 +46,6 @@ public class CapnoModelImpl implements CapnoModel {
     private Subscriber subscriber;
     private EventLoop eventLoop;
 
-
-
     private final EventLoop.ConditionHandler capnoHandler = new EventLoop.ConditionHandler() {
         private final ice.SampleArraySeq sa_seq = new ice.SampleArraySeq();
         private final SampleInfoSeq info_seq = new SampleInfoSeq();
@@ -57,8 +55,7 @@ public class CapnoModelImpl implements CapnoModel {
             try {
                 for (;;) {
                     try {
-                        capnoReader.read_w_condition(sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
-                                (QueryCondition) condition);
+                        capnoReader.read_w_condition(sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
                         for (int i = 0; i < info_seq.size(); i++) {
                             SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
                             if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
@@ -84,8 +81,8 @@ public class CapnoModelImpl implements CapnoModel {
         }
     };
 
-
     protected final String sa_name;
+
     public CapnoModelImpl(final String name) {
         this.sa_name = name;
     }
@@ -105,14 +102,18 @@ public class CapnoModelImpl implements CapnoModel {
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
 
-//      ice.InfusionStatusTypeSupport.register_type(subscriber.get_participant(), ice.InfusionStatusTypeSupport.get_type_name());
-      TopicDescription saTopic = TopicUtil.lookupOrCreateTopic(subscriber.get_participant(), ice.SampleArrayTopic.VALUE, ice.SampleArrayTypeSupport.class);
-      capnoReader = (ice.SampleArrayDataReader) subscriber.create_datareader_with_profile(saTopic, QosProfiles.ice_library, QosProfiles.waveform_data, null, StatusKind.STATUS_MASK_NONE);
-      StringSeq params = new StringSeq();
-      params.add("'"+sa_name+"'");
-      capnoCondition = capnoReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "metric_id = %0", params);
+        // ice.InfusionStatusTypeSupport.register_type(subscriber.get_participant(),
+        // ice.InfusionStatusTypeSupport.get_type_name());
+        TopicDescription saTopic = TopicUtil.lookupOrCreateTopic(subscriber.get_participant(), ice.SampleArrayTopic.VALUE,
+                ice.SampleArrayTypeSupport.class);
+        capnoReader = (ice.SampleArrayDataReader) subscriber.create_datareader_with_profile(saTopic, QosProfiles.ice_library,
+                QosProfiles.waveform_data, null, StatusKind.STATUS_MASK_NONE);
+        StringSeq params = new StringSeq();
+        params.add("'" + sa_name + "'");
+        capnoCondition = capnoReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                InstanceStateKind.ANY_INSTANCE_STATE, "metric_id = %0", params);
 
-      eventLoop.addHandler(capnoCondition, capnoHandler);
+        eventLoop.addHandler(capnoCondition, capnoHandler);
 
     }
 
@@ -129,35 +130,35 @@ public class CapnoModelImpl implements CapnoModel {
 
     protected void removeCapno(String udi) {
         List<Capno> removed = new ArrayList<Capno>();
-        synchronized(capnos) {
+        synchronized (capnos) {
             ListIterator<Capno> litr = capnos.listIterator();
-            while(litr.hasNext()) {
+            while (litr.hasNext()) {
                 Capno capno = litr.next();
-                if(capno.getSampleArray().unique_device_identifier.equals(udi)) {
+                if (capno.getSampleArray().unique_device_identifier.equals(udi)) {
                     removed.add(capno);
                     litr.remove();
                 }
             }
         }
-        for(Capno c : removed) {
+        for (Capno c : removed) {
             fireCapnoRemoved(c);
         }
     }
 
     protected void updateCapno(ice.SampleArray sampleArray, SampleInfo sampleInfo) {
         Capno capno = null;
-        synchronized(capnos) {
+        synchronized (capnos) {
             ListIterator<Capno> itr = capnos.listIterator();
-            while(itr.hasNext()) {
+            while (itr.hasNext()) {
                 capno = itr.next();
-                if(sampleArray.unique_device_identifier.equals(capno.getSampleArray().unique_device_identifier)) {
+                if (sampleArray.unique_device_identifier.equals(capno.getSampleArray().unique_device_identifier)) {
                     break;
                 } else {
                     capno = null;
                 }
             }
         }
-        if(capno != null) {
+        if (capno != null) {
             capno.getSampleArray().copy_from(sampleArray);
             capno.getSampleInfo().copy_from(sampleInfo);
             fireCapnoChanged(capno);
@@ -194,6 +195,7 @@ public class CapnoModelImpl implements CapnoModel {
         this.listeners = newListeners.toArray(new CapnoModelListener[0]);
         return found;
     }
+
     protected void fireCapnoAdded(Capno c) {
         CapnoModelListener[] listeners = this.listeners;
         for (CapnoModelListener cml : listeners) {

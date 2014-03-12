@@ -50,7 +50,7 @@ import org.mdpnp.devices.philips.intellivue.dataexport.impl.DataExportInvokeImpl
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class IntellivueAcceptor extends  Intellivue {
+public class IntellivueAcceptor extends Intellivue {
 
     private static final Logger log = LoggerFactory.getLogger(IntellivueAcceptor.class);
 
@@ -61,10 +61,7 @@ public class IntellivueAcceptor extends  Intellivue {
             try {
                 final List<Network.AddressSubnet> address = Network.getBroadcastAddresses();
 
-
-
-
-                for(Network.AddressSubnet as : address) {
+                for (Network.AddressSubnet as : address) {
                     ConnectIndicationImpl ci = new ConnectIndicationImpl();
 
                     ProtocolSupportEntry e = new ProtocolSupportEntry();
@@ -87,7 +84,6 @@ public class IntellivueAcceptor extends  Intellivue {
                     DatagramSocket ds = new DatagramSocket();
                     DatagramPacket dp = new DatagramPacket(bytes, bytes.length, null, 24005);
 
-
                     log.info("Transmit to " + as.getInetAddress());
 
                     dp.setAddress(as.getInetAddress());
@@ -104,25 +100,26 @@ public class IntellivueAcceptor extends  Intellivue {
             return null;
         }
     };
+
     @Override
     protected void handle(Set set, boolean confirmed) throws IOException {
         super.handle(set, confirmed);
-        if(confirmed) {
+        if (confirmed) {
         }
     }
-    @Override
 
+    @Override
     protected synchronized void handle(SocketAddress sockaddr, org.mdpnp.devices.philips.intellivue.association.AssociationConnect message) {
         super.handle(sockaddr, message);
 
         AssociationAccept acc = new AssociationAcceptImpl();
-        log.debug("Sending accept:"+acc);
+        log.debug("Sending accept:" + acc);
         try {
             final DatagramChannel channel = DatagramChannel.open();
             channel.configureBlocking(false);
             channel.socket().setReuseAddress(true);
 
-            channel.connect(new InetSocketAddress( ((InetSocketAddress) sockaddr).getAddress(), port));
+            channel.connect(new InetSocketAddress(((InetSocketAddress) sockaddr).getAddress(), port));
 
             networkLoop.register(this, channel);
             send(acc);
@@ -131,7 +128,8 @@ public class IntellivueAcceptor extends  Intellivue {
         }
         MdsCreateEventImpl m = new MdsCreateEventImpl();
         Attribute<SystemModel> asm = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_MODEL, SystemModel.class);
-        Attribute<org.mdpnp.devices.philips.intellivue.data.String> as = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_BED_LABEL, org.mdpnp.devices.philips.intellivue.data.String.class);
+        Attribute<org.mdpnp.devices.philips.intellivue.data.String> as = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_BED_LABEL,
+                org.mdpnp.devices.philips.intellivue.data.String.class);
         Attribute<ProductionSpecification> ps = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_PROD_SPECN, ProductionSpecification.class);
 
         ProductionSpecification.Entry e = new ProductionSpecification.Entry();
@@ -159,9 +157,11 @@ public class IntellivueAcceptor extends  Intellivue {
             throw new RuntimeException(e1);
         }
     };
+
     public IntellivueAcceptor() throws IOException {
         this(DEFAULT_UNICAST_PORT);
     }
+
     public IntellivueAcceptor(int port) throws IOException {
         super();
         beacon.setInterval(10000L);
@@ -207,14 +207,14 @@ public class IntellivueAcceptor extends  Intellivue {
             }
         });
 
-
     }
+
     protected final int port;
 
     public static void main(String[] args) throws IOException {
         final int port = args.length > 0 ? Integer.parseInt(args[0]) : Intellivue.DEFAULT_UNICAST_PORT;
         final NetworkLoop networkLoop = new NetworkLoop();
-        final IntellivueAcceptor ia = new IntellivueAcceptor( port);
+        final IntellivueAcceptor ia = new IntellivueAcceptor(port);
         ia.accept(networkLoop);
         networkLoop.runLoop();
 

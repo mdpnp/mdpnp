@@ -29,7 +29,7 @@ public class DataVisualization extends JSplitPane {
 
     public DataVisualization(ScheduledExecutorService executor) {
         super(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(new PCAConfig(executor)), new VitalMonitoring(executor));
-        this.pcaConfig = (PCAConfig) ((JScrollPane)getLeftComponent()).getViewport().getComponent(0);
+        this.pcaConfig = (PCAConfig) ((JScrollPane) getLeftComponent()).getViewport().getComponent(0);
         this.vitalMonitoring = (VitalMonitoring) getRightComponent();
         setDividerLocation(0.2);
         setDividerSize(10);

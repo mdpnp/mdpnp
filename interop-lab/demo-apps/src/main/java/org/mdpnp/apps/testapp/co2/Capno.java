@@ -16,6 +16,8 @@ import com.rti.dds.subscription.SampleInfo;
 
 public interface Capno {
     ice.SampleArray getSampleArray();
+
     SampleInfo getSampleInfo();
+
     CapnoModel getParent();
 }

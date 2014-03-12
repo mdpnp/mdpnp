@@ -30,6 +30,7 @@ public class DemoEthernetIntellivue extends AbstractDemoIntellivue {
     public DemoEthernetIntellivue(int domainId, EventLoop eventLoop) throws IOException {
         super(domainId, eventLoop);
     }
+
     @Override
     protected ice.ConnectionType getConnectionType() {
         return ice.ConnectionType.Network;

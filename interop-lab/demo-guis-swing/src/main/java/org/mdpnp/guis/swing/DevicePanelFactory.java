@@ -23,65 +23,57 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DevicePanelFactory {
-    private DevicePanelFactory() {}
+    private DevicePanelFactory() {
+    }
 
-    public static final Class<?>[] PANELS = new Class[] {
-        PulseOximeterPanel.class,
-        BloodPressurePanel.class,
-        ElectroCardioGramPanel.class,
-        VentilatorPanel.class,
-        InfusionPumpPanel.class,
-        InvasiveBloodPressurePanel.class
-//        MultiPulseOximeterPanel.class,
+    public static final Class<?>[] PANELS = new Class[] { PulseOximeterPanel.class, BloodPressurePanel.class, ElectroCardioGramPanel.class,
+            VentilatorPanel.class, InfusionPumpPanel.class, InvasiveBloodPressurePanel.class
+    // MultiPulseOximeterPanel.class,
     };
     private final static Logger log = LoggerFactory.getLogger(DevicePanelFactory.class);
     public static final Method[] PANEL_SUPPORTED = new Method[PANELS.length];
     static {
-        for(int i = 0; i < PANELS.length; i++) {
+        for (int i = 0; i < PANELS.length; i++) {
             try {
                 PANEL_SUPPORTED[i] = PANELS[i].getDeclaredMethod("supported", Set.class);
             } catch (Exception e) {
                 log.error("Exception checking supported method", e);
-//                throw new ExceptionInInitializerError(e);
+                // throw new ExceptionInInitializerError(e);
             }
         }
     }
 
-
-
-
-
     public static <T extends Component> void resolvePanels(Set<String> tags, Collection<T> container, Set<String> pumps) {
-        log.trace("resolvePanels tags="+tags+" container="+container);
+        log.trace("resolvePanels tags=" + tags + " container=" + container);
         Map<Class<?>, T> byClass = new HashMap<Class<?>, T>();
 
-        for(T c : container) {
+        for (T c : container) {
             byClass.put(c.getClass(), c);
         }
 
         container.clear();
         try {
-            if(!pumps.isEmpty()) {
-                if(byClass.containsKey(InfusionPumpPanel.class)) {
+            if (!pumps.isEmpty()) {
+                if (byClass.containsKey(InfusionPumpPanel.class)) {
                     container.add(byClass.remove(InfusionPumpPanel.class));
                 } else {
-                    container.add((T)InfusionPumpPanel.class.getConstructor().newInstance());
+                    container.add((T) InfusionPumpPanel.class.getConstructor().newInstance());
                 }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        for(int i = 0; i < PANELS.length; i++) {
+        for (int i = 0; i < PANELS.length; i++) {
             try {
-                if((Boolean)PANEL_SUPPORTED[i].invoke(null, tags)) {
-                    if(byClass.containsKey(PANELS[i])) {
+                if ((Boolean) PANEL_SUPPORTED[i].invoke(null, tags)) {
+                    if (byClass.containsKey(PANELS[i])) {
                         // Reuse a panel
                         container.add(byClass.remove(PANELS[i]));
                         log.trace("Reused a " + PANELS[i]);
                     } else {
                         // New panel
-                        container.add((T)PANELS[i].getConstructor().newInstance());
+                        container.add((T) PANELS[i].getConstructor().newInstance());
                         log.trace("Created a " + PANELS[i]);
                     }
                 }
@@ -90,13 +82,13 @@ public class DevicePanelFactory {
             }
         }
 
-        for(Component c : byClass.values()) {
-            if(c instanceof DevicePanel) {
+        for (Component c : byClass.values()) {
+            if (c instanceof DevicePanel) {
 
-                ((DevicePanel)c).destroy();
+                ((DevicePanel) c).destroy();
                 log.trace("Destroyed a " + c.getClass());
             } else {
-                log.warn("Not a DevicePanel:"+c.getClass());
+                log.warn("Not a DevicePanel:" + c.getClass());
             }
         }
         byClass.clear();

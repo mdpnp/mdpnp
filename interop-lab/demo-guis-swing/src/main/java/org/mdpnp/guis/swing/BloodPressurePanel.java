@@ -45,7 +45,8 @@ public class BloodPressurePanel extends DevicePanel {
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private JLabel nextInflation;
     private final Date date = new Date();
-//	private JButton inflate = new JButton("Inflate");
+
+    // private JButton inflate = new JButton("Inflate");
 
     protected void buildComponents() {
         systolicLabel = new JLabel("mmHg");
@@ -95,21 +96,21 @@ public class BloodPressurePanel extends DevicePanel {
         add(time = new JLabel(""), BorderLayout.SOUTH);
         time.setHorizontalAlignment(JLabel.RIGHT);
 
-//		inflate.addActionListener(new ActionListener() {
-//		    @Override
-//		    public void actionPerformed(ActionEvent e) {
-//		        MutableTextUpdate mtu = new MutableTextUpdateImpl(NoninvasiveBloodPressure.REQUEST_NIBP, guid);
-//		        mtu.setSource("*");
-//		        mtu.setTarget(BloodPressurePanel.this.source);
-//
-//		        gateway.update(BloodPressurePanel.this, mtu);
-//		    }
-//		});
+        // inflate.addActionListener(new ActionListener() {
+        // @Override
+        // public void actionPerformed(ActionEvent e) {
+        // MutableTextUpdate mtu = new
+        // MutableTextUpdateImpl(NoninvasiveBloodPressure.REQUEST_NIBP, guid);
+        // mtu.setSource("*");
+        // mtu.setTarget(BloodPressurePanel.this.source);
+        //
+        // gateway.update(BloodPressurePanel.this, mtu);
+        // }
+        // });
         setForeground(Color.magenta);
         setBackground(Color.black);
         setOpaque(true);
     }
-
 
     protected static float maxFontSize(JLabel label) {
         Font labelFont = label.getFont();
@@ -121,7 +122,7 @@ public class BloodPressurePanel extends DevicePanel {
         int componentHeight = label.getHeight();
 
         // Find out how much the font can grow in width.
-        double widthRatio = (double)componentWidth / (double)stringWidth;
+        double widthRatio = (double) componentWidth / (double) stringWidth;
         double heightRatio = 1.0 * componentHeight / stringHeight;
 
         double smallerRatio = Math.min(widthRatio, heightRatio) - 0.5f;
@@ -132,20 +133,18 @@ public class BloodPressurePanel extends DevicePanel {
     protected static void resizeFontToFill(JLabel... label) {
         float fontSize = Float.MAX_VALUE;
 
-        for(JLabel l : label) {
+        for (JLabel l : label) {
             fontSize = Math.min(fontSize, maxFontSize(l));
         }
 
-        for(JLabel l : label) {
+        for (JLabel l : label) {
             l.setFont(l.getFont().deriveFont(fontSize));
         }
     }
 
-
-
     @Override
     protected void processComponentEvent(ComponentEvent e) {
-        if(e.getID() == ComponentEvent.COMPONENT_RESIZED) {
+        if (e.getID() == ComponentEvent.COMPONENT_RESIZED) {
             resizeFontToFill(systolic, diastolic, pulse);
         }
         super.processComponentEvent(e);
@@ -156,32 +155,26 @@ public class BloodPressurePanel extends DevicePanel {
         enableEvents(ComponentEvent.COMPONENT_RESIZED);
     }
 
-
     public static boolean supported(Set<String> names) {
         return names.contains(rosetta.MDC_PRESS_CUFF.VALUE);
     }
 
     // TODO manage state better
-    /* jplourde June 19, 2013
-     * The "entire" blood pressure state is constructed incrementally
-     * through calls to numeric(Numeric,SampleInfo)
-     *
+    /*
+     * jplourde June 19, 2013 The "entire" blood pressure state is constructed
+     * incrementally through calls to numeric(Numeric,SampleInfo)
+     * 
      * I need the "entire" blood pressure state to render a meaningful GUI
-     *
+     * 
      * so the end result is storing state here.
-     *
+     * 
      * An alternative would be to give this component visibility "down" "into"
      * the associated DataReader to get relevant instances on-demand and the
      * DataReader can manage state per the QoS parameters.
-     *
-     *
      */
 
     enum State {
-        Inflating,
-        Deflating,
-        Waiting,
-        Uninited
+        Inflating, Deflating, Waiting, Uninited
     }
 
     private State state = State.Uninited;
@@ -197,10 +190,10 @@ public class BloodPressurePanel extends DevicePanel {
 
     @Override
     public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
-        if(aliveAndValidData(sampleInfo)) {
-    //        log.debug("N:"+numeric);
-            if(rosetta.MDC_PRESS_CUFF.VALUE.equals(metric_id)) {
-                switch((int)numeric.value) {
+        if (aliveAndValidData(sampleInfo)) {
+            // log.debug("N:"+numeric);
+            if (rosetta.MDC_PRESS_CUFF.VALUE.equals(metric_id)) {
+                switch ((int) numeric.value) {
                 case ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE:
                     state = State.Deflating;
                     break;
@@ -211,38 +204,39 @@ public class BloodPressurePanel extends DevicePanel {
                     this.state = State.Waiting;
                     break;
                 }
-            } else if(rosetta.MDC_PRESS_CUFF_SYS.VALUE.equals(metric_id)) {
+            } else if (rosetta.MDC_PRESS_CUFF_SYS.VALUE.equals(metric_id)) {
                 systolicN.copy_from(numeric);
-            } else if(rosetta.MDC_PRESS_CUFF_DIA.VALUE.equals(metric_id)) {
+            } else if (rosetta.MDC_PRESS_CUFF_DIA.VALUE.equals(metric_id)) {
                 diastolicN.copy_from(numeric);
-            } else if(rosetta.MDC_PULS_RATE_NON_INV.VALUE.equals(metric_id)) {
+            } else if (rosetta.MDC_PULS_RATE_NON_INV.VALUE.equals(metric_id)) {
                 pulseN.copy_from(numeric);
-            } else if(ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE.equals(metric_id)) {
+            } else if (ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE.equals(metric_id)) {
                 nextInflationN.copy_from(numeric);
-            } else if(ice.MDC_PRESS_CUFF_INFLATION.VALUE.equals(metric_id)) {
+            } else if (ice.MDC_PRESS_CUFF_INFLATION.VALUE.equals(metric_id)) {
                 inflationN.copy_from(numeric);
             }
-    //        log.debug("State:"+state);
+            // log.debug("State:"+state);
 
-            switch(state) {
+            switch (state) {
             case Inflating:
                 nextInflation.setText("Inflating...");
-                systolic.setText(Integer.toString((int)inflationN.value));
+                systolic.setText(Integer.toString((int) inflationN.value));
                 diastolic.setText("");
                 pulse.setText("");
                 break;
             case Deflating:
                 nextInflation.setText("Deflating...");
-                systolic.setText(Integer.toString((int)inflationN.value));
+                systolic.setText(Integer.toString((int) inflationN.value));
                 diastolic.setText("");
                 pulse.setText("");
                 break;
             case Waiting:
-                long  seconds = ((long)nextInflationN.value % 60000L / 1000L);
-                this.nextInflation.setText((int)Math.floor(1.0 * nextInflationN.value / 60000.0) + ":" + (seconds<10?"0":"") + seconds + " MIN");
-                systolic.setText(Integer.toString((int)systolicN.value));
-                diastolic.setText(Integer.toString((int)diastolicN.value));
-                pulse.setText(Integer.toString((int)pulseN.value));
+                long seconds = ((long) nextInflationN.value % 60000L / 1000L);
+                this.nextInflation.setText((int) Math.floor(1.0 * nextInflationN.value / 60000.0) + ":" + (seconds < 10 ? "0" : "") + seconds
+                        + " MIN");
+                systolic.setText(Integer.toString((int) systolicN.value));
+                diastolic.setText(Integer.toString((int) diastolicN.value));
+                pulse.setText(Integer.toString((int) pulseN.value));
                 break;
             case Uninited:
                 nextInflation.setText("");
@@ -251,17 +245,15 @@ public class BloodPressurePanel extends DevicePanel {
                 pulse.setText("");
                 break;
             }
-            date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
+            date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
             time.setText(dateFormat.format(date));
         }
     }
-
 
     @Override
     public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
 
     }
-
 
     @Override
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {

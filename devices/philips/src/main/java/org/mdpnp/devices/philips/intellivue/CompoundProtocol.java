@@ -24,7 +24,6 @@ import org.mdpnp.devices.philips.intellivue.connectindication.ConnectIndicationP
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportMessage;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportProtocol;
 import org.mdpnp.devices.philips.intellivue.dataexport.impl.DataExportProtocolImpl;
-import org.mdpnp.devices.philips.intellivue.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,13 +32,14 @@ public class CompoundProtocol implements Protocol {
     private final DataExportProtocol dataExportProtocol = new DataExportProtocolImpl();
     private final ConnectIndicationProtocol connectIndicationProtocol = new ConnectIndicationProtocolImpl();
     private final AssociationProtocol associationProtocol = new AssociationProtocolImpl();
+
     @Override
     public Message parse(ByteBuffer bb) {
         try {
-            if(bb.hasRemaining()) {
+            if (bb.hasRemaining()) {
                 int firstByte = 0xFF & bb.get(0);
 
-                switch(firstByte) {
+                switch (firstByte) {
                 case 0xE1:
                     return dataExportProtocol.parse(bb);
                 case 0x00:
@@ -52,22 +52,22 @@ public class CompoundProtocol implements Protocol {
             }
         } catch (RuntimeException re) {
             bb.position(0);
-            log.trace("Offending buffer:\n"+HexUtil.dump(bb, 20));
+            log.trace("Offending buffer:\n" + HexUtil.dump(bb, 20));
             throw new RuntimeException(re);
         }
     }
+
     @Override
     public void format(Message message, ByteBuffer bb) {
-        if(message instanceof DataExportMessage) {
-            dataExportProtocol.format((DataExportMessage)message, bb);
-        } else if(message instanceof AssociationMessage) {
-            associationProtocol.format((AssociationMessage)message, bb);
-        } else if(message instanceof ConnectIndication) {
+        if (message instanceof DataExportMessage) {
+            dataExportProtocol.format((DataExportMessage) message, bb);
+        } else if (message instanceof AssociationMessage) {
+            associationProtocol.format((AssociationMessage) message, bb);
+        } else if (message instanceof ConnectIndication) {
             connectIndicationProtocol.format((ConnectIndication) message, bb);
         } else {
             // TODO something to alert the user
         }
     }
-
 
 }

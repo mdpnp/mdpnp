@@ -39,8 +39,8 @@ import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
 
 public class DeviceFactory {
-    public static final AbstractDevice buildDevice(DeviceType type, int domainId, EventLoop eventLoop)
-            throws NoSuchFieldException, SecurityException, IOException {
+    public static final AbstractDevice buildDevice(DeviceType type, int domainId, EventLoop eventLoop) throws NoSuchFieldException,
+            SecurityException, IOException {
         switch (type) {
         case Nonin:
             return new DemoNoninPulseOx(domainId, eventLoop);

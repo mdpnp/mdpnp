@@ -149,7 +149,7 @@ public class VitalBoundedRangeMulti implements BoundedRangeMultiModel {
     public int getMarkerCount() {
         return vital.getValues().size();
     }
-    
+
     @Override
     public Float getMarker(int idx) {
         return vital.getValues().get(idx).getNumeric().value;

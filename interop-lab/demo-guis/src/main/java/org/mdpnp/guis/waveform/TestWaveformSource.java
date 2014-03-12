@@ -47,7 +47,7 @@ public class TestWaveformSource implements WaveformSource, Runnable {
         return count;
     }
 
-    private static final double[] OFFSETS = new double[] {0, Math.PI / 2.0};
+    private static final double[] OFFSETS = new double[] { 0, Math.PI / 2.0 };
 
     @Override
     public long getStartTime() {
@@ -57,10 +57,10 @@ public class TestWaveformSource implements WaveformSource, Runnable {
     @Override
     public void run() {
         long INTERVAL = TIME / MAX;
-        while(true) {
-            for(int i = 0; i < MAX; i++) {
+        while (true) {
+            for (int i = 0; i < MAX; i++) {
                 startTime = System.currentTimeMillis();
-                for(WaveformSourceListener listener : listeners) {
+                for (WaveformSourceListener listener : listeners) {
                     listener.waveform(this);
                 }
                 try {
@@ -72,9 +72,9 @@ public class TestWaveformSource implements WaveformSource, Runnable {
                 count++;
             }
             count = 0;
-            offset=++offset==OFFSETS.length?0:offset;
+            offset = ++offset == OFFSETS.length ? 0 : offset;
             scale = 1.0 + Math.random() * 100.0;
-            System.out.println("New offset:" + OFFSETS[offset] + " New scale:"+ scale);
+            System.out.println("New offset:" + OFFSETS[offset] + " New scale:" + scale);
         }
     }
 
@@ -89,6 +89,7 @@ public class TestWaveformSource implements WaveformSource, Runnable {
     public void removeListener(WaveformSourceListener listener) {
         listeners.remove(listener);
     }
+
     @Override
     public double getMillisecondsPerSample() {
         return 1.0 * TIME / MAX;

@@ -17,7 +17,7 @@ import java.util.Collection;
 public class SimpleWaveformSource implements WaveformSource, Runnable {
 
     public SimpleWaveformSource() {
-        Thread t= new Thread(this);
+        Thread t = new Thread(this);
         t.setDaemon(true);
         t.start();
     }
@@ -57,16 +57,17 @@ public class SimpleWaveformSource implements WaveformSource, Runnable {
 
     private int count = 0;
     private long startTime = 0L;
+
     public void run() {
-        while(true) {
+        while (true) {
             try {
                 Thread.sleep(1000L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             startTime = System.currentTimeMillis();
-            count = ++count%2;
-            for(WaveformSourceListener listener : listeners) {
+            count = ++count % 2;
+            for (WaveformSourceListener listener : listeners) {
                 listener.waveform(this);
             }
         }
@@ -78,16 +79,17 @@ public class SimpleWaveformSource implements WaveformSource, Runnable {
     }
 
     public static final void main(String[] args) {
-//		JFrame frame = new JFrame("TEST");
-//		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//		WaveformSource source = new SimpleWaveformSource();
-//
-//		final WaveformPanel panel = new WaveformPanel(new CachingWaveformSource(source, 4000L));
-////		final WaveformPanel panel = new WaveformPanel(source);
-//
-//		frame.getContentPane().add(panel);
-//		frame.setSize(640, 480);
-//		frame.setVisible(true);
+        // JFrame frame = new JFrame("TEST");
+        // frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // WaveformSource source = new SimpleWaveformSource();
+        //
+        // final WaveformPanel panel = new WaveformPanel(new
+        // CachingWaveformSource(source, 4000L));
+        // // final WaveformPanel panel = new WaveformPanel(source);
+        //
+        // frame.getContentPane().add(panel);
+        // frame.setSize(640, 480);
+        // frame.setVisible(true);
 
     }
 

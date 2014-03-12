@@ -18,10 +18,15 @@ import org.mdpnp.devices.philips.intellivue.data.Type;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportAction;
 
 public interface ExtendedPollDataRequest extends DataExportAction {
-	int getPollNumber();
-	void setPollNumber(int pollNumber);
-	OIDType getPolledAttributeGroup();
-	void setPolledAttributeGroup(OIDType lookup);
-	Type getPolledObjectType();
-	AttributeValueList getPollExtra();
+    int getPollNumber();
+
+    void setPollNumber(int pollNumber);
+
+    OIDType getPolledAttributeGroup();
+
+    void setPolledAttributeGroup(OIDType lookup);
+
+    Type getPolledObjectType();
+
+    AttributeValueList getPollExtra();
 }

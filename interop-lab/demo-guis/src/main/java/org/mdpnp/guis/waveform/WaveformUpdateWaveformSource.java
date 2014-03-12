@@ -26,8 +26,8 @@ public class WaveformUpdateWaveformSource extends AbstractWaveformSource {
 
     public void applyUpdate(ice.SampleArray update, SampleInfo sampleInfo) {
 
-        if(0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & sampleInfo.instance_state)) {
-            if(sampleInfo.valid_data) {
+        if (0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & sampleInfo.instance_state)) {
+            if (sampleInfo.valid_data) {
                 this.lastUpdate.copy_from(update);
                 this.lastSampleInfo.copy_from(sampleInfo);
                 fireWaveform();
@@ -36,7 +36,6 @@ public class WaveformUpdateWaveformSource extends AbstractWaveformSource {
             reset();
         }
     }
-
 
     @Override
     public long getStartTime() {
@@ -50,27 +49,28 @@ public class WaveformUpdateWaveformSource extends AbstractWaveformSource {
     @Override
     public float getValue(int x) {
         return lastUpdate.values.userData.getFloat(x);
-//		if(null == lastUpdate) {
-//			return 0;
-//		} else {
-//			float[] values = lastUpdate.values.toArrayFloat(arg0)
-//			if(null == values) {
-//				return 0;
-//			} else {
-//				Number value = values[x];
-//				if(null == value) {
-//					return 0;
-//				} else {
-//					return value.intValue();
-//				}
-//			}
-//		}
+        // if(null == lastUpdate) {
+        // return 0;
+        // } else {
+        // float[] values = lastUpdate.values.toArrayFloat(arg0)
+        // if(null == values) {
+        // return 0;
+        // } else {
+        // Number value = values[x];
+        // if(null == value) {
+        // return 0;
+        // } else {
+        // return value.intValue();
+        // }
+        // }
+        // }
     }
 
     @Override
     public int getMax() {
         return lastUpdate.values.userData.size();
-//		return null == lastUpdate.getValues() ? 0 : lastUpdate.getValues().length;
+        // return null == lastUpdate.getValues() ? 0 :
+        // lastUpdate.getValues().length;
     }
 
     @Override
@@ -81,6 +81,6 @@ public class WaveformUpdateWaveformSource extends AbstractWaveformSource {
     @Override
     public double getMillisecondsPerSample() {
         return lastUpdate.millisecondsPerSample;
-//		return lastUpdate.getMillisecondsPerSample();
+        // return lastUpdate.getMillisecondsPerSample();
     }
 }

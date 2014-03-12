@@ -40,8 +40,6 @@ public class MainMenuPanel extends JPanel {
     private final JList deviceList;
     private final JButton spawnDeviceAdapter;
 
-
-
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public MainMenuPanel(AppType[] appTypes) {
         super(new GridBagLayout());
@@ -50,7 +48,8 @@ public class MainMenuPanel extends JPanel {
 
         Font bigFont = Font.decode("verdana-30");
 
-        GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(2,10,2,10), 0, 0);
+        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(2, 10,
+                2, 10), 0, 0);
         appList = new JList(appTypes);
         appList.setSelectionBackground(appList.getBackground());
         appList.setSelectionForeground(appList.getForeground());
@@ -64,16 +63,14 @@ public class MainMenuPanel extends JPanel {
         AppListCellRenderer lcr = new AppListCellRenderer();
         DeviceListCellRenderer dlcr = new DeviceListCellRenderer();
 
-        CompoundBorder cb = new CompoundBorder(new EmptyBorder(5,5,5,5), new LineBorder(Color.black, 1, true));
-        CompoundBorder cb1 = new CompoundBorder(new EmptyBorder(5,5,5,5), new LineBorder(Color.black, 1, true));
+        CompoundBorder cb = new CompoundBorder(new EmptyBorder(5, 5, 5, 5), new LineBorder(Color.black, 1, true));
+        CompoundBorder cb1 = new CompoundBorder(new EmptyBorder(5, 5, 5, 5), new LineBorder(Color.black, 1, true));
 
         lcr.setBorder(cb);
         dlcr.setBorder(cb1);
 
         appList.setCellRenderer(lcr);
         deviceList.setCellRenderer(dlcr);
-
-
 
         JLabel lbl;
         add(lbl = new JLabel("Available Applications"), gbc);
@@ -124,6 +121,7 @@ public class MainMenuPanel extends JPanel {
     public JList getDeviceList() {
         return deviceList;
     }
+
     public JButton getSpawnDeviceAdapter() {
         return spawnDeviceAdapter;
     }

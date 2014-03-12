@@ -75,6 +75,7 @@ public class AttributeFactory {
     public static final Attribute<PollProfileExtensions> getPollProfileExtensions() {
         return getAttribute(0xF001, PollProfileExtensions.class);
     }
+
     public static final Attribute<PollProfileSupport> getPollProfileSupport() {
         return getAttribute(0x0001, PollProfileSupport.class);
     }
@@ -105,7 +106,8 @@ public class AttributeFactory {
     public static final <T extends EnumMessage<T>> Attribute<EnumValue<T>> getEnumAttribute(OIDType oid, Class<T> enumClass) {
 
         try {
-            return new AttributeImpl<EnumValue<T>>(oid, new EnumValueImpl<T>((T) ((Object[])enumClass.getMethod("values", new Class<?>[0]).invoke(null))[0]));
+            return new AttributeImpl<EnumValue<T>>(oid, new EnumValueImpl<T>((T) ((Object[]) enumClass.getMethod("values", new Class<?>[0]).invoke(
+                    null))[0]));
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         } catch (IllegalArgumentException e) {
@@ -119,13 +121,12 @@ public class AttributeFactory {
         }
     }
 
-
     public static Class<?> valueType(OIDType oid) {
         AttributeId id = AttributeId.valueOf(oid.getType());
-        if(null == id) {
+        if (null == id) {
             return null;
         } else {
-            switch(id) {
+            switch (id) {
             case NOM_ATTR_ID_TYPE:
                 return Type.class;
             case NOM_ATTR_ID_HANDLE:
@@ -164,10 +165,10 @@ public class AttributeFactory {
             case NOM_ATTR_ID_LABEL_STRING:
             case NOM_ATTR_ID_BED_LABEL:
             case NOM_ATTR_PT_NAME_GIVEN:
-//				case NOM_ATTR_PT_NAME_MIDDLE:
+                // case NOM_ATTR_PT_NAME_MIDDLE:
             case NOM_ATTR_PT_NAME_FAMILY:
             case NOM_ATTR_PT_ID:
-//				case NOM_ATTR_PT_ENCOUNTER_ID:
+                // case NOM_ATTR_PT_ENCOUNTER_ID:
             case NOM_ATTR_PT_NOTES1:
             case NOM_ATTR_PT_NOTES2:
                 return org.mdpnp.devices.philips.intellivue.data.String.class;
@@ -256,12 +257,12 @@ public class AttributeFactory {
     @SuppressWarnings("unchecked")
     public static final <T extends EnumMessage<T>> Attribute<?> getAttribute(OIDType oid) {
         Class<?> valueType = valueType(oid);
-        if(null == valueType) {
+        if (null == valueType) {
             return null;
-        } else if(valueType.isEnum()) {
-            return getEnumAttribute(oid, (Class<T>)valueType);
+        } else if (valueType.isEnum()) {
+            return getEnumAttribute(oid, (Class<T>) valueType);
         } else {
-            return getAttribute(oid, ((Class<Value>)valueType(oid)));
+            return getAttribute(oid, ((Class<Value>) valueType(oid)));
         }
     }
 }

@@ -17,7 +17,7 @@ import org.mdpnp.devices.io.SplitBytesOutputStream;
 public final class IntellivueByteSplitter implements SplitBytesOutputStream.Splitter {
     @Override
     public int split(byte b, byte[] b1) {
-        switch(0xFF & b) {
+        switch (0xFF & b) {
         case 0x7D:
         case 0xC1:
         case 0xC0:

@@ -16,7 +16,6 @@ import ice.Numeric;
 
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
-import org.mdpnp.devices.simulation.nibp.SimulatedNoninvasiveBloodPressure;
 
 public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice {
 
@@ -69,7 +68,8 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
         inflation = createNumericInstance(ice.MDC_PRESS_CUFF_INFLATION.VALUE);
         // TODO temporarily more interesting
         pulse = createNumericInstance(rosetta.MDC_PULS_RATE_NON_INV.VALUE);
-        // pulse = createNumericInstance(ice.Physio.MDC_PULS_RATE_NON_INV.value());
+        // pulse =
+        // createNumericInstance(ice.Physio.MDC_PULS_RATE_NON_INV.value());
 
         numericSample(state, ice.MDC_EVT_STAT_OFF.VALUE, null);
     }

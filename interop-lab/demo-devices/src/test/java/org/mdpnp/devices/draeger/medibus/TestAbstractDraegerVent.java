@@ -19,7 +19,7 @@ import org.junit.Test;
 
 public class TestAbstractDraegerVent {
     @Test
-    public void testLoadMap() throws Exception  {
+    public void testLoadMap() throws Exception {
         Map<Enum<?>, String> numerics = new HashMap<Enum<?>, String>();
         Map<Enum<?>, String> waveforms = new HashMap<Enum<?>, String>();
         AbstractDraegerVent.loadMap(numerics, waveforms);

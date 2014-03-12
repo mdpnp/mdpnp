@@ -75,35 +75,34 @@ public class AlertState implements Parseable, Formatable {
     @Override
     public java.lang.String toString() {
         StringBuilder sb = new StringBuilder("[");
-        if(isAlInhibited()) {
+        if (isAlInhibited()) {
             sb.append("INHIBITED ");
         }
-        if(isAlSuspended()) {
+        if (isAlSuspended()) {
             sb.append("SUSPENDED ");
         }
-        if(isAlLatched()) {
+        if (isAlLatched()) {
             sb.append("LATCHED ");
         }
-        if(isAlSilencedReset()) {
+        if (isAlSilencedReset()) {
             sb.append("SILENCED_RESET ");
         }
-        if(isAlDevInTestMode()) {
+        if (isAlDevInTestMode()) {
             sb.append("AL_DEV_IN_TEST_MODE ");
         }
-        if(isAlDevInStandby()) {
+        if (isAlDevInStandby()) {
             sb.append("AL_DEV_IN_STANDBY ");
         }
-        if(isAlDevInDemoMode()) {
+        if (isAlDevInDemoMode()) {
             sb.append("AL_DEV_IN_DEMO_MODE ");
         }
-        if(isAlNewAlert()) {
+        if (isAlNewAlert()) {
             sb.append("NEW_ALERT ");
         }
-        if(sb.charAt(sb.length()-1)==' ') {
-            sb.delete(sb.length()-1, sb.length());
+        if (sb.charAt(sb.length() - 1) == ' ') {
+            sb.delete(sb.length() - 1, sb.length());
         }
         sb.append("]");
         return sb.toString();
     }
 }
-

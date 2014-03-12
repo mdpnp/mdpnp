@@ -24,14 +24,14 @@ import javax.swing.JPanel;
 public class ImagePanel extends JPanel {
 
     private BufferedImage image;
-    
+
     @Override
     public void paintComponent(Graphics g) {
-    	if(image != null) {
-    		g.drawImage(image, 0, 0, null);
-    	}
+        if (image != null) {
+            g.drawImage(image, 0, 0, null);
+        }
     }
-    
+
     public void setImage(URL url) {
         try {
             image = null == url ? null : ImageIO.read(url);

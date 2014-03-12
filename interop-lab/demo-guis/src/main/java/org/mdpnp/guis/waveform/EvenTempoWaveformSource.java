@@ -26,11 +26,11 @@ public class EvenTempoWaveformSource extends AbstractNestedWaveformSource implem
     }
 
     private int reportingCount;
-    
+
     private long microsecondsPerSample = 50000L;
 
     private ScheduledFuture<?> scheduledFuture;
-    
+
     @Override
     public synchronized void reset(WaveformSource source) {
         reportingCount = 0;
@@ -43,32 +43,34 @@ public class EvenTempoWaveformSource extends AbstractNestedWaveformSource implem
 
     private long priorInvocation;
     private static final Logger log = LoggerFactory.getLogger(EvenTempoWaveformSource.class);
+
     @Override
     public void run() {
-        synchronized(this) {
+        synchronized (this) {
             long now = System.currentTimeMillis();
-            if(0L!=priorInvocation) {
+            if (0L != priorInvocation) {
                 // Number of samples we should play since the last invocation
-                int samples = (int) Math.round((now-priorInvocation)/getTarget().getMillisecondsPerSample());
-                
+                int samples = (int) Math.round((now - priorInvocation) / getTarget().getMillisecondsPerSample());
+
                 // putative updated reportingCount
                 int max = getTarget().getMax();
                 int count = getTarget().getCount();
-                
+
                 int oldReportingCount = this.reportingCount;
                 int reportingCount = oldReportingCount + samples;
                 // wrap around
-                reportingCount = reportingCount >= max?(reportingCount-max):reportingCount;
-                
-                if(count >= 0) {
-                    boolean crossedTheCount = (oldReportingCount<count&&count<reportingCount) || (count<reportingCount&&reportingCount<oldReportingCount);
-                    if(crossedTheCount) {
+                reportingCount = reportingCount >= max ? (reportingCount - max) : reportingCount;
+
+                if (count >= 0) {
+                    boolean crossedTheCount = (oldReportingCount < count && count < reportingCount)
+                            || (count < reportingCount && reportingCount < oldReportingCount);
+                    if (crossedTheCount) {
                         log.info("Reported count got ahead of real count");
                         reportingCount = count;
                     }
                 }
                 this.reportingCount = reportingCount;
-                
+
             }
             priorInvocation = now;
         }
@@ -83,28 +85,29 @@ public class EvenTempoWaveformSource extends AbstractNestedWaveformSource implem
 
     private static ScheduledExecutorService executorService;
     private static int executorServiceReferences = 0;
+
     private synchronized static ScheduledExecutorService reference() {
-        if(0 == executorServiceReferences) {
+        if (0 == executorServiceReferences) {
             executorService = Executors.newScheduledThreadPool(1);
         }
         executorServiceReferences++;
         return executorService;
     }
-    
+
     private synchronized static void release() {
         executorServiceReferences--;
-        if(0 == executorServiceReferences) {
+        if (0 == executorServiceReferences) {
             executorService.shutdown();
             executorService = null;
         }
     }
-    
+
     @Override
     public synchronized void addListener(WaveformSourceListener listener) {
         boolean wasEmpty = getListeners().isEmpty();
 
         super.addListener(listener);
-        if(wasEmpty) {
+        if (wasEmpty) {
             reference();
             scheduledFuture = executorService.scheduleAtFixedRate(this, microsecondsPerSample, microsecondsPerSample, TimeUnit.MICROSECONDS);
         }
@@ -113,8 +116,8 @@ public class EvenTempoWaveformSource extends AbstractNestedWaveformSource implem
     @Override
     public synchronized void removeListener(WaveformSourceListener listener) {
         super.removeListener(listener);
-        if(getListeners().isEmpty()) {
-            if(null != scheduledFuture) {
+        if (getListeners().isEmpty()) {
+            if (null != scheduledFuture) {
                 scheduledFuture.cancel(true);
                 scheduledFuture = null;
             }

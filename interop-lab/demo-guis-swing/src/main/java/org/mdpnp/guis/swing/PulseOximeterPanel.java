@@ -43,7 +43,6 @@ import com.rti.dds.subscription.SampleInfo;
 @SuppressWarnings("serial")
 public class PulseOximeterPanel extends DevicePanel {
 
-
     private JLabel spo2, heartrate, spo2Label, heartrateLabel;
     private JLabel spo2Low, spo2Up, heartrateLow, heartrateUp;
     private JPanel spo2Bounds, heartrateBounds;
@@ -52,7 +51,6 @@ public class PulseOximeterPanel extends DevicePanel {
     private WaveformPanel plethPanel;
     private JLabel time;
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
 
     protected void buildComponents() {
         spo2Bounds = new JPanel();
@@ -63,7 +61,6 @@ public class PulseOximeterPanel extends DevicePanel {
         spo2Bounds.add(spo2Label = new JLabel("%"));
         spo2Up.setVisible(false);
         spo2Low.setVisible(false);
-
 
         spo2Panel = new JPanel();
         spo2Panel.setOpaque(false);
@@ -77,7 +74,7 @@ public class PulseOximeterPanel extends DevicePanel {
 
         heartrateBounds = new JPanel();
         heartrateBounds.setOpaque(false);
-        heartrateBounds.setLayout(new GridLayout(3,1));
+        heartrateBounds.setLayout(new GridLayout(3, 1));
         heartrateBounds.add(heartrateUp = new JLabel("--"));
         heartrateBounds.add(heartrateLow = new JLabel("--"));
         heartrateBounds.add(heartrateLabel = new JLabel("BPM"));
@@ -104,7 +101,8 @@ public class PulseOximeterPanel extends DevicePanel {
         upper.setOpaque(false);
         upper.setLayout(new GridBagLayout());
 
-        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0);
+        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0),
+                0, 0);
 
         upper.add(label("Plethysmogram", plethPanel.asComponent()), gbc);
 
@@ -138,7 +136,7 @@ public class PulseOximeterPanel extends DevicePanel {
         plethPanel.setSource(plethWave);
 
         pulsePanel.setSource(pulseWave);
-        if(null != pulsePanel.cachingSource()) {
+        if (null != pulsePanel.cachingSource()) {
             pulsePanel.cachingSource().setFixedTimeDomain(120000L);
         }
 
@@ -159,25 +157,26 @@ public class PulseOximeterPanel extends DevicePanel {
     }
 
     public static boolean supported(Set<String> names) {
-        return names.contains(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE) &&
-               names.contains(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);// &&
-//	           names.contains(ice.Physio._MDC_PULS_OXIM_PLETH);
+        return names.contains(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE) && names.contains(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);// &&
+        // names.contains(ice.Physio._MDC_PULS_OXIM_PLETH);
     }
+
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
     private final Date date = new Date();
+
     @Override
     public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
-        if(aliveAndValidData(sampleInfo)) {
+        if (aliveAndValidData(sampleInfo)) {
             setInt(numeric, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
             setInt(numeric, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
-            if(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
+            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
                 pulseWave.applyUpdate(numeric, sampleInfo);
             }
-            date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
+            date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
             time.setText(dateFormat.format(date));
         } else {
-            if(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
+            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
                 pulseWave.reset();
             }
         }
@@ -185,14 +184,14 @@ public class PulseOximeterPanel extends DevicePanel {
 
     @Override
     public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
-        if(aliveAndValidData(sampleInfo)) {
-            if(rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(metric_id)) {
+        if (aliveAndValidData(sampleInfo)) {
+            if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(metric_id)) {
                 plethWave.applyUpdate(sampleArray, sampleInfo);
             }
-            date.setTime(1000L*sampleInfo.source_timestamp.sec+sampleInfo.source_timestamp.nanosec/1000000L);
+            date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
             time.setText(dateFormat.format(date));
         } else {
-            if(rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(metric_id)) {
+            if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(metric_id)) {
                 plethWave.reset();
             }
         }
@@ -202,6 +201,7 @@ public class PulseOximeterPanel extends DevicePanel {
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
 
     }
+
     @Override
     public void connected() {
         plethWave.reset();

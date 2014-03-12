@@ -13,18 +13,25 @@
 package org.mdpnp.devices.math;
 
 public interface Distribution {
-	double getAverage();
-	double getVariance();
-	double getStdDev();
-	double getSkewness();
-	double getKurtosis();
-	double getMinimum();
-	double getMaximum();
-	void newPoint(double p);
-	
-	void newPoint(Object p);
+    double getAverage();
 
-	Distribution reset();
-	
-	int getRealSamples();
+    double getVariance();
+
+    double getStdDev();
+
+    double getSkewness();
+
+    double getKurtosis();
+
+    double getMinimum();
+
+    double getMaximum();
+
+    void newPoint(double p);
+
+    void newPoint(Object p);
+
+    Distribution reset();
+
+    int getRealSamples();
 }

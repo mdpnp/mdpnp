@@ -35,9 +35,6 @@ public class ValueImpl implements Value {
     private long[] historyTime = new long[HISTORY_SAMPLES];
     private float[] historyValue = new float[HISTORY_SAMPLES];
 
-
-
-
     public ValueImpl(String uniqueDeviceIdentifier, String metric_id, int instance_id, Vital parent) {
 
         this.metric_id = metric_id;
@@ -66,10 +63,12 @@ public class ValueImpl implements Value {
     public Vital getParent() {
         return parent;
     }
+
     @Override
     public String toString() {
-        return "[udi="+uniqueDeviceIdentifier+",numeric="+numeric+",sampleInfo="+sampleInfo+"]";
+        return "[udi=" + uniqueDeviceIdentifier + ",numeric=" + numeric + ",sampleInfo=" + sampleInfo + "]";
     }
+
     @Override
     public boolean isIgnore() {
         return parent.isIgnoreZero() && (0 == Float.compare(0f, numeric.value) || Float.isNaN(numeric.value));
@@ -80,11 +79,13 @@ public class ValueImpl implements Value {
         Float warningHigh = parent.getWarningHigh();
         return (isIgnore() || null == warningHigh) ? false : (Float.compare(numeric.value, warningHigh) >= 0);
     }
+
     @Override
     public boolean isAtOrBelowLow() {
         Float warningLow = parent.getWarningLow();
         return (isIgnore() || null == warningLow) ? false : (Float.compare(warningLow, numeric.value) >= 0);
     }
+
     @Override
     public boolean isAtOrOutsideOfBounds() {
         return isAtOrAboveHigh() || isAtOrBelowLow();
@@ -93,13 +94,15 @@ public class ValueImpl implements Value {
     @Override
     public boolean isAtOrAboveCriticalHigh() {
         Float criticalHigh = parent.getCriticalHigh();
-        return (isIgnore() || null == criticalHigh) ? false : (Float.compare(numeric.value,  criticalHigh) >= 0);
+        return (isIgnore() || null == criticalHigh) ? false : (Float.compare(numeric.value, criticalHigh) >= 0);
     }
+
     @Override
     public boolean isAtOrBelowCriticalLow() {
         Float criticalLow = parent.getCriticalLow();
         return (isIgnore() || null == criticalLow) ? false : (Float.compare(criticalLow, numeric.value) >= 0);
     }
+
     @Override
     public boolean isAtOrOutsideOfCriticalBounds() {
         return isAtOrAboveCriticalHigh() || isAtOrBelowCriticalLow();
@@ -153,7 +156,7 @@ public class ValueImpl implements Value {
 
         // characterize the new sample
         boolean isAbove = isAtOrAboveHigh();
-        boolean isBelow =  isAtOrBelowLow();
+        boolean isBelow = isAtOrBelowLow();
         float isValue = this.numeric.value;
         long isTime = this.sampleInfo.source_timestamp.sec * 1000L + this.sampleInfo.source_timestamp.nanosec / 1000000L;
 
@@ -161,28 +164,29 @@ public class ValueImpl implements Value {
         historyTime[historyCount] = isTime;
         historyValue[historyCount] = isValue;
 
-        if(++historyCount>=HISTORY_SAMPLES) {
+        if (++historyCount >= HISTORY_SAMPLES) {
             historyWrapped = true;
             historyCount = 0;
         }
 
         // Integrate
-        if(isAbove) {
-            if(wasAbove) {
+        if (isAbove) {
+            if (wasAbove) {
                 // persisting above the bound ...
                 valueMsAboveHigh += (long) ((isTime - wasTime) * (wasValue - parent.getWarningHigh()));
             } else {
-                // above the bound but it wasn't previously ... so restart at zero
+                // above the bound but it wasn't previously ... so restart at
+                // zero
                 valueMsAboveHigh = 0L;
             }
         } else {
             valueMsAboveHigh = 0L;
         }
 
-        if(isBelow) {
-            if(wasBelow) {
+        if (isBelow) {
+            if (wasBelow) {
                 // persisting below the bound ...
-                valueMsBelowLow += (long)((isTime - wasTime) * (parent.getWarningLow() - wasValue));
+                valueMsBelowLow += (long) ((isTime - wasTime) * (parent.getWarningLow() - wasValue));
             } else {
                 valueMsBelowLow = 0L;
             }
@@ -190,8 +194,8 @@ public class ValueImpl implements Value {
             valueMsBelowLow = 0L;
         }
 
-
     }
+
     @Override
     public String getMetricId() {
         return metric_id;

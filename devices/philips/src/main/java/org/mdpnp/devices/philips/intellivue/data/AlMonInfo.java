@@ -58,6 +58,6 @@ public abstract class AlMonInfo implements Parseable, Formatable {
 
     @Override
     public java.lang.String toString() {
-        return "[al_inst_no="+al_inst_no+",al_text="+al_text+",priority="+priority+",flags="+flags+"]";
+        return "[al_inst_no=" + al_inst_no + ",al_text=" + al_text + ",priority=" + priority + ",flags=" + flags + "]";
     }
 }

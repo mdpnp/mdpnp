@@ -64,6 +64,7 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
+
 //
 public class DemoApp {
 
@@ -89,7 +90,7 @@ public class DemoApp {
     }
 
     private static void goback() {
-        if(null != goBackAction) {
+        if (null != goBackAction) {
             goBackAction.run();
             goBackAction = null;
         }
@@ -109,12 +110,11 @@ public class DemoApp {
     public static final void start(final int domainId) throws Exception {
         UIManager.setLookAndFeel(new MDPnPLookAndFeel());
 
-
         final EventLoop eventLoop = new EventLoop();
         final EventLoopHandler handler = new EventLoopHandler(eventLoop);
 
-//		UIManager.put("List.focusSelectedCellHighlightBorder", null);
-//		UIManager.put("List.focusCellHighlightBorder", null);
+        // UIManager.put("List.focusSelectedCellHighlightBorder", null);
+        // UIManager.put("List.focusCellHighlightBorder", null);
 
         // This could prove confusing
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
@@ -130,12 +130,12 @@ public class DemoApp {
             log.error(e.getMessage(), e);
         }
 
-
         DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
         DomainParticipantFactory.get_instance().get_qos(qos);
         qos.entity_factory.autoenable_created_entities = false;
         DomainParticipantFactory.get_instance().set_qos(qos);
-        final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null, StatusKind.STATUS_MASK_NONE);
+        final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null,
+                StatusKind.STATUS_MASK_NONE);
         participant.get_builtin_subscriber().lookup_datareader(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME);
         participant.enable();
         qos.entity_factory.autoenable_created_entities = true;
@@ -145,8 +145,9 @@ public class DemoApp {
         @SuppressWarnings("serial")
         final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop) {
             protected void notADevice(SampleInfo si, ParticipantBuiltinTopicData participant_info) {
-                if("Supervisor".equals(participant_info.participant_name.name) && 0 != (ViewStateKind.NEW_VIEW_STATE & si.view_state)) {
-                    JOptionPane.showMessageDialog(panel, "Another supervisor has been detected on the domain", "Multiple Supervisors", JOptionPane.ERROR_MESSAGE);
+                if ("Supervisor".equals(participant_info.participant_name.name) && 0 != (ViewStateKind.NEW_VIEW_STATE & si.view_state)) {
+                    JOptionPane.showMessageDialog(panel, "Another supervisor has been detected on the domain", "Multiple Supervisors",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         };
@@ -155,12 +156,12 @@ public class DemoApp {
         final DemoFrame frame = new DemoFrame("ICE Supervisor");
         frame.setIconImage(ImageIO.read(DemoApp.class.getResource("icon.png")));
         panel = new DemoPanel();
-        switch(domainId) {
+        switch (domainId) {
         case 0:
             panel.getBedLabel().setText("ICE Test Domain " + domainId);
             break;
         case 3:
-            panel.getBedLabel().setText("Operating Room "+domainId);
+            panel.getBedLabel().setText("Operating Room " + domainId);
             break;
         default:
             panel.getBedLabel().setText("Intensive Care " + domainId);
@@ -169,22 +170,20 @@ public class DemoApp {
 
         String version = BuildInfo.getVersion();
 
-        if(null == version) {
-            panel.getVersion().setText("Development Version on "+System.getProperty("java.version"));
+        if (null == version) {
+            panel.getVersion().setText("Development Version on " + System.getProperty("java.version"));
         } else {
-            panel.getVersion().setText("v"+version+" built:"+BuildInfo.getDate()+" "+BuildInfo.getTime()+" on "+System.getProperty("java.version"));
+            panel.getVersion().setText(
+                    "v" + version + " built:" + BuildInfo.getDate() + " " + BuildInfo.getTime() + " on " + System.getProperty("java.version"));
         }
-
-
 
         frame.getContentPane().add(panel);
         ol = new CardLayout();
         panel.getContent().setLayout(ol);
         panel.getUdi().setText(udi);
-//		LoginPanel loginPanel = new LoginPanel();
-//
-//		panel.getContent().add(loginPanel, "login");
-
+        // LoginPanel loginPanel = new LoginPanel();
+        //
+        // panel.getContent().add(loginPanel, "login");
 
         final MainMenuPanel mainMenuPanel = new MainMenuPanel(AppType.getListedTypes());
         mainMenuPanel.setOpaque(false);
@@ -198,16 +197,16 @@ public class DemoApp {
         final PumpModel pumpModel = new PumpModelImpl();
         final CapnoModel capnoModel = new CapnoModelImpl(ice.MDC_CAPNOGRAPH.VALUE);
 
-//      VitalSign.EndTidalCO2.addToModel(vitalModel);
+        // VitalSign.EndTidalCO2.addToModel(vitalModel);
         vitalModel.start(subscriber, eventLoop);
         pumpModel.start(subscriber, publisher, eventLoop);
         capnoModel.start(subscriber, eventLoop);
-//        VitalSign.HeartRate.addToModel(vitalModel);
+        // VitalSign.HeartRate.addToModel(vitalModel);
         VitalSign.SpO2.addToModel(vitalModel);
         VitalSign.RespiratoryRate.addToModel(vitalModel);
         VitalSign.EndTidalCO2.addToModel(vitalModel);
         PCAPanel _pcaPanel = null;
-        if(!AppType.PCA.isDisabled()) {
+        if (!AppType.PCA.isDisabled()) {
             UIManager.put("TabbedPane.contentOpaque", false);
             _pcaPanel = new PCAPanel(refreshScheduler);
             _pcaPanel.setOpaque(false);
@@ -216,28 +215,28 @@ public class DemoApp {
         final PCAPanel pcaPanel = _pcaPanel;
 
         XRayVentPanel _xrayVentPanel = null;
-        if(!AppType.XRay.isDisabled()) {
+        if (!AppType.XRay.isDisabled()) {
             _xrayVentPanel = new XRayVentPanel(panel, nc, subscriber, eventLoop);
             panel.getContent().add(_xrayVentPanel, AppType.XRay.getId());
         }
         final XRayVentPanel xrayVentPanel = _xrayVentPanel;
 
         DataVisualization _pcaviz = null;
-        if(!AppType.PCAViz.isDisabled()) {
+        if (!AppType.PCAViz.isDisabled()) {
             _pcaviz = new DataVisualization(refreshScheduler);
             panel.getContent().add(_pcaviz, AppType.PCAViz.getId());
         }
         final DataVisualization pcaviz = _pcaviz;
 
         RapidRespiratoryRate _rrr = null;
-        if(!AppType.RRR.isDisabled()) {
+        if (!AppType.RRR.isDisabled()) {
             _rrr = new RapidRespiratoryRate(domainId, eventLoop);
             panel.getContent().add(_rrr, AppType.RRR.getId());
         }
         final RapidRespiratoryRate rrr = _rrr;
 
         JFrame _sim = null;
-        if(!AppType.SimControl.isDisabled()) {
+        if (!AppType.SimControl.isDisabled()) {
             SimControl simControl = new SimControl(participant);
             _sim = new JFrame("Sim Control");
             _sim.getContentPane().add(new JScrollPane(simControl));
@@ -249,29 +248,28 @@ public class DemoApp {
             d.width = 2 * d.width;
             _sim.setSize(d);
 
-//            panel.getContent().add(_sim, AppType.SimControl.getId());
+            // panel.getContent().add(_sim, AppType.SimControl.getId());
         }
         final JFrame sim = _sim;
 
-
-      frame.addWindowListener(new WindowAdapter() {
+        frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 refreshScheduler.shutdownNow();
-                if(goBackAction != null) {
+                if (goBackAction != null) {
                     goBackAction.run();
                     goBackAction = null;
                 }
-                if(null != sim) {
+                if (null != sim) {
                     // TODO things
                 }
-                if(pcaPanel != null) {
+                if (pcaPanel != null) {
                     pcaPanel.setModel(null, null);
                 }
-                if(null != pcaviz) {
+                if (null != pcaviz) {
                     pcaviz.setModel(null, null);
                 }
-                if(null != rrr) {
+                if (null != rrr) {
                     rrr.setModel(null, null);
                 }
                 vitalModel.stop();
@@ -304,7 +302,8 @@ public class DemoApp {
             public void actionPerformed(ActionEvent e) {
                 ConfigurationDialog dia = new ConfigurationDialog();
                 dia.setTitle("Create a local ICE Device Adapter");
-                dia.getApplications().setModel(new DefaultComboBoxModel(new Configuration.Application[] {Configuration.Application.ICE_Device_Interface}));
+                dia.getApplications().setModel(
+                        new DefaultComboBoxModel(new Configuration.Application[] { Configuration.Application.ICE_Device_Interface }));
                 dia.set(Configuration.Application.ICE_Device_Interface, Configuration.DeviceType.PO_Simulator);
                 dia.remove(dia.getDomainId());
                 dia.remove(dia.getDomainIdLabel());
@@ -312,18 +311,20 @@ public class DemoApp {
                 dia.remove(dia.getApplicationsLabel());
                 dia.getWelcomeText().setRows(4);
                 dia.getWelcomeText().setColumns(40);
-//                dia.remove(dia.getWelcomeScroll());
-                dia.getWelcomeText().setText("Typically ICE Device Adapters do not run directly within the ICE Supervisor.  This option is provided for convenient testing.  A window will be created for the device adapter.  To terminate the adapter close that window.  To exit this application you must close the supervisory window.");
+                // dia.remove(dia.getWelcomeScroll());
+                dia.getWelcomeText()
+                        .setText(
+                                "Typically ICE Device Adapters do not run directly within the ICE Supervisor.  This option is provided for convenient testing.  A window will be created for the device adapter.  To terminate the adapter close that window.  To exit this application you must close the supervisory window.");
                 dia.getQuit().setText("Close");
                 dia.pack();
                 dia.setLocationRelativeTo(panel);
                 final Configuration c = dia.showDialog();
-                if(null != c) {
+                if (null != c) {
                     Thread t = new Thread(new Runnable() {
                         public void run() {
                             try {
                                 DeviceAdapter da = new DeviceAdapter();
-                                da.start(c.getDeviceType(), domainId, c.getAddress(), true, false, eventLoop );
+                                da.start(c.getDeviceType(), domainId, c.getAddress(), true, false, eventLoop);
                                 log.info("DeviceAdapter ended");
                             } catch (Exception e) {
                                 log.error("Error in spawned DeviceAdapter", e);
@@ -337,23 +338,22 @@ public class DemoApp {
 
         });
 
-
         mainMenuPanel.getDeviceList().setModel(nc);
 
         mainMenuPanel.getAppList().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int idx = mainMenuPanel.getAppList().locationToIndex(e.getPoint());
-                if(idx >= 0 && mainMenuPanel.getAppList().getCellBounds(idx, idx).contains(e.getPoint())) {
+                if (idx >= 0 && mainMenuPanel.getAppList().getCellBounds(idx, idx).contains(e.getPoint())) {
                     Object o = mainMenuPanel.getAppList().getModel().getElementAt(idx);
                     AppType appType = (AppType) o;
 
-                    switch(appType) {
+                    switch (appType) {
                     case RRR:
-                        if(null != rrr) {
+                        if (null != rrr) {
                             setGoBack(AppType.Main.getId(), new Runnable() {
                                 public void run() {
-//					                rrr.setModel(null, null);
+                                    // rrr.setModel(null, null);
                                 }
                             });
                             panel.getBedLabel().setText(appType.getName());
@@ -363,11 +363,11 @@ public class DemoApp {
                         }
                         break;
                     case PCAViz:
-                        if(null != pcaviz) {
+                        if (null != pcaviz) {
                             setGoBack(AppType.Main.getId(), new Runnable() {
-                               public void run() {
-                                   pcaviz.setModel(null, null);
-                               }
+                                public void run() {
+                                    pcaviz.setModel(null, null);
+                                }
                             });
                             panel.getBedLabel().setText(appType.getName());
                             panel.getPatientLabel().setText("");
@@ -376,7 +376,7 @@ public class DemoApp {
                         }
                         break;
                     case PCA:
-                        if(null != pcaPanel) {
+                        if (null != pcaPanel) {
                             setGoBack(AppType.Main.getId(), new Runnable() {
                                 public void run() {
                                     pcaPanel.setModel(null, null);
@@ -389,7 +389,7 @@ public class DemoApp {
                         }
                         break;
                     case XRay:
-                        if(null != xrayVentPanel) {
+                        if (null != xrayVentPanel) {
                             setGoBack(AppType.Main.getId(), new Runnable() {
                                 public void run() {
                                     xrayVentPanel.stop();
@@ -400,16 +400,17 @@ public class DemoApp {
                         }
                         break;
                     case SimControl:
-                        if(null != sim) {
+                        if (null != sim) {
                             sim.setLocationRelativeTo(frame);
                             sim.setVisible(true);
-//                            setGoBack(AppType.Main.getId(), new Runnable() {
-//                                public void run() {
-//                                    sim.stop();
-//                                }
-//                            });
-//                            ol.show(panel.getContent(), AppType.SimControl.getId());
-//                            sim.start();
+                            // setGoBack(AppType.Main.getId(), new Runnable() {
+                            // public void run() {
+                            // sim.stop();
+                            // }
+                            // });
+                            // ol.show(panel.getContent(),
+                            // AppType.SimControl.getId());
+                            // sim.start();
                         }
                     case Device:
                         break;
@@ -426,14 +427,15 @@ public class DemoApp {
         mainMenuPanel.getDeviceList().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                int idx  = mainMenuPanel.getDeviceList().locationToIndex(e.getPoint());
-                if(idx>=0 && mainMenuPanel.getDeviceList().getCellBounds(idx, idx).contains(e.getPoint())) {
+                int idx = mainMenuPanel.getDeviceList().locationToIndex(e.getPoint());
+                if (idx >= 0 && mainMenuPanel.getDeviceList().getCellBounds(idx, idx).contains(e.getPoint())) {
                     final Device device = (Device) mainMenuPanel.getDeviceList().getModel().getElementAt(idx);
-                    // TODO threading model needs to be revisited but here this will ultimately deadlock on this AWT EventQueue thread
+                    // TODO threading model needs to be revisited but here this
+                    // will ultimately deadlock on this AWT EventQueue thread
                     Thread t = new Thread(new Runnable() {
                         public void run() {
                             DeviceMonitor deviceMonitor = devicePanel.getModel();
-                            if(null != deviceMonitor) {
+                            if (null != deviceMonitor) {
                                 deviceMonitor.stop();
                                 deviceMonitor = null;
                             }
@@ -445,11 +447,10 @@ public class DemoApp {
                     t.setDaemon(true);
                     t.start();
 
-
                     setGoBack(AppType.Main.getId(), new Runnable() {
                         public void run() {
                             DeviceMonitor deviceMonitor = devicePanel.getModel();
-                            if(null != deviceMonitor) {
+                            if (null != deviceMonitor) {
                                 deviceMonitor.stop();
                             }
                             devicePanel.setModel(null);
@@ -461,27 +462,24 @@ public class DemoApp {
             }
         });
 
-//		mainMenuPanel.getDeviceList().setModel(nc.getAcceptedDevices());
+        // mainMenuPanel.getDeviceList().setModel(nc.getAcceptedDevices());
 
-//		loginPanel.getClinicianId().addActionListener(new ActionListener() {
-//
-//			@Override
-//			public void actionPerformed(ActionEvent e) {
-//				setGoBack("login", null);
-//				ol.show(panel.getContent(), "main");
-//			}
-//
-//		});
+        // loginPanel.getClinicianId().addActionListener(new ActionListener() {
+        //
+        // @Override
+        // public void actionPerformed(ActionEvent e) {
+        // setGoBack("login", null);
+        // ol.show(panel.getContent(), "main");
+        // }
+        //
+        // });
 
+        // DemoPanel.setChildrenOpaque(panel, false);
 
-
-//		DemoPanel.setChildrenOpaque(panel, false);
-
-
-//		panel.setOpaque(true);
+        // panel.setOpaque(true);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800,600);
+        frame.setSize(800, 600);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }

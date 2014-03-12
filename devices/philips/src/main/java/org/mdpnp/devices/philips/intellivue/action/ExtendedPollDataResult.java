@@ -22,12 +22,20 @@ import org.mdpnp.devices.philips.intellivue.dataexport.DataExportAction;
 
 public interface ExtendedPollDataResult extends DataExportAction {
     int getPollNumber();
+
     void setPollNumber(int pollNumber);
+
     int getSequenceNumber();
+
     RelativeTime getRelativeTime();
+
     AbsoluteTime getAbsoluteTime();
+
     Type getPolledObjType();
+
     OIDType getPolledAttributeGroup();
+
     void setPolledAttributeGroup(OIDType oid);
+
     List<SingleContextPoll> getPollInfoList();
 }

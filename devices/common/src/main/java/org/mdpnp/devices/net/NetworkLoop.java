@@ -71,18 +71,18 @@ public class NetworkLoop implements Runnable {
 
     private synchronized void pause(String action) {
         long start = System.currentTimeMillis();
-        if(!Thread.currentThread().equals(myThread)) {
-            while(!LoopState.Paused.equals(loopState)) {
+        if (!Thread.currentThread().equals(myThread)) {
+            while (!LoopState.Paused.equals(loopState)) {
                 long now = System.currentTimeMillis();
-                switch(loopState) {
+                switch (loopState) {
                 case New:
-                    if( now >= (start + 5000L)) {
+                    if (now >= (start + 5000L)) {
                         throw new IllegalStateException("RunLoop not started after five seconds, unable to register connection");
                     }
                     break;
                 case Terminating:
                 case Terminated:
-                    throw new IllegalStateException("Cannot " + action +"; runLoop is " + loopState);
+                    throw new IllegalStateException("Cannot " + action + "; runLoop is " + loopState);
                 case Resuming:
                 case Pausing:
                 case Paused:
@@ -109,12 +109,12 @@ public class NetworkLoop implements Runnable {
 
     public SelectionKey register(NetworkConnection conn, SelectableChannel channel) throws ClosedChannelException {
         SelectionKey key = null;
-        synchronized(this) {
-            if(LoopState.New.equals(loopState)) {
+        synchronized (this) {
+            if (LoopState.New.equals(loopState)) {
                 key = channel.register(select, SelectionKey.OP_READ, conn);
             }
         }
-        if(null != key) {
+        if (null != key) {
             conn.registered(this, key);
             return key;
         } else {
@@ -128,13 +128,13 @@ public class NetworkLoop implements Runnable {
 
     public void unregister(SelectionKey key, NetworkConnection conn) {
         boolean canceled = false;
-        synchronized(this) {
-            if(LoopState.New.equals(loopState)) {
+        synchronized (this) {
+            if (LoopState.New.equals(loopState)) {
                 key.cancel();
                 canceled = true;
             }
         }
-        if(canceled) {
+        if (canceled) {
             conn.unregistered(this, key);
         } else {
             pause("unregister a connection");
@@ -144,12 +144,10 @@ public class NetworkLoop implements Runnable {
         }
     }
 
-
-
     private int select(long time) throws IOException {
-        if(time < 0L) {
+        if (time < 0L) {
             return select.selectNow();
-        } else if(time == 0L) {
+        } else if (time == 0L) {
             return select.select();
         } else {
             return select.select(time);
@@ -157,10 +155,10 @@ public class NetworkLoop implements Runnable {
     }
 
     public void runLoop() {
-        synchronized(this) {
-            if(!LoopState.New.equals(loopState)) {
-                throw new IllegalStateException("runLoop has already been called, loopState="+loopState);
-            } else if(null != myThread) {
+        synchronized (this) {
+            if (!LoopState.New.equals(loopState)) {
+                throw new IllegalStateException("runLoop has already been called, loopState=" + loopState);
+            } else if (null != myThread) {
                 throw new IllegalStateException("Do not invoke the runLoop from multiple threads");
             } else {
                 myThread = Thread.currentThread();
@@ -170,10 +168,10 @@ public class NetworkLoop implements Runnable {
         }
 
         try {
-            while(true) {
-                synchronized(this) {
-                    while(!LoopState.Resumed.equals(loopState)) {
-                        switch(loopState) {
+            while (true) {
+                synchronized (this) {
+                    while (!LoopState.Resumed.equals(loopState)) {
+                        switch (loopState) {
                         case New:
                         case Terminated:
                             throw new IllegalStateException();
@@ -206,8 +204,8 @@ public class NetworkLoop implements Runnable {
                 }
 
                 java.util.Set<SelectionKey> keys = select.selectedKeys();
-                for(SelectionKey sk : keys) {
-                    if(sk.isReadable()) {
+                for (SelectionKey sk : keys) {
+                    if (sk.isReadable()) {
                         NetworkConnection nc = (NetworkConnection) sk.attachment();
                         try {
                             nc.read(sk);
@@ -218,7 +216,7 @@ public class NetworkLoop implements Runnable {
                         }
                     }
 
-                    if(sk.isValid()&&sk.isWritable()) {
+                    if (sk.isValid() && sk.isWritable()) {
                         NetworkConnection nc = (NetworkConnection) sk.attachment();
                         try {
                             nc.write(sk);
@@ -228,19 +226,20 @@ public class NetworkLoop implements Runnable {
                             continue;
                         }
                     }
-//					if(sk.isAcceptable()) {
-//						NetworkConnection nc = (NetworkConnection) sk.attachment();
-//						try {
-//							nc.accept(sk);
-//						} catch (IOException e) {
-//							e.printStackTrace();
-//							sk.cancel();
-//						}
-//					}
+                    // if(sk.isAcceptable()) {
+                    // NetworkConnection nc = (NetworkConnection)
+                    // sk.attachment();
+                    // try {
+                    // nc.accept(sk);
+                    // } catch (IOException e) {
+                    // e.printStackTrace();
+                    // sk.cancel();
+                    // }
+                    // }
                 }
             }
         } finally {
-            synchronized(this) {
+            synchronized (this) {
                 myThread = null;
                 loopState = LoopState.Terminated;
                 this.notifyAll();
@@ -249,8 +248,8 @@ public class NetworkLoop implements Runnable {
     }
 
     public synchronized void cancelThread() {
-        while(!LoopState.Resumed.equals(loopState)) {
-            switch(loopState) {
+        while (!LoopState.Resumed.equals(loopState)) {
+            switch (loopState) {
             case New:
                 throw new IllegalStateException("runLoop has not been started");
             case Paused:
@@ -275,8 +274,8 @@ public class NetworkLoop implements Runnable {
 
     public void cancelThreadAndWait() {
         cancelThread();
-        synchronized(this) {
-            while(null != myThread) {
+        synchronized (this) {
+            while (null != myThread) {
                 try {
                     this.wait();
                 } catch (InterruptedException e) {
@@ -285,14 +284,17 @@ public class NetworkLoop implements Runnable {
             }
         }
     }
+
     public void add(TaskQueue.Task<?> task) {
         taskQueue.add(task);
         select.wakeup();
     }
+
     public void clearTasks() {
         taskQueue.clear();
         select.wakeup();
     }
+
     public void wakeup() {
         select.wakeup();
     }

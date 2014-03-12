@@ -34,12 +34,13 @@ public class MultiPulseOximeterPanel extends DevicePanel {
     private final WaveformUpdateWaveformSource[] plethWave;
 
     private static final int N = 12;
+
     protected void buildComponents() {
-//        WaveformPanelFactory fact = new WaveformPanelFactory();
+        // WaveformPanelFactory fact = new WaveformPanelFactory();
         this.plethPanel = new WaveformPanel[N];
-        setLayout(new GridLayout(N,1));
-        for(int i = 0; i < N; i++) {
-//            plethPanel[i] = fact.createWaveformPanel();
+        setLayout(new GridLayout(N, 1));
+        for (int i = 0; i < N; i++) {
+            // plethPanel[i] = fact.createWaveformPanel();
             plethPanel[i] = new SwingWaveformPanel();
         }
 
@@ -53,7 +54,7 @@ public class MultiPulseOximeterPanel extends DevicePanel {
         setOpaque(true);
         buildComponents();
         plethWave = new WaveformUpdateWaveformSource[N];
-        for(int i = 0 ; i < N; i++) {
+        for (int i = 0; i < N; i++) {
             plethWave[i] = new WaveformUpdateWaveformSource();
             plethPanel[i].setSource(plethWave[i]);
             plethPanel[i].start();
@@ -62,7 +63,7 @@ public class MultiPulseOximeterPanel extends DevicePanel {
 
     @Override
     public void destroy() {
-        for(int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++) {
             plethPanel[i].setSource(null);
             plethPanel[i].stop();
         }
@@ -72,18 +73,20 @@ public class MultiPulseOximeterPanel extends DevicePanel {
     public static boolean supported(Set<String> names) {
         return names.contains(rosetta.MDC_PULS_OXIM_PLETH.VALUE);
     }
+
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
-//    private final Date date = new Date();
+
+    // private final Date date = new Date();
 
     @Override
     public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
-        if(aliveAndValidData(sampleInfo)) {
-            if(sampleArray.instance_id>=0&&sampleArray.instance_id<N) {
+        if (aliveAndValidData(sampleInfo)) {
+            if (sampleArray.instance_id >= 0 && sampleArray.instance_id < N) {
                 plethWave[sampleArray.instance_id].applyUpdate(sampleArray, sampleInfo);
             }
         } else {
-            if(sampleArray.instance_id>=0&&sampleArray.instance_id<N) {
+            if (sampleArray.instance_id >= 0 && sampleArray.instance_id < N) {
                 plethWave[sampleArray.instance_id].reset();
             }
         }
@@ -96,7 +99,7 @@ public class MultiPulseOximeterPanel extends DevicePanel {
 
     @Override
     public void connected() {
-        for(WaveformUpdateWaveformSource wuws : plethWave) {
+        for (WaveformUpdateWaveformSource wuws : plethWave) {
             wuws.reset();
         }
     }

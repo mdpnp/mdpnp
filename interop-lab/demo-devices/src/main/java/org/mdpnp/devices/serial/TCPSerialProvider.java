@@ -25,7 +25,6 @@ import org.mdpnp.devices.serial.SerialSocket.FlowControl;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 
-
 public class TCPSerialProvider implements SerialProvider {
 
     private static class TCPSerialSocket implements SerialSocket {
@@ -57,8 +56,7 @@ public class TCPSerialProvider implements SerialProvider {
         }
 
         @Override
-        public void setSerialParams(int baud, DataBits dataBits, Parity parity,
-                StopBits stopBits, FlowControl flowControl) {
+        public void setSerialParams(int baud, DataBits dataBits, Parity parity, StopBits stopBits, FlowControl flowControl) {
             // all this needs a refactoring for another day
         }
 
@@ -86,18 +84,17 @@ public class TCPSerialProvider implements SerialProvider {
 
     @Override
     public void cancelConnect() {
-        // we'll see if there is something to do about his maybe but TCP timeouts are pretty short
+        // we'll see if there is something to do about his maybe but TCP
+        // timeouts are pretty short
     }
 
     @Override
-    public void setDefaultSerialSettings(int baudrate, DataBits dataBits,
-            Parity parity, StopBits stopBits) {
+    public void setDefaultSerialSettings(int baudrate, DataBits dataBits, Parity parity, StopBits stopBits) {
 
     }
 
     @Override
-    public void setDefaultSerialSettings(int baudrate, DataBits dataBits, Parity parity, StopBits stopBits,
-            FlowControl flowControl) {
+    public void setDefaultSerialSettings(int baudrate, DataBits dataBits, Parity parity, StopBits stopBits, FlowControl flowControl) {
 
     }
 

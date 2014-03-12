@@ -20,14 +20,14 @@ import org.mdpnp.devices.philips.intellivue.data.Type;
 import org.mdpnp.devices.philips.intellivue.dataexport.Nomenclature;
 
 public interface ConnectIndication extends Message {
-	public Nomenclature getNomenclature();
-	
-	public IPAddressInformation getIpAddressInformation();
+    public Nomenclature getNomenclature();
 
-	public SystemLocalization getSystemLocalization();
-	
-	public Type getSystemType();
+    public IPAddressInformation getIpAddressInformation();
 
-	public ProtocolSupport getProtocolSupport();
+    public SystemLocalization getSystemLocalization();
+
+    public Type getSystemType();
+
+    public ProtocolSupport getProtocolSupport();
 
 }

@@ -24,71 +24,69 @@ import org.mdpnp.devices.philips.intellivue.util.Util;
 
 public class DataExportInvokeImpl implements DataExportInvoke {
 
-	private int invokeId;
-	private CommandType commandType;
-	
-	private DataExportCommand command;
-	
-	@Override
-	public void setCommandType(CommandType commandType) {
-		this.commandType = commandType;
-	}
-	
-	@Override
-	public int getInvoke() {
-		return invokeId;
-	}
-	
-	@Override
-	public void setInvoke(int i) {
-		this.invokeId = i;
-	}
+    private int invokeId;
+    private CommandType commandType;
 
-	@SuppressWarnings("unused")
+    private DataExportCommand command;
+
     @Override
-	public void parse(ByteBuffer bb) {
-		invokeId = Bits.getUnsignedShort(bb);
-		commandType = CommandType.valueOf(Bits.getUnsignedShort(bb));
-		int length = Bits.getUnsignedShort(bb);
-		command = CommandFactory.buildCommand(commandType, false);
-		command.setMessage(this);
-		command.parse(bb);
-		
-	}
+    public void setCommandType(CommandType commandType) {
+        this.commandType = commandType;
+    }
 
-	@Override
-	public void format(ByteBuffer bb) {
-		Bits.putUnsignedShort(bb, invokeId);
-		Bits.putUnsignedShort(bb, commandType.asInt());
-		
-		
-		Util.PrefixLengthShort.write(bb, command);
+    @Override
+    public int getInvoke() {
+        return invokeId;
+    }
 
-	}
+    @Override
+    public void setInvoke(int i) {
+        this.invokeId = i;
+    }
 
+    @SuppressWarnings("unused")
+    @Override
+    public void parse(ByteBuffer bb) {
+        invokeId = Bits.getUnsignedShort(bb);
+        commandType = CommandType.valueOf(Bits.getUnsignedShort(bb));
+        int length = Bits.getUnsignedShort(bb);
+        command = CommandFactory.buildCommand(commandType, false);
+        command.setMessage(this);
+        command.parse(bb);
 
-	@Override
-	public CommandType getCommandType() {
-		return commandType;
-	}
+    }
 
-	@Override
-	public void setCommand(DataExportCommand dec) {
-		this.command = dec;
-	}
+    @Override
+    public void format(ByteBuffer bb) {
+        Bits.putUnsignedShort(bb, invokeId);
+        Bits.putUnsignedShort(bb, commandType.asInt());
 
-	@Override
-	public DataExportCommand getCommand() {
-		return command;
-	}
+        Util.PrefixLengthShort.write(bb, command);
 
-	@Override
-	public String toString() {
-		return "[invokeId="+invokeId+",commandType="+commandType+",command="+command+"]";
-	}
-	
-	@Override
-	public RemoteOperation getRemoteOperation() {
-		return RemoteOperation.Invoke;
-	}
+    }
+
+    @Override
+    public CommandType getCommandType() {
+        return commandType;
+    }
+
+    @Override
+    public void setCommand(DataExportCommand dec) {
+        this.command = dec;
+    }
+
+    @Override
+    public DataExportCommand getCommand() {
+        return command;
+    }
+
+    @Override
+    public String toString() {
+        return "[invokeId=" + invokeId + ",commandType=" + commandType + ",command=" + command + "]";
+    }
+
+    @Override
+    public RemoteOperation getRemoteOperation() {
+        return RemoteOperation.Invoke;
+    }
 }

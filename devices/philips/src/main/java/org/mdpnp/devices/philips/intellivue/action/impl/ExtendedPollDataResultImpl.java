@@ -29,7 +29,7 @@ import org.mdpnp.devices.philips.intellivue.util.Util;
 public class ExtendedPollDataResultImpl implements ExtendedPollDataResult {
     private int pollNumber;
     private int sequenceNumber;
-    private final RelativeTime relativeTimestamp= new RelativeTime();
+    private final RelativeTime relativeTimestamp = new RelativeTime();
     private final AbsoluteTime absoluteTimestamp = new AbsoluteTime();
     private final Type polledObjectType = new Type();
     private OIDType polledAttributeGroup = OIDType.lookup(0);
@@ -56,6 +56,7 @@ public class ExtendedPollDataResultImpl implements ExtendedPollDataResult {
     public void parseMore(ByteBuffer bb) {
         parse(bb, true);
     }
+
     private void parse(ByteBuffer bb, boolean more) {
         pollNumber = Bits.getUnsignedShort(bb);
         sequenceNumber = Bits.getUnsignedShort(bb);
@@ -80,11 +81,15 @@ public class ExtendedPollDataResultImpl implements ExtendedPollDataResult {
 
     @Override
     public String toString() {
-        return "[pollNumber="+pollNumber+",sequenceNumber="+sequenceNumber+",relativeTimestamp="+relativeTimestamp+",absoluteTimestamp="+absoluteTimestamp+",polledObjectType="+polledObjectType+",polledAttributeGroup="+polledAttributeGroup+",pollInfoList="+pollInfoList+"]";
+        return "[pollNumber=" + pollNumber + ",sequenceNumber=" + sequenceNumber + ",relativeTimestamp=" + relativeTimestamp + ",absoluteTimestamp="
+                + absoluteTimestamp + ",polledObjectType=" + polledObjectType + ",polledAttributeGroup=" + polledAttributeGroup + ",pollInfoList="
+                + pollInfoList + "]";
     }
+
     public void setPolledAttributeGroup(OIDType polledAttributeGroup) {
         this.polledAttributeGroup = polledAttributeGroup;
     }
+
     @Override
     public int getPollNumber() {
         return pollNumber;

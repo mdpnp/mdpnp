@@ -48,9 +48,8 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
 
     private class MySimulatedInfusionPump extends SimulatedInfusionPump {
         @Override
-        protected void receivePumpStatus(String drugName, boolean infusionActive, int drugMassMcg,
-                int solutionVolumeMl, int volumeToBeInfusedMl, int infusionDurationSeconds,
-                float infusionFractionComplete) {
+        protected void receivePumpStatus(String drugName, boolean infusionActive, int drugMassMcg, int solutionVolumeMl, int volumeToBeInfusedMl,
+                int infusionDurationSeconds, float infusionFractionComplete) {
             infusionStatus.drug_name = drugName;
             infusionStatus.infusionActive = infusionActive;
             infusionStatus.drug_mass_mcg = drugMassMcg;
@@ -91,8 +90,10 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
         writeIdentity();
 
         ice.InfusionStatusTypeSupport.register_type(getParticipant(), ice.InfusionStatusTypeSupport.get_type_name());
-        infusionStatusTopic = getParticipant().create_topic(ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        infusionStatusWriter = (InfusionStatusDataWriter) publisher.create_datawriter_with_profile(infusionStatusTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        infusionStatusTopic = getParticipant().create_topic(ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.get_type_name(),
+                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        infusionStatusWriter = (InfusionStatusDataWriter) publisher.create_datawriter_with_profile(infusionStatusTopic, QosProfiles.ice_library,
+                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         infusionStatus.unique_device_identifier = deviceIdentity.unique_device_identifier;
         infusionStatusHandle = infusionStatusWriter.register_instance(infusionStatus);
@@ -108,12 +109,15 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
         infusionStatusWriter.write(infusionStatus, infusionStatusHandle);
 
         ice.InfusionObjectiveTypeSupport.register_type(getParticipant(), ice.InfusionObjectiveTypeSupport.get_type_name());
-        infusionObjectiveTopic = getParticipant().create_topic(ice.InfusionObjectiveTopic.VALUE,  ice.InfusionObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        infusionObjectiveReader = (ice.InfusionObjectiveDataReader) subscriber.create_datareader_with_profile(infusionObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        infusionObjectiveTopic = getParticipant().create_topic(ice.InfusionObjectiveTopic.VALUE, ice.InfusionObjectiveTypeSupport.get_type_name(),
+                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        infusionObjectiveReader = (ice.InfusionObjectiveDataReader) subscriber.create_datareader_with_profile(infusionObjectiveTopic,
+                QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         StringSeq params = new StringSeq();
-        params.add("'"+deviceIdentity.unique_device_identifier+"'");
-        infusionObjectiveQueryCondition = infusionObjectiveReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0", params);
+        params.add("'" + deviceIdentity.unique_device_identifier + "'");
+        infusionObjectiveQueryCondition = infusionObjectiveReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
+                ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0", params);
         eventLoop.addHandler(infusionObjectiveQueryCondition, new ConditionHandler() {
             private ice.InfusionObjectiveSeq data_seq = new ice.InfusionObjectiveSeq();
             private SampleInfoSeq info_seq = new SampleInfoSeq();
@@ -121,17 +125,18 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
             @Override
             public void conditionChanged(Condition condition) {
 
-                for(;;) {
+                for (;;) {
                     try {
-                        infusionObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (ReadCondition) condition);
-                        for(int i = 0; i < info_seq.size(); i++) {
+                        infusionObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+                                (ReadCondition) condition);
+                        for (int i = 0; i < info_seq.size(); i++) {
                             SampleInfo si = (SampleInfo) info_seq.get(i);
                             ice.InfusionObjective data = (InfusionObjective) data_seq.get(i);
-                            if(si.valid_data) {
+                            if (si.valid_data) {
                                 stopThePump(data.stopInfusion);
                             }
                         }
-                    } catch(RETCODE_NO_DATA noData) {
+                    } catch (RETCODE_NO_DATA noData) {
                         break;
                     } finally {
                         infusionObjectiveReader.return_loan(data_seq, info_seq);
@@ -140,7 +145,6 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
             }
 
         });
-
 
     }
 

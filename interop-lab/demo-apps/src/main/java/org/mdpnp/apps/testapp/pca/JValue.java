@@ -41,7 +41,6 @@ public class JValue extends JComponent {
     private final JLabel valueMsBelow = new JLabel();
     private final JValueChart valueChart = new JValueChart(null);
 
-
     private final JLabel value = new JLabel();
 
     public JValue() {
@@ -56,7 +55,8 @@ public class JValue extends JComponent {
         value.setForeground(Color.blue);
         deviceName.setFont(value.getFont().deriveFont(16f));
         setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,1.0,1.0,GridBagConstraints.CENTER,GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0);
+        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
+                0), 0, 0);
 
         gbc.gridheight = 3;
         add(icon, gbc);
@@ -69,7 +69,7 @@ public class JValue extends JComponent {
 
         valueChart.setMinimumSize(new Dimension(150, 20));
         valueChart.setPreferredSize(new Dimension(150, 20));
-        gbc.insets = new Insets(1,1,1,1);
+        gbc.insets = new Insets(1, 1, 1, 1);
         add(valueChart, gbc);
 
         gbc.gridy++;
@@ -88,31 +88,27 @@ public class JValue extends JComponent {
         gbc.gridheight = 3;
         add(value, gbc);
 
-
-
-
-
     }
 
     private final Date date = new Date();
     private final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
     public void update(Value value, Icon icon, String deviceName, ice.Numeric numeric, SampleInfo si, long valueMsBelowLow, long valueMsAboveHigh) {
-//        if(value.isAtOrOutsideOfBounds()) {
-//            setBackground(Color.yellow);
-//        } else if(value.isAtOrOutsideOfCriticalBounds()) {
-//            setBackground(Color.red);
-//        } else {
-//            setBackground(getParent().getBackground());
-//        }
+        // if(value.isAtOrOutsideOfBounds()) {
+        // setBackground(Color.yellow);
+        // } else if(value.isAtOrOutsideOfCriticalBounds()) {
+        // setBackground(Color.red);
+        // } else {
+        // setBackground(getParent().getBackground());
+        // }
         this.icon.setIcon(icon);
 
         this.deviceName.setText(deviceName);
-        if(si != null && numeric != null) {
+        if (si != null && numeric != null) {
             date.setTime(1000L * si.source_timestamp.sec + si.source_timestamp.nanosec / 1000000L);
             String s = Integer.toString(Math.round(numeric.value));
-            while(s.length()<3) {
-                s = " "+s;
+            while (s.length() < 3) {
+                s = " " + s;
             }
             this.value.setText(s);
 
@@ -121,7 +117,7 @@ public class JValue extends JComponent {
             this.value.setText("   ");
             this.time.setText("");
         }
-        this.valueMsAbove.setText(0L == valueMsAboveHigh ? "" : Long.toString(valueMsAboveHigh/1000L));
+        this.valueMsAbove.setText(0L == valueMsAboveHigh ? "" : Long.toString(valueMsAboveHigh / 1000L));
         this.valueMsBelow.setText(0L == valueMsBelowLow ? "" : Long.toString(valueMsBelowLow / 1000L));
         this.valueChart.setValue(value);
 

@@ -65,8 +65,8 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         add(icon, BorderLayout.WEST);
 
         JPanel text = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER,
-                GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
+        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,
+                0, 0, 0), 0, 0);
         text.setOpaque(false);
         // text.setBorder(new EmptyBorder(1, 5, 1, 5));
 
@@ -80,13 +80,13 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         gbc.gridx++;
         udi.setHorizontalTextPosition(SwingConstants.RIGHT);
         text.add(udi, gbc);
-        
+
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.gridwidth = 2;
         hostname.setHorizontalTextPosition(SwingConstants.RIGHT);
         text.add(hostname, gbc);
-        
+
         add(text, BorderLayout.CENTER);
 
     }
@@ -94,8 +94,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
     private final Border selectedBorder = new LineBorder(Color.blue, 1);
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
-            boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         Device device = value == null ? null : (Device) value;
 
         modelName.setFont(list.getFont());
@@ -104,14 +103,14 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         if (null != device) {
 
             String shortUDI = device.getShortUDI();
-            if(null == shortUDI) {
+            if (null == shortUDI) {
                 udi.setText("<unknown UDI>");
             } else {
                 udi.setText(shortUDI);
             }
 
             hostname.setText(device.getHostname());
-            
+
             DeviceIcon icon = device.getIcon();
 
             DeviceConnectivity dc = device.getDeviceConnectivity();

@@ -70,19 +70,21 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
     public void setCaching(boolean caching) {
         this.caching = caching;
     }
+
     public void setSource(WaveformSource source) {
-        if(null == source) {
+        if (null == source) {
             setRawSource(null);
         } else {
-            if(caching) {
+            if (caching) {
                 source = new CachingWaveformSource(source, 5000L);
             }
-            if(evenTempo) {
+            if (evenTempo) {
                 source = new EvenTempoWaveformSource(source);
             }
             setRawSource(source);
-        } 
+        }
     }
+
     public void setRawSource(WaveformSource source) {
         if (null != this.source) {
             this.source.removeListener(this);
@@ -129,7 +131,7 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
 
         // gl.glEnable(OpenGL.GL_LINE_SMOOTH);
         // gl.glHint(OpenGL.GL_LINE_SMOOTH_HINT, OpenGL.GL_NICEST);
-         gl.glLineWidth(3.0f);
+        gl.glLineWidth(3.0f);
 
         gl.glEnableClientState(OpenGL.GL_VERTEX_ARRAY);
 
@@ -158,7 +160,7 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
 
             gl.glEnable(OpenGL.GL_LINE_SMOOTH);
             gl.glHint(OpenGL.GL_LINE_SMOOTH_HINT, OpenGL.GL_NICEST);
-             gl.glLineWidth(4);
+            gl.glLineWidth(4);
             gl.glEnableClientState(OpenGL.GL_VERTEX_ARRAY);
 
             gl.glVertexPointer(2, OpenGL.GL_FLOAT, 0, unitCircle);

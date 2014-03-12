@@ -39,7 +39,8 @@ public class SimControl extends JPanel {
         public final String name, metricId;
         public final float lowerBound, upperBound, initialValue, increment;
 
-        public NumericValue(final String name, final String metricId, final float lowerBound, final float upperBound, final float initialValue, final float increment) {
+        public NumericValue(final String name, final String metricId, final float lowerBound, final float upperBound, final float initialValue,
+                final float increment) {
             this.name = name;
             this.metricId = metricId;
             this.lowerBound = lowerBound;
@@ -50,17 +51,16 @@ public class SimControl extends JPanel {
     }
 
     private static final NumericValue[] numericValues = new NumericValue[] {
-      new NumericValue("SpO2", rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 0, 100, 98, 10),
-      new NumericValue("Heart Rate", rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 10, 360, 60, 50),
-      new NumericValue("etCO2", rosetta.MDC_AWAY_CO2_EXP.VALUE, 0, 140, 30, 20),
-      // The Fluke ProSim does not support respiratory rates less than 10
-      // but we'll allow settings down to zero for other simulators
-      new NumericValue("RespRate", rosetta.MDC_RESP_RATE.VALUE, 0, 60, 15, 10),
-      new NumericValue("ABP Systolic", rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 0, 300, 120, 40),
-      new NumericValue("ABP Diastolic", rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 0, 300, 80, 40),
-      new NumericValue("NIBP Systolic", rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE, 0, 400, 120, 40),
-      new NumericValue("NIBP Diastolic", rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE, 0, 400, 80, 40)
-    };
+            new NumericValue("SpO2", rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 0, 100, 98, 10),
+            new NumericValue("Heart Rate", rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 10, 360, 60, 50),
+            new NumericValue("etCO2", rosetta.MDC_AWAY_CO2_EXP.VALUE, 0, 140, 30, 20),
+            // The Fluke ProSim does not support respiratory rates less than 10
+            // but we'll allow settings down to zero for other simulators
+            new NumericValue("RespRate", rosetta.MDC_RESP_RATE.VALUE, 0, 60, 15, 10),
+            new NumericValue("ABP Systolic", rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 0, 300, 120, 40),
+            new NumericValue("ABP Diastolic", rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 0, 300, 80, 40),
+            new NumericValue("NIBP Systolic", rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE, 0, 400, 120, 40),
+            new NumericValue("NIBP Diastolic", rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE, 0, 400, 80, 40) };
 
     private final DomainParticipant participant;
     private final Publisher publisher;
@@ -69,37 +69,38 @@ public class SimControl extends JPanel {
     private final ice.GlobalSimulationObjective[] objectives = new ice.GlobalSimulationObjective[numericValues.length];
     private final InstanceHandle_t[] handles = new InstanceHandle_t[numericValues.length];
 
-
     public SimControl(final DomainParticipant participant) {
         super(new GridBagLayout());
         this.participant = participant;
         publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         ice.GlobalSimulationObjectiveTypeSupport.register_type(participant, ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
-        topic = participant.create_topic(ice.GlobalSimulationObjectiveTopic.VALUE, ice.GlobalSimulationObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        writer = (GlobalSimulationObjectiveDataWriter) participant.create_datawriter_with_profile(topic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        topic = participant.create_topic(ice.GlobalSimulationObjectiveTopic.VALUE, ice.GlobalSimulationObjectiveTypeSupport.get_type_name(),
+                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        writer = (GlobalSimulationObjectiveDataWriter) participant.create_datawriter_with_profile(topic, QosProfiles.ice_library, QosProfiles.state,
+                null, StatusKind.STATUS_MASK_NONE);
 
         final JSlider[] sliders = new JSlider[numericValues.length];
         final JLabel[] labels = new JLabel[numericValues.length];
         final JLabel[] currentValues = new JLabel[numericValues.length];
-//        final JPanel[] panels = new JPanel[numericValues.length];
+        // final JPanel[] panels = new JPanel[numericValues.length];
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridy = 0;
         gbc.ipady = 10;
 
-        for(int i = 0; i < objectives.length; i++) {
+        for (int i = 0; i < objectives.length; i++) {
             objectives[i] = (GlobalSimulationObjective) ice.GlobalSimulationObjective.create();
             objectives[i].metric_id.userData = numericValues[i].metricId;
             objectives[i].value = numericValues[i].initialValue;
             handles[i] = writer.register_instance(objectives[i]);
-            sliders[i] = new JSlider((int)numericValues[i].lowerBound, (int)numericValues[i].upperBound);
-            sliders[i].setValue((int)objectives[i].value);
-            sliders[i].setLabelTable(sliders[i].createStandardLabels((int)numericValues[i].increment, (int)numericValues[i].lowerBound));
+            sliders[i] = new JSlider((int) numericValues[i].lowerBound, (int) numericValues[i].upperBound);
+            sliders[i].setValue((int) objectives[i].value);
+            sliders[i].setLabelTable(sliders[i].createStandardLabels((int) numericValues[i].increment, (int) numericValues[i].lowerBound));
             sliders[i].setPaintLabels(true);
             sliders[i].setPaintTicks(true);
             labels[i] = new JLabel(numericValues[i].name);
-            currentValues[i] = new JLabel(""+sliders[i].getValue());
+            currentValues[i] = new JLabel("" + sliders[i].getValue());
             gbc.gridx = 0;
             gbc.weightx = 0.1;
             add(labels[i], gbc);
@@ -110,18 +111,18 @@ public class SimControl extends JPanel {
             gbc.weightx = 0.1;
             add(currentValues[i], gbc);
 
-//            panels[i] = new JPanel(new BorderLayout());
-//            panels[i].add(labels[i], BorderLayout.WEST);
-//            panels[i].add(sliders[i], BorderLayout.CENTER);
-//            panels[i].add(currentValues[i], BorderLayout.EAST);
+            // panels[i] = new JPanel(new BorderLayout());
+            // panels[i].add(labels[i], BorderLayout.WEST);
+            // panels[i].add(sliders[i], BorderLayout.CENTER);
+            // panels[i].add(currentValues[i], BorderLayout.EAST);
 
-//            add(panels[i]);
+            // add(panels[i]);
 
             writer.write(objectives[i], handles[i]);
 
             final ice.GlobalSimulationObjective obj = objectives[i];
             final JSlider slider = sliders[i];
-//            final JLabel label = labels[i];
+            // final JLabel label = labels[i];
             final JLabel currentValue = currentValues[i];
             final InstanceHandle_t handle = handles[i];
 
@@ -129,12 +130,13 @@ public class SimControl extends JPanel {
 
                 @Override
                 public void stateChanged(ChangeEvent e) {
-                    // For now I would rather publish changes as the slider is dragged
-//                  if(! ((JSlider)e.getSource()).getValueIsAdjusting()) {
-                        obj.value = slider.getValue();
-                        currentValue.setText(""+obj.value);
-                        writer.write(obj, handle);
-//                  }
+                    // For now I would rather publish changes as the slider is
+                    // dragged
+                    // if(! ((JSlider)e.getSource()).getValueIsAdjusting()) {
+                    obj.value = slider.getValue();
+                    currentValue.setText("" + obj.value);
+                    writer.write(obj, handle);
+                    // }
                 }
             });
 
@@ -144,7 +146,7 @@ public class SimControl extends JPanel {
     }
 
     public void tearDown() {
-        for(int i = 0; i < numericValues.length; i++) {
+        for (int i = 0; i < numericValues.length; i++) {
             writer.unregister_instance(objectives[i], handles[i]);
         }
 

@@ -43,22 +43,14 @@ public class ElectroCardioGramPanel extends DevicePanel {
     private final JLabel time = new JLabel(" "), heartRate = new JLabel(" "), respiratoryRate = new JLabel(" ");
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    private final static String[] ECG_WAVEFORMS = new String[] {
-        rosetta.MDC_ECG_AMPL_ST_I.VALUE,
-        rosetta.MDC_ECG_AMPL_ST_II.VALUE,
-        rosetta.MDC_ECG_AMPL_ST_III.VALUE
-    };
+    private final static String[] ECG_WAVEFORMS = new String[] { rosetta.MDC_ECG_AMPL_ST_I.VALUE, rosetta.MDC_ECG_AMPL_ST_II.VALUE,
+            rosetta.MDC_ECG_AMPL_ST_III.VALUE };
 
-    private final static String[] ECG_LABELS = new String[] {
-        "ECG LEAD I",
-        "ECG LEAD II",
-        "ECG LEAD III",
-        "ECG LEAD AVF",
-        "ECG LEAD AVL",
-        "ECG LEAD AVR"
-    };
+    private final static String[] ECG_LABELS = new String[] { "ECG LEAD I", "ECG LEAD II", "ECG LEAD III", "ECG LEAD AVF", "ECG LEAD AVL",
+            "ECG LEAD AVR" };
 
     private final Map<String, WaveformUpdateWaveformSource> panelMap = new HashMap<String, WaveformUpdateWaveformSource>();
+
     public ElectroCardioGramPanel() {
         super(new BorderLayout());
         add(label("Last Sample: ", time, BorderLayout.WEST), BorderLayout.SOUTH);
@@ -66,8 +58,11 @@ public class ElectroCardioGramPanel extends DevicePanel {
         JPanel waves = new JPanel(new GridLayout(ECG_WAVEFORMS.length, 1));
         WaveformPanelFactory fact = new WaveformPanelFactory();
         panel = new WaveformPanel[ECG_WAVEFORMS.length];
-        for(int i = 0; i < panel.length; i++) {
-            waves.add(label(ECG_LABELS[i], (panel[i] = fact.createWaveformPanel()).asComponent())/*, gbc*/);
+        for (int i = 0; i < panel.length; i++) {
+            waves.add(label(ECG_LABELS[i], (panel[i] = fact.createWaveformPanel()).asComponent())/*
+                                                                                                  * ,
+                                                                                                  * gbc
+                                                                                                  */);
             WaveformUpdateWaveformSource wuws = new WaveformUpdateWaveformSource();
             panel[i].setSource(wuws);
             panelMap.put(ECG_WAVEFORMS[i], wuws);
@@ -91,15 +86,15 @@ public class ElectroCardioGramPanel extends DevicePanel {
 
     @Override
     public void destroy() {
-        for(WaveformPanel wp : panel) {
+        for (WaveformPanel wp : panel) {
             wp.stop();
         }
         super.destroy();
     }
 
     public static boolean supported(Set<String> identifiers) {
-        for(String w : ECG_WAVEFORMS) {
-            if(identifiers.contains(w)) {
+        for (String w : ECG_WAVEFORMS) {
+            if (identifiers.contains(w)) {
                 return true;
             }
         }
@@ -108,25 +103,26 @@ public class ElectroCardioGramPanel extends DevicePanel {
 
     @Override
     public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
-        if(aliveAndValidData(sampleInfo)) {
-            if(rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
-                respiratoryRate.setText(Integer.toString((int)numeric.value));
-            } else if(rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE.equals(metric_id)) {
-                heartRate.setText(Integer.toString((int)numeric.value));
+        if (aliveAndValidData(sampleInfo)) {
+            if (rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
+                respiratoryRate.setText(Integer.toString((int) numeric.value));
+            } else if (rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE.equals(metric_id)) {
+                heartRate.setText(Integer.toString((int) numeric.value));
             }
         }
     }
+
     @Override
     public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
         WaveformUpdateWaveformSource wuws = panelMap.get(metric_id);
-        if(aliveAndValidData(sampleInfo)) {
-            if(null != wuws) {
+        if (aliveAndValidData(sampleInfo)) {
+            if (null != wuws) {
                 wuws.applyUpdate(sampleArray, sampleInfo);
             }
-            date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+            date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
             time.setText(dateFormat.format(date));
         } else {
-            if(null != wuws) {
+            if (null != wuws) {
                 wuws.reset();
             }
         }
@@ -139,7 +135,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
 
     @Override
     public void connected() {
-        for(WaveformUpdateWaveformSource wuws : panelMap.values()) {
+        for (WaveformUpdateWaveformSource wuws : panelMap.values()) {
             wuws.reset();
         }
     }

@@ -31,10 +31,10 @@ import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 
 public class GlobalSimulationObjectiveMonitor {
-    protected  ice.GlobalSimulationObjective globalSimulationObjective;
-    protected  ice.GlobalSimulationObjectiveDataReader globalSimulationObjectiveReader;
-    protected  Topic globalSimulationObjectiveTopic;
-    private  ReadCondition rc;
+    protected ice.GlobalSimulationObjective globalSimulationObjective;
+    protected ice.GlobalSimulationObjectiveDataReader globalSimulationObjectiveReader;
+    protected Topic globalSimulationObjectiveTopic;
+    private ReadCondition rc;
     private final GlobalSimulationObjectiveListener listener;
 
     public GlobalSimulationObjectiveMonitor(final GlobalSimulationObjectiveListener listener) {
@@ -46,7 +46,6 @@ public class GlobalSimulationObjectiveMonitor {
         globalSimulationObjectiveReader.delete_readcondition(rc);
         rc = null;
         eventLoop = null;
-
 
         domainParticipant.delete_datareader(globalSimulationObjectiveReader);
         globalSimulationObjectiveReader = null;
@@ -65,10 +64,13 @@ public class GlobalSimulationObjectiveMonitor {
         this.eventLoop = eventLoop;
         globalSimulationObjective = (ice.GlobalSimulationObjective) ice.GlobalSimulationObjective.create();
         ice.GlobalSimulationObjectiveTypeSupport.register_type(domainParticipant, ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
-        globalSimulationObjectiveTopic = domainParticipant.create_topic(ice.GlobalSimulationObjectiveTopic.VALUE, ice.GlobalSimulationObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        globalSimulationObjectiveReader = (ice.GlobalSimulationObjectiveDataReader) domainParticipant.create_datareader_with_profile(globalSimulationObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        globalSimulationObjectiveTopic = domainParticipant.create_topic(ice.GlobalSimulationObjectiveTopic.VALUE,
+                ice.GlobalSimulationObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        globalSimulationObjectiveReader = (ice.GlobalSimulationObjectiveDataReader) domainParticipant.create_datareader_with_profile(
+                globalSimulationObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
-        rc = globalSimulationObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+        rc = globalSimulationObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                InstanceStateKind.ANY_INSTANCE_STATE);
 
         final ice.GlobalSimulationObjectiveSeq data_seq = new ice.GlobalSimulationObjectiveSeq();
         final SampleInfoSeq info_seq = new SampleInfoSeq();
@@ -79,9 +81,9 @@ public class GlobalSimulationObjectiveMonitor {
             public void conditionChanged(Condition condition) {
                 try {
                     globalSimulationObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, rc);
-                    for(int i = 0; i < info_seq.size(); i++) {
+                    for (int i = 0; i < info_seq.size(); i++) {
                         SampleInfo si = (SampleInfo) info_seq.get(i);
-                        if(si.valid_data) {
+                        if (si.valid_data) {
                             ice.GlobalSimulationObjective gso = (GlobalSimulationObjective) data_seq.get(i);
                             listener.simulatedNumeric(gso);
                         }

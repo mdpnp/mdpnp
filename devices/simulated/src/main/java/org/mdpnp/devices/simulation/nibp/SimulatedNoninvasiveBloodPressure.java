@@ -22,29 +22,29 @@ public class SimulatedNoninvasiveBloodPressure implements Runnable {
     private final Random random = new Random();
 
     protected void beginInflation() {
-        
+
     }
-    
+
     protected void beginDeflation() {
-        
+
     }
-    
+
     protected void endDeflation() {
-        
+
     }
-    
+
     protected void updateInflation(int inflation) {
-        
+
     }
-    
+
     protected void updateReading(int systolic, int diastolic, int pulse) {
-        
+
     }
-    
+
     protected void updateNextInflationTime(long nextInflationTime) {
-        
+
     }
-    
+
     protected void simulateReading(int systolic, int diastolic, final int pulserate) {
 
         beginInflation();
@@ -62,7 +62,7 @@ public class SimulatedNoninvasiveBloodPressure implements Runnable {
                 e.printStackTrace();
             }
         }
-        if(!running) {
+        if (!running) {
             return;
         }
 
@@ -78,14 +78,13 @@ public class SimulatedNoninvasiveBloodPressure implements Runnable {
                 e.printStackTrace();
             }
         }
-        if(!running) {
+        if (!running) {
             return;
         }
         updateInflation(inflation);
 
         updateReading(systolic, diastolic, pulserate);
 
-        
         endDeflation();
 
     }
@@ -124,7 +123,7 @@ public class SimulatedNoninvasiveBloodPressure implements Runnable {
                         nextRoundMinute = diff % WAITING_NOTIFY_INTERVAL;
                     }
                 }
-                if(!running) {
+                if (!running) {
                     break;
                 }
                 updateNextInflationTime(getNextInflationTimeRemaining());
@@ -149,11 +148,12 @@ public class SimulatedNoninvasiveBloodPressure implements Runnable {
                     this.nextInflation = now + INTERVAL;
                     this.notifyAll();
                 }
-                updateNextInflationTime((long)nextInflation);
+                updateNextInflationTime((long) nextInflation);
             }
         }
         log.trace("Here ends the NIBP simulator thread");
     }
+
     private static final Logger log = LoggerFactory.getLogger(SimulatedNoninvasiveBloodPressure.class);
     private static final long INTERVAL = 3 * 60 * 1000L;
 
@@ -163,7 +163,6 @@ public class SimulatedNoninvasiveBloodPressure implements Runnable {
     public SimulatedNoninvasiveBloodPressure() {
         super();
 
-        
     }
 
     public void connect(String str) {
@@ -186,7 +185,7 @@ public class SimulatedNoninvasiveBloodPressure implements Runnable {
     }
 
     public void disconnect() {
-        synchronized(threadLock) {
+        synchronized (threadLock) {
             if (t != null) {
                 running = false;
                 try {

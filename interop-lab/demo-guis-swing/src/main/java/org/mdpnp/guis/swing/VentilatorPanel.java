@@ -48,13 +48,14 @@ public class VentilatorPanel extends DevicePanel {
         co2Panel.stop();
         super.destroy();
     }
+
     protected void buildComponents() {
         WaveformPanelFactory fact = new WaveformPanelFactory();
         flowPanel = fact.createWaveformPanel();
         pressurePanel = fact.createWaveformPanel();
         co2Panel = fact.createWaveformPanel();
 
-        JPanel waves = new JPanel(new GridLayout(3,1));
+        JPanel waves = new JPanel(new GridLayout(3, 1));
         waves.setOpaque(false);
 
         waves.add(label("Flow", flowPanel.asComponent()));
@@ -86,7 +87,6 @@ public class VentilatorPanel extends DevicePanel {
         pressurePanel.start();
         co2Panel.start();
 
-
         setForeground(Color.white);
         setBackground(Color.black);
         setOpaque(true);
@@ -103,7 +103,6 @@ public class VentilatorPanel extends DevicePanel {
     private final WaveformUpdateWaveformSource pressureWave = new WaveformUpdateWaveformSource();
     private final WaveformUpdateWaveformSource etco2Wave = new WaveformUpdateWaveformSource();
 
-
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(VentilatorPanel.class);
 
@@ -111,42 +110,43 @@ public class VentilatorPanel extends DevicePanel {
         return identifiers.contains(rosetta.MDC_PRESS_AWAY.VALUE) || identifiers.contains(ice.MDC_CAPNOGRAPH.VALUE);
     }
 
-
     @Override
     public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
-        if(aliveAndValidData(sampleInfo)) {
-            if(rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
-                respiratoryRate.setText(Integer.toString((int)numeric.value));
-            } else if(rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(metric_id)) {
-                endTidalCO2.setText(Integer.toString((int)numeric.value));
+        if (aliveAndValidData(sampleInfo)) {
+            if (rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
+                respiratoryRate.setText(Integer.toString((int) numeric.value));
+            } else if (rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(metric_id)) {
+                endTidalCO2.setText(Integer.toString((int) numeric.value));
             }
         }
     }
 
     private final Date date = new Date();
+
     @Override
     public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
-        if(aliveAndValidData(sampleInfo)) {
-            if(rosetta.MDC_FLOW_AWAY.VALUE.equals(metric_id)) {
+        if (aliveAndValidData(sampleInfo)) {
+            if (rosetta.MDC_FLOW_AWAY.VALUE.equals(metric_id)) {
                 flowWave.applyUpdate(sampleArray, sampleInfo);
-            } else if(rosetta.MDC_PRESS_AWAY.VALUE.equals(metric_id)) {
+            } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(metric_id)) {
                 pressureWave.applyUpdate(sampleArray, sampleInfo);
-            } else if(ice.MDC_CAPNOGRAPH.VALUE.equals(metric_id)) {
+            } else if (ice.MDC_CAPNOGRAPH.VALUE.equals(metric_id)) {
                 etco2Wave.applyUpdate(sampleArray, sampleInfo);
             }
-            date.setTime(sampleInfo.source_timestamp.sec*1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+            date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
 
             time.setText(dateFormat.format(date));
         } else {
-            if(rosetta.MDC_FLOW_AWAY.VALUE.equals(metric_id)) {
+            if (rosetta.MDC_FLOW_AWAY.VALUE.equals(metric_id)) {
                 flowWave.reset();
-            } else if(rosetta.MDC_PRESS_AWAY.VALUE.equals(metric_id)) {
+            } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(metric_id)) {
                 pressureWave.reset();
-            } else if(ice.MDC_CAPNOGRAPH.VALUE.equals(metric_id)) {
+            } else if (ice.MDC_CAPNOGRAPH.VALUE.equals(metric_id)) {
                 etco2Wave.reset();
             }
         }
     }
+
     @Override
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
 

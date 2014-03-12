@@ -17,6 +17,7 @@ import org.mdpnp.devices.philips.intellivue.data.ManagedObjectIdentifier;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportEvent;
 
 public interface MdsCreateEvent extends DataExportEvent {
-	AttributeValueList getAttributes();
-	ManagedObjectIdentifier getManagedObject();
+    AttributeValueList getAttributes();
+
+    ManagedObjectIdentifier getManagedObject();
 }

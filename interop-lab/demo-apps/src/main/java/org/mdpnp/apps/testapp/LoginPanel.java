@@ -42,5 +42,4 @@ public class LoginPanel extends JPanel {
         add(clinicianId);
     }
 
-
 }

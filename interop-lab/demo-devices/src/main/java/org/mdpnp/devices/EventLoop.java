@@ -28,7 +28,7 @@ import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.WaitSet;
 import com.rti.dds.infrastructure.WaitSetProperty_t;
 
-public class EventLoop  {
+public class EventLoop {
 
     private static final Logger log = LoggerFactory.getLogger(EventLoop.class);
 
@@ -44,51 +44,50 @@ public class EventLoop  {
     private final GuardCondition runnable = new GuardCondition();
 
     protected void handleMutation(Mutation m) {
-        if(m.isAdd()) {
-//          log.debug("Handling an add mutation for " + m.getCondition());
-          conditionHandlers.put(m.getCondition(), m.getConditionHandler());
-          waitSet.attach_condition(m.getCondition());
-      } else {
-//          log.debug("Handling a remove mutation for " + m.getCondition());
-          if(null == conditionHandlers.remove(m.getCondition())) {
-              log.warn("Attempt to detach unknown condition:"+m.getCondition());
-              for(int i = 0; i < m.getTrace().length; i++) {
-                  log.warn("\tat "+m.getTrace()[i]);
-              }
-          } else {
-              waitSet.detach_condition(m.getCondition());
-          }
-      }
-      m.done();
+        if (m.isAdd()) {
+            // log.debug("Handling an add mutation for " + m.getCondition());
+            conditionHandlers.put(m.getCondition(), m.getConditionHandler());
+            waitSet.attach_condition(m.getCondition());
+        } else {
+            // log.debug("Handling a remove mutation for " + m.getCondition());
+            if (null == conditionHandlers.remove(m.getCondition())) {
+                log.warn("Attempt to detach unknown condition:" + m.getCondition());
+                for (int i = 0; i < m.getTrace().length; i++) {
+                    log.warn("\tat " + m.getTrace()[i]);
+                }
+            } else {
+                waitSet.detach_condition(m.getCondition());
+            }
+        }
+        m.done();
     }
 
     private final ConditionHandler mutateHandler = new ConditionHandler() {
         @Override
         public void conditionChanged(Condition condition) {
             Mutation[] mutations = new Mutation[0];
-            synchronized(queuedMutations) {
+            synchronized (queuedMutations) {
                 mutations = queuedMutations.toArray(mutations);
                 queuedMutations.clear();
-                ((GuardCondition)condition).set_trigger_value(false);
+                ((GuardCondition) condition).set_trigger_value(false);
             }
-            for(Mutation m : mutations) {
+            for (Mutation m : mutations) {
                 handleMutation(m);
             }
         }
     };
-
 
     private Thread currentServiceThread;
 
     private final ConditionHandler runnableHandler = new ConditionHandler() {
         public void conditionChanged(Condition condition) {
             Runnable[] runnables = new Runnable[0];
-            synchronized(queuedRunnables) {
+            synchronized (queuedRunnables) {
                 runnables = queuedRunnables.toArray(runnables);
                 queuedRunnables.clear();
-                ((GuardCondition)condition).set_trigger_value(false);
+                ((GuardCondition) condition).set_trigger_value(false);
             }
-            for(Runnable r : runnables) {
+            for (Runnable r : runnables) {
                 r.run();
             }
         }
@@ -124,12 +123,14 @@ public class EventLoop  {
         public StackTraceElement[] getTrace() {
             return trace;
         }
+
         public synchronized void done() {
             this.done = true;
             this.notifyAll();
         }
-        public synchronized void await()  {
-            while(!done) {
+
+        public synchronized void await() {
+            while (!done) {
                 try {
                     this.wait();
                 } catch (InterruptedException e) {
@@ -137,8 +138,6 @@ public class EventLoop  {
             }
         }
     }
-
-
 
     public EventLoop() {
         this(null);
@@ -157,13 +156,13 @@ public class EventLoop  {
         long giveup = dur.is_infinite() ? Long.MAX_VALUE : (System.currentTimeMillis() + dur.sec * 1000L + dur.nanosec / 1000000L);
 
         long now = System.currentTimeMillis();
-        synchronized(this) {
-            while(currentServiceThread != null && now < giveup) {
-                if(dur.is_zero()) {
+        synchronized (this) {
+            while (currentServiceThread != null && now < giveup) {
+                if (dur.is_zero()) {
                     throw new RETCODE_TIMEOUT("Timed out waiting to become service thread");
                 }
                 try {
-                    this.wait(giveup-now);
+                    this.wait(giveup - now);
                 } catch (InterruptedException e) {
                     log.error("Interrupted", e);
                 }
@@ -172,27 +171,27 @@ public class EventLoop  {
             currentServiceThread = Thread.currentThread();
         }
 
-        if(!dur.is_zero() && now >= giveup) {
+        if (!dur.is_zero() && now >= giveup) {
             throw new RETCODE_TIMEOUT("Timed out waiting to become service thread");
         }
 
         condSeq.clear();
         try {
             waitSet.wait(condSeq, dur);
-            for(int i = 0; i < condSeq.size(); i++) {
+            for (int i = 0; i < condSeq.size(); i++) {
                 Condition c = (Condition) condSeq.get(i);
                 ConditionHandler ch = conditionHandlers.get(c);
-                if(null != ch) {
+                if (null != ch) {
                     ch.conditionChanged(c);
                 } else {
                     log.warn("No ConditionHandler for Condition " + c);
                 }
             }
             return true;
-        } catch(RETCODE_TIMEOUT timeout) {
+        } catch (RETCODE_TIMEOUT timeout) {
             return false;
         } finally {
-            synchronized(this) {
+            synchronized (this) {
                 currentServiceThread = null;
                 this.notifyAll();
             }
@@ -203,40 +202,39 @@ public class EventLoop  {
         return Thread.currentThread().equals(currentServiceThread);
     }
 
-
     public void addHandler(Condition condition, ConditionHandler conditionHandler) {
         Mutation m = new Mutation(true, condition, conditionHandler);
-        if(isCurrentServiceThread()) {
+        if (isCurrentServiceThread()) {
             handleMutation(m);
         } else {
-            synchronized(queuedMutations) {
-    //            log.debug("Queue add condition:"+condition);
+            synchronized (queuedMutations) {
+                // log.debug("Queue add condition:"+condition);
                 queuedMutations.add(m);
                 mutate.set_trigger_value(true);
             }
             m.await();
         }
-//        log.debug("addHandler complete for " + condition);
+        // log.debug("addHandler complete for " + condition);
     }
 
     public void removeHandler(Condition condition) {
 
         Mutation m = new Mutation(false, condition, null);
-        if(isCurrentServiceThread()) {
+        if (isCurrentServiceThread()) {
             handleMutation(m);
         } else {
-            synchronized(queuedMutations) {
-    //            log.debug("Queue remove condition:"+condition);
+            synchronized (queuedMutations) {
+                // log.debug("Queue remove condition:"+condition);
                 queuedMutations.add(m);
                 mutate.set_trigger_value(true);
             }
             m.await();
         }
-//        log.debug("removeHandler complete for " + condition);
+        // log.debug("removeHandler complete for " + condition);
     }
 
     public void doLater(Runnable r) {
-        synchronized(queuedRunnables) {
+        synchronized (queuedRunnables) {
             queuedRunnables.add(r);
             runnable.set_trigger_value(true);
         }

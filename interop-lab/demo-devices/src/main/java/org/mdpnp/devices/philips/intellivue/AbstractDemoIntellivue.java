@@ -275,15 +275,12 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 MdsCreateEvent createEvent = (MdsCreateEvent) eventReport.getEvent();
                 AttributeValueList attrs = createEvent.getAttributes();
                 Attribute<SystemModel> asm = attrs.getAttribute(AttributeId.NOM_ATTR_ID_MODEL, SystemModel.class);
-                Attribute<org.mdpnp.devices.philips.intellivue.data.String> as = attrs.getAttribute(
-                        AttributeId.NOM_ATTR_ID_BED_LABEL, org.mdpnp.devices.philips.intellivue.data.String.class);
-                Attribute<ProductionSpecification> ps = attrs.getAttribute(AttributeId.NOM_ATTR_ID_PROD_SPECN,
-                        ProductionSpecification.class);
+                Attribute<org.mdpnp.devices.philips.intellivue.data.String> as = attrs.getAttribute(AttributeId.NOM_ATTR_ID_BED_LABEL,
+                        org.mdpnp.devices.philips.intellivue.data.String.class);
+                Attribute<ProductionSpecification> ps = attrs.getAttribute(AttributeId.NOM_ATTR_ID_PROD_SPECN, ProductionSpecification.class);
 
-                Attribute<AbsoluteTime> clockTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_ABS,
-                        AbsoluteTime.class);
-                Attribute<RelativeTime> offsetTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_REL,
-                        RelativeTime.class);
+                Attribute<AbsoluteTime> clockTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_ABS, AbsoluteTime.class);
+                Attribute<RelativeTime> offsetTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_REL, RelativeTime.class);
 
                 if (null == clockTime) {
                     log.warn("No NOM_ATTR_TIME_ABS in MDS Create");
@@ -299,8 +296,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 if (ps != null) {
                     log.info("ProductionSpecification");
                     log.info("" + ps.getValue());
-                    VariableLabel vl = ps.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER,
-                            ComponentId.ID_COMP_PRODUCT);
+                    VariableLabel vl = ps.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER, ComponentId.ID_COMP_PRODUCT);
                     if (null != vl) {
                         deviceIdentity.serial_number = vl.getString();
                         writeDeviceIdentity();
@@ -322,8 +318,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
                 requestSinglePoll(ObjectClass.NOM_MOC_VMS_MDS, AttributeId.NOM_ATTR_GRP_SYS_PROD);
 
-                requestSet(numericLabels.values().toArray(new Label[0]),
-                        sampleArrayLabels.values().toArray(new Label[0]));
+                requestSet(numericLabels.values().toArray(new Label[0]), sampleArrayLabels.values().toArray(new Label[0]));
 
                 break;
             default:
@@ -413,8 +408,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             PollProfileSupport pps = message.getUserInfo().getPollProfileSupport();
             long timeout = minPollPeriodToTimeout(pps.getMinPollPeriod().toMilliseconds());
             OUT_CONNECTION_ASSERT = Math.max(200L, timeout - 1000L);
-            log.debug("Negotiated " + pps.getMinPollPeriod().toMilliseconds() + "ms min poll period, timeout="
-                    + timeout);
+            log.debug("Negotiated " + pps.getMinPollPeriod().toMilliseconds() + "ms min poll period, timeout=" + timeout);
             log.debug("Negotiated " + pps.getMaxMtuTx() + " " + pps.getMaxMtuRx() + " " + pps.getMaxBwTx());
             super.handle(sockaddr, message);
         }
@@ -426,10 +420,11 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 switch (AttributeId.valueOf(result.getPolledAttributeGroup().getType())) {
                 case NOM_ATTR_GRP_VMO_STATIC:
                     // Responses to our "keep alive" messages occur here
-                    // Currently we track any incoming message as proof of life ... so nothing special to do here
+                    // Currently we track any incoming message as proof of life
+                    // ... so nothing special to do here
                     break;
                 case NOM_ATTR_GRP_AL_MON:
-                    log.debug("Alert Monitor Information has arrived:"+result);
+                    log.debug("Alert Monitor Information has arrived:" + result);
                     break;
                 default:
                     break;
@@ -441,28 +436,26 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             for (SingleContextPoll sop : result.getPollInfoList()) {
                 for (ObservationPoll op : sop.getPollInfo()) {
                     AttributeValueList attrs = op.getAttributes();
-                    Attribute<ProductionSpecification> prodSpec = attrs.getAttribute(
-                            AttributeId.NOM_ATTR_ID_PROD_SPECN, ProductionSpecification.class);
+                    Attribute<ProductionSpecification> prodSpec = attrs.getAttribute(AttributeId.NOM_ATTR_ID_PROD_SPECN,
+                            ProductionSpecification.class);
                     if (null != prodSpec) {
                         log.info("ProductionSpecification");
                         log.info("" + prodSpec.getValue());
-                        VariableLabel vlabel = prodSpec.getValue().getByComponentId(
-                                ProductionSpecificationType.SERIAL_NUMBER, ComponentId.ID_COMP_PRODUCT);
+                        VariableLabel vlabel = prodSpec.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER,
+                                ComponentId.ID_COMP_PRODUCT);
                         if (vlabel != null) {
                             deviceIdentity.serial_number = vlabel.getString();
                             writeDeviceIdentity();
                         }
-                        vlabel = prodSpec.getValue().getByComponentId(ProductionSpecificationType.PART_NUMBER,
-                                ComponentId.ID_COMP_PRODUCT);
+                        vlabel = prodSpec.getValue().getByComponentId(ProductionSpecificationType.PART_NUMBER, ComponentId.ID_COMP_PRODUCT);
                     }
 
-                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> firstName = attrs.getAttribute(
-                            AttributeId.NOM_ATTR_PT_NAME_GIVEN, org.mdpnp.devices.philips.intellivue.data.String.class);
-                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> lastName = attrs
-                            .getAttribute(AttributeId.NOM_ATTR_PT_NAME_FAMILY,
-                                    org.mdpnp.devices.philips.intellivue.data.String.class);
-                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> patientId = attrs.getAttribute(
-                            AttributeId.NOM_ATTR_PT_ID, org.mdpnp.devices.philips.intellivue.data.String.class);
+                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> firstName = attrs.getAttribute(AttributeId.NOM_ATTR_PT_NAME_GIVEN,
+                            org.mdpnp.devices.philips.intellivue.data.String.class);
+                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> lastName = attrs.getAttribute(AttributeId.NOM_ATTR_PT_NAME_FAMILY,
+                            org.mdpnp.devices.philips.intellivue.data.String.class);
+                    Attribute<org.mdpnp.devices.philips.intellivue.data.String> patientId = attrs.getAttribute(AttributeId.NOM_ATTR_PT_ID,
+                            org.mdpnp.devices.philips.intellivue.data.String.class);
 
                     if (null != firstName) {
 
@@ -480,10 +473,11 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
         @Override
         protected void handle(ExtendedPollDataResult result) {
-            // we could track gaps in poll sequence numbers but instead we're relying on consumers of the data
+            // we could track gaps in poll sequence numbers but instead we're
+            // relying on consumers of the data
             // to observe a gap in the data timestamps
-            if(result.getPolledObjType().getNomPartition().equals(NomPartition.Object) &&
-               result.getPolledObjType().getOidType().getType() == ObjectClass.NOM_MOC_VMO_AL_MON.asInt()) {
+            if (result.getPolledObjType().getNomPartition().equals(NomPartition.Object)
+                    && result.getPolledObjType().getOidType().getType() == ObjectClass.NOM_MOC_VMO_AL_MON.asInt()) {
                 for (SingleContextPoll sop : result.getPollInfoList()) {
                     for (ObservationPoll op : sop.getPollInfo()) {
                         int handle = op.getHandle().getHandle();
@@ -492,23 +486,24 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         Attribute<DevAlarmList> patientAlertList = attrs.getAttribute(AbstractDemoIntellivue.this.patientAlertList);
                         Attribute<DevAlarmList> technicalAlertList = attrs.getAttribute(AbstractDemoIntellivue.this.technicalAlertList);
 
-                        if(null != deviceAlertCondition) {
+                        if (null != deviceAlertCondition) {
                             deviceAlertConditionInstance.data.alert_state = deviceAlertCondition.getValue().getDeviceAlertState().toString();
                             deviceAlertConditionWriter.write(deviceAlertConditionInstance.data, deviceAlertConditionInstance.handle);
                         }
 
-                        if(null != patientAlertList) {
+                        if (null != patientAlertList) {
 
                             Set<String> oldPatientAlerts = new HashSet<String>(AbstractDemoIntellivue.this.patientAlertInstances.keySet());
 
-
-                            for(DevAlarmEntry dae : patientAlertList.getValue().getValue()) {
-                                if(dae.getAlMonInfo() instanceof StrAlMonInfo) {
-                                    StrAlMonInfo info = (StrAlMonInfo)dae.getAlMonInfo();
-                                    String key = dae.getAlCode().getType() + "-"+dae.getAlSource().getType()+"-"+dae.getObject().getGlobalHandle().getMdsContext()+"-"+dae.getObject().getGlobalHandle().getHandle()+"-"+dae.getObject().getOidType().getType();
+                            for (DevAlarmEntry dae : patientAlertList.getValue().getValue()) {
+                                if (dae.getAlMonInfo() instanceof StrAlMonInfo) {
+                                    StrAlMonInfo info = (StrAlMonInfo) dae.getAlMonInfo();
+                                    String key = dae.getAlCode().getType() + "-" + dae.getAlSource().getType() + "-"
+                                            + dae.getObject().getGlobalHandle().getMdsContext() + "-" + dae.getObject().getGlobalHandle().getHandle()
+                                            + "-" + dae.getObject().getOidType().getType();
                                     oldPatientAlerts.remove(key);
                                     InstanceHolder<ice.Alert> alert = patientAlertInstances.get(key);
-                                    if(null == alert) {
+                                    if (null == alert) {
                                         alert = new InstanceHolder<ice.Alert>();
                                         alert.data = (Alert) ice.Alert.create();
                                         alert.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
@@ -517,29 +512,28 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                         patientAlertInstances.put(key, alert);
                                     }
                                     alert.data.text = info.getString().getString();
-                                    alert.data.text =
-                                            Normalizer
-                                                .normalize(alert.data.text, Normalizer.Form.NFD)
-                                                .replaceAll("[^\\p{ASCII}]", "");
+                                    alert.data.text = Normalizer.normalize(alert.data.text, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
                                     patientAlertWriter.write(alert.data, alert.handle);
                                 }
                             }
-                            for(String key : oldPatientAlerts) {
+                            for (String key : oldPatientAlerts) {
                                 InstanceHolder<ice.Alert> alert = patientAlertInstances.remove(key);
-                                if(null != alert) {
+                                if (null != alert) {
                                     patientAlertWriter.dispose(alert.data, alert.handle);
                                 }
                             }
                         }
-                        if(null != technicalAlertList) {
+                        if (null != technicalAlertList) {
                             Set<String> oldTechnicalAlerts = new HashSet<String>(AbstractDemoIntellivue.this.technicalAlertInstances.keySet());
-                            for(DevAlarmEntry dae : technicalAlertList.getValue().getValue()) {
-                                if(dae.getAlMonInfo() instanceof StrAlMonInfo) {
-                                    StrAlMonInfo info = (StrAlMonInfo)dae.getAlMonInfo();
-                                    String key = dae.getAlCode().getType() + "-"+dae.getAlSource().getType()+"-"+dae.getObject().getGlobalHandle().getMdsContext()+"-"+dae.getObject().getGlobalHandle().getHandle()+"-"+dae.getObject().getOidType().getType();
+                            for (DevAlarmEntry dae : technicalAlertList.getValue().getValue()) {
+                                if (dae.getAlMonInfo() instanceof StrAlMonInfo) {
+                                    StrAlMonInfo info = (StrAlMonInfo) dae.getAlMonInfo();
+                                    String key = dae.getAlCode().getType() + "-" + dae.getAlSource().getType() + "-"
+                                            + dae.getObject().getGlobalHandle().getMdsContext() + "-" + dae.getObject().getGlobalHandle().getHandle()
+                                            + "-" + dae.getObject().getOidType().getType();
                                     oldTechnicalAlerts.remove(key);
                                     InstanceHolder<ice.Alert> alert = technicalAlertInstances.get(key);
-                                    if(null == alert) {
+                                    if (null == alert) {
                                         alert = new InstanceHolder<ice.Alert>();
                                         alert.data = (Alert) ice.Alert.create();
                                         alert.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
@@ -548,19 +542,14 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                         technicalAlertInstances.put(key, alert);
                                     }
                                     alert.data.text = info.getString().getString();
-                                    alert.data.text =
-                                            Normalizer
-                                                .normalize(alert.data.text, Normalizer.Form.NFD)
-                                                .replaceAll("[^\\p{ASCII}]", "");
+                                    alert.data.text = Normalizer.normalize(alert.data.text, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
                                     technicalAlertWriter.write(alert.data, alert.handle);
                                 }
                             }
 
-
-
-                            for(String key : oldTechnicalAlerts) {
+                            for (String key : oldTechnicalAlerts) {
                                 InstanceHolder<ice.Alert> alert = technicalAlertInstances.remove(key);
-                                if(null != alert) {
+                                if (null != alert) {
                                     technicalAlertWriter.dispose(alert.data, alert.handle);
                                 }
                             }
@@ -575,12 +564,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         AttributeValueList attrs = op.getAttributes();
 
                         Attribute<NumericObservedValue> observed = attrs.getAttribute(AbstractDemoIntellivue.this.observed);
-                        Attribute<CompoundNumericObservedValue> compoundObserved = attrs
-                                .getAttribute(AbstractDemoIntellivue.this.compoundObserved);
+                        Attribute<CompoundNumericObservedValue> compoundObserved = attrs.getAttribute(AbstractDemoIntellivue.this.compoundObserved);
                         Attribute<RelativeTime> period = attrs.getAttribute(AbstractDemoIntellivue.this.period);
                         Attribute<SampleArraySpecification> spec = attrs.getAttribute(AbstractDemoIntellivue.this.spec);
-                        Attribute<SampleArrayCompoundObservedValue> cov = attrs
-                                .getAttribute(AbstractDemoIntellivue.this.cov);
+                        Attribute<SampleArrayCompoundObservedValue> cov = attrs.getAttribute(AbstractDemoIntellivue.this.cov);
                         Attribute<SampleArrayObservedValue> v = attrs.getAttribute(AbstractDemoIntellivue.this.v);
 
                         if (null != observed) {
@@ -592,7 +579,6 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 handle(handle, result.getRelativeTime(), nov);
                             }
                         }
-
 
                         if (null != period) {
                             handle(handle, period.getValue());
@@ -626,12 +612,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     sampleTime.sec = (int) (tm / 1000L);
                     sampleTime.nanosec = (int) ((tm % 1000L) * 1000000L);
                     if (observed.getMsmtState().isUnavailable()) {
-                        putNumericUpdate(ov, handle, 
-                                numericSample(getNumericUpdate(ov, handle), (Float) null, metricId, handle, sampleTime));
+                        putNumericUpdate(ov, handle, numericSample(getNumericUpdate(ov, handle), (Float) null, metricId, handle, sampleTime));
                     } else {
-                        putNumericUpdate(ov, handle, 
-                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), metricId, handle,
-                                        sampleTime));
+                        putNumericUpdate(ov, handle,
+                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), metricId, handle, sampleTime));
                     }
                 } else {
                     log.debug("Unknown numeric:" + observed);
@@ -644,16 +628,17 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
         private final MySampleArray getSampleArray(ObservedValue ov, int handle) {
             Map<Integer, MySampleArray> forObservedValue = mySampleArrays.get(ov);
-            if(null == forObservedValue) {
+            if (null == forObservedValue) {
                 return null;
             } else {
                 return forObservedValue.get(handle);
             }
 
         }
+
         private final void putSampleArray(ObservedValue ov, int handle, MySampleArray value) {
             Map<Integer, MySampleArray> forObservedValue = mySampleArrays.get(ov);
-            if(null == forObservedValue) {
+            if (null == forObservedValue) {
                 forObservedValue = new HashMap<Integer, MySampleArray>();
                 mySampleArrays.put(ov, forObservedValue);
             }
@@ -662,24 +647,25 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
         private final InstanceHolder<SampleArray> getSampleArrayUpdate(ObservedValue ov, int handle) {
             Map<Integer, InstanceHolder<SampleArray>> forObservedValue = sampleArrayUpdates.get(ov);
-            if(null == forObservedValue) {
+            if (null == forObservedValue) {
                 return null;
             } else {
                 return forObservedValue.get(handle);
             }
         }
+
         private final InstanceHolder<ice.Numeric> getNumericUpdate(ObservedValue ov, int handle) {
             Map<Integer, InstanceHolder<ice.Numeric>> forObservedValue = numericUpdates.get(ov);
-            if(null == forObservedValue) {
+            if (null == forObservedValue) {
                 return null;
             } else {
                 return forObservedValue.get(handle);
-            }            
+            }
         }
-        
+
         private final void putSampleArrayUpdate(ObservedValue ov, int handle, InstanceHolder<SampleArray> value) {
             Map<Integer, InstanceHolder<SampleArray>> forObservedValue = sampleArrayUpdates.get(ov);
-            if(null == forObservedValue) {
+            if (null == forObservedValue) {
                 forObservedValue = new HashMap<Integer, InstanceHolder<SampleArray>>();
                 sampleArrayUpdates.put(ov, forObservedValue);
             }
@@ -688,7 +674,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
         private final void putNumericUpdate(ObservedValue ov, int handle, InstanceHolder<ice.Numeric> value) {
             Map<Integer, InstanceHolder<ice.Numeric>> forObservedValue = numericUpdates.get(ov);
-            if(null == forObservedValue) {
+            if (null == forObservedValue) {
                 forObservedValue = new HashMap<Integer, InstanceHolder<ice.Numeric>>();
                 numericUpdates.put(ov, forObservedValue);
             }
@@ -708,8 +694,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     SampleArraySpecification sas = handleToSampleArraySpecification.get(handle);
                     RelativeTime rt = handleToRelativeTime.get(handle);
                     if (null == sas || null == rt) {
-                        log.warn("No SampleArraySpecification or RelativeTime for handle=" + handle + " rt=" + rt
-                                + " sas=" + sas);
+                        log.warn("No SampleArraySpecification or RelativeTime for handle=" + handle + " rt=" + rt + " sas=" + sas);
                     } else {
 
                         MySampleArray w = getSampleArray(ov, handle);
@@ -720,34 +705,36 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         }
 
                         int cnt = sas.getArraySize();
-                        int cnt_sa = v.getLength()/(sas.getSampleSize()/Byte.SIZE);
-                        
-                        if(cnt_sa < cnt) {
-                        	log.info("Ignoring insufficient data ("+cnt_sa+") in the samplearray observation when " + cnt + " expected for " + ov + " " + handle + " v.getLength()="+v.getLength() + " sampleSize="+sas.getSampleSize());
-                        	return;
+                        int cnt_sa = v.getLength() / (sas.getSampleSize() / Byte.SIZE);
+
+                        if (cnt_sa < cnt) {
+                            log.info("Ignoring insufficient data (" + cnt_sa + ") in the samplearray observation when " + cnt + " expected for " + ov
+                                    + " " + handle + " v.getLength()=" + v.getLength() + " sampleSize=" + sas.getSampleSize());
+                            return;
                         } else {
-                        	if(cnt < cnt_sa) { 
-                        		log.info("Expanding to accomodate " + cnt_sa + " samples where only " + cnt + " were expected");
-                        		w.setArraySize(cnt_sa);
-                        		cnt = cnt_sa;
-                        	}
-                        	if(w.getArraySize()<cnt) {
-                        		log.info("Expanding to accomodate " + cnt + " samples where " + w.getArraySize() + " were expected");
-                        		w.setArraySize(cnt);
-                        	}
-                        	
-                        for (int i = 0; i < cnt; i++) {
-                            w.applyValue(i, bytes);
+                            if (cnt < cnt_sa) {
+                                log.info("Expanding to accomodate " + cnt_sa + " samples where only " + cnt + " were expected");
+                                w.setArraySize(cnt_sa);
+                                cnt = cnt_sa;
+                            }
+                            if (w.getArraySize() < cnt) {
+                                log.info("Expanding to accomodate " + cnt + " samples where " + w.getArraySize() + " were expected");
+                                w.setArraySize(cnt);
+                            }
+
+                            for (int i = 0; i < cnt; i++) {
+                                w.applyValue(i, bytes);
+                            }
                         }
-                        }
-                        
-                        
+
                         long tm = clockOffset + time.toMilliseconds();
                         sampleTime.sec = (int) (tm / 1000L);
                         sampleTime.nanosec = (int) ((tm % 1000L) * 1000000L);
-                        putSampleArrayUpdate(ov, handle,
-                                sampleArraySample(getSampleArrayUpdate(ov, handle), w.getNumbers(),
-                                        (int) rt.toMilliseconds(), metricId, handle, sampleTime));
+                        putSampleArrayUpdate(
+                                ov,
+                                handle,
+                                sampleArraySample(getSampleArrayUpdate(ov, handle), w.getNumbers(), (int) rt.toMilliseconds(), metricId, handle,
+                                        sampleTime));
                     }
                 }
             }
@@ -795,8 +782,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             Map<ObservedValue, String> sampleArrayMetricIds, Map<ObservedValue, Label> sampleArrayLabels) {
 
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    DemoEthernetIntellivue.class.getResourceAsStream("intellivue.map")));
+            BufferedReader br = new BufferedReader(new InputStreamReader(DemoEthernetIntellivue.class.getResourceAsStream("intellivue.map")));
             String line = null;
 
             while (null != (line = br.readLine())) {
@@ -841,8 +827,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     protected ice.AlertDataWriter patientAlertWriter, technicalAlertWriter;
 
     protected final InstanceHolder<ice.DeviceAlertCondition> deviceAlertConditionInstance;
-    protected final Map<String, InstanceHolder<ice.Alert>> patientAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>(), technicalAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>();
-
+    protected final Map<String, InstanceHolder<ice.Alert>> patientAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>(),
+            technicalAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>();
 
     public AbstractDemoIntellivue(int domainId, EventLoop eventLoop) throws IOException {
         this(domainId, eventLoop, null);
@@ -853,16 +839,22 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         loadMap(numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
 
         ice.DeviceAlertConditionTypeSupport.register_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
-        deviceAlertConditionTopic = domainParticipant.create_topic(ice.DeviceAlertConditionTopic.VALUE, ice.DeviceAlertConditionTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceAlertConditionTopic = domainParticipant.create_topic(ice.DeviceAlertConditionTopic.VALUE,
+                ice.DeviceAlertConditionTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
-        deviceAlertConditionWriter = (ice.DeviceAlertConditionDataWriter) publisher.create_datawriter_with_profile(deviceAlertConditionTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        deviceAlertConditionWriter = (ice.DeviceAlertConditionDataWriter) publisher.create_datawriter_with_profile(deviceAlertConditionTopic,
+                QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         ice.AlertTypeSupport.register_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
-        patientAlertTopic = domainParticipant.create_topic(ice.PatientAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        technicalAlertTopic = domainParticipant.create_topic(ice.TechnicalAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        patientAlertTopic = domainParticipant.create_topic(ice.PatientAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(),
+                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        technicalAlertTopic = domainParticipant.create_topic(ice.TechnicalAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(),
+                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
-        patientAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(patientAlertTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-        technicalAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(technicalAlertTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        patientAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(patientAlertTopic, QosProfiles.ice_library,
+                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        technicalAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(technicalAlertTopic, QosProfiles.ice_library,
+                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         deviceIdentity.manufacturer = "Philips";
         deviceIdentity.model = "Intellivue Device";
@@ -926,26 +918,27 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         public void applyValue(int sampleNumber, short[] values) {
             int value = 0;
             for (int i = 0; i < sampleSize; i++) {
-            	int idx = sampleNumber * sampleSize + i;
-            	if(idx >= values.length) {
-            		log.warn("Cannot locate index " + idx + " where values.length="+values.length+" sampleSize="+sampleSize+" sampleNumber="+sampleNumber+" i="+i);
-            	} else {
-            		if(i >= mask.length) {
-            			log.warn("Cannot access i="+i+" where mask.length="+mask.length);
-            		} else {
-            			if(i>=shift.length) {
-            				log.warn("Cannot access i="+i+" where shift.length="+shift.length);
-            			} else {
-            				value |= (mask[i] & values[idx]) << shift[i];
-            			}
+                int idx = sampleNumber * sampleSize + i;
+                if (idx >= values.length) {
+                    log.warn("Cannot locate index " + idx + " where values.length=" + values.length + " sampleSize=" + sampleSize + " sampleNumber="
+                            + sampleNumber + " i=" + i);
+                } else {
+                    if (i >= mask.length) {
+                        log.warn("Cannot access i=" + i + " where mask.length=" + mask.length);
+                    } else {
+                        if (i >= shift.length) {
+                            log.warn("Cannot access i=" + i + " where shift.length=" + shift.length);
+                        } else {
+                            value |= (mask[i] & values[idx]) << shift[i];
+                        }
+                    }
+                }
             }
-            	}
-            }
-            if(sampleNumber>=numbers.size()) {
-            	log.warn("Received sampleNumber="+sampleNumber+" where expected size was "+numbers.size());
+            if (sampleNumber >= numbers.size()) {
+                log.warn("Received sampleNumber=" + sampleNumber + " where expected size was " + numbers.size());
             } else {
-            numbers.set(sampleNumber, value);
-        }
+                numbers.set(sampleNumber, value);
+            }
         }
 
         public static final int createMask(int prefix) {
@@ -970,8 +963,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 mask[i] = significantBits >= Byte.SIZE ? 0xFF : createMask(significantBits);
                 significantBits -= Byte.SIZE;
             }
-            log.debug("Mask:" + Arrays.toString(mask) + " Shift:" + Arrays.toString(shift) + " sampleSize="
-                    + sampleSize + " sigBits=" + this.significantBits);
+            log.debug("Mask:" + Arrays.toString(mask) + " Shift:" + Arrays.toString(shift) + " sampleSize=" + sampleSize + " sigBits="
+                    + this.significantBits);
         }
 
         public short getSampleSize() {
@@ -998,16 +991,16 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         }
 
         public int getArraySize() {
-        	return numbers.size();
+            return numbers.size();
         }
-        
+
         public void setArraySize(int size) {
             if (size != numbers.size()) {
                 while (numbers.size() < size) {
                     numbers.add(0);
                 }
-                while(numbers.size() > size) {
-                	numbers.remove(0);
+                while (numbers.size() > size) {
+                    numbers.remove(0);
                 }
             }
         }
@@ -1037,42 +1030,39 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     protected final Map<Integer, RelativeTime> handleToRelativeTime = new HashMap<Integer, RelativeTime>();
     protected final Map<Integer, SampleArraySpecification> handleToSampleArraySpecification = new HashMap<Integer, SampleArraySpecification>();
 
-    protected final Attribute<DeviceAlertCondition> deviceAlertCondition = AttributeFactory.getAttribute(
-            AttributeId.NOM_ATTR_DEV_AL_COND, DeviceAlertCondition.class);
+    protected final Attribute<DeviceAlertCondition> deviceAlertCondition = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_DEV_AL_COND,
+            DeviceAlertCondition.class);
 
-    protected final Attribute<DevAlarmList> patientAlertList = AttributeFactory.getAttribute(
-            AttributeId.NOM_ATTR_AL_MON_P_AL_LIST, DevAlarmList.class);
+    protected final Attribute<DevAlarmList> patientAlertList = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_AL_MON_P_AL_LIST,
+            DevAlarmList.class);
 
-    protected final Attribute<DevAlarmList> technicalAlertList = AttributeFactory.getAttribute(
-            AttributeId.NOM_ATTR_AL_MON_T_AL_LIST, DevAlarmList.class);
+    protected final Attribute<DevAlarmList> technicalAlertList = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_AL_MON_T_AL_LIST,
+            DevAlarmList.class);
 
-    protected final Attribute<CompoundNumericObservedValue> compoundObserved = AttributeFactory.getAttribute(
-            AttributeId.NOM_ATTR_NU_CMPD_VAL_OBS, CompoundNumericObservedValue.class);
-    protected final Attribute<NumericObservedValue> observed = AttributeFactory.getAttribute(
-            AttributeId.NOM_ATTR_NU_VAL_OBS, NumericObservedValue.class);
-    protected final Attribute<SampleArrayObservedValue> v = AttributeFactory.getAttribute(
-            AttributeId.NOM_ATTR_SA_VAL_OBS, SampleArrayObservedValue.class);
-    protected final Attribute<SampleArrayCompoundObservedValue> cov = AttributeFactory.getAttribute(
-            AttributeId.NOM_ATTR_SA_CMPD_VAL_OBS, SampleArrayCompoundObservedValue.class);
+    protected final Attribute<CompoundNumericObservedValue> compoundObserved = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_NU_CMPD_VAL_OBS,
+            CompoundNumericObservedValue.class);
+    protected final Attribute<NumericObservedValue> observed = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_NU_VAL_OBS,
+            NumericObservedValue.class);
+    protected final Attribute<SampleArrayObservedValue> v = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_SA_VAL_OBS,
+            SampleArrayObservedValue.class);
+    protected final Attribute<SampleArrayCompoundObservedValue> cov = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_SA_CMPD_VAL_OBS,
+            SampleArrayCompoundObservedValue.class);
 
     protected final Attribute<Type> type = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_TYPE, Type.class);
-    protected final Attribute<MetricSpecification> metricSpecification = AttributeFactory.getAttribute(
-            AttributeId.NOM_ATTR_METRIC_SPECN, MetricSpecification.class);
-    protected final Attribute<TextId> idLabel = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_LABEL,
-            TextId.class);
-    protected final Attribute<org.mdpnp.devices.philips.intellivue.data.String> idLabelString = AttributeFactory
-            .getAttribute(AttributeId.NOM_ATTR_ID_LABEL_STRING, org.mdpnp.devices.philips.intellivue.data.String.class);
-    protected final Attribute<DisplayResolution> displayResolution = AttributeFactory.getAttribute(
-            AttributeId.NOM_ATTR_DISP_RES, DisplayResolution.class);
-    protected final Attribute<EnumValue<SimpleColor>> color = AttributeFactory.getEnumAttribute(
-            AttributeId.NOM_ATTR_COLOR.asOid(), SimpleColor.class);
+    protected final Attribute<MetricSpecification> metricSpecification = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_METRIC_SPECN,
+            MetricSpecification.class);
+    protected final Attribute<TextId> idLabel = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_LABEL, TextId.class);
+    protected final Attribute<org.mdpnp.devices.philips.intellivue.data.String> idLabelString = AttributeFactory.getAttribute(
+            AttributeId.NOM_ATTR_ID_LABEL_STRING, org.mdpnp.devices.philips.intellivue.data.String.class);
+    protected final Attribute<DisplayResolution> displayResolution = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_DISP_RES,
+            DisplayResolution.class);
+    protected final Attribute<EnumValue<SimpleColor>> color = AttributeFactory
+            .getEnumAttribute(AttributeId.NOM_ATTR_COLOR.asOid(), SimpleColor.class);
 
-    protected final Attribute<Handle> handle = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_HANDLE,
-            Handle.class);
-    protected final Attribute<RelativeTime> period = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_TIME_PD_SAMP,
-            RelativeTime.class);
-    protected final Attribute<SampleArraySpecification> spec = AttributeFactory.getAttribute(
-            AttributeId.NOM_ATTR_SA_SPECN, SampleArraySpecification.class);
+    protected final Attribute<Handle> handle = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_ID_HANDLE, Handle.class);
+    protected final Attribute<RelativeTime> period = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_TIME_PD_SAMP, RelativeTime.class);
+    protected final Attribute<SampleArraySpecification> spec = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_SA_SPECN,
+            SampleArraySpecification.class);
 
     protected Set<SelectionKey> registrationKeys = new HashSet<SelectionKey>();
 
@@ -1115,8 +1105,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     public void connect(InetSocketAddress remote, InetSocketAddress local) throws IOException {
         switch (stateMachine.getState().ordinal()) {
         case ice.ConnectionState._Disconnected:
-            state(ice.ConnectionState.Connecting,
-                    "trying " + remote.getAddress().getHostAddress() + ":" + remote.getPort());
+            state(ice.ConnectionState.Connecting, "trying " + remote.getAddress().getHostAddress() + ":" + remote.getPort());
             break;
         case ice.ConnectionState._Connecting:
             setConnectionInfo("trying " + remote.getAddress().getHostAddress() + ":" + remote.getPort());

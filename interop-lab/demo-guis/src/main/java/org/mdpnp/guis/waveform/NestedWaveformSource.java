@@ -13,6 +13,7 @@
 package org.mdpnp.guis.waveform;
 
 public interface NestedWaveformSource extends WaveformSource {
-	WaveformSource getTarget();
-	<T extends NestedWaveformSource> T source(Class<T> cls);
+    WaveformSource getTarget();
+
+    <T extends NestedWaveformSource> T source(Class<T> cls);
 }

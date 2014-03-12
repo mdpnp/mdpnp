@@ -11,41 +11,38 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package org.mdpnp.devices.philips.intellivue.data;
-import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
+
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 import org.mdpnp.devices.io.util.Bits;
+import org.mdpnp.devices.philips.intellivue.OrdinalEnum;
 
 public enum PatientType implements EnumMessage<PatientType>, OrdinalEnum.IntType {
-	PAT_TYPE_UNSPECIFIED(0),
-	ADULT(1),
-	PEDIATRIC(2),
-	NEONATAL(3);
-	
-	@Override
-	public void format(ByteBuffer bb) {
-		Bits.putUnsignedShort(bb, asInt());
-	}
-	
-	public PatientType parse(ByteBuffer bb) {
-		return PatientType.valueOf(Bits.getUnsignedShort(bb));
-	};
-	
-	
-	private final int x;
-	
-	private PatientType(final int x) {
-	    this.x = x;
+    PAT_TYPE_UNSPECIFIED(0), ADULT(1), PEDIATRIC(2), NEONATAL(3);
+
+    @Override
+    public void format(ByteBuffer bb) {
+        Bits.putUnsignedShort(bb, asInt());
     }
-	
-	private static final Map<Integer, PatientType> map = OrdinalEnum.buildInt(PatientType.class);
-	
-	public static PatientType valueOf(int x) {
-		return map.get(x);
-	}
-	
-	public final int asInt() {
-		return x;
-	}
+
+    public PatientType parse(ByteBuffer bb) {
+        return PatientType.valueOf(Bits.getUnsignedShort(bb));
+    };
+
+    private final int x;
+
+    private PatientType(final int x) {
+        this.x = x;
+    }
+
+    private static final Map<Integer, PatientType> map = OrdinalEnum.buildInt(PatientType.class);
+
+    public static PatientType valueOf(int x) {
+        return map.get(x);
+    }
+
+    public final int asInt() {
+        return x;
+    }
 }

@@ -28,6 +28,7 @@ public class RTMedibus extends Medibus {
     public RTMedibus(InputStream in, OutputStream out) {
         super(in, out);
     }
+
     private static final int SYNC_BYTE = 0xD0;
     private static final int SYNC_MASK = 0xF0;
     private static final int SYNC_CMD_BYTE = 0xC0;
@@ -53,8 +54,8 @@ public class RTMedibus extends Medibus {
 
         out.write(SC_DATASTREAM_1_4);
         int flags = SYNC_CMD_BYTE;
-        for(int t : traces) {
-            if(t > 7) {
+        for (int t : traces) {
+            if (t > 7) {
                 flags |= (0x0F & (t - 8 + 1));
             }
         }
@@ -62,8 +63,8 @@ public class RTMedibus extends Medibus {
 
         out.write(SC_DATASTREAM_5_8);
         flags = SYNC_CMD_BYTE;
-        for(int t : traces) {
-            if(t > 3 && t <= 7) {
+        for (int t : traces) {
+            if (t > 3 && t <= 7) {
                 flags |= (0x0F & (t - 4 + 1));
             }
         }
@@ -71,8 +72,8 @@ public class RTMedibus extends Medibus {
 
         out.write(SC_DATASTREAM_1_4);
         flags = SYNC_CMD_BYTE;
-        for(int t : traces) {
-            if(t < 4) {
+        for (int t : traces) {
+            if (t < 4) {
                 flags |= (0x0F & (t + 1));
             }
         }
@@ -86,7 +87,7 @@ public class RTMedibus extends Medibus {
     }
 
     public void receiveSyncByte(int syncByte) {
-        for(int i = 0; i < transmittedDataStreams.length; i++) {
+        for (int i = 0; i < transmittedDataStreams.length; i++) {
             transmittedDataStreams[i] = false;
         }
         dataCounter = 0;
@@ -99,30 +100,30 @@ public class RTMedibus extends Medibus {
     public void receiveSyncCommand(int command, int argument) {
         int offset = 0;
 
-        switch(command) {
+        switch (command) {
         case SC_DATASTREAM_9_12:
             offset += 4;
         case SC_DATASTREAM_5_8:
             offset += 4;
         case SC_DATASTREAM_1_4:
-            dataStreamEnabled[offset+0] = 0 != (0x01 & argument);
-            dataStreamEnabled[offset+1] = 0 != (0x02 & argument);
-            dataStreamEnabled[offset+2] = 0 != (0x04 & argument);
-            dataStreamEnabled[offset+3] = 0 != (0x08 & argument);
-            log.debug("dataStreamEnabled:"+Arrays.toString(dataStreamEnabled));
+            dataStreamEnabled[offset + 0] = 0 != (0x01 & argument);
+            dataStreamEnabled[offset + 1] = 0 != (0x02 & argument);
+            dataStreamEnabled[offset + 2] = 0 != (0x04 & argument);
+            dataStreamEnabled[offset + 3] = 0 != (0x08 & argument);
+            log.debug("dataStreamEnabled:" + Arrays.toString(dataStreamEnabled));
             break;
         case SC_TX_DATASTREAM_9_12:
             offset += 4;
         case SC_TX_DATASTREAM_5_8:
             offset += 4;
-            transmittedDataStreams[offset+0] = 0 != (0x01 & argument);
-            transmittedDataStreams[offset+1] = 0 != (0x02 & argument);
-            transmittedDataStreams[offset+2] = 0 != (0x04 & argument);
-            transmittedDataStreams[offset+3] = 0 != (0x08 & argument);
-            log.debug("transmittedDataStreams:"+Arrays.toString(transmittedDataStreams));
+            transmittedDataStreams[offset + 0] = 0 != (0x01 & argument);
+            transmittedDataStreams[offset + 1] = 0 != (0x02 & argument);
+            transmittedDataStreams[offset + 2] = 0 != (0x04 & argument);
+            transmittedDataStreams[offset + 3] = 0 != (0x08 & argument);
+            log.debug("transmittedDataStreams:" + Arrays.toString(transmittedDataStreams));
             break;
         case SC_START_CYCLE:
-            if(0 != (0x01 & argument)) {
+            if (0 != (0x01 & argument)) {
                 startExpiratoryCycle();
             } else {
                 startInspiratoryCycle();
@@ -138,6 +139,7 @@ public class RTMedibus extends Medibus {
     public void startInspiratoryCycle() {
 
     }
+
     public void startExpiratoryCycle() {
 
     }
@@ -151,9 +153,9 @@ public class RTMedibus extends Medibus {
         int idx = dataCounter++;
         int i;
 
-        for(i = 0; i < transmittedDataStreams.length; i++) {
-            if(transmittedDataStreams[i]) {
-                if(idx == 0) {
+        for (i = 0; i < transmittedDataStreams.length; i++) {
+            if (transmittedDataStreams[i]) {
+                if (idx == 0) {
                     idx = i;
                     break;
                 } else {
@@ -163,31 +165,31 @@ public class RTMedibus extends Medibus {
         }
 
         int binval = (first & 0x3F) | ((second & 0x3F) << 6);
-        if(this.lastTransmitted != null && idx < this.lastTransmitted.length) {
+        if (this.lastTransmitted != null && idx < this.lastTransmitted.length) {
             RTDataConfig c = lastTransmitted[idx].rtDataConfig;
             receiveDataValue(c, lastTransmitted[idx].multiplier, idx, c.realtimeData, (1.0 * binval / c.maxbin) * (c.max - c.min) + c.min);
         } else {
-            receiveDataValue(null, 1, idx, (byte)idx, binval);
+            receiveDataValue(null, 1, idx, (byte) idx, binval);
         }
 
     }
 
     public void receiveDataValue(RTDataConfig config, int multiplier, int streamIndex, Object realtimeData, double data) {
-        log.debug("Received(" + Medibus.toString(realtimeData) + "):"+data);
+        log.debug("Received(" + Medibus.toString(realtimeData) + "):" + data);
     }
 
     public boolean receiveFast() throws IOException {
         int leading = 0;
-        while(true) {
+        while (true) {
             leading = fastIn.read();
-            if(leading < 0) {
+            if (leading < 0) {
                 return false;
             }
-            if( (RT_BYTE_MASK & leading) == RT_BYTE) {
+            if ((RT_BYTE_MASK & leading) == RT_BYTE) {
                 receiveData(leading, fastIn.read());
             } else {
                 int syncMasked = SYNC_MASK & leading;
-                switch(syncMasked) {
+                switch (syncMasked) {
                 case SYNC_BYTE:
                     receiveSyncByte(leading);
                     break;
@@ -195,7 +197,7 @@ public class RTMedibus extends Medibus {
                     receiveSyncCommand(leading, fastIn.read());
                     break;
                 default:
-                    log.warn("Unknown r/t byte:"+Integer.toHexString(leading));
+                    log.warn("Unknown r/t byte:" + Integer.toHexString(leading));
                 }
             }
         }
@@ -215,17 +217,17 @@ public class RTMedibus extends Medibus {
 
         @Override
         public String toString() {
-            return "[realtimeData="+Medibus.toString(realtimeData)+", multiplier="+multiplier+"]";
+            return "[realtimeData=" + Medibus.toString(realtimeData) + ", multiplier=" + multiplier + "]";
         }
     }
 
     public void sendRTTransmissionCommand(RTTransmit[] transmits) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        for(int i = 0; i < transmits.length; i++) {
-            if(transmits[i].realtimeData instanceof RealtimeData) {
-                sendASCIIHex(baos, ((RealtimeData)transmits[i].realtimeData).toByte());
+        for (int i = 0; i < transmits.length; i++) {
+            if (transmits[i].realtimeData instanceof RealtimeData) {
+                sendASCIIHex(baos, ((RealtimeData) transmits[i].realtimeData).toByte());
             } else {
-                sendASCIIHex(baos, ((Integer)transmits[i].realtimeData).byteValue());
+                sendASCIIHex(baos, ((Integer) transmits[i].realtimeData).byteValue());
             }
             sendASCIIHex(baos, (byte) transmits[i].multiplier);
         }
@@ -237,13 +239,14 @@ public class RTMedibus extends Medibus {
         public Object realtimeData;
         public int interval, min, max, maxbin;
         public int ordinal;
+
         @Override
         public String toString() {
-            return "[code="+Medibus.toString(realtimeData)+", interval="+interval+",min="+min+",max="+max+",maxbin="+maxbin+"]";
+            return "[code=" + Medibus.toString(realtimeData) + ", interval=" + interval + ",min=" + min + ",max=" + max + ",maxbin=" + maxbin + "]";
         }
     }
 
-//    private RTDataConfig[] currentRTDataConfig;
+    // private RTDataConfig[] currentRTDataConfig;
     private RTTransmit[] lastTransmitted;
 
     private static final int parseInt(byte[] buf, int off, int len) {
@@ -252,13 +255,13 @@ public class RTMedibus extends Medibus {
 
     private void receiveRealtimeConfig(byte[] response, int len) {
         RTDataConfig[] rtDataConfig = new RTDataConfig[len / 23];
-        for(int i = 0; i < rtDataConfig.length; i++) {
+        for (int i = 0; i < rtDataConfig.length; i++) {
             rtDataConfig[i] = new RTDataConfig();
-            rtDataConfig[i].realtimeData = RealtimeData.fromByteIf((byte) recvASCIIHex(response, 1+i*23));
-            rtDataConfig[i].interval = parseInt(response, 1+23*i+2, 8);
-            rtDataConfig[i].min = parseInt(response, 1+23*i+10, 5);
-            rtDataConfig[i].max = parseInt(response, 1+23*i+15, 5);
-            rtDataConfig[i].maxbin = recvASCIIHex(response, 1+23*i+20, 3);
+            rtDataConfig[i].realtimeData = RealtimeData.fromByteIf((byte) recvASCIIHex(response, 1 + i * 23));
+            rtDataConfig[i].interval = parseInt(response, 1 + 23 * i + 2, 8);
+            rtDataConfig[i].min = parseInt(response, 1 + 23 * i + 10, 5);
+            rtDataConfig[i].max = parseInt(response, 1 + 23 * i + 15, 5);
+            rtDataConfig[i].maxbin = recvASCIIHex(response, 1 + 23 * i + 20, 3);
             rtDataConfig[i].ordinal = i;
         }
         receiveRealtimeConfig(rtDataConfig);
@@ -266,19 +269,19 @@ public class RTMedibus extends Medibus {
 
     protected void receiveRealtimeConfig(RTDataConfig[] config) {
         log.debug("RT Config");
-        for(int i = 0; i < config.length; i++) {
-            log.debug("\t"+config[i]);
+        for (int i = 0; i < config.length; i++) {
+            log.debug("\t" + config[i]);
         }
     }
 
     @Override
     protected void receiveResponse(byte[] response, int len) {
-        if(len < 1) {
+        if (len < 1) {
             return;
         }
         Object cmdEcho = Command.fromByteIf(response[0]);
-        if(cmdEcho instanceof Command) {
-            switch((Command)cmdEcho) {
+        if (cmdEcho instanceof Command) {
+            switch ((Command) cmdEcho) {
             case ReqRealtimeConfig:
                 receiveRealtimeConfig(response, len);
                 break;
@@ -296,18 +299,19 @@ public class RTMedibus extends Medibus {
         }
 
     }
+
     protected void receiveRealtimeConfigSuccess() {
 
     }
 
     @Override
     protected void receiveCommand(byte[] argument, int len) throws IOException {
-        if(len < 1) {
+        if (len < 1) {
             return;
         }
         Object cmdCode = Command.fromByteIf(argument[0]);
-        if(cmdCode instanceof Command) {
-            switch((Command)cmdCode) {
+        if (cmdCode instanceof Command) {
+            switch ((Command) cmdCode) {
             case RealtimeConfigChanged:
                 sendResponse(cmdCode, null);
                 sendCommand(Command.ReqRealtimeConfig);

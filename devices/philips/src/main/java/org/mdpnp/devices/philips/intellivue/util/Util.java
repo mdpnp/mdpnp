@@ -26,11 +26,7 @@ public class Util {
 
     }
 
-
-
-
-
-    public static  class PrefixLengthShort {
+    public static class PrefixLengthShort {
         public interface Builder<T extends Parseable> {
             T build();
         }
@@ -42,15 +38,16 @@ public class Util {
         public static <T extends Parseable> void read(ByteBuffer bb, Collection<T> list, Class<? extends T> clazz) {
             read(bb, list, true, clazz);
         }
+
         @SuppressWarnings("unused")
         public static <T extends Parseable> void read(ByteBuffer bb, Collection<T> list, boolean clear, Class<? extends T> clazz) {
-            if(clear) {
+            if (clear) {
                 list.clear();
             }
             try {
                 int count = getUnsignedShort(bb);
                 int length = getUnsignedShort(bb);
-                for(int i = 0; i < count; i++) {
+                for (int i = 0; i < count; i++) {
                     T p = clazz.newInstance();
                     p.parse(bb);
                     list.add(p);
@@ -73,13 +70,13 @@ public class Util {
 
         @SuppressWarnings("unused")
         public static <T extends Parseable> void read(ByteBuffer bb, Collection<T> list, boolean clear, Builder<T> b) {
-            if(clear) {
+            if (clear) {
                 list.clear();
             }
 
             int count = getUnsignedShort(bb);
             int length = getUnsignedShort(bb);
-            for(int i = 0; i < count; i++) {
+            for (int i = 0; i < count; i++) {
                 T p = b.build();
                 p.parse(bb);
                 list.add(p);
@@ -87,14 +84,14 @@ public class Util {
         }
 
         public static void write(ByteBuffer bb, Collection<? extends Formatable> list) {
-            if(list.isEmpty()) {
+            if (list.isEmpty()) {
                 putUnsignedShort(bb, 0);
                 putUnsignedShort(bb, 0);
             } else {
                 putUnsignedShort(bb, list.size());
                 putUnsignedShort(bb, 0);
                 int pos = bb.position();
-                for(Formatable f : list) {
+                for (Formatable f : list) {
                     f.format(bb);
                 }
                 int length = bb.position() - pos;

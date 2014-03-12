@@ -44,8 +44,10 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     }
 
     @Override
-    public Vital addVital(String label, String units, String[] metric_ids, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
-        return model.addVital(label, units, metric_ids, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow, valueMsWarningHigh, color);
+    public Vital addVital(String label, String units, String[] metric_ids, Float low, Float high, Float criticalLow, Float criticalHigh,
+            float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
+        return model.addVital(label, units, metric_ids, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow,
+                valueMsWarningHigh, color);
     }
 
     @Override
@@ -68,15 +70,15 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
         return removeListener(vitalModelListener);
     }
 
-//    @Override
-//    public DeviceIdentity getDeviceIdentity(String udi) {
-//        return model.getDeviceIdentity(udi);
-//    }
-//
-//    @Override
-//    public DeviceConnectivity getDeviceConnectivity(String udi) {
-//        return model.getDeviceConnectivity(udi);
-//    }
+    // @Override
+    // public DeviceIdentity getDeviceIdentity(String udi) {
+    // return model.getDeviceIdentity(udi);
+    // }
+    //
+    // @Override
+    // public DeviceConnectivity getDeviceConnectivity(String udi) {
+    // return model.getDeviceConnectivity(udi);
+    // }
 
     @Override
     public void start(Subscriber subscriber, EventLoop eventLoop) {
@@ -136,6 +138,7 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
         public int getIndex0() {
             return index0;
         }
+
         @Override
         public int getIndex1() {
             return index1;
@@ -147,7 +150,6 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
         }
     }
 
-
     private class VitalListModelListenerAdapter implements VitalModelListener {
         private final ListDataListener listener;
         private final MutableListDataEvent event = new MutableListDataEvent(VitalListModelAdapterImpl.this, ListDataEvent.CONTENTS_CHANGED, 0, 0);
@@ -155,36 +157,40 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
         public VitalListModelListenerAdapter(ListDataListener listener) {
             this.listener = listener;
         }
+
         @Override
         public boolean equals(Object obj) {
             return listener.equals(obj);
         }
+
         @Override
         public int hashCode() {
             return listener.hashCode();
         }
+
         @Override
         public void vitalChanged(VitalModel model, Vital vital) {
             event.setTypeAndRange(ListDataEvent.CONTENTS_CHANGED, 0, getCount() - 1);
             listener.contentsChanged(event);
         }
+
         @Override
         public void vitalRemoved(VitalModel model, Vital vital) {
             // Cheat ... remove from the beginning and refresh
             event.setTypeAndRange(ListDataEvent.INTERVAL_REMOVED, 0, 0);
             listener.intervalRemoved(event);
-            event.setTypeAndRange(ListDataEvent.CONTENTS_CHANGED, 0, getCount()-1);
+            event.setTypeAndRange(ListDataEvent.CONTENTS_CHANGED, 0, getCount() - 1);
             listener.contentsChanged(event);
         }
+
         @Override
         public void vitalAdded(VitalModel model, Vital vital) {
             event.setTypeAndRange(ListDataEvent.INTERVAL_ADDED, 0, 0);
             listener.intervalAdded(event);
-            event.setTypeAndRange(ListDataEvent.CONTENTS_CHANGED, 0, getCount()-1);
+            event.setTypeAndRange(ListDataEvent.CONTENTS_CHANGED, 0, getCount() - 1);
             listener.contentsChanged(event);
         }
     }
-
 
     @Override
     public State getState() {

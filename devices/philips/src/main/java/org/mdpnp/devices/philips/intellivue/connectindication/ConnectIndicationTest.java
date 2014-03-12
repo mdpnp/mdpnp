@@ -37,16 +37,16 @@ import javax.swing.JTextArea;
 
 import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.philips.intellivue.Network;
-import org.mdpnp.devices.philips.intellivue.util.Util;
 
 public class ConnectIndicationTest {
     private interface ConnectIndicationCallback {
         void beacon(ConnectIndication ci);
     }
+
     public ConnectIndicationTest(List<Network.AddressSubnet> addrs, ConnectIndicationCallback callback) throws IOException {
         Selector select = Selector.open();
 
-        for(Network.AddressSubnet a : addrs) {
+        for (Network.AddressSubnet a : addrs) {
             DatagramChannel channel = DatagramChannel.open();
             channel.configureBlocking(false);
             channel.socket().setReuseAddress(true);
@@ -54,15 +54,14 @@ public class ConnectIndicationTest {
             channel.register(select, SelectionKey.OP_READ);
         }
 
-
         ByteBuffer bb = ByteBuffer.allocate(5000);
         bb.order(ByteOrder.BIG_ENDIAN);
-        while(true) {
+        while (true) {
             select.select();
             Set<SelectionKey> keys = select.selectedKeys();
-            for(SelectionKey sk : keys) {
-                if(sk.isReadable()) {
-                    SocketAddress addr = ((DatagramChannel)sk.channel()).receive(bb);
+            for (SelectionKey sk : keys) {
+                if (sk.isReadable()) {
+                    SocketAddress addr = ((DatagramChannel) sk.channel()).receive(bb);
                     RandomAccessFile file = new RandomAccessFile("connectind", "rw");
 
                     bb.flip();
@@ -71,15 +70,14 @@ public class ConnectIndicationTest {
                     bb.reset();
                     file.close();
 
-
                     bb.reset();
                     System.out.println(HexUtil.dump(bb, 100));
                     ConnectIndicationImpl ci = new ConnectIndicationImpl();
                     ci.parse(bb);
-                    if(callback!=null) {
+                    if (callback != null) {
                         callback.beacon(ci);
                     }
-                    System.out.print(addr+" "+ci);
+                    System.out.print(addr + " " + ci);
 
                     bb.clear();
                     System.out.println();
@@ -89,7 +87,6 @@ public class ConnectIndicationTest {
         }
 
     }
-
 
     public static void main(String[] args) throws IOException {
         JFrame frame = new JFrame("Beacon");
@@ -102,8 +99,7 @@ public class ConnectIndicationTest {
         text.setLineWrap(true);
         frame.getContentPane().add(button, BorderLayout.NORTH);
         frame.getContentPane().add(new JScrollPane(text), BorderLayout.CENTER);
-        System.setProperty("java.net.preferIPv4Stack","true");
-
+        System.setProperty("java.net.preferIPv4Stack", "true");
 
         final List<Network.AddressSubnet> address = Network.getBroadcastAddresses();
 
@@ -131,12 +127,12 @@ public class ConnectIndicationTest {
                     ds = new DatagramSocket();
                     DatagramPacket dp = new DatagramPacket(bytes, bytes.length, null, 24005);
 
-                    for(int i = 0; i < bytes.length; i++) {
-                        System.out.print(Integer.toHexString(0xFF&bytes[i])+ " ");
+                    for (int i = 0; i < bytes.length; i++) {
+                        System.out.print(Integer.toHexString(0xFF & bytes[i]) + " ");
                     }
                     System.out.println();
 
-                    for(Network.AddressSubnet as : address) {
+                    for (Network.AddressSubnet as : address) {
                         System.out.println("Transmit to " + as.getInetAddress());
 
                         dp.setAddress(as.getInetAddress());
@@ -161,7 +157,6 @@ public class ConnectIndicationTest {
                 text.setText(ci.toString());
             }
         });
-
 
     }
 }

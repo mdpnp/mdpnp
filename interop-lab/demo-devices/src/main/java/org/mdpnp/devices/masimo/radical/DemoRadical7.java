@@ -36,18 +36,20 @@ public class DemoRadical7 extends AbstractSerialDevice {
         public MyMasimoRadical7() throws NoSuchFieldException, SecurityException, IOException {
             super();
         }
-        private final Time_t sampleTime = new Time_t(0,0);
+
+        private final Time_t sampleTime = new Time_t(0, 0);
+
         @Override
         public void firePulseOximeter() {
             super.firePulseOximeter();
             reportConnected();
             long tm = getTimestamp().getTime();
-            sampleTime.sec = (int)(tm / 1000L);
-            sampleTime.nanosec = (int)(tm % 1000L * 1000000L);
+            sampleTime.sec = (int) (tm / 1000L);
+            sampleTime.nanosec = (int) (tm % 1000L * 1000000L);
             pulseUpdate = numericSample(pulseUpdate, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, sampleTime);
             spo2Update = numericSample(spo2Update, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, sampleTime);
             String guid = getUniqueId();
-            if(guid != null && !guid.equals(deviceIdentity.serial_number)) {
+            if (guid != null && !guid.equals(deviceIdentity.serial_number)) {
                 deviceIdentity.serial_number = guid;
                 writeDeviceIdentity();
             }
@@ -61,21 +63,23 @@ public class DemoRadical7 extends AbstractSerialDevice {
         fieldDelegate.setInputStream(inputStream);
         fieldDelegate.run();
     }
+
     @Override
     protected long getMaximumQuietTime() {
         return 1100L;
     }
+
     @Override
     protected void doInitCommands() throws IOException {
     }
 
-
     @Override
     public SerialProvider getSerialProvider() {
-        SerialProvider serialProvider =  super.getSerialProvider();
+        SerialProvider serialProvider = super.getSerialProvider();
         serialProvider.setDefaultSerialSettings(9600, SerialSocket.DataBits.Eight, SerialSocket.Parity.None, SerialSocket.StopBits.One);
         return serialProvider;
     }
+
     public DemoRadical7(int domainId, EventLoop eventLoop) throws NoSuchFieldException, SecurityException, IOException {
         super(domainId, eventLoop);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
@@ -85,7 +89,6 @@ public class DemoRadical7 extends AbstractSerialDevice {
 
         this.fieldDelegate = new MyMasimoRadical7();
     }
-
 
     @Override
     protected String iconResourceName() {

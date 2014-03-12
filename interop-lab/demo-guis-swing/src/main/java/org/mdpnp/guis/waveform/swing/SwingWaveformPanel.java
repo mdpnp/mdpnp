@@ -55,8 +55,7 @@ import org.mdpnp.guis.waveform.WaveformSource;
 import org.mdpnp.guis.waveform.WaveformSourceListener;
 
 @SuppressWarnings("serial")
-public class SwingWaveformPanel extends javax.swing.JComponent implements WaveformCanvas, WaveformSourceListener,
-        WaveformPanel {
+public class SwingWaveformPanel extends javax.swing.JComponent implements WaveformCanvas, WaveformSourceListener, WaveformPanel {
     private WaveformRenderer renderer;
     private WaveformSource source;
     private Graphics graphics;
@@ -74,8 +73,7 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
         return AbstractNestedWaveformSource.source(CachingWaveformSource.class, this.source);
     }
 
-    private final static class WaveformSourceTableModel extends AbstractTableModel implements TableModel,
-            WaveformSourceListener {
+    private final static class WaveformSourceTableModel extends AbstractTableModel implements TableModel, WaveformSourceListener {
         private final WaveformSource source;
 
         public WaveformSourceTableModel(WaveformSource source) {
@@ -150,7 +148,7 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
                 this.dct_source = new SwingDCTSource(this.source);
                 this.renderer.addOtherSource(255, 0, 0, 255, dct_source);
             }
-            if(null != dataTable2) {
+            if (null != dataTable2) {
                 dataTable2.setModel(new WaveformSourceTableModel(SwingWaveformPanel.this.source));
             }
         } else {
@@ -269,8 +267,7 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
                     final CachingWaveformSource cachesource = cachingSource();
                     cacheFrame = new JFrame("Set Time Domain (seconds)");
                     cacheFrame.getContentPane().setLayout(new BorderLayout());
-                    final JLabel valueLabel = new JLabel(Long.toString(cachesource.getFixedTimeDomain() / 1000)
-                            + " seconds");
+                    final JLabel valueLabel = new JLabel(Long.toString(cachesource.getFixedTimeDomain() / 1000) + " seconds");
 
                     final JSlider slider = new JSlider();
                     slider.setMaximum(5 * 60);
@@ -306,7 +303,7 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(SwingWaveformPanel.this.caching ^ caching.isSelected()) {
+                if (SwingWaveformPanel.this.caching ^ caching.isSelected()) {
                     setCaching(caching.isSelected());
                     WaveformSource src = SwingWaveformPanel.this.source;
                     while (src instanceof NestedWaveformSource) {
@@ -326,7 +323,7 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(evenTempo ^ tempoing.isSelected()) {
+                if (evenTempo ^ tempoing.isSelected()) {
                     setEvenTempo(tempoing.isSelected());
                     WaveformSource src = SwingWaveformPanel.this.source;
                     while (src instanceof NestedWaveformSource) {
@@ -432,12 +429,9 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
             this.graphics = image.getGraphics();
 
             if (this.graphics instanceof Graphics2D) {
-                ((Graphics2D) this.graphics).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
-                ((Graphics2D) this.graphics).setRenderingHint(RenderingHints.KEY_RENDERING,
-                        RenderingHints.VALUE_RENDER_QUALITY);
-                ((Graphics2D) this.graphics).setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND,
-                        BasicStroke.JOIN_ROUND));
+                ((Graphics2D) this.graphics).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                ((Graphics2D) this.graphics).setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                ((Graphics2D) this.graphics).setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             }
 
             this.graphics.setColor(getBackground());

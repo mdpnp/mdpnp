@@ -18,7 +18,6 @@ import java.util.List;
 
 import org.mdpnp.devices.io.util.Bits;
 import org.mdpnp.devices.io.util.HexUtil;
-import org.mdpnp.devices.philips.intellivue.util.Util;
 
 public class MDSGeneralSystemInfo implements Value {
     public static class Entry implements Value {
@@ -32,6 +31,7 @@ public class MDSGeneralSystemInfo implements Value {
             bb.put(value);
 
         }
+
         @Override
         public void parse(ByteBuffer bb) {
             choice = Bits.getUnsignedShort(bb);
@@ -42,7 +42,7 @@ public class MDSGeneralSystemInfo implements Value {
 
         @Override
         public java.lang.String toString() {
-            return "[choice="+choice+",value="+HexUtil.dump(ByteBuffer.wrap(value))+"]";
+            return "[choice=" + choice + ",value=" + HexUtil.dump(ByteBuffer.wrap(value)) + "]";
         }
     }
 
@@ -64,8 +64,9 @@ public class MDSGeneralSystemInfo implements Value {
             int length = bb.position() - pos;
             bb.reset();
             Bits.putUnsignedShort(bb, length);
-            bb.position(bb.position()+length);
+            bb.position(bb.position() + length);
         }
+
         @Override
         public void parse(ByteBuffer bb) {
             super.parse(bb);
@@ -73,15 +74,16 @@ public class MDSGeneralSystemInfo implements Value {
             systemPulse.parse(wrapped);
             alarmPulse.parse(wrapped);
         }
+
         @Override
         public java.lang.String toString() {
-            return "[choice="+choice+",systemPulse="+systemPulse+",alarmPulse="+alarmPulse+"]";
+            return "[choice=" + choice + ",systemPulse=" + systemPulse + ",alarmPulse=" + alarmPulse + "]";
         }
     }
 
     @Override
     public void format(ByteBuffer bb) {
-        // TODO ???  getting so tired
+        // TODO ??? getting so tired
         throw new UnsupportedOperationException();
     }
 
@@ -91,10 +93,10 @@ public class MDSGeneralSystemInfo implements Value {
         @SuppressWarnings("unused")
         int length = Bits.getUnsignedShort(bb);
         list.clear();
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             int choice = 0xFFFF & bb.getShort(bb.position());
             Entry e;
-            switch(choice) {
+            switch (choice) {
             case 1:
                 e = new PulseEntry();
                 break;
@@ -112,4 +114,3 @@ public class MDSGeneralSystemInfo implements Value {
         return list.toString();
     }
 }
-

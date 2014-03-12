@@ -19,7 +19,7 @@ import org.junit.Test;
 
 public class TestDemoBernoulli {
     @Test
-    public void testMappingFileContents() throws Exception  {
+    public void testMappingFileContents() throws Exception {
         Map<String, String> numerics = new HashMap<String, String>();
         Map<String, String> waveforms = new HashMap<String, String>();
         DemoBernoulli.populateMap(numerics, waveforms);

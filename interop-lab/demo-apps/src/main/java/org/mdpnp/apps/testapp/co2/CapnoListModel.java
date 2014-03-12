@@ -27,14 +27,16 @@ public class CapnoListModel extends AbstractListModel implements ListModel {
         public CapnoListModelListener(ListDataListener listener) {
             this.listener = listener;
         }
+
         @Override
         public int hashCode() {
             return listener.hashCode();
         }
+
         @Override
         public boolean equals(Object obj) {
-            if(obj instanceof CapnoListModelListener) {
-                return this.listener.equals(((CapnoListModelListener)obj).listener);
+            if (obj instanceof CapnoListModelListener) {
+                return this.listener.equals(((CapnoListModelListener) obj).listener);
             } else {
                 return false;
             }
@@ -45,14 +47,16 @@ public class CapnoListModel extends AbstractListModel implements ListModel {
             listener.intervalAdded(new ListDataEvent(CapnoListModel.this, ListDataEvent.INTERVAL_ADDED, 0, 0));
             listener.contentsChanged(new ListDataEvent(CapnoListModel.this, ListDataEvent.CONTENTS_CHANGED, 0, getSize() - 1));
         }
+
         @Override
         public void capnoRemoved(CapnoModel model, Capno capno) {
             listener.intervalRemoved(new ListDataEvent(CapnoListModel.this, ListDataEvent.INTERVAL_REMOVED, 0, 0));
-            if(getSize() > 0) {
+            if (getSize() > 0) {
                 listener.contentsChanged(new ListDataEvent(CapnoListModel.this, ListDataEvent.CONTENTS_CHANGED, 0, getSize() - 1));
             }
 
         }
+
         @Override
         public void capnoChanged(CapnoModel model, Capno pump) {
             // NOT RELAYING CHANGES TO CONTENTS
@@ -64,6 +68,7 @@ public class CapnoListModel extends AbstractListModel implements ListModel {
     public CapnoListModel(CapnoModel model) {
         this.model = model;
     }
+
     @Override
     public int getSize() {
         return model.getCount();
@@ -73,14 +78,15 @@ public class CapnoListModel extends AbstractListModel implements ListModel {
     public Object getElementAt(int index) {
         return model.getCapno(index);
     }
+
     @Override
     public void addListDataListener(ListDataListener l) {
         model.addCapnoListener(new CapnoListModelListener(l));
     }
+
     @Override
     public void removeListDataListener(ListDataListener l) {
         model.removeCapnoListener(new CapnoListModelListener(l));
     }
 
 }
-

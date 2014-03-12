@@ -67,36 +67,34 @@ public class AlertType implements Parseable, Formatable {
         return 0 != (HI_PRI_P_AL & state);
     }
 
-
     @Override
     public java.lang.String toString() {
         StringBuilder sb = new StringBuilder("[");
-        if(isNoAlert()) {
+        if (isNoAlert()) {
             sb.append("NO_ALERT ");
         }
-        if(isLowPriorityTechnicalAlarm()) {
+        if (isLowPriorityTechnicalAlarm()) {
             sb.append("LOW_PRI_T_AL ");
         }
-        if(isMediumPriorityTechnicalAlarm()) {
+        if (isMediumPriorityTechnicalAlarm()) {
             sb.append("MED_PRI_T_AL ");
         }
-        if(isHighPriorityTechnicalAlarm()) {
+        if (isHighPriorityTechnicalAlarm()) {
             sb.append("HI_PRI_T_AL ");
         }
-        if(isLowPriorityPatientAlarm()) {
+        if (isLowPriorityPatientAlarm()) {
             sb.append("LOW_PRI_P_AL ");
         }
-        if(isMediumPriorityPatientAlarm()) {
+        if (isMediumPriorityPatientAlarm()) {
             sb.append("MED_PRI_P_AL ");
         }
-        if(isHighPriorityPatientAlarm()) {
+        if (isHighPriorityPatientAlarm()) {
             sb.append("HI_PRI_P_AL ");
         }
-        if(sb.charAt(sb.length()-1)==' ') {
-            sb.delete(sb.length()-1, sb.length());
+        if (sb.charAt(sb.length() - 1) == ' ') {
+            sb.delete(sb.length() - 1, sb.length());
         }
         sb.append("]");
         return sb.toString();
     }
 }
-

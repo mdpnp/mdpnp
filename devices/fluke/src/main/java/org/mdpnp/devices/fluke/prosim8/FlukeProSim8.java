@@ -12,7 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.devices.fluke.prosim8;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -20,53 +19,26 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
-import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import org.mdpnp.devices.io.util.StateMachine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FlukeProSim8 {
 
-    private static final byte
-            CR = 0x0D,
-            LF = 0x0A,
-            SP = 0x20,
-            BS = 0x08,
-            ESC = 0x1B,
-            STX = 0x02,
-            ETX = 0x03,
-            ACK = 0x06,
-            NAK = 0x15;
+    private static final byte CR = 0x0D, LF = 0x0A, SP = 0x20, BS = 0x08, ESC = 0x1B, STX = 0x02, ETX = 0x03, ACK = 0x06, NAK = 0x15;
     private final String CRLF = "\r\n";
 
     private final String OZYMANDIAS = "OZYMANDIAS";
 
     public enum KeyCode {
-        F1("01"),
-        F2("02"),
-        F3("03"),
-        F4("04"),
-        F5("05"),
-        UpArrow("06"),
-        DownArrow("07"),
-        LeftArrow("08"),
-        RightArrow("09"),
-        Enter("10"),
-        ECG("11"),
-        NIBP("12"),
-        SpecialFunctions("13"),
-        SpO2("14"),
-        IBP("15"),
-        Setup("16"),
-        Backlight("17");
+        F1("01"), F2("02"), F3("03"), F4("04"), F5("05"), UpArrow("06"), DownArrow("07"), LeftArrow("08"), RightArrow("09"), Enter("10"), ECG("11"), NIBP(
+                "12"), SpecialFunctions("13"), SpO2("14"), IBP("15"), Setup("16"), Backlight("17");
 
         private String number;
 
@@ -75,15 +47,12 @@ public class FlukeProSim8 {
         }
     }
 
-
-
     private final InputStream in;
     private final OutputStream out;
     private final BufferedWriter writer;
     private final BufferedReader reader;
 
     private final Logger log = LoggerFactory.getLogger(FlukeProSim8.class);
-
 
     private final Charset ascii;
 
@@ -103,9 +72,10 @@ public class FlukeProSim8 {
     }
 
     private static final DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+
     public Date getRealTimeClock(TimeZone timeZone) throws IOException, ParseException {
         String[] results = sendCommand("GETRTC", 2);
-        if(null != timeZone) {
+        if (null != timeZone) {
             // TODO not even a little threadsafe
             dateFormat.setTimeZone(timeZone);
         }
@@ -118,13 +88,8 @@ public class FlukeProSim8 {
 
     public String setRealTimeClock(Date date) throws IOException {
         String dateText = dateFormat.format(date);
-        return sendCommand("SETRTC", 1,
-                dateText.substring(11, 13),
-                dateText.substring(14, 16),
-                dateText.substring(17, 19),
-                dateText.substring(0, 2),
-                dateText.substring(3, 5),
-                dateText.substring(6, 10))[0];
+        return sendCommand("SETRTC", 1, dateText.substring(11, 13), dateText.substring(14, 16), dateText.substring(17, 19), dateText.substring(0, 2),
+                dateText.substring(3, 5), dateText.substring(6, 10))[0];
     }
 
     public String validationOn() throws IOException {
@@ -152,30 +117,24 @@ public class FlukeProSim8 {
     }
 
     public enum Wave {
-        Arterial("ART"),
-        RadialArtery("RART"),
-        LeftVentricle("LV"),
-        LeftAtrium("LA"),
-        RightVentricle("RV"),
-        PulmonaryArtery("PA"),
-        PAWedge("PAW"),
-        RightAtriumCVP("RA")
-        ;
+        Arterial("ART"), RadialArtery("RART"), LeftVentricle("LV"), LeftAtrium("LA"), RightVentricle("RV"), PulmonaryArtery("PA"), PAWedge("PAW"), RightAtriumCVP(
+                "RA");
         public final String code;
+
         Wave(final String code) {
             this.code = code;
         }
     }
 
     private static final void rangeCheck(String s, int value, int min, int max) {
-        if(value < min || value > max) {
-            throw new IllegalArgumentException("Invalid " + s + " value:"+value);
+        if (value < min || value > max) {
+            throw new IllegalArgumentException("Invalid " + s + " value:" + value);
         }
     }
 
     private static final void channelCheck(int channel) {
-        if(channel < 1 || channel > 2) {
-            throw new IllegalArgumentException("Invalid channel:"+channel);
+        if (channel < 1 || channel > 2) {
+            throw new IllegalArgumentException("Invalid channel:" + channel);
         }
     }
 
@@ -184,15 +143,16 @@ public class FlukeProSim8 {
             return new StringBuilder();
         };
     };
+
     private static final String leadingZeroes(boolean sign, int places, int value) {
         StringBuilder b = builder.get();
         b.delete(0, b.length());
         b.append(value);
-        while(b.length() < places) {
+        while (b.length() < places) {
             b.insert(0, "0");
         }
-        if(sign) {
-            if(value >= 0) {
+        if (sign) {
+            if (value >= 0) {
                 b.insert(0, "+");
             } else {
                 b.insert(0, "-");
@@ -212,19 +172,19 @@ public class FlukeProSim8 {
         rangeCheck("systolic", systolic, 0, 300);
         rangeCheck("diastolic", diastolic, 0, 300);
 
-        return sendCommand("IBPP", 1, ""+channel, leadingZeroes(false, 3, systolic), leadingZeroes(false,  3, diastolic))[0];
+        return sendCommand("IBPP", 1, "" + channel, leadingZeroes(false, 3, systolic), leadingZeroes(false, 3, diastolic))[0];
     }
 
     public String invasiveBloodPressureWave(int channel, Wave wave) throws IOException {
         channelCheck(channel);
-        return sendCommand("IBPW", 1, ""+channel, wave.code)[0];
+        return sendCommand("IBPW", 1, "" + channel, wave.code)[0];
     }
 
     public String invasiveBloodPressureStatic(int channel, int value) throws IOException {
         channelCheck(channel);
         rangeCheck("pressure", value, -10, 300);
 
-        return sendCommand("IBPS", 1, ""+channel, leadingZeroes(true, 3, value))[0];
+        return sendCommand("IBPS", 1, "" + channel, leadingZeroes(true, 3, value))[0];
     }
 
     public String respirationRate(int rate) throws IOException {
@@ -238,15 +198,15 @@ public class FlukeProSim8 {
     }
 
     public String sendKey(KeyCode code, int cycles) throws IOException {
-        return sendCommand("KEY", 1, code.number, ""+cycles)[0];
+        return sendCommand("KEY", 1, code.number, "" + cycles)[0];
     }
 
     public synchronized String[] sendCommand(String command, int expectedLines, String... arguments) throws IOException {
         writer.write(command);
-        if(arguments.length > 0) {
+        if (arguments.length > 0) {
             writer.write("=");
             writer.write(arguments[0]);
-            for(int i = 1; i < arguments.length; i++) {
+            for (int i = 1; i < arguments.length; i++) {
                 writer.write(",");
                 writer.write(arguments[i]);
             }
@@ -257,19 +217,19 @@ public class FlukeProSim8 {
 
         String[] result = new String[expectedLines];
 
-        for(int i = 0; i < result.length; i++) {
+        for (int i = 0; i < result.length; i++) {
             // TODO A 2-second timeout is totally arbitrary here
             long giveup = System.currentTimeMillis() + 2000L;
 
-            while(this.result == null && System.currentTimeMillis() < giveup) {
+            while (this.result == null && System.currentTimeMillis() < giveup) {
                 try {
                     this.wait(250L);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-            if(null == this.result) {
-                log.warn("No response " + (i+1) + "/" + result.length + " for command " + command);
+            if (null == this.result) {
+                log.warn("No response " + (i + 1) + "/" + result.length + " for command " + command);
                 return result;
             } else {
                 result[i] = this.result;
@@ -283,8 +243,8 @@ public class FlukeProSim8 {
 
     public void receiveCommand() throws IOException {
         String result = reader.readLine();
-        synchronized(this) {
-            while(this.result != null) {
+        synchronized (this) {
+            while (this.result != null) {
                 try {
                     wait();
                 } catch (InterruptedException e) {
@@ -296,10 +256,9 @@ public class FlukeProSim8 {
             notifyAll();
         }
 
-
     }
 
     public void receiveString(String line) {
-        log.debug("Received string="+line);
+        log.debug("Received string=" + line);
     }
 }

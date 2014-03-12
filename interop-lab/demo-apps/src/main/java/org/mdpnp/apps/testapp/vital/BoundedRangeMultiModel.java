@@ -26,11 +26,11 @@ public interface BoundedRangeMultiModel {
     Float getValue(int idx);
 
     void setValue(int idx, Float newValue);
-    
+
     int getValueCount();
-    
+
     int getMarkerCount();
-    
+
     Float getMarker(int idx);
 
     void setValueIsAdjusting(boolean b);

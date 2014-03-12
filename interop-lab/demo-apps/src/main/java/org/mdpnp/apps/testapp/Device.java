@@ -29,11 +29,13 @@ import com.rti.dds.infrastructure.Property_t;
 
 /**
  * Convenience class for storing DeviceIdentity and DeviceConnectivity instances
- * DeviceIdentity is required, DeviceConnectivity is only relevant for "connected" devices
- * and may be null.  A softreference to a DeviceIcon constructed from the DeviceIdentity raster
- * is also maintained (and reconstructed on demand).
+ * DeviceIdentity is required, DeviceConnectivity is only relevant for
+ * "connected" devices and may be null. A softreference to a DeviceIcon
+ * constructed from the DeviceIdentity raster is also maintained (and
+ * reconstructed on demand).
+ * 
  * @author jplourde
- *
+ * 
  */
 public class Device {
     private String udi;
@@ -56,26 +58,25 @@ public class Device {
 
     public static final String getHostname(ParticipantBuiltinTopicData participantData) {
         StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < participantData.property.value.size(); i++) {
+        for (int i = 0; i < participantData.property.value.size(); i++) {
             Property_t prop = (Property_t) participantData.property.value.get(i);
-            if("dds.sys_info.hostname".equals(prop.name)) {
+            if ("dds.sys_info.hostname".equals(prop.name)) {
                 sb.append(prop.value).append(" ");
             }
         }
-        
 
-            
-        for(int i = 0; i < participantData.default_unicast_locators.size(); i++) {
+        for (int i = 0; i < participantData.default_unicast_locators.size(); i++) {
             Locator_t locator = (Locator_t) participantData.default_unicast_locators.get(i);
             try {
                 InetAddress addr = null;
-                switch(locator.kind) {
+                switch (locator.kind) {
                 case Locator_t.KIND_TCPV4_LAN:
                 case Locator_t.KIND_TCPV4_WAN:
                 case Locator_t.KIND_TLSV4_LAN:
                 case Locator_t.KIND_TLSV4_WAN:
                 case Locator_t.KIND_UDPv4:
-                    addr = InetAddress.getByAddress(new byte[] {locator.address[12], locator.address[13], locator.address[14], locator.address[15]});
+                    addr = InetAddress
+                            .getByAddress(new byte[] { locator.address[12], locator.address[13], locator.address[14], locator.address[15] });
                     break;
                 case Locator_t.KIND_UDPv6:
                 default:
@@ -89,27 +90,27 @@ public class Device {
         }
         return sb.toString();
     }
-    
+
     public String getHostname() {
         return getHostname(participantData);
     }
-    
+
     public DeviceIcon getIcon() {
-        if(null == deviceIdentity) {
+        if (null == deviceIdentity) {
             return null;
         }
 
         DeviceIcon di = null;
-        if(null != realIcon) {
+        if (null != realIcon) {
             di = realIcon.get();
         }
 
-        if(di != null && di.isBlank() && deviceIdentity.icon.raster != null && deviceIdentity.icon.width > 0 && deviceIdentity.icon.height > 0) {
+        if (di != null && di.isBlank() && deviceIdentity.icon.raster != null && deviceIdentity.icon.width > 0 && deviceIdentity.icon.height > 0) {
             di = null;
             log.debug("Constructing a new Icon with new ice.Image data");
         }
 
-        if(null == di) {
+        if (null == di) {
             di = new DeviceIcon(deviceIdentity.icon);
             realIcon = new SoftReference<DeviceIcon>(di);
         }
@@ -118,7 +119,7 @@ public class Device {
     }
 
     public String getMakeAndModel() {
-        if(deviceIdentity.manufacturer.equals(deviceIdentity.model)) {
+        if (deviceIdentity.manufacturer.equals(deviceIdentity.model)) {
             return deviceIdentity.model;
         } else {
             return deviceIdentity.manufacturer + " " + deviceIdentity.model;
@@ -147,10 +148,10 @@ public class Device {
 
     public void setDeviceIdentity(DeviceIdentity deviceIdentity) {
         this.realIcon = null;
-        if(null == deviceIdentity) {
+        if (null == deviceIdentity) {
             this.deviceIdentity = null;
         } else {
-            if(null == this.deviceIdentity) {
+            if (null == this.deviceIdentity) {
                 this.deviceIdentity = new DeviceIdentity(deviceIdentity);
             } else {
                 this.deviceIdentity.copy_from(deviceIdentity);
@@ -159,9 +160,9 @@ public class Device {
     }
 
     public void setParticipantData(ParticipantBuiltinTopicData participantData) {
-        if(null != participantData) {
+        if (null != participantData) {
             this.participantData.copy_from(participantData);
-            if(!participantData.user_data.value.isEmpty()) {
+            if (!participantData.user_data.value.isEmpty()) {
                 byte[] arrbyte = new byte[participantData.user_data.value.size()];
                 participantData.user_data.value.toArrayByte(arrbyte);
                 String udi = null;
@@ -177,10 +178,10 @@ public class Device {
     }
 
     public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {
-        if(null == deviceConnectivity) {
+        if (null == deviceConnectivity) {
             this.deviceConnectivity = null;
         } else {
-            if(null == this.deviceConnectivity) {
+            if (null == this.deviceConnectivity) {
                 this.deviceConnectivity = new DeviceConnectivity(deviceConnectivity);
             } else {
                 this.deviceConnectivity.copy_from(deviceConnectivity);

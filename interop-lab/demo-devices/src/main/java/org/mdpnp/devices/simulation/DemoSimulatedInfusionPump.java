@@ -14,13 +14,10 @@ package org.mdpnp.devices.simulation;
 
 import org.mdpnp.devices.EventLoop;
 
-
-
 public class DemoSimulatedInfusionPump extends AbstractSimulatedDevice {
-	
 
-	public DemoSimulatedInfusionPump(int domainId, EventLoop eventLoop) {
-		super(domainId, eventLoop);
-		deviceIdentity.model = "Simulated Infusion Pump";
-	}
+    public DemoSimulatedInfusionPump(int domainId, EventLoop eventLoop) {
+        super(domainId, eventLoop);
+        deviceIdentity.model = "Simulated Infusion Pump";
+    }
 }

@@ -16,9 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-
 public class SimulatedThermometer {
-
 
     private final class MyTask implements Runnable {
         @Override
@@ -44,7 +42,7 @@ public class SimulatedThermometer {
     private ScheduledFuture<?> task;
 
     public void connect(ScheduledExecutorService executor) {
-        if(task != null) {
+        if (task != null) {
             task.cancel(false);
             task = null;
         }
@@ -52,7 +50,7 @@ public class SimulatedThermometer {
     }
 
     public void disconnect() {
-        if(task != null) {
+        if (task != null) {
             task.cancel(false);
             task = null;
         }

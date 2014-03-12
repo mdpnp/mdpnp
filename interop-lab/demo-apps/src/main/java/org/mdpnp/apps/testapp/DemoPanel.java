@@ -63,6 +63,7 @@ public class DemoPanel extends JPanel implements Runnable {
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     private final JPanel content = new JPanel();
+
     public JPanel getContent() {
         return content;
     }
@@ -74,9 +75,11 @@ public class DemoPanel extends JPanel implements Runnable {
     public JLabel getBedLabel() {
         return bedLabel;
     }
+
     public JLabel getPatientLabel() {
         return patientLabel;
     }
+
     public JButton getBack() {
         return back;
     }
@@ -100,53 +103,56 @@ public class DemoPanel extends JPanel implements Runnable {
         bedLabel.setOpaque(false);
         header.add(bedLabel, BorderLayout.CENTER);
 
-
         header.add(patientLabel, BorderLayout.EAST);
         patientLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         patientLabel.setHorizontalTextPosition(SwingConstants.RIGHT);
         patientLabel.setForeground(darkBlue);
         patientLabel.setFont(bedLabel.getFont());
         patientLabel.setOpaque(false);
-//		SpaceFillLabel.attachResizeFontToFill( header, bedLabel, patientLabel);
+        // SpaceFillLabel.attachResizeFontToFill( header, bedLabel,
+        // patientLabel);
 
     }
 
     private void buildContent() {
-//		JTable table = new JTable(new Object[][] { {"Tomato", "Orange"}, {"Banana", "Cantaloupe"} }, new Object[] {"First", "Second"});
-//		table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-//			@Override
-//			public Component getTableCellRendererComponent(JTable table,
-//					Object value, boolean isSelected, boolean hasFocus,
-//					int row, int column) {
-//				Component c =  super.getTableCellRendererComponent(table, value, isSelected, hasFocus,
-//						row, column);
-//				((JComponent)c).setOpaque(false);
-//				((JComponent)c).setBorder(new EmptyBorder(0,0,0,0));
-//
-////				c.setBackground(new Color(1.0f, 1.0f, 1.0f, 1.0f));
-//				return c;
-//			}
-//		});
-//		table.getTableHeader().setOpaque(false);
-//		table.setGridColor(new Color(1.0f,1.0f,1.0f,1.0f));
-//		table.setShowGrid(false);
-//
-//		table.setIntercellSpacing(new Dimension(0,0));
-//
-//		JScrollPane scroll = new JScrollPane(table);
-//		scroll.getViewport().setOpaque(false);
-//		scroll.setViewportBorder(new EmptyBorder(0,0,0,0));
-//		scroll.setBorder(new EmptyBorder(0,0,0,0));
-//
-//		scroll.setOpaque(false);
-//		table.setOpaque(false);
-//		content.add(scroll);
+        // JTable table = new JTable(new Object[][] { {"Tomato", "Orange"},
+        // {"Banana", "Cantaloupe"} }, new Object[] {"First", "Second"});
+        // table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer()
+        // {
+        // @Override
+        // public Component getTableCellRendererComponent(JTable table,
+        // Object value, boolean isSelected, boolean hasFocus,
+        // int row, int column) {
+        // Component c = super.getTableCellRendererComponent(table, value,
+        // isSelected, hasFocus,
+        // row, column);
+        // ((JComponent)c).setOpaque(false);
+        // ((JComponent)c).setBorder(new EmptyBorder(0,0,0,0));
+        //
+        // // c.setBackground(new Color(1.0f, 1.0f, 1.0f, 1.0f));
+        // return c;
+        // }
+        // });
+        // table.getTableHeader().setOpaque(false);
+        // table.setGridColor(new Color(1.0f,1.0f,1.0f,1.0f));
+        // table.setShowGrid(false);
+        //
+        // table.setIntercellSpacing(new Dimension(0,0));
+        //
+        // JScrollPane scroll = new JScrollPane(table);
+        // scroll.getViewport().setOpaque(false);
+        // scroll.setViewportBorder(new EmptyBorder(0,0,0,0));
+        // scroll.setBorder(new EmptyBorder(0,0,0,0));
+        //
+        // scroll.setOpaque(false);
+        // table.setOpaque(false);
+        // content.add(scroll);
         content.setOpaque(false);
         add(content, BorderLayout.CENTER);
     }
 
     private void buildFooter() {
-        wholeFooter.setLayout(new GridLayout(2,1));
+        wholeFooter.setLayout(new GridLayout(2, 1));
         wholeFooter.add(topFooter);
         wholeFooter.add(bottomFooter);
         wholeFooter.setOpaque(false);
@@ -177,17 +183,18 @@ public class DemoPanel extends JPanel implements Runnable {
         bottomFooter.add(udi, BorderLayout.EAST);
         bottomFooter.add(version, BorderLayout.WEST);
 
-
         add(wholeFooter, BorderLayout.SOUTH);
         revalidate();
     }
-//    private static final Color transparentWhite = new Color(1.0f, 1.0f, 1.0f, 0.8f);
+
+    // private static final Color transparentWhite = new Color(1.0f, 1.0f, 1.0f,
+    // 0.8f);
     public DemoPanel() {
         setLayout(new BorderLayout());
         setForeground(darkBlue);
         enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
         setBackground(new Color(1.0f, 1.0f, 1.0f, 0.8f));
-        setBorder(new EmptyBorder(10,10,10,10));
+        setBorder(new EmptyBorder(10, 10, 10, 10));
 
         buildHeader();
         buildContent();
@@ -198,31 +205,34 @@ public class DemoPanel extends JPanel implements Runnable {
         setChildrenOpaque(this, false);
         setOpaque(true);
     }
+
     public static void setChildrenOpaque(Component c, boolean opaque) {
-        if(c instanceof Container) {
-            for(Component co : ((Container)c).getComponents()) {
+        if (c instanceof Container) {
+            for (Component co : ((Container) c).getComponents()) {
                 setChildrenOpaque(co, opaque);
             }
         }
-        if(c instanceof JComponent) {
-            ((JComponent)c).setOpaque(opaque);
+        if (c instanceof JComponent) {
+            ((JComponent) c).setOpaque(opaque);
         }
-        if(c instanceof JScrollPane) {
-            ((JScrollPane)c).getViewport().setOpaque(opaque);
+        if (c instanceof JScrollPane) {
+            ((JScrollPane) c).getViewport().setOpaque(opaque);
         }
-        if(c instanceof JTable) {
-            ((JTable)c).getTableHeader().setOpaque(opaque);
+        if (c instanceof JTable) {
+            ((JTable) c).getTableHeader().setOpaque(opaque);
         }
-        if(c instanceof JList) {
+        if (c instanceof JList) {
 
         }
     }
+
     private int img_src_x1, img_src_y1, img_src_x2, img_src_y2;
     private ScheduledFuture<?> timeFuture;
+
     @Override
     protected void processComponentEvent(ComponentEvent e) {
         super.processComponentEvent(e);
-        switch(e.getID()) {
+        switch (e.getID()) {
         case ComponentEvent.COMPONENT_SHOWN:
             this.timeFuture = executor.scheduleAtFixedRate(this, 1000L - (System.currentTimeMillis() % 1000L) + 10L, 1000L, TimeUnit.MILLISECONDS);
             break;
@@ -234,31 +244,30 @@ public class DemoPanel extends JPanel implements Runnable {
             double img_width = ice_cubes.getImage().getWidth(this);
             double img_height = ice_cubes.getImage().getHeight(this);
 
-            if(img_width > 0 && img_height > 0) {
+            if (img_width > 0 && img_height > 0) {
                 double scr_width = size.getWidth();
                 double scr_height = size.getHeight();
 
                 // if the screen is bigger than the image
-                if(scr_width >= img_width) {
+                if (scr_width >= img_width) {
                     img_src_x1 = 0;
                     img_src_x2 = (int) img_width;
                 } else {
-                    img_src_x1 = (int)((img_width-scr_width) / 2.0);
-                    img_src_x2 = (int)( img_src_x1 + scr_width );
+                    img_src_x1 = (int) ((img_width - scr_width) / 2.0);
+                    img_src_x2 = (int) (img_src_x1 + scr_width);
                 }
-                if(scr_height >= img_height) {
+                if (scr_height >= img_height) {
                     img_src_y1 = 0;
                     img_src_y2 = (int) img_height;
                 } else {
-                    img_src_y1 = (int)((img_height-scr_height) /2.0);
-                    img_src_y2 = (int)(img_src_y1+scr_height);
+                    img_src_y1 = (int) ((img_height - scr_height) / 2.0);
+                    img_src_y2 = (int) (img_src_y1 + scr_height);
                 }
             }
             break;
         }
 
     }
-
 
     public JLabel getVersion() {
         return version;
@@ -268,13 +277,15 @@ public class DemoPanel extends JPanel implements Runnable {
     protected void paintComponent(Graphics g) {
 
         g.drawImage(ice_cubes.getImage(), 0, 0, getWidth(), getHeight(), img_src_x1, img_src_y1, img_src_x2, img_src_y2, null);
-//		g.drawImage(mdpnp.getImage(), 0, 0, null);
+        // g.drawImage(mdpnp.getImage(), 0, 0, null);
         super.paintComponent(g);
 
-//		super.paintComponent(g);
+        // super.paintComponent(g);
     }
+
     private final Date date = new Date();
     private final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+
     @Override
     public void run() {
         date.setTime(System.currentTimeMillis());

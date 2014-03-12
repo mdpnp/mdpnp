@@ -43,7 +43,8 @@ public class DeviceAlertCondition implements Value {
 
     @Override
     public java.lang.String toString() {
-        return "[deviceAlertState="+deviceAlertState+",alStatChgCount="+alStatChgCount+",maxPatientAlarm="+maxPatientAlarm+",maxTechnicalAlarm="+maxTechnicalAlarm+",maxAudAlarm="+maxAudAlarm+"]";
+        return "[deviceAlertState=" + deviceAlertState + ",alStatChgCount=" + alStatChgCount + ",maxPatientAlarm=" + maxPatientAlarm
+                + ",maxTechnicalAlarm=" + maxTechnicalAlarm + ",maxAudAlarm=" + maxAudAlarm + "]";
     }
 
     public AlertState getDeviceAlertState() {
@@ -53,12 +54,15 @@ public class DeviceAlertCondition implements Value {
     public int getAlStatChgCount() {
         return alStatChgCount;
     }
+
     public AlertType getMaxAudAlarm() {
         return maxAudAlarm;
     }
+
     public AlertType getMaxPatientAlarm() {
         return maxPatientAlarm;
     }
+
     public AlertType getMaxTechnicalAlarm() {
         return maxTechnicalAlarm;
     }

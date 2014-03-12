@@ -20,10 +20,13 @@ import org.mdpnp.devices.philips.intellivue.data.ManagedObjectIdentifier;
 import org.mdpnp.devices.philips.intellivue.data.OIDType;
 
 public interface ErrorDetailGetList extends ErrorDetail {
-	interface GetError extends Parseable, Formatable {
-		ErrorStatus getErrorStatus();
-		OIDType getOid();
-	};
-	ManagedObjectIdentifier getManagedObject();
-	List<GetError> getList();
+    interface GetError extends Parseable, Formatable {
+        ErrorStatus getErrorStatus();
+
+        OIDType getOid();
+    };
+
+    ManagedObjectIdentifier getManagedObject();
+
+    List<GetError> getList();
 }

@@ -60,35 +60,35 @@ public class TestIntellivue extends JPanel {
         connect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-//                try {
-//                    intellivue.connect(InetAddress.getByName(address.getText()).getHostAddress());
-//                } catch (UnknownHostException e1) {
-//                    show(e1);
-//                } catch (IOException e1) {
-//                    show(e1);
-//                }
+                // try {
+                // intellivue.connect(InetAddress.getByName(address.getText()).getHostAddress());
+                // } catch (UnknownHostException e1) {
+                // show(e1);
+                // } catch (IOException e1) {
+                // show(e1);
+                // }
             }
         });
         JButton listen = new JButton("Listen");
         listen.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-//                try {
-//                    intellivue.listenForConnectIndication();
-//                } catch (IOException e1) {
-//                    show(e1);
-//                }
+                // try {
+                // intellivue.listenForConnectIndication();
+                // } catch (IOException e1) {
+                // show(e1);
+                // }
             }
         });
         JButton disconnect = new JButton("Disconnect");
         disconnect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-//                try {
-//                    intellivue.disconnect();
-//                } catch (IOException e1) {
-//                    show(e1);
-//                }
+                // try {
+                // intellivue.disconnect();
+                // } catch (IOException e1) {
+                // show(e1);
+                // }
             }
         });
         controls.add(address);

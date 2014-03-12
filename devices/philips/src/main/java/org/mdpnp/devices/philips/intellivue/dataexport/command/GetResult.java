@@ -17,7 +17,7 @@ import org.mdpnp.devices.philips.intellivue.data.ManagedObjectIdentifier;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportCommand;
 
 public interface GetResult extends DataExportCommand {
-	ManagedObjectIdentifier getManagedObject();
-	AttributeValueList getAttributeList();
+    ManagedObjectIdentifier getManagedObject();
+
+    AttributeValueList getAttributeList();
 }
- 

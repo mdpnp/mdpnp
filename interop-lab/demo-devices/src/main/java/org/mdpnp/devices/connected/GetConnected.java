@@ -20,30 +20,31 @@ import javax.swing.JOptionPane;
 import org.mdpnp.devices.EventLoop;
 
 public class GetConnected extends AbstractGetConnected {
-	private final JFrame frame;
-	
-	public GetConnected(JFrame frame, int domainId, String unique_device_identifier, EventLoop eventLoop) {
-		super(domainId, unique_device_identifier, eventLoop);
-		this.frame = frame;
-	}
-	
-	@Override
-	protected void abortConnect() {
-		frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
-	}
-	
-	@Override
-	protected String addressFromUser() {
-		return NetworkChooser.showNetworkAddressDialog(frame, "192.168.1.199");
-	}
-	
-	@Override
-	protected String addressFromUserList(String[] list) {
-		return (String) JOptionPane.showInputDialog(frame, "Choose a port", "Port", JOptionPane.QUESTION_MESSAGE, null, list, null);
-	}
-	@Override
-	protected boolean isFixedAddress() {
-		return false;
-	}
+    private final JFrame frame;
+
+    public GetConnected(JFrame frame, int domainId, String unique_device_identifier, EventLoop eventLoop) {
+        super(domainId, unique_device_identifier, eventLoop);
+        this.frame = frame;
+    }
+
+    @Override
+    protected void abortConnect() {
+        frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+    }
+
+    @Override
+    protected String addressFromUser() {
+        return NetworkChooser.showNetworkAddressDialog(frame, "192.168.1.199");
+    }
+
+    @Override
+    protected String addressFromUserList(String[] list) {
+        return (String) JOptionPane.showInputDialog(frame, "Choose a port", "Port", JOptionPane.QUESTION_MESSAGE, null, list, null);
+    }
+
+    @Override
+    protected boolean isFixedAddress() {
+        return false;
+    }
 
 }

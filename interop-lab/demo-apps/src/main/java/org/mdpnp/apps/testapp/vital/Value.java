@@ -12,27 +12,37 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
-import com.rti.dds.subscription.SampleInfo;
-
 import ice.Numeric;
+
+import com.rti.dds.subscription.SampleInfo;
 
 public interface Value {
     String getUniqueDeviceIdentifier();
+
     String getMetricId();
+
     int getInstanceId();
+
     Numeric getNumeric();
+
     SampleInfo getSampleInfo();
+
     Vital getParent();
 
     boolean isAtOrAboveHigh();
+
     boolean isAtOrBelowLow();
+
     boolean isAtOrOutsideOfBounds();
 
     boolean isAtOrAboveCriticalHigh();
+
     boolean isAtOrBelowCriticalLow();
+
     boolean isAtOrOutsideOfCriticalBounds();
 
     boolean isAtOrAboveValueMsHigh();
+
     boolean isAtOrAboveValueMsLow();
 
     boolean isIgnore();
@@ -42,12 +52,16 @@ public interface Value {
     void updateFrom(Numeric numeric, SampleInfo sampleInfo);
 
     long getValueMsBelowLow();
+
     long getValueMsAboveHigh();
 
     int getHistoryCount();
+
     float getHistoryValue(int x);
+
     long getHistoryTime(int x);
+
     int getHistoryCurrent();
 
-//    long getRateOfChange();
+    // long getRateOfChange();
 }

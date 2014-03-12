@@ -30,6 +30,7 @@ public class DataExportLinkedResultImpl extends DataExportResultImpl implements 
     public RemoteOperationLinkedState getLinkedState() {
         return state;
     }
+
     @Override
     public short getLinkedCount() {
         return count;
@@ -43,14 +44,14 @@ public class DataExportLinkedResultImpl extends DataExportResultImpl implements 
 
     private static final void advanceOrEnd(ByteBuffer bb, int advancement) {
         int newPosition = bb.position() + advancement;
-        if(newPosition>bb.limit()) {
+        if (newPosition > bb.limit()) {
             log.warn("Tried to advance " + advancement + " bytes where only " + bb.remaining() + " remain");
             bb.position(bb.limit());
         } else {
             bb.position(newPosition);
         }
     }
-    
+
     @Override
     public void parse(ByteBuffer bb) {
         state = RemoteOperationLinkedState.valueOf(Bits.getUnsignedByte(bb));
@@ -67,8 +68,8 @@ public class DataExportLinkedResultImpl extends DataExportResultImpl implements 
             switch (state) {
             case First:
                 command = CommandFactory.buildCommand(commandType, true);
-                if(null == command) {
-                    log.warn("Unable to build command for CommandType="+commandType);
+                if (null == command) {
+                    log.warn("Unable to build command for CommandType=" + commandType);
                     advanceOrEnd(bb, length);
                 } else {
                     command.setMessage(this);
@@ -76,7 +77,7 @@ public class DataExportLinkedResultImpl extends DataExportResultImpl implements 
                 }
                 break;
             case NotFirstNotLast:
-                if(null == command) {
+                if (null == command) {
                     log.warn("Received a command of type " + commandType + " with NotFirstNotLastState but no previous First");
                     advanceOrEnd(bb, length);
                 } else {
@@ -84,7 +85,7 @@ public class DataExportLinkedResultImpl extends DataExportResultImpl implements 
                 }
                 break;
             case Last:
-                if(null == command) {
+                if (null == command) {
                     log.warn("Received a command of type " + commandType + " with Last but no previous First");
                     advanceOrEnd(bb, length);
                 } else {

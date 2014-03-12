@@ -33,7 +33,6 @@ public class NellcorN595 extends ASCIIFieldDelegate {
     private LimitsType limitsType;
     private SpO2RespMode spO2RespMode;
 
-
     public Date getTimestamp() {
         return lastPoint;
     }
@@ -89,49 +88,42 @@ public class NellcorN595 extends ASCIIFieldDelegate {
     public SpO2RespMode getSpO2RespMode() {
         return spO2RespMode;
     }
+
     enum Status {
-        AlarmOff,
-        AlarmSilence,
-        LowBattery,
-        LossOfPulseInterference,
-        LossOfPulse,
-        InterferenceDetected,
-        PulseRateUpperLimitAlarm,
-        PulseRateLowerLimitAlarm,
-        PulseSearch,
-        SaturationUpperLimitAlarm,
-        SaturationLowerLimitAlarm,
-        SensorDisconnect,
-        SensorOff
+        AlarmOff, AlarmSilence, LowBattery, LossOfPulseInterference, LossOfPulse, InterferenceDetected, PulseRateUpperLimitAlarm, PulseRateLowerLimitAlarm, PulseSearch, SaturationUpperLimitAlarm, SaturationLowerLimitAlarm, SensorDisconnect, SensorOff
     }
+
     enum LimitsType {
-        Adult,
-        NeoNatal
+        Adult, NeoNatal
     }
 
     enum SpO2RespMode {
-        Normal,
-        Fast
+        Normal, Fast
     }
+
     private static final Pattern number = Pattern.compile("^(\\d+)(\\*?)$");
+
     @SuppressWarnings("unused")
     private static final String filterStar(String val) {
-        if(null == val) {
+        if (null == val) {
             return null;
         }
         Matcher m1 = number.matcher(val);
-        if(m1.matches()) {
+        if (m1.matches()) {
             return m1.group(1);
         } else {
             return null;
         }
     }
+
     public static final String MANUFACTURER_NAME = "Nellcor";
     public static final String MODEL_NAME = "";
+
     @SuppressWarnings("unused")
     private static final String applyRoot(String val) {
         return MODEL_NAME + " " + val;
     }
+
     public Integer getHeartRate() {
         return heartRate;
     }
@@ -149,19 +141,22 @@ public class NellcorN595 extends ASCIIFieldDelegate {
     }
 
     public enum NellcorStatus {
-        SensorOff,
-        PoorSignal,
+        SensorOff, PoorSignal,
 
     }
+
     public void firePulseOximeter() {
     }
+
     public void fireAlarmPulseOximeter() {
     }
+
     public void fireDevice() {
     }
 
     protected void setName(String name) {
     }
+
     protected void setGuid(String guid) {
     }
 }

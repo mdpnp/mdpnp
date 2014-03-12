@@ -18,34 +18,34 @@ import org.mdpnp.devices.philips.intellivue.data.OIDType;
 
 public class ErrorDetailNoSuchActionImpl implements ErrorDetailNoSuchAction {
 
-	private OIDType objectClass;
-	private OIDType action;
-	
-	@Override
-	public void parse(ByteBuffer bb) {
-		objectClass = OIDType.parse(bb);
-		action = OIDType.parse(bb);
-	}
+    private OIDType objectClass;
+    private OIDType action;
 
-	@Override
-	public void format(ByteBuffer bb) {
-		objectClass.format(bb);
-		action.format(bb);
-	}
+    @Override
+    public void parse(ByteBuffer bb) {
+        objectClass = OIDType.parse(bb);
+        action = OIDType.parse(bb);
+    }
 
-	@Override
-	public OIDType getActionType() {
-		return action;
-	}
-	
-	@Override
-	public OIDType getObjectClass() {
-		return objectClass;
-	}
+    @Override
+    public void format(ByteBuffer bb) {
+        objectClass.format(bb);
+        action.format(bb);
+    }
 
-	@Override
-	public String toString() {
-		return "[objectClass="+objectClass+",action="+action+"]";
-	}
+    @Override
+    public OIDType getActionType() {
+        return action;
+    }
+
+    @Override
+    public OIDType getObjectClass() {
+        return objectClass;
+    }
+
+    @Override
+    public String toString() {
+        return "[objectClass=" + objectClass + ",action=" + action + "]";
+    }
 
 }

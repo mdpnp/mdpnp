@@ -40,6 +40,7 @@ public class RelativeTime implements Value {
     public void setRelativeTime(long relativeTime) {
         this.relativeTime = relativeTime;
     }
+
     @Override
     public java.lang.String toString() {
         return Long.toString(relativeTime) + " (" + Long.toString(toMilliseconds()) + "ms)";
@@ -53,12 +54,15 @@ public class RelativeTime implements Value {
     public long toMicroseconds() {
         return relativeTime * RESOLUTION_MICROSECONDS;
     }
+
     public void fromMicroseconds(long microseconds) {
         this.relativeTime = microseconds / RESOLUTION_MICROSECONDS;
     }
+
     public long toMilliseconds() {
         return toMicroseconds() / 1000L;
     }
+
     public void fromMilliseconds(long milliseconds) {
         fromMicroseconds(1000L * milliseconds);
     }

@@ -25,11 +25,8 @@ import com.rti.dds.subscription.SampleInfo;
 
 public class InfusionPumpPanel extends DevicePanel {
 
-    private final JLabel active = new JLabel(), drugName = new JLabel(),
-           drugMass = new JLabel(), solutionVolume = new JLabel(),
-           vtbiMl = new JLabel(), durationSec = new JLabel(),
-           fracComplete = new JLabel();
-
+    private final JLabel active = new JLabel(), drugName = new JLabel(), drugMass = new JLabel(), solutionVolume = new JLabel(),
+            vtbiMl = new JLabel(), durationSec = new JLabel(), fracComplete = new JLabel();
 
     public InfusionPumpPanel() {
         super(new GridLayout(7, 2));
@@ -67,14 +64,14 @@ public class InfusionPumpPanel extends DevicePanel {
 
     @Override
     public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
-        if(aliveAndValidData(sampleInfo)) {
+        if (aliveAndValidData(sampleInfo)) {
             active.setText(Boolean.toString(infusionStatus.infusionActive));
             drugMass.setText(Integer.toString(infusionStatus.drug_mass_mcg) + " mcg");
             drugName.setText(infusionStatus.drug_name);
-            durationSec.setText(Integer.toString(infusionStatus.infusion_duration_seconds)+ " seconds");
-            fracComplete.setText(Integer.toString((int)(100f * infusionStatus.infusion_fraction_complete))+"%");
+            durationSec.setText(Integer.toString(infusionStatus.infusion_duration_seconds) + " seconds");
+            fracComplete.setText(Integer.toString((int) (100f * infusionStatus.infusion_fraction_complete)) + "%");
             solutionVolume.setText(Integer.toString(infusionStatus.solution_volume_ml) + " mL");
-            vtbiMl.setText(Integer.toString(infusionStatus.volume_to_be_infused_ml)+" mL");
+            vtbiMl.setText(Integer.toString(infusionStatus.volume_to_be_infused_ml) + " mL");
         }
     }
 

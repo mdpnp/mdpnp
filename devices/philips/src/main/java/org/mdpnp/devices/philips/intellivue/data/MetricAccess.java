@@ -37,36 +37,47 @@ public class MetricAccess implements Message {
     public boolean isAvailIntermittent() {
         return 0 != (AVAIL_INTERMITTENT & value);
     }
+
     public boolean isUpdPeriodic() {
         return 0 != (UPD_PERIODIC & value);
     }
+
     public boolean isUpdEpisodic() {
         return 0 != (UPD_EPISODIC & value);
     }
+
     public boolean isMsmtNoncontinuous() {
         return 0 != (MSMT_NONCONTINUOUS & value);
     }
+
     public boolean isAccEvRep() {
         return 0 != (ACC_EVREP & value);
     }
+
     public boolean isAccGet() {
         return 0 != (ACC_GET & value);
     }
+
     public boolean isAccScan() {
         return 0 != (ACC_SCAN & value);
     }
+
     public boolean isGenOptSync() {
         return 0 != (GEN_OPT_SYNC & value);
     }
+
     public boolean isScOptNormal() {
         return 0 != (SC_OPT_NORMAL & value);
     }
+
     public boolean isScOptExtensive() {
         return 0 != (SC_OPT_EXTENSIVE & value);
     }
+
     public boolean isScOptLongPdAvail() {
         return 0 != (SC_OPT_LONG_PD_AVAIL & value);
     }
+
     public boolean isScOptConfirm() {
         return 0 != (SC_OPT_CONFIRM & value);
     }
@@ -74,41 +85,41 @@ public class MetricAccess implements Message {
     @Override
     public java.lang.String toString() {
         StringBuilder sb = new StringBuilder("[");
-        if(isAvailIntermittent()) {
+        if (isAvailIntermittent()) {
             sb.append("AVAIL_INTERMITTENT|");
         }
-        if(isUpdPeriodic()) {
+        if (isUpdPeriodic()) {
             sb.append("UPD_PERIODIC|");
         }
-        if(isMsmtNoncontinuous()) {
+        if (isMsmtNoncontinuous()) {
             sb.append("MSMT_NONCONTINUOUS|");
         }
-        if(isAccEvRep()) {
+        if (isAccEvRep()) {
             sb.append("ACC_EVREP|");
         }
-        if(isAccGet()) {
+        if (isAccGet()) {
             sb.append("ACC_GET|");
         }
-        if(isAccScan()) {
+        if (isAccScan()) {
             sb.append("ACC_SCAN|");
         }
-        if(isGenOptSync()) {
+        if (isGenOptSync()) {
             sb.append("GEN_OPT_SYNC|");
         }
-        if(isScOptNormal()) {
+        if (isScOptNormal()) {
             sb.append("SC_OPT_NORMAL|");
         }
-        if(isScOptExtensive()) {
+        if (isScOptExtensive()) {
             sb.append("SC_OPT_EXTENSIVE|");
         }
-        if(isScOptLongPdAvail()) {
+        if (isScOptLongPdAvail()) {
             sb.append("SC_OPT_LONG_PD_AVAIL|");
         }
-        if(isScOptConfirm()) {
+        if (isScOptConfirm()) {
             sb.append("SC_OPT_CONFIRM|");
         }
-        if(sb.length()>1) {
-            sb.delete(sb.length()-1, sb.length());
+        if (sb.length() > 1) {
+            sb.delete(sb.length() - 1, sb.length());
         }
         sb.append("]");
         return sb.toString();
@@ -118,6 +129,7 @@ public class MetricAccess implements Message {
     public void parse(ByteBuffer bb) {
         value = Bits.getUnsignedShort(bb);
     }
+
     @Override
     public void format(ByteBuffer bb) {
         Bits.putUnsignedShort(bb, value);

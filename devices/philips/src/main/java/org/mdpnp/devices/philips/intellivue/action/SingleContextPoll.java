@@ -18,7 +18,8 @@ import org.mdpnp.devices.philips.intellivue.Formatable;
 import org.mdpnp.devices.philips.intellivue.Parseable;
 
 public interface SingleContextPoll extends Parseable, Formatable {
-	int getMdsContext();
-	List<ObservationPoll> getPollInfo();
-	
+    int getMdsContext();
+
+    List<ObservationPoll> getPollInfo();
+
 }

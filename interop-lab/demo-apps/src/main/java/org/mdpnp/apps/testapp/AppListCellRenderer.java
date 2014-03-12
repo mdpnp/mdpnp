@@ -33,7 +33,7 @@ public class AppListCellRenderer extends JComponent implements ListCellRenderer 
 
     @Override
     protected void paintComponent(Graphics g) {
-        if(isOpaque()) {
+        if (isOpaque()) {
             g.setColor(getBackground());
             myDimension = getSize(myDimension);
             g.fillRect(0, 0, myDimension.width, myDimension.height);
@@ -52,14 +52,12 @@ public class AppListCellRenderer extends JComponent implements ListCellRenderer 
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list,
-            Object value, int index, boolean isSelected,
-            boolean cellHasFocus) {
-        AppType app = value == null ? null : (AppType)value;
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        AppType app = value == null ? null : (AppType) value;
 
         appName.setFont(list.getFont());
 
-        if(null != app) {
+        if (null != app) {
             appName.setText(app.getName());
             icon.setIcon(app.getIcon());
         }

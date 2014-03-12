@@ -23,7 +23,7 @@ public class ScaledDeviceIcon extends DeviceIcon {
     private final double scale;
 
     protected static final Image scaleImage(DeviceIcon source, double scale) {
-        return source.getImage().getScaledInstance( (int)(source.getIconWidth() * scale), (int)(source.getIconHeight() * scale), Image.SCALE_SMOOTH);
+        return source.getImage().getScaledInstance((int) (source.getIconWidth() * scale), (int) (source.getIconHeight() * scale), Image.SCALE_SMOOTH);
     }
 
     public DeviceIcon getSource() {
@@ -43,8 +43,9 @@ public class ScaledDeviceIcon extends DeviceIcon {
 
     @Override
     public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
-        if(source.getImage() != lastImage) {
-//            System.out.println("RESCALE SOURCE="+source+" GETIMAGE="+source.getImage() + " lastImage="+lastImage);
+        if (source.getImage() != lastImage) {
+            // System.out.println("RESCALE SOURCE="+source+" GETIMAGE="+source.getImage()
+            // + " lastImage="+lastImage);
             lastImage = source.getImage();
             setImage(scaleImage(source, scale));
         }

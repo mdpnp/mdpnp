@@ -23,8 +23,8 @@ public class FourOff {
     public static void main(String[] args) {
         JFrame window = new JFrame("Test Webcam Panel");
         Webcam webcam = Webcam.getDefault();
-        webcam.setCustomViewSizes(new Dimension[] {new Dimension(1600,1200)});
-        webcam.setViewSize(new Dimension(1600,1200));
+        webcam.setCustomViewSizes(new Dimension[] { new Dimension(1600, 1200) });
+        webcam.setViewSize(new Dimension(1600, 1200));
         WebcamPanel panel = new WebcamPanel(webcam);
         panel.setFPS(25.0);
         window.add(panel);

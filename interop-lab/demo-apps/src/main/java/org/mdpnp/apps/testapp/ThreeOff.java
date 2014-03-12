@@ -34,11 +34,17 @@ import com.rti.dds.subscription.ViewStateKind;
 public class ThreeOff {
     public static void main(String[] args) {
         DDS.init();
-        DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(0, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-//        PublicationBuiltinTopicDataTypeSupport.register_type(participant, PublicationBuiltinTopicDataTypeSupport.get_type_name());
-//        TopicDescription topic = participant.lookup_topicdescription(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME);
-//        PublicationBuiltinTopicDataDataReader reader = (PublicationBuiltinTopicDataDataReader) participant.get_builtin_subscriber().lookup_datareader(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME);
-        ParticipantBuiltinTopicDataDataReader reader = (ParticipantBuiltinTopicDataDataReader) participant.get_builtin_subscriber().lookup_datareader(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME);
+        DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(0,
+                DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        // PublicationBuiltinTopicDataTypeSupport.register_type(participant,
+        // PublicationBuiltinTopicDataTypeSupport.get_type_name());
+        // TopicDescription topic =
+        // participant.lookup_topicdescription(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME);
+        // PublicationBuiltinTopicDataDataReader reader =
+        // (PublicationBuiltinTopicDataDataReader)
+        // participant.get_builtin_subscriber().lookup_datareader(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME);
+        ParticipantBuiltinTopicDataDataReader reader = (ParticipantBuiltinTopicDataDataReader) participant.get_builtin_subscriber()
+                .lookup_datareader(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME);
         reader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
         WaitSet ws = new WaitSet();
         ws.attach_condition(reader.get_statuscondition());
@@ -46,16 +52,17 @@ public class ThreeOff {
         ConditionSeq condSeq = new ConditionSeq();
         ParticipantBuiltinTopicDataSeq data_seq = new ParticipantBuiltinTopicDataSeq();
         SampleInfoSeq sample_seq = new SampleInfoSeq();
-        for(;;) {
+        for (;;) {
             ws.wait(condSeq, dur);
             try {
-                reader.read(data_seq, sample_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
-                for(int i = 0; i < sample_seq.size(); i++) {
+                reader.read(data_seq, sample_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE,
+                        ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                for (int i = 0; i < sample_seq.size(); i++) {
                     ParticipantBuiltinTopicData data = (ParticipantBuiltinTopicData) data_seq.get(i);
                     SampleInfo si = (SampleInfo) sample_seq.get(i);
                     System.out.println(si.instance_handle);
-                    if(si.valid_data) {
-                        System.out.println("\t"+data);
+                    if (si.valid_data) {
+                        System.out.println("\t" + data);
                     }
                 }
             } finally {

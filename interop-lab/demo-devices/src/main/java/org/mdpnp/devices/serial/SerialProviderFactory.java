@@ -26,21 +26,22 @@ import org.slf4j.LoggerFactory;
 public class SerialProviderFactory {
 
     private static SerialProvider defaultProvider;
-    private static final String[] DEFAULT_PROVIDERS = new String[] {"org.mdpnp.data.serial.PureJavaCommSerialProvider", "org.mdpnp.devices.serial.TCPSerialProvider"};
+    private static final String[] DEFAULT_PROVIDERS = new String[] { "org.mdpnp.data.serial.PureJavaCommSerialProvider",
+            "org.mdpnp.devices.serial.TCPSerialProvider" };
     private static final String SYSTEM_PROPERTY = "org.mdpnp.data.serial.SerialProviderFactory.defaultProvider";
 
     public static final void setDefaultProvider(SerialProvider serialProvider) {
-            SerialProviderFactory.defaultProvider = serialProvider;
+        SerialProviderFactory.defaultProvider = serialProvider;
     }
 
     private static final Logger log = LoggerFactory.getLogger(SerialProviderFactory.class);
 
     private static final void addCandidates(List<String> candidates, InputStream in) {
-        if(null != in) {
+        if (null != in) {
             try {
                 BufferedReader br = new BufferedReader(new InputStreamReader(in));
                 String line = null;
-                while(null != (line = br.readLine())) {
+                while (null != (line = br.readLine())) {
                     candidates.add(line);
                 }
                 br.close();
@@ -51,12 +52,12 @@ public class SerialProviderFactory {
     }
 
     public static final SerialProvider getDefaultProvider() {
-        if(null == defaultProvider) {
+        if (null == defaultProvider) {
             List<String> candidates = new ArrayList<String>();
 
             String sysProp = System.getProperty(SYSTEM_PROPERTY);
 
-            if(sysProp != null) {
+            if (sysProp != null) {
                 candidates.add(sysProp);
             }
 
@@ -65,8 +66,8 @@ public class SerialProviderFactory {
 
             candidates.addAll(Arrays.asList(DEFAULT_PROVIDERS));
 
-            while(null == defaultProvider) {
-                if(candidates.isEmpty()) {
+            while (null == defaultProvider) {
+                if (candidates.isEmpty()) {
                     throw new IllegalStateException("No valid defaultProvider available");
                 }
                 String candidate = null;
@@ -74,7 +75,7 @@ public class SerialProviderFactory {
                     candidate = candidates.remove(0);
                     defaultProvider = (SerialProvider) Class.forName(candidate).getConstructor(new Class<?>[0]).newInstance(new Object[0]);
                 } catch (Exception e) {
-                    if(candidates.isEmpty()) {
+                    if (candidates.isEmpty()) {
                         throw new RuntimeException(e);
                     } else {
                         log.warn("cannot load candidate SerialProvider " + candidate + "; trying another", e);

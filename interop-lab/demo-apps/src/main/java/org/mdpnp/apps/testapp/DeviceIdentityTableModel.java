@@ -18,8 +18,7 @@ import javax.swing.event.ListDataListener;
 import javax.swing.table.AbstractTableModel;
 
 @SuppressWarnings("serial")
-public class DeviceIdentityTableModel extends AbstractTableModel implements
-        ListDataListener {
+public class DeviceIdentityTableModel extends AbstractTableModel implements ListDataListener {
     @SuppressWarnings("rawtypes")
     private final ListModel model;
 

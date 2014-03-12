@@ -32,7 +32,7 @@ public class DemoSerialIntellivue extends AbstractDemoIntellivue {
 
     private static int[] getAvailablePorts(int cnt) throws IOException {
         int[] twoports = new int[cnt];
-        for(int i = 0; i < cnt; i++) {
+        for (int i = 0; i < cnt; i++) {
             ServerSocket ss = new ServerSocket(0);
             twoports[i] = ss.getLocalPort();
             ss.close();
@@ -50,11 +50,11 @@ public class DemoSerialIntellivue extends AbstractDemoIntellivue {
 
     @Override
     public void connect(String str) {
-        if(null != adapter) {
+        if (null != adapter) {
             throw new IllegalStateException("Multiple calls to connect are not currently supported");
         }
         try {
-            int [] ports = getAvailablePorts(2);
+            int[] ports = getAvailablePorts(2);
             InetSocketAddress serialSide = new InetSocketAddress(InetAddress.getLoopbackAddress(), ports[0]);
             InetSocketAddress networkSide = new InetSocketAddress(InetAddress.getLoopbackAddress(), ports[1]);
             adapter = new RS232Adapter(str, serialSide, networkSide, threadGroup, networkLoop);

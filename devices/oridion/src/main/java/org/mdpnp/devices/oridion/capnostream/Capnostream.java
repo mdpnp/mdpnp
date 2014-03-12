@@ -40,8 +40,7 @@ import org.slf4j.LoggerFactory;
 
 public class Capnostream {
     private final Set<CapnostreamListener> listeners = new CopyOnWriteArraySet<CapnostreamListener>();
-    private static final Logger log = LoggerFactory
-            .getLogger(Capnostream.class);
+    private static final Logger log = LoggerFactory.getLogger(Capnostream.class);
 
     private final InputStream inputStream;
     private final SplitBytesOutputStream outputStream;
@@ -77,39 +76,37 @@ public class Capnostream {
 
         public static StringBuilder fastStatus(int fastStatus, StringBuilder builder) {
             builder.delete(0, builder.length());
-            if(0 != (INVALID_CO2_VALUE & fastStatus)) {
+            if (0 != (INVALID_CO2_VALUE & fastStatus)) {
                 builder.append("INVALID_CO2_VALUE, ");
             }
-            if(0 != (INITIALIZATION & fastStatus)) {
+            if (0 != (INITIALIZATION & fastStatus)) {
                 builder.append("INITIALIZATION, ");
             }
-            if(0 != (OCCLUSION_IN_GAS_INPUT_LINE & fastStatus)) {
+            if (0 != (OCCLUSION_IN_GAS_INPUT_LINE & fastStatus)) {
                 builder.append("OCCLUSION_IN_GAS_INPUT_LINE, ");
             }
-            if(0 != (END_OF_BREATH_INDICATION & fastStatus)) {
+            if (0 != (END_OF_BREATH_INDICATION & fastStatus)) {
                 builder.append("END_OF_BREATH_INDICATION, ");
             }
-            if(0 != (SFM_IN_PROGRESS & fastStatus)) {
+            if (0 != (SFM_IN_PROGRESS & fastStatus)) {
                 builder.append("SFM_IN_PROGRESS, ");
             }
-            if(0 != (PURGING_IN_PROGRESS & fastStatus)) {
+            if (0 != (PURGING_IN_PROGRESS & fastStatus)) {
                 builder.append("PURGING_IN_PROGRESS, ");
             }
-            if(0 != (FILTER_LINE_NOT_CONNECTED & fastStatus)) {
+            if (0 != (FILTER_LINE_NOT_CONNECTED & fastStatus)) {
                 builder.append("FILTER_LINE_NOT_CONNECTED, ");
             }
-            if(0 != (CO2_MALFUNCTION & fastStatus)) {
+            if (0 != (CO2_MALFUNCTION & fastStatus)) {
                 builder.append("CO2_MALFUNCTION, ");
             }
 
-            if(builder.length() > 1) {
+            if (builder.length() > 1) {
                 builder.delete(builder.length() - 2, builder.length());
             }
             return builder;
         }
     }
-
-
 
     public static class SlowStatus {
         public static final int PATIENT_TYPE = 0x01;
@@ -161,11 +158,9 @@ public class Capnostream {
     }
 
     public enum SetupItem {
-        TemporaryAlarmSilence(1), StartEndCase(2), PatientType(3), CommIntIndication(
-                4), EtCO2Low(5, 0, 145), EtCO2High(6, 5, 150), FiCO2High(7, 2, 149), respiratoryRateLow(
-                8, 0, 145), respiratoryRateHigh(9, 5, 150), SpO2Low(10, 20, 95), SpO2High(11, 25, 100), PulseRateLow(
-                12, 25, 235), PulseRateHigh(13, 30, 240), IPILow(14), SpMetLow(17), SpMetHigh(18), SpHbHigh(
-                19), SpHbLow(20), SpCOHigh(21), SpCOLow(22);
+        TemporaryAlarmSilence(1), StartEndCase(2), PatientType(3), CommIntIndication(4), EtCO2Low(5, 0, 145), EtCO2High(6, 5, 150), FiCO2High(7, 2,
+                149), respiratoryRateLow(8, 0, 145), respiratoryRateHigh(9, 5, 150), SpO2Low(10, 20, 95), SpO2High(11, 25, 100), PulseRateLow(12, 25,
+                235), PulseRateHigh(13, 30, 240), IPILow(14), SpMetLow(17), SpMetHigh(18), SpHbHigh(19), SpHbLow(20), SpCOHigh(21), SpCOLow(22);
 
         SetupItem(int code) {
             this(code, null, null);
@@ -174,7 +169,7 @@ public class Capnostream {
         static Map<Integer, SetupItem> mapping = new HashMap<Integer, SetupItem>();
 
         static {
-            for(SetupItem si : values()) {
+            for (SetupItem si : values()) {
                 mapping.put(si.getCode(), si);
             }
         }
@@ -195,9 +190,11 @@ public class Capnostream {
         public int getCode() {
             return code;
         }
+
         public Integer getLower() {
             return lower;
         }
+
         public Integer getUpper() {
             return upper;
         }
@@ -265,12 +262,9 @@ public class Capnostream {
     }
 
     public enum Command {
-        EnableComm(1), DisableComm(2), InquireNumericItem(3), StartRTComm(4), StopRTComm(
-                5), LinkIsActive(6), SetHostIdNonUnicode(7), SetHostIdUnicode(8), InquireProtocolRev(
-                9), ConfigurePeriodicMessage(10), InquirePatientId(11), InquireEventsList(
-                21), StartLongTrendDownload(54), StopLongTrendDownload(55), StartLongTrendConfigDownload(
-                56), ConfigurableSetup(60), SetPatientIdNonUnicode(61), SetPatientIdUnicode(
-                62);
+        EnableComm(1), DisableComm(2), InquireNumericItem(3), StartRTComm(4), StopRTComm(5), LinkIsActive(6), SetHostIdNonUnicode(7), SetHostIdUnicode(
+                8), InquireProtocolRev(9), ConfigurePeriodicMessage(10), InquirePatientId(11), InquireEventsList(21), StartLongTrendDownload(54), StopLongTrendDownload(
+                55), StartLongTrendConfigDownload(56), ConfigurableSetup(60), SetPatientIdNonUnicode(61), SetPatientIdUnicode(62);
 
         Command(int code) {
             this.code = code;
@@ -289,10 +283,8 @@ public class Capnostream {
     }
 
     public enum Response {
-        CO2Wave(0), Numerics(1), PatientIdNonUnicode(2), NumericItem(3), DeviceIdSoftwareVersion(
-                4), ProtocolRevision(9), ConfigurableMessage(10), PatientIdUnicode(
-                12), EventsListNonUnicode(21), EventsListUnicode(22), LongTrendDownload(
-                55), LongTrendConfigurable(56), NewPatientNonUnicode(57), NewPatientUnicode(
+        CO2Wave(0), Numerics(1), PatientIdNonUnicode(2), NumericItem(3), DeviceIdSoftwareVersion(4), ProtocolRevision(9), ConfigurableMessage(10), PatientIdUnicode(
+                12), EventsListNonUnicode(21), EventsListUnicode(22), LongTrendDownload(55), LongTrendConfigurable(56), NewPatientNonUnicode(57), NewPatientUnicode(
                 58), ConfigurableSetup(60);
 
         Response(int code) {
@@ -311,16 +303,15 @@ public class Capnostream {
         }
     }
 
-   public boolean sendConfigurableSetup(SetupItem si, int value)
-            throws IOException {
-       if(si.getLower() != null && value < si.getLower()) {
-           log.warn("Cannot set " + si.name() + " to " + value + " because it's less than " + si.getLower());
-           value = si.getLower();
-       }
-       if(si.getUpper() != null && value > si.getUpper()) {
-           log.warn("Cannot set " + si.name() + " to " + value + " because it's greater than " + si.getLower());
-           value = si.getUpper();
-       }
+    public boolean sendConfigurableSetup(SetupItem si, int value) throws IOException {
+        if (si.getLower() != null && value < si.getLower()) {
+            log.warn("Cannot set " + si.name() + " to " + value + " because it's less than " + si.getLower());
+            value = si.getLower();
+        }
+        if (si.getUpper() != null && value > si.getUpper()) {
+            log.warn("Cannot set " + si.name() + " to " + value + " because it's greater than " + si.getLower());
+            value = si.getUpper();
+        }
 
         int length;
 
@@ -344,14 +335,12 @@ public class Capnostream {
         return sendCommand(Command.ConfigurableSetup, outBuffer, length);
     }
 
-    public boolean sendStartLongTrendConfigurableDownload(DataItem di)
-            throws IOException {
+    public boolean sendStartLongTrendConfigurableDownload(DataItem di) throws IOException {
         outBuffer[0] = (byte) di.getCode();
         return sendCommand(Command.StartLongTrendConfigDownload, outBuffer, 1);
     }
 
-    public boolean sendConfigurePeriodicMessage(DataItem di, boolean messageData)
-            throws IOException {
+    public boolean sendConfigurePeriodicMessage(DataItem di, boolean messageData) throws IOException {
         outBuffer[0] = (byte) di.getCode();
         outBuffer[1] = (byte) (messageData ? 1 : 0);
         return sendCommand(Command.ConfigurePeriodicMessage, outBuffer, 2);
@@ -362,10 +351,9 @@ public class Capnostream {
         return sendCommand(Command.InquireNumericItem, outBuffer, 1);
     }
 
-    public boolean sendString(Command command, String s, boolean unicode,
-            int max_length) throws IOException {
+    public boolean sendString(Command command, String s, boolean unicode, int max_length) throws IOException {
         StringBuilder sb = new StringBuilder(s);
-        if(sb.length() > max_length) {
+        if (sb.length() > max_length) {
             sb.delete(max_length, sb.length());
         }
 
@@ -374,12 +362,12 @@ public class Capnostream {
         }
         byte[] s_bytes = sb.toString().getBytes(unicode ? "UTF-16" : "ASCII");
 
-//		byte[] bytes = s.getBytes(unicode ? "UTF-16" : "ASCII");
-//		if (bytes.length > ((unicode ? 2 : 1) * max_length)) {
-//			throw new IllegalArgumentException(command.toString()
-//					+ " string too long:" + s);
-//		}
-//		System.arraycopy(bytes, 0, s_bytes, 0, bytes.length);
+        // byte[] bytes = s.getBytes(unicode ? "UTF-16" : "ASCII");
+        // if (bytes.length > ((unicode ? 2 : 1) * max_length)) {
+        // throw new IllegalArgumentException(command.toString()
+        // + " string too long:" + s);
+        // }
+        // System.arraycopy(bytes, 0, s_bytes, 0, bytes.length);
         return sendCommand(command, s_bytes, s_bytes.length);
     }
 
@@ -388,28 +376,24 @@ public class Capnostream {
     }
 
     public boolean sendPatientId(String s, boolean unicode) throws IOException {
-        return sendString(unicode ? Command.SetPatientIdUnicode
-                : Command.SetPatientIdNonUnicode, s, unicode, 20);
+        return sendString(unicode ? Command.SetPatientIdUnicode : Command.SetPatientIdNonUnicode, s, unicode, 20);
     }
 
     public boolean sendHostMonitoringId(String s) throws IOException {
         return sendHostMonitoringId(s, false);
     }
 
-    public boolean sendHostMonitoringId(String s, boolean unicode)
-            throws IOException {
-        return sendString(unicode ? Command.SetHostIdUnicode
-                : Command.SetHostIdNonUnicode, s, unicode, 17);
+    public boolean sendHostMonitoringId(String s, boolean unicode) throws IOException {
+        return sendString(unicode ? Command.SetHostIdUnicode : Command.SetHostIdNonUnicode, s, unicode, 17);
     }
 
     public boolean sendCommand(Object command) throws IOException {
         return sendCommand(command, null, 0);
     }
 
-//    private long nextCommand = 0L;
+    // private long nextCommand = 0L;
 
-    public boolean sendCommand(Object command, byte[] payload, int length)
-            throws IOException {
+    public boolean sendCommand(Object command, byte[] payload, int length) throws IOException {
         outputStream.writeProtected(0x85);
 
         int code;
@@ -418,10 +402,9 @@ public class Capnostream {
         } else if (command instanceof Number) {
             code = ((Number) command).intValue();
         } else {
-            throw new IllegalArgumentException("Unknown command type:"
-                    + command);
+            throw new IllegalArgumentException("Unknown command type:" + command);
         }
-        outputStream.write(length+1);
+        outputStream.write(length + 1);
         outputStream.write(code);
 
         if (length > 0) {
@@ -430,7 +413,7 @@ public class Capnostream {
         int checksum = (length + 1);
         checksum ^= code;
         for (int i = 0; i < length; i++) {
-            switch(0xFF&payload[i]) {
+            switch (0xFF & payload[i]) {
             case 0x85:
                 checksum ^= 0x80;
                 checksum ^= 0x05;
@@ -458,18 +441,17 @@ public class Capnostream {
     }
 
     private static double co2(byte[] buf, int off) {
-        return (0xFF&buf[off]) + (0xFF&buf[off + 1]) / 256.0;
+        return (0xFF & buf[off]) + (0xFF & buf[off + 1]) / 256.0;
     }
 
-    public boolean receiveNumerics(long date, int etCO2, int FiCO2,
-            int respiratoryRate, int spo2, int pulserate, int slowStatus,
-            int CO2ActiveAlarms, int SpO2ActiveAlarms, int noBreathPeriodSeconds, int etCo2AlarmHigh, int etCo2AlarmLow, int rrAlarmHigh, int rrAlarmLow, int fico2AlarmHigh, int spo2AlarmHigh, int spo2AlarmLow, int pulseAlarmHigh, int pulseAlarmLow, CO2Units units, int extendedCO2Status) {
+    public boolean receiveNumerics(long date, int etCO2, int FiCO2, int respiratoryRate, int spo2, int pulserate, int slowStatus,
+            int CO2ActiveAlarms, int SpO2ActiveAlarms, int noBreathPeriodSeconds, int etCo2AlarmHigh, int etCo2AlarmLow, int rrAlarmHigh,
+            int rrAlarmLow, int fico2AlarmHigh, int spo2AlarmHigh, int spo2AlarmLow, int pulseAlarmHigh, int pulseAlarmLow, CO2Units units,
+            int extendedCO2Status) {
         for (CapnostreamListener listener : listeners) {
-            listener.numerics(date, etCO2, FiCO2, respiratoryRate, spo2, pulserate,
-                    slowStatus, CO2ActiveAlarms, SpO2ActiveAlarms, noBreathPeriodSeconds,
-                    etCo2AlarmHigh, etCo2AlarmLow, rrAlarmHigh, rrAlarmLow,
-                    fico2AlarmHigh, spo2AlarmHigh, spo2AlarmLow, pulseAlarmHigh,
-                    pulseAlarmLow, units, extendedCO2Status);
+            listener.numerics(date, etCO2, FiCO2, respiratoryRate, spo2, pulserate, slowStatus, CO2ActiveAlarms, SpO2ActiveAlarms,
+                    noBreathPeriodSeconds, etCo2AlarmHigh, etCo2AlarmLow, rrAlarmHigh, rrAlarmLow, fico2AlarmHigh, spo2AlarmHigh, spo2AlarmLow,
+                    pulseAlarmHigh, pulseAlarmLow, units, extendedCO2Status);
         }
         return true;
     }
@@ -477,7 +459,7 @@ public class Capnostream {
     private int priorRespiratoryRate = -1;
 
     public boolean receiveNumerics(byte[] payload, int length) {
-        if(length < 27) {
+        if (length < 27) {
             log.warn("Insufficient length for Numerics payload; ignoring");
             return true;
         }
@@ -488,12 +470,12 @@ public class Capnostream {
         int spo2 = 0xFF & payload[7];
 
         // TODO Report this behavior to Oridion
-        if(priorRespiratoryRate != 255 && priorRespiratoryRate == spo2) {
+        if (priorRespiratoryRate != 255 && priorRespiratoryRate == spo2) {
             log.warn("Prior Respiratory Rate == SpO2, " + rr + "==" + spo2 + " ignoring this potentially spurious SpO2");
             spo2 = 0xFF;
             byte[] subpayload = new byte[length];
             System.arraycopy(payload, 0, subpayload, 0, length);
-            log.warn("This numerics payload seems to be offset:"+Arrays.toString(subpayload));
+            log.warn("This numerics payload seems to be offset:" + Arrays.toString(subpayload));
             return true;
         }
 
@@ -518,19 +500,17 @@ public class Capnostream {
         priorRespiratoryRate = rr;
 
         // TODO there is more stuff here
-        return receiveNumerics(dt, etco2, fico2, rr, spo2, pulse,
-                slowStatus, co2ActiveAlarms, spo2ActiveAlarms, noBreathPeriodSeconds,
-                etCo2AlarmHigh, etCo2AlarmLow, rrAlarmHigh, rrAlarmLow,
-                fico2AlarmHigh, spo2AlarmHigh, spo2AlarmLow, pulseAlarmHigh,
-                pulseAlarmLow, units, extendedCO2Status);
+        return receiveNumerics(dt, etco2, fico2, rr, spo2, pulse, slowStatus, co2ActiveAlarms, spo2ActiveAlarms, noBreathPeriodSeconds,
+                etCo2AlarmHigh, etCo2AlarmLow, rrAlarmHigh, rrAlarmLow, fico2AlarmHigh, spo2AlarmHigh, spo2AlarmLow, pulseAlarmHigh, pulseAlarmLow,
+                units, extendedCO2Status);
     }
 
     public boolean receiveProtocolRevision(byte[] payload, int length) {
-        return receiveProtocolRevision((char) payload[0], (int)payload[1]);
+        return receiveProtocolRevision((char) payload[0], (int) payload[1]);
     }
 
     public boolean receiveProtocolRevision(char revisionAsChar, int revisionAsInt) {
-        log.debug("revisionAsChar="+revisionAsChar+", revisionAsInt="+revisionAsInt);
+        log.debug("revisionAsChar=" + revisionAsChar + ", revisionAsInt=" + revisionAsInt);
         return true;
     }
 
@@ -552,13 +532,14 @@ public class Capnostream {
                 return receiveNumerics(payload, length);
             case ConfigurableSetup:
                 SetupItem si = SetupItem.fromCode(0xFF & payload[0]);
-                if(null == si) {
-                    log.warn("Not processing unknown SetupItem for ConfigurableSetup:"+(0xFF&payload[0]));
+                if (null == si) {
+                    log.warn("Not processing unknown SetupItem for ConfigurableSetup:" + (0xFF & payload[0]));
                 } else {
-                    switch(si){
+                    switch (si) {
                     case SpMetHigh:
                     case SpMetLow:
-                        // TODO what is meant by "high byte" here ... clearly they don't mean a 16-bit int
+                        // TODO what is meant by "high byte" here ... clearly
+                        // they don't mean a 16-bit int
                         return true;
                     default:
                         return receiveConfigurableSetup(SetupItem.fromCode(0xFF & payload[0]), 0xFF & payload[1]);
@@ -566,8 +547,7 @@ public class Capnostream {
 
                 }
             default:
-                log.debug("Unknown message " + response + " " + length + " "
-                        + Arrays.toString(payload));
+                log.debug("Unknown message " + response + " " + length + " " + Arrays.toString(payload));
             }
         }
 
@@ -575,13 +555,12 @@ public class Capnostream {
     }
 
     public boolean receiveConfigurableSetup(SetupItem fromCode, int i) {
-        log.debug("Configurable Setup:"+fromCode+"="+i);
+        log.debug("Configurable Setup:" + fromCode + "=" + i);
         return true;
     }
 
     protected enum PulseOximetry {
-        Masimo,
-        Nellcor
+        Masimo, Nellcor
     }
 
     public static void main(String[] args) {
@@ -589,30 +568,31 @@ public class Capnostream {
         c.receiveDeviceIdSoftwareVersion("V45.67 02/24/2008 B355987654  ");
     }
 
-    public boolean receiveDeviceIdSoftwareVersion(String softwareVersion,
-            Date softwareReleaseDate, PulseOximetry pulseOximetry, String revision, String number) {
-        log.debug("softwareVersion="+softwareVersion+
-                ", softwareReleaseDate="+softwareReleaseDate+", pulseOximetry="+pulseOximetry+", revision="+
-                revision+", number="+number);
+    public boolean receiveDeviceIdSoftwareVersion(String softwareVersion, Date softwareReleaseDate, PulseOximetry pulseOximetry, String revision,
+            String number) {
+        log.debug("softwareVersion=" + softwareVersion + ", softwareReleaseDate=" + softwareReleaseDate + ", pulseOximetry=" + pulseOximetry
+                + ", revision=" + revision + ", number=" + number);
         return true;
     }
+
     private static final Pattern deviceIdSoftwareVersionPattern = Pattern.compile("^V(.{5}) (.{10}) (.{2})(.{2})(.{6})  $");
     private static final DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+
     public boolean receiveDeviceIdSoftwareVersion(String s) {
 
         log.debug("DeviceIdSoftwareVersion:" + s);
         Matcher m = deviceIdSoftwareVersionPattern.matcher(s);
-        if(m.matches()) {
-            if(m.groupCount()>=5) {
+        if (m.matches()) {
+            if (m.groupCount() >= 5) {
                 String softwareVersion = m.group(1);
                 Date softwareReleaseDate;
 
                 String date = m.group(2).trim();
-                if(null != date && !"".equals(date)) {
+                if (null != date && !"".equals(date)) {
                     try {
                         softwareReleaseDate = dateFormat.parse(date);
                     } catch (ParseException e) {
-                        log.error("Error parsing date:"+date, e);
+                        log.error("Error parsing date:" + date, e);
                         softwareReleaseDate = null;
                     }
                 } else {
@@ -620,14 +600,14 @@ public class Capnostream {
                 }
                 String po = m.group(3);
                 PulseOximetry pulseOximetry = null;
-                if("B5".equals(po)) {
+                if ("B5".equals(po)) {
                     pulseOximetry = PulseOximetry.Masimo;
-                } else if("B2".equals(po)) {
+                } else if ("B2".equals(po)) {
                     pulseOximetry = PulseOximetry.Nellcor;
-                } else if("B3".equals(po)) {
+                } else if ("B3".equals(po)) {
                     pulseOximetry = PulseOximetry.Masimo;
                 } else {
-                    log.warn("Unknown serial number prefix:"+po);
+                    log.warn("Unknown serial number prefix:" + po);
                 }
                 String revision = m.group(4);
                 String serial_number = po + revision + m.group(5);
@@ -637,19 +617,17 @@ public class Capnostream {
                 receiveDeviceIdSoftwareVersion(softwareVersion, softwareReleaseDate, pulseOximetry, revision, serial_number);
 
             } else {
-                log.warn("Insufficient matching groups:"+s);
+                log.warn("Insufficient matching groups:" + s);
             }
         } else {
-            log.warn("Device ID and Software revision doesn't match expected regex:"+s);
+            log.warn("Device ID and Software revision doesn't match expected regex:" + s);
         }
-
 
         return true;
     }
 
     public boolean receiveDeviceIdSoftwareVersion(byte[] payload, int length) {
-        String s = Charset.forName("ASCII")
-                .decode(ByteBuffer.wrap(payload, 0, length)).toString();
+        String s = Charset.forName("ASCII").decode(ByteBuffer.wrap(payload, 0, length)).toString();
         return receiveDeviceIdSoftwareVersion(s);
     }
 
@@ -675,8 +653,7 @@ public class Capnostream {
         int read_length = 0;
 
         while (read_length < length) {
-            int b = inputStream.read(inBuffer, read_length, length
-                    - read_length);
+            int b = inputStream.read(inBuffer, read_length, length - read_length);
             if (b < 0) {
                 return false;
             } else {
@@ -684,10 +661,10 @@ public class Capnostream {
             }
         }
 
-        for(int i = 0; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             int x = 0xFF & inBuffer[i];
 
-            switch(x) {
+            switch (x) {
             case 0x80:
                 my_checksum ^= 0x80;
                 my_checksum ^= 0x00;
@@ -709,8 +686,9 @@ public class Capnostream {
             return false;
         }
 
-        if(checksum != my_checksum) {
-            log.warn("Failed checksum check expected:"+my_checksum+" but received "+checksum+" data are ignored for msg type:"+response+" after read_length=" + read_length + " length="+length+" bytes");
+        if (checksum != my_checksum) {
+            log.warn("Failed checksum check expected:" + my_checksum + " but received " + checksum + " data are ignored for msg type:" + response
+                    + " after read_length=" + read_length + " length=" + length + " bytes");
             return true;
         }
 
@@ -727,7 +705,7 @@ public class Capnostream {
                     log.trace("received EOF instead of cmd header");
                     return false;
                 }
-                log.trace("Received Between Messages:"+Integer.toHexString(b));
+                log.trace("Received Between Messages:" + Integer.toHexString(b));
                 b = inputStream.read();
             }
             if (!receiveMessage()) {

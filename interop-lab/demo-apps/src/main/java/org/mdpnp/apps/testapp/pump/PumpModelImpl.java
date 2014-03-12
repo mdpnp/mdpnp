@@ -51,11 +51,11 @@ public class PumpModelImpl implements PumpModel {
     private ice.InfusionStatusDataReader statusReader;
     private ReadCondition statusCondition;
     private ice.InfusionObjectiveDataWriter objectiveWriter;
-    
+
     private Subscriber subscriber;
     private Publisher publisher;
     private EventLoop eventLoop;
-    
+
     private final EventLoop.ConditionHandler infusionStatusHandler = new EventLoop.ConditionHandler() {
         private final ice.InfusionStatusSeq inf_seq = new ice.InfusionStatusSeq();
         private final SampleInfoSeq info_seq = new SampleInfoSeq();
@@ -65,8 +65,7 @@ public class PumpModelImpl implements PumpModel {
             try {
                 for (;;) {
                     try {
-                        statusReader.read_w_condition(inf_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
-                                (ReadCondition) condition);
+                        statusReader.read_w_condition(inf_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (ReadCondition) condition);
                         for (int i = 0; i < info_seq.size(); i++) {
                             SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
                             if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
@@ -92,40 +91,41 @@ public class PumpModelImpl implements PumpModel {
         }
     };
     private static final Logger log = LoggerFactory.getLogger(PumpModelImpl.class);
+
     protected void removePump(String udi) {
         List<Pump> removed = new ArrayList<Pump>();
-        synchronized(pumps) {
+        synchronized (pumps) {
             ListIterator<Pump> litr = pumps.listIterator();
-            while(litr.hasNext()) {
+            while (litr.hasNext()) {
                 Pump pump = litr.next();
-                if(pump.getInfusionStatus().unique_device_identifier.equals(udi)) {
+                if (pump.getInfusionStatus().unique_device_identifier.equals(udi)) {
                     removed.add(pump);
                     litr.remove();
                 }
             }
         }
-        if(removed.isEmpty()) {
+        if (removed.isEmpty()) {
             log.warn("Couldn't find pump with udi to remove : " + udi);
         }
-        for(Pump p : removed) {
+        for (Pump p : removed) {
             firePumpRemoved(p);
         }
     }
-    
+
     protected void updatePump(ice.InfusionStatus status, SampleInfo sampleInfo) {
         Pump pump = null;
-        synchronized(pumps) {
+        synchronized (pumps) {
             ListIterator<Pump> itr = pumps.listIterator();
-            while(itr.hasNext()) {
+            while (itr.hasNext()) {
                 pump = itr.next();
-                if(status.unique_device_identifier.equals(pump.getInfusionStatus().unique_device_identifier)) {
+                if (status.unique_device_identifier.equals(pump.getInfusionStatus().unique_device_identifier)) {
                     break;
                 } else {
                     pump = null;
                 }
             }
         }
-        if(pump != null) {
+        if (pump != null) {
             pump.getInfusionStatus().copy_from(status);
             pump.getSampleInfo().copy_from(sampleInfo);
             firePumpChanged(pump);
@@ -134,9 +134,9 @@ public class PumpModelImpl implements PumpModel {
             pumps.add(pump);
             firePumpAdded(pump);
         }
-        
+
     }
-    
+
     @Override
     public int getCount() {
         return pumps.size();
@@ -172,6 +172,7 @@ public class PumpModelImpl implements PumpModel {
         this.listeners = newListeners.toArray(new PumpModelListener[0]);
         return found;
     }
+
     protected void firePumpAdded(Pump p) {
         PumpModelListener[] listeners = this.listeners;
         for (PumpModelListener pml : listeners) {
@@ -192,35 +193,40 @@ public class PumpModelImpl implements PumpModel {
             pml.pumpChanged(this, p);
         }
     }
-    
+
     public void start(Subscriber subscriber, Publisher publisher, EventLoop eventLoop) {
         this.subscriber = subscriber;
         this.publisher = publisher;
         this.eventLoop = eventLoop;
-        
-//        ice.InfusionStatusTypeSupport.register_type(subscriber.get_participant(), ice.InfusionStatusTypeSupport.get_type_name());
-        TopicDescription infusionStatusTopic = TopicUtil.lookupOrCreateTopic(subscriber.get_participant(), ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.class);
-        statusReader = (InfusionStatusDataReader) subscriber.create_datareader_with_profile(infusionStatusTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-        statusCondition = statusReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
-        
-        
+
+        // ice.InfusionStatusTypeSupport.register_type(subscriber.get_participant(),
+        // ice.InfusionStatusTypeSupport.get_type_name());
+        TopicDescription infusionStatusTopic = TopicUtil.lookupOrCreateTopic(subscriber.get_participant(), ice.InfusionStatusTopic.VALUE,
+                ice.InfusionStatusTypeSupport.class);
+        statusReader = (InfusionStatusDataReader) subscriber.create_datareader_with_profile(infusionStatusTopic, QosProfiles.ice_library,
+                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        statusCondition = statusReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                InstanceStateKind.ANY_INSTANCE_STATE);
+
         ice.InfusionObjectiveTypeSupport.register_type(subscriber.get_participant(), ice.InfusionObjectiveTypeSupport.get_type_name());
-        Topic infusionObjectiveTopic = publisher.get_participant().create_topic(ice.InfusionObjectiveTopic.VALUE, ice.InfusionObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        objectiveWriter = (InfusionObjectiveDataWriter) publisher.create_datawriter_with_profile(infusionObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-        
+        Topic infusionObjectiveTopic = publisher.get_participant().create_topic(ice.InfusionObjectiveTopic.VALUE,
+                ice.InfusionObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        objectiveWriter = (InfusionObjectiveDataWriter) publisher.create_datawriter_with_profile(infusionObjectiveTopic, QosProfiles.ice_library,
+                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+
         eventLoop.addHandler(statusCondition, infusionStatusHandler);
     }
-    
+
     public void stop() {
         publisher.delete_datawriter(objectiveWriter);
         objectiveWriter = null;
-        
+
         eventLoop.removeHandler(statusCondition);
         statusReader.delete_readcondition(statusCondition);
         statusCondition = null;
         subscriber.delete_datareader(statusReader);
         statusReader = null;
-        
+
     }
 
     @Override

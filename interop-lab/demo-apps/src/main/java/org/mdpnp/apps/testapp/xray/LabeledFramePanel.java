@@ -37,6 +37,7 @@ public class LabeledFramePanel extends FramePanel {
     public LabeledFramePanel(ScheduledExecutorService executor) {
         super(executor);
     }
+
     private static final String ACQUIRING_IMAGE = "Acquiring image...";
     private static final String IMAGE_ACQUIRED = "Image Acquired";
     private static final String LIVE_VIDEO = "Live Video";
@@ -55,10 +56,10 @@ public class LabeledFramePanel extends FramePanel {
         super.paint(g);
         FontMetrics fontMetrics;
 
-        if(null == bigFont) {
+        if (null == bigFont) {
             float fontSize = 50f;
             String s = System.getProperty("XRAYVENTFONTSIZE");
-            if(null != s) {
+            if (null != s) {
                 try {
                     fontSize = Float.parseFloat(s);
                 } catch (NumberFormatException nfe) {
@@ -66,7 +67,7 @@ public class LabeledFramePanel extends FramePanel {
                 }
             }
             bigFont = g.getFont().deriveFont(fontSize);
-//          System.out.println("bigFont");
+            // System.out.println("bigFont");
         }
         g.setFont(bigFont);
 
@@ -75,7 +76,7 @@ public class LabeledFramePanel extends FramePanel {
         final int X = 20;
         int y = Y - fontMetrics.getHeight() + fontMetrics.getDescent();
 
-        switch(stateMachine.getState()) {
+        switch (stateMachine.getState()) {
         case Freezing:
             g.setColor(transparentWhite);
             g.fillRect(X, y, fontMetrics.stringWidth(acquiringImage), fontMetrics.getHeight());
@@ -90,7 +91,7 @@ public class LabeledFramePanel extends FramePanel {
             break;
         case Thawed:
             g.setColor(transparentWhite);
-            if(liveVideo != null) {
+            if (liveVideo != null) {
                 g.fillRect(X, y, fontMetrics.stringWidth(liveVideo), fontMetrics.getHeight());
                 g.setColor(Color.black);
                 g.drawString(liveVideo, X, Y);
@@ -111,7 +112,6 @@ public class LabeledFramePanel extends FramePanel {
         top.getContentPane().setLayout(new BorderLayout());
         top.getContentPane().add(panel, BorderLayout.CENTER);
 
-
         top.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -120,13 +120,13 @@ public class LabeledFramePanel extends FramePanel {
             }
         });
 
-//        panel.addMouseListener(new MouseAdapter() {
-//            @Override
-//            public void mouseReleased(MouseEvent e) {
-//                panel.toggle();
-//                super.mouseReleased(e);
-//            }
-//        });
+        // panel.addMouseListener(new MouseAdapter() {
+        // @Override
+        // public void mouseReleased(MouseEvent e) {
+        // panel.toggle();
+        // super.mouseReleased(e);
+        // }
+        // });
 
         top.addWindowListener(new WindowAdapter() {
             @Override

@@ -56,8 +56,9 @@ public class DeviceAdapter {
         log.trace(s + " took " + (System.currentTimeMillis() - tm) + "ms");
         return start();
     }
+
     private static final void setString(JProgressBar progressBar, String s, int value) {
-        if(progressBar != null) {
+        if (progressBar != null) {
             progressBar.setString(s);
             progressBar.setValue(value);
         }
@@ -66,16 +67,17 @@ public class DeviceAdapter {
     private void killAdapter() {
         killAdapter(null);
     }
+
     private synchronized void killAdapter(final JProgressBar progressBar) {
         try {
             long tm = start();
 
-            if(null != device && device instanceof AbstractConnectedDevice) {
+            if (null != device && device instanceof AbstractConnectedDevice) {
                 AbstractConnectedDevice cDevice = (AbstractConnectedDevice) device;
                 setString(progressBar, "Ask the device to disconnect from the ICE", 20);
                 cDevice.disconnect();
-                if(!cDevice.awaitState(ice.ConnectionState.Disconnected, 5000L)) {
-                    log.warn("ConnectedDevice ended in State:"+cDevice.getState());
+                if (!cDevice.awaitState(ice.ConnectionState.Disconnected, 5000L)) {
+                    log.warn("ConnectedDevice ended in State:" + cDevice.getState());
                 }
                 tm = stop("disconnect", tm);
             }
@@ -113,12 +115,12 @@ public class DeviceAdapter {
     }
 
     public void start(DeviceType type, int domainId, final String address, boolean gui, boolean exit, EventLoop eventLoop) throws Exception {
-        log.trace("Starting DeviceAdapter with type="+type);
+        log.trace("Starting DeviceAdapter with type=" + type);
         if (null != address && address.contains(":")) {
             SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
             log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
         }
-        if(null == eventLoop) {
+        if (null == eventLoop) {
             eventLoop = new EventLoop();
             handler = new EventLoopHandler(eventLoop);
         } else {
@@ -140,8 +142,8 @@ public class DeviceAdapter {
                 public void windowClosing(WindowEvent e) {
                     // On the AWT EventQueue
                     final JProgressBar progressBar = new JProgressBar();
-//                    progressBar.setMaximumSize(new Dimension(300, 100));
-//                    progressBar.setPreferredSize(new Dimension(300, 100));
+                    // progressBar.setMaximumSize(new Dimension(300, 100));
+                    // progressBar.setPreferredSize(new Dimension(300, 100));
                     progressBar.setMinimum(1);
                     progressBar.setMaximum(100);
 
@@ -209,19 +211,19 @@ public class DeviceAdapter {
             }));
         }
 
-        if(null != device && device instanceof AbstractConnectedDevice) {
-            ((AbstractConnectedDevice)device).connect(address);
+        if (null != device && device instanceof AbstractConnectedDevice) {
+            ((AbstractConnectedDevice) device).connect(address);
         }
 
-        // Wait until killAdapter, then report on any threads that didn't come down successfully
+        // Wait until killAdapter, then report on any threads that didn't come
+        // down successfully
         synchronized (this) {
             while (!interrupted) {
                 wait();
             }
         }
 
-
-        if(gui) {
+        if (gui) {
             frame.setVisible(false);
             frame.dispose();
         }
@@ -240,5 +242,6 @@ public class DeviceAdapter {
             System.exit(0);
         }
     }
+
     private boolean interrupted = false;
 }

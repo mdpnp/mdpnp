@@ -33,80 +33,83 @@ import org.mdpnp.devices.philips.intellivue.util.Util;
 
 public class DataExportErrorImpl implements DataExportError {
 
-	private int invoke;
-	private RemoteError error;
-	private ErrorDetail detail;
-	
-	private static final ErrorDetail buildErrorDetail(RemoteError error) {
-		switch(error) {
-		case GetListError:
-			return new ErrorDetailGetListImpl();
-		case SetListError:
-			return new ErrorDetailSetListImpl();
-		case NoSuchAction:
-			return new ErrorDetailNoSuchActionImpl();
-		case NoSuchObjectClass:
-			return new ErrorDetailNoSuchObjectClassImpl();
-		case NoSuchObjectInstance:
-			return new ErrorDetailNoSuchObjectInstanceImpl();
-		case AccessDenied:
-			return new ErrorDetailAccessDeniedImpl();
-		case ProcessingFailure:
-			return new ErrorDetailProcessingFailureImpl();
-		case InvalidArgumentValue:
-			return new ErrorDetailInvalidArgumentValueImpl();
-		case InvalidScope:
-			return new ErrorDetailInvalidScopeImpl();
-		case InvalidObjectInstance:
-			return new ErrorDetailInvalidObjectInstanceImpl();
-		default:
-			throw new IllegalArgumentException("Unknown error type:"+error);
-		}
-	}
-	
-	@SuppressWarnings("unused")
+    private int invoke;
+    private RemoteError error;
+    private ErrorDetail detail;
+
+    private static final ErrorDetail buildErrorDetail(RemoteError error) {
+        switch (error) {
+        case GetListError:
+            return new ErrorDetailGetListImpl();
+        case SetListError:
+            return new ErrorDetailSetListImpl();
+        case NoSuchAction:
+            return new ErrorDetailNoSuchActionImpl();
+        case NoSuchObjectClass:
+            return new ErrorDetailNoSuchObjectClassImpl();
+        case NoSuchObjectInstance:
+            return new ErrorDetailNoSuchObjectInstanceImpl();
+        case AccessDenied:
+            return new ErrorDetailAccessDeniedImpl();
+        case ProcessingFailure:
+            return new ErrorDetailProcessingFailureImpl();
+        case InvalidArgumentValue:
+            return new ErrorDetailInvalidArgumentValueImpl();
+        case InvalidScope:
+            return new ErrorDetailInvalidScopeImpl();
+        case InvalidObjectInstance:
+            return new ErrorDetailInvalidObjectInstanceImpl();
+        default:
+            throw new IllegalArgumentException("Unknown error type:" + error);
+        }
+    }
+
+    @SuppressWarnings("unused")
     @Override
-	public void parse(ByteBuffer bb) {
-		invoke = Bits.getUnsignedShort(bb);
-		error = RemoteError.valueOf(Bits.getUnsignedShort(bb));
-		int length = Bits.getUnsignedShort(bb);
-		detail = buildErrorDetail(error);
-		
-		detail.parse(bb);
-	}
+    public void parse(ByteBuffer bb) {
+        invoke = Bits.getUnsignedShort(bb);
+        error = RemoteError.valueOf(Bits.getUnsignedShort(bb));
+        int length = Bits.getUnsignedShort(bb);
+        detail = buildErrorDetail(error);
 
-	@Override
-	public void format(ByteBuffer bb) {
-		Bits.putUnsignedShort(bb, invoke);
-		Bits.putUnsignedShort(bb, error.asInt());
-		Util.PrefixLengthShort.write(bb, detail);
-	}
-	@Override
-	public RemoteError getError() {
-		return error;
-	}
-	@Override
-	public int getInvoke() {
-		return invoke;
-	}
-	
-	@Override
-	public ErrorDetail getErrorDetail() {
-		return detail;
-	}
-	
-	@Override
-	public String toString() {
-		return "[error="+error+",invoke="+invoke+",detail="+detail+"]";
-	}
-	@Override
-	public RemoteOperation getRemoteOperation() {
-		return RemoteOperation.Error;
-	}
+        detail.parse(bb);
+    }
 
-	@Override
-	public void setInvoke(int i) {
-		this.invoke = i;
-	}
-	
+    @Override
+    public void format(ByteBuffer bb) {
+        Bits.putUnsignedShort(bb, invoke);
+        Bits.putUnsignedShort(bb, error.asInt());
+        Util.PrefixLengthShort.write(bb, detail);
+    }
+
+    @Override
+    public RemoteError getError() {
+        return error;
+    }
+
+    @Override
+    public int getInvoke() {
+        return invoke;
+    }
+
+    @Override
+    public ErrorDetail getErrorDetail() {
+        return detail;
+    }
+
+    @Override
+    public String toString() {
+        return "[error=" + error + ",invoke=" + invoke + ",detail=" + detail + "]";
+    }
+
+    @Override
+    public RemoteOperation getRemoteOperation() {
+        return RemoteOperation.Error;
+    }
+
+    @Override
+    public void setInvoke(int i) {
+        this.invoke = i;
+    }
+
 }

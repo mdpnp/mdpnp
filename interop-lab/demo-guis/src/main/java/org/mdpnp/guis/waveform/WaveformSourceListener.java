@@ -13,6 +13,7 @@
 package org.mdpnp.guis.waveform;
 
 public interface WaveformSourceListener {
-	void waveform(WaveformSource source);
-	void reset(WaveformSource source);
+    void waveform(WaveformSource source);
+
+    void reset(WaveformSource source);
 }

@@ -25,13 +25,13 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
     protected final InstanceHolder<ice.Numeric> SpO2;
     protected final InstanceHolder<ice.SampleArray> pleth;
 
-    private final Time_t sampleTime = new Time_t(0,0);
+    private final Time_t sampleTime = new Time_t(0, 0);
 
     private class MySimulatedPulseOximeter extends SimulatedPulseOximeter {
         @Override
         protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, double msPerSample) {
-            sampleTime.sec = (int)(timestamp/1000L);
-            sampleTime.nanosec = (int)(timestamp % 1000L * 1000000L);
+            sampleTime.sec = (int) (timestamp / 1000L);
+            sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
             numericSample(pulse, heartRate, sampleTime);
             numericSample(SimPulseOximeter.this.SpO2, SpO2, sampleTime);
             sampleArraySample(pleth, plethValues, (int) msPerSample, sampleTime);
@@ -39,7 +39,6 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
     }
 
     private final MySimulatedPulseOximeter pulseox = new MySimulatedPulseOximeter();
-
 
     @Override
     public void connect(String str) {
@@ -71,11 +70,11 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
-        if(obj != null) {
-            if(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(obj.metric_id.userData)) {
-                pulseox.setTargetHeartRate((double)obj.value);
-            } else if(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(obj.metric_id.userData)) {
-                pulseox.setTargetSpO2((double)obj.value);
+        if (obj != null) {
+            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(obj.metric_id.userData)) {
+                pulseox.setTargetHeartRate((double) obj.value);
+            } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(obj.metric_id.userData)) {
+                pulseox.setTargetSpO2((double) obj.value);
             }
         }
     }

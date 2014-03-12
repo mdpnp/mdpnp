@@ -87,34 +87,40 @@ public abstract class AbstractGetConnected {
         deviceConnectivityObjective = (DeviceConnectivityObjective) DeviceConnectivityObjective.create();
         deviceConnectivityObjective.unique_device_identifier = unique_device_identifier;
         DeviceConnectivityObjectiveTypeSupport.register_type(participant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
-        deviceConnectivityObjectiveTopic = participant.create_topic(ice.DeviceConnectivityObjectiveTopic.VALUE, ice.DeviceConnectivityObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        deviceConnectivityObjectiveWriter = (DeviceConnectivityObjectiveDataWriter) publisher.create_datawriter_with_profile(deviceConnectivityObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        deviceConnectivityObjectiveTopic = participant.create_topic(ice.DeviceConnectivityObjectiveTopic.VALUE,
+                ice.DeviceConnectivityObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceConnectivityObjectiveWriter = (DeviceConnectivityObjectiveDataWriter) publisher.create_datawriter_with_profile(
+                deviceConnectivityObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         DeviceConnectivityTypeSupport.register_type(participant, DeviceConnectivityTypeSupport.get_type_name());
-        deviceConnectivityTopic = participant.create_topic(ice.DeviceConnectivityTopic.VALUE, ice.DeviceConnectivityTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        deviceConnectivityReader = (DeviceConnectivityDataReader) subscriber.create_datareader_with_profile(deviceConnectivityTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        deviceConnectivityTopic = participant.create_topic(ice.DeviceConnectivityTopic.VALUE, ice.DeviceConnectivityTypeSupport.get_type_name(),
+                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceConnectivityReader = (DeviceConnectivityDataReader) subscriber.create_datareader_with_profile(deviceConnectivityTopic,
+                QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
         StringSeq udis = new StringSeq();
-        udis.add("'"+unique_device_identifier+"'");
-        qc = deviceConnectivityReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "unique_device_identifier MATCH %0",  udis);
+        udis.add("'" + unique_device_identifier + "'");
+        qc = deviceConnectivityReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                InstanceStateKind.ANY_INSTANCE_STATE, "unique_device_identifier MATCH %0", udis);
         eventLoop.addHandler(qc, new EventLoop.ConditionHandler() {
             SampleInfoSeq info_seq = new SampleInfoSeq();
             DeviceConnectivitySeq data_seq = new DeviceConnectivitySeq();
+
             @Override
             public void conditionChanged(Condition condition) {
                 try {
                     deviceConnectivityReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, qc);
-                    for(int i = 0; i < data_seq.size(); i++) {
+                    for (int i = 0; i < data_seq.size(); i++) {
                         SampleInfo si = (SampleInfo) info_seq.get(i);
-                        if(si.valid_data) {
+                        if (si.valid_data) {
                             DeviceConnectivity dc = (DeviceConnectivity) data_seq.get(i);
                             deviceConnectivity.copy_from(dc);
-                            synchronized(AbstractGetConnected.this) {
+                            synchronized (AbstractGetConnected.this) {
                                 deviceConnectivityReceived = true;
                                 AbstractGetConnected.this.notifyAll();
                             }
                         }
                     }
-                } catch(RETCODE_NO_DATA noData) {
+                } catch (RETCODE_NO_DATA noData) {
                 } finally {
                     deviceConnectivityReader.return_loan(data_seq, info_seq);
                 }
@@ -138,12 +144,12 @@ public abstract class AbstractGetConnected {
 
         boolean disconnected = false;
 
-        while(!disconnected) {
+        while (!disconnected) {
             deviceConnectivityObjectiveWriter.write(deviceConnectivityObjective, InstanceHandle_t.HANDLE_NIL);
-            synchronized(this) {
+            synchronized (this) {
                 disconnected = ice.ConnectionState.Disconnected.equals(deviceConnectivity.state);
-                if(!disconnected) {
-                    if( (System.currentTimeMillis()-start) >= 10000L) {
+                if (!disconnected) {
+                    if ((System.currentTimeMillis() - start) >= 10000L) {
                         return;
                     }
                     try {
@@ -158,8 +164,11 @@ public abstract class AbstractGetConnected {
     }
 
     protected abstract void abortConnect();
+
     protected abstract String addressFromUser();
+
     protected abstract String addressFromUserList(String[] list);
+
     protected abstract boolean isFixedAddress();
 
     private boolean issuingConnect;
@@ -167,38 +176,43 @@ public abstract class AbstractGetConnected {
     @SuppressWarnings("unchecked")
     private void issueConnect() {
         long giveup = System.currentTimeMillis() + 10000L;
-        synchronized(this) {
-            if(issuingConnect) {
+        synchronized (this) {
+            if (issuingConnect) {
                 return;
             } else {
                 issuingConnect = true;
                 notifyAll();
             }
             long now = System.currentTimeMillis();
-            while(!deviceConnectivityReceived && now < giveup) {
+            while (!deviceConnectivityReceived && now < giveup) {
                 try {
                     wait(500L);
                 } catch (InterruptedException e) {
                 }
                 now = System.currentTimeMillis();
             }
-            if(now >= giveup) {
+            if (now >= giveup) {
                 throw new IllegalStateException("No DeviceConnectivity received within 10 seconds");
             }
 
         }
         try {
             System.out.println(deviceConnectivity.state);
-            if("".equals(deviceConnectivityObjective.target) && !closing && deviceConnectivity.type != null && (isFixedAddress() || !deviceConnectivity.valid_targets.userData.isEmpty() || !ice.ConnectionType.Serial.equals(deviceConnectivity.type)) && ice.ConnectionState.Disconnected.equals(deviceConnectivity.state)) {
-                if(ice.ConnectionType.Network.equals(deviceConnectivity.type)) {
+            if ("".equals(deviceConnectivityObjective.target)
+                    && !closing
+                    && deviceConnectivity.type != null
+                    && (isFixedAddress() || !deviceConnectivity.valid_targets.userData.isEmpty() || !ice.ConnectionType.Serial
+                            .equals(deviceConnectivity.type)) && ice.ConnectionState.Disconnected.equals(deviceConnectivity.state)) {
+                if (ice.ConnectionType.Network.equals(deviceConnectivity.type)) {
                     deviceConnectivityObjective.target = addressFromUser();
-                    if(null == deviceConnectivityObjective.target) {
+                    if (null == deviceConnectivityObjective.target) {
                         abortConnect();
                         return;
                     }
-                } else if(ice.ConnectionType.Serial.equals(deviceConnectivity.type)) {
-                    deviceConnectivityObjective.target = addressFromUserList((String[]) deviceConnectivity.valid_targets.userData.toArray(new String[0]));
-                    if(null == deviceConnectivityObjective.target) {
+                } else if (ice.ConnectionType.Serial.equals(deviceConnectivity.type)) {
+                    deviceConnectivityObjective.target = addressFromUserList((String[]) deviceConnectivity.valid_targets.userData
+                            .toArray(new String[0]));
+                    if (null == deviceConnectivityObjective.target) {
                         abortConnect();
                         return;
                     }
@@ -211,7 +225,7 @@ public abstract class AbstractGetConnected {
 
             }
         } finally {
-            synchronized(this) {
+            synchronized (this) {
                 issuingConnect = false;
                 notifyAll();
             }

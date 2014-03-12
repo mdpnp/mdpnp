@@ -38,6 +38,7 @@ public class TeeOutputStream extends java.io.FilterOutputStream {
         }
         out.write(b);
     }
+
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
         try {
@@ -47,6 +48,7 @@ public class TeeOutputStream extends java.io.FilterOutputStream {
         }
         out.write(b, off, len);
     }
+
     @Override
     public void write(int b) throws IOException {
         try {
@@ -56,6 +58,5 @@ public class TeeOutputStream extends java.io.FilterOutputStream {
         }
         out.write(b);
     }
-
 
 }

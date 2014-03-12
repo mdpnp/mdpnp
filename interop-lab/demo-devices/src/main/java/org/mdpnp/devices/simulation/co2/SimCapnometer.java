@@ -34,7 +34,6 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
 
     private final MySimulatedCapnometer capnometer = new MySimulatedCapnometer();
 
-
     @Override
     public void connect(String str) {
         capnometer.connect(executor);
@@ -65,10 +64,10 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
 
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
-        if(rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id.userData)) {
-            capnometer.setRespirationRate((int)obj.value);
-        } else if(rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(obj.metric_id.userData)) {
-            capnometer.setEndTidalCO2((int)obj.value);
+        if (rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id.userData)) {
+            capnometer.setRespirationRate((int) obj.value);
+        } else if (rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(obj.metric_id.userData)) {
+            capnometer.setEndTidalCO2((int) obj.value);
         }
     }
 }

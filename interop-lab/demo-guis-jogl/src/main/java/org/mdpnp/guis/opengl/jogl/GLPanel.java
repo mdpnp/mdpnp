@@ -18,12 +18,12 @@ import org.mdpnp.guis.opengl.GLRenderer;
 
 @SuppressWarnings("serial")
 public class GLPanel extends GLCanvas {
-	private final JOGLGLRendererAdapter adapter;
-	
-	public GLPanel(GLRenderer renderer) {
-		super();
-		adapter  = new JOGLGLRendererAdapter(renderer);
-		addGLEventListener(adapter);
-	}
-	
+    private final JOGLGLRendererAdapter adapter;
+
+    public GLPanel(GLRenderer renderer) {
+        super();
+        adapter = new JOGLGLRendererAdapter(renderer);
+        addGLEventListener(adapter);
+    }
+
 }

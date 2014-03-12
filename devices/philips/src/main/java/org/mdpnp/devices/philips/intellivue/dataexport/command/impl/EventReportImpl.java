@@ -48,10 +48,12 @@ public class EventReportImpl implements EventReport {
     public DataExportMessage getMessage() {
         return parent;
     }
+
     @Override
     public void setMessage(DataExportMessage message) {
         this.parent = message;
     }
+
     @Override
     public void setEventType(OIDType oid) {
         this.eventType = oid;
@@ -71,45 +73,48 @@ public class EventReportImpl implements EventReport {
         parse(bb, true);
     }
 
-
-
     private void parse(ByteBuffer bb, boolean clear) {
         managedObject.parse(bb);
         eventTime.parse(bb);
         eventType = OIDType.parse(bb);
         int length = Bits.getUnsignedShort(bb);
-        if(clear) {
+        if (clear) {
             event = EventFactory.buildEvent(eventType);
         }
-        if(null == event) {
+        if (null == event) {
             bb.position(bb.position() + length);
         } else {
             event.parse(bb);
         }
     }
+
     @Override
     public void format(ByteBuffer bb) {
         managedObject.format(bb);
         eventTime.format(bb);
         eventType.format(bb);
-        if(event != null) {
+        if (event != null) {
             Util.PrefixLengthShort.write(bb, event);
         } else {
             Bits.putUnsignedShort(bb, 0);
         }
     }
+
     @Override
     public ManagedObjectIdentifier getManagedObject() {
         return managedObject;
     }
+
     @Override
     public OIDType getEventType() {
         return eventType;
     }
+
     @Override
     public String toString() {
-        return "[eventType="+eventType+",eventTime="+eventTime+",managedObject="+managedObject+",event="+event+"]";
+        return "[eventType=" + eventType + ",eventTime=" + eventTime + ",managedObject=" + managedObject + ",event=" + event + "]";
     }
+
     @Override
     public DataExportEvent getEvent() {
         return event;

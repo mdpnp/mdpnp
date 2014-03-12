@@ -18,5 +18,5 @@ import org.mdpnp.devices.philips.intellivue.data.OIDType;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportCommand;
 
 public interface Get extends DataExportCommand {
-	List<OIDType> getAttributeId();
+    List<OIDType> getAttributeId();
 }

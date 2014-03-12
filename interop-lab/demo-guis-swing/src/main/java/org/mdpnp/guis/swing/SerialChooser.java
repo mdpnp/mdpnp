@@ -19,7 +19,8 @@ import javax.swing.JOptionPane;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 
 public class SerialChooser {
-	public static String showSerialPortNameDialog(Component parent) {
-		return (String) JOptionPane.showInputDialog(parent, "Choose a port", "Port", JOptionPane.QUESTION_MESSAGE, null, SerialProviderFactory.getDefaultProvider().getPortNames().toArray(), null);
-	}
+    public static String showSerialPortNameDialog(Component parent) {
+        return (String) JOptionPane.showInputDialog(parent, "Choose a port", "Port", JOptionPane.QUESTION_MESSAGE, null, SerialProviderFactory
+                .getDefaultProvider().getPortNames().toArray(), null);
+    }
 }

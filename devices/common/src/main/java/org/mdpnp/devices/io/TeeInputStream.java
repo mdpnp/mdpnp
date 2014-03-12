@@ -33,7 +33,7 @@ public class TeeInputStream extends FilterInputStream {
     @Override
     public int read() throws IOException {
         int n = super.read();
-        if(n >= 0) {
+        if (n >= 0) {
             try {
                 out.write(n);
             } catch (Throwable t) {
@@ -52,7 +52,7 @@ public class TeeInputStream extends FilterInputStream {
     public int read(byte[] b, int off, int len) throws IOException {
         int n = in.read(b, off, len);
 
-        if(n >= 0) {
+        if (n >= 0) {
             try {
                 out.write(b, off, n);
             } catch (Throwable t) {

@@ -20,10 +20,16 @@ import org.mdpnp.devices.philips.intellivue.dataexport.DataExportEvent;
 
 public interface EventReport extends DataExportCommand {
     ManagedObjectIdentifier getManagedObject();
+
     OIDType getEventType();
+
     void setEventType(OIDType oid);
+
     EventReportResult createConfirm();
+
     DataExportEvent getEvent();
+
     RelativeTime getEventTime();
+
     void setEvent(DataExportEvent event);
 }

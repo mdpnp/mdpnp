@@ -21,7 +21,7 @@ import org.mdpnp.devices.philips.intellivue.data.ObservedValue;
 
 public class TestDemoIntellivue {
     @Test
-    public void testLoadMap() throws Exception  {
+    public void testLoadMap() throws Exception {
         Map<ObservedValue, String> numericMetricIds = new HashMap<ObservedValue, String>();
         Map<ObservedValue, Label> numericLabels = new HashMap<ObservedValue, Label>();
         Map<ObservedValue, String> sampleArrayMetricIds = new HashMap<ObservedValue, String>();

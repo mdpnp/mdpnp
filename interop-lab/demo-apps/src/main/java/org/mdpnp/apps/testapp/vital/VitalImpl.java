@@ -35,20 +35,20 @@ class VitalImpl implements Vital {
     private boolean noValueWarning = false;
     private long warningAgeBecomesAlarm = Long.MAX_VALUE;
 
-
     private final InstanceHolder<ice.GlobalAlarmSettingsObjective>[] alarmObjectives;
 
     @SuppressWarnings("unchecked")
-    VitalImpl(VitalModelImpl parent, String label, String units, String[] metric_ids, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
+    VitalImpl(VitalModelImpl parent, String label, String units, String[] metric_ids, Float low, Float high, Float criticalLow, Float criticalHigh,
+            float minimum, float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
         this.parent = parent;
         this.label = label;
         this.units = units;
         this.metric_ids = metric_ids;
-        this.minimum =  minimum;
-        this.maximum =  maximum;
+        this.minimum = minimum;
+        this.maximum = maximum;
 
         alarmObjectives = new InstanceHolder[metric_ids.length];
-        for(int i = 0; i < metric_ids.length; i++) {
+        for (int i = 0; i < metric_ids.length; i++) {
             alarmObjectives[i] = new InstanceHolder<ice.GlobalAlarmSettingsObjective>();
             alarmObjectives[i].data = (GlobalAlarmSettingsObjective) ice.GlobalAlarmSettingsObjective.create();
             alarmObjectives[i].data.metric_id = metric_ids[i];
@@ -62,10 +62,7 @@ class VitalImpl implements Vital {
         setValueMsWarningLow(valueMsWarningLow);
         setValueMsWarningHigh(valueMsWarningHigh);
 
-
-
     }
-
 
     @Override
     public String getLabel() {
@@ -109,43 +106,42 @@ class VitalImpl implements Vital {
 
     @Override
     public float getDisplayMaximum() {
-        if(null == this.warningHigh) {
-            if(null == this.warningLow) {
+        if (null == this.warningHigh) {
+            if (null == this.warningLow) {
                 return maximum + maximum - minimum;
             } else {
                 return maximum + 2 * (maximum - warningLow);
             }
         } else {
-            if(null == this.warningLow) {
+            if (null == this.warningLow) {
                 return warningHigh + (warningHigh - minimum);
             } else {
-                return 1.5f*warningHigh-0.5f*warningLow;
+                return 1.5f * warningHigh - 0.5f * warningLow;
             }
         }
-
 
     }
 
     @Override
     public float getDisplayMinimum() {
-        if(null == this.warningHigh) {
-            if(null == this.warningLow) {
+        if (null == this.warningHigh) {
+            if (null == this.warningLow) {
                 return minimum - minimum + maximum;
             } else {
-                return warningLow -  (maximum - warningLow);
+                return warningLow - (maximum - warningLow);
             }
         } else {
-            if(null == this.warningLow) {
-                return warningHigh  - 3 * (warningHigh - minimum);
+            if (null == this.warningLow) {
+                return warningHigh - 3 * (warningHigh - minimum);
             } else {
-                return 1.5f * warningLow - 0.5f*warningHigh;
+                return 1.5f * warningLow - 0.5f * warningHigh;
             }
         }
     }
 
     @Override
     public String getLabelMaximum() {
-        if(Float.compare(getDisplayMaximum(), maximum)>0) {
+        if (Float.compare(getDisplayMaximum(), maximum) > 0) {
             return "";
         } else {
             return Integer.toString((int) getDisplayMaximum());
@@ -154,19 +150,19 @@ class VitalImpl implements Vital {
 
     @Override
     public String getLabelMinimum() {
-        if(Float.compare(minimum, getDisplayMinimum())>0) {
+        if (Float.compare(minimum, getDisplayMinimum()) > 0) {
             return "";
         } else {
-            return Integer.toString((int)getDisplayMinimum());
+            return Integer.toString((int) getDisplayMinimum());
         }
     }
 
     @Override
     public void setWarningLow(Float low) {
-        if(null != low) {
-            if(criticalLow != null && low < criticalLow) {
+        if (null != low) {
+            if (criticalLow != null && low < criticalLow) {
                 low = criticalLow;
-            } else if(warningHigh != null && low > warningHigh) {
+            } else if (warningHigh != null && low > warningHigh) {
                 low = warningHigh;
             }
         }
@@ -176,10 +172,10 @@ class VitalImpl implements Vital {
 
     @Override
     public void setWarningHigh(Float high) {
-        if(null != high) {
-            if(criticalHigh != null && high > criticalHigh) {
+        if (null != high) {
+            if (criticalHigh != null && high > criticalHigh) {
                 high = criticalHigh;
-            } else if(warningLow != null && high < warningLow) {
+            } else if (warningLow != null && high < warningLow) {
                 high = warningLow;
             }
         }
@@ -189,10 +185,10 @@ class VitalImpl implements Vital {
 
     @Override
     public void setCriticalLow(Float low) {
-        if(null != low) {
-            if(low < minimum) {
+        if (null != low) {
+            if (low < minimum) {
                 low = minimum;
-            } else if(warningLow != null && low > warningLow) {
+            } else if (warningLow != null && low > warningLow) {
                 low = warningLow;
             }
         }
@@ -203,7 +199,7 @@ class VitalImpl implements Vital {
     }
 
     private void writeCriticalLimits() {
-        for(int i = 0; i < alarmObjectives.length; i++) {
+        for (int i = 0; i < alarmObjectives.length; i++) {
             alarmObjectives[i].data.lower = null == criticalLow ? Float.MIN_VALUE : criticalLow;
             alarmObjectives[i].data.upper = null == criticalHigh ? Float.MAX_VALUE : criticalHigh;
             getParent().getWriter().write(alarmObjectives[i].data, alarmObjectives[i].handle);
@@ -212,10 +208,10 @@ class VitalImpl implements Vital {
 
     @Override
     public void setCriticalHigh(Float high) {
-        if(null != high) {
-            if(high > maximum) {
+        if (null != high) {
+            if (high > maximum) {
                 high = maximum;
-            } else if(warningHigh != null && high < warningHigh) {
+            } else if (warningHigh != null && high < warningHigh) {
                 high = warningHigh;
             }
         }
@@ -225,7 +221,7 @@ class VitalImpl implements Vital {
     }
 
     public void destroy() {
-        for(int i = 0; i < alarmObjectives.length; i++) {
+        for (int i = 0; i < alarmObjectives.length; i++) {
             getParent().getWriter().unregister_instance(alarmObjectives[i].data, alarmObjectives[i].handle);
         }
     }
@@ -239,27 +235,32 @@ class VitalImpl implements Vital {
     public VitalModel getParent() {
         return parent;
     }
+
     @Override
     public String getUnits() {
         return units;
     }
+
     @Override
     public String toString() {
-        return "[label="+label+",names="+Arrays.toString(metric_ids)+",minimum="+minimum+",maximum="+maximum+",low="+warningLow+",high="+warningHigh+",values="+values.toString()+"]";
+        return "[label=" + label + ",names=" + Arrays.toString(metric_ids) + ",minimum=" + minimum + ",maximum=" + maximum + ",low=" + warningLow
+                + ",high=" + warningHigh + ",values=" + values.toString() + "]";
     }
+
     @Override
     public boolean isAnyOutOfBounds() {
-        for(Value v : values) {
-            if(v.isAtOrOutsideOfBounds()) {
+        for (Value v : values) {
+            if (v.isAtOrOutsideOfBounds()) {
                 return true;
             }
         }
         return false;
     }
+
     @Override
     public int countOutOfBounds() {
         int cnt = 0;
-        for(Value v : values) {
+        for (Value v : values) {
             cnt += v.isAtOrAboveHigh() ? 1 : 0;
             cnt += v.isAtOrBelowLow() ? 1 : 0;
         }
@@ -267,18 +268,19 @@ class VitalImpl implements Vital {
     }
 
     private boolean ignoreZero = true;
+
     @Override
     public boolean isIgnoreZero() {
         return ignoreZero;
     }
+
     @Override
     public void setIgnoreZero(boolean ignoreZero) {
-        if(this.ignoreZero ^ ignoreZero) {
+        if (this.ignoreZero ^ ignoreZero) {
             this.ignoreZero = ignoreZero;
             parent.fireVitalChanged(this);
         }
     }
-
 
     @Override
     public boolean isNoValueWarning() {
@@ -287,7 +289,7 @@ class VitalImpl implements Vital {
 
     @Override
     public void setNoValueWarning(boolean noValueWarning) {
-        if(this.noValueWarning ^ noValueWarning) {
+        if (this.noValueWarning ^ noValueWarning) {
             this.noValueWarning = noValueWarning;
             parent.fireVitalChanged(this);
         }
@@ -325,7 +327,6 @@ class VitalImpl implements Vital {
         this.valueMsWarningLow = low;
         parent.fireVitalChanged(this);
     }
-
 
     @Override
     public Color getColor() {

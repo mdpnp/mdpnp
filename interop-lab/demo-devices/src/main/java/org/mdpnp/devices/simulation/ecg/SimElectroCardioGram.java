@@ -35,7 +35,6 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
 
     private final MySimulatedElectroCardioGram ecg = new MySimulatedElectroCardioGram();
 
-
     @Override
     public void connect(String str) {
         ecg.connect(executor);

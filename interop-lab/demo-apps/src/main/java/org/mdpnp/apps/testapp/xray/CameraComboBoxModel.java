@@ -32,7 +32,7 @@ public class CameraComboBoxModel extends DefaultComboBoxModel implements WebcamD
     }
 
     public synchronized void addElement(Webcam webcam) {
-        if(getIndexOf(webcam) < 0) {
+        if (getIndexOf(webcam) < 0) {
             super.addElement(webcam);
         }
     }
@@ -43,7 +43,7 @@ public class CameraComboBoxModel extends DefaultComboBoxModel implements WebcamD
 
     public void start() {
         Webcam.addDiscoveryListener(this);
-        for(Webcam c : Webcam.getWebcams()) {
+        for (Webcam c : Webcam.getWebcams()) {
             addElement(c);
         }
     }

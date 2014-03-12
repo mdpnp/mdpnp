@@ -15,7 +15,6 @@ package org.mdpnp.devices.io;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
 
 public class SplitBytesOutputStream extends FilterOutputStream {
 
@@ -31,7 +30,7 @@ public class SplitBytesOutputStream extends FilterOutputStream {
 
             @Override
             public int split(byte b, byte[] b1) {
-                switch(0xFF & b) {
+                switch (0xFF & b) {
                 case 0x80:
                     b1[0] = (byte) 0x80;
                     b1[1] = 0x00;
@@ -63,26 +62,26 @@ public class SplitBytesOutputStream extends FilterOutputStream {
     public void write(byte[] b, int off, int len) throws IOException {
         int h = 0, i = 0;
 
-        for(i = 0; i < len; i++) {
-            int j = splitter.split(b[off+i], buffer);
-            if(j > 1) {
-                if(i > h) {
-                    out.write(b, off+h, i-h);
+        for (i = 0; i < len; i++) {
+            int j = splitter.split(b[off + i], buffer);
+            if (j > 1) {
+                if (i > h) {
+                    out.write(b, off + h, i - h);
                 }
                 out.write(buffer, 0, j);
                 h = i + 1;
             }
         }
-        if(i > h) {
+        if (i > h) {
             out.write(b, off + h, i - h);
         }
     }
 
     @Override
     public void write(int b) throws IOException {
-        int i = splitter.split((byte)b, buffer);
-        for(int h = 0; h < i; h++) {
-            out.write(0xFF&buffer[h]);
+        int i = splitter.split((byte) b, buffer);
+        for (int h = 0; h < i; h++) {
+            out.write(0xFF & buffer[h]);
         }
     }
 

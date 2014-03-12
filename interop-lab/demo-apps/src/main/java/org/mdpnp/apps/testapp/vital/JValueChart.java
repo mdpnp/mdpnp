@@ -72,7 +72,7 @@ public class JValueChart extends JComponent {
                 float v = value.getHistoryValue(i);
 
                 int x = (int) (size.width * 1.0 * (tm - first) / (last - first));
-                int y = size.height - (int) ((size.height-1) * 1.0 * (v - low) / (high - low)) - 1;
+                int y = size.height - (int) ((size.height - 1) * 1.0 * (v - low) / (high - low)) - 1;
 
                 if (null != last_x) {
                     if (last_x <= x && (x >= 0 || last_x >= 0)) {
@@ -83,8 +83,6 @@ public class JValueChart extends JComponent {
                 last_x = x;
                 last_y = y;
             }
-
-
 
             g.setColor(c);
 
@@ -98,15 +96,14 @@ public class JValueChart extends JComponent {
 
     private static final long RECENT_HISTORY = 30000L;
 
-
     @Override
     protected void processComponentEvent(ComponentEvent e) {
         switch (e.getID()) {
         case ComponentEvent.COMPONENT_RESIZED:
         case ComponentEvent.COMPONENT_SHOWN:
             getSize(size);
-             size.width = size.width;
-             size.height = size.height;
+            size.width = size.width;
+            size.height = size.height;
 
             if (size.width != 0 && size.height != 0) {
                 this.image = createImage(size.width, size.height);
@@ -118,9 +115,9 @@ public class JValueChart extends JComponent {
 
     @Override
     protected void paintComponent(Graphics g_) {
-         super.paintComponent(g_);
+        super.paintComponent(g_);
 
-         if(null != image) {
+        if (null != image) {
             g_.drawImage(image, 0, 0, size.width, size.height, this);
         }
 

@@ -17,7 +17,8 @@ import java.awt.Component;
 import javax.swing.JOptionPane;
 
 public class NetworkChooser {
-	public static String showNetworkAddressDialog(Component parent, String _default) {
-		return (String) JOptionPane.showInputDialog(parent, "Enter a network address (blank may mean wait for incoming beacon)", "Address", JOptionPane.QUESTION_MESSAGE, null, null, _default);
-	}
+    public static String showNetworkAddressDialog(Component parent, String _default) {
+        return (String) JOptionPane.showInputDialog(parent, "Enter a network address (blank may mean wait for incoming beacon)", "Address",
+                JOptionPane.QUESTION_MESSAGE, null, null, _default);
+    }
 }

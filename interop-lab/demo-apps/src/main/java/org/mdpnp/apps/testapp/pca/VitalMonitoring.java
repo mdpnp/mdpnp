@@ -73,7 +73,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
     }
 
     public void run() {
-        if(isVisible()) {
+        if (isVisible()) {
             repaint();
         }
     }
@@ -82,7 +82,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
 
     public void setModel(VitalModel model) {
         if (null != this.model) {
-            if(future != null) {
+            if (future != null) {
                 future.cancel(true);
                 future = null;
             }
@@ -91,7 +91,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
         this.model = model;
         if (null != this.model) {
             this.model.addListener(this);
-            if(executor != null) {
+            if (executor != null) {
                 future = executor.scheduleAtFixedRate(this, 0L, REFRESH_RATE_MS, TimeUnit.MILLISECONDS);
             }
         }
@@ -115,9 +115,8 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
     private final Polygon dataArea = new Polygon();
     private final Polygon idealArea = new Polygon();
 
-
-    /// THIS LOGIC SHOULD LIVE OUTSIDE OF THE AWT THREAD
-    /// and probably draw an offscreen buffer
+    // / THIS LOGIC SHOULD LIVE OUTSIDE OF THE AWT THREAD
+    // / and probably draw an offscreen buffer
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -126,15 +125,13 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
             return;
         }
 
-
-
         int N = model.getCount();
 
         getSize(size);
         center.y = size.height / 2;
         center.x = size.width / 2;
 
-        if(N < 3) {
+        if (N < 3) {
             String s = "Please add at least three vital signs.";
             int width = g.getFontMetrics().stringWidth(s);
             int height = g.getFontMetrics().getHeight();
@@ -157,13 +154,13 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
         dataArea.reset();
         idealArea.reset();
 
-//        int countVitalsOut = 0;
-//        int countVitalsAbsent = 0;
+        // int countVitalsOut = 0;
+        // int countVitalsAbsent = 0;
 
         // find the vertices of the data axes
         for (int v = 0; v < N; v++) {
             Vital vital = model.getVital(v);
-//            countVitalsOut += vital.countOutOfBounds();
+            // countVitalsOut += vital.countOutOfBounds();
             double r1 = v * radiansPerArc;
             double r2 = (v == (N - 1) ? 0 : (v + 1)) * radiansPerArc;
 
@@ -173,7 +170,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
             int y2 = (int) Math.round(center.y + radius * Math.sin(r2));
 
             final boolean REVERSE_DIRECTION = y2 > y1;
-            final boolean VERTICAL = Math.abs(x2-x1)<=1;
+            final boolean VERTICAL = Math.abs(x2 - x1) <= 1;
 
             float minimum = REVERSE_DIRECTION ? vital.getDisplayMaximum() : vital.getDisplayMinimum();
             float maximum = REVERSE_DIRECTION ? vital.getDisplayMinimum() : vital.getDisplayMaximum();
@@ -184,35 +181,33 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
             Float low = vital.getWarningLow();
             Float high = vital.getWarningHigh();
 
-            if(null == low) {
-                if(null == high) {
+            if (null == low) {
+                if (null == high) {
                     low = vital.getMinimum();
                     high = vital.getMaximum();
                 } else {
                     low = high - 2 * (high - vital.getMinimum());
                 }
             } else {
-                if(null == high) {
+                if (null == high) {
                     high = low + 2 * (vital.getMaximum() - low);
                 } else {
                     // All's well
                 }
             }
 
-//            float low = REVERSE_DIRECTION ? vital.getHigh() : vital.getLow();
-//            float high = REVERSE_DIRECTION ? vital.getLow() : vital.getHigh();
+            // float low = REVERSE_DIRECTION ? vital.getHigh() : vital.getLow();
+            // float high = REVERSE_DIRECTION ? vital.getLow() :
+            // vital.getHigh();
 
             // Draw an axis line for this vital
-//            g.drawLine(x1, y1, x2, y2);
+            // g.drawLine(x1, y1, x2, y2);
             chartArea.addPoint(x1, y1);
-
 
             double slope = 1.0 * (y2 - y1) / (x2 - x1);
             double intercept = y1 - slope * x1;
 
-
-
-            if(REVERSE_DIRECTION) {
+            if (REVERSE_DIRECTION) {
                 double proportion = 1.0 * (high - minimum) / (maximum - minimum);
                 int x_ideal = (int) (proportion * (x2 - x1) + x1);
                 int y_ideal = (int) (slope * x_ideal + intercept);
@@ -223,9 +218,9 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
                 }
                 idealArea.addPoint(x_ideal, y_ideal);
 
-                 proportion = 1.0 * (low - minimum) / (maximum - minimum);
-                 x_ideal = (int) (proportion * (x2 - x1) + x1);
-                 y_ideal = (int) (slope * x_ideal + intercept);
+                proportion = 1.0 * (low - minimum) / (maximum - minimum);
+                x_ideal = (int) (proportion * (x2 - x1) + x1);
+                y_ideal = (int) (slope * x_ideal + intercept);
                 if (VERTICAL) {
                     // vertical line is a special case
                     x_ideal = x1;
@@ -245,9 +240,9 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
 
                 idealArea.addPoint(x_ideal, y_ideal);
 
-                 proportion = 1.0 * (high - minimum) / (maximum - minimum);
-                 x_ideal = (int) (proportion * (x2 - x1) + x1);
-                 y_ideal = (int) (slope * x_ideal + intercept);
+                proportion = 1.0 * (high - minimum) / (maximum - minimum);
+                x_ideal = (int) (proportion * (x2 - x1) + x1);
+                y_ideal = (int) (slope * x_ideal + intercept);
                 if (VERTICAL) {
                     // vertical line is a special case
                     x_ideal = x1;
@@ -275,30 +270,31 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
                 // (y2-y1)*(y2-y1))));
                 double rotate = Math.atan2((y2 - y1), (x2 - x1));
                 boolean FLIP = false;
-                if(VERTICAL) {
+                if (VERTICAL) {
                     rotate -= Math.PI;
                     FLIP = true;
                     // vertical line case
-//                    rotate -= Math.PI;
-//                    FLIP = ;
-                } else if(rotate > Math.PI/2.0) {
+                    // rotate -= Math.PI;
+                    // FLIP = ;
+                } else if (rotate > Math.PI / 2.0) {
                     rotate -= Math.PI;
                     FLIP = true;
-                } else if(rotate < -Math.PI/2.0) {
+                } else if (rotate < -Math.PI / 2.0) {
                     rotate += Math.PI;
                     FLIP = true;
                 }
                 int FLIP_SIGN = FLIP ? -1 : 1;
-//                System.out.println(vital.getLabel() + " rotate " + Math.toDegrees(rotate));
+                // System.out.println(vital.getLabel() + " rotate " +
+                // Math.toDegrees(rotate));
                 g2d.rotate(rotate);
                 // String lbl = v < LABEL.length ? LABEL[v] : "";
 
                 // Vital name
-                String lbl = vital.getLabel() + " ("+vital.getUnits()+ ")";
+                String lbl = vital.getLabel() + " (" + vital.getUnits() + ")";
                 int maxDescent = g.getFontMetrics().getMaxDescent();
                 int height = g.getFontMetrics().getHeight();
                 int str_w = g.getFontMetrics().stringWidth(lbl);
-                if(FLIP) {
+                if (FLIP) {
                     g.drawString(lbl, -str_w / 2, 3 * height + maxDescent);
                 } else {
                     g.drawString(lbl, -str_w / 2, FLIP_SIGN * (-2 * height - maxDescent));
@@ -307,7 +303,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
                 // Low end of the scale
                 lbl = minimumLabel;
                 str_w = g.getFontMetrics().stringWidth(lbl);
-                if(FLIP) {
+                if (FLIP) {
                     g.drawString(lbl, length / 2 - str_w, maxDescent + height + 5);
                     g.drawLine(length / 2, 0, length / 2, 5);
                 } else {
@@ -316,19 +312,19 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
                 }
 
                 // Alarm low limit
-                if(null != vital.getWarningLow()) {
+                if (null != vital.getWarningLow()) {
                     Color c = g.getColor();
                     g.setColor(IDEAL_COLOR);
-                    lbl = Integer.toString((int)(float) low);
+                    lbl = Integer.toString((int) (float) low);
                     str_w = g.getFontMetrics().stringWidth(lbl);
                     double proportion = 1.0 * (low - minimum) / (maximum - minimum);
                     proportion -= 0.5;
                     int xloc = (int) (proportion * length);
-                    if(FLIP) {
-                        g.drawString(lbl, -xloc - str_w/2, maxDescent + height + 5);
+                    if (FLIP) {
+                        g.drawString(lbl, -xloc - str_w / 2, maxDescent + height + 5);
                         g.drawLine(-xloc, 0, -xloc, 5);
                     } else {
-                        g.drawString(lbl, xloc-str_w/2, -maxDescent - 5);
+                        g.drawString(lbl, xloc - str_w / 2, -maxDescent - 5);
                         g.drawLine(xloc, 0, xloc, -5);
                     }
                     g.setColor(c);
@@ -337,7 +333,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
                 // High end of the scale
                 lbl = maximumLabel;
                 str_w = g.getFontMetrics().stringWidth(lbl);
-                if(FLIP) {
+                if (FLIP) {
                     g.drawString(lbl, -length / 2, maxDescent + 5 + height);
                     g.drawLine(-length / 2, 0, -length / 2, 5);
                 } else {
@@ -346,19 +342,19 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
                 }
 
                 // Alarm high limit
-                if(null != vital.getWarningHigh()) {
+                if (null != vital.getWarningHigh()) {
                     Color c = g.getColor();
                     g.setColor(IDEAL_COLOR);
-                    lbl = Integer.toString((int)(float) high);
+                    lbl = Integer.toString((int) (float) high);
                     str_w = g.getFontMetrics().stringWidth(lbl);
                     double proportion = 1.0 * (high - minimum) / (maximum - minimum);
                     proportion -= 0.5;
                     int xloc = (int) (proportion * length);
-                    if(FLIP) {
-                        g.drawString(lbl, -xloc - str_w/2, maxDescent + height + 5);
+                    if (FLIP) {
+                        g.drawString(lbl, -xloc - str_w / 2, maxDescent + height + 5);
                         g.drawLine(-xloc, 0, -xloc, 5);
                     } else {
-                        g.drawString(lbl, xloc-str_w/2, -maxDescent - 5);
+                        g.drawString(lbl, xloc - str_w / 2, -maxDescent - 5);
                         g.drawLine(xloc, 0, xloc, -5);
                     }
                     g.setColor(c);
@@ -366,12 +362,12 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
                 // Middle of the scale
                 lbl = Integer.toString((int) ((maximum - minimum) / 2 + minimum));
                 str_w = g.getFontMetrics().stringWidth(lbl);
-                if(FLIP) {
+                if (FLIP) {
                     g.drawString(lbl, -str_w / 2, maxDescent + 5 + height);
                     g.drawLine(0, 0, 0, 5);
                 } else {
                     g.drawString(lbl, -str_w / 2, -maxDescent - 5);
-                    g.drawLine(0, 0, 0,  -5);
+                    g.drawLine(0, 0, 0, -5);
                 }
 
                 g2d.setTransform(at);
@@ -379,31 +375,32 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
             }
 
             if (vital.getValues().isEmpty()) {
-//                countVitalsAbsent++;
+                // countVitalsAbsent++;
                 continue;
             } else {
-                while(vital.getValues().size() > vital_values.length) {
+                while (vital.getValues().size() > vital_values.length) {
                     vital_values = new float[vital_values.length * 2 + 1];
                 }
 
                 int i = 0;
                 for (Value val : vital.getValues()) {
-                    if(!val.isIgnore()) {
+                    if (!val.isIgnore()) {
                         vital_values[i++] = val.getNumeric().value;
                     }
                 }
                 Arrays.sort(vital_values, 0, i);
 
-                if(REVERSE_DIRECTION && i > 1) {
-//                    System.out.println(i+ " " +Arrays.toString(vital_values));
-                    for(int k = 0; k < i/2; k++) {
+                if (REVERSE_DIRECTION && i > 1) {
+                    // System.out.println(i+ " "
+                    // +Arrays.toString(vital_values));
+                    for (int k = 0; k < i / 2; k++) {
                         float tmp = vital_values[k];
-                        vital_values[k] = vital_values[i-1-k];
-                        vital_values[i-1-k] = tmp;
+                        vital_values[k] = vital_values[i - 1 - k];
+                        vital_values[i - 1 - k] = tmp;
                     }
                 }
 
-                for(int j = 0; j < i; j++) {
+                for (int j = 0; j < i; j++) {
                     float f = vital_values[j];
                     double proportion = 1.0 * (f - minimum) / (maximum - minimum);
                     int x = (int) Math.floor(proportion * (x2 - x1) + x1);
@@ -427,8 +424,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
         g.setColor(IDEAL_COLOR);
         g.drawPolygon(idealArea);
 
-
-        switch(model.getState()) {
+        switch (model.getState()) {
         case Alarm:
             g.setColor(ALARM_DATA_COLOR);
             break;
@@ -453,17 +449,20 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
     public static final void main(String[] args) {
 
         DDS.init(false);
-        final DomainParticipant p = DomainParticipantFactory.get_instance().create_participant(0,
-                DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        final Subscriber s = p.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null,
-                StatusKind.STATUS_MASK_NONE);
+        final DomainParticipant p = DomainParticipantFactory.get_instance().create_participant(0, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT,
+                null, StatusKind.STATUS_MASK_NONE);
+        final Subscriber s = p.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final VitalModel vm = new VitalModelImpl(null);
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-//        vm.addVital("Heart Rate", "bpm", new int[] { ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 40, 80, 0, 120);
-//        vm.addVital("SpO\u2082", "%", new int[] { ice.MDC_PULS_OXIM_SAT_O2.VALUE }, 90, 100, 70, 130);
-//        vm.addVital("Respiratory Rate", "bpm", new int[] { ice.MDC_RESP_RATE.VALUE }, 6, 15, 0, 24);
-//        vm.addVital("etCO\u2082", "mmHg", new int[] { ice.MDC_AWAY_CO2_EXP.VALUE }, 20, 50, 0, 60);
+        // vm.addVital("Heart Rate", "bpm", new int[] {
+        // ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 40, 80, 0, 120);
+        // vm.addVital("SpO\u2082", "%", new int[] {
+        // ice.MDC_PULS_OXIM_SAT_O2.VALUE }, 90, 100, 70, 130);
+        // vm.addVital("Respiratory Rate", "bpm", new int[] {
+        // ice.MDC_RESP_RATE.VALUE }, 6, 15, 0, 24);
+        // vm.addVital("etCO\u2082", "mmHg", new int[] {
+        // ice.MDC_AWAY_CO2_EXP.VALUE }, 20, 50, 0, 60);
         EventLoop eventLoop = new EventLoop();
         final EventLoopHandler eventLoopHandler = new EventLoopHandler(eventLoop);
 
@@ -473,7 +472,11 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
         frame.getContentPane().setBackground(Color.white);
         final VitalMonitoring uiTest = new VitalMonitoring(null);
         uiTest.setModel(vm);
-        executor.scheduleAtFixedRate(new Runnable() { public void run() { uiTest.repaint(); } }, 0L, 500L, TimeUnit.MILLISECONDS);
+        executor.scheduleAtFixedRate(new Runnable() {
+            public void run() {
+                uiTest.repaint();
+            }
+        }, 0L, 500L, TimeUnit.MILLISECONDS);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter() {
             @Override
@@ -501,21 +504,21 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
 
     @Override
     public void vitalChanged(VitalModel model, Vital vital) {
-        if(null == executor) {
+        if (null == executor) {
             repaint();
         }
     }
 
     @Override
     public void vitalRemoved(VitalModel model, Vital vital) {
-        if(null == executor) {
+        if (null == executor) {
             repaint();
         }
     }
 
     @Override
     public void vitalAdded(VitalModel model, Vital vital) {
-        if(null == executor) {
+        if (null == executor) {
             repaint();
         }
     }

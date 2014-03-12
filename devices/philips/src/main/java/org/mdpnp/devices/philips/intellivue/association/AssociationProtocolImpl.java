@@ -32,15 +32,16 @@ public class AssociationProtocolImpl implements AssociationProtocol {
     private AssociationMessageType type = AssociationMessageType.Connect;
     private final LengthInformation length = new LengthInformation();
 
-
     public static final class ParameterIdentifier {
         private final short id;
         private final byte[] data;
+
         public ParameterIdentifier(short id, byte[] data) {
             this.id = id;
             this.data = data;
         }
     }
+
     private final List<ParameterIdentifier> parameterIdentifiers = new ArrayList<ParameterIdentifier>();
 
     public List<ParameterIdentifier> getParameterIdentifiers() {
@@ -58,17 +59,17 @@ public class AssociationProtocolImpl implements AssociationProtocol {
     public void setType(AssociationMessageType type) {
         this.type = type;
         parameterIdentifiers.clear();
-        switch(type) {
+        switch (type) {
         case Connect:
         case Accept:
-            parameterIdentifiers.add(new ParameterIdentifier((short)0x05, new byte[] {0x13, 0x01, 0x00, 0x16, 0x01, 0x02, (byte)0x80, 0x00}));
-            parameterIdentifiers.add(new ParameterIdentifier((short)0x14, new byte[] {0x00, 0x02}));
+            parameterIdentifiers.add(new ParameterIdentifier((short) 0x05, new byte[] { 0x13, 0x01, 0x00, 0x16, 0x01, 0x02, (byte) 0x80, 0x00 }));
+            parameterIdentifiers.add(new ParameterIdentifier((short) 0x14, new byte[] { 0x00, 0x02 }));
             break;
         case Abort:
-            parameterIdentifiers.add(new ParameterIdentifier((short) 0x11, new byte[] {0x03}));
+            parameterIdentifiers.add(new ParameterIdentifier((short) 0x11, new byte[] { 0x03 }));
             break;
         case Refuse:
-            parameterIdentifiers.add(new ParameterIdentifier((short)0x32, new byte[] {0x00}));
+            parameterIdentifiers.add(new ParameterIdentifier((short) 0x32, new byte[] { 0x00 }));
             break;
         case Disconnect:
         case Finish:
@@ -76,12 +77,11 @@ public class AssociationProtocolImpl implements AssociationProtocol {
         }
     }
 
-
-    private final LengthInformation presentationLength = new LengthInformation(new byte[] {(byte)0xC1});
+    private final LengthInformation presentationLength = new LengthInformation(new byte[] { (byte) 0xC1 });
 
     private static final AssociationMessage buildMessage(AssociationMessageType type) {
-        // TODO manage lifecycle better?  Don't use this for data messages
-        switch(type) {
+        // TODO manage lifecycle better? Don't use this for data messages
+        switch (type) {
         case Connect:
             return new AssociationConnectImpl();
         case Abort:
@@ -101,31 +101,31 @@ public class AssociationProtocolImpl implements AssociationProtocol {
 
     @Override
     public void format(Message message, ByteBuffer bb) {
-        if(message instanceof AssociationMessage) {
-            format((AssociationMessage)message, bb);
+        if (message instanceof AssociationMessage) {
+            format((AssociationMessage) message, bb);
         }
     }
 
     private int sessionLength() {
         int count = 0;
-        for(ParameterIdentifier pi : parameterIdentifiers) {
-            count+=2;
-            count+=pi.data.length;
+        for (ParameterIdentifier pi : parameterIdentifiers) {
+            count += 2;
+            count += pi.data.length;
         }
         return count;
     }
 
     @Override
     public void format(AssociationMessage message, ByteBuffer bb) {
-        if(null == message) {
+        if (null == message) {
             throw new IllegalStateException("No ApplicationMessage set");
         }
         setType(message.getType());
 
         ByteBuffer bbAppMessage = ByteBuffer.allocate(5000);
         message.format(bbAppMessage);
-        presentationLength.setLength(bbAppMessage.position()+message.getPresentationHeader().length+message.getPresentationTrailer().length);
-        length.setLength(presentationLength.getByteCount()+sessionLength()+presentationLength.getLength());
+        presentationLength.setLength(bbAppMessage.position() + message.getPresentationHeader().length + message.getPresentationTrailer().length);
+        length.setLength(presentationLength.getByteCount() + sessionLength() + presentationLength.getLength());
         bbAppMessage.flip();
 
         Bits.putUnsignedByte(bb, type.asShort());
@@ -133,7 +133,7 @@ public class AssociationProtocolImpl implements AssociationProtocol {
 
         LengthInformation li = new LengthInformation();
 
-        for(ParameterIdentifier pi : parameterIdentifiers) {
+        for (ParameterIdentifier pi : parameterIdentifiers) {
             Bits.putUnsignedByte(bb, pi.id);
             li.setLength(pi.data.length);
             li.format(bb);
@@ -163,30 +163,30 @@ public class AssociationProtocolImpl implements AssociationProtocol {
         short pi = Bits.getUnsignedByte(bb);
 
         //
-        while(pi != 0xC1 && bb.position() < end_pos) {
+        while (pi != 0xC1 && bb.position() < end_pos) {
             li.parse(bb);
-            log.trace("Parameter Identifier:"+Integer.toHexString(pi));
-            byte[] bytes = new byte[ (int) li.getLength()];
+            log.trace("Parameter Identifier:" + Integer.toHexString(pi));
+            byte[] bytes = new byte[(int) li.getLength()];
             bb.get(bytes);
             parameterIdentifiers.add(new ParameterIdentifier(pi, bytes));
-            if(bb.position() < end_pos) {
+            if (bb.position() < end_pos) {
                 pi = Bits.getUnsignedByte(bb);
             }
         }
         // Presentation header starts with 0xC1 followed by a length info
-        if(0xC1 == pi && bb.position() < end_pos) {
+        if (0xC1 == pi && bb.position() < end_pos) {
             li.parse(bb);
         }
 
         AssociationMessage message = buildMessage(getType());
 
-        if(null == message) {
-            log.warn("Unimplemented message type:"+getType());
+        if (null == message) {
+            log.warn("Unimplemented message type:" + getType());
         } else {
             message.advancePastPresentationHeader(bb);
             message.parse(bb);
         }
-        bb.position(bb.position()+message.getPresentationTrailer().length);
+        bb.position(bb.position() + message.getPresentationTrailer().length);
         return message;
     }
 

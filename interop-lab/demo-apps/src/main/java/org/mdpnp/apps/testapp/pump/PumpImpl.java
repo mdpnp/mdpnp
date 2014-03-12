@@ -33,6 +33,7 @@ public class PumpImpl implements Pump {
     public ice.InfusionStatus getInfusionStatus() {
         return infusionStatus;
     }
+
     public SampleInfo getSampleInfo() {
         return sampleInfo;
     }

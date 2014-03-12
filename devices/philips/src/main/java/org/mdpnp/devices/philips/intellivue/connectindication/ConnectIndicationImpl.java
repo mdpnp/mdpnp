@@ -43,31 +43,37 @@ public class ConnectIndicationImpl implements ConnectIndication {
     private final EventReport report = new EventReport();
     private final AttributeValueList attrs = new AttributeValueList();
     private final Attribute<Type> systemType = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_SYS_TYPE, Type.class);
-    private final Attribute<ProtocolSupport> protocolSupport = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_PCOL_SUPPORT, ProtocolSupport.class);
-    private final Attribute<SystemLocalization> systemLocalization =  AttributeFactory.getAttribute(AttributeId.NOM_ATTR_LOCALIZN, SystemLocalization.class);
-    private final Attribute<IPAddressInformation> ipAddressInformation = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_NET_ADDR_INFO, IPAddressInformation.class);
+    private final Attribute<ProtocolSupport> protocolSupport = AttributeFactory
+            .getAttribute(AttributeId.NOM_ATTR_PCOL_SUPPORT, ProtocolSupport.class);
+    private final Attribute<SystemLocalization> systemLocalization = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_LOCALIZN,
+            SystemLocalization.class);
+    private final Attribute<IPAddressInformation> ipAddressInformation = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_NET_ADDR_INFO,
+            IPAddressInformation.class);
 
     @Override
     public Nomenclature getNomenclature() {
         return nomenclature;
     }
+
     @Override
     public IPAddressInformation getIpAddressInformation() {
         return ipAddressInformation.getValue();
     }
+
     @Override
     public SystemLocalization getSystemLocalization() {
         return systemLocalization.getValue();
     }
+
     @Override
     public Type getSystemType() {
         return systemType.getValue();
     }
+
     @Override
     public ProtocolSupport getProtocolSupport() {
         return protocolSupport.getValue();
     }
-
 
     @SuppressWarnings("unused")
     public void parse(ByteBuffer bb) {
@@ -88,7 +94,9 @@ public class ConnectIndicationImpl implements ConnectIndication {
 
     @Override
     public String toString() {
-        return "[" + nomenclature +",remoteOp="+remoteOperation+",invokeId="+invokeId+",commandType="+commandType+",report="+report+",systemType="+systemType+",protocolSupport="+protocolSupport+",systemLocalization="+systemLocalization+",ipAddressInformation="+ipAddressInformation+"]";
+        return "[" + nomenclature + ",remoteOp=" + remoteOperation + ",invokeId=" + invokeId + ",commandType=" + commandType + ",report=" + report
+                + ",systemType=" + systemType + ",protocolSupport=" + protocolSupport + ",systemLocalization=" + systemLocalization
+                + ",ipAddressInformation=" + ipAddressInformation + "]";
     }
 
     @Override
@@ -101,7 +109,7 @@ public class ConnectIndicationImpl implements ConnectIndication {
         final AttributeValueList attrs = this.attrs;
         final Attribute<Type> systemType = this.systemType;
         final Attribute<ProtocolSupport> protocolSupport = this.protocolSupport;
-        final Attribute<SystemLocalization> systemLocalization =  this.systemLocalization;
+        final Attribute<SystemLocalization> systemLocalization = this.systemLocalization;
         final Attribute<IPAddressInformation> ipAddressInformation = this.ipAddressInformation;
 
         Util.PrefixLengthShort.write(bb, new Formatable() {
@@ -126,21 +134,19 @@ public class ConnectIndicationImpl implements ConnectIndication {
             }
         });
 
-
     }
 
     public static void main(String[] args) throws SocketException {
         ConnectIndication ci = new ConnectIndicationImpl();
         ci.getIpAddressInformation().setInetAddress(Network.getLocalAddresses().get(1));
-//		ci.getSystemType().setOidType(OIDType.lookup(1));
-//		ci.getNomenclature().setMajorVersion((short) 5);
+        // ci.getSystemType().setOidType(OIDType.lookup(1));
+        // ci.getNomenclature().setMajorVersion((short) 5);
         ByteBuffer bb = ByteBuffer.allocate(5000);
         ci.format(bb);
         System.out.println(ci);
 
         bb.flip();
         System.out.println(HexUtil.dump(bb));
-
 
         ConnectIndication ci2 = new ConnectIndicationImpl();
         ci2.parse(bb);

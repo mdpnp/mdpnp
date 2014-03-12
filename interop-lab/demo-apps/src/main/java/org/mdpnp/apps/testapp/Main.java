@@ -32,7 +32,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         // TODO this should be external
-        System.setProperty("java.net.preferIPv4Stack","true");
+        System.setProperty("java.net.preferIPv4Stack", "true");
         final boolean debug = false;
 
         Configuration runConf = null;
@@ -42,14 +42,14 @@ public class Main {
 
         boolean cmdline = false;
 
-        if(args.length > 0) {
+        if (args.length > 0) {
             runConf = Configuration.read(args);
             cmdline = true;
-        } else if(jumpStartSettings.exists() && jumpStartSettings.canRead()) {
+        } else if (jumpStartSettings.exists() && jumpStartSettings.canRead()) {
             FileInputStream fis = new FileInputStream(jumpStartSettings);
             runConf = Configuration.read(fis);
             fis.close();
-        } else if(jumpStartSettingsHome.exists() && jumpStartSettingsHome.canRead()) {
+        } else if (jumpStartSettingsHome.exists() && jumpStartSettingsHome.canRead()) {
             FileInputStream fis = new FileInputStream(jumpStartSettingsHome);
             runConf = Configuration.read(fis);
             fis.close();
@@ -66,63 +66,65 @@ public class Main {
             log.debug("Not able to set Mac OS X dock icon");
         }
 
-        if(!cmdline) {
+        if (!cmdline) {
             ConfigurationDialog d = new ConfigurationDialog(runConf, debug);
 
             d.setIconImage(ImageIO.read(Main.class.getResource("icon.png")));
             runConf = d.showDialog();
             // It's nice to be able to change settings even without running
-            if(null == runConf) {
+            if (null == runConf) {
                 writeConf = d.getLastConfiguration();
             }
         } else {
             // fall through to allow configuration via a file
         }
 
-        if(null != runConf) {
+        if (null != runConf) {
             writeConf = runConf;
         }
 
-        if(null != writeConf) {
-            if(!jumpStartSettings.exists()) {
+        if (null != writeConf) {
+            if (!jumpStartSettings.exists()) {
                 jumpStartSettings.createNewFile();
             }
 
-            if(jumpStartSettings.canWrite()) {
+            if (jumpStartSettings.canWrite()) {
                 FileOutputStream fos = new FileOutputStream(jumpStartSettings);
                 writeConf.write(fos);
                 fos.close();
             }
 
-            if(!jumpStartSettingsHome.exists()) {
+            if (!jumpStartSettingsHome.exists()) {
                 jumpStartSettingsHome.createNewFile();
             }
 
-            if(jumpStartSettingsHome.canWrite()) {
+            if (jumpStartSettingsHome.canWrite()) {
                 FileOutputStream fos = new FileOutputStream(jumpStartSettingsHome);
                 writeConf.write(fos);
                 fos.close();
             }
         }
 
-        if(null != runConf) {
-            if(!(Boolean)Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init", boolean.class).invoke(null, debug)) {
+        if (null != runConf) {
+            if (!(Boolean) Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init", boolean.class).invoke(null, debug)) {
                 throw new Exception("Unable to DDS.init");
             }
             {
-                // Unfortunately this throws an Exception if there are errors in XML profiles
-                // which Exception prevents a more useful Exception throwing later
+                // Unfortunately this throws an Exception if there are errors in
+                // XML profiles
+                // which Exception prevents a more useful Exception throwing
+                // later
                 try {
                     DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
                     DomainParticipantFactory.get_instance().get_qos(qos);
                     qos.resource_limits.max_objects_per_thread = 8192;
                     DomainParticipantFactory.get_instance().set_qos(qos);
-                } catch(Exception e) {
+                } catch (Exception e) {
                     log.error("Unable to set max_objects_per_thread", e);
                 }
             }
 
-            switch(runConf.getApplication()) {
+            switch (runConf.getApplication()) {
             case ICE_Device_Interface:
                 new DeviceAdapter().start(runConf.getDeviceType(), runConf.getDomainId(), runConf.getAddress(), !cmdline);
                 break;
@@ -133,7 +135,7 @@ public class Main {
                 ParticipantOnly.start(runConf.getDomainId(), cmdline);
                 break;
             }
-        } else if(cmdline) {
+        } else if (cmdline) {
             Configuration.help(Main.class, System.out);
         } else {
 

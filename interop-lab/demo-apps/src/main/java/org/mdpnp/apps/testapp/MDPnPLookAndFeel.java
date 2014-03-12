@@ -32,5 +32,4 @@ public class MDPnPLookAndFeel extends MetalLookAndFeel {
         return "For MDPnP ICE Components";
     }
 
-
 }

@@ -15,8 +15,6 @@ package org.mdpnp.guis.waveform;
 import java.util.Set;
 
 import org.mdpnp.devices.math.DCT;
-import org.mdpnp.guis.waveform.WaveformSource;
-import org.mdpnp.guis.waveform.WaveformSourceListener;
 
 public class DCTSource implements WaveformSource, WaveformSourceListener {
     private double[] sourceData;
@@ -28,8 +26,8 @@ public class DCTSource implements WaveformSource, WaveformSourceListener {
     private double resolution = 1;
 
     private int checkMax(final int max) {
-        if(data == null || max != data.length) {
-            if(max == -1) {
+        if (data == null || max != data.length) {
+            if (max == -1) {
                 this.data = this.sourceData = this.coeffs = new double[0];
             } else {
                 this.data = new double[max];
@@ -63,7 +61,7 @@ public class DCTSource implements WaveformSource, WaveformSourceListener {
 
     @Override
     public float getValue(int x) {
-        return (float)( x >= data.length ? 0 : data[x] );
+        return (float) (x >= data.length ? 0 : data[x]);
     }
 
     @Override
@@ -101,17 +99,17 @@ public class DCTSource implements WaveformSource, WaveformSourceListener {
 
     @Override
     public void waveform(WaveformSource source) {
-        if(checkMax(source.getMax())<0) {
+        if (checkMax(source.getMax()) < 0) {
             return;
         }
 
-        for(int i = 0; i < sourceData.length; i++) {
+        for (int i = 0; i < sourceData.length; i++) {
             sourceData[i] = source.getValue(i);
         }
         DCT.dct(sourceData, coeffs);
-        DCT.idct(coeffs, 0, maxCoeff , data);
+        DCT.idct(coeffs, 0, maxCoeff, data);
         count = source.getCount();
-        for(WaveformSourceListener listener : listeners) {
+        for (WaveformSourceListener listener : listeners) {
             listener.waveform(this);
         }
     }

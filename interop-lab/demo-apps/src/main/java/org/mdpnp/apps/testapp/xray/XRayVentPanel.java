@@ -92,13 +92,11 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
     private JList deviceList;
 
     public enum Strategy {
-        Manual,
-        Automatic
+        Manual, Automatic
     }
 
     public enum TargetTime {
-        EndInspiration,
-        EndExpiration
+        EndInspiration, EndExpiration
     }
 
     private final DemoPanel demoPanel;
@@ -108,15 +106,16 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
     private final ButtonGroup strategiesGroup = new ButtonGroup();
     private final ButtonGroup targetTimesGroup = new ButtonGroup();
     private static final float FONT_SIZE = 20f;
+
     protected JPanel buildRadioButtons(Object[] values, ButtonGroup buttonGroup) {
         JPanel panel = new JPanel(new GridLayout(values.length, 1));
         boolean seenFirstButton = false;
 
-        for(Object o : values) {
+        for (Object o : values) {
             JRadioButton r = new JRadioButton(o.toString());
             r.setFont(r.getFont().deriveFont(FONT_SIZE));
             r.setActionCommand(o.toString());
-            if(!seenFirstButton) {
+            if (!seenFirstButton) {
                 r.setSelected(true);
                 seenFirstButton = true;
             }
@@ -126,13 +125,14 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 
         return panel;
     }
+
     private static final Logger log = LoggerFactory.getLogger(XRayVentPanel.class);
 
     private DeviceMonitor deviceMonitor;
 
     public void changeSource(String source, DomainParticipant participant, EventLoop eventLoop) {
-        if(null != deviceMonitor) {
-            if(deviceMonitor.getUniqueDeviceIdentifier().equals(source)) {
+        if (null != deviceMonitor) {
+            if (deviceMonitor.getUniqueDeviceIdentifier().equals(source)) {
                 return;
             } else {
                 deviceMonitor.stop();
@@ -158,8 +158,8 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 
             @Override
             public boolean dispatchKeyEvent(KeyEvent e) {
-                if(e.getKeyCode()==KeyEvent.VK_SPACE) {
-                    switch(e.getID()) {
+                if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                    switch (e.getID()) {
                     case KeyEvent.KEY_PRESSED:
                         imageButton.getModel().setSelected(true);
                         imageButton.getModel().setPressed(true);
@@ -171,8 +171,8 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
                     default:
                         return false;
                     }
-                } else if(e.getKeyCode()==KeyEvent.VK_ESCAPE) {
-                    switch(e.getID()) {
+                } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    switch (e.getID()) {
                     case KeyEvent.KEY_RELEASED:
                         resetButton.doClick();
                         return true;
@@ -190,13 +190,13 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
             @Override
             public void stateChanged(ChangeEvent e) {
                 imageButtonDown = imageButton.getModel().isPressed();
-                if(imageButtonDown && Strategy.Manual.equals(Strategy.valueOf(strategiesGroup.getSelection().getActionCommand()))) {
+                if (imageButtonDown && Strategy.Manual.equals(Strategy.valueOf(strategiesGroup.getSelection().getActionCommand()))) {
                     noSync();
                 }
-                log.info(""+imageButtonDown);
+                log.info("" + imageButtonDown);
             }
         });
-        JPanel panel = new JPanel(new GridLayout(2,2));
+        JPanel panel = new JPanel(new GridLayout(2, 2));
 
         JPanel textPanel = new JPanel(new BorderLayout());
         JLabel text = new JLabel();
@@ -213,9 +213,9 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 int idx = deviceList.getSelectedIndex();
-                if(idx >= 0) {
+                if (idx >= 0) {
                     Device device = devices.getElementAt(idx);
-                    if(null != device) {
+                    if (null != device) {
                         changeSource(device.getDeviceIdentity().unique_device_identifier, subscriber.get_participant(), eventLoop);
                     }
                 }
@@ -226,7 +226,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 
         JPanel enclosingFramePanel = new JPanel(new BorderLayout());
         JLabel l;
-        enclosingFramePanel.add(l=new JLabel("X-Ray Viewer"), BorderLayout.NORTH);
+        enclosingFramePanel.add(l = new JLabel("X-Ray Viewer"), BorderLayout.NORTH);
         l.setFont(l.getFont().deriveFont(FONT_SIZE));
         cameraPanel = new LabeledFramePanel(executorNonCritical);
         enclosingFramePanel.add(cameraPanel, BorderLayout.CENTER);
@@ -249,31 +249,29 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 
         wuws = new WaveformUpdateWaveformSource();
 
-
         JPanel enclosingWaveformPanel = new JPanel(new BorderLayout());
-        enclosingWaveformPanel.add(l=new JLabel("Flow Inspiration/Expiration"), BorderLayout.NORTH);
+        enclosingWaveformPanel.add(l = new JLabel("Flow Inspiration/Expiration"), BorderLayout.NORTH);
         l.setFont(l.getFont().deriveFont(FONT_SIZE));
 
         waveformPanel = new SwingWaveformPanel();
-        if(waveformPanel instanceof JComponent) {
-            ((JComponent)waveformPanel).setBorder(border);
+        if (waveformPanel instanceof JComponent) {
+            ((JComponent) waveformPanel).setBorder(border);
         }
 
         waveformPanel.setEvenTempo(false);
         waveformPanel.setSource(wuws);
-        if(null != waveformPanel.cachingSource()) {
+        if (null != waveformPanel.cachingSource()) {
             waveformPanel.cachingSource().setFixedTimeDomain(20000L);
         }
 
         enclosingWaveformPanel.add(waveformPanel.asComponent(), BorderLayout.CENTER);
         panel.add(enclosingWaveformPanel);
 
-
         JPanel controlsPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.ipadx = 10;
         gbc.ipady = 0;
-        gbc.insets = new Insets(0,10,0,10);
+        gbc.insets = new Insets(0, 10, 0, 10);
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.gridx = 0;
@@ -285,7 +283,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 
         gbc.gridwidth = 2;
 
-        controlsPanel.add(l= new JLabel("Exposure Time (seconds)"), gbc);
+        controlsPanel.add(l = new JLabel("Exposure Time (seconds)"), gbc);
         l.setFont(l.getFont().deriveFont(FONT_SIZE));
 
         gbc.gridy++;
@@ -300,16 +298,15 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
         nf.setMinimumFractionDigits(1);
         nf.setMaximumFractionDigits(1);
         exposureTime.setFont(exposureTime.getFont().deriveFont(FONT_SIZE));
-        //TOTAL KLUGE
-        for(int i = exposureTime.getMinimum(); i <= exposureTime.getMaximum(); i+= 100) {
+        // TOTAL KLUGE
+        for (int i = exposureTime.getMinimum(); i <= exposureTime.getMaximum(); i += 100) {
             Object o = dict.get(i);
-            if(o != null && o instanceof JLabel) {
-                ((JLabel)o).setText(nf.format(i/1000.0));
+            if (o != null && o instanceof JLabel) {
+                ((JLabel) o).setText(nf.format(i / 1000.0));
             }
         }
 
         exposureTime.setLabelTable(dict);
-
 
         controlsPanel.add(exposureTime, gbc);
 
@@ -359,7 +356,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
         executorNonCritical.schedule(new Runnable() {
             public void run() {
                 waveformPanel.stop();
-                if(null != deviceMonitor) {
+                if (null != deviceMonitor) {
                     deviceMonitor.stop();
                     deviceMonitor = null;
                 }
@@ -390,11 +387,10 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
     protected ScheduledExecutorService executorCritical = Executors.newSingleThreadScheduledExecutor();
     protected ScheduledExecutorService executorNonCritical = Executors.newSingleThreadScheduledExecutor();
 
-
     private final Callable<Void> freezeCallable = new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-            if(imageButtonDown) {
+            if (imageButtonDown) {
                 cameraPanel.freeze(exposureTime.getValue());
             }
             return null;
@@ -406,41 +402,46 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
     private final void noSync() {
         cameraPanel.freeze(exposureTime.getValue());
 
-
     }
 
     private final void autoSync(TargetTime targetTime) {
 
-        switch(targetTime) {
+        switch (targetTime) {
         case EndExpiration:
             // JP Apr 29, 2013
-            // Luckily this works quickly enough to respond to *this* start breath
-            // event.  A more robust implementation would probably trigger just before
-            // the *next* start breath ... or a timeout of (this.period-50L) on the following line
+            // Luckily this works quickly enough to respond to *this* start
+            // breath
+            // event. A more robust implementation would probably trigger just
+            // before
+            // the *next* start breath ... or a timeout of (this.period-50L) on
+            // the following line
             executorCritical.schedule(freezeCallable, 0L, TimeUnit.MILLISECONDS);
             break;
         case EndInspiration:
-            executorCritical.schedule(freezeCallable, inspiratoryTime-100L, TimeUnit.MILLISECONDS);
+            executorCritical.schedule(freezeCallable, inspiratoryTime - 100L, TimeUnit.MILLISECONDS);
             break;
         }
     }
 
     private static final Color alertPink = new Color(200, 20, 0);
     private static final Color normalGreen = new Color(20, 200, 20);
+
     @Override
     public void deviceIdentity(ice.DeviceIdentityDataReader reader, ice.DeviceIdentitySeq di_seq, SampleInfoSeq info_seq) {
     }
+
     private final Set<InstanceHandle_t> seenInstances = new HashSet<InstanceHandle_t>();
+
     @Override
     public void deviceConnectivity(ice.DeviceConnectivityDataReader reader, ice.DeviceConnectivitySeq dc_seq, SampleInfoSeq info_seq) {
         seenInstances.clear();
-        for(int i = info_seq.size() - 1; i >= 0; i--) {
+        for (int i = info_seq.size() - 1; i >= 0; i--) {
             SampleInfo si = (SampleInfo) info_seq.get(i);
-            if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
+            if (si.valid_data && !seenInstances.contains(si.instance_handle)) {
                 seenInstances.add(si.instance_handle);
                 DeviceConnectivity dc = (DeviceConnectivity) dc_seq.get(i);
                 demoPanel.getPatientLabel().setText(dc.state.name());
-                switch(dc.state.value()) {
+                switch (dc.state.value()) {
                 case ice.ConnectionState._Connected:
                     demoPanel.getPatientLabel().setForeground(normalGreen);
                     break;
@@ -456,33 +457,33 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
     @Override
     public void numeric(ice.NumericDataReader reader, ice.NumericSeq nu_seq, SampleInfoSeq info_seq) {
         seenInstances.clear();
-        for(int i = info_seq.size() - 1; i >= 0; i--) {
+        for (int i = info_seq.size() - 1; i >= 0; i--) {
             SampleInfo si = (SampleInfo) info_seq.get(i);
 
-            if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
+            if (si.valid_data && !seenInstances.contains(si.instance_handle)) {
                 seenInstances.add(si.instance_handle);
                 ice.Numeric n = (Numeric) nu_seq.get(i);
                 long previousPeriod = this.period;
-                if(ice.MDC_TIME_PD_INSPIRATORY.VALUE.equals(n.metric_id)) {
+                if (ice.MDC_TIME_PD_INSPIRATORY.VALUE.equals(n.metric_id)) {
                     inspiratoryTime = (long) (1000.0 * n.value);
-                } else if(ice.MDC_VENT_TIME_PD_PPV.VALUE.equals(n.metric_id)) {
-                    period = (long)( 60000.0 / n.value );
-                    if(period != previousPeriod) {
-                        log.debug("FrequencyIPPV="+n.value+" period="+period);
+                } else if (ice.MDC_VENT_TIME_PD_PPV.VALUE.equals(n.metric_id)) {
+                    period = (long) (60000.0 / n.value);
+                    if (period != previousPeriod) {
+                        log.debug("FrequencyIPPV=" + n.value + " period=" + period);
                     }
-                } else if(ice.MDC_START_OF_BREATH.VALUE.equals(n.metric_id)) {
-//                  log.trace("START_INSPIRATORY_CYCLE");
-                  Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
-                  TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
+                } else if (ice.MDC_START_OF_BREATH.VALUE.equals(n.metric_id)) {
+                    // log.trace("START_INSPIRATORY_CYCLE");
+                    Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
+                    TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
 
-                  switch(strategy) {
-                  case Automatic:
-                      autoSync(targetTime);
-                      break;
-                  case Manual:
-                      break;
-                  }
-                  break;
+                    switch (strategy) {
+                    case Automatic:
+                        autoSync(targetTime);
+                        break;
+                    case Manual:
+                        break;
+                    }
+                    break;
                 }
             }
         }
@@ -491,12 +492,12 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
     @Override
     public void sampleArray(ice.SampleArrayDataReader redaer, ice.SampleArraySeq sa_seq, SampleInfoSeq info_seq) {
         seenInstances.clear();
-        for(int i = info_seq.size() - 1; i >= 0; i--) {
+        for (int i = info_seq.size() - 1; i >= 0; i--) {
             SampleInfo si = (SampleInfo) info_seq.get(i);
-            if(si.valid_data && !seenInstances.contains(si.instance_handle)) {
+            if (si.valid_data && !seenInstances.contains(si.instance_handle)) {
                 seenInstances.add(si.instance_handle);
                 ice.SampleArray sa = (SampleArray) sa_seq.get(i);
-                if(rosetta.MDC_FLOW_AWAY.VALUE.equals(sa.metric_id)) {
+                if (rosetta.MDC_FLOW_AWAY.VALUE.equals(sa.metric_id)) {
                     wuws.applyUpdate(sa, si);
                 }
             }

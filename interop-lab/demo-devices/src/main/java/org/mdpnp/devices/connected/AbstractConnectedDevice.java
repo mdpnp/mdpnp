@@ -51,18 +51,19 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 
     protected final DeviceConnectivityObjective deviceConnectivityObjective;
     protected final DeviceConnectivityObjectiveDataReader deviceConnectivityObjectiveReader;
-//	protected final InstanceHandle_t deviceConnectivityObjectiveHandle;
+    // protected final InstanceHandle_t deviceConnectivityObjectiveHandle;
     protected final Topic deviceConnectivityObjectiveTopic;
     private final ReadCondition rc;
 
-    protected final StateMachine<ice.ConnectionState> stateMachine = new StateMachine<ice.ConnectionState>(legalTransitions, ice.ConnectionState.Disconnected) {
+    protected final StateMachine<ice.ConnectionState> stateMachine = new StateMachine<ice.ConnectionState>(legalTransitions,
+            ice.ConnectionState.Disconnected) {
         @Override
         public void emit(ice.ConnectionState newState, ice.ConnectionState oldState) {
             stateChanging(newState, oldState);
-            log.debug(oldState + "==>"+newState);
+            log.debug(oldState + "==>" + newState);
             deviceConnectivity.state = newState;
             InstanceHandle_t handle = deviceConnectivityHandle;
-            if(handle != null) {
+            if (handle != null) {
                 writeDeviceConnectivity();
             }
             stateChanged(newState, oldState);
@@ -74,7 +75,7 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
     }
 
     protected void stateChanged(ice.ConnectionState newState, ice.ConnectionState oldState) {
-        if(ice.ConnectionState.Connected.equals(oldState) && !ice.ConnectionState.Connected.equals(newState)) {
+        if (ice.ConnectionState.Connected.equals(oldState) && !ice.ConnectionState.Connected.equals(newState)) {
             eventLoop.doLater(new Runnable() {
                 public void run() {
                     unregisterAllInstances();
@@ -93,7 +94,7 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         domainParticipant.delete_topic(deviceConnectivityObjectiveTopic);
         DeviceConnectivityObjectiveTypeSupport.unregister_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
 
-        if(null != deviceConnectivityHandle) {
+        if (null != deviceConnectivityHandle) {
             InstanceHandle_t handle = deviceConnectivityHandle;
             deviceConnectivityHandle = null;
             deviceConnectivityWriter.dispose(deviceConnectivity, handle);
@@ -105,14 +106,15 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         super.shutdown();
     }
 
-
     public AbstractConnectedDevice(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
         DeviceConnectivityTypeSupport.register_type(domainParticipant, DeviceConnectivityTypeSupport.get_type_name());
-        deviceConnectivityTopic = domainParticipant.create_topic(DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        deviceConnectivityWriter = (DeviceConnectivityDataWriter) publisher.create_datawriter_with_profile(deviceConnectivityTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        deviceConnectivityTopic = domainParticipant.create_topic(DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.get_type_name(),
+                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceConnectivityWriter = (DeviceConnectivityDataWriter) publisher.create_datawriter_with_profile(deviceConnectivityTopic,
+                QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
-        if(null == deviceConnectivityWriter) {
+        if (null == deviceConnectivityWriter) {
             throw new RuntimeException("unable to create writer");
         }
 
@@ -122,10 +124,13 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 
         deviceConnectivityObjective = (DeviceConnectivityObjective) DeviceConnectivityObjective.create();
         DeviceConnectivityObjectiveTypeSupport.register_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
-        deviceConnectivityObjectiveTopic = domainParticipant.create_topic(DeviceConnectivityObjectiveTopic.VALUE, DeviceConnectivityObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        deviceConnectivityObjectiveReader = (DeviceConnectivityObjectiveDataReader) subscriber.create_datareader_with_profile(deviceConnectivityObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        deviceConnectivityObjectiveTopic = domainParticipant.create_topic(DeviceConnectivityObjectiveTopic.VALUE,
+                DeviceConnectivityObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceConnectivityObjectiveReader = (DeviceConnectivityObjectiveDataReader) subscriber.create_datareader_with_profile(
+                deviceConnectivityObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
-        rc = deviceConnectivityObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+        rc = deviceConnectivityObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                InstanceStateKind.ANY_INSTANCE_STATE);
 
         final DeviceConnectivityObjectiveSeq data_seq = new DeviceConnectivityObjectiveSeq();
         final SampleInfoSeq info_seq = new SampleInfoSeq();
@@ -136,13 +141,13 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
             public void conditionChanged(Condition condition) {
                 try {
                     deviceConnectivityObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, rc);
-                    for(int i = 0; i < info_seq.size(); i++) {
+                    for (int i = 0; i < info_seq.size(); i++) {
                         SampleInfo si = (SampleInfo) info_seq.get(i);
-                        if(si.valid_data) {
+                        if (si.valid_data) {
                             DeviceConnectivityObjective dco = (DeviceConnectivityObjective) data_seq.get(i);
-                            if(deviceIdentity.unique_device_identifier.equals(dco.unique_device_identifier)) {
+                            if (deviceIdentity.unique_device_identifier.equals(dco.unique_device_identifier)) {
 
-                                if(dco.connected) {
+                                if (dco.connected) {
                                     log.info("Issuing connect for " + deviceIdentity.unique_device_identifier + " to " + dco.target);
                                     connect(dco.target);
 
@@ -165,7 +170,9 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
     }
 
     public abstract void connect(String str);
+
     public abstract void disconnect();
+
     protected abstract ice.ConnectionType getConnectionType();
 
     public ice.ConnectionState getState() {
@@ -173,46 +180,48 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
     };
 
     private static final ice.ConnectionState[][] legalTransitions = new ice.ConnectionState[][] {
-        // Normal "flow"
-        // A "connect" was requested
-        {ice.ConnectionState.Disconnected, ice.ConnectionState.Connecting},
-        // A "disconnect" was requested from the Connected state
-        {ice.ConnectionState.Connected, ice.ConnectionState.Disconnecting},
-          // A "disconnect" was requested from the Connecting state
-        {ice.ConnectionState.Connecting, ice.ConnectionState.Disconnecting},
-        // A "disconnect" was requested from the Negotiating state
-        {ice.ConnectionState.Negotiating, ice.ConnectionState.Disconnecting},
-        // Connection was established
-        {ice.ConnectionState.Connecting, ice.ConnectionState.Negotiating},
-        // Connection still open but no active session (silence on the RS-232 line for example)
-        {ice.ConnectionState.Connected, ice.ConnectionState.Negotiating},
-        // Negotiation was successful
-        {ice.ConnectionState.Negotiating, ice.ConnectionState.Connected},
-        // Disconnection was successful
-        {ice.ConnectionState.Disconnecting, ice.ConnectionState.Disconnected},
-        // Exception pathways
-        // A fatal error occurred in the Negotiating state
-        {ice.ConnectionState.Negotiating, ice.ConnectionState.Disconnected},
-        // A fatal error occurred in the Connecting state
-        {ice.ConnectionState.Connecting, ice.ConnectionState.Disconnected},
-        // A fatal error occurred in the Connected state
-        {ice.ConnectionState.Connected, ice.ConnectionState.Disconnected},
+            // Normal "flow"
+            // A "connect" was requested
+            { ice.ConnectionState.Disconnected, ice.ConnectionState.Connecting },
+            // A "disconnect" was requested from the Connected state
+            { ice.ConnectionState.Connected, ice.ConnectionState.Disconnecting },
+            // A "disconnect" was requested from the Connecting state
+            { ice.ConnectionState.Connecting, ice.ConnectionState.Disconnecting },
+            // A "disconnect" was requested from the Negotiating state
+            { ice.ConnectionState.Negotiating, ice.ConnectionState.Disconnecting },
+            // Connection was established
+            { ice.ConnectionState.Connecting, ice.ConnectionState.Negotiating },
+            // Connection still open but no active session (silence on the
+            // RS-232 line for example)
+            { ice.ConnectionState.Connected, ice.ConnectionState.Negotiating },
+            // Negotiation was successful
+            { ice.ConnectionState.Negotiating, ice.ConnectionState.Connected },
+            // Disconnection was successful
+            { ice.ConnectionState.Disconnecting, ice.ConnectionState.Disconnected },
+            // Exception pathways
+            // A fatal error occurred in the Negotiating state
+            { ice.ConnectionState.Negotiating, ice.ConnectionState.Disconnected },
+            // A fatal error occurred in the Connecting state
+            { ice.ConnectionState.Connecting, ice.ConnectionState.Disconnected },
+            // A fatal error occurred in the Connected state
+            { ice.ConnectionState.Connected, ice.ConnectionState.Disconnected },
 
     };
 
-    //Disconnected -> Connecting -> Negotiating -> Connected -> Disconnecting -> Disconnected
+    // Disconnected -> Connecting -> Negotiating -> Connected -> Disconnecting
+    // -> Disconnected
 
     public boolean awaitState(ice.ConnectionState state, long timeout) {
         return stateMachine.wait(state, timeout);
     }
 
     protected void setConnectionInfo(String connectionInfo) {
-        if(null == connectionInfo) {
+        if (null == connectionInfo) {
             // TODO work on nullity semantics
             log.warn("Attempt to set connectionInfo null");
             connectionInfo = "";
         }
-        if(!connectionInfo.equals(deviceConnectivity.info)) {
+        if (!connectionInfo.equals(deviceConnectivity.info)) {
             deviceConnectivity.info = connectionInfo;
             writeDeviceConnectivity();
         }
@@ -221,17 +230,17 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
     @Override
     protected void writeDeviceIdentity() {
         super.writeDeviceIdentity();
-        if(null == deviceConnectivityHandle) {
+        if (null == deviceConnectivityHandle) {
             writeDeviceConnectivity();
         }
     }
 
     protected void writeDeviceConnectivity() {
         deviceConnectivity.unique_device_identifier = deviceIdentity.unique_device_identifier;
-        if(null == deviceConnectivity.unique_device_identifier || "".equals(deviceConnectivity.unique_device_identifier)) {
+        if (null == deviceConnectivity.unique_device_identifier || "".equals(deviceConnectivity.unique_device_identifier)) {
             throw new IllegalStateException("No UDI");
         }
-        if(null == deviceConnectivityHandle) {
+        if (null == deviceConnectivityHandle) {
             deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);
         }
         deviceConnectivityWriter.write(deviceConnectivity, deviceConnectivityHandle);
