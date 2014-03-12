@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.mdpnp.devices.EventLoop;
+import org.mdpnp.devices.QosProfiles;
 import org.mdpnp.devices.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -187,13 +188,13 @@ public class PumpModelImpl implements PumpModel {
         
 //        ice.InfusionStatusTypeSupport.register_type(subscriber.get_participant(), ice.InfusionStatusTypeSupport.get_type_name());
         TopicDescription infusionStatusTopic = TopicUtil.lookupOrCreateTopic(subscriber.get_participant(), ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.class);
-        statusReader = (InfusionStatusDataReader) subscriber.create_datareader(infusionStatusTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        statusReader = (InfusionStatusDataReader) subscriber.create_datareader_with_profile(infusionStatusTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
         statusCondition = statusReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
         
         
         ice.InfusionObjectiveTypeSupport.register_type(subscriber.get_participant(), ice.InfusionObjectiveTypeSupport.get_type_name());
         Topic infusionObjectiveTopic = publisher.get_participant().create_topic(ice.InfusionObjectiveTopic.VALUE, ice.InfusionObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        objectiveWriter = (InfusionObjectiveDataWriter) publisher.create_datawriter(infusionObjectiveTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        objectiveWriter = (InfusionObjectiveDataWriter) publisher.create_datawriter_with_profile(infusionObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
         
         eventLoop.addHandler(statusCondition, infusionStatusHandler);
     }

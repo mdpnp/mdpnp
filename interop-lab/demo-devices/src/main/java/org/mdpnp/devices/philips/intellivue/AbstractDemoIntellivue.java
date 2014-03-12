@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mdpnp.devices.EventLoop;
+import org.mdpnp.devices.QosProfiles;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.net.NetworkLoop;
 import org.mdpnp.devices.net.TaskQueue;
@@ -817,14 +818,14 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         ice.DeviceAlertConditionTypeSupport.register_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
         deviceAlertConditionTopic = domainParticipant.create_topic(ice.DeviceAlertConditionTopic.VALUE, ice.DeviceAlertConditionTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
-        deviceAlertConditionWriter = (ice.DeviceAlertConditionDataWriter) publisher.create_datawriter(deviceAlertConditionTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceAlertConditionWriter = (ice.DeviceAlertConditionDataWriter) publisher.create_datawriter_with_profile(deviceAlertConditionTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         ice.AlertTypeSupport.register_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
         patientAlertTopic = domainParticipant.create_topic(ice.PatientAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         technicalAlertTopic = domainParticipant.create_topic(ice.TechnicalAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
-        patientAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter(patientAlertTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        technicalAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter(technicalAlertTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        patientAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(patientAlertTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        technicalAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(technicalAlertTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         deviceIdentity.manufacturer = "Philips";
         deviceIdentity.model = "Intellivue Device";

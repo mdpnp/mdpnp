@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.mdpnp.devices.EventLoop;
+import org.mdpnp.devices.QosProfiles;
 import org.mdpnp.devices.TopicUtil;
 
 import com.rti.dds.infrastructure.Condition;
@@ -94,7 +95,7 @@ public class CapnoModelImpl implements CapnoModel {
 
 //      ice.InfusionStatusTypeSupport.register_type(subscriber.get_participant(), ice.InfusionStatusTypeSupport.get_type_name());
       TopicDescription saTopic = TopicUtil.lookupOrCreateTopic(subscriber.get_participant(), ice.SampleArrayTopic.VALUE, ice.SampleArrayTypeSupport.class);
-      capnoReader = (ice.SampleArrayDataReader) subscriber.create_datareader(saTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+      capnoReader = (ice.SampleArrayDataReader) subscriber.create_datareader_with_profile(saTopic, QosProfiles.ice_library, QosProfiles.waveform_data, null, StatusKind.STATUS_MASK_NONE);
       StringSeq params = new StringSeq();
       params.add("'"+sa_name+"'");
       capnoCondition = capnoReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE, "metric_id = %0", params);

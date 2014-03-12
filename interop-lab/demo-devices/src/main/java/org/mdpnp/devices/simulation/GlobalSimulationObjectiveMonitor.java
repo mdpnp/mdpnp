@@ -3,6 +3,7 @@ package org.mdpnp.devices.simulation;
 import ice.GlobalSimulationObjective;
 
 import org.mdpnp.devices.EventLoop;
+import org.mdpnp.devices.QosProfiles;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.Condition;
@@ -14,7 +15,6 @@ import com.rti.dds.subscription.ReadCondition;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
-import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 
@@ -54,7 +54,7 @@ public class GlobalSimulationObjectiveMonitor {
         globalSimulationObjective = (ice.GlobalSimulationObjective) ice.GlobalSimulationObjective.create();
         ice.GlobalSimulationObjectiveTypeSupport.register_type(domainParticipant, ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
         globalSimulationObjectiveTopic = domainParticipant.create_topic(ice.GlobalSimulationObjectiveTopic.VALUE, ice.GlobalSimulationObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        globalSimulationObjectiveReader = (ice.GlobalSimulationObjectiveDataReader) domainParticipant.create_datareader(globalSimulationObjectiveTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        globalSimulationObjectiveReader = (ice.GlobalSimulationObjectiveDataReader) domainParticipant.create_datareader_with_profile(globalSimulationObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         rc = globalSimulationObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
 

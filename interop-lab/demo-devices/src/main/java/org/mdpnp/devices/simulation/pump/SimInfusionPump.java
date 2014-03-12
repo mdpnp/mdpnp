@@ -5,6 +5,7 @@ import ice.InfusionStatusDataWriter;
 
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoop.ConditionHandler;
+import org.mdpnp.devices.QosProfiles;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 
 import com.rti.dds.domain.DomainParticipant;
@@ -14,14 +15,12 @@ import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
-import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.QueryCondition;
 import com.rti.dds.subscription.ReadCondition;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
-import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 
@@ -81,7 +80,7 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
 
         ice.InfusionStatusTypeSupport.register_type(getParticipant(), ice.InfusionStatusTypeSupport.get_type_name());
         infusionStatusTopic = getParticipant().create_topic(ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        infusionStatusWriter = (InfusionStatusDataWriter) publisher.create_datawriter(infusionStatusTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        infusionStatusWriter = (InfusionStatusDataWriter) publisher.create_datawriter_with_profile(infusionStatusTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         infusionStatus.unique_device_identifier = deviceIdentity.unique_device_identifier;
         infusionStatusHandle = infusionStatusWriter.register_instance(infusionStatus);
@@ -98,7 +97,7 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
 
         ice.InfusionObjectiveTypeSupport.register_type(getParticipant(), ice.InfusionObjectiveTypeSupport.get_type_name());
         infusionObjectiveTopic = getParticipant().create_topic(ice.InfusionObjectiveTopic.VALUE,  ice.InfusionObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        infusionObjectiveReader = (ice.InfusionObjectiveDataReader) subscriber.create_datareader(infusionObjectiveTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        infusionObjectiveReader = (ice.InfusionObjectiveDataReader) subscriber.create_datareader_with_profile(infusionObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         StringSeq params = new StringSeq();
         params.add("'"+deviceIdentity.unique_device_identifier+"'");

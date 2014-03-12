@@ -103,11 +103,11 @@ public class DeviceMonitor {
         TopicDescription deviceInfusionStatusTopic = lookupOrCreateTopic(participant, ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.class);
 
 
-        final DeviceIdentityDataReader idReader = (DeviceIdentityDataReader) subscriber.create_datareader(deviceIdentityTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        final DeviceConnectivityDataReader connReader = (DeviceConnectivityDataReader) subscriber.create_datareader(deviceConnectivityTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        final NumericDataReader numReader = (NumericDataReader) subscriber.create_datareader(deviceNumericTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        final SampleArrayDataReader saReader = (SampleArrayDataReader) subscriber.create_datareader(deviceSampleArrayTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        final ice.InfusionStatusDataReader ipReader = (ice.InfusionStatusDataReader) subscriber.create_datareader(deviceInfusionStatusTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        final DeviceIdentityDataReader idReader = (DeviceIdentityDataReader) subscriber.create_datareader_with_profile(deviceIdentityTopic, QosProfiles.ice_library, QosProfiles.invariant_state, null, StatusKind.STATUS_MASK_NONE);
+        final DeviceConnectivityDataReader connReader = (DeviceConnectivityDataReader) subscriber.create_datareader_with_profile(deviceConnectivityTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        final NumericDataReader numReader = (NumericDataReader) subscriber.create_datareader_with_profile(deviceNumericTopic, QosProfiles.ice_library, QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
+        final SampleArrayDataReader saReader = (SampleArrayDataReader) subscriber.create_datareader_with_profile(deviceSampleArrayTopic, QosProfiles.ice_library, QosProfiles.waveform_data, null, StatusKind.STATUS_MASK_NONE);
+        final ice.InfusionStatusDataReader ipReader = (ice.InfusionStatusDataReader) subscriber.create_datareader_with_profile(deviceInfusionStatusTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         dataReaders.add(idReader);
         dataReaders.add(connReader);

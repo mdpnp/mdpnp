@@ -1,9 +1,10 @@
 package org.mdpnp.apps.testapp;
 
-import org.mdpnp.rti.dds.DDS;
-
 import ice.Numeric;
 import ice.NumericDataReader;
+
+import org.mdpnp.devices.QosProfiles;
+import org.mdpnp.rti.dds.DDS;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
@@ -67,7 +68,7 @@ public class OneOff {
         // data samples so that they are accessible to the application.  Violations of Quality of Service constraints are reported by all entities
         // via status conditions.  In the absence of such reports the DataReader represents the authoritative "truth" provided by the DDS bus governed
         // by the guarantees of the Quality of Service settings.
-        ice.NumericDataReader reader = (NumericDataReader) sub.create_datareader(topic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        ice.NumericDataReader reader = (NumericDataReader) sub.create_datareader_with_profile(topic, QosProfiles.ice_library, QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
 
         // A WaitSet allows us to wait for other threads to set conditions.  Analagous to a UNIX 'select' invocation.
         WaitSet ws = new WaitSet();

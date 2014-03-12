@@ -18,6 +18,7 @@ import java.util.Map;
 import javax.swing.AbstractListModel;
 
 import org.mdpnp.devices.EventLoop;
+import org.mdpnp.devices.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,13 +28,11 @@ import com.rti.dds.domain.builtin.ParticipantBuiltinTopicDataDataReader;
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicDataSeq;
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicDataTypeSupport;
 import com.rti.dds.infrastructure.Condition;
-import com.rti.dds.infrastructure.HistoryQosPolicyKind;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusCondition;
 import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.subscription.DataReaderQos;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
@@ -289,16 +288,6 @@ public class DeviceListModel extends AbstractListModel<Device> {
     final ParticipantBuiltinTopicDataSeq part_seq = new ParticipantBuiltinTopicDataSeq();
     final SampleInfoSeq info_seq = new SampleInfoSeq();
 
-    private static final void ensureStatefulHistory(DataReaderQos qos, String identifier) {
-        if(HistoryQosPolicyKind.KEEP_ALL_HISTORY_QOS.equals(qos.history.kind)) {
-            log.warn("Overriding KEEP_ALL_HISTORY_QOS for " + identifier);
-            qos.history.kind = HistoryQosPolicyKind.KEEP_LAST_HISTORY_QOS;
-        }
-        if(qos.history.depth > 1) {
-            log.warn("Overriding history depth of " + qos.history.depth + " for " + identifier);
-            qos.history.depth = 1;
-        }
-    }
 
     public DeviceListModel(final Subscriber subscriber, final EventLoop eventLoop) {
         this.eventLoop = eventLoop;
@@ -310,14 +299,10 @@ public class DeviceListModel extends AbstractListModel<Device> {
                 idTopic = lookupOrCreateTopic(participant, ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.class);
                 connTopic = lookupOrCreateTopic(participant, ice.DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.class);
 
-                DataReaderQos stateReaderQos = new DataReaderQos();
-                subscriber.get_default_datareader_qos(stateReaderQos);
-                ensureStatefulHistory(stateReaderQos, "DeviceConnectivity and DeviceIdentity");
-
                 reader = (ParticipantBuiltinTopicDataDataReader) participant.get_builtin_subscriber().lookup_datareader(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME);
-                idReader = (DeviceIdentityDataReader) subscriber.create_datareader(idTopic, stateReaderQos, null, StatusKind.STATUS_MASK_NONE);
+                idReader = (DeviceIdentityDataReader) subscriber.create_datareader_with_profile(idTopic, QosProfiles.ice_library, QosProfiles.invariant_state, null, StatusKind.STATUS_MASK_NONE);
 
-                connReader = (DeviceConnectivityDataReader) subscriber.create_datareader(connTopic, stateReaderQos, null, StatusKind.STATUS_MASK_NONE);
+                connReader = (DeviceConnectivityDataReader) subscriber.create_datareader_with_profile(connTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
                 reader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
                 idReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);

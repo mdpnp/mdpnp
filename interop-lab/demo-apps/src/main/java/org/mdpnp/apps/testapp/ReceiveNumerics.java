@@ -1,5 +1,8 @@
 package org.mdpnp.apps.testapp;
 
+import ice.Numeric;
+import ice.NumericDataReader;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -7,9 +10,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import ice.Numeric;
-import ice.NumericDataReader;
-
+import org.mdpnp.devices.QosProfiles;
 import org.mdpnp.rti.dds.DDS;
 
 import com.rti.dds.domain.DomainParticipant;
@@ -50,7 +51,7 @@ public class ReceiveNumerics implements DataReaderListener {
         ice.NumericTypeSupport.register_type(participant, ice.NumericTypeSupport.get_type_name());
         Topic topic = participant.create_topic(ice.NumericTopic.VALUE, ice.NumericTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
-        ice.NumericDataReader reader = (NumericDataReader) subscriber.create_datareader(topic, Subscriber.DATAREADER_QOS_DEFAULT, receiver, StatusKind.DATA_AVAILABLE_STATUS);
+        ice.NumericDataReader reader = (NumericDataReader) subscriber.create_datareader_with_profile(topic, QosProfiles.ice_library, QosProfiles.numeric_data, receiver, StatusKind.DATA_AVAILABLE_STATUS);
 
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 

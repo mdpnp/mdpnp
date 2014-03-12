@@ -568,8 +568,8 @@ public abstract class AbstractDevice implements ThreadFactory {
         deviceIdentityTopic = domainParticipant.create_topic(ice.DeviceIdentityTopic.VALUE,
                 DeviceIdentityTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
                 StatusKind.STATUS_MASK_NONE);
-        deviceIdentityWriter = (DeviceIdentityDataWriter) publisher.create_datawriter(deviceIdentityTopic,
-                Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceIdentityWriter = (DeviceIdentityDataWriter) publisher.create_datawriter_with_profile(deviceIdentityTopic,
+                QosProfiles.ice_library, QosProfiles.invariant_state, null, StatusKind.STATUS_MASK_NONE);
         if (null == deviceIdentityWriter) {
             throw new RuntimeException("deviceIdentityWriter not created");
         }
@@ -583,8 +583,8 @@ public abstract class AbstractDevice implements ThreadFactory {
         NumericTypeSupport.register_type(domainParticipant, NumericTypeSupport.get_type_name());
         numericTopic = domainParticipant.create_topic(ice.NumericTopic.VALUE, NumericTypeSupport.get_type_name(),
                 DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        numericDataWriter = (NumericDataWriter) publisher.create_datawriter(numericTopic,
-                Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        numericDataWriter = (NumericDataWriter) publisher.create_datawriter_with_profile(numericTopic,
+                QosProfiles.ice_library, QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
         if (null == numericDataWriter) {
             throw new RuntimeException("numericDataWriter not created");
         }
@@ -593,8 +593,8 @@ public abstract class AbstractDevice implements ThreadFactory {
         sampleArrayTopic = domainParticipant.create_topic(ice.SampleArrayTopic.VALUE,
                 SampleArrayTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
                 StatusKind.STATUS_MASK_NONE);
-        sampleArrayDataWriter = (SampleArrayDataWriter) publisher.create_datawriter(sampleArrayTopic,
-                Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        sampleArrayDataWriter = (SampleArrayDataWriter) publisher.create_datawriter_with_profile(sampleArrayTopic,
+                QosProfiles.ice_library, QosProfiles.waveform_data, null, StatusKind.STATUS_MASK_NONE);
         if (null == sampleArrayDataWriter) {
             throw new RuntimeException("sampleArrayDataWriter not created");
         }
@@ -602,14 +602,14 @@ public abstract class AbstractDevice implements ThreadFactory {
         ice.AlarmSettingsTypeSupport.register_type(domainParticipant, ice.AlarmSettingsTypeSupport.get_type_name());
         alarmSettingsTopic = domainParticipant.create_topic(ice.AlarmSettingsTopic.VALUE, ice.AlarmSettingsTypeSupport.get_type_name(),
                 DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        alarmSettingsDataWriter = (ice.AlarmSettingsDataWriter) publisher.create_datawriter(alarmSettingsTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        alarmSettingsDataWriter = (ice.AlarmSettingsDataWriter) publisher.create_datawriter_with_profile(alarmSettingsTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         ice.LocalAlarmSettingsObjectiveTypeSupport.register_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
         alarmSettingsObjectiveTopic = domainParticipant.create_topic(ice.LocalAlarmSettingsObjectiveTopic.VALUE, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        alarmSettingsObjectiveWriter = (LocalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter(alarmSettingsObjectiveTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        alarmSettingsObjectiveWriter = (LocalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(alarmSettingsObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         TopicDescription alarmSettingsObjectiveTopic = TopicUtil.lookupOrCreateTopic(domainParticipant, ice.GlobalAlarmSettingsObjectiveTopic.VALUE, ice.GlobalAlarmSettingsObjectiveTypeSupport.class);
-        alarmSettingsObjectiveReader = (ice.GlobalAlarmSettingsObjectiveDataReader) subscriber.create_datareader(alarmSettingsObjectiveTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        alarmSettingsObjectiveReader = (ice.GlobalAlarmSettingsObjectiveDataReader) subscriber.create_datareader_with_profile(alarmSettingsObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
 
         threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "AbstractDevice") {

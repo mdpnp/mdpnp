@@ -1,11 +1,12 @@
 package org.mdpnp.apps.testapp.pca;
 
-import java.io.IOException;
-
 import ice.InfusionObjectiveDataWriter;
 import ice.InfusionStatus;
 import ice.InfusionStatusDataReader;
 
+import java.io.IOException;
+
+import org.mdpnp.devices.QosProfiles;
 import org.mdpnp.rti.dds.DDS;
 
 import com.rti.dds.domain.DomainParticipant;
@@ -44,12 +45,12 @@ public class StopThePump {
         ice.InfusionStatusTypeSupport.register_type(part, ice.InfusionStatusTypeSupport.get_type_name());
 
         Topic infoTopic = part.create_topic(ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        ice.InfusionStatusDataReader reader = (InfusionStatusDataReader) sub.create_datareader(infoTopic, Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        ice.InfusionStatusDataReader reader = (InfusionStatusDataReader) sub.create_datareader_with_profile(infoTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
         ReadCondition rc = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
 
         ice.InfusionObjectiveTypeSupport.register_type(part, ice.InfusionObjectiveTypeSupport.get_type_name());
         Topic objTopic = part.create_topic(ice.InfusionObjectiveTopic.VALUE, ice.InfusionObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        ice.InfusionObjectiveDataWriter writer = (InfusionObjectiveDataWriter) pub.create_datawriter(objTopic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        ice.InfusionObjectiveDataWriter writer = (InfusionObjectiveDataWriter) pub.create_datawriter_with_profile(objTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         final GuardCondition exitCondition = new GuardCondition();
 

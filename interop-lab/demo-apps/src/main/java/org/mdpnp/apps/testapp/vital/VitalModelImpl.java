@@ -27,6 +27,7 @@ import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
+import org.mdpnp.devices.QosProfiles;
 import org.mdpnp.devices.TopicUtil;
 import org.mdpnp.rti.dds.DDS;
 import org.slf4j.Logger;
@@ -348,12 +349,12 @@ public class VitalModelImpl implements VitalModel {
                 ice.GlobalAlarmSettingsObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name());
 //                TopicDescription topic = TopicUtil.lookupOrCreateTopic(participant, ice.AlarmSettingsObjectiveTopic.VALUE, ice.AlarmSettingsObjectiveTypeSupport.class);
                 Topic topic = participant.create_topic(ice.GlobalAlarmSettingsObjectiveTopic.VALUE, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-                writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) participant.create_datawriter(topic, Publisher.DATAWRITER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+                writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) participant.create_datawriter_with_profile(topic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
                 NumericTypeSupport.register_type(participant, NumericTypeSupport.get_type_name());
                 TopicDescription nTopic = TopicUtil.lookupOrCreateTopic(participant, NumericTopic.VALUE,
                         NumericTypeSupport.class);
-                numericReader = (NumericDataReader) subscriber.create_datareader(nTopic, Subscriber.DATAREADER_QOS_DEFAULT,
+                numericReader = (NumericDataReader) subscriber.create_datareader_with_profile(nTopic, QosProfiles.ice_library, QosProfiles.numeric_data,
                         null, StatusKind.STATUS_MASK_NONE);
 
                 for (Vital v : vitals) {
