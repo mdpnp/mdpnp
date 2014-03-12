@@ -11,8 +11,9 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Image;
 import java.awt.Insets;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -115,7 +116,13 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
                 serial_number.setText(di.serial_number);
                 unique_device_identifier.setText(di.unique_device_identifier);
                 icon.setText("");
-                Image img = IconUtil.image(di.icon);
+                BufferedImage img;
+                try {
+                    img = IconUtil.image(di.icon);
+                } catch (IOException e) {
+                    log.error("Error loading device image", e);
+                    img = null;
+                }
 
                 if(null != img) {
                     icon.setIcon(new ImageIcon(img));
