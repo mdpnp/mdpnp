@@ -44,13 +44,13 @@ import com.rti.dds.topic.TopicDescription;
 @SuppressWarnings("serial")
 public class DeviceListModel extends AbstractListModel<Device> {
 
-    private final void update(DeviceConnectivity dc) {
+    private final void update(DeviceConnectivity dc, boolean alive) {
         if(!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:"+Thread.currentThread());
         }
         Device device = contentsByUDI.get(dc.unique_device_identifier);
         if(null != device) {
-            device.setDeviceConnectivity(dc);
+            device.setDeviceConnectivity(alive?dc:null);
             Integer idx = contentsByIdx.get(device);
             if(null != idx) {
                 fireContentsChanged(DeviceListModel.this, idx, idx);
@@ -62,13 +62,13 @@ public class DeviceListModel extends AbstractListModel<Device> {
         }
     }
 
-    private final void update(DeviceIdentity di) {
+    private final void update(DeviceIdentity di, boolean alive) {
         if(!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:"+Thread.currentThread());
         }
         Device device = contentsByUDI.get(di.unique_device_identifier);
         if(null != device) {
-            device.setDeviceIdentity(di);
+            device.setDeviceIdentity(alive?di:null);
             Integer idx = contentsByIdx.get(device);
             if(null != idx) {
                 fireContentsChanged(DeviceListModel.this, idx, idx);
@@ -242,7 +242,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
 
     private final void dataAvailable(ice.DeviceConnectivityDataReader reader) {
         try {
-            while(true) {
+            for(;;) {
                 try {
                     reader.read(conn_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
 //                    log.trace("read for dataAvailable(DeviceConnectivityDataReader");
@@ -250,8 +250,14 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         DeviceConnectivity dc = (DeviceConnectivity) conn_seq.get(i);
                         SampleInfo si = (SampleInfo) info_seq.get(i);
 
-                        if(si.valid_data && 0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
-                            update(dc);
+                        if(0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
+                            if(si.valid_data) {
+                                update(dc, true);
+                            }
+                        } else {
+                            dc = new DeviceConnectivity();
+                            reader.get_key_value(dc, si.instance_handle);
+                            update(dc, false);
                         }
                     }
                 } finally {
@@ -267,19 +273,29 @@ public class DeviceListModel extends AbstractListModel<Device> {
 
     private final void dataAvailable(ice.DeviceIdentityDataReader reader) {
         try {
-            reader.read(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
-            for(int i = 0; i < data_seq.size(); i++) {
-                DeviceIdentity di = (DeviceIdentity) data_seq.get(i);
-                SampleInfo si = (SampleInfo) info_seq.get(i);
-
-                if(si.valid_data) {
-                    update(di);
+            for(;;) {
+                try {
+                    reader.read(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                    for(int i = 0; i < data_seq.size(); i++) {
+                        DeviceIdentity di = (DeviceIdentity) data_seq.get(i);
+                        SampleInfo si = (SampleInfo) info_seq.get(i);
+        
+                        if(0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
+                            if(si.valid_data) {
+                                update(di, true);
+                            }
+                        } else {
+                            di = new DeviceIdentity();
+                            reader.get_key_value(di, si.instance_handle);
+                            update(di, false);
+                        }
+                    }
+                } finally {
+                    reader.return_loan(data_seq, info_seq);
                 }
             }
         } catch (RETCODE_NO_DATA noData) {
 
-        } finally {
-            reader.return_loan(data_seq, info_seq);
         }
     }
 
