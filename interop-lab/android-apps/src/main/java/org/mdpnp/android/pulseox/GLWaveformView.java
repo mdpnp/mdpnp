@@ -1,12 +1,17 @@
 package org.mdpnp.android.pulseox;
 
+import java.lang.reflect.Method;
+
 import org.mdpnp.guis.opengl.GLRenderer;
 import org.mdpnp.guis.waveform.CachingWaveformSource;
 import org.mdpnp.guis.waveform.WaveformSource;
 import org.mdpnp.guis.waveform.opengl.GLWaveformRenderer;
+import org.mdpnp.rtbb.R;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -30,16 +35,30 @@ public class GLWaveformView extends GLView implements WaveformRepresentation, On
 		return new GLWaveformRenderer.Color(Color.red(color)/255f, Color.green(color)/255f, Color.blue(color)/255f, Color.alpha(color)/255f);
 	}
 	
+	private static final int color(GLWaveformRenderer.Color color) {
+	    return Color.argb((int)(color.alpha*255f), (int)(color.red*255f),(int)(color.green*255f), (int)(color.blue*255f));
+	}
+	
+	@Override
+	public void setBackgroundColor(int color) {
+		super.setBackgroundColor(color);
+		getRenderer().setBackground(color(color));
+	}
+		
+	
 	@Override
 	public void setBackground(int color) {
 		getRenderer().setBackground(color(color));
 	}
-		
 	@Override
 	public void setForeground(int color) {
 		getRenderer().setForeground(color(color));
 	}
 	
+	@Override
+	public int getForeground() {
+	    return color(getRenderer().getForeground());
+	}
 
 	
 	@Override
@@ -53,12 +72,49 @@ public class GLWaveformView extends GLView implements WaveformRepresentation, On
 	
 	public GLWaveformView(Context context) {
 		super(context);
+		setupBackground();
 	}
 	
+	private void setupBackground() {
+	    try {
+            Class<?> colorDrawable = Class.forName("android.graphics.drawable.ColorDrawable");
+            Method getColor = colorDrawable.getMethod("getColor");
+            Drawable background = getBackground();
+            if(colorDrawable.isInstance(background)) {
+                setBackground((Integer) getColor.invoke(background));
+            }
+        } catch (Throwable t) {
+            Log.i("GLWaveformView", "No ColorDrawable.getColor available on this device");
+        }
+	}
 	public GLWaveformView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		
+		TypedArray a = context.obtainStyledAttributes(attrs,
+		        R.styleable.org_mdpnp_android_pulseox_GLWaveformView);
+		     
+		    final int N = a.getIndexCount();
+		    for (int i = 0; i < N; ++i)
+		    {
+		        int attr = a.getIndex(i);
+		        switch (attr) {
+		        case R.styleable.org_mdpnp_android_pulseox_GLWaveformView_foreground:
+		            setForeground(a.getColor(attr, Color.BLACK));
+		            break;
+		        
+		        }
+		    }
+		a.recycle();
+		setupBackground();
+		
+		
 	}
 
+	@Override
+	public WaveformSource getSource() {
+	    return getRenderer().getSource();
+	}
+	
 	@Override
 	public void setSource(WaveformSource source) {
 		getRenderer().setSource(source);
