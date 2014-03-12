@@ -130,7 +130,7 @@ public class ParticipantOnly extends JPanel implements TableModel, DataReaderLis
         
         DomainParticipantQos dpQos = new DomainParticipantQos();
         factory.get_default_participant_qos(dpQos);
-        dpQos.participant_name.name = "ICE Diagnostic Participant";
+        dpQos.participant_name.name = "ICE  Participant Only";
         
         participant = factory.create_participant(this.domainId, dpQos, null, StatusKind.STATUS_MASK_NONE);
         reader = (ParticipantBuiltinTopicDataDataReader) participant.get_builtin_subscriber().lookup_datareader(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME);
@@ -148,7 +148,7 @@ public class ParticipantOnly extends JPanel implements TableModel, DataReaderLis
 
     @Override
     public int getColumnCount() {
-        return 2;
+        return 3;
     }
 
     @Override
@@ -158,6 +158,8 @@ public class ParticipantOnly extends JPanel implements TableModel, DataReaderLis
             return "Key";
         case 1:
             return "Name";
+        case 2:
+            return "Hostname";
          default:
              return "???";
             
@@ -169,6 +171,7 @@ public class ParticipantOnly extends JPanel implements TableModel, DataReaderLis
         switch(columnIndex) {
         case 0:
         case 1:
+        case 2:
             return String.class;
         default:
             return Object.class;
@@ -195,6 +198,8 @@ public class ParticipantOnly extends JPanel implements TableModel, DataReaderLis
             return data.key.toString();
         case 1:
             return data.participant_name.name;
+        case 2:
+            return Device.getHostname(data);
         default:
             return null;
         }

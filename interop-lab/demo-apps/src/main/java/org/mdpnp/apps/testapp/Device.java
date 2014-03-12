@@ -42,7 +42,7 @@ public class Device {
         setParticipantData(participantData);
     }
 
-    public String getHostname() {
+    public static final String getHostname(ParticipantBuiltinTopicData participantData) {
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < participantData.property.value.size(); i++) {
             Property_t prop = (Property_t) participantData.property.value.get(i);
@@ -76,6 +76,10 @@ public class Device {
             }
         }
         return sb.toString();
+    }
+    
+    public String getHostname() {
+        return getHostname(participantData);
     }
     
     public DeviceIcon getIcon() {
