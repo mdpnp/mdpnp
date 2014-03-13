@@ -58,7 +58,6 @@ import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
 import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
-import com.rti.dds.domain.builtin.ParticipantBuiltinTopicDataTypeSupport;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.SampleInfo;
@@ -140,10 +139,6 @@ public class DemoApp {
         DomainParticipantFactory.get_instance().set_qos(qos);
         final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null,
                 StatusKind.STATUS_MASK_NONE);
-        participant.get_builtin_subscriber().lookup_datareader(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME);
-        participant.enable();
-        qos.entity_factory.autoenable_created_entities = true;
-        DomainParticipantFactory.get_instance().set_qos(qos);
         final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final Publisher publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         @SuppressWarnings("serial")
@@ -154,7 +149,12 @@ public class DemoApp {
                             JOptionPane.ERROR_MESSAGE);
                 }
             }
-        };
+        };        
+        participant.enable();
+        qos.entity_factory.autoenable_created_entities = true;
+        DomainParticipantFactory.get_instance().set_qos(qos);
+
+
         final ScheduledExecutorService refreshScheduler = Executors.newSingleThreadScheduledExecutor();
 
         final DemoFrame frame = new DemoFrame("ICE Supervisor");

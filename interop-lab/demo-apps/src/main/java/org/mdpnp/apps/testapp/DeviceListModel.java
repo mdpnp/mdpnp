@@ -110,6 +110,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                 contentsByIdx.put(contents.get(i), i);
             }
             String udi = device.getUDI();
+            log.debug("New device with udi = " + udi);
             // Check for Identity and Connectivity in the case that it arrived
             // before the discovery message
             if (null != udi && !"".equals(udi)) {
@@ -124,6 +125,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
             device.setParticipantData(pbtd);
             String udi = device.getUDI();
             if (null != udi && !"".equals(udi) && !contentsByUDI.containsKey(udi)) {
+                log.debug("Previously saw device but now UDI available udi="+udi);
                 contentsByUDI.put(udi, device);
                 DeviceConnectivity dc = getConnectivityForUdi(udi);
                 DeviceIdentity di = getIdentityForUdi(udi);
@@ -262,7 +264,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
             for (;;) {
                 try {
                     reader.read(conn_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE,
-                            ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
+                            ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
                     // log.trace("read for dataAvailable(DeviceConnectivityDataReader");
                     for (int i = 0; i < conn_seq.size(); i++) {
                         DeviceConnectivity dc = (DeviceConnectivity) conn_seq.get(i);
@@ -380,29 +382,6 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         }
                     }
                 });
-
-                InstanceHandle_t previousInstance = InstanceHandle_t.HANDLE_NIL;
-                // Iterate to ensure we didn't miss any previously discovered
-                // instances
-                int i = 0;
-                for (;;) {
-                    try {
-                        reader.read_next_instance(part_seq, info_seq, 1, previousInstance, SampleStateKind.ANY_SAMPLE_STATE,
-                                ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
-                        ParticipantBuiltinTopicData data = (ParticipantBuiltinTopicData) part_seq.get(0);
-                        SampleInfo si = (SampleInfo) info_seq.get(0);
-                        i++;
-                        log.trace("This InstanceHandle was already in the reader! " + si.instance_handle);
-                        seeAnInstance(data, si);
-
-                        previousInstance = si.instance_handle;
-                    } catch (RETCODE_NO_DATA noData) {
-                        log.trace("Iterated over " + i + " instances");
-                        return;
-                    } finally {
-                        reader.return_loan(part_seq, info_seq);
-                    }
-                }
             }
         });
     }
@@ -431,18 +410,22 @@ public class DeviceListModel extends AbstractListModel<Device> {
 
     private final void dataAvailable(ParticipantBuiltinTopicDataDataReader reader) {
         try {
-            reader.read(part_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE,
-                    ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
-            for (int i = 0; i < part_seq.size(); i++) {
-                ParticipantBuiltinTopicData pbtd = (ParticipantBuiltinTopicData) part_seq.get(i);
-                SampleInfo si = (SampleInfo) info_seq.get(i);
-
-                seeAnInstance(pbtd, si);
+            for(;;) {
+                try {
+                    reader.read(part_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE,
+                            ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                    for (int i = 0; i < part_seq.size(); i++) {
+                        ParticipantBuiltinTopicData pbtd = (ParticipantBuiltinTopicData) part_seq.get(i);
+                        SampleInfo si = (SampleInfo) info_seq.get(i);
+        
+                        seeAnInstance(pbtd, si);
+                    }
+                } finally {
+                    reader.return_loan(part_seq, info_seq);
+                }
             }
         } catch (RETCODE_NO_DATA noData) {
-
-        } finally {
-            reader.return_loan(part_seq, info_seq);
+            
         }
     }
 

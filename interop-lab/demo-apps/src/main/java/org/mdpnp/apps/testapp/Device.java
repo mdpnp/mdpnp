@@ -152,6 +152,7 @@ public class Device {
             this.deviceIdentity = null;
         } else {
             if (null == this.deviceIdentity) {
+                log.debug("see first deviceIdentity sample for udi="+deviceIdentity.unique_device_identifier);
                 this.deviceIdentity = new DeviceIdentity(deviceIdentity);
             } else {
                 this.deviceIdentity.copy_from(deviceIdentity);
