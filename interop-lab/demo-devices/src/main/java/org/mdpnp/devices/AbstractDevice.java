@@ -459,6 +459,13 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
     protected boolean iconFromResource(DeviceIdentity di, String iconResourceName) throws IOException {
+        if(null == iconResourceName) {
+            di.icon.height = 0;
+            di.icon.width = 0;
+            di.icon.raster.clear();
+            return true;
+        }
+        
         InputStream is = getClass().getResourceAsStream(iconResourceName);
         if (null != is) {
             try {

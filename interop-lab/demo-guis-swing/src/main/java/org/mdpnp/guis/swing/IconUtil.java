@@ -30,6 +30,10 @@ import org.slf4j.LoggerFactory;
  */
 public class IconUtil {
     public static BufferedImage image(ice.Image image) throws IOException {
+        if(image.width == 0 || image.height == 0 || image.raster.userData.isEmpty()) {
+            return null;
+        }
+        
         BufferedImage bi;
         Exception e_read = null, e_raster = null;
         try {
