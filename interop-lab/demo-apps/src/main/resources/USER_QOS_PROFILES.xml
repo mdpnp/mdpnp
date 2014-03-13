@@ -94,6 +94,14 @@
        <nanosec>0</nanosec>
       </late_joiner_heartbeat_period>
      </participant_message_writer>
+     
+     <!--  set to asynchronous to allow rtps fragmentation when transport max message size is very small -->
+     <publication_writer_publish_mode>
+         <kind>DDS_SYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+     </publication_writer_publish_mode>
+     <subscription_writer_publish_mode>
+         <kind>DDS_SYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+     </subscription_writer_publish_mode>
     </discovery_config>
 
     <!-- 
@@ -132,6 +140,11 @@
        <!-- Don't ignore an interface just because it is nonup -->
        <name>ignore_nonup_interfaces</name>
        <value>0</value>
+      </element>
+      <!-- 65507 is the default; IP level fragmentation doesn't seem to be a problem -->
+      <element>
+       <name>dds.transport.UDPv4.builtin.parent.message_size_max</name>
+       <value>65507</value>
       </element>
      </value>
     </property>
@@ -203,10 +216,10 @@
     <ownership>
      <kind>DDS_EXCLUSIVE_OWNERSHIP_QOS</kind>
     </ownership>
-    <!-- Enables RTPS fragmentation by allowing a separate thread to manage 
-     publication of samples in several fragments -->
+    <!-- Set to async to allow RTPS fragmentation where it's necessary to 
+         exceed max message size of transport -->
     <publish_mode>
-     <kind>ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+     <kind>DDS_SYNCHRONOUS_PUBLISH_MODE_QOS</kind>
     </publish_mode>
     <protocol>
      <serialize_key_with_dispose>
