@@ -18,7 +18,9 @@ import ice.DeviceIdentity;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
@@ -30,8 +32,8 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
-import javax.swing.SwingConstants;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 @SuppressWarnings({ "serial", "rawtypes" })
@@ -60,43 +62,41 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         super.paintComponent(g);
     }
 
+    private static final void addFinePrint(Font fineprint, String label, JComponent component, GridBagConstraints gbc, Container container) {
+        JPanel pnl = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        pnl.setBorder(new EmptyBorder(0, 0, 0, 0));
+        pnl.setOpaque(false);
+        JLabel lbl = new JLabel(label);
+        pnl.add(lbl);
+        lbl.setFont(fineprint);
+        pnl.add(component);
+        component.setFont(fineprint);
+        container.add(pnl, gbc);
+        gbc.gridy++;
+    }
+    
     public DeviceListCellRenderer() {
         super();
         setLayout(new BorderLayout());
         setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
         setOpaque(true);
 
-        udi.setFont(Font.decode("fixed-12"));
         add(icon, BorderLayout.WEST);
 
         JPanel text = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,
+        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,
                 0, 0, 0), 0, 0);
         text.setOpaque(false);
-        // text.setBorder(new EmptyBorder(1, 5, 1, 5));
 
-        gbc.gridwidth = 2;
         text.add(modelName, gbc);
         gbc.gridy++;
-        gbc.gridx = 0;
-        gbc.gridwidth = 1;
         text.add(connectionStatus, gbc);
-
-        gbc.gridx++;
-        udi.setHorizontalTextPosition(SwingConstants.RIGHT);
-        text.add(udi, gbc);
-
-        gbc.gridx = 0;
         gbc.gridy++;
-        gbc.gridwidth = 2;
-        hostname.setHorizontalTextPosition(SwingConstants.RIGHT);
-        text.add(hostname, gbc);
         
-        gbc.gridx = 0;
-        gbc.gridy++;
-        gbc.gridwidth = 2;
-        buildDescriptor.setHorizontalTextPosition(SwingConstants.RIGHT);
-        text.add(buildDescriptor, gbc);
+        Font fineprint = Font.decode("fixed-8");
+        addFinePrint(fineprint, "Unique Device Id:", udi, gbc, text);
+        addFinePrint(fineprint, "Hostname:", hostname, gbc, text);
+        addFinePrint(fineprint, "Build:", buildDescriptor, gbc, text);
 
         add(text, BorderLayout.CENTER);
 
@@ -113,11 +113,11 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
 
         if (null != device) {
 
-            String shortUDI = device.getShortUDI();
-            if (null == shortUDI) {
-                udi.setText("<unknown UDI>");
+            String udi = device.getUDI();
+            if (null == udi) {
+                this.udi.setText("<unknown UDI>");
             } else {
-                udi.setText(shortUDI);
+                this.udi.setText(udi);
             }
 
             hostname.setText(device.getHostname());
@@ -140,15 +140,11 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
 
             DeviceIdentity di = device.getDeviceIdentity();
             if (null != di) {
-                String makeAndModel = di.model;
-                if (!makeAndModel.equals(di.manufacturer)) {
-                    makeAndModel = di.manufacturer + " " + makeAndModel;
-                }
-                modelName.setText(makeAndModel);
+                modelName.setText(device.getMakeAndModel());
                 buildDescriptor.setText(di.build);
             } else {
                 modelName.setText(device.getParticipantData().participant_name.name);
-                buildDescriptor.setText("");
+                buildDescriptor.setText("DeviceIdentity not yet found.");
             }
 
             if (icon != null) {
