@@ -47,7 +47,8 @@ public class Configuration {
                 ice.ConnectionType.Serial, "Ivy", "450C Monitor"), Nonin(ice.ConnectionType.Serial, "Nonin", "Bluetooth Pulse Oximeter"), IntellivueEthernet(
                 ice.ConnectionType.Network, "Philips", "Intellivue (LAN)"), IntellivueSerial(ice.ConnectionType.Serial, "Philips",
                 "Intellivue (MIB/RS232)"), Dr\u00E4gerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"), Dr\u00E4gerEvitaXL(
-                ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), Dr\u00E4gerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), Capnostream20(
+                ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), Dr\u00E4gerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), Dr\u00E4gerEvita4(
+                ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"), Capnostream20(
                 ice.ConnectionType.Serial, "Oridion", "Capnostream20"), NellcorN595(ice.ConnectionType.Serial, "Nellcor", "N-595"), MasimoRadical7(
                 ice.ConnectionType.Serial, "Masimo", "Radical-7"), Symbiq(ice.ConnectionType.Simulated, "Hospira", "Symbiq"), MultiPO_Simulator(
                 ice.ConnectionType.Simulated, "Simulated", "Multiple Pulse Oximeter");

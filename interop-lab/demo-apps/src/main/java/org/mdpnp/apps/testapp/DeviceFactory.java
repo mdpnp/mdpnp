@@ -19,6 +19,7 @@ import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
+import org.mdpnp.devices.draeger.medibus.DemoEvita4;
 import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
 import org.mdpnp.devices.draeger.medibus.DemoV500;
 import org.mdpnp.devices.fluke.prosim68.DemoProsim68;
@@ -66,6 +67,8 @@ public class DeviceFactory {
             return new DemoEvitaXL(domainId, eventLoop);
         case Dr\u00E4gerV500:
             return new DemoV500(domainId, eventLoop);
+        case Dr\u00E4gerEvita4:
+            return new DemoEvita4(domainId, eventLoop);
         case Bernoulli:
             return new DemoBernoulli(domainId, eventLoop);
         case Capnostream20:
