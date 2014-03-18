@@ -45,6 +45,7 @@ import org.mdpnp.apps.testapp.sim.SimControl;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
+import org.mdpnp.devices.BuildInfo;
 import org.mdpnp.devices.DeviceMonitor;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
@@ -171,15 +172,7 @@ public class DemoApp {
             panel.getBedLabel().setText("Intensive Care " + domainId);
             break;
         }
-
-        String version = BuildInfo.getVersion();
-
-        if (null == version) {
-            panel.getVersion().setText("Development Version on " + System.getProperty("java.version"));
-        } else {
-            panel.getVersion().setText(
-                    "v" + version + " built:" + BuildInfo.getDate() + " " + BuildInfo.getTime() + " on " + System.getProperty("java.version"));
-        }
+        panel.getVersion().setText(BuildInfo.getDescriptor());
 
         frame.getContentPane().add(panel);
         ol = new CardLayout();

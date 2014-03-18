@@ -46,6 +46,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
     private final JLabel connectionStatus = new JLabel(" ");
     private final JLabel udi = new JLabel(" ");
     private final JLabel hostname = new JLabel(" ");
+    private final JLabel buildDescriptor = new JLabel(" ");
 
     private Dimension myDimension = null;
 
@@ -90,6 +91,12 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         gbc.gridwidth = 2;
         hostname.setHorizontalTextPosition(SwingConstants.RIGHT);
         text.add(hostname, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        buildDescriptor.setHorizontalTextPosition(SwingConstants.RIGHT);
+        text.add(buildDescriptor, gbc);
 
         add(text, BorderLayout.CENTER);
 
@@ -114,6 +121,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
             }
 
             hostname.setText(device.getHostname());
+            
 
             DeviceIcon icon = device.getIcon();
 
@@ -137,8 +145,10 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
                     makeAndModel = di.manufacturer + " " + makeAndModel;
                 }
                 modelName.setText(makeAndModel);
+                buildDescriptor.setText(di.build);
             } else {
                 modelName.setText(device.getParticipantData().participant_name.name);
+                buildDescriptor.setText("");
             }
 
             if (icon != null) {

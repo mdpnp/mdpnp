@@ -573,6 +573,7 @@ public abstract class AbstractDevice implements ThreadFactory {
             throw new RuntimeException("deviceIdentityWriter not created");
         }
         deviceIdentity = new DeviceIdentity();
+        deviceIdentity.build = BuildInfo.getDescriptor();
         try {
             iconFromResource(deviceIdentity, iconResourceName());
         } catch (IOException e1) {

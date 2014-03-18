@@ -10,7 +10,7 @@
  * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package org.mdpnp.apps.testapp;
+package org.mdpnp.devices;
 
 import java.io.IOException;
 import java.net.URL;
@@ -28,10 +28,11 @@ public class BuildInfo {
     private static final String date;
     private static final String time;
     private static final String build;
+    private static final String descriptor;
 
     static {
         String _version = null;
-        String _date = null, _time = null, _build = null;
+        String _date = null, _time = null, _build = null, _descriptor = null;
 
         Enumeration<URL> resources;
         try {
@@ -59,10 +60,17 @@ public class BuildInfo {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        if (null == _version) {
+            _descriptor = "Development Version on " + System.getProperty("java.version");
+        } else {
+            _descriptor = 
+                    "v" + _version + " built:" + _date + " " + _time + " on " + System.getProperty("java.version");
+        }
         version = _version;
         build = _build;
         date = _date;
         time = _time;
+        descriptor = _descriptor;
     }
 
     public static final String getVersion() {
@@ -79,5 +87,9 @@ public class BuildInfo {
 
     public static final String getTime() {
         return time;
+    }
+    
+    public static String getDescriptor() {
+        return descriptor;
     }
 }

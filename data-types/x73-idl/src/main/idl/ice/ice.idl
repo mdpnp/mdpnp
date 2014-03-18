@@ -21,6 +21,7 @@ module ice {
     LongString model;
     LongString serial_number;
     Image icon;
+    string<128> build;
   };
   #pragma keylist DeviceIdentity unique_device_identifier
   const string DeviceIdentityTopic = "ice::DeviceIdentity";
