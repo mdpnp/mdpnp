@@ -26,12 +26,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
 
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceIcon;
@@ -50,9 +46,7 @@ import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.InstanceStateKind;
-import com.rti.dds.subscription.QueryCondition;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
@@ -72,7 +66,6 @@ public class VitalModelImpl implements VitalModel {
     private VitalModelListener[] listeners = new VitalModelListener[0];
 
     protected NumericDataReader numericReader;
-    private final Map<Vital, Set<QueryCondition>> queryConditions = new HashMap<Vital, Set<QueryCondition>>();
 
     protected Subscriber subscriber;
     protected EventLoop eventLoop;
@@ -89,7 +82,7 @@ public class VitalModelImpl implements VitalModel {
             try {
                 for (;;) {
                     try {
-                        numericReader.read_w_condition(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                        numericReader.read(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
                         for (int i = 0; i < info_seq.size(); i++) {
                             SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
                             if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
@@ -203,7 +196,7 @@ public class VitalModelImpl implements VitalModel {
         Vital v = new VitalImpl(this, label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow,
                 valueMsWarningHigh, color);
         vitals.add(v);
-        addQueryConditions(v);
+//        addQueryConditions(v);
         fireVitalAdded(v);
         return v;
     }
@@ -212,7 +205,7 @@ public class VitalModelImpl implements VitalModel {
     public boolean removeVital(Vital vital) {
         boolean r = vitals.remove(vital);
         if (r) {
-            removeQueryConditions(vital);
+//            removeQueryConditions(vital);
 
             ListIterator<Value> li = vital.getValues().listIterator();
             while (li.hasNext()) {
@@ -229,7 +222,7 @@ public class VitalModelImpl implements VitalModel {
     public Vital removeVital(int i) {
         Vital v = vitals.remove(i);
         if (v != null) {
-            removeQueryConditions(v);
+//            removeQueryConditions(v);
 
             ListIterator<Value> li = v.getValues().listIterator();
             while (li.hasNext()) {
@@ -317,44 +310,6 @@ public class VitalModelImpl implements VitalModel {
         return null == device ? null : device.getDeviceConnectivity();
     }
 
-    private void removeQueryConditions(final Vital v) {
-        final NumericDataReader numericReader = this.numericReader;
-        final EventLoop eventLoop = this.eventLoop;
-
-        if (null != numericReader && null != eventLoop) {
-            Set<QueryCondition> set = queryConditions.get(v);
-            if (null != set) {
-                for (QueryCondition qc : set) {
-                    eventLoop.removeHandler(qc);
-                    set.remove(qc);
-                    numericReader.delete_readcondition(qc);
-                }
-                queryConditions.remove(v);
-            }
-        }
-    }
-
-    private void addQueryConditions(final Vital v) {
-        final NumericDataReader numericReader = this.numericReader;
-        final EventLoop eventLoop = this.eventLoop;
-
-        if (null != numericReader && null != eventLoop) {
-            // TODO this should probably be a ContentFilteredTopic to allow the
-            // writer to do the filtering
-
-            Set<QueryCondition> set = queryConditions.get(v);
-            set = null == set ? new HashSet<QueryCondition>() : set;
-            for (String x : v.getMetricIds()) {
-                StringSeq params = new StringSeq();
-                params.add("'" + x + "'");
-                QueryCondition qc = numericReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
-                        InstanceStateKind.ANY_INSTANCE_STATE, "metric_id = %0", params);
-                set.add(qc);
-                eventLoop.addHandler(qc, numericHandler);
-            }
-        }
-    }
-
     @Override
     public void start(final Subscriber subscriber, final EventLoop eventLoop) {
 
@@ -365,10 +320,7 @@ public class VitalModelImpl implements VitalModel {
                 DomainParticipant participant = subscriber.get_participant();
 
                 ice.GlobalAlarmSettingsObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name());
-                // TopicDescription topic =
-                // TopicUtil.lookupOrCreateTopic(participant,
-                // ice.AlarmSettingsObjectiveTopic.VALUE,
-                // ice.AlarmSettingsObjectiveTypeSupport.class);
+
                 Topic topic = participant.create_topic(ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
                         ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
                         StatusKind.STATUS_MASK_NONE);
@@ -380,9 +332,8 @@ public class VitalModelImpl implements VitalModel {
                 numericReader = (NumericDataReader) subscriber.create_datareader_with_profile(nTopic, QosProfiles.ice_library,
                         QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
 
-                for (Vital v : vitals) {
-                    addQueryConditions(v);
-                }
+                eventLoop.addHandler(numericReader.get_statuscondition(), numericHandler);
+                numericReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
 
             }
         });
@@ -395,13 +346,9 @@ public class VitalModelImpl implements VitalModel {
                 while (!vitals.isEmpty()) {
                     removeVital(0);
                 }
-
+                eventLoop.removeHandler(numericReader.get_statuscondition());
                 subscriber.get_participant().delete_datawriter(writer);
 
-                for (Vital v : queryConditions.keySet()) {
-                    removeQueryConditions(v);
-                }
-                queryConditions.clear();
                 numericReader.delete_contained_entities();
                 subscriber.delete_datareader(numericReader);
 
@@ -439,7 +386,7 @@ public class VitalModelImpl implements VitalModel {
         // vm.addVital("Heart Rate", "bpm", new int[] {
         // ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 20, 200, 10, 210, 0, 200);
         EventLoop eventLoop = new EventLoop();
-        // EventLoopHandler eventLoopHandler =
+
         new EventLoopHandler(eventLoop);
 
         vm.start(s, eventLoop);
