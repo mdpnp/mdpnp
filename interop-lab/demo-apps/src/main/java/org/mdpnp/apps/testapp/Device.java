@@ -119,7 +119,10 @@ public class Device {
     }
 
     public String getMakeAndModel() {
-        if (deviceIdentity.manufacturer.equals(deviceIdentity.model)) {
+        if(null == deviceIdentity) {
+            return null;
+        }
+        if (null==deviceIdentity.manufacturer||deviceIdentity.manufacturer.equals(deviceIdentity.model)||"".equals(deviceIdentity.manufacturer)) {
             return deviceIdentity.model;
         } else {
             return deviceIdentity.manufacturer + " " + deviceIdentity.model;
@@ -151,6 +154,7 @@ public class Device {
         if (null == deviceIdentity) {
             this.deviceIdentity = null;
         } else {
+            changeUdi(deviceIdentity.unique_device_identifier);
             if (null == this.deviceIdentity) {
                 log.debug("see first deviceIdentity sample for udi="+deviceIdentity.unique_device_identifier);
                 this.deviceIdentity = new DeviceIdentity(deviceIdentity);
@@ -160,20 +164,34 @@ public class Device {
         }
     }
 
+    private static final String udiFromParticipantData(ParticipantBuiltinTopicData participantData) {
+        byte[] arrbyte = new byte[participantData.user_data.value.size()];
+        participantData.user_data.value.toArrayByte(arrbyte);
+        try {
+            return new String(arrbyte, "ASCII");
+        } catch (UnsupportedEncodingException e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+    }
+    
+    private void changeUdi(String udi) {
+        if(null != udi) {
+            if(this.udi == null) {
+                this.udi = udi;
+            } else {
+                if(!udi.equals(this.udi)) {
+                    throw new IllegalArgumentException("UDI currently " + this.udi + " not changing to " + udi + " found in user QoS");
+                }
+            }
+        }
+    }
+    
     public void setParticipantData(ParticipantBuiltinTopicData participantData) {
         if (null != participantData) {
             this.participantData.copy_from(participantData);
             if (!participantData.user_data.value.isEmpty()) {
-                byte[] arrbyte = new byte[participantData.user_data.value.size()];
-                participantData.user_data.value.toArrayByte(arrbyte);
-                String udi = null;
-                try {
-                    udi = new String(arrbyte, "ASCII");
-                    this.udi = udi;
-                } catch (UnsupportedEncodingException e) {
-                    log.error(e.getMessage(), e);
-                    this.udi = null;
-                }
+                changeUdi(udiFromParticipantData(participantData));
             }
         }
     }
@@ -182,6 +200,7 @@ public class Device {
         if (null == deviceConnectivity) {
             this.deviceConnectivity = null;
         } else {
+            changeUdi(deviceConnectivity.unique_device_identifier);
             if (null == this.deviceConnectivity) {
                 this.deviceConnectivity = new DeviceConnectivity(deviceConnectivity);
             } else {
