@@ -125,11 +125,11 @@ public class DeviceListModel extends AbstractListModel<Device> {
         remove(getDevice(pbtd, false));
     }
     
-    private final void update(ParticipantBuiltinTopicData participantData, DeviceConnectivity dc, boolean alive) {
+    private final void update(ParticipantBuiltinTopicData participantData, DeviceConnectivity dc) {
         if (!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
         }
-        if(alive && null != participantData) {
+        if(null != participantData) {
             if(deviceConnectivityByParticipantKey.containsKey(participantData.key)) {
                 deviceConnectivityByParticipantKey.get(participantData.key).copy_from(dc);
             } else {
@@ -139,25 +139,23 @@ public class DeviceListModel extends AbstractListModel<Device> {
 //            deviceConnectivityByParticipantKey.remove(participantData.key);
         }
         Device device = getDevice(participantData, false);
-        if(alive) {
+        if(null != device) {
+            device.setDeviceConnectivity(dc);
+            update(device);
+        } else {
+            device = getByUniqueDeviceIdentifier(dc.unique_device_identifier);
             if(null != device) {
                 device.setDeviceConnectivity(dc);
                 update(device);
-            } else {
-                device = getByUniqueDeviceIdentifier(dc.unique_device_identifier);
-                if(null != device) {
-                    device.setDeviceConnectivity(dc);
-                    update(device);
-                }
             }
         }
     }
 
-    private final void update(ParticipantBuiltinTopicData participantData, DeviceIdentity di, boolean alive) {
+    private final void update(ParticipantBuiltinTopicData participantData, DeviceIdentity di) {
         if (!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
         }
-        if(alive && null != participantData) {
+        if(null != participantData) {
             if(deviceIdentityByParticipantKey.containsKey(participantData.key)) {
                 deviceIdentityByParticipantKey.get(participantData.key).copy_from(di);
             } else {
@@ -167,16 +165,14 @@ public class DeviceListModel extends AbstractListModel<Device> {
 //            deviceIdentityByParticipantKey.remove(participantData.key);
         }
         Device device = getDevice(participantData, false);
-        if(alive) {
+        if(null != device) {
+            device.setDeviceIdentity(di);
+            update(device);
+        } else {
+            device = getByUniqueDeviceIdentifier(di.unique_device_identifier);
             if(null != device) {
                 device.setDeviceIdentity(di);
                 update(device);
-            } else {
-                device = getByUniqueDeviceIdentifier(di.unique_device_identifier);
-                if(null != device) {
-                    device.setDeviceIdentity(di);
-                    update(device);
-                }
             }
         }
     }
@@ -262,13 +258,10 @@ public class DeviceListModel extends AbstractListModel<Device> {
                             participantData = null;
                         }
                         
-                        boolean alive = 0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE);
-                        
-                        if (!si.valid_data) {
-                            dc = new DeviceConnectivity();
-                            reader.get_key_value(dc, si.instance_handle);
+                        if (si.valid_data) {
+                            update(participantData, dc);
                         }
-                        update(participantData, dc, alive);
+                        
                     }
                 } finally {
                     reader.return_loan(conn_seq, info_seq);
@@ -300,13 +293,11 @@ public class DeviceListModel extends AbstractListModel<Device> {
                             log.debug("Unable to get participant for publication", preCondition);
                             participantData = null;
                         }
-                        boolean alive = 0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE);
                         
-                        if (!si.valid_data) {
-                            di = new DeviceIdentity();
-                            reader.get_key_value(di, si.instance_handle);
+                        if (si.valid_data) {
+                            update(participantData, di);
                         }
-                        update(participantData, di, alive);
+                        
                     }
                 } finally {
                     reader.return_loan(data_seq, info_seq);
