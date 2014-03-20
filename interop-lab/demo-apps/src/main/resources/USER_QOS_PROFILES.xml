@@ -37,60 +37,60 @@
       <nanosec>0</nanosec>
      </max_initial_participant_announcement_period>
      <participant_liveliness_lease_duration>
-      <sec>3</sec>
+      <sec>20</sec>
       <nanosec>0</nanosec>
      </participant_liveliness_lease_duration>
      <participant_liveliness_assert_period>
       <sec>0</sec>
-      <nanosec>500000000</nanosec>
+      <nanosec>250000000</nanosec>
      </participant_liveliness_assert_period>
      <max_liveliness_loss_detection_period>
-      <sec>3</sec>
+      <sec>10</sec>
       <nanosec>0</nanosec>
      </max_liveliness_loss_detection_period>
 
      <!-- Following SEDP controls added with defaults for future experimentation -->
      <publication_writer>
       <heartbeat_period>
-       <sec>3</sec>
+       <sec>1</sec>
        <nanosec>0</nanosec>
       </heartbeat_period>
       <fast_heartbeat_period>
-       <sec>3</sec>
+       <sec>1</sec>
        <nanosec>0</nanosec>
       </fast_heartbeat_period>
       <late_joiner_heartbeat_period>
-       <sec>3</sec>
+       <sec>1</sec>
        <nanosec>0</nanosec>
       </late_joiner_heartbeat_period>
      </publication_writer>
 
      <subscription_writer>
       <heartbeat_period>
-       <sec>3</sec>
+       <sec>1</sec>
        <nanosec>0</nanosec>
       </heartbeat_period>
       <fast_heartbeat_period>
-       <sec>3</sec>
+       <sec>1</sec>
        <nanosec>0</nanosec>
       </fast_heartbeat_period>
       <late_joiner_heartbeat_period>
-       <sec>3</sec>
+       <sec>1</sec>
        <nanosec>0</nanosec>
       </late_joiner_heartbeat_period>
      </subscription_writer>
 
      <participant_message_writer>
       <heartbeat_period>
-       <sec>3</sec>
+       <sec>1</sec>
        <nanosec>0</nanosec>
       </heartbeat_period>
       <fast_heartbeat_period>
-       <sec>3</sec>
+       <sec>1</sec>
        <nanosec>0</nanosec>
       </fast_heartbeat_period>
       <late_joiner_heartbeat_period>
-       <sec>3</sec>
+       <sec>1</sec>
        <nanosec>0</nanosec>
       </late_joiner_heartbeat_period>
      </participant_message_writer>
@@ -124,9 +124,9 @@
     <!-- some typecodes serialize to something larger than is supported by 
      default -->
     <resource_limits>
-     <type_code_max_serialized_length>4096
+     <type_code_max_serialized_length>8192
      </type_code_max_serialized_length>
-     <type_object_max_serialized_length>4096
+     <type_object_max_serialized_length>8192
      </type_object_max_serialized_length>
     </resource_limits>
     <property>
@@ -151,13 +151,13 @@
    </participant_qos>
    
    <datareader_qos>
-       
+    <!--  for the default profile readers no longer request RELIABLE reliability -->
     <liveliness>
      <!-- Let DDS handle heartbeats -->
      <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
      <!-- Point at which writers (and associated instances) become "not alive" -->
      <lease_duration>
-      <sec>2</sec>
+      <sec>5</sec>
       <nanosec>0</nanosec>
      </lease_duration>
     </liveliness>
@@ -191,6 +191,18 @@
    </datareader_qos>
    
    <datawriter_qos>
+    <!--  Jeff Plourde wants to use BEST EFFORT reliability for non-state non-critical data
+          But I'm continuing to make offering reliable reliability the default for now for the
+          sake of backward compatibility. -->
+    <reliability>
+     <kind>RELIABLE_RELIABILITY_QOS</kind>
+     <max_blocking_time>
+      <sec>2</sec>
+      <nanosec>0</nanosec>
+     </max_blocking_time>
+     <acknowledgment_kind>DDS_PROTOCOL_ACKNOWLEDGMENT_MODE
+     </acknowledgment_kind>
+    </reliability>
        
     <liveliness>
      <!-- Let DDS handle heartbeats -->
@@ -198,7 +210,7 @@
      <!-- Point at which writers (and associated exclusively owned instances) 
       become "not alive" -->
      <lease_duration>
-      <sec>2</sec>
+      <sec>1</sec>
       <nanosec>0</nanosec>
      </lease_duration>
     </liveliness>
@@ -290,8 +302,8 @@
      <!-- Point at which writers (and associated exclusively owned instances) 
       become "not alive" -->
      <lease_duration>
-      <sec>2147483647</sec>
-      <nanosec>2147483647</nanosec>
+      <sec>1</sec>
+      <nanosec>0</nanosec>
      </lease_duration>
     </liveliness>
    </datawriter_qos>
@@ -305,6 +317,7 @@
   <qos_profile name="waveform_data" base_name="default_profile" is_default_qos="false">
     <datawriter_qos>
      <!--  batch with default settings entered for future experimentation -->
+     <!-- 
      <batch>
       <enable>false</enable>
       <max_samples>-1</max_samples>
@@ -317,6 +330,7 @@
        <nanosec>2147483647</nanosec>
       </source_timestamp_resolution>
      </batch>
+     -->
     </datawriter_qos>
   </qos_profile>
 
