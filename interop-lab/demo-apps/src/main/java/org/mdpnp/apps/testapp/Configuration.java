@@ -51,7 +51,12 @@ public class Configuration {
                 ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"), Capnostream20(
                 ice.ConnectionType.Serial, "Oridion", "Capnostream20"), NellcorN595(ice.ConnectionType.Serial, "Nellcor", "N-595"), MasimoRadical7(
                 ice.ConnectionType.Serial, "Masimo", "Radical-7"), Symbiq(ice.ConnectionType.Simulated, "Hospira", "Symbiq"), MultiPO_Simulator(
-                ice.ConnectionType.Simulated, "Simulated", "Multiple Pulse Oximeter");
+                ice.ConnectionType.Simulated, "Simulated", "Multiple Pulse Oximeter"),
+                DraegerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"),
+                DraegerEvitaXL(
+                        ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), 
+                        DraegerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), DraegerEvita4(
+                        ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4");
 
         private final ice.ConnectionType connectionType;
         private final String manufacturer, model;

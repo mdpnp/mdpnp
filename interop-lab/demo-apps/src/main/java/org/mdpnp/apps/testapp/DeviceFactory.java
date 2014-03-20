@@ -62,12 +62,16 @@ public class DeviceFactory {
         case IntellivueSerial:
             return new DemoSerialIntellivue(domainId, eventLoop);
         case Dr\u00E4gerApollo:
+        case DraegerApollo:
             return new DemoApollo(domainId, eventLoop);
         case Dr\u00E4gerEvitaXL:
+        case DraegerEvitaXL:
             return new DemoEvitaXL(domainId, eventLoop);
         case Dr\u00E4gerV500:
+        case DraegerV500:
             return new DemoV500(domainId, eventLoop);
         case Dr\u00E4gerEvita4:
+        case DraegerEvita4:
             return new DemoEvita4(domainId, eventLoop);
         case Bernoulli:
             return new DemoBernoulli(domainId, eventLoop);
