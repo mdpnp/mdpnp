@@ -105,18 +105,20 @@ public class DeviceListModel extends AbstractListModel<Device> {
         return device;
     }
     
-    private final void update(ParticipantBuiltinTopicData pbtd, boolean alive) {
+    private final void update(ParticipantBuiltinTopicData pbtd, boolean alive, boolean valid_data) {
         if (!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
         }
         
         if(alive) {
             if(pbtd.participant_name.name != null && DEVICE_FILTER.matcher(pbtd.participant_name.name).matches()) {
-                Device device = getDevice(pbtd, true);
-                device.setParticipantData(pbtd);
-                device.setDeviceIdentity(deviceIdentityByParticipantKey.get(pbtd.key));
-                device.setDeviceConnectivity(deviceConnectivityByParticipantKey.get(pbtd.key));
-                update(device);
+                if(valid_data) {
+                    Device device = getDevice(pbtd, true);
+                    device.setParticipantData(pbtd);
+                    device.setDeviceIdentity(deviceIdentityByParticipantKey.get(pbtd.key));
+                    device.setDeviceConnectivity(deviceConnectivityByParticipantKey.get(pbtd.key));
+                    update(device);
+                }
                 return;
             } else {
                 notADevice(pbtd, alive);
@@ -279,7 +281,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
         try {
             for (;;) {
                 try {
-                    reader.take(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE,
+                    reader.take(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.ANY_SAMPLE_STATE,
                             ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
                     for (int i = 0; i < data_seq.size(); i++) {
                         DeviceIdentity di = (DeviceIdentity) data_seq.get(i);
@@ -324,7 +326,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                             reader.get_key_value(pbtd, si.instance_handle);
                         }
                         
-                        update(pbtd, alive);
+                        update(pbtd, alive, si.valid_data);
                     }
                 } finally {
                     reader.return_loan(part_seq, info_seq);
