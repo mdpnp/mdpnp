@@ -217,22 +217,22 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
     @Override
     public void simulatedNumeric(GlobalSimulationObjective gso) {
         try {
-            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(gso.metric_id.userData)) {
+            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(gso.metric_id)) {
                 getDelegate().normalSinusRhythmAdult((int) gso.value);
-            } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(gso.metric_id.userData)) {
+            } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(gso.metric_id)) {
                 getDelegate().saturation((int) gso.value);
-            } else if (rosetta.MDC_RESP_RATE.VALUE.equals(gso.metric_id.userData)) {
+            } else if (rosetta.MDC_RESP_RATE.VALUE.equals(gso.metric_id)) {
                 getDelegate().respirationRate((int) gso.value);
-            } else if (rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE.equals(gso.metric_id.userData)) {
+            } else if (rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE.equals(gso.metric_id)) {
                 invasiveDiastolic = (int) gso.value;
                 setInvasive();
-            } else if (rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE.equals(gso.metric_id.userData)) {
+            } else if (rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE.equals(gso.metric_id)) {
                 invasiveSystolic = (int) gso.value;
                 setInvasive();
-            } else if (rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE.equals(gso.metric_id.userData)) {
+            } else if (rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE.equals(gso.metric_id)) {
                 noninvasiveDiastolic = (int) gso.value;
                 setNoninvasive();
-            } else if (rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE.equals(gso.metric_id.userData)) {
+            } else if (rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE.equals(gso.metric_id)) {
                 noninvasiveSystolic = (int) gso.value;
                 setNoninvasive();
             }

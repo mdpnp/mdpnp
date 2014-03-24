@@ -95,7 +95,7 @@ public class SimControl extends JPanel {
 
         for (int i = 0; i < objectives.length; i++) {
             objectives[i] = (GlobalSimulationObjective) ice.GlobalSimulationObjective.create();
-            objectives[i].metric_id.userData = numericValues[i].metricId;
+            objectives[i].metric_id = numericValues[i].metricId;
             objectives[i].value = numericValues[i].initialValue;
             handles[i] = writer.register_instance(objectives[i]);
             sliders[i] = new JSlider((int) numericValues[i].lowerBound, (int) numericValues[i].upperBound);

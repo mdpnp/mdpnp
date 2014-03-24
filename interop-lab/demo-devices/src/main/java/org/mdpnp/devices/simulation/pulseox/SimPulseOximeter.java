@@ -75,9 +75,9 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
         if (obj != null) {
-            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(obj.metric_id.userData)) {
+            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(obj.metric_id)) {
                 pulseox.setTargetHeartRate((double) obj.value);
-            } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(obj.metric_id.userData)) {
+            } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(obj.metric_id)) {
                 pulseox.setTargetSpO2((double) obj.value);
             }
         }

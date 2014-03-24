@@ -68,9 +68,9 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
 
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
-        if (rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id.userData)) {
+        if (rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id)) {
             capnometer.setRespirationRate((int) obj.value);
-        } else if (rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(obj.metric_id.userData)) {
+        } else if (rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(obj.metric_id)) {
             capnometer.setEndTidalCO2((int) obj.value);
         }
     }
