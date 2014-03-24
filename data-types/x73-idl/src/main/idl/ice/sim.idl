@@ -6,7 +6,7 @@ module ice {
     float value;
   };
   #pragma keylist GlobalSimulationObjective metric_id
-  const string GlobalSimulationObjectiveTopic = "ice::GlobalSimulationObjective";
+  const string GlobalSimulationObjectiveTopic = "GlobalSimulationObjective";
 
   struct LocalSimulationObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -14,5 +14,5 @@ module ice {
     float value;
   };
   #pragma keylist LocalSimulationObjective unique_device_identifier metric_id
-  const string LocalSimulationObjectiveTopic = "ice::LocalSimulationObjective";
+  const string LocalSimulationObjectiveTopic = "LocalSimulationObjective";
 };
