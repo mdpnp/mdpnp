@@ -191,9 +191,10 @@ public class PulseOximeterPanel extends DevicePanel {
         if (aliveAndValidData(sampleInfo)) {
             if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(metric_id)) {
                 plethWave.applyUpdate(sampleArray, sampleInfo);
+                date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
+                time.setText(dateFormat.format(date));
             }
-            date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
-            time.setText(dateFormat.format(date));
+            
         } else {
             if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(metric_id)) {
                 plethWave.reset();
