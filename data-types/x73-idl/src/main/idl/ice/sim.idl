@@ -1,3 +1,5 @@
+#include <ice/ice.idl>
+
 module ice {
   struct GlobalSimulationObjective {
     MetricIdentifier metric_id; //@key
