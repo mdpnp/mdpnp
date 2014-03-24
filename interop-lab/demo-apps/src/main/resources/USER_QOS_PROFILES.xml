@@ -44,17 +44,24 @@
       <sec>2</sec>
       <nanosec>0</nanosec>
      </max_initial_participant_announcement_period>
+     <!-- Target is to detect a newly arrived participant or a newly departed participant
+          within 3 seconds.  Lease expires at 1.75 seconds and detected within 1.25 seconds
+          from that time.
+          With assertions every 0.5 seconds packet three assertions should arrive within
+          every lease duration assuming no spikes in latency or packet loss.  These settings
+          need to be rigorously tested in a controlled environment.
+     -->
      <participant_liveliness_lease_duration>
-      <sec>10</sec>
-      <nanosec>0</nanosec>
+      <sec>1</sec>
+      <nanosec>750000000</nanosec>
      </participant_liveliness_lease_duration>
      <participant_liveliness_assert_period>
       <sec>0</sec>
-      <nanosec>250000000</nanosec>
+      <nanosec>500000000</nanosec>
      </participant_liveliness_assert_period>
      <max_liveliness_loss_detection_period>
-      <sec>10</sec>
-      <nanosec>0</nanosec>
+      <sec>1</sec>
+      <nanosec>250000000</nanosec>
      </max_liveliness_loss_detection_period>
 
      <!-- Following SEDP controls added with defaults for future experimentation -->
@@ -183,7 +190,11 @@
       <nanosec>0</nanosec>
      </lease_duration>
     </liveliness>
-    
+    <!-- Don't request this in all cases
+    <destination_order>
+        <kind>DDS_BY_SOURCE_TIMESTAMP_DESTINATIONORDER_QOS</kind>
+    </destination_order>
+    -->
     <durability>
      <!-- Writer is responsible for maintaining transient copies of samples 
       ... see history -->
@@ -242,7 +253,9 @@
       <nanosec>0</nanosec>
      </lease_duration>
     </liveliness>
-    
+    <destination_order>
+     <kind>DDS_BY_SOURCE_TIMESTAMP_DESTINATIONORDER_QOS</kind>
+    </destination_order>
     <durability>
      <!-- Writer is responsible for maintaining transient copies of samples 
       ... see history -->
