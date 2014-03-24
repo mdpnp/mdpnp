@@ -111,20 +111,26 @@ public class DeviceListModel extends AbstractListModel<Device> {
         }
         
         if(alive) {
-            if(pbtd.participant_name.name != null && DEVICE_FILTER.matcher(pbtd.participant_name.name).matches()) {
-                if(valid_data) {
-                    Device device = getDevice(pbtd, true);
-                    device.setParticipantData(pbtd);
-                    device.setDeviceIdentity(deviceIdentityByParticipantKey.get(pbtd.key));
-                    device.setDeviceConnectivity(deviceConnectivityByParticipantKey.get(pbtd.key));
-                    update(device);
+            if(pbtd.participant_name.name != null) {
+                if(DEVICE_FILTER.matcher(pbtd.participant_name.name).matches()) {
+                    if(valid_data) {
+                        Device device = getDevice(pbtd, true);
+                        device.setParticipantData(pbtd);
+                        device.setDeviceIdentity(deviceIdentityByParticipantKey.get(pbtd.key));
+                        device.setDeviceConnectivity(deviceConnectivityByParticipantKey.get(pbtd.key));
+                        update(device);
+                    } else {
+                        log.debug("No valid data for " + pbtd.key);
+                    }
+                } else {
+                    notADevice(pbtd, alive);
                 }
-                return;
             } else {
-                notADevice(pbtd, alive);
+                log.debug("name of participant is null for " + pbtd.key);
             }
+        } else {
+            remove(getDevice(pbtd, false));
         }
-        remove(getDevice(pbtd, false));
     }
     
     private final void update(ParticipantBuiltinTopicData participantData, DeviceConnectivity dc) {
@@ -135,7 +141,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
             if(deviceConnectivityByParticipantKey.containsKey(participantData.key)) {
                 deviceConnectivityByParticipantKey.get(participantData.key).copy_from(dc);
             } else {
-                deviceConnectivityByParticipantKey.put(participantData.key, new DeviceConnectivity(dc));
+                deviceConnectivityByParticipantKey.put(new BuiltinTopicKey_t(participantData.key), new DeviceConnectivity(dc));
             }
         } else {
 //            deviceConnectivityByParticipantKey.remove(participantData.key);
@@ -161,9 +167,10 @@ public class DeviceListModel extends AbstractListModel<Device> {
             if(deviceIdentityByParticipantKey.containsKey(participantData.key)) {
                 deviceIdentityByParticipantKey.get(participantData.key).copy_from(di);
             } else {
-                deviceIdentityByParticipantKey.put(participantData.key, new DeviceIdentity(di));
+                deviceIdentityByParticipantKey.put(new BuiltinTopicKey_t(participantData.key), new DeviceIdentity(di));
             }
         } else {
+            log.debug("No ParticipantData available to store DeviceIdentity for:"+di.unique_device_identifier);
 //            deviceIdentityByParticipantKey.remove(participantData.key);
         }
         Device device = getDevice(participantData, false);
@@ -175,6 +182,8 @@ public class DeviceListModel extends AbstractListModel<Device> {
             if(null != device) {
                 device.setDeviceIdentity(di);
                 update(device);
+            } else {
+                log.warn("Unable to find Device by participantData="+participantData + " or UDI="+di.unique_device_identifier);
             }
         }
     }
@@ -297,6 +306,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         }
                         
                         if (si.valid_data) {
+//                            log.debug("DeviceIdentity at " + si.source_timestamp + " " + di);
                             update(participantData, di);
                         }
                         
@@ -313,7 +323,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
         try {
             for(;;) {
                 try {
-                    reader.read(part_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE,
+                    reader.take(part_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.ANY_SAMPLE_STATE,
                             ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
                     for (int i = 0; i < part_seq.size(); i++) {
                         ParticipantBuiltinTopicData pbtd = (ParticipantBuiltinTopicData) part_seq.get(i);
@@ -325,7 +335,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
                             pbtd = new ParticipantBuiltinTopicData();
                             reader.get_key_value(pbtd, si.instance_handle);
                         }
-                        
+                        log.debug("Participant " + pbtd.key + " is " + (alive?"":"NOT ") + " alive");
                         update(pbtd, alive, si.valid_data);
                     }
                 } finally {
@@ -404,7 +414,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
     }
 
     protected void notADevice(ParticipantBuiltinTopicData participant_info, boolean alive) {
-
+        log.debug("Remote participant " + participant_info.key + " is not a device and is " + (alive?"":"NOT ")+ "alive");
     }
 
     public Device getByParticipantKey(BuiltinTopicKey_t key) {
