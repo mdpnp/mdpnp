@@ -25,6 +25,14 @@
      </initial_peers>
     </discovery>
     <discovery_config>
+     <!--  RTPX announcements on domain 0 are not standard  -->
+     <default_domain_announcement_period>
+      <sec>2147483647</sec>
+      <nanosec>2147483647</nanosec>
+     </default_domain_announcement_period>
+     <ignore_default_domain_announcements>
+         true
+     </ignore_default_domain_announcements>
      <!-- initial_participant_announcements added with defaults for future 
       experimentation -->
      <initial_participant_announcements>50</initial_participant_announcements>
@@ -146,6 +154,11 @@
        <name>dds.transport.UDPv4.builtin.parent.message_size_max</name>
        <value>65507</value>
        <!-- <value>8163</value> -->
+      </element>
+      <!--  Mostly harmless way to ensure ARP tables set up at onset of discovery, but not part of the standard -->
+      <element>
+       <name>dds.transport.UDPv4.builtin.send_ping</name>
+       <value>false</value>
       </element>
      </value>
     </property>
