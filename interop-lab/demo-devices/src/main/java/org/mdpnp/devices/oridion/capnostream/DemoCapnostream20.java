@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -262,6 +263,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     private static final int BUFFER_SAMPLES = 5;
     private final Number[] realtimeBuffer = new Number[BUFFER_SAMPLES];
     private int realtimeBufferCount = 0;
+    protected static final TimeZone localTimeZone = TimeZone.getDefault();
     
     public class MyCapnostream extends Capnostream {
         public MyCapnostream(InputStream in, OutputStream out) {
@@ -276,6 +278,12 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
                 int rrAlarmLow, int fico2AlarmHigh, int spo2AlarmHigh, int spo2AlarmLow, int pulseAlarmHigh, int pulseAlarmLow, CO2Units units,
                 int extendedCO2Status) {
 
+            // The device has no timezone setting ... so we're getting milliseconds since the epoch in local time
+            // which is an unusual value to get... and hence we need to do something unusual to cope with it
+            int offset = localTimeZone.getOffset(date);
+            
+            date -= offset;
+            
             sampleTime.sec = (int) (date / 1000L);
             sampleTime.nanosec = (int) (date % 1000L * 1000000L);
 
