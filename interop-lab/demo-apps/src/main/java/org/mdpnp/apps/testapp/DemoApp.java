@@ -144,8 +144,9 @@ public class DemoApp {
         final Publisher publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         @SuppressWarnings("serial")
         final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop) {
-            protected void notADevice(SampleInfo si, ParticipantBuiltinTopicData participant_info) {
-                if ("Supervisor".equals(participant_info.participant_name.name) && 0 != (ViewStateKind.NEW_VIEW_STATE & si.view_state)) {
+            @Override
+            protected void notADevice(ParticipantBuiltinTopicData participant_info, boolean alive) {
+                if ("Supervisor".equals(participant_info.participant_name.name) && alive) {
                     JOptionPane.showMessageDialog(panel, "Another supervisor has been detected on the domain", "Multiple Supervisors",
                             JOptionPane.ERROR_MESSAGE);
                 }
