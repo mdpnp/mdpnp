@@ -27,6 +27,12 @@ if(hasProperty('sdk.dir') || null != System.getenv().get("ANDROID_HOME")) {
 
 
 include 'data-types:x73-idl-rti-dds'
+
+if(null != System.getenv().get("OSPL_HOME") && null != System.getenv().get("SPLICE_TARGET")) {
+  include 'data-types:x73-idl-ospl-dds'
+} else {
+  println "Not building with OpenSplice"
+}
 include 'interop-lab:demo-devices'
 include 'interop-lab:demo-apps'
 
