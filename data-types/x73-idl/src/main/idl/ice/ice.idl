@@ -24,7 +24,7 @@ module ice {
     string<128> build;
   };
   #pragma keylist DeviceIdentity unique_device_identifier
-  const string DeviceIdentityTopic = "ice::DeviceIdentity";
+  const string DeviceIdentityTopic = "DeviceIdentity";
 
   enum ConnectionState {
     Connected,
@@ -57,8 +57,8 @@ module ice {
   #pragma keylist DeviceConnectivityObjective unique_device_identifier
 
 
-  const string DeviceConnectivityTopic = "ice::DeviceConnectivity";
-  const string DeviceConnectivityObjectiveTopic = "ice::DeviceConnectivityObjective";
+  const string DeviceConnectivityTopic = "DeviceConnectivity";
+  const string DeviceConnectivityObjectiveTopic = "DeviceConnectivityObjective";
 
 
 
@@ -86,7 +86,7 @@ module ice {
     float value;
   };
   #pragma keylist Numeric unique_device_identifier metric_id instance_id
-  const string NumericTopic = "ice::Numeric";
+  const string NumericTopic = "Numeric";
 
   struct SampleArray {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -96,7 +96,7 @@ module ice {
     long millisecondsPerSample;
   };
   #pragma keylist SampleArray unique_device_identifier metric_id instance_id
-  const string SampleArrayTopic = "ice::SampleArray";
+  const string SampleArrayTopic = "SampleArray";
 
   struct Text {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -105,7 +105,7 @@ module ice {
     TextString value;
   };
   #pragma keylist Text unique_device_identifier metric_id instance_id
-  const string TextTopic = "ice::Text";
+  const string TextTopic = "Text";
 
   struct InfusionObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -113,7 +113,7 @@ module ice {
     boolean stopInfusion;
   };
   #pragma keylist InfusionObjective unique_device_identifier
-  const string InfusionObjectiveTopic = "ice::InfusionObjective";
+  const string InfusionObjectiveTopic = "InfusionObjective";
   struct InfusionStatus {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     // is the pump actively infusing?
@@ -139,7 +139,7 @@ module ice {
     float infusion_fraction_complete;
   };
   #pragma keylist InfusionStatus unique_device_identifier
-  const string InfusionStatusTopic = "ice::InfusionStatus";
+  const string InfusionStatusTopic = "InfusionStatus";
 
 
 // Assumes all instances of a given metric have the same alarm settings
@@ -152,7 +152,7 @@ module ice {
 
   };
   #pragma keylist AlarmSettings unique_device_identifier metric_id
-  const string AlarmSettingsTopic = "ice::AlarmSettings";
+  const string AlarmSettingsTopic = "AlarmSettings";
 
   struct GlobalAlarmSettingsObjective {
     MetricIdentifier metric_id; //@key
@@ -161,7 +161,7 @@ module ice {
 
   };
   #pragma keylist GlobalAlarmSettingsObjective metric_id
-  const string GlobalAlarmSettingsObjectiveTopic = "ice:GlobalAlarmSettingsObjective";
+  const string GlobalAlarmSettingsObjectiveTopic = "GlobalAlarmSettingsObjective";
 
   struct LocalAlarmSettingsObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -170,7 +170,7 @@ module ice {
     float upper;
   };
   #pragma keylist LocalAlarmSettingsObjective unique_device_identifier metric_id
-  const string LocalAlarmSettingsObjectiveTopic = "ice::LocalAlarmSettingsObjective";
+  const string LocalAlarmSettingsObjectiveTopic = "LocalAlarmSettingsObjective";
 
   // Experimental alarm info... highly speculative
   struct DeviceAlertCondition {
@@ -178,7 +178,7 @@ module ice {
     string<256> alert_state;
   };
   #pragma keylist DeviceAlertCondition unique_device_identifier
-  const string DeviceAlertConditionTopic = "ice::DeviceAlertCondition";
+  const string DeviceAlertConditionTopic = "DeviceAlertCondition";
 
   struct Alert {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -186,9 +186,9 @@ module ice {
     string<256> identifier; //@key
     string<256> text;
   };
-  #pragma keylist DeviceAlert unique_device_identifier identifier
-  const string PatientAlertTopic = "ice::PatientAlert";
-  const string TechnicalAlertTopic = "ice::TechnicalAlert";
+  #pragma keylist Alert unique_device_identifier identifier
+  const string PatientAlertTopic = "PatientAlert";
+  const string TechnicalAlertTopic = "TechnicalAlert";
 };
 
 
