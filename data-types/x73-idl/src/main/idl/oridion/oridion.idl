@@ -1,7 +1,0 @@
-module oridion {
-
-    const string MDC_FAST_STATUS = "MDC_FAST_STATUS";
-    const string MDC_SLOW_STATUS = "MDC_SLOW_STATUS";
-    const string MDC_EXTENDED_CO2_STATUS = "MDC_EXTENDED_CO2_STATUS";
-
-};
