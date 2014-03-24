@@ -125,10 +125,10 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
     protected InstanceHolder<Numeric> createNumericInstance(String metric_id) {
-        return createNumericInstance(metric_id, 0);
+        return createNumericInstance(metric_id, 0, null);
     }
 
-    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, int instance_id) {
+    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, int instance_id, Time_t time) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createNumericInstance");
         }
@@ -138,7 +138,14 @@ public abstract class AbstractDevice implements ThreadFactory {
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
         holder.data.instance_id = instance_id;
-        holder.handle = numericDataWriter.register_instance(holder.data);
+        if(null != time) {
+            holder.handle = numericDataWriter.register_instance_w_timestamp(holder.data, time);
+        } else {
+            holder.handle = numericDataWriter.register_instance(holder.data);
+        }
+        if(holder.handle.is_nil()) {
+            throw new IllegalStateException("Unable to register instance");
+        }
         registeredNumericInstances.add(holder);
         return holder;
     }
@@ -192,7 +199,7 @@ public abstract class AbstractDevice implements ThreadFactory {
 
     protected void unregisterAllNumericInstances() {
         while (!registeredNumericInstances.isEmpty()) {
-            unregisterNumericInstance(registeredNumericInstances.get(0));
+            unregisterNumericInstance(registeredNumericInstances.get(0), null);
         }
     }
 
@@ -202,10 +209,14 @@ public abstract class AbstractDevice implements ThreadFactory {
         }
     }
 
-    protected void unregisterNumericInstance(InstanceHolder<Numeric> holder) {
+    protected void unregisterNumericInstance(InstanceHolder<Numeric> holder, Time_t time) {
         if (null != holder) {
             registeredNumericInstances.remove(holder);
-            numericDataWriter.unregister_instance(holder.data, holder.handle);
+            if(null != time) {
+                numericDataWriter.unregister_instance_w_timestamp(holder.data, holder.handle, time);
+            } else {
+                numericDataWriter.unregister_instance(holder.data, holder.handle);
+            }
         }
     }
 
@@ -335,17 +346,17 @@ public abstract class AbstractDevice implements ThreadFactory {
 
     protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, int instance_id, Time_t time) {
         if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
-            unregisterNumericInstance(holder);
+            unregisterNumericInstance(holder, time);
             holder = null;
         }
         if (null != newValue) {
             if (null == holder) {
-                holder = createNumericInstance(metric_id, instance_id);
+                holder = createNumericInstance(metric_id, instance_id, time);
             }
             numericSample(holder, newValue, time);
         } else {
             if (null != holder) {
-                unregisterNumericInstance(holder);
+                unregisterNumericInstance(holder, time);
                 holder = null;
             }
         }
