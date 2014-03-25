@@ -125,10 +125,10 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
     protected InstanceHolder<Numeric> createNumericInstance(String metric_id) {
-        return createNumericInstance(metric_id, 0, null);
+        return createNumericInstance(metric_id, 0);
     }
 
-    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, int instance_id, Time_t time) {
+    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, int instance_id) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createNumericInstance");
         }
@@ -138,14 +138,8 @@ public abstract class AbstractDevice implements ThreadFactory {
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
         holder.data.instance_id = instance_id;
-        if(null != time) {
-            holder.handle = numericDataWriter.register_instance_w_timestamp(holder.data, time);
-        } else {
-            holder.handle = numericDataWriter.register_instance(holder.data);
-        }
-        if(holder.handle.is_nil()) {
-            throw new IllegalStateException("Unable to register instance");
-        }
+        holder.handle = numericDataWriter.register_instance(holder.data);
+
         registeredNumericInstances.add(holder);
         return holder;
     }
@@ -199,7 +193,7 @@ public abstract class AbstractDevice implements ThreadFactory {
 
     protected void unregisterAllNumericInstances() {
         while (!registeredNumericInstances.isEmpty()) {
-            unregisterNumericInstance(registeredNumericInstances.get(0), null);
+            unregisterNumericInstance(registeredNumericInstances.get(0));
         }
     }
 
@@ -209,14 +203,10 @@ public abstract class AbstractDevice implements ThreadFactory {
         }
     }
 
-    protected void unregisterNumericInstance(InstanceHolder<Numeric> holder, Time_t time) {
+    protected void unregisterNumericInstance(InstanceHolder<Numeric> holder) {
         if (null != holder) {
             registeredNumericInstances.remove(holder);
-            if(null != time) {
-                numericDataWriter.unregister_instance_w_timestamp(holder.data, holder.handle, time);
-            } else {
-                numericDataWriter.unregister_instance(holder.data, holder.handle);
-            }
+            numericDataWriter.unregister_instance(holder.data, holder.handle);
         }
     }
 
@@ -261,11 +251,14 @@ public abstract class AbstractDevice implements ThreadFactory {
 
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, Time_t time) {
         holder.data.value = newValue;
-        if (null != time) {
-            numericDataWriter.write_w_timestamp(holder.data, holder.handle, time);
+        if(null != time) {
+            holder.data.device_time.sec = time.sec;
+            holder.data.device_time.nanosec = time.nanosec;
         } else {
-            numericDataWriter.write(holder.data, holder.handle);
+            holder.data.device_time.sec = 0;
+            holder.data.device_time.nanosec = 0;
         }
+        numericDataWriter.write(holder.data, holder.handle);
     }
 
     protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, float newLower, float newUpper) {
@@ -346,17 +339,17 @@ public abstract class AbstractDevice implements ThreadFactory {
 
     protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, int instance_id, Time_t time) {
         if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
-            unregisterNumericInstance(holder, time);
+            unregisterNumericInstance(holder);
             holder = null;
         }
         if (null != newValue) {
             if (null == holder) {
-                holder = createNumericInstance(metric_id, instance_id, time);
+                holder = createNumericInstance(metric_id, instance_id);
             }
             numericSample(holder, newValue, time);
         } else {
             if (null != holder) {
-                unregisterNumericInstance(holder, time);
+                unregisterNumericInstance(holder);
                 holder = null;
             }
         }
@@ -369,12 +362,15 @@ public abstract class AbstractDevice implements ThreadFactory {
             holder.data.values.userData.addFloat(n.floatValue());
         }
         holder.data.millisecondsPerSample = msPerSample;
-        // log.info("Source:"+holder.data);
-        if (null != timestamp) {
-            sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, timestamp);
+        if(null != timestamp) {
+            holder.data.device_time.sec = timestamp.sec;
+            holder.data.device_time.nanosec = timestamp.nanosec;
         } else {
-            sampleArrayDataWriter.write(holder.data, holder.handle);
+            holder.data.device_time.sec = 0;
+            holder.data.device_time.nanosec = 0;
         }
+
+        sampleArrayDataWriter.write(holder.data, holder.handle);
     }
 
     protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, int msPerSample, Time_t timestamp) {
@@ -407,13 +403,7 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
     protected void sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues, int count, int msPerSample) {
-        holder.data.values.userData.clear();
-        for (int i = 0; i < count; i++) {
-            holder.data.values.userData.addFloat(newValues[i]);
-        }
-        holder.data.millisecondsPerSample = msPerSample;
-
-        sampleArrayDataWriter.write(holder.data, holder.handle);
+        sampleArraySample(holder, newValues, count, msPerSample, null);
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues, int count, int msPerSample,

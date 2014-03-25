@@ -9,11 +9,16 @@ module ice {
   typedef sequence<octet, 65530> Raster;
   typedef sequence<float, 400> Values;
 
+  struct Time_t {
+    long sec;
+    long nanosec;
+  }; //@top-level false
+
   struct Image {
     Raster raster;
     long width;
     long height;
-  };
+  }; //@top-level false
 
   struct DeviceIdentity {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -84,6 +89,7 @@ module ice {
     MetricIdentifier metric_id; //@key
     InstanceIdentifier instance_id; //@key
     float value;
+    Time_t device_time;
   };
   #pragma keylist Numeric unique_device_identifier metric_id instance_id
   const string NumericTopic = "Numeric";
@@ -94,6 +100,7 @@ module ice {
     InstanceIdentifier instance_id; //@key
     Values values;
     long millisecondsPerSample;
+    Time_t device_time;
   };
   #pragma keylist SampleArray unique_device_identifier metric_id instance_id
   const string SampleArrayTopic = "SampleArray";
