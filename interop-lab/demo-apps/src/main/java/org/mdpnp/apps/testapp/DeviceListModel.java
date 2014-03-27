@@ -253,7 +253,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
         try {
             for (;;) {
                 try {
-                    reader.read(conn_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                    reader.read(conn_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
                     for (int i = 0; i < conn_seq.size(); i++) {
                         DeviceConnectivity dc = (DeviceConnectivity) conn_seq.get(i);
                         SampleInfo si = (SampleInfo) info_seq.get(i);
@@ -289,7 +289,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
         try {
             for (;;) {
                 try {
-                    reader.read(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                    reader.read(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
                     for (int i = 0; i < data_seq.size(); i++) {
                         DeviceIdentity di = (DeviceIdentity) data_seq.get(i);
                         SampleInfo si = (SampleInfo) info_seq.get(i);
@@ -321,7 +321,7 @@ public class DeviceListModel extends AbstractListModel<Device> {
         try {
             for(;;) {
                 try {
-                    reader.read(part_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                    reader.read(part_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
                     for (int i = 0; i < part_seq.size(); i++) {
                         ParticipantBuiltinTopicData pbtd = (ParticipantBuiltinTopicData) part_seq.get(i);
                         SampleInfo si = (SampleInfo) info_seq.get(i);
