@@ -61,9 +61,7 @@ import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.ViewStateKind;
 
 //
 /**
@@ -196,13 +194,19 @@ public class DemoApp {
         final CapnoModel capnoModel = new CapnoModelImpl(ice.MDC_CAPNOGRAPH.VALUE);
 
         // VitalSign.EndTidalCO2.addToModel(vitalModel);
+        if(!AppType.PCA.isDisabled() || !AppType.PCAViz.isDisabled()) {
         vitalModel.start(subscriber, eventLoop);
         pumpModel.start(subscriber, publisher, eventLoop);
-        capnoModel.start(subscriber, eventLoop);
         // VitalSign.HeartRate.addToModel(vitalModel);
         VitalSign.SpO2.addToModel(vitalModel);
         VitalSign.RespiratoryRate.addToModel(vitalModel);
         VitalSign.EndTidalCO2.addToModel(vitalModel);
+        }
+
+        if(!AppType.RRR.isDisabled()) {
+            capnoModel.start(subscriber, eventLoop);
+        }
+
         PCAPanel _pcaPanel = null;
         if (!AppType.PCA.isDisabled()) {
             UIManager.put("TabbedPane.contentOpaque", false);
