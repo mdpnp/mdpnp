@@ -29,7 +29,7 @@ public class EvenTempoWaveformSource extends AbstractNestedWaveformSource implem
         super(target);
     }
 
-    private int reportingCount;
+    private int reportingCount = -1;
 
     private long microsecondsPerSample = 50000L;
 
@@ -37,7 +37,7 @@ public class EvenTempoWaveformSource extends AbstractNestedWaveformSource implem
 
     @Override
     public synchronized void reset(WaveformSource source) {
-        reportingCount = 0;
+        reportingCount = -1;
         fireReset();
     }
 
@@ -52,30 +52,28 @@ public class EvenTempoWaveformSource extends AbstractNestedWaveformSource implem
     public void run() {
         synchronized (this) {
             long now = System.currentTimeMillis();
-            if (0L != priorInvocation) {
-                // Number of samples we should play since the last invocation
-                int samples = (int) Math.round((now - priorInvocation) / getTarget().getMillisecondsPerSample());
+            // Number of samples we should play since the last invocation
+            int samples = 0L == priorInvocation ? 0 : (int) Math.round((now - priorInvocation) / getTarget().getMillisecondsPerSample());
+            
+            // putative updated reportingCount
+            int max = getTarget().getMax();
+            int count = getTarget().getCount();
 
-                // putative updated reportingCount
-                int max = getTarget().getMax();
-                int count = getTarget().getCount();
+            int oldReportingCount = this.reportingCount;
+            int reportingCount = oldReportingCount + samples;
+            // wrap around
+            reportingCount = reportingCount >= max ? (reportingCount - max) : reportingCount;
 
-                int oldReportingCount = this.reportingCount;
-                int reportingCount = oldReportingCount + samples;
-                // wrap around
-                reportingCount = reportingCount >= max ? (reportingCount - max) : reportingCount;
-
-                if (count >= 0) {
-                    boolean crossedTheCount = (oldReportingCount < count && count < reportingCount)
-                            || (count < reportingCount && reportingCount < oldReportingCount);
-                    if (crossedTheCount) {
-                        log.info("Reported count got ahead of real count");
-                        reportingCount = count;
-                    }
+            if (count >= 0) {
+                boolean crossedTheCount = (oldReportingCount < count && count < reportingCount)
+                        || (count < reportingCount && reportingCount < oldReportingCount);
+                if (crossedTheCount) {
+                    log.info("Reported count got ahead of real count");
+                    reportingCount = count;
                 }
-                this.reportingCount = reportingCount;
-
             }
+            this.reportingCount = reportingCount;
+
             priorInvocation = now;
         }
 
