@@ -23,8 +23,18 @@
      <initial_peers>
       <element>udpv4://239.255.0.1</element>
      </initial_peers>
+     <!-- Under load could this be helpful to maintain participant liveliness
+     <metatraffic_transport_priority>
+       5
+     </metatraffic_transport_priority>
+     -->
     </discovery>
     <discovery_config>
+     <!-- Is there a difference in SDP and SPDP? 
+     <builtin_discovery_plugins>
+      DDS_DISCOVERYCONFIG_BUILTIN_SPDP|DDS_DISCOVERYCONFIG_BUILTIN_SEDP
+     </builtin_discovery_plugins>
+     -->
      <!--  RTPX announcements on domain 0 are not standard  -->
      <default_domain_announcement_period>
       <sec>2147483647</sec>
@@ -108,7 +118,28 @@
        <sec>1</sec>
        <nanosec>0</nanosec>
       </late_joiner_heartbeat_period>
+      <!-- Could multicast be more efficient for frequent heartbeats?
+      <enable_multicast_periodic_heartbeat>
+          true
+      </enable_multicast_periodic_heartbeat>
+      -->
      </participant_message_writer>
+     <!-- would it be more efficient for participant message reader to 
+          periodically ACKNACK ?
+     <participant_message_reader>
+         <nack_period>
+             <sec>0</sec>
+             <nanosec>500000000</nanosec>
+         </nack_period>
+         <samples_per_app_ack>
+             -1
+         </samples_per_app_ack>
+         <app_ack_period>
+             <sec>0</sec>
+             <nanosec>500000000</nanosec>
+         </app_ack_period>
+     </participant_message_reader>
+     -->
      
      <!--  set to asynchronous to allow rtps fragmentation when transport max message size is very small -->
      <publication_writer_publish_mode>
