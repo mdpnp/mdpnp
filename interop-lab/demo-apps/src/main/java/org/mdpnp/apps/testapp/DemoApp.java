@@ -140,8 +140,8 @@ public class DemoApp {
         DomainParticipantFactory.get_instance().set_qos(qos);
         final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null,
                 StatusKind.STATUS_MASK_NONE);
-        final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        final Publisher publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        final Subscriber subscriber = participant.get_implicit_subscriber();
+        final Publisher publisher = participant.get_implicit_publisher();
         @SuppressWarnings("serial")
         final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop) {
             @Override
