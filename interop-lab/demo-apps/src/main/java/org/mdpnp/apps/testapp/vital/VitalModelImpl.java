@@ -341,22 +341,24 @@ public class VitalModelImpl implements VitalModel {
 
     @Override
     public void stop() {
-        eventLoop.doLater(new Runnable() {
-            public void run() {
-                while (!vitals.isEmpty()) {
-                    removeVital(0);
+        if(eventLoop != null) {
+            eventLoop.doLater(new Runnable() {
+                public void run() {
+                    while (!vitals.isEmpty()) {
+                        removeVital(0);
+                    }
+                    eventLoop.removeHandler(numericReader.get_statuscondition());
+                    subscriber.get_participant().delete_datawriter(writer);
+    
+                    numericReader.delete_contained_entities();
+                    subscriber.delete_datareader(numericReader);
+    
+                    VitalModelImpl.this.subscriber = null;
+                    VitalModelImpl.this.eventLoop = null;
                 }
-                eventLoop.removeHandler(numericReader.get_statuscondition());
-                subscriber.get_participant().delete_datawriter(writer);
+            });
 
-                numericReader.delete_contained_entities();
-                subscriber.delete_datareader(numericReader);
-
-                VitalModelImpl.this.subscriber = null;
-                VitalModelImpl.this.eventLoop = null;
-            }
-        });
-
+        }
     }
 
     public static void main(String[] args) {

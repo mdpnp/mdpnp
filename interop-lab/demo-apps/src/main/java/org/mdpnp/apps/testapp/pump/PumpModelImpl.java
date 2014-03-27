@@ -222,14 +222,18 @@ public class PumpModelImpl implements PumpModel {
     }
 
     public void stop() {
-        publisher.delete_datawriter(objectiveWriter);
-        objectiveWriter = null;
+        if(publisher!=null) {
+            publisher.delete_datawriter(objectiveWriter);
+            objectiveWriter = null;
+        }
 
-        eventLoop.removeHandler(statusCondition);
-        statusReader.delete_readcondition(statusCondition);
-        statusCondition = null;
-        subscriber.delete_datareader(statusReader);
-        statusReader = null;
+        if(eventLoop != null) {
+            eventLoop.removeHandler(statusCondition);
+            statusReader.delete_readcondition(statusCondition);
+            statusCondition = null;
+            subscriber.delete_datareader(statusReader);
+            statusReader = null;
+        }
 
     }
 

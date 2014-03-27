@@ -123,13 +123,15 @@ public class CapnoModelImpl implements CapnoModel {
 
     @Override
     public void stop() {
-        eventLoop.removeHandler(capnoCondition);
-        capnoReader.delete_readcondition(capnoCondition);
-        capnoCondition = null;
-        subscriber.delete_datareader(capnoReader);
-        capnoReader = null;
-        subscriber = null;
-        eventLoop = null;
+        if(null != eventLoop) {
+            eventLoop.removeHandler(capnoCondition);
+            capnoReader.delete_readcondition(capnoCondition);
+            capnoCondition = null;
+            subscriber.delete_datareader(capnoReader);
+            capnoReader = null;
+            subscriber = null;
+            eventLoop = null;
+        }
     }
 
     protected void removeCapno(String udi) {
