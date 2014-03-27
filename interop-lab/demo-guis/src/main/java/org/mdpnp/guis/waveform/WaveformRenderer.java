@@ -88,7 +88,7 @@ public class WaveformRenderer {
 
     public void render(WaveformCanvas canvas, Rect rect) {
 
-        long start = System.currentTimeMillis();
+//        long start = System.currentTimeMillis();
         WaveformSource source = this.source;
 
         if (null == canvas || null == source) {
@@ -109,11 +109,14 @@ public class WaveformRenderer {
 
         if (!extent.equals(this.extent)) {
             first = 0;
-            last = source.getMax() - 1;
+            last = 0;
+//            last = source.getMax() - 1;
             this.extent = extent;
         } else if (first == -1) {
             first = 0;
-            last = source.getMax() - 1;
+            last = 0;
+            return;
+//            last = source.getMax() - 1;
         }
 
         // TODO this is temporary
