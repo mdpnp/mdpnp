@@ -26,11 +26,11 @@ import com.jogamp.opengl.util.FPSAnimator;
  * @author Jeff Plourde
  * 
  */
-public class AnimatorSingleton {
+public class GLAnimatorSingleton {
     private static GLAnimatorControl animator = null;
     private static int referenceCount = 0;
 
-    private static final Logger log = LoggerFactory.getLogger(AnimatorSingleton.class);
+    private static final Logger log = LoggerFactory.getLogger(GLAnimatorSingleton.class);
 
     // at this point anything more would be excessive
     private static final int FRAMES_PER_INTERVAL = 15;
@@ -54,7 +54,7 @@ public class AnimatorSingleton {
         if (referenceCount < 1) {
             throw new IllegalStateException("No references to release");
         }
-        if (animator != AnimatorSingleton.animator) {
+        if (animator != GLAnimatorSingleton.animator) {
             throw new IllegalArgumentException(animator + " is not the current singleton");
         }
         if (0 == --referenceCount) {
@@ -64,7 +64,7 @@ public class AnimatorSingleton {
             } else {
                 log.warn("Unable to stop an animator");
             }
-            AnimatorSingleton.animator = null;
+            GLAnimatorSingleton.animator = null;
         }
 
     }

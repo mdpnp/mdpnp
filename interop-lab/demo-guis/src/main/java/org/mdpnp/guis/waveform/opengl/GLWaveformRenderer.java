@@ -18,17 +18,13 @@ import java.nio.FloatBuffer;
 
 import org.mdpnp.guis.opengl.GLRenderer;
 import org.mdpnp.guis.opengl.OpenGL;
-import org.mdpnp.guis.waveform.AbstractNestedWaveformSource;
-import org.mdpnp.guis.waveform.CachingWaveformSource;
-import org.mdpnp.guis.waveform.EvenTempoWaveformSource;
 import org.mdpnp.guis.waveform.WaveformSource;
-import org.mdpnp.guis.waveform.WaveformSourceListener;
 
 /**
  * @author Jeff Plourde
  *
  */
-public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
+public class GLWaveformRenderer implements GLRenderer {
 
     private long[] startTime = new long[FRAME_SAMPLE];
     private int frames = 0;
@@ -76,28 +72,7 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
     }
 
     public void setSource(WaveformSource source) {
-        if (null == source) {
-            setRawSource(null);
-        } else {
-            if (caching) {
-                source = new CachingWaveformSource(source, 5000L);
-            }
-            if (evenTempo) {
-                source = new EvenTempoWaveformSource(source);
-            }
-            setRawSource(source);
-        }
-    }
-
-    public void setRawSource(WaveformSource source) {
-        if (null != this.source) {
-            this.source.removeListener(this);
-        }
         this.source = source;
-
-        if (null != this.source) {
-            this.source.addListener(this);
-        }
     }
 
     protected FloatBuffer buffer;
@@ -196,82 +171,80 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
         return ++x >= max ? 0 : x;
     }
 
-    @Override
-    public void waveform(WaveformSource source) {
-        maxX = source.getMax();
-        curX = source.getCount();
+//    public void waveform(WaveformSource source) {
+//        maxX = source.getMax();
+//        curX = source.getCount();
+//
+//        if ((curX - 1) >= maxCurX) {
+//            maxCurX = curX - 1;
+//        }
+//
+//        if (buffer == null || buffer.capacity() < (2 * maxX)) {
+//            x_gap = (int) (0.05 * maxX);
+//            buffer = ByteBuffer.allocateDirect(Float.SIZE * 2 * maxX).order(ByteOrder.nativeOrder()).asFloatBuffer();
+//        }
+//
+//        boolean incremental = true;
+//
+//        if (incremental) {
+//            int x = lastCount;
+//            int x1;
+//            // buffer.position(2 * x);
+//
+//            // maxX = max;
+//
+//            if (curX >= 0) {
+//
+//                while (x != curX) {
+//                    float y = source.getValue(x);
+//                    if (y < minY) {
+//                        minY = Math.min(y, minY);
+//                        x = 0;
+//                        // buffer.position(0);
+//                        continue;
+//                    }
+//                    if (y > maxY) {
+//                        maxY = Math.max(y, maxY);
+//                        x = 0;
+//                        // buffer.position(0);
+//                        continue;
+//                    }
+//                    x1 = incr(x, maxX);
+//                    // Log.d(GLWaveformView.class.getName(),
+//                    // "point x="+x+",y="+y);
+//                    // Don't draw the wraparound line (from max back to 0)
+//                    if (x1 > x && x != x1) {
+//                        // Log.d(GLWaveformView.class.getName(),
+//                        // "point applied");
+//                        buffer.put(2 * x, x).put(2 * x + 1, y);
+//                    } else {
+//                        // buffer.position(0);
+//                    }
+//                    x = x1;
+//                }
+//            }
+//            lastCount = curX;
+//        } else {
+//            // buffer.position(0);
+//            for (int i = 0; i < maxX; i++) {
+//                float y = source.getValue(i);
+//                if (y < minY) {
+//                    minY = y;
+//                }
+//                if (y > maxY) {
+//                    maxY = y;
+//                }
+//                buffer.put(2 * i, i).put(2 * i + 1, y);
+//            }
+//        }
+//
+//        // Log.d(GLWaveformView.class.getName(), "TOOK " +
+//        // (System.currentTimeMillis()-start) + "ms to populate");
+//        // requestRender();
+//        // renderer.render(glRenderer, rect);
+//    }
 
-        if ((curX - 1) >= maxCurX) {
-            maxCurX = curX - 1;
-        }
-
-        if (buffer == null || buffer.capacity() < (2 * maxX)) {
-            x_gap = (int) (0.05 * maxX);
-            buffer = ByteBuffer.allocateDirect(Float.SIZE * 2 * maxX).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        }
-
-        boolean incremental = true;
-
-        if (incremental) {
-            int x = lastCount;
-            int x1;
-            // buffer.position(2 * x);
-
-            // maxX = max;
-
-            if (curX >= 0) {
-
-                while (x != curX) {
-                    float y = source.getValue(x);
-                    if (y < minY) {
-                        minY = Math.min(y, minY);
-                        x = 0;
-                        // buffer.position(0);
-                        continue;
-                    }
-                    if (y > maxY) {
-                        maxY = Math.max(y, maxY);
-                        x = 0;
-                        // buffer.position(0);
-                        continue;
-                    }
-                    x1 = incr(x, maxX);
-                    // Log.d(GLWaveformView.class.getName(),
-                    // "point x="+x+",y="+y);
-                    // Don't draw the wraparound line (from max back to 0)
-                    if (x1 > x && x != x1) {
-                        // Log.d(GLWaveformView.class.getName(),
-                        // "point applied");
-                        buffer.put(2 * x, x).put(2 * x + 1, y);
-                    } else {
-                        // buffer.position(0);
-                    }
-                    x = x1;
-                }
-            }
-            lastCount = curX;
-        } else {
-            // buffer.position(0);
-            for (int i = 0; i < maxX; i++) {
-                float y = source.getValue(i);
-                if (y < minY) {
-                    minY = y;
-                }
-                if (y > maxY) {
-                    maxY = y;
-                }
-                buffer.put(2 * i, i).put(2 * i + 1, y);
-            }
-        }
-
-        // Log.d(GLWaveformView.class.getName(), "TOOK " +
-        // (System.currentTimeMillis()-start) + "ms to populate");
-        // requestRender();
-        // renderer.render(glRenderer, rect);
-    }
-
-    @Override
-    public void reset(WaveformSource source) {
+    public void reset() {
         minY = Integer.MAX_VALUE;
         maxY = Integer.MIN_VALUE;
         minX = 0;
@@ -319,14 +292,6 @@ public class GLWaveformRenderer implements GLRenderer, WaveformSourceListener {
         maxY = Integer.MIN_VALUE;
         minY = Integer.MAX_VALUE;
         // log.debug("Rescaling the y axis");
-    }
-
-    public EvenTempoWaveformSource evenTempoSource() {
-        return AbstractNestedWaveformSource.source(EvenTempoWaveformSource.class, source);
-    }
-
-    public CachingWaveformSource cachingSource() {
-        return AbstractNestedWaveformSource.source(CachingWaveformSource.class, source);
     }
 
     public WaveformSource getSource() {

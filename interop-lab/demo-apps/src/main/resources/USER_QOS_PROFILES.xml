@@ -202,9 +202,12 @@
     </property>
    </participant_qos>
    
+   <!--  Default reader QoS represent a minimum level of stringency,
+         for any reader that didn't bother selecting a more specific
+         profile or setting QoS policies programmatically. -->
    <datareader_qos>
     <reliability>
-     <kind>RELIABLE_RELIABILITY_QOS</kind>
+     <kind>DDS_BEST_EFFORT_RELIABILITY_QOS</kind>
      <max_blocking_time>
       <sec>2</sec>
       <nanosec>0</nanosec>
@@ -217,8 +220,8 @@
      <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
      <!-- Point at which writers (and associated instances) become "not alive" -->
      <lease_duration>
-      <sec>5</sec>
-      <nanosec>0</nanosec>
+      <sec>2147483647</sec>
+      <nanosec>2147483647</nanosec>
      </lease_duration>
     </liveliness>
     <!-- Don't request this in all cases
@@ -229,13 +232,14 @@
     <durability>
      <!-- Writer is responsible for maintaining transient copies of samples 
       ... see history -->
-     <kind>DDS_TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+     <kind>DDS_VOLATILE_DURABILITY_QOS</kind>
      <!-- Contact that writer directly to get the samples -->
      <direct_communication>DDS_BOOLEAN_TRUE</direct_communication>
     </durability>
 
     <!-- UDI is typical in the instance key so instances are owned exclusively 
-     by one publisher (device) -->
+     by one publisher (device)
+     This seems like a peculiar "default" -->
     <ownership>
      <kind>DDS_EXCLUSIVE_OWNERSHIP_QOS</kind>
     </ownership>
@@ -244,11 +248,14 @@
     <reader_resource_limits>
      <max_fragments_per_sample>5000</max_fragments_per_sample>
      <max_query_condition_filters>32</max_query_condition_filters>
+     <max_samples_per_read>65536</max_samples_per_read>
     </reader_resource_limits>
+    <!--  An easy policy request for a default.  Most inheriting profiles
+          should adjust this. -->
     <history>
-     <kind>KEEP_LAST_HISTORY_QOS</kind>
+     <kind>DDS_KEEP_ALL_HISTORY_QOS</kind>
      <!-- samples kept in the writer ... see durability -->
-     <depth>1</depth>
+     <!-- <depth>1</depth> -->
      <refilter>DDS_NONE_REFILTER_QOS</refilter>
     </history>
     
@@ -260,12 +267,13 @@
      </reader_data_lifecycle> -->
    </datareader_qos>
    
+   <!--  "default" data writers will offer as stringent QoS policies as feasible -->
    <datawriter_qos>
     <!--  Jeff Plourde wants to use BEST EFFORT reliability for non-state non-critical data
           But I'm continuing to make offering reliable reliability the default for now for the
           sake of backward compatibility. -->
     <reliability>
-     <kind>RELIABLE_RELIABILITY_QOS</kind>
+     <kind>DDS_RELIABLE_RELIABILITY_QOS</kind>
      <max_blocking_time>
       <sec>2</sec>
       <nanosec>0</nanosec>
@@ -284,6 +292,7 @@
       <nanosec>0</nanosec>
      </lease_duration>
     </liveliness>
+    <!-- It's important to offer this QoS even if every Reader does not request it -->
     <destination_order>
      <kind>DDS_BY_SOURCE_TIMESTAMP_DESTINATIONORDER_QOS</kind>
     </destination_order>
@@ -312,24 +321,66 @@
 
     </protocol>
     <history>
-     <kind>KEEP_LAST_HISTORY_QOS</kind>
-     <!-- samples kept in the writer ... see durability -->
-     <depth>1</depth>
-     <refilter>DDS_NONE_REFILTER_QOS</refilter>
+     <kind>DDS_KEEP_ALL_HISTORY_QOS</kind>
     </history>
    </datawriter_qos>
   </qos_profile>
   
   <qos_profile name="state" base_name="default_profile"
    is_default_qos="false">
-
-
+   <datareader_qos>
+    <!--  State information should be acknowledged -->
+    <reliability>
+     <kind>DDS_RELIABLE_RELIABILITY_QOS</kind>
+     <max_blocking_time>
+      <sec>2</sec>
+      <nanosec>0</nanosec>
+     </max_blocking_time>
+     <acknowledgment_kind>DDS_PROTOCOL_ACKNOWLEDGMENT_MODE
+     </acknowledgment_kind>
+    </reliability>
+    
+    <liveliness>
+     <!-- Let DDS handle heartbeats -->
+     <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
+     <!-- Point at which writers (and associated instances) become "not alive" -->
+     <!--  For state information a lack of liveliness means remote state may change and 
+           we will not get an update.  More critical state information might set a more 
+           stringent lease -->
+     <lease_duration>
+      <sec>5</sec>
+      <nanosec>0</nanosec>
+     </lease_duration>
+    </liveliness>
+    <!-- After a state transition we would like eventual consistency
+         If samples are not delivered in order this is impossible -->
+    <destination_order>
+        <kind>DDS_BY_SOURCE_TIMESTAMP_DESTINATIONORDER_QOS</kind>
+    </destination_order>
+    <durability>
+     <!-- Writer is responsible for maintaining transient copies of samples 
+      ... see history -->
+     <kind>DDS_TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+     <!-- Contact that writer directly to get the samples -->
+     <direct_communication>DDS_BOOLEAN_TRUE</direct_communication>
+    </durability>
+    <!-- The most recent sample is the "current" state -->
+    <history>
+     <kind>KEEP_LAST_HISTORY_QOS</kind>
+     <!-- samples kept in the writer ... see durability -->
+     <depth>1</depth>
+     <refilter>DDS_NONE_REFILTER_QOS</refilter>
+    </history>
+   </datareader_qos>
   </qos_profile>
 
   <qos_profile name="invariant_state" base_name="state"
    is_default_qos="false">
    <datareader_qos>
 
+    <!-- If the state information will not vary (currently thinking of something like
+         device serial number) then if the writer misses a heartbeat we are at no risk
+         of "missing" subsequent changes to the state -->
     <liveliness>
      <!-- Let DDS handle heartbeats -->
      <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
@@ -341,26 +392,93 @@
     </liveliness>
    </datareader_qos>
    <datawriter_qos>
-    <liveliness>
-     <!-- Let DDS handle heartbeats -->
-     <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
-     <!-- Point at which writers (and associated exclusively owned instances) 
-      become "not alive" -->
-     <lease_duration>
-      <sec>1</sec>
-      <nanosec>0</nanosec>
-     </lease_duration>
-    </liveliness>
    </datawriter_qos>
 
   </qos_profile>
   
-  <qos_profile name="numeric_data" base_name="default_profile" is_default_qos="false">
-      
+  <qos_profile name="observed_data" base_name="default_profile" is_default_qos="false">
+          <datareader_qos>
+      <!-- Ask DDS to sort samples for ease-of-programming.  Depending on the reader is might want to deal with
+           time ordering itself and disable this feature -->
+      <destination_order>
+        <kind>DDS_BY_SOURCE_TIMESTAMP_DESTINATIONORDER_QOS</kind>
+      </destination_order>
+      <reliability>
+        <kind>DDS_RELIABLE_RELIABILITY_QOS</kind>
+        <max_blocking_time>
+          <sec>2</sec>
+          <nanosec>0</nanosec>
+        </max_blocking_time>
+        <acknowledgment_kind>DDS_PROTOCOL_ACKNOWLEDGMENT_MODE
+        </acknowledgment_kind>
+      </reliability>
+      <liveliness>
+        <!-- Let DDS handle heartbeats -->
+        <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
+        <!-- Point at which writers (and associated instances) become "not alive" -->
+        <lease_duration>
+          <sec>3</sec>
+          <nanosec>0</nanosec>
+        </lease_duration>
+      </liveliness>
+      <durability>
+        <!-- Writer is responsible for maintaining transient copies of samples 
+             ... see history -->
+        <kind>DDS_TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+        <!-- Contact that writer directly to get the samples -->
+        <direct_communication>DDS_BOOLEAN_TRUE</direct_communication>
+      </durability>
+
+      <!-- This is contrived and meaningless because sample rate is not
+           the same in all cases -->
+      <history>
+        <kind>KEEP_ALL_HISTORY_QOS</kind>
+        <!--  <depth>1</depth>  -->
+      </history>
+      <!-- Why isn't lifespan supported on the reading side? -->
+      <!-- For data sampled at different rates one history depth does
+           not fit all cases -->
+           <!--  
+      <lifespan>
+          <duration>
+              <sec>10</sec>
+              <nanosec>0</nanosec>
+          </duration>
+      </lifespan>
+         -->
+    </datareader_qos>
+    <datawriter_qos>
+        <!--  Reliability is offered by default -->
+        <!--  Liveliness lease of 1 second is offered by default -->
+        <!--  Destination ordering BY_SOURCE is offered by default -->
+        <!--  Durability offered is TRANSIENT_LOCAL by default; change here for persistence of numerics? -->
+        <!--  Ownership is exclusive by default -->
+        <!--  Publish-mode async by default; is that necessary for these small messages? -->
+        <!--  History is KEEP_ALL by default -->
+        
+        <!--  For TRANSIENT_LOCAL durability ease the burden on writers by only storing numeric
+              data for an hour.  A persistent store can make it reasonable to store more -->
+        <lifespan>
+            <duration>
+                <sec>900</sec>
+                <nanosec>0</nanosec>
+            </duration>
+        </lifespan>
+        
+    </datawriter_qos>
   </qos_profile>
   
-  <qos_profile name="waveform_data" base_name="default_profile" is_default_qos="false">
+  <qos_profile name="numeric_data" base_name="observed_data" is_default_qos="false">
+
+  </qos_profile>
+  
+  <qos_profile name="waveform_data" base_name="observed_data" is_default_qos="false">
+    <datareader_qos>
+
+    </datareader_qos>
+
     <datawriter_qos>
+
      <!--  batch with default settings entered for future experimentation -->
      <!-- 
      <batch>

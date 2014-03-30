@@ -12,180 +12,148 @@
  ******************************************************************************/
 package org.mdpnp.guis.waveform;
 
-import java.util.List;
+
+
 
 /**
  * @author Jeff Plourde
  *
  */
-public class WaveformRenderer {
-    private WaveformSource source;
+public class WaveformRenderer implements WaveformSource.WaveformIterator {
 
-    private final List<WaveformSource> otherSources = new java.util.concurrent.CopyOnWriteArrayList<WaveformSource>();
-
-    public WaveformRenderer(WaveformSource source) {
-        this.source = source;
+    public WaveformRenderer() {
     }
 
-    private int lastCount = -1;
     private WaveformCanvas.Extent extent;
+    
     private float minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
-
-    private static final int incr(int x, int max) {
-        return ++x >= max ? 0 : x;
-    }
-
-    private static final int decr(int x, int max) {
-        return --x < 0 ? (max - 1) : x;
-    }
-
-    private static final int scaleX(int x, int minX0, int maxX0, int minX1, int maxX1) {
-        double d = 1.0 * (x - minX0) / (maxX0 - minX0);
-        // naive impl for now
-        return minX1 + (int) (d * (maxX1 - minX1));
-
-    }
-
-    private final int scaleX(int x, int max) {
-        int minX = extent.getMinX();
-        int maxX = extent.getMaxX();
-        return scaleX(x, 0, max, minX, maxX);
-    }
-
-    private final int scaleY(float y, float minY0, float maxY0) {
-        int minY1 = extent.getMinY();
-        int maxY1 = extent.getMaxY();
-
-        float f = 1.0f * (y - minY0) / (maxY0 - minY0);
-        return (int) (minY1 + f * (maxY1 - minY1));
-    }
-
-    public void addOtherSource(int r, int g, int b, int a, WaveformSource source) {
-        otherSources.add(source);
-    }
-
-    public static final class Rect {
-        public int bottom, top, left, right;
-    }
-
+    private int last_x = -1, last_y = -1;
+    private long t0, t1, t2;
+    private WaveformCanvas canvas;
     private boolean continuousRescale = true;
+    private boolean overwrite = true;
+    private float gapSize = 0.02f;
+    boolean aged_segment = true;
 
+    public void setOverwrite(boolean overwrite) {
+        this.overwrite = overwrite;
+    }
+    
+    public void setGapSize(float gapSize) {
+        this.gapSize = gapSize;
+    }
+    
+    public float getGapSize() {
+        return gapSize;
+    }
+    
+    public boolean getOverwrite() {
+        return overwrite;
+    }
+    
     public void setContinuousRescale(boolean continuousRescale) {
         this.continuousRescale = continuousRescale;
     }
-
-    public CachingWaveformSource cachingSource() {
-        return AbstractNestedWaveformSource.source(CachingWaveformSource.class, source);
-    }
-
-    private int minimumClearLines = 10;
+    
+    
 
     public void rescaleValue() {
-        lastCount = 0;
         minY = Integer.MAX_VALUE;
         maxY = Integer.MIN_VALUE;
     }
+    
+    
+    
+    @Override
+    public void sample(long time, float value) {
+        minY = Math.min(value, minY);
+        maxY = Math.max(value, maxY);
 
-    public void render(WaveformCanvas canvas, Rect rect) {
+        if(0==Float.compare(minY, maxY)) {
+            maxY = minY + 0.01f;
+        }
+        float x_prop = -1f;
+        if(overwrite) {
+            float split_prop = 1f * (t2 - t0) / (t2 - t1);
+            if(time >= t0 && time < t2) {
+                // the newer data (left)
+                if(aged_segment) {
+                    last_x = -1;
+                    last_y = -1;
+                    aged_segment = false;
+                }
+                x_prop = 1f * (time - t0) / (t2-t0);
+                x_prop *= split_prop;
+            } else if(time >= t1 && time < t0) {
+                // the older data (right)
+                x_prop = 1f * (time - t1) / (t0-t1);
+                x_prop *= (1f-split_prop);
+                if(x_prop < gapSize) {
+                    x_prop = -1f;
+                } else {
+                    x_prop += split_prop;
+                }
+            } else {
+                x_prop = -1f;
+            }
+        } else {
+            x_prop = 1f * (time - t1) / (t2-t1);
+        }
+        
+        float y_prop = 1f * (value - minY) / (maxY-minY);
+        
+        int x = extent.getMinX() + (int) (x_prop * (extent.getMaxX()-extent.getMinX()));
+        int y = extent.getMinY() + (int) (y_prop * (extent.getMaxY()-extent.getMinY()));
+        
+        if(x_prop>=0f&&x_prop<1f&&y_prop>=0f&&y_prop<1f) {
+            if(last_x>=0||last_y>=0&&x>last_x) {
+                canvas.drawLine(last_x, last_y, x, y);
+            }
+            last_x = x;
+            last_y = y;
+//            System.err.println("in " + x_prop + ", " + y_prop + " " + new Date(time));
+        } else {
+//            System.err.println("out of " + x_prop + ", " + y_prop);
+        }
 
-//        long start = System.currentTimeMillis();
-        WaveformSource source = this.source;
+    }
+    
+    public void render(WaveformSource source, WaveformCanvas canvas, long t1, long t2) {
+        this.canvas = canvas;
 
         if (null == canvas || null == source) {
             return;
         }
 
-        WaveformCanvas.Extent extent = canvas.getExtent();
-
-        int first = lastCount;
-        int max = source.getMax();
-
-        if (max < 2) {
-            // Really not much we can do with a single point
-            return;
+        extent = canvas.getExtent();
+        
+        if (continuousRescale) {
+            minY = Float.MAX_VALUE;
+            maxY = Float.MIN_VALUE;
         }
-
-        int last = decr(source.getCount(), max);
-
-        if (!extent.equals(this.extent)) {
-            first = 0;
-            last = 0;
-//            last = source.getMax() - 1;
-            this.extent = extent;
-        } else if (first == -1) {
-            first = 0;
-            last = 0;
-            return;
-//            last = source.getMax() - 1;
+        
+        if(overwrite) {
+            long domain = t2 - t1;
+            // what is the nearest start increment for a domain of this size?
+            this.t0 = t2 - t2 % domain;
         }
+        
+        this.t1 = t1;
+        this.t2 = t2;
 
-        // TODO this is temporary
-
-        int height = extent.getMaxY() - extent.getMinY();
-        int width = (extent.getMaxX() - extent.getMinX()) / (max - 1);
-
-        rect.left = 0;
-        rect.bottom = height;
-        rect.right = width;
-        rect.top = 0;
-        // canvas.getExtent().
-
-        int x = first;
-
-        if (last >= 0) {
-            while (x != last) {
-                int x1 = incr(x, max);
-                // TODO gain some efficiencies here
-                float y = source.getValue(x);
-                float y1 = source.getValue(x1);
-
-                if (continuousRescale && x == (max - 1)) {
-                    minY = Float.MAX_VALUE;
-                    maxY = Float.MIN_VALUE;
-                }
-                if (y1 < minY || y < minY) {
-                    minY = Math.min(y, y1);
-                    x = 0;
-                    // canvas.clearAll();
-                    continue;
-                }
-                if (y1 >= maxY || y >= maxY) {
-                    // max needs to be +1 from the highest point
-                    maxY = Math.max(y, y1) + 1;
-                    x = 0;
-                    // canvas.clearAll();
-                    continue;
-                }
-
-                // Don't draw the wraparound line (from max back to 0)
-                if (x1 > x && x != x1) {
-                    int pixelRight = scaleX(x1, max) - scaleX(x, max) + minimumClearLines;
-                    // if(pixelRight>=width) {
-                    // pixelRight = width - 1;
-                    // }
-                    canvas.clearRect(scaleX(x, max) + 1, scaleY(minY, minY, maxY), pixelRight, scaleY(maxY, minY, maxY) - scaleY(minY, minY, maxY));
-
-                    // int[] prevColor = canvas.getColor();
-                    for (WaveformSource cs : otherSources) {
-                        float _y = cs.getValue(x);
-                        float _y1 = cs.getValue(x1);
-                        // canvas.setColor(cs.r, cs.g, cs.b, cs.a);
-                        canvas.drawSecondaryLine(scaleX(x, max), scaleY(_y, minY, maxY), scaleX(x1, max), scaleY(_y1, minY, maxY));
-                    }
-                    // canvas.setColor(prevColor);
-                    // Log.d(WaveformRenderer.class.getName(),
-                    // "x0="+x+",y0="+y+",x1="+x1+",y1="+y1+",minY="+minY+",maxY="+maxY);
-                    canvas.drawLine(scaleX(x, max), scaleY(y, minY, maxY), scaleX(x1, max), scaleY(y1, minY, maxY));
-
-                } else {
-                    // canvas.clearAll();
-                }
-                x = x1;
-            }
-        }
-        lastCount = last;
-        // lastCount = source.getCount();
-
+        this.last_x = -1;
+        this.last_y = -1;
+        
+        source.iterate(this);
     }
 
+    @Override
+    public void begin() {
+        aged_segment = true;
+    }
+
+    @Override
+    public void end() {
+//        System.err.println(count + " points rendered most recent " + new Date(mostRecent));
+    }
 }

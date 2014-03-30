@@ -12,6 +12,9 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+import ice.NumericDataReader;
+import ice.SampleArrayDataReader;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -25,9 +28,10 @@ import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
 
 @SuppressWarnings("serial")
-public abstract class DevicePanel extends JPanel {
+public abstract class DevicePanel extends JPanel  {
 
     public DevicePanel() {
+        super();
         setOpaque(false);
     }
 
@@ -100,6 +104,15 @@ public abstract class DevicePanel extends JPanel {
     public abstract void infusionStatus(ice.InfusionStatus infusionStatus, SampleInfo sampleInfo);
 
     public void destroy() {
+    }
+    
+    protected NumericDataReader numericReader;
+    protected SampleArrayDataReader sampleArrayReader;
+    
+    public void set(NumericDataReader numericReader, SampleArrayDataReader sampleArrayReader) {
+        this.numericReader = numericReader;
+        this.sampleArrayReader = sampleArrayReader;
+//        flowWave = new SampleArrayWaveformSource(sampleArrayReader, new ice.Sample)
     }
 
     protected static final JPanel label(String label, Component c) {

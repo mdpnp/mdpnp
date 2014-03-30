@@ -28,10 +28,11 @@ import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
+import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
-import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 
 import com.rti.dds.subscription.SampleInfo;
 
@@ -42,7 +43,7 @@ import com.rti.dds.subscription.SampleInfo;
  */
 public class ElectroCardioGramPanel extends DevicePanel {
 
-    private final WaveformPanel[] panel;
+//    private final WaveformPanel[] panel;
     private final Date date = new Date();
     private final JLabel time = new JLabel(" "), heartRate = new JLabel(" "), respiratoryRate = new JLabel(" ");
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -53,25 +54,27 @@ public class ElectroCardioGramPanel extends DevicePanel {
     private final static String[] ECG_LABELS = new String[] { "ECG LEAD I", "ECG LEAD II", "ECG LEAD III", "ECG LEAD AVF", "ECG LEAD AVL",
             "ECG LEAD AVR" };
 
-    private final Map<String, WaveformUpdateWaveformSource> panelMap = new HashMap<String, WaveformUpdateWaveformSource>();
+    private final Map<String, WaveformPanel> panelMap = new HashMap<String, WaveformPanel>();
+    private final GridLayout waveLayout = new GridLayout(1,1);
+    private final JPanel waves = new JPanel(waveLayout);
 
     public ElectroCardioGramPanel() {
         super(new BorderLayout());
         add(label("Last Sample: ", time, BorderLayout.WEST), BorderLayout.SOUTH);
 
-        JPanel waves = new JPanel(new GridLayout(ECG_WAVEFORMS.length, 1));
-        WaveformPanelFactory fact = new WaveformPanelFactory();
-        panel = new WaveformPanel[ECG_WAVEFORMS.length];
-        for (int i = 0; i < panel.length; i++) {
-            waves.add(label(ECG_LABELS[i], (panel[i] = fact.createWaveformPanel()).asComponent())/*
-                                                                                                  * ,
-                                                                                                  * gbc
-                                                                                                  */);
-            WaveformUpdateWaveformSource wuws = new WaveformUpdateWaveformSource();
-            panel[i].setSource(wuws);
-            panelMap.put(ECG_WAVEFORMS[i], wuws);
-            panel[i].start();
-        }
+//        JPanel waves = new JPanel(new GridLayout(ECG_WAVEFORMS.length, 1));
+//        WaveformPanelFactory fact = new WaveformPanelFactory();
+//        panel = new WaveformPanel[ECG_WAVEFORMS.length];
+//        for (int i = 0; i < panel.length; i++) {
+//            waves.add(label(ECG_LABELS[i], (panel[i] = fact.createWaveformPanel()).asComponent())/*
+//                                                                                                  * ,
+//                                                                                                  * gbc
+//                                                                                                  */);
+//            SampleArrayWaveformSource wuws = new SampleArrayWaveformSource(sampleArrayReader, );
+//            panel[i].setSource(wuws);
+//            panelMap.put(ECG_WAVEFORMS[i], panel[i]);
+//            panel[i].start();
+//        }
         add(waves, BorderLayout.CENTER);
 
         JPanel numerics = new JPanel(new GridLayout(2, 1));
@@ -90,7 +93,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
 
     @Override
     public void destroy() {
-        for (WaveformPanel wp : panel) {
+        for (WaveformPanel wp : panelMap.values()) {
             wp.stop();
         }
         super.destroy();
@@ -118,17 +121,31 @@ public class ElectroCardioGramPanel extends DevicePanel {
 
     @Override
     public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
-        WaveformUpdateWaveformSource wuws = panelMap.get(metric_id);
+        WaveformPanel wuws = panelMap.get(metric_id);
         if (aliveAndValidData(sampleInfo)) {
-            if (null != wuws) {
-                wuws.applyUpdate(sampleArray, sampleInfo);
+            if (null == wuws) {
+                SampleArrayWaveformSource saws = new SampleArrayWaveformSource(sampleArrayReader, sampleArray);
+                wuws = new WaveformPanelFactory().createWaveformPanel();
+                wuws.setSource(saws);
+                final WaveformPanel _wuws = wuws;
+                panelMap.put(metric_id, wuws);
+                waveLayout.setRows(panelMap.size());
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        waves.add(_wuws.asComponent());
+                        waves.invalidate();
+                    }
+                });
+                
+//                
+//                wuws.applyUpdate(sampleArray, sampleInfo);
             }
             date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
             time.setText(dateFormat.format(date));
         } else {
-            if (null != wuws) {
-                wuws.reset();
-            }
+//            if (null != wuws) {
+//                wuws.reset();
+//            }
         }
     }
 
@@ -139,8 +156,8 @@ public class ElectroCardioGramPanel extends DevicePanel {
 
     @Override
     public void connected() {
-        for (WaveformUpdateWaveformSource wuws : panelMap.values()) {
-            wuws.reset();
-        }
+//        for (WaveformUpdateWaveformSource wuws : panelMap.values()) {
+//            wuws.reset();
+//        }
     }
 }

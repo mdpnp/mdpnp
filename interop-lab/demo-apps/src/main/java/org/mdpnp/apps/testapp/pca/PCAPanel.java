@@ -32,7 +32,8 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
-import org.mdpnp.apps.testapp.pump.PumpModel;
+import org.mdpnp.apps.testapp.data.DeviceListCellRenderer;
+import org.mdpnp.apps.testapp.data.InfusionStatusInstanceModel;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
@@ -65,13 +66,13 @@ public class PCAPanel extends JPanel implements VitalModelListener {
         return new ByteArrayInputStream(baos.toByteArray());
     }
 
-    public PCAPanel(ScheduledExecutorService refreshScheduler) {
+    public PCAPanel(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListCellRenderer deviceCellRenderer) {
         // super(JSplitPane.HORIZONTAL_SPLIT, true, new
         // PCAConfig(refreshScheduler), new VitalMonitoring(refreshScheduler));
         super(new BorderLayout());
         // pcaConfig = (PCAConfig) getLeftComponent();
         // vitalMonitor = (VitalMonitoring) getRightComponent();
-        pcaConfig = new PCAConfig(refreshScheduler);
+        pcaConfig = new PCAConfig(refreshScheduler, objectiveWriter, deviceCellRenderer);
 
         setBorder(EMPTY_BORDER);
 
@@ -116,7 +117,7 @@ public class PCAPanel extends JPanel implements VitalModelListener {
 
     private VitalModel model;
 
-    public void setModel(VitalModel vitalModel, PumpModel pumpModel) {
+    public void setModel(VitalModel vitalModel, InfusionStatusInstanceModel pumpModel) {
         if (this.model != null) {
             this.model.removeListener(this);
         }

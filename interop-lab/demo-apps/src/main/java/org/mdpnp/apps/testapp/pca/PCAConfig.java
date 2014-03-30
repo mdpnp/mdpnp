@@ -44,30 +44,36 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.mdpnp.apps.testapp.pump.Pump;
-import org.mdpnp.apps.testapp.pump.PumpListModel;
-import org.mdpnp.apps.testapp.pump.PumpModel;
-import org.mdpnp.apps.testapp.pump.PumpModelListener;
+import org.mdpnp.apps.testapp.data.DeviceListCellRenderer;
+import org.mdpnp.apps.testapp.data.InfusionStatusInstanceModel;
+import org.mdpnp.apps.testapp.data.InstanceModel;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
+
+import com.rti.dds.infrastructure.InstanceHandle_t;
 
 @SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
  *
  */
-public class PCAConfig extends JComponent implements VitalModelListener, PumpModelListener {
+public class PCAConfig extends JComponent implements VitalModelListener, ListDataListener {
 
     JCheckBox configureModeBox = new JCheckBox("Configuration Mode");
     JPanel configurePanel = new JPanel();
+    
+    private final ice.InfusionObjectiveDataWriter objectiveWriter;
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public PCAConfig(ScheduledExecutorService executor) {
+    public PCAConfig(ScheduledExecutorService executor, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListCellRenderer deviceCellRenderer) {
         setLayout(new GridBagLayout());
+        this.objectiveWriter = objectiveWriter;
         pumpProgress = new JProgressAnimation2(executor);
         pumpProgress.setForeground(Color.green);
         // pumpProgress.setBackground(new Color(1f,1f,1f,.5f));
@@ -140,37 +146,12 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
                 if (null == pumpList.getSelectedValue()) {
                     pumpProgress.setPopulated(false);
                 } else {
-                    pumpChanged(pumpModel, (Pump) pumpList.getSelectedValue());
+                    contentsChanged(null);
                 }
             }
 
         });
-        pumpList.setCellRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                String udi = null;
-                setOpaque(false);
-                if (value != null && value instanceof Pump) {
-                    udi = ((Pump) value).getInfusionStatus().unique_device_identifier;
-                    VitalModel model = PCAConfig.this.model;
-                    if (model != null) {
-                        ice.DeviceIdentity di = model.getDeviceIdentity(udi);
-                        if (null != di) {
-                            value = di.manufacturer + " " + di.model;
-                        }
-
-                    }
-                }
-
-                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-                if (null != udi && c instanceof JLabel && null != model) {
-                    ((JLabel) c).setIcon(model.getDeviceIcon(udi));
-                    ((JLabel) c).setOpaque(false);
-                }
-                return c;
-            }
-        });
+        pumpList.setCellRenderer(deviceCellRenderer);
         buildGUI();
     }
 
@@ -233,7 +214,7 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
     }
 
     private VitalModel model;
-    private PumpModel pumpModel;
+    private InfusionStatusInstanceModel pumpModel;
 
     protected void updateVitals() {
         if (SwingUtilities.isEventDispatchThread()) {
@@ -250,8 +231,7 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
     }
 
     private final JProgressAnimation2 pumpProgress;
-    @SuppressWarnings("rawtypes")
-    private final JList pumpList = new JList();
+    private final JList<ice.InfusionStatus> pumpList = new JList<ice.InfusionStatus>();
     private final JTextArea warningStatus = new JTextArea(" ");
     @SuppressWarnings("rawtypes")
     private final JComboBox warningsToAlarm = new JComboBox();
@@ -292,28 +272,29 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public void setModel(VitalModel model, PumpModel pumpModel) {
+    public void setModel(VitalModel model, InfusionStatusInstanceModel pumpModel) {
         String selectedUdi = null;
-        Object selected = pumpList.getSelectedValue();
-        if (null != selected && selected instanceof Pump) {
-            selectedUdi = ((Pump) selected).getInfusionStatus().unique_device_identifier;
+        ice.InfusionStatus selected = pumpList.getSelectedValue();
+        if (null != selected) {
+            selectedUdi = selected.unique_device_identifier;
         }
-        pumpList.setModel(null == pumpModel ? new DefaultListModel() : new PumpListModel(pumpModel));
+        pumpList.setModel(null == pumpModel ? new DefaultListModel() : pumpModel);
         if (null != selectedUdi && pumpModel != null) {
-            for (int i = 0; i < pumpModel.getCount(); i++) {
-                if (selectedUdi.equals(pumpModel.getPump(i).getInfusionStatus().unique_device_identifier)) {
-                    pumpList.setSelectedValue(pumpModel.getPump(i), true);
+            for (int i = 0; i < pumpModel.getSize(); i++) {
+                ice.InfusionStatus status = pumpModel.getElementAt(i);
+                if (selectedUdi.equals(status.unique_device_identifier)) {
+                    pumpList.setSelectedValue(status, true);
                 }
             }
         }
         pumpList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         if (this.pumpModel != null) {
-            this.pumpModel.removeListener(this);
+            this.pumpModel.removeListDataListener(this);
         }
         this.pumpModel = pumpModel;
         if (this.pumpModel != null) {
-            this.pumpModel.addListener(this);
+            this.pumpModel.addListDataListener(this);
         }
 
         if (this.model != null) {
@@ -331,19 +312,16 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
     public void vitalChanged(VitalModel model, Vital vital) {
         if (model != null) {
             warningsToAlarm.setSelectedItem((Integer) model.getCountWarningsBecomeAlarm());
-            Object o = pumpList.getSelectedValue();
-            Pump p = null;
-            if (o instanceof Pump) {
-                p = (Pump) o;
-            }
+            ice.InfusionStatus p = pumpList.getSelectedValue();
+
             if (model.isInfusionStopped()) {
                 if (null != p) {
-                    p.setStop(true);
+                    setStop(p, true);
                 }
                 pumpProgress.setInterlockText(model.getInterlockText());
             } else {
                 if (null != p) {
-                    p.setStop(false);
+                    setStop(p, false);
                 }
                 pumpProgress.setInterlockText(null);
             }
@@ -387,24 +365,33 @@ public class PCAConfig extends JComponent implements VitalModelListener, PumpMod
     }
 
     @Override
-    public void pumpAdded(PumpModel model, Pump pump) {
+    public void intervalAdded(ListDataEvent e) {
         vitalChanged(this.model, null);
     }
 
     @Override
-    public void pumpRemoved(PumpModel model, Pump pump) {
+    public void intervalRemoved(ListDataEvent e) {
         vitalChanged(this.model, null);
     }
 
     @Override
-    public void pumpChanged(PumpModel model, Pump pump) {
-        if (pump != null && pump.equals(pumpList.getSelectedValue())) {
-            if (pump.getInfusionStatus().infusionActive) {
-                pumpProgress.start(pump.getInfusionStatus().drug_name, pump.getInfusionStatus().volume_to_be_infused_ml,
-                        pump.getInfusionStatus().infusion_duration_seconds, pump.getInfusionStatus().infusion_fraction_complete);
+    public void contentsChanged(ListDataEvent e) {
+        ice.InfusionStatus status = pumpList.getSelectedValue();
+        if(null != status) {
+            if (status.infusionActive) {
+                pumpProgress.start(status.drug_name, status.volume_to_be_infused_ml,
+                        status.infusion_duration_seconds, status.infusion_fraction_complete);
             } else {
                 pumpProgress.stop();
             }
         }
+    }
+
+    public void setStop(ice.InfusionStatus status, boolean stop) {
+        ice.InfusionObjective obj = new ice.InfusionObjective();
+        obj.requestor = "ME";
+        obj.unique_device_identifier = status.unique_device_identifier;
+        obj.stopInfusion = stop;
+        objectiveWriter.write(obj, InstanceHandle_t.HANDLE_NIL);
     }
 }

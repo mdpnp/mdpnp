@@ -349,65 +349,64 @@ public class DeviceListModel extends AbstractListModel<Device> {
     final ParticipantBuiltinTopicDataSeq part_seq = new ParticipantBuiltinTopicDataSeq();
     final SampleInfoSeq info_seq = new SampleInfoSeq();
 
+    public void start() {
+        DomainParticipant participant = subscriber.get_participant();
+
+        idTopic = lookupOrCreateTopic(participant, ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.class);
+        connTopic = lookupOrCreateTopic(participant, ice.DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.class);
+
+        reader = (ParticipantBuiltinTopicDataDataReader) participant.get_builtin_subscriber().lookup_datareader(
+                ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME);
+        idReader = (DeviceIdentityDataReader) subscriber.create_datareader_with_profile(idTopic, QosProfiles.ice_library,
+                QosProfiles.invariant_state, null, StatusKind.STATUS_MASK_NONE);
+
+        connReader = (DeviceConnectivityDataReader) subscriber.create_datareader_with_profile(connTopic, QosProfiles.ice_library,
+                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+
+        reader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
+        idReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
+        connReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
+
+        eventLoop.addHandler(reader.get_statuscondition(), new EventLoop.ConditionHandler() {
+
+            @Override
+            public void conditionChanged(Condition condition) {
+                ParticipantBuiltinTopicDataDataReader reader = (ParticipantBuiltinTopicDataDataReader) ((StatusCondition) condition)
+                        .get_entity();
+                int status_changes = reader.get_status_changes();
+                if (0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
+                    dataAvailable(reader);
+                }
+            }
+        });
+
+        eventLoop.addHandler(idReader.get_statuscondition(), new EventLoop.ConditionHandler() {
+            @Override
+            public void conditionChanged(Condition condition) {
+                ice.DeviceIdentityDataReader reader = (DeviceIdentityDataReader) ((StatusCondition) condition).get_entity();
+                int status_changes = reader.get_status_changes();
+                if (0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
+                    dataAvailable(reader);
+                }
+            }
+
+        });
+        eventLoop.addHandler(connReader.get_statuscondition(), new EventLoop.ConditionHandler() {
+
+            @Override
+            public void conditionChanged(Condition condition) {
+                ice.DeviceConnectivityDataReader reader = (ice.DeviceConnectivityDataReader) ((StatusCondition) condition).get_entity();
+                int status_changes = reader.get_status_changes();
+                if (0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
+                    dataAvailable(reader);
+                }
+            }
+        });
+    }
+    
     public DeviceListModel(final Subscriber subscriber, final EventLoop eventLoop) {
         this.eventLoop = eventLoop;
         this.subscriber = subscriber;
-        eventLoop.doLater(new Runnable() {
-            public void run() {
-                DomainParticipant participant = subscriber.get_participant();
-
-                idTopic = lookupOrCreateTopic(participant, ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.class);
-                connTopic = lookupOrCreateTopic(participant, ice.DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.class);
-
-                reader = (ParticipantBuiltinTopicDataDataReader) participant.get_builtin_subscriber().lookup_datareader(
-                        ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME);
-                idReader = (DeviceIdentityDataReader) subscriber.create_datareader_with_profile(idTopic, QosProfiles.ice_library,
-                        QosProfiles.invariant_state, null, StatusKind.STATUS_MASK_NONE);
-
-                connReader = (DeviceConnectivityDataReader) subscriber.create_datareader_with_profile(connTopic, QosProfiles.ice_library,
-                        QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-
-                reader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
-                idReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
-                connReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
-
-                eventLoop.addHandler(reader.get_statuscondition(), new EventLoop.ConditionHandler() {
-
-                    @Override
-                    public void conditionChanged(Condition condition) {
-                        ParticipantBuiltinTopicDataDataReader reader = (ParticipantBuiltinTopicDataDataReader) ((StatusCondition) condition)
-                                .get_entity();
-                        int status_changes = reader.get_status_changes();
-                        if (0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
-                            dataAvailable(reader);
-                        }
-                    }
-                });
-
-                eventLoop.addHandler(idReader.get_statuscondition(), new EventLoop.ConditionHandler() {
-                    @Override
-                    public void conditionChanged(Condition condition) {
-                        ice.DeviceIdentityDataReader reader = (DeviceIdentityDataReader) ((StatusCondition) condition).get_entity();
-                        int status_changes = reader.get_status_changes();
-                        if (0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
-                            dataAvailable(reader);
-                        }
-                    }
-
-                });
-                eventLoop.addHandler(connReader.get_statuscondition(), new EventLoop.ConditionHandler() {
-
-                    @Override
-                    public void conditionChanged(Condition condition) {
-                        ice.DeviceConnectivityDataReader reader = (ice.DeviceConnectivityDataReader) ((StatusCondition) condition).get_entity();
-                        int status_changes = reader.get_status_changes();
-                        if (0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
-                            dataAvailable(reader);
-                        }
-                    }
-                });
-            }
-        });
     }
 
     protected void notADevice(ParticipantBuiltinTopicData participant_info, boolean alive) {

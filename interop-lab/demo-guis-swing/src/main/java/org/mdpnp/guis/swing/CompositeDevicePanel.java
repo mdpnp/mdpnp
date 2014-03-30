@@ -193,6 +193,10 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
                 } else {
                     data.setLayout(new GridLayout(__dataComponents.length, 1));
                     for (DevicePanel d : __dataComponents) {
+                        // TODO this is getting to be a mess
+                        if(deviceMonitor != null) {
+                            d.set(deviceMonitor.getNumericReader(), deviceMonitor.getSampleArrayReader());
+                        }
                         data.add(d);
                     }
                     CompositeDevicePanel.this.validate();
@@ -217,10 +221,10 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
 
     @Override
     public void numeric(ice.NumericDataReader reader, ice.NumericSeq nu_seq, SampleInfoSeq info_seq) {
-        for (int i = 0; i < info_seq.size(); i++) {
+        // Only dole out the most recent sample
+        for (int i = info_seq.size()-1; i < info_seq.size(); i++) {
             SampleInfo si = (SampleInfo) info_seq.get(i);
             ice.Numeric n = (Numeric) nu_seq.get(i);
-
             String metric_id = null;
 
             if (si.valid_data) {
@@ -252,7 +256,8 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
 
     @Override
     public void sampleArray(ice.SampleArrayDataReader reader, ice.SampleArraySeq sa_seq, SampleInfoSeq info_seq) {
-        for (int i = 0; i < info_seq.size(); i++) {
+        // Only the most recent sample (no need to replay numerics for instance through all time)
+        for (int i = info_seq.size()-1; i < info_seq.size(); i++) {
             SampleInfo si = (SampleInfo) info_seq.get(i);
             ice.SampleArray sampleArray = (SampleArray) sa_seq.get(i);
             String metric_id = null;

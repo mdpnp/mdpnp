@@ -16,19 +16,18 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
 import org.mdpnp.guis.waveform.WaveformSource;
-import org.mdpnp.guis.waveform.WaveformSourceListener;
 
-public final class WaveformSourceTableModel extends AbstractTableModel implements TableModel, WaveformSourceListener {
+public final class WaveformSourceTableModel extends AbstractTableModel implements TableModel {
     private final WaveformSource source;
 
     public WaveformSourceTableModel(WaveformSource source) {
         this.source = source;
     }
 
-    @Override
-    public void waveform(WaveformSource source) {
-        fireTableDataChanged();
-    }
+//    @Override
+//    public void waveform(WaveformSource source) {
+//        fireTableDataChanged();
+//    }
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
@@ -54,22 +53,34 @@ public final class WaveformSourceTableModel extends AbstractTableModel implement
 
     @Override
     public int getRowCount() {
-        return source.getMax();
+        // TODO Auto-generated method stub
+        return 0;
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        switch (columnIndex) {
-        case 0:
-            return rowIndex;
-        case 1:
-            return source.getValue(rowIndex);
-        default:
-            return null;
-        }
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    @Override
-    public void reset(WaveformSource source) {
-    }
+//    @Override
+//    public int getRowCount() {
+//        return source.getMax();
+//    }
+
+//    @Override
+//    public Object getValueAt(int rowIndex, int columnIndex) {
+//        switch (columnIndex) {
+//        case 0:
+//            return rowIndex;
+//        case 1:
+//            return source.getValue(rowIndex);
+//        default:
+//            return null;
+//        }
+//    }
+
+//    @Override
+//    public void reset(WaveformSource source) {
+//    }
 }

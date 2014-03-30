@@ -29,9 +29,9 @@ import java.util.Set;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
-import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 
 import com.rti.dds.subscription.SampleInfo;
 
@@ -53,7 +53,7 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
 
     private final static String[] LABELS = new String[] { "ART", "ABP", };
 
-    private final Map<String, WaveformUpdateWaveformSource> panelMap = new HashMap<String, WaveformUpdateWaveformSource>();
+    private final Map<String, SampleArrayWaveformSource> panelMap = new HashMap<String, SampleArrayWaveformSource>();
 
     public InvasiveBloodPressurePanel() {
         super(new BorderLayout());
@@ -67,9 +67,9 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
                                                                                               * ,
                                                                                               * gbc
                                                                                               */);
-            WaveformUpdateWaveformSource wuws = new WaveformUpdateWaveformSource();
-            panel[i].setSource(wuws);
-            panelMap.put(WAVEFORMS[i], wuws);
+//            SampleArrayWaveformSource wuws = new SampleArrayWaveformSource();
+//            panel[i].setSource(wuws);
+//            panelMap.put(WAVEFORMS[i], wuws);
             panel[i].start();
         }
         add(waves, BorderLayout.CENTER);
@@ -120,19 +120,19 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
 
     @Override
     public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
-        WaveformUpdateWaveformSource wuws = panelMap.get(metric_id);
-        if (aliveAndValidData(sampleInfo)) {
-            if (null != wuws) {
-                wuws.applyUpdate(sampleArray, sampleInfo);
-            }
-            date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
-            time.setText(dateFormat.format(date));
-        } else {
-            if (null != wuws) {
-                System.err.println("RESET RESET RESET");
-                wuws.reset();
-            }
-        }
+//        WaveformUpdateWaveformSource wuws = panelMap.get(metric_id);
+//        if (aliveAndValidData(sampleInfo)) {
+//            if (null != wuws) {
+//                wuws.applyUpdate(sampleArray, sampleInfo);
+//            }
+//            date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+//            time.setText(dateFormat.format(date));
+//        } else {
+//            if (null != wuws) {
+//                System.err.println("RESET RESET RESET");
+//                wuws.reset();
+//            }
+//        }
     }
 
     @Override
@@ -142,8 +142,8 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
 
     @Override
     public void connected() {
-        for (WaveformUpdateWaveformSource wuws : panelMap.values()) {
-            wuws.reset();
-        }
+//        for (WaveformUpdateWaveformSource wuws : panelMap.values()) {
+//            wuws.reset();
+//        }
     }
 }

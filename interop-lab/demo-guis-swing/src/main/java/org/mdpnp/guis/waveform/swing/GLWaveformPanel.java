@@ -23,7 +23,6 @@ import java.lang.reflect.InvocationTargetException;
 
 import javax.media.opengl.GLAnimatorControl;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -36,11 +35,8 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
 import org.mdpnp.guis.opengl.jogl.GLPanel;
-import org.mdpnp.guis.waveform.CachingWaveformSource;
-import org.mdpnp.guis.waveform.EvenTempoWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformSource;
-import org.mdpnp.guis.waveform.WaveformSourceListener;
 import org.mdpnp.guis.waveform.opengl.GLWaveformRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,10 +69,10 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (null == cacheFrame) {
-                    final CachingWaveformSource cachesource = getRenderer().cachingSource();
+//                    final CachingWaveformSource cachesource = getRenderer().cachingSource();
                     cacheFrame = new JFrame("Set Time Domain (seconds)");
                     cacheFrame.getContentPane().setLayout(new BorderLayout());
-                    final JLabel valueLabel = new JLabel(Long.toString(cachesource.getFixedTimeDomain() / 1000) + " seconds");
+//                    final JLabel valueLabel = new JLabel(Long.toString(cachesource.getFixedTimeDomain() / 1000) + " seconds");
 
                     final JSlider slider = new JSlider();
                     slider.setMaximum(5 * 60);
@@ -85,19 +81,19 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
                     slider.setPaintLabels(true);
                     slider.setMajorTickSpacing(60);
                     // slider.setMinorTickSpacing(1000);
-                    slider.setValue((int) (long) cachesource.getFixedTimeDomain() / 1000);
+//                    slider.setValue((int) (long) cachesource.getFixedTimeDomain() / 1000);
 
                     slider.addChangeListener(new ChangeListener() {
 
                         @Override
                         public void stateChanged(ChangeEvent arg0) {
-                            cachesource.setFixedTimeDomain(slider.getValue() * 1000);
-                            valueLabel.setText(Long.toString(cachesource.getFixedTimeDomain() / 1000) + " seconds");
+//                            cachesource.setFixedTimeDomain(slider.getValue() * 1000);
+//                            valueLabel.setText(Long.toString(cachesource.getFixedTimeDomain() / 1000) + " seconds");
                         }
 
                     });
                     cacheFrame.getContentPane().add(slider, BorderLayout.CENTER);
-                    cacheFrame.getContentPane().add(valueLabel, BorderLayout.SOUTH);
+//                    cacheFrame.getContentPane().add(valueLabel, BorderLayout.SOUTH);
                     cacheFrame.setSize(640, 120);
 
                 }
@@ -115,13 +111,13 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
                 if (null == source) {
                     sampleRate.setText("");
                 } else {
-                    sampleRate.setText("" + source.getMillisecondsPerSample() + " ms/sample");
+//                    sampleRate.setText("" + source.getMillisecondsPerSample() + " ms/sample");
                 }
-                if (null == getRenderer().cachingSource()) {
-                    cacheItem.setVisible(false);
-                } else {
-                    cacheItem.setVisible(true);
-                }
+//                if (null == getRenderer().cachingSource()) {
+//                    cacheItem.setVisible(false);
+//                } else {
+//                    cacheItem.setVisible(true);
+//                }
             }
 
             @Override
@@ -149,7 +145,7 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
                     dataFrame.addWindowListener(new WindowAdapter() {
                         @Override
                         public void windowClosing(WindowEvent e) {
-                            getRenderer().getSource().removeListener((WaveformSourceListener) table.getModel());
+//                            getRenderer().getSource().removeListener((WaveformSourceListener) table.getModel());
                             table.getModel().removeTableModelListener(table);
                             super.windowClosing(e);
                         }
@@ -192,23 +188,13 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
     }
 
     @Override
-    public CachingWaveformSource cachingSource() {
-        return getRenderer().cachingSource();
-    }
-
-    @Override
-    public EvenTempoWaveformSource evenTempoSource() {
-        return getRenderer().evenTempoSource();
-    }
-
-    @Override
     public void setOutOfTrack(boolean outOfTrack) {
         renderer.setOutOfTrack(outOfTrack);
     }
 
     @Override
     public void start() {
-        final GLAnimatorControl singleton = AnimatorSingleton.getInstance();
+        final GLAnimatorControl singleton = GLAnimatorSingleton.getInstance();
         // Making this call from the AWT thread because AWTAnimatorImpl seems to
         // prefer it
         Runnable r = new Runnable() {
@@ -253,18 +239,8 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
             }
         }
 
-        AnimatorSingleton.releaseInstance(singleton);
+        GLAnimatorSingleton.releaseInstance(singleton);
     }
 
     protected final static Logger log = LoggerFactory.getLogger(GLWaveformPanel.class);
-
-    @Override
-    public void setEvenTempo(boolean evenTempo) {
-        renderer.setEvenTempo(evenTempo);
-    }
-
-    @Override
-    public void setCaching(boolean caching) {
-        renderer.setCaching(caching);
-    }
 }

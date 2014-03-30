@@ -34,19 +34,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.infrastructure.Condition;
+import com.rti.dds.infrastructure.DurabilityQosPolicyKind;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.ReliabilityQosPolicyKind;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.DataReader;
+import com.rti.dds.subscription.DataReaderQos;
 import com.rti.dds.subscription.InstanceStateKind;
-import com.rti.dds.subscription.QueryCondition;
 import com.rti.dds.subscription.ReadCondition;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
+import com.rti.dds.topic.ContentFilteredTopic;
+import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicDescription;
 
 /**
@@ -54,9 +59,10 @@ import com.rti.dds.topic.TopicDescription;
  *
  */
 public class DeviceMonitor {
-    private Subscriber subscriber;
+    private DomainParticipant participant;
     private final Set<Condition> conditions = new HashSet<Condition>();
     private final Set<DataReader> dataReaders = new HashSet<DataReader>();
+    private final Set<ContentFilteredTopic> filteredTopics = new HashSet<ContentFilteredTopic>();
     private EventLoop eventLoop;
     private static final Logger log = LoggerFactory.getLogger(DeviceMonitor.class);
 
@@ -100,6 +106,32 @@ public class DeviceMonitor {
         this.udi = udi;
     }
 
+    private DeviceIdentityDataReader idReader;
+    private DeviceConnectivityDataReader connReader;
+    private NumericDataReader numReader;
+    private SampleArrayDataReader saReader;
+    private ice.InfusionStatusDataReader ipReader;
+    
+    public ice.DeviceIdentityDataReader getDeviceIdentityReader() {
+        return idReader;
+    }
+    
+    public ice.DeviceConnectivityDataReader getDeviceConnectivityReader() {
+        return connReader;
+    }
+    
+    public ice.NumericDataReader getNumericReader() {
+        return numReader;
+    }
+    
+    public ice.SampleArrayDataReader getSampleArrayReader() {
+        return saReader;
+    }
+    
+    public ice.InfusionStatusDataReader getInfusionStatusReader() {
+        return ipReader;
+    }
+    
     public void start(final DomainParticipant participant, final EventLoop eventLoop) {
         this.eventLoop = eventLoop;
         eventLoop.doLater(new Runnable() {
@@ -110,7 +142,7 @@ public class DeviceMonitor {
     }
 
     protected void _start(final DomainParticipant participant, final EventLoop eventLoop) {
-        subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        this.participant = participant;
         TopicDescription deviceIdentityTopic = lookupOrCreateTopic(participant, ice.DeviceIdentityTopic.VALUE, ice.DeviceIdentityTypeSupport.class);
         TopicDescription deviceConnectivityTopic = lookupOrCreateTopic(participant, ice.DeviceConnectivityTopic.VALUE,
                 DeviceConnectivityTypeSupport.class);
@@ -118,17 +150,37 @@ public class DeviceMonitor {
         TopicDescription deviceSampleArrayTopic = lookupOrCreateTopic(participant, ice.SampleArrayTopic.VALUE, SampleArrayTypeSupport.class);
         TopicDescription deviceInfusionStatusTopic = lookupOrCreateTopic(participant, ice.InfusionStatusTopic.VALUE,
                 ice.InfusionStatusTypeSupport.class);
-
-        final DeviceIdentityDataReader idReader = (DeviceIdentityDataReader) subscriber.create_datareader_with_profile(deviceIdentityTopic,
+        
+        final StringSeq identity = new StringSeq();
+        identity.add("'" + udi + "'");
+        final String identity_exp = "unique_device_identifier = %0";
+        
+        ContentFilteredTopic fDeviceIdentityTopic = participant.create_contentfilteredtopic("DeviceMonitorFilteredDeviceIdentity", (Topic) deviceIdentityTopic, identity_exp, identity);
+        ContentFilteredTopic fDeviceConnectivityTopic = participant.create_contentfilteredtopic("DeviceMonitorFilteredDeviceConnectivity", (Topic) deviceConnectivityTopic, identity_exp, identity);
+        ContentFilteredTopic fDeviceNumericTopic = participant.create_contentfilteredtopic("DeviceMonitorFilteredNumeric", (Topic) deviceNumericTopic, identity_exp, identity);
+        ContentFilteredTopic fDeviceSampleArrayTopic = participant.create_contentfilteredtopic("DeviceMonitorFilteredSampleArray", (Topic) deviceSampleArrayTopic, identity_exp, identity);
+        ContentFilteredTopic fDeviceInfusionStatusTopic = participant.create_contentfilteredtopic("DeviceMonitorFilteredInfusionStatus", (Topic) deviceInfusionStatusTopic, identity_exp, identity);
+        
+        filteredTopics.add(fDeviceIdentityTopic);
+        filteredTopics.add(fDeviceConnectivityTopic);
+        filteredTopics.add(fDeviceNumericTopic);
+        filteredTopics.add(fDeviceSampleArrayTopic);
+        filteredTopics.add(fDeviceInfusionStatusTopic);
+        
+        idReader = (DeviceIdentityDataReader) participant.create_datareader_with_profile(fDeviceIdentityTopic,
                 QosProfiles.ice_library, QosProfiles.invariant_state, null, StatusKind.STATUS_MASK_NONE);
-        final DeviceConnectivityDataReader connReader = (DeviceConnectivityDataReader) subscriber.create_datareader_with_profile(
-                deviceConnectivityTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-        final NumericDataReader numReader = (NumericDataReader) subscriber.create_datareader_with_profile(deviceNumericTopic,
+        connReader = (DeviceConnectivityDataReader) participant.create_datareader_with_profile(
+                fDeviceConnectivityTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        numReader = (NumericDataReader) participant.create_datareader_with_profile(fDeviceNumericTopic,
                 QosProfiles.ice_library, QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
-        final SampleArrayDataReader saReader = (SampleArrayDataReader) subscriber.create_datareader_with_profile(deviceSampleArrayTopic,
-                QosProfiles.ice_library, QosProfiles.waveform_data, null, StatusKind.STATUS_MASK_NONE);
-        final ice.InfusionStatusDataReader ipReader = (ice.InfusionStatusDataReader) subscriber.create_datareader_with_profile(
-                deviceInfusionStatusTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        DataReaderQos drQos = new DataReaderQos();
+        DomainParticipantFactory.get_instance().get_datareader_qos_from_profile(drQos, QosProfiles.ice_library, QosProfiles.waveform_data);
+        drQos.durability.kind = DurabilityQosPolicyKind.TRANSIENT_LOCAL_DURABILITY_QOS;
+        drQos.reliability.kind = ReliabilityQosPolicyKind.RELIABLE_RELIABILITY_QOS;
+        saReader = (SampleArrayDataReader) participant.create_datareader(fDeviceSampleArrayTopic,
+                drQos, null, StatusKind.STATUS_MASK_NONE);
+        ipReader = (ice.InfusionStatusDataReader) participant.create_datareader_with_profile(
+                fDeviceInfusionStatusTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         dataReaders.add(idReader);
         dataReaders.add(connReader);
@@ -136,8 +188,7 @@ public class DeviceMonitor {
         dataReaders.add(saReader);
         dataReaders.add(ipReader);
 
-        final StringSeq identity = new StringSeq();
-        identity.add("'" + udi + "'");
+        
 
         final DeviceIdentitySeq id_seq = new DeviceIdentitySeq();
         final DeviceConnectivitySeq conn_seq = new DeviceConnectivitySeq();
@@ -146,14 +197,14 @@ public class DeviceMonitor {
         final SampleInfoSeq info_seq = new SampleInfoSeq();
         final ice.InfusionStatusSeq inf_seq = new ice.InfusionStatusSeq();
 
-        eventLoop.addHandler(c(idReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
-                InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
+        eventLoop.addHandler(c(idReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                InstanceStateKind.ALIVE_INSTANCE_STATE)), new EventLoop.ConditionHandler() {
             @Override
             public void conditionChanged(Condition condition) {
                 try {
                     for (;;) {
                         try {
-                            idReader.read_w_condition(id_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            idReader.read_w_condition(id_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (ReadCondition) condition);
                             for (DeviceMonitorListener listener : getListeners()) {
                                 listener.deviceIdentity(idReader, id_seq, info_seq);
                             }
@@ -169,15 +220,15 @@ public class DeviceMonitor {
             }
         });
 
-        eventLoop.addHandler(c(connReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
-                InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
+        eventLoop.addHandler(c(connReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                InstanceStateKind.ALIVE_INSTANCE_STATE)), new EventLoop.ConditionHandler() {
 
             @Override
             public void conditionChanged(Condition condition) {
                 try {
                     for (;;) {
                         try {
-                            connReader.read_w_condition(conn_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            connReader.read_w_condition(conn_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (ReadCondition) condition);
                             for (DeviceMonitorListener listener : getListeners()) {
                                 listener.deviceConnectivity(connReader, conn_seq, info_seq);
                             }
@@ -194,15 +245,15 @@ public class DeviceMonitor {
             }
         });
 
-        eventLoop.addHandler(c(numReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
-                InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
+        eventLoop.addHandler(c(numReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                InstanceStateKind.ALIVE_INSTANCE_STATE)), new EventLoop.ConditionHandler() {
 
             @Override
             public void conditionChanged(Condition condition) {
                 try {
                     for (;;) {
                         try {
-                            numReader.read_w_condition(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            numReader.read_w_condition(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (ReadCondition) condition);
                             for (DeviceMonitorListener listener : getListeners()) {
                                 listener.numeric(numReader, num_seq, info_seq);
                             }
@@ -218,15 +269,15 @@ public class DeviceMonitor {
             }
         });
 
-        eventLoop.addHandler(c(saReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
-                InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
+        eventLoop.addHandler(c(saReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                InstanceStateKind.ALIVE_INSTANCE_STATE)), new EventLoop.ConditionHandler() {
 
             @Override
             public void conditionChanged(Condition condition) {
                 try {
                     for (;;) {
                         try {
-                            saReader.read_w_condition(sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                            saReader.read_w_condition(sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (ReadCondition) condition);
                             for (DeviceMonitorListener listener : getListeners()) {
                                 listener.sampleArray(saReader, sa_seq, info_seq);
                             }
@@ -242,14 +293,14 @@ public class DeviceMonitor {
             }
         });
 
-        eventLoop.addHandler(c(ipReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
-                InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0", identity)), new EventLoop.ConditionHandler() {
+        eventLoop.addHandler(c(ipReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                InstanceStateKind.ALIVE_INSTANCE_STATE)), new EventLoop.ConditionHandler() {
 
             @Override
             public void conditionChanged(Condition condition) {
                 for (;;) {
                     try {
-                        ipReader.read_w_condition(inf_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (QueryCondition) condition);
+                        ipReader.read_w_condition(inf_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (ReadCondition) condition);
                         for (DeviceMonitorListener listener : getListeners()) {
                             listener.infusionPump(ipReader, inf_seq, info_seq);
                         }
@@ -288,21 +339,21 @@ public class DeviceMonitor {
         }
         conditions.clear();
         for (DataReader r : dataReaders) {
-            subscriber.delete_datareader(r);
+            participant.delete_datareader(r);
         }
         dataReaders.clear();
-
-        if (null != subscriber) {
-            DomainParticipant participant = subscriber.get_participant();
-            if (null != participant) {
-                participant.delete_subscriber(subscriber);
-                subscriber = null;
-            } else {
-                log.warn("participant is null");
-            }
-        } else {
-            log.warn("subscriber is null");
+        for(ContentFilteredTopic cft : filteredTopics) {
+            participant.delete_contentfilteredtopic(cft);
         }
+        filteredTopics.clear();
+        
+        
+        idReader = null;
+        ipReader = null;
+        numReader = null;
+        saReader = null;
+        connReader = null;
+
         log.debug("Shut down a DeviceMonitor");
         this.eventLoop = null;
     }

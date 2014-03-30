@@ -12,6 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
+import ice.InfusionObjectiveDataWriter;
+
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -34,12 +36,15 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
 
-import org.mdpnp.apps.testapp.co2.CapnoModel;
-import org.mdpnp.apps.testapp.co2.CapnoModelImpl;
+import org.mdpnp.apps.testapp.data.DeviceListCellRenderer;
+import org.mdpnp.apps.testapp.data.InfusionStatusInstanceModel;
+import org.mdpnp.apps.testapp.data.InfusionStatusInstanceModelImpl;
+import org.mdpnp.apps.testapp.data.InstanceModel;
+import org.mdpnp.apps.testapp.data.InstanceModelImpl;
+import org.mdpnp.apps.testapp.data.SampleArrayInstanceModel;
+import org.mdpnp.apps.testapp.data.SampleArrayInstanceModelImpl;
 import org.mdpnp.apps.testapp.pca.PCAPanel;
 import org.mdpnp.apps.testapp.pca.VitalSign;
-import org.mdpnp.apps.testapp.pump.PumpModel;
-import org.mdpnp.apps.testapp.pump.PumpModelImpl;
 import org.mdpnp.apps.testapp.rrr.RapidRespiratoryRate;
 import org.mdpnp.apps.testapp.sim.SimControl;
 import org.mdpnp.apps.testapp.vital.VitalModel;
@@ -49,6 +54,8 @@ import org.mdpnp.devices.BuildInfo;
 import org.mdpnp.devices.DeviceMonitor;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
+import org.mdpnp.devices.QosProfiles;
+import org.mdpnp.devices.TopicUtil;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
 import org.slf4j.Logger;
@@ -60,8 +67,11 @@ import com.rti.dds.domain.DomainParticipantFactoryQos;
 import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.topic.Topic;
+import com.rti.dds.topic.TopicDescription;
 
 //
 /**
@@ -108,6 +118,24 @@ public class DemoApp {
 
     private static final Logger log = LoggerFactory.getLogger(DemoApp.class);
 
+    private abstract static class RunAndDone implements Runnable {
+        public boolean done;
+        
+        public synchronized void waitForIt() {
+            while(!done) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        protected synchronized void done() {
+            this.done = true;
+            this.notifyAll();
+        }
+    }
+    
     @SuppressWarnings("unchecked")
     public static final void start(final int domainId) throws Exception {
         UIManager.setLookAndFeel(new MDPnPLookAndFeel());
@@ -132,7 +160,7 @@ public class DemoApp {
             log.error(e.getMessage(), e);
         }
 
-        DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
+        final DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
         DomainParticipantFactory.get_instance().get_qos(qos);
         qos.entity_factory.autoenable_created_entities = false;
         DomainParticipantFactory.get_instance().set_qos(qos);
@@ -149,10 +177,23 @@ public class DemoApp {
                             JOptionPane.ERROR_MESSAGE);
                 }
             }
-        };        
-        participant.enable();
-        qos.entity_factory.autoenable_created_entities = true;
-        DomainParticipantFactory.get_instance().set_qos(qos);
+        };
+        
+        RunAndDone enable = new RunAndDone() {
+            public void run() {
+                nc.start();
+                participant.enable();
+                qos.entity_factory.autoenable_created_entities = true;
+                DomainParticipantFactory.get_instance().set_qos(qos);
+                done();
+            }
+        };
+        
+        eventLoop.doLater(enable);
+        
+        enable.waitForIt();
+        
+        final DeviceListCellRenderer deviceCellRenderer = new DeviceListCellRenderer(nc);
 
 
         final ScheduledExecutorService refreshScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -190,27 +231,35 @@ public class DemoApp {
         panel.getContent().add(devicePanel, AppType.Device.getId());
 
         final VitalModel vitalModel = new VitalModelImpl(nc);
-        final PumpModel pumpModel = new PumpModelImpl();
-        final CapnoModel capnoModel = new CapnoModelImpl(ice.MDC_CAPNOGRAPH.VALUE);
+        final InfusionStatusInstanceModel pumpModel = 
+                new InfusionStatusInstanceModelImpl(ice.InfusionStatusTopic.VALUE);
+        ice.InfusionObjectiveDataWriter objectiveWriter = null;
+        final SampleArrayInstanceModel capnoModel = 
+                new SampleArrayInstanceModelImpl(ice.SampleArrayTopic.VALUE);
 
         // VitalSign.EndTidalCO2.addToModel(vitalModel);
         if(!AppType.PCA.isDisabled() || !AppType.PCAViz.isDisabled()) {
-        vitalModel.start(subscriber, eventLoop);
-        pumpModel.start(subscriber, publisher, eventLoop);
-        // VitalSign.HeartRate.addToModel(vitalModel);
-        VitalSign.SpO2.addToModel(vitalModel);
-        VitalSign.RespiratoryRate.addToModel(vitalModel);
-        VitalSign.EndTidalCO2.addToModel(vitalModel);
+            vitalModel.start(subscriber, eventLoop);
+            TopicDescription infusionObjectiveTopic = TopicUtil.lookupOrCreateTopic(participant, ice.InfusionObjectiveTopic.VALUE,  ice.InfusionObjectiveTypeSupport.class);
+            objectiveWriter = (InfusionObjectiveDataWriter) publisher.create_datawriter_with_profile((Topic) infusionObjectiveTopic, QosProfiles.ice_library,
+                    QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+            pumpModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
+            // VitalSign.HeartRate.addToModel(vitalModel);
+            VitalSign.SpO2.addToModel(vitalModel);
+            VitalSign.RespiratoryRate.addToModel(vitalModel);
+            VitalSign.EndTidalCO2.addToModel(vitalModel);
         }
 
         if(!AppType.RRR.isDisabled()) {
-            capnoModel.start(subscriber, eventLoop);
+            StringSeq params = new StringSeq();
+            params.add("'"+ice.MDC_CAPNOGRAPH.VALUE+"'");
+            capnoModel.start(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.waveform_data);
         }
 
         PCAPanel _pcaPanel = null;
         if (!AppType.PCA.isDisabled()) {
             UIManager.put("TabbedPane.contentOpaque", false);
-            _pcaPanel = new PCAPanel(refreshScheduler);
+            _pcaPanel = new PCAPanel(refreshScheduler, objectiveWriter, deviceCellRenderer);
             _pcaPanel.setOpaque(false);
             panel.getContent().add(_pcaPanel, AppType.PCA.getId());
         }
@@ -218,21 +267,21 @@ public class DemoApp {
 
         XRayVentPanel _xrayVentPanel = null;
         if (!AppType.XRay.isDisabled()) {
-            _xrayVentPanel = new XRayVentPanel(panel, nc, subscriber, eventLoop);
+            _xrayVentPanel = new XRayVentPanel(panel, subscriber, eventLoop, deviceCellRenderer);
             panel.getContent().add(_xrayVentPanel, AppType.XRay.getId());
         }
         final XRayVentPanel xrayVentPanel = _xrayVentPanel;
 
         DataVisualization _pcaviz = null;
         if (!AppType.PCAViz.isDisabled()) {
-            _pcaviz = new DataVisualization(refreshScheduler);
+            _pcaviz = new DataVisualization(refreshScheduler, objectiveWriter, deviceCellRenderer);
             panel.getContent().add(_pcaviz, AppType.PCAViz.getId());
         }
         final DataVisualization pcaviz = _pcaviz;
 
         RapidRespiratoryRate _rrr = null;
         if (!AppType.RRR.isDisabled()) {
-            _rrr = new RapidRespiratoryRate(domainId, eventLoop);
+            _rrr = new RapidRespiratoryRate(domainId, eventLoop, deviceCellRenderer);
             panel.getContent().add(_rrr, AppType.RRR.getId());
         }
         final RapidRespiratoryRate rrr = _rrr;
@@ -272,7 +321,7 @@ public class DemoApp {
                     pcaviz.setModel(null, null);
                 }
                 if (null != rrr) {
-                    rrr.setModel(null, null);
+                    rrr.setModel(null);
                 }
                 vitalModel.stop();
                 pumpModel.stop();
@@ -337,7 +386,7 @@ public class DemoApp {
                     t.start();
                 }
             }
-
+            
         });
 
         mainMenuPanel.getDeviceList().setModel(nc);
@@ -360,7 +409,7 @@ public class DemoApp {
                             });
                             panel.getBedLabel().setText(appType.getName());
                             panel.getPatientLabel().setText("");
-                            rrr.setModel(capnoModel, vitalModel);
+                            rrr.setModel(capnoModel);
                             ol.show(panel.getContent(), appType.getId());
                         }
                         break;
@@ -441,7 +490,7 @@ public class DemoApp {
                                 deviceMonitor.stop();
                                 deviceMonitor = null;
                             }
-                            deviceMonitor = new DeviceMonitor(device.getDeviceIdentity().unique_device_identifier);
+                            deviceMonitor = new DeviceMonitor(device.getUDI());
                             devicePanel.setModel(deviceMonitor);
                             deviceMonitor.start(subscriber.get_participant(), eventLoop);
                         }
@@ -479,7 +528,7 @@ public class DemoApp {
         // DemoPanel.setChildrenOpaque(panel, false);
 
         // panel.setOpaque(true);
-
+        
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 600);
         frame.setLocationRelativeTo(null);

@@ -28,18 +28,22 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
-import org.mdpnp.apps.testapp.co2.Capno;
-import org.mdpnp.apps.testapp.co2.CapnoListModel;
-import org.mdpnp.apps.testapp.co2.CapnoModel;
-import org.mdpnp.apps.testapp.co2.CapnoModelListener;
+import org.mdpnp.apps.testapp.data.DeviceListCellRenderer;
+import org.mdpnp.apps.testapp.data.InstanceModel;
+import org.mdpnp.apps.testapp.data.SampleArrayInstanceModel;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.math.DCT;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
+import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
-import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
+import org.mdpnp.guis.waveform.WaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 
 @SuppressWarnings("serial")
@@ -47,14 +51,12 @@ import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
  * @author Jeff Plourde
  *
  */
-public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
+public class RapidRespiratoryRate extends JPanel implements ListDataListener {
 
-    @SuppressWarnings("rawtypes")
-    private final JList capnoSources = new JList();
+    private final JList<ice.SampleArray> capnoSources = new JList<ice.SampleArray>();
     private final JPanel controlPanel = new JPanel();
     private final JLabel rrLabel = new JLabel("???");
-    private final WaveformUpdateWaveformSource wuws = new WaveformUpdateWaveformSource();
-    private final WaveformPanel wavePanel = new SwingWaveformPanel(wuws);
+    private final WaveformPanel wavePanel = new SwingWaveformPanel();
     private final JSlider thresholdSlider = new JSlider(0, 100, 20);
     private final JCheckBox device = new JCheckBox("Create Device");
 
@@ -87,7 +89,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
     private final EventLoop eventLoop;
 
     @SuppressWarnings("unchecked")
-    public RapidRespiratoryRate(final int domainId, final EventLoop eventLoop) {
+    public RapidRespiratoryRate(final int domainId, final EventLoop eventLoop, DeviceListCellRenderer deviceCellRenderer) {
         super(new GridLayout(2, 2));
         this.eventLoop = eventLoop;
         // rrDevice = new RespiratoryRateDevice(domainId, eventLoop);
@@ -101,6 +103,19 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
         controlPanel.add(device);
         add(wavePanel.asComponent());
         add(rrLabel);
+        capnoSources.addListSelectionListener(new ListSelectionListener() {
+
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                ice.SampleArray sa = capnoSources.getSelectedValue();
+                if(null == sa) {
+                    wavePanel.setSource(null);
+                } else {
+                    wavePanel.setSource(new SampleArrayWaveformSource(model.getReader(), sa));
+                }
+            }
+            
+        });
         device.addActionListener(new ActionListener() {
 
             @Override
@@ -118,67 +133,36 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
             }
 
         });
-        capnoSources.setCellRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                String udi = null;
-                if (value != null && value instanceof Capno) {
-                    udi = ((Capno) value).getSampleArray().unique_device_identifier;
-                    VitalModel model = RapidRespiratoryRate.this.vitalModel;
-                    if (model != null) {
-                        ice.DeviceIdentity di = model.getDeviceIdentity(udi);
-                        if (null != di) {
-                            value = di.manufacturer + " " + di.model;
-                        }
-                    }
-                }
-                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (null != udi && c instanceof JLabel && vitalModel != null) {
-                    ((JLabel) c).setIcon(vitalModel.getDeviceIcon(udi));
-                }
-                return c;
-            }
-        });
+        capnoSources.setCellRenderer(deviceCellRenderer);   
     }
 
-    private CapnoModel model;
-    private VitalModel vitalModel;
+    private SampleArrayInstanceModel model;
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void setModel(CapnoModel model, VitalModel vitalModel) {
-        this.vitalModel = vitalModel;
+    public void setModel(SampleArrayInstanceModel model) {
         String selectedUdi = null;
         Object selected = capnoSources.getSelectedValue();
-        if (null != selected && selected instanceof Capno) {
-            selectedUdi = ((Capno) selected).getSampleArray().unique_device_identifier;
+        if (null != selected && selected instanceof ice.SampleArray) {
+            selectedUdi = ((ice.SampleArray) selected).unique_device_identifier;
         }
 
-        capnoSources.setModel(null == model ? new DefaultListModel() : new CapnoListModel(model));
+        capnoSources.setModel(null == model ? new DefaultListModel() : model);
         if (null != selectedUdi && model != null) {
-            for (int i = 0; i < model.getCount(); i++) {
-                if (selectedUdi.equals(model.getCapno(i).getSampleArray().unique_device_identifier)) {
-                    capnoSources.setSelectedValue(model.getCapno(i), true);
+            for (int i = 0; i < model.getSize(); i++) {
+                if (selectedUdi.equals(model.getElementAt(i).unique_device_identifier)) {
+                    capnoSources.setSelectedValue(model.getElementAt(i), true);
                 }
             }
         }
+
         capnoSources.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         if (this.model != null) {
-            this.model.removeCapnoListener(this);
+            this.model.removeListDataListener(this);
         }
         this.model = model;
         if (this.model != null) {
-            this.model.addCapnoListener(this);
+            this.model.addListDataListener(this);
         }
-    }
-
-    @Override
-    public void capnoAdded(CapnoModel model, Capno capno) {
-
-    }
-
-    @Override
-    public void capnoRemoved(CapnoModel model, Capno capno) {
-
     }
 
     private final static int HISTORY = 200;
@@ -199,7 +183,7 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
         return (x += delta) >= HISTORY ? (x % HISTORY) : x;
     }
 
-    private Long lastBreathTime;
+//    private Long lastBreathTime;
     // private Float highWaterMark;
 
     // private float high = Float.MIN_VALUE, low = Float.MAX_VALUE;
@@ -214,83 +198,101 @@ public class RapidRespiratoryRate extends JPanel implements CapnoModelListener {
         }
     };
 
+//    @Override
+//    public void capnoChanged(CapnoModel model, Capno capno) {
+//        if (null != capno && capno.equals(capnoSources.getSelectedValue())) {
+////            wuws.applyUpdate(capno.getSampleArray(), capno.getSampleInfo());
+//            // sample arrays ... why? it's just obnoxious having data samples
+//            // artificially batched like this
+//            long src_time = capno.getSampleInfo().source_timestamp.sec * 1000L + capno.getSampleInfo().source_timestamp.nanosec / 1000000L;
+//            long msPerSample = capno.getSampleArray().millisecondsPerSample;
+//            final int sz = capno.getSampleArray().values.userData.size();
+//            int startedAtCurrent = current;
+//            for (int i = 0; i < sz; i++) {
+//                times[current] = src_time + (i - sz) * msPerSample;
+//                values[current] = capno.getSampleArray().values.userData.getFloat(i);
+//                if (values[minus(current)] <= thresholdSlider.getValue() && values[current] > thresholdSlider.getValue()) {
+//                    if (lastBreathTime != null) {
+//                        rr = 60000.0 / (times[current] - lastBreathTime);
+//                        // rrLabel.setText(Double.toString(rr));
+//                        // if(rrDevice != null) {
+//                        // rrDevice.updateRate((float) rr);
+//                        // }
+//                    }
+//                    lastBreathTime = times[current];
+//                }
+//                current = plus(current);
+//            }
+//
+//            // long mostRecentTime = times[minus(current)];
+//            // long oneHalfSecondAgo = times[minus(current)]-500L;
+//            DCT.dct(values, current, coeffs, 10);
+//            double weighted = 0.0, sum = 0.0;
+//            double max = Double.MIN_VALUE;
+//            int index = 0;
+//
+//            for (int i = 1; i < 10; i++) {
+//                weighted += i * Math.abs(coeffs[i]);
+//                sum += Math.abs(coeffs[i]);
+//                if (Math.abs(coeffs[i]) > max) {
+//                    index = i;
+//                    max = Math.abs(coeffs[i]);
+//                }
+//            }
+//            double weighted_C = weighted / sum;
+//            double bpm = (Math.PI * HISTORY * msPerSample / 1000.0) / (weighted_C + 2);
+//            bpm = 60.0 / bpm;
+//            rrLabel.setText(Double.toString(bpm) + "  " + weighted_C + "  " + index + "  " + rr);
+//            this.rr = bpm;
+//            eventLoop.doLater(updateRate);
+//            // if(rrDevice != null) {
+//            // rrDevice.updateRate((float) bpm);
+//            // }
+//
+//            // process each point as if it were coming in anew like real data
+//            // samples would
+//            for (int localCurrent = startedAtCurrent; localCurrent < current; localCurrent = plus(localCurrent)) {
+//                // for(int i = minus(localCurrent); i != localCurrent; i =
+//                // minus(i)) {
+//                // if(times[i] != 0L && times[i] <= oneHalfSecondAgo) {
+//                // // found it .. a reference point at least some distance back
+//                // in time
+//                // // System.out.println("From " + times[i] + " to " +
+//                // mostRecentTime + " value from " + values[i] + " to " +
+//                // values[minus(current)]);
+//                // double rateChange = 1.0 * (values[minus(localCurrent)] -
+//                // values[i]) / (mostRecentTime - times[i]);
+//                // low = (float) Math.min(low, rateChange);
+//                // high = (float) Math.max(high, rateChange);
+//                // rrLabel.setText(""+(1000.0*low) + " / " + (1000.0*high)+
+//                // " / "+Double.toString(1000.0*rateChange));
+//                // break;
+//                // }
+//                // }
+//            }
+//            // if(current == 0) {
+//            // System.err.println(Arrays.toString(values));
+//            // }
+//
+//        }
+//    }
+
     @Override
-    public void capnoChanged(CapnoModel model, Capno capno) {
-        if (null != capno && capno.equals(capnoSources.getSelectedValue())) {
-            wuws.applyUpdate(capno.getSampleArray(), capno.getSampleInfo());
-            // sample arrays ... why? it's just obnoxious having data samples
-            // artificially batched like this
-            long src_time = capno.getSampleInfo().source_timestamp.sec * 1000L + capno.getSampleInfo().source_timestamp.nanosec / 1000000L;
-            long msPerSample = capno.getSampleArray().millisecondsPerSample;
-            final int sz = capno.getSampleArray().values.userData.size();
-            int startedAtCurrent = current;
-            for (int i = 0; i < sz; i++) {
-                times[current] = src_time + (i - sz) * msPerSample;
-                values[current] = capno.getSampleArray().values.userData.getFloat(i);
-                if (values[minus(current)] <= thresholdSlider.getValue() && values[current] > thresholdSlider.getValue()) {
-                    if (lastBreathTime != null) {
-                        rr = 60000.0 / (times[current] - lastBreathTime);
-                        // rrLabel.setText(Double.toString(rr));
-                        // if(rrDevice != null) {
-                        // rrDevice.updateRate((float) rr);
-                        // }
-                    }
-                    lastBreathTime = times[current];
-                }
-                current = plus(current);
-            }
+    public void intervalAdded(ListDataEvent e) {
+        // TODO Auto-generated method stub
+        
+    }
 
-            // long mostRecentTime = times[minus(current)];
-            // long oneHalfSecondAgo = times[minus(current)]-500L;
-            DCT.dct(values, current, coeffs, 10);
-            double weighted = 0.0, sum = 0.0;
-            double max = Double.MIN_VALUE;
-            int index = 0;
+    @Override
+    public void intervalRemoved(ListDataEvent e) {
+        // TODO Auto-generated method stub
+        
+    }
 
-            for (int i = 1; i < 10; i++) {
-                weighted += i * Math.abs(coeffs[i]);
-                sum += Math.abs(coeffs[i]);
-                if (Math.abs(coeffs[i]) > max) {
-                    index = i;
-                    max = Math.abs(coeffs[i]);
-                }
-            }
-            double weighted_C = weighted / sum;
-            double bpm = (Math.PI * HISTORY * msPerSample / 1000.0) / (weighted_C + 2);
-            bpm = 60.0 / bpm;
-            rrLabel.setText(Double.toString(bpm) + "  " + weighted_C + "  " + index + "  " + rr);
-            this.rr = bpm;
-            eventLoop.doLater(updateRate);
-            // if(rrDevice != null) {
-            // rrDevice.updateRate((float) bpm);
-            // }
-
-            // process each point as if it were coming in anew like real data
-            // samples would
-            for (int localCurrent = startedAtCurrent; localCurrent < current; localCurrent = plus(localCurrent)) {
-                // for(int i = minus(localCurrent); i != localCurrent; i =
-                // minus(i)) {
-                // if(times[i] != 0L && times[i] <= oneHalfSecondAgo) {
-                // // found it .. a reference point at least some distance back
-                // in time
-                // // System.out.println("From " + times[i] + " to " +
-                // mostRecentTime + " value from " + values[i] + " to " +
-                // values[minus(current)]);
-                // double rateChange = 1.0 * (values[minus(localCurrent)] -
-                // values[i]) / (mostRecentTime - times[i]);
-                // low = (float) Math.min(low, rateChange);
-                // high = (float) Math.max(high, rateChange);
-                // rrLabel.setText(""+(1000.0*low) + " / " + (1000.0*high)+
-                // " / "+Double.toString(1000.0*rateChange));
-                // break;
-                // }
-                // }
-            }
-            // if(current == 0) {
-            // System.err.println(Arrays.toString(values));
-            // }
-
-        }
+    @Override
+    public void contentsChanged(ListDataEvent e) {
+        // TODO Auto-generated method stub
+        
     }
 
 }

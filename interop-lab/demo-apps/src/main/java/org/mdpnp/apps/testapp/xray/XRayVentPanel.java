@@ -61,13 +61,14 @@ import javax.swing.event.ListSelectionListener;
 
 import org.mdpnp.apps.testapp.DemoPanel;
 import org.mdpnp.apps.testapp.Device;
-import org.mdpnp.apps.testapp.DeviceListCellRenderer;
 import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.data.DeviceListCellRenderer;
+import org.mdpnp.apps.testapp.data.NumericInstanceModel;
+import org.mdpnp.apps.testapp.data.NumericInstanceModelImpl;
 import org.mdpnp.devices.DeviceMonitor;
 import org.mdpnp.devices.DeviceMonitorListener;
 import org.mdpnp.devices.EventLoop;
 import org.mdpnp.guis.waveform.WaveformPanel;
-import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,9 +92,8 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
     private JComboBox cameraBox = new JComboBox(cameraModel);
 
     private WaveformPanel waveformPanel;
-    private WaveformUpdateWaveformSource wuws;
-    @SuppressWarnings("rawtypes")
-    private JList deviceList;
+
+    private JList<ice.Numeric> deviceList;
 
     public enum Strategy {
         Manual, Automatic
@@ -133,6 +133,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
     private static final Logger log = LoggerFactory.getLogger(XRayVentPanel.class);
 
     private DeviceMonitor deviceMonitor;
+    private NumericInstanceModel startOfBreathModel;
 
     public void changeSource(String source, DomainParticipant participant, EventLoop eventLoop) {
         if (null != deviceMonitor) {
@@ -153,7 +154,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
     private boolean imageButtonDown = false;
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public XRayVentPanel(DemoPanel demoPanel, final DeviceListModel devices, final Subscriber subscriber, final EventLoop eventLoop) {
+    public XRayVentPanel(DemoPanel demoPanel, final Subscriber subscriber, final EventLoop eventLoop, DeviceListCellRenderer deviceCellRenderer) {
         super(new BorderLayout());
 
         this.demoPanel = demoPanel;
@@ -208,8 +209,9 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
         text.setText("Sources");
         text.setFont(text.getFont().deriveFont(FONT_SIZE));
         textPanel.add(text, BorderLayout.NORTH);
-        deviceList = new JList(devices);
-        deviceList.setCellRenderer(new DeviceListCellRenderer());
+        startOfBreathModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
+        deviceList = new JList(startOfBreathModel);
+        deviceList.setCellRenderer(deviceCellRenderer);
         textPanel.add(new JScrollPane(deviceList), BorderLayout.CENTER);
         panel.add(textPanel);
 
@@ -218,9 +220,9 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
             public void valueChanged(ListSelectionEvent e) {
                 int idx = deviceList.getSelectedIndex();
                 if (idx >= 0) {
-                    Device device = devices.getElementAt(idx);
+                    ice.Numeric device = startOfBreathModel.getElementAt(idx);
                     if (null != device) {
-                        changeSource(device.getDeviceIdentity().unique_device_identifier, subscriber.get_participant(), eventLoop);
+                        changeSource(device.unique_device_identifier, subscriber.get_participant(), eventLoop);
                     }
                 }
             }
@@ -251,7 +253,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
         });
         panel.add(enclosingFramePanel);
 
-        wuws = new WaveformUpdateWaveformSource();
+//        wuws = new WaveformUpdateWaveformSource();
 
         JPanel enclosingWaveformPanel = new JPanel(new BorderLayout());
         enclosingWaveformPanel.add(l = new JLabel("Flow Inspiration/Expiration"), BorderLayout.NORTH);
@@ -262,11 +264,11 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
             ((JComponent) waveformPanel).setBorder(border);
         }
 
-        waveformPanel.setEvenTempo(false);
-        waveformPanel.setSource(wuws);
-        if (null != waveformPanel.cachingSource()) {
-            waveformPanel.cachingSource().setFixedTimeDomain(20000L);
-        }
+//        waveformPanel.setEvenTempo(false);
+//        waveformPanel.setSource(wuws);
+//        if (null != waveformPanel.cachingSource()) {
+//            waveformPanel.cachingSource().setFixedTimeDomain(20000L);
+//        }
 
         enclosingWaveformPanel.add(waveformPanel.asComponent(), BorderLayout.CENTER);
         panel.add(enclosingWaveformPanel);
@@ -372,6 +374,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
     }
 
     public void start() {
+
         demoPanel.getBedLabel().setText("X-Ray / Ventilator Synchronization");
         demoPanel.getPatientLabel().setText("");
         demoPanel.getPatientLabel().setFont(Font.decode("courier-bold-20"));
@@ -502,7 +505,7 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
                 seenInstances.add(si.instance_handle);
                 ice.SampleArray sa = (SampleArray) sa_seq.get(i);
                 if (rosetta.MDC_FLOW_AWAY.VALUE.equals(sa.metric_id)) {
-                    wuws.applyUpdate(sa, si);
+//                    wuws.applyUpdate(sa, si);
                 }
             }
         }

@@ -31,10 +31,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import org.mdpnp.guis.waveform.NumericUpdateWaveformSource;
+import org.mdpnp.guis.waveform.NumericWaveformSource;
+import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
-import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +51,7 @@ public class PulseOximeterPanel extends DevicePanel {
     private JLabel spo2Low, spo2Up, heartrateLow, heartrateUp;
     private JPanel spo2Bounds, heartrateBounds;
     private JPanel spo2Panel, heartratePanel;
-    private WaveformPanel pulsePanel;
-    private WaveformPanel plethPanel;
+    private WaveformPanel pulsePanel, plethPanel;
     private JLabel time;
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -138,18 +137,14 @@ public class PulseOximeterPanel extends DevicePanel {
         setOpaque(true);
         buildComponents();
         plethPanel.setSource(plethWave);
-
         pulsePanel.setSource(pulseWave);
-        if (null != pulsePanel.cachingSource()) {
-            pulsePanel.cachingSource().setFixedTimeDomain(120000L);
-        }
-
+        
         plethPanel.start();
         pulsePanel.start();
     }
 
-    private final WaveformUpdateWaveformSource plethWave = new WaveformUpdateWaveformSource();
-    private final NumericUpdateWaveformSource pulseWave = new NumericUpdateWaveformSource(333L);
+    private SampleArrayWaveformSource plethWave;
+    private NumericWaveformSource pulseWave;
 
     @Override
     public void destroy() {
@@ -175,13 +170,17 @@ public class PulseOximeterPanel extends DevicePanel {
             setInt(numeric, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
             setInt(numeric, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
             if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
-                pulseWave.applyUpdate(numeric, sampleInfo);
+                if(null == pulseWave) {
+                    pulseWave = new NumericWaveformSource(numericReader, numeric);
+                    pulsePanel.setSource(pulseWave);
+                }
+//                pulseWave.applyUpdate(numeric, sampleInfo);
             }
             date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
             time.setText(dateFormat.format(date));
         } else {
             if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
-                pulseWave.reset();
+//                pulseWave.reset();
             }
         }
     }
@@ -190,14 +189,18 @@ public class PulseOximeterPanel extends DevicePanel {
     public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
         if (aliveAndValidData(sampleInfo)) {
             if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(metric_id)) {
-                plethWave.applyUpdate(sampleArray, sampleInfo);
+                if(null == plethWave) {
+                    plethWave = new SampleArrayWaveformSource(sampleArrayReader, sampleArray);
+                    plethPanel.setSource(plethWave);
+                }
+//                plethWave.applyUpdate(sampleArray, sampleInfo);
                 date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
                 time.setText(dateFormat.format(date));
             }
             
         } else {
             if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(metric_id)) {
-                plethWave.reset();
+//                plethWave.reset();
             }
         }
     }
@@ -209,7 +212,7 @@ public class PulseOximeterPanel extends DevicePanel {
 
     @Override
     public void connected() {
-        plethWave.reset();
-        pulseWave.reset();
+//        plethWave.reset();
+//        pulseWave.reset();
     }
 }

@@ -20,8 +20,8 @@ import java.awt.Color;
 import java.awt.GridLayout;
 import java.util.Set;
 
+import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
-import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,7 @@ import com.rti.dds.subscription.SampleInfo;
  */
 public class MultiPulseOximeterPanel extends DevicePanel {
     private WaveformPanel[] plethPanel;
-    private final WaveformUpdateWaveformSource[] plethWave;
+    private final SampleArrayWaveformSource[] plethWave;
 
     private static final int N = 12;
 
@@ -57,10 +57,10 @@ public class MultiPulseOximeterPanel extends DevicePanel {
         setBackground(Color.black);
         setOpaque(true);
         buildComponents();
-        plethWave = new WaveformUpdateWaveformSource[N];
+        plethWave = new SampleArrayWaveformSource[N];
         for (int i = 0; i < N; i++) {
-            plethWave[i] = new WaveformUpdateWaveformSource();
-            plethPanel[i].setSource(plethWave[i]);
+//            plethWave[i] = new SampleArrayWaveformSource();
+//            plethPanel[i].setSource(plethWave[i]);
             plethPanel[i].start();
         }
     }
@@ -87,11 +87,11 @@ public class MultiPulseOximeterPanel extends DevicePanel {
     public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
         if (aliveAndValidData(sampleInfo)) {
             if (sampleArray.instance_id >= 0 && sampleArray.instance_id < N) {
-                plethWave[sampleArray.instance_id].applyUpdate(sampleArray, sampleInfo);
+//                plethWave[sampleArray.instance_id].applyUpdate(sampleArray, sampleInfo);
             }
         } else {
             if (sampleArray.instance_id >= 0 && sampleArray.instance_id < N) {
-                plethWave[sampleArray.instance_id].reset();
+//                plethWave[sampleArray.instance_id].reset();
             }
         }
     }
@@ -103,9 +103,9 @@ public class MultiPulseOximeterPanel extends DevicePanel {
 
     @Override
     public void connected() {
-        for (WaveformUpdateWaveformSource wuws : plethWave) {
-            wuws.reset();
-        }
+//        for (WaveformUpdateWaveformSource wuws : plethWave) {
+//            wuws.reset();
+//        }
     }
 
     @Override

@@ -14,7 +14,9 @@ package org.mdpnp.guis.swing;
 
 import ice.InfusionStatus;
 import ice.Numeric;
+import ice.NumericDataReader;
 import ice.SampleArray;
+import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -27,9 +29,10 @@ import java.util.Set;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
-import org.mdpnp.guis.waveform.WaveformUpdateWaveformSource;
+import org.mdpnp.guis.waveform.WaveformSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,9 +106,9 @@ public class VentilatorPanel extends DevicePanel {
 
     }
 
-    private final WaveformUpdateWaveformSource flowWave = new WaveformUpdateWaveformSource();
-    private final WaveformUpdateWaveformSource pressureWave = new WaveformUpdateWaveformSource();
-    private final WaveformUpdateWaveformSource etco2Wave = new WaveformUpdateWaveformSource();
+    private SampleArrayWaveformSource flowWave;
+    private SampleArrayWaveformSource pressureWave;
+    private SampleArrayWaveformSource etco2Wave;
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(VentilatorPanel.class);
@@ -127,27 +130,37 @@ public class VentilatorPanel extends DevicePanel {
 
     private final Date date = new Date();
 
+    
     @Override
     public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
         if (aliveAndValidData(sampleInfo)) {
             if (rosetta.MDC_FLOW_AWAY.VALUE.equals(metric_id)) {
-                flowWave.applyUpdate(sampleArray, sampleInfo);
+                if(null == flowWave) {
+                    flowWave = new SampleArrayWaveformSource(sampleArrayReader, sampleArray);
+                    flowPanel.setSource(flowWave);
+                }
             } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(metric_id)) {
-                pressureWave.applyUpdate(sampleArray, sampleInfo);
+                if(null == pressureWave) {
+                    pressureWave = new SampleArrayWaveformSource(sampleArrayReader, sampleArray);
+                    pressurePanel.setSource(pressureWave);
+                }
             } else if (ice.MDC_CAPNOGRAPH.VALUE.equals(metric_id)) {
-                etco2Wave.applyUpdate(sampleArray, sampleInfo);
+                if(null == etco2Wave) {
+                    etco2Wave = new SampleArrayWaveformSource(sampleArrayReader, sampleArray);
+                    co2Panel.setSource(etco2Wave);
+                }
             }
             date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
 
             time.setText(dateFormat.format(date));
         } else {
-            if (rosetta.MDC_FLOW_AWAY.VALUE.equals(metric_id)) {
-                flowWave.reset();
-            } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(metric_id)) {
-                pressureWave.reset();
-            } else if (ice.MDC_CAPNOGRAPH.VALUE.equals(metric_id)) {
-                etco2Wave.reset();
-            }
+//            if (rosetta.MDC_FLOW_AWAY.VALUE.equals(metric_id)) {
+//                flowWave.reset();
+//            } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(metric_id)) {
+//                pressureWave.reset();
+//            } else if (ice.MDC_CAPNOGRAPH.VALUE.equals(metric_id)) {
+//                etco2Wave.reset();
+//            }
         }
     }
 
@@ -158,9 +171,9 @@ public class VentilatorPanel extends DevicePanel {
 
     @Override
     public void connected() {
-        etco2Wave.reset();
-        flowWave.reset();
-        pressureWave.reset();
+//        etco2Wave.reset();
+//        flowWave.reset();
+//        pressureWave.reset();
     }
 
 }
