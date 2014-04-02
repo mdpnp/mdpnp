@@ -12,7 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.devices;
 
-import org.mdpnp.devices.EventLoop.ConditionHandler;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

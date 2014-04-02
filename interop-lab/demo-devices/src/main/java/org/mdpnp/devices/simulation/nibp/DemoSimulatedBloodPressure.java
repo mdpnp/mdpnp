@@ -14,8 +14,8 @@ package org.mdpnp.devices.simulation.nibp;
 
 import ice.Numeric;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 /**
  * @author Jeff Plourde

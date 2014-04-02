@@ -28,15 +28,17 @@ import javax.swing.JTextArea;
 
 import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.devices.AbstractDevice;
-import org.mdpnp.devices.DeviceMonitor;
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
+import org.mdpnp.rtiapi.data.DeviceDataMonitor;
+import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rti.dds.domain.DomainParticipant;
 
 /**
  * @author Jeff Plourde
@@ -134,10 +136,15 @@ public class DeviceAdapter {
         device = DeviceFactory.buildDevice(type, domainId, eventLoop);
 
         if (gui) {
+            final DomainParticipant participant = device.getParticipant();
+            
+            final DeviceDataMonitor deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier);
+            
             final CompositeDevicePanel cdp = new CompositeDevicePanel();
-            final DeviceMonitor deviceMonitor = new DeviceMonitor(device.getDeviceIdentity().unique_device_identifier);
-            deviceMonitor.addListener(cdp);
-            deviceMonitor.start(device.getParticipant(), eventLoop);
+            
+            cdp.setModel(deviceMonitor);
+            
+            deviceMonitor.start(participant.get_implicit_subscriber(), eventLoop);
 
             frame = new DemoFrame("ICE Device Adapter - " + type);
             frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
@@ -165,6 +172,7 @@ public class DeviceAdapter {
                         public void run() {
                             try {
                                 setString(progressBar, "Shut down local monitoring client", 10);
+                                cdp.stop();
                                 deviceMonitor.stop();
                                 setString(progressBar, "Shut down local user interface", 20);
                                 cdp.reset();

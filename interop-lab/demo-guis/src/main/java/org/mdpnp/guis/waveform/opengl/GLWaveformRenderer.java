@@ -60,17 +60,6 @@ public class GLWaveformRenderer implements GLRenderer {
         setSource(source);
     }
 
-    private boolean evenTempo = true;
-    private boolean caching = true;
-
-    public void setEvenTempo(boolean evenTempo) {
-        this.evenTempo = evenTempo;
-    }
-
-    public void setCaching(boolean caching) {
-        this.caching = caching;
-    }
-
     public void setSource(WaveformSource source) {
         this.source = source;
     }
@@ -241,7 +230,7 @@ public class GLWaveformRenderer implements GLRenderer {
 //        // Log.d(GLWaveformView.class.getName(), "TOOK " +
 //        // (System.currentTimeMillis()-start) + "ms to populate");
 //        // requestRender();
-//        // renderer.render(glRenderer, rect);
+//         renderer.render(glRenderer, rect);
 //    }
 
     public void reset() {

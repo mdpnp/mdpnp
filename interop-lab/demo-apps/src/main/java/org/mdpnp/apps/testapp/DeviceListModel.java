@@ -12,7 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import static org.mdpnp.devices.TopicUtil.lookupOrCreateTopic;
+import static org.mdpnp.rtiapi.data.TopicUtil.lookupOrCreateTopic;
 import ice.DeviceConnectivity;
 import ice.DeviceConnectivityDataReader;
 import ice.DeviceConnectivitySeq;
@@ -30,8 +30,8 @@ import java.util.regex.Pattern;
 
 import javax.swing.AbstractListModel;
 
-import org.mdpnp.devices.EventLoop;
-import org.mdpnp.devices.QosProfiles;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

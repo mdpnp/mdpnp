@@ -14,7 +14,7 @@ package org.mdpnp.devices.connected;
 
 import javax.swing.JFrame;
 
-import org.mdpnp.devices.EventLoop;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 /**
  * @author Jeff Plourde

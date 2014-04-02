@@ -15,10 +15,10 @@ package org.mdpnp.devices.simulation.pump;
 import ice.InfusionObjective;
 import ice.InfusionStatusDataWriter;
 
-import org.mdpnp.devices.EventLoop;
-import org.mdpnp.devices.EventLoop.ConditionHandler;
-import org.mdpnp.devices.QosProfiles;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
+import org.mdpnp.rtiapi.data.QosProfiles;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.Condition;

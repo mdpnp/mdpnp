@@ -12,7 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
-import org.mdpnp.devices.EventLoop;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 /**
  * @author Jeff Plourde

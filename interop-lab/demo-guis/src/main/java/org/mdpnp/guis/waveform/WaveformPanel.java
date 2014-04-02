@@ -14,6 +14,8 @@ package org.mdpnp.guis.waveform;
 
 public interface WaveformPanel {
     void setSource(WaveformSource source);
+    
+    WaveformSource getSource();
 
     java.awt.Component asComponent();
 

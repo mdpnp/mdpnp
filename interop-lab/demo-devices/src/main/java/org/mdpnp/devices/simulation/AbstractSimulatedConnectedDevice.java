@@ -14,8 +14,8 @@ package org.mdpnp.devices.simulation;
 
 import ice.GlobalSimulationObjective;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice implements GlobalSimulationObjectiveListener {
     protected Throwable t;

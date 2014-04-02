@@ -12,9 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
-import ice.InfusionStatus;
 import ice.Numeric;
-import ice.SampleArray;
+import ice.NumericDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -30,6 +29,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
+import org.mdpnp.rtiapi.data.DeviceDataMonitor;
+import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -162,6 +164,12 @@ public class BloodPressurePanel extends DevicePanel {
     public static boolean supported(Set<String> names) {
         return names.contains(rosetta.MDC_PRESS_CUFF.VALUE);
     }
+    
+    @Override
+    public void destroy() {
+        super.destroy();
+        deviceMonitor.getNumericModel().removeListener(numericListener);
+    }
 
     // TODO manage state better
     /*
@@ -181,7 +189,13 @@ public class BloodPressurePanel extends DevicePanel {
         Inflating, Deflating, Waiting, Uninited
     }
 
-    private State state = State.Uninited;
+    @Override
+    public void set(DeviceDataMonitor deviceMonitor) {
+        super.set(deviceMonitor);
+        deviceMonitor.getNumericModel().iterateAndAddListener(numericListener);
+    }
+    
+    protected State state = State.Uninited;
 
     private final Numeric systolicN = new Numeric();
     private final Numeric diastolicN = new Numeric();
@@ -191,37 +205,46 @@ public class BloodPressurePanel extends DevicePanel {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(BloodPressurePanel.class);
+    
+    private final InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
 
-    @Override
-    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
-        if (aliveAndValidData(sampleInfo)) {
-            // log.debug("N:"+numeric);
-            if (rosetta.MDC_PRESS_CUFF.VALUE.equals(metric_id)) {
-                switch ((int) numeric.value) {
+        @Override
+        public void instanceAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+        }
+
+        @Override
+        public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
+                SampleInfo sampleInfo) {
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            if (rosetta.MDC_PRESS_CUFF.VALUE.equals(data.metric_id)) {
+                switch ((int) data.value) {
                 case ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE:
-                    state = State.Deflating;
+                    BloodPressurePanel.this.state = State.Deflating;
                     break;
                 case ice.MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS.VALUE:
-                    this.state = State.Inflating;
+                    BloodPressurePanel.this.state = State.Inflating;
                     break;
                 case ice.MDC_EVT_STAT_OFF.VALUE:
-                    this.state = State.Waiting;
+                    BloodPressurePanel.this.state = State.Waiting;
                     break;
                 }
-            } else if (rosetta.MDC_PRESS_CUFF_SYS.VALUE.equals(metric_id)) {
-                systolicN.copy_from(numeric);
-            } else if (rosetta.MDC_PRESS_CUFF_DIA.VALUE.equals(metric_id)) {
-                diastolicN.copy_from(numeric);
-            } else if (rosetta.MDC_PULS_RATE_NON_INV.VALUE.equals(metric_id)) {
-                pulseN.copy_from(numeric);
-            } else if (ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE.equals(metric_id)) {
-                nextInflationN.copy_from(numeric);
-            } else if (ice.MDC_PRESS_CUFF_INFLATION.VALUE.equals(metric_id)) {
-                inflationN.copy_from(numeric);
+            } else if (rosetta.MDC_PRESS_CUFF_SYS.VALUE.equals(data.metric_id)) {
+                systolicN.copy_from(data);
+            } else if (rosetta.MDC_PRESS_CUFF_DIA.VALUE.equals(data.metric_id)) {
+                diastolicN.copy_from(data);
+            } else if (rosetta.MDC_PULS_RATE_NON_INV.VALUE.equals(data.metric_id)) {
+                pulseN.copy_from(data);
+            } else if (ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE.equals(data.metric_id)) {
+                nextInflationN.copy_from(data);
+            } else if (ice.MDC_PRESS_CUFF_INFLATION.VALUE.equals(data.metric_id)) {
+                inflationN.copy_from(data);
             }
             // log.debug("State:"+state);
 
-            switch (state) {
+            switch (BloodPressurePanel.this.state) {
             case Inflating:
                 nextInflation.setText("Inflating...");
                 systolic.setText(Integer.toString((int) inflationN.value));
@@ -236,7 +259,7 @@ public class BloodPressurePanel extends DevicePanel {
                 break;
             case Waiting:
                 long seconds = ((long) nextInflationN.value % 60000L / 1000L);
-                this.nextInflation.setText((int) Math.floor(1.0 * nextInflationN.value / 60000.0) + ":" + (seconds < 10 ? "0" : "") + seconds
+                BloodPressurePanel.this.nextInflation.setText((int) Math.floor(1.0 * nextInflationN.value / 60000.0) + ":" + (seconds < 10 ? "0" : "") + seconds
                         + " MIN");
                 systolic.setText(Integer.toString((int) systolicN.value));
                 diastolic.setText(Integer.toString((int) diastolicN.value));
@@ -251,17 +274,10 @@ public class BloodPressurePanel extends DevicePanel {
             }
             date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
             time.setText(dateFormat.format(date));
+
         }
-    }
+        
+    };
 
-    @Override
-    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
-
-    }
-
-    @Override
-    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
-
-    }
 
 }

@@ -1,10 +1,10 @@
 package org.mdpnp.devices.draeger.medibus;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 public class DemoEvita4 extends AbstractDraegerVent {
 

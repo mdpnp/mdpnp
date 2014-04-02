@@ -25,8 +25,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.concurrent.ScheduledFuture;
 
 import javax.swing.JCheckBoxMenuItem;
@@ -34,17 +32,12 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
 import javax.swing.JSlider;
-import javax.swing.JTable;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
 
-import org.mdpnp.guis.waveform.TestWaveformSource;
 import org.mdpnp.guis.waveform.WaveformCanvas;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformRenderer;
@@ -58,7 +51,9 @@ import org.mdpnp.guis.waveform.WaveformSource;
 public class SwingWaveformPanel extends javax.swing.JComponent implements WaveformCanvas, WaveformPanel, SwingAnimatable {
     private final WaveformRenderer renderer = new WaveformRenderer();
     private WaveformSource source;
-    private Graphics graphics;
+    private int paintImage = 0;
+    private Graphics[] graphics;
+    private Image[] image;
     private Extent extent;
     private final JPopupMenu popup;
 
@@ -72,6 +67,11 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
         this.source = source;
     }
 
+    @Override
+    public WaveformSource getSource() {
+        return source;
+    }
+    
     public SwingWaveformPanel() {
         this(null);
     }
@@ -84,11 +84,11 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        SwingAnimatorSingleton.release(this);
+
     }
     
     public SwingWaveformPanel(WaveformSource source) {
-        SwingAnimatorSingleton.reference(this);
+        
         this.popup = new JPopupMenu("Options");
         popup.add(overwriteMode);
         overwriteMode.addActionListener(new ActionListener() {
@@ -165,7 +165,7 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 
     }
 
-    private Image image;
+
 
     @Override
     protected void processMouseEvent(MouseEvent e) {
@@ -182,24 +182,25 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
     }
 
     @Override
-    protected synchronized void processComponentEvent(ComponentEvent e) {
+    protected void processComponentEvent(ComponentEvent e) {
         super.processComponentEvent(e);
         if (e.getID() == ComponentEvent.COMPONENT_RESIZED || e.getID() == ComponentEvent.COMPONENT_SHOWN) {
             Dimension d = e.getComponent().getSize();
             this.extent = new ExtentImpl(d);
             int width = (int) d.getWidth();
             int height = (int) d.getHeight();
-            this.image = createImage(width, height);
-            this.graphics = image.getGraphics();
+            this.image = new Image[] {createImage(width, height), createImage(width, height)};
+            this.graphics = new Graphics[] {image[0].getGraphics(), image[1].getGraphics()};
 
-            if (this.graphics instanceof Graphics2D) {
-                ((Graphics2D) this.graphics).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                ((Graphics2D) this.graphics).setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                ((Graphics2D) this.graphics).setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            for(Graphics g : graphics) {
+                if (g instanceof Graphics2D) {
+                    ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                    ((Graphics2D) g).setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                }
+                g.setColor(getBackground());
+                g.fillRect(0, 0, width, height);
             }
-
-            this.graphics.setColor(getBackground());
-            this.graphics.fillRect(0, 0, width, height);
         }
 
     }
@@ -213,30 +214,31 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
         if (null != image) {
             int width = extent.getMaxX() - extent.getMinX();
             int height = extent.getMaxY() - extent.getMinY();
-            g.drawImage(image, 0, 0, width, height, 0, 0, width, height, this);
+            
+            g.drawImage(image[paintImage], 0, 0, width, height, 0, 0, width, height, this);
         }
     }
 
     private final Color secondaryColor = new Color(255, 0, 0, 200);
 
     @Override
-    public synchronized void drawSecondaryLine(int x0, int y0, int x1, int y1) {
+    public void drawSecondaryLine(int x0, int y0, int x1, int y1) {
         int height = extent.getMaxY() - extent.getMinY();
-        graphics.setColor(secondaryColor);
-        graphics.drawLine(x0, height - y0, x1, height - y1);
+        graphics[(paintImage+1)%2].setColor(secondaryColor);
+        graphics[(paintImage+1)%2].drawLine(x0, height - y0, x1, height - y1);
     }
 
     @Override
-    public synchronized void drawLine(int x0, int y0, int x1, int y1) {
+    public void drawLine(int x0, int y0, int x1, int y1) {
         int height = extent.getMaxY() - extent.getMinY();
-        graphics.setColor(getForeground());
-        graphics.drawLine(x0, height - y0, x1, height - y1);
+        graphics[(paintImage+1)%2].setColor(getForeground());
+        graphics[(paintImage+1)%2].drawLine(x0, height - y0, x1, height - y1);
     }
 
     @Override
-    public synchronized void clearRect(int x, int y, int width, int height) {
-        graphics.setColor(getBackground());
-        graphics.fillRect(x, y, width, height);
+    public void clearRect(int x, int y, int width, int height) {
+        graphics[(paintImage+1)%2].setColor(getBackground());
+        graphics[(paintImage+1)%2].fillRect(x, y, width, height);
     }
 
     @Override
@@ -259,19 +261,22 @@ public class SwingWaveformPanel extends javax.swing.JComponent implements Wavefo
 
     @Override
     public void start() {
+        SwingAnimatorSingleton.reference(this);
     }
 
     @Override
     public void stop() {
+        SwingAnimatorSingleton.release(this);
     }
 
     @Override
     public void run() {
         if(null != source && null != renderer && isShowing()) {
             long now = System.currentTimeMillis();
-            graphics.setColor(getBackground());
-            graphics.fillRect(extent.getMinX(), extent.getMinY(), extent.getMaxX(), extent.getMaxY());
+            graphics[(paintImage+1)%2].setColor(getBackground());
+            graphics[(paintImage+1)%2].fillRect(extent.getMinX(), extent.getMinY(), extent.getMaxX(), extent.getMaxY());
             renderer.render(source, this, now-2000L-timeDomain, now-2000L);
+            paintImage = (paintImage+1)%2;
             repaint();
         }
         

@@ -32,11 +32,11 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
-import org.mdpnp.apps.testapp.data.DeviceListCellRenderer;
-import org.mdpnp.apps.testapp.data.InfusionStatusInstanceModel;
+import org.mdpnp.apps.testapp.DeviceListCellRenderer;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
+import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 
 @SuppressWarnings("serial")
 /**

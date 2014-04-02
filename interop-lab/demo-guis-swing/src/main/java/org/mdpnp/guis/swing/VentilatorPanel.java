@@ -12,7 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
-import ice.InfusionStatus;
 import ice.Numeric;
 import ice.NumericDataReader;
 import ice.SampleArray;
@@ -32,7 +31,9 @@ import javax.swing.JPanel;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
-import org.mdpnp.guis.waveform.WaveformSource;
+import org.mdpnp.rtiapi.data.DeviceDataMonitor;
+import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +54,8 @@ public class VentilatorPanel extends DevicePanel {
         flowPanel.stop();
         pressurePanel.stop();
         co2Panel.stop();
+        deviceMonitor.getNumericModel().removeListener(numericListener);
+        deviceMonitor.getSampleArrayModel().removeListener(sampleArrayListener);
         super.destroy();
     }
 
@@ -118,62 +121,74 @@ public class VentilatorPanel extends DevicePanel {
     }
 
     @Override
-    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
-        if (aliveAndValidData(sampleInfo)) {
-            if (rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
-                respiratoryRate.setText(Integer.toString((int) numeric.value));
-            } else if (rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(metric_id)) {
-                endTidalCO2.setText(Integer.toString((int) numeric.value));
+    public void set(DeviceDataMonitor deviceMonitor) {
+        super.set(deviceMonitor);
+        deviceMonitor.getNumericModel().iterateAndAddListener(numericListener);
+        deviceMonitor.getSampleArrayModel().iterateAndAddListener(sampleArrayListener);
+    }
+    
+    private final InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
+
+        @Override
+        public void instanceAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+
+        }
+
+        @Override
+        public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
+                SampleInfo sampleInfo) {
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            if (rosetta.MDC_RESP_RATE.VALUE.equals(data.metric_id)) {
+                respiratoryRate.setText(Integer.toString((int) data.value));
+            } else if (rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(data.metric_id)) {
+                endTidalCO2.setText(Integer.toString((int) data.value));
             }
         }
-    }
-
-    private final Date date = new Date();
-
+        
+    };
     
-    @Override
-    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
-        if (aliveAndValidData(sampleInfo)) {
-            if (rosetta.MDC_FLOW_AWAY.VALUE.equals(metric_id)) {
+    private final InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader> sampleArrayListener = new InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader>() {
+
+        @Override
+        public void instanceAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+                SampleInfo sampleInfo) {
+            if (rosetta.MDC_FLOW_AWAY.VALUE.equals(data.metric_id)) {
                 if(null == flowWave) {
-                    flowWave = new SampleArrayWaveformSource(sampleArrayReader, sampleArray);
+                    flowWave = new SampleArrayWaveformSource(reader, data);
                     flowPanel.setSource(flowWave);
                 }
-            } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(metric_id)) {
+            } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(data.metric_id)) {
                 if(null == pressureWave) {
-                    pressureWave = new SampleArrayWaveformSource(sampleArrayReader, sampleArray);
+                    pressureWave = new SampleArrayWaveformSource(reader, data);
                     pressurePanel.setSource(pressureWave);
                 }
-            } else if (ice.MDC_CAPNOGRAPH.VALUE.equals(metric_id)) {
+            } else if (ice.MDC_CAPNOGRAPH.VALUE.equals(data.metric_id)) {
                 if(null == etco2Wave) {
-                    etco2Wave = new SampleArrayWaveformSource(sampleArrayReader, sampleArray);
+                    etco2Wave = new SampleArrayWaveformSource(reader, data);
                     co2Panel.setSource(etco2Wave);
                 }
             }
-            date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
 
-            time.setText(dateFormat.format(date));
-        } else {
-//            if (rosetta.MDC_FLOW_AWAY.VALUE.equals(metric_id)) {
-//                flowWave.reset();
-//            } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(metric_id)) {
-//                pressureWave.reset();
-//            } else if (ice.MDC_CAPNOGRAPH.VALUE.equals(metric_id)) {
-//                etco2Wave.reset();
-//            }
+
         }
-    }
 
-    @Override
-    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
+        private final Date date = new Date();
+        
+        @Override
+        public void instanceNotAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
+                SampleInfo sampleInfo) {
+            
+        }
 
-    }
-
-    @Override
-    public void connected() {
-//        etco2Wave.reset();
-//        flowWave.reset();
-//        pressureWave.reset();
-    }
-
+        @Override
+        public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+                SampleInfo sampleInfo) {
+            date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+            time.setText(dateFormat.format(date));
+        }
+        
+    };
 }

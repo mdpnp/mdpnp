@@ -32,11 +32,11 @@ import java.util.ListIterator;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.devices.QosProfiles;
-import org.mdpnp.devices.TopicUtil;
 import org.mdpnp.rti.dds.DDS;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

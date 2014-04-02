@@ -17,8 +17,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.pump.SimInfusionPump;
+import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -14,13 +14,11 @@ package org.mdpnp.apps.testapp.rrr;
 
 import ice.Numeric;
 
-import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -33,18 +31,14 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.mdpnp.apps.testapp.data.DeviceListCellRenderer;
-import org.mdpnp.apps.testapp.data.InstanceModel;
-import org.mdpnp.apps.testapp.data.SampleArrayInstanceModel;
-import org.mdpnp.apps.testapp.vital.VitalModel;
+import org.mdpnp.apps.testapp.DeviceListCellRenderer;
 import org.mdpnp.devices.AbstractDevice;
-import org.mdpnp.devices.EventLoop;
-import org.mdpnp.devices.math.DCT;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
-import org.mdpnp.guis.waveform.WaveformSource;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 
 @SuppressWarnings("serial")
 /**
@@ -134,6 +128,7 @@ public class RapidRespiratoryRate extends JPanel implements ListDataListener {
 
         });
         capnoSources.setCellRenderer(deviceCellRenderer);   
+        wavePanel.start();
     }
 
     private SampleArrayInstanceModel model;

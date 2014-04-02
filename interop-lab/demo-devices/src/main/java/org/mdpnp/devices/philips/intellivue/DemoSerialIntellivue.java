@@ -17,7 +17,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
-import org.mdpnp.devices.EventLoop;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 /**
  * @author Jeff Plourde

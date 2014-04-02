@@ -39,9 +39,9 @@ import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.rti.dds.DDS;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;

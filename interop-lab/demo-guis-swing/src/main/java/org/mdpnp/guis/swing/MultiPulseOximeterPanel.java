@@ -12,9 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
-import ice.InfusionStatus;
-import ice.Numeric;
 import ice.SampleArray;
+import ice.SampleArrayDataReader;
 
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -23,6 +22,9 @@ import java.util.Set;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
+import org.mdpnp.rtiapi.data.DeviceDataMonitor;
+import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +73,7 @@ public class MultiPulseOximeterPanel extends DevicePanel {
             plethPanel[i].setSource(null);
             plethPanel[i].stop();
         }
+        deviceMonitor.getSampleArrayModel().removeListener(sampleArrayListener);
         super.destroy();
     }
 
@@ -81,35 +84,34 @@ public class MultiPulseOximeterPanel extends DevicePanel {
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
 
-    // private final Date date = new Date();
-
     @Override
-    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
-        if (aliveAndValidData(sampleInfo)) {
-            if (sampleArray.instance_id >= 0 && sampleArray.instance_id < N) {
-//                plethWave[sampleArray.instance_id].applyUpdate(sampleArray, sampleInfo);
-            }
-        } else {
-            if (sampleArray.instance_id >= 0 && sampleArray.instance_id < N) {
-//                plethWave[sampleArray.instance_id].reset();
-            }
+    public void set(DeviceDataMonitor deviceMonitor) {
+        super.set(deviceMonitor);
+        deviceMonitor.getSampleArrayModel().iterateAndAddListener(sampleArrayListener);
+    }
+    
+    private final InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader> sampleArrayListener = new InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader>() {
+
+        @Override
+        public void instanceAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+                SampleInfo sampleInfo) {
+            if (data.instance_id >= 0 && data.instance_id < N) {
+                plethPanel[data.instance_id].setSource(new SampleArrayWaveformSource(reader, data));
+          }
         }
-    }
+        
+        @Override
+        public void instanceNotAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
+                SampleInfo sampleInfo) {
+            
+        }
 
-    @Override
-    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
+        @Override
+        public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+                SampleInfo sampleInfo) {
+        }
+        
+    };
 
-    }
 
-    @Override
-    public void connected() {
-//        for (WaveformUpdateWaveformSource wuws : plethWave) {
-//            wuws.reset();
-//        }
-    }
-
-    @Override
-    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
-        // NO OP
-    }
 }

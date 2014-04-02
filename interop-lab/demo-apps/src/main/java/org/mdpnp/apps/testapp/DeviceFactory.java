@@ -16,7 +16,6 @@ import java.io.IOException;
 
 import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.devices.AbstractDevice;
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.draeger.medibus.DemoApollo;
 import org.mdpnp.devices.draeger.medibus.DemoEvita4;
@@ -38,6 +37,7 @@ import org.mdpnp.devices.simulation.pulseox.MultiSimPulseOximeter;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 /**
  * @author Jeff Plourde

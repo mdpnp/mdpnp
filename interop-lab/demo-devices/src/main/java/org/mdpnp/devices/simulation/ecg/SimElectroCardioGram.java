@@ -12,8 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation.ecg;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 /**
  * @author Jeff Plourde
@@ -21,17 +21,45 @@ import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
  */
 public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
 
-    protected final InstanceHolder<ice.SampleArray> i, ii, iii;
+    protected InstanceHolder<ice.SampleArray> i, ii, iii;
 
     protected final InstanceHolder<ice.Numeric> respiratoryRate, heartRate;
 
+//    private Number[][][] ecgCache = new Number[3][4][];
+//    private int ecgCount;
+    
+    private static final Number[] copy(Number[] source, Number[] target) {
+        if(target == null || target.length < source.length) {
+            target = new Number[source.length];
+        }
+        for(int i = 0; i < source.length; i++) {
+            target[i] = source[i];
+        }
+        return target;
+    }
+    
     private class MySimulatedElectroCardioGram extends SimulatedElectroCardioGram {
         @Override
         protected void receiveECG(Number[] iValues, Number[] iiValues, Number[] iiiValues, int heartRateValue, int respiratoryRateValue,
                 double msPerSample) {
-            sampleArraySample(i, iValues, (int) msPerSample, null);
-            sampleArraySample(ii, iiValues, (int) msPerSample, null);
-            sampleArraySample(iii, iiiValues, (int) msPerSample, null);
+//            ecgCache[0][ecgCount] = copy(iValues, ecgCache[0][ecgCount]);
+//            ecgCache[1][ecgCount] = copy(iiValues, ecgCache[1][ecgCount]);
+//            ecgCache[2][ecgCount] = copy(iiiValues, ecgCache[2][ecgCount]);
+//            
+//            ecgCount++;
+//            
+//            if(ecgCount==4) {
+//                for(int i = 0; i < 4; i++) {
+//                    sampleArraySample(SimElectroCardioGram.this.i, ecgCache[0][i], (int) msPerSample, null);
+//                    sampleArraySample(SimElectroCardioGram.this.ii, ecgCache[1][i], (int) msPerSample, null);
+//                    sampleArraySample(SimElectroCardioGram.this.iii, ecgCache[2][i], (int) msPerSample, null);
+//                }
+//                ecgCount = 0;
+//            }
+            sampleArraySample(SimElectroCardioGram.this.i, iValues, (int) msPerSample, null);
+            sampleArraySample(SimElectroCardioGram.this.ii, iiValues, (int) msPerSample, null);
+            sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, (int) msPerSample, null);
+
             numericSample(heartRate, heartRateValue, null);
             numericSample(respiratoryRate, respiratoryRateValue, null);
         }

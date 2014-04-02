@@ -12,17 +12,20 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
-import ice.InfusionStatus;
 import ice.Numeric;
+import ice.NumericDataReader;
 import ice.SampleArray;
+import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,6 +36,8 @@ import javax.swing.SwingUtilities;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
+import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.InstanceModelListener;
 
 import com.rti.dds.subscription.SampleInfo;
 
@@ -54,6 +59,11 @@ public class ElectroCardioGramPanel extends DevicePanel {
     private final static String[] ECG_LABELS = new String[] { "ECG LEAD I", "ECG LEAD II", "ECG LEAD III", "ECG LEAD AVF", "ECG LEAD AVL",
             "ECG LEAD AVR" };
 
+    private final static Set<String> ECG_WAVEFORMS_SET = new HashSet<String>();
+    static {
+        ECG_WAVEFORMS_SET.addAll(Arrays.asList(ECG_WAVEFORMS));
+    }
+    
     private final Map<String, WaveformPanel> panelMap = new HashMap<String, WaveformPanel>();
     private final GridLayout waveLayout = new GridLayout(1,1);
     private final JPanel waves = new JPanel(waveLayout);
@@ -96,6 +106,8 @@ public class ElectroCardioGramPanel extends DevicePanel {
         for (WaveformPanel wp : panelMap.values()) {
             wp.stop();
         }
+        deviceMonitor.getNumericModel().removeListener(numericListener);
+        deviceMonitor.getSampleArrayModel().removeListener(sampleArrayListener);
         super.destroy();
     }
 
@@ -107,57 +119,76 @@ public class ElectroCardioGramPanel extends DevicePanel {
         }
         return false;
     }
+    
+    private final InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
 
-    @Override
-    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
-        if (aliveAndValidData(sampleInfo)) {
-            if (rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
-                respiratoryRate.setText(Integer.toString((int) numeric.value));
-            } else if (rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE.equals(metric_id)) {
-                heartRate.setText(Integer.toString((int) numeric.value));
+        @Override
+        public void instanceAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            
+        }
+
+        @Override
+        public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
+                SampleInfo sampleInfo) {
+            
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            if (rosetta.MDC_RESP_RATE.VALUE.equals(data.metric_id)) {
+                respiratoryRate.setText(Integer.toString((int) data.value));
+            } else if (rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE.equals(data.metric_id)) {
+                heartRate.setText(Integer.toString((int) data.value));
             }
         }
-    }
+        
+    };
+    
+    public void set(org.mdpnp.rtiapi.data.DeviceDataMonitor deviceMonitor) {
+        super.set(deviceMonitor);
+        deviceMonitor.getNumericModel().iterateAndAddListener(numericListener);
+        deviceMonitor.getSampleArrayModel().iterateAndAddListener(sampleArrayListener);
+    };
+    
+    private final InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader> sampleArrayListener = new InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader>() {
 
-    @Override
-    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
-        WaveformPanel wuws = panelMap.get(metric_id);
-        if (aliveAndValidData(sampleInfo)) {
-            if (null == wuws) {
-                SampleArrayWaveformSource saws = new SampleArrayWaveformSource(sampleArrayReader, sampleArray);
-                wuws = new WaveformPanelFactory().createWaveformPanel();
-                wuws.setSource(saws);
-                final WaveformPanel _wuws = wuws;
-                panelMap.put(metric_id, wuws);
-                waveLayout.setRows(panelMap.size());
-                SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                        waves.add(_wuws.asComponent());
-                        waves.invalidate();
-                    }
-                });
-                
-//                
-//                wuws.applyUpdate(sampleArray, sampleInfo);
+        @Override
+        public void instanceAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+                SampleInfo sampleInfo) {
+            if(ECG_WAVEFORMS_SET.contains(data.metric_id)) {
+                WaveformPanel wuws = panelMap.get(data.metric_id);
+                if (null == wuws) {
+                    SampleArrayWaveformSource saws = new SampleArrayWaveformSource(reader, data);
+                    wuws = new WaveformPanelFactory().createWaveformPanel();
+                    wuws.setSource(saws);
+                    final WaveformPanel _wuws = wuws;
+                    panelMap.put(data.metric_id, wuws);
+                    waveLayout.setRows(panelMap.size());
+                    SwingUtilities.invokeLater(new Runnable() {
+                        public void run() {
+                            waves.add(_wuws.asComponent());
+                            waves.getParent().invalidate();
+                        }
+                    });
+                    wuws.start();
+                }
+                date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+                time.setText(dateFormat.format(date));
             }
-            date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
-            time.setText(dateFormat.format(date));
-        } else {
-//            if (null != wuws) {
-//                wuws.reset();
-//            }
         }
-    }
 
-    @Override
-    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
+        @Override
+        public void instanceNotAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
+                SampleInfo sampleInfo) {
+            // TODO Auto-generated method stub
+            
+        }
 
-    }
-
-    @Override
-    public void connected() {
-//        for (WaveformUpdateWaveformSource wuws : panelMap.values()) {
-//            wuws.reset();
-//        }
-    }
+        @Override
+        public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+                SampleInfo sampleInfo) {
+            // TODO Auto-generated method stub
+            
+        } 
+    };    
 }

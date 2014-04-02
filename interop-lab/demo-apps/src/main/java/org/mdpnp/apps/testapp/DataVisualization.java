@@ -17,11 +17,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 
-import org.mdpnp.apps.testapp.data.DeviceListCellRenderer;
-import org.mdpnp.apps.testapp.data.InfusionStatusInstanceModel;
 import org.mdpnp.apps.testapp.pca.PCAConfig;
 import org.mdpnp.apps.testapp.pca.VitalMonitoring;
 import org.mdpnp.apps.testapp.vital.VitalModel;
+import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 
 @SuppressWarnings("serial")
 /**

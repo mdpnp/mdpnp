@@ -12,9 +12,10 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
-import ice.InfusionStatus;
 import ice.Numeric;
+import ice.NumericDataReader;
 import ice.SampleArray;
+import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -32,6 +33,9 @@ import javax.swing.JPanel;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
+import org.mdpnp.rtiapi.data.DeviceDataMonitor;
+import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.InstanceModelListener;
 
 import com.rti.dds.subscription.SampleInfo;
 
@@ -42,7 +46,7 @@ import com.rti.dds.subscription.SampleInfo;
  */
 public class InvasiveBloodPressurePanel extends DevicePanel {
 
-    private final WaveformPanel[] panel;
+    private final WaveformPanel[] panels;
     private final Date date = new Date();
     private final JLabel time = new JLabel(" "); // , heartRate = new
                                                  // JLabel(" "), respiratoryRate
@@ -53,7 +57,7 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
 
     private final static String[] LABELS = new String[] { "ART", "ABP", };
 
-    private final Map<String, SampleArrayWaveformSource> panelMap = new HashMap<String, SampleArrayWaveformSource>();
+    private final Map<String, WaveformPanel> panelMap = new HashMap<String, WaveformPanel>();
 
     public InvasiveBloodPressurePanel() {
         super(new BorderLayout());
@@ -61,28 +65,15 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
 
         JPanel waves = new JPanel(new GridLayout(WAVEFORMS.length, 1));
         WaveformPanelFactory fact = new WaveformPanelFactory();
-        panel = new WaveformPanel[WAVEFORMS.length];
-        for (int i = 0; i < panel.length; i++) {
-            waves.add(label(LABELS[i], (panel[i] = fact.createWaveformPanel()).asComponent())/*
-                                                                                              * ,
-                                                                                              * gbc
-                                                                                              */);
-//            SampleArrayWaveformSource wuws = new SampleArrayWaveformSource();
-//            panel[i].setSource(wuws);
-//            panelMap.put(WAVEFORMS[i], wuws);
-            panel[i].start();
+        panels = new WaveformPanel[WAVEFORMS.length];
+        for (int i = 0; i < panels.length; i++) {
+            WaveformPanel panel = fact.createWaveformPanel();
+            waves.add(label(LABELS[i], (panels[i] = panel).asComponent()));
+
+            panelMap.put(WAVEFORMS[i], panel);
+            panels[i].start();
         }
         add(waves, BorderLayout.CENTER);
-
-        // JPanel numerics = new JPanel(new GridLayout(2, 1));
-        // SpaceFillLabel.attachResizeFontToFill(this, heartRate,
-        // respiratoryRate);
-        // JPanel t;
-        // numerics.add(t = label("Heart Rate", heartRate));
-        // t.add(new JLabel("BPM"), BorderLayout.EAST);
-        // numerics.add(t = label("RespiratoryRate", respiratoryRate));
-        // t.add(new JLabel("BPM"), BorderLayout.EAST);
-        // add(numerics, BorderLayout.EAST);
 
         setForeground(Color.red);
         setBackground(Color.black);
@@ -90,10 +81,19 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
     }
 
     @Override
+    public void set(DeviceDataMonitor deviceMonitor) {
+        super.set(deviceMonitor);
+        deviceMonitor.getSampleArrayModel().iterateAndAddListener(sampleArrayListener);
+        deviceMonitor.getNumericModel().iterateAndAddListener(numericListener);
+    }
+    
+    @Override
     public void destroy() {
-        for (WaveformPanel wp : panel) {
+        for (WaveformPanel wp : panels) {
             wp.stop();
         }
+        deviceMonitor.getSampleArrayModel().removeListener(sampleArrayListener);
+        deviceMonitor.getNumericModel().removeListener(numericListener);
         super.destroy();
     }
 
@@ -105,45 +105,56 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
         }
         return false;
     }
+    private final InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
 
-    @Override
-    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
-        if (aliveAndValidData(sampleInfo)) {
-            // if(rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
-            // respiratoryRate.setText(Integer.toString((int)numeric.value));
-            // } else if(rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE.equals(metric_id))
-            // {
-            // heartRate.setText(Integer.toString((int)numeric.value));
-            // }
+        @Override
+        public void instanceAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
         }
-    }
 
-    @Override
-    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
-//        WaveformUpdateWaveformSource wuws = panelMap.get(metric_id);
-//        if (aliveAndValidData(sampleInfo)) {
-//            if (null != wuws) {
-//                wuws.applyUpdate(sampleArray, sampleInfo);
-//            }
-//            date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
-//            time.setText(dateFormat.format(date));
-//        } else {
-//            if (null != wuws) {
-//                System.err.println("RESET RESET RESET");
-//                wuws.reset();
-//            }
-//        }
-    }
+        @Override
+        public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
+                SampleInfo sampleInfo) {
+        }
 
-    @Override
-    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
+        @Override
+        public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+//             if(rosetta.MDC_RESP_RATE.VALUE.equals(data.metric_id)) {
+//                 respiratoryRate.setText(Integer.toString((int)data.value));
+//             } else if(rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE.equals(data.metric_id)) {
+//                 heartRate.setText(Integer.toString((int)data.value));
+//             }
+        }
+        
+    };
+    private final InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader> sampleArrayListener = new InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader>() {
 
-    }
+        @Override
+        public void instanceAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+                SampleInfo sampleInfo) {
+            WaveformPanel wuws = panelMap.get(data.metric_id);
+            if(null != wuws) {
+                if(null == wuws.getSource()) {
+                    wuws.setSource(new SampleArrayWaveformSource(reader, data));
+                }
 
-    @Override
-    public void connected() {
-//        for (WaveformUpdateWaveformSource wuws : panelMap.values()) {
-//            wuws.reset();
-//        }
-    }
+                date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+                time.setText(dateFormat.format(date));
+          }
+        }
+        
+        @Override
+        public void instanceNotAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
+                SampleInfo sampleInfo) {
+            
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+                SampleInfo sampleInfo) {
+        }
+        
+    };
+
+
+
 }

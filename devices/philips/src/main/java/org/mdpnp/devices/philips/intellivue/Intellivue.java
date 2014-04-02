@@ -515,7 +515,10 @@ public class Intellivue implements NetworkConnection {
         AssociationConnect req = new AssociationConnectImpl();
         PollProfileSupport pps = req.getUserInfo().getPollProfileSupport();
 
+        // On our Revision J MP70 500ms is the minimum supported
         pps.getMinPollPeriod().fromMilliseconds(500L);
+        pps.setMaxMtuRx(1456);
+        pps.setMaxMtuTx(1456);
 
         MdibObjectSupport obj = req.getUserInfo().getMdibObjectSupport();
         obj.addClass(ObjectClass.NOM_MOC_VMS_MDS, 1);

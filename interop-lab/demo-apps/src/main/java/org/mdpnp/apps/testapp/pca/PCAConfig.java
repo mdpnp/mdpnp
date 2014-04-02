@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -49,12 +48,11 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.mdpnp.apps.testapp.data.DeviceListCellRenderer;
-import org.mdpnp.apps.testapp.data.InfusionStatusInstanceModel;
-import org.mdpnp.apps.testapp.data.InstanceModel;
+import org.mdpnp.apps.testapp.DeviceListCellRenderer;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
+import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 
 import com.rti.dds.infrastructure.InstanceHandle_t;
 

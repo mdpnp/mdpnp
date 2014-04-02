@@ -12,12 +12,17 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
+
 import ice.DeviceConnectivity;
+import ice.DeviceConnectivityDataReader;
 import ice.DeviceIdentity;
+import ice.DeviceIdentityDataReader;
 import ice.InfusionStatus;
 import ice.InfusionStatusDataReader;
 import ice.Numeric;
+import ice.NumericDataReader;
 import ice.SampleArray;
+import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
@@ -38,29 +43,28 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import org.mdpnp.devices.DeviceMonitor;
-import org.mdpnp.devices.DeviceMonitorListener;
+import org.mdpnp.rtiapi.data.DeviceDataMonitor;
+import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
-import com.rti.dds.subscription.SampleInfoSeq;
 
 @SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
  *
  */
-public class CompositeDevicePanel extends JPanel implements DeviceMonitorListener {
-    private final JLabel manufacturer = new JLabel(" ");
-    private final JLabel model = new JLabel(" ");
-    private final JLabel serial_number = new JLabel(" ");
+public class CompositeDevicePanel extends JPanel {
+    protected final JLabel manufacturer = new JLabel(" ");
+    protected final JLabel model = new JLabel(" ");
+    protected final JLabel serial_number = new JLabel(" ");
 
-    private final JLabel connectionState = new JLabel(" ");
-    private final JLabel unique_device_identifier = new JLabel(" ");
-    private final JLabel icon = new JLabel(" ");
+    protected final JLabel connectionState = new JLabel(" ");
+    protected final JLabel unique_device_identifier = new JLabel(" ");
+    protected final JLabel icon = new JLabel(" ");
 
     private static final Logger log = LoggerFactory.getLogger(CompositeDevicePanel.class);
 
@@ -71,8 +75,10 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
     private final Set<String> knownIdentifiers = new HashSet<String>();
     private final Set<String> knownPumps = new HashSet<String>();
 
-    public CompositeDevicePanel() {
+
+    public CompositeDevicePanel()  {
         super(new BorderLayout());
+        
         JComponent header = new JPanel();
         header.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(1, 1,
@@ -116,65 +122,145 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
         add(data, BorderLayout.CENTER);
     }
 
-    private final Set<InstanceHandle_t> seenInstances = new HashSet<InstanceHandle_t>();
+    private final InstanceModelListener<ice.DeviceIdentity, ice.DeviceIdentityDataReader> deviceIdentityListener = new InstanceModelListener<ice.DeviceIdentity, ice.DeviceIdentityDataReader>() {
 
-    @Override
-    public void deviceIdentity(ice.DeviceIdentityDataReader reader, ice.DeviceIdentitySeq di_seq, SampleInfoSeq info_seq) {
-        // TODO really a History QoS with keep last of 1 is better but trying to
-        // be compatible with various QoS settings for now
-        seenInstances.clear();
-        for (int i = info_seq.size() - 1; i >= 0; i--) {
-            SampleInfo si = (SampleInfo) info_seq.get(i);
-            if (si.valid_data && !seenInstances.contains(si.instance_handle)) {
-                seenInstances.add(si.instance_handle);
-                DeviceIdentity di = (DeviceIdentity) di_seq.get(i);
-                manufacturer.setText(di.manufacturer);
-                model.setText(di.model);
-                serial_number.setText(di.serial_number);
-                unique_device_identifier.setText(di.unique_device_identifier);
-                icon.setText("");
-                BufferedImage img;
-                try {
-                    img = IconUtil.image(di.icon);
-                } catch (IOException e) {
-                    log.error("Error loading device image", e);
-                    img = null;
-                }
+        @Override
+        public void instanceAlive(InstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader,
+                DeviceIdentity data, SampleInfo sampleInfo) {
+            
+        }
 
-                if (null != img) {
-                    icon.setIcon(new ImageIcon(img));
-                }
+        @Override
+        public void instanceNotAlive(InstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader,
+                DeviceIdentity keyHolder, SampleInfo sampleInfo) {
+            
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader,
+                DeviceIdentity data, SampleInfo sampleInfo) {
+            CompositeDevicePanel.this.manufacturer.setText(data.manufacturer);
+            CompositeDevicePanel.this.model.setText(data.model);
+            serial_number.setText(data.serial_number);
+            unique_device_identifier.setText(data.unique_device_identifier);
+            icon.setText("");
+            BufferedImage img;
+            try {
+                img = IconUtil.image(data.icon);
+            } catch (IOException e) {
+                log.error("Error loading device image", e);
+                img = null;
+            }
+
+            if (null != img) {
+                icon.setIcon(new ImageIcon(img));
+            }
+        }
+        
+    };
+    
+    private final InstanceModelListener<ice.DeviceConnectivity, ice.DeviceConnectivityDataReader> deviceConnectivityListener = new InstanceModelListener<ice.DeviceConnectivity, ice.DeviceConnectivityDataReader>() {
+
+        @Override
+        public void instanceAlive(InstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
+                DeviceConnectivity data, SampleInfo sampleInfo) {
+            
+        }
+
+        @Override
+        public void instanceNotAlive(InstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
+                DeviceConnectivity keyHolder, SampleInfo sampleInfo) {
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
+                DeviceConnectivity data, SampleInfo sampleInfo) {
+            connectionState.setText(data.state.name() + (!"".equals(data.info) ? (" (" + data.info + ")") : ""));
+        }
+        
+    };
+    
+    private final InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
+
+        @Override
+        public void instanceAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            if (0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & sampleInfo.instance_state) && !knownIdentifiers.contains(data.metric_id)) {
+                // avoid reboxing ... also tells us if something is new
+                knownIdentifiers.add(data.metric_id);
+                log.trace("New numeric, new set:" + knownIdentifiers);
+                replaceDataPanels();
+            }
+            // TODO this should probably be handled by replaying the contents of
+            // the reader for any new gui panels
+
+        }
+
+        @Override
+        public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
+                SampleInfo sampleInfo) {
+            
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            
+        }
+        
+    };
+    
+    private final InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader> sampleArrayListener = new InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader>() {
+
+        @Override
+        public void instanceAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+                SampleInfo sampleInfo) {
+            if (0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & sampleInfo.instance_state) && !knownIdentifiers.contains(data.metric_id)) {
+                knownIdentifiers.add(data.metric_id);
+                log.trace("New SampleArray, new set:" + knownIdentifiers);
+                replaceDataPanels();
             }
         }
 
-    }
+        @Override
+        public void instanceNotAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
+                SampleInfo sampleInfo) {
+            
+        }
 
-    private boolean connected = false;
+        @Override
+        public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+                SampleInfo sampleInfo) {
+            
+        }
+        
+    };
+    
+    private final InstanceModelListener<ice.InfusionStatus, ice.InfusionStatusDataReader> infusionStatusListener = new InstanceModelListener<ice.InfusionStatus, ice.InfusionStatusDataReader>() {
 
-    @Override
-    public void deviceConnectivity(ice.DeviceConnectivityDataReader reader, ice.DeviceConnectivitySeq dc_seq, SampleInfoSeq info_seq) {
-        seenInstances.clear();
-        for (int i = info_seq.size() - 1; i >= 0; i--) {
-            SampleInfo si = (SampleInfo) info_seq.get(i);
-            if (si.valid_data && !seenInstances.contains(si.instance_handle)) {
-                seenInstances.add(si.instance_handle);
-                DeviceConnectivity dc = (DeviceConnectivity) dc_seq.get(i);
-                connectionState.setText(dc.state.name() + (!"".equals(dc.info) ? (" (" + dc.info + ")") : ""));
-                if (ice.ConnectionState.Connected.equals(dc.state)) {
-                    if (!connected) {
-                        synchronized (dataComponents) {
-                            for (DevicePanel d : dataComponents) {
-                                d.connected();
-                            }
-                        }
-                        connected = true;
-                    }
-                } else {
-                    connected = false;
-                }
+        @Override
+        public void instanceAlive(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
+                InfusionStatus data, SampleInfo sampleInfo) {
+            // log.info("Pump Status:"+infusionStatus);
+            // TODO Jeff, what are you doing?
+            if (!knownPumps.contains(data.unique_device_identifier)) {
+                knownPumps.add(data.unique_device_identifier);
+                replaceDataPanels();
             }
         }
-    }
+
+        @Override
+        public void instanceNotAlive(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
+                InfusionStatus keyHolder, SampleInfo sampleInfo) {
+            
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
+                InfusionStatus data, SampleInfo sampleInfo) {
+            
+        }
+        
+    };
+    
 
     private void replaceDataPanels() {
         DevicePanel[] _dataComponents;
@@ -183,7 +269,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
             _dataComponents = dataComponents.toArray(new DevicePanel[0]);
         }
         final DevicePanel[] __dataComponents = _dataComponents;
-
+        
         Runnable r = new Runnable() {
             public void run() {
                 data.removeAll();
@@ -195,7 +281,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
                     for (DevicePanel d : __dataComponents) {
                         // TODO this is getting to be a mess
                         if(deviceMonitor != null) {
-                            d.set(deviceMonitor.getNumericReader(), deviceMonitor.getSampleArrayReader());
+                            d.set(deviceMonitor);
                         }
                         data.add(d);
                     }
@@ -215,69 +301,7 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
                 log.error("error adding panels", e);
             }
         }
-    }
 
-    private final ice.Numeric numericKeyHolder = (Numeric) ice.Numeric.create();
-
-    @Override
-    public void numeric(ice.NumericDataReader reader, ice.NumericSeq nu_seq, SampleInfoSeq info_seq) {
-        // Only dole out the most recent sample
-        for (int i = info_seq.size()-1; i < info_seq.size(); i++) {
-            SampleInfo si = (SampleInfo) info_seq.get(i);
-            ice.Numeric n = (Numeric) nu_seq.get(i);
-            String metric_id = null;
-
-            if (si.valid_data) {
-                metric_id = n.metric_id;
-            } else {
-                reader.get_key_value(numericKeyHolder, si.instance_handle);
-                metric_id = numericKeyHolder.metric_id;
-            }
-
-            if (0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & si.instance_state) && !knownIdentifiers.contains(metric_id)) {
-                // avoid reboxing ... also tells us if something is new
-                knownIdentifiers.add(metric_id);
-                log.trace("New numeric, new set:" + knownIdentifiers);
-                replaceDataPanels();
-            }
-            // TODO this should probably be handled by replaying the contents of
-            // the reader for any new gui panels
-            synchronized (dataComponents) {
-                for (DevicePanel d : dataComponents) {
-                    d.numeric(n, metric_id, si);
-                }
-            }
-        }
-
-        // log.trace(n.toString());
-    }
-
-    private final ice.SampleArray sampleArrayKeyHolder = new ice.SampleArray();
-
-    @Override
-    public void sampleArray(ice.SampleArrayDataReader reader, ice.SampleArraySeq sa_seq, SampleInfoSeq info_seq) {
-        // Only the most recent sample (no need to replay numerics for instance through all time)
-        for (int i = info_seq.size()-1; i < info_seq.size(); i++) {
-            SampleInfo si = (SampleInfo) info_seq.get(i);
-            ice.SampleArray sampleArray = (SampleArray) sa_seq.get(i);
-            String metric_id = null;
-            if (si.valid_data) {
-                metric_id = sampleArray.metric_id;
-            } else {
-                reader.get_key_value(sampleArrayKeyHolder, si.instance_handle);
-                metric_id = sampleArrayKeyHolder.metric_id;
-            }
-            if (0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & si.instance_state) && !knownIdentifiers.contains(metric_id)) {
-                knownIdentifiers.add(metric_id);
-                log.trace("New SampleArray, new set:" + knownIdentifiers);
-                replaceDataPanels();
-            }
-            synchronized (dataComponents) {
-                for (DevicePanel d : dataComponents) {
-                    d.sampleArray(sampleArray, metric_id, si);
-                }
-            }
-        }
     }
 
     public void reset() {
@@ -286,41 +310,33 @@ public class CompositeDevicePanel extends JPanel implements DeviceMonitorListene
         replaceDataPanels();
     }
 
-    private DeviceMonitor deviceMonitor;
+    public void stop() {
+        
+    }
+    
+    private DeviceDataMonitor deviceMonitor;
 
-    public void setModel(DeviceMonitor deviceMonitor) {
+    public void setModel(DeviceDataMonitor deviceMonitor) {
         if (null != this.deviceMonitor) {
-            this.deviceMonitor.removeListener(this);
+            this.deviceMonitor.getDeviceIdentityModel().removeListener(deviceIdentityListener);
+            this.deviceMonitor.getDeviceConnectivityModel().removeListener(deviceConnectivityListener);
+            this.deviceMonitor.getNumericModel().removeListener(numericListener);
+            this.deviceMonitor.getSampleArrayModel().removeListener(sampleArrayListener);
+            this.deviceMonitor.getInfusionStatusModel().removeListener(infusionStatusListener);
         }
         this.deviceMonitor = deviceMonitor;
         reset();
         if (null != this.deviceMonitor) {
-            this.deviceMonitor.addListener(this);
+            deviceMonitor.getDeviceIdentityModel().iterateAndAddListener(deviceIdentityListener);
+            deviceMonitor.getDeviceConnectivityModel().iterateAndAddListener(deviceConnectivityListener);
+            deviceMonitor.getNumericModel().iterateAndAddListener(numericListener);
+            deviceMonitor.getSampleArrayModel().iterateAndAddListener(sampleArrayListener);
+            deviceMonitor.getInfusionStatusModel().iterateAndAddListener(infusionStatusListener);
         }
     }
 
-    public DeviceMonitor getModel() {
+    public DeviceDataMonitor getModel() {
         return deviceMonitor;
     }
 
-    @Override
-    public void infusionPump(InfusionStatusDataReader reader, ice.InfusionStatusSeq status, SampleInfoSeq sampleInfo) {
-        for (int i = 0; i < sampleInfo.size(); i++) {
-            InfusionStatus infusionStatus = (InfusionStatus) status.get(i);
-            SampleInfo si = (SampleInfo) sampleInfo.get(i);
-            if (si.valid_data) {
-                // log.info("Pump Status:"+infusionStatus);
-                if (!knownPumps.contains(infusionStatus.unique_device_identifier)) {
-                    knownPumps.add(infusionStatus.unique_device_identifier);
-                    replaceDataPanels();
-                }
-                synchronized (dataComponents) {
-                    for (DevicePanel d : dataComponents) {
-                        d.infusionStatus(infusionStatus, si);
-                    }
-                }
-            }
-        }
-
-    }
 }

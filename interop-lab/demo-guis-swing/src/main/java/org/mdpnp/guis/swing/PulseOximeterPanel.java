@@ -12,9 +12,10 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
-import ice.InfusionStatus;
 import ice.Numeric;
+import ice.NumericDataReader;
 import ice.SampleArray;
+import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -35,6 +36,9 @@ import org.mdpnp.guis.waveform.NumericWaveformSource;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
+import org.mdpnp.rtiapi.data.DeviceDataMonitor;
+import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,6 +156,11 @@ public class PulseOximeterPanel extends DevicePanel {
         pulsePanel.setSource(null);
         plethPanel.stop();
         pulsePanel.stop();
+        
+        if(deviceMonitor != null) {
+            deviceMonitor.getNumericModel().removeListener(numericListener);
+            deviceMonitor.getSampleArrayModel().removeListener(sampleArrayListener);
+        }
         super.destroy();
     }
 
@@ -160,59 +169,75 @@ public class PulseOximeterPanel extends DevicePanel {
         // names.contains(ice.Physio._MDC_PULS_OXIM_PLETH);
     }
 
+    @Override
+    public void set(DeviceDataMonitor deviceMonitor) {
+        super.set(deviceMonitor);
+        deviceMonitor.getNumericModel().iterateAndAddListener(numericListener);
+        deviceMonitor.getSampleArrayModel().iterateAndAddListener(sampleArrayListener);
+    }
+    
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
     private final Date date = new Date();
+    
+    private final InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
 
-    @Override
-    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
-        if (aliveAndValidData(sampleInfo)) {
-            setInt(numeric, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
-            setInt(numeric, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
-            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
+        @Override
+        public void instanceAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(data.metric_id)) {
                 if(null == pulseWave) {
-                    pulseWave = new NumericWaveformSource(numericReader, numeric);
+                    pulseWave = new NumericWaveformSource(model.getReader(), data);
                     pulsePanel.setSource(pulseWave);
                 }
-//                pulseWave.applyUpdate(numeric, sampleInfo);
-            }
-            date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
-            time.setText(dateFormat.format(date));
-        } else {
-            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
-//                pulseWave.reset();
-            }
-        }
-    }
-
-    @Override
-    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
-        if (aliveAndValidData(sampleInfo)) {
-            if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(metric_id)) {
-                if(null == plethWave) {
-                    plethWave = new SampleArrayWaveformSource(sampleArrayReader, sampleArray);
-                    plethPanel.setSource(plethWave);
-                }
-//                plethWave.applyUpdate(sampleArray, sampleInfo);
                 date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
                 time.setText(dateFormat.format(date));
             }
-            
-        } else {
-            if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(metric_id)) {
-//                plethWave.reset();
+        }
+
+        @Override
+        public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
+                SampleInfo sampleInfo) {
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            setInt(data, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
+            setInt(data, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
+            date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
+            time.setText(dateFormat.format(date));
+        }
+        
+    };
+    
+    private final InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader> sampleArrayListener = new InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader>() {
+
+        @Override
+        public void instanceAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+                SampleInfo sampleInfo) {
+            System.err.println("I see you SampleArray:"+data.metric_id);
+            if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(data.metric_id)) {
+                if(null == plethWave) {
+                    plethWave = new SampleArrayWaveformSource(deviceMonitor.getSampleArrayModel().getReader(), data);
+                    plethPanel.setSource(plethWave);
+                }
+                date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
+                time.setText(dateFormat.format(date));
             }
         }
-    }
 
-    @Override
-    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
+        @Override
+        public void instanceNotAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
+                SampleInfo sampleInfo) {
+            
+        }
 
-    }
+        @Override
+        public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+                SampleInfo sampleInfo) {
+            
+        }
+        
+    };
+    
 
-    @Override
-    public void connected() {
-//        plethWave.reset();
-//        pulseWave.reset();
-    }
 }

@@ -30,9 +30,14 @@ public class DevicePanelFactory {
     private DevicePanelFactory() {
     }
 
-    public static final Class<?>[] PANELS = new Class[] { PulseOximeterPanel.class, BloodPressurePanel.class, ElectroCardioGramPanel.class,
-            VentilatorPanel.class, InfusionPumpPanel.class, InvasiveBloodPressurePanel.class
-    // MultiPulseOximeterPanel.class,
+    public static final Class<?>[] PANELS = new Class[] { 
+        PulseOximeterPanel.class,
+        ElectroCardioGramPanel.class,
+        BloodPressurePanel.class, 
+         VentilatorPanel.class, 
+        InfusionPumpPanel.class, 
+        InvasiveBloodPressurePanel.class,
+//     MultiPulseOximeterPanel.class,
     };
     private final static Logger log = LoggerFactory.getLogger(DevicePanelFactory.class);
     public static final Method[] PANEL_SUPPORTED = new Method[PANELS.length];

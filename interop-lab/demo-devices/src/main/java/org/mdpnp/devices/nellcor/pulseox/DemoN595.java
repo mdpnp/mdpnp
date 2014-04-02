@@ -16,13 +16,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.serial.AbstractSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.infrastructure.Time_t;
 

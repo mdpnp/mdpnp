@@ -26,10 +26,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.connected.TimeAwareInputStream;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;

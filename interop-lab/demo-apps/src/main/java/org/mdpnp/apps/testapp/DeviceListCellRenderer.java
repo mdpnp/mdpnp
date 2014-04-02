@@ -42,7 +42,7 @@ import javax.swing.border.LineBorder;
  *
  */
 public class DeviceListCellRenderer extends JComponent implements ListCellRenderer {
-
+    private final DeviceListModel model;
     private final JLabel icon = new JLabel();
     private final JLabel modelName = new JLabel(" ");
     private final JLabel connectionStatus = new JLabel(" ");
@@ -52,6 +52,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
 
     private Dimension myDimension = null;
 
+    
     @Override
     protected void paintComponent(Graphics g) {
         if (isOpaque()) {
@@ -76,7 +77,12 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
     }
     
     public DeviceListCellRenderer() {
+        this(null);
+    }
+    
+    public DeviceListCellRenderer(DeviceListModel model) {
         super();
+        this.model = model;
         setLayout(new BorderLayout());
         setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
         setOpaque(true);
@@ -106,20 +112,36 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        Device device = value == null ? null : (Device) value;
-
         modelName.setFont(list.getFont());
         connectionStatus.setFont(list.getFont());
 
+        String udi;
+        Device device = null;
+        
+        if(value instanceof ice.SampleArray) {
+            udi = ((ice.SampleArray)value).unique_device_identifier;
+        } else if(value instanceof ice.Numeric) {
+            udi = ((ice.Numeric)value).unique_device_identifier;
+        } else if(value instanceof ice.InfusionStatus) {
+            udi = ((ice.InfusionStatus)value).unique_device_identifier;
+        } else if(value instanceof Device) {
+            device = (Device) value;
+            udi = device.getUDI();
+        } else {
+            udi = null;
+        }
+        
+        if(null != udi && null == device && null != model) {
+            device = model.getByUniqueDeviceIdentifier(udi);
+        }
+        
+        if (null == udi) {
+            this.udi.setText("<unknown UDI>");
+        } else {
+            this.udi.setText(udi);
+        }
+        
         if (null != device) {
-
-            String udi = device.getUDI();
-            if (null == udi) {
-                this.udi.setText("<unknown UDI>");
-            } else {
-                this.udi.setText(udi);
-            }
-
             hostname.setText(device.getHostname());
             
 
@@ -153,7 +175,6 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
                 this.icon.setIcon(DeviceIcon.WHITE_SQUARE_ICON);
             }
         } else {
-            udi.setText("<awaiting UDI>");
             connectionStatus.setText("");
             hostname.setText("");
             modelName.setText("<unknown>");

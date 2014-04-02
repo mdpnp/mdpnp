@@ -12,7 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.guis.waveform;
 
-import java.util.Set;
 
 /**
  * @author Jeff Plourde

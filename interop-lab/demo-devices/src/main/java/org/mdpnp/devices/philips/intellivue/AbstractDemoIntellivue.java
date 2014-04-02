@@ -35,8 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.mdpnp.devices.EventLoop;
-import org.mdpnp.devices.QosProfiles;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.net.NetworkLoop;
 import org.mdpnp.devices.net.TaskQueue;
@@ -94,6 +92,8 @@ import org.mdpnp.devices.philips.intellivue.dataexport.command.EventReport;
 import org.mdpnp.devices.philips.intellivue.dataexport.command.SetResult;
 import org.mdpnp.devices.philips.intellivue.dataexport.event.MdsCreateEvent;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,7 +115,15 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         }
     }
 
-    protected long clockOffset;
+    // For a point in time this is currentTime-runTime
+    // Or, in other words, the time when the device started
+    // according to the device clock
+    protected long deviceStartTimeInDeviceTime;
+    
+    // For a point in time this is System.currentTimeInMillis()-runTime
+    // Or, in other words, the time when the device started according
+    // to the local clock
+    protected long deviceStartTimeInLocalTime;
 
     protected final static long WATCHDOG_INTERVAL = 200L;
     // Maximum time between message receipt
@@ -289,8 +297,11 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 } else {
                     long currentTime = clockTime.getValue().getDate().getTime();
                     long runTime = offsetTime.getValue().toMilliseconds();
-                    clockOffset = currentTime - runTime;
-                    log.info("Device started at " + new Date(clockOffset));
+                    deviceStartTimeInDeviceTime = currentTime - runTime;
+                    // TODO these all assume near-zero latency
+                    deviceStartTimeInLocalTime = System.currentTimeMillis() - runTime;
+                    log.info("Device started (in device time) at " + new Date(deviceStartTimeInDeviceTime));
+                    log.info("Device started (in local time) at " + new Date(deviceStartTimeInLocalTime));
                 }
 
                 if (ps != null) {
@@ -608,7 +619,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             if (null != ov) {
                 String metricId = numericMetricIds.get(ov);
                 if (null != metricId) {
-                    long tm = clockOffset + time.toMilliseconds();
+                    // TODO using the local clock instead of device clock in case device clock is set incorrectly
+                    long tm = deviceStartTimeInLocalTime + time.toMilliseconds();
                     sampleTime.sec = (int) (tm / 1000L);
                     sampleTime.nanosec = (int) ((tm % 1000L) * 1000000L);
                     if (observed.getMsmtState().isUnavailable()) {
@@ -726,19 +738,26 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 w.applyValue(i, bytes);
                             }
                         }
-
-                        long tm = clockOffset + time.toMilliseconds();
-                        sampleTime.sec = (int) (tm / 1000L);
-                        sampleTime.nanosec = (int) ((tm % 1000L) * 1000000L);
-                        putSampleArrayUpdate(
-                                ov,
-                                handle,
-                                sampleArraySample(getSampleArrayUpdate(ov, handle), w.getNumbers(), (int) rt.toMilliseconds(), metricId, handle,
-                                        sampleTime));
+                        // TODO using offset against local clock in case device absolute time is not correct
+                        if(0L!=deviceStartTimeInLocalTime) {
+                            long tm = deviceStartTimeInLocalTime + time.toMilliseconds();
+                            sampleTime.sec = (int) (tm / 1000L);
+                            sampleTime.nanosec = (int) ((tm % 1000L) * 1000000L);
+    //                        log.debug("Sample Array Time:"+new Date(tm));
+                            putSampleArrayUpdate(
+                                    ov,
+                                    handle,
+                                    sampleArraySample(getSampleArrayUpdate(ov, handle), w.getNumbers(), (int) rt.toMilliseconds(), metricId, handle,
+                                            sampleTime));
+                        } else {
+                            log.warn("Not emitting SampleArray data where device start time is unknown");
+                        }
                     }
                 }
             }
         }
+        
+        
 
         protected void handle(int handle, SampleArraySpecification spec) {
             SampleArraySpecification sas = new SampleArraySpecification();
@@ -756,6 +775,11 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         }
     }
 
+    @Override
+    protected boolean sampleArraySpecifySourceTimestamp() {
+        return true;
+    }
+    
     @Override
     protected void unregisterAllNumericInstances() {
         numericUpdates.clear();

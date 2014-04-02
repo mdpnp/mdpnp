@@ -22,7 +22,6 @@ import java.util.Date;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.fluke.prosim8.FlukeProSim8;
 import org.mdpnp.devices.fluke.prosim8.FlukeProSim8.Wave;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
@@ -34,6 +33,7 @@ import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
 import org.mdpnp.devices.simulation.GlobalSimulationObjectiveMonitor;
+import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

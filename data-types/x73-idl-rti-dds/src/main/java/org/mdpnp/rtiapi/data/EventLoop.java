@@ -10,7 +10,7 @@
  * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package org.mdpnp.devices;
+package org.mdpnp.rtiapi.data;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -243,5 +243,41 @@ public class EventLoop {
             runnable.set_trigger_value(true);
         }
     }
+    
+    public void doNow(Runnable r) {
+        NestedRunnable nr = new NestedRunnable(r);
+        synchronized (queuedRunnables) {
+            queuedRunnables.add(nr);
+            runnable.set_trigger_value(true);
+        }
+        nr.waitTillDone();
+    }
 
+    private static class NestedRunnable implements Runnable {
+        private final Runnable runnable;
+        private boolean done = false;
+        
+        public NestedRunnable(Runnable runnable) {
+            this.runnable = runnable;
+        }
+        public void run() {
+            try {
+                runnable.run();
+            } finally {
+                synchronized(this) {
+                    done = true;
+                    this.notifyAll();
+                }
+            }
+        }
+        public synchronized void waitTillDone() {
+            while(!done) {
+                try {
+                    this.wait();
+                } catch (InterruptedException e) {
+                    log.error("Interrupted waiting for task completion", e);
+                }
+            }
+        }
+    }
 }

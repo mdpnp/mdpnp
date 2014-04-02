@@ -14,8 +14,8 @@ package org.mdpnp.devices.simulation.pulseox;
 
 import ice.GlobalSimulationObjective;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.infrastructure.Time_t;
 

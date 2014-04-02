@@ -21,7 +21,7 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
 import org.mdpnp.apps.testapp.DeviceIcon;
-import org.mdpnp.devices.EventLoop;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.subscription.Subscriber;
 

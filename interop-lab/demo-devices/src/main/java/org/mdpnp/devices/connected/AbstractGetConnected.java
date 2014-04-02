@@ -20,8 +20,8 @@ import ice.DeviceConnectivityObjectiveTypeSupport;
 import ice.DeviceConnectivitySeq;
 import ice.DeviceConnectivityTypeSupport;
 
-import org.mdpnp.devices.EventLoop;
-import org.mdpnp.devices.QosProfiles;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.QosProfiles;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;

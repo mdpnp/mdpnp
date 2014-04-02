@@ -1,7 +1,5 @@
 package org.mdpnp.guis.waveform;
 
-import java.util.Date;
-
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;

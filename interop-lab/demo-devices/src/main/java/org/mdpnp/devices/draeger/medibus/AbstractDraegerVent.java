@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.draeger.medibus.Medibus.Alarm;
 import org.mdpnp.devices.draeger.medibus.Medibus.Data;
 import org.mdpnp.devices.draeger.medibus.RTMedibus.RTTransmit;
@@ -36,6 +35,7 @@ import org.mdpnp.devices.draeger.medibus.types.MeasuredDataCP1;
 import org.mdpnp.devices.draeger.medibus.types.RealtimeData;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

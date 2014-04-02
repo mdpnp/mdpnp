@@ -32,6 +32,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
-import org.mdpnp.devices.EventLoop.ConditionHandler;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
+import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -235,6 +239,10 @@ public abstract class AbstractDevice implements ThreadFactory {
     }
 
     protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id) {
+        return createSampleArrayInstance(metric_id, instance_id, null);
+    }
+    
+    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id, Time_t timestamp) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createSampleArrayInstance");
         }
@@ -244,7 +252,17 @@ public abstract class AbstractDevice implements ThreadFactory {
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
         holder.data.instance_id = instance_id;
-        holder.handle = sampleArrayDataWriter.register_instance(holder.data);
+        if(sampleArraySpecifySourceTimestamp()) {
+            if(timestamp == null) {
+                // TODO do we want to throw this?
+                log.error("Inheritor "+getClass()+" reports sampleArraySourceTimestamp()==true but did not provide a timestamp");
+            } else {
+                holder.handle = sampleArrayDataWriter.register_instance_w_timestamp(holder.data, timestamp);
+            }
+        } else {
+            holder.handle = sampleArrayDataWriter.register_instance(holder.data);
+        }
+        
         registeredSampleArrayInstances.add(holder);
         return holder;
     }
@@ -356,6 +374,11 @@ public abstract class AbstractDevice implements ThreadFactory {
         return holder;
     }
 
+    protected boolean sampleArraySpecifySourceTimestamp() {
+        return false;
+    }
+    protected final Time_t lastSampleArrayTimestamp = new Time_t(0,0);
+    
     protected void sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues, int msPerSample, Time_t timestamp) {
         holder.data.values.userData.clear();
         for (Number n : newValues) {
@@ -369,8 +392,28 @@ public abstract class AbstractDevice implements ThreadFactory {
             holder.data.device_time.sec = 0;
             holder.data.device_time.nanosec = 0;
         }
-
-        sampleArrayDataWriter.write(holder.data, holder.handle);
+        
+        if(sampleArraySpecifySourceTimestamp()) {
+            if(timestamp == null) {
+                // TODO do we want to throw this?
+                log.error("Inheritor "+getClass()+" reports sampleArraySourceTimestamp()==true but did not provide a timestamp");
+            } else {
+                // Using the specified time for source_timestamp
+                // Check that time has indeed moved forward only
+                if(timestamp.sec<lastSampleArrayTimestamp.sec || (timestamp.sec==lastSampleArrayTimestamp.sec&&timestamp.nanosec<lastSampleArrayTimestamp.nanosec)) {
+                    log.warn("Timestamps moved in reverse); promoting " + new Date(1000L*timestamp.sec+timestamp.nanosec/1000000L) + " to " + new Date(1000L*lastSampleArrayTimestamp.sec+lastSampleArrayTimestamp.nanosec/1000000L));
+                    timestamp.sec = lastSampleArrayTimestamp.sec;
+                    timestamp.nanosec = lastSampleArrayTimestamp.nanosec;
+                } else {
+                    lastSampleArrayTimestamp.sec = timestamp.sec;
+                    lastSampleArrayTimestamp.nanosec = timestamp.nanosec;
+                }
+//                log.debug("SampleArray Timestamp:"+new Date(1000L*timestamp.sec+timestamp.nanosec/1000000L));
+                sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, timestamp);
+            }
+        } else {
+            sampleArrayDataWriter.write(holder.data, holder.handle);
+        }
     }
 
     protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, int msPerSample, Time_t timestamp) {
@@ -390,7 +433,7 @@ public abstract class AbstractDevice implements ThreadFactory {
         }
         if (null != newValues) {
             if (null == holder) {
-                holder = createSampleArrayInstance(metric_id, instance_id);
+                holder = createSampleArrayInstance(metric_id, instance_id, timestamp);
             }
             sampleArraySample(holder, newValues, msPerSample, timestamp);
         } else {
@@ -421,7 +464,7 @@ public abstract class AbstractDevice implements ThreadFactory {
 
         if (null != newValues) {
             if (null == holder) {
-                holder = createSampleArrayInstance(metric_id, instance_id);
+                holder = createSampleArrayInstance(metric_id, instance_id, timestamp);
             }
             sampleArraySample(holder, newValues, msPerSample, timestamp);
         } else {

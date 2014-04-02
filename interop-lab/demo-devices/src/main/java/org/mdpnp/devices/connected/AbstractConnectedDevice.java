@@ -23,9 +23,9 @@ import ice.DeviceConnectivityTopic;
 import ice.DeviceConnectivityTypeSupport;
 
 import org.mdpnp.devices.AbstractDevice;
-import org.mdpnp.devices.EventLoop;
-import org.mdpnp.devices.QosProfiles;
 import org.mdpnp.devices.io.util.StateMachine;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

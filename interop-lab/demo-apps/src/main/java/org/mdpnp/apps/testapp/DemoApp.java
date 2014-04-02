@@ -36,13 +36,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
 
-import org.mdpnp.apps.testapp.data.DeviceListCellRenderer;
-import org.mdpnp.apps.testapp.data.InfusionStatusInstanceModel;
-import org.mdpnp.apps.testapp.data.InfusionStatusInstanceModelImpl;
-import org.mdpnp.apps.testapp.data.InstanceModel;
-import org.mdpnp.apps.testapp.data.InstanceModelImpl;
-import org.mdpnp.apps.testapp.data.SampleArrayInstanceModel;
-import org.mdpnp.apps.testapp.data.SampleArrayInstanceModelImpl;
 import org.mdpnp.apps.testapp.pca.PCAPanel;
 import org.mdpnp.apps.testapp.pca.VitalSign;
 import org.mdpnp.apps.testapp.rrr.RapidRespiratoryRate;
@@ -51,13 +44,17 @@ import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 import org.mdpnp.devices.BuildInfo;
-import org.mdpnp.devices.DeviceMonitor;
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.devices.QosProfiles;
-import org.mdpnp.devices.TopicUtil;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
+import org.mdpnp.rtiapi.data.DeviceDataMonitor;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
+import org.mdpnp.rtiapi.data.InfusionStatusInstanceModelImpl;
+import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
+import org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl;
+import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -218,9 +215,6 @@ public class DemoApp {
         ol = new CardLayout();
         panel.getContent().setLayout(ol);
         panel.getUdi().setText(udi);
-        // LoginPanel loginPanel = new LoginPanel();
-        //
-        // panel.getContent().add(loginPanel, "login");
 
         final MainMenuPanel mainMenuPanel = new MainMenuPanel(AppType.getListedTypes());
         mainMenuPanel.setOpaque(false);
@@ -485,14 +479,14 @@ public class DemoApp {
                     // will ultimately deadlock on this AWT EventQueue thread
                     Thread t = new Thread(new Runnable() {
                         public void run() {
-                            DeviceMonitor deviceMonitor = devicePanel.getModel();
+                            DeviceDataMonitor deviceMonitor = devicePanel.getModel();
                             if (null != deviceMonitor) {
                                 deviceMonitor.stop();
                                 deviceMonitor = null;
                             }
-                            deviceMonitor = new DeviceMonitor(device.getUDI());
+                            deviceMonitor = new DeviceDataMonitor(device.getUDI());
                             devicePanel.setModel(deviceMonitor);
-                            deviceMonitor.start(subscriber.get_participant(), eventLoop);
+                            deviceMonitor.start(subscriber, eventLoop);
                         }
                     });
                     t.setDaemon(true);
@@ -500,7 +494,7 @@ public class DemoApp {
 
                     setGoBack(AppType.Main.getId(), new Runnable() {
                         public void run() {
-                            DeviceMonitor deviceMonitor = devicePanel.getModel();
+                            DeviceDataMonitor deviceMonitor = devicePanel.getModel();
                             if (null != deviceMonitor) {
                                 deviceMonitor.stop();
                             }

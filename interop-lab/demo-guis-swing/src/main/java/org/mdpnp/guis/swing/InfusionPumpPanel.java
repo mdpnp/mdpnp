@@ -13,13 +13,16 @@
 package org.mdpnp.guis.swing;
 
 import ice.InfusionStatus;
-import ice.Numeric;
-import ice.SampleArray;
+import ice.InfusionStatusDataReader;
 
 import java.awt.GridLayout;
 import java.util.Set;
 
 import javax.swing.JLabel;
+
+import org.mdpnp.rtiapi.data.DeviceDataMonitor;
+import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.InstanceModelListener;
 
 import com.rti.dds.subscription.SampleInfo;
 
@@ -50,33 +53,50 @@ public class InfusionPumpPanel extends DevicePanel {
         add(fracComplete);
     }
 
-    @Override
-    public void numeric(Numeric numeric, String metric_id, SampleInfo sampleInfo) {
-        // TODO Auto-generated method stub
 
-    }
-
-    @Override
-    public void sampleArray(SampleArray sampleArray, String metric_id, SampleInfo sampleInfo) {
-        // TODO Auto-generated method stub
-
-    }
 
     public static boolean supported(Set<String> numerics) {
         return false;
     }
 
     @Override
-    public void infusionStatus(InfusionStatus infusionStatus, SampleInfo sampleInfo) {
-        if (aliveAndValidData(sampleInfo)) {
-            active.setText(Boolean.toString(infusionStatus.infusionActive));
-            drugMass.setText(Integer.toString(infusionStatus.drug_mass_mcg) + " mcg");
-            drugName.setText(infusionStatus.drug_name);
-            durationSec.setText(Integer.toString(infusionStatus.infusion_duration_seconds) + " seconds");
-            fracComplete.setText(Integer.toString((int) (100f * infusionStatus.infusion_fraction_complete)) + "%");
-            solutionVolume.setText(Integer.toString(infusionStatus.solution_volume_ml) + " mL");
-            vtbiMl.setText(Integer.toString(infusionStatus.volume_to_be_infused_ml) + " mL");
-        }
+    public void set(DeviceDataMonitor deviceMonitor) {
+        super.set(deviceMonitor);
+        deviceMonitor.getInfusionStatusModel().iterateAndAddListener(infusionStatusListener);
     }
+    
+    @Override
+    public void destroy() {
+        super.destroy();
+        deviceMonitor.getInfusionStatusModel().removeListener(infusionStatusListener);
+    }
+    
+    private final InstanceModelListener<ice.InfusionStatus, ice.InfusionStatusDataReader> infusionStatusListener = new InstanceModelListener<ice.InfusionStatus, ice.InfusionStatusDataReader>() {
+
+        @Override
+        public void instanceAlive(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
+                InfusionStatus data, SampleInfo sampleInfo) {
+            
+        }
+
+        @Override
+        public void instanceNotAlive(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
+                InfusionStatus keyHolder, SampleInfo sampleInfo) {
+            
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
+                InfusionStatus data, SampleInfo sampleInfo) {
+            active.setText(Boolean.toString(data.infusionActive));
+            drugMass.setText(Integer.toString(data.drug_mass_mcg) + " mcg");
+            drugName.setText(data.drug_name);
+            durationSec.setText(Integer.toString(data.infusion_duration_seconds) + " seconds");
+            fracComplete.setText(Integer.toString((int) (100f * data.infusion_fraction_complete)) + "%");
+            solutionVolume.setText(Integer.toString(data.solution_volume_ml) + " mL");
+            vtbiMl.setText(Integer.toString(data.volume_to_be_infused_ml) + " mL");
+        }
+    };
+
 
 }

@@ -26,7 +26,6 @@ import java.util.TimeZone;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.oridion.capnostream.Capnostream.Command;
 import org.mdpnp.devices.oridion.capnostream.Capnostream.SetupItem;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
@@ -35,6 +34,7 @@ import org.mdpnp.devices.serial.SerialSocket.DataBits;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

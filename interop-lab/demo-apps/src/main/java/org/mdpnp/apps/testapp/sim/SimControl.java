@@ -24,7 +24,7 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.mdpnp.devices.QosProfiles;
+import org.mdpnp.rtiapi.data.QosProfiles;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.InstanceHandle_t;

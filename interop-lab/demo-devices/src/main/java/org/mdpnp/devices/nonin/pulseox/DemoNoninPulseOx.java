@@ -21,7 +21,6 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Date;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
@@ -32,6 +31,7 @@ import org.mdpnp.devices.serial.SerialSocket.FlowControl;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -15,6 +15,7 @@ package org.mdpnp.devices;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 /**
  * @author Jeff Plourde

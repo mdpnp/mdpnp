@@ -177,6 +177,11 @@ public class GLWaveformPanel extends GLPanel implements WaveformPanel {
     public void setSource(WaveformSource source) {
         renderer.setSource(source);
     }
+    
+    @Override
+    public WaveformSource getSource() {
+        return renderer.getSource();
+    }
 
     public GLWaveformRenderer getRenderer() {
         return renderer;

@@ -13,10 +13,11 @@
 package org.mdpnp.apps.testapp.xray;
 
 import ice.DeviceConnectivity;
-import ice.InfusionStatusDataReader;
-import ice.InfusionStatusSeq;
+import ice.DeviceConnectivityDataReader;
 import ice.Numeric;
+import ice.NumericDataReader;
 import ice.SampleArray;
+import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -34,8 +35,6 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.text.NumberFormat;
 import java.util.Dictionary;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -60,24 +59,21 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.mdpnp.apps.testapp.DemoPanel;
-import org.mdpnp.apps.testapp.Device;
-import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.data.DeviceListCellRenderer;
-import org.mdpnp.apps.testapp.data.NumericInstanceModel;
-import org.mdpnp.apps.testapp.data.NumericInstanceModelImpl;
-import org.mdpnp.devices.DeviceMonitor;
-import org.mdpnp.devices.DeviceMonitorListener;
-import org.mdpnp.devices.EventLoop;
+import org.mdpnp.apps.testapp.DeviceListCellRenderer;
+import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
+import org.mdpnp.rtiapi.data.DeviceDataMonitor;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.InstanceModelListener;
+import org.mdpnp.rtiapi.data.NumericInstanceModel;
+import org.mdpnp.rtiapi.data.NumericInstanceModelImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.sarxos.webcam.Webcam;
 import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.SampleInfo;
-import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.Subscriber;
 
 @SuppressWarnings("serial")
@@ -85,7 +81,7 @@ import com.rti.dds.subscription.Subscriber;
  * @author Jeff Plourde
  *
  */
-public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
+public class XRayVentPanel extends JPanel {
     private final FramePanel cameraPanel;
     private CameraComboBoxModel cameraModel = new CameraComboBoxModel();
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -132,9 +128,80 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
 
     private static final Logger log = LoggerFactory.getLogger(XRayVentPanel.class);
 
-    private DeviceMonitor deviceMonitor;
+    private DeviceDataMonitor deviceMonitor;
     private NumericInstanceModel startOfBreathModel;
+    
+    private InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
+        public void instanceAlive(org.mdpnp.rtiapi.data.InstanceModel<Numeric,NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            
+        };
+        public void instanceNotAlive(org.mdpnp.rtiapi.data.InstanceModel<Numeric,NumericDataReader> model, NumericDataReader reader, Numeric keyHolder, SampleInfo sampleInfo) {
+            
+        };
+        public void instanceSample(org.mdpnp.rtiapi.data.InstanceModel<Numeric,NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            if (sampleInfo.valid_data) {
+                long previousPeriod = period;
+                if (ice.MDC_TIME_PD_INSPIRATORY.VALUE.equals(data.metric_id)) {
+                    inspiratoryTime = (long) (1000.0 * data.value);
+                } else if (ice.MDC_VENT_TIME_PD_PPV.VALUE.equals(data.metric_id)) {
+                    period = (long) (60000.0 / data.value);
+                    if (period != previousPeriod) {
+                        log.debug("FrequencyIPPV=" + data.value + " period=" + period);
+                    }
+                } else if (ice.MDC_START_OF_BREATH.VALUE.equals(data.metric_id)) {
+                    log.trace("START_INSPIRATORY_CYCLE");
+                    Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
+                    TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
+  
+                    switch (strategy) {
+                    case Automatic:
+                        autoSync(targetTime);
+                        break;
+                    case Manual:
+                        break;
+                    }
+                }
+            }
+        };
+    };
+    
+    private InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader> sampleArrayListener = new InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader>() {
+        public void instanceAlive(org.mdpnp.rtiapi.data.InstanceModel<SampleArray,SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data, SampleInfo sampleInfo) {
+            if (sampleInfo.valid_data) {
+                if (rosetta.MDC_FLOW_AWAY.VALUE.equals(data.metric_id)) {
+                    waveformPanel.setSource(new SampleArrayWaveformSource(reader, data));
+                }
+            }
+        };
+        public void instanceNotAlive(org.mdpnp.rtiapi.data.InstanceModel<SampleArray,SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder, SampleInfo sampleInfo) {
+            
+        };
+        public void instanceSample(org.mdpnp.rtiapi.data.InstanceModel<SampleArray,SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data, SampleInfo sampleInfo) {
 
+        };
+    };
+    
+    private InstanceModelListener<ice.DeviceConnectivity, ice.DeviceConnectivityDataReader> deviceConnectivityListener = new InstanceModelListener<ice.DeviceConnectivity, ice.DeviceConnectivityDataReader>() {
+        public void instanceAlive(org.mdpnp.rtiapi.data.InstanceModel<DeviceConnectivity,DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader, DeviceConnectivity data, SampleInfo sampleInfo) {
+            
+        };
+        public void instanceNotAlive(org.mdpnp.rtiapi.data.InstanceModel<DeviceConnectivity,DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader, DeviceConnectivity keyHolder, SampleInfo sampleInfo) {
+            
+        };
+        public void instanceSample(org.mdpnp.rtiapi.data.InstanceModel<DeviceConnectivity,DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader, DeviceConnectivity data, SampleInfo sampleInfo) {
+          if (sampleInfo.valid_data) {
+              demoPanel.getPatientLabel().setText(data.state.name());
+              switch (data.state.value()) {
+              case ice.ConnectionState._Connected:
+                  demoPanel.getPatientLabel().setForeground(normalGreen);
+                  break;
+              default:
+                  demoPanel.getPatientLabel().setForeground(alertPink);
+                  break;
+              }
+          }
+        };
+    };
     public void changeSource(String source, DomainParticipant participant, EventLoop eventLoop) {
         if (null != deviceMonitor) {
             if (deviceMonitor.getUniqueDeviceIdentifier().equals(source)) {
@@ -145,9 +212,11 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
             }
         }
 
-        deviceMonitor = new DeviceMonitor(source);
-        deviceMonitor.addListener(XRayVentPanel.this);
-        deviceMonitor.start(participant, eventLoop);
+        deviceMonitor = new DeviceDataMonitor(source);
+        deviceMonitor.getNumericModel().addListener(numericListener);
+        deviceMonitor.getSampleArrayModel().addListener(sampleArrayListener);
+        deviceMonitor.getDeviceConnectivityModel().addListener(deviceConnectivityListener);
+        deviceMonitor.start(participant.get_implicit_subscriber(), eventLoop);
         log.trace("new source is " + source);
     }
 
@@ -389,8 +458,8 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
         }, 0L, TimeUnit.MILLISECONDS);
     }
 
-    private long inspiratoryTime;
-    private long period;
+    protected long inspiratoryTime;
+    protected long period;
     protected ScheduledExecutorService executorCritical = Executors.newSingleThreadScheduledExecutor();
     protected ScheduledExecutorService executorNonCritical = Executors.newSingleThreadScheduledExecutor();
 
@@ -433,88 +502,30 @@ public class XRayVentPanel extends JPanel implements DeviceMonitorListener {
     private static final Color alertPink = new Color(200, 20, 0);
     private static final Color normalGreen = new Color(20, 200, 20);
 
-    @Override
-    public void deviceIdentity(ice.DeviceIdentityDataReader reader, ice.DeviceIdentitySeq di_seq, SampleInfoSeq info_seq) {
-    }
+//    private final Set<InstanceHandle_t> seenInstances = new HashSet<InstanceHandle_t>();
 
-    private final Set<InstanceHandle_t> seenInstances = new HashSet<InstanceHandle_t>();
+//    @Override
+//    public void deviceConnectivity(ice.DeviceConnectivityDataReader reader, ice.DeviceConnectivitySeq dc_seq, SampleInfoSeq info_seq) {
+//        seenInstances.clear();
+//        for (int i = info_seq.size() - 1; i >= 0; i--) {
+//            SampleInfo si = (SampleInfo) info_seq.get(i);
+//            if (si.valid_data && !seenInstances.contains(si.instance_handle)) {
+//                seenInstances.add(si.instance_handle);
+//                DeviceConnectivity dc = (DeviceConnectivity) dc_seq.get(i);
+//                demoPanel.getPatientLabel().setText(dc.state.name());
+//                switch (dc.state.value()) {
+//                case ice.ConnectionState._Connected:
+//                    demoPanel.getPatientLabel().setForeground(normalGreen);
+//                    break;
+//                default:
+//                    demoPanel.getPatientLabel().setForeground(alertPink);
+//                    break;
+//                }
+//            }
+//        }
+//
+//    }
 
-    @Override
-    public void deviceConnectivity(ice.DeviceConnectivityDataReader reader, ice.DeviceConnectivitySeq dc_seq, SampleInfoSeq info_seq) {
-        seenInstances.clear();
-        for (int i = info_seq.size() - 1; i >= 0; i--) {
-            SampleInfo si = (SampleInfo) info_seq.get(i);
-            if (si.valid_data && !seenInstances.contains(si.instance_handle)) {
-                seenInstances.add(si.instance_handle);
-                DeviceConnectivity dc = (DeviceConnectivity) dc_seq.get(i);
-                demoPanel.getPatientLabel().setText(dc.state.name());
-                switch (dc.state.value()) {
-                case ice.ConnectionState._Connected:
-                    demoPanel.getPatientLabel().setForeground(normalGreen);
-                    break;
-                default:
-                    demoPanel.getPatientLabel().setForeground(alertPink);
-                    break;
-                }
-            }
-        }
 
-    }
-
-    @Override
-    public void numeric(ice.NumericDataReader reader, ice.NumericSeq nu_seq, SampleInfoSeq info_seq) {
-        seenInstances.clear();
-        for (int i = info_seq.size() - 1; i >= 0; i--) {
-            SampleInfo si = (SampleInfo) info_seq.get(i);
-
-            if (si.valid_data && !seenInstances.contains(si.instance_handle)) {
-                seenInstances.add(si.instance_handle);
-                ice.Numeric n = (Numeric) nu_seq.get(i);
-                long previousPeriod = this.period;
-                if (ice.MDC_TIME_PD_INSPIRATORY.VALUE.equals(n.metric_id)) {
-                    inspiratoryTime = (long) (1000.0 * n.value);
-                } else if (ice.MDC_VENT_TIME_PD_PPV.VALUE.equals(n.metric_id)) {
-                    period = (long) (60000.0 / n.value);
-                    if (period != previousPeriod) {
-                        log.debug("FrequencyIPPV=" + n.value + " period=" + period);
-                    }
-                } else if (ice.MDC_START_OF_BREATH.VALUE.equals(n.metric_id)) {
-                    // log.trace("START_INSPIRATORY_CYCLE");
-                    Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
-                    TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
-
-                    switch (strategy) {
-                    case Automatic:
-                        autoSync(targetTime);
-                        break;
-                    case Manual:
-                        break;
-                    }
-                    break;
-                }
-            }
-        }
-    }
-
-    @Override
-    public void sampleArray(ice.SampleArrayDataReader redaer, ice.SampleArraySeq sa_seq, SampleInfoSeq info_seq) {
-        seenInstances.clear();
-        for (int i = info_seq.size() - 1; i >= 0; i--) {
-            SampleInfo si = (SampleInfo) info_seq.get(i);
-            if (si.valid_data && !seenInstances.contains(si.instance_handle)) {
-                seenInstances.add(si.instance_handle);
-                ice.SampleArray sa = (SampleArray) sa_seq.get(i);
-                if (rosetta.MDC_FLOW_AWAY.VALUE.equals(sa.metric_id)) {
-//                    wuws.applyUpdate(sa, si);
-                }
-            }
-        }
-
-    }
-
-    @Override
-    public void infusionPump(InfusionStatusDataReader reader, InfusionStatusSeq status, SampleInfoSeq sampleInfo) {
-
-    }
 
 }

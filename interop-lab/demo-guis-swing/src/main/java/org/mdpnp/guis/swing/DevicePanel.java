@@ -12,9 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.guis.swing;
 
-import ice.NumericDataReader;
-import ice.SampleArrayDataReader;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -24,8 +21,7 @@ import java.awt.LayoutManager;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import com.rti.dds.subscription.InstanceStateKind;
-import com.rti.dds.subscription.SampleInfo;
+import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 
 @SuppressWarnings("serial")
 public abstract class DevicePanel extends JPanel  {
@@ -75,10 +71,6 @@ public abstract class DevicePanel extends JPanel  {
         }
     }
 
-    protected static boolean aliveAndValidData(SampleInfo si) {
-        return (0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & si.instance_state)) && si.valid_data;
-    }
-
     @Override
     public void setForeground(Color fg) {
         super.setForeground(fg);
@@ -91,27 +83,13 @@ public abstract class DevicePanel extends JPanel  {
         setBackground(this, bg);
     }
 
-    // public abstract deviceIdentity(DeviceIdentity di);
-    // public abstract void deviceConnectivity(ice.DeviceConnectivity dc,
-    // SampleInfo sampleInfo);
-    public void connected() {
-    }
-
-    public abstract void numeric(ice.Numeric numeric, String metric_id, SampleInfo sampleInfo);
-
-    public abstract void sampleArray(ice.SampleArray sampleArray, String metric_id, SampleInfo sampleInfo);
-
-    public abstract void infusionStatus(ice.InfusionStatus infusionStatus, SampleInfo sampleInfo);
-
     public void destroy() {
     }
     
-    protected NumericDataReader numericReader;
-    protected SampleArrayDataReader sampleArrayReader;
+    protected DeviceDataMonitor deviceMonitor;
     
-    public void set(NumericDataReader numericReader, SampleArrayDataReader sampleArrayReader) {
-        this.numericReader = numericReader;
-        this.sampleArrayReader = sampleArrayReader;
+    public void set(DeviceDataMonitor deviceMonitor) {
+        this.deviceMonitor = deviceMonitor;
 //        flowWave = new SampleArrayWaveformSource(sampleArrayReader, new ice.Sample)
     }
 

@@ -15,7 +15,7 @@ package org.mdpnp.apps.testapp.vital;
 import java.awt.Color;
 
 import org.mdpnp.apps.testapp.DeviceIcon;
-import org.mdpnp.devices.EventLoop;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.subscription.Subscriber;
 

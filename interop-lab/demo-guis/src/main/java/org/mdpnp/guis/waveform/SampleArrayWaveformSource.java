@@ -2,6 +2,9 @@ package org.mdpnp.guis.waveform;
 
 import ice.SampleArray;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
@@ -22,9 +25,10 @@ public class SampleArrayWaveformSource implements WaveformSource {
     public SampleArrayWaveformSource(final ice.SampleArrayDataReader reader, ice.SampleArray keyHolder) {
         this.reader = reader;
         this.keyHolder = new ice.SampleArray(keyHolder);
+        log.debug("Created a SampleArrayWaveformSource for " + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
     }
     
-    
+    private static final Logger log = LoggerFactory.getLogger(SampleArrayWaveformSource.class);
 
     @Override
     public void iterate(WaveformIterator itr) {
@@ -42,8 +46,10 @@ public class SampleArrayWaveformSource implements WaveformSource {
                     long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
                     ice.SampleArray sampleArray = (SampleArray) sample_array_seq.get(i);
     
-                    for(int j = 0; j < sampleArray.values.userData.size(); j++) {
-                        long tm = baseTime + sampleArray.millisecondsPerSample * j;
+                    final int sz = sampleArray.values.userData.size();
+//                    log.debug(sz + " samples " + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
+                    for(int j = 0; j < sz; j++) {
+                        long tm = baseTime - (sz-j) * sampleArray.millisecondsPerSample;
                         float value = sampleArray.values.userData.getFloat(j);
                         itr.sample(tm, value);
                     }

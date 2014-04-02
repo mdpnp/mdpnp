@@ -12,8 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation.pulseox;
 
-import org.mdpnp.devices.EventLoop;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
 
 /**
  * @author Jeff Plourde
