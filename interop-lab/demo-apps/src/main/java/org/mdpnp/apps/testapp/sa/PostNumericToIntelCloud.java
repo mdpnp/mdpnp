@@ -13,8 +13,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.mdpnp.rti.dds.DDS;
-
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.infrastructure.ConditionSeq;
@@ -99,7 +97,6 @@ public class PostNumericToIntelCloud {
         
         final StringBuilder sb = new StringBuilder();
 
-        DDS.init();
         DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         ice.NumericTypeSupport.register_type(participant, ice.NumericTypeSupport.get_type_name());
         Topic numericTopic = participant.create_topic(ice.NumericTopic.VALUE, ice.NumericTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);

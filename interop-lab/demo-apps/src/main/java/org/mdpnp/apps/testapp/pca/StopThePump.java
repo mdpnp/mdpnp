@@ -18,7 +18,6 @@ import ice.InfusionStatusDataReader;
 
 import java.io.IOException;
 
-import org.mdpnp.rti.dds.DDS;
 import org.mdpnp.rtiapi.data.QosProfiles;
 
 import com.rti.dds.domain.DomainParticipant;
@@ -54,7 +53,6 @@ public class StopThePump {
             domainId = Integer.parseInt(args[0]);
         }
 
-        DDS.init();
         DomainParticipant part = DomainParticipantFactory.get_instance().create_participant(domainId,
                 DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         Subscriber sub = part.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);

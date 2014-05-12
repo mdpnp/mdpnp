@@ -148,19 +148,6 @@ public class ConfigurationDialog extends JDialog {
 
     private final static Logger log = LoggerFactory.getLogger(ConfigurationDialog.class);
 
-    private static boolean ddsInit(boolean debug) {
-        try {
-            if ((Boolean) Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init", boolean.class).invoke(null, debug)) {
-                return true;
-            } else {
-                throw new Exception("Unable to init");
-            }
-        } catch (Throwable t) {
-            log.warn("Unable to initialize RTI DDS, removing the option", t);
-        }
-        return false;
-    }
-
     private final void addWithAnchor(JComponent c, GridBagConstraints gbc, int anchor, int fill) {
         int previousAnchor = gbc.anchor;
         int previousFill = gbc.fill;
@@ -189,11 +176,6 @@ public class ConfigurationDialog extends JDialog {
 
     public ConfigurationDialog(Configuration conf, boolean ddsDebug) {
         super((JDialog) null, true);
-
-        // Why does this occur here and not outside?
-        if (!ddsInit(ddsDebug)) {
-            throw new IllegalStateException("DDS not available");
-        }
 
         if (null != conf) {
             if (null != conf.getApplication()) {

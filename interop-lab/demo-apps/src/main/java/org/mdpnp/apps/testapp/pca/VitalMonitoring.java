@@ -40,7 +40,6 @@ import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
 import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.rti.dds.DDS;
 import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.domain.DomainParticipant;
@@ -452,7 +451,6 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
 
     public static final void main(String[] args) {
 
-        DDS.init(false);
         final DomainParticipant p = DomainParticipantFactory.get_instance().create_participant(0, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT,
                 null, StatusKind.STATUS_MASK_NONE);
         final Subscriber s = p.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);

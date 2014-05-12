@@ -33,7 +33,6 @@ import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.rti.dds.DDS;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
@@ -362,7 +361,6 @@ public class VitalModelImpl implements VitalModel {
     }
 
     public static void main(String[] args) {
-        DDS.init(false);
         DomainParticipant p = DomainParticipantFactory.get_instance().create_participant(0, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null,
                 StatusKind.STATUS_MASK_NONE);
         Subscriber s = p.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
