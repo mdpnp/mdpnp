@@ -170,6 +170,7 @@
     <!-- some typecodes serialize to something larger than is supported by 
      default -->
     <resource_limits>
+        <contentfilter_property_max_length>512</contentfilter_property_max_length>
      <type_code_max_serialized_length>8192
      </type_code_max_serialized_length>
      <type_object_max_serialized_length>8192
@@ -201,7 +202,26 @@
      </value>
     </property>
    </participant_qos>
-   
+   <!-- 
+   <subscriber_qos>
+       <partition>
+           <name>
+               <element>JEFFPARTITION</element>
+           </name>
+           
+       </partition>
+       
+   </subscriber_qos>
+   <publisher_qos>
+       <partition>
+           <name>
+               <element>JEFFPARTITION</element>
+               
+           </name>
+       </partition>
+       
+   </publisher_qos>
+   -->
    <!--  Default reader QoS represent a minimum level of stringency,
          for any reader that didn't bother selecting a more specific
          profile or setting QoS policies programmatically. -->
@@ -292,7 +312,8 @@
       <nanosec>0</nanosec>
      </lease_duration>
     </liveliness>
-    <!-- It's important to offer this QoS even if every Reader does not request it -->
+    
+    <!-- It is important to offer this QoS even if every Reader does not request it -->
     <destination_order>
      <kind>DDS_BY_SOURCE_TIMESTAMP_DESTINATIONORDER_QOS</kind>
     </destination_order>
@@ -446,6 +467,12 @@
           </duration>
       </lifespan>
          -->
+                 <latency_budget>
+            <duration>
+                <sec>1</sec>
+                <nanosec>0</nanosec>
+            </duration>
+        </latency_budget>
     </datareader_qos>
     <datawriter_qos>
         <!--  Reliability is offered by default -->
@@ -464,7 +491,12 @@
                 <nanosec>0</nanosec>
             </duration>
         </lifespan>
-        
+        <latency_budget>
+            <duration>
+                <sec>0</sec>
+                <nanosec>0</nanosec>
+            </duration>
+        </latency_budget>
     </datawriter_qos>
   </qos_profile>
   
@@ -478,9 +510,6 @@
     </datareader_qos>
 
     <datawriter_qos>
-
-     <!--  batch with default settings entered for future experimentation -->
-     <!-- 
      <batch>
       <enable>false</enable>
       <max_samples>-1</max_samples>
@@ -488,12 +517,13 @@
        <sec>2147483647</sec>
        <nanosec>2147483647</nanosec>
       </max_flush_delay>
+      <!-- allows coalescing of source_timestamp for the whole batch
+           Cuts down the overhead of INFO_TS for each DATA -->
       <source_timestamp_resolution> 
-       <sec>2147483647</sec>
-       <nanosec>2147483647</nanosec>
+       <sec>0</sec>
+       <nanosec>0</nanosec>
       </source_timestamp_resolution>
      </batch>
-     -->
     </datawriter_qos>
   </qos_profile>
 

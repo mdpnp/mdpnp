@@ -16,15 +16,24 @@ import java.awt.Image;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 
 import javax.imageio.ImageIO;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
+import com.rti.dds.infrastructure.StringSeq;
 
 /**
  * @author Jeff Plourde
@@ -34,6 +43,28 @@ public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
+    
+    private static final void loadIceQosLibrary(DomainParticipantFactoryQos qos) {
+        InputStream is = Main.class
+                .getResourceAsStream("/META-INF/ice_library.xml");
+        if (is != null) {
+            java.util.Scanner scanner = new java.util.Scanner(is);
+            try {
+                qos.profile.url_profile.clear();
+                qos.profile.string_profile.clear();
+                qos.profile.string_profile.add(scanner.useDelimiter("\\A").next());
+            } finally {
+                scanner.close();
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    log.error("",e);
+                }
+            }
+        }
+    }
+    
+    
     public static void main(String[] args) throws Exception {
         // TODO this should be external
         System.setProperty("java.net.preferIPv4Stack", "true");
@@ -110,21 +141,47 @@ public class Main {
         }
 
         if (null != runConf) {
-            if (!(Boolean) Class.forName("org.mdpnp.rti.dds.DDS").getMethod("init", boolean.class).invoke(null, debug)) {
-                throw new Exception("Unable to DDS.init");
-            }
+
             {
                 // Unfortunately this throws an Exception if there are errors in
                 // XML profiles
                 // which Exception prevents a more useful Exception throwing
                 // later
                 try {
+                    boolean userIceLibrary = false;
+                    
+                    File userProfiles = new File("USER_QOS_PROFILES.xml");
+                    if(userProfiles.exists()&&userProfiles.isFile()&&userProfiles.canRead()) {
+                        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+                        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+                        Document doc = dBuilder.parse(userProfiles);
+                        NodeList libraryNodes = doc.getElementsByTagName("qos_library");
+                        for(int i = 0; i < libraryNodes.getLength(); i++) {
+                            Node libraryNode = libraryNodes.item(i);
+                            if(libraryNode.hasAttributes()) {
+                                Node nameNode = libraryNode.getAttributes().getNamedItem("name");
+                                if(QosProfiles.ice_library.equals(nameNode.getTextContent())) {
+                                    log.debug(QosProfiles.ice_library + " specified in USER_QOS_PROFILES.xml");
+                                    userIceLibrary = true;
+                                }
+                            }
+                        }
+                    }
+
+                    DomainParticipantFactory factory = DomainParticipantFactory.get_instance();
                     DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
-                    DomainParticipantFactory.get_instance().get_qos(qos);
+                    factory.get_qos(qos);
+                    
+                    if(!userIceLibrary) {
+                        loadIceQosLibrary(qos);
+                        log.debug("Loaded default ice_library QoS");
+                    }
+                    
                     qos.resource_limits.max_objects_per_thread = 8192;
-                    DomainParticipantFactory.get_instance().set_qos(qos);
+                    factory.set_qos(qos);
+                    
                 } catch (Exception e) {
-                    log.error("Unable to set max_objects_per_thread", e);
+                    log.error("Unable to set factory qos", e);
                 }
             }
 
