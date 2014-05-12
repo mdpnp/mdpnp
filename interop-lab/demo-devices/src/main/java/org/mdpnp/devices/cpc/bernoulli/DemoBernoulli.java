@@ -122,13 +122,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
             super.measurementGroup(name, n, msPerSample);
             InstanceHolder<SampleArray> waveform = waveforms.get(name);
             if (null != waveform) {
-                waveform.data.millisecondsPerSample = (int) msPerSample;
-                waveform.data.values.userData.clear();
-                for (Number _n : n) {
-                    waveform.data.values.userData.addFloat(_n.floatValue());
-                }
-                log.trace("SIZE=" + waveform.data.values.userData.size() + " LENGTH=" + n.length);
-                sampleArrayDataWriter.write(waveform.data, waveform.handle);
+                sampleArraySample(waveform, n, (int)msPerSample, null);
 
                 log.trace(waveform.toString());
             } else {

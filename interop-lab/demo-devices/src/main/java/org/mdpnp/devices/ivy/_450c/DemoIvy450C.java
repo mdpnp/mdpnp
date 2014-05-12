@@ -91,7 +91,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         protected void receiveECGWave(int[] data, int count, int msPerSample, String label) {
             String ecg = nameOfECGWave(label);
             if (ecg != null) {
-                ecgWave = sampleArraySample(ecgWave, data, count, msPerSample, ecg);
+                ecgWave = sampleArraySample(ecgWave, data, count, msPerSample, ecg, 0);
             } else {
                 if (ecgWave != null) {
                     unregisterSampleArrayInstance(ecgWave);
@@ -102,12 +102,12 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
         @Override
         protected void receiveRespWave(int[] data, int count, int msPerSample) {
-            respWave = sampleArraySample(respWave, data, count, msPerSample, ice.MDC_CAPNOGRAPH.VALUE);
+            respWave = sampleArraySample(respWave, data, count, msPerSample, ice.MDC_CAPNOGRAPH.VALUE, 0);
         }
 
         @Override
         protected void receivePlethWave(int[] data, int count, int msPerSample) {
-            plethWave = sampleArraySample(plethWave, data, count, msPerSample, rosetta.MDC_PULS_OXIM_PLETH.VALUE);
+            plethWave = sampleArraySample(plethWave, data, count, msPerSample, rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0);
         }
 
         @Override

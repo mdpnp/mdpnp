@@ -169,7 +169,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
                 plethBuffer[i] = currentPacket.getPleth(i);
             }
             pleth = sampleArraySample(pleth, plethBuffer, plethBuffer.length, (int) NoninPulseOx.MILLISECONDS_PER_SAMPLE,
-                    rosetta.MDC_PULS_OXIM_PLETH.VALUE);
+                    rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0);
 
             if (currentPacket.getCurrentStatus().isArtifact() || currentPacket.getCurrentStatus().isSensorAlarm()
                     || currentPacket.getCurrentStatus().isOutOfTrack()) {

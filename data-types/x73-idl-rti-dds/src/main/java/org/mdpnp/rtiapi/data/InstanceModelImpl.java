@@ -152,6 +152,8 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         public void conditionChanged(Condition condition) {
             try {
                 readWCondition.invoke(reader, sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (ReadCondition) condition);
+                InstanceHandle_t lastHandle = InstanceHandle_t.HANDLE_NIL;
+                
                 for (int i = 0; i < info_seq.size(); i++) {
                     SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
                     if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
@@ -164,7 +166,7 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
                             log.warn("Unable to find instance for removal:"+sampleInfo.instance_handle);
                         }
                     } else {
-                        if(0 != (sampleInfo.view_state & ViewStateKind.NEW_VIEW_STATE)) {
+                        if(!lastHandle.equals(sampleInfo.instance_handle) && 0 != (sampleInfo.view_state & ViewStateKind.NEW_VIEW_STATE)) {
                             fireInstanceAlive((D) sa_seq.get(i), sampleInfo);
                         }
                         fireInstanceSample((D) sa_seq.get(i), sampleInfo);
@@ -176,6 +178,7 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
                             fireIntervalAdded(InstanceModelImpl.this, instances.size()-1, instances.size()-1);
                         }
                     }
+                    lastHandle = sampleInfo.instance_handle;
                 }
             } catch (RETCODE_NO_DATA noData) {
                 
@@ -272,6 +275,7 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         }
         if(subscriber != null) {
             if(reader != null) {
+                reader.delete_contained_entities();
                 subscriber.delete_datareader(reader);
                 reader = null;
             }
