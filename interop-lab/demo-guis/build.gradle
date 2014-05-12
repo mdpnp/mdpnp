@@ -25,9 +25,6 @@ artifacts {
     archives sourcesJar
 }
 dependencies {
-  // There are some math utilities lurking in here
   compile project(':devices:common')
-//  compile project(':interop-lab:demo-datamodel')
   compile project(':data-types:x73-idl-rti-dds')
-  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
 }

@@ -19,6 +19,4 @@ targetCompatibility = JAVA_VERSION_CLASSES
 dependencies {
   compile project(':interop-lab:demo-devices')
   compile project(':interop-lab:demo-guis')
-  compile project(':interop-lab:demo-guis-jogl')
-  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
 }

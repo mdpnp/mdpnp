@@ -18,6 +18,7 @@ ext {
     ARM = 3
     ARMHF = 4
     ALL = 5
+    SLF4J_VERSION = '1.7.5'
 }
 
 def fromOsName(name) {
@@ -78,10 +79,10 @@ subprojects {
             url 'http://arvi.mgh.harvard.edu:8080/artifactory/remote-repos' }
 
         // Repository for external snapshot libs hosted by mdpnp (unavailable in any other repo)
-        maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-snapshot-local' }
+        maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-snapshot' }
 
         // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
-        maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-release-local' }
+        maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-release' }
 
         // All the following should be covered by the remote-repos repository above
         // They are included her for reference (and potentially fallback)

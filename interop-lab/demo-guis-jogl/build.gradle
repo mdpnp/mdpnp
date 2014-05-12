@@ -20,7 +20,7 @@ def JOGL_version = '2.0.2'
 
 dependencies {
   compile project(':interop-lab:demo-guis')
-  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+  compile group: 'org.slf4j', name: 'slf4j-api', version: SLF4J_VERSION
   
   
   compile group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version
