@@ -774,11 +774,6 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             handleToRelativeTime.put(handle, newPeriod);
         }
     }
-
-    @Override
-    protected boolean sampleArraySpecifySourceTimestamp() {
-        return true;
-    }
     
     @Override
     protected void unregisterAllNumericInstances() {

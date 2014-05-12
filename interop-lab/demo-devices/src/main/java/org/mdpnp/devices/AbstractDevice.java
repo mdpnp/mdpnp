@@ -259,17 +259,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
         holder.data.instance_id = instance_id;
-        if(sampleArraySpecifySourceTimestamp()) {
-            if(timestamp == null) {
-                // TODO do we want to throw this?
-                log.error("Inheritor "+getClass()+" reports sampleArraySourceTimestamp()==true but did not provide a timestamp");
-            } else {
-                holder.handle = sampleArrayDataWriter.register_instance_w_timestamp(holder.data, timestamp);
-            }
-        } else {
-            holder.handle = sampleArrayDataWriter.register_instance(holder.data);
-        }
-        
+        holder.handle = sampleArrayDataWriter.register_instance(holder.data);
         registeredSampleArrayInstances.add(holder);
         return holder;
     }
@@ -381,48 +371,38 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return holder;
     }
 
-    protected boolean sampleArraySpecifySourceTimestamp() {
-        return false;
-    }
-    protected final Time_t lastSampleArrayTimestamp = new Time_t(0,0);
-    
-    protected void sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues, int msPerSample, Time_t timestamp) {
+    protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, Collection<Number> newValues, int msPerSample, Time_t deviceTimestamp) {
         holder.data.values.userData.clear();
-        for (Number n : newValues) {
+        for(Number n : newValues) {
             holder.data.values.userData.addFloat(n.floatValue());
         }
         holder.data.millisecondsPerSample = msPerSample;
-        if(null != timestamp) {
-            holder.data.device_time.sec = timestamp.sec;
-            holder.data.device_time.nanosec = timestamp.nanosec;
+        if(deviceTimestamp != null) {
+            holder.data.device_time.sec = deviceTimestamp.sec;
+            holder.data.device_time.nanosec = deviceTimestamp.nanosec;
         } else {
             holder.data.device_time.sec = 0;
             holder.data.device_time.nanosec = 0;
         }
-        
-        if(sampleArraySpecifySourceTimestamp()) {
-            if(timestamp == null) {
-                // TODO do we want to throw this?
-                log.error("Inheritor "+getClass()+" reports sampleArraySourceTimestamp()==true but did not provide a timestamp");
-            } else {
-                // Using the specified time for source_timestamp
-                // Check that time has indeed moved forward only
-                if(timestamp.sec<lastSampleArrayTimestamp.sec || (timestamp.sec==lastSampleArrayTimestamp.sec&&timestamp.nanosec<lastSampleArrayTimestamp.nanosec)) {
-                    log.warn("Timestamps moved in reverse); promoting " + new Date(1000L*timestamp.sec+timestamp.nanosec/1000000L) + " to " + new Date(1000L*lastSampleArrayTimestamp.sec+lastSampleArrayTimestamp.nanosec/1000000L));
-                    timestamp.sec = lastSampleArrayTimestamp.sec;
-                    timestamp.nanosec = lastSampleArrayTimestamp.nanosec;
-                } else {
-                    lastSampleArrayTimestamp.sec = timestamp.sec;
-                    lastSampleArrayTimestamp.nanosec = timestamp.nanosec;
-                }
-//                log.debug("SampleArray Timestamp:"+new Date(1000L*timestamp.sec+timestamp.nanosec/1000000L));
-                sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, timestamp);
-            }
-        } else {
-            sampleArrayDataWriter.write(holder.data, holder.handle);
-        }
+        sampleArrayDataWriter.write(holder.data, holder.handle);
     }
-
+    
+    protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len, int msPerSample, Time_t deviceTimestamp) {
+        holder.data.values.userData.clear();
+        for(int n : newValues) {
+            holder.data.values.userData.addFloat(n);
+        }
+        holder.data.millisecondsPerSample = msPerSample;
+        if(deviceTimestamp != null) {
+            holder.data.device_time.sec = deviceTimestamp.sec;
+            holder.data.device_time.nanosec = deviceTimestamp.nanosec;
+        } else {
+            holder.data.device_time.sec = 0;
+            holder.data.device_time.nanosec = 0;
+        }
+        sampleArrayDataWriter.write(holder.data, holder.handle);
+    }
+    
     protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, int msPerSample, Time_t timestamp) {
         sampleArraySample(holder, Arrays.asList(newValues), msPerSample, timestamp);
     }
@@ -432,7 +412,12 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return sampleArraySample(holder, newValues, msPerSample, metric_id, 0, timestamp);
     }
 
-    protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, int msPerSample,
+    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len, int msPerSample,
+            String metric_id, int instance_id) {
+        return sampleArraySample(holder, newValues, len, msPerSample, metric_id, instance_id, null);
+    }
+    
+    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len, int msPerSample,
             String metric_id, int instance_id, Time_t timestamp) {
         if (null != holder && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
             unregisterSampleArrayInstance(holder);
@@ -442,7 +427,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             if (null == holder) {
                 holder = createSampleArrayInstance(metric_id, instance_id, timestamp);
             }
-            sampleArraySample(holder, newValues, msPerSample, timestamp);
+            sampleArraySample(holder, newValues, len, msPerSample, timestamp);
         } else {
             if (holder != null) {
                 unregisterSampleArrayInstance(holder);
@@ -452,13 +437,9 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return holder;
     }
 
-    protected void sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues, int count, int msPerSample) {
-        sampleArraySample(holder, newValues, count, msPerSample, null);
-    }
-
-    protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues, int count, int msPerSample,
-            String metric_id) {
-        return sampleArraySample(holder, newValues, count, msPerSample, metric_id, 0);
+    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, Number[] newValues, int msPerSample,
+            String metric_id, int instance_id, Time_t timestamp) {
+        return sampleArraySample(holder, Arrays.asList(newValues), msPerSample, metric_id, instance_id, timestamp);
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues, int msPerSample,
@@ -474,28 +455,6 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                 holder = createSampleArrayInstance(metric_id, instance_id, timestamp);
             }
             sampleArraySample(holder, newValues, msPerSample, timestamp);
-        } else {
-            if (holder != null) {
-                unregisterSampleArrayInstance(holder);
-                holder = null;
-            }
-        }
-        return holder;
-    }
-
-    protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, int[] newValues, int count, int msPerSample,
-            String metric_id, int instance_id) {
-        // if the specified holder doesn't match the specified name
-        if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
-            unregisterSampleArrayInstance(holder);
-            holder = null;
-        }
-
-        if (null != newValues) {
-            if (null == holder) {
-                holder = createSampleArrayInstance(metric_id, instance_id);
-            }
-            sampleArraySample(holder, newValues, count, msPerSample);
         } else {
             if (holder != null) {
                 unregisterSampleArrayInstance(holder);
