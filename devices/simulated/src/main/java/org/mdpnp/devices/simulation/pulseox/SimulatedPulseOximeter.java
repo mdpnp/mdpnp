@@ -18,6 +18,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.math.DCT;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Jeff Plourde
@@ -25,6 +27,7 @@ import org.mdpnp.devices.math.DCT;
  */
 public class SimulatedPulseOximeter {
     private int count = 0;
+    private static final Logger log = LoggerFactory.getLogger(SimulatedPulseOximeter.class);
 
     protected int postIncrCount() {
         int count = this.count;
@@ -41,15 +44,19 @@ public class SimulatedPulseOximeter {
 
         @Override
         public void run() {
-            for (int i = 0; i < plethValues.length; i++) {
-                plethValues[i] = pleth[postIncrCount()];
+            try {
+                for (int i = 0; i < plethValues.length; i++) {
+                    plethValues[i] = pleth[postIncrCount()];
+                }
+                nextDraw();
+                // if(0==countTimes) {
+                lastTime = System.currentTimeMillis();
+                // }
+                // countTimes = ++countTimes%4;
+                receivePulseOx(lastTime, (int) Math.round(heartRate), (int) Math.round(spO2), plethValues, MILLISECONDS_PER_SAMPLE);
+            } catch (Throwable t) {
+                log.error("Error sending simulated pulse oximetry data", t);
             }
-            nextDraw();
-            // if(0==countTimes) {
-            lastTime = System.currentTimeMillis();
-            // }
-            // countTimes = ++countTimes%4;
-            receivePulseOx(lastTime, (int) Math.round(heartRate), (int) Math.round(spO2), plethValues, MILLISECONDS_PER_SAMPLE);
         }
 
     };
