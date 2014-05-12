@@ -144,7 +144,9 @@ public class DeviceAdapter {
             
             cdp.setModel(deviceMonitor);
             
-            deviceMonitor.start(participant.get_implicit_subscriber(), eventLoop);
+            // Use the device subscriber so that we
+            // automatically maintain the same partition as the device
+            deviceMonitor.start(device.getSubscriber(), eventLoop);
 
             frame = new DemoFrame("ICE Device Adapter - " + type);
             frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));

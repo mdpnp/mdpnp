@@ -27,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -39,6 +40,10 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+
+import javax.management.JMException;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
 
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
@@ -57,17 +62,19 @@ import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.Time_t;
 import com.rti.dds.publication.Publisher;
+import com.rti.dds.publication.PublisherQos;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.ReadCondition;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriberQos;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicDescription;
 
-public abstract class AbstractDevice implements ThreadFactory {
+public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBean {
     protected final ThreadGroup threadGroup;
     protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(this);
     protected final EventLoop eventLoop;
@@ -685,6 +692,7 @@ public abstract class AbstractDevice implements ThreadFactory {
         if (null == deviceIdentity.unique_device_identifier || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("cannot write deviceIdentity without a UDI");
         }
+        registerForManagement();
         DomainParticipantQos qos = new DomainParticipantQos();
         domainParticipant.get_qos(qos);
         try {
@@ -750,6 +758,70 @@ public abstract class AbstractDevice implements ThreadFactory {
                             }
                         }
                     });
+        }
+    }
+    @Override
+    public String getManufacturer() {
+        return null == deviceIdentity ? null : deviceIdentity.manufacturer;
+    }
+    
+    @Override
+    public String getModel() {
+        return null == deviceIdentity ? null : deviceIdentity.model;
+    }
+    
+    @Override
+    public String[] getPartition() {
+        PublisherQos pQos = new PublisherQos();
+        publisher.get_qos(pQos);
+        String[] partition = new String[pQos.partition.name.size()];
+        for(int i = 0; i < partition.length; i++) {
+            partition[i] = (String) pQos.partition.name.get(i);
+        }
+        return partition;
+    }
+    
+    @Override
+    public void addPartition(String partition) {
+        List<String> currentPartition = new ArrayList<String>(Arrays.asList(getPartition()));
+        currentPartition.add(partition);
+        setPartition(currentPartition.toArray(new String[0]));
+    }
+    
+    @Override
+    public void removePartition(String partition) {
+        List<String> currentPartition = new ArrayList<String>(Arrays.asList(getPartition()));
+        currentPartition.remove(partition);
+        setPartition(currentPartition.toArray(new String[0]));
+    }
+    
+    @Override
+    public void setPartition(String[] partition) {
+        PublisherQos pQos = new PublisherQos();
+        SubscriberQos sQos = new SubscriberQos();
+        publisher.get_qos(pQos);
+        subscriber.get_qos(sQos);
+        pQos.partition.name.clear();
+        sQos.partition.name.clear();
+        pQos.partition.name.addAll(Arrays.asList(partition));
+        sQos.partition.name.addAll(Arrays.asList(partition));
+        publisher.set_qos(pQos);
+        subscriber.set_qos(sQos);
+    }
+    
+    @Override
+    public String getUniqueDeviceIdentifier() {
+        return null == deviceIdentity ? null : deviceIdentity.unique_device_identifier;
+    }
+    
+    private ObjectInstance objInstance;
+    private void registerForManagement() {
+        if(null == objInstance) {
+            try {
+                objInstance = ManagementFactory.getPlatformMBeanServer().registerMBean(this, new ObjectName(AbstractDevice.class.getPackage().getName()+":type="+AbstractDevice.class.getSimpleName()+",name="+getUniqueDeviceIdentifier()));
+            } catch (JMException e) {
+                log.warn("Unable to register with JMX", e);
+            }
         }
     }
 }
