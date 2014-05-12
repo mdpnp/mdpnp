@@ -87,7 +87,7 @@ public class VitalModelImpl implements VitalModel {
                             if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
                                 Numeric keyHolder = new Numeric();
                                 numericReader.get_key_value(keyHolder, sampleInfo.instance_handle);
-                                log.debug("Numeric NOT ALIVE:" + keyHolder);
+                                log.debug("Numeric NOT ALIVE:" + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
                                 removeNumeric(keyHolder.unique_device_identifier, keyHolder.metric_id, keyHolder.instance_id);
                             } else {
                                 if (sampleInfo.valid_data) {
