@@ -44,42 +44,7 @@ jar.doFirst {
 
 dependencies {
   // nddsjava.jar is the java binding library for RTI DDS
-
-  compile group: 'org.mdpnp.rti.dds', name: 'nddsjava-rt', version: '5.1'
-
-  switch(localOsName) {
-      case MAC:
-          testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'darwin'
-          break
-      case WINDOWS:
-          switch(localOsArch) {
-              case X64:
-                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'win32amd64'
-                  break
-              case X86:
-                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'win32x86'
-                  break
-          }
-      case LINUX:
-          switch(localOsArch) {
-              case X64:
-                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'linuxamd64'
-                  break
-              case X86:
-                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'linuxi386'
-                  break
-              case ARM:
-              case ARMHF:
-                  testRuntime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'linuxarm'
-                  break
-          }
-  }
-
-
-
-
-
-
+  compile group: 'com.rti.dds', name: 'nddsjava', version: '5.1-mdpnp-000004'
 
   compile project(':data-types:x73-idl')
   testCompile group: 'junit', name: 'junit', version: '4.11'

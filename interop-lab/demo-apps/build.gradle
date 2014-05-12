@@ -178,7 +178,6 @@ dependencies {
     runtime group: 'log4j', name: 'log4j', version: '1.2.17'
     runtime group: 'org.mdpnp.apps.testapp.pca', name: 'mdpnp-sounds', version: '0.1.0'
 
-
     // Default capture device is a trimmed down piece of OpenIMAJ
     compile group: 'com.github.sarxos', name: 'webcam-capture', version: '0.3.9'
 
@@ -205,18 +204,15 @@ dependencies {
         }
 
         if(ALL == targetOsArch || X64 == targetOsArch) {
-            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'win32amd64'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-windows-amd64'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-windows-amd64'
         }
         if(ALL == targetOsArch || X86 == targetOsArch) {
-            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'win32x86'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-windows-i586'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-windows-i586'
         }
     }
     if(MAC == targetOsName || ALL == targetOsName) {
-        runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'darwin'
         runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-macosx-universal'
         runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-macosx-universal'
     }
@@ -232,17 +228,14 @@ dependencies {
                 break
         }
         if(ALL == targetOsArch || X64 == targetOsArch) {
-            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'linuxamd64'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-linux-amd64'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-linux-amd64'
         }
         if(ALL == targetOsArch || X86 == targetOsArch) {
-            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'linuxi386'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-linux-i586'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-linux-i586'
         }
         if(ALL == targetOsArch || ARM == targetOsArch || ARMHF == targetOsArch) {
-            runtime group: 'org.mdpnp.rti.dds', name: 'nddsjava-bin', version: '5.1', classifier: 'linuxarm'
             runtime group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version, classifier: 'natives-android-armv6'
             runtime group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version, classifier: 'natives-android-armv6'
         }
