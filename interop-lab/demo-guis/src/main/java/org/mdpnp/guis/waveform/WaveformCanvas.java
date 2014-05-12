@@ -25,13 +25,7 @@ public interface WaveformCanvas {
 
     void drawLine(int x0, int y0, int x1, int y1);
 
-    void drawSecondaryLine(int x0, int y0, int x1, int y1);
-
     void clearRect(int x, int y, int width, int height);
 
-    // void setColor(int r, int g, int b, int a);
-    // int[] getColor();
-    // void setColor(int[] c);
     Extent getExtent();
-    // void clearAll();
 }
