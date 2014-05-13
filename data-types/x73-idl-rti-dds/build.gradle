@@ -99,7 +99,6 @@ task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) << {
   for(File f : idlFiles) {
     println 'Generating from ' + f.name
     myArgs.add(f.getPath())
-    println myArgs;
     javaexec {
       classpath = configurations.rtiddsgen
       jvmArgs = ['-DNDDS_RESOURCE_DIR=build/rtiddsgen/resource/']

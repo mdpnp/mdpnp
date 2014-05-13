@@ -8,8 +8,8 @@ task wrapper(type: Wrapper) {
 }
 
 ext {
-    JAVA_VERSION_SOURCE = 1.6
-    JAVA_VERSION_CLASSES = 1.6
+    JAVA_VERSION_SOURCE = 1.7
+    JAVA_VERSION_CLASSES = 1.7
     WINDOWS = 1
     MAC = 2
     LINUX = 3
