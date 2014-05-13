@@ -23,8 +23,8 @@ targetCompatibility = JAVA_VERSION_CLASSES
 // configuration for code generation
 configurations { rtiddsgen }
 
-def GENERATED_JAVA_SOURCES = new File(project.projectDir, 'build/generated/src/main/java').getAbsolutePath()
-def GENERATED_CPP_SOURCES  = new File(project.projectDir, 'build/generated/src/main/cpp').getAbsolutePath()
+def GENERATED_JAVA_SOURCES = new File(project.projectDir, 'build/generated/src/main/java').getPath()
+def GENERATED_CPP_SOURCES  = new File(project.projectDir, 'build/generated/src/main/cpp').getPath()
 
 // add generated source code to the main java sourceset
 sourceSets {
@@ -71,7 +71,7 @@ task rtiddsgenExplodeResources(type: Copy) {
   configurations.rtiddsgen.filter {
     it.toString().endsWith(".zip")}.each {
     from zipTree(it)}
-  into new File(project.projectDir, 'build/rtiddsgen').getAbsolutePath()
+  into new File(project.projectDir, 'build/rtiddsgen').getPath()
 }
 
 // Runs the RTI DDS Generate code generator for all idl files under src/main/idl
@@ -82,7 +82,7 @@ task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) << {
   FileTree idlFiles = project(':data-types:x73-idl').build.source
 
   //println idlFiles
-  String loc = new File(project.projectDir, 'build/rtiddsgen/jcpp').getAbsolutePath()
+  String loc = 'build/rtiddsgen/jcpp'
 
   if(System.properties['os.name'].toLowerCase().contains("windows")) {
     loc = loc + '.cmd'
@@ -92,13 +92,14 @@ task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) << {
   List<String> myArgs = ['-language', 'Java']
   myArgs.addAll(['-ppPath', loc])
   myArgs.addAll(['-d', GENERATED_JAVA_SOURCES])
-  myArgs.addAll(['-ppOption', '-I'+project(':data-types:x73-idl').projectDir.getAbsolutePath()+'/src/main/idl'])
+  myArgs.addAll(['-ppOption', '-I'+project(':data-types:x73-idl').projectDir.getPath()+'/src/main/idl'])
   myArgs.add('-replace')
   myArgs.add('-inputIdl')
 
   for(File f : idlFiles) {
     println 'Generating from ' + f.name
-    myArgs.add(f.getAbsolutePath())
+    myArgs.add(f.getPath())
+    println myArgs;
     javaexec {
       classpath = configurations.rtiddsgen
       jvmArgs = ['-DNDDS_RESOURCE_DIR=build/rtiddsgen/resource/']
