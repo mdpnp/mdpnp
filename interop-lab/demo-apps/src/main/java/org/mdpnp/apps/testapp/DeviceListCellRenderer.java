@@ -142,7 +142,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         }
         
         if (null != device) {
-            hostname.setText(device.getHostname());
+            hostname.setText(""); // device.getHostname());
             
 
             DeviceIcon icon = device.getIcon();
@@ -165,7 +165,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
                 modelName.setText(device.getMakeAndModel());
                 buildDescriptor.setText(di.build);
             } else {
-                modelName.setText(device.getParticipantData().participant_name.name);
+                modelName.setText("");
                 buildDescriptor.setText("DeviceIdentity not yet found.");
             }
 

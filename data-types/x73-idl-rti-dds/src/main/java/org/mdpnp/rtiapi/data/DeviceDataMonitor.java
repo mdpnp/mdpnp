@@ -42,7 +42,7 @@ public class DeviceDataMonitor {
         identity.add("'" + udi + "'");
         final String identity_exp = "unique_device_identifier = %0";
         
-        idModel.start(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, QosProfiles.invariant_state);
+        idModel.start(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, QosProfiles.device_identity);
         connModel.start(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, QosProfiles.state);
         numModel.start(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, QosProfiles.numeric_data);
         saModel.start(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, QosProfiles.waveform_data);

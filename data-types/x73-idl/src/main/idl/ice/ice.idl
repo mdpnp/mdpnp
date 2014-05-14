@@ -14,6 +14,25 @@ module ice {
     long nanosec;
   }; //@top-level false
 
+  
+
+  struct HeartBeat {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    string<32> type;
+    
+  }; //@top-level true
+  #pragma keylist HeartBeat unique_device_identifier
+  const string HeartBeatTopic = "HeartBeat";
+  
+  struct TimeSync {
+    UniqueDeviceIdentifier heartbeat_source; //@key
+    UniqueDeviceIdentifier heartbeat_recipient; //@key
+    Time_t source_source_timestamp;
+    Time_t recipient_receipt_timestamp;
+  }; //@top-level true
+  #pragma keylist TimeSync heartbeat_source heartbeat_recipient
+  const String TimeSyncTopic = "TimeSync";
+
   struct Image {
     Raster raster;
     long width;

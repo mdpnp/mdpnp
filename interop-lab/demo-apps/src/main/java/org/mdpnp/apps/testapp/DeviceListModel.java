@@ -21,6 +21,7 @@ import ice.DeviceIdentity;
 import ice.DeviceIdentityDataReader;
 import ice.DeviceIdentitySeq;
 import ice.DeviceIdentityTypeSupport;
+import ice.HeartBeat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,17 +31,16 @@ import java.util.regex.Pattern;
 
 import javax.swing.AbstractListModel;
 
+import org.mdpnp.devices.TimeManager;
+import org.mdpnp.devices.TimeManagerListener;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
-import com.rti.dds.domain.builtin.ParticipantBuiltinTopicDataDataReader;
-import com.rti.dds.domain.builtin.ParticipantBuiltinTopicDataSeq;
-import com.rti.dds.domain.builtin.ParticipantBuiltinTopicDataTypeSupport;
 import com.rti.dds.infrastructure.Condition;
+import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.RETCODE_PRECONDITION_NOT_MET;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
@@ -67,34 +67,25 @@ import com.rti.dds.topic.TopicDescription;
  * @author Jeff Plourde 
  *
  */
-public class DeviceListModel extends AbstractListModel<Device> {
+public class DeviceListModel extends AbstractListModel<Device> implements TimeManagerListener {
     
-    private final static Pattern DEVICE_FILTER = Pattern.compile("Device"); 
-
     public Device getByUniqueDeviceIdentifier(String udi) {
         if(null == udi) {
             return null;
         }
-        for(Device d : deviceByParticipantKey.values()) {
-            if(udi.equals(d.getUDI())) {
-                return d;
-            }
-        }
-        return null;
+        return contentsByUDI.get(udi);
     }
     
-    private final Device getDevice(ParticipantBuiltinTopicData data, boolean create) {
-        if(null == data) {
+    private final Device getDevice(String udi, boolean create) {
+        if(null == udi) {
             return null;
         }
-        Device device = contentsByParticipantKey.get(data.key);
+        Device device = contentsByUDI.get(udi);
         if(null == device && create) {
-            device = deviceByParticipantKey.get(data.key);
-            if(null == device) {
-                device = new Device(data);
-                deviceByParticipantKey.put(device.getParticipantData().key, device);
-            }
-            contentsByParticipantKey.put(device.getParticipantData().key, device);
+            device = new Device(udi);
+            device.setDeviceIdentity(deviceIdentityByUDI.get(udi));
+            device.setDeviceConnectivity(deviceConnectivityByUDI.get(udi));
+            contentsByUDI.put(udi, device);
             contents.add(0, device);
             contentsByIdx.clear();
             for (int i = 0; i < contents.size(); i++) {
@@ -105,99 +96,76 @@ public class DeviceListModel extends AbstractListModel<Device> {
         return device;
     }
     
-    private final void update(ParticipantBuiltinTopicData pbtd, boolean alive, boolean valid_data) {
-        if (!eventLoop.isCurrentServiceThread()) {
-            throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
-        }
+    protected void notADevice(ice.HeartBeat heartbeat, boolean alive) {
         
-        if(alive) {
-            if(pbtd.participant_name.name != null) {
-                if(DEVICE_FILTER.matcher(pbtd.participant_name.name).matches()) {
-                    if(valid_data) {
-                        Device device = getDevice(pbtd, true);
-                        device.setParticipantData(pbtd);
-                        device.setDeviceIdentity(deviceIdentityByParticipantKey.get(pbtd.key));
-                        device.setDeviceConnectivity(deviceConnectivityByParticipantKey.get(pbtd.key));
-                        update(device);
-                    } else {
-                        log.debug("No valid data for " + pbtd.key);
-                    }
-                } else {
-                    notADevice(pbtd, alive);
-                }
-            } else {
-                log.debug("name of participant is null for " + pbtd.key);
-            }
+    }
+    
+    @Override
+    public void aliveHeartbeat(SampleInfo sampleInfo, HeartBeat heartbeat) {
+        if("Device".equals(heartbeat.type)) {
+            log.debug(heartbeat.unique_device_identifier + " IS STILL ALIVE");
+            getDevice(heartbeat.unique_device_identifier, true);
         } else {
-            remove(getDevice(pbtd, false));
+            notADevice(heartbeat, true);
         }
     }
     
-    private final void update(ParticipantBuiltinTopicData participantData, DeviceConnectivity dc) {
+    @Override
+    public void notAliveHeartbeat(SampleInfo sampleInfo, HeartBeat heartbeat) {
+        if("Device".equals(heartbeat.type)) {
+            log.debug(heartbeat.unique_device_identifier + " IS NO LONGER ALIVE");
+            remove(getDevice(heartbeat.unique_device_identifier, false));
+        } else {
+            notADevice(heartbeat, false);
+        }
+
+    }
+    
+    @Override
+    public void synchronization(String remote_udi, Duration_t latency, Duration_t clockDifference) {
+        System.out.println(remote_udi + " has latency="+latency+" and clockDifference="+clockDifference);
+    }
+    
+    private final void update(DeviceConnectivity dc) {
         if (!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
         }
-        if(null != participantData) {
-            if(deviceConnectivityByParticipantKey.containsKey(participantData.key)) {
-                deviceConnectivityByParticipantKey.get(participantData.key).copy_from(dc);
-            } else {
-                deviceConnectivityByParticipantKey.put(new BuiltinTopicKey_t(participantData.key), new DeviceConnectivity(dc));
-            }
+        if(deviceConnectivityByUDI.containsKey(dc.unique_device_identifier)) {
+            deviceConnectivityByUDI.get(dc.unique_device_identifier).copy_from(dc);
         } else {
-//            deviceConnectivityByParticipantKey.remove(participantData.key);
+            deviceConnectivityByUDI.put(dc.unique_device_identifier, new DeviceConnectivity(dc));
         }
-        Device device = getDevice(participantData, false);
+        Device device = getDevice(dc.unique_device_identifier, false);
         if(null != device) {
             device.setDeviceConnectivity(dc);
             update(device);
-        } else {
-            device = getByUniqueDeviceIdentifier(dc.unique_device_identifier);
-            if(null != device) {
-                device.setDeviceConnectivity(dc);
-                update(device);
-            }
         }
     }
 
-    private final void update(ParticipantBuiltinTopicData participantData, DeviceIdentity di) {
+    private final void update(DeviceIdentity di) {
+        
         if (!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
         }
-        if(null != participantData) {
-            if(deviceIdentityByParticipantKey.containsKey(participantData.key)) {
-                deviceIdentityByParticipantKey.get(participantData.key).copy_from(di);
-            } else {
-                deviceIdentityByParticipantKey.put(new BuiltinTopicKey_t(participantData.key), new DeviceIdentity(di));
-            }
+        if(deviceIdentityByUDI.containsKey(di.unique_device_identifier)) {
+            deviceIdentityByUDI.get(di.unique_device_identifier).copy_from(di);
         } else {
-            log.debug("No ParticipantData available to store DeviceIdentity for:"+di.unique_device_identifier);
-//            deviceIdentityByParticipantKey.remove(participantData.key);
+            deviceIdentityByUDI.put(di.unique_device_identifier, new DeviceIdentity(di));
         }
-        Device device = getDevice(participantData, false);
+        Device device = getDevice(di.unique_device_identifier, false);
         if(null != device) {
             device.setDeviceIdentity(di);
             update(device);
-        } else {
-            device = getByUniqueDeviceIdentifier(di.unique_device_identifier);
-            if(null != device) {
-                device.setDeviceIdentity(di);
-                update(device);
-            } else {
-                log.warn("Unable to find Device by participantData="+participantData + " or UDI="+di.unique_device_identifier);
-            }
         }
     }
 
     
     
     private final void remove(Device device) {
-        if (!eventLoop.isCurrentServiceThread()) {
-            throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
-        }
         if(null == device) {
             return;
         }
-        contentsByParticipantKey.remove(device.getParticipantData().key);
+        contentsByUDI.remove(device.getUDI());
         final int idx = contentsByIdx.get(device);
         contents.remove(idx);
         contentsByIdx.clear();
@@ -212,10 +180,6 @@ public class DeviceListModel extends AbstractListModel<Device> {
     }
     
     private final boolean update(Device device) {
-        if (!eventLoop.isCurrentServiceThread()) {
-            throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
-        }
-
         final int idx = contentsByIdx.get(device);
         if(idx >= 0) {
             fireContentsChanged(DeviceListModel.this, idx, idx);
@@ -228,28 +192,20 @@ public class DeviceListModel extends AbstractListModel<Device> {
     private static final Logger log = LoggerFactory.getLogger(DeviceListModel.class);
 
     protected final List<Device> contents = new ArrayList<Device>();
-    protected final Map<BuiltinTopicKey_t, Device> contentsByParticipantKey = new HashMap<BuiltinTopicKey_t, Device>();
     protected final Map<Device, Integer> contentsByIdx = new HashMap<Device, Integer>();
     
-    protected final Map<BuiltinTopicKey_t, Device> deviceByParticipantKey = new HashMap<BuiltinTopicKey_t, Device>();
-    protected final Map<BuiltinTopicKey_t, DeviceIdentity> deviceIdentityByParticipantKey = new HashMap<BuiltinTopicKey_t, DeviceIdentity>();
-    protected final Map<BuiltinTopicKey_t, DeviceConnectivity> deviceConnectivityByParticipantKey = new HashMap<BuiltinTopicKey_t, DeviceConnectivity>();
+    protected final Map<String, Device> contentsByUDI = new java.util.concurrent.ConcurrentHashMap<String, Device>();
+    protected final Map<String, DeviceIdentity> deviceIdentityByUDI = new java.util.concurrent.ConcurrentHashMap<String, DeviceIdentity>();
+    protected final Map<String, DeviceConnectivity> deviceConnectivityByUDI = new java.util.concurrent.ConcurrentHashMap<String, DeviceConnectivity>();
 
     private final Subscriber subscriber;
     private final EventLoop eventLoop;
-    protected ParticipantBuiltinTopicDataDataReader reader;
     protected ice.DeviceIdentityDataReader idReader;
     protected ice.DeviceConnectivityDataReader connReader;
     protected TopicDescription idTopic, connTopic;
+    protected final TimeManager timeManager;
 
-    private final ThreadLocal<ParticipantBuiltinTopicData> participantData = new ThreadLocal<ParticipantBuiltinTopicData>() {
-        protected ParticipantBuiltinTopicData initialValue() {
-            return new ParticipantBuiltinTopicData();
-        };  
-    };
-    
     private final void dataAvailable(ice.DeviceConnectivityDataReader reader) {
-        ParticipantBuiltinTopicData participantData = this.participantData.get();
         try {
             for (;;) {
                 try {
@@ -261,15 +217,8 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         if(si.publication_handle.is_nil()) {
                             log.warn("publication_handle is nil");
                         }
-                        try {
-                            reader.get_matched_publication_participant_data(participantData, si.publication_handle);
-                        } catch (RETCODE_PRECONDITION_NOT_MET preCondition) {
-                            log.debug("Unable to get participant for publication", preCondition);
-                            participantData = null;
-                        }
-                        
                         if (si.valid_data) {
-                            update(participantData, dc);
+                            update(dc);
                         }
                         
                     }
@@ -285,7 +234,6 @@ public class DeviceListModel extends AbstractListModel<Device> {
     }
 
     private final void dataAvailable(ice.DeviceIdentityDataReader reader) {
-        ParticipantBuiltinTopicData participantData = this.participantData.get();
         try {
             for (;;) {
                 try {
@@ -296,16 +244,10 @@ public class DeviceListModel extends AbstractListModel<Device> {
                         if(si.publication_handle.is_nil()) {
                             log.warn("publication_handle is nil");
                         }
-                        try {
-                            reader.get_matched_publication_participant_data(participantData, si.publication_handle);
-                        } catch (RETCODE_PRECONDITION_NOT_MET preCondition) {
-                            log.debug("Unable to get participant for publication", preCondition);
-                            participantData = null;
-                        }
-                        
+
                         if (si.valid_data) {
 //                            log.debug("DeviceIdentity at " + si.source_timestamp + " " + di);
-                            update(participantData, di);
+                            update(di);
                         }
                         
                     }
@@ -317,36 +259,9 @@ public class DeviceListModel extends AbstractListModel<Device> {
 
         }
     }
-    private final void dataAvailable(ParticipantBuiltinTopicDataDataReader reader) {
-        try {
-            for(;;) {
-                try {
-                    reader.read(part_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
-                    for (int i = 0; i < part_seq.size(); i++) {
-                        ParticipantBuiltinTopicData pbtd = (ParticipantBuiltinTopicData) part_seq.get(i);
-                        SampleInfo si = (SampleInfo) info_seq.get(i);
-
-                        boolean alive = 0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE);
-                        
-                        if(!si.valid_data) {
-                            pbtd = new ParticipantBuiltinTopicData();
-                            reader.get_key_value(pbtd, si.instance_handle);
-                        }
-                        log.debug("Participant " + pbtd.key + " is " + (alive?"":"NOT ") + " alive");
-                        update(pbtd, alive, si.valid_data);
-                    }
-                } finally {
-                    reader.return_loan(part_seq, info_seq);
-                }
-            }
-        } catch (RETCODE_NO_DATA noData) {
-            
-        }
-    }
 
     final DeviceIdentitySeq data_seq = new DeviceIdentitySeq();
     final DeviceConnectivitySeq conn_seq = new DeviceConnectivitySeq();
-    final ParticipantBuiltinTopicDataSeq part_seq = new ParticipantBuiltinTopicDataSeq();
     final SampleInfoSeq info_seq = new SampleInfoSeq();
 
     public void start() {
@@ -355,30 +270,14 @@ public class DeviceListModel extends AbstractListModel<Device> {
         idTopic = lookupOrCreateTopic(participant, ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.class);
         connTopic = lookupOrCreateTopic(participant, ice.DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.class);
 
-        reader = (ParticipantBuiltinTopicDataDataReader) participant.get_builtin_subscriber().lookup_datareader(
-                ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME);
         idReader = (DeviceIdentityDataReader) subscriber.create_datareader_with_profile(idTopic, QosProfiles.ice_library,
-                QosProfiles.invariant_state, null, StatusKind.STATUS_MASK_NONE);
+                QosProfiles.device_identity, null, StatusKind.STATUS_MASK_NONE);
 
         connReader = (DeviceConnectivityDataReader) subscriber.create_datareader_with_profile(connTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
-        reader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
         idReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
         connReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
-
-        eventLoop.addHandler(reader.get_statuscondition(), new EventLoop.ConditionHandler() {
-
-            @Override
-            public void conditionChanged(Condition condition) {
-                ParticipantBuiltinTopicDataDataReader reader = (ParticipantBuiltinTopicDataDataReader) ((StatusCondition) condition)
-                        .get_entity();
-                int status_changes = reader.get_status_changes();
-                if (0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
-                    dataAvailable(reader);
-                }
-            }
-        });
 
         eventLoop.addHandler(idReader.get_statuscondition(), new EventLoop.ConditionHandler() {
             @Override
@@ -404,20 +303,11 @@ public class DeviceListModel extends AbstractListModel<Device> {
         });
     }
     
-    public DeviceListModel(final Subscriber subscriber, final EventLoop eventLoop) {
+    public DeviceListModel(final Subscriber subscriber, final EventLoop eventLoop, final TimeManager timeManager) {
         this.eventLoop = eventLoop;
         this.subscriber = subscriber;
-    }
-
-    protected void notADevice(ParticipantBuiltinTopicData participant_info, boolean alive) {
-        log.debug("Remote participant " + participant_info.key + " is not a device and is " + (alive?"":"NOT ")+ "alive");
-    }
-
-    public Device getByParticipantKey(BuiltinTopicKey_t key) {
-        if(null == key) {
-            return null;
-        }
-        return contentsByParticipantKey.get(key);
+        this.timeManager = timeManager;
+        timeManager.addListener(this);
     }
 
     private Device lastRemoved;
@@ -431,7 +321,6 @@ public class DeviceListModel extends AbstractListModel<Device> {
         // in this PArticipant
         eventLoop.doLater(new Runnable() {
             public void run() {
-                eventLoop.removeHandler(reader.get_statuscondition());
                 eventLoop.removeHandler(idReader.get_statuscondition());
                 eventLoop.removeHandler(connReader.get_statuscondition());
                 idReader.delete_contained_entities();

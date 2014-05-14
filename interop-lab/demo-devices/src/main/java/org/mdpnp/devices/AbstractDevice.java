@@ -39,7 +39,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.JMException;
 import javax.management.ObjectInstance;
@@ -74,7 +76,7 @@ import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicDescription;
 
-public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBean {
+public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBean, Runnable {
     protected final ThreadGroup threadGroup;
     protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(this);
     protected final EventLoop eventLoop;
@@ -84,6 +86,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     protected final DomainParticipant domainParticipant;
     protected final Publisher publisher;
     protected final Subscriber subscriber;
+    protected TimeManager timeManager;
     protected final Topic deviceIdentityTopic;
     private final DeviceIdentityDataWriter deviceIdentityWriter;
     protected final DeviceIdentity deviceIdentity;
@@ -248,7 +251,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id) {
         return createSampleArrayInstance(metric_id, instance_id, null);
     }
-    
+
     protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id, Time_t timestamp) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createSampleArrayInstance");
@@ -266,7 +269,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, Time_t time) {
         holder.data.value = newValue;
-        if(null != time) {
+        if (null != time) {
             holder.data.device_time.sec = time.sec;
             holder.data.device_time.nanosec = time.nanosec;
         } else {
@@ -373,11 +376,11 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, Collection<Number> newValues, int msPerSample, Time_t deviceTimestamp) {
         holder.data.values.userData.clear();
-        for(Number n : newValues) {
+        for (Number n : newValues) {
             holder.data.values.userData.addFloat(n.floatValue());
         }
         holder.data.millisecondsPerSample = msPerSample;
-        if(deviceTimestamp != null) {
+        if (deviceTimestamp != null) {
             holder.data.device_time.sec = deviceTimestamp.sec;
             holder.data.device_time.nanosec = deviceTimestamp.nanosec;
         } else {
@@ -386,14 +389,14 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
         sampleArrayDataWriter.write(holder.data, holder.handle);
     }
-    
+
     protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len, int msPerSample, Time_t deviceTimestamp) {
         holder.data.values.userData.clear();
-        for(int n : newValues) {
+        for (int n : newValues) {
             holder.data.values.userData.addFloat(n);
         }
         holder.data.millisecondsPerSample = msPerSample;
-        if(deviceTimestamp != null) {
+        if (deviceTimestamp != null) {
             holder.data.device_time.sec = deviceTimestamp.sec;
             holder.data.device_time.nanosec = deviceTimestamp.nanosec;
         } else {
@@ -402,7 +405,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
         sampleArrayDataWriter.write(holder.data, holder.handle);
     }
-    
+
     protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, int msPerSample, Time_t timestamp) {
         sampleArraySample(holder, Arrays.asList(newValues), msPerSample, timestamp);
     }
@@ -416,7 +419,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             String metric_id, int instance_id) {
         return sampleArraySample(holder, newValues, len, msPerSample, metric_id, instance_id, null);
     }
-    
+
     protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len, int msPerSample,
             String metric_id, int instance_id, Time_t timestamp) {
         if (null != holder && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
@@ -469,13 +472,13 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     protected boolean iconFromResource(DeviceIdentity di, String iconResourceName) throws IOException {
-        if(null == iconResourceName) {
+        if (null == iconResourceName) {
             di.icon.height = 0;
             di.icon.width = 0;
             di.icon.raster.clear();
             return true;
         }
-        
+
         InputStream is = getClass().getResourceAsStream(iconResourceName);
         if (null != is) {
             try {
@@ -526,6 +529,14 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         // inheritor may have registered... perhaps they should be responsible
         // in their override of shutdown?
 
+        if(timeManager!=null) {
+            timeManager.stop();
+        }
+        
+        if(null != assertIdentityLiveliness) {
+            assertIdentityLiveliness.cancel(false);
+        }
+        
         if (null != alarmSettingsObjectiveCondition) {
             eventLoop.removeHandler(alarmSettingsObjectiveCondition);
             alarmSettingsObjectiveReader.delete_readcondition(alarmSettingsObjectiveCondition);
@@ -578,7 +589,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         deviceIdentityTopic = domainParticipant.create_topic(ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.get_type_name(),
                 DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         deviceIdentityWriter = (DeviceIdentityDataWriter) publisher.create_datawriter_with_profile(deviceIdentityTopic, QosProfiles.ice_library,
-                QosProfiles.invariant_state, null, StatusKind.STATUS_MASK_NONE);
+                QosProfiles.device_identity, null, StatusKind.STATUS_MASK_NONE);
         if (null == deviceIdentityWriter) {
             throw new RuntimeException("deviceIdentityWriter not created");
         }
@@ -647,11 +658,19 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     private Map<InstanceHandle_t, String> instanceMetrics = new HashMap<InstanceHandle_t, String>();
 
+    private ScheduledFuture<?> assertIdentityLiveliness;
+
     protected void writeDeviceIdentity() {
         if (null == deviceIdentity.unique_device_identifier || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("cannot write deviceIdentity without a UDI");
         }
         registerForManagement();
+        
+        if(null == timeManager) {
+            timeManager = new TimeManager(publisher, subscriber, deviceIdentity.unique_device_identifier, "Device");
+            timeManager.start();
+        }
+        
         DomainParticipantQos qos = new DomainParticipantQos();
         domainParticipant.get_qos(qos);
         try {
@@ -718,42 +737,50 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                         }
                     });
         }
+        if (null == assertIdentityLiveliness) {
+            assertIdentityLiveliness = executor.scheduleAtFixedRate(this, 500L, 800L, TimeUnit.MILLISECONDS);
+        }
     }
+
+    public void run() {
+        deviceIdentityWriter.assert_liveliness();
+    }
+    
     @Override
     public String getManufacturer() {
         return null == deviceIdentity ? null : deviceIdentity.manufacturer;
     }
-    
+
     @Override
     public String getModel() {
         return null == deviceIdentity ? null : deviceIdentity.model;
     }
-    
+
     @Override
     public String[] getPartition() {
         PublisherQos pQos = new PublisherQos();
         publisher.get_qos(pQos);
         String[] partition = new String[pQos.partition.name.size()];
-        for(int i = 0; i < partition.length; i++) {
+        for (int i = 0; i < partition.length; i++) {
             partition[i] = (String) pQos.partition.name.get(i);
         }
         return partition;
     }
-    
+
     @Override
     public void addPartition(String partition) {
         List<String> currentPartition = new ArrayList<String>(Arrays.asList(getPartition()));
         currentPartition.add(partition);
         setPartition(currentPartition.toArray(new String[0]));
     }
-    
+
     @Override
     public void removePartition(String partition) {
         List<String> currentPartition = new ArrayList<String>(Arrays.asList(getPartition()));
         currentPartition.remove(partition);
         setPartition(currentPartition.toArray(new String[0]));
     }
-    
+
     @Override
     public void setPartition(String[] partition) {
         PublisherQos pQos = new PublisherQos();
@@ -767,17 +794,21 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         publisher.set_qos(pQos);
         subscriber.set_qos(sQos);
     }
-    
+
     @Override
     public String getUniqueDeviceIdentifier() {
         return null == deviceIdentity ? null : deviceIdentity.unique_device_identifier;
     }
-    
+
     private ObjectInstance objInstance;
+
     private void registerForManagement() {
-        if(null == objInstance) {
+        if (null == objInstance) {
             try {
-                objInstance = ManagementFactory.getPlatformMBeanServer().registerMBean(this, new ObjectName(AbstractDevice.class.getPackage().getName()+":type="+AbstractDevice.class.getSimpleName()+",name="+getUniqueDeviceIdentifier()));
+                objInstance = ManagementFactory.getPlatformMBeanServer().registerMBean(
+                        this,
+                        new ObjectName(AbstractDevice.class.getPackage().getName() + ":type=" + AbstractDevice.class.getSimpleName() + ",name="
+                                + getUniqueDeviceIdentifier()));
             } catch (JMException e) {
                 log.warn("Unable to register with JMX", e);
             }

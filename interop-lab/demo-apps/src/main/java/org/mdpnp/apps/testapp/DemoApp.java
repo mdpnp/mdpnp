@@ -45,6 +45,7 @@ import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.xray.XRayVentPanel;
 import org.mdpnp.devices.BuildInfo;
 import org.mdpnp.devices.EventLoopHandler;
+import org.mdpnp.devices.TimeManager;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
@@ -145,31 +146,23 @@ public class DemoApp {
 
         // This could prove confusing
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
-        final DomainParticipantQos pQos = new DomainParticipantQos();
-        DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-        String udi = AbstractSimulatedDevice.randomUDI();
-        pQos.participant_name.name = "Supervisor";
-        try {
-
-            pQos.user_data.value.clear();
-            pQos.user_data.value.addAllByte(udi.getBytes("ASCII"));
-        } catch (UnsupportedEncodingException e) {
-            log.error(e.getMessage(), e);
-        }
+        final String udi = AbstractSimulatedDevice.randomUDI();
 
         final DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
         DomainParticipantFactory.get_instance().get_qos(qos);
         qos.entity_factory.autoenable_created_entities = false;
         DomainParticipantFactory.get_instance().set_qos(qos);
-        final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null,
+        final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null,
                 StatusKind.STATUS_MASK_NONE);
         final Subscriber subscriber = participant.get_implicit_subscriber();
         final Publisher publisher = participant.get_implicit_publisher();
+        final TimeManager timeManager = new TimeManager(publisher, subscriber, udi, "Supervisor");
+
         @SuppressWarnings("serial")
-        final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop) {
+        final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop, timeManager) {
             @Override
-            protected void notADevice(ParticipantBuiltinTopicData participant_info, boolean alive) {
-                if ("Supervisor".equals(participant_info.participant_name.name) && alive) {
+            protected void notADevice(ice.HeartBeat heartbeat, boolean alive) {
+                if ("Supervisor".equals(heartbeat.type) && alive) {
                     JOptionPane.showMessageDialog(panel, "Another supervisor has been detected on the domain", "Multiple Supervisors",
                             JOptionPane.ERROR_MESSAGE);
                 }
@@ -180,6 +173,7 @@ public class DemoApp {
             public void run() {
                 nc.start();
                 participant.enable();
+                timeManager.start();
                 qos.entity_factory.autoenable_created_entities = true;
                 DomainParticipantFactory.get_instance().set_qos(qos);
                 done();
