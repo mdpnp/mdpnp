@@ -33,7 +33,6 @@ import org.w3c.dom.NodeList;
 
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
-import com.rti.dds.infrastructure.StringSeq;
 
 /**
  * @author Jeff Plourde
@@ -44,7 +43,7 @@ public class Main {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     
-    private static final void loadIceQosLibrary(DomainParticipantFactoryQos qos) {
+    public static final void loadIceQosLibrary(DomainParticipantFactoryQos qos) {
         InputStream is = Main.class
                 .getResourceAsStream("/META-INF/ice_library.xml");
         if (is != null) {
