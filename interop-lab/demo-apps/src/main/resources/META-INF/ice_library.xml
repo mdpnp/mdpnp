@@ -56,16 +56,16 @@
       in latency or packet loss. These settings need to be rigorously tested in 
       a controlled environment. -->
      <participant_liveliness_lease_duration>
-      <sec>1</sec>
-      <nanosec>750000000</nanosec>
+      <sec>10</sec>
+      <nanosec>0</nanosec>
      </participant_liveliness_lease_duration>
      <participant_liveliness_assert_period>
-      <sec>0</sec>
-      <nanosec>500000000</nanosec>
+      <sec>3</sec>
+      <nanosec>0</nanosec>
      </participant_liveliness_assert_period>
      <max_liveliness_loss_detection_period>
-      <sec>1</sec>
-      <nanosec>250000000</nanosec>
+      <sec>5</sec>
+      <nanosec>0</nanosec>
      </max_liveliness_loss_detection_period>
 
      <!-- Following SEDP controls added with defaults for future experimentation -->
@@ -190,12 +190,6 @@
    <datareader_qos>
     <reliability>
      <kind>DDS_BEST_EFFORT_RELIABILITY_QOS</kind>
-     <max_blocking_time>
-      <sec>2</sec>
-      <nanosec>0</nanosec>
-     </max_blocking_time>
-     <acknowledgment_kind>DDS_PROTOCOL_ACKNOWLEDGMENT_MODE
-     </acknowledgment_kind>
     </reliability>
     <liveliness>
      <!-- Let DDS handle heartbeats -->
@@ -309,23 +303,9 @@
   <qos_profile name="heartbeat" base_name="default_profile"
    is_default_qos="false">
    <datareader_qos>
-    <!-- Ask DDS to sort samples for ease-of-programming. Depending on the 
-     reader is might want to deal with time ordering itself and disable this feature -->
-    <destination_order>
-     <kind>DDS_BY_SOURCE_TIMESTAMP_DESTINATIONORDER_QOS</kind>
-    </destination_order>
-    <reliability>
-     <kind>DDS_RELIABLE_RELIABILITY_QOS</kind>
-     <max_blocking_time>
-      <sec>2</sec>
-      <nanosec>0</nanosec>
-     </max_blocking_time>
-     <acknowledgment_kind>DDS_PROTOCOL_ACKNOWLEDGMENT_MODE
-     </acknowledgment_kind>
-    </reliability>
     <liveliness>
      <!-- Let DDS handle heartbeats -->
-     <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
+     <kind>DDS_MANUAL_BY_TOPIC_LIVELINESS_QOS</kind>
      <!-- Point at which writers (and associated instances) become "not alive" -->
      <lease_duration>
       <sec>3</sec>
@@ -333,57 +313,32 @@
      </lease_duration>
     </liveliness>
     <durability>
-     <!-- Writer is responsible for maintaining transient copies of samples 
-      ... see history -->
-     <kind>DDS_TRANSIENT_LOCAL_DURABILITY_QOS</kind>
-     <!-- Contact that writer directly to get the samples -->
-     <direct_communication>DDS_BOOLEAN_TRUE</direct_communication>
+     <kind>DDS_VOLATILE_DURABILITY_QOS</kind>
     </durability>
 
     <!-- This is contrived and meaningless because sample rate is not the 
      same in all cases -->
     <history>
-     <kind>KEEP_ALL_HISTORY_QOS</kind>
-     <!-- <depth>1</depth> -->
+     <kind>KEEP_LAST_HISTORY_QOS</kind>
+     <depth>1</depth>
     </history>
-    <!-- Why isn't lifespan supported on the reading side? -->
-    <!-- For data sampled at different rates one history depth does not fit 
-     all cases -->
-    <!-- <lifespan> <duration> <sec>10</sec> <nanosec>0</nanosec> </duration> 
-     </lifespan> -->
-    <latency_budget>
-     <duration>
-      <sec>1</sec>
-      <nanosec>0</nanosec>
-     </duration>
-    </latency_budget>
    </datareader_qos>
    <datawriter_qos>
-    <!-- Reliability is offered by default -->
-    <!-- Liveliness lease of 1 second is offered by default -->
-    <!-- Destination ordering BY_SOURCE is offered by default -->
-    <!-- Durability offered is TRANSIENT_LOCAL by default; change here for 
-     persistence of numerics? -->
-    <!-- Ownership is exclusive by default -->
-    <!-- Publish-mode async by default; is that necessary for these small 
-     messages? -->
-    <!-- History is KEEP_ALL by default -->
-
-    <!-- For TRANSIENT_LOCAL durability ease the burden on writers by only 
-     storing numeric data for an hour. A persistent store can make it reasonable 
-     to store more -->
-    <lifespan>
-     <duration>
-      <sec>900</sec>
+    <publish_mode>
+     <kind>DDS_SYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+    </publish_mode>
+    <durability>
+     <kind>DDS_VOLATILE_DURABILITY_QOS</kind>
+    </durability>
+    <liveliness>
+     <!-- Let DDS handle heartbeats -->
+     <kind>DDS_MANUAL_BY_TOPIC_LIVELINESS_QOS</kind>
+     <!-- Point at which writers (and associated instances) become "not alive" -->
+     <lease_duration>
+      <sec>3</sec>
       <nanosec>0</nanosec>
-     </duration>
-    </lifespan>
-    <latency_budget>
-     <duration>
-      <sec>0</sec>
-      <nanosec>0</nanosec>
-     </duration>
-    </latency_budget>
+     </lease_duration>
+    </liveliness>    
    </datawriter_qos>
 
   </qos_profile>
