@@ -142,7 +142,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         }
         
         if (null != device) {
-            hostname.setText(""); // device.getHostname());
+            hostname.setText(device.getHostname());
             
 
             DeviceIcon icon = device.getIcon();

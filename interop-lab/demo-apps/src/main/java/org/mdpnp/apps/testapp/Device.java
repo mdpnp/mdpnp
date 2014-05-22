@@ -15,13 +15,12 @@ package org.mdpnp.apps.testapp;
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.ref.SoftReference;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
 
 /**
  * Convenience class for storing DeviceIdentity and DeviceConnectivity instances
@@ -37,6 +36,7 @@ public class Device {
     private String udi;
     private DeviceIdentity deviceIdentity;
     private DeviceConnectivity deviceConnectivity;
+    private ParticipantBuiltinTopicData participantData;
 
     private SoftReference<DeviceIcon> realIcon;
 
@@ -101,7 +101,7 @@ public class Device {
         return udi;
     }
 
-    public void setDeviceIdentity(DeviceIdentity deviceIdentity) {
+    public void setDeviceIdentity(DeviceIdentity deviceIdentity, ParticipantBuiltinTopicData participantData) {
         this.realIcon = null;
         if (null == deviceIdentity) {
             this.deviceIdentity = null;
@@ -112,6 +112,12 @@ public class Device {
                 this.deviceIdentity = new DeviceIdentity(deviceIdentity);
             } else {
                 this.deviceIdentity.copy_from(deviceIdentity);
+            }
+            if(null == this.participantData) {
+                this.participantData = new ParticipantBuiltinTopicData();
+                this.participantData.copy_from(participantData);
+            } else {
+                this.participantData.copy_from(participantData);
             }
         }
     }
@@ -126,6 +132,10 @@ public class Device {
                 }
             }
         }
+    }
+    
+    public String getHostname() {
+        return null == participantData ? null : ParticipantOnly.getHostname(participantData);
     }
 
     public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {

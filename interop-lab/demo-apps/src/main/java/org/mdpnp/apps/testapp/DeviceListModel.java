@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import javax.swing.AbstractListModel;
 
@@ -39,10 +38,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
 import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
-import com.rti.dds.infrastructure.RETCODE_PRECONDITION_NOT_MET;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusCondition;
 import com.rti.dds.infrastructure.StatusKind;
@@ -52,7 +51,6 @@ import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
-import com.rti.dds.topic.BuiltinTopicKey_t;
 import com.rti.dds.topic.TopicDescription;
 
 @SuppressWarnings("serial")
@@ -83,7 +81,8 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
         Device device = contentsByUDI.get(udi);
         if(null == device && create) {
             device = new Device(udi);
-            device.setDeviceIdentity(deviceIdentityByUDI.get(udi));
+            IdentityAndParticipant iandp = deviceIdentityByUDI.get(udi);
+            device.setDeviceIdentity(null==iandp?null:iandp.deviceIdentity, null==iandp?null:iandp.participantData);
             device.setDeviceConnectivity(deviceConnectivityByUDI.get(udi));
             contentsByUDI.put(udi, device);
             contents.add(0, device);
@@ -142,19 +141,24 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
         }
     }
 
-    private final void update(DeviceIdentity di) {
+    private final void update(DeviceIdentity di, ParticipantBuiltinTopicData data) {
         
         if (!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
         }
         if(deviceIdentityByUDI.containsKey(di.unique_device_identifier)) {
-            deviceIdentityByUDI.get(di.unique_device_identifier).copy_from(di);
+            IdentityAndParticipant iandp = deviceIdentityByUDI.get(di.unique_device_identifier); 
+            iandp.deviceIdentity.copy_from(di);
+            iandp.participantData.copy_from(data);
         } else {
-            deviceIdentityByUDI.put(di.unique_device_identifier, new DeviceIdentity(di));
+            IdentityAndParticipant iandp = new IdentityAndParticipant(); 
+            iandp.deviceIdentity.copy_from(di);
+            iandp.participantData.copy_from(data);
+            deviceIdentityByUDI.put(di.unique_device_identifier, iandp);
         }
         Device device = getDevice(di.unique_device_identifier, false);
         if(null != device) {
-            device.setDeviceIdentity(di);
+            device.setDeviceIdentity(di, data);
             update(device);
         }
     }
@@ -195,7 +199,12 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
     protected final Map<Device, Integer> contentsByIdx = new HashMap<Device, Integer>();
     
     protected final Map<String, Device> contentsByUDI = new java.util.concurrent.ConcurrentHashMap<String, Device>();
-    protected final Map<String, DeviceIdentity> deviceIdentityByUDI = new java.util.concurrent.ConcurrentHashMap<String, DeviceIdentity>();
+    private static final class IdentityAndParticipant {
+        public final ParticipantBuiltinTopicData participantData = new ParticipantBuiltinTopicData();
+        public final DeviceIdentity deviceIdentity = new DeviceIdentity();
+    }
+    
+    protected final Map<String, IdentityAndParticipant> deviceIdentityByUDI = new java.util.concurrent.ConcurrentHashMap<String, IdentityAndParticipant>();
     protected final Map<String, DeviceConnectivity> deviceConnectivityByUDI = new java.util.concurrent.ConcurrentHashMap<String, DeviceConnectivity>();
 
     private final Subscriber subscriber;
@@ -246,8 +255,15 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
                         }
 
                         if (si.valid_data) {
+                            ParticipantBuiltinTopicData data = null;
+                            try {
+                                data = new ParticipantBuiltinTopicData();
+                                reader.get_matched_publication_participant_data(data, si.publication_handle);
+                            } catch(Exception e) {
+                                log.warn("Unable to get participant information for DeviceIdentity publication");
+                            }
 //                            log.debug("DeviceIdentity at " + si.source_timestamp + " " + di);
-                            update(di);
+                            update(di, data);
                         }
                         
                     }
