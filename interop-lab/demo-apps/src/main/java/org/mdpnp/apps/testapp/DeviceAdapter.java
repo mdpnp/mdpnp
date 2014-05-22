@@ -38,8 +38,6 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.domain.DomainParticipant;
-
 /**
  * @author Jeff Plourde
  *
@@ -136,7 +134,6 @@ public class DeviceAdapter {
         device = DeviceFactory.buildDevice(type, domainId, eventLoop);
 
         if (gui) {
-            final DomainParticipant participant = device.getParticipant();
             
             final DeviceDataMonitor deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier);
             
