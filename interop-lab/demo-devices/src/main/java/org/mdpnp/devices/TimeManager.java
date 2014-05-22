@@ -388,11 +388,10 @@ public class TimeManager implements Runnable {
                     }
                 }
                 
-                
-                
+              
                 timeout.sec = HEARTBEAT_INTERVAL.sec;
                 timeout.nanosec = HEARTBEAT_INTERVAL.nanosec;
-                timeout.subtract(sinceLastHeartbeat);
+                subtract(timeout, sinceLastHeartbeat);
                 waitSet.wait(condSeq, timeout);
             } catch(RETCODE_TIMEOUT t) {
                 
