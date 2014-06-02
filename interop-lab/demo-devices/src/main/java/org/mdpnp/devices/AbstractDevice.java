@@ -33,15 +33,12 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 import javax.management.JMException;
 import javax.management.ObjectInstance;
@@ -76,7 +73,7 @@ import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicDescription;
 
-public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBean, Runnable {
+public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBean {
     protected final ThreadGroup threadGroup;
     protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(this);
     protected final EventLoop eventLoop;
@@ -533,10 +530,6 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             timeManager.stop();
         }
         
-        if(null != assertIdentityLiveliness) {
-            assertIdentityLiveliness.cancel(false);
-        }
-        
         if (null != alarmSettingsObjectiveCondition) {
             eventLoop.removeHandler(alarmSettingsObjectiveCondition);
             alarmSettingsObjectiveReader.delete_readcondition(alarmSettingsObjectiveCondition);
@@ -658,8 +651,6 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     private Map<InstanceHandle_t, String> instanceMetrics = new HashMap<InstanceHandle_t, String>();
 
-    private ScheduledFuture<?> assertIdentityLiveliness;
-
     protected void writeDeviceIdentity() {
         if (null == deviceIdentity.unique_device_identifier || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("cannot write deviceIdentity without a UDI");
@@ -737,13 +728,6 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                         }
                     });
         }
-        if (null == assertIdentityLiveliness) {
-            assertIdentityLiveliness = executor.scheduleAtFixedRate(this, 500L, 800L, TimeUnit.MILLISECONDS);
-        }
-    }
-
-    public void run() {
-        deviceIdentityWriter.assert_liveliness();
     }
     
     @Override
