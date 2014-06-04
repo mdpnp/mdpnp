@@ -102,7 +102,7 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
     @Override
     public void aliveHeartbeat(SampleInfo sampleInfo, HeartBeat heartbeat) {
         if("Device".equals(heartbeat.type)) {
-            log.debug(heartbeat.unique_device_identifier + " IS STILL ALIVE");
+            log.trace(heartbeat.unique_device_identifier + " IS STILL ALIVE");
             getDevice(heartbeat.unique_device_identifier, true);
         } else {
             notADevice(heartbeat, true);
@@ -122,7 +122,7 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
     
     @Override
     public void synchronization(String remote_udi, Duration_t latency, Duration_t clockDifference) {
-        System.out.println(remote_udi + " has latency="+latency+" and clockDifference="+clockDifference);
+        log.trace(remote_udi + " has latency="+latency+" and clockDifference="+clockDifference);
     }
     
     private final void update(DeviceConnectivity dc) {
