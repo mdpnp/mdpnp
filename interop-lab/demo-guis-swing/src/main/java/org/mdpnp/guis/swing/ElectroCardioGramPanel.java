@@ -56,6 +56,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
     private final static String[] ECG_WAVEFORMS = new String[] { rosetta.MDC_ECG_AMPL_ST_I.VALUE, rosetta.MDC_ECG_AMPL_ST_II.VALUE,
             rosetta.MDC_ECG_AMPL_ST_III.VALUE };
 
+    @SuppressWarnings("unused")
     private final static String[] ECG_LABELS = new String[] { "ECG LEAD I", "ECG LEAD II", "ECG LEAD III", "ECG LEAD AVF", "ECG LEAD AVL",
             "ECG LEAD AVR" };
 
@@ -67,7 +68,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
     private final Map<String, WaveformPanel> panelMap = new HashMap<String, WaveformPanel>();
     private final GridLayout waveLayout = new GridLayout(1,1);
     private final JPanel waves = new JPanel(waveLayout);
-
+    
     public ElectroCardioGramPanel() {
         super(new BorderLayout());
         add(label("Last Sample: ", time, BorderLayout.WEST), BorderLayout.SOUTH);
@@ -172,8 +173,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
                     });
                     wuws.start();
                 }
-                date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
-                time.setText(dateFormat.format(date));
+                
             }
         }
 
@@ -187,8 +187,10 @@ public class ElectroCardioGramPanel extends DevicePanel {
         @Override
         public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
-            // TODO Auto-generated method stub
-            
+            if(sampleInfo.valid_data && ECG_WAVEFORMS_SET.contains(data.metric_id)) {
+                date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+                time.setText(dateFormat.format(date));
+            }
         } 
     };    
 }

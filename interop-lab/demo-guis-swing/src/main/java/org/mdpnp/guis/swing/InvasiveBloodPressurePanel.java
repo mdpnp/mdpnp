@@ -151,6 +151,10 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
         @Override
         public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
+            if(sampleInfo.valid_data && panelMap.containsKey(data.metric_id)) {
+                date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+                time.setText(dateFormat.format(date));
+            }
         }
         
     };

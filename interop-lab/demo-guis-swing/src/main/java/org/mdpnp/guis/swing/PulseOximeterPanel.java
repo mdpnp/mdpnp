@@ -51,6 +51,7 @@ import com.rti.dds.subscription.SampleInfo;
  */
 public class PulseOximeterPanel extends DevicePanel {
 
+    @SuppressWarnings("unused")
     private JLabel spo2, heartrate, spo2Label, heartrateLabel;
     private JLabel spo2Low, spo2Up, heartrateLow, heartrateUp;
     private JPanel spo2Bounds, heartrateBounds;
