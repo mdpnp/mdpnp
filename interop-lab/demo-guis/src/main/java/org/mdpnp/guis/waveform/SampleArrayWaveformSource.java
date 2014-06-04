@@ -19,8 +19,16 @@ public class SampleArrayWaveformSource implements WaveformSource {
     private final ice.SampleArrayDataReader reader;
     private final ice.SampleArray keyHolder;
     
-    private final SampleInfoSeq sample_info_seq = new SampleInfoSeq();
-    private final ice.SampleArraySeq sample_array_seq = new ice.SampleArraySeq();
+    private final ThreadLocal<SampleInfoSeq> sample_info_seq = new ThreadLocal<SampleInfoSeq>() {
+        protected SampleInfoSeq initialValue() {
+            return new SampleInfoSeq();
+        }
+    };
+    private final ThreadLocal<ice.SampleArraySeq> sample_array_seq = new ThreadLocal<ice.SampleArraySeq>() {
+        protected ice.SampleArraySeq initialValue() {
+            return new ice.SampleArraySeq();
+        }
+    };
     
     public SampleArrayWaveformSource(final ice.SampleArrayDataReader reader, ice.SampleArray keyHolder) {
         this.reader = reader;
@@ -31,14 +39,15 @@ public class SampleArrayWaveformSource implements WaveformSource {
     private static final Logger log = LoggerFactory.getLogger(SampleArrayWaveformSource.class);
 
     @Override
-    public void iterate(WaveformIterator itr) {
+    public void iterate(final WaveformIterator itr) {
         try {
             itr.begin();
             InstanceHandle_t instanceHandle = reader.lookup_instance(keyHolder);
             if(instanceHandle.is_nil()) {
                 return;
             }
-            
+            SampleInfoSeq sample_info_seq = this.sample_info_seq.get();
+            ice.SampleArraySeq sample_array_seq = this.sample_array_seq.get();
             try {
                 reader.read_instance(sample_array_seq, sample_info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, instanceHandle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
                 for(int i = 0; i < sample_info_seq.size(); i++) {
