@@ -13,17 +13,19 @@
 package org.mdpnp.guis.waveform.swing;
 
 import java.awt.BorderLayout;
-import java.awt.Canvas;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
 import java.util.concurrent.ScheduledFuture;
 
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -43,12 +45,11 @@ import org.mdpnp.guis.waveform.WaveformSource;
  * @author Jeff Plourde
  *
  */
-public class SwingWaveformPanel extends Canvas implements WaveformPanel, SwingAnimatable {
+public class SwingWaveformPanel extends JComponent implements WaveformPanel, SwingAnimatable {
     private final WaveformRenderer renderer = new WaveformRenderer();
     private final SwingWaveformCanvas canvas = new SwingVectorWaveformCanvas(this);
-//    private final SwingWaveformCanvas canvas = new SwingRasterWaveformCanvas(this);
     private WaveformSource source;
-
+    private BufferedImage offscreenBuffer = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
 
 
     private final JPopupMenu popup;
@@ -151,11 +152,22 @@ public class SwingWaveformPanel extends Canvas implements WaveformPanel, SwingAn
         this.popup.add(aboutPanel);
 
         setSource(source);
-        enableEvents(MouseEvent.MOUSE_PRESSED | MouseEvent.MOUSE_RELEASED);
+        enableEvents(MouseEvent.MOUSE_PRESSED | MouseEvent.MOUSE_RELEASED | ComponentEvent.COMPONENT_RESIZED);
 
     }
 
+    @Override
+    protected void processComponentEvent(ComponentEvent e) {
+        super.processComponentEvent(e);
+        switch(e.getID()) {
+        case ComponentEvent.COMPONENT_RESIZED:
 
+            Dimension dim = getSize();
+//            System.err.println("Component resized:"+dim);
+            offscreenBuffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
+            break;
+        }
+    }
 
     @Override
     protected void processMouseEvent(MouseEvent e) {
@@ -193,19 +205,24 @@ public class SwingWaveformPanel extends Canvas implements WaveformPanel, SwingAn
     public void stop() {
         SwingAnimatorSingleton.getInstance().release(this);
     }
+    
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        g.drawImage(offscreenBuffer, 0, 0, this);
+    }
 
+    
+    
     @Override
     public void run() {
         try {
             if(null != source && null != renderer) {
-                BufferStrategy bufferStrategy = getBufferStrategy();
-                if(null == bufferStrategy) {
-                    createBufferStrategy(2);
-                    bufferStrategy = getBufferStrategy();
-                }
-                if(null != bufferStrategy) {
-                    canvas.run(renderer, bufferStrategy);
-                }
+                
+                Graphics2D graphics = offscreenBuffer.createGraphics();
+                canvas.run(renderer, graphics);
+                graphics.dispose();
+                repaint();
             }
         } catch(Throwable t) {
             t.printStackTrace();
