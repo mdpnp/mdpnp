@@ -442,7 +442,7 @@
     <durability>
      <!-- Writer is responsible for maintaining transient copies of samples 
       ... see history -->
-     <kind>DDS_TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+     <kind>DDS_VOLATILE_DURABILITY_QOS</kind>
      <!-- Contact that writer directly to get the samples -->
      <direct_communication>DDS_BOOLEAN_TRUE</direct_communication>
     </durability>

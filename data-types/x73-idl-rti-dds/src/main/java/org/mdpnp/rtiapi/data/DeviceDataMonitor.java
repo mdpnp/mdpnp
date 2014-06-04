@@ -15,6 +15,8 @@ package org.mdpnp.rtiapi.data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.infrastructure.Duration_t;
+import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.Subscriber;
 /**
@@ -37,16 +39,26 @@ public class DeviceDataMonitor {
         return udi;
     }
 
+    public void startAndWait(InstanceModel<?, ?> instanceModel, Subscriber subscriber, EventLoop eventLoop, String identity_exp, StringSeq identity, Duration_t waitTime, String profile) {
+        try {
+            instanceModel.start(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, profile);
+//            instanceModel.getReader().wait_for_historical_data(waitTime);
+        } catch(RETCODE_TIMEOUT timeout) {
+            log.warn("Non-fatal timed out waiting " + waitTime.sec + " seconds and " + waitTime.nanosec + " nanoseconds for historical " + instanceModel.getReader().get_topicdescription().get_name());
+        }
+    }
+    
     public void start(Subscriber subscriber, EventLoop eventLoop) {
         final StringSeq identity = new StringSeq();
         identity.add("'" + udi + "'");
         final String identity_exp = "unique_device_identifier = %0";
         
-        idModel.start(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, QosProfiles.device_identity);
-        connModel.start(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, QosProfiles.state);
-        numModel.start(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, QosProfiles.numeric_data);
-        saModel.start(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, QosProfiles.waveform_data);
-        isModel.start(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, QosProfiles.state);
+        Duration_t waitTime = new Duration_t(2,0);
+        startAndWait(idModel, subscriber, eventLoop, identity_exp, identity, waitTime, QosProfiles.device_identity);
+        startAndWait(connModel, subscriber, eventLoop, identity_exp, identity, waitTime, QosProfiles.state);
+        startAndWait(numModel, subscriber, eventLoop, identity_exp, identity, waitTime, QosProfiles.numeric_data);
+        startAndWait(saModel, subscriber, eventLoop, identity_exp, identity, waitTime, QosProfiles.waveform_data);
+        startAndWait(isModel, subscriber, eventLoop, identity_exp, identity,waitTime, QosProfiles.state);
     }
     
     
