@@ -10,7 +10,8 @@ import com.rti.dds.subscription.Subscriber;
 public interface InstanceModel<D extends Copyable, R extends DataReaderImpl> extends ListModel<D> {
 
     void addListener(InstanceModelListener<D,R> listener);
-    void iterateAndAddListener(InstanceModelListener<D,R> listener);
+    void iterateAndAddListener(InstanceModelListener<D, R> listener);
+    void iterateAndAddListener(InstanceModelListener<D,R> listener, int maxSamples);
     void removeListener(InstanceModelListener<D,R> listener);
     
     public void start(Subscriber subscriber, EventLoop eventLoop, String expression, StringSeq params, String qosLibrary, String qosProfile);
@@ -18,6 +19,7 @@ public interface InstanceModel<D extends Copyable, R extends DataReaderImpl> ext
     void stop();
 
     R getReader();
+    EventLoop getEventLoop();
 
     void start(Subscriber subscriber, EventLoop eventLoop, String qosLibrary, String qosProfile);
 }

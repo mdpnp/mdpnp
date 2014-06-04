@@ -46,11 +46,16 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
     
     @Override
     public void iterateAndAddListener(InstanceModelListener<D, R> listener) {
+        iterateAndAddListener(listener, ResourceLimitsQosPolicy.LENGTH_UNLIMITED);
+    }
+    
+    @Override
+    public void iterateAndAddListener(InstanceModelListener<D, R> listener, int maxSamples) {
         // TODO ordering issues if an instance becomes unalive while I'm catching up this listener
         addListener(listener);
         for(InstanceHandle_t handle : instances) {
             try {
-                readInstance.invoke(reader, sa_seq1, info_seq1, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
+                readInstance.invoke(reader, sa_seq1, info_seq1, maxSamples, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
                 boolean reportedAlive = false;
                 for(int i = 0; i < info_seq1.size(); i++) {
                     if(!reportedAlive) {
@@ -119,6 +124,11 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
     private Subscriber subscriber;
     private EventLoop eventLoop;
     private ContentFilteredTopic filteredTopic;
+    
+    @Override
+    public EventLoop getEventLoop() {
+        return eventLoop;
+    }
 
     @Override
     public R getReader() {
@@ -133,7 +143,6 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
     
     private static final Logger log = LoggerFactory.getLogger(InstanceModelImpl.class);
     
-    @SuppressWarnings("unchecked")
     protected void fireInstanceAlive(D data, SampleInfo sampleInfo) {
         listeners.fire(instanceAlive.set(data, sampleInfo));
     }
