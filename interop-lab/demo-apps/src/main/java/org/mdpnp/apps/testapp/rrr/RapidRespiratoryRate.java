@@ -18,6 +18,9 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
@@ -36,6 +39,7 @@ import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
+import org.mdpnp.guis.waveform.WaveformSource.WaveformIterator;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
@@ -45,7 +49,7 @@ import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
  * @author Jeff Plourde
  *
  */
-public class RapidRespiratoryRate extends JPanel implements ListDataListener {
+public class RapidRespiratoryRate extends JPanel implements ListDataListener, Runnable {
 
     private final JList<ice.SampleArray> capnoSources = new JList<ice.SampleArray>();
     private final JPanel controlPanel = new JPanel();
@@ -53,6 +57,8 @@ public class RapidRespiratoryRate extends JPanel implements ListDataListener {
     private final WaveformPanel wavePanel = new SwingWaveformPanel();
     private final JSlider thresholdSlider = new JSlider(0, 100, 20);
     private final JCheckBox device = new JCheckBox("Create Device");
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private SampleArrayWaveformSource waveformSource;
 
     private final class RespiratoryRateDevice extends AbstractDevice {
 
@@ -80,6 +86,7 @@ public class RapidRespiratoryRate extends JPanel implements ListDataListener {
     }
 
     private RespiratoryRateDevice rrDevice;
+    @SuppressWarnings("unused")
     private final EventLoop eventLoop;
 
     @SuppressWarnings("unchecked")
@@ -103,9 +110,11 @@ public class RapidRespiratoryRate extends JPanel implements ListDataListener {
             public void valueChanged(ListSelectionEvent e) {
                 ice.SampleArray sa = capnoSources.getSelectedValue();
                 if(null == sa) {
-                    wavePanel.setSource(null);
+                    waveformSource = null;
+                    wavePanel.setSource(waveformSource);
                 } else {
-                    wavePanel.setSource(new SampleArrayWaveformSource(model.getReader(), sa));
+                    waveformSource = new SampleArrayWaveformSource(model.getReader(), sa);
+                    wavePanel.setSource(waveformSource);
                 }
             }
             
@@ -129,6 +138,12 @@ public class RapidRespiratoryRate extends JPanel implements ListDataListener {
         });
         capnoSources.setCellRenderer(deviceCellRenderer);   
         wavePanel.start();
+        executor.scheduleAtFixedRate(new Runnable() {
+            public void run() {
+                RapidRespiratoryRate.this.run();
+//                eventLoop.doLater(RapidRespiratoryRate.this);
+            }
+        }, 1000L, 200L, TimeUnit.MILLISECONDS);
     }
 
     private SampleArrayInstanceModel model;
@@ -160,134 +175,97 @@ public class RapidRespiratoryRate extends JPanel implements ListDataListener {
         }
     }
 
-    private final static int HISTORY = 200;
-    private long[] times = new long[HISTORY];
-    private float[] values = new float[HISTORY];
-    private float[] coeffs = new float[HISTORY];
-    private int current;
-
-    private final int minus(int x) {
-        return --x < 0 ? (HISTORY - 1) : x;
-    }
-
-    private final int plus(int x) {
-        return plus(x, 1);
-    }
-
-    private final int plus(int x, int delta) {
-        return (x += delta) >= HISTORY ? (x % HISTORY) : x;
-    }
-
-//    private Long lastBreathTime;
-    // private Float highWaterMark;
-
-    // private float high = Float.MIN_VALUE, low = Float.MAX_VALUE;
 
     private double rr;
+    
+    protected float min, max;
+    protected Long lastCrossing, lastInterval;
+    protected Float lastValue = null;
+    
+    @Override
+    public void run() {
+        SampleArrayWaveformSource source = this.waveformSource;
+        if(source != null) {
+            source.iterate(new WaveformIterator() {
 
-    private final Runnable updateRate = new Runnable() {
-        public void run() {
-            if (rrDevice != null) {
-                rrDevice.updateRate((float) Math.round(rr));
-            }
+                @Override
+                public void begin() {
+                    min = Float.MAX_VALUE;
+                    max = Float.MIN_VALUE;
+                }
+
+                @Override
+                public void sample(long time, float value) {
+                    if(value > max) {
+                        max = value;
+                    } else if(value < min) {
+                        min = value;
+                    }
+                }
+
+                @Override
+                public void end() {
+                    
+                }
+                
+            });
+            final float threshold = max - 1f * thresholdSlider.getValue() / 100f * (max - min);
+            source.iterate(new WaveformIterator() {
+
+                @Override
+                public void begin() {
+                    lastCrossing = null;
+                    lastInterval = null;
+                    lastValue = null;
+                }
+
+                @Override
+                public void sample(long time, float value) {
+                    if(null != lastValue) {
+                        if(value >= threshold && lastValue < threshold) {
+                            if(lastCrossing != null) {
+                                lastInterval = time - lastCrossing;
+                            }
+                            lastCrossing = time;
+                        }
+                        
+                    }
+                    lastValue = value;
+                }
+
+                @Override
+                public void end() {
+                    // ms per breath to breaths/ms
+                    if(null != lastInterval) {
+                        rr = 1.0 / (lastInterval / 60000.0);
+                    }
+//                    System.err.println("lastInterval="+lastInterval+ " lastCrossing="+lastCrossing+ " rr="+rr);
+                    
+                }
+                
+            });
+        } else {
+            rr = 0;
         }
-    };
-
-//    @Override
-//    public void capnoChanged(CapnoModel model, Capno capno) {
-//        if (null != capno && capno.equals(capnoSources.getSelectedValue())) {
-////            wuws.applyUpdate(capno.getSampleArray(), capno.getSampleInfo());
-//            // sample arrays ... why? it's just obnoxious having data samples
-//            // artificially batched like this
-//            long src_time = capno.getSampleInfo().source_timestamp.sec * 1000L + capno.getSampleInfo().source_timestamp.nanosec / 1000000L;
-//            long msPerSample = capno.getSampleArray().millisecondsPerSample;
-//            final int sz = capno.getSampleArray().values.userData.size();
-//            int startedAtCurrent = current;
-//            for (int i = 0; i < sz; i++) {
-//                times[current] = src_time + (i - sz) * msPerSample;
-//                values[current] = capno.getSampleArray().values.userData.getFloat(i);
-//                if (values[minus(current)] <= thresholdSlider.getValue() && values[current] > thresholdSlider.getValue()) {
-//                    if (lastBreathTime != null) {
-//                        rr = 60000.0 / (times[current] - lastBreathTime);
-//                        // rrLabel.setText(Double.toString(rr));
-//                        // if(rrDevice != null) {
-//                        // rrDevice.updateRate((float) rr);
-//                        // }
-//                    }
-//                    lastBreathTime = times[current];
-//                }
-//                current = plus(current);
-//            }
-//
-//            // long mostRecentTime = times[minus(current)];
-//            // long oneHalfSecondAgo = times[minus(current)]-500L;
-//            DCT.dct(values, current, coeffs, 10);
-//            double weighted = 0.0, sum = 0.0;
-//            double max = Double.MIN_VALUE;
-//            int index = 0;
-//
-//            for (int i = 1; i < 10; i++) {
-//                weighted += i * Math.abs(coeffs[i]);
-//                sum += Math.abs(coeffs[i]);
-//                if (Math.abs(coeffs[i]) > max) {
-//                    index = i;
-//                    max = Math.abs(coeffs[i]);
-//                }
-//            }
-//            double weighted_C = weighted / sum;
-//            double bpm = (Math.PI * HISTORY * msPerSample / 1000.0) / (weighted_C + 2);
-//            bpm = 60.0 / bpm;
-//            rrLabel.setText(Double.toString(bpm) + "  " + weighted_C + "  " + index + "  " + rr);
-//            this.rr = bpm;
-//            eventLoop.doLater(updateRate);
-//            // if(rrDevice != null) {
-//            // rrDevice.updateRate((float) bpm);
-//            // }
-//
-//            // process each point as if it were coming in anew like real data
-//            // samples would
-//            for (int localCurrent = startedAtCurrent; localCurrent < current; localCurrent = plus(localCurrent)) {
-//                // for(int i = minus(localCurrent); i != localCurrent; i =
-//                // minus(i)) {
-//                // if(times[i] != 0L && times[i] <= oneHalfSecondAgo) {
-//                // // found it .. a reference point at least some distance back
-//                // in time
-//                // // System.out.println("From " + times[i] + " to " +
-//                // mostRecentTime + " value from " + values[i] + " to " +
-//                // values[minus(current)]);
-//                // double rateChange = 1.0 * (values[minus(localCurrent)] -
-//                // values[i]) / (mostRecentTime - times[i]);
-//                // low = (float) Math.min(low, rateChange);
-//                // high = (float) Math.max(high, rateChange);
-//                // rrLabel.setText(""+(1000.0*low) + " / " + (1000.0*high)+
-//                // " / "+Double.toString(1000.0*rateChange));
-//                // break;
-//                // }
-//                // }
-//            }
-//            // if(current == 0) {
-//            // System.err.println(Arrays.toString(values));
-//            // }
-//
-//        }
-//    }
-
+        this.rrLabel.setText(""+Math.round(rr));
+        if (rrDevice != null) {
+            rrDevice.updateRate((float) Math.round(rr));
+        }
+    }
+    
+    
     @Override
     public void intervalAdded(ListDataEvent e) {
-        // TODO Auto-generated method stub
         
     }
 
     @Override
     public void intervalRemoved(ListDataEvent e) {
-        // TODO Auto-generated method stub
         
     }
 
     @Override
     public void contentsChanged(ListDataEvent e) {
-        // TODO Auto-generated method stub
-        
-    }
 
+    }
 }
