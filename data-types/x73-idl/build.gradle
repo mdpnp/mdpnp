@@ -22,14 +22,3 @@ task build(type: Zip) {
 
 artifacts {  archives build }
 
-if(project.hasProperty('MDPNP_WRITE_USER') && project.hasProperty('MDPNP_WRITE_PASSWORD')) {
-  uploadArchives { 
-    repositories { 
-      mavenDeployer { 
-	repository(url: 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-release-local') { 
-	  authentication(userName: MDPNP_WRITE_USER, password: MDPNP_WRITE_PASSWORD)
-	}
-      }
-    }
-  }
-}
