@@ -1,7 +1,7 @@
-PARCEL=demo-apps-0.1.5-SNAPSHOT-linux-arm
+PARCEL=demo-apps-0.1.5-SNAPSHOT
 TARGETS=`cat targets | sed '/^\s*#/d'`
 # Add --offline to the following line if no internet access
-./gradlew  -POS_NAME=linux -POS_ARCH=arm :interop-lab:demo-apps:distZip
+./gradlew :interop-lab:demo-apps:distZip
 
 for TARGET in $TARGETS
 do
@@ -25,7 +25,6 @@ do
   echo Stopping device-adapter on $TARGET
   ssh ubuntu@$TARGET sudo service device-adapter stop
   echo Copying more files to $TARGET
-  scp interop-lab/demo-apps/src/main/resources/USER_QOS_PROFILES.xml ubuntu@$TARGET:
   scp log4j.properties ubuntu@$TARGET:
   scp device-adapter ubuntu@$TARGET:
   ssh ubuntu@$TARGET chmod 777 $PARCEL/bin/demo-apps
