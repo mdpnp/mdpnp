@@ -63,6 +63,10 @@ public class RelativeTime implements Value {
         this.relativeTime = microseconds / RESOLUTION_MICROSECONDS;
     }
 
+    public long toSeconds() {
+        return toMicroseconds() / 1000000L;
+    }
+    
     public long toMilliseconds() {
         return toMicroseconds() / 1000L;
     }
