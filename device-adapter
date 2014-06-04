@@ -16,11 +16,11 @@ then
   export DEVICE_ID="`cat /home/ubuntu/device.id`"
 fi
 export ADAPTER_OPTS="ICE_Device_Interface $DEVICE_SETTINGS"
-export ADAPTER_DIR=/home/ubuntu/demo-apps-0.1.5-SNAPSHOT-linux-arm/bin/
+export ADAPTER_DIR=/home/ubuntu/demo-apps-0.1.5-SNAPSHOT/bin
 export ADAPTER_SCR=demo-apps
 export PIDFILE=/var/run/$NAME.pid
 export DEMO_APPS_OPTS="-Dlog4j.configuration=file:$ADAPTER_DIR/../../log4j.properties -DrandomUDI=$DEVICE_ID"
-export JAVA_HOME=/home/ubuntu/jdk1.7.0_51
+export JAVA_HOME=/home/ubuntu/jdk1.7.0_60
 
 case "$1" in
     start)
