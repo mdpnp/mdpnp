@@ -66,6 +66,13 @@ subprojects {
 
     }
     repositories {
+        // Repository for external snapshot libs hosted by mdpnp (unavailable in any other repo)
+        maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-snapshot' 
+        }
+
+        // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
+        maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-release' }
+        
         // Virtual repository of all remote repositories
         // used in the mdpnp project
         maven {
@@ -78,11 +85,7 @@ subprojects {
             }
             url 'http://arvi.mgh.harvard.edu:8080/artifactory/remote-repos' }
 
-        // Repository for external snapshot libs hosted by mdpnp (unavailable in any other repo)
-        maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-snapshot' }
 
-        // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
-        maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-release' }
 
         // All the following should be covered by the remote-repos repository above
         // They are included her for reference (and potentially fallback)
