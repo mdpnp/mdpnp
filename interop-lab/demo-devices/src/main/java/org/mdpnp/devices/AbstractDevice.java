@@ -210,7 +210,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     protected void unregisterAllSampleArrayInstances() {
         while (!registeredSampleArrayInstances.isEmpty()) {
-            unregisterSampleArrayInstance(registeredSampleArrayInstances.get(0));
+            unregisterSampleArrayInstance(registeredSampleArrayInstances.get(0), null);
         }
     }
 
@@ -221,9 +221,13 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
     }
 
-    protected void unregisterSampleArrayInstance(InstanceHolder<SampleArray> holder) {
+    protected void unregisterSampleArrayInstance(InstanceHolder<SampleArray> holder, Time_t timestamp) {
         registeredSampleArrayInstances.remove(holder);
-        sampleArrayDataWriter.unregister_instance(holder.data, holder.handle);
+        if(sampleArraySpecifySourceTimestamp()&&null!=timestamp) {
+            sampleArrayDataWriter.unregister_instance_w_timestamp(holder.data, holder.handle, timestamp);
+        } else {
+            sampleArrayDataWriter.unregister_instance(holder.data, holder.handle);
+        }
     }
 
     protected void unregisterAlarmSettingsInstance(InstanceHolder<ice.AlarmSettings> holder) {
@@ -259,7 +263,9 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
         holder.data.instance_id = instance_id;
-        holder.handle = sampleArrayDataWriter.register_instance(holder.data);
+        if(sampleArraySpecifySourceTimestamp()) {
+            holder.handle = sampleArrayDataWriter.register_instance_w_timestamp(holder.data, timestamp);
+        }
         registeredSampleArrayInstances.add(holder);
         return holder;
     }
@@ -370,6 +376,10 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
         return holder;
     }
+    
+    protected boolean sampleArraySpecifySourceTimestamp() {
+        return false;
+    }
 
     protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, Collection<Number> newValues, int msPerSample, Time_t deviceTimestamp) {
         holder.data.values.userData.clear();
@@ -384,7 +394,11 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             holder.data.device_time.sec = 0;
             holder.data.device_time.nanosec = 0;
         }
-        sampleArrayDataWriter.write(holder.data, holder.handle);
+        if(sampleArraySpecifySourceTimestamp() && null != deviceTimestamp) {
+            sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, deviceTimestamp);
+        } else {
+            sampleArrayDataWriter.write(holder.data, holder.handle);
+        }
     }
 
     protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len, int msPerSample, Time_t deviceTimestamp) {
@@ -400,7 +414,11 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             holder.data.device_time.sec = 0;
             holder.data.device_time.nanosec = 0;
         }
-        sampleArrayDataWriter.write(holder.data, holder.handle);
+        if(sampleArraySpecifySourceTimestamp() && null != deviceTimestamp) {
+            sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, deviceTimestamp);
+        } else {
+            sampleArrayDataWriter.write(holder.data, holder.handle);
+        }
     }
 
     protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, int msPerSample, Time_t timestamp) {
@@ -420,7 +438,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len, int msPerSample,
             String metric_id, int instance_id, Time_t timestamp) {
         if (null != holder && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
-            unregisterSampleArrayInstance(holder);
+            unregisterSampleArrayInstance(holder, timestamp);
             holder = null;
         }
         if (null != newValues) {
@@ -430,7 +448,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             sampleArraySample(holder, newValues, len, msPerSample, timestamp);
         } else {
             if (holder != null) {
-                unregisterSampleArrayInstance(holder);
+                unregisterSampleArrayInstance(holder, timestamp);
                 holder = null;
             }
         }
@@ -446,7 +464,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             String metric_id, int instance_id, Time_t timestamp) {
         // if the specified holder doesn't match the specified name
         if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
-            unregisterSampleArrayInstance(holder);
+            unregisterSampleArrayInstance(holder, timestamp);
             holder = null;
         }
 
@@ -457,7 +475,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             sampleArraySample(holder, newValues, msPerSample, timestamp);
         } else {
             if (holder != null) {
-                unregisterSampleArrayInstance(holder);
+                unregisterSampleArrayInstance(holder, timestamp);
                 holder = null;
             }
         }

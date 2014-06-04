@@ -94,7 +94,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
                 ecgWave = sampleArraySample(ecgWave, data, count, msPerSample, ecg, 0);
             } else {
                 if (ecgWave != null) {
-                    unregisterSampleArrayInstance(ecgWave);
+                    unregisterSampleArrayInstance(ecgWave, null);
                     ecgWave = null;
                 }
             }

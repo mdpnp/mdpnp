@@ -351,7 +351,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             if (0 != (0x40 & status)) {
                 // filter line not connected
                 if (null != DemoCapnostream20.this.co2) {
-                    unregisterSampleArrayInstance(DemoCapnostream20.this.co2);
+                    unregisterSampleArrayInstance(DemoCapnostream20.this.co2, null);
                     DemoCapnostream20.this.co2 = null;
                 }
                 log.warn("Filterline indicates disconnected " + co2 + " with fast status " + Integer.toHexString(status));
