@@ -30,7 +30,7 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
     private int last_x = -1, last_y = -1;
     private long t0, t1, t2;
     private WaveformCanvas canvas;
-    private boolean continuousRescale = true;
+    private boolean continuousRescale = false;
     private boolean overwrite = true;
     private float gapSize = 0.02f;
     boolean aged_segment = true;
@@ -66,11 +66,13 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
     
     @Override
     public void sample(long time, float value) {
-        minY = Math.min(value, minY);
-        maxY = Math.max(value, maxY);
+        if(time>=t1&&time<t2) {
+            minY = Math.min(value, minY);
+            maxY = Math.max(value, maxY);
 
-        if(0==Float.compare(minY, maxY)) {
-            maxY = minY + 0.01f;
+            if(0==Float.compare(minY, maxY)) {
+                maxY = minY + 0.01f;
+            }
         }
         float x_prop = -1f;
         if(overwrite) {
