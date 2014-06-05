@@ -859,6 +859,8 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             if(lastPartitionFileTime!=0L) {
                 setPartition(new String[0]);
                 lastPartitionFileTime = 0L;
+            } else {
+                // No file and it never existed
             }
         } else if(f.canRead() && f.lastModified()>lastPartitionFileTime) {
             try {
