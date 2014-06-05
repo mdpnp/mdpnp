@@ -53,24 +53,26 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
     public void iterateAndAddListener(InstanceModelListener<D, R> listener, int maxSamples) {
         // TODO ordering issues if an instance becomes unalive while I'm catching up this listener
         addListener(listener);
+        LoanableSequence sa_seq = InstanceModelImpl.this.sa_seq.get();
+        SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq.get();
         for(InstanceHandle_t handle : instances) {
             try {
-                readInstance.invoke(reader, sa_seq1, info_seq1, maxSamples, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
+                readInstance.invoke(reader, sa_seq, info_seq, maxSamples, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
                 boolean reportedAlive = false;
-                for(int i = 0; i < info_seq1.size(); i++) {
+                for(int i = 0; i < info_seq.size(); i++) {
                     if(!reportedAlive) {
-                        listener.instanceAlive(this,  reader, (D)sa_seq1.get(i), (SampleInfo) info_seq1.get(i));
+                        listener.instanceAlive(this,  reader, (D)sa_seq.get(i), (SampleInfo) info_seq.get(i));
                         reportedAlive = true;
                     }
-                    if(((SampleInfo)info_seq1.get(i)).valid_data) {
-                        listener.instanceSample(this, reader, (D)sa_seq1.get(i), (SampleInfo) info_seq1.get(i));
+                    if(((SampleInfo)info_seq.get(i)).valid_data) {
+                        listener.instanceSample(this, reader, (D)sa_seq.get(i), (SampleInfo) info_seq.get(i));
                     }
                 }
             } catch (Exception e) {
                 log.error("read_instance", e);
             } finally {
                 try {
-                    returnLoan.invoke(reader, sa_seq1, info_seq1);
+                    returnLoan.invoke(reader, sa_seq, info_seq);
                 } catch (Exception e) {
                     log.error("return_loan", e);
                 }
@@ -135,11 +137,20 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         return reader;
     }
     
-    protected final LoanableSequence sa_seq;
-    protected final SampleInfoSeq info_seq = new SampleInfoSeq();
-    
-    protected final LoanableSequence sa_seq1;
-    protected final SampleInfoSeq info_seq1 = new SampleInfoSeq();
+    protected final ThreadLocal<LoanableSequence> sa_seq = new ThreadLocal<LoanableSequence>() {
+        protected LoanableSequence initialValue() {
+            try {
+                return sequenceClass.newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+    };
+    protected final ThreadLocal<SampleInfoSeq> info_seq = new ThreadLocal<SampleInfoSeq>() {
+        protected SampleInfoSeq initialValue() {
+            return new SampleInfoSeq();
+        };
+    };
     
     private static final Logger log = LoggerFactory.getLogger(InstanceModelImpl.class);
     
@@ -159,6 +170,9 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         @SuppressWarnings("unchecked")
         @Override
         public void conditionChanged(Condition condition) {
+            LoanableSequence sa_seq = InstanceModelImpl.this.sa_seq.get();
+            SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq.get();
+            R reader = InstanceModelImpl.this.reader;
             try {
                 readWCondition.invoke(reader, sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (ReadCondition) condition);
                 InstanceHandle_t lastHandle = InstanceHandle_t.HANDLE_NIL;
@@ -220,8 +234,6 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         this.typeSupportClass = typeSupportClass;
         this.sequenceClass = sequenceClass;
         try {
-            this.sa_seq = sequenceClass.newInstance();
-            this.sa_seq1 = sequenceClass.newInstance();
             getKeyValue = readerClass.getMethod("get_key_value", dataClass, InstanceHandle_t.class);
             returnLoan = readerClass.getMethod("return_loan", sequenceClass, SampleInfoSeq.class);
             readWCondition = readerClass.getMethod("read_w_condition", sequenceClass, SampleInfoSeq.class, int.class, ReadCondition.class);
@@ -304,16 +316,19 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
     @Override
     public D getElementAt(int index) {
         InstanceHandle_t handle = instances.get(index);
+        LoanableSequence sa_seq = InstanceModelImpl.this.sa_seq.get();
+        SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq.get();
+        R reader = this.reader;
         try {
-            readInstance.invoke(reader, sa_seq1, info_seq1, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+            readInstance.invoke(reader, sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
             D d = dataClass.newInstance();
-            d.copy_from(sa_seq1.get(sa_seq1.size()-1));
+            d.copy_from(sa_seq.get(sa_seq.size()-1));
             return d;
         } catch (Exception e) {
             log.error("read_instance", e);
         } finally {
             try {
-                returnLoan.invoke(reader, sa_seq1, info_seq1);
+                returnLoan.invoke(reader, sa_seq, info_seq);
             } catch (Exception e) {
                 log.error("return_loan", e);
             }
