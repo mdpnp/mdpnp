@@ -56,7 +56,8 @@ public class SimControl extends JPanel {
 
     private static final NumericValue[] numericValues = new NumericValue[] {
             new NumericValue("SpO2", rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 0, 100, 98, 10),
-            new NumericValue("Heart Rate", rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 10, 360, 60, 50),
+            new NumericValue("Pulse Rate (SpO2)", rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 10, 360, 60, 50),
+            new NumericValue("Heart Rate (ECG)", rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE, 10, 360, 60, 50),
             new NumericValue("etCO2", rosetta.MDC_AWAY_CO2_EXP.VALUE, 0, 140, 30, 20),
             // The Fluke ProSim does not support respiratory rates less than 10
             // but we'll allow settings down to zero for other simulators

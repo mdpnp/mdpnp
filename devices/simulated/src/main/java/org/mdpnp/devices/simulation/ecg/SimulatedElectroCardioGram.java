@@ -50,6 +50,20 @@ public class SimulatedElectroCardioGram {
 
         @Override
         public void run() {
+            if (null != targetHeartRate) {
+                double delta = targetHeartRate - heartRate;
+                delta = Math.min(5, delta);
+                delta = Math.max(-5, delta);
+                heartRate += delta;
+            }
+            
+            if (null != targetRespiratoryRate) {
+                double delta = targetRespiratoryRate - respiratoryRate;
+                delta = Math.min(2, delta);
+                delta = Math.max(-2, delta);
+                respiratoryRate += delta;
+            }
+            
             for (int i = 0; i < iValues.length; i++) {
                 iValues[i] = SimulatedElectroCardioGram.this.i[postIncrCounti()];
             }
@@ -65,7 +79,7 @@ public class SimulatedElectroCardioGram {
 
     };
 
-    protected void receiveECG(Number[] i, Number[] ii, Number[] iii, int heartRate, int respiratoryRate, double msPerSample) {
+    protected void receiveECG(Number[] i, Number[] ii, Number[] iii, double heartRate, double respiratoryRate, double msPerSample) {
 
     }
 
@@ -176,9 +190,17 @@ public class SimulatedElectroCardioGram {
     private final double[] ii = new double[iiCoeffs.length];
     private final double[] iii = new double[iiiCoeffs.length];
 
-    // TODO build a control system
-    private int heartRate = 60;
-    private int respiratoryRate = 12;
+    private double heartRate = 60, respiratoryRate = 12;
+    
+    private Double targetHeartRate, targetRespiratoryRate;
+    
+    public void setTargetHeartRate(Double targetHeartRate) {
+        this.targetHeartRate = targetHeartRate;
+    }
+
+    public void setTargetRespiratoryRate(Double targetRespiratoryRate) {
+        this.targetRespiratoryRate = targetRespiratoryRate;
+    }
 
     private void initWaves() {
         DCT.idct(iCoeffs, i);

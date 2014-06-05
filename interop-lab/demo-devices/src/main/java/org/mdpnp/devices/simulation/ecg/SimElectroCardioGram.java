@@ -12,6 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation.ecg;
 
+import ice.GlobalSimulationObjective;
+
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
@@ -42,7 +44,7 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
 
     private class MySimulatedElectroCardioGram extends SimulatedElectroCardioGram {
         @Override
-        protected void receiveECG(Number[] iValues, Number[] iiValues, Number[] iiiValues, int heartRateValue, int respiratoryRateValue,
+        protected void receiveECG(Number[] iValues, Number[] iiValues, Number[] iiiValues, double heartRateValue, double respiratoryRateValue,
                 double msPerSample) {
             // ecgCache[0][ecgCount] = copy(iValues, ecgCache[0][ecgCount]);
             // ecgCache[1][ecgCount] = copy(iiValues, ecgCache[1][ecgCount]);
@@ -66,8 +68,8 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
                 sampleArraySample(SimElectroCardioGram.this.ii, iiValues, (int) msPerSample, null);
                 sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, (int) msPerSample, null);
 
-                numericSample(heartRate, heartRateValue, null);
-                numericSample(respiratoryRate, respiratoryRateValue, null);
+                numericSample(heartRate, (float) heartRateValue, null);
+                numericSample(respiratoryRate, (float) respiratoryRateValue, null);
             } catch (Throwable t) {
                 log.error("Error simulating ECG data", t);
             }
@@ -104,5 +106,14 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
     @Override
     protected String iconResourceName() {
         return "ecg.png";
+    }
+    
+    @Override
+    public void simulatedNumeric(GlobalSimulationObjective obj) {
+        if (rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id)) {
+            ecg.setTargetRespiratoryRate((double)obj.value);
+        } else if (rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE.equals(obj.metric_id)) {
+            ecg.setTargetHeartRate((double)obj.value);
+        }
     }
 }

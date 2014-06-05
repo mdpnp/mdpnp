@@ -32,6 +32,7 @@ import org.mdpnp.devices.philips.intellivue.DemoEthernetIntellivue;
 import org.mdpnp.devices.philips.intellivue.DemoSerialIntellivue;
 import org.mdpnp.devices.simulation.co2.SimCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
+import org.mdpnp.devices.simulation.multi.SimMultiparameter;
 import org.mdpnp.devices.simulation.nibp.DemoSimulatedBloodPressure;
 import org.mdpnp.devices.simulation.pulseox.MultiSimPulseOximeter;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
@@ -93,6 +94,8 @@ public class DeviceFactory {
             return new MultiSimPulseOximeter(domainId, eventLoop);
         case FlukeProsim68:
             return new DemoProsim68(domainId, eventLoop);
+        case Multiparameter:
+            return new SimMultiparameter(domainId, eventLoop);
         default:
             throw new RuntimeException("Unknown type:" + type);
         }

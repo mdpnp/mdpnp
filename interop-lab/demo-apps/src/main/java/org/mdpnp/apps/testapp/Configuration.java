@@ -52,6 +52,7 @@ public class Configuration {
                 ice.ConnectionType.Serial, "Oridion", "Capnostream20"), NellcorN595(ice.ConnectionType.Serial, "Nellcor", "N-595"), MasimoRadical7(
                 ice.ConnectionType.Serial, "Masimo", "Radical-7"), Symbiq(ice.ConnectionType.Simulated, "Hospira", "Symbiq"), MultiPO_Simulator(
                 ice.ConnectionType.Simulated, "Simulated", "Multiple Pulse Oximeter"),
+                Multiparameter(ice.ConnectionType.Simulated, "Simulated", "Multiparameter Monitor"),
                 DraegerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"),
                 DraegerEvitaXL(
                         ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), 
