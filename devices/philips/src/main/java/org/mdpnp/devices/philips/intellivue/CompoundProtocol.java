@@ -57,7 +57,8 @@ public class CompoundProtocol implements Protocol {
         } catch (RuntimeException re) {
             bb.position(0);
             log.trace("Offending buffer:\n" + HexUtil.dump(bb, 20));
-            throw new RuntimeException(re);
+            log.error("Error parsing message", re);
+            return null;
         }
     }
 
