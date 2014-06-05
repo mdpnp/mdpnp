@@ -23,7 +23,11 @@ import ice.SampleArray;
 import ice.SampleArrayDataWriter;
 import ice.SampleArrayTypeSupport;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -39,6 +43,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.JMException;
 import javax.management.ObjectInstance;
@@ -657,6 +662,12 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
         threadGroup.setDaemon(true);
         this.eventLoop = eventLoop;
+        
+        executor.scheduleWithFixedDelay(new Runnable() {
+            public void run() {
+                checkForPartitionFile();
+            }
+        }, 1000L, 5000L, TimeUnit.MILLISECONDS);
     }
 
     public void setAlarmSettings(ice.GlobalAlarmSettingsObjective obj) {
@@ -789,12 +800,33 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         SubscriberQos sQos = new SubscriberQos();
         publisher.get_qos(pQos);
         subscriber.get_qos(sQos);
-        pQos.partition.name.clear();
-        sQos.partition.name.clear();
-        pQos.partition.name.addAll(Arrays.asList(partition));
-        sQos.partition.name.addAll(Arrays.asList(partition));
-        publisher.set_qos(pQos);
-        subscriber.set_qos(sQos);
+        
+        if(null == partition) {
+            partition = new String[0];
+        }
+        
+        boolean same = partition.length == pQos.partition.name.size();
+        
+        if(same) {
+            for(int i = 0; i < partition.length; i++) {
+                if(!partition[i].equals(pQos.partition.name.get(i))) {
+                    same = false;
+                    break;
+                }
+            }
+        }
+        
+        if(!same) {
+            log.info("Changing partition to " + Arrays.toString(partition));
+            pQos.partition.name.clear();
+            sQos.partition.name.clear();
+            pQos.partition.name.addAll(Arrays.asList(partition));
+            sQos.partition.name.addAll(Arrays.asList(partition));
+            publisher.set_qos(pQos);
+            subscriber.set_qos(sQos);
+        } else {
+            log.info("Not changing to same partition " + Arrays.toString(partition));
+        }
     }
 
     @Override
@@ -816,4 +848,39 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             }
         }
     }
+    
+    private long lastPartitionFileTime = 0L;
+    
+    public void checkForPartitionFile() {
+        File f = new File("device.partition");
+        
+        if(!f.exists()) {
+            // File once existed
+            if(lastPartitionFileTime!=0L) {
+                setPartition(new String[0]);
+                lastPartitionFileTime = 0L;
+            }
+        } else if(f.canRead() && f.lastModified()>lastPartitionFileTime) {
+            try {
+                List<String> partition = new ArrayList<String>();
+                FileReader fr = new FileReader(f);
+                BufferedReader br = new BufferedReader(fr);
+                String line = null;
+                while(null != (line = br.readLine())) {
+                    partition.add(line);
+                }
+                br.close();
+                setPartition(partition.toArray(new String[0]));
+            } catch (FileNotFoundException e) {
+                log.error("Reading partition info", e);
+            } catch (IOException e) {
+                log.error("Reading partition info", e);
+            }
+            
+            lastPartitionFileTime = f.lastModified();
+        }
+    }
+    
+    
+    
 }
