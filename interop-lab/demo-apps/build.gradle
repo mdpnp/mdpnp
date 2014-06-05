@@ -121,7 +121,7 @@ if(localOsName == MAC) {
     }
     task createSignedPkg(type:Exec, dependsOn: createSignedApp) {
         workingDir "$buildDir/"
-        commandLine 'productbuild', '--component', 'MDPnP Demo Apps.app', '/Applications', '--sign', 'Developer ID Installer: JEFFREY PLOURDE', '--identifier', 'org.mdpnp.apps.testapp.Main', '--version', project.version, 'demo-apps-'+project.version+'-mac.pkg'
+        commandLine 'productbuild', '--component', 'MDPnP Demo Apps.app', '/Applications', '--sign', 'Developer ID Installer: JEFFREY PLOURDE', '--identifier', 'org.mdpnp.apps.testapp.Main', '--version', project.version, 'demo-apps-'+project.version+'.pkg'
     }
 
     task verifySignedApp(type:Exec, dependsOn: createSignedApp) {
