@@ -35,6 +35,8 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.infrastructure.Time_t;
+
 /**
  * @author Jeff Plourde
  *
@@ -157,7 +159,12 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         }
 
         private int[] plethBuffer = new int[Packet.FRAMES];
+        
+        private final Time_t updateTime = new Time_t(0,0);
+        private long lastUpdate = 0L;
 
+        private static final long MS_PER_PACKET = (long)( Packet.FRAMES * NoninPulseOx.MILLISECONDS_PER_SAMPLE );
+        
         @Override
         public void receivePacket(Packet currentPacket) {
             // Changed because data will begin flowing even when negotiation is
@@ -168,8 +175,31 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             for (int i = 0; i < Packet.FRAMES; i++) {
                 plethBuffer[i] = currentPacket.getPleth(i);
             }
+            
+            
+            // Complex way of finding the nearest millisecond on an even second
+            // or 333ms or 666ms into the second
+            long now = System.currentTimeMillis();
+            long nearest_second = 1000L * (now / 1000L);
+            long mod = (now-nearest_second) / MS_PER_PACKET;
+            now = nearest_second + mod * MS_PER_PACKET;
+            if((now%1000L)==999L) {
+                now+=1L;
+            }
+
+            if(now <= lastUpdate) { 
+                now = lastUpdate + MS_PER_PACKET;
+                if((now%1000L)==999L) {
+                    now+=1L;
+                }
+            }
+            lastUpdate = now;
+            
+            updateTime.sec = (int) (now / 1000L);
+            updateTime.nanosec = (int) ((now % 1000L) * 1000000L);
+            
             pleth = sampleArraySample(pleth, plethBuffer, plethBuffer.length, (int) NoninPulseOx.MILLISECONDS_PER_SAMPLE,
-                    rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0);
+                    rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, updateTime);
 
             if (currentPacket.getCurrentStatus().isArtifact() || currentPacket.getCurrentStatus().isSensorAlarm()
                     || currentPacket.getCurrentStatus().isOutOfTrack()) {
@@ -358,6 +388,11 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
     protected static boolean response = false;
 
+    @Override
+    protected boolean sampleArraySpecifySourceTimestamp() {
+        return true;
+    }
+    
     // This main program resets the device to data type 13 (which is the
     // default)
     public static void main(String[] args) throws IOException {
