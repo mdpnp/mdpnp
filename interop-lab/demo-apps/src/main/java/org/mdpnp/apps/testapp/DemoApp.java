@@ -31,7 +31,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.imageio.ImageIO;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
 
@@ -433,7 +432,7 @@ public class DemoApp {
                                 }
                             });
                             ol.show(panel.getContent(), AppType.XRay.getId());
-                            xrayVentPanel.start();
+                            xrayVentPanel.start(subscriber, eventLoop);
                         }
                         break;
                     case SimControl:
