@@ -237,7 +237,7 @@ public class RapidRespiratoryRate extends JPanel implements ListDataListener, Ru
                 public void end() {
                     // ms per breath to breaths/ms
                     if(null != lastInterval) {
-                        rr = 1.0 / (lastInterval / 60000.0);
+                        rr = Math.round(1.0 / (lastInterval / 60000.0));
                     }
 //                    System.err.println("lastInterval="+lastInterval+ " lastCrossing="+lastCrossing+ " rr="+rr);
                     
