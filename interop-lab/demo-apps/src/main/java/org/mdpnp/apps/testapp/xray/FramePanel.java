@@ -17,6 +17,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Toolkit;
 import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
@@ -146,11 +147,19 @@ public class FramePanel extends JComponent implements Runnable {
     private Graphics2D renderCameraGraphics = null;
 
     private BufferedImage grabFrame() {
-        bufferedCameraImage = acceptedWebcam.getImage();
+        
+        BufferedImage img = acceptedWebcam.getImage();
+        // This is wasteful in memory space, but this image will render much better via drawImage on mac retina displays
+        BufferedImage tempImage = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_USHORT_555_RGB);
+        Graphics2D g = tempImage.createGraphics();
+        g.drawImage(img, 0,0,null);
+         
+        bufferedCameraImage = tempImage;
+                
         // Build a compositing buffer if necessary (reset when camera or size
         // changes)
         if (null == renderCameraImage) {
-            renderCameraImage = new BufferedImage(bufferedCameraImage.getWidth(), bufferedCameraImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            renderCameraImage = new BufferedImage(bufferedCameraImage.getWidth(), bufferedCameraImage.getHeight(), BufferedImage.TYPE_USHORT_555_RGB);
         }
         return bufferedCameraImage;
     }
@@ -205,6 +214,8 @@ public class FramePanel extends JComponent implements Runnable {
                     acceptedWebcam.close();
                 }
 
+                System.out.println("SCREEN REZ:"+Toolkit.getDefaultToolkit().getScreenResolution());
+                System.out.println("WEBCAM WINDOW SIZE:"+size);
                 // cam holds references to these dimensions
                 acceptedWebcam.setCustomViewSizes(new Dimension[] { new Dimension(size) });
                 acceptedWebcam.setViewSize(new Dimension(size));
@@ -215,7 +226,6 @@ public class FramePanel extends JComponent implements Runnable {
                         if (d.width <= size.width && d.height <= size.height) {
                             log.trace("setViewSize " + d);
                             acceptedWebcam.setViewSize(d);
-
                         }
                     }
                 }
