@@ -217,6 +217,10 @@ public class NetworkLoop implements Runnable {
                             log.error("in NetworkConnection.read, canceling the SelectionKey", e);
                             sk.cancel();
                             continue;
+                        } catch (Throwable t) {
+                            log.error("in NetworkConnection.read, canceling the SelectionKey", t);
+                            sk.cancel();
+                            continue;
                         }
                     }
 
@@ -226,6 +230,10 @@ public class NetworkLoop implements Runnable {
                             nc.write(sk);
                         } catch (IOException e) {
                             log.error("NetworkConnection.write, canceling SelectionKey", e);
+                            sk.cancel();
+                            continue;
+                        } catch(Throwable t) {
+                            log.error("in NetworkConnection.write, canceling the SelectionKey", t);
                             sk.cancel();
                             continue;
                         }
