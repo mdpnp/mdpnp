@@ -160,8 +160,9 @@ public class DemoApp {
             @Override
             protected void notADevice(ice.HeartBeat heartbeat, boolean alive) {
                 if ("Supervisor".equals(heartbeat.type) && alive) {
-                    JOptionPane.showMessageDialog(panel, "Another supervisor has been detected on the domain", "Multiple Supervisors",
-                            JOptionPane.ERROR_MESSAGE);
+                    // TODO Temporarily removing this; is there a requirement that only one Supervisor runs at a time?
+//                    JOptionPane.showMessageDialog(panel, "Another supervisor has been detected on the domain", "Multiple Supervisors",
+//                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         };
