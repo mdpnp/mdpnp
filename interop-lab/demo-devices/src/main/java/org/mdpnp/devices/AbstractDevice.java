@@ -408,8 +408,9 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len, int msPerSample, Time_t deviceTimestamp) {
         holder.data.values.userData.clear();
-        for (int n : newValues) {
-            holder.data.values.userData.addFloat(n);
+        
+        for(int i = 0; i < len; i++) {
+            holder.data.values.userData.addFloat(newValues[i]);
         }
         holder.data.millisecondsPerSample = msPerSample;
         if (deviceTimestamp != null) {
