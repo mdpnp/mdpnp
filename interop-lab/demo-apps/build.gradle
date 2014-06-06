@@ -131,7 +131,7 @@ if(localOsName == MAC) {
 
     task verifySignedPkg(type:Exec, dependsOn: createSignedPkg) {
         workingDir "$buildDir/"
-        commandLine 'spctl', '--verbose', '--assess', '--type', 'install', 'demo-apps-'+project.version+'-mac.pkg'
+        commandLine 'spctl', '--verbose', '--assess', '--type', 'install', 'demo-apps-'+project.version+'.pkg'
     }
 }
 task downloadLaunch4j(dependsOn: createBuildToolsDir) << {
