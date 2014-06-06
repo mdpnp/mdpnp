@@ -146,7 +146,21 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
             }
         };
     };
+    protected final ThreadLocal<LoanableSequence> sa_seq1 = new ThreadLocal<LoanableSequence>() {
+        protected LoanableSequence initialValue() {
+            try {
+                return sequenceClass.newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+    };
     protected final ThreadLocal<SampleInfoSeq> info_seq = new ThreadLocal<SampleInfoSeq>() {
+        protected SampleInfoSeq initialValue() {
+            return new SampleInfoSeq();
+        };
+    };
+    protected final ThreadLocal<SampleInfoSeq> info_seq1 = new ThreadLocal<SampleInfoSeq>() {
         protected SampleInfoSeq initialValue() {
             return new SampleInfoSeq();
         };
@@ -316,8 +330,8 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
     @Override
     public D getElementAt(int index) {
         InstanceHandle_t handle = instances.get(index);
-        LoanableSequence sa_seq = InstanceModelImpl.this.sa_seq.get();
-        SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq.get();
+        LoanableSequence sa_seq = InstanceModelImpl.this.sa_seq1.get();
+        SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq1.get();
         R reader = this.reader;
         try {
             readInstance.invoke(reader, sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
