@@ -53,9 +53,9 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
                                                  // = new JLabel(" ");
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    private final static String[] WAVEFORMS = new String[] { rosetta.MDC_PRESS_BLD_ART.VALUE, rosetta.MDC_PRESS_BLD_ART_ABP.VALUE, };
+    private final static String[] WAVEFORMS = new String[] { rosetta.MDC_PRESS_BLD.VALUE, rosetta.MDC_PRESS_BLD_ART.VALUE, rosetta.MDC_PRESS_BLD_ART_ABP.VALUE, };
 
-    private final static String[] LABELS = new String[] { "ART", "ABP", };
+    private final static String[] LABELS = new String[] { "IBP", "ART", "ABP", };
 
     private final Map<String, WaveformPanel> panelMap = new HashMap<String, WaveformPanel>();
 
