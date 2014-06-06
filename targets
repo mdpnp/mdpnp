@@ -1,11 +1,27 @@
-bbb-capnostream
-bbb-evitaxl
+#bbb-capnostream
+#bbb-evitaxl
 #bbb-apollo
 #bbb-bernoulli
-bbb-ivy
-bbb-mp70
-192.168.1.211
+#bbb-ivy
+#bbb-mp70
+#192.168.1.211
 #10.0.1.200
 #192.168.1.207
 #192.168.17.102
 #bbb-0007
+# Ivy Monitor
+192.168.7.19
+# Evita JSN
+192.168.7.22
+#192.168.15.16
+# Capnostream
+#192.168.15.12
+#192.168.15.42
+#192.168.15.22
+#192.168.15.42
+# MP70
+#192.168.15.46
+#192.168.15.14
+#192.168.15.13
+# Draeger Apollo?
+#192.168.15.97
