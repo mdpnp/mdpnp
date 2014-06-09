@@ -231,6 +231,11 @@
      <refilter>DDS_NONE_REFILTER_QOS</refilter>
     </history>
 
+    <resource_limits>
+     <max_samples>10000</max_samples>
+     <max_instances>100</max_instances>
+     <max_samples_per_instance>100</max_samples_per_instance>
+    </resource_limits>
     <!-- JP 30-Sep-2013 get_key_value is failing on unalive instances maybe 
      they are being purged too quickly? -->
     <!-- <reader_data_lifecycle> <autopurge_nowriter_samples_delay> <sec>INFINITE</sec> 
@@ -297,6 +302,11 @@
     <history>
      <kind>DDS_KEEP_ALL_HISTORY_QOS</kind>
     </history>
+    <resource_limits>
+     <max_samples>10000</max_samples>
+     <max_instances>100</max_instances>
+     <max_samples_per_instance>100</max_samples_per_instance>
+    </resource_limits>
    </datawriter_qos>
   </qos_profile>
 
@@ -338,7 +348,7 @@
       <sec>3</sec>
       <nanosec>0</nanosec>
      </lease_duration>
-    </liveliness>    
+    </liveliness>
    </datawriter_qos>
 
   </qos_profile>
