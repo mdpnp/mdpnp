@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!--
-  Copyright (c) 2014, MD PnP Program
-  All rights reserved.
-  
-  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-  
-  1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-  
-  2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-  
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
--->
+<!-- Copyright (c) 2014, MD PnP Program All rights reserved. Redistribution 
+ and use in source and binary forms, with or without modification, are permitted 
+ provided that the following conditions are met: 1. Redistributions of source 
+ code must retain the above copyright notice, this list of conditions and 
+ the following disclaimer. 2. Redistributions in binary form must reproduce 
+ the above copyright notice, this list of conditions and the following disclaimer 
+ in the documentation and/or other materials provided with the distribution. 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE 
+ LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. -->
 <dds version="5.1.0">
  <qos_library name="ice_library">
   <!-- Using a singular default profile for now -->
@@ -49,12 +54,8 @@
       <sec>2</sec>
       <nanosec>0</nanosec>
      </max_initial_participant_announcement_period>
-     <!-- Target is to detect a newly arrived participant or a newly departed 
-      participant within 3 seconds. Lease expires at 1.75 seconds and detected 
-      within 1.25 seconds from that time. With assertions every 0.5 seconds packet 
-      three assertions should arrive within every lease duration assuming no spikes 
-      in latency or packet loss. These settings need to be rigorously tested in 
-      a controlled environment. -->
+     <!-- Participant liveliness is no longer used to detect 'device' connectivity 
+      so these settings can be less stringent -->
      <participant_liveliness_lease_duration>
       <sec>10</sec>
       <nanosec>0</nanosec>
@@ -222,19 +223,25 @@
      <max_query_condition_filters>32</max_query_condition_filters>
      <max_samples_per_read>65536</max_samples_per_read>
     </reader_resource_limits>
-    <!-- An easy policy request for a default. Most inheriting profiles should 
-     adjust this. -->
+
+    <!-- Somewhat mooted by volatile durability but inheritors may override 
+     that. KEEP_ALL would be a nice setting but without a reader LIFESPAN QoS 
+     we're trusting the writer to set a reasonable LIFESPAN otherwise we'll 1.) 
+     continually allocate or 2.) hit max_samples or max_samples_per_instance and 
+     start discarding new samples -->
     <history>
-     <kind>DDS_KEEP_ALL_HISTORY_QOS</kind>
+     <kind>DDS_KEEP_LAST_HISTORY_QOS</kind>
      <!-- samples kept in the writer ... see durability -->
-     <!-- <depth>1</depth> -->
+     <depth>5000</depth>
      <refilter>DDS_NONE_REFILTER_QOS</refilter>
     </history>
 
+    <!-- Discarding samples based upon sequence via history (if durability 
+     increased) -->
     <resource_limits>
-     <max_samples>100000</max_samples>
+     <max_samples>-1</max_samples>
      <max_instances>100</max_instances>
-     <max_samples_per_instance>10000</max_samples_per_instance>
+     <max_samples_per_instance>-1</max_samples_per_instance>
     </resource_limits>
     <!-- JP 30-Sep-2013 get_key_value is failing on unalive instances maybe 
      they are being purged too quickly? -->
@@ -263,7 +270,8 @@
      <!-- Let DDS handle heartbeats -->
      <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
      <!-- Point at which writers (and associated exclusively owned instances) 
-      become "not alive" -->
+      become "not alive". This is an offer; most readers should request a longer 
+      duration. -->
      <lease_duration>
       <sec>1</sec>
       <nanosec>0</nanosec>
@@ -284,7 +292,7 @@
     </durability>
 
     <!-- UDI is typical in the instance key so instances are owned exclusively 
-     by one publisher (device) -->
+     by one publisher (device). This may not be a reasonable default. -->
     <ownership>
      <kind>DDS_EXCLUSIVE_OWNERSHIP_QOS</kind>
     </ownership>
@@ -299,13 +307,26 @@
      </serialize_key_with_dispose>
 
     </protocol>
+
+    <!-- By default samples will expire temporally via LIFESPAN and not by 
+     sequence. -->
     <history>
      <kind>DDS_KEEP_ALL_HISTORY_QOS</kind>
     </history>
+    <!-- For TRANSIENT_LOCAL durability ease the burden on writers by only 
+     storing numeric data for 15 minutes. A persistent store could make it reasonable 
+     to store more -->
+    <lifespan>
+     <duration>
+      <sec>900</sec>
+      <nanosec>0</nanosec>
+     </duration>
+    </lifespan>
+
     <resource_limits>
-     <max_samples>100000</max_samples>
+     <max_samples>-1</max_samples>
      <max_instances>100</max_instances>
-     <max_samples_per_instance>10000</max_samples_per_instance>
+     <max_samples_per_instance>-1</max_samples_per_instance>
     </resource_limits>
    </datawriter_qos>
   </qos_profile>
@@ -314,7 +335,7 @@
    is_default_qos="false">
    <datareader_qos>
     <liveliness>
-     <!-- Let DDS handle heartbeats -->
+     <!-- Heartbeats must be written regularly; so no automatic liveliness updates need be sent. -->
      <kind>DDS_MANUAL_BY_TOPIC_LIVELINESS_QOS</kind>
      <!-- Point at which writers (and associated instances) become "not alive" -->
      <lease_duration>
@@ -326,22 +347,24 @@
      <kind>DDS_VOLATILE_DURABILITY_QOS</kind>
     </durability>
 
-    <!-- This is contrived and meaningless because sample rate is not the 
-     same in all cases -->
+    <!-- Just for completeness; durability is volatile -->
     <history>
      <kind>KEEP_LAST_HISTORY_QOS</kind>
      <depth>1</depth>
     </history>
    </datareader_qos>
    <datawriter_qos>
+    <!-- These samples are too small for fragmentation and it is important
+         to delay them as little as possible. -->
     <publish_mode>
      <kind>DDS_SYNCHRONOUS_PUBLISH_MODE_QOS</kind>
     </publish_mode>
+    <!-- No need to persist -->
     <durability>
      <kind>DDS_VOLATILE_DURABILITY_QOS</kind>
     </durability>
     <liveliness>
-     <!-- Let DDS handle heartbeats -->
+     <!--  Handle heartbeats ourselves by writing to this topic periodically -->
      <kind>DDS_MANUAL_BY_TOPIC_LIVELINESS_QOS</kind>
      <!-- Point at which writers (and associated instances) become "not alive" -->
      <lease_duration>
@@ -452,7 +475,7 @@
     <durability>
      <!-- Writer is responsible for maintaining transient copies of samples 
       ... see history -->
-     <kind>DDS_VOLATILE_DURABILITY_QOS</kind>
+     <kind>DDS_TRANSIENT_LOCAL_DURABILITY_QOS</kind>
      <!-- Contact that writer directly to get the samples -->
      <direct_communication>DDS_BOOLEAN_TRUE</direct_communication>
     </durability>
@@ -468,12 +491,6 @@
      all cases -->
     <!-- <lifespan> <duration> <sec>10</sec> <nanosec>0</nanosec> </duration> 
      </lifespan> -->
-    <latency_budget>
-     <duration>
-      <sec>1</sec>
-      <nanosec>0</nanosec>
-     </duration>
-    </latency_budget>
    </datareader_qos>
    <datawriter_qos>
     <!-- Reliability is offered by default -->
@@ -485,22 +502,6 @@
     <!-- Publish-mode async by default; is that necessary for these small 
      messages? -->
     <!-- History is KEEP_ALL by default -->
-
-    <!-- For TRANSIENT_LOCAL durability ease the burden on writers by only 
-     storing numeric data for an hour. A persistent store can make it reasonable 
-     to store more -->
-    <lifespan>
-     <duration>
-      <sec>900</sec>
-      <nanosec>0</nanosec>
-     </duration>
-    </lifespan>
-    <latency_budget>
-     <duration>
-      <sec>0</sec>
-      <nanosec>0</nanosec>
-     </duration>
-    </latency_budget>
    </datawriter_qos>
   </qos_profile>
 
