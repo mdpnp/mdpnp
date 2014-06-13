@@ -232,9 +232,9 @@
     </history>
 
     <resource_limits>
-     <max_samples>10000</max_samples>
+     <max_samples>100000</max_samples>
      <max_instances>100</max_instances>
-     <max_samples_per_instance>100</max_samples_per_instance>
+     <max_samples_per_instance>10000</max_samples_per_instance>
     </resource_limits>
     <!-- JP 30-Sep-2013 get_key_value is failing on unalive instances maybe 
      they are being purged too quickly? -->
@@ -303,9 +303,9 @@
      <kind>DDS_KEEP_ALL_HISTORY_QOS</kind>
     </history>
     <resource_limits>
-     <max_samples>10000</max_samples>
+     <max_samples>100000</max_samples>
      <max_instances>100</max_instances>
-     <max_samples_per_instance>100</max_samples_per_instance>
+     <max_samples_per_instance>10000</max_samples_per_instance>
     </resource_limits>
    </datawriter_qos>
   </qos_profile>
