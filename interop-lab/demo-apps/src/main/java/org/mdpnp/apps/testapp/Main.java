@@ -33,19 +33,136 @@ import org.w3c.dom.NodeList;
 
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
+import com.rti.dds.domain.DomainParticipantQos;
+import com.rti.dds.infrastructure.DurabilityQosPolicy;
+import com.rti.dds.infrastructure.DurabilityQosPolicyKind;
+import com.rti.dds.infrastructure.HistoryQosPolicy;
+import com.rti.dds.infrastructure.HistoryQosPolicyKind;
+import com.rti.dds.infrastructure.ReliabilityQosPolicy;
+import com.rti.dds.infrastructure.ReliabilityQosPolicyKind;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
+import com.rti.dds.infrastructure.StringSeq;
+import com.rti.dds.publication.DataWriterQos;
+import com.rti.dds.publication.PublisherQos;
+import com.rti.dds.subscription.DataReaderQos;
+import com.rti.dds.subscription.SubscriberQos;
+import com.rti.dds.topic.TopicQos;
 
 /**
  * @author Jeff Plourde
- *
+ * 
  */
 public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
+    public static final void verify(DomainParticipantQos qos) {
+
+    }
+
+    public static final void verify(TopicQos qos) {
+
+    }
+
+    public static final void verify(SubscriberQos qos) {
+
+    }
+
+    public static final void verify(PublisherQos qos) {
+
+    }
+
+    public static final void verify(String name, HistoryQosPolicy history, ResourceLimitsQosPolicy resource_limits) {
+        if (history.kind.equals(HistoryQosPolicyKind.KEEP_ALL_HISTORY_QOS)) {
+            if (resource_limits.max_samples != ResourceLimitsQosPolicy.LENGTH_UNLIMITED) {
+                log.info("\t"+name+" KEEP_ALL history with max_samples=" + resource_limits.max_samples
+                        + " will exclude newer samples when max_samples has been reached");
+            }
+            if (resource_limits.max_samples_per_instance != ResourceLimitsQosPolicy.LENGTH_UNLIMITED) {
+                log.info("\t"+name+" KEEP_ALL history with max_samples_per_instance=" + resource_limits.max_samples_per_instance
+                        + " will exclude newer samples when max_samples_per_instance has been reached");
+            }
+        } else if (history.kind.equals(HistoryQosPolicyKind.KEEP_LAST_HISTORY_QOS)) {
+            int depth = history.depth;
+            if (resource_limits.max_samples!=ResourceLimitsQosPolicy.LENGTH_UNLIMITED && resource_limits.max_samples < depth) {
+                log.info("\t"+name+" KEEP_LAST depth=" + depth + " history with max_samples=" + resource_limits.max_samples
+                        + " will exclude newer samples when max_samples has been reached");
+            }
+            if (resource_limits.max_samples_per_instance!=ResourceLimitsQosPolicy.LENGTH_UNLIMITED && resource_limits.max_samples_per_instance < depth) {
+                log.info("\t"+name+" KEEP_LAST depth=" + depth + " history with max_samples_per_instance="
+                        + resource_limits.max_samples_per_instance + " will exclude newer samples when max_samples_per_instance has been reached");
+            }
+        }
+    }
     
+    public static final void verify(String name, DurabilityQosPolicy durability, ReliabilityQosPolicy reliability) {
+        if(!durability.kind.equals(DurabilityQosPolicyKind.VOLATILE_DURABILITY_QOS)) {
+            if(!reliability.kind.equals(ReliabilityQosPolicyKind.RELIABLE_RELIABILITY_QOS)) {
+                log.info("\t"+name+" has durability="+durability.kind+" which is ineffective with reliability="+reliability.kind);
+            }
+        }
+    }
+
+    public static final void verify(DataReaderQos qos) {
+        verify("DataReader", qos.history, qos.resource_limits);
+        verify("DataReader", qos.durability, qos.reliability);
+    }
+    
+    public static final void verify(DataWriterQos qos) {
+        verify("DataWriter", qos.history, qos.resource_limits);
+        verify("DataWriter", qos.durability, qos.reliability);
+    }
+
+    public static final void verify(DataReaderQos rqos, DataWriterQos wqos) {
+        // Should check for valid RxO for endpoints using the same profile
+
+    }
+
+    public static final void verify(SubscriberQos sqos, PublisherQos pqos) {
+        // Should check for valid RxO for endpoints using the same profile
+    }
+
+    public static final void verifyQosLibraries() {
+        DomainParticipantQos part_qos = new DomainParticipantQos();
+        SubscriberQos sub_qos = new SubscriberQos();
+        PublisherQos pub_qos = new PublisherQos();
+        DataReaderQos r_qos = new DataReaderQos();
+        DataWriterQos w_qos = new DataWriterQos();
+        TopicQos t_qos = new TopicQos();
+
+        DomainParticipantFactory dpf = DomainParticipantFactory.get_instance();
+        StringSeq libraries = new StringSeq();
+        StringSeq profiles = new StringSeq();
+        dpf.get_qos_profile_libraries(libraries);
+        for (int i = 0; i < libraries.size(); i++) {
+            String library = (String) libraries.get(i);
+            dpf.get_qos_profiles(profiles, library);
+            for (int j = 0; j < profiles.size(); j++) {
+                String profile = (String) profiles.get(j);
+                log.info("Examining QoS profile: " + library + "::" + profile);
+                dpf.get_participant_qos_from_profile(part_qos, library, profile);
+                dpf.get_publisher_qos_from_profile(pub_qos, library, profile);
+                dpf.get_subscriber_qos_from_profile(sub_qos, library, profile);
+                dpf.get_datawriter_qos_from_profile(w_qos, library, profile);
+                dpf.get_datareader_qos_from_profile(r_qos, library, profile);
+                dpf.get_topic_qos_from_profile(t_qos, library, profile);
+
+                verify(part_qos);
+                verify(pub_qos);
+                verify(sub_qos);
+                verify(sub_qos, pub_qos);
+                verify(r_qos);
+                verify(w_qos);
+                verify(r_qos, w_qos);
+                verify(t_qos);
+            }
+            profiles.clear();
+        }
+
+    }
+
     public static final void loadIceQosLibrary(DomainParticipantFactoryQos qos) {
-        InputStream is = Main.class
-                .getResourceAsStream("/META-INF/ice_library.xml");
+        InputStream is = Main.class.getResourceAsStream("/META-INF/ice_library.xml");
         if (is != null) {
             java.util.Scanner scanner = new java.util.Scanner(is);
             try {
@@ -57,13 +174,21 @@ public class Main {
                 try {
                     is.close();
                 } catch (IOException e) {
-                    log.error("",e);
+                    log.error("", e);
                 }
             }
         }
     }
-    
-    
+
+    public static void main2(String[] args) throws Exception {
+        DomainParticipantFactory dpf = DomainParticipantFactory.get_instance();
+        DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
+        dpf.get_qos(qos);
+        loadIceQosLibrary(qos);
+        dpf.set_qos(qos);
+        verifyQosLibraries();
+    }
+
     public static void main(String[] args) throws Exception {
         // TODO this should be external
         System.setProperty("java.net.preferIPv4Stack", "true");
@@ -148,18 +273,18 @@ public class Main {
                 // later
                 try {
                     boolean userIceLibrary = false;
-                    
+
                     File userProfiles = new File("USER_QOS_PROFILES.xml");
-                    if(userProfiles.exists()&&userProfiles.isFile()&&userProfiles.canRead()) {
+                    if (userProfiles.exists() && userProfiles.isFile() && userProfiles.canRead()) {
                         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
                         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
                         Document doc = dBuilder.parse(userProfiles);
                         NodeList libraryNodes = doc.getElementsByTagName("qos_library");
-                        for(int i = 0; i < libraryNodes.getLength(); i++) {
+                        for (int i = 0; i < libraryNodes.getLength(); i++) {
                             Node libraryNode = libraryNodes.item(i);
-                            if(libraryNode.hasAttributes()) {
+                            if (libraryNode.hasAttributes()) {
                                 Node nameNode = libraryNode.getAttributes().getNamedItem("name");
-                                if(QosProfiles.ice_library.equals(nameNode.getTextContent())) {
+                                if (QosProfiles.ice_library.equals(nameNode.getTextContent())) {
                                     log.debug(QosProfiles.ice_library + " specified in USER_QOS_PROFILES.xml");
                                     userIceLibrary = true;
                                 }
@@ -170,15 +295,15 @@ public class Main {
                     DomainParticipantFactory factory = DomainParticipantFactory.get_instance();
                     DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
                     factory.get_qos(qos);
-                    
-                    if(!userIceLibrary) {
+
+                    if (!userIceLibrary) {
                         loadIceQosLibrary(qos);
                         log.debug("Loaded default ice_library QoS");
                     }
-                    
+
                     qos.resource_limits.max_objects_per_thread = 8192;
                     factory.set_qos(qos);
-                    
+                    verifyQosLibraries();
                 } catch (Exception e) {
                     log.error("Unable to set factory qos", e);
                 }
