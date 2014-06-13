@@ -19,6 +19,7 @@ import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -74,7 +75,12 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
             panels[i].start();
         }
         add(waves, BorderLayout.CENTER);
-
+        
+        JPanel panel = new JPanel();
+        int w = panel.getFontMetrics(panel.getFont()).stringWidth("RespiratoryRate");
+        panel.setMinimumSize(new Dimension(w, panel.getMinimumSize().height));
+        panel.setPreferredSize(panel.getMinimumSize());
+        add(panel, BorderLayout.EAST);
         setForeground(Color.red);
         setBackground(Color.black);
         setOpaque(true);

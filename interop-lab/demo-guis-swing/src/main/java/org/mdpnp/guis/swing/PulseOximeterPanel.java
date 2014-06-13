@@ -19,10 +19,8 @@ import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.Insets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -30,6 +28,7 @@ import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
 import org.mdpnp.guis.waveform.NumericWaveformSource;
@@ -76,6 +75,7 @@ public class PulseOximeterPanel extends DevicePanel {
         spo2Panel.add(new JLabel("SpO\u2082"), BorderLayout.NORTH);
         spo2Panel.add(spo2 = new JLabel("----"), BorderLayout.CENTER);
         spo2.setHorizontalAlignment(JLabel.RIGHT);
+        spo2.setHorizontalTextPosition(SwingConstants.RIGHT);
 
         spo2.setBorder(new EmptyBorder(5, 5, 5, 5));
         spo2Panel.add(spo2Bounds, BorderLayout.EAST);
@@ -92,8 +92,13 @@ public class PulseOximeterPanel extends DevicePanel {
         heartratePanel = new JPanel();
         heartratePanel.setOpaque(false);
         heartratePanel.setLayout(new BorderLayout());
-        heartratePanel.add(new JLabel("Pulse Rate"), BorderLayout.NORTH);
+        JLabel lbl;
+        heartratePanel.add(lbl = new JLabel("Pulse Rate"), BorderLayout.NORTH);
+        int w = lbl.getFontMetrics(lbl.getFont()).stringWidth("RespiratoryRate");
+        lbl.setMinimumSize(new Dimension(w, lbl.getMinimumSize().height));
+        lbl.setPreferredSize(lbl.getMinimumSize());
         heartratePanel.add(heartrate = new JLabel("----"), BorderLayout.CENTER);
+        heartrate.setHorizontalTextPosition(SwingConstants.RIGHT);
         heartrate.setBorder(new EmptyBorder(5, 5, 5, 5));
         heartrate.setHorizontalAlignment(JLabel.RIGHT);
         heartratePanel.add(heartrateBounds, BorderLayout.EAST);
@@ -105,30 +110,18 @@ public class PulseOximeterPanel extends DevicePanel {
         plethPanel = fact.createWaveformPanel();
         pulsePanel = fact.createWaveformPanel();
 
-        JPanel upper = new JPanel();
+        JPanel upper = new JPanel(new GridLayout(2, 1));
         upper.setOpaque(false);
-        upper.setLayout(new GridBagLayout());
+        upper.add(label("Plethysmogram", plethPanel.asComponent()));
+        upper.add(label("Pulse Rate", pulsePanel.asComponent()));
 
-        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0),
-                0, 0);
-
-        upper.add(label("Plethysmogram", plethPanel.asComponent()), gbc);
-
-        gbc.gridy = 1;
-        upper.add(label("Pulse Rate", pulsePanel.asComponent()), gbc);
-
-        gbc.gridy = 0;
-        gbc.weightx = 0.1;
-        gbc.gridheight = 1;
-        gbc.gridwidth = 1;
-        gbc.gridx = 1;
-
-        upper.add(spo2Panel, gbc);
-        gbc.gridy = 1;
-        upper.add(heartratePanel, gbc);
+        JPanel east = new JPanel(new GridLayout(2, 1));
+        east.add(spo2Panel);
+        east.add(heartratePanel);
 
         setLayout(new BorderLayout());
         add(upper, BorderLayout.CENTER);
+        add(east, BorderLayout.EAST);
 
         add(label("Last Sample: ", time = new JLabel("TIME"), BorderLayout.WEST), BorderLayout.SOUTH);
 
