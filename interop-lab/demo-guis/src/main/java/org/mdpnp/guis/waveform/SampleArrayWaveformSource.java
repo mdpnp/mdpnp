@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.RETCODE_ALREADY_DELETED;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.Time_t;
@@ -15,39 +16,33 @@ import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.ViewStateKind;
 
-public class SampleArrayWaveformSource implements WaveformSource {
-    private final ice.SampleArrayDataReader reader;
-    private final ice.SampleArray keyHolder;
-    
-    private final ThreadLocal<SampleInfoSeq> sample_info_seq = new ThreadLocal<SampleInfoSeq>() {
-        protected SampleInfoSeq initialValue() {
-            return new SampleInfoSeq();
-        }
-    };
-    private final ThreadLocal<ice.SampleArraySeq> sample_array_seq = new ThreadLocal<ice.SampleArraySeq>() {
-        protected ice.SampleArraySeq initialValue() {
-            return new ice.SampleArraySeq();
-        }
-    };
-    
+public class SampleArrayWaveformSource extends AbstractDdsWaveformSource<ice.SampleArrayDataReader, ice.SampleArray, ice.SampleArraySeq> implements WaveformSource {
+    private static final Logger log = LoggerFactory.getLogger(SampleArrayWaveformSource.class);
+
     public SampleArrayWaveformSource(final ice.SampleArrayDataReader reader, ice.SampleArray keyHolder) {
-        this.reader = reader;
-        this.keyHolder = new ice.SampleArray(keyHolder);
+        super(reader, keyHolder, ice.SampleArray.class, ice.SampleArraySeq.class);
         log.debug("Created a SampleArrayWaveformSource for " + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
     }
     
-    private static final Logger log = LoggerFactory.getLogger(SampleArrayWaveformSource.class);
 
     @Override
     public void iterate(final WaveformIterator itr) {
         try {
             itr.begin();
-            InstanceHandle_t instanceHandle = reader.lookup_instance(keyHolder);
-            if(instanceHandle.is_nil()) {
+            InstanceHandle_t instanceHandle = null;
+            try {
+                instanceHandle = reader.lookup_instance(keyHolder);
+            } catch(RETCODE_ALREADY_DELETED alreadyDeleted) {
+                log.warn("Tried to iterate a deleted instance ");
                 return;
             }
+            if(null == instanceHandle || instanceHandle.is_nil()) {
+                log.warn("Tried to iterate a null or nil instance ");
+                return;
+            }
+            
             SampleInfoSeq sample_info_seq = this.sample_info_seq.get();
-            ice.SampleArraySeq sample_array_seq = this.sample_array_seq.get();
+            ice.SampleArraySeq sample_array_seq = this.data_seq.get();
             try {
                 reader.read_instance(sample_array_seq, sample_info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, instanceHandle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
                 for(int i = 0; i < sample_info_seq.size(); i++) {

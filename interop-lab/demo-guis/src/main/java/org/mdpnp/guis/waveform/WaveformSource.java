@@ -24,4 +24,5 @@ public interface WaveformSource {
     }
     void iterate(WaveformIterator itr);
     String getIdentifier();
+    boolean loadingHistoricalData();
 }

@@ -12,4 +12,10 @@ public class SwingVectorWaveformCanvas extends SwingWaveformCanvas {
         int height = extent.getMaxY() - extent.getMinY();
         currentGraphics.drawLine(x0, height - y0, x1, height - y1);
     }
+    
+    @Override
+    public void drawString(String str, int x, int y) {
+        int height = extent.getMaxY() - extent.getMinY();
+        currentGraphics.drawString(str, x, height - y);
+    }
 }

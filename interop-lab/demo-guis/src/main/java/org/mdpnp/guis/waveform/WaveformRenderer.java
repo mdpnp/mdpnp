@@ -126,6 +126,11 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
         if (null == canvas || null == source) {
             return;
         }
+        
+        if(source.loadingHistoricalData()) {
+            canvas.drawString("Retrieving Recent Data...", 0, 0);
+            return;
+        }
 
         extent = canvas.getExtent();
         

@@ -26,6 +26,8 @@ public interface WaveformCanvas {
     void drawLine(int x0, int y0, int x1, int y1);
 
     void clearRect(int x, int y, int width, int height);
+    
+    void drawString(String str, int x, int y);
 
     Extent getExtent();
 }

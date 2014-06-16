@@ -24,6 +24,11 @@ public class TestWaveformSource implements WaveformSource, Runnable {
         t.setDaemon(true);
         t.start();
     }
+    
+    @Override
+    public boolean loadingHistoricalData() {
+        return false;
+    }
 
     private int offset = 0;
     private int MAX = 800;
