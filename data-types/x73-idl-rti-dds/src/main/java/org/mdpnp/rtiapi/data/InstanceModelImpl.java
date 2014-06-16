@@ -16,6 +16,7 @@ import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.Copyable;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.RETCODE_PRECONDITION_NOT_MET;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
@@ -311,7 +312,12 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         if(subscriber != null) {
             if(reader != null) {
                 reader.delete_contained_entities();
-                subscriber.delete_datareader(reader);
+                try {
+                    subscriber.delete_datareader(reader);
+                } catch (RETCODE_PRECONDITION_NOT_MET preCondition) {
+                    // TODO nail this down an awful lot tighter
+                    log.warn("Ignoring an error in delete_datareader", preCondition);
+                }
                 reader = null;
             }
             if(null != filteredTopic) {
