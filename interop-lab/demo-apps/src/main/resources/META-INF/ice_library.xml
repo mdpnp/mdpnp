@@ -314,11 +314,11 @@
      <kind>DDS_KEEP_ALL_HISTORY_QOS</kind>
     </history>
     <!-- For TRANSIENT_LOCAL durability ease the burden on writers by only 
-     storing numeric data for 15 minutes. A persistent store could make it reasonable 
+     storing numeric data for 30 seconds. A persistent store could make it reasonable 
      to store more -->
     <lifespan>
      <duration>
-      <sec>900</sec>
+      <sec>30</sec>
       <nanosec>0</nanosec>
      </duration>
     </lifespan>
