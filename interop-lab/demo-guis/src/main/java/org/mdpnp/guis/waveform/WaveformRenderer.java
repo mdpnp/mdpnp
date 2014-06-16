@@ -128,7 +128,7 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
         }
         
         if(source.loadingHistoricalData()) {
-            canvas.drawString("Retrieving Recent Data...", 0, 0);
+            canvas.drawString("Receiving Recent Data...", 0, 0);
             return;
         }
 
