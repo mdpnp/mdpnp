@@ -313,15 +313,6 @@
     <history>
      <kind>DDS_KEEP_ALL_HISTORY_QOS</kind>
     </history>
-    <!-- For TRANSIENT_LOCAL durability ease the burden on writers by only 
-     storing numeric data for 30 seconds. A persistent store could make it reasonable 
-     to store more -->
-    <lifespan>
-     <duration>
-      <sec>30</sec>
-      <nanosec>0</nanosec>
-     </duration>
-    </lifespan>
 
     <resource_limits>
      <max_samples>-1</max_samples>
@@ -335,7 +326,8 @@
    is_default_qos="false">
    <datareader_qos>
     <liveliness>
-     <!-- Heartbeats must be written regularly; so no automatic liveliness updates need be sent. -->
+     <!-- Heartbeats must be written regularly; so no automatic liveliness 
+      updates need be sent. -->
      <kind>DDS_MANUAL_BY_TOPIC_LIVELINESS_QOS</kind>
      <!-- Point at which writers (and associated instances) become "not alive" -->
      <lease_duration>
@@ -354,8 +346,8 @@
     </history>
    </datareader_qos>
    <datawriter_qos>
-    <!-- These samples are too small for fragmentation and it is important
-         to delay them as little as possible. -->
+    <!-- These samples are too small for fragmentation and it is important 
+     to delay them as little as possible. -->
     <publish_mode>
      <kind>DDS_SYNCHRONOUS_PUBLISH_MODE_QOS</kind>
     </publish_mode>
@@ -364,7 +356,7 @@
      <kind>DDS_VOLATILE_DURABILITY_QOS</kind>
     </durability>
     <liveliness>
-     <!--  Handle heartbeats ourselves by writing to this topic periodically -->
+     <!-- Handle heartbeats ourselves by writing to this topic periodically -->
      <kind>DDS_MANUAL_BY_TOPIC_LIVELINESS_QOS</kind>
      <!-- Point at which writers (and associated instances) become "not alive" -->
      <lease_duration>
@@ -493,6 +485,15 @@
      </lifespan> -->
    </datareader_qos>
    <datawriter_qos>
+    <!-- For TRANSIENT_LOCAL durability ease the burden on writers by only 
+     storing numeric data for 30 seconds. A persistent store could make it reasonable 
+     to store more -->
+    <lifespan>
+     <duration>
+      <sec>30</sec>
+      <nanosec>0</nanosec>
+     </duration>
+    </lifespan>
     <!-- Reliability is offered by default -->
     <!-- Liveliness lease of 1 second is offered by default -->
     <!-- Destination ordering BY_SOURCE is offered by default -->
