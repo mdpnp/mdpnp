@@ -44,7 +44,7 @@
      </ignore_default_domain_announcements>
      <!-- initial_participant_announcements added with defaults for future 
       experimentation -->
-     <initial_participant_announcements>50
+     <initial_participant_announcements>5
      </initial_participant_announcements>
      <min_initial_participant_announcement_period>
       <sec>0</sec>
