@@ -19,8 +19,9 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
 import org.mdpnp.apps.safetylockapplication.Resources.Command;
-import org.mdpnp.devices.QosProfiles;
-import org.mdpnp.rti.dds.DDS;
+
+
+import org.mdpnp.rtiapi.data.QosProfiles;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
@@ -73,7 +74,6 @@ public class DevicePanel extends JPanel implements PatientEventListener, ActionL
 		setupGridLayout();
 		
 		//for pulse oximeter numerics
-		DDS.init();
 		rReceiver = new ReceivePulseOximeterNumerics();
         int domainId = 0;
         final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId,

@@ -15,8 +15,6 @@ import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.mdpnp.devices.QosProfiles;
-import org.mdpnp.rti.dds.DDS;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
