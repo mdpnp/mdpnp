@@ -10,15 +10,15 @@ import javax.swing.JPanel;
 public class DistressorPanel extends JPanel implements ActionListener {
 	
 	
-	private ImageButton o2Distressor = new ImageButton(Resources.pathToImages + "o2DistressorInactive.png");
-	private ImageButton o2Roc = new ImageButton(Resources.pathToImages + "o2RocInactive.png");
-	private ImageButton co2Distressor = new ImageButton(Resources.pathToImages + "co2DistressorInactive.png");
-	private ImageButton plethysmographDistressor = new ImageButton(Resources.pathToImages + "plethDistressorInactive.png");
-	private ImageButton co2Roc = new ImageButton(Resources.pathToImages + "co2RocInactive.png");
-	private ImageButton respiratoryDistressor = new ImageButton(Resources.pathToImages + "RespiratoryRateDistressorInactive.png");
-	private ImageButton respiratoryRoc = new ImageButton(Resources.pathToImages + "RespirationRocInactive.png");
-	private ImageButton hrprDistressor = new ImageButton(Resources.pathToImages + "HrprDistressorInactive.png");
-	private ImageButton hrprRoc = new ImageButton(Resources.pathToImages + "HrprRocInactive.png");
+	private ImageButton o2Distressor = new ImageButton(Resources.loadImage("o2DistressorInactive.png"));
+	private ImageButton o2Roc = new ImageButton(Resources.loadImage("o2RocInactive.png"));
+	private ImageButton co2Distressor = new ImageButton(Resources.loadImage("co2DistressorInactive.png"));
+	private ImageButton plethysmographDistressor = new ImageButton(Resources.loadImage("plethDistressorInactive.png"));
+	private ImageButton co2Roc = new ImageButton(Resources.loadImage("co2RocInactive.png"));
+	private ImageButton respiratoryDistressor = new ImageButton(Resources.loadImage("RespiratoryRateDistressorInactive.png"));
+	private ImageButton respiratoryRoc = new ImageButton(Resources.loadImage("RespirationRocInactive.png"));
+	private ImageButton hrprDistressor = new ImageButton(Resources.loadImage("HrprDistressorInactive.png"));
+	private ImageButton hrprRoc = new ImageButton(Resources.loadImage("HrprRocInactive.png"));
 	
 	private SimulatedPatient patient;
 	
@@ -72,23 +72,23 @@ public class DistressorPanel extends JPanel implements ActionListener {
 	
 	private void resetAll()
 	{
-		o2Distressor.updateImage(Resources.pathToImages + "o2DistressorInactive.png");
+		o2Distressor.updateImage(Resources.loadImage("o2DistressorInactive.png"));
 		patient.o2Bad = false;
-		o2Roc.updateImage(Resources.pathToImages + "o2RocInactive.png");
+		o2Roc.updateImage(Resources.loadImage("o2RocInactive.png"));
 		patient.O2RocBad = false;
-		co2Distressor.updateImage(Resources.pathToImages + "co2DistressorInactive.png");
+		co2Distressor.updateImage(Resources.loadImage("co2DistressorInactive.png"));
 		patient.co2Bad = false;
-		co2Roc.updateImage(Resources.pathToImages + "co2RocInactive.png");
+		co2Roc.updateImage(Resources.loadImage("co2RocInactive.png"));
 		patient.Co2RocBad = false;
-		respiratoryDistressor.updateImage(Resources.pathToImages + "RespiratoryRateDistressorInactive.png");
+		respiratoryDistressor.updateImage(Resources.loadImage("RespiratoryRateDistressorInactive.png"));
 		patient.respBad = false;
-		respiratoryRoc.updateImage(Resources.pathToImages + "RespirationRocInactive.png");
+		respiratoryRoc.updateImage(Resources.loadImage("RespirationRocInactive.png"));
 		patient.RespRocBad = false;
-		hrprDistressor.updateImage(Resources.pathToImages + "HrprDistressorInactive.png");
+		hrprDistressor.updateImage(Resources.loadImage("HrprDistressorInactive.png"));
 		patient.hrprBad = false;
-		hrprRoc.updateImage(Resources.pathToImages + "HrprRocInactive.png");
+		hrprRoc.updateImage(Resources.loadImage("HrprRocInactive.png"));
 		patient.HrprRocBad = false;
-		plethysmographDistressor.updateImage(Resources.pathToImages + "plethDistressorInactive.png");
+		plethysmographDistressor.updateImage(Resources.loadImage("plethDistressorInactive.png"));
 		patient.plethBad = false;
 	}
 
@@ -100,47 +100,47 @@ public class DistressorPanel extends JPanel implements ActionListener {
 			Object source = e.getSource();
 			if (source == o2Distressor)
 			{
-				o2Distressor.updateImage(Resources.pathToImages + "o2DistressorActive.png");
+				o2Distressor.updateImage(Resources.loadImage("o2DistressorActive.png"));
 				patient.o2Bad = true;
 			}
 			else if (source == o2Roc)
 			{
-				o2Roc.updateImage(Resources.pathToImages + "o2RocActive.png");
+				o2Roc.updateImage(Resources.loadImage("o2RocActive.png"));
 				patient.O2RocBad = true;
 			}
 			else if (source == co2Distressor)
 			{
-				co2Distressor.updateImage(Resources.pathToImages + "co2DistressorActive.png");
+				co2Distressor.updateImage(Resources.loadImage("co2DistressorActive.png"));
 				patient.co2Bad = true;
 			}
 			else if (source == co2Roc)
 			{
-				co2Roc.updateImage(Resources.pathToImages + "co2RocActive.png");
+				co2Roc.updateImage(Resources.loadImage("co2RocActive.png"));
 				patient.Co2RocBad = true;
 			}
 			else if (source == respiratoryDistressor)
 			{
-				respiratoryDistressor.updateImage(Resources.pathToImages + "RespiratoryRateDistressorActive.png");
+				respiratoryDistressor.updateImage(Resources.loadImage("RespiratoryRateDistressorActive.png"));
 				patient.respBad = true;
 			}
 			else if (source == respiratoryRoc)
 			{
-				respiratoryRoc.updateImage(Resources.pathToImages + "RespirationRocActive.png");
+				respiratoryRoc.updateImage(Resources.loadImage("RespirationRocActive.png"));
 				patient.RespRocBad = true;
 			}
 			else if (source == hrprDistressor)
 			{
-				hrprDistressor.updateImage(Resources.pathToImages + "HrprDistressorActive.png");
+				hrprDistressor.updateImage(Resources.loadImage("HrprDistressorActive.png"));
 				patient.hrprBad = true;
 			}
 			else if (source == hrprRoc)
 			{
-				hrprRoc.updateImage(Resources.pathToImages + "HrprRocActive.png");
+				hrprRoc.updateImage(Resources.loadImage("HrprRocActive.png"));
 				patient.HrprRocBad = true;
 			}
 			else if (source == plethysmographDistressor)
 			{
-				plethysmographDistressor.updateImage(Resources.pathToImages + "plethDistressorActive.png");
+				plethysmographDistressor.updateImage(Resources.loadImage("plethDistressorActive.png"));
 				patient.plethBad = true;
 			}
 		}

@@ -161,6 +161,15 @@ public class Main {
 
     }
 
+    public static final void loadAndSetIceQosLibrary() {
+        DomainParticipantFactory dpf = DomainParticipantFactory.get_instance();
+        DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
+        dpf.get_qos(qos);
+        loadIceQosLibrary(qos);
+        dpf.set_qos(qos);
+        verifyQosLibraries();
+    }
+    
     public static final void loadIceQosLibrary(DomainParticipantFactoryQos qos) {
         InputStream is = Main.class.getResourceAsStream("/META-INF/ice_library.xml");
         if (is != null) {

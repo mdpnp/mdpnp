@@ -25,7 +25,7 @@ public class ControllerFrame implements DevicePanelListener, CommandListener, Ac
 	{
 		listeners = new ArrayList<ControllerFrameListener>();
 		patient = new SimulatedPatient();
-		patientShape = new ImageButton(Resources.pathToImages + "PatientShapeHealthy.png");
+		patientShape = new ImageButton(Resources.loadImage("PatientShapeHealthy.png"));
 		patientShape.addActionListener(this);
 		
 		JFrame controllerPanel = new JFrame();
@@ -89,12 +89,12 @@ public class ControllerFrame implements DevicePanelListener, CommandListener, Ac
 	public void actionPerformed(ActionEvent arg0) {
 		if (!patient.distressed)
 		{
-			patientShape.updateImage(Resources.pathToImages + "PatientShapeDistressed.png");
+			patientShape.updateImage(Resources.loadImage("PatientShapeDistressed.png"));
 			patient.setDistressed(true);
 		}
 		else if (patient.distressed)
 		{
-			patientShape.updateImage(Resources.pathToImages + "PatientShapeHealthy.png");
+			patientShape.updateImage(Resources.loadImage("PatientShapeHealthy.png"));
 			patient.setDistressed(false);
 		}
 	}

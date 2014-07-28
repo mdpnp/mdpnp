@@ -83,7 +83,7 @@ public class SafetyLockScreenMainPanel extends JPanel implements MouseListener, 
 		commandGood.add("Ready");
 		pumpCommand.setGoodQualityDescriptors(commandGood);
 		
-		lockButton = new ImageButton(Resources.pathToImages + "InitialInactiveLock.png");
+		lockButton = new ImageButton(Resources.loadImage("InitialInactiveLock.png"));
 		lockButton.addMouseListener(this);
 		
 		modeOfOperation = OperatingMode.UNSPECIFIED;
@@ -115,13 +115,13 @@ public class SafetyLockScreenMainPanel extends JPanel implements MouseListener, 
 		modeOfOperation = mode;
 		
 		if (modeOfOperation == OperatingMode.MANUAL)
-			lockButton.updateImage(Resources.pathToImages + "InactiveLockManual.png");
+			lockButton.updateImage(Resources.loadImage("InactiveLockManual.png"));
 		else if (modeOfOperation == OperatingMode.PLETHYSMOGRAPH)
-			lockButton.updateImage(Resources.pathToImages + "InactiveLockPlethysmograph.png");
+			lockButton.updateImage(Resources.loadImage("InactiveLockPlethysmograph.png"));
 		else if (modeOfOperation == OperatingMode.HEART_RATE_VS_PULSE_RATE)
-			lockButton.updateImage(Resources.pathToImages + "InactiveLockHeartRateVsPulseRate.png");
+			lockButton.updateImage(Resources.loadImage("InactiveLockHeartRateVsPulseRate.png"));
 		else if (modeOfOperation == OperatingMode.CAPNOGRAPH)
-			lockButton.updateImage(Resources.pathToImages + "InactiveLockCapnograph.png");
+			lockButton.updateImage(Resources.loadImage("InactiveLockCapnograph.png"));
 		
 		repaint();
 	}
@@ -498,35 +498,35 @@ public class SafetyLockScreenMainPanel extends JPanel implements MouseListener, 
 		if (lockIsActive && lastCommand == Command.START)
 		{
 			if (modeOfOperation == OperatingMode.PLETHYSMOGRAPH)
-				lockButton.updateImage(Resources.pathToImages + "ActiveLockPlethysmograph.png");
+				lockButton.updateImage(Resources.loadImage("ActiveLockPlethysmograph.png"));
 			else if (modeOfOperation == OperatingMode.CAPNOGRAPH)
-				lockButton.updateImage(Resources.pathToImages + "ActiveLockCapnograph.png");
+				lockButton.updateImage(Resources.loadImage("ActiveLockCapnograph.png"));
 			else if (modeOfOperation == OperatingMode.HEART_RATE_VS_PULSE_RATE)
-				lockButton.updateImage(Resources.pathToImages + "ActiveLockHeartRateVsPulseRate.png");
+				lockButton.updateImage(Resources.loadImage("ActiveLockHeartRateVsPulseRate.png"));
 			else if (modeOfOperation == OperatingMode.MANUAL)
-					lockButton.updateImage(Resources.pathToImages + "LockManualPressStop.png");
+					lockButton.updateImage(Resources.loadImage("LockManualPressStop.png"));
 		}
 		else if (lockIsActive && lastCommand == Command.STOP)
 		{
 			if (modeOfOperation == OperatingMode.PLETHYSMOGRAPH)
-				lockButton.updateImage(Resources.pathToImages + "ActiveLockPlethysmographPressStart.png");
+				lockButton.updateImage(Resources.loadImage("ActiveLockPlethysmographPressStart.png"));
 			else if (modeOfOperation == OperatingMode.CAPNOGRAPH)
-				lockButton.updateImage(Resources.pathToImages + "ActiveLockCapnographPressStart.png");
+				lockButton.updateImage(Resources.loadImage("ActiveLockCapnographPressStart.png"));
 			else if (modeOfOperation == OperatingMode.HEART_RATE_VS_PULSE_RATE)
-				lockButton.updateImage(Resources.pathToImages + "ActiveLockHeartRateVsPulseRatePressStart.png");
+				lockButton.updateImage(Resources.loadImage("ActiveLockHeartRateVsPulseRatePressStart.png"));
 			else if (modeOfOperation == OperatingMode.MANUAL)
-					lockButton.updateImage(Resources.pathToImages + "LockManualPressStart.png");
+					lockButton.updateImage(Resources.loadImage("LockManualPressStart.png"));
 		}
 		else if (!lockIsActive)
 		{
 			if (modeOfOperation == OperatingMode.PLETHYSMOGRAPH)
-				lockButton.updateImage(Resources.pathToImages + "InactiveLockPlethysmograph.png");
+				lockButton.updateImage(Resources.loadImage("InactiveLockPlethysmograph.png"));
 			else if (modeOfOperation == OperatingMode.CAPNOGRAPH)
-				lockButton.updateImage(Resources.pathToImages + "InactiveLockCapnograph.png");
+				lockButton.updateImage(Resources.loadImage("InactiveLockCapnograph.png"));
 			else if (modeOfOperation == OperatingMode.HEART_RATE_VS_PULSE_RATE)
-				lockButton.updateImage(Resources.pathToImages + "InactiveLockHeartRateVsPulseRate.png");
+				lockButton.updateImage(Resources.loadImage("InactiveLockHeartRateVsPulseRate.png"));
 			else if (modeOfOperation == OperatingMode.MANUAL)
-				lockButton.updateImage(Resources.pathToImages + "InactiveLockManual.png");
+				lockButton.updateImage(Resources.loadImage("InactiveLockManual.png"));
 		}
 	}
 	

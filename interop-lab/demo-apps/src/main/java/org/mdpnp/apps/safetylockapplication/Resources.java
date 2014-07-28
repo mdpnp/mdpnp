@@ -2,8 +2,11 @@ package org.mdpnp.apps.safetylockapplication;
 
 
 import java.awt.Color;
+import java.awt.Image;
 import java.awt.Point;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 
 public class Resources {
@@ -46,6 +49,14 @@ public class Resources {
 	public static enum YesNoResponse {
 		YES,
 		NO
+	}
+	
+	public static final Image loadImage(String path) {
+	    try {
+            return ImageIO.read(Resources.class.getResource("images/"+path));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 	}
 	
 	public static final String pathToImages = "src/main/java/org/mdpnp/apps/safetylockapplication/images/";

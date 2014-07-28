@@ -39,10 +39,10 @@ public class YesNoDialog extends JDialog implements ActionListener {
 	    setUndecorated(true);
 	    getRootPane().setBorder(BorderFactory.createLineBorder(Color.white, 2, true));
 		
-		yes = new ImageButton(Resources.pathToImages + "YesButton.png");
+		yes = new ImageButton(Resources.loadImage("YesButton.png"));
 		yes.addActionListener(this);
 		
-		no = new ImageButton(Resources.pathToImages + "NoButton.png");
+		no = new ImageButton(Resources.loadImage("NoButton.png"));
 		no.addActionListener(this);
 		
 		JLabel messageLabel = new JLabel(message);

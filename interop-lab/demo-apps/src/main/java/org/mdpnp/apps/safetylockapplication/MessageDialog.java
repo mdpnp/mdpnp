@@ -35,7 +35,7 @@ public class MessageDialog extends JDialog implements ActionListener {
 	    setUndecorated(true);
 	    getRootPane().setBorder(BorderFactory.createLineBorder(Color.white, 2, true));
 		
-		okay = new ImageButton(Resources.pathToImages + "OkButton.png");
+		okay = new ImageButton(Resources.loadImage("OkButton.png"));
 		okay.addActionListener(this);
 		
 		JLabel messageLabel = new JLabel(message);

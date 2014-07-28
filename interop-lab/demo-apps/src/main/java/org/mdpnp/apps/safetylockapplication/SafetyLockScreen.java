@@ -69,10 +69,10 @@ public class SafetyLockScreen extends JPanel implements ActionListener, CommandL
 		modeSelectLabel.setBackground(Resources.physiologicalDisplayPanelBackgroundColor);
 		modeSelectLabel.setTextColor(Resources.standardTextColor);
 		
-		manualButton = new ImageButton(Resources.pathToImages + "ManualButtonInactive.png");
-		plethysmographButton = new ImageButton(Resources.pathToImages + "PlethysmographButtonInactive.png");
-		heartRateVsPulseRateButton = new ImageButton(Resources.pathToImages + "HrprButtonInactive.png");
-		capnographButton = new ImageButton(Resources.pathToImages + "CapnographButtonInactive.png");
+		manualButton = new ImageButton(Resources.loadImage("ManualButtonInactive.png"));
+		plethysmographButton = new ImageButton(Resources.loadImage("PlethysmographButtonInactive.png"));
+		heartRateVsPulseRateButton = new ImageButton(Resources.loadImage("HrprButtonInactive.png"));
+		capnographButton = new ImageButton(Resources.loadImage("CapnographButtonInactive.png"));
 		
 		safetyLockScreenModeSelectionPanel.add(modeSelectLabel);
 		safetyLockScreenModeSelectionPanel.add(manualButton);
@@ -132,34 +132,34 @@ public class SafetyLockScreen extends JPanel implements ActionListener, CommandL
 			if (object == plethysmographButton)
 			{
 				safetyLockScreenMainPanel.updateModeOfOperation(OperatingMode.PLETHYSMOGRAPH);
-				manualButton.updateImage(Resources.pathToImages + "ManualButtonInactive.png");
-				plethysmographButton.updateImage(Resources.pathToImages + "PlethysmographButtonActive.png");
-				heartRateVsPulseRateButton.updateImage(Resources.pathToImages + "HrprButtonInactive.png");
-				capnographButton.updateImage(Resources.pathToImages + "CapnographButtonInactive.png");
+				manualButton.updateImage(Resources.loadImage("ManualButtonInactive.png"));
+				plethysmographButton.updateImage(Resources.loadImage("PlethysmographButtonActive.png"));
+				heartRateVsPulseRateButton.updateImage(Resources.loadImage("HrprButtonInactive.png"));
+				capnographButton.updateImage(Resources.loadImage("CapnographButtonInactive.png"));
 			}
 			if (object == manualButton)
 			{
 				safetyLockScreenMainPanel.updateModeOfOperation(OperatingMode.MANUAL);
-				manualButton.updateImage(Resources.pathToImages + "ManualButtonActive.png");
-				plethysmographButton.updateImage(Resources.pathToImages + "PlethysmographButtonInactive.png");
-				heartRateVsPulseRateButton.updateImage(Resources.pathToImages + "HrprButtonInactive.png");
-				capnographButton.updateImage(Resources.pathToImages + "CapnographButtonInactive.png");
+				manualButton.updateImage(Resources.loadImage("ManualButtonActive.png"));
+				plethysmographButton.updateImage(Resources.loadImage("PlethysmographButtonInactive.png"));
+				heartRateVsPulseRateButton.updateImage(Resources.loadImage("HrprButtonInactive.png"));
+				capnographButton.updateImage(Resources.loadImage("CapnographButtonInactive.png"));
 			}
 			if (object == heartRateVsPulseRateButton)
 			{
 				safetyLockScreenMainPanel.updateModeOfOperation(OperatingMode.HEART_RATE_VS_PULSE_RATE);
-				manualButton.updateImage(Resources.pathToImages + "ManualButtonInactive.png");
-				plethysmographButton.updateImage(Resources.pathToImages + "PlethysmographButtonInactive.png");
-				heartRateVsPulseRateButton.updateImage(Resources.pathToImages + "HrprButtonActive.png");
-				capnographButton.updateImage(Resources.pathToImages + "CapnographButtonInactive.png");
+				manualButton.updateImage(Resources.loadImage("ManualButtonInactive.png"));
+				plethysmographButton.updateImage(Resources.loadImage("PlethysmographButtonInactive.png"));
+				heartRateVsPulseRateButton.updateImage(Resources.loadImage("HrprButtonActive.png"));
+				capnographButton.updateImage(Resources.loadImage("CapnographButtonInactive.png"));
 			}
 			if (object == capnographButton)
 			{
 				safetyLockScreenMainPanel.updateModeOfOperation(OperatingMode.CAPNOGRAPH);
-				manualButton.updateImage(Resources.pathToImages + "ManualButtonInactive.png");
-				plethysmographButton.updateImage(Resources.pathToImages + "PlethysmographButtonInactive.png");
-				heartRateVsPulseRateButton.updateImage(Resources.pathToImages + "HrprButtonInactive.png");
-				capnographButton.updateImage(Resources.pathToImages + "CapnographButtonActive.png");
+				manualButton.updateImage(Resources.loadImage("ManualButtonInactive.png"));
+				plethysmographButton.updateImage(Resources.loadImage("PlethysmographButtonInactive.png"));
+				heartRateVsPulseRateButton.updateImage(Resources.loadImage("HrprButtonInactive.png"));
+				capnographButton.updateImage(Resources.loadImage("CapnographButtonActive.png"));
 			}
 		}
 	}

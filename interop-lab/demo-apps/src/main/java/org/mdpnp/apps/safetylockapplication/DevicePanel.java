@@ -40,20 +40,20 @@ public class DevicePanel extends JPanel implements PatientEventListener, ActionL
 	private boolean sPumpIsSpawned = false;
 	private boolean pumpIsActive = false;
 	
-	ImageButton rPulseOxButton = new ImageButton(Resources.pathToImages + "NoninPulseOximeterUnselected.png");
-	ImageButton sPulseOxButton = new ImageButton(Resources.pathToImages + "SimulatedPulseOximeterUnselected.png");
-	ImageButton sEkgButton = new ImageButton(Resources.pathToImages + "SimulatedEcgUnselected.png");
-	ImageButton sPump = new ImageButton(Resources.pathToImages + "SimulatedPumpUnselected.png");
-	ImageButton sCapnoButton = new ImageButton(Resources.pathToImages + "SimulatedCapnographUnselected.png");
+	ImageButton rPulseOxButton = new ImageButton(Resources.loadImage("NoninPulseOximeterUnselected.png"));
+	ImageButton sPulseOxButton = new ImageButton(Resources.loadImage("SimulatedPulseOximeterUnselected.png"));
+	ImageButton sEkgButton = new ImageButton(Resources.loadImage("SimulatedEcgUnselected.png"));
+	ImageButton sPump = new ImageButton(Resources.loadImage("SimulatedPumpUnselected.png"));
+	ImageButton sCapnoButton = new ImageButton(Resources.loadImage("SimulatedCapnographUnselected.png"));
 	
-	ImageButton o2Distressor = new ImageButton(Resources.pathToImages + "o2DistressorInactive.png");
-	ImageButton o2Roc = new ImageButton(Resources.pathToImages + "o2RocInactive.png");
-	ImageButton co2Distressor = new ImageButton(Resources.pathToImages + "co2DistressorInactive.png");
-	ImageButton co2Roc = new ImageButton(Resources.pathToImages + "co2RocInactive.png");
-	ImageButton respiratoryDistressor = new ImageButton(Resources.pathToImages + "RespiratoryRateDistressorInactive.png");
-	ImageButton respiratoryRoc = new ImageButton(Resources.pathToImages + "RespiratoryRocInactive.png");
-	ImageButton hrprDistressor = new ImageButton(Resources.pathToImages + "HrprDistressorInactive.png");
-	ImageButton hrprRoc = new ImageButton(Resources.pathToImages + "HrprRocInactive.png");
+	ImageButton o2Distressor = new ImageButton(Resources.loadImage("o2DistressorInactive.png"));
+	ImageButton o2Roc = new ImageButton(Resources.loadImage("o2RocInactive.png"));
+	ImageButton co2Distressor = new ImageButton(Resources.loadImage("co2DistressorInactive.png"));
+	ImageButton co2Roc = new ImageButton(Resources.loadImage("co2RocInactive.png"));
+	ImageButton respiratoryDistressor = new ImageButton(Resources.loadImage("RespiratoryRateDistressorInactive.png"));
+	ImageButton respiratoryRoc = new ImageButton(Resources.loadImage("RespirationRocInactive.png"));
+	ImageButton hrprDistressor = new ImageButton(Resources.loadImage("HrprDistressorInactive.png"));
+	ImageButton hrprRoc = new ImageButton(Resources.loadImage("HrprRocInactive.png"));
 	
 	ArrayList<DevicePanelListener> listeners = new ArrayList<DevicePanelListener>();
 	PatientEvent previousPatientEvent = null;
@@ -75,7 +75,8 @@ public class DevicePanel extends JPanel implements PatientEventListener, ActionL
 		
 		//for pulse oximeter numerics
 		rReceiver = new ReceivePulseOximeterNumerics();
-        int domainId = 0;
+        int domainId = 15;
+        org.mdpnp.apps.testapp.Main.loadAndSetIceQosLibrary();
         final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId,
                 DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
@@ -228,17 +229,17 @@ public class DevicePanel extends JPanel implements PatientEventListener, ActionL
 		{
 			if (!rPulseOxIsSpawned)
 			{
-				rPulseOxButton.updateImage(Resources.pathToImages + "NoninPulseOximeterSelected.png");
+				rPulseOxButton.updateImage(Resources.loadImage("NoninPulseOximeterSelected.png"));
 				rPulseOxIsSpawned = true;
 				if (sPulseOxIsSpawned)
 				{
-					sPulseOxButton.updateImage(Resources.pathToImages + "SimulatedPulseOximeterUnselected.png");
+					sPulseOxButton.updateImage(Resources.loadImage("SimulatedPulseOximeterUnselected.png"));
 					sPulseOxIsSpawned = false;
 				}
 			}
 			else
 			{
-				rPulseOxButton.updateImage(Resources.pathToImages + "NoninPulseOximeterUnselected.png");
+				rPulseOxButton.updateImage(Resources.loadImage("NoninPulseOximeterUnselected.png"));
 				rPulseOxIsSpawned = false;
 			}
 		}
@@ -246,17 +247,17 @@ public class DevicePanel extends JPanel implements PatientEventListener, ActionL
 		{
 			if (!sPulseOxIsSpawned)
 			{
-				sPulseOxButton.updateImage(Resources.pathToImages + "SimulatedPulseOximeterSelected.png");
+				sPulseOxButton.updateImage(Resources.loadImage("SimulatedPulseOximeterSelected.png"));
 				sPulseOxIsSpawned = true;
 				if (rPulseOxIsSpawned)
 				{
-					rPulseOxButton.updateImage(Resources.pathToImages + "NoninPulseOximeterUnselected.png");
+					rPulseOxButton.updateImage(Resources.loadImage("NoninPulseOximeterUnselected.png"));
 					rPulseOxIsSpawned = false;
 				}
 			}
 			else
 			{
-				sPulseOxButton.updateImage(Resources.pathToImages + "SimulatedPulseOximeterUnselected.png");
+				sPulseOxButton.updateImage(Resources.loadImage("SimulatedPulseOximeterUnselected.png"));
 				sPulseOxIsSpawned = false;
 			}
 		}
@@ -264,12 +265,12 @@ public class DevicePanel extends JPanel implements PatientEventListener, ActionL
 		{
 			if (!sEkgIsSpawned)
 			{
-				sEkgButton.updateImage(Resources.pathToImages + "SimulatedEcgSelected.png");
+				sEkgButton.updateImage(Resources.loadImage("SimulatedEcgSelected.png"));
 				sEkgIsSpawned = true;
 			}
 			else
 			{
-				sEkgButton.updateImage(Resources.pathToImages + "SimulatedEcgUnselected.png");
+				sEkgButton.updateImage(Resources.loadImage("SimulatedEcgUnselected.png"));
 				sEkgIsSpawned = false;
 			}
 		}
@@ -277,12 +278,12 @@ public class DevicePanel extends JPanel implements PatientEventListener, ActionL
 		{
 			if (!sCapnoIsSpawned)
 			{
-				sCapnoButton.updateImage(Resources.pathToImages + "SimulatedCapnographSelected.png");
+				sCapnoButton.updateImage(Resources.loadImage("SimulatedCapnographSelected.png"));
 				sCapnoIsSpawned = true;
 			}
 			else
 			{
-				sCapnoButton.updateImage(Resources.pathToImages + "SimulatedCapnographUnselected.png");
+				sCapnoButton.updateImage(Resources.loadImage("SimulatedCapnographUnselected.png"));
 				sCapnoIsSpawned = false;
 			}
 		}
@@ -290,12 +291,12 @@ public class DevicePanel extends JPanel implements PatientEventListener, ActionL
 		{
 			if (!sPumpIsSpawned)
 			{
-				sPump.updateImage(Resources.pathToImages + "SimulatedPumpSelected.png");
+				sPump.updateImage(Resources.loadImage("SimulatedPumpSelected.png"));
 				sPumpIsSpawned = true;
 			}
 			else
 			{
-				sPump.updateImage(Resources.pathToImages + "SimulatedPumpUnselected.png");
+				sPump.updateImage(Resources.loadImage("SimulatedPumpUnselected.png"));
 				sPumpIsSpawned = false;
 				pumpIsActive = false;
 			}

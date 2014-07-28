@@ -194,12 +194,16 @@ public class DemoFrame extends JFrame {
     }
 
     public final boolean setWindowCanFullScreen(boolean b) {
+        return setWindowCanFullScreen(b, this);
+    }
+    
+    public final static boolean setWindowCanFullScreen(boolean b, JFrame frame) {
         Class<?> util;
         try {
             util = Class.forName("com.apple.eawt.FullScreenUtilities");
             Class<?> params[] = new Class[] { Window.class, Boolean.TYPE };
             Method method = util.getMethod("setWindowCanFullScreen", params);
-            method.invoke(util, this, b);
+            method.invoke(util, frame, b);
             return true;
         } catch (Exception e) {
         }

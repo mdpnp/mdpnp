@@ -29,18 +29,18 @@ public class SetAlarmOptionsPanel extends JPanel implements ActionListener {
 		
 		listeners = new ArrayList<OptionsPanelListener>();
 		this.mode = mode;
-		cancel = new ImageButton(Resources.pathToImages + "CancelButton.png");
-		clear = new ImageButton(Resources.pathToImages + "ClearRulesButton.png");
-		newRule = new ImageButton(Resources.pathToImages + "NewRuleButton.png");
+		cancel = new ImageButton(Resources.loadImage("CancelButton.png"));
+		clear = new ImageButton(Resources.loadImage("ClearRulesButton.png"));
+		newRule = new ImageButton(Resources.loadImage("NewRuleButton.png"));
 		
 		if (mode == OperatingMode.PLETHYSMOGRAPH)
-			use = new ImageButton(Resources.pathToImages + "PlethysmographDefaults.png");
+			use = new ImageButton(Resources.loadImage("PlethysmographDefaults.png"));
 		else if (mode == OperatingMode.HEART_RATE_VS_PULSE_RATE)
-			use = new ImageButton(Resources.pathToImages + "HrprDefaults.png");
+			use = new ImageButton(Resources.loadImage("HrprDefaults.png"));
 		else if (mode == OperatingMode.CAPNOGRAPH)
-			use = new ImageButton(Resources.pathToImages + "CapnographDefaults.png");
+			use = new ImageButton(Resources.loadImage("CapnographDefaults.png"));
 		
-		start = new ImageButton(Resources.pathToImages + "StartButton.png");
+		start = new ImageButton(Resources.loadImage("StartButton.png"));
 		
 		cancel.addActionListener(this);
 		clear.addActionListener(this);
