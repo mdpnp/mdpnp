@@ -7,3 +7,5 @@ MeasuredDataCP1.PulseRate	rosetta.MDC_PULS_OXIM_PULS_RATE	N
 Setting.InspiratoryTime	ice.MDC_TIME_PD_INSPIRATORY	N
 Setting.FrequencyIPPV	ice.MDC_VENT_TIME_PD_PPV	N
 MeasuredDataCP1.EndTidalCO2mmHg	rosetta.MDC_AWAY_CO2_EXP	N
+MeasuredDataCP1.RespiratoryRate	rosetta.MDC_RESP_RATE	N
+MeasuredDataCP1.PEEPBreathingPressure	rosetta.MDC_PRESS_AWAY	N
