@@ -298,14 +298,18 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
 
         @Override
-        protected void receiveDateTime(Date date) {
-            process(date);
-            lastDateTime = System.currentTimeMillis();
+        protected void receiveDateTime(byte[] response, int len) {
+            super.receiveDateTime(response, len);
             try {
                 getDelegate().sendCommand(Command.ReqDeviceSetting);
             } catch (IOException e) {
                 log.error(e.getMessage(), e);
             }
+        }
+        
+        @Override
+        protected void receiveDateTime(Date date) {
+            process(date);
         }
 
         @Override
