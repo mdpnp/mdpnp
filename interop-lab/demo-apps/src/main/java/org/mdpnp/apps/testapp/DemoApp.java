@@ -189,6 +189,7 @@ public class DemoApp {
         final DemoFrame frame = new DemoFrame("ICE Supervisor");
         frame.setIconImage(ImageIO.read(DemoApp.class.getResource("icon.png")));
         panel = new DemoPanel();
+        panel.getPartitionChooser().add(subscriber);
         switch (domainId) {
         case 0:
             panel.getBedLabel().setText("ICE Test Domain " + domainId);

@@ -21,6 +21,8 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -46,6 +48,7 @@ import javax.swing.border.EmptyBorder;
  *
  */
 public class DemoPanel extends JPanel implements Runnable {
+    private final PartitionChooser partitionChooser = new PartitionChooser();
     private final ImageIcon ice_cubes = new ImageIcon(DemoPanel.class.getResource("blue_ice_cubes.jpg"));
     private final ImageIcon mdpnp = new ImageIcon(DemoPanel.class.getResource("mdpnp-small.png"));
 
@@ -87,8 +90,13 @@ public class DemoPanel extends JPanel implements Runnable {
     public JButton getBack() {
         return back;
     }
+    
+    public PartitionChooser getPartitionChooser() {
+        return partitionChooser;
+    }
 
     private void buildHeader() {
+        
         header.setLayout(new BorderLayout());
         header.setOpaque(true);
         header.setBackground(Color.white);
@@ -113,6 +121,15 @@ public class DemoPanel extends JPanel implements Runnable {
         patientLabel.setForeground(darkBlue);
         patientLabel.setFont(bedLabel.getFont());
         patientLabel.setOpaque(false);
+        partitionChooser.setSize(320, 240);
+        patientLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                partitionChooser.setLocationRelativeTo(patientLabel);
+                partitionChooser.setVisible(true);
+            }
+        });
         // SpaceFillLabel.attachResizeFontToFill( header, bedLabel,
         // patientLabel);
 
