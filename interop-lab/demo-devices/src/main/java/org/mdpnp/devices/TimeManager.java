@@ -361,29 +361,33 @@ public class TimeManager implements Runnable {
                             }
                         }
                     } else if(tsReadCond.equals(c)) {
-                        try {
-                            tsReader.read_w_condition(ts_seq, sa_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, tsReadCond);
-                             int size = sa_seq.size();
-                            for(int j = 0; j < size; j++) {
-                                SampleInfo sampleInfo = (SampleInfo) sa_seq.get(j);
-                                ice.TimeSync timeSync = (TimeSync) ts_seq.get(j);
-                                
-                                if(sampleInfo.valid_data) {
-                                    elapsedTime(timeSync.recipient_receipt_timestamp, sampleInfo.source_timestamp, remoteProcessingTime);
-                                    elapsedTime(timeSync.source_source_timestamp, sampleInfo.reception_timestamp, totalRoundtripTime);
-                                    latencyTime.sec = totalRoundtripTime.sec;
-                                    latencyTime.nanosec = totalRoundtripTime.nanosec;
-                                    subtract(latencyTime, remoteProcessingTime);
-                                    divide(latencyTime, 2);
+                        for(;;) {
+                            try {
+                                tsReader.read_w_condition(ts_seq, sa_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, tsReadCond);
+                                 int size = sa_seq.size();
+                                for(int j = 0; j < size; j++) {
+                                    SampleInfo sampleInfo = (SampleInfo) sa_seq.get(j);
+                                    ice.TimeSync timeSync = (TimeSync) ts_seq.get(j);
                                     
-                                    elapsedTime(timeSync.source_source_timestamp, timeSync.recipient_receipt_timestamp, clockDifference);
-                                    subtract(clockDifference, latencyTime);
-                                    
-                                    processSynchronization(timeSync.heartbeat_recipient, latencyTime, clockDifference);
+                                    if(sampleInfo.valid_data) {
+                                        elapsedTime(timeSync.recipient_receipt_timestamp, sampleInfo.source_timestamp, remoteProcessingTime);
+                                        elapsedTime(timeSync.source_source_timestamp, sampleInfo.reception_timestamp, totalRoundtripTime);
+                                        latencyTime.sec = totalRoundtripTime.sec;
+                                        latencyTime.nanosec = totalRoundtripTime.nanosec;
+                                        subtract(latencyTime, remoteProcessingTime);
+                                        divide(latencyTime, 2);
+                                        
+                                        elapsedTime(timeSync.source_source_timestamp, timeSync.recipient_receipt_timestamp, clockDifference);
+                                        subtract(clockDifference, latencyTime);
+                                        
+                                        processSynchronization(timeSync.heartbeat_recipient, latencyTime, clockDifference);
+                                    }
                                 }
+                            } catch (RETCODE_NO_DATA noData) {
+                                break;
+                            } finally {
+                                tsReader.return_loan(ts_seq, sa_seq);
                             }
-                        } finally {
-                            tsReader.return_loan(ts_seq, sa_seq);
                         }
                     }
                 }
