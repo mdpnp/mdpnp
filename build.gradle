@@ -56,7 +56,7 @@ subprojects {
         repositories {
 
             // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
-            maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/ext-release-local' }
+            maven {  url 'https://build.openice.info/artifactory/ext-release-local' }
 
             ivy {  artifactPattern 'http://gradle-launch4j.googlecode.com/files/[module]-[revision].[ext]' }
 
@@ -67,11 +67,11 @@ subprojects {
     }
     repositories {
         // Repository for external snapshot libs hosted by mdpnp (unavailable in any other repo)
-        maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-snapshot' 
+        maven {  url 'https://build.openice.info/artifactory/libs-snapshot' 
         }
 
         // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
-        maven {  url 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-release' }
+        maven {  url 'https://build.openice.info/artifactory/libs-release' }
         
         // Virtual repository of all remote repositories
         // used in the mdpnp project
@@ -83,7 +83,7 @@ subprojects {
                     password MDPNP_WRITE_PASSWORD
                 }
             }
-            url 'http://arvi.mgh.harvard.edu:8080/artifactory/remote-repos' }
+            url 'https://build.openice.info/artifactory/remote-repos' }
 
 
 
@@ -119,10 +119,10 @@ subprojects {
         uploadArchives {
             repositories {
                 mavenDeployer {
-                    repository(url: 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-release-local') {
+                    repository(url: 'https://build.openice.info/artifactory/libs-release-local') {
                         authentication(userName: MDPNP_WRITE_USER, password: MDPNP_WRITE_PASSWORD)
                     }
-                    snapshotRepository(url: 'http://arvi.mgh.harvard.edu:8080/artifactory/libs-snapshot-local') {
+                    snapshotRepository(url: 'https://build.openice.info/artifactory/libs-snapshot-local') {
                         authentication(userName: MDPNP_WRITE_USER, password: MDPNP_WRITE_PASSWORD)
                     }
                 }
