@@ -27,6 +27,7 @@
      <!-- multicast discovery -->
      <initial_peers>
       <element>udpv4://239.255.0.1</element>
+      <element>udpv4://127.0.0.1</element>
      </initial_peers>
      <!-- Under load could this be helpful to maintain participant liveliness 
       <metatraffic_transport_priority> 5 </metatraffic_transport_priority> -->
