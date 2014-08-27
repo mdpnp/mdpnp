@@ -131,6 +131,6 @@ struct PatientAssessment
   string<100> clinician_name;   // Unstructured clinician name
 }; //@top-level true
 
-const string PatientAssessmentTopic = "ice::PatientAssessment";
+const string PatientAssessmentTopic = "PatientAssessment";
 
 };
