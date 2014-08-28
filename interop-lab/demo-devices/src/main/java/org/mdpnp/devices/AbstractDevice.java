@@ -691,16 +691,6 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             timeManager = new TimeManager(publisher, subscriber, deviceIdentity.unique_device_identifier, "Device");
             timeManager.start();
         }
-        
-        DomainParticipantQos qos = new DomainParticipantQos();
-        domainParticipant.get_qos(qos);
-        try {
-            qos.user_data.value.clear();
-            qos.user_data.value.addAllByte(deviceIdentity.unique_device_identifier.getBytes("ASCII"));
-        } catch (UnsupportedEncodingException e) {
-            log.error(e.getMessage(), e);
-        }
-        domainParticipant.set_qos(qos);
 
         if (null == deviceIdentityHandle) {
             deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
