@@ -2,232 +2,128 @@
 #define _ROSETTA_IDL_
 
 module rosetta {
-  // from 
-  const string MDC_ECG_AMPL_ST = "MDC_ECG_AMPL_ST";
-  // from 
-  const string MDC_ECG_AMPL_ST_I = "MDC_ECG_AMPL_ST_I";
-  // from 
-  const string MDC_ECG_AMPL_ST_II = "MDC_ECG_AMPL_ST_II";
-  // from 
-  const string MDC_ECG_AMPL_ST_V1 = "MDC_ECG_AMPL_ST_V1";
-  // from 
-  const string MDC_ECG_AMPL_ST_V2 = "MDC_ECG_AMPL_ST_V2";
-  // from 
-  const string MDC_ECG_AMPL_ST_V3 = "MDC_ECG_AMPL_ST_V3";
-  // from 
-  const string MDC_ECG_AMPL_ST_V4 = "MDC_ECG_AMPL_ST_V4";
-  // from 
-  const string MDC_ECG_AMPL_ST_V5 = "MDC_ECG_AMPL_ST_V5";
-  // from 
-  const string MDC_ECG_AMPL_ST_V6 = "MDC_ECG_AMPL_ST_V6";
-  // from 
-  const string MDC_ECG_AMPL_ST_III = "MDC_ECG_AMPL_ST_III";
-  // from 
-  const string MDC_ECG_AMPL_ST_AVR = "MDC_ECG_AMPL_ST_AVR";
-  // from 
-  const string MDC_ECG_AMPL_ST_AVL = "MDC_ECG_AMPL_ST_AVL";
-  // from 
-  const string MDC_ECG_AMPL_ST_AVF = "MDC_ECG_AMPL_ST_AVF";
-  // from 
-  const string MDC_ECG_AMPL_ST_V = "MDC_ECG_AMPL_ST_V";
-  // from 
-  const string MDC_ECG_AMPL_ST_MCL = "MDC_ECG_AMPL_ST_MCL";
-  // from 
-  const string MDC_ECG_AMPL_ST_ES = "MDC_ECG_AMPL_ST_ES";
-  // from 
-  const string MDC_ECG_AMPL_ST_AS = "MDC_ECG_AMPL_ST_AS";
-  // from 
-  const string MDC_ECG_AMPL_ST_AI = "MDC_ECG_AMPL_ST_AI";
-  // from 
-  const string MDC_ECG_TIME_PD_QT_GL = "MDC_ECG_TIME_PD_QT_GL";
-  // from 
-  const string MDC_ECG_TIME_PD_QTc = "MDC_ECG_TIME_PD_QTc";
-  // from A.7.2.1
-  const string MDC_ECG_CARD_BEAT_RATE = "MDC_ECG_CARD_BEAT_RATE";
-  // from 
-  const string MDC_ECG_CARD_BEAT_RATE_BTB = "MDC_ECG_CARD_BEAT_RATE_BTB";
-  // from 
-  const string MDC_ECG_V_P_C_CNT = "MDC_ECG_V_P_C_CNT";
-  // from 
-  const string MDC_PULS_RATE = "MDC_PULS_RATE";
-  // from 
-  const string MDC_PULS_OXIM_PULS_RATE = "MDC_PULS_OXIM_PULS_RATE";
-  // from 
-  const string MDC_RES_VASC_SYS_INDEX = "MDC_RES_VASC_SYS_INDEX";
-  // from 
-  const string MDC_WK_LV_STROKE_INDEX = "MDC_WK_LV_STROKE_INDEX";
   // from A.7.3.1
-  const string MDC_WK_RV_STROKE_INDEX = "MDC_WK_RV_STROKE_INDEX";
-  // from 
-  const string MDC_OUTPUT_CARD_INDEX = "MDC_OUTPUT_CARD_INDEX";
-  // from 
-  const string MDC_PRESS_BLD = "MDC_PRESS_BLD";
-  // from 
-  const string MDC_PRESS_BLD_SYS = "MDC_PRESS_BLD_SYS";
-  // from 
-  const string MDC_PRESS_BLD_DIA = "MDC_PRESS_BLD_DIA";
-  // from 
-  const string MDC_PRESS_BLD_MEAN = "MDC_PRESS_BLD_MEAN";
-  // from 
-  const string MDC_PRESS_BLD_NONINV = "MDC_PRESS_BLD_NONINV";
-  // from 
-  const string MDC_PRESS_BLD_NONINV_SYS = "MDC_PRESS_BLD_NONINV_SYS";
-  // from 
-  const string MDC_PRESS_BLD_NONINV_DIA = "MDC_PRESS_BLD_NONINV_DIA";
-  // from 
-  const string MDC_PRESS_BLD_NONINV_MEAN = "MDC_PRESS_BLD_NONINV_MEAN";
-  // from 
-  const string MDC_PRESS_BLD_AORT = "MDC_PRESS_BLD_AORT";
-  // from 
-  const string MDC_PRESS_BLD_AORT_SYS = "MDC_PRESS_BLD_AORT_SYS";
-  // from 
-  const string MDC_PRESS_BLD_AORT_DIA = "MDC_PRESS_BLD_AORT_DIA";
-  // from 
-  const string MDC_PRESS_BLD_AORT_MEAN = "MDC_PRESS_BLD_AORT_MEAN";
-  // from 
-  const string MDC_PRESS_BLD_ART = "MDC_PRESS_BLD_ART";
-  // from 
-  const string MDC_PRESS_BLD_ART_SYS = "MDC_PRESS_BLD_ART_SYS";
-  // from 
-  const string MDC_PRESS_BLD_ART_DIA = "MDC_PRESS_BLD_ART_DIA";
-  // from 
-  const string MDC_PRESS_BLD_ART_MEAN = "MDC_PRESS_BLD_ART_MEAN";
-  // from 
-  const string MDC_PRESS_BLD_ART_ABP = "MDC_PRESS_BLD_ART_ABP";
-  // from 
-  const string MDC_PRESS_BLD_ART_ABP_SYS = "MDC_PRESS_BLD_ART_ABP_SYS";
-  // from 
-  const string MDC_PRESS_BLD_ART_ABP_DIA = "MDC_PRESS_BLD_ART_ABP_DIA";
-  // from 
-  const string MDC_PRESS_BLD_ART_ABP_MEAN = "MDC_PRESS_BLD_ART_ABP_MEAN";
-  // from 
-  const string MDC_PRESS_BLD_ART_PULM = "MDC_PRESS_BLD_ART_PULM";
-  // from 
-  const string MDC_PRESS_BLD_ART_PULM_SYS = "MDC_PRESS_BLD_ART_PULM_SYS";
-  // from 
-  const string MDC_PRESS_BLD_ART_PULM_DIA = "MDC_PRESS_BLD_ART_PULM_DIA";
-  // from 
-  const string MDC_PRESS_BLD_ART_PULM_MEAN = "MDC_PRESS_BLD_ART_PULM_MEAN";
-  // from 
-  const string MDC_PRESS_BLD_ART_PULM_WEDGE = "MDC_PRESS_BLD_ART_PULM_WEDGE";
-  // from 
-  const string MDC_PRESS_BLD_ART_UMB = "MDC_PRESS_BLD_ART_UMB";
-  // from 
-  const string MDC_PRESS_BLD_ART_UMB_SYS = "MDC_PRESS_BLD_ART_UMB_SYS";
-  // from 
-  const string MDC_PRESS_BLD_ART_UMB_DIA = "MDC_PRESS_BLD_ART_UMB_DIA";
-  // from 
-  const string MDC_PRESS_BLD_ART_UMB_MEAN = "MDC_PRESS_BLD_ART_UMB_MEAN";
-  // from 
-  const string MDC_PRESS_BLD_ATR_LEFT = "MDC_PRESS_BLD_ATR_LEFT";
-  // from 
-  const string MDC_PRESS_BLD_ATR_LEFT_SYS = "MDC_PRESS_BLD_ATR_LEFT_SYS";
-  // from 
-  const string MDC_PRESS_BLD_ATR_LEFT_DIA = "MDC_PRESS_BLD_ATR_LEFT_DIA";
-  // from 
-  const string MDC_PRESS_BLD_ATR_LEFT_MEAN = "MDC_PRESS_BLD_ATR_LEFT_MEAN";
-  // from 
-  const string MDC_PRESS_BLD_ATR_RIGHT = "MDC_PRESS_BLD_ATR_RIGHT";
-  // from 
-  const string MDC_PRESS_BLD_ATR_RIGHT_SYS = "MDC_PRESS_BLD_ATR_RIGHT_SYS";
-  // from 
-  const string MDC_PRESS_BLD_ATR_RIGHT_DIA = "MDC_PRESS_BLD_ATR_RIGHT_DIA";
-  // from 
-  const string MDC_PRESS_BLD_ATR_RIGHT_MEAN = "MDC_PRESS_BLD_ATR_RIGHT_MEAN";
-  // from 
-  const string MDC_PRESS_BLD_PULM_CAP = "MDC_PRESS_BLD_PULM_CAP";
-  // from 
-  const string MDC_PRESS_BLD_PULM_CAP_SYS = "MDC_PRESS_BLD_PULM_CAP_SYS";
-  // from 
-  const string MDC_PRESS_BLD_PULM_CAP_DIA = "MDC_PRESS_BLD_PULM_CAP_DIA";
-  // from 
-  const string MDC_PRESS_BLD_PULM_CAP_MEAN = "MDC_PRESS_BLD_PULM_CAP_MEAN";
-  // from 
-  const string MDC_PRESS_BLD_VEN_CENT = "MDC_PRESS_BLD_VEN_CENT";
-  // from 
-  const string MDC_PRESS_BLD_VEN_CENT_SYS = "MDC_PRESS_BLD_VEN_CENT_SYS";
-  // from 
-  const string MDC_PRESS_BLD_VEN_CENT_DIA = "MDC_PRESS_BLD_VEN_CENT_DIA";
-  // from 
-  const string MDC_PRESS_BLD_VEN_CENT_MEAN = "MDC_PRESS_BLD_VEN_CENT_MEAN";
-  // from 
-  const string MDC_PRESS_BLD_VEN_UMB = "MDC_PRESS_BLD_VEN_UMB";
-  // from 
-  const string MDC_PRESS_BLD_VEN_UMB_SYS = "MDC_PRESS_BLD_VEN_UMB_SYS";
-  // from 
-  const string MDC_PRESS_BLD_VEN_UMB_DIA = "MDC_PRESS_BLD_VEN_UMB_DIA";
-  // from 
-  const string MDC_PRESS_BLD_VEN_UMB_MEAN = "MDC_PRESS_BLD_VEN_UMB_MEAN";
-  // from 
-  const string MDC_SAT_O2_CONSUMP = "MDC_SAT_O2_CONSUMP";
-  // from 
-  const string MDC_OUTPUT_CARD = "MDC_OUTPUT_CARD";
-  // from 
-  const string MDC_PRESS_CUFF = "MDC_PRESS_CUFF";
-  // from 
-  const string MDC_RES_VASC_SYS = "MDC_RES_VASC_SYS";
-  // from 
-  const string MDC_SAT_O2_ART = "MDC_SAT_O2_ART";
-  // from 
-  const string MDC_SAT_O2_VEN = "MDC_SAT_O2_VEN";
-  // from 
-  const string MDC_SAT_DIFF_O2_ART_ALV = "MDC_SAT_DIFF_O2_ART_ALV";
-  // from 
-  const string MDC_TEMP = "MDC_TEMP";
-  // from 
-  const string MDC_TEMP_ART = "MDC_TEMP_ART";
-  // from 
-  const string MDC_TEMP_AWAY = "MDC_TEMP_AWAY";
-  // from 
-  const string MDC_TEMP_CORE = "MDC_TEMP_CORE";
-  // from 
-  const string MDC_TEMP_ESOPH = "MDC_TEMP_ESOPH";
-  // from 
-  const string MDC_TEMP_INJ = "MDC_TEMP_INJ";
-  // from 
-  const string MDC_TEMP_NASOPH = "MDC_TEMP_NASOPH";
-  // from 
-  const string MDC_TEMP_SKIN = "MDC_TEMP_SKIN";
-  // from 
-  const string MDC_TEMP_VEN = "MDC_TEMP_VEN";
-  // from 
-  const string MDC_VOL_BLD_STROKE = "MDC_VOL_BLD_STROKE";
-  // from 
-  const string MDC_WK_CARD_LEFT = "MDC_WK_CARD_LEFT";
-  // from 
-  const string MDC_WK_CARD_RIGHT = "MDC_WK_CARD_RIGHT";
-  // from 
-  const string MDC_WK_LV_STROKE = "MDC_WK_LV_STROKE";
-  // from 
-  const string MDC_PULS_OXIM_PERF_REL = "MDC_PULS_OXIM_PERF_REL";
-  // from 
-  const string MDC_PULS_OXIM_PLETH = "MDC_PULS_OXIM_PLETH";
-  // from 
-  const string MDC_PULS_OXIM_SAT_O2 = "MDC_PULS_OXIM_SAT_O2";
-  // from 
-  const string MDC_PULS_OXIM_SAT_O2_DIFF = "MDC_PULS_OXIM_SAT_O2_DIFF";
-  // from 
-  const string MDC_PULS_OXIM_SAT_O2_ART_LEFT = "MDC_PULS_OXIM_SAT_O2_ART_LEFT";
-  // from 
-  const string MDC_PULS_OXIM_SAT_O2_ART_RIGHT = "MDC_PULS_OXIM_SAT_O2_ART_RIGHT";
-  // from 
-  const string MDC_DESAT = "MDC_DESAT";
-  // from 
-  const string MDC_OUTPUT_CARD_CTS = "MDC_OUTPUT_CARD_CTS";
-  // from 
-  const string MDC_GRAD_PRESS_BLD_AORT_POS_MAX = "MDC_GRAD_PRESS_BLD_AORT_POS_MAX";
-  // from 
-  const string MDC_TRANSMISSION = "MDC_TRANSMISSION";
-  // from 
-  const string MDC_TRANSMISSION_RED = "MDC_TRANSMISSION_RED";
-  // from 
-  const string MDC_TRANSMISSION_INFRARED = "MDC_TRANSMISSION_INFRARED";
-  // from 
-  const string MDC_RESP_RATE = "MDC_RESP_RATE";
+  const string MDC_ACCELERATION_INDEX = "MDC_ACCELERATION_INDEX";
+  // from 
+  const string MDC_AREA_BODY_SURF_ACTUAL = "MDC_AREA_BODY_SURF_ACTUAL";
+  // from A.3.3.2
+  const string MDC_ATTR_ALARM_INACTIVATION_STATE = "MDC_ATTR_ALARM_INACTIVATION_STATE";
+  // from A.3.3.2
+  const string MDC_ATTR_ALARM_PRIORITY = "MDC_ATTR_ALARM_PRIORITY";
+  // from A.3.3.2
+  const string MDC_ATTR_ALARM_STATE = "MDC_ATTR_ALARM_STATE";
+  // from A.3.3.2
+  const string MDC_ATTR_ALERT_SOURCE = "MDC_ATTR_ALERT_SOURCE";
+  // from A.3.3.2
+  const string MDC_ATTR_ALERT_TYPE = "MDC_ATTR_ALERT_TYPE";
+  // from 
+  const string MDC_ATTR_AL_COND = "MDC_ATTR_AL_COND";
+  // from A.3.3.2
+  const string MDC_ATTR_EVENT_PHASE = "MDC_ATTR_EVENT_PHASE";
+  // from 
+  const string MDC_ATTR_PT_HEIGHT = "MDC_ATTR_PT_HEIGHT";
+  // from 
+  const string MDC_ATTR_PT_WEIGHT = "MDC_ATTR_PT_WEIGHT";
+  // from A.7.4.1
+  const string MDC_AWAY_AR = "MDC_AWAY_AR";
+  // from A.7.4.1
+  const string MDC_AWAY_AR_EXP = "MDC_AWAY_AR_EXP";
+  // from A.7.4.1
+  const string MDC_AWAY_AR_INSP = "MDC_AWAY_AR_INSP";
+  // from A.7.4.1
+  const string MDC_AWAY_CO2 = "MDC_AWAY_CO2";
+  // from 
+  const string MDC_AWAY_CO2_ET = "MDC_AWAY_CO2_ET";
+  // from A.7.4.1
+  const string MDC_AWAY_CO2_EXP = "MDC_AWAY_CO2_EXP";
+  // from A.7.4.1
+  const string MDC_AWAY_CO2_INSP = "MDC_AWAY_CO2_INSP";
+  // from 
+  const string MDC_AWAY_CO2_INSP_MIN = "MDC_AWAY_CO2_INSP_MIN";
+  // from A.7.4.1
+  const string MDC_AWAY_DESFL = "MDC_AWAY_DESFL";
+  // from A.7.4.1
+  const string MDC_AWAY_DESFL_EXP = "MDC_AWAY_DESFL_EXP";
+  // from A.7.4.1
+  const string MDC_AWAY_DESFL_INSP = "MDC_AWAY_DESFL_INSP";
+  // from A.7.4.1
+  const string MDC_AWAY_ENFL = "MDC_AWAY_ENFL";
+  // from A.7.4.1
+  const string MDC_AWAY_ENFL_EXP = "MDC_AWAY_ENFL_EXP";
+  // from A.7.4.1
+  const string MDC_AWAY_ENFL_INSP = "MDC_AWAY_ENFL_INSP";
+  // from A.7.4.1
+  const string MDC_AWAY_HALOTH = "MDC_AWAY_HALOTH";
+  // from A.7.4.1
+  const string MDC_AWAY_HALOTH_EXP = "MDC_AWAY_HALOTH_EXP";
+  // from A.7.4.1
+  const string MDC_AWAY_HALOTH_INSP = "MDC_AWAY_HALOTH_INSP";
+  // from A.7.4.1
+  const string MDC_AWAY_HE = "MDC_AWAY_HE";
+  // from A.7.4.1
+  const string MDC_AWAY_HE_EXP = "MDC_AWAY_HE_EXP";
+  // from A.7.4.1
+  const string MDC_AWAY_HE_INSP = "MDC_AWAY_HE_INSP";
+  // from A.7.4.1
+  const string MDC_AWAY_ISOFL = "MDC_AWAY_ISOFL";
+  // from A.7.4.1
+  const string MDC_AWAY_ISOFL_EXP = "MDC_AWAY_ISOFL_EXP";
+  // from A.7.4.1
+  const string MDC_AWAY_ISOFL_INSP = "MDC_AWAY_ISOFL_INSP";
+  // from A.7.4.1
+  const string MDC_AWAY_N2 = "MDC_AWAY_N2";
+  // from A.7.4.1
+  const string MDC_AWAY_N2O = "MDC_AWAY_N2O";
+  // from A.7.4.1
+  const string MDC_AWAY_N2O_EXP = "MDC_AWAY_N2O_EXP";
+  // from A.7.4.1
+  const string MDC_AWAY_N2O_INSP = "MDC_AWAY_N2O_INSP";
+  // from A.7.4.1
+  const string MDC_AWAY_N2_EXP = "MDC_AWAY_N2_EXP";
+  // from A.7.4.1
+  const string MDC_AWAY_N2_INSP = "MDC_AWAY_N2_INSP";
+  // from A.7.4.1
+  const string MDC_AWAY_NO2 = "MDC_AWAY_NO2";
+  // from A.7.4.1
+  const string MDC_AWAY_NO2_EXP = "MDC_AWAY_NO2_EXP";
+  // from A.7.4.1
+  const string MDC_AWAY_NO2_INSP = "MDC_AWAY_NO2_INSP";
+  // from A.7.4.1
+  const string MDC_AWAY_O2 = "MDC_AWAY_O2";
+  // from A.7.4.1
+  const string MDC_AWAY_O2_EXP = "MDC_AWAY_O2_EXP";
+  // from A.7.4.1
+  const string MDC_AWAY_O2_INSP = "MDC_AWAY_O2_INSP";
   // from 
   const string MDC_AWAY_RESP_RATE = "MDC_AWAY_RESP_RATE";
+  // from A.7.4.1
+  const string MDC_AWAY_SEVOFL = "MDC_AWAY_SEVOFL";
+  // from A.7.4.1
+  const string MDC_AWAY_SEVOFL_EXP = "MDC_AWAY_SEVOFL_EXP";
+  // from A.7.4.1
+  const string MDC_AWAY_SEVOFL_INSP = "MDC_AWAY_SEVOFL_INSP";
+  // from A.7.5.1
+  const string MDC_BASE_EXCESS_BLD_ART = "MDC_BASE_EXCESS_BLD_ART";
+  // from 
+  const string MDC_BASE_EXCESS_BLD_ART_INDEX = "MDC_BASE_EXCESS_BLD_ART_INDEX";
+  // from A.7.5.1
+  const string MDC_BASE_EXCESS_FLUID_EXTRACELLULAR = "MDC_BASE_EXCESS_FLUID_EXTRACELLULAR";
+  // from 
+  const string MDC_BLD_PERF_INDEX = "MDC_BLD_PERF_INDEX";
+  // from 
+  const string MDC_BLD_PULS_RATE_INV = "MDC_BLD_PULS_RATE_INV";
+  // from A.7.4.1
+  const string MDC_BLD_SHUNT_FRACTION = "MDC_BLD_SHUNT_FRACTION";
   // from 
   const string MDC_CAPAC_VITAL = "MDC_CAPAC_VITAL";
+  // from 
+  const string MDC_CIRCUM_HEAD = "MDC_CIRCUM_HEAD";
+  // from 
+  const string MDC_CO2_RESP_RATE = "MDC_CO2_RESP_RATE";
+  // from 
+  const string MDC_CO2_TCUT = "MDC_CO2_TCUT";
+  // from A.7.11.1
+  const string MDC_COMM_STATUS = "MDC_COMM_STATUS";
   // from 
   const string MDC_COMPL_LUNG = "MDC_COMPL_LUNG";
   // from 
@@ -235,127 +131,15 @@ module rosetta {
   // from 
   const string MDC_COMPL_LUNG_STATIC = "MDC_COMPL_LUNG_STATIC";
   // from A.7.4.1
-  const string MDC_AWAY_CO2 = "MDC_AWAY_CO2";
-  // from 
-  const string MDC_AWAY_CO2_ET = "MDC_AWAY_CO2_ET";
-  // from 
-  const string MDC_AWAY_CO2_INSP_MIN = "MDC_AWAY_CO2_INSP_MIN";
-  // from 
-  const string MDC_CO2_TCUT = "MDC_CO2_TCUT";
-  // from 
-  const string MDC_O2_TCUT = "MDC_O2_TCUT";
-  // from 
-  const string MDC_FLOW_AWAY = "MDC_FLOW_AWAY";
-  // from 
-  const string MDC_FLOW_AWAY_EXP_MAX = "MDC_FLOW_AWAY_EXP_MAX";
-  // from 
-  const string MDC_FLOW_AWAY_INSP_MAX = "MDC_FLOW_AWAY_INSP_MAX";
-  // from 
-  const string MDC_FLOW_CO2_PROD_RESP = "MDC_FLOW_CO2_PROD_RESP";
-  // from 
-  const string MDC_IMPED_TTHOR = "MDC_IMPED_TTHOR";
-  // from 
-  const string MDC_PRESS_RESP_PLAT = "MDC_PRESS_RESP_PLAT";
-  // from 
-  const string MDC_PRESS_AWAY = "MDC_PRESS_AWAY";
-  // from 
-  const string MDC_PRESS_AWAY_MIN = "MDC_PRESS_AWAY_MIN";
-  // from 
-  const string MDC_PRESS_AWAY_CTS_POS = "MDC_PRESS_AWAY_CTS_POS";
-  // from 
-  const string MDC_PRESS_AWAY_NEG_MAX = "MDC_PRESS_AWAY_NEG_MAX";
+  const string MDC_CONC_AR = "MDC_CONC_AR";
   // from A.7.4.1
-  const string MDC_PRESS_AWAY_END_EXP_POS_INTRINSIC = "MDC_PRESS_AWAY_END_EXP_POS_INTRINSIC";
-  // from 
-  const string MDC_PRESS_AWAY_INSP = "MDC_PRESS_AWAY_INSP";
-  // from 
-  const string MDC_PRESS_AWAY_INSP_MAX = "MDC_PRESS_AWAY_INSP_MAX";
-  // from 
-  const string MDC_PRESS_AWAY_INSP_MEAN = "MDC_PRESS_AWAY_INSP_MEAN";
-  // from 
-  const string MDC_RATIO_IE = "MDC_RATIO_IE";
-  // from 
-  const string MDC_RATIO_AWAY_DEADSP_TIDAL = "MDC_RATIO_AWAY_DEADSP_TIDAL";
-  // from 
-  const string MDC_RES_AWAY = "MDC_RES_AWAY";
-  // from 
-  const string MDC_TIME_PD_APNEA = "MDC_TIME_PD_APNEA";
-  // from 
-  const string MDC_VOL_AWAY_TIDAL = "MDC_VOL_AWAY_TIDAL";
-  // from 
-  const string MDC_VOL_MINUTE_AWAY = "MDC_VOL_MINUTE_AWAY";
-  // from 
-  const string MDC_VOL_MINUTE_AWAY_EXP = "MDC_VOL_MINUTE_AWAY_EXP";
-  // from 
-  const string MDC_VOL_MINUTE_AWAY_INSP = "MDC_VOL_MINUTE_AWAY_INSP";
-  // from 
-  const string MDC_CONC_AWAY_O2 = "MDC_CONC_AWAY_O2";
-  // from 
-  const string MDC_VENT_CONC_AWAY_O2_DELTA = "MDC_VENT_CONC_AWAY_O2_DELTA";
-  // from 
-  const string MDC_VENT_FLOW_INSP = "MDC_VENT_FLOW_INSP";
-  // from 
-  const string MDC_VENT_FLOW_RATIO_PERF_ALV_INDEX = "MDC_VENT_FLOW_RATIO_PERF_ALV_INDEX";
-  // from 
-  const string MDC_VENT_PRESS_OCCL = "MDC_VENT_PRESS_OCCL";
-  // from 
-  const string MDC_VENT_PRESS_AWAY_END_EXP_POS = "MDC_VENT_PRESS_AWAY_END_EXP_POS";
-  // from 
-  const string MDC_VENT_VOL_AWAY_DEADSP = "MDC_VENT_VOL_AWAY_DEADSP";
-  // from 
-  const string MDC_VENT_VOL_AWAY_DEADSP_REL = "MDC_VENT_VOL_AWAY_DEADSP_REL";
-  // from 
-  const string MDC_VENT_VOL_LUNG_TRAPD = "MDC_VENT_VOL_LUNG_TRAPD";
-  // from 
-  const string MDC_CONC_AWAY_DESFL = "MDC_CONC_AWAY_DESFL";
-  // from 
-  const string MDC_CONC_AWAY_ENFL = "MDC_CONC_AWAY_ENFL";
-  // from 
-  const string MDC_CONC_AWAY_HALOTH = "MDC_CONC_AWAY_HALOTH";
-  // from 
-  const string MDC_CONC_AWAY_SEVOFL = "MDC_CONC_AWAY_SEVOFL";
-  // from 
-  const string MDC_CONC_AWAY_ISOFL = "MDC_CONC_AWAY_ISOFL";
-  // from 
-  const string MDC_CONC_AWAY_N2O = "MDC_CONC_AWAY_N2O";
-  // from 
-  const string MDC_CONC_AWAY_DESFL_ET = "MDC_CONC_AWAY_DESFL_ET";
-  // from 
-  const string MDC_CONC_AWAY_ENFL_ET = "MDC_CONC_AWAY_ENFL_ET";
-  // from 
-  const string MDC_CONC_AWAY_HALOTH_ET = "MDC_CONC_AWAY_HALOTH_ET";
-  // from 
-  const string MDC_CONC_AWAY_SEVOFL_ET = "MDC_CONC_AWAY_SEVOFL_ET";
-  // from 
-  const string MDC_CONC_AWAY_ISOFL_ET = "MDC_CONC_AWAY_ISOFL_ET";
-  // from 
-  const string MDC_CONC_AWAY_N2O_ET = "MDC_CONC_AWAY_N2O_ET";
-  // from 
-  const string MDC_CONC_AWAY_DESFL_INSP = "MDC_CONC_AWAY_DESFL_INSP";
-  // from 
-  const string MDC_CONC_AWAY_ENFL_INSP = "MDC_CONC_AWAY_ENFL_INSP";
-  // from 
-  const string MDC_CONC_AWAY_HALOTH_INSP = "MDC_CONC_AWAY_HALOTH_INSP";
-  // from 
-  const string MDC_CONC_AWAY_SEVOFL_INSP = "MDC_CONC_AWAY_SEVOFL_INSP";
-  // from 
-  const string MDC_CONC_AWAY_ISOFL_INSP = "MDC_CONC_AWAY_ISOFL_INSP";
-  // from 
-  const string MDC_CONC_AWAY_N2O_INSP = "MDC_CONC_AWAY_N2O_INSP";
-  // from 
-  const string MDC_CONC_AWAY_O2_INSP = "MDC_CONC_AWAY_O2_INSP";
-  // from 
-  const string MDC_VENT_VOL_LEAK = "MDC_VENT_VOL_LEAK";
-  // from 
-  const string MDC_VENT_VOL_LUNG_ALV = "MDC_VENT_VOL_LUNG_ALV";
-  // from 
-  const string MDC_CONC_AWAY_O2_ET = "MDC_CONC_AWAY_O2_ET";
-  // from 
-  const string MDC_CONC_AWAY_N2 = "MDC_CONC_AWAY_N2";
-  // from 
-  const string MDC_CONC_AWAY_N2_ET = "MDC_CONC_AWAY_N2_ET";
-  // from 
-  const string MDC_CONC_AWAY_N2_INSP = "MDC_CONC_AWAY_N2_INSP";
+  const string MDC_CONC_AR_BREATH = "MDC_CONC_AR_BREATH";
+  // from A.7.4.1
+  const string MDC_CONC_AR_ET = "MDC_CONC_AR_ET";
+  // from A.7.4.1
+  const string MDC_CONC_AR_EXP = "MDC_CONC_AR_EXP";
+  // from A.7.4.1
+  const string MDC_CONC_AR_INSP = "MDC_CONC_AR_INSP";
   // from 
   const string MDC_CONC_AWAY_AGENT = "MDC_CONC_AWAY_AGENT";
   // from 
@@ -363,237 +147,399 @@ module rosetta {
   // from 
   const string MDC_CONC_AWAY_AGENT_INSP = "MDC_CONC_AWAY_AGENT_INSP";
   // from 
-  const string MDC_PRESS_CEREB_PERF = "MDC_PRESS_CEREB_PERF";
+  const string MDC_CONC_AWAY_CO2 = "MDC_CONC_AWAY_CO2";
   // from 
-  const string MDC_PRESS_INTRA_CRAN = "MDC_PRESS_INTRA_CRAN";
+  const string MDC_CONC_AWAY_CO2_ET = "MDC_CONC_AWAY_CO2_ET";
   // from 
-  const string MDC_PRESS_INTRA_CRAN_SYS = "MDC_PRESS_INTRA_CRAN_SYS";
+  const string MDC_CONC_AWAY_CO2_EXP = "MDC_CONC_AWAY_CO2_EXP";
   // from 
-  const string MDC_PRESS_INTRA_CRAN_DIA = "MDC_PRESS_INTRA_CRAN_DIA";
+  const string MDC_CONC_AWAY_CO2_INSP = "MDC_CONC_AWAY_CO2_INSP";
   // from 
-  const string MDC_PRESS_INTRA_CRAN_MEAN = "MDC_PRESS_INTRA_CRAN_MEAN";
+  const string MDC_CONC_AWAY_DESFL = "MDC_CONC_AWAY_DESFL";
   // from 
-  const string MDC_SCORE_GLAS_COMA = "MDC_SCORE_GLAS_COMA";
+  const string MDC_CONC_AWAY_DESFL_ET = "MDC_CONC_AWAY_DESFL_ET";
   // from 
-  const string MDC_SCORE_EYE_SUBSC_GLAS_COMA = "MDC_SCORE_EYE_SUBSC_GLAS_COMA";
+  const string MDC_CONC_AWAY_DESFL_INSP = "MDC_CONC_AWAY_DESFL_INSP";
   // from 
-  const string MDC_SCORE_MOTOR_SUBSC_GLAS_COMA = "MDC_SCORE_MOTOR_SUBSC_GLAS_COMA";
+  const string MDC_CONC_AWAY_ENFL = "MDC_CONC_AWAY_ENFL";
   // from 
-  const string MDC_SCORE_SUBSC_VERBAL_GLAS_COMA = "MDC_SCORE_SUBSC_VERBAL_GLAS_COMA";
+  const string MDC_CONC_AWAY_ENFL_ET = "MDC_CONC_AWAY_ENFL_ET";
   // from 
-  const string MDC_CIRCUM_HEAD = "MDC_CIRCUM_HEAD";
+  const string MDC_CONC_AWAY_ENFL_INSP = "MDC_CONC_AWAY_ENFL_INSP";
   // from 
-  const string MDC_TIME_PD_PUPIL_REACT_LEFT = "MDC_TIME_PD_PUPIL_REACT_LEFT";
+  const string MDC_CONC_AWAY_HALOTH = "MDC_CONC_AWAY_HALOTH";
   // from 
-  const string MDC_TIME_PD_PUPIL_REACT_RIGHT = "MDC_TIME_PD_PUPIL_REACT_RIGHT";
+  const string MDC_CONC_AWAY_HALOTH_ET = "MDC_CONC_AWAY_HALOTH_ET";
   // from 
-  const string MDC_EEG_ELEC_POTL_CRTX = "MDC_EEG_ELEC_POTL_CRTX";
-  // from A.7.8.1
-  const string MDC_EMG_ELEC_POTL_MUSCL = "MDC_EMG_ELEC_POTL_MUSCL";
+  const string MDC_CONC_AWAY_HALOTH_INSP = "MDC_CONC_AWAY_HALOTH_INSP";
   // from 
-  const string MDC_EEG_FREQ_PWR_SPEC_CRTX_DOM_MEAN = "MDC_EEG_FREQ_PWR_SPEC_CRTX_DOM_MEAN";
+  const string MDC_CONC_AWAY_ISOFL = "MDC_CONC_AWAY_ISOFL";
   // from 
-  const string MDC_EEG_FREQ_PWR_SPEC_CRTX_PEAK = "MDC_EEG_FREQ_PWR_SPEC_CRTX_PEAK";
+  const string MDC_CONC_AWAY_ISOFL_ET = "MDC_CONC_AWAY_ISOFL_ET";
   // from 
-  const string MDC_EEG_FREQ_PWR_SPEC_CRTX_SPECTRAL_EDGE = "MDC_EEG_FREQ_PWR_SPEC_CRTX_SPECTRAL_EDGE";
+  const string MDC_CONC_AWAY_ISOFL_INSP = "MDC_CONC_AWAY_ISOFL_INSP";
   // from 
-  const string MDC_EEG_NUM_SPK = "MDC_EEG_NUM_SPK";
+  const string MDC_CONC_AWAY_N2 = "MDC_CONC_AWAY_N2";
   // from 
-  const string MDC_EEG_NUM_SEIZ = "MDC_EEG_NUM_SEIZ";
+  const string MDC_CONC_AWAY_N2O = "MDC_CONC_AWAY_N2O";
   // from 
-  const string MDC_EEG_PWR_SPEC_CSA = "MDC_EEG_PWR_SPEC_CSA";
+  const string MDC_CONC_AWAY_N2O_ET = "MDC_CONC_AWAY_N2O_ET";
   // from 
-  const string MDC_EEG_PWR_SPEC_TOT = "MDC_EEG_PWR_SPEC_TOT";
+  const string MDC_CONC_AWAY_N2O_INSP = "MDC_CONC_AWAY_N2O_INSP";
   // from 
-  const string MDC_EEG_PWR_SPEC_ALPHA_REL = "MDC_EEG_PWR_SPEC_ALPHA_REL";
+  const string MDC_CONC_AWAY_N2_ET = "MDC_CONC_AWAY_N2_ET";
   // from 
-  const string MDC_EEG_PWR_SPEC_BETA_REL = "MDC_EEG_PWR_SPEC_BETA_REL";
+  const string MDC_CONC_AWAY_N2_INSP = "MDC_CONC_AWAY_N2_INSP";
   // from 
-  const string MDC_EEG_PWR_SPEC_DELTA_REL = "MDC_EEG_PWR_SPEC_DELTA_REL";
+  const string MDC_CONC_AWAY_O2 = "MDC_CONC_AWAY_O2";
   // from 
-  const string MDC_EEG_PWR_SPEC_THETA_REL = "MDC_EEG_PWR_SPEC_THETA_REL";
+  const string MDC_CONC_AWAY_O2_ET = "MDC_CONC_AWAY_O2_ET";
   // from 
-  const string MDC_CONC_PH_ART = "MDC_CONC_PH_ART";
+  const string MDC_CONC_AWAY_O2_INSP = "MDC_CONC_AWAY_O2_INSP";
   // from 
-  const string MDC_CONC_PCO2_ART = "MDC_CONC_PCO2_ART";
+  const string MDC_CONC_AWAY_SEVOFL = "MDC_CONC_AWAY_SEVOFL";
   // from 
-  const string MDC_CONC_PO2_ART = "MDC_CONC_PO2_ART";
+  const string MDC_CONC_AWAY_SEVOFL_ET = "MDC_CONC_AWAY_SEVOFL_ET";
+  // from 
+  const string MDC_CONC_AWAY_SEVOFL_INSP = "MDC_CONC_AWAY_SEVOFL_INSP";
+  // from 
+  const string MDC_CONC_CA_ART = "MDC_CONC_CA_ART";
+  // from 
+  const string MDC_CONC_CA_GEN = "MDC_CONC_CA_GEN";
+  // from A.7.5.1
+  const string MDC_CONC_CA_PH_NORMALIZED_ART = "MDC_CONC_CA_PH_NORMALIZED_ART";
+  // from A.7.5.1
+  const string MDC_CONC_CHLORIDE_GEN = "MDC_CONC_CHLORIDE_GEN";
+  // from 
+  const string MDC_CONC_CHLOR_GEN = "MDC_CONC_CHLOR_GEN";
+  // from A.7.4.1
+  const string MDC_CONC_CO2 = "MDC_CONC_CO2";
+  // from A.7.4.1
+  const string MDC_CONC_CO2_BREATH = "MDC_CONC_CO2_BREATH";
+  // from A.7.4.1
+  const string MDC_CONC_CO2_ET = "MDC_CONC_CO2_ET";
+  // from A.7.4.1
+  const string MDC_CONC_CO2_ET_SETTING = "MDC_CONC_CO2_ET_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_CO2_EXP = "MDC_CONC_CO2_EXP";
+  // from A.7.4.1
+  const string MDC_CONC_CO2_EXP_SETTING = "MDC_CONC_CO2_EXP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_CO2_FG_SETTING = "MDC_CONC_CO2_FG_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_CO2_INSP = "MDC_CONC_CO2_INSP";
+  // from A.7.4.1
+  const string MDC_CONC_CO2_INSP_SETTING = "MDC_CONC_CO2_INSP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_CO2_SETTING = "MDC_CONC_CO2_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_DESFL = "MDC_CONC_DESFL";
+  // from A.7.4.1
+  const string MDC_CONC_DESFL_BREATH = "MDC_CONC_DESFL_BREATH";
+  // from A.7.4.1
+  const string MDC_CONC_DESFL_ET = "MDC_CONC_DESFL_ET";
+  // from A.7.4.1
+  const string MDC_CONC_DESFL_ET_SETTING = "MDC_CONC_DESFL_ET_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_DESFL_EXP = "MDC_CONC_DESFL_EXP";
+  // from A.7.4.1
+  const string MDC_CONC_DESFL_EXP_SETTING = "MDC_CONC_DESFL_EXP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_DESFL_FG_SETTING = "MDC_CONC_DESFL_FG_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_DESFL_INSP = "MDC_CONC_DESFL_INSP";
+  // from A.7.4.1
+  const string MDC_CONC_DESFL_INSP_SETTING = "MDC_CONC_DESFL_INSP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_DESFL_SETTING = "MDC_CONC_DESFL_SETTING";
+  // from 
+  const string MDC_CONC_DRUG = "MDC_CONC_DRUG";
+  // from A.7.4.1
+  const string MDC_CONC_ENFL = "MDC_CONC_ENFL";
+  // from A.7.4.1
+  const string MDC_CONC_ENFL_BREATH = "MDC_CONC_ENFL_BREATH";
+  // from A.7.4.1
+  const string MDC_CONC_ENFL_ET = "MDC_CONC_ENFL_ET";
+  // from A.7.4.1
+  const string MDC_CONC_ENFL_ET_SETTING = "MDC_CONC_ENFL_ET_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_ENFL_EXP = "MDC_CONC_ENFL_EXP";
+  // from A.7.4.1
+  const string MDC_CONC_ENFL_EXP_SETTING = "MDC_CONC_ENFL_EXP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_ENFL_FG_SETTING = "MDC_CONC_ENFL_FG_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_ENFL_INSP = "MDC_CONC_ENFL_INSP";
+  // from A.7.4.1
+  const string MDC_CONC_ENFL_INSP_SETTING = "MDC_CONC_ENFL_INSP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_ENFL_SETTING = "MDC_CONC_ENFL_SETTING";
+  // from 
+  const string MDC_CONC_GLU_GEN = "MDC_CONC_GLU_GEN";
+  // from A.7.4.1
+  const string MDC_CONC_HALOTH = "MDC_CONC_HALOTH";
+  // from A.7.4.1
+  const string MDC_CONC_HALOTH_BREATH = "MDC_CONC_HALOTH_BREATH";
+  // from A.7.4.1
+  const string MDC_CONC_HALOTH_ET = "MDC_CONC_HALOTH_ET";
+  // from A.7.4.1
+  const string MDC_CONC_HALOTH_ET_SETTING = "MDC_CONC_HALOTH_ET_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_HALOTH_EXP = "MDC_CONC_HALOTH_EXP";
+  // from A.7.4.1
+  const string MDC_CONC_HALOTH_EXP_SETTING = "MDC_CONC_HALOTH_EXP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_HALOTH_FG_SETTING = "MDC_CONC_HALOTH_FG_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_HALOTH_INSP = "MDC_CONC_HALOTH_INSP";
+  // from A.7.4.1
+  const string MDC_CONC_HALOTH_INSP_SETTING = "MDC_CONC_HALOTH_INSP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_HALOTH_SETTING = "MDC_CONC_HALOTH_SETTING";
   // from 
   const string MDC_CONC_HB_ART = "MDC_CONC_HB_ART";
   // from 
   const string MDC_CONC_HB_O2_ART = "MDC_CONC_HB_O2_ART";
   // from 
-  const string MDC_CONC_PH_VEN = "MDC_CONC_PH_VEN";
-  // from 
-  const string MDC_CONC_PCO2_VEN = "MDC_CONC_PCO2_VEN";
-  // from 
-  const string MDC_CONC_PO2_VEN = "MDC_CONC_PO2_VEN";
-  // from 
   const string MDC_CONC_HB_O2_VEN = "MDC_CONC_HB_O2_VEN";
-  // from 
-  const string MDC_CONC_NA_URINE = "MDC_CONC_NA_URINE";
-  // from 
-  const string MDC_CONC_NA_SERUM = "MDC_CONC_NA_SERUM";
-  // from 
-  const string MDC_CONC_PH_GEN = "MDC_CONC_PH_GEN";
-  // from 
-  const string MDC_CONC_HCO3_GEN = "MDC_CONC_HCO3_GEN";
-  // from 
-  const string MDC_CONC_NA_GEN = "MDC_CONC_NA_GEN";
-  // from 
-  const string MDC_CONC_K_GEN = "MDC_CONC_K_GEN";
-  // from 
-  const string MDC_CONC_GLU_GEN = "MDC_CONC_GLU_GEN";
-  // from 
-  const string MDC_CONC_CA_GEN = "MDC_CONC_CA_GEN";
-  // from 
-  const string MDC_CONC_PCO2_GEN = "MDC_CONC_PCO2_GEN";
-  // from A.7.5.1
-  const string MDC_CONC_CHLORIDE_GEN = "MDC_CONC_CHLORIDE_GEN";
-  // from A.7.5.1
-  const string MDC_BASE_EXCESS_BLD_ART = "MDC_BASE_EXCESS_BLD_ART";
-  // from 
-  const string MDC_CONC_PO2_GEN = "MDC_CONC_PO2_GEN";
-  // from 
-  const string MDC_CONC_HCT_GEN = "MDC_CONC_HCT_GEN";
-  // from 
-  const string MDC_VENT_CONC_AWAY_O2_INSP = "MDC_VENT_CONC_AWAY_O2_INSP";
-  // from 
-  const string MDC_ECG_STAT_ECT = "MDC_ECG_STAT_ECT";
-  // from 
-  const string MDC_ECG_STAT_RHY = "MDC_ECG_STAT_RHY";
-  // from 
-  const string MDC_TEMP_RECT = "MDC_TEMP_RECT";
-  // from 
-  const string MDC_TEMP_BLD = "MDC_TEMP_BLD";
-  // from 
-  const string MDC_TEMP_DIFF = "MDC_TEMP_DIFF";
-  // from 
-  const string MDC_ATTR_AL_COND = "MDC_ATTR_AL_COND";
-  // from 
-  const string MDC_ATTR_PT_HEIGHT = "MDC_ATTR_PT_HEIGHT";
-  // from 
-  const string MDC_ATTR_PT_WEIGHT = "MDC_ATTR_PT_WEIGHT";
-  // from 
-  const string MDC_CONC_DRUG = "MDC_CONC_DRUG";
-  // from 
-  const string MDC_FLOW_FLUID_PUMP = "MDC_FLOW_FLUID_PUMP";
-  // from 
-  const string MDC_VOL_FLUID_TBI_REMAIN = "MDC_VOL_FLUID_TBI_REMAIN";
-  // from 
-  const string MDC_TIME_PD_REMAIN = "MDC_TIME_PD_REMAIN";
-  // from 
-  const string MDC_RATE_DOSE = "MDC_RATE_DOSE";
-  // from 
-  const string MDC_DRUG_NAME_TYPE = "MDC_DRUG_NAME_TYPE";
-  // from 
-  const string MDC_PUMP_MODE = "MDC_PUMP_MODE";
-  // from 
-  const string MDC_PUMP_STAT = "MDC_PUMP_STAT";
-  // from 
-  const string MDC_VOL_FLUID_DELIV = "MDC_VOL_FLUID_DELIV";
-  // from 
-  const string MDC_PULS_RATE_NON_INV = "MDC_PULS_RATE_NON_INV";
-  // from 
-  const string MDC_LEN_BODY_ACTUAL = "MDC_LEN_BODY_ACTUAL";
-  // from 
-  const string MDC_MASS_BODY_ACTUAL = "MDC_MASS_BODY_ACTUAL";
-  // from 
-  const string MDC_ECG_PACED_BEAT_RATE = "MDC_ECG_PACED_BEAT_RATE";
-  // from 
-  const string MDC_ECG_ARRHY = "MDC_ECG_ARRHY";
-  // from 
-  const string MDC_EEG_PAROX_CRTX_BURST_SUPPRN = "MDC_EEG_PAROX_CRTX_BURST_SUPPRN";
-  // from 
-  const string MDC_OUTPUT_CARD_NONCTS = "MDC_OUTPUT_CARD_NONCTS";
-  // from 
-  const string MDC_PRESS_BLD_NONINV_DIA_CTS = "MDC_PRESS_BLD_NONINV_DIA_CTS";
-  // from 
-  const string MDC_PRESS_BLD_NONINV_MEAN_CTS = "MDC_PRESS_BLD_NONINV_MEAN_CTS";
-  // from 
-  const string MDC_PRESS_BLD_NONINV_SYS_CTS = "MDC_PRESS_BLD_NONINV_SYS_CTS";
-  // from 
-  const string MDC_VOL_VENT_L_END_DIA = "MDC_VOL_VENT_L_END_DIA";
-  // from 
-  const string MDC_EEG_FREQ_PWR_SPEC_CRTX_MEDIAN = "MDC_EEG_FREQ_PWR_SPEC_CRTX_MEDIAN";
-  // from 
-  const string MDC_RES_AWAY_EXP = "MDC_RES_AWAY_EXP";
-  // from 
-  const string MDC_VOL_VENT_L_END_SYS = "MDC_VOL_VENT_L_END_SYS";
   // from 
   const string MDC_CONC_HCO3_ART = "MDC_CONC_HCO3_ART";
   // from 
+  const string MDC_CONC_HCO3_GEN = "MDC_CONC_HCO3_GEN";
+  // from 
   const string MDC_CONC_HCT_ART = "MDC_CONC_HCT_ART";
   // from 
-  const string MDC_VENT_CONC_ISOFL_INSP = "MDC_VENT_CONC_ISOFL_INSP";
-  // from 
-  const string MDC_CONC_AWAY_CO2_INSP = "MDC_CONC_AWAY_CO2_INSP";
-  // from 
-  const string MDC_VENT_CONC_DESFL_INSP = "MDC_VENT_CONC_DESFL_INSP";
-  // from 
-  const string MDC_VENT_CONC_ENFL_INSP = "MDC_VENT_CONC_ENFL_INSP";
-  // from 
-  const string MDC_VENT_CONC_HALOTH_INSP = "MDC_VENT_CONC_HALOTH_INSP";
-  // from 
-  const string MDC_RES_AWAY_INSP = "MDC_RES_AWAY_INSP";
-  // from 
-  const string MDC_VENT_CONC_SEVOFL_INSP = "MDC_VENT_CONC_SEVOFL_INSP";
-  // from 
-  const string MDC_PRESS_BLD_VENT_LEFT_DIA = "MDC_PRESS_BLD_VENT_LEFT_DIA";
-  // from 
-  const string MDC_PRESS_BLD_VENT_LEFT_MEAN = "MDC_PRESS_BLD_VENT_LEFT_MEAN";
-  // from 
-  const string MDC_PRESS_BLD_VENT_LEFT_SYS = "MDC_PRESS_BLD_VENT_LEFT_SYS";
-  // from 
-  const string MDC_VOL_AWAY_DEADSP = "MDC_VOL_AWAY_DEADSP";
-  // from 
-  const string MDC_VENT_VOL_MINUTE_EXP = "MDC_VENT_VOL_MINUTE_EXP";
-  // from 
-  const string MDC_VENT_VOL_MINUTE_AWAY_INSP = "MDC_VENT_VOL_MINUTE_AWAY_INSP";
-  // from 
-  const string MDC_PRESS_RESP_PAUSE = "MDC_PRESS_RESP_PAUSE";
+  const string MDC_CONC_HCT_GEN = "MDC_CONC_HCT_GEN";
   // from A.7.4.1
-  const string MDC_AWAY_CO2_EXP = "MDC_AWAY_CO2_EXP";
+  const string MDC_CONC_HE = "MDC_CONC_HE";
+  // from A.7.4.1
+  const string MDC_CONC_HE_BREATH = "MDC_CONC_HE_BREATH";
+  // from A.7.4.1
+  const string MDC_CONC_HE_ET = "MDC_CONC_HE_ET";
+  // from A.7.4.1
+  const string MDC_CONC_HE_EXP = "MDC_CONC_HE_EXP";
+  // from A.7.4.1
+  const string MDC_CONC_HE_INSP = "MDC_CONC_HE_INSP";
+  // from A.7.4.1
+  const string MDC_CONC_ISOFL = "MDC_CONC_ISOFL";
+  // from A.7.4.1
+  const string MDC_CONC_ISOFL_BREATH = "MDC_CONC_ISOFL_BREATH";
+  // from A.7.4.1
+  const string MDC_CONC_ISOFL_ET = "MDC_CONC_ISOFL_ET";
+  // from A.7.4.1
+  const string MDC_CONC_ISOFL_ET_SETTING = "MDC_CONC_ISOFL_ET_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_ISOFL_EXP = "MDC_CONC_ISOFL_EXP";
+  // from A.7.4.1
+  const string MDC_CONC_ISOFL_EXP_SETTING = "MDC_CONC_ISOFL_EXP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_ISOFL_FG_SETTING = "MDC_CONC_ISOFL_FG_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_ISOFL_INSP = "MDC_CONC_ISOFL_INSP";
+  // from A.7.4.1
+  const string MDC_CONC_ISOFL_INSP_SETTING = "MDC_CONC_ISOFL_INSP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_ISOFL_SETTING = "MDC_CONC_ISOFL_SETTING";
   // from 
-  const string MDC_PRESS_AWAY_END_EXP_POS = "MDC_PRESS_AWAY_END_EXP_POS";
+  const string MDC_CONC_K_GEN = "MDC_CONC_K_GEN";
+  // from A.7.4.1
+  const string MDC_CONC_MAC = "MDC_CONC_MAC";
+  // from A.7.4.1
+  const string MDC_CONC_MAC_SUM = "MDC_CONC_MAC_SUM";
+  // from A.7.4.1
+  const string MDC_CONC_MAC_SUM_AGE_CORR = "MDC_CONC_MAC_SUM_AGE_CORR";
+  // from A.7.4.1
+  const string MDC_CONC_N2 = "MDC_CONC_N2";
+  // from A.7.4.1
+  const string MDC_CONC_N2O = "MDC_CONC_N2O";
+  // from A.7.4.1
+  const string MDC_CONC_N2O_BREATH = "MDC_CONC_N2O_BREATH";
+  // from A.7.4.1
+  const string MDC_CONC_N2O_ET = "MDC_CONC_N2O_ET";
+  // from A.7.4.1
+  const string MDC_CONC_N2O_ET_SETTING = "MDC_CONC_N2O_ET_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_N2O_EXP = "MDC_CONC_N2O_EXP";
+  // from A.7.4.1
+  const string MDC_CONC_N2O_EXP_SETTING = "MDC_CONC_N2O_EXP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_N2O_FG_SETTING = "MDC_CONC_N2O_FG_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_N2O_INSP = "MDC_CONC_N2O_INSP";
+  // from A.7.4.1
+  const string MDC_CONC_N2O_INSP_SETTING = "MDC_CONC_N2O_INSP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_N2O_SETTING = "MDC_CONC_N2O_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_N2_BREATH = "MDC_CONC_N2_BREATH";
+  // from A.7.4.1
+  const string MDC_CONC_N2_ET = "MDC_CONC_N2_ET";
+  // from A.7.4.1
+  const string MDC_CONC_N2_EXP = "MDC_CONC_N2_EXP";
+  // from A.7.4.1
+  const string MDC_CONC_N2_INSP = "MDC_CONC_N2_INSP";
   // from 
-  const string MDC_VENT_FLOW_EXP_MAX = "MDC_VENT_FLOW_EXP_MAX";
+  const string MDC_CONC_NA_GEN = "MDC_CONC_NA_GEN";
   // from 
-  const string MDC_VENT_FLOW_INSP_MAX = "MDC_VENT_FLOW_INSP_MAX";
+  const string MDC_CONC_NA_SERUM = "MDC_CONC_NA_SERUM";
   // from 
-  const string MDC_VENT_PRESS_MAX = "MDC_VENT_PRESS_MAX";
+  const string MDC_CONC_NA_URINE = "MDC_CONC_NA_URINE";
+  // from A.7.4.1
+  const string MDC_CONC_NO2 = "MDC_CONC_NO2";
+  // from A.7.4.1
+  const string MDC_CONC_NO2_BREATH = "MDC_CONC_NO2_BREATH";
+  // from A.7.4.1
+  const string MDC_CONC_NO2_ET = "MDC_CONC_NO2_ET";
+  // from A.7.4.1
+  const string MDC_CONC_NO2_EXP = "MDC_CONC_NO2_EXP";
+  // from A.7.4.1
+  const string MDC_CONC_NO2_INSP = "MDC_CONC_NO2_INSP";
+  // from A.7.4.1
+  const string MDC_CONC_O2 = "MDC_CONC_O2";
+  // from A.7.4.1
+  const string MDC_CONC_O2_BREATH = "MDC_CONC_O2_BREATH";
+  // from A.7.4.1
+  const string MDC_CONC_O2_ET = "MDC_CONC_O2_ET";
+  // from A.7.4.1
+  const string MDC_CONC_O2_ET_SETTING = "MDC_CONC_O2_ET_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_O2_EXP = "MDC_CONC_O2_EXP";
+  // from A.7.4.1
+  const string MDC_CONC_O2_EXP_SETTING = "MDC_CONC_O2_EXP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_O2_FG_SETTING = "MDC_CONC_O2_FG_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_O2_INSP = "MDC_CONC_O2_INSP";
+  // from A.7.4.1
+  const string MDC_CONC_O2_INSP_SETTING = "MDC_CONC_O2_INSP_SETTING";
+  // from A.7.11.1
+  const string MDC_CONC_O2_MICROENV = "MDC_CONC_O2_MICROENV";
+  // from A.7.11.1
+  const string MDC_CONC_O2_MICROENV_SETTING = "MDC_CONC_O2_MICROENV_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_O2_SETTING = "MDC_CONC_O2_SETTING";
   // from 
-  const string MDC_VENT_RESP_RATE = "MDC_VENT_RESP_RATE";
+  const string MDC_CONC_PCO2_ART = "MDC_CONC_PCO2_ART";
+  // from A.7.4.1
+  const string MDC_CONC_PCO2_ART_PULM = "MDC_CONC_PCO2_ART_PULM";
+  // from A.7.11.1
+  const string MDC_CONC_PCO2_GASTRIC_ART_DIFF = "MDC_CONC_PCO2_GASTRIC_ART_DIFF";
+  // from A.7.11.1
+  const string MDC_CONC_PCO2_GASTRIC_ET_DIFF = "MDC_CONC_PCO2_GASTRIC_ET_DIFF";
+  // from A.7.11.1
+  const string MDC_CONC_PCO2_GASTRIC_MUCOSAL = "MDC_CONC_PCO2_GASTRIC_MUCOSAL";
   // from 
-  const string MDC_VENT_FLOW_EXP = "MDC_VENT_FLOW_EXP";
+  const string MDC_CONC_PCO2_GEN = "MDC_CONC_PCO2_GEN";
   // from 
-  const string MDC_FLOW_AWAY_EXP = "MDC_FLOW_AWAY_EXP";
+  const string MDC_CONC_PCO2_VEN = "MDC_CONC_PCO2_VEN";
   // from 
-  const string MDC_VENT_VOL_TIDAL = "MDC_VENT_VOL_TIDAL";
+  const string MDC_CONC_PH_ART = "MDC_CONC_PH_ART";
   // from 
-  const string MDC_FLOW_O2_CONSUMP = "MDC_FLOW_O2_CONSUMP";
+  const string MDC_CONC_PH_GEN = "MDC_CONC_PH_GEN";
+  // from A.7.11.1
+  const string MDC_CONC_PH_INTRAMUCOSAL = "MDC_CONC_PH_INTRAMUCOSAL";
   // from 
-  const string MDC_PRESS_CUFF_DIA = "MDC_PRESS_CUFF_DIA";
+  const string MDC_CONC_PH_VEN = "MDC_CONC_PH_VEN";
   // from 
-  const string MDC_PRESS_CUFF_MEAN = "MDC_PRESS_CUFF_MEAN";
+  const string MDC_CONC_PO2_ART = "MDC_CONC_PO2_ART";
+  // from A.7.4.1
+  const string MDC_CONC_PO2_ART_VEN_DIFF = "MDC_CONC_PO2_ART_VEN_DIFF";
   // from 
-  const string MDC_PRESS_CUFF_SYS = "MDC_PRESS_CUFF_SYS";
+  const string MDC_CONC_PO2_GEN = "MDC_CONC_PO2_GEN";
   // from 
-  const string MDC_BLD_PULS_RATE_INV = "MDC_BLD_PULS_RATE_INV";
+  const string MDC_CONC_PO2_VEN = "MDC_CONC_PO2_VEN";
+  // from A.7.4.1
+  const string MDC_CONC_SEVOFL = "MDC_CONC_SEVOFL";
+  // from A.7.4.1
+  const string MDC_CONC_SEVOFL_BREATH = "MDC_CONC_SEVOFL_BREATH";
+  // from A.7.4.1
+  const string MDC_CONC_SEVOFL_ET = "MDC_CONC_SEVOFL_ET";
+  // from A.7.4.1
+  const string MDC_CONC_SEVOFL_ET_SETTING = "MDC_CONC_SEVOFL_ET_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_SEVOFL_EXP = "MDC_CONC_SEVOFL_EXP";
+  // from A.7.4.1
+  const string MDC_CONC_SEVOFL_EXP_SETTING = "MDC_CONC_SEVOFL_EXP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_SEVOFL_FG_SETTING = "MDC_CONC_SEVOFL_FG_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_SEVOFL_INSP = "MDC_CONC_SEVOFL_INSP";
+  // from A.7.4.1
+  const string MDC_CONC_SEVOFL_INSP_SETTING = "MDC_CONC_SEVOFL_INSP_SETTING";
+  // from A.7.4.1
+  const string MDC_CONC_SEVOFL_SETTING = "MDC_CONC_SEVOFL_SETTING";
   // from 
-  const string MDC_RES_VASC_PULM = "MDC_RES_VASC_PULM";
+  const string MDC_CONC_UREA_ART = "MDC_CONC_UREA_ART";
   // from 
-  const string MDC_TTHOR_RESP_RATE = "MDC_TTHOR_RESP_RATE";
+  const string MDC_DESAT = "MDC_DESAT";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_CHAN_CLINICIAN_DOSE = "MDC_DEV_PUMP_INFUS_CHAN_CLINICIAN_DOSE";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_CHAN_DELIVERY = "MDC_DEV_PUMP_INFUS_CHAN_DELIVERY";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_CHAN_LOADING_DOSE = "MDC_DEV_PUMP_INFUS_CHAN_LOADING_DOSE";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_CHAN_PRIMARY = "MDC_DEV_PUMP_INFUS_CHAN_PRIMARY";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_CHAN_SECONDARY = "MDC_DEV_PUMP_INFUS_CHAN_SECONDARY";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_LVP = "MDC_DEV_PUMP_INFUS_LVP";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_LVP_MDS = "MDC_DEV_PUMP_INFUS_LVP_MDS";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_LVP_VMD = "MDC_DEV_PUMP_INFUS_LVP_VMD";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_PCA = "MDC_DEV_PUMP_INFUS_PCA";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_PCA_CHAN = "MDC_DEV_PUMP_INFUS_PCA_CHAN";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_PCA_MDS = "MDC_DEV_PUMP_INFUS_PCA_MDS";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_PCA_SYRINGE = "MDC_DEV_PUMP_INFUS_PCA_SYRINGE";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_PCA_SYRINGE_MDS = "MDC_DEV_PUMP_INFUS_PCA_SYRINGE_MDS";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_PCA_SYRINGE_VMD = "MDC_DEV_PUMP_INFUS_PCA_SYRINGE_VMD";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_PCA_VMD = "MDC_DEV_PUMP_INFUS_PCA_VMD";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_SYRINGE = "MDC_DEV_PUMP_INFUS_SYRINGE";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_SYRINGE_CHAN = "MDC_DEV_PUMP_INFUS_SYRINGE_CHAN";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_SYRINGE_MDS = "MDC_DEV_PUMP_INFUS_SYRINGE_MDS";
+  // from A.5.1
+  const string MDC_DEV_PUMP_INFUS_SYRINGE_VMD = "MDC_DEV_PUMP_INFUS_SYRINGE_VMD";
+  // from A.7.7.1
+  const string MDC_DOSE_DRUG_DELIV = "MDC_DOSE_DRUG_DELIV";
+  // from A.7.7.1
+  const string MDC_DOSE_DRUG_DELIV_SEGMENT = "MDC_DOSE_DRUG_DELIV_SEGMENT";
+  // from A.7.7.1
+  const string MDC_DOSE_DRUG_DELIV_TOTAL = "MDC_DOSE_DRUG_DELIV_TOTAL";
+  // from A.7.7.1
+  const string MDC_DOSE_DRUG_TBI = "MDC_DOSE_DRUG_TBI";
+  // from A.7.7.1
+  const string MDC_DOSE_DRUG_TBI_REMAIN = "MDC_DOSE_DRUG_TBI_REMAIN";
+  // from A.7.7.1
+  const string MDC_DOSE_PCA_LIMIT = "MDC_DOSE_PCA_LIMIT";
+  // from A.7.7.1
+  const string MDC_DRUG_ID = "MDC_DRUG_ID";
+  // from A.7.7.1
+  const string MDC_DRUG_NAME_LABEL = "MDC_DRUG_NAME_LABEL";
   // from 
-  const string MDC_VENT_CO2_RESP_RATE = "MDC_VENT_CO2_RESP_RATE";
+  const string MDC_DRUG_NAME_TYPE = "MDC_DRUG_NAME_TYPE";
   // from 
-  const string MDC_CO2_RESP_RATE = "MDC_CO2_RESP_RATE";
+  const string MDC_ECG_AMPL_ST = "MDC_ECG_AMPL_ST";
   // from 
-  const string MDC_PRESS_BLD_VENT_RIGHT_DIA = "MDC_PRESS_BLD_VENT_RIGHT_DIA";
+  const string MDC_ECG_AMPL_ST_AI = "MDC_ECG_AMPL_ST_AI";
   // from 
-  const string MDC_PRESS_BLD_VENT_RIGHT_MEAN = "MDC_PRESS_BLD_VENT_RIGHT_MEAN";
+  const string MDC_ECG_AMPL_ST_AS = "MDC_ECG_AMPL_ST_AS";
   // from 
-  const string MDC_PRESS_BLD_VENT_RIGHT_SYS = "MDC_PRESS_BLD_VENT_RIGHT_SYS";
+  const string MDC_ECG_AMPL_ST_AVF = "MDC_ECG_AMPL_ST_AVF";
+  // from 
+  const string MDC_ECG_AMPL_ST_AVL = "MDC_ECG_AMPL_ST_AVL";
+  // from 
+  const string MDC_ECG_AMPL_ST_AVR = "MDC_ECG_AMPL_ST_AVR";
   // from 
   const string MDC_ECG_AMPL_ST_dV1 = "MDC_ECG_AMPL_ST_dV1";
   // from 
@@ -607,169 +553,773 @@ module rosetta {
   // from 
   const string MDC_ECG_AMPL_ST_dV6 = "MDC_ECG_AMPL_ST_dV6";
   // from 
+  const string MDC_ECG_AMPL_ST_ES = "MDC_ECG_AMPL_ST_ES";
+  // from 
+  const string MDC_ECG_AMPL_ST_I = "MDC_ECG_AMPL_ST_I";
+  // from 
+  const string MDC_ECG_AMPL_ST_II = "MDC_ECG_AMPL_ST_II";
+  // from 
+  const string MDC_ECG_AMPL_ST_III = "MDC_ECG_AMPL_ST_III";
+  // from 
+  const string MDC_ECG_AMPL_ST_MCL = "MDC_ECG_AMPL_ST_MCL";
+  // from 
   const string MDC_ECG_AMPL_ST_MCL1 = "MDC_ECG_AMPL_ST_MCL1";
   // from 
   const string MDC_ECG_AMPL_ST_MCL6 = "MDC_ECG_AMPL_ST_MCL6";
   // from 
-  const string MDC_AREA_BODY_SURF_ACTUAL = "MDC_AREA_BODY_SURF_ACTUAL";
+  const string MDC_ECG_AMPL_ST_V = "MDC_ECG_AMPL_ST_V";
   // from 
-  const string MDC_CONC_AWAY_CO2_EXP = "MDC_CONC_AWAY_CO2_EXP";
-  // from A.7.4.1
-  const string MDC_AWAY_O2_EXP = "MDC_AWAY_O2_EXP";
+  const string MDC_ECG_AMPL_ST_V1 = "MDC_ECG_AMPL_ST_V1";
   // from 
-  const string MDC_TIME_PD_VENT_L_AORT_VALV = "MDC_TIME_PD_VENT_L_AORT_VALV";
-  // from A.7.4.1
-  const string MDC_AWAY_N2O_EXP = "MDC_AWAY_N2O_EXP";
-  // from A.7.4.1
-  const string MDC_AWAY_HALOTH_EXP = "MDC_AWAY_HALOTH_EXP";
-  // from A.7.4.1
-  const string MDC_AWAY_ISOFL_EXP = "MDC_AWAY_ISOFL_EXP";
-  // from A.7.4.1
-  const string MDC_AWAY_ENFL_EXP = "MDC_AWAY_ENFL_EXP";
-  // from A.7.4.1
-  const string MDC_AWAY_DESFL_EXP = "MDC_AWAY_DESFL_EXP";
-  // from A.7.4.1
-  const string MDC_AWAY_SEVOFL_EXP = "MDC_AWAY_SEVOFL_EXP";
+  const string MDC_ECG_AMPL_ST_V2 = "MDC_ECG_AMPL_ST_V2";
   // from 
-  const string MDC_CONC_CA_ART = "MDC_CONC_CA_ART";
+  const string MDC_ECG_AMPL_ST_V3 = "MDC_ECG_AMPL_ST_V3";
   // from 
-  const string MDC_CONC_UREA_ART = "MDC_CONC_UREA_ART";
+  const string MDC_ECG_AMPL_ST_V4 = "MDC_ECG_AMPL_ST_V4";
   // from 
-  const string MDC_VOL_URINE_COL = "MDC_VOL_URINE_COL";
+  const string MDC_ECG_AMPL_ST_V5 = "MDC_ECG_AMPL_ST_V5";
   // from 
-  const string MDC_VENT_VOL_MINUTE_AWAY = "MDC_VENT_VOL_MINUTE_AWAY";
+  const string MDC_ECG_AMPL_ST_V6 = "MDC_ECG_AMPL_ST_V6";
   // from 
-  const string MDC_VENT_PRESS_AWAY = "MDC_VENT_PRESS_AWAY";
+  const string MDC_ECG_ARRHY = "MDC_ECG_ARRHY";
+  // from A.7.2.1
+  const string MDC_ECG_CARD_BEAT_RATE = "MDC_ECG_CARD_BEAT_RATE";
   // from 
-  const string MDC_VENT_FLOW = "MDC_VENT_FLOW";
+  const string MDC_ECG_CARD_BEAT_RATE_BTB = "MDC_ECG_CARD_BEAT_RATE_BTB";
+  // from 
+  const string MDC_ECG_HEART_RATE = "MDC_ECG_HEART_RATE";
+  // from 
+  const string MDC_ECG_PACED_BEAT_RATE = "MDC_ECG_PACED_BEAT_RATE";
+  // from 
+  const string MDC_ECG_STAT_ECT = "MDC_ECG_STAT_ECT";
+  // from 
+  const string MDC_ECG_STAT_RHY = "MDC_ECG_STAT_RHY";
+  // from 
+  const string MDC_ECG_TIME_PD_QTc = "MDC_ECG_TIME_PD_QTc";
+  // from 
+  const string MDC_ECG_TIME_PD_QT_GL = "MDC_ECG_TIME_PD_QT_GL";
   // from 
   const string MDC_ECG_TIME_PD_RR_GL = "MDC_ECG_TIME_PD_RR_GL";
   // from 
-  const string MDC_PRESS_GI = "MDC_PRESS_GI";
+  const string MDC_ECG_V_P_C_CNT = "MDC_ECG_V_P_C_CNT";
   // from 
-  const string MDC_QUO_RESP = "MDC_QUO_RESP";
+  const string MDC_ECG_V_P_C_RATE = "MDC_ECG_V_P_C_RATE";
+  // from A.7.8.1
+  const string MDC_EEG_BISPECTRAL_INDEX = "MDC_EEG_BISPECTRAL_INDEX";
+  // from 
+  const string MDC_EEG_ELEC_POTL_CRTX = "MDC_EEG_ELEC_POTL_CRTX";
+  // from A.7.8.1
+  const string MDC_EEG_ENTROPY_RESPONSE = "MDC_EEG_ENTROPY_RESPONSE";
+  // from A.7.8.1
+  const string MDC_EEG_ENTROPY_STATE = "MDC_EEG_ENTROPY_STATE";
+  // from 
+  const string MDC_EEG_FREQ_PWR_SPEC_CRTX_DOM_MEAN = "MDC_EEG_FREQ_PWR_SPEC_CRTX_DOM_MEAN";
+  // from 
+  const string MDC_EEG_FREQ_PWR_SPEC_CRTX_MEDIAN = "MDC_EEG_FREQ_PWR_SPEC_CRTX_MEDIAN";
+  // from 
+  const string MDC_EEG_FREQ_PWR_SPEC_CRTX_PEAK = "MDC_EEG_FREQ_PWR_SPEC_CRTX_PEAK";
+  // from 
+  const string MDC_EEG_FREQ_PWR_SPEC_CRTX_SPECTRAL_EDGE = "MDC_EEG_FREQ_PWR_SPEC_CRTX_SPECTRAL_EDGE";
+  // from 
+  const string MDC_EEG_NUM_SEIZ = "MDC_EEG_NUM_SEIZ";
+  // from 
+  const string MDC_EEG_NUM_SPK = "MDC_EEG_NUM_SPK";
+  // from 
+  const string MDC_EEG_PAROX_CRTX_BURST_SUPPRN = "MDC_EEG_PAROX_CRTX_BURST_SUPPRN";
+  // from 
+  const string MDC_EEG_PWR_SPEC_ALPHA_REL = "MDC_EEG_PWR_SPEC_ALPHA_REL";
+  // from 
+  const string MDC_EEG_PWR_SPEC_BETA_REL = "MDC_EEG_PWR_SPEC_BETA_REL";
+  // from 
+  const string MDC_EEG_PWR_SPEC_CSA = "MDC_EEG_PWR_SPEC_CSA";
+  // from 
+  const string MDC_EEG_PWR_SPEC_DELTA_REL = "MDC_EEG_PWR_SPEC_DELTA_REL";
+  // from 
+  const string MDC_EEG_PWR_SPEC_THETA_REL = "MDC_EEG_PWR_SPEC_THETA_REL";
+  // from 
+  const string MDC_EEG_PWR_SPEC_TOT = "MDC_EEG_PWR_SPEC_TOT";
+  // from A.7.8.1
+  const string MDC_EEG_SIGNAL_QUALITY_INDEX = "MDC_EEG_SIGNAL_QUALITY_INDEX";
+  // from A.7.8.1
+  const string MDC_EEG_SNAP_INDEX = "MDC_EEG_SNAP_INDEX";
+  // from A.7.8.1
+  const string MDC_EMG_ELEC_POTL_MUSCL = "MDC_EMG_ELEC_POTL_MUSCL";
+  // from 
+  const string MDC_EVT_PATIENT_CHANGE = "MDC_EVT_PATIENT_CHANGE";
+  // from 
+  const string MDC_EVT_PATIENT_ID_CHANGE = "MDC_EVT_PATIENT_ID_CHANGE";
+  // from 
+  const string MDC_EVT_PATIENT_WEIGHT_CHANGE = "MDC_EVT_PATIENT_WEIGHT_CHANGE";
+  // from 
+  const string MDC_EVT_PUMP_AUTO_PROG_CLEARED = "MDC_EVT_PUMP_AUTO_PROG_CLEARED";
+  // from 
+  const string MDC_EVT_PUMP_DELIV_COMP = "MDC_EVT_PUMP_DELIV_COMP";
+  // from 
+  const string MDC_EVT_PUMP_DELIV_START = "MDC_EVT_PUMP_DELIV_START";
+  // from 
+  const string MDC_EVT_PUMP_DELIV_STOP = "MDC_EVT_PUMP_DELIV_STOP";
+  // from 
+  const string MDC_EVT_PUMP_PROG_CLEARED = "MDC_EVT_PUMP_PROG_CLEARED";
+  // from A.7.4.1
+  const string MDC_FLOW_AIR_FG = "MDC_FLOW_AIR_FG";
+  // from 
+  const string MDC_FLOW_AWAY = "MDC_FLOW_AWAY";
+  // from 
+  const string MDC_FLOW_AWAY_EXP = "MDC_FLOW_AWAY_EXP";
+  // from 
+  const string MDC_FLOW_AWAY_EXP_MAX = "MDC_FLOW_AWAY_EXP_MAX";
+  // from 
+  const string MDC_FLOW_AWAY_INSP_MAX = "MDC_FLOW_AWAY_INSP_MAX";
+  // from A.7.3.1
+  const string MDC_FLOW_BLD_PULM_CAP = "MDC_FLOW_BLD_PULM_CAP";
+  // from 
+  const string MDC_FLOW_CO2_PROD_RESP = "MDC_FLOW_CO2_PROD_RESP";
   // from 
   const string MDC_FLOW_DRUG_DELIV = "MDC_FLOW_DRUG_DELIV";
   // from 
-  const string MDC_CONC_AWAY_CO2_ET = "MDC_CONC_AWAY_CO2_ET";
+  const string MDC_FLOW_FLUID_PUMP = "MDC_FLOW_FLUID_PUMP";
+  // from A.7.4.1
+  const string MDC_FLOW_N2O_FG = "MDC_FLOW_N2O_FG";
   // from 
-  const string MDC_BLD_PERF_INDEX = "MDC_BLD_PERF_INDEX";
+  const string MDC_FLOW_O2_CONSUMP = "MDC_FLOW_O2_CONSUMP";
+  // from A.7.4.1
+  const string MDC_FLOW_O2_FG = "MDC_FLOW_O2_FG";
   // from 
-  const string MDC_CONC_AWAY_CO2 = "MDC_CONC_AWAY_CO2";
+  const string MDC_GRAD_PRESS_BLD_AORT_POS_MAX = "MDC_GRAD_PRESS_BLD_AORT_POS_MAX";
+  // from 
+  const string MDC_IMPED_TTHOR = "MDC_IMPED_TTHOR";
+  // from A.7.7.1
+  const string MDC_INFUS_DOSE_DELIV = "MDC_INFUS_DOSE_DELIV";
+  // from 
+  const string MDC_LEN_BODY_ACTUAL = "MDC_LEN_BODY_ACTUAL";
+  // from 
+  const string MDC_MASS_BODY_ACTUAL = "MDC_MASS_BODY_ACTUAL";
+  // from 
+  const string MDC_MASS_DRUG_DELIV = "MDC_MASS_DRUG_DELIV";
+  // from A.7.7.1
+  const string MDC_MASS_DRUG_REMAIN_CONTAINER = "MDC_MASS_DRUG_REMAIN_CONTAINER";
+  // from A.7.11.1
+  const string MDC_MICROENV_AIR_CURTAIN_STATE = "MDC_MICROENV_AIR_CURTAIN_STATE";
+  // from A.7.4.1
+  const string MDC_MICROENV_BED_STATE = "MDC_MICROENV_BED_STATE";
+  // from A.7.11.1
+  const string MDC_MICROENV_FAN_SPEED = "MDC_MICROENV_FAN_SPEED";
+  // from A.7.11.1
+  const string MDC_MICROENV_HEATER_TYPE = "MDC_MICROENV_HEATER_TYPE";
+  // from A.7.11.1
+  const string MDC_MICROENV_TYPE = "MDC_MICROENV_TYPE";
+  // from A.7.7.1
+  const string MDC_NUM_PATIENT_DOSES_ATTEMPTED_TOTAL = "MDC_NUM_PATIENT_DOSES_ATTEMPTED_TOTAL";
+  // from A.7.7.1
+  const string MDC_NUM_PATIENT_DOSES_GIVEN_TOTAL = "MDC_NUM_PATIENT_DOSES_GIVEN_TOTAL";
+  // from A.7.4.2
+  const string MDC_O2_EXTRACTION_RATIO = "MDC_O2_EXTRACTION_RATIO";
+  // from A.7.4.2
+  const string MDC_O2_OXYGENATION_RATIO = "MDC_O2_OXYGENATION_RATIO";
+  // from 
+  const string MDC_O2_TCUT = "MDC_O2_TCUT";
+  // from 
+  const string MDC_OUTPUT_CARD = "MDC_OUTPUT_CARD";
+  // from A.7.3.1
+  const string MDC_OUTPUT_CARDIAC_FICK = "MDC_OUTPUT_CARDIAC_FICK";
+  // from 
+  const string MDC_OUTPUT_CARD_CTS = "MDC_OUTPUT_CARD_CTS";
+  // from 
+  const string MDC_OUTPUT_CARD_INDEX = "MDC_OUTPUT_CARD_INDEX";
+  // from 
+  const string MDC_OUTPUT_CARD_NONCTS = "MDC_OUTPUT_CARD_NONCTS";
+  // from A.7.11.1
+  const string MDC_POWER_TCUT = "MDC_POWER_TCUT";
+  // from A.7.4.1
+  const string MDC_PRESS_AIR_AMBIENT = "MDC_PRESS_AIR_AMBIENT";
+  // from 
+  const string MDC_PRESS_AWAY = "MDC_PRESS_AWAY";
+  // from 
+  const string MDC_PRESS_AWAY_CTS_POS = "MDC_PRESS_AWAY_CTS_POS";
+  // from 
+  const string MDC_PRESS_AWAY_END_EXP_POS = "MDC_PRESS_AWAY_END_EXP_POS";
+  // from A.7.4.1
+  const string MDC_PRESS_AWAY_END_EXP_POS_INTRINSIC = "MDC_PRESS_AWAY_END_EXP_POS_INTRINSIC";
+  // from A.7.4.1
+  const string MDC_PRESS_AWAY_END_EXP_POS_STATIC_EXTRINSIC = "MDC_PRESS_AWAY_END_EXP_POS_STATIC_EXTRINSIC";
+  // from A.7.4.1
+  const string MDC_PRESS_AWAY_END_EXP_POS_STATIC_INTRINSIC = "MDC_PRESS_AWAY_END_EXP_POS_STATIC_INTRINSIC";
+  // from A.7.4.1
+  const string MDC_PRESS_AWAY_END_EXP_POS_STATIC_TOTAL = "MDC_PRESS_AWAY_END_EXP_POS_STATIC_TOTAL";
+  // from 
+  const string MDC_PRESS_AWAY_INSP = "MDC_PRESS_AWAY_INSP";
+  // from 
+  const string MDC_PRESS_AWAY_INSP_MAX = "MDC_PRESS_AWAY_INSP_MAX";
+  // from 
+  const string MDC_PRESS_AWAY_INSP_MEAN = "MDC_PRESS_AWAY_INSP_MEAN";
+  // from 
+  const string MDC_PRESS_AWAY_INSP_PEAK = "MDC_PRESS_AWAY_INSP_PEAK";
+  // from 
+  const string MDC_PRESS_AWAY_MIN = "MDC_PRESS_AWAY_MIN";
+  // from 
+  const string MDC_PRESS_AWAY_NEG_MAX = "MDC_PRESS_AWAY_NEG_MAX";
+  // from A.7.4.1
+  const string MDC_PRESS_BAROMETRIC = "MDC_PRESS_BAROMETRIC";
+  // from 
+  const string MDC_PRESS_BLD = "MDC_PRESS_BLD";
+  // from 
+  const string MDC_PRESS_BLD_AORT = "MDC_PRESS_BLD_AORT";
+  // from 
+  const string MDC_PRESS_BLD_AORT_DIA = "MDC_PRESS_BLD_AORT_DIA";
+  // from 
+  const string MDC_PRESS_BLD_AORT_MEAN = "MDC_PRESS_BLD_AORT_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_AORT_SYS = "MDC_PRESS_BLD_AORT_SYS";
+  // from 
+  const string MDC_PRESS_BLD_ART = "MDC_PRESS_BLD_ART";
+  // from 
+  const string MDC_PRESS_BLD_ART_ABP = "MDC_PRESS_BLD_ART_ABP";
+  // from 
+  const string MDC_PRESS_BLD_ART_ABP_DIA = "MDC_PRESS_BLD_ART_ABP_DIA";
+  // from 
+  const string MDC_PRESS_BLD_ART_ABP_MEAN = "MDC_PRESS_BLD_ART_ABP_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_ART_ABP_SYS = "MDC_PRESS_BLD_ART_ABP_SYS";
+  // from 
+  const string MDC_PRESS_BLD_ART_DIA = "MDC_PRESS_BLD_ART_DIA";
+  // from A.7.3.1
+  const string MDC_PRESS_BLD_ART_FEMORAL = "MDC_PRESS_BLD_ART_FEMORAL";
+  // from A.7.3.1
+  const string MDC_PRESS_BLD_ART_FEMORAL_DIA = "MDC_PRESS_BLD_ART_FEMORAL_DIA";
+  // from A.7.3.1
+  const string MDC_PRESS_BLD_ART_FEMORAL_MEAN = "MDC_PRESS_BLD_ART_FEMORAL_MEAN";
+  // from A.7.3.1
+  const string MDC_PRESS_BLD_ART_FEMORAL_SYS = "MDC_PRESS_BLD_ART_FEMORAL_SYS";
+  // from 
+  const string MDC_PRESS_BLD_ART_MEAN = "MDC_PRESS_BLD_ART_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_ART_PULM = "MDC_PRESS_BLD_ART_PULM";
+  // from 
+  const string MDC_PRESS_BLD_ART_PULM_DIA = "MDC_PRESS_BLD_ART_PULM_DIA";
+  // from 
+  const string MDC_PRESS_BLD_ART_PULM_MEAN = "MDC_PRESS_BLD_ART_PULM_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_ART_PULM_OCCL = "MDC_PRESS_BLD_ART_PULM_OCCL";
+  // from 
+  const string MDC_PRESS_BLD_ART_PULM_SYS = "MDC_PRESS_BLD_ART_PULM_SYS";
+  // from 
+  const string MDC_PRESS_BLD_ART_PULM_WEDGE = "MDC_PRESS_BLD_ART_PULM_WEDGE";
+  // from 
+  const string MDC_PRESS_BLD_ART_SYS = "MDC_PRESS_BLD_ART_SYS";
+  // from 
+  const string MDC_PRESS_BLD_ART_UMB = "MDC_PRESS_BLD_ART_UMB";
+  // from 
+  const string MDC_PRESS_BLD_ART_UMB_DIA = "MDC_PRESS_BLD_ART_UMB_DIA";
+  // from 
+  const string MDC_PRESS_BLD_ART_UMB_MEAN = "MDC_PRESS_BLD_ART_UMB_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_ART_UMB_SYS = "MDC_PRESS_BLD_ART_UMB_SYS";
+  // from 
+  const string MDC_PRESS_BLD_ATR_LEFT = "MDC_PRESS_BLD_ATR_LEFT";
+  // from 
+  const string MDC_PRESS_BLD_ATR_LEFT_DIA = "MDC_PRESS_BLD_ATR_LEFT_DIA";
+  // from 
+  const string MDC_PRESS_BLD_ATR_LEFT_MEAN = "MDC_PRESS_BLD_ATR_LEFT_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_ATR_LEFT_SYS = "MDC_PRESS_BLD_ATR_LEFT_SYS";
+  // from 
+  const string MDC_PRESS_BLD_ATR_RIGHT = "MDC_PRESS_BLD_ATR_RIGHT";
+  // from 
+  const string MDC_PRESS_BLD_ATR_RIGHT_DIA = "MDC_PRESS_BLD_ATR_RIGHT_DIA";
+  // from 
+  const string MDC_PRESS_BLD_ATR_RIGHT_MEAN = "MDC_PRESS_BLD_ATR_RIGHT_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_ATR_RIGHT_SYS = "MDC_PRESS_BLD_ATR_RIGHT_SYS";
+  // from 
+  const string MDC_PRESS_BLD_DIA = "MDC_PRESS_BLD_DIA";
+  // from 
+  const string MDC_PRESS_BLD_MEAN = "MDC_PRESS_BLD_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_NONINV = "MDC_PRESS_BLD_NONINV";
+  // from 
+  const string MDC_PRESS_BLD_NONINV_DIA = "MDC_PRESS_BLD_NONINV_DIA";
+  // from 
+  const string MDC_PRESS_BLD_NONINV_DIA_CTS = "MDC_PRESS_BLD_NONINV_DIA_CTS";
+  // from 
+  const string MDC_PRESS_BLD_NONINV_MEAN = "MDC_PRESS_BLD_NONINV_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_NONINV_MEAN_CTS = "MDC_PRESS_BLD_NONINV_MEAN_CTS";
+  // from 
+  const string MDC_PRESS_BLD_NONINV_SYS = "MDC_PRESS_BLD_NONINV_SYS";
+  // from 
+  const string MDC_PRESS_BLD_NONINV_SYS_CTS = "MDC_PRESS_BLD_NONINV_SYS_CTS";
+  // from 
+  const string MDC_PRESS_BLD_PULM_CAP = "MDC_PRESS_BLD_PULM_CAP";
+  // from 
+  const string MDC_PRESS_BLD_PULM_CAP_DIA = "MDC_PRESS_BLD_PULM_CAP_DIA";
+  // from 
+  const string MDC_PRESS_BLD_PULM_CAP_MEAN = "MDC_PRESS_BLD_PULM_CAP_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_PULM_CAP_SYS = "MDC_PRESS_BLD_PULM_CAP_SYS";
+  // from 
+  const string MDC_PRESS_BLD_SYS = "MDC_PRESS_BLD_SYS";
+  // from 
+  const string MDC_PRESS_BLD_VENT_LEFT_DIA = "MDC_PRESS_BLD_VENT_LEFT_DIA";
+  // from 
+  const string MDC_PRESS_BLD_VENT_LEFT_MEAN = "MDC_PRESS_BLD_VENT_LEFT_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_VENT_LEFT_SYS = "MDC_PRESS_BLD_VENT_LEFT_SYS";
+  // from 
+  const string MDC_PRESS_BLD_VENT_RIGHT_DIA = "MDC_PRESS_BLD_VENT_RIGHT_DIA";
+  // from 
+  const string MDC_PRESS_BLD_VENT_RIGHT_MEAN = "MDC_PRESS_BLD_VENT_RIGHT_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_VENT_RIGHT_SYS = "MDC_PRESS_BLD_VENT_RIGHT_SYS";
+  // from 
+  const string MDC_PRESS_BLD_VEN_CENT = "MDC_PRESS_BLD_VEN_CENT";
+  // from 
+  const string MDC_PRESS_BLD_VEN_CENT_DIA = "MDC_PRESS_BLD_VEN_CENT_DIA";
+  // from 
+  const string MDC_PRESS_BLD_VEN_CENT_MEAN = "MDC_PRESS_BLD_VEN_CENT_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_VEN_CENT_SYS = "MDC_PRESS_BLD_VEN_CENT_SYS";
+  // from 
+  const string MDC_PRESS_BLD_VEN_UMB = "MDC_PRESS_BLD_VEN_UMB";
+  // from 
+  const string MDC_PRESS_BLD_VEN_UMB_DIA = "MDC_PRESS_BLD_VEN_UMB_DIA";
+  // from 
+  const string MDC_PRESS_BLD_VEN_UMB_MEAN = "MDC_PRESS_BLD_VEN_UMB_MEAN";
+  // from 
+  const string MDC_PRESS_BLD_VEN_UMB_SYS = "MDC_PRESS_BLD_VEN_UMB_SYS";
+  // from 
+  const string MDC_PRESS_CEREB_PERF = "MDC_PRESS_CEREB_PERF";
+  // from 
+  const string MDC_PRESS_CUFF = "MDC_PRESS_CUFF";
+  // from 
+  const string MDC_PRESS_CUFF_DIA = "MDC_PRESS_CUFF_DIA";
+  // from 
+  const string MDC_PRESS_CUFF_MEAN = "MDC_PRESS_CUFF_MEAN";
+  // from 
+  const string MDC_PRESS_CUFF_SYS = "MDC_PRESS_CUFF_SYS";
   // from 
   const string MDC_PRESS_ESOPH = "MDC_PRESS_ESOPH";
   // from 
-  const string MDC_TEMP_FOLEY = "MDC_TEMP_FOLEY";
+  const string MDC_PRESS_GI = "MDC_PRESS_GI";
+  // from 
+  const string MDC_PRESS_INTRA_CRAN = "MDC_PRESS_INTRA_CRAN";
+  // from 
+  const string MDC_PRESS_INTRA_CRAN_DIA = "MDC_PRESS_INTRA_CRAN_DIA";
+  // from 
+  const string MDC_PRESS_INTRA_CRAN_MEAN = "MDC_PRESS_INTRA_CRAN_MEAN";
+  // from 
+  const string MDC_PRESS_INTRA_CRAN_SYS = "MDC_PRESS_INTRA_CRAN_SYS";
+  // from 
+  const string MDC_PRESS_RESP_PAUSE = "MDC_PRESS_RESP_PAUSE";
+  // from 
+  const string MDC_PRESS_RESP_PLAT = "MDC_PRESS_RESP_PLAT";
+  // from A.7.4.1
+  const string MDC_PRESS_RESP_PLAT_DYNAMIC = "MDC_PRESS_RESP_PLAT_DYNAMIC";
+  // from A.7.4.1
+  const string MDC_PRESS_RESP_PLAT_STATIC = "MDC_PRESS_RESP_PLAT_STATIC";
+  // from A.7.4.1
+  const string MDC_PRES_AWAY_END_EXP_POS = "MDC_PRES_AWAY_END_EXP_POS";
+  // from 
+  const string MDC_PULS_OXIM_PERF_REL = "MDC_PULS_OXIM_PERF_REL";
+  // from 
+  const string MDC_PULS_OXIM_PLETH = "MDC_PULS_OXIM_PLETH";
+  // from 
+  const string MDC_PULS_OXIM_PULS_RATE = "MDC_PULS_OXIM_PULS_RATE";
+  // from 
+  const string MDC_PULS_OXIM_SAT_O2 = "MDC_PULS_OXIM_SAT_O2";
+  // from 
+  const string MDC_PULS_OXIM_SAT_O2_ART_LEFT = "MDC_PULS_OXIM_SAT_O2_ART_LEFT";
+  // from 
+  const string MDC_PULS_OXIM_SAT_O2_ART_RIGHT = "MDC_PULS_OXIM_SAT_O2_ART_RIGHT";
+  // from 
+  const string MDC_PULS_OXIM_SAT_O2_DIFF = "MDC_PULS_OXIM_SAT_O2_DIFF";
+  // from 
+  const string MDC_PULS_RATE = "MDC_PULS_RATE";
+  // from 
+  const string MDC_PULS_RATE_NON_INV = "MDC_PULS_RATE_NON_INV";
+  // from A.7.7.1
+  const string MDC_PUMP_DRUG_LIBRARY_CARE_AREA = "MDC_PUMP_DRUG_LIBRARY_CARE_AREA";
+  // from A.7.7.1
+  const string MDC_PUMP_DRUG_LIBRARY_VERSION = "MDC_PUMP_DRUG_LIBRARY_VERSION";
+  // from A.7.7.1
+  const string MDC_PUMP_INFUSING_STATUS = "MDC_PUMP_INFUSING_STATUS";
+  // from 
+  const string MDC_PUMP_MODE = "MDC_PUMP_MODE";
+  // from A.7.7.1
+  const string MDC_PUMP_MODE_CONCURRENT_CHAN_LABEL = "MDC_PUMP_MODE_CONCURRENT_CHAN_LABEL";
+  // from A.7.7.1
+  const string MDC_PUMP_MODE_CURRENT = "MDC_PUMP_MODE_CURRENT";
+  // from A.7.7.1
+  const string MDC_PUMP_MODE_SET = "MDC_PUMP_MODE_SET";
+  // from A.7.7.1
+  const string MDC_PUMP_NOT_INFUSING_REASON = "MDC_PUMP_NOT_INFUSING_REASON";
+  // from 
+  const string MDC_PUMP_STAT = "MDC_PUMP_STAT";
+  // from 
+  const string MDC_QUO_RESP = "MDC_QUO_RESP";
+  // from 
+  const string MDC_RATE_DOSE = "MDC_RATE_DOSE";
+  // from A.7.7.1
+  const string MDC_RATE_PCA_MAX_DOSES_PER_HOUR = "MDC_RATE_PCA_MAX_DOSES_PER_HOUR";
+  // from 
+  const string MDC_RATIO_AWAY_DEADSP_TIDAL = "MDC_RATIO_AWAY_DEADSP_TIDAL";
+  // from 
+  const string MDC_RATIO_IE = "MDC_RATIO_IE";
+  // from A.7.4.1
+  const string MDC_RATIO_INSP = "MDC_RATIO_INSP";
+  // from A.7.11.1
+  const string MDC_REL_HUMIDITY_MICROENV = "MDC_REL_HUMIDITY_MICROENV";
+  // from A.7.11.1
+  const string MDC_REL_HUMIDITY_MICROENV_SETTING = "MDC_REL_HUMIDITY_MICROENV_SETTING";
+  // from 
+  const string MDC_RESP = "MDC_RESP";
+  // from A.7.4.1
+  const string MDC_RESP_EXPENDED_ENERGY = "MDC_RESP_EXPENDED_ENERGY";
+  // from 
+  const string MDC_RESP_RATE = "MDC_RESP_RATE";
+  // from A.7.4.1
+  const string MDC_RESP_RATE_SPONT = "MDC_RESP_RATE_SPONT";
+  // from 
+  const string MDC_RESPMDC_RESP_RATE = "MDC_RESPMDC_RESP_RATE";
+  // from 
+  const string MDC_RES_AWAY = "MDC_RES_AWAY";
+  // from 
+  const string MDC_RES_AWAY_EXP = "MDC_RES_AWAY_EXP";
+  // from 
+  const string MDC_RES_AWAY_INSP = "MDC_RES_AWAY_INSP";
+  // from 
+  const string MDC_RES_VASC = "MDC_RES_VASC";
+  // from 
+  const string MDC_RES_VASC_PULM = "MDC_RES_VASC_PULM";
+  // from A.7.4.1
+  const string MDC_RES_VASC_PULM_INDEX = "MDC_RES_VASC_PULM_INDEX";
+  // from 
+  const string MDC_RES_VASC_SYS = "MDC_RES_VASC_SYS";
+  // from 
+  const string MDC_RES_VASC_SYS_INDEX = "MDC_RES_VASC_SYS_INDEX";
+  // from 
+  const string MDC_SAT_DIFF_O2_ART_ALV = "MDC_SAT_DIFF_O2_ART_ALV";
+  // from 
+  const string MDC_SAT_O2_ART = "MDC_SAT_O2_ART";
+  // from 
+  const string MDC_SAT_O2_CONSUMP = "MDC_SAT_O2_CONSUMP";
+  // from A.7.3.1
+  const string MDC_SAT_O2_CONSUMP_INDEX = "MDC_SAT_O2_CONSUMP_INDEX";
+  // from A.7.3.1
+  const string MDC_SAT_O2_DELIV_INDEX = "MDC_SAT_O2_DELIV_INDEX";
+  // from 
+  const string MDC_SAT_O2_VEN = "MDC_SAT_O2_VEN";
+  // from 
+  const string MDC_SCORE_EYE_SUBSC_GLAS_COMA = "MDC_SCORE_EYE_SUBSC_GLAS_COMA";
+  // from 
+  const string MDC_SCORE_GLAS_COMA = "MDC_SCORE_GLAS_COMA";
+  // from 
+  const string MDC_SCORE_MOTOR_SUBSC_GLAS_COMA = "MDC_SCORE_MOTOR_SUBSC_GLAS_COMA";
+  // from 
+  const string MDC_SCORE_SUBSC_VERBAL_GLAS_COMA = "MDC_SCORE_SUBSC_VERBAL_GLAS_COMA";
+  // from A.7.7.1
+  const string MDC_SYRINGE_MANUFACTURER = "MDC_SYRINGE_MANUFACTURER";
+  // from A.7.3.1
+  const string MDC_SYSTOLIC_TIME_RATIO = "MDC_SYSTOLIC_TIME_RATIO";
+  // from 
+  const string MDC_TEMP = "MDC_TEMP";
+  // from 
+  const string MDC_TEMP_ART = "MDC_TEMP_ART";
+  // from 
+  const string MDC_TEMP_AWAY = "MDC_TEMP_AWAY";
+  // from A.7.11.1
+  const string MDC_TEMP_AXIL = "MDC_TEMP_AXIL";
+  // from 
+  const string MDC_TEMP_BLD = "MDC_TEMP_BLD";
+  // from 
+  const string MDC_TEMP_BODY = "MDC_TEMP_BODY";
+  // from 
+  const string MDC_TEMP_CORE = "MDC_TEMP_CORE";
+  // from 
+  const string MDC_TEMP_DIFF = "MDC_TEMP_DIFF";
   // from 
   const string MDC_TEMP_EAR = "MDC_TEMP_EAR";
   // from 
+  const string MDC_TEMP_ESOPH = "MDC_TEMP_ESOPH";
+  // from 
   const string MDC_TEMP_FINGER = "MDC_TEMP_FINGER";
+  // from 
+  const string MDC_TEMP_FOLEY = "MDC_TEMP_FOLEY";
+  // from 
+  const string MDC_TEMP_INJ = "MDC_TEMP_INJ";
+  // from A.7.11.1
+  const string MDC_TEMP_MICROENV = "MDC_TEMP_MICROENV";
+  // from A.7.11.1
+  const string MDC_TEMP_MICROENV_SETTING = "MDC_TEMP_MICROENV_SETTING";
+  // from A.7.11.1
+  const string MDC_TEMP_MYO = "MDC_TEMP_MYO";
+  // from A.7.11.1
+  const string MDC_TEMP_NASAL = "MDC_TEMP_NASAL";
+  // from 
+  const string MDC_TEMP_NASOPH = "MDC_TEMP_NASOPH";
   // from 
   const string MDC_TEMP_ORAL = "MDC_TEMP_ORAL";
   // from 
-  const string MDC_TEMP_BODY = "MDC_TEMP_BODY";
+  const string MDC_TEMP_RECT = "MDC_TEMP_RECT";
+  // from A.7.11.1
+  const string MDC_TEMP_ROOM = "MDC_TEMP_ROOM";
+  // from 
+  const string MDC_TEMP_SKIN = "MDC_TEMP_SKIN";
+  // from A.7.11.1
+  const string MDC_TEMP_SKIN_SETTING = "MDC_TEMP_SKIN_SETTING";
+  // from A.7.11.1
+  const string MDC_TEMP_TCUT = "MDC_TEMP_TCUT";
   // from 
   const string MDC_TEMP_TOE = "MDC_TEMP_TOE";
   // from 
   const string MDC_TEMP_TYMP = "MDC_TEMP_TYMP";
-  // from A.7.4.1
-  const string MDC_VENT_AWAY_DESFL = "MDC_VENT_AWAY_DESFL";
-  // from A.7.4.1
-  const string MDC_VENT_DESFL_INSP = "MDC_VENT_DESFL_INSP";
-  // from A.7.4.1
-  const string MDC_VENT_DESFL_EXP = "MDC_VENT_DESFL_EXP";
-  // from A.7.4.1
-  const string MDC_AWAY_DESFL = "MDC_AWAY_DESFL";
-  // from A.7.4.1
-  const string MDC_AWAY_DESFL_INSP = "MDC_AWAY_DESFL_INSP";
-  // from A.7.4.1
-  const string MDC_VENT_ENFL_INSP = "MDC_VENT_ENFL_INSP";
-  // from A.7.4.1
-  const string MDC_VENT_ENFL_EXP = "MDC_VENT_ENFL_EXP";
-  // from A.7.4.1
-  const string MDC_AWAY_ENFL = "MDC_AWAY_ENFL";
-  // from A.7.4.1
-  const string MDC_AWAY_ENFL_INSP = "MDC_AWAY_ENFL_INSP";
-  // from A.7.4.1
-  const string MDC_VENT_HALOTH_INSP = "MDC_VENT_HALOTH_INSP";
-  // from A.7.4.1
-  const string MDC_VENT_HALOTH_EXP = "MDC_VENT_HALOTH_EXP";
-  // from A.7.4.1
-  const string MDC_AWAY_HALOTH = "MDC_AWAY_HALOTH";
-  // from A.7.4.1
-  const string MDC_AWAY_HALOTH_INSP = "MDC_AWAY_HALOTH_INSP";
-  // from A.7.4.1
-  const string MDC_VENT_SEVOFL_INSP = "MDC_VENT_SEVOFL_INSP";
-  // from A.7.4.1
-  const string MDC_VENT_SEVOFL_EXP = "MDC_VENT_SEVOFL_EXP";
-  // from A.7.4.1
-  const string MDC_AWAY_SEVOFL = "MDC_AWAY_SEVOFL";
-  // from A.7.4.1
-  const string MDC_AWAY_SEVOFL_INSP = "MDC_AWAY_SEVOFL_INSP";
-  // from A.7.4.1
-  const string MDC_VENT_ISOFL_INSP = "MDC_VENT_ISOFL_INSP";
-  // from A.7.4.1
-  const string MDC_VENT_ISOFL_EXP = "MDC_VENT_ISOFL_EXP";
-  // from A.7.4.1
-  const string MDC_AWAY_ISOFL = "MDC_AWAY_ISOFL";
-  // from A.7.4.1
-  const string MDC_AWAY_ISOFL_INSP = "MDC_AWAY_ISOFL_INSP";
-  // from A.7.4.1
-  const string MDC_VENT_N2O_INSP = "MDC_VENT_N2O_INSP";
-  // from A.7.4.1
-  const string MDC_VENT_N2O_EXP = "MDC_VENT_N2O_EXP";
-  // from A.7.4.1
-  const string MDC_AWAY_N2O = "MDC_AWAY_N2O";
-  // from A.7.4.1
-  const string MDC_AWAY_N2O_INSP = "MDC_AWAY_N2O_INSP";
   // from 
-  const string MDC_VOL_FLUID_TBI = "MDC_VOL_FLUID_TBI";
+  const string MDC_TEMP_VEN = "MDC_TEMP_VEN";
+  // from A.7.3.1
+  const string MDC_THORACIC_FLUID_CONTENT = "MDC_THORACIC_FLUID_CONTENT";
+  // from A.7.7.1
+  const string MDC_TIME_PCA_LOCKOUT = "MDC_TIME_PCA_LOCKOUT";
   // from 
-  const string MDC_VOL_FLUID_DELIV_TOTAL_SET = "MDC_VOL_FLUID_DELIV_TOTAL_SET";
-  // from 
-  const string MDC_MASS_DRUG_DELIV = "MDC_MASS_DRUG_DELIV";
+  const string MDC_TIME_PD_APNEA = "MDC_TIME_PD_APNEA";
+  // from A.7.7.1
+  const string MDC_TIME_PD_DOSE_START_INTERVAL = "MDC_TIME_PD_DOSE_START_INTERVAL";
   // from A.7.4.1
-  const string MDC_VENT_AWAY_O2 = "MDC_VENT_AWAY_O2";
-  // from 
-  const string MDC_VENT_AWAY_O2_INSP = "MDC_VENT_AWAY_O2_INSP";
-  // from 
-  const string MDC_VENT_AWAY_O2_EXP = "MDC_VENT_AWAY_O2_EXP";
+  const string MDC_TIME_PD_EXP = "MDC_TIME_PD_EXP";
   // from A.7.4.1
-  const string MDC_AWAY_O2 = "MDC_AWAY_O2";
-  // from A.7.4.1
-  const string MDC_AWAY_O2_INSP = "MDC_AWAY_O2_INSP";
+  const string MDC_TIME_PD_INSP = "MDC_TIME_PD_INSP";
+  // from A.7.7.1
+  const string MDC_TIME_PD_PCA_DOSE_LIMIT = "MDC_TIME_PD_PCA_DOSE_LIMIT";
+  // from A.7.7.1
+  const string MDC_TIME_PD_PROG = "MDC_TIME_PD_PROG";
+  // from 
+  const string MDC_TIME_PD_PUPIL_REACT_LEFT = "MDC_TIME_PD_PUPIL_REACT_LEFT";
+  // from 
+  const string MDC_TIME_PD_PUPIL_REACT_RIGHT = "MDC_TIME_PD_PUPIL_REACT_RIGHT";
+  // from 
+  const string MDC_TIME_PD_REMAIN = "MDC_TIME_PD_REMAIN";
+  // from A.7.7.1
+  const string MDC_TIME_PD_REMAIN_CONTAINER = "MDC_TIME_PD_REMAIN_CONTAINER";
+  // from A.7.3.1
+  const string MDC_TIME_PD_VENT_L_AORT_PRE_EJCT = "MDC_TIME_PD_VENT_L_AORT_PRE_EJCT";
+  // from 
+  const string MDC_TIME_PD_VENT_L_AORT_VALV = "MDC_TIME_PD_VENT_L_AORT_VALV";
+  // from 
+  const string MDC_TRANSMISSION = "MDC_TRANSMISSION";
+  // from 
+  const string MDC_TRANSMISSION_INFRARED = "MDC_TRANSMISSION_INFRARED";
+  // from 
+  const string MDC_TRANSMISSION_RED = "MDC_TRANSMISSION_RED";
+  // from 
+  const string MDC_TTHOR_RESP_RATE = "MDC_TTHOR_RESP_RATE";
+  // from A.7.3.1
+  const string MDC_VELOCITY_INDEX = "MDC_VELOCITY_INDEX";
   // from A.7.4.1
   const string MDC_VENT_AWAY_CO2 = "MDC_VENT_AWAY_CO2";
   // from 
-  const string MDC_VENT_AWAY_CO2_INSP = "MDC_VENT_AWAY_CO2_INSP";
-  // from 
   const string MDC_VENT_AWAY_CO2_EXP = "MDC_VENT_AWAY_CO2_EXP";
+  // from 
+  const string MDC_VENT_AWAY_CO2_INSP = "MDC_VENT_AWAY_CO2_INSP";
   // from A.7.4.1
-  const string MDC_AWAY_CO2_INSP = "MDC_AWAY_CO2_INSP";
+  const string MDC_VENT_AWAY_DESFL = "MDC_VENT_AWAY_DESFL";
   // from A.7.4.1
-  const string MDC_AWAY_NO2 = "MDC_AWAY_NO2";
+  const string MDC_VENT_AWAY_ENFL = "MDC_VENT_AWAY_ENFL";
   // from A.7.4.1
-  const string MDC_AWAY_NO2_INSP = "MDC_AWAY_NO2_INSP";
+  const string MDC_VENT_AWAY_HALOTH = "MDC_VENT_AWAY_HALOTH";
   // from A.7.4.1
-  const string MDC_AWAY_NO2_EXP = "MDC_AWAY_NO2_EXP";
+  const string MDC_VENT_AWAY_ISOFL = "MDC_VENT_AWAY_ISOFL";
+  // from A.7.4.1
+  const string MDC_VENT_AWAY_N2O = "MDC_VENT_AWAY_N2O";
+  // from A.7.4.1
+  const string MDC_VENT_AWAY_O2 = "MDC_VENT_AWAY_O2";
   // from 
-  const string MDC_ECG_V_P_C_RATE = "MDC_ECG_V_P_C_RATE";
+  const string MDC_VENT_AWAY_O2_EXP = "MDC_VENT_AWAY_O2_EXP";
   // from 
-  const string MDC_VOL_SYRINGE = "MDC_VOL_SYRINGE";
+  const string MDC_VENT_AWAY_O2_INSP = "MDC_VENT_AWAY_O2_INSP";
+  // from A.7.4.1
+  const string MDC_VENT_AWAY_SEVOFL = "MDC_VENT_AWAY_SEVOFL";
   // from 
-  const string MDC_SYRINGE_TYPE = "MDC_SYRINGE_TYPE";
+  const string MDC_VENT_CO2_RESP_RATE = "MDC_VENT_CO2_RESP_RATE";
   // from 
-  const string MDC_PUMP_MODE_CURRENT = "MDC_PUMP_MODE_CURRENT";
+  const string MDC_VENT_CONC_AWAY_O2_DELTA = "MDC_VENT_CONC_AWAY_O2_DELTA";
   // from 
-  const string MDC_TIME_PD_FLUID_BOLUS_LOCKOUT = "MDC_TIME_PD_FLUID_BOLUS_LOCKOUT";
+  const string MDC_VENT_CONC_AWAY_O2_INSP = "MDC_VENT_CONC_AWAY_O2_INSP";
   // from 
-  const string MDC_DOSE_DRUG_BOLUS = "MDC_DOSE_DRUG_BOLUS";
+  const string MDC_VENT_CONC_DESFL_INSP = "MDC_VENT_CONC_DESFL_INSP";
   // from 
-  const string MDC_VENT_MODE = "MDC_VENT_MODE";
+  const string MDC_VENT_CONC_ENFL_INSP = "MDC_VENT_CONC_ENFL_INSP";
   // from 
-  const string MDC_ATTR_PT_BSA = "MDC_ATTR_PT_BSA";
+  const string MDC_VENT_CONC_HALOTH_INSP = "MDC_VENT_CONC_HALOTH_INSP";
   // from 
-  const string MDC_ATTR_PT_LBM = "MDC_ATTR_PT_LBM";
+  const string MDC_VENT_CONC_ISOFL_INSP = "MDC_VENT_CONC_ISOFL_INSP";
+  // from 
+  const string MDC_VENT_CONC_SEVOFL_INSP = "MDC_VENT_CONC_SEVOFL_INSP";
+  // from A.7.4.1
+  const string MDC_VENT_DESFL_EXP = "MDC_VENT_DESFL_EXP";
+  // from A.7.4.1
+  const string MDC_VENT_DESFL_INSP = "MDC_VENT_DESFL_INSP";
+  // from A.7.4.1
+  const string MDC_VENT_ENFL_EXP = "MDC_VENT_ENFL_EXP";
+  // from A.7.4.1
+  const string MDC_VENT_ENFL_INSP = "MDC_VENT_ENFL_INSP";
+  // from 
+  const string MDC_VENT_FLOW = "MDC_VENT_FLOW";
+  // from 
+  const string MDC_VENT_FLOW_EXP = "MDC_VENT_FLOW_EXP";
+  // from 
+  const string MDC_VENT_FLOW_EXP_MAX = "MDC_VENT_FLOW_EXP_MAX";
+  // from 
+  const string MDC_VENT_FLOW_INSP = "MDC_VENT_FLOW_INSP";
+  // from 
+  const string MDC_VENT_FLOW_INSP_MAX = "MDC_VENT_FLOW_INSP_MAX";
+  // from 
+  const string MDC_VENT_FLOW_RATIO_PERF_ALV_INDEX = "MDC_VENT_FLOW_RATIO_PERF_ALV_INDEX";
+  // from A.7.4.1
+  const string MDC_VENT_HALOTH_EXP = "MDC_VENT_HALOTH_EXP";
+  // from A.7.4.1
+  const string MDC_VENT_HALOTH_INSP = "MDC_VENT_HALOTH_INSP";
+  // from A.7.4.1
+  const string MDC_VENT_ISOFL_EXP = "MDC_VENT_ISOFL_EXP";
+  // from A.7.4.1
+  const string MDC_VENT_ISOFL_INSP = "MDC_VENT_ISOFL_INSP";
+  // from A.7.4.1
+  const string MDC_VENT_N2O_EXP = "MDC_VENT_N2O_EXP";
+  // from A.7.4.1
+  const string MDC_VENT_N2O_INSP = "MDC_VENT_N2O_INSP";
+  // from 
+  const string MDC_VENT_PRESS_AWAY = "MDC_VENT_PRESS_AWAY";
+  // from 
+  const string MDC_VENT_PRESS_AWAY_END_EXP_POS = "MDC_VENT_PRESS_AWAY_END_EXP_POS";
+  // from 
+  const string MDC_VENT_PRESS_MAX = "MDC_VENT_PRESS_MAX";
+  // from 
+  const string MDC_VENT_PRESS_OCCL = "MDC_VENT_PRESS_OCCL";
+  // from 
+  const string MDC_VENT_RESP_RATE = "MDC_VENT_RESP_RATE";
+  // from A.7.4.1
+  const string MDC_VENT_SEVOFL_EXP = "MDC_VENT_SEVOFL_EXP";
+  // from A.7.4.1
+  const string MDC_VENT_SEVOFL_INSP = "MDC_VENT_SEVOFL_INSP";
+  // from 
+  const string MDC_VENT_VOL_AWAY_DEADSP = "MDC_VENT_VOL_AWAY_DEADSP";
+  // from 
+  const string MDC_VENT_VOL_AWAY_DEADSP_REL = "MDC_VENT_VOL_AWAY_DEADSP_REL";
+  // from 
+  const string MDC_VENT_VOL_LEAK = "MDC_VENT_VOL_LEAK";
+  // from 
+  const string MDC_VENT_VOL_LUNG_ALV = "MDC_VENT_VOL_LUNG_ALV";
+  // from 
+  const string MDC_VENT_VOL_LUNG_TRAPD = "MDC_VENT_VOL_LUNG_TRAPD";
+  // from 
+  const string MDC_VENT_VOL_MINUTE_AWAY = "MDC_VENT_VOL_MINUTE_AWAY";
+  // from 
+  const string MDC_VENT_VOL_MINUTE_AWAY_INSP = "MDC_VENT_VOL_MINUTE_AWAY_INSP";
+  // from 
+  const string MDC_VENT_VOL_MINUTE_EXP = "MDC_VENT_VOL_MINUTE_EXP";
+  // from 
+  const string MDC_VENT_VOL_TIDAL = "MDC_VENT_VOL_TIDAL";
+  // from A.7.4.1
+  const string MDC_VENT_VOL_TIDAL_EXP = "MDC_VENT_VOL_TIDAL_EXP";
+  // from A.7.4.1
+  const string MDC_VENT_VOL_TIDAL_INSP = "MDC_VENT_VOL_TIDAL_INSP";
+  // from 
+  const string MDC_VOL_AWAY_DEADSP = "MDC_VOL_AWAY_DEADSP";
+  // from 
+  const string MDC_VOL_AWAY_TIDAL = "MDC_VOL_AWAY_TIDAL";
+  // from A.7.4.1
+  const string MDC_VOL_AWAY_TIDAL_EXP = "MDC_VOL_AWAY_TIDAL_EXP";
+  // from 
+  const string MDC_VOL_BLD_STROKE = "MDC_VOL_BLD_STROKE";
+  // from A.7.3.1
+  const string MDC_VOL_BLD_STROKE_INDEX = "MDC_VOL_BLD_STROKE_INDEX";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_AIR_CASE = "MDC_VOL_DELIV_AIR_CASE";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_AIR_LIQUID_CASE = "MDC_VOL_DELIV_AIR_LIQUID_CASE";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_AIR_TOTAL = "MDC_VOL_DELIV_AIR_TOTAL";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_CO2_CASE = "MDC_VOL_DELIV_CO2_CASE";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_CO2_TOTAL = "MDC_VOL_DELIV_CO2_TOTAL";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_DESFL_LIQUID_CASE = "MDC_VOL_DELIV_DESFL_LIQUID_CASE";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_DESFL_LIQUID_TOTAL = "MDC_VOL_DELIV_DESFL_LIQUID_TOTAL";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_ENFL_LIQUID_CASE = "MDC_VOL_DELIV_ENFL_LIQUID_CASE";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_ENFL_LIQUID_TOTAL = "MDC_VOL_DELIV_ENFL_LIQUID_TOTAL";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_HALOTH_LIQUID_CASE = "MDC_VOL_DELIV_HALOTH_LIQUID_CASE";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_HALOTH_LIQUID_TOTAL = "MDC_VOL_DELIV_HALOTH_LIQUID_TOTAL";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_ISOFL_LIQUID_CASE = "MDC_VOL_DELIV_ISOFL_LIQUID_CASE";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_ISOFL_LIQUID_TOTAL = "MDC_VOL_DELIV_ISOFL_LIQUID_TOTAL";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_N2O_CASE = "MDC_VOL_DELIV_N2O_CASE";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_N2O_TOTAL = "MDC_VOL_DELIV_N2O_TOTAL";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_O2_CASE = "MDC_VOL_DELIV_O2_CASE";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_O2_LIQUID_CASE = "MDC_VOL_DELIV_O2_LIQUID_CASE";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_O2_TOTAL = "MDC_VOL_DELIV_O2_TOTAL";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_SEVOFL_LIQUID_CASE = "MDC_VOL_DELIV_SEVOFL_LIQUID_CASE";
+  // from A.7.4.1
+  const string MDC_VOL_DELIV_SEVOFL_LIQUID_TOTAL = "MDC_VOL_DELIV_SEVOFL_LIQUID_TOTAL";
+  // from A.7.7.1
+  const string MDC_VOL_FLUID_CONTAINER_START = "MDC_VOL_FLUID_CONTAINER_START";
+  // from 
+  const string MDC_VOL_FLUID_DELIV = "MDC_VOL_FLUID_DELIV";
+  // from A.7.7.1
+  const string MDC_VOL_FLUID_DELIV_SEGMENT = "MDC_VOL_FLUID_DELIV_SEGMENT";
+  // from A.7.7.1
+  const string MDC_VOL_FLUID_DELIV_TOTAL = "MDC_VOL_FLUID_DELIV_TOTAL";
+  // from 
+  const string MDC_VOL_FLUID_DELIV_TOTAL_SET = "MDC_VOL_FLUID_DELIV_TOTAL_SET";
+  // from 
+  const string MDC_VOL_FLUID_TBI = "MDC_VOL_FLUID_TBI";
+  // from 
+  const string MDC_VOL_FLUID_TBI_REMAIN = "MDC_VOL_FLUID_TBI_REMAIN";
+  // from 
+  const string MDC_VOL_MINUTE_AWAY = "MDC_VOL_MINUTE_AWAY";
+  // from 
+  const string MDC_VOL_MINUTE_AWAY_EXP = "MDC_VOL_MINUTE_AWAY_EXP";
+  // from 
+  const string MDC_VOL_MINUTE_AWAY_INSP = "MDC_VOL_MINUTE_AWAY_INSP";
+  // from A.7.7.1
+  const string MDC_VOL_PCA_DOSE_LIMIT = "MDC_VOL_PCA_DOSE_LIMIT";
+  // from A.7.7.1
+  const string MDC_VOL_REMAIN_CONTAINER = "MDC_VOL_REMAIN_CONTAINER";
+  // from A.7.7.1
+  const string MDC_VOL_SYRINGE_ACTUAL = "MDC_VOL_SYRINGE_ACTUAL";
+  // from 
+  const string MDC_VOL_URINE_COL = "MDC_VOL_URINE_COL";
+  // from 
+  const string MDC_VOL_VENT_L_END_DIA = "MDC_VOL_VENT_L_END_DIA";
+  // from 
+  const string MDC_VOL_VENT_L_END_SYS = "MDC_VOL_VENT_L_END_SYS";
+  // from 
+  const string MDC_WK_CARD_LEFT = "MDC_WK_CARD_LEFT";
+  // from 
+  const string MDC_WK_CARD_RIGHT = "MDC_WK_CARD_RIGHT";
+  // from 
+  const string MDC_WK_LV_STROKE = "MDC_WK_LV_STROKE";
+  // from 
+  const string MDC_WK_LV_STROKE_INDEX = "MDC_WK_LV_STROKE_INDEX";
+  // from A.7.3.1
+  const string MDC_WK_LV_WORK_INDEX = "MDC_WK_LV_WORK_INDEX";
+  // from A.7.3.1
+  const string MDC_WK_RV_STROKE_INDEX = "MDC_WK_RV_STROKE_INDEX";
+  // from A.7.4.1
+  const string MDC_WORK_OF_BREATHING_SPON_PATIENT = "MDC_WORK_OF_BREATHING_SPON_PATIENT";
+  // from A.7.4.1
+  const string MDC_WORK_OF_BREATHING_SPON_VENT = "MDC_WORK_OF_BREATHING_SPON_VENT";
+  // from A.7.4.1
+  const string MDC_WORK_OF_BREATHING_VENT = "MDC_WORK_OF_BREATHING_VENT";
 };
 #endif
 
