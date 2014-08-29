@@ -64,7 +64,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
     private InstanceHolder<ice.Numeric> heartRate, respiratoryRate, spo2, etco2, t1, t2, pulseRate, nibpSystolic, nibpDiastolic, nibpMean, nibpPulse,
             ibpSystolic1, ibpDiastolic1, ibpMean1, ibpSystolic2, ibpDiastolic2, ibpMean2;
 
-    private InstanceHolder<ice.SampleArray> ecgWave, respWave, plethWave, p1Wave, p2Wave;
+    private InstanceHolder<ice.SampleArray> ecgWave, impThorWave, co2Wave, plethWave, p1Wave, p2Wave;
 
     @Override
     protected String iconResourceName() {
@@ -84,7 +84,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
         @Override
         protected void receiveEndTidalCO2(Integer value, String label) {
-            etco2 = numericSample(etco2, value, rosetta.MDC_AWAY_CO2_EXP.VALUE, null);
+            etco2 = numericSample(etco2, value, rosetta.MDC_AWAY_CO2_ET.VALUE, null);
         }
 
         @Override
@@ -102,7 +102,15 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
         @Override
         protected void receiveRespWave(int[] data, int count, int msPerSample) {
-            respWave = sampleArraySample(respWave, data, count, msPerSample, ice.MDC_CAPNOGRAPH.VALUE, 0);
+            // This is less than ideal but if the device is reporting etCO2 we'll treat this as a capnogram
+            // otherwise it is from respiratory impedance
+            if(null != etco2) {
+                co2Wave = sampleArraySample(co2Wave, data, count, msPerSample, rosetta.MDC_AWAY_CO2.VALUE, 0);
+                impThorWave = sampleArraySample(impThorWave, null, 0, 0, rosetta.MDC_TTHOR_RESP_RATE.VALUE, 0);
+            } else {
+                impThorWave = sampleArraySample(impThorWave, data, count, msPerSample, rosetta.MDC_TTHOR_RESP_RATE.VALUE, 0);
+                co2Wave = sampleArraySample(co2Wave, null, 0, 0, rosetta.MDC_AWAY_CO2.VALUE, 0);
+            }
         }
 
         @Override
@@ -123,7 +131,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         @Override
         protected void receiveHeartRate(Integer value, String label) {
             // should be ECG heart rate? or should it .. depends upon mode
-            heartRate = numericSample(heartRate, value, rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE, null);
+            heartRate = numericSample(heartRate, value, rosetta.MDC_ECG_HEART_RATE.VALUE, null);
 
         }
 
@@ -151,7 +159,8 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
         @Override
         protected void receiveRespiratoryRate(Integer value, String label) {
-            respiratoryRate = numericSample(respiratoryRate, value, rosetta.MDC_RESP_RATE.VALUE, null);
+            System.err.println("RR="+label);
+            respiratoryRate = numericSample(respiratoryRate, value, rosetta.MDC_CO2_RESP_RATE.VALUE, null);
         }
 
         @Override

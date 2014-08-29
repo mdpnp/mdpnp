@@ -238,7 +238,7 @@ public class DemoApp {
 
         if(!AppType.RRR.isDisabled()) {
             StringSeq params = new StringSeq();
-            params.add("'"+ice.MDC_CAPNOGRAPH.VALUE+"'");
+            params.add("'"+rosetta.MDC_AWAY_CO2.VALUE+"'");
             capnoModel.start(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.waveform_data);
         }
 

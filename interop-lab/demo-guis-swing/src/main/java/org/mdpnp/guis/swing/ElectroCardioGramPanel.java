@@ -136,9 +136,9 @@ public class ElectroCardioGramPanel extends DevicePanel {
 
         @Override
         public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
-            if (rosetta.MDC_RESP_RATE.VALUE.equals(data.metric_id)) {
+            if (rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(data.metric_id)) {
                 respiratoryRate.setText(Integer.toString((int) data.value));
-            } else if (rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE.equals(data.metric_id)) {
+            } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(data.metric_id)) {
                 heartRate.setText(Integer.toString((int) data.value));
             }
         }

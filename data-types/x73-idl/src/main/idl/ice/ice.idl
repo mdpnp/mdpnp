@@ -95,7 +95,6 @@ module ice {
   const string MDC_RR_APNEA = "MDC_RR_APNEA";
   const string MDC_SPO2_C_LOCK = "MDC_SPO2_C_LOCK";
   const string MDC_TIME_PD_INSPIRATORY = "MDC_TIME_PD_INSPIRATORY";
-  const string MDC_CAPNOGRAPH = "MDC_CAPNOGRAPH";
   const string MDC_START_OF_BREATH = "MDC_START_OF_BREATH";
   const string MDC_VENT_TIME_PD_PPV = "MDC_VENT_TIME_PD_PPV";
 

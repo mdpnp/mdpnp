@@ -114,7 +114,7 @@ public class VentilatorPanel extends DevicePanel {
     private static final Logger log = LoggerFactory.getLogger(VentilatorPanel.class);
 
     public static boolean supported(Set<String> identifiers) {
-        return identifiers.contains(rosetta.MDC_PRESS_AWAY.VALUE) || identifiers.contains(ice.MDC_CAPNOGRAPH.VALUE);
+        return identifiers.contains(rosetta.MDC_PRESS_AWAY.VALUE) || identifiers.contains(rosetta.MDC_AWAY_CO2.VALUE);
     }
 
     @Override
@@ -138,9 +138,9 @@ public class VentilatorPanel extends DevicePanel {
 
         @Override
         public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
-            if (rosetta.MDC_RESP_RATE.VALUE.equals(data.metric_id)) {
+            if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(data.metric_id)) {
                 respiratoryRate.setText(Integer.toString((int) data.value));
-            } else if (rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(data.metric_id)) {
+            } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(data.metric_id)) {
                 endTidalCO2.setText(Integer.toString((int) data.value));
             }
         }
@@ -156,7 +156,7 @@ public class VentilatorPanel extends DevicePanel {
                 flowPanel.setSource(new SampleArrayWaveformSource(reader, data));
             } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(data.metric_id)&&sampleInfo.valid_data&&0!=(InstanceStateKind.ALIVE_INSTANCE_STATE&sampleInfo.instance_state)) {
                 pressurePanel.setSource(new SampleArrayWaveformSource(reader, data));   
-            } else if (ice.MDC_CAPNOGRAPH.VALUE.equals(data.metric_id)&&sampleInfo.valid_data&&0!=(InstanceStateKind.ALIVE_INSTANCE_STATE&sampleInfo.instance_state)) {
+            } else if (rosetta.MDC_AWAY_CO2.VALUE.equals(data.metric_id)&&sampleInfo.valid_data&&0!=(InstanceStateKind.ALIVE_INSTANCE_STATE&sampleInfo.instance_state)) {
                 co2Panel.setSource(new SampleArrayWaveformSource(reader, data));
             }
 

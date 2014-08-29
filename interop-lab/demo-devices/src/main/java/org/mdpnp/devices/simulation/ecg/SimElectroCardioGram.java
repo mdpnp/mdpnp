@@ -96,8 +96,8 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
         i = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_I.VALUE);
         ii = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_II.VALUE);
         iii = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_III.VALUE);
-        respiratoryRate = createNumericInstance(rosetta.MDC_RESP_RATE.VALUE);
-        heartRate = createNumericInstance(rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE);
+        respiratoryRate = createNumericInstance(rosetta.MDC_TTHOR_RESP_RATE.VALUE);
+        heartRate = createNumericInstance(rosetta.MDC_ECG_HEART_RATE.VALUE);
 
         deviceIdentity.model = "ECG (Simulated)";
         writeDeviceIdentity();
@@ -110,9 +110,9 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
     
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
-        if (rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id)) {
+        if (rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(obj.metric_id)) {
             ecg.setTargetRespiratoryRate((double)obj.value);
-        } else if (rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE.equals(obj.metric_id)) {
+        } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(obj.metric_id)) {
             ecg.setTargetHeartRate((double)obj.value);
         }
     }

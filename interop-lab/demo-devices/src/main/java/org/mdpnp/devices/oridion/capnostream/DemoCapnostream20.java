@@ -120,9 +120,9 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             return SetupItem.SpO2Low;
         } else if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
             return SetupItem.PulseRateLow;
-        } else if (rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
+        } else if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(metric_id)) {
             return SetupItem.respiratoryRateLow;
-        } else if (rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(metric_id)) {
+        } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(metric_id)) {
             return SetupItem.EtCO2Low;
         } else {
             return null;
@@ -134,9 +134,9 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             return SetupItem.SpO2High;
         } else if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(metric_id)) {
             return SetupItem.PulseRateHigh;
-        } else if (rosetta.MDC_RESP_RATE.VALUE.equals(metric_id)) {
+        } else if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(metric_id)) {
             return SetupItem.respiratoryRateHigh;
-        } else if (rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(metric_id)) {
+        } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(metric_id)) {
             return SetupItem.EtCO2High;
         } else {
             return null;
@@ -292,9 +292,9 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             DemoCapnostream20.this.spo2 = numericSample(DemoCapnostream20.this.spo2, 0xFF == spo2 ? null : spo2, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE,
                     sampleTime);
 
-            rr = numericSample(rr, 0xFF == respiratoryRate ? null : respiratoryRate, rosetta.MDC_RESP_RATE.VALUE, sampleTime);
+            rr = numericSample(rr, 0xFF == respiratoryRate ? null : respiratoryRate, rosetta.MDC_CO2_RESP_RATE.VALUE, sampleTime);
 
-            etco2 = numericSample(etco2, 0xFF == etCO2 ? null : etCO2, rosetta.MDC_AWAY_CO2_EXP.VALUE, sampleTime);
+            etco2 = numericSample(etco2, 0xFF == etCO2 ? null : etCO2, rosetta.MDC_AWAY_CO2_ET.VALUE, sampleTime);
 
             DemoCapnostream20.this.pulserate = numericSample(DemoCapnostream20.this.pulserate, 0xFF == pulserate ? null : pulserate,
                     rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, sampleTime);
@@ -309,7 +309,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
                     : (float) spo2AlarmLow, 0xFF == spo2AlarmHigh ? null : (float) spo2AlarmHigh, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
 
             DemoCapnostream20.this.etco2AlarmSettings = alarmSettingsSample(DemoCapnostream20.this.etco2AlarmSettings, 0xFF == etCo2AlarmLow ? null
-                    : (float) etCo2AlarmLow, 0xFF == etCo2AlarmHigh ? null : (float) spo2AlarmLow, rosetta.MDC_AWAY_CO2_EXP.VALUE);
+                    : (float) etCo2AlarmLow, 0xFF == etCo2AlarmHigh ? null : (float) spo2AlarmLow, rosetta.MDC_AWAY_CO2_ET.VALUE);
 
             DemoCapnostream20.this.pulserateAlarmSettings = alarmSettingsSample(DemoCapnostream20.this.pulserateAlarmSettings,
                     0xFF == pulseAlarmLow ? null : (float) pulseAlarmLow, 0xFF == pulseAlarmHigh ? null : (float) pulseAlarmHigh,
@@ -365,7 +365,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             realtimeBuffer[realtimeBufferCount++] = co2;
             if (realtimeBufferCount == realtimeBuffer.length) {
                 realtimeBufferCount = 0;
-                DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, realtimeBuffer, 50, ice.MDC_CAPNOGRAPH.VALUE, null);
+                DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, realtimeBuffer, 50, rosetta.MDC_AWAY_CO2.VALUE, null);
 
             }
             return true;

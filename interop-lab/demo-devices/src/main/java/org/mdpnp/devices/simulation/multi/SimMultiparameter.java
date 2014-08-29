@@ -102,15 +102,15 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
         SpO2 = createNumericInstance(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
         pleth = createSampleArrayInstance(rosetta.MDC_PULS_OXIM_PLETH.VALUE);
         
-        co2 = createSampleArrayInstance(ice.MDC_CAPNOGRAPH.VALUE);
-        respiratoryRate = createNumericInstance(rosetta.MDC_RESP_RATE.VALUE);
-        etCO2 = createNumericInstance(rosetta.MDC_AWAY_CO2_EXP.VALUE);
+        co2 = createSampleArrayInstance(rosetta.MDC_AWAY_CO2.VALUE);
+        respiratoryRate = createNumericInstance(rosetta.MDC_CO2_RESP_RATE.VALUE);
+        etCO2 = createNumericInstance(rosetta.MDC_AWAY_CO2_ET.VALUE);
         
         i = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_I.VALUE);
         ii = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_II.VALUE);
         iii = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_III.VALUE);
-        ecgRespiratoryRate = createNumericInstance(rosetta.MDC_RESP_RATE.VALUE);
-        heartRate = createNumericInstance(rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE);
+        ecgRespiratoryRate = createNumericInstance(rosetta.MDC_TTHOR_RESP_RATE.VALUE);
+        heartRate = createNumericInstance(rosetta.MDC_ECG_HEART_RATE.VALUE);
 
         deviceIdentity.model = "Multiparameter (Simulated)";
         writeDeviceIdentity();
@@ -131,12 +131,12 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
                 pulseox.setTargetHeartRate((double) obj.value);
             } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(obj.metric_id)) {
                 pulseox.setTargetSpO2((double) obj.value);
-            } else if (rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id)) {
+            } else if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(obj.metric_id)) {
                 capnometer.setRespirationRate((int) obj.value);
                 ecg.setTargetRespiratoryRate((double) obj.value);
-            } else if (rosetta.MDC_AWAY_CO2_EXP.VALUE.equals(obj.metric_id)) {
+            } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(obj.metric_id)) {
                 capnometer.setEndTidalCO2((int) obj.value);
-            } else if (rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE.equals(obj.metric_id)) {
+            } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(obj.metric_id)) {
                 ecg.setTargetHeartRate((double) obj.value);
             }
         }

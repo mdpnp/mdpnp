@@ -221,7 +221,10 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
                 getDelegate().normalSinusRhythmAdult((int) gso.value);
             } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(gso.metric_id)) {
                 getDelegate().saturation((int) gso.value);
-            } else if (rosetta.MDC_RESP_RATE.VALUE.equals(gso.metric_id)) {
+            } else if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(gso.metric_id)) {
+                // TODO this isn't really apt since fluke cannot emit CO2 measures
+                getDelegate().respirationRate((int) gso.value);
+            } else if(rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(gso.metric_id)) {
                 getDelegate().respirationRate((int) gso.value);
             } else if (rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE.equals(gso.metric_id)) {
                 invasiveDiastolic = (int) gso.value;
