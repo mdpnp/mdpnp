@@ -456,15 +456,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
         final Subscriber s = p.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final VitalModel vm = new VitalModelImpl(null);
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-
-        // vm.addVital("Heart Rate", "bpm", new int[] {
-        // ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 40, 80, 0, 120);
-        // vm.addVital("SpO\u2082", "%", new int[] {
-        // ice.MDC_PULS_OXIM_SAT_O2.VALUE }, 90, 100, 70, 130);
-        // vm.addVital("Respiratory Rate", "bpm", new int[] {
-        // ice.MDC_RESP_RATE.VALUE }, 6, 15, 0, 24);
-        // vm.addVital("etCO\u2082", "mmHg", new int[] {
-        // ice.MDC_AWAY_CO2_EXP.VALUE }, 20, 50, 0, 60);
+        
         EventLoop eventLoop = new EventLoop();
         final EventLoopHandler eventLoopHandler = new EventLoopHandler(eventLoop);
 
