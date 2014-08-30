@@ -35,9 +35,8 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
     protected final InstanceHolder<ice.Numeric> pulse, SpO2, respiratoryRate, etCO2, ecgRespiratoryRate, heartRate;
     protected final InstanceHolder<ice.SampleArray> pleth, co2, i, ii, iii;
 
-    private final Time_t sampleTime = new Time_t(0, 0);
-
     private class MySimulatedPulseOximeter extends SimulatedPulseOximeter {
+        private final Time_t sampleTime = new Time_t(0, 0);
         @Override
         protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, double msPerSample) {
             sampleTime.sec = (int) (timestamp / 1000L);
@@ -49,26 +48,32 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
     }
     
     private class MySimulatedCapnometer extends SimulatedCapnometer {
+        private final Time_t sampleTime = new Time_t(0, 0);
         @Override
-        protected void receiveCO2(Number[] co2Values, int respiratoryRateValue, int etCO2Value, double msPerSample) {
-            sampleArraySample(co2, co2Values, (int) msPerSample, null);
-            numericSample(respiratoryRate, respiratoryRateValue, null);
-            numericSample(etCO2, etCO2Value, null);
+        protected void receiveCO2(long timestamp, Number[] co2Values, int respiratoryRateValue, int etCO2Value, double msPerSample) {
+            sampleTime.sec = (int) (timestamp / 1000L);
+            sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
+            sampleArraySample(co2, co2Values, (int) msPerSample, sampleTime);
+            numericSample(respiratoryRate, respiratoryRateValue, sampleTime);
+            numericSample(etCO2, etCO2Value, sampleTime);
 
         }
     }
     
     private class MySimulatedElectroCardioGram extends SimulatedElectroCardioGram {
+        private final Time_t sampleTime = new Time_t(0, 0);
         @Override
-        protected void receiveECG(Number[] iValues, Number[] iiValues, Number[] iiiValues, double heartRateValue, double respiratoryRateValue,
+        protected void receiveECG(long timestamp, Number[] iValues, Number[] iiValues, Number[] iiiValues, double heartRateValue, double respiratoryRateValue,
                 double msPerSample) {
+            sampleTime.sec = (int) (timestamp / 1000L);
+            sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
             try {
-                sampleArraySample(i, iValues, (int) msPerSample, null);
-                sampleArraySample(ii, iiValues, (int) msPerSample, null);
-                sampleArraySample(iii, iiiValues, (int) msPerSample, null);
+                sampleArraySample(i, iValues, (int) msPerSample, sampleTime);
+                sampleArraySample(ii, iiValues, (int) msPerSample, sampleTime);
+                sampleArraySample(iii, iiiValues, (int) msPerSample, sampleTime);
 
-                numericSample(heartRate, (float) heartRateValue, null);
-                numericSample(ecgRespiratoryRate, (float) respiratoryRateValue, null);
+                numericSample(heartRate, (float) heartRateValue, sampleTime);
+                numericSample(ecgRespiratoryRate, (float) respiratoryRateValue, sampleTime);
             } catch (Throwable t) {
                 log.error("Error simulating ECG data", t);
             }
@@ -140,5 +145,10 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
                 ecg.setTargetHeartRate((double) obj.value);
             }
         }
+    }
+    
+    @Override
+    protected boolean sampleArraySpecifySourceTimestamp() {
+        return true;
     }
 }

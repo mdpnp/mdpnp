@@ -39,25 +39,31 @@ public class Configuration {
     }
 
     public enum DeviceType {
-        PO_Simulator(ice.ConnectionType.Simulated, "Simulated", "Pulse Oximeter"), NIBP_Simulator(ice.ConnectionType.Simulated, "Simulated",
-                "Noninvasive Blood Pressure"), ECG_Simulator(ice.ConnectionType.Simulated, "Simulated", "ElectroCardioGram"), CO2_Simulator(
-                ice.ConnectionType.Simulated, "Simulated", "Capnometer"), Temp_Simulator(ice.ConnectionType.Simulated, "Simulated",
-                "Temperature Probe"), Pump_Simulator(ice.ConnectionType.Simulated, "Simulated", "Infusion Pump"), FlukeProsim68(
-                ice.ConnectionType.Serial, "Fluke", "Prosim 6/8"), Bernoulli(ice.ConnectionType.Network, "CardioPulmonaryCorp", "Bernoulli"), Ivy450C(
-                ice.ConnectionType.Serial, "Ivy", "450C Monitor"), Nonin(ice.ConnectionType.Serial, "Nonin", "Bluetooth Pulse Oximeter"), IntellivueEthernet(
-                ice.ConnectionType.Network, "Philips", "Intellivue (LAN)"), IntellivueSerial(ice.ConnectionType.Serial, "Philips",
-                "Intellivue (MIB/RS232)"), Dr\u00E4gerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"), Dr\u00E4gerEvitaXL(
-                ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), Dr\u00E4gerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), Dr\u00E4gerEvita4(
-                ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"), Capnostream20(
-                ice.ConnectionType.Serial, "Oridion", "Capnostream20"), NellcorN595(ice.ConnectionType.Serial, "Nellcor", "N-595"), MasimoRadical7(
-                ice.ConnectionType.Serial, "Masimo", "Radical-7"), Symbiq(ice.ConnectionType.Simulated, "Hospira", "Symbiq"), MultiPO_Simulator(
-                ice.ConnectionType.Simulated, "Simulated", "Multiple Pulse Oximeter"),
-                Multiparameter(ice.ConnectionType.Simulated, "Simulated", "Multiparameter Monitor"),
-                DraegerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"),
-                DraegerEvitaXL(
-                        ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), 
-                        DraegerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), DraegerEvita4(
-                        ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4");
+        PO_Simulator(ice.ConnectionType.Simulated, "Simulated", "Pulse Oximeter"), 
+        NIBP_Simulator(ice.ConnectionType.Simulated, "Simulated", "Noninvasive Blood Pressure"), 
+        ECG_Simulator(ice.ConnectionType.Simulated, "Simulated", "ElectroCardioGram"), 
+        CO2_Simulator(ice.ConnectionType.Simulated, "Simulated", "Capnometer"), 
+        Temp_Simulator(ice.ConnectionType.Simulated, "Simulated", "Temperature Probe"), 
+        Pump_Simulator(ice.ConnectionType.Simulated, "Simulated", "Infusion Pump"),
+        FlukeProsim68(ice.ConnectionType.Serial, "Fluke", "Prosim 6/8"), 
+        Bernoulli(ice.ConnectionType.Network, "CardioPulmonaryCorp", "Bernoulli"), 
+        Ivy450C(ice.ConnectionType.Serial, "Ivy", "450C Monitor"), 
+        Nonin(ice.ConnectionType.Serial, "Nonin", "Bluetooth Pulse Oximeter"), 
+        IntellivueEthernet(ice.ConnectionType.Network, "Philips", "Intellivue (LAN)"), 
+        IntellivueSerial(ice.ConnectionType.Serial, "Philips", "Intellivue (MIB/RS232)"), 
+        Dr\u00E4gerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"), 
+        Dr\u00E4gerEvitaXL(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), 
+        Dr\u00E4gerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), 
+        Dr\u00E4gerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"), 
+        Capnostream20(ice.ConnectionType.Serial, "Oridion", "Capnostream20"), 
+        NellcorN595(ice.ConnectionType.Serial, "Nellcor", "N-595"), 
+        MasimoRadical7(ice.ConnectionType.Serial, "Masimo", "Radical-7"), 
+        Symbiq(ice.ConnectionType.Simulated, "Hospira", "Symbiq"), 
+        Multiparameter(ice.ConnectionType.Simulated, "Simulated", "Multiparameter Monitor"),
+        DraegerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"),
+        DraegerEvitaXL(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), 
+        DraegerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), 
+        DraegerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4");
 
         private final ice.ConnectionType connectionType;
         private final String manufacturer, model;

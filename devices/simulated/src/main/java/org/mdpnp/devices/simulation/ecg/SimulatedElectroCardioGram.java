@@ -47,7 +47,12 @@ public class SimulatedElectroCardioGram {
         private final Number[] iValues = new Number[SAMPLES_PER_UPDATE];
         private final Number[] iiValues = new Number[SAMPLES_PER_UPDATE];
         private final Number[] iiiValues = new Number[SAMPLES_PER_UPDATE];
-
+        private long lastTime;
+        
+        public MyTask(long lastTime) {
+            this.lastTime = lastTime;
+        }
+        
         @Override
         public void run() {
             if (null != targetHeartRate) {
@@ -74,12 +79,14 @@ public class SimulatedElectroCardioGram {
                 iiiValues[i] = iii[postIncrCountiii()];
             }
 
-            receiveECG(iValues, iiValues, iiiValues, heartRate, respiratoryRate, MILLISECONDS_PER_SAMPLE);
+            lastTime+=UPDATE_PERIOD;
+            
+            receiveECG(lastTime, iValues, iiValues, iiiValues, heartRate, respiratoryRate, MILLISECONDS_PER_SAMPLE);
         }
 
     };
 
-    protected void receiveECG(Number[] i, Number[] ii, Number[] iii, double heartRate, double respiratoryRate, double msPerSample) {
+    protected void receiveECG(long timestamp, Number[] i, Number[] ii, Number[] iii, double heartRate, double respiratoryRate, double msPerSample) {
 
     }
 
@@ -215,7 +222,8 @@ public class SimulatedElectroCardioGram {
             task.cancel(false);
             task = null;
         }
-        task = executor.scheduleAtFixedRate(new MyTask(), 0L, UPDATE_PERIOD, TimeUnit.MILLISECONDS);
+        long now = System.currentTimeMillis();
+        task = executor.scheduleAtFixedRate(new MyTask(now-now%UPDATE_PERIOD), UPDATE_PERIOD - now % UPDATE_PERIOD, UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
 
     public void disconnect() {

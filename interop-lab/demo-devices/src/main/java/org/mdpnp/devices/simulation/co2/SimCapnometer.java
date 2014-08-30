@@ -17,6 +17,8 @@ import ice.GlobalSimulationObjective;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.infrastructure.Time_t;
+
 /**
  * @author Jeff Plourde
  *
@@ -26,12 +28,16 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
     protected final InstanceHolder<ice.SampleArray> co2;
     protected final InstanceHolder<ice.Numeric> respiratoryRate, etCO2;
 
+    private final Time_t sampleTime = new Time_t(0, 0);
+    
     private class MySimulatedCapnometer extends SimulatedCapnometer {
         @Override
-        protected void receiveCO2(Number[] co2Values, int respiratoryRateValue, int etCO2Value, double msPerSample) {
-            sampleArraySample(co2, co2Values, (int) msPerSample, null);
-            numericSample(respiratoryRate, respiratoryRateValue, null);
-            numericSample(etCO2, etCO2Value, null);
+        protected void receiveCO2(long timestamp, Number[] co2Values, int respiratoryRateValue, int etCO2Value, double msPerSample) {
+            sampleTime.sec = (int) (timestamp / 1000L);
+            sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
+            sampleArraySample(co2, co2Values, (int) msPerSample, sampleTime);
+            numericSample(respiratoryRate, respiratoryRateValue, sampleTime);
+            numericSample(etCO2, etCO2Value, sampleTime);
 
         }
     }
@@ -73,5 +79,10 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
         } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(obj.metric_id)) {
             capnometer.setEndTidalCO2((int) obj.value);
         }
+    }
+    
+    @Override
+    protected boolean sampleArraySpecifySourceTimestamp() {
+        return true;
     }
 }

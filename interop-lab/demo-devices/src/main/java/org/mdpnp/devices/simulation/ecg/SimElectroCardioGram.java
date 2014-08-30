@@ -19,6 +19,8 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.infrastructure.Time_t;
+
 /**
  * @author Jeff Plourde
  * 
@@ -32,19 +34,22 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
     // private Number[][][] ecgCache = new Number[3][4][];
     // private int ecgCount;
 
-    private static final Number[] copy(Number[] source, Number[] target) {
-        if (target == null || target.length < source.length) {
-            target = new Number[source.length];
-        }
-        for (int i = 0; i < source.length; i++) {
-            target[i] = source[i];
-        }
-        return target;
-    }
+//    private static final Number[] copy(Number[] source, Number[] target) {
+//        if (target == null || target.length < source.length) {
+//            target = new Number[source.length];
+//        }
+//        for (int i = 0; i < source.length; i++) {
+//            target[i] = source[i];
+//        }
+//        return target;
+//    }
 
     private class MySimulatedElectroCardioGram extends SimulatedElectroCardioGram {
+        
+        private final Time_t sampleTime = new Time_t(0, 0);
+        
         @Override
-        protected void receiveECG(Number[] iValues, Number[] iiValues, Number[] iiiValues, double heartRateValue, double respiratoryRateValue,
+        protected void receiveECG(long timestamp, Number[] iValues, Number[] iiValues, Number[] iiiValues, double heartRateValue, double respiratoryRateValue,
                 double msPerSample) {
             // ecgCache[0][ecgCount] = copy(iValues, ecgCache[0][ecgCount]);
             // ecgCache[1][ecgCount] = copy(iiValues, ecgCache[1][ecgCount]);
@@ -63,17 +68,24 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
             // }
             // ecgCount = 0;
             // }
+            sampleTime.sec = (int) (timestamp / 1000L);
+            sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
             try {
-                sampleArraySample(SimElectroCardioGram.this.i, iValues, (int) msPerSample, null);
-                sampleArraySample(SimElectroCardioGram.this.ii, iiValues, (int) msPerSample, null);
-                sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, (int) msPerSample, null);
+                sampleArraySample(SimElectroCardioGram.this.i, iValues, (int) msPerSample, sampleTime);
+                sampleArraySample(SimElectroCardioGram.this.ii, iiValues, (int) msPerSample, sampleTime);
+                sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, (int) msPerSample, sampleTime);
 
-                numericSample(heartRate, (float) heartRateValue, null);
-                numericSample(respiratoryRate, (float) respiratoryRateValue, null);
+                numericSample(heartRate, (float) heartRateValue, sampleTime);
+                numericSample(respiratoryRate, (float) respiratoryRateValue, sampleTime);
             } catch (Throwable t) {
                 log.error("Error simulating ECG data", t);
             }
         }
+    }
+    
+    @Override
+    protected boolean sampleArraySpecifySourceTimestamp() {
+        return true;
     }
 
     private final MySimulatedElectroCardioGram ecg = new MySimulatedElectroCardioGram();

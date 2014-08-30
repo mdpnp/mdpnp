@@ -38,9 +38,11 @@ public class SimulatedPulseOximeter {
     private final class MyTask implements Runnable {
         private final Number[] plethValues = new Number[SAMPLES_PER_UPDATE];
 
+        public MyTask(long lastTime) {
+            this.lastTime = lastTime;
+        }
+        
         long lastTime;
-
-        // int countTimes;
 
         @Override
         public void run() {
@@ -49,10 +51,9 @@ public class SimulatedPulseOximeter {
                     plethValues[i] = pleth[postIncrCount()];
                 }
                 nextDraw();
-                // if(0==countTimes) {
-                lastTime = System.currentTimeMillis();
-                // }
-                // countTimes = ++countTimes%4;
+                
+                lastTime+=UPDATE_PERIOD;
+
                 receivePulseOx(lastTime, (int) Math.round(heartRate), (int) Math.round(spO2), plethValues, MILLISECONDS_PER_SAMPLE);
             } catch (Throwable t) {
                 log.error("Error sending simulated pulse oximetry data", t);
@@ -93,7 +94,8 @@ public class SimulatedPulseOximeter {
             task.cancel(false);
             task = null;
         }
-        task = executor.scheduleAtFixedRate(new MyTask(), 0L, UPDATE_PERIOD, TimeUnit.MILLISECONDS);
+        long now = System.currentTimeMillis();
+        task = executor.scheduleAtFixedRate(new MyTask(now-now%UPDATE_PERIOD), UPDATE_PERIOD - now % UPDATE_PERIOD, UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
 
     public void disconnect() {

@@ -33,7 +33,12 @@ public class SimulatedCapnometer {
 
     private final class MyTask implements Runnable {
         private final Number[] values = new Number[SAMPLES_PER_UPDATE];
-
+        private long lastTime;
+        
+        public MyTask(long lastTime) {
+            this.lastTime = lastTime;
+        }
+        
         @Override
         public void run() {
 
@@ -54,13 +59,15 @@ public class SimulatedCapnometer {
             for (int i = 0; i < values.length; i++) {
                 values[i] = SimulatedCapnometer.this.co2[postIncrCount()];
             }
+            
+            lastTime += UPDATE_PERIOD;
 
-            receiveCO2(values, respiratoryRate, etCO2, MILLISECONDS_PER_SAMPLE);
+            receiveCO2(lastTime, values, respiratoryRate, etCO2, MILLISECONDS_PER_SAMPLE);
         }
 
     };
 
-    protected void receiveCO2(Number[] co2, int respiratoryRate, int etCO2, double msPerSample) {
+    protected void receiveCO2(long time, Number[] co2, int respiratoryRate, int etCO2, double msPerSample) {
 
     }
 
@@ -102,7 +109,8 @@ public class SimulatedCapnometer {
             task.cancel(false);
             task = null;
         }
-        task = executor.scheduleAtFixedRate(new MyTask(), 0L, UPDATE_PERIOD, TimeUnit.MILLISECONDS);
+        long now = System.currentTimeMillis();
+        task = executor.scheduleAtFixedRate(new MyTask(now-now%UPDATE_PERIOD), UPDATE_PERIOD - now % UPDATE_PERIOD, UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
 
     public void disconnect() {

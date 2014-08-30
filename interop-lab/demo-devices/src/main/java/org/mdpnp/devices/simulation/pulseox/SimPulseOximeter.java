@@ -83,4 +83,11 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
             }
         }
     }
+    
+    @Override
+    protected boolean sampleArraySpecifySourceTimestamp() {
+        return true;
+    }
+    
+
 }

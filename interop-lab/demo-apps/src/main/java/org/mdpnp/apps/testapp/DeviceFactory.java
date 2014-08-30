@@ -90,8 +90,6 @@ public class DeviceFactory {
             return new SimInfusionPump(domainId, eventLoop);
         case Ivy450C:
             return new DemoIvy450C(domainId, eventLoop);
-        case MultiPO_Simulator:
-            return new MultiSimPulseOximeter(domainId, eventLoop);
         case FlukeProsim68:
             return new DemoProsim68(domainId, eventLoop);
         case Multiparameter:
