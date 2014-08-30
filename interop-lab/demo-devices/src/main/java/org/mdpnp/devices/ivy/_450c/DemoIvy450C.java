@@ -61,7 +61,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         writeDeviceIdentity();
     }
 
-    private InstanceHolder<ice.Numeric> heartRate, respiratoryRate, spo2, etco2, t1, t2, pulseRate, nibpSystolic, nibpDiastolic, nibpMean, nibpPulse,
+    private InstanceHolder<ice.Numeric> heartRate, co2RespiratoryRate, tthorRespiratoryRate, spo2, etco2, t1, t2, pulseRate, nibpSystolic, nibpDiastolic, nibpMean, nibpPulse,
             ibpSystolic1, ibpDiastolic1, ibpMean1, ibpSystolic2, ibpDiastolic2, ibpMean2;
 
     private InstanceHolder<ice.SampleArray> ecgWave, impThorWave, co2Wave, plethWave, p1Wave, p2Wave;
@@ -106,9 +106,9 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
             // otherwise it is from respiratory impedance
             if(null != etco2) {
                 co2Wave = sampleArraySample(co2Wave, data, count, msPerSample, rosetta.MDC_AWAY_CO2.VALUE, 0);
-                impThorWave = sampleArraySample(impThorWave, null, 0, 0, rosetta.MDC_TTHOR_RESP_RATE.VALUE, 0);
+                impThorWave = sampleArraySample(impThorWave, null, 0, 0, rosetta.MDC_IMPED_TTHOR.VALUE, 0);
             } else {
-                impThorWave = sampleArraySample(impThorWave, data, count, msPerSample, rosetta.MDC_TTHOR_RESP_RATE.VALUE, 0);
+                impThorWave = sampleArraySample(impThorWave, data, count, msPerSample, rosetta.MDC_IMPED_TTHOR.VALUE, 0);
                 co2Wave = sampleArraySample(co2Wave, null, 0, 0, rosetta.MDC_AWAY_CO2.VALUE, 0);
             }
         }
@@ -159,8 +159,14 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
         @Override
         protected void receiveRespiratoryRate(Integer value, String label) {
-            System.err.println("RR="+label);
-            respiratoryRate = numericSample(respiratoryRate, value, rosetta.MDC_CO2_RESP_RATE.VALUE, null);
+            if(null == etco2) {
+                tthorRespiratoryRate = numericSample(tthorRespiratoryRate, value, rosetta.MDC_TTHOR_RESP_RATE.VALUE, null);
+                co2RespiratoryRate = numericSample(co2RespiratoryRate, (Integer)null, rosetta.MDC_CO2_RESP_RATE.VALUE, null);
+            } else {
+                co2RespiratoryRate = numericSample(co2RespiratoryRate, value, rosetta.MDC_CO2_RESP_RATE.VALUE, null);
+                tthorRespiratoryRate = numericSample(tthorRespiratoryRate, (Integer)null, rosetta.MDC_TTHOR_RESP_RATE.VALUE, null);
+            }
+            
         }
 
         @Override
