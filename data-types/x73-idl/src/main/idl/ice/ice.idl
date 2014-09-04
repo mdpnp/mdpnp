@@ -31,7 +31,7 @@ module ice {
     Time_t recipient_receipt_timestamp;
   }; //@top-level true
   #pragma keylist TimeSync heartbeat_source heartbeat_recipient
-  const String TimeSyncTopic = "TimeSync";
+  const string TimeSyncTopic = "TimeSync";
 
   struct Image {
     Raster raster;
