@@ -53,8 +53,8 @@ public class ElectroCardioGramPanel extends DevicePanel {
     private final JLabel time = new JLabel(" "), heartRate = new JLabel(" "), respiratoryRate = new JLabel(" ");
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    private final static String[] ECG_WAVEFORMS = new String[] { rosetta.MDC_ECG_AMPL_ST_I.VALUE, rosetta.MDC_ECG_AMPL_ST_II.VALUE,
-            rosetta.MDC_ECG_AMPL_ST_III.VALUE };
+    private final static String[] ECG_WAVEFORMS = new String[] { ice.MDC_ECG_LEAD_I.VALUE, ice.MDC_ECG_LEAD_II.VALUE,
+            ice.MDC_ECG_LEAD_III.VALUE };
 
     @SuppressWarnings("unused")
     private final static String[] ECG_LABELS = new String[] { "ECG LEAD I", "ECG LEAD II", "ECG LEAD III", "ECG LEAD AVF", "ECG LEAD AVL",

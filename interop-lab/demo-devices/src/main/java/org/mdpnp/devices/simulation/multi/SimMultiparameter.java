@@ -111,9 +111,9 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
         respiratoryRate = createNumericInstance(rosetta.MDC_CO2_RESP_RATE.VALUE);
         etCO2 = createNumericInstance(rosetta.MDC_AWAY_CO2_ET.VALUE);
         
-        i = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_I.VALUE);
-        ii = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_II.VALUE);
-        iii = createSampleArrayInstance(rosetta.MDC_ECG_AMPL_ST_III.VALUE);
+        i = createSampleArrayInstance(ice.MDC_ECG_LEAD_I.VALUE);
+        ii = createSampleArrayInstance(ice.MDC_ECG_LEAD_II.VALUE);
+        iii = createSampleArrayInstance(ice.MDC_ECG_LEAD_III.VALUE);
         ecgRespiratoryRate = createNumericInstance(rosetta.MDC_TTHOR_RESP_RATE.VALUE);
         heartRate = createNumericInstance(rosetta.MDC_ECG_HEART_RATE.VALUE);
 

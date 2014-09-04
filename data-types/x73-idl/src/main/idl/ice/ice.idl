@@ -102,6 +102,19 @@ module ice {
   const long MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS = 6222;
   const long MDC_EVT_STAT_OFF = 6226;
 
+  // These leads appear in 11073-10101-2004
+  // but are absent from Rosetta
+  const string MDC_ECG_LEAD_I = "MDC_ECG_LEAD_I";
+  const string MDC_ECG_LEAD_II = "MDC_ECG_LEAD_II";
+  const string MDC_ECG_LEAD_III = "MDC_ECG_LEAD_III";
+  const string MDC_ECG_LEAD_V1 = "MDC_ECG_LEAD_V1";
+  const string MDC_ECG_LEAD_V2 = "MDC_ECG_LEAD_V2";
+  const string MDC_ECG_LEAD_V3 = "MDC_ECG_LEAD_V3";
+  const string MDC_ECG_LEAD_V4 = "MDC_ECG_LEAD_V4";
+  const string MDC_ECG_LEAD_V5 = "MDC_ECG_LEAD_V5";
+  const string MDC_ECG_LEAD_V6 = "MDC_ECG_LEAD_V6";
+  
+
   struct Numeric {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key

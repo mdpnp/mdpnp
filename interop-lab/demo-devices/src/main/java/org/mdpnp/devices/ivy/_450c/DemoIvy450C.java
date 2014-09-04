@@ -40,11 +40,11 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
             return null;
         }
         if (lbl.startsWith(ECG_III_PREFIX)) {
-            return rosetta.MDC_ECG_AMPL_ST_III.VALUE;
+            return ice.MDC_ECG_LEAD_III.VALUE;
         } else if (lbl.startsWith(ECG_II_PREFIX)) {
-            return rosetta.MDC_ECG_AMPL_ST_II.VALUE;
+            return ice.MDC_ECG_LEAD_II.VALUE;
         } else if (lbl.startsWith(ECG_I_PREFIX)) {
-            return rosetta.MDC_ECG_AMPL_ST_I.VALUE;
+            return ice.MDC_ECG_LEAD_I.VALUE;
         } else {
             log.warn("Unknown ECG:" + lbl);
             return null;

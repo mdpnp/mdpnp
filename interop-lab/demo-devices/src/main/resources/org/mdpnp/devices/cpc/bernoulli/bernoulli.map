@@ -17,7 +17,7 @@ P1	rosetta.MDC_PRESS_BLD	W
 #P2_DIAS	InvasiveBloodPressure.DIASTOLIC2
 #P2_MEAN	InvasiveBloodPressure.MEAN2
 #P2	InvasiveBloodPressure.PRESSURE2
-ECG	rosetta.MDC_ECG_AMPL_ST_I	W
+ECG	ice.MDC_ECG_LEAD_I	W
 PLETH	rosetta.MDC_PULS_OXIM_PLETH	W
 T1	rosetta.MDC_TEMP_BLD	N
 #T2	Temperature.TEMP2
