@@ -1068,7 +1068,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         data[i].getHandle(),
                         // TODO Check this logic should be 1024ms
                         sampleArraySample(getSampleArrayUpdate(data[i].getObservedValue(), data[i].getHandle()), data[i].getSampleArray().getNumbers(),
-                                metricId, data[i].getHandle(), (int)(1024 / rt.toMilliseconds()), sampleTime));
+                                metricId, data[i].getHandle(), (int)(1000 / rt.toMilliseconds()), sampleTime));
                 SampleArraySample.releaseSample(data[i]);
             } else {
                 // These are sorted no need to continue
