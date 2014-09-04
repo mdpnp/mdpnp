@@ -27,7 +27,6 @@ class VitalImpl implements Vital {
     private final String label, units;
     private final String[] metric_ids;
     private final float minimum, maximum;
-    private Color color;
     private Float warningLow, warningHigh;
     private Float criticalLow, criticalHigh;
     private Long valueMsWarningLow, valueMsWarningHigh;
@@ -328,8 +327,4 @@ class VitalImpl implements Vital {
         parent.fireVitalChanged(this);
     }
 
-    @Override
-    public Color getColor() {
-        return color;
-    }
 }
