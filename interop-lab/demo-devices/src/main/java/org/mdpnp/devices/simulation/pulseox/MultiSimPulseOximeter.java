@@ -31,8 +31,8 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
         }
 
         @Override
-        protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, double msPerSample) {
-            sampleArraySample(pleth[ordinal], plethValues, (int) msPerSample, null);
+        protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, int frequency) {
+            pleth[ordinal] = sampleArraySample(pleth[ordinal], plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, ordinal, frequency, null);
         }
     }
 
@@ -65,7 +65,6 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
         for (int i = 0; i < pleth.length; i++) {
             this.pulseox[i] = new MySimulatedPulseOximeter(i);
-            pleth[i] = createSampleArrayInstance(rosetta.MDC_PULS_OXIM_PLETH.VALUE, i);
         }
 
         deviceIdentity.model = "Pulse Ox (Simulated)";

@@ -39,8 +39,10 @@ import org.xml.sax.SAXException;
  *
  */
 public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
+    protected final Map<String, String> numericNames = new HashMap<String, String>();
+    protected final Map<String, String> waveformNames = new HashMap<String, String>();
     protected final Map<String, InstanceHolder<Numeric>> numerics = new HashMap<String, InstanceHolder<Numeric>>();
-    private final Map<String, InstanceHolder<SampleArray>> waveforms = new HashMap<String, InstanceHolder<SampleArray>>();
+    protected final Map<String, InstanceHolder<SampleArray>> waveforms = new HashMap<String, InstanceHolder<SampleArray>>();
 
     private class MyBernoulli extends Bernoulli {
 
@@ -118,13 +120,15 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
         }
 
         @Override
-        protected void measurementGroup(String name, Number[] n, double msPerSample) {
-            super.measurementGroup(name, n, msPerSample);
-            InstanceHolder<SampleArray> waveform = waveforms.get(name);
-            if (null != waveform) {
-                sampleArraySample(waveform, n, (int)msPerSample, null);
+        protected void measurementGroup(String name, Number[] n, int frequency) {
+            super.measurementGroup(name, n, frequency);
+            String realName = waveformNames.get(name);
+            if (null != realName) {
+                InstanceHolder<SampleArray> holder = waveforms.get(realName);
+                holder = sampleArraySample(holder, n, realName, frequency, null);
+                waveforms.put(realName, holder);
 
-                log.trace(waveform.toString());
+                
             } else {
                 log.warn("Orphaned Measure:" + name + "=" + Arrays.toString(n));
             }
@@ -147,16 +151,6 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
                 writeDeviceIdentity();
             }
         }
-    }
-
-    protected void addWaveform(String name, String tagName) {
-        waveforms.put(name, createSampleArrayInstance(tagName));
-        log.trace("Added Waveform:" + name + " tag=" + tagName);
-    }
-
-    protected void addNumeric(String name, String tagName) {
-        numerics.put(name, createNumericInstance(tagName));
-        log.trace("Added Numeric:" + name + " tag=" + tagName);
     }
 
     private static String getValue(String name) throws Exception {
@@ -227,15 +221,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
         writeDeviceIdentity();
 
         try {
-            Map<String, String> numerics = new HashMap<String, String>();
-            Map<String, String> waveforms = new HashMap<String, String>();
-            populateMap(numerics, waveforms);
-            for (String name : numerics.keySet()) {
-                addNumeric(name, numerics.get(name));
-            }
-            for (String name : waveforms.keySet()) {
-                addWaveform(name, waveforms.get(name));
-            }
+            populateMap(numericNames, waveformNames);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -50,7 +50,7 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
         
         @Override
         protected void receiveECG(long timestamp, Number[] iValues, Number[] iiValues, Number[] iiiValues, double heartRateValue, double respiratoryRateValue,
-                double msPerSample) {
+                int frequency) {
             // ecgCache[0][ecgCount] = copy(iValues, ecgCache[0][ecgCount]);
             // ecgCache[1][ecgCount] = copy(iiValues, ecgCache[1][ecgCount]);
             // ecgCache[2][ecgCount] = copy(iiiValues, ecgCache[2][ecgCount]);
@@ -71,9 +71,9 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
             sampleTime.sec = (int) (timestamp / 1000L);
             sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
             try {
-                sampleArraySample(SimElectroCardioGram.this.i, iValues, (int) msPerSample, sampleTime);
-                sampleArraySample(SimElectroCardioGram.this.ii, iiValues, (int) msPerSample, sampleTime);
-                sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, (int) msPerSample, sampleTime);
+                SimElectroCardioGram.this.i = sampleArraySample(SimElectroCardioGram.this.i, iValues, ice.MDC_ECG_LEAD_I.VALUE, 0, frequency, sampleTime);
+                SimElectroCardioGram.this.ii = sampleArraySample(SimElectroCardioGram.this.ii, iiValues, ice.MDC_ECG_LEAD_II.VALUE, 0, frequency, sampleTime);
+                SimElectroCardioGram.this.iii = sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, ice.MDC_ECG_LEAD_III.VALUE, 0, frequency, sampleTime);
 
                 numericSample(heartRate, (float) heartRateValue, sampleTime);
                 numericSample(respiratoryRate, (float) respiratoryRateValue, sampleTime);
@@ -105,9 +105,6 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
     public SimElectroCardioGram(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
-        i = createSampleArrayInstance(ice.MDC_ECG_LEAD_I.VALUE);
-        ii = createSampleArrayInstance(ice.MDC_ECG_LEAD_II.VALUE);
-        iii = createSampleArrayInstance(ice.MDC_ECG_LEAD_III.VALUE);
         respiratoryRate = createNumericInstance(rosetta.MDC_TTHOR_RESP_RATE.VALUE);
         heartRate = createNumericInstance(rosetta.MDC_ECG_HEART_RATE.VALUE);
 

@@ -25,17 +25,17 @@ import com.rti.dds.infrastructure.Time_t;
  */
 public class SimCapnometer extends AbstractSimulatedConnectedDevice {
 
-    protected final InstanceHolder<ice.SampleArray> co2;
+    protected InstanceHolder<ice.SampleArray> co2;
     protected final InstanceHolder<ice.Numeric> respiratoryRate, etCO2;
 
     private final Time_t sampleTime = new Time_t(0, 0);
     
     private class MySimulatedCapnometer extends SimulatedCapnometer {
         @Override
-        protected void receiveCO2(long timestamp, Number[] co2Values, int respiratoryRateValue, int etCO2Value, double msPerSample) {
+        protected void receiveCO2(long timestamp, Number[] co2Values, int respiratoryRateValue, int etCO2Value, int frequency) {
             sampleTime.sec = (int) (timestamp / 1000L);
             sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
-            sampleArraySample(co2, co2Values, (int) msPerSample, sampleTime);
+            co2 = sampleArraySample(co2, co2Values, rosetta.MDC_AWAY_CO2.VALUE, 0, frequency, sampleTime);
             numericSample(respiratoryRate, respiratoryRateValue, sampleTime);
             numericSample(etCO2, etCO2Value, sampleTime);
 
@@ -59,7 +59,6 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
     public SimCapnometer(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
-        co2 = createSampleArrayInstance(rosetta.MDC_AWAY_CO2.VALUE);
         respiratoryRate = createNumericInstance(rosetta.MDC_CO2_RESP_RATE.VALUE);
         etCO2 = createNumericInstance(rosetta.MDC_AWAY_CO2_ET.VALUE);
 

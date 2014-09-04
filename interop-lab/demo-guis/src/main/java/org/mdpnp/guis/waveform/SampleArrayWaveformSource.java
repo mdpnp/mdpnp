@@ -52,8 +52,9 @@ public class SampleArrayWaveformSource extends AbstractDdsWaveformSource<ice.Sam
     
                     final int sz = sampleArray.values.userData.size();
 //                    log.debug(sz + " samples " + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
+                    int msPerSample = 1000 / sampleArray.frequency;
                     for(int j = 0; j < sz; j++) {
-                        long tm = baseTime - (sz-j) * sampleArray.millisecondsPerSample;
+                        long tm = baseTime - (sz-j) * msPerSample;
                         float value = sampleArray.values.userData.getFloat(j);
                         itr.sample(tm, value);
                     }

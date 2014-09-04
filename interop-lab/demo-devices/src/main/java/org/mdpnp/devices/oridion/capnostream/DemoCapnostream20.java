@@ -365,7 +365,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             realtimeBuffer[realtimeBufferCount++] = co2;
             if (realtimeBufferCount == realtimeBuffer.length) {
                 realtimeBufferCount = 0;
-                DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, realtimeBuffer, 50, rosetta.MDC_AWAY_CO2.VALUE, null);
+                DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, realtimeBuffer, rosetta.MDC_AWAY_CO2.VALUE, 20, null);
 
             }
             return true;

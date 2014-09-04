@@ -42,7 +42,7 @@ public class AnsarB {
     private final static int ECG_PTS = 200, RESP_PTS = 50, PLETH_PTS = 50, P1_PTS = 50, P2_PTS = 50;
     private final static int ECG_OFF = 0, RESP_OFF = 200, PLETH_OFF = 250, P1_OFF = 300, P2_OFF = 350;
     private final static int ECG_OFFSET = 118, RESP_OFFSET = 0, PLETH_OFFSET = 86, P1_OFFSET = 80, P2_OFFSET = 251;
-    private final static int ECG_PERIOD = 5, RESP_PERIOD = 20, PLETH_PERIOD = 20, P1_PERIOD = 20, P2_PERIOD = 20;
+    private final static int ECG_FREQUENCY = 200, RESP_FREQUENCY = 50, PLETH_FREQUENCY = 50, P1_FREQUENCY = 50, P2_FREQUENCY = 50;
 
     private int[] wavedata = new int[ECG_PTS];
     private String ecgLabel;
@@ -146,23 +146,23 @@ public class AnsarB {
 
     }
 
-    protected void receiveECGWave(int[] data, int count, int msPerSample, String label) {
+    protected void receiveECGWave(int[] data, int count, int frequency, String label) {
 
     }
 
-    protected void receiveRespWave(int[] data, int count, int msPerSample) {
+    protected void receiveRespWave(int[] data, int count, int frequency) {
 
     }
 
-    protected void receivePlethWave(int[] data, int count, int msPerSample) {
+    protected void receivePlethWave(int[] data, int count, int frequency) {
 
     }
 
-    protected void receiveP1Wave(int[] data, int count, int msPerSample) {
+    protected void receiveP1Wave(int[] data, int count, int frequency) {
 
     }
 
-    protected void receiveP2Wave(int[] data, int count, int msPerSample) {
+    protected void receiveP2Wave(int[] data, int count, int frequency) {
 
     }
 
@@ -252,15 +252,15 @@ public class AnsarB {
 
         // ECG Wave
         offset(wavedata, message, off + ANSAR_B.length + 1 + ECG_OFF, ECG_OFFSET, ECG_PTS);
-        receiveECGWave(wavedata, ECG_PTS, ECG_PERIOD, ecgLabel);
+        receiveECGWave(wavedata, ECG_PTS, ECG_FREQUENCY, ecgLabel);
         offset(wavedata, message, off + ANSAR_B.length + 1 + RESP_OFF, RESP_OFFSET, RESP_PTS);
-        receiveRespWave(wavedata, RESP_PTS, RESP_PERIOD);
+        receiveRespWave(wavedata, RESP_PTS, RESP_FREQUENCY);
         offset(wavedata, message, off + ANSAR_B.length + 1 + PLETH_OFF, PLETH_OFFSET, PLETH_PTS);
-        receivePlethWave(wavedata, PLETH_PTS, PLETH_PERIOD);
+        receivePlethWave(wavedata, PLETH_PTS, PLETH_FREQUENCY);
         offset(wavedata, message, off + ANSAR_B.length + 1 + P1_OFF, P1_OFFSET, P1_PTS);
-        receiveP1Wave(wavedata, P1_PTS, P1_PERIOD);
+        receiveP1Wave(wavedata, P1_PTS, P1_FREQUENCY);
         offset(wavedata, message, off + ANSAR_B.length + 1 + P2_OFF, P2_OFFSET, P2_PTS);
-        receiveP2Wave(wavedata, P2_PTS, P2_PERIOD);
+        receiveP2Wave(wavedata, P2_PTS, P2_FREQUENCY);
 
         return true;
 

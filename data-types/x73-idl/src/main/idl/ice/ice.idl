@@ -129,11 +129,11 @@ module ice {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
     InstanceIdentifier instance_id; //@key
+    long frequency; //@key
     Values values;
-    long millisecondsPerSample;
     Time_t device_time;
   };
-  #pragma keylist SampleArray unique_device_identifier metric_id instance_id
+  #pragma keylist SampleArray unique_device_identifier metric_id instance_id frequency
   const string SampleArrayTopic = "SampleArray";
 
   struct Text {

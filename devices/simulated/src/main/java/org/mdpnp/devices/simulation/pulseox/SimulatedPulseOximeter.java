@@ -54,7 +54,7 @@ public class SimulatedPulseOximeter {
                 
                 lastTime+=UPDATE_PERIOD;
 
-                receivePulseOx(lastTime, (int) Math.round(heartRate), (int) Math.round(spO2), plethValues, MILLISECONDS_PER_SAMPLE);
+                receivePulseOx(lastTime, (int) Math.round(heartRate), (int) Math.round(spO2), plethValues, FREQUENCY);
             } catch (Throwable t) {
                 log.error("Error sending simulated pulse oximetry data", t);
             }
@@ -62,12 +62,13 @@ public class SimulatedPulseOximeter {
 
     };
 
-    protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, double msPerSample) {
+    protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, int frequency) {
 
     }
 
     protected static final long UPDATE_PERIOD = 1000L;
     protected static final double MILLISECONDS_PER_SAMPLE = 10L;
+    protected static final int FREQUENCY = (int)(1000.0 / MILLISECONDS_PER_SAMPLE);
     protected static final int SAMPLES_PER_UPDATE = (int) Math.floor(UPDATE_PERIOD / MILLISECONDS_PER_SAMPLE);
 
     private final double[] coeffs = new double[] { 572784, -3815, -7452, -2196, 51, 2412, 3227, 4118, 3404, 11455, 30013, -28722, -1132, -5540, -125,

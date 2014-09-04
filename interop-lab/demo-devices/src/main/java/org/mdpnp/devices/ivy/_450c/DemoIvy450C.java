@@ -88,10 +88,10 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
 
         @Override
-        protected void receiveECGWave(int[] data, int count, int msPerSample, String label) {
+        protected void receiveECGWave(int[] data, int count, int frequency, String label) {
             String ecg = nameOfECGWave(label);
             if (ecg != null) {
-                ecgWave = sampleArraySample(ecgWave, data, count, msPerSample, ecg, 0);
+                ecgWave = sampleArraySample(ecgWave, data, count, ecg, 0, frequency);
             } else {
                 if (ecgWave != null) {
                     unregisterSampleArrayInstance(ecgWave, null);
@@ -101,31 +101,31 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
 
         @Override
-        protected void receiveRespWave(int[] data, int count, int msPerSample) {
+        protected void receiveRespWave(int[] data, int count, int frequency) {
             // This is less than ideal but if the device is reporting etCO2 we'll treat this as a capnogram
             // otherwise it is from respiratory impedance
             if(null != etco2) {
-                co2Wave = sampleArraySample(co2Wave, data, count, msPerSample, rosetta.MDC_AWAY_CO2.VALUE, 0);
-                impThorWave = sampleArraySample(impThorWave, null, 0, 0, rosetta.MDC_IMPED_TTHOR.VALUE, 0);
+                co2Wave = sampleArraySample(co2Wave, data, count, rosetta.MDC_AWAY_CO2.VALUE, 0, frequency);
+                impThorWave = sampleArraySample(impThorWave, null, 0, rosetta.MDC_IMPED_TTHOR.VALUE, 0, frequency);
             } else {
-                impThorWave = sampleArraySample(impThorWave, data, count, msPerSample, rosetta.MDC_IMPED_TTHOR.VALUE, 0);
-                co2Wave = sampleArraySample(co2Wave, null, 0, 0, rosetta.MDC_AWAY_CO2.VALUE, 0);
+                impThorWave = sampleArraySample(impThorWave, data, count, rosetta.MDC_IMPED_TTHOR.VALUE, 0, frequency);
+                co2Wave = sampleArraySample(co2Wave, null, 0, rosetta.MDC_AWAY_CO2.VALUE, 0, frequency);
             }
         }
 
         @Override
-        protected void receivePlethWave(int[] data, int count, int msPerSample) {
-            plethWave = sampleArraySample(plethWave, data, count, msPerSample, rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0);
+        protected void receivePlethWave(int[] data, int count, int frequency) {
+            plethWave = sampleArraySample(plethWave, data, count, rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, frequency);
         }
 
         @Override
-        protected void receiveP1Wave(int[] data, int count, int msPerSample) {
-            p1Wave = sampleArraySample(p1Wave, data, count, msPerSample, rosetta.MDC_PRESS_BLD.VALUE, 0);
+        protected void receiveP1Wave(int[] data, int count, int frequency) {
+            p1Wave = sampleArraySample(p1Wave, data, count, rosetta.MDC_PRESS_BLD.VALUE, 0, frequency);
         }
 
         @Override
-        protected void receiveP2Wave(int[] data, int count, int msPerSample) {
-            p2Wave = sampleArraySample(p2Wave, data, count, msPerSample, rosetta.MDC_PRESS_BLD.VALUE, 1);
+        protected void receiveP2Wave(int[] data, int count, int frequency) {
+            p2Wave = sampleArraySample(p2Wave, data, count, rosetta.MDC_PRESS_BLD.VALUE, 1, frequency);
         }
 
         @Override

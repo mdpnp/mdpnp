@@ -198,8 +198,8 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             updateTime.sec = (int) (now / 1000L);
             updateTime.nanosec = (int) ((now % 1000L) * 1000000L);
             
-            pleth = sampleArraySample(pleth, plethBuffer, plethBuffer.length, (int) NoninPulseOx.MILLISECONDS_PER_SAMPLE,
-                    rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, updateTime);
+            pleth = sampleArraySample(pleth, plethBuffer, plethBuffer.length, 
+                    rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, NoninPulseOx.FREQUENCY, updateTime);
 
             if (currentPacket.getCurrentStatus().isArtifact() || currentPacket.getCurrentStatus().isSensorAlarm()
                     || currentPacket.getCurrentStatus().isOutOfTrack()) {

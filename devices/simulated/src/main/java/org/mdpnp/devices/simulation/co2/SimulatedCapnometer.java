@@ -62,17 +62,18 @@ public class SimulatedCapnometer {
             
             lastTime += UPDATE_PERIOD;
 
-            receiveCO2(lastTime, values, respiratoryRate, etCO2, MILLISECONDS_PER_SAMPLE);
+            receiveCO2(lastTime, values, respiratoryRate, etCO2, FREQUENCY);
         }
 
     };
 
-    protected void receiveCO2(long time, Number[] co2, int respiratoryRate, int etCO2, double msPerSample) {
+    protected void receiveCO2(long time, Number[] co2, int respiratoryRate, int etCO2, int frequency) {
 
     }
 
     protected static final long UPDATE_PERIOD = 1000L;
     protected static final double MILLISECONDS_PER_SAMPLE = 50;
+    protected static final int FREQUENCY = (int)(1000.0 / MILLISECONDS_PER_SAMPLE);
     protected static final int SAMPLES_PER_UPDATE = (int) Math.floor(UPDATE_PERIOD / MILLISECONDS_PER_SAMPLE);
 
     private final double[] co2Coeffs = new double[] { 149.66002885691225, -25.293660981458554, -85.58222030802641, 10.266184380818338,

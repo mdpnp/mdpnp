@@ -132,7 +132,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     sampleArrayUpdates.put(
                             (Enum<?>) code,
                             sampleArraySample(sampleArrayUpdates.get(code), realtimeBuffer[streamIndex],
-                                    (int) (1.0 * config.interval * multiplier / 1000.0), metric_id, currentTime()));
+                                   metric_id, config.interval * multiplier, currentTime()));
                 } else {
                     log.trace("No nomenclature code for enum code=" + code + " class=" + code.getClass().getName());
                 }

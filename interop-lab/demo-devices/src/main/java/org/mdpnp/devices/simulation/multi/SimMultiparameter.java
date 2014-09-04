@@ -33,27 +33,27 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
     private static final Logger log = LoggerFactory.getLogger(SimMultiparameter.class);
 
     protected final InstanceHolder<ice.Numeric> pulse, SpO2, respiratoryRate, etCO2, ecgRespiratoryRate, heartRate;
-    protected final InstanceHolder<ice.SampleArray> pleth, co2, i, ii, iii;
+    protected InstanceHolder<ice.SampleArray> pleth, co2, i, ii, iii;
 
     private class MySimulatedPulseOximeter extends SimulatedPulseOximeter {
         private final Time_t sampleTime = new Time_t(0, 0);
         @Override
-        protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, double msPerSample) {
+        protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, int frequency) {
             sampleTime.sec = (int) (timestamp / 1000L);
             sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
             numericSample(pulse, heartRate, sampleTime);
             numericSample(SimMultiparameter.this.SpO2, SpO2, sampleTime);
-            sampleArraySample(pleth, plethValues, (int) msPerSample, sampleTime);
+            pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, frequency, sampleTime);
         }
     }
     
     private class MySimulatedCapnometer extends SimulatedCapnometer {
         private final Time_t sampleTime = new Time_t(0, 0);
         @Override
-        protected void receiveCO2(long timestamp, Number[] co2Values, int respiratoryRateValue, int etCO2Value, double msPerSample) {
+        protected void receiveCO2(long timestamp, Number[] co2Values, int respiratoryRateValue, int etCO2Value, int frequency) {
             sampleTime.sec = (int) (timestamp / 1000L);
             sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
-            sampleArraySample(co2, co2Values, (int) msPerSample, sampleTime);
+            co2 = sampleArraySample(co2, co2Values, rosetta.MDC_AWAY_CO2.VALUE, 0, frequency, sampleTime);
             numericSample(respiratoryRate, respiratoryRateValue, sampleTime);
             numericSample(etCO2, etCO2Value, sampleTime);
 
@@ -64,13 +64,13 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
         private final Time_t sampleTime = new Time_t(0, 0);
         @Override
         protected void receiveECG(long timestamp, Number[] iValues, Number[] iiValues, Number[] iiiValues, double heartRateValue, double respiratoryRateValue,
-                double msPerSample) {
+                int frequency) {
             sampleTime.sec = (int) (timestamp / 1000L);
             sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
             try {
-                sampleArraySample(i, iValues, (int) msPerSample, sampleTime);
-                sampleArraySample(ii, iiValues, (int) msPerSample, sampleTime);
-                sampleArraySample(iii, iiiValues, (int) msPerSample, sampleTime);
+                i = sampleArraySample(i, iValues, ice.MDC_ECG_LEAD_I.VALUE, 0, frequency, sampleTime);
+                ii = sampleArraySample(ii, iiValues, ice.MDC_ECG_LEAD_II.VALUE, 0, frequency, sampleTime);
+                iii = sampleArraySample(iii, iiiValues, ice.MDC_ECG_LEAD_III.VALUE, 0, frequency, sampleTime);
 
                 numericSample(heartRate, (float) heartRateValue, sampleTime);
                 numericSample(ecgRespiratoryRate, (float) respiratoryRateValue, sampleTime);
@@ -105,15 +105,10 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
 
         pulse = createNumericInstance(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
         SpO2 = createNumericInstance(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
-        pleth = createSampleArrayInstance(rosetta.MDC_PULS_OXIM_PLETH.VALUE);
         
-        co2 = createSampleArrayInstance(rosetta.MDC_AWAY_CO2.VALUE);
         respiratoryRate = createNumericInstance(rosetta.MDC_CO2_RESP_RATE.VALUE);
         etCO2 = createNumericInstance(rosetta.MDC_AWAY_CO2_ET.VALUE);
-        
-        i = createSampleArrayInstance(ice.MDC_ECG_LEAD_I.VALUE);
-        ii = createSampleArrayInstance(ice.MDC_ECG_LEAD_II.VALUE);
-        iii = createSampleArrayInstance(ice.MDC_ECG_LEAD_III.VALUE);
+
         ecgRespiratoryRate = createNumericInstance(rosetta.MDC_TTHOR_RESP_RATE.VALUE);
         heartRate = createNumericInstance(rosetta.MDC_ECG_HEART_RATE.VALUE);
 

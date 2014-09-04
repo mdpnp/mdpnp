@@ -81,17 +81,18 @@ public class SimulatedElectroCardioGram {
 
             lastTime+=UPDATE_PERIOD;
             
-            receiveECG(lastTime, iValues, iiValues, iiiValues, heartRate, respiratoryRate, MILLISECONDS_PER_SAMPLE);
+            receiveECG(lastTime, iValues, iiValues, iiiValues, heartRate, respiratoryRate, FREQUENCY);
         }
 
     };
 
-    protected void receiveECG(long timestamp, Number[] i, Number[] ii, Number[] iii, double heartRate, double respiratoryRate, double msPerSample) {
+    protected void receiveECG(long timestamp, Number[] i, Number[] ii, Number[] iii, double heartRate, double respiratoryRate, int frequency) {
 
     }
 
     protected static final long UPDATE_PERIOD = 1000L;
     protected static final double MILLISECONDS_PER_SAMPLE = 5;
+    protected static final int FREQUENCY = (int)(1000.0 / MILLISECONDS_PER_SAMPLE);
     protected static final int SAMPLES_PER_UPDATE = (int) Math.floor(UPDATE_PERIOD / MILLISECONDS_PER_SAMPLE);
 
     private final double[] iCoeffs = new double[] { 1754.6228740250176, -1.8702723856853978, -17.30350351479403, 0.9639533281850988,

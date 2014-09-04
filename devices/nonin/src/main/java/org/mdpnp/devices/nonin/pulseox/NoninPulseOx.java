@@ -132,10 +132,11 @@ public class NoninPulseOx {
         return null == packet ? null : packet.getAvgHeartRateEightBeatForDisplay();
     }
 
-    public static final double MILLISECONDS_PER_SAMPLE = 1000.0 / (3.0 * Packet.FRAMES);
+    public static final int FREQUENCY = 3 * Packet.FRAMES;
+    public static final double MILLISECONDS_PER_SAMPLE = 1000.0 / FREQUENCY;
 
-    public Double getMillisecondsPerSample() {
-        return MILLISECONDS_PER_SAMPLE;
+    public Integer getFrequency() {
+        return FREQUENCY;
     }
 
     private final Packet currentPacket = new Packet();

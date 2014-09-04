@@ -266,13 +266,13 @@ public class Bernoulli implements ContentHandler, ErrorHandler {
 
     }
 
-    protected void measurementGroup(String name, Number[] n, double msPerSample) {
+    protected void measurementGroup(String name, Number[] n, int frequency) {
 
     }
 
     protected void measurementGroup(String name, Map<String, String> values) {
 
-        double hertz = Double.parseDouble(values.get("Hz"));
+        int hertz = Integer.parseInt(values.get("Hz"));
         byte[] wave = Base64.decodeFast(values.get("Wave"));
         int points = Integer.parseInt(values.get("Points"));
         int pointBytes = Integer.parseInt(values.get("PointBytes"));
@@ -300,7 +300,7 @@ public class Bernoulli implements ContentHandler, ErrorHandler {
             }
             break;
         }
-        measurementGroup(name, n, 1000.0 * (1.0 / hertz));
+        measurementGroup(name, n, hertz);
     }
 
     protected void device(String bid, String make, String model) {
