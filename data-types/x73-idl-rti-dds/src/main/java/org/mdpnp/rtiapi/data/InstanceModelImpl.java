@@ -70,7 +70,10 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
                     }
                 }
             } catch (Exception e) {
-                log.error("read_instance", e);
+                if(!(e.getCause() instanceof RETCODE_NO_DATA)) {
+                    log.error("read_instance", e);
+                }
+                
             } finally {
                 try {
                     returnLoan.invoke(reader, sa_seq, info_seq);
@@ -218,8 +221,6 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
                     }
                     lastHandle = sampleInfo.instance_handle;
                 }
-            } catch (RETCODE_NO_DATA noData) {
-                
             } catch (InvocationTargetException ite) {
                 if(!(ite.getCause() instanceof RETCODE_NO_DATA)) {
                     log.error("reading", ite);
@@ -345,7 +346,9 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
             d.copy_from(sa_seq.get(sa_seq.size()-1));
             return d;
         } catch (Exception e) {
-            log.error("read_instance", e);
+            if(!(e.getCause() instanceof RETCODE_NO_DATA)) {
+                log.error("read_instance", e);
+            }
         } finally {
             try {
                 returnLoan.invoke(reader, sa_seq, info_seq);
