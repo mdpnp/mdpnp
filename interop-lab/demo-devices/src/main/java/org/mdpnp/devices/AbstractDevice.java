@@ -211,17 +211,17 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         unregisterAllTechnicalAlertInstances();
     }
     
-    private void unregisterAllAlertInstances(Map<String, InstanceHolder<ice.Alert>> map, ice.AlertDataWriter writer) {
+    private void unregisterAllAlertInstances(Set<String> old, Map<String, InstanceHolder<ice.Alert>> map, ice.AlertDataWriter writer) {
         for(String key : map.keySet().toArray(new String[0])) {
-            writeAlert(map, writer, key, null);
+            writeAlert(old, map, writer, key, null);
         }
     }
     protected void unregisterAllPatientAlertInstances() {
-        unregisterAllAlertInstances(patientAlertInstances, patientAlertWriter);
+        unregisterAllAlertInstances(oldPatientAlertInstances, patientAlertInstances, patientAlertWriter);
     }
     
     protected void unregisterAllTechnicalAlertInstances() {
-        unregisterAllAlertInstances(technicalAlertInstances, technicalAlertWriter);
+        unregisterAllAlertInstances(oldTechnicalAlertInstances, technicalAlertInstances, technicalAlertWriter);
     }
 
     protected void unregisterAllAlarmSettingsObjectiveInstances() {
@@ -429,7 +429,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
     }
     
-    private void writeAlert(Map<String, InstanceHolder<ice.Alert> > map, ice.AlertDataWriter writer, String key, String value) {
+    private void writeAlert(Set<String> old, Map<String, InstanceHolder<ice.Alert> > map, ice.AlertDataWriter writer, String key, String value) {
         InstanceHolder<ice.Alert> alert = map.get(key);
         if(null == value) {
             if(null != alert) {
@@ -445,6 +445,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                 alert.handle = writer.register_instance(alert.data);
                 map.put(key, alert);
             }
+            old.remove(key);
             alert.data.text = value;
             writer.write(alert.data, alert.handle);
         }
@@ -473,12 +474,10 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
     
     protected void writePatientAlert(String key, String value) {
-        oldPatientAlertInstances.remove(key);
-        writeAlert(patientAlertInstances, patientAlertWriter, key, value);
+        writeAlert(oldPatientAlertInstances, patientAlertInstances, patientAlertWriter, key, value);
     }
     protected void writeTechnicalAlert(String key, String value) {
-        oldTechnicalAlertInstances.remove(key);
-        writeAlert(technicalAlertInstances, technicalAlertWriter, key, value);
+        writeAlert(oldTechnicalAlertInstances, technicalAlertInstances, technicalAlertWriter, key, value);
     }
     
     protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, Collection<Number> newValues, Time_t deviceTimestamp) {
