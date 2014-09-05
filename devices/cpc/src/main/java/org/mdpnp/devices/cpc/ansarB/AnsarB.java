@@ -95,8 +95,10 @@ public class AnsarB {
             while ((msgStart = messageStartIndex()) >= 0 && (msgEnd = messageEndIndex(msgStart)) >= 0) {
                 // log.info("msgStart="+msgStart+" msgEnd="+msgEnd+" buffer[msgStart]="+Integer.toHexString(buffer[msgStart])+" buffer[msgEnd]="+Integer.toHexString(buffer[msgEnd]));
                 receiveMessage(buffer, msgStart, msgEnd - msgStart);
-                length = length - (msgEnd - msgStart + 1);
-                System.arraycopy(buffer, msgEnd, buffer, 0, length);
+                length -= (msgEnd+1);
+                if(length > 0) {
+                    System.arraycopy(buffer, msgEnd+1, buffer, 0, length);
+                }
             }
 
             // Read some bytes into the buffer
@@ -110,39 +112,39 @@ public class AnsarB {
         }
     }
 
-    protected void receiveHeartRate(Integer value, String label) {
+    protected void receiveHeartRate(Integer value, String label, String alarm) {
 
     }
 
-    protected void receiveRespiratoryRate(Integer value, String label) {
+    protected void receiveRespiratoryRate(Integer value, String label, String alarm) {
 
     }
 
-    protected void receiveEndTidalCO2(Integer value, String label) {
+    protected void receiveEndTidalCO2(Integer value, String label, String alarm) {
 
     }
 
-    protected void receiveSpO2(Integer value, String label, Integer pulseRate) {
+    protected void receiveSpO2(Integer value, String label, Integer pulseRate, String alarm) {
 
     }
 
-    protected void receivePressure1(Integer systolic, Integer diastolic, Integer mean, String label) {
+    protected void receivePressure1(Integer systolic, Integer diastolic, Integer mean, String label, String alarm) {
 
     }
 
-    protected void receiveNIBP(Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label) {
+    protected void receiveNIBP(Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label, String alarm) {
 
     }
 
-    protected void receivePressure2(Integer systolic, Integer diastolic, Integer mean, String label) {
+    protected void receivePressure2(Integer systolic, Integer diastolic, Integer mean, String label, String alarm) {
 
     }
 
-    protected void receiveTemperature1(Float value, String label) {
+    protected void receiveTemperature1(Float value, String label, String alarm) {
 
     }
 
-    protected void receiveTemperature2(Float value, String label) {
+    protected void receiveTemperature2(Float value, String label, String alarm) {
 
     }
 
@@ -167,32 +169,32 @@ public class AnsarB {
     }
 
     protected void receiveLine(String line) {
-        String[] fields = line.split(";");
+        String[] fields = line.split(";", -1);
         if (fields.length > 0) {
             String[] name = fields[0].split("=");
-            if (name.length > 0) {
-                if ("HR".equals(name[0]) && fields.length > 2) {
-                    receiveHeartRate(parseIntOrNull(fields[1]), ecgLabel = fields[fields.length - 1]);
-                } else if ("RR".equals(name[0]) && fields.length > 2) {
-                    receiveRespiratoryRate(parseIntOrNull(fields[1]), fields[fields.length - 1]);
-                } else if ("ETCO2".equals(name[0]) && fields.length > 2) {
-                    receiveEndTidalCO2(parseIntOrNull(fields[1]), fields[fields.length - 1]);
-                } else if ("SPO2".equals(name[0]) && fields.length > 2) {
-                    String[] label = fields[fields.length - 1].split("=");
-                    receiveSpO2(parseIntOrNull(fields[1]), fields[fields.length - 1], label.length > 1 ? parseIntOrNull(label[1]) : null);
-                } else if ("NIBP".equals(name[0]) && fields.length > 5) {
+            if (name.length > 0 && fields.length > 3) {
+                if ("HR".equals(name[0])) {
+                    receiveHeartRate(parseIntOrNull(fields[1]), ecgLabel = fields[2], fields[3]);
+                } else if ("RR".equals(name[0])) {
+                    receiveRespiratoryRate(parseIntOrNull(fields[1]), fields[2], fields[3]);
+                } else if ("ETCO2".equals(name[0])) {
+                    receiveEndTidalCO2(parseIntOrNull(fields[1]), fields[2], fields[3]);
+                } else if ("SPO2".equals(name[0])) {
+                    String[] label = fields[2].split("=");
+                    receiveSpO2(parseIntOrNull(fields[1]), fields[2], label.length > 1 ? parseIntOrNull(label[1]) : null, fields[3]);
+                } else if ("NIBP".equals(name[0]) && fields.length > 6) {
                     receiveNIBP(parseIntOrNull(fields[1]), parseIntOrNull(fields[2]), parseIntOrNull(fields[3]), parseIntOrNull(fields[4]),
-                            fields[fields.length - 1]);
-                } else if ("P1".equals(name[0]) && fields.length > 3) {
+                            fields[5], fields[6]);
+                } else if ("P1".equals(name[0]) && fields.length > 5) {
                     receivePressure1(parseIntOrNull(fields[1]), parseIntOrNull(fields[2]), parseIntOrNull(fields[3]),
-                            fields.length > 4 ? fields[fields.length - 1] : "");
+                            fields[4], fields[5]);
                 } else if ("P2".equals(name[0]) && fields.length > 3) {
                     receivePressure2(parseIntOrNull(fields[1]), parseIntOrNull(fields[2]), parseIntOrNull(fields[3]),
-                            fields.length > 4 ? fields[fields.length - 1] : "");
+                            fields[4], fields[5]);
                 } else if ("T1".equals(name[0]) && fields.length > 1) {
-                    receiveTemperature1(parseFloatOrNull(fields[1]), fields[fields.length - 1]);
+                    receiveTemperature1(parseFloatOrNull(fields[1]), fields[2], fields[3]);
                 } else if ("T2".equals(name[0]) && fields.length > 1) {
-                    receiveTemperature2(parseFloatOrNull(fields[1]), fields[fields.length - 1]);
+                    receiveTemperature2(parseFloatOrNull(fields[1]), fields[2], fields[3]);
                 } else {
                     log.debug("Nothing to do for line: " + line);
                 }
@@ -244,7 +246,7 @@ public class AnsarB {
             if (message[i] == '\r') {
                 // Now there is a line from last to (i - last - 1)
                 // We've put off decoding it long enough
-                String line = new String(message, last, i - last - 1, ASCII).intern();
+                String line = new String(message, last, i - last, ASCII).intern();
                 receiveLine(line);
                 last = i + 1;
             }

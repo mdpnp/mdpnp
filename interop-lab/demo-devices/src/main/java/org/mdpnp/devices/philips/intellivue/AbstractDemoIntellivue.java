@@ -12,7 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.devices.philips.intellivue;
 
-import ice.Alert;
 import ice.ConnectionState;
 import ice.SampleArray;
 
@@ -95,15 +94,10 @@ import org.mdpnp.devices.philips.intellivue.dataexport.command.SetResult;
 import org.mdpnp.devices.philips.intellivue.dataexport.event.MdsCreateEvent;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.infrastructure.InstanceHandle_t;
-import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.Time_t;
-import com.rti.dds.topic.Topic;
 
 public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     protected Time_t sampleTime = new Time_t(0, 0);
@@ -615,72 +609,34 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         Attribute<DevAlarmList> technicalAlertList = attrs.getAttribute(AbstractDemoIntellivue.this.technicalAlertList);
 
                         if (null != deviceAlertCondition) {
-                            deviceAlertConditionInstance.data.alert_state = deviceAlertCondition.getValue().getDeviceAlertState().toString();
-                            deviceAlertConditionWriter.write(deviceAlertConditionInstance.data, deviceAlertConditionInstance.handle);
+                            writeDeviceAlert(deviceAlertCondition.getValue().getDeviceAlertState().toString());
                         }
 
                         if (null != patientAlertList) {
-
-                            Set<String> oldPatientAlerts = new HashSet<String>(AbstractDemoIntellivue.this.patientAlertInstances.keySet());
-
+                            markOldPatientAlertInstances();
                             for (DevAlarmEntry dae : patientAlertList.getValue().getValue()) {
                                 if (dae.getAlMonInfo() instanceof StrAlMonInfo) {
                                     StrAlMonInfo info = (StrAlMonInfo) dae.getAlMonInfo();
                                     String key = dae.getAlCode().getType() + "-" + dae.getAlSource().getType() + "-"
                                             + dae.getObject().getGlobalHandle().getMdsContext() + "-" + dae.getObject().getGlobalHandle().getHandle()
                                             + "-" + dae.getObject().getOidType().getType();
-                                    oldPatientAlerts.remove(key);
-                                    InstanceHolder<ice.Alert> alert = patientAlertInstances.get(key);
-                                    if (null == alert) {
-                                        alert = new InstanceHolder<ice.Alert>();
-                                        alert.data = (Alert) ice.Alert.create();
-                                        alert.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
-                                        alert.data.identifier = key;
-                                        alert.handle = patientAlertWriter.register_instance(alert.data);
-                                        patientAlertInstances.put(key, alert);
-                                    }
-                                    alert.data.text = info.getString().getString();
-                                    alert.data.text = Normalizer.normalize(alert.data.text, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
-                                    patientAlertWriter.write(alert.data, alert.handle);
+                                    writePatientAlert(key, Normalizer.normalize(info.getString().getString(), Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", ""));
                                 }
                             }
-                            for (String key : oldPatientAlerts) {
-                                InstanceHolder<ice.Alert> alert = patientAlertInstances.remove(key);
-                                if (null != alert) {
-                                    patientAlertWriter.dispose(alert.data, alert.handle);
-                                }
-                            }
+                            clearOldPatientAlertInstances();
                         }
                         if (null != technicalAlertList) {
-                            Set<String> oldTechnicalAlerts = new HashSet<String>(AbstractDemoIntellivue.this.technicalAlertInstances.keySet());
+                            markOldTechnicalAlertInstances();
                             for (DevAlarmEntry dae : technicalAlertList.getValue().getValue()) {
                                 if (dae.getAlMonInfo() instanceof StrAlMonInfo) {
                                     StrAlMonInfo info = (StrAlMonInfo) dae.getAlMonInfo();
                                     String key = dae.getAlCode().getType() + "-" + dae.getAlSource().getType() + "-"
                                             + dae.getObject().getGlobalHandle().getMdsContext() + "-" + dae.getObject().getGlobalHandle().getHandle()
                                             + "-" + dae.getObject().getOidType().getType();
-                                    oldTechnicalAlerts.remove(key);
-                                    InstanceHolder<ice.Alert> alert = technicalAlertInstances.get(key);
-                                    if (null == alert) {
-                                        alert = new InstanceHolder<ice.Alert>();
-                                        alert.data = (Alert) ice.Alert.create();
-                                        alert.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
-                                        alert.data.identifier = key;
-                                        alert.handle = technicalAlertWriter.register_instance(alert.data);
-                                        technicalAlertInstances.put(key, alert);
-                                    }
-                                    alert.data.text = info.getString().getString();
-                                    alert.data.text = Normalizer.normalize(alert.data.text, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
-                                    technicalAlertWriter.write(alert.data, alert.handle);
+                                    writeTechnicalAlert(key, Normalizer.normalize(info.getString().getString(), Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", ""));
                                 }
                             }
-
-                            for (String key : oldTechnicalAlerts) {
-                                InstanceHolder<ice.Alert> alert = technicalAlertInstances.remove(key);
-                                if (null != alert) {
-                                    technicalAlertWriter.dispose(alert.data, alert.handle);
-                                }
-                            }
+                            clearOldTechnicalAlertInstances();
                         }
                     }
                 }
@@ -959,14 +915,6 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     private final Thread networkLoopThread;
     private final TaskQueue.Task<?> watchdogTask, serviceSampleArrays;
 
-    protected Topic deviceAlertConditionTopic, patientAlertTopic, technicalAlertTopic;
-    protected ice.DeviceAlertConditionDataWriter deviceAlertConditionWriter;
-    protected ice.AlertDataWriter patientAlertWriter, technicalAlertWriter;
-
-    protected final InstanceHolder<ice.DeviceAlertCondition> deviceAlertConditionInstance;
-    protected final Map<String, InstanceHolder<ice.Alert>> patientAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>(),
-            technicalAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>();
-
     public AbstractDemoIntellivue(int domainId, EventLoop eventLoop) throws IOException {
         this(domainId, eventLoop, null);
     }
@@ -975,35 +923,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         super(domainId, eventLoop);
         loadMap(numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
 
-        ice.DeviceAlertConditionTypeSupport.register_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
-        deviceAlertConditionTopic = domainParticipant.create_topic(ice.DeviceAlertConditionTopic.VALUE,
-                ice.DeviceAlertConditionTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-
-        deviceAlertConditionWriter = (ice.DeviceAlertConditionDataWriter) publisher.create_datawriter_with_profile(deviceAlertConditionTopic,
-                QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-
-        ice.AlertTypeSupport.register_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
-        patientAlertTopic = domainParticipant.create_topic(ice.PatientAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        technicalAlertTopic = domainParticipant.create_topic(ice.TechnicalAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-
-        patientAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(patientAlertTopic, QosProfiles.ice_library,
-                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-        technicalAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(technicalAlertTopic, QosProfiles.ice_library,
-                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-
         deviceIdentity.manufacturer = "Philips";
         deviceIdentity.model = "Intellivue Device";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         writeDeviceIdentity();
-        {
-            ice.DeviceAlertCondition alertCondition = (ice.DeviceAlertCondition) ice.DeviceAlertCondition.create();
-            alertCondition.unique_device_identifier = deviceIdentity.unique_device_identifier;
-            alertCondition.alert_state = "";
-            InstanceHandle_t deviceAlertHandle = deviceAlertConditionWriter.register_instance(alertCondition);
-            deviceAlertConditionInstance = new InstanceHolder<ice.DeviceAlertCondition>(alertCondition, deviceAlertHandle);
-        }
 
         if (null == loop) {
             networkLoop = new NetworkLoop();
@@ -1332,22 +1255,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 log.error("Interrupted", e);
             }
         }
-        publisher.delete_datawriter(deviceAlertConditionWriter);
-        deviceAlertConditionWriter = null;
-        domainParticipant.delete_topic(deviceAlertConditionTopic);
-        deviceAlertConditionTopic = null;
-        ice.DeviceAlertConditionTypeSupport.unregister_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
 
-        publisher.delete_datawriter(patientAlertWriter);
-        publisher.delete_datawriter(technicalAlertWriter);
-        patientAlertWriter = technicalAlertWriter = null;
-
-        domainParticipant.delete_topic(patientAlertTopic);
-        domainParticipant.delete_topic(technicalAlertTopic);
-
-        patientAlertTopic = technicalAlertTopic = null;
-
-        ice.AlertTypeSupport.unregister_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
 
         super.shutdown();
     }

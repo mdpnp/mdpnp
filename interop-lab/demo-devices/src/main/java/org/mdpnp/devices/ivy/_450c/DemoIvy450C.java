@@ -77,14 +77,24 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
 
         @Override
+        public boolean receiveMessage(byte[] message, int off, int len) throws IOException {
+            // Any patient alert that does not get updated will cease to exist
+            markOldPatientAlertInstances();
+            boolean res = super.receiveMessage(message, off, len);
+            clearOldPatientAlertInstances();
+            return res;
+        }
+        
+        @Override
         protected void receiveLine(String line) {
             reportConnected();
             super.receiveLine(line);
         }
-
+        
         @Override
-        protected void receiveEndTidalCO2(Integer value, String label) {
+        protected void receiveEndTidalCO2(Integer value, String label, String alarm) {
             etco2 = numericSample(etco2, value, rosetta.MDC_AWAY_CO2_ET.VALUE, null);
+            alarmIfPresent("ETCO2", alarm);
         }
 
         @Override
@@ -129,36 +139,39 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
 
         @Override
-        protected void receiveHeartRate(Integer value, String label) {
+        protected void receiveHeartRate(Integer value, String label, String alarm) {
             // should be ECG heart rate? or should it .. depends upon mode
             heartRate = numericSample(heartRate, value, rosetta.MDC_ECG_HEART_RATE.VALUE, null);
-
+            alarmIfPresent("HR", alarm);
         }
 
         @Override
-        protected void receiveNIBP(Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label) {
+        protected void receiveNIBP(Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label, String alarm) {
             nibpSystolic = numericSample(nibpSystolic, systolic, rosetta.MDC_PRESS_CUFF_SYS.VALUE, null);
             nibpDiastolic = numericSample(nibpDiastolic, diastolic, rosetta.MDC_PRESS_CUFF_DIA.VALUE, null);
             nibpPulse = numericSample(nibpPulse, pulse, rosetta.MDC_PULS_RATE_NON_INV.VALUE, null);
             nibpMean = numericSample(nibpMean, mean, rosetta.MDC_PRESS_CUFF_MEAN.VALUE, null);
+            alarmIfPresent("NIBP", alarm);
         }
 
         @Override
-        protected void receivePressure1(Integer systolic, Integer diastolic, Integer mean, String label) {
+        protected void receivePressure1(Integer systolic, Integer diastolic, Integer mean, String label, String alarm) {
             ibpSystolic1 = numericSample(ibpSystolic1, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, 0, null);
             ibpDiastolic1 = numericSample(ibpDiastolic1, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, 0, null);
             ibpMean1 = numericSample(ibpMean1, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, 0, null);
+            alarmIfPresent("P1", alarm);
         }
 
         @Override
-        protected void receivePressure2(Integer systolic, Integer diastolic, Integer mean, String label) {
+        protected void receivePressure2(Integer systolic, Integer diastolic, Integer mean, String label, String alarm) {
             ibpSystolic2 = numericSample(ibpSystolic2, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, 1, null);
             ibpDiastolic2 = numericSample(ibpDiastolic2, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, 1, null);
             ibpMean2 = numericSample(ibpMean2, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, 1, null);
+            alarmIfPresent("P2", alarm);
         }
 
         @Override
-        protected void receiveRespiratoryRate(Integer value, String label) {
+        protected void receiveRespiratoryRate(Integer value, String label, String alarm) {
             if(null == etco2) {
                 tthorRespiratoryRate = numericSample(tthorRespiratoryRate, value, rosetta.MDC_TTHOR_RESP_RATE.VALUE, null);
                 co2RespiratoryRate = numericSample(co2RespiratoryRate, (Integer)null, rosetta.MDC_CO2_RESP_RATE.VALUE, null);
@@ -166,24 +179,26 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
                 co2RespiratoryRate = numericSample(co2RespiratoryRate, value, rosetta.MDC_CO2_RESP_RATE.VALUE, null);
                 tthorRespiratoryRate = numericSample(tthorRespiratoryRate, (Integer)null, rosetta.MDC_TTHOR_RESP_RATE.VALUE, null);
             }
-            
+            alarmIfPresent("RR", alarm);
         }
 
         @Override
-        protected void receiveSpO2(Integer value, String label, Integer pulseRate) {
+        protected void receiveSpO2(Integer value, String label, Integer pulseRate, String alarm) {
             spo2 = numericSample(spo2, value, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, null);
             DemoIvy450C.this.pulseRate = numericSample(DemoIvy450C.this.pulseRate, pulseRate, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, null);
-
+            alarmIfPresent("SPO2", alarm);
         }
 
         @Override
-        protected void receiveTemperature1(Float value, String label) {
+        protected void receiveTemperature1(Float value, String label, String alarm) {
             t1 = numericSample(t1, value, rosetta.MDC_TEMP_BLD.VALUE, 0, null);
+            alarmIfPresent("T1", alarm);
         }
 
         @Override
-        protected void receiveTemperature2(Float value, String label) {
+        protected void receiveTemperature2(Float value, String label, String alarm) {
             t2 = numericSample(t2, value, rosetta.MDC_TEMP_BLD.VALUE, 1, null);
+            alarmIfPresent("T2", alarm);
         }
     }
 
@@ -210,6 +225,12 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
     @Override
     protected long getNegotiateInterval() {
         return 200L;
+    }
+    
+    protected void alarmIfPresent(String label, String alarm) {
+        if(null != alarm && !"".equals(alarm)) {
+            writePatientAlert(label, alarm);
+        }
     }
 
     @Override

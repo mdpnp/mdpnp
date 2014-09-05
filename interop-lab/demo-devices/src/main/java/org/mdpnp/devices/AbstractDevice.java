@@ -12,6 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.devices;
 
+import ice.Alert;
 import ice.DeviceIdentity;
 import ice.DeviceIdentityDataWriter;
 import ice.DeviceIdentityTypeSupport;
@@ -37,8 +38,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -104,9 +107,21 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     protected final Topic alarmSettingsObjectiveTopic;
     protected final ice.LocalAlarmSettingsObjectiveDataWriter alarmSettingsObjectiveWriter;
+    
+    protected Topic deviceAlertConditionTopic;
+    protected ice.DeviceAlertConditionDataWriter deviceAlertConditionWriter;
+    
+    protected Topic patientAlertTopic;
+    protected ice.AlertDataWriter patientAlertWriter;
+    
+    protected Topic technicalAlertTopic;
+    protected ice.AlertDataWriter technicalAlertWriter;
 
     protected ice.GlobalAlarmSettingsObjectiveDataReader alarmSettingsObjectiveReader;
     protected ReadCondition alarmSettingsObjectiveCondition;
+    
+    protected InstanceHolder<ice.DeviceAlertCondition> deviceAlertConditionInstance;
+
 
     public Subscriber getSubscriber() {
         return subscriber;
@@ -192,6 +207,21 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         unregisterAllSampleArrayInstances();
         unregisterAllAlarmSettingsInstances();
         unregisterAllAlarmSettingsObjectiveInstances();
+        unregisterAllPatientAlertInstances();
+        unregisterAllTechnicalAlertInstances();
+    }
+    
+    private void unregisterAllAlertInstances(Map<String, InstanceHolder<ice.Alert>> map, ice.AlertDataWriter writer) {
+        for(String key : map.keySet().toArray(new String[0])) {
+            writeAlert(map, writer, key, null);
+        }
+    }
+    protected void unregisterAllPatientAlertInstances() {
+        unregisterAllAlertInstances(patientAlertInstances, patientAlertWriter);
+    }
+    
+    protected void unregisterAllTechnicalAlertInstances() {
+        unregisterAllAlertInstances(technicalAlertInstances, technicalAlertWriter);
     }
 
     protected void unregisterAllAlarmSettingsObjectiveInstances() {
@@ -244,10 +274,14 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         alarmSettingsObjectiveWriter.unregister_instance(holder.data, holder.handle);
     }
 
-    private List<InstanceHolder<SampleArray>> registeredSampleArrayInstances = new ArrayList<InstanceHolder<SampleArray>>();
-    private List<InstanceHolder<Numeric>> registeredNumericInstances = new ArrayList<InstanceHolder<Numeric>>();
-    private List<InstanceHolder<ice.AlarmSettings>> registeredAlarmSettingsInstances = new ArrayList<InstanceHolder<ice.AlarmSettings>>();
-    private List<InstanceHolder<ice.LocalAlarmSettingsObjective>> registeredAlarmSettingsObjectiveInstances = new ArrayList<InstanceHolder<ice.LocalAlarmSettingsObjective>>();
+    private final List<InstanceHolder<SampleArray>> registeredSampleArrayInstances = new ArrayList<InstanceHolder<SampleArray>>();
+    private final List<InstanceHolder<Numeric>> registeredNumericInstances = new ArrayList<InstanceHolder<Numeric>>();
+    private final List<InstanceHolder<ice.AlarmSettings>> registeredAlarmSettingsInstances = new ArrayList<InstanceHolder<ice.AlarmSettings>>();
+    private final List<InstanceHolder<ice.LocalAlarmSettingsObjective>> registeredAlarmSettingsObjectiveInstances = new ArrayList<InstanceHolder<ice.LocalAlarmSettingsObjective>>();
+    private final Map<String, InstanceHolder<ice.Alert>> patientAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>();
+    private final Map<String, InstanceHolder<ice.Alert>> technicalAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>();
+    private final Set<String> oldPatientAlertInstances = new HashSet<String>();
+    private final Set<String> oldTechnicalAlertInstances = new HashSet<String>();
 
     protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int frequency) {
         return createSampleArrayInstance(metric_id, 0, frequency);
@@ -386,6 +420,67 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return false;
     }
 
+    protected void writeDeviceAlert(String alertState) {
+        if(null != deviceAlertConditionInstance) {
+            deviceAlertConditionInstance.data.alert_state = alertState;
+            deviceAlertConditionWriter.write(deviceAlertConditionInstance.data, deviceAlertConditionInstance.handle);
+        } else {
+            throw new IllegalStateException("No deviceAlertCondition; have you called writeDeviceIdentity?");
+        }
+    }
+    
+    private void writeAlert(Map<String, InstanceHolder<ice.Alert> > map, ice.AlertDataWriter writer, String key, String value) {
+        InstanceHolder<ice.Alert> alert = map.get(key);
+        if(null == value) {
+            if(null != alert) {
+                writer.unregister_instance(alert.data, alert.handle);
+                map.remove(key);
+            }
+        } else {
+            if (null == alert) {
+                alert = new InstanceHolder<ice.Alert>();
+                alert.data = (Alert) ice.Alert.create();
+                alert.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
+                alert.data.identifier = key;
+                alert.handle = writer.register_instance(alert.data);
+                map.put(key, alert);
+            }
+            alert.data.text = value;
+            writer.write(alert.data, alert.handle);
+        }
+    }
+    
+    protected void markOldPatientAlertInstances() {
+        oldPatientAlertInstances.clear();
+        oldPatientAlertInstances.addAll(patientAlertInstances.keySet());
+    }
+    
+    protected void markOldTechnicalAlertInstances() {
+        oldTechnicalAlertInstances.clear();
+        oldTechnicalAlertInstances.addAll(technicalAlertInstances.keySet());
+    }
+    
+    protected void clearOldPatientAlertInstances() {
+        for(String key : oldPatientAlertInstances) {
+            writePatientAlert(key, null);
+        }
+    }
+    
+    protected void clearOldTechnicalAlertInstances() {
+        for(String key : oldTechnicalAlertInstances) {
+            writeTechnicalAlert(key, null);
+        }
+    }
+    
+    protected void writePatientAlert(String key, String value) {
+        oldPatientAlertInstances.remove(key);
+        writeAlert(patientAlertInstances, patientAlertWriter, key, value);
+    }
+    protected void writeTechnicalAlert(String key, String value) {
+        oldTechnicalAlertInstances.remove(key);
+        writeAlert(technicalAlertInstances, technicalAlertWriter, key, value);
+    }
+    
     protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, Collection<Number> newValues, Time_t deviceTimestamp) {
         holder.data.values.userData.clear();
         for (Number n : newValues) {
@@ -579,6 +674,17 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         publisher.delete_datawriter(deviceIdentityWriter);
         domainParticipant.delete_topic(deviceIdentityTopic);
         DeviceIdentityTypeSupport.unregister_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
+        
+        publisher.delete_datawriter(deviceAlertConditionWriter);
+        domainParticipant.delete_topic(deviceAlertConditionTopic);
+        ice.DeviceAlertConditionTypeSupport.unregister_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
+
+        publisher.delete_datawriter(patientAlertWriter);
+        domainParticipant.delete_topic(patientAlertTopic);
+        
+        publisher.delete_datawriter(technicalAlertWriter);
+        domainParticipant.delete_topic(technicalAlertTopic);
+        ice.AlertTypeSupport.unregister_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
 
         domainParticipant.delete_publisher(publisher);
         domainParticipant.delete_subscriber(subscriber);
@@ -651,6 +757,25 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         alarmSettingsObjectiveReader = (ice.GlobalAlarmSettingsObjectiveDataReader) subscriber.create_datareader_with_profile(
                 alarmSettingsObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
+        ice.DeviceAlertConditionTypeSupport.register_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
+        deviceAlertConditionTopic = domainParticipant.create_topic(ice.DeviceAlertConditionTopic.VALUE,
+                ice.DeviceAlertConditionTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceAlertConditionWriter = (ice.DeviceAlertConditionDataWriter) publisher.create_datawriter_with_profile(deviceAlertConditionTopic,
+                QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+
+        ice.AlertTypeSupport.register_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
+        patientAlertTopic = domainParticipant.create_topic(ice.PatientAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(),
+                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        patientAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(patientAlertTopic, QosProfiles.ice_library,
+                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        
+        technicalAlertTopic = domainParticipant.create_topic(ice.TechnicalAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(),
+                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        technicalAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(technicalAlertTopic, QosProfiles.ice_library,
+                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+        
+        
+        
         threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "AbstractDevice") {
             @Override
             public void uncaughtException(Thread t, Throwable e) {
@@ -694,6 +819,12 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
         }
         deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+        
+        ice.DeviceAlertCondition alertCondition = (ice.DeviceAlertCondition) ice.DeviceAlertCondition.create();
+        alertCondition.unique_device_identifier = deviceIdentity.unique_device_identifier;
+        alertCondition.alert_state = "";
+        InstanceHandle_t deviceAlertHandle = deviceAlertConditionWriter.register_instance(alertCondition);
+        deviceAlertConditionInstance = new InstanceHolder<ice.DeviceAlertCondition>(alertCondition, deviceAlertHandle);
 
         if (null == alarmSettingsObjectiveCondition) {
             final SampleInfoSeq info_seq = new SampleInfoSeq();
