@@ -421,6 +421,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     protected void writeDeviceAlert(String alertState) {
+        alertState = null == alertState ? "" : alertState;
         if(null != deviceAlertConditionInstance) {
             deviceAlertConditionInstance.data.alert_state = alertState;
             deviceAlertConditionWriter.write(deviceAlertConditionInstance.data, deviceAlertConditionInstance.handle);

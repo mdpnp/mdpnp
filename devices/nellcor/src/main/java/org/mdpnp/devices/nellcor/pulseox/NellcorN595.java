@@ -28,12 +28,12 @@ public class NellcorN595 extends ASCIIFieldDelegate {
         super(NellcorN595.class.getResource("nellcor-n595.spec"));
     }
 
-    private Integer heartRate, spo2, pulseAmplitude;
+    private Integer heartRate, spo2, pulseAmplitude, satS;
     private Date lastPoint;
     private Status[] status = new Status[10];
 
     private String version, crc, spO2Units, pRUnits;
-    private Integer spO2Lower, spO2Upper, pRLower, pRUpper, satS;
+    private Float spO2Lower, spO2Upper, pRLower, pRUpper;
     private LimitsType limitsType;
     private SpO2RespMode spO2RespMode;
 
@@ -49,7 +49,7 @@ public class NellcorN595 extends ASCIIFieldDelegate {
         return crc;
     }
 
-    public Integer getPRLower() {
+    public Float getPRLower() {
         return pRLower;
     }
 
@@ -57,11 +57,11 @@ public class NellcorN595 extends ASCIIFieldDelegate {
         return pRUnits;
     }
 
-    public Integer getPRUpper() {
+    public Float getPRUpper() {
         return pRUpper;
     }
 
-    public Integer getSpO2Lower() {
+    public Float getSpO2Lower() {
         return spO2Lower;
     }
 
@@ -69,7 +69,7 @@ public class NellcorN595 extends ASCIIFieldDelegate {
         return spO2Units;
     }
 
-    public Integer getSpO2Upper() {
+    public Float getSpO2Upper() {
         return spO2Upper;
     }
 

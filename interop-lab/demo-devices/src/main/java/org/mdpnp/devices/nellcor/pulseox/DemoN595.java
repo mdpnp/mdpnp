@@ -15,6 +15,9 @@ package org.mdpnp.devices.nellcor.pulseox;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.mdpnp.devices.serial.AbstractSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
@@ -31,17 +34,9 @@ import com.rti.dds.infrastructure.Time_t;
  *
  */
 public class DemoN595 extends AbstractSerialDevice {
-    private InstanceHolder<ice.Numeric> pulseUpdate;
-    private InstanceHolder<ice.Numeric> spo2Update;
-
-    // private final MutableNumericUpdate pulseUpperUpdate = new
-    // MutableNumericUpdateImpl(PulseOximeter.PULSE_UPPER);
-    // private final MutableNumericUpdate pulseLowerUpdate = new
-    // MutableNumericUpdateImpl(PulseOximeter.PULSE_LOWER);
-    // private final MutableNumericUpdate spo2UpperUpdate = new
-    // MutableNumericUpdateImpl(PulseOximeter.SPO2_UPPER);
-    // private final MutableNumericUpdate spo2LowerUpdate = new
-    // MutableNumericUpdateImpl(PulseOximeter.SPO2_LOWER);
+    protected InstanceHolder<ice.Numeric> pulseUpdate;
+    protected InstanceHolder<ice.Numeric> spo2Update;
+    protected InstanceHolder<ice.AlarmSettings> pulseAlarmSettings, spo2AlarmSettings;
 
     private class MyNellcorN595 extends NellcorN595 {
         public MyNellcorN595() throws NoSuchFieldException, SecurityException, IOException {
@@ -49,6 +44,8 @@ public class DemoN595 extends AbstractSerialDevice {
         }
 
         private final Time_t sampleTime = new Time_t(0, 0);
+        private final Set<Status> statusSet = new HashSet<Status>();
+        private final StringBuilder builder = new StringBuilder();
 
         @Override
         public void firePulseOximeter() {
@@ -57,17 +54,45 @@ public class DemoN595 extends AbstractSerialDevice {
             sampleTime.nanosec = (int) (tm % 1000L * 1000000L);
             pulseUpdate = numericSample(pulseUpdate, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, sampleTime);
             spo2Update = numericSample(spo2Update, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, sampleTime);
+            markOldPatientAlertInstances();
+            statusSet.clear();
+            statusSet.addAll(Arrays.asList(getStatus()));
+            if(statusSet.contains(Status.PulseRateLowerLimitAlarm)) {
+                statusSet.remove(Status.PulseRateLowerLimitAlarm);
+                writePatientAlert("PR", Status.PulseRateLowerLimitAlarm.name());
+            }
+            if(statusSet.contains(Status.PulseRateUpperLimitAlarm)) {
+                statusSet.remove(Status.PulseRateUpperLimitAlarm);
+                writePatientAlert("PR", Status.PulseRateUpperLimitAlarm.name());
+            }
+            if(statusSet.contains(Status.SaturationLowerLimitAlarm)) {
+                statusSet.remove(Status.SaturationLowerLimitAlarm);
+                writePatientAlert("SPO2", Status.SaturationLowerLimitAlarm.name());
+            }
+            if(statusSet.contains(Status.SaturationUpperLimitAlarm)) {
+                statusSet.remove(Status.SaturationUpperLimitAlarm);
+                writePatientAlert("SPO2", Status.SaturationUpperLimitAlarm.name());
+            }
+            if(!statusSet.isEmpty()) {
+                builder.delete(0, builder.length());
+                for(Status s : statusSet) {
+                    builder.append(s.name()+", ");
+                }
+                builder.delete(builder.length()-2,builder.length());
+                writeDeviceAlert(builder.toString());
+            } else {
+                writeDeviceAlert("");
+            }
+                
+            clearOldPatientAlertInstances();
         }
 
         @Override
         public void fireAlarmPulseOximeter() {
-            // pulseLowerUpdate.set(getPRLower(), getTimestamp());
-            // pulseUpperUpdate.set(getPRUpper(), getTimestamp());
-            // spo2LowerUpdate.set(getSpO2Lower(), getTimestamp());
-            // spo2UpperUpdate.set(getSpO2Upper(), getTimestamp());
-            // gateway.update(pulseLowerUpdate, pulseUpperUpdate,
-            // spo2LowerUpdate, spo2UpperUpdate);
+            pulseAlarmSettings = alarmSettingsSample(pulseAlarmSettings, getPRLower(), getPRUpper(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
+            spo2AlarmSettings = alarmSettingsSample(spo2AlarmSettings, getSpO2Lower(), getSpO2Upper(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
         }
+        
 
         @Override
         public void fireDevice() {
@@ -156,5 +181,12 @@ public class DemoN595 extends AbstractSerialDevice {
         super.unregisterAllNumericInstances();
         this.pulseUpdate = null;
         this.spo2Update = null;
+    }
+    
+    @Override
+    protected void unregisterAllAlarmSettingsInstances() {
+        super.unregisterAllAlarmSettingsInstances();
+        this.spo2AlarmSettings = null;
+        this.pulseAlarmSettings = null;
     }
 }
