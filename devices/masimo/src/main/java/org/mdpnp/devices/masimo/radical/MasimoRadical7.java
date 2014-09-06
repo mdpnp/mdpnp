@@ -26,7 +26,7 @@ import org.mdpnp.devices.io.ASCIIFieldDelegate;
 public class MasimoRadical7 extends ASCIIFieldDelegate {
 
     private Integer heartRate, spo2, perfusionIndex, spco, spmet, desat, pidelta, pvi;
-    private String guid;
+    private String guid, alarm;
     private Date lastPoint;
 
     public MasimoRadical7() throws IOException, NoSuchFieldException, SecurityException {
@@ -90,5 +90,9 @@ public class MasimoRadical7 extends ASCIIFieldDelegate {
 
     public String getUniqueId() {
         return guid;
+    }
+    
+    public String getAlarm() {
+        return alarm;
     }
 }

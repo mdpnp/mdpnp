@@ -423,8 +423,10 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     protected void writeDeviceAlert(String alertState) {
         alertState = null == alertState ? "" : alertState;
         if(null != deviceAlertConditionInstance) {
-            deviceAlertConditionInstance.data.alert_state = alertState;
-            deviceAlertConditionWriter.write(deviceAlertConditionInstance.data, deviceAlertConditionInstance.handle);
+            if(!alertState.equals(deviceAlertConditionInstance.data.alert_state)) {
+                deviceAlertConditionInstance.data.alert_state = alertState;
+                deviceAlertConditionWriter.write(deviceAlertConditionInstance.data, deviceAlertConditionInstance.handle);
+            }
         } else {
             throw new IllegalStateException("No deviceAlertCondition; have you called writeDeviceIdentity?");
         }
@@ -447,8 +449,10 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                 map.put(key, alert);
             }
             old.remove(key);
-            alert.data.text = value;
-            writer.write(alert.data, alert.handle);
+            if(!value.equals(alert.data.text)) { 
+                alert.data.text = value;
+                writer.write(alert.data, alert.handle);
+            }
         }
     }
     

@@ -1,4 +1,4 @@
-^(.{17})\s+SN\=(\S+)\s+SPO2\=(\S+)\%\s+BPM\=(\S+)\s+PI\=(\S+)\%\s+SPCO\=(\S+)\%\s+SPMET\=(\S+)\%\s+DESAT\=(\S+)\s+PIDELTA\=(\S+)\s+PVI\=(\S+)\s+ALARM\=\S+\s+EXC\=\S+\s*$
+^(.{17})\s+SN\=(\S+)\s+SPO2\=(\S+)\%\s+BPM\=(\S+)\s+PI\=(\S+)\%\s+SPCO\=(\S+)\%\s+SPMET\=(\S+)\%\s+DESAT\=(\S+)\s+PIDELTA\=(\S+)\s+PVI\=(\S+)\s+ALARM\=(\S+)\s+EXC\=\S+\s*$
 	firePulseOximeter
 	lastPoint
 		MM/dd/yy HH:mm:ss
@@ -10,3 +10,4 @@
 	spmet	filter
 	pidelta	filter
 	pvi	filter
+	alarm	filter

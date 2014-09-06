@@ -57,6 +57,11 @@ public class DemoRadical7 extends AbstractSerialDevice {
                 deviceIdentity.serial_number = guid;
                 writeDeviceIdentity();
             }
+            if(getAlarm() != null && !"".equals(getAlarm())) {
+                writeDeviceAlert(getAlarm());
+            } else {
+                writeDeviceAlert("");
+            }
         }
     }
 
