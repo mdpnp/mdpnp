@@ -272,11 +272,18 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
         private final Time_t sampleTime = new Time_t(0, 0);
         
+        private final StringBuilder messageBuilder = new StringBuilder();
+        
         @Override
         public boolean receiveNumerics(long date, int etCO2, int FiCO2, int respiratoryRate, int spo2, int pulserate, int slowStatus,
-                int CO2ActiveAlarms, int SpO2ActiveAlarms, int noBreathPeriodSeconds, int etCo2AlarmHigh, int etCo2AlarmLow, int rrAlarmHigh,
+                int co2ActiveAlarms, int spO2ActiveAlarms, int noBreathPeriodSeconds, int etCo2AlarmHigh, int etCo2AlarmLow, int rrAlarmHigh,
                 int rrAlarmLow, int fico2AlarmHigh, int spo2AlarmHigh, int spo2AlarmLow, int pulseAlarmHigh, int pulseAlarmLow, CO2Units units,
                 int extendedCO2Status) {
+            
+            writePatientAlert("CO2", CO2ActiveAlarms.build(co2ActiveAlarms, messageBuilder));
+            writePatientAlert("SPO2", SpO2ActiveAlarms.build(spO2ActiveAlarms, messageBuilder));
+            writeDeviceAlert(SlowStatus.build(slowStatus, messageBuilder));
+            writeTechnicalAlert("CO2", ExtendedCO2Status.build(extendedCO2Status, messageBuilder));
 
             // The device has no timezone setting ... so we're getting milliseconds since the epoch in local time
             // which is an unusual value to get... and hence we need to do something unusual to cope with it
@@ -287,8 +294,6 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             sampleTime.sec = (int) (date / 1000L);
             sampleTime.nanosec = (int) (date % 1000L * 1000000L);
 
-            // We have an SpO2 value
-
             DemoCapnostream20.this.spo2 = numericSample(DemoCapnostream20.this.spo2, 0xFF == spo2 ? null : spo2, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE,
                     sampleTime);
 
@@ -298,12 +303,6 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
             DemoCapnostream20.this.pulserate = numericSample(DemoCapnostream20.this.pulserate, 0xFF == pulserate ? null : pulserate,
                     rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, sampleTime);
-
-//            DemoCapnostream20.this.extendedCO2Status = numericSample(DemoCapnostream20.this.extendedCO2Status, 0xFF == extendedCO2Status ? null
-//                    : extendedCO2Status, oridion.MDC_EXTENDED_CO2_STATUS.VALUE, sampleTime);
-
-//            DemoCapnostream20.this.slowStatus = numericSample(DemoCapnostream20.this.slowStatus, 0xFF == slowStatus ? null : slowStatus,
-//                    oridion.MDC_SLOW_STATUS.VALUE, sampleTime);
 
             DemoCapnostream20.this.spo2AlarmSettings = alarmSettingsSample(DemoCapnostream20.this.spo2AlarmSettings, 0xFF == spo2AlarmLow ? null
                     : (float) spo2AlarmLow, 0xFF == spo2AlarmHigh ? null : (float) spo2AlarmHigh, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
@@ -321,44 +320,15 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         @Override
         public boolean receiveCO2Wave(int messageNumber, double co2, int status) {
             reportConnected();
-//            DemoCapnostream20.this.fastStatus = numericSample(DemoCapnostream20.this.fastStatus, status, oridion.MDC_FAST_STATUS.VALUE, sampleTime);
+            
+            writeTechnicalAlert("Fast CO2", FastStatus.build(status, messageBuilder));
 
-            if (0 != (0x01 & status)) {
-                log.warn("invalid CO2 value ignored " + co2 + " with fast status " + Integer.toHexString(status));
-                return true;
-            }
-            if (0 != (0x02 & status)) {
-                log.warn("Initialization " + co2 + " with fast status " + Integer.toHexString(status));
-                return true;
-            }
-            if (0 != (0x04 & status)) {
-                log.warn("occlusion " + co2 + " with fast status " + Integer.toHexString(status));
-                return true;
-            }
-            if (0 != (0x08 & status)) {
-                // log.debug("End of breath");
-            }
-            if (0 != (0x10 & status)) {
-                // SFM in progress
-                log.warn("SFM in progress " + co2 + " with fast status " + Integer.toHexString(status));
-                return true;
-            }
-            if (0 != (0x20 & status)) {
-                // purge in progress
-                log.warn("purge in progress " + co2 + " with fast status " + Integer.toHexString(status));
-                return true;
-            }
             if (0 != (0x40 & status)) {
                 // filter line not connected
                 if (null != DemoCapnostream20.this.co2) {
                     unregisterSampleArrayInstance(DemoCapnostream20.this.co2, null);
                     DemoCapnostream20.this.co2 = null;
                 }
-                log.warn("Filterline indicates disconnected " + co2 + " with fast status " + Integer.toHexString(status));
-                return true;
-            }
-            if (0 != (0x80 & status)) {
-                log.warn("CO2 malfunction " + co2 + " with fast status " + Integer.toHexString(status));
                 return true;
             }
 

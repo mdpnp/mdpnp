@@ -64,91 +64,23 @@ public class Capnostream {
     protected static final Map<Integer, Response> resMapping = new HashMap<Integer, Response>();
     protected static final Map<Integer, NumericItem> numMapping = new HashMap<Integer, NumericItem>();
     protected static final Map<Integer, DataItem> dataMapping = new HashMap<Integer, DataItem>();
-    protected static final Map<Integer, FastStatus> fastMapping = new HashMap<Integer, FastStatus>();
     protected static final Map<Integer, CO2Units> co2Mapping = new HashMap<Integer, CO2Units>();
     protected static final Map<Integer, PatientType> patMapping = new HashMap<Integer, PatientType>();
 
-    public static final class FastStatus {
-        public static final int INVALID_CO2_VALUE = 0x01;
-        public static final int INITIALIZATION = 0x02;
-        public static final int OCCLUSION_IN_GAS_INPUT_LINE = 0x04;
-        public static final int END_OF_BREATH_INDICATION = 0x08;
-        public static final int SFM_IN_PROGRESS = 0x10;
-        public static final int PURGING_IN_PROGRESS = 0x20;
-        public static final int FILTER_LINE_NOT_CONNECTED = 0x40;
-        public static final int CO2_MALFUNCTION = 0x80;
-
-        public static StringBuilder fastStatus(int fastStatus, StringBuilder builder) {
-            builder.delete(0, builder.length());
-            if (0 != (INVALID_CO2_VALUE & fastStatus)) {
-                builder.append("INVALID_CO2_VALUE, ");
+    protected static String build(Bits[] values, int status, StringBuilder builder) {
+        builder.delete(0, builder.length());
+        for(int i = 0; i < values.length; i++) {
+            String s = 0 != (values[i].getBit() & status) ? values[i].on() : values[i].off();
+            if(s != null) {
+                builder.append(s).append(", ");
             }
-            if (0 != (INITIALIZATION & fastStatus)) {
-                builder.append("INITIALIZATION, ");
-            }
-            if (0 != (OCCLUSION_IN_GAS_INPUT_LINE & fastStatus)) {
-                builder.append("OCCLUSION_IN_GAS_INPUT_LINE, ");
-            }
-            if (0 != (END_OF_BREATH_INDICATION & fastStatus)) {
-                builder.append("END_OF_BREATH_INDICATION, ");
-            }
-            if (0 != (SFM_IN_PROGRESS & fastStatus)) {
-                builder.append("SFM_IN_PROGRESS, ");
-            }
-            if (0 != (PURGING_IN_PROGRESS & fastStatus)) {
-                builder.append("PURGING_IN_PROGRESS, ");
-            }
-            if (0 != (FILTER_LINE_NOT_CONNECTED & fastStatus)) {
-                builder.append("FILTER_LINE_NOT_CONNECTED, ");
-            }
-            if (0 != (CO2_MALFUNCTION & fastStatus)) {
-                builder.append("CO2_MALFUNCTION, ");
-            }
-
-            if (builder.length() > 1) {
-                builder.delete(builder.length() - 2, builder.length());
-            }
-            return builder;
         }
+        if (builder.length() > 1) {
+            builder.delete(builder.length() - 2, builder.length());
+        }
+        return builder.length() == 0 ? null : builder.toString();
     }
-
-    public static class SlowStatus {
-        public static final int PATIENT_TYPE = 0x01;
-        public static final int TEMP_ALARM_SILENCE = 0x02;
-        public static final int ALL_ALARMS_SILENCED = 0x04;
-        public static final int HIGH_PRIORITY_ACTIVE_AUDIBLE = 0x08;
-        public static final int LOW_PRIORITY_ACTIVE_AUDIBLE = 0x10;
-        public static final int ADVISORY_ACTIVE_AUDIBLE = 0x20;
-        public static final int PULSE_BEEPS_SILENCED = 0x40;
-        public static final int SPO2_MANUFACTURER = 0x80;
-    }
-
-    public static class CO2ActiveAlarms {
-        public static final int NO_BREATH = 0x01;
-        public static final int ETCO2_HIGH = 0x02;
-        public static final int ETCO2_LOW = 0x04;
-        public static final int RR_HIGH = 0x08;
-        public static final int RR_LOW = 0x10;
-        public static final int FICO2_HIGH = 0x20;
-    }
-
-    public static class SpO2ActiveAlarms {
-        public static final int PULSE_NOT_FOUND = 0x01;
-        public static final int SPO2_HIGH = 0x02;
-        public static final int SPO2_LOW = 0x04;
-        public static final int PULSE_RATE_HIGH = 0x08;
-        public static final int PULSE_RATE_LOW = 0x10;
-        public static final int SPO2_SENSOR_OFF = 0x20;
-        public static final int SPO2_SENSOR_DISCONNECTED = 0x40;
-    }
-
-    public static class ExtendedCO2Status {
-        public static final int CHECK_CALIBRATION = 0x01;
-        public static final int CHECK_FLOW = 0x02;
-        public static final int PUMP_OFF = 0x04;
-        public static final int BATTERY_LOW = 0x80;
-    }
-
+    
     public enum Alarm {
         Enabled, Disabled
     }
