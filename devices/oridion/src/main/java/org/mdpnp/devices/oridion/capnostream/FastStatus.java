@@ -5,7 +5,8 @@ public enum FastStatus implements Bits {
     INVALID_CO2_VALUE(0x01, "Invalid CO2 value", null),
     INITIALIZATION(0x02, "Initialization", null),
     OCCLUSION_IN_GAS_INPUT_LINE(0x04, "Occlusion in gas input line", null),
-    END_OF_BREATH_INDICATION(0x08, "End-of-breath indication", null),
+    // TODO End of breath indication goes in a different place than as an alert, but where?
+    END_OF_BREATH_INDICATION(0x08, null, null),
     SFM_IN_PROGRESS(0x10, "SFM in progress", null),
     PURGING_IN_PROGRESS(0x20, "Purging in progress", null),
     FILTER_LINE_NOT_CONNECTED(0x40, "FilterLine not connected", null),

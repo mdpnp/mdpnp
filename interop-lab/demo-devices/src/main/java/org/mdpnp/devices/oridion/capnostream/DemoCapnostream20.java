@@ -47,7 +47,7 @@ import com.rti.dds.infrastructure.Time_t;
 public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostream> {
     @Override
     protected long getMaximumQuietTime() {
-        return 800L;
+        return 900L;
     }
 
     @Override
@@ -70,12 +70,9 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     protected InstanceHolder<ice.SampleArray> co2;
     protected InstanceHolder<ice.Numeric> spo2;
     protected InstanceHolder<ice.Numeric> pulserate;
-
     protected InstanceHolder<ice.Numeric> rr;
     protected InstanceHolder<ice.Numeric> etco2;
-    protected InstanceHolder<ice.Numeric> fastStatus;
-    protected InstanceHolder<ice.Numeric> slowStatus;
-    protected InstanceHolder<ice.Numeric> extendedCO2Status;
+
 
     protected InstanceHolder<ice.AlarmSettings> spo2AlarmSettings, pulserateAlarmSettings, rrAlarmSettings, etco2AlarmSettings;
 
