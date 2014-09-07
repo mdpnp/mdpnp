@@ -310,16 +310,16 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, Time_t time) {
-        holder.data.value = newValue;
-        if (null != time) {
-            holder.data.device_time.sec = time.sec;
-            holder.data.device_time.nanosec = time.nanosec;
-        } else {
-            holder.data.device_time.sec = 0;
-            holder.data.device_time.nanosec = 0;
+            holder.data.value = newValue;
+            if (null != time) {
+                holder.data.device_time.sec = time.sec;
+                holder.data.device_time.nanosec = time.nanosec;
+            } else {
+                holder.data.device_time.sec = 0;
+                holder.data.device_time.nanosec = 0;
+            }
+            numericDataWriter.write(holder.data, holder.handle);
         }
-        numericDataWriter.write(holder.data, holder.handle);
-    }
 
     protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, float newLower, float newUpper) {
         if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
@@ -330,9 +330,11 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     protected void alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, float newLower, float newUpper) {
-        holder.data.lower = newLower;
-        holder.data.upper = newUpper;
-        alarmSettingsObjectiveWriter.write(holder.data, holder.handle);
+        if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
+            holder.data.lower = newLower;
+            holder.data.upper = newUpper;
+            alarmSettingsObjectiveWriter.write(holder.data, holder.handle);
+        }
     }
 
     protected InstanceHolder<ice.AlarmSettings> alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper,
