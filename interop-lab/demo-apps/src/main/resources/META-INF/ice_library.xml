@@ -183,9 +183,7 @@
      </value>
     </property>
    </participant_qos>
-   <!-- <subscriber_qos> <partition> <name> <element>JEFFPARTITION</element> 
-    </name> </partition> </subscriber_qos> <publisher_qos> <partition> <name> 
-    <element>JEFFPARTITION</element> </name> </partition> </publisher_qos> -->
+
    <!-- Default reader QoS represent a minimum level of stringency, for any 
     reader that didn't bother selecting a more specific profile or setting QoS 
     policies programmatically. -->
@@ -233,7 +231,7 @@
     <history>
      <kind>DDS_KEEP_LAST_HISTORY_QOS</kind>
      <!-- samples kept in the writer ... see durability -->
-     <depth>5000</depth>
+     <depth>500</depth>
      <refilter>DDS_NONE_REFILTER_QOS</refilter>
     </history>
 
@@ -365,11 +363,27 @@
       <nanosec>0</nanosec>
      </lease_duration>
     </liveliness>
+    <history>
+     <kind>KEEP_LAST_HISTORY_QOS</kind>
+     <depth>1</depth>
+    </history>
    </datawriter_qos>
 
   </qos_profile>
   <qos_profile name="timesync" base_name="default_profile"
    is_default_qos="false">
+   <datawriter_qos>
+    <history>
+      <kind>KEEP_LAST_HISTORY</kind>
+      <depth>1</depth>
+    </history>
+   </datawriter_qos>
+   <datareader_qos>
+    <history>
+      <kind>KEEP_LAST_HISTORY</kind>
+      <depth>1</depth>
+    </history>
+   </datareader_qos>   
   </qos_profile>
   <qos_profile name="state" base_name="default_profile"
    is_default_qos="false">
@@ -417,6 +431,12 @@
      <refilter>DDS_NONE_REFILTER_QOS</refilter>
     </history>
    </datareader_qos>
+   <datawriter_qos>
+    <history>
+     <kind>KEEP_LAST_HISTORY_QOS</kind>
+     <depth>1</depth>
+    </history>
+   </datawriter_qos>
   </qos_profile>
 
   <qos_profile name="device_identity" base_name="state"
@@ -491,7 +511,7 @@
      to store more -->
     <lifespan>
      <duration>
-      <sec>30</sec>
+      <sec>10</sec>
       <nanosec>0</nanosec>
      </duration>
     </lifespan>
