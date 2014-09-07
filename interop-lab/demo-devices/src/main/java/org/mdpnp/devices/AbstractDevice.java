@@ -322,9 +322,11 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, float newLower, float newUpper) {
-        holder.data.lower = newLower;
-        holder.data.upper = newUpper;
-        alarmSettingsDataWriter.write(holder.data, holder.handle);
+        if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
+            holder.data.lower = newLower;
+            holder.data.upper = newUpper;
+            alarmSettingsDataWriter.write(holder.data, holder.handle);
+        }
     }
 
     protected void alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, float newLower, float newUpper) {
