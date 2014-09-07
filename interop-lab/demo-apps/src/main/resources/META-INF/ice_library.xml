@@ -374,13 +374,13 @@
    is_default_qos="false">
    <datawriter_qos>
     <history>
-      <kind>KEEP_LAST_HISTORY</kind>
+      <kind>KEEP_LAST_HISTORY_QOS</kind>
       <depth>1</depth>
     </history>
    </datawriter_qos>
    <datareader_qos>
     <history>
-      <kind>KEEP_LAST_HISTORY</kind>
+      <kind>KEEP_LAST_HISTORY_QOS</kind>
       <depth>1</depth>
     </history>
    </datareader_qos>   
