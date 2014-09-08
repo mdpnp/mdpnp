@@ -45,6 +45,7 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
 @SuppressWarnings("serial")
@@ -454,13 +455,14 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
         final DomainParticipant p = DomainParticipantFactory.get_instance().create_participant(0, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT,
                 null, StatusKind.STATUS_MASK_NONE);
         final Subscriber s = p.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        final Publisher pub = p.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final VitalModel vm = new VitalModelImpl(null);
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
         
         EventLoop eventLoop = new EventLoop();
         final EventLoopHandler eventLoopHandler = new EventLoopHandler(eventLoop);
 
-        vm.start(s, eventLoop);
+        vm.start(s, pub, eventLoop);
 
         JFrame frame = new JFrame("UITest");
         frame.getContentPane().setBackground(Color.white);

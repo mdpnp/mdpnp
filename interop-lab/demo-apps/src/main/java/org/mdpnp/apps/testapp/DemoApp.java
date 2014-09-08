@@ -66,6 +66,7 @@ import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.publication.Publisher;
+import com.rti.dds.publication.PublisherQos;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 import com.rti.dds.topic.Topic;
@@ -156,8 +157,21 @@ public class DemoApp {
         DomainParticipantFactory.get_instance().set_qos(qos);
         final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null,
                 StatusKind.STATUS_MASK_NONE);
-        final Subscriber subscriber = participant.get_implicit_subscriber();
-        final Publisher publisher = participant.get_implicit_publisher();
+
+        /**
+         * This is a workaround.  Publisher.set_qos (potentially called later to
+         * change partitions) expects thread priorities be set in the java range
+         * Thread.MIN_PRIORITY to Thread.MAX_PRIORITY but Publisher.get_qos DOES NOT
+         * populate thread priority.  So we set NORM_PRIORITY here and later
+         * to avoid changing an immutable QoS. 
+         */
+        PublisherQos pubQos = new PublisherQos();
+        participant.get_default_publisher_qos(pubQos);
+        pubQos.asynchronous_publisher.asynchronous_batch_thread.priority = Thread.NORM_PRIORITY;
+        pubQos.asynchronous_publisher.thread.priority = Thread.NORM_PRIORITY;
+
+        final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        final Publisher publisher = participant.create_publisher(pubQos, null, StatusKind.STATUS_MASK_NONE);
         final TimeManager timeManager = new TimeManager(publisher, subscriber, udi, "Supervisor");
 
         @SuppressWarnings("serial")
@@ -198,10 +212,11 @@ public class DemoApp {
         partitionChooser = new PartitionChooser(frame);
         partitionChooser.setSize(320, 240);
         partitionChooser.set(subscriber);
+        partitionChooser.set(publisher);
         
         discoveryPeers = new DiscoveryPeers(frame);
         discoveryPeers.setSize(320, 240);
-        discoveryPeers.set(subscriber.get_participant());
+        discoveryPeers.set(participant);
         
         switch (domainId) {
         case 0:
@@ -260,7 +275,7 @@ public class DemoApp {
 
         // VitalSign.EndTidalCO2.addToModel(vitalModel);
         if(!AppType.PCA.isDisabled() || !AppType.PCAViz.isDisabled()) {
-            vitalModel.start(subscriber, eventLoop);
+            vitalModel.start(subscriber, publisher, eventLoop);
             TopicDescription infusionObjectiveTopic = TopicUtil.lookupOrCreateTopic(participant, ice.InfusionObjectiveTopic.VALUE,  ice.InfusionObjectiveTypeSupport.class);
             objectiveWriter = (InfusionObjectiveDataWriter) publisher.create_datawriter_with_profile((Topic) infusionObjectiveTopic, QosProfiles.ice_library,
                     QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);

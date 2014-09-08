@@ -34,7 +34,6 @@ import org.mdpnp.devices.simulation.co2.SimCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
 import org.mdpnp.devices.simulation.multi.SimMultiparameter;
 import org.mdpnp.devices.simulation.nibp.DemoSimulatedBloodPressure;
-import org.mdpnp.devices.simulation.pulseox.MultiSimPulseOximeter;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;

@@ -45,6 +45,7 @@ import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
@@ -67,6 +68,7 @@ public class VitalModelImpl implements VitalModel {
     protected NumericDataReader numericReader;
 
     protected Subscriber subscriber;
+    protected Publisher publisher;
     protected EventLoop eventLoop;
     private State state = State.Normal;
 
@@ -310,11 +312,12 @@ public class VitalModelImpl implements VitalModel {
     }
 
     @Override
-    public void start(final Subscriber subscriber, final EventLoop eventLoop) {
+    public void start(final Subscriber subscriber, final Publisher publisher, final EventLoop eventLoop) {
 
         eventLoop.doLater(new Runnable() {
             public void run() {
                 VitalModelImpl.this.subscriber = subscriber;
+                VitalModelImpl.this.publisher = publisher;
                 VitalModelImpl.this.eventLoop = eventLoop;
                 DomainParticipant participant = subscriber.get_participant();
 
@@ -323,7 +326,7 @@ public class VitalModelImpl implements VitalModel {
                 Topic topic = participant.create_topic(ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
                         ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
                         StatusKind.STATUS_MASK_NONE);
-                writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) participant.create_datawriter_with_profile(topic, QosProfiles.ice_library,
+                writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(topic, QosProfiles.ice_library,
                         QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
                 NumericTypeSupport.register_type(participant, NumericTypeSupport.get_type_name());
@@ -364,6 +367,7 @@ public class VitalModelImpl implements VitalModel {
         DomainParticipant p = DomainParticipantFactory.get_instance().create_participant(0, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null,
                 StatusKind.STATUS_MASK_NONE);
         Subscriber s = p.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        Publisher pub = p.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         VitalModel vm = new VitalModelImpl(null);
 
         vm.addListener(new VitalModelListener() {
@@ -389,7 +393,7 @@ public class VitalModelImpl implements VitalModel {
 
         new EventLoopHandler(eventLoop);
 
-        vm.start(s, eventLoop);
+        vm.start(s, pub, eventLoop);
     }
 
     private static final String DEFAULT_INTERLOCK_TEXT = "Drug: Morphine\r\nRate: 4cc / hour";

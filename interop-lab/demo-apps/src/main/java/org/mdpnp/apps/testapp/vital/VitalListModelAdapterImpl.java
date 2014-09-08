@@ -23,6 +23,7 @@ import javax.swing.event.ListDataListener;
 import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
 /**
@@ -85,8 +86,8 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
     // }
 
     @Override
-    public void start(Subscriber subscriber, EventLoop eventLoop) {
-        model.start(subscriber, eventLoop);
+    public void start(Subscriber subscriber, Publisher publisher, EventLoop eventLoop) {
+        model.start(subscriber, publisher, eventLoop);
     }
 
     @Override

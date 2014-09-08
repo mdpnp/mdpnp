@@ -17,6 +17,7 @@ import java.awt.Color;
 import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
 public interface VitalModel {
@@ -47,7 +48,7 @@ public interface VitalModel {
 
     ice.GlobalAlarmSettingsObjectiveDataWriter getWriter();
 
-    void start(Subscriber subscriber, EventLoop eventLoop);
+    void start(Subscriber subscriber, Publisher publisher, EventLoop eventLoop);
 
     void stop();
 

@@ -8,7 +8,9 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.AbstractListModel;
 import javax.swing.JButton;
@@ -20,6 +22,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.publication.PublisherQos;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 
@@ -27,17 +31,29 @@ import com.rti.dds.subscription.SubscriberQos;
 public class PartitionChooser extends JDialog {
     
     protected Subscriber subscriber;
+    protected Publisher publisher;
     protected final MyListModel partitions = new MyListModel();
     protected final JButton ok = new JButton("Ok");
         
     public void refresh() {
         partitions.clear();
+        Set<String> parts = new HashSet<String>();
         if(subscriber != null) {
             SubscriberQos qos = new SubscriberQos();
             subscriber.get_qos(qos);
             for(int i = 0; i < qos.partition.name.size(); i++) {
-                partitions.add((String) qos.partition.name.get(i));
+                parts.add((String)qos.partition.name.get(i));
             }
+        }
+        if(publisher != null) {
+            PublisherQos qos = new PublisherQos();
+            publisher.get_qos(qos);
+            for(int i = 0; i < qos.partition.name.size(); i++) {
+                parts.add((String)qos.partition.name.get(i));
+            }
+        }
+        for(String s : parts) {
+            partitions.add(s);
         }
     }
     
@@ -145,14 +161,28 @@ public class PartitionChooser extends JDialog {
         ok.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                SubscriberQos qos = new SubscriberQos();
-                
-                subscriber.get_qos(qos);
-                qos.partition.name.clear();
-                for(String s : partitions.values) {
-                    qos.partition.name.add(s);
+                {
+                    SubscriberQos qos = new SubscriberQos();
+                    
+                    subscriber.get_qos(qos);
+                    qos.partition.name.clear();
+                    for(String s : partitions.values) {
+                        qos.partition.name.add(s);
+                    }
+                    subscriber.set_qos(qos);
                 }
-                subscriber.set_qos(qos);
+                {
+                    PublisherQos qos = new PublisherQos();
+                    publisher.get_qos(qos);
+                    qos.asynchronous_publisher.thread.priority = Thread.NORM_PRIORITY;
+                    qos.asynchronous_publisher.asynchronous_batch_thread.priority = Thread.NORM_PRIORITY;
+                    System.out.println(qos);
+                    qos.partition.name.clear();
+                    for(String s : partitions.values) {
+                        qos.partition.name.add(s);
+                    }
+                    publisher.set_qos(qos);
+                }
                 PartitionChooser.this.setVisible(false);
             }
             
@@ -161,5 +191,8 @@ public class PartitionChooser extends JDialog {
     
     public void set(Subscriber sub) {
         this.subscriber = sub;
+    }
+    public void set(Publisher pub) {
+        this.publisher = pub;
     }
 }
