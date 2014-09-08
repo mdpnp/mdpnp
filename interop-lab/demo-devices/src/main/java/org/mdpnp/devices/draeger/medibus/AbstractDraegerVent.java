@@ -46,9 +46,10 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     private Map<Enum<?>, String> numerics = new HashMap<Enum<?>, String>();
     private Map<Enum<?>, String> waveforms = new HashMap<Enum<?>, String>();
 
-    protected Map<Enum<?>, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Enum<?>, InstanceHolder<ice.Numeric>>();
-    protected Map<Enum<?>, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Enum<?>, InstanceHolder<ice.SampleArray>>();
-    protected Map<Enum<?>, InstanceHolder<ice.AlarmSettings>> alarmSettingsUpdates = new HashMap<Enum<?>, InstanceHolder<ice.AlarmSettings>>();
+    protected Map<Object, InstanceHolder<ice.Numeric>> settingUpdates = new HashMap<Object, InstanceHolder<ice.Numeric>>();
+    protected Map<Object, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Object, InstanceHolder<ice.Numeric>>();
+    protected Map<Object, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Object, InstanceHolder<ice.SampleArray>>();
+    protected Map<Object, InstanceHolder<ice.AlarmSettings>> alarmSettingsUpdates = new HashMap<Object, InstanceHolder<ice.AlarmSettings>>();
     
     
     protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate;
@@ -102,21 +103,16 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         realtimeBuffer[streamIndex][realtimeBufferCount[streamIndex]++] = value;
         if (realtimeBufferCount[streamIndex] == realtimeBuffer[streamIndex].length) {
             realtimeBufferCount[streamIndex] = 0;
-
+            String metric_id = null;
             // flush
             if (code instanceof Enum<?>) {
-                String metric_id = waveforms.get(code);
-                if (null != metric_id) {
-                    sampleArrayUpdates.put(
-                            (Enum<?>) code,
+                metric_id = waveforms.get(code);
+            }
+            metric_id = null == metric_id ? ("DRAEGER_RT_"+code.toString()) : metric_id;
+            sampleArrayUpdates.put(
+                            code,
                             sampleArraySample(sampleArrayUpdates.get(code), realtimeBuffer[streamIndex],
                                    metric_id, config.interval * multiplier, currentTime()));
-                } else {
-                    log.trace("No nomenclature code for enum code=" + code + " class=" + code.getClass().getName());
-                }
-            } else {
-                log.trace("No enumerated type for code=" + code + " class=" + code.getClass().getName());
-            }
         }
     }
 
@@ -124,6 +120,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected void unregisterAllNumericInstances() {
         super.unregisterAllNumericInstances();
         numericUpdates.clear();
+        settingUpdates.clear();
     }
 
     @Override
@@ -212,7 +209,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
         
         @Override
-        protected void receiveTextMessage(Data[] data, int n) {
+        protected void receiveTextMessage(Data[] data) {
             markOldPatientAlertInstances();
             for(Data d : data) {
                 if(null != d) {
@@ -223,14 +220,23 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
 
         @Override
-        protected void receiveDeviceSetting(Data[] data, int n) {
-            // TODO EMIT DEVICE SETTINGS
+        protected void receiveDeviceSetting(Data[] data) {
             try {
                 getDelegate().sendCommand(Command.ReqMeasuredDataCP1);
             } catch (IOException e) {
                 log.error(e.getMessage(), e);
             }
-
+            for(Data d : data) {
+                String metric = "DRAEGER_SETTING_"+d.code.toString();
+                String s = null == d.data ? null : d.data.toString().trim();
+                Float f = null;
+                try {
+                    f = Float.parseFloat(s);
+                } catch (NumberFormatException nfe) {
+                    log.error("Bad number format " + d.code + " " + d.data, nfe);
+                }
+                settingUpdates.put(d.code,  numericSample(settingUpdates.get(d.code), f, metric, currentTime()));
+            }
         }
 
         @Override
@@ -261,29 +267,18 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             super.receiveDataCodes(cmdEcho, response, len);
         }
         @Override
-        protected void receiveMeasuredData(Data[] data, int n) {
+        protected void receiveMeasuredData(Data[] data) {
             for(Data d : data) {
-                if(d != null) {
-                    try {
-                        if(d.code instanceof Enum<?>) {
-                            String metric = numerics.get(d.code);
-                            if(null != metric) {
-                                String s = null == d.data ? null : d.data.toString().trim();
-                                if (null != s) {
-                                    numericUpdates.put((Enum<?>) d.code,  numericSample(numericUpdates.get(d.code), Float.parseFloat(s), metric, currentTime()));
-                                } else {
-                                    numericUpdates.put((Enum<?>) d.code,  numericSample(numericUpdates.get(d.code), (Float) null, metric, currentTime()));
-                                }
-                            } else {
-                                log.debug("No metric mapped for code=" + d.code +" data="+d.data);
-                            }
-                        } else {
-                            log.debug("Unknown code="+d.code+" data="+d.data);
-                        }
-                    } catch (NumberFormatException nfe) {
-                        log.error("Bad number format " + d.data, nfe);
-                    }
+                String metric = numerics.get(d.code);
+                metric = null == metric ? ("DRAEGER_MEASURED_"+d.code.toString()) : metric;
+                String s = null == d.data ? null : d.data.toString().trim();
+                Float f = null;
+                try {
+                    f = Float.parseFloat(s);
+                } catch (NumberFormatException nfe) {
+                    log.error("Bad number format " + d.code + " " + d.data, nfe);
                 }
+                numericUpdates.put(d.code,  numericSample(numericUpdates.get(d.code), f, metric, currentTime()));
             }
         }
 
@@ -316,52 +311,41 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
         
         @Override
-        protected void receiveLowAlarmLimits(Data[] data, int n) {
+        protected void receiveLowAlarmLimits(Data[] data) {
             for(Data d : data) {
-                if(d != null) {
-                    try {
-                        InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
-                        String metric = numerics.get(d.code);
-                        if(null != metric) {
-                            alarmSettingsUpdates.put((Enum<?>) d.code, alarmSettingsSample(a, Float.parseFloat(d.data), null==a?null:a.data.upper, metric));
-                        } else {
-                            log.debug("No metric for alarm code " + d.code);
-                        }
-                    } catch (NumberFormatException nfe) {
-                        log.error("Badly formatted number " + d.data, nfe);
-                    }
+                Float f = null;
+                try {
+                    f = Float.parseFloat(d.data);
+                } catch (NumberFormatException nfe) {
+                    log.error("Badly formatted number " + d.data, nfe);
                 }
+                InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
+                String metric = numerics.get(d.code);
+                metric = null == metric ? ("DRAEGER_"+d.code.toString()) : metric;
+                alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, f, null==a?Float.MAX_VALUE:a.data.upper, metric));
             }
         }
         
         @Override
-        protected void receiveHighAlarmLimits(Data[] data, int n) {
+        protected void receiveHighAlarmLimits(Data[] data) {
             for(Data d : data) {
-                if(d != null) {
-                    try {
-                        InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
-                        String metric = numerics.get(d.code);
-                        if(null != metric) {
-                            alarmSettingsUpdates.put((Enum<?>) d.code, alarmSettingsSample(a, null==a?null:a.data.lower, Float.parseFloat(d.data), metric));
-                        } else {
-                            log.debug("No metric for alarm code " + d.code);
-                        }
-                    } catch (NumberFormatException nfe) {
-                        log.error("Badly formatted number " + d.data, nfe);
-                    }
+                Float f = null;
+                try {
+                    f = Float.parseFloat(d.data);
+                } catch (NumberFormatException nfe) {
+                    log.error("Badly formatted number " + d.data, nfe);
                 }
+                InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
+                String metric = numerics.get(d.code);
+                metric = null == metric ? ("DRAEGER_"+d.code.toString()) : metric;
+                alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, null==a?Float.MIN_VALUE:a.data.lower,f, metric));
             }
-            
         }
         
         @Override
         protected void receiveAlarms(Alarm[] alarms) {
             for(Alarm a : alarms) {
-                if(a.alarmCode instanceof Enum<?>) {
-                    writeTechnicalAlert(a.alarmCode.toString(), a.alarmPhrase);
-                } else {
-                    log.debug("Unknown alarmCode="+a.alarmCode+" alarmPhrase="+a.alarmPhrase);
-                }
+                writeTechnicalAlert(a.alarmCode.toString(), a.alarmPhrase);
             }
         }
 
@@ -379,7 +363,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         @Override
         protected void receiveDateTime(Date date) {
             deviceClockOffset = date.getTime() - System.currentTimeMillis();
-            log.debug("Local clock offset " + deviceClockOffset + "ms from device");
+            log.debug("Device says date is: " + date + " - Local clock offset " + deviceClockOffset + "ms from device");
         }
 
         @Override

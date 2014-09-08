@@ -16,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -35,6 +36,7 @@ import org.mdpnp.devices.draeger.medibus.types.MeasuredDataCP1;
 import org.mdpnp.devices.draeger.medibus.types.MeasuredDataCP2;
 import org.mdpnp.devices.draeger.medibus.types.Setting;
 import org.mdpnp.devices.draeger.medibus.types.TextMessage;
+import org.mdpnp.devices.io.util.HexUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -365,20 +367,6 @@ public class Medibus {
         }
     }
 
-    protected Data[] data = new Data[0];
-
-    protected Data[] ensureLength(int n) {
-        if (data.length < n) {
-            Data[] new_data = new Data[n];
-            System.arraycopy(this.data, 0, new_data, 0, data.length);
-            for (int i = this.data.length; i < n; i++) {
-                new_data[i] = new Data();
-            }
-            this.data = new_data;
-        }
-        return this.data;
-    }
-
     protected void receiveDataCodes(Command cmdEcho, byte[] response, int len) {
         int codepage = 0;
 
@@ -396,16 +384,12 @@ public class Medibus {
         default:
             throw new IllegalArgumentException("Unknown cmd:" + cmdEcho);
         }
+        len -= 3;
         int n = len / 6;
-        Data[] data = ensureLength(n);
+        Data[] data = new Data[n];
 
-        // Data[] data = new Data[len / 6];
         for (int i = 0; i < n; i++) {
-            if (null == data[i]) {
-                log.warn("Allocating data on the fly .. this shouldn't happen");
-                data[i] = new Data();
-            }
-            // data[i] = new Data();
+            data[i] = new Data();
             switch (codepage) {
             case 1:
                 data[i].code = MeasuredDataCP1.fromByteIf((byte) recvASCIIHex(response, 1 + i * 6));
@@ -417,45 +401,42 @@ public class Medibus {
 
             data[i].data = new String(response, 1 + i * 6 + 2, 4);
         }
-        for (int i = n; i < this.data.length; i++) {
-            data[i] = null;
-        }
         switch (cmdEcho) {
         case ReqMeasuredDataCP1:
         case ReqMeasuredDataCP2:
-            receiveMeasuredData(data, n);
+            receiveMeasuredData(data);
             break;
         case ReqLowAlarmLimitsCP1:
         case ReqLowAlarmLimitsCP2:
-            receiveLowAlarmLimits(data, n);
+            receiveLowAlarmLimits(data);
             break;
         case ReqHighAlarmLimitsCP1:
         case ReqHighAlarmLimitsCP2:
-            receiveHighAlarmLimits(data, n);
+            receiveHighAlarmLimits(data);
             break;
         default:
             throw new IllegalArgumentException("Unknown cmd:" + cmdEcho);
         }
     }
 
-    protected void receiveMeasuredData(Data[] data, int n) {
+    protected void receiveMeasuredData(Data[] data) {
         log.debug("Measured Data");
-        for (int i = 0; i < n; i++) {
-            log.debug("\t" + data[i]);
+        for (Data d : data) {
+            log.debug("\t" + d);
         }
     }
 
-    protected void receiveLowAlarmLimits(Data[] data, int n) {
+    protected void receiveLowAlarmLimits(Data[] data) {
         log.debug("Low Alarm Limits");
-        for (int i = 0; i < n; i++) {
-            log.debug("\t" + data[i]);
+        for (Data d : data) {
+            log.debug("\t" + d);
         }
     }
 
-    protected void receiveHighAlarmLimits(Data[] data, int n) {
+    protected void receiveHighAlarmLimits(Data[] data) {
         log.debug("High Alarm Limits");
-        for (int i = 0; i < n; i++) {
-            log.debug("\t" + data[i]);
+        for (Data d : data) {
+            log.debug("\t" + d);
         }
     }
 
@@ -509,8 +490,7 @@ public class Medibus {
 
     }
 
-    private static final Pattern timePattern = Pattern.compile("^(\\d+):(\\d+):(\\d+)$");
-    private static final Pattern datePattern = Pattern.compile("(.+)-(.+)-(.+)");
+    private static final Pattern dateTimePattern = Pattern.compile("^(\\d+):(\\d+):?(\\d*)\\s+(.+)-(.+)-(.+)");    
     private static final Map<String, Integer> germanMonths = new HashMap<String, Integer>();
     static {
         germanMonths.put("JAN", Calendar.JANUARY);
@@ -536,24 +516,20 @@ public class Medibus {
     protected void receiveDateTime(byte[] response, int len) {
         Calendar cal = this.calendar.get();
         String s = null;
-        Matcher m = timePattern.matcher(s = new String(response, 1, 8));
+        Matcher m = dateTimePattern.matcher(s = new String(response, 1, len - 3));
+        log.trace("Attempting to parse datetime " + s);
         if (m.matches()) {
             cal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(m.group(1)));
             cal.set(Calendar.MINUTE, Integer.parseInt(m.group(2)));
-            cal.set(Calendar.SECOND, Integer.parseInt(m.group(3)));
+            cal.set(Calendar.SECOND, m.group(3).length()>0?Integer.parseInt(m.group(3)):0);
             cal.set(Calendar.MILLISECOND, 0);
-            m = datePattern.matcher(s = new String(response, 9, 9));
-            if (m.matches()) {
-                cal.set(Calendar.DATE, Integer.parseInt(m.group(1)));
-                cal.set(Calendar.MONTH, germanMonths.get(m.group(2)));
-                // Note the V500 as of 12-Mar-2014 emits "14" as the year
-                cal.set(Calendar.YEAR, 2000 + Integer.parseInt(m.group(3)));
-                receiveDateTime(cal.getTime());
-            } else {
-                log.warn("Received a bad date:" + s);
-            }
+            cal.set(Calendar.DATE, Integer.parseInt(m.group(4)));
+            cal.set(Calendar.MONTH, germanMonths.get(m.group(5)));
+            // Note the V500 as of 12-Mar-2014 emits "14" as the year
+            cal.set(Calendar.YEAR, 2000 + Integer.parseInt(m.group(6)));
+            receiveDateTime(cal.getTime());
         } else {
-            log.warn("Received a bad time:" + s);
+            log.warn("Received a bad datetime:" + s);
         }
     }
 
@@ -562,18 +538,18 @@ public class Medibus {
     }
 
     protected void receiveDeviceSetting(byte[] response, int len) {
+        len -= 3; // leading command and trailing 2byte checksum
         int n = len / 7;
-        ensureLength(n);
-        // Data[] data = new Data[len / 7];
+        Data[] data = new Data[n];
         for (int i = 0; i < n; i++) {
-            // data[i] = new Data();
+            data[i] = new Data();
             data[i].code = Setting.fromByteIf((byte) recvASCIIHex(response, 1 + i * 7));
             data[i].data = new String(response, 1 + i * 7 + 2, 5);
         }
-        receiveDeviceSetting(data, n);
+        receiveDeviceSetting(data);
     }
 
-    protected void receiveDeviceSetting(Data[] data, int n) {
+    protected void receiveDeviceSetting(Data[] data) {
         log.trace("Device Setting");
         for (Data d : data) {
             log.trace("\t" + d);
@@ -582,27 +558,31 @@ public class Medibus {
 
     protected void receiveTextMessage(byte[] response, int len) {
         int off = 0;
-        int i = 0;
-        while (off < len) {
-            ensureLength(i + 1);
-            Data d = data[i++];
-            d.code = TextMessage.fromByteIf((byte) recvASCIIHex(response, off));
-            off += 2;
-            int length = 0xFF & response[off];
-            length -= 0x30;
-            off++;
-            d.data = new String(response, off, length);
-            off += length;
-            // ETX
-            off++;
+        // Take off the checksum bytes and command code from the count
+        len -= 3;
+        
+        int n = 0;
+        while(off < len) {
+            int length = (0xFF & response[1 + off + 2]) - 0x30;
+            off += 4 + length;
+            n++;
         }
-        receiveTextMessage(data, i);
+        Data[] data = new Data[n];
+        off = 0; 
+        for(int i = 0; i < n; i++) {
+            Data d = data[i] = new Data();
+            d.code = TextMessage.fromByteIf((byte) recvASCIIHex(response, 1 + off));
+            int length = (0xFF & response[1 + off + 2]) - 0x30;
+            d.data = new String(response, 1 + off + 3, length);
+            off += 4 + length; // 4 = 2byte code, 1 byte length, 1 byte trailing ETX
+        }
+        
+        receiveTextMessage(data);
     }
 
-    protected void receiveTextMessage(Data[] data, int n) {
+    protected void receiveTextMessage(Data[] data) {
         log.debug("Text Messages");
-        for (int i = 0; i < n; i++) {
-            Data d = data[i];
+        for (Data d : data) {
             log.debug("\t" + d);
         }
     }
@@ -740,6 +720,10 @@ public class Medibus {
                 break;
             case ASCIIByte.CR:
                 if (null != topBuffer) {
+                    if(log.isTraceEnabled()) {
+                        String msg = HexUtil.dump(ByteBuffer.wrap(topBuffer.receiveBuffer, 0, topBuffer.getCount()), 80);
+                        log.trace(msg);
+                    }
                     switch (topBuffer.getType()) {
                     case Command:
                         receiveCommand(topBuffer.getReceiveBuffer(), topBuffer.getCount());
