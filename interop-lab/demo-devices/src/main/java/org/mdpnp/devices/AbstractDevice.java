@@ -350,10 +350,10 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             alarmSettingsSample(holder, newLower, newUpper);
         } else {
             if (null != newLower) {
-                log.warn("Not setting only a lower limit on " + metric_id + " for " + holder.data.unique_device_identifier);
+                log.warn("Not setting only a lower limit on " + metric_id + " for " + deviceIdentity.unique_device_identifier);
             }
             if (null != newUpper) {
-                log.warn("Not setting only an upper limit on " + metric_id + " for " + holder.data.unique_device_identifier);
+                log.warn("Not setting only an upper limit on " + metric_id + " for " + deviceIdentity.unique_device_identifier);
             }
             if (null != holder) {
                 unregisterAlarmSettingsInstance(holder);
@@ -704,12 +704,12 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         executor.shutdown();
         log.info("AbstractDevice shutdown complete");
     }
-
+    
     public AbstractDevice(int domainId, EventLoop eventLoop) {
         DomainParticipantQos pQos = new DomainParticipantQos();
         DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
         pQos.participant_name.name = "Device";
-
+        
         domainParticipant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null, StatusKind.STATUS_MASK_NONE);
         publisher = domainParticipant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         subscriber = domainParticipant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
