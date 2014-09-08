@@ -134,54 +134,6 @@ public class DemoFrame extends JFrame {
             }
             return false;
         } else {
-            // if(isUndecorated()) {
-            // try {
-            // Runnable r = new Runnable() {
-            //
-            // @Override
-            // public void run() {
-            // setVisible(false);
-            // dispose();
-            // setSize(800, 600);
-            // setUndecorated(false);
-            // setVisible(true);
-            // }
-            //
-            // };
-            // if(SwingUtilities.isEventDispatchThread()) {
-            // r.run();
-            // } else {
-            // SwingUtilities.invokeAndWait(r);
-            // }
-            // } catch (Exception e) {
-            // e.printStackTrace();
-            // }
-            // } else {
-            // try {
-            // Runnable r = new Runnable() {
-            //
-            // @Override
-            // public void run() {
-            // setVisible(false);
-            // dispose();
-            // // Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-            // setSize(1280, 700);
-            //
-            // setUndecorated(true);
-            // setVisible(true);
-            // }
-            //
-            // };
-            // if(SwingUtilities.isEventDispatchThread()) {
-            // r.run();
-            // } else {
-            // SwingUtilities.invokeAndWait(r);
-            // }
-            // } catch (Exception e) {
-            // e.printStackTrace();
-            // }
-            //
-            // }
             final GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
             if (null == gd.getFullScreenWindow()) {
                 gd.setFullScreenWindow(this);
