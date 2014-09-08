@@ -27,8 +27,6 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.mdpnp.devices.draeger.medibus.Medibus.Alarm;
-import org.mdpnp.devices.draeger.medibus.Medibus.Data;
 import org.mdpnp.devices.draeger.medibus.RTMedibus.RTTransmit;
 import org.mdpnp.devices.draeger.medibus.types.Command;
 import org.mdpnp.devices.draeger.medibus.types.MeasuredDataCP1;
@@ -50,7 +48,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     protected Map<Enum<?>, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Enum<?>, InstanceHolder<ice.Numeric>>();
     protected Map<Enum<?>, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Enum<?>, InstanceHolder<ice.SampleArray>>();
-
+    protected Map<Enum<?>, InstanceHolder<ice.AlarmSettings>> alarmSettingsUpdates = new HashMap<Enum<?>, InstanceHolder<ice.AlarmSettings>>();
+    
+    
     protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate;
 
     protected long deviceClockOffset = 0L;
@@ -77,28 +77,6 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             currentTime.nanosec = (int) (now % 1000L * 1000000L);
         }
         return currentTime;
-    }
-
-    protected InstanceHolder<ice.Numeric> doNumericUpdate(InstanceHolder<ice.Numeric> update, Object value, String metric_id) {
-        try {
-            // TODO There are weird number formats in medibus .. this will need
-            // enhancement
-
-            if (value instanceof Number) {
-                return numericSample(update, ((Number) value).floatValue(), metric_id, currentTime());
-            } else {
-                String s = null == value ? null : value.toString().trim();
-                if (null != s) {
-                    return numericSample(update, Float.parseFloat(s), metric_id, currentTime());
-                } else {
-                    return numericSample(update, (Float) null, metric_id, currentTime());
-                }
-            }
-
-        } catch (NumberFormatException nfe) {
-            log.trace("Invalid number:" + value);
-            return numericSample(update, (Float) null, metric_id, null);
-        }
     }
 
     protected void processStartInspCycle() {
@@ -153,46 +131,14 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         super.unregisterAllSampleArrayInstances();
         sampleArrayUpdates.clear();
     }
-
-    protected void process(Object code, Object data) {
-        if (code instanceof Enum<?>) {
-            String name = numerics.get(code);
-            if (null != name) {
-                numericUpdates.put((Enum<?>) code, doNumericUpdate(numericUpdates.get(code), data, name));
-            } else {
-                log.trace("No nomenclature code for enum code=" + code + " class=" + code.getClass().getName());
-            }
-        } else {
-            log.trace("No enumerated type for code=" + code + " class=" + code.getClass().getName());
-        }
-    }
-
-    protected void process(Data d) {
-        process(d.code, d.data);
-    }
-
-    protected void process(Alarm a) {
-        process(a.alarmCode, a.alarmPhrase);
-    }
-
-    protected void process(Alarm[] alarms) {
-        for (Alarm a : alarms) {
-            process(a);
-        }
-    }
-
-    protected void process(Date date) {
-        deviceClockOffset = date.getTime() - System.currentTimeMillis();
-        log.debug("Local clock offset " + deviceClockOffset + "ms from device");
+    
+    @Override
+    protected void unregisterAllAlarmSettingsInstances() {
+        super.unregisterAllAlarmSettingsInstances();
+        alarmSettingsUpdates.clear();
     }
 
     protected void processCorrupt() {
-    }
-
-    protected void process(Data[] data, int n) {
-        for (int i = 0; i < n; i++) {
-            process(data[i]);
-        }
     }
 
     private class MyRTMedibus extends RTMedibus {
@@ -255,14 +201,28 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
 
         @Override
+        protected void receiveTextMessage(byte[] response, int len) {
+            try {
+                lastReqDateTime = System.currentTimeMillis();
+                getDelegate().sendCommand(Command.ReqDateTime);
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+            super.receiveTextMessage(response, len);
+        }
+        
+        @Override
         protected void receiveTextMessage(Data[] data, int n) {
-            process(data, n);
+            markOldPatientAlertInstances();
+            for(Data d : data) {
+                writePatientAlert(d.code.toString(), d.data);
+            }
+            clearOldPatientAlertInstances();
         }
 
         @Override
         protected void receiveDeviceSetting(Data[] data, int n) {
-            process(data, n);
-            lastReqDeviceSetting = System.currentTimeMillis();
+            // TODO EMIT DEVICE SETTINGS
             try {
                 getDelegate().sendCommand(Command.ReqMeasuredDataCP1);
             } catch (IOException e) {
@@ -272,13 +232,54 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
 
         @Override
-        protected void receiveMeasuredData(Data[] data, int n) {
-            process(data, n);
-            lastReqMeasuredDataCP1 = System.currentTimeMillis();
+        protected void receiveDataCodes(Command cmdEcho, byte[] response, int len) {
             try {
-                getDelegate().sendCommand(Command.ReqDateTime);
+                switch(cmdEcho) {
+                case ReqMeasuredDataCP1:
+                    getDelegate().sendCommand(Command.ReqMeasuredDataCP2);
+                    break;
+                case ReqMeasuredDataCP2:
+                    getDelegate().sendCommand(Command.ReqLowAlarmLimitsCP1);
+                    break;
+                case ReqLowAlarmLimitsCP1:
+                    getDelegate().sendCommand(Command.ReqLowAlarmLimitsCP2);
+                    break;
+                case ReqLowAlarmLimitsCP2:
+                    getDelegate().sendCommand(Command.ReqHighAlarmLimitsCP1);
+                    break;
+                case ReqHighAlarmLimitsCP1:
+                    markOldTechnicalAlertInstances();
+                    getDelegate().sendCommand(Command.ReqAlarmsCP1);
+                    break;
+                default:
+                }
             } catch (IOException e) {
                 log.error(e.getMessage(), e);
+            }
+            super.receiveDataCodes(cmdEcho, response, len);
+        }
+        @Override
+        protected void receiveMeasuredData(Data[] data, int n) {
+            for(Data d : data) {
+                try {
+                    if(d.code instanceof Enum<?>) {
+                        String metric = numerics.get(d.code);
+                        if(null != metric) {
+                            String s = null == d.data ? null : d.data.toString().trim();
+                            if (null != s) {
+                                numericUpdates.put((Enum<?>) d.code,  numericSample(numericUpdates.get(d.code), Float.parseFloat(s), metric, currentTime()));
+                            } else {
+                                numericUpdates.put((Enum<?>) d.code,  numericSample(numericUpdates.get(d.code), (Float) null, metric, currentTime()));
+                            }
+                        } else {
+                            log.debug("No metric mapped for code=" + d.code +" data="+d.data);
+                        }
+                    } else {
+                        log.debug("Unknown code="+d.code+" data="+d.data);
+                    }
+                } catch (NumberFormatException nfe) {
+                    log.error("Bad number format " + d.data, nfe);
+                }
             }
         }
 
@@ -293,23 +294,84 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
 
         @Override
-        protected void receiveAlarms(Alarm[] alarms) {
-            process(alarms);
-        }
-
-        @Override
-        protected void receiveDateTime(byte[] response, int len) {
-            super.receiveDateTime(response, len);
+        protected void receiveAlarmCodes(Command cmdEcho, byte[] response, int len) {
             try {
-                getDelegate().sendCommand(Command.ReqDeviceSetting);
+                switch(cmdEcho) {
+                case ReqAlarmsCP1:
+                    getDelegate().sendCommand(Command.ReqAlarmsCP2);
+                    break;
+                case ReqAlarmsCP2:
+                    getDelegate().sendCommand(Command.ReqTextMessages);
+                    break;
+                default:
+                }
             } catch (IOException e) {
                 log.error(e.getMessage(), e);
+            }
+            super.receiveAlarmCodes(cmdEcho, response, len);
+        }
+        
+        @Override
+        protected void receiveLowAlarmLimits(Data[] data, int n) {
+            for(Data d : data) {
+                try {
+                    InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
+                    String metric = numerics.get(d.code);
+                    if(null != metric) {
+                        alarmSettingsUpdates.put((Enum<?>) d.code, alarmSettingsSample(a, Float.parseFloat(d.data), null==a?null:a.data.upper, metric));
+                    } else {
+                        log.debug("No metric for alarm code " + d.code);
+                    }
+                } catch (NumberFormatException nfe) {
+                    log.error("Badly formatted number " + d.data, nfe);
+                }
             }
         }
         
         @Override
+        protected void receiveHighAlarmLimits(Data[] data, int n) {
+            for(Data d : data) {
+                try {
+                    InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
+                    String metric = numerics.get(d.code);
+                    if(null != metric) {
+                        alarmSettingsUpdates.put((Enum<?>) d.code, alarmSettingsSample(a, null==a?null:a.data.lower, Float.parseFloat(d.data), metric));
+                    } else {
+                        log.debug("No metric for alarm code " + d.code);
+                    }
+                } catch (NumberFormatException nfe) {
+                    log.error("Badly formatted number " + d.data, nfe);
+                }
+            }
+            
+        }
+        
+        @Override
+        protected void receiveAlarms(Alarm[] alarms) {
+            for(Alarm a : alarms) {
+                if(a.alarmCode instanceof Enum<?>) {
+                    writeTechnicalAlert(a.alarmCode.toString(), a.alarmPhrase);
+                } else {
+                    log.debug("Unknown alarmCode="+a.alarmCode+" alarmPhrase="+a.alarmPhrase);
+                }
+            }
+        }
+
+        @Override
+        protected void receiveDateTime(byte[] response, int len) {
+            try {
+                
+                getDelegate().sendCommand(Command.ReqDeviceSetting);
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+            super.receiveDateTime(response, len);
+        }
+        
+        @Override
         protected void receiveDateTime(Date date) {
-            process(date);
+            deviceClockOffset = date.getTime() - System.currentTimeMillis();
+            log.debug("Local clock offset " + deviceClockOffset + "ms from device");
         }
 
         @Override
@@ -322,7 +384,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     private static final RealtimeData[] REQUEST_REALTIME = new RealtimeData[] { RealtimeData.AirwayPressure, RealtimeData.FlowInspExp,
             RealtimeData.ExpiratoryCO2mmHg, RealtimeData.O2InspExp };
 
-    private long lastDateTime, lastReqDeviceSetting, lastReqMeasuredDataCP1;
+    private long lastReqDateTime;
 
     private class RequestSlowData implements Runnable {
         public void run() {
@@ -340,9 +402,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     }
                     long now = System.currentTimeMillis();
 
-                    if (now - lastDateTime >= 10000L || now - lastReqDeviceSetting >= 10000L || now - lastReqMeasuredDataCP1 >= 10000L) {
+                    if (now - lastReqDateTime >= 15000L) {
                         log.debug("Slow data too old, requesting DateTime");
-                        lastDateTime = lastReqDeviceSetting = lastReqMeasuredDataCP1 = now;
+                        lastReqDateTime = now;
                         medibus.sendCommand(Command.ReqDateTime);
                         return;
                     }
