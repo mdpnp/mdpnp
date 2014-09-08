@@ -582,19 +582,16 @@ public class Medibus {
 
     protected void receiveTextMessage(byte[] response, int len) {
         int off = 0;
-        // java.util.List<Data> data = new java.util.ArrayList<Data>();
         int i = 0;
         while (off < len) {
             ensureLength(i + 1);
-            // Data d = new Data();
-            // data.add(d);
             Data d = data[i++];
-            d.code = TextMessage.fromByteIf((byte) recvASCIIHex(response, 1 + off));
+            d.code = TextMessage.fromByteIf((byte) recvASCIIHex(response, off));
             off += 2;
-            int length = 0xFF & response[1 + off];
+            int length = 0xFF & response[off];
             length -= 0x30;
             off++;
-            d.data = new String(response, 1 + off, length);
+            d.data = new String(response, off, length);
             off += length;
             // ETX
             off++;
