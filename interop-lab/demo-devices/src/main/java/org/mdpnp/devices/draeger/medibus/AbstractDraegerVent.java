@@ -215,7 +215,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         protected void receiveTextMessage(Data[] data, int n) {
             markOldPatientAlertInstances();
             for(Data d : data) {
-                writePatientAlert(d.code.toString(), d.data);
+                if(null != d) {
+                    writePatientAlert(d.code.toString(), d.data);
+                }
             }
             clearOldPatientAlertInstances();
         }
@@ -261,24 +263,26 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         @Override
         protected void receiveMeasuredData(Data[] data, int n) {
             for(Data d : data) {
-                try {
-                    if(d.code instanceof Enum<?>) {
-                        String metric = numerics.get(d.code);
-                        if(null != metric) {
-                            String s = null == d.data ? null : d.data.toString().trim();
-                            if (null != s) {
-                                numericUpdates.put((Enum<?>) d.code,  numericSample(numericUpdates.get(d.code), Float.parseFloat(s), metric, currentTime()));
+                if(d != null) {
+                    try {
+                        if(d.code instanceof Enum<?>) {
+                            String metric = numerics.get(d.code);
+                            if(null != metric) {
+                                String s = null == d.data ? null : d.data.toString().trim();
+                                if (null != s) {
+                                    numericUpdates.put((Enum<?>) d.code,  numericSample(numericUpdates.get(d.code), Float.parseFloat(s), metric, currentTime()));
+                                } else {
+                                    numericUpdates.put((Enum<?>) d.code,  numericSample(numericUpdates.get(d.code), (Float) null, metric, currentTime()));
+                                }
                             } else {
-                                numericUpdates.put((Enum<?>) d.code,  numericSample(numericUpdates.get(d.code), (Float) null, metric, currentTime()));
+                                log.debug("No metric mapped for code=" + d.code +" data="+d.data);
                             }
                         } else {
-                            log.debug("No metric mapped for code=" + d.code +" data="+d.data);
+                            log.debug("Unknown code="+d.code+" data="+d.data);
                         }
-                    } else {
-                        log.debug("Unknown code="+d.code+" data="+d.data);
+                    } catch (NumberFormatException nfe) {
+                        log.error("Bad number format " + d.data, nfe);
                     }
-                } catch (NumberFormatException nfe) {
-                    log.error("Bad number format " + d.data, nfe);
                 }
             }
         }
@@ -314,16 +318,18 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         @Override
         protected void receiveLowAlarmLimits(Data[] data, int n) {
             for(Data d : data) {
-                try {
-                    InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
-                    String metric = numerics.get(d.code);
-                    if(null != metric) {
-                        alarmSettingsUpdates.put((Enum<?>) d.code, alarmSettingsSample(a, Float.parseFloat(d.data), null==a?null:a.data.upper, metric));
-                    } else {
-                        log.debug("No metric for alarm code " + d.code);
+                if(d != null) {
+                    try {
+                        InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
+                        String metric = numerics.get(d.code);
+                        if(null != metric) {
+                            alarmSettingsUpdates.put((Enum<?>) d.code, alarmSettingsSample(a, Float.parseFloat(d.data), null==a?null:a.data.upper, metric));
+                        } else {
+                            log.debug("No metric for alarm code " + d.code);
+                        }
+                    } catch (NumberFormatException nfe) {
+                        log.error("Badly formatted number " + d.data, nfe);
                     }
-                } catch (NumberFormatException nfe) {
-                    log.error("Badly formatted number " + d.data, nfe);
                 }
             }
         }
@@ -331,16 +337,18 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         @Override
         protected void receiveHighAlarmLimits(Data[] data, int n) {
             for(Data d : data) {
-                try {
-                    InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
-                    String metric = numerics.get(d.code);
-                    if(null != metric) {
-                        alarmSettingsUpdates.put((Enum<?>) d.code, alarmSettingsSample(a, null==a?null:a.data.lower, Float.parseFloat(d.data), metric));
-                    } else {
-                        log.debug("No metric for alarm code " + d.code);
+                if(d != null) {
+                    try {
+                        InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
+                        String metric = numerics.get(d.code);
+                        if(null != metric) {
+                            alarmSettingsUpdates.put((Enum<?>) d.code, alarmSettingsSample(a, null==a?null:a.data.lower, Float.parseFloat(d.data), metric));
+                        } else {
+                            log.debug("No metric for alarm code " + d.code);
+                        }
+                    } catch (NumberFormatException nfe) {
+                        log.error("Badly formatted number " + d.data, nfe);
                     }
-                } catch (NumberFormatException nfe) {
-                    log.error("Badly formatted number " + d.data, nfe);
                 }
             }
             
