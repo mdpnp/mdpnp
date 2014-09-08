@@ -649,8 +649,6 @@ public class Medibus {
         log.trace("DeviceId=" + idNumber + " name=" + name + " revision=" + revision);
     }
 
-    private final byte[] receiveBuffer = new byte[32000];
-
     private static class Buffer {
         public Buffer(Type type) {
             this.type = type;
