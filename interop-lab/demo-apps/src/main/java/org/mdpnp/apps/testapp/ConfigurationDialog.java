@@ -16,6 +16,7 @@ import java.awt.CardLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -166,16 +167,12 @@ public class ConfigurationDialog extends JDialog {
         addWithAnchor(c, gbc, GridBagConstraints.WEST, GridBagConstraints.NONE);
     }
 
-    public ConfigurationDialog() {
-        this(false);
+    public ConfigurationDialog(Window window) {
+        this(null, window);
     }
 
-    public ConfigurationDialog(boolean ddsDebug) {
-        this(null, ddsDebug);
-    }
-
-    public ConfigurationDialog(Configuration conf, boolean ddsDebug) {
-        super((JDialog) null, true);
+    public ConfigurationDialog(Configuration conf, Window window) {
+        super(window, ModalityType.APPLICATION_MODAL);
 
         if (null != conf) {
             if (null != conf.getApplication()) {

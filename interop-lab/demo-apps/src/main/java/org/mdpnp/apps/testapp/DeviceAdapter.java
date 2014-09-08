@@ -47,7 +47,16 @@ public class DeviceAdapter {
     private JFrame frame;
     private AbstractDevice device;
     private EventLoopHandler handler;
+    private String[] initialPartition;
+    
+    public void setInitialPartition(String[] initialPartition) {
+        this.initialPartition = initialPartition;
+    }
 
+    public AbstractDevice getDevice() {
+        return device;
+    }
+    
     public JFrame getFrame() {
         return frame;
     }
@@ -132,6 +141,10 @@ public class DeviceAdapter {
         }
 
         device = DeviceFactory.buildDevice(type, domainId, eventLoop);
+        
+        if(null != initialPartition) {
+            device.setPartition(initialPartition);
+        }
 
         if (gui) {
             

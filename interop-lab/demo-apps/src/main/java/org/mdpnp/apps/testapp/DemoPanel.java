@@ -21,8 +21,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -48,7 +46,6 @@ import javax.swing.border.EmptyBorder;
  *
  */
 public class DemoPanel extends JPanel implements Runnable {
-    private final PartitionChooser partitionChooser = new PartitionChooser();
     private final ImageIcon ice_cubes = new ImageIcon(DemoPanel.class.getResource("blue_ice_cubes.jpg"));
     private final ImageIcon mdpnp = new ImageIcon(DemoPanel.class.getResource("mdpnp-small.png"));
 
@@ -90,10 +87,6 @@ public class DemoPanel extends JPanel implements Runnable {
     public JButton getBack() {
         return back;
     }
-    
-    public PartitionChooser getPartitionChooser() {
-        return partitionChooser;
-    }
 
     private void buildHeader() {
         
@@ -121,53 +114,10 @@ public class DemoPanel extends JPanel implements Runnable {
         patientLabel.setForeground(darkBlue);
         patientLabel.setFont(bedLabel.getFont());
         patientLabel.setOpaque(false);
-        partitionChooser.setSize(320, 240);
-        patientLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                super.mouseClicked(e);
-                partitionChooser.setLocationRelativeTo(patientLabel);
-                partitionChooser.setVisible(true);
-            }
-        });
-        // SpaceFillLabel.attachResizeFontToFill( header, bedLabel,
-        // patientLabel);
-
     }
 
     private void buildContent() {
-        // JTable table = new JTable(new Object[][] { {"Tomato", "Orange"},
-        // {"Banana", "Cantaloupe"} }, new Object[] {"First", "Second"});
-        // table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer()
-        // {
-        // @Override
-        // public Component getTableCellRendererComponent(JTable table,
-        // Object value, boolean isSelected, boolean hasFocus,
-        // int row, int column) {
-        // Component c = super.getTableCellRendererComponent(table, value,
-        // isSelected, hasFocus,
-        // row, column);
-        // ((JComponent)c).setOpaque(false);
-        // ((JComponent)c).setBorder(new EmptyBorder(0,0,0,0));
-        //
-        // // c.setBackground(new Color(1.0f, 1.0f, 1.0f, 1.0f));
-        // return c;
-        // }
-        // });
-        // table.getTableHeader().setOpaque(false);
-        // table.setGridColor(new Color(1.0f,1.0f,1.0f,1.0f));
-        // table.setShowGrid(false);
-        //
-        // table.setIntercellSpacing(new Dimension(0,0));
-        //
-        // JScrollPane scroll = new JScrollPane(table);
-        // scroll.getViewport().setOpaque(false);
-        // scroll.setViewportBorder(new EmptyBorder(0,0,0,0));
-        // scroll.setBorder(new EmptyBorder(0,0,0,0));
-        //
-        // scroll.setOpaque(false);
-        // table.setOpaque(false);
-        // content.add(scroll);
+
         content.setOpaque(false);
         add(content, BorderLayout.CENTER);
     }

@@ -24,6 +24,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.TimeZone;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -60,10 +62,12 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
+import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriberQos;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicDescription;
 
@@ -76,12 +80,14 @@ public class DemoApp {
 
     private static String goback = null;
     private static Runnable goBackAction = null;
-    private static DemoPanel panel;
+    protected static DemoPanel panel;
     private static String gobackPatient, gobackBed;
     private static Font gobackPatientFont;
     private static Color gobackPatientColor;
     private static int verticalAlignment, verticalTextAlignment;
     private static CardLayout ol;
+    private static PartitionChooser partitionChooser;
+    private static DiscoveryPeers discoveryPeers;
 
     private static void setGoBack(String goback, Runnable goBackAction) {
         DemoApp.goback = goback;
@@ -189,7 +195,14 @@ public class DemoApp {
         final DemoFrame frame = new DemoFrame("ICE Supervisor");
         frame.setIconImage(ImageIO.read(DemoApp.class.getResource("icon.png")));
         panel = new DemoPanel();
-        panel.getPartitionChooser().add(subscriber);
+        partitionChooser = new PartitionChooser(frame);
+        partitionChooser.setSize(320, 240);
+        partitionChooser.set(subscriber);
+        
+        discoveryPeers = new DiscoveryPeers(frame);
+        discoveryPeers.setSize(320, 240);
+        discoveryPeers.set(subscriber.get_participant());
+        
         switch (domainId) {
         case 0:
             panel.getBedLabel().setText("ICE Test Domain " + domainId);
@@ -213,6 +226,28 @@ public class DemoApp {
         panel.getContent().add(mainMenuPanel, AppType.Main.getId());
         ol.show(panel.getContent(), AppType.Main.getId());
 
+        mainMenuPanel.getPartitionChooser().addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                partitionChooser.refresh();
+                partitionChooser.setLocationRelativeTo(DemoApp.panel);
+                partitionChooser.setVisible(true);
+            }
+            
+        });
+        
+        mainMenuPanel.getDiscoveryPeers().addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                discoveryPeers.setLocationRelativeTo(DemoApp.panel);
+                discoveryPeers.setVisible(true);
+            }
+            
+        });
+        
+        
         final CompositeDevicePanel devicePanel = new CompositeDevicePanel();
         panel.getContent().add(devicePanel, AppType.Device.getId());
 
@@ -337,7 +372,7 @@ public class DemoApp {
             @SuppressWarnings({ "rawtypes" })
             @Override
             public void actionPerformed(ActionEvent e) {
-                ConfigurationDialog dia = new ConfigurationDialog();
+                ConfigurationDialog dia = new ConfigurationDialog(null, frame);
                 dia.setTitle("Create a local ICE Device Adapter");
                 dia.getApplications().setModel(
                         new DefaultComboBoxModel(new Configuration.Application[] { Configuration.Application.ICE_Device_Interface }));
@@ -360,7 +395,22 @@ public class DemoApp {
                     Thread t = new Thread(new Runnable() {
                         public void run() {
                             try {
+                                DomainParticipantQos pQos = new DomainParticipantQos();
+                                DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
+                                pQos.discovery.initial_peers.clear();
+                                for(int i = 0; i < discoveryPeers.peers.getSize(); i++) {
+                                    pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
+                                    System.err.println("PEER:"+discoveryPeers.peers.getElementAt(i));
+                                }
+                                DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
+                                SubscriberQos qos = new SubscriberQos();
+                                subscriber.get_qos(qos);
+                                List<String> partition = new ArrayList<String>();
+                                for(int i = 0; i < qos.partition.name.size(); i++) {
+                                    partition.add((String)qos.partition.name.get(i));
+                                }
                                 DeviceAdapter da = new DeviceAdapter();
+                                da.setInitialPartition(partition.toArray(new String[0]));
                                 da.start(c.getDeviceType(), domainId, c.getAddress(), true, false, eventLoop);
                                 log.info("DeviceAdapter ended");
                             } catch (Exception e) {

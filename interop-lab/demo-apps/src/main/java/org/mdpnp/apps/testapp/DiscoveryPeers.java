@@ -20,26 +20,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.SubscriberQos;
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantQos;
 
 @SuppressWarnings("serial")
-public class PartitionChooser extends JDialog {
+public class DiscoveryPeers extends JDialog {
     
-    protected Subscriber subscriber;
-    protected final MyListModel partitions = new MyListModel();
+    protected DomainParticipant participant;
+    protected final MyListModel peers = new MyListModel();
     protected final JButton ok = new JButton("Ok");
-        
-    public void refresh() {
-        partitions.clear();
-        if(subscriber != null) {
-            SubscriberQos qos = new SubscriberQos();
-            subscriber.get_qos(qos);
-            for(int i = 0; i < qos.partition.name.size(); i++) {
-                partitions.add((String) qos.partition.name.get(i));
-            }
-        }
-    }
     
     public static final class MyListModel extends AbstractListModel<String> {
         
@@ -79,23 +68,23 @@ public class PartitionChooser extends JDialog {
         }
     };
     
-    protected final JList<String> list = new JList<String>(partitions);
+    protected final JList<String> list = new JList<String>(peers);
     protected final JTextField field = new JTextField();
     
     
-    public PartitionChooser(Window window) {
+    public DiscoveryPeers(Window window) {
         super(window);
-        setTitle("Partition Chooser");
+        setTitle("Discovery Peers");
         getContentPane().setLayout(new BorderLayout());
         enableEvents(ComponentEvent.COMPONENT_SHOWN);
         
         add(new JScrollPane(list), BorderLayout.CENTER);
-        add(new JLabel("Current Partitions"), BorderLayout.NORTH);
+        add(new JLabel("Current Discovery Peers"), BorderLayout.NORTH);
         
         JPanel controls = new JPanel(new BorderLayout());
         controls.add(field, BorderLayout.CENTER);
         controls.add(ok, BorderLayout.EAST);
-        JTextArea jText = new JTextArea("Type a partition name and press <enter> to add.\nHighlight a partition and press <backspace> to remove.\nPress Ok when you're done.");
+        JTextArea jText = new JTextArea("Type a peer address and press <enter> to add.\nHighlight a discovery peer and press <backspace> to remove.\nPress Ok when you're done.");
         jText.setWrapStyleWord(true);
         jText.setEditable(false);
         jText.setLineWrap(true);
@@ -107,7 +96,8 @@ public class PartitionChooser extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 String value = field.getText();
                 if(value != null && !value.isEmpty()) {
-                    partitions.add(value);
+                    peers.add(value);
+                    participant.add_peer(value);
                     field.setText("");
                 }
             }
@@ -135,7 +125,8 @@ public class PartitionChooser extends JDialog {
                 case KeyEvent.VK_DELETE:
                     String val = list.getSelectedValue();
                     if(null != val) {
-                        partitions.remove(val);
+                        participant.remove_peer(val);
+                        peers.remove(val);
                     }
                     break;
                 }
@@ -145,21 +136,18 @@ public class PartitionChooser extends JDialog {
         ok.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                SubscriberQos qos = new SubscriberQos();
-                
-                subscriber.get_qos(qos);
-                qos.partition.name.clear();
-                for(String s : partitions.values) {
-                    qos.partition.name.add(s);
-                }
-                subscriber.set_qos(qos);
-                PartitionChooser.this.setVisible(false);
+                DiscoveryPeers.this.setVisible(false);
             }
             
         });
     }
     
-    public void set(Subscriber sub) {
-        this.subscriber = sub;
+    public void set(DomainParticipant participant) {
+        this.participant = participant;
+        DomainParticipantQos qos = new DomainParticipantQos();
+        participant.get_qos(qos);
+        for(int i = 0; i < qos.discovery.initial_peers.size(); i++) {
+            peers.add((String) qos.discovery.initial_peers.get(i));
+        }
     }
 }

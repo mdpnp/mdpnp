@@ -235,7 +235,7 @@ public class Main {
         }
 
         if (!cmdline) {
-            ConfigurationDialog d = new ConfigurationDialog(runConf, debug);
+            ConfigurationDialog d = new ConfigurationDialog(runConf, null);
 
             d.setIconImage(ImageIO.read(Main.class.getResource("icon.png")));
             runConf = d.showDialog();

@@ -42,7 +42,7 @@ public class MainMenuPanel extends JPanel {
     private final JList appList;
     @SuppressWarnings("rawtypes")
     private final JList deviceList;
-    private final JButton spawnDeviceAdapter;
+    private final JButton spawnDeviceAdapter, partitionChooser, discoveryPeers;
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public MainMenuPanel(AppType[] appTypes) {
@@ -109,11 +109,25 @@ public class MainMenuPanel extends JPanel {
         deviceList.setOpaque(false);
 
         gbc.gridy++;
+        gbc.gridx--;
+        gbc.gridwidth = 2;
         gbc.weighty = 1.0;
 
+        JPanel panel = new JPanel();
+        panel.setOpaque(false);
+        
         spawnDeviceAdapter = new JButton("Create a local ICE Device Adapter...");
+        spawnDeviceAdapter.setOpaque(false);
+        partitionChooser = new JButton("Partitions...");
+        partitionChooser.setOpaque(false);
+        discoveryPeers = new JButton("Discovery Peers...");
+        discoveryPeers.setOpaque(false);
+        panel.add(spawnDeviceAdapter);
+        panel.add(partitionChooser);
+        panel.add(discoveryPeers);
+        
 
-        add(spawnDeviceAdapter, gbc);
+        add(panel, gbc);
     }
 
     @SuppressWarnings("rawtypes")
@@ -128,5 +142,11 @@ public class MainMenuPanel extends JPanel {
 
     public JButton getSpawnDeviceAdapter() {
         return spawnDeviceAdapter;
+    }
+    public JButton getPartitionChooser() {
+        return partitionChooser;
+    }
+    public JButton getDiscoveryPeers() {
+        return discoveryPeers;
     }
 }
