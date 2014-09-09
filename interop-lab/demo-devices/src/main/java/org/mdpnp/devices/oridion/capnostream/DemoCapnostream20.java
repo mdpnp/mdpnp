@@ -72,9 +72,11 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     protected InstanceHolder<ice.Numeric> pulserate;
     protected InstanceHolder<ice.Numeric> rr;
     protected InstanceHolder<ice.Numeric> etco2;
+    protected InstanceHolder<ice.Numeric> endOfBreath;
 
 
     protected InstanceHolder<ice.AlarmSettings> spo2AlarmSettings, pulserateAlarmSettings, rrAlarmSettings, etco2AlarmSettings;
+    
 
     protected void linkIsActive() {
         try {
@@ -314,11 +316,16 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             return true;
         }
 
+        private final int END_OF_BREATH_BIT = FastStatus.END_OF_BREATH_INDICATION.getBit();
         @Override
         public boolean receiveCO2Wave(int messageNumber, double co2, int status) {
             reportConnected();
             
             writeTechnicalAlert("Fast CO2", FastStatus.build(status, messageBuilder));
+            
+            if(0 != (END_OF_BREATH_BIT & status)) {
+                endOfBreath = numericSample(endOfBreath, 0, ice.MDC_END_OF_BREATH.VALUE, null);
+            }
 
             if (0 != (0x40 & status)) {
                 // filter line not connected

@@ -52,7 +52,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected Map<Object, InstanceHolder<ice.AlarmSettings>> alarmSettingsUpdates = new HashMap<Object, InstanceHolder<ice.AlarmSettings>>();
     
     
-    protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate;
+    protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate, startExpiratoryCycleUpdate;
 
     protected long deviceClockOffset = 0L;
     private final ThreadLocal<Time_t> currentTime = new ThreadLocal<Time_t>() {
@@ -82,7 +82,12 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     protected void processStartInspCycle() {
         // TODO This should not be triggered as a numeric; it's a bad idea
-        startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0, ice.MDC_START_OF_BREATH.VALUE, null);
+        startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0, ice.MDC_START_INSPIRATORY_CYCLE.VALUE, null);
+    }
+    
+    protected void processStartExpCycle() {
+        // TODO ditto the bad idea-ness of using Numeric topic for this
+        startExpiratoryCycleUpdate = numericSample(startExpiratoryCycleUpdate, 0, ice.MDC_START_EXPIRATORY_CYCLE.VALUE, null);
     }
 
     private static final int BUFFER_SAMPLES = 10;
@@ -108,11 +113,15 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             if (code instanceof Enum<?>) {
                 metric_id = waveforms.get(code);
             }
+            // NOTE: config.interval is the sampling interval expressed in MICRO-seconds
+            // The specification is ambiguous using ms for micro and milli... 
+            // but in the examples '16000' is stated to mean 16 milliseconds
+            int frequency = (int)(1000000f / config.interval / multiplier);
             metric_id = null == metric_id ? ("DRAEGER_RT_"+code.toString()) : metric_id;
             sampleArrayUpdates.put(
                             code,
                             sampleArraySample(sampleArrayUpdates.get(code), realtimeBuffer[streamIndex],
-                                   metric_id, config.interval * multiplier, currentTime()));
+                                   metric_id, frequency, currentTime()));
         }
     }
 
@@ -369,6 +378,11 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         @Override
         public void startInspiratoryCycle() {
             processStartInspCycle();
+        }
+        
+        @Override
+        public void startExpiratoryCycle() {
+            super.startExpiratoryCycle();
         }
 
     }

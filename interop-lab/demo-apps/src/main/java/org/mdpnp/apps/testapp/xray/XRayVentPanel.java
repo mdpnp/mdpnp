@@ -147,7 +147,7 @@ public class XRayVentPanel extends JPanel {
                     if (period != previousPeriod) {
                         log.debug("FrequencyIPPV=" + data.value + " period=" + period);
                     }
-                } else if (ice.MDC_START_OF_BREATH.VALUE.equals(data.metric_id)) {
+                } else if (ice.MDC_START_INSPIRATORY_CYCLE.VALUE.equals(data.metric_id)) {
                     log.trace("START_INSPIRATORY_CYCLE");
                     Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
                     TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
@@ -420,7 +420,7 @@ public class XRayVentPanel extends JPanel {
         deviceList.getSelectionModel().clearSelection();
         
         StringSeq params = new StringSeq();
-        params.add("'"+ice.MDC_START_OF_BREATH.VALUE+"'");
+        params.add("'"+ice.MDC_START_INSPIRATORY_CYCLE.VALUE+"'");
         startOfBreathModel.start(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.numeric_data);
         
         demoPanel.getBedLabel().setText("X-Ray / Ventilator Synchronization");

@@ -258,6 +258,8 @@ public class RTMedibus extends Medibus {
     }
 
     private void receiveRealtimeConfig(byte[] response, int len) {
+        // First byte is the command and the last two bytes are the checksum
+        len -= 3;
         RTDataConfig[] rtDataConfig = new RTDataConfig[len / 23];
         for (int i = 0; i < rtDataConfig.length; i++) {
             rtDataConfig[i] = new RTDataConfig();
