@@ -34,8 +34,7 @@ import com.rti.dds.infrastructure.Time_t;
  *
  */
 public class DemoN595 extends AbstractSerialDevice {
-    protected InstanceHolder<ice.Numeric> pulseUpdate;
-    protected InstanceHolder<ice.Numeric> spo2Update;
+    protected InstanceHolder<ice.Numeric> pulse, spo2, pulseAmplitude;
     protected InstanceHolder<ice.AlarmSettings> pulseAlarmSettings, spo2AlarmSettings;
 
     private class MyNellcorN595 extends NellcorN595 {
@@ -52,11 +51,17 @@ public class DemoN595 extends AbstractSerialDevice {
             long tm = getTimestamp().getTime();
             sampleTime.sec = (int) (tm / 1000L);
             sampleTime.nanosec = (int) (tm % 1000L * 1000000L);
-            pulseUpdate = numericSample(pulseUpdate, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, sampleTime);
-            spo2Update = numericSample(spo2Update, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, sampleTime);
+            pulse = numericSample(pulse, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, sampleTime);
+            spo2 = numericSample(spo2, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, sampleTime);
+            pulseAmplitude = numericSample(pulseAmplitude, getPulseAmplitude(), "NELLCOR_PULSE_AMPLITUDE", sampleTime);
             markOldPatientAlertInstances();
             statusSet.clear();
-            statusSet.addAll(Arrays.asList(getStatus()));
+            for(Status s : getStatus()) {
+                if(null != s) {
+                    statusSet.add(s);
+                }
+            }
+            
             if(statusSet.contains(Status.PulseRateLowerLimitAlarm)) {
                 statusSet.remove(Status.PulseRateLowerLimitAlarm);
                 writePatientAlert("PR", Status.PulseRateLowerLimitAlarm.name());
@@ -179,8 +184,9 @@ public class DemoN595 extends AbstractSerialDevice {
     @Override
     protected void unregisterAllNumericInstances() {
         super.unregisterAllNumericInstances();
-        this.pulseUpdate = null;
-        this.spo2Update = null;
+        this.pulse = null;
+        this.spo2 = null;
+        this.pulseAmplitude = null;
     }
     
     @Override
