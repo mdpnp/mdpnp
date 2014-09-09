@@ -176,7 +176,6 @@ public class PartitionChooser extends JDialog {
                     publisher.get_qos(qos);
                     qos.asynchronous_publisher.thread.priority = Thread.NORM_PRIORITY;
                     qos.asynchronous_publisher.asynchronous_batch_thread.priority = Thread.NORM_PRIORITY;
-                    System.out.println(qos);
                     qos.partition.name.clear();
                     for(String s : partitions.values) {
                         qos.partition.name.add(s);
