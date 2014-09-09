@@ -144,6 +144,7 @@ public class VitalModelImpl implements VitalModel {
     };
 
     private ice.GlobalAlarmSettingsObjectiveDataWriter writer;
+    private Topic globalAlarmSettingsTopic;
 
     public ice.GlobalAlarmSettingsObjectiveDataWriter getWriter() {
         return writer;
@@ -323,10 +324,10 @@ public class VitalModelImpl implements VitalModel {
 
                 ice.GlobalAlarmSettingsObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name());
 
-                Topic topic = participant.create_topic(ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
+                globalAlarmSettingsTopic = participant.create_topic(ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
                         ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
                         StatusKind.STATUS_MASK_NONE);
-                writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(topic, QosProfiles.ice_library,
+                writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(globalAlarmSettingsTopic, QosProfiles.ice_library,
                         QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
                 NumericTypeSupport.register_type(participant, NumericTypeSupport.get_type_name());
@@ -350,8 +351,8 @@ public class VitalModelImpl implements VitalModel {
                         removeVital(0);
                     }
                     eventLoop.removeHandler(numericReader.get_statuscondition());
-                    subscriber.get_participant().delete_datawriter(writer);
-    
+                    publisher.delete_datawriter(writer);
+                    subscriber.get_participant().delete_topic(globalAlarmSettingsTopic);
                     numericReader.delete_contained_entities();
                     subscriber.delete_datareader(numericReader);
     
