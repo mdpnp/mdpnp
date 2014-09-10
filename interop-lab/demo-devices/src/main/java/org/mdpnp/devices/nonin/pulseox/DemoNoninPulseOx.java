@@ -72,8 +72,8 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
     }
 
-    protected static final byte[] WRISTOX = new byte[] { 0x18, 0x05, 0x09 };
-    protected static final byte[] ONYX = new byte[] { (byte) 0x9E, 0x09 };
+    protected static final byte[][] WRISTOX = new byte[][] { {0x18, 0x05, 0x09} };
+    protected static final byte[][] ONYX = new byte[][] {{ (byte) 0x9E, 0x09 }, {(byte)0x93, 0x06} };
 
     protected static final boolean equals(byte[] a, int offa, int lena, byte[] b, int offb, int lenb) {
         if (lena != lenb) {
@@ -127,13 +127,25 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
         @Override
         protected synchronized void recvOperation(byte opCode, byte[] source, int off, int len) {
+            boolean found = false;
             switch (opCode) {
             case (byte) 0xF3:
-                if (DemoNoninPulseOx.equals(source, off, len, WRISTOX, 0, WRISTOX.length)) {
-                    iconOrBlank("WristOx2", "3150.png");
-                } else if (DemoNoninPulseOx.equals(source, off, len, ONYX, 0, ONYX.length)) {
-                    iconOrBlank("Onyx II", "9650.png");
-                } else {
+                for(byte[] WO : WRISTOX) {
+                    if (!found && DemoNoninPulseOx.equals(source, off, len, WO, 0, WO.length)) {
+                        System.err.println("THIS IS A WRIST OX?");
+                        found = true;
+                        iconOrBlank("WristOx2", "3150.png");
+                    }
+                }
+                for(byte[] ON : ONYX) {
+                    if(!found && DemoNoninPulseOx.equals(source, off, len, ON, 0, ON.length)) {
+                        System.err.println("THIS IS An ONYX?");
+                        found = true;
+                        iconOrBlank("Onyx II", "9650.png");
+                    }
+                }
+                
+                if(!found) {
                     log.warn("Unrecognized response to 0x73:" + HexUtil.dump(ByteBuffer.wrap(source, off, len)));
                 }
 
@@ -233,8 +245,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         return new MyNoninPulseOx(in, out);
     }
 
-    protected InstanceHolder<ice.Numeric> pulse;
-    protected InstanceHolder<ice.Numeric> SpO2;
+    protected InstanceHolder<ice.Numeric> pulse, SpO2;
     protected InstanceHolder<SampleArray> pleth;
 
     enum Phase {
@@ -376,7 +387,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
     @Override
     protected String iconResourceName() {
-        return "3150.png";
+        return "9650.png";
     }
 
     @Override
