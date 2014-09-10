@@ -1,0 +1,8 @@
+0x00	VTspon	mL
+0x06	ElastanceE	mbarPerL
+0x07	Tau	sec
+0x21	ExpiratoryTidalVolumeVTe	mL
+0x22	InspiratoryTidalVolumeVTi	mL
+0x23	EIP	mbar
+0x7D	Tlowmax	sec
+0x7B	PressureVariability	pct

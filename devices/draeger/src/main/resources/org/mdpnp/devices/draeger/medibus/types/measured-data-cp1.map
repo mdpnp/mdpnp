@@ -4,6 +4,7 @@
 0x08	Resistance
 0x09	CarbonDioxideProduction
 0x0B	ResistanceFrac
+0x2A	rSquared	None
 0x50	InspHalothanekPa	kPa
 0x51	ExpHalothanekPa	kPa
 0x52	InspEnfluranekPa	kPa
@@ -27,9 +28,15 @@
 0x78	PEEPBreathingPressure	mbar
 0x79	IntrinsicPEEPBreathingPressure
 0x7A	SpontaneousMinuteVolumeFrac
+0x7B	RRmand	OnePerMin
 0x7D	PeakBreathingPressure	mbar
+0x7E	VTmand	L
+0x7F	VTspon	L
 0x81	TrappedVolume
 0x82	TidalVolumeFrac
+0x83	VTemand	mL
+0x84	VTespon	mL
+0x85	InspmandatoryTidalVolumeVTimand	mL
 0x88	TidalVolume	mL
 0x89	DeadSpace
 0x8A	RelativeDeadSpace
@@ -41,8 +48,10 @@
 0xB0	InspSevofluranePct	pct
 0xB1	ExpSevofluranePct	pct
 0xB2	Leakage	mLPerMin
+0xB3	LeakageRelPctleak	pct
 0xB4	RespiratoryRatePressure	OnePerMin
 0xB5	SpontaneousRespiratoryRate
+0xB6	SpontaneousFractionMinVoPctMVsponMVtotal	pct
 0xB7	SpontaneousMinuteVolume
 0xB8	RespiratoryMinuteVolume
 0xB9	RespiratoryMinuteVolumeFrac	L
@@ -61,6 +70,8 @@
 0xE3	EndTidalCO2kPa	kPa
 0xE5	InspCO2mmHg	mmHg
 0xE6	EndTidalCO2mmHg	mmHg
+0xE7	ItoE_Ipart	None
+0xE8	ItoE_Epart	None
 0xE9	InspAgentPct	pct
 0xEA	ExpAgentPct	pct
 0xEB	OxygenSaturation	pct

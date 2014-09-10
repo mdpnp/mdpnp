@@ -22,6 +22,7 @@
 0x29	FlowTrigger	LPerMin
 0x2E	ASBRamp	sec
 0x2F	FreshgasFlow	mLPerMin
+0x40	VT	mL
 0x42	MinimalFrequency	OnePerMin
 0x45	InspiratoryPressure	mbar
 0x4A	Age	a

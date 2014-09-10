@@ -22,7 +22,30 @@ import org.mdpnp.devices.Unit;
  *
  */
 public enum RealtimeData {
-    AirwayPressure, FlowInspExp, RespiratoryVolumeSinceInspBegin, ExpiratoryVolume, ExpiratoryCO2mmHg, ExpiratoryCO2kPa, ExpiratoryCO2Percent, Pleth, InspiratoryFlow, ExpiratoryFlow, O2InspExp, AgentInspExpPercent, HalothaneInspExpPercent, EnfluraneInspExpPercent, IsofluraneInspExpPercent, DesfluraneInspExpPercent, SevofluraneInspExpPercent, AgentInspExpkPa, HalothaneInspExpkPa, EnfluraneInspExpkPa, IsofluraneInspExpkPa, DesfluraneInspExpkPa, SevofluraneInspExpkPa;
+    AirwayPressure, 
+    FlowInspExp, 
+    RespiratoryVolumeSinceInspBegin, 
+    ExpiratoryVolume, 
+    ExpiratoryCO2mmHg, 
+    ExpiratoryCO2kPa, 
+    ExpiratoryCO2Percent, 
+    Pleth, 
+    InspiratoryFlow, 
+    ExpiratoryFlow, 
+    O2InspExp, 
+    AgentInspExpPercent, 
+    HalothaneInspExpPercent, 
+    EnfluraneInspExpPercent, 
+    IsofluraneInspExpPercent, 
+    DesfluraneInspExpPercent, 
+    SevofluraneInspExpPercent, 
+    AgentInspExpkPa, 
+    HalothaneInspExpkPa, 
+    EnfluraneInspExpkPa, 
+    IsofluraneInspExpkPa, 
+    DesfluraneInspExpkPa, 
+    SevofluraneInspExpkPa,
+    Ptrach;
 
     private static final Map<java.lang.Byte, RealtimeData> fromByte;
 

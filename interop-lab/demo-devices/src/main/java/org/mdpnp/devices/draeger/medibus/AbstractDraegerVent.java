@@ -31,6 +31,7 @@ import org.mdpnp.devices.draeger.medibus.RTMedibus.RTTransmit;
 import org.mdpnp.devices.draeger.medibus.types.Command;
 import org.mdpnp.devices.draeger.medibus.types.MeasuredDataCP1;
 import org.mdpnp.devices.draeger.medibus.types.RealtimeData;
+import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -117,7 +118,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             // The specification is ambiguous using ms for micro and milli... 
             // but in the examples '16000' is stated to mean 16 milliseconds
             int frequency = (int)(1000000f / config.interval / multiplier);
-            metric_id = null == metric_id ? ("DRAEGER_RT_"+code.toString()) : metric_id;
+            
+            metric_id = metricOrCode(metric_id, code, "RT");
             sampleArrayUpdates.put(
                             code,
                             sampleArraySample(sampleArrayUpdates.get(code), realtimeBuffer[streamIndex],
@@ -125,6 +127,20 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
     }
 
+    private static final String metricOrCode(String metric_id, Object code, String type) {
+        if(null != metric_id) {
+            return metric_id;
+        } else {
+            if(code == null) {
+                return "null";
+            } else if(code instanceof Byte) {
+                return "DRAEGER_"+type+"_"+HexUtil.toHexString((Byte)code)+"H";
+            } else {
+                return "DRAEGER_"+code.toString();
+            }
+        }
+    }
+    
     @Override
     protected void unregisterAllNumericInstances() {
         super.unregisterAllNumericInstances();
@@ -236,7 +252,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                 log.error(e.getMessage(), e);
             }
             for(Data d : data) {
-                String metric = "DRAEGER_SETTING_"+d.code.toString();
+                String metric = metricOrCode(null, d.code, "SETTING");
                 String s = null == d.data ? null : d.data.toString().trim();
                 Float f = null;
                 try {
@@ -279,7 +295,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         protected void receiveMeasuredData(Data[] data) {
             for(Data d : data) {
                 String metric = numerics.get(d.code);
-                metric = null == metric ? ("DRAEGER_MEASURED_"+d.code.toString()) : metric;
+                metric = metricOrCode(metric, d.code, "MEASURED");
                 String s = null == d.data ? null : d.data.toString().trim();
                 Float f = null;
                 try {
@@ -330,7 +346,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                 }
                 InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
                 String metric = numerics.get(d.code);
-                metric = null == metric ? ("DRAEGER_"+d.code.toString()) : metric;
+                metric = metricOrCode(metric, d.code, "ALARM_LIMIT");
                 alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, f, null==a?Float.MAX_VALUE:a.data.upper, metric));
             }
         }
@@ -346,7 +362,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                 }
                 InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
                 String metric = numerics.get(d.code);
-                metric = null == metric ? ("DRAEGER_"+d.code.toString()) : metric;
+                metric = metricOrCode(metric, d.code, "ALARM_LIMIT");
                 alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, null==a?Float.MIN_VALUE:a.data.lower,f, metric));
             }
         }
@@ -382,13 +398,13 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         
         @Override
         public void startExpiratoryCycle() {
-            super.startExpiratoryCycle();
+            processStartExpCycle();
         }
 
     }
 
     private static final RealtimeData[] REQUEST_REALTIME = new RealtimeData[] { RealtimeData.AirwayPressure, RealtimeData.FlowInspExp,
-            RealtimeData.ExpiratoryCO2mmHg, RealtimeData.O2InspExp };
+            RealtimeData.ExpiratoryCO2mmHg, RealtimeData.ExpiratoryVolume, RealtimeData.ExpiratoryFlow, RealtimeData.InspiratoryFlow };
 
     private long lastReqDateTime;
 

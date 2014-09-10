@@ -12,6 +12,7 @@
 0x0D	IsofluraneInspExpPercent	pct
 0x0E	DesfluraneInspExpPercent	pct
 0x0F	SevofluraneInspExpPercent	pct
+0x1C	Ptrach	mbar
 0x20	InspiratoryFlow	LPerMin
 0x21	ExpiratoryFlow	LPerMin
 0x24	ExpiratoryVolume	mL

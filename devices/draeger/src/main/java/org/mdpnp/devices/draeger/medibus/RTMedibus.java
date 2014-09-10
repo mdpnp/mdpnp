@@ -171,7 +171,11 @@ public class RTMedibus extends Medibus {
         int binval = (first & 0x3F) | ((second & 0x3F) << 6);
         if (this.lastTransmitted != null && idx < this.lastTransmitted.length) {
             RTDataConfig c = lastTransmitted[idx].rtDataConfig;
-            receiveDataValue(c, lastTransmitted[idx].multiplier, idx, c.realtimeData, (1.0 * binval / c.maxbin) * (c.max - c.min) + c.min);
+            if(null == c) {
+                log.warn("cannot receive r/t value idx="+idx+" config is null");
+            } else {
+                receiveDataValue(c, lastTransmitted[idx].multiplier, idx, c.realtimeData, (1.0 * binval / c.maxbin) * (c.max - c.min) + c.min);
+            }
         } else {
             receiveDataValue(null, 1, idx, (byte) idx, binval);
         }

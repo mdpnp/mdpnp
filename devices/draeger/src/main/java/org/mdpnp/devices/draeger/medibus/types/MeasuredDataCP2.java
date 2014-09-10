@@ -15,16 +15,18 @@ package org.mdpnp.devices.draeger.medibus.types;
 import java.util.Map;
 
 import org.mdpnp.devices.EnumHelper;
+import org.mdpnp.devices.Unit;
 
 /**
  * @author Jeff Plourde
  *
  */
 public enum MeasuredDataCP2 {
-    ;
+    Tlowmax, PressureVariability, VTspon, ElastanceE, Tau, InspiratoryTidalVolumeVTi, ExpiratoryTidalVolumeVTe, EIP;
     private static final Map<java.lang.Byte, MeasuredDataCP2> fromByte;
 
     private byte b;
+    private Unit u;
 
     static {
         try {
@@ -50,5 +52,17 @@ public enum MeasuredDataCP2 {
         } else {
             return b;
         }
+    }
+    
+    public Unit getUnit() {
+        return u;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + (u != null ? (" (in " + u + ")") : "");
+    }
+    public static void main(String[] args) {
+        
     }
 }

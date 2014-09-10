@@ -19,7 +19,7 @@ import org.mdpnp.devices.Unit;
 
 /**
  * @author Jeff Plourde
- *
+ * 
  */
 public enum MeasuredDataCP1 {
     /**
@@ -37,7 +37,7 @@ public enum MeasuredDataCP1 {
     /**
      * Occlusion Pressure mbar
      */
-    OcclusionPressure, MeanBreathingPressure, PlateauPressure, PEEPBreathingPressure, IntrinsicPEEPBreathingPressure, PeakBreathingPressure, TrappedVolume, TidalVolume, SpontaneousRespiratoryRate, SpontaneousMinuteVolume, RespiratoryMinuteVolume, AirwayTemperature, RespiratoryRate, InspiredOxygen, CarbonDioxideProduction, DeadSpace, RelativeDeadSpace, EndTidalCO2Percent, ComplianceFrac, ResistanceFrac, TidalVolumeFrac, SpontaneousMinuteVolumeFrac, RespiratoryMinuteVolumeFrac, InspiratorySpontaneousSupportVolume, RapidShallowBreathingIndex, PulseRate, InspHalothanekPa, ExpHalothanekPa, InspEnfluranekPa, ExpEnfluranekPa, InspIsofluranekPa, ExpIsofluranekPa, InspDesfluranekPa, ExpDesfluranekPa, InspSevofluranekPa, ExpSevofluranekPa, InspAgentkPa, ExpAgentkPa, InspAgent2kPa, ExpAgent2kPa, InspMAC, ExpMAC, InspDesfluranePct, ExpDesfluranePct, InspSevofluranePct, ExpSevofluranePct, InspAgentPct, ExpAgentPct, InspAgent2Pct, ExpAgent2Pct, InspHalothanePct, ExpHalothanePct, InspEnfluranePct, ExpEnfluranePct, InspIsofluranePct, ExpIsofluranePct, InspN2OPct, ExpN2OPct, BreathingPressure, AmbientPressure, RespiratoryRatePressure, ApneaDuration, RespiratoryRateVolumePerFlow, RespiratoryRateDerived, RespiratoryRateCO2, InspCO2Pct, EndTidalCO2kPa, InspCO2mmHg, EndTidalCO2mmHg, InspCO2kPa, DeltaO2, ExpO2, InspO2, O2Uptake, OxygenSaturation, PulseRateDerived, PulseRateOximeter, Leakage;
+    OcclusionPressure, MeanBreathingPressure, PlateauPressure, PEEPBreathingPressure, IntrinsicPEEPBreathingPressure, PeakBreathingPressure, TrappedVolume, TidalVolume, SpontaneousRespiratoryRate, SpontaneousMinuteVolume, RespiratoryMinuteVolume, AirwayTemperature, RespiratoryRate, InspiredOxygen, CarbonDioxideProduction, DeadSpace, RelativeDeadSpace, EndTidalCO2Percent, ComplianceFrac, ResistanceFrac, TidalVolumeFrac, SpontaneousMinuteVolumeFrac, RespiratoryMinuteVolumeFrac, InspiratorySpontaneousSupportVolume, RapidShallowBreathingIndex, PulseRate, InspHalothanekPa, ExpHalothanekPa, InspEnfluranekPa, ExpEnfluranekPa, InspIsofluranekPa, ExpIsofluranekPa, InspDesfluranekPa, ExpDesfluranekPa, InspSevofluranekPa, ExpSevofluranekPa, InspAgentkPa, ExpAgentkPa, InspAgent2kPa, ExpAgent2kPa, InspMAC, ExpMAC, InspDesfluranePct, ExpDesfluranePct, InspSevofluranePct, ExpSevofluranePct, InspAgentPct, ExpAgentPct, InspAgent2Pct, ExpAgent2Pct, InspHalothanePct, ExpHalothanePct, InspEnfluranePct, ExpEnfluranePct, InspIsofluranePct, ExpIsofluranePct, InspN2OPct, ExpN2OPct, BreathingPressure, AmbientPressure, RespiratoryRatePressure, ApneaDuration, RespiratoryRateVolumePerFlow, RespiratoryRateDerived, RespiratoryRateCO2, InspCO2Pct, EndTidalCO2kPa, InspCO2mmHg, EndTidalCO2mmHg, InspCO2kPa, DeltaO2, ExpO2, InspO2, O2Uptake, OxygenSaturation, PulseRateDerived, PulseRateOximeter, Leakage, RRmand, VTmand, VTspon, rSquared, VTemand, VTespon, InspmandatoryTidalVolumeVTimand, LeakageRelPctleak, SpontaneousFractionMinVoPctMVsponMVtotal, ItoE_Ipart, ItoE_Epart;
 
     private static final Map<java.lang.Byte, MeasuredDataCP1> fromByte;
 
