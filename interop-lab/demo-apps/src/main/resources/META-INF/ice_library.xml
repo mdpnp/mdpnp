@@ -447,9 +447,13 @@
     <!-- If the state information will not vary (currently thinking of something 
      like device serial number) then if the writer misses a heartbeat we are at 
      no risk of "missing" subsequent changes to the state -->
-    <!-- <liveliness> Let DDS handle heartbeats <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind> 
-     Point at which writers (and associated instances) become "not alive" <lease_duration> 
-     <sec>2147483647</sec> <nanosec>2147483647</nanosec> </lease_duration> </liveliness> -->
+    <liveliness>
+     <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
+     <lease_duration> 
+      <sec>2147483647</sec>
+      <nanosec>2147483647</nanosec>
+     </lease_duration>
+    </liveliness>
    </datareader_qos>
    <datawriter_qos>
     <!-- <liveliness> <kind>DDS_MANUAL_BY_TOPIC_LIVELINESS_QOS</kind> <lease_duration> 
@@ -511,7 +515,7 @@
      to store more -->
     <lifespan>
      <duration>
-      <sec>10</sec>
+      <sec>15</sec>
       <nanosec>0</nanosec>
      </duration>
     </lifespan>

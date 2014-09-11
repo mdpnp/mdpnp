@@ -212,20 +212,50 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             
             pleth = sampleArraySample(pleth, plethBuffer, plethBuffer.length, 
                     rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, NoninPulseOx.FREQUENCY, updateTime);
-
+            Status status = getCurrentPacket().getCurrentStatus();
+            Perfusion perfusion = perfusion(status);
+            writeTechnicalAlert("Perfusion", null != perfusion ? perfusion.toString() : null);
+            writeTechnicalAlert("Artifact", status.isArtifact()?"Artifact":null);
+            writeTechnicalAlert("Out Of Track", status.isOutOfTrack()?"Out Of Track":null);
+            writeTechnicalAlert("Sensor Alarm", status.isSensorAlarm()?"Sensor Alarm":null);
+            writeTechnicalAlert("Battery", getCurrentPacket().isLowBattery()?"Low Battery":null);
+            writeTechnicalAlert("Smart Point", getCurrentPacket().isSmartPoint()?"Smart Point":null);
+            writeTechnicalAlert("Firmware", Integer.toString(getCurrentPacket().getFirmwareRevision()));
+            
+            
             if (currentPacket.getCurrentStatus().isArtifact() || currentPacket.getCurrentStatus().isSensorAlarm()
                     || currentPacket.getCurrentStatus().isOutOfTrack()) {
                 pulse = numericSample(pulse, (Integer) null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, null);
                 SpO2 = numericSample(SpO2, (Integer) null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, null);
+                avgHeartRateFourBeat = numericSample(avgHeartRateFourBeat, (Integer) null, "NONIN_AVG_HR_4BEAT", null);
+                avgSpO2FourBeat = numericSample(avgSpO2FourBeat, (Integer) null, "NONIN_AVG_SPO2_4BEAT", null);
+                avgSpO2FourBeatFast = numericSample(avgSpO2FourBeatFast, (Integer) null, "NONIN_SPO2_4BEAT_FAST", null);
+                SpO2BeatToBeat = numericSample(SpO2BeatToBeat, (Integer) null, "NONIN_SPO2_BTB", null);
+                avgHeartRateEightBeat = numericSample(avgHeartRateEightBeat, (Integer)null, "NONIN_AVG_HR_8BEAT", null);
+                avgSpO2EightBeat = numericSample(avgSpO2EightBeat, (Integer)null, "NONIN_SPO2_8BEAT", null);
+                avgSpO2EightBeatForDisplay = numericSample(avgSpO2EightBeatForDisplay, (Integer) null, "NONIN_SPO2_8BEAT_FOR_DISPLAY", null);
+                avgHeartRateFourBeatForDisplay = numericSample(avgHeartRateFourBeatForDisplay, (Integer) null, "NONIN_HR_4BEAT_FOR_DISPLAY", null);
+                avgHeartRateEightBeatForDisplay = numericSample(avgHeartRateEightBeatForDisplay, (Integer) null, "NONIN_HR_8BEAT_FOR_DISPLAY", null);
             } else {
-                Integer heartRate = getHeartRate();
-                Integer spo2 = getSpO2();
-                pulse = numericSample(pulse, heartRate != null ? (heartRate < 511 ? heartRate : null) : null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE,
-                        null);
-                SpO2 = numericSample(SpO2, spo2 != null ? (spo2 <= 100 ? spo2 : null) : null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, null);
+                pulse = numericSample(pulse, maxOut(getHeartRate(), MAX_HR), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, null);
+                SpO2 = numericSample(SpO2, maxOut(getSpO2(), MAX_SPO2), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, null);
+                avgHeartRateFourBeat = numericSample(avgHeartRateFourBeat, maxOut(getAvgHeartRateFourBeat(), MAX_HR), "NONIN_AVG_HR_4BEAT", null);
+                avgSpO2FourBeat = numericSample(avgSpO2FourBeat, maxOut(getAvgSpO2FourBeat(), MAX_SPO2), "NONIN_AVG_SPO2_4BEAT", null);
+                avgSpO2FourBeatFast = numericSample(avgSpO2FourBeatFast, maxOut(getAvgSpO2FourBeatFast(), MAX_SPO2), "NONIN_SPO2_4BEAT_FAST", null);
+                SpO2BeatToBeat = numericSample(SpO2BeatToBeat, maxOut(getSpO2BeatToBeat(), MAX_SPO2), "NONIN_SPO2_BTB", null);
+                avgHeartRateEightBeat = numericSample(avgHeartRateEightBeat, maxOut(getAvgHeartRateEightBeat(), MAX_HR), "NONIN_AVG_HR_8BEAT", null);
+                avgSpO2EightBeat = numericSample(avgSpO2EightBeat, maxOut(getAvgSpO2EightBeat(), MAX_SPO2), "NONIN_SPO2_8BEAT", null);
+                avgSpO2EightBeatForDisplay = numericSample(avgSpO2EightBeatForDisplay, maxOut(getAvgSpO2EightBeatForDisplay(), MAX_SPO2), "NONIN_SPO2_8BEAT_FOR_DISPLAY", null);
+                avgHeartRateFourBeatForDisplay = numericSample(avgHeartRateFourBeatForDisplay, maxOut(getAvgHeartRateFourBeatForDisplay(), MAX_HR), "NONIN_HR_4BEAT_FOR_DISPLAY", null);
+                avgHeartRateEightBeatForDisplay = numericSample(avgHeartRateEightBeatForDisplay, maxOut(getAvgHeartRateEightBeatForDisplay(), MAX_HR), "NONIN_HR_8BEAT_FOR_DISPLAY", null);
             }
 
         }
+    }
+    private static final int MAX_HR = 511, MAX_SPO2 = 101;
+    
+    private static final Integer maxOut(Integer i, int max) {
+        return i != null ? (i < max ? i : null) : null;
     }
 
     public static final Perfusion perfusion(Status status) {
@@ -247,7 +277,11 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
     protected InstanceHolder<ice.Numeric> pulse, SpO2;
     protected InstanceHolder<SampleArray> pleth;
-
+    protected InstanceHolder<ice.Numeric> avgHeartRateFourBeat, 
+        avgSpO2FourBeat, avgSpO2FourBeatFast, SpO2BeatToBeat, avgHeartRateEightBeat, 
+        avgSpO2EightBeat, avgSpO2EightBeatForDisplay, avgHeartRateFourBeatForDisplay,
+        avgHeartRateEightBeatForDisplay;
+    
     enum Phase {
         GetSerial, GetDeviceType, SetFormat, GetTime,
     }
