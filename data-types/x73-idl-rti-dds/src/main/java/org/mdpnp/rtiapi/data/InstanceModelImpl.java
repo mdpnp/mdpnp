@@ -336,7 +336,16 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
 
     @Override
     public D getElementAt(int index) {
-        InstanceHandle_t handle = instances.get(index);
+        InstanceHandle_t handle;
+        // Doesn't seem likely but I've seen it happen
+        synchronized(instances) {
+            if(index < instances.size()) {
+                handle = instances.get(index);
+            } else {
+                return null;
+            }
+        }
+        
         LoanableSequence sa_seq = InstanceModelImpl.this.sa_seq1.get();
         SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq1.get();
         R reader = this.reader;
