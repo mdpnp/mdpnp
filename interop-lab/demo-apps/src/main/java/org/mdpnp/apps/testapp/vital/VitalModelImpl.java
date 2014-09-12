@@ -95,6 +95,10 @@ public class VitalModelImpl implements VitalModel {
                                 if (sampleInfo.valid_data) {
                                     Numeric n = (Numeric) num_seq.get(i);
                                     updateNumeric(n, sampleInfo);
+                                } else {
+                                    Numeric n = new Numeric();
+                                    numericReader.get_key_value(n, sampleInfo.instance_handle);
+                                    log.warn("Numeric ALIVE (WITH NO VALID DATA):" + n.unique_device_identifier + " " + n.metric_id + " " + n.instance_id);
                                 }
                             }
                         }
