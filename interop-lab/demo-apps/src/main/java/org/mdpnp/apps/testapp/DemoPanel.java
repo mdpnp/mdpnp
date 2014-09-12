@@ -16,11 +16,20 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -50,16 +59,14 @@ public class DemoPanel extends JPanel implements Runnable {
     private final ImageIcon mdpnp = new ImageIcon(DemoPanel.class.getResource("mdpnp-small.png"));
 
     private final JLabel bedLabel = new JLabel("Intensive Care 15");
-    private final JLabel patientLabel = new JLabel("John Doe");
     public final static Color darkBlue = new Color(51, 0, 101);
     public final static Color lightBlue = new Color(1, 153, 203);
 
     private final JPanel header = new JPanel();
     private final JPanel wholeFooter = new JPanel();
-    private final JPanel topFooter = new JPanel();
-    private final JPanel bottomFooter = new JPanel();
-    private final JLabel status = new JLabel("  ");
     private final JButton back = new JButton("Exit App");
+    private final JButton changePartition = new JButton("Change Partition...");
+    private final JButton createAdapter = new JButton("Create a local ICE Device Adapter...");
     private final JLabel time = new JLabel("HH:mm:ss");
     private final JLabel version = new JLabel(" ");
     private final JLabel udi = new JLabel(" ");
@@ -80,16 +87,19 @@ public class DemoPanel extends JPanel implements Runnable {
         return bedLabel;
     }
 
-    public JLabel getPatientLabel() {
-        return patientLabel;
-    }
-
     public JButton getBack() {
         return back;
     }
+    
+    public JButton getChangePartition() {
+        return changePartition;
+    }
+    
+    public JButton getCreateAdapter() {
+        return createAdapter;
+    }
 
     private void buildHeader() {
-        
         header.setLayout(new BorderLayout());
         header.setOpaque(true);
         header.setBackground(Color.white);
@@ -108,12 +118,12 @@ public class DemoPanel extends JPanel implements Runnable {
         bedLabel.setOpaque(false);
         header.add(bedLabel, BorderLayout.CENTER);
 
-        header.add(patientLabel, BorderLayout.EAST);
-        patientLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        patientLabel.setHorizontalTextPosition(SwingConstants.RIGHT);
-        patientLabel.setForeground(darkBlue);
-        patientLabel.setFont(bedLabel.getFont());
-        patientLabel.setOpaque(false);
+        header.add(time, BorderLayout.EAST);
+        time.setHorizontalAlignment(SwingConstants.RIGHT);
+        time.setHorizontalTextPosition(SwingConstants.RIGHT);
+        time.setForeground(darkBlue);
+        time.setFont(bedLabel.getFont());
+        time.setOpaque(true);
     }
 
     private void buildContent() {
@@ -123,36 +133,77 @@ public class DemoPanel extends JPanel implements Runnable {
     }
 
     private void buildFooter() {
-        wholeFooter.setLayout(new GridLayout(2, 1));
-        wholeFooter.add(topFooter);
-        wholeFooter.add(bottomFooter);
+        wholeFooter.setLayout(new GridBagLayout());
         wholeFooter.setOpaque(false);
+        wholeFooter.setForeground(darkBlue);
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(2,2,2,2);
+        
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        
+        wholeFooter.add(back, gbc);
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridy++;
+        wholeFooter.add(version, gbc);
 
-        topFooter.setLayout(new BorderLayout());
-        bottomFooter.setLayout(new BorderLayout());
-        topFooter.setOpaque(false);
-        bottomFooter.setOpaque(false);
-        topFooter.setForeground(darkBlue);
-        bottomFooter.setForeground(darkBlue);
+        
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridy = 0;
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.CENTER;
+        wholeFooter.add(changePartition, gbc);
+        
+        gbc.gridy++;
+        wholeFooter.add(createAdapter, gbc);
+        
+        Font font = Font.decode("Courier-12");
+        
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.fill = GridBagConstraints.BOTH;
+        JLabel url = new JLabel("http://www.openice.info");
+        url.setForeground(darkBlue);
+        url.setOpaque(false);
+        url.setFont(font.deriveFont(18f));
+        url.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        url.setHorizontalTextPosition(SwingConstants.RIGHT);
+        url.setHorizontalAlignment(SwingConstants.RIGHT);
+        url.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+               if (e.getClickCount() > 0) {
+                   if (Desktop.isDesktopSupported()) {
+                         Desktop desktop = Desktop.getDesktop();
+                         try {
+                             URI uri = new URI("http://www.openice.info");
+                             desktop.browse(uri);
+                         } catch (IOException ex) {
 
-        status.setForeground(darkBlue);
-        status.setFont(Font.decode("verdana-15"));
-        topFooter.add(back, BorderLayout.WEST);
-        topFooter.add(status, BorderLayout.CENTER);
-        topFooter.add(time, BorderLayout.EAST);
-
-        time.setForeground(darkBlue);
-        time.setOpaque(false);
-        time.setFont(Font.decode("verdana-15"));
+                         } catch (URISyntaxException ex) {
+                             
+                         }
+                 }
+               }
+            }
+         });
+        wholeFooter.add(url, gbc);
         version.setForeground(darkBlue);
         version.setOpaque(false);
-        version.setFont(Font.decode("Courier-10"));
+        version.setFont(font);
         udi.setForeground(darkBlue);
-        udi.setFont(Font.decode("Courier-10"));
+        udi.setFont(font);
         udi.setOpaque(false);
+        udi.setHorizontalTextPosition(SwingConstants.RIGHT);
+        udi.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        bottomFooter.add(udi, BorderLayout.EAST);
-        bottomFooter.add(version, BorderLayout.WEST);
+        gbc.gridy++;
+        wholeFooter.add(udi, gbc);
 
         add(wholeFooter, BorderLayout.SOUTH);
         revalidate();
@@ -251,7 +302,7 @@ public class DemoPanel extends JPanel implements Runnable {
         // g.drawImage(mdpnp.getImage(), 0, 0, null);
         super.paintComponent(g);
 
-        // super.paintComponent(g);
+//        super.paintComponent(g);
     }
 
     private final Date date = new Date();

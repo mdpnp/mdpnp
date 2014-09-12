@@ -15,17 +15,15 @@ package org.mdpnp.apps.testapp;
 import ice.InfusionObjectiveDataWriter;
 
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -82,10 +80,7 @@ public class DemoApp {
     private static String goback = null;
     private static Runnable goBackAction = null;
     protected static DemoPanel panel;
-    private static String gobackPatient, gobackBed;
-    private static Font gobackPatientFont;
-    private static Color gobackPatientColor;
-    private static int verticalAlignment, verticalTextAlignment;
+    private static String gobackBed;
     private static CardLayout ol;
     private static PartitionChooser partitionChooser;
     private static DiscoveryPeers discoveryPeers;
@@ -93,12 +88,7 @@ public class DemoApp {
     private static void setGoBack(String goback, Runnable goBackAction) {
         DemoApp.goback = goback;
         DemoApp.goBackAction = goBackAction;
-        DemoApp.gobackPatient = panel.getPatientLabel().getText();
         DemoApp.gobackBed = panel.getBedLabel().getText();
-        DemoApp.gobackPatientFont = panel.getPatientLabel().getFont();
-        DemoApp.gobackPatientColor = panel.getPatientLabel().getForeground();
-        DemoApp.verticalAlignment = panel.getPatientLabel().getVerticalAlignment();
-        DemoApp.verticalTextAlignment = panel.getPatientLabel().getVerticalTextPosition();
         panel.getBack().setVisible(null != goback);
     }
 
@@ -107,13 +97,8 @@ public class DemoApp {
             goBackAction.run();
             goBackAction = null;
         }
-        panel.getPatientLabel().setFont(gobackPatientFont);
-        panel.getPatientLabel().setForeground(gobackPatientColor);
-        panel.getPatientLabel().setText(DemoApp.gobackPatient);
         panel.getBedLabel().setText(DemoApp.gobackBed);
         ol.show(panel.getContent(), DemoApp.goback);
-        panel.getPatientLabel().setVerticalAlignment(DemoApp.verticalAlignment);
-        panel.getPatientLabel().setVerticalTextPosition(DemoApp.verticalTextAlignment);
         panel.getBack().setVisible(false);
     }
 
@@ -218,17 +203,7 @@ public class DemoApp {
         discoveryPeers.setSize(320, 240);
         discoveryPeers.set(participant);
         
-        switch (domainId) {
-        case 0:
-            panel.getBedLabel().setText("ICE Test Domain " + domainId);
-            break;
-        case 3:
-            panel.getBedLabel().setText("Operating Room " + domainId);
-            break;
-        default:
-            panel.getBedLabel().setText("Intensive Care " + domainId);
-            break;
-        }
+        panel.getBedLabel().setText("OpenICE");
         panel.getVersion().setText(BuildInfo.getDescriptor());
 
         frame.getContentPane().add(panel);
@@ -241,7 +216,7 @@ public class DemoApp {
         panel.getContent().add(mainMenuPanel, AppType.Main.getId());
         ol.show(panel.getContent(), AppType.Main.getId());
 
-        mainMenuPanel.getPartitionChooser().addActionListener(new ActionListener() {
+        panel.getChangePartition().addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -252,16 +227,16 @@ public class DemoApp {
             
         });
         
-        mainMenuPanel.getDiscoveryPeers().addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                discoveryPeers.setLocationRelativeTo(DemoApp.panel);
-                discoveryPeers.setVisible(true);
-            }
-            
-        });
-        
+//        mainMenuPanel.getDiscoveryPeers().addActionListener(new ActionListener() {
+//
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                discoveryPeers.setLocationRelativeTo(DemoApp.panel);
+//                discoveryPeers.setVisible(true);
+//            }
+//            
+//        });
+//        
         
         final CompositeDevicePanel devicePanel = new CompositeDevicePanel();
         panel.getContent().add(devicePanel, AppType.Device.getId());
@@ -382,7 +357,7 @@ public class DemoApp {
 
         });
 
-        mainMenuPanel.getSpawnDeviceAdapter().addActionListener(new ActionListener() {
+        panel.getCreateAdapter().addActionListener(new ActionListener() {
 
             @SuppressWarnings({ "rawtypes" })
             @Override
@@ -459,7 +434,6 @@ public class DemoApp {
                                 }
                             });
                             panel.getBedLabel().setText(appType.getName());
-                            panel.getPatientLabel().setText("");
                             rrr.setModel(capnoModel);
                             ol.show(panel.getContent(), appType.getId());
                         }
@@ -472,7 +446,6 @@ public class DemoApp {
                                 }
                             });
                             panel.getBedLabel().setText(appType.getName());
-                            panel.getPatientLabel().setText("");
                             pcaviz.setModel(vitalModel, pumpModel);
                             ol.show(panel.getContent(), AppType.PCAViz.getId());
                         }
@@ -485,7 +458,6 @@ public class DemoApp {
                                 }
                             });
                             panel.getBedLabel().setText(appType.getName());
-                            panel.getPatientLabel().setText("");
                             pcaPanel.setModel(vitalModel, pumpModel);
                             ol.show(panel.getContent(), AppType.PCA.getId());
                         }
@@ -564,21 +536,6 @@ public class DemoApp {
             }
         });
 
-        // mainMenuPanel.getDeviceList().setModel(nc.getAcceptedDevices());
-
-        // loginPanel.getClinicianId().addActionListener(new ActionListener() {
-        //
-        // @Override
-        // public void actionPerformed(ActionEvent e) {
-        // setGoBack("login", null);
-        // ol.show(panel.getContent(), "main");
-        // }
-        //
-        // });
-
-        // DemoPanel.setChildrenOpaque(panel, false);
-
-        // panel.setOpaque(true);
         
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 600);

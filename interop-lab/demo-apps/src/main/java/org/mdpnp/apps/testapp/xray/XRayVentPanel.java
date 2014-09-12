@@ -18,7 +18,6 @@ import ice.SampleArray;
 import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -424,10 +423,6 @@ public class XRayVentPanel extends JPanel {
         startOfBreathModel.start(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.numeric_data);
         
         demoPanel.getBedLabel().setText("X-Ray / Ventilator Synchronization");
-        demoPanel.getPatientLabel().setText("");
-        demoPanel.getPatientLabel().setFont(Font.decode("courier-bold-20"));
-        demoPanel.getPatientLabel().setVerticalAlignment(SwingConstants.TOP);
-        demoPanel.getPatientLabel().setVerticalTextPosition(SwingConstants.TOP);
         executorNonCritical.schedule(new Runnable() {
             public void run() {
                 cameraModel.start();
