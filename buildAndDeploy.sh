@@ -23,13 +23,13 @@ wait
 for TARGET in $TARGETS
 do
   echo Stopping device-adapter on $TARGET
-  ssh ubuntu@$TARGET sudo service device-adapter stop
+  ssh ubuntu@$TARGET sudo stop device-adapter
   echo Copying more files to $TARGET
   scp log4j.properties ubuntu@$TARGET:
-  scp device-adapter ubuntu@$TARGET:
+  scp device-adapter.conf ubuntu@$TARGET:/etc/init/device-adapter.conf
   ssh ubuntu@$TARGET chmod 777 $PARCEL/bin/demo-apps
   rm $TARGET.scp.out
   rm $TARGET.unzip.out
   echo Restarting device-adapter on $TARGET
-  ssh ubuntu@$TARGET sudo service device-adapter start
+  ssh ubuntu@$TARGET sudo start device-adapter
 done
