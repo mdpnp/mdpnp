@@ -45,9 +45,9 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
     private final MySimulatedPulseOximeter pulseox = new MySimulatedPulseOximeter();
 
     @Override
-    public void connect(String str) {
+    public boolean connect(String str) {
         pulseox.connect(executor);
-        super.connect(str);
+        return super.connect(str);
     }
 
     @Override

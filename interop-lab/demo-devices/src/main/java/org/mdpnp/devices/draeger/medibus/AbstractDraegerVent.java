@@ -513,7 +513,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     private ScheduledFuture<?> requestSlowData;
 
     @Override
-    protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
+    protected void stateChanged(ConnectionState newState, ConnectionState oldState, String transitionNote) {
 
         if (ice.ConnectionState.Connected.equals(newState) && !ice.ConnectionState.Connected.equals(oldState)) {
             startRequestSlowData();
@@ -521,7 +521,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         if (!ice.ConnectionState.Connected.equals(newState) && ice.ConnectionState.Connected.equals(oldState)) {
             stopRequestSlowData();
         }
-        super.stateChanged(newState, oldState);
+        super.stateChanged(newState, oldState, transitionNote);
     }
 
     private synchronized void stopRequestSlowData() {
@@ -594,7 +594,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         if (writeIt) {
             writeDeviceIdentity();
         }
-        reportConnected();
+        reportConnected("Device Id Message Received");
     }
 
     @Override

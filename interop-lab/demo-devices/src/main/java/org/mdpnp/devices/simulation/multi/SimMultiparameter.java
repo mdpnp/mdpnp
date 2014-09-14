@@ -85,11 +85,11 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
     private final MySimulatedCapnometer capnometer = new MySimulatedCapnometer();
 
     @Override
-    public void connect(String str) {
+    public boolean connect(String str) {
         pulseox.connect(executor);
         capnometer.connect(executor);
         ecg.connect(executor);
-        super.connect(str);
+        return super.connect(str);
     }
 
     @Override

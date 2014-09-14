@@ -147,7 +147,7 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
         // } catch (ParseException e) {
         // e.printStackTrace();
         // }
-        reportConnected();
+        reportConnected("message received");
         super.doInitCommands();
     }
 

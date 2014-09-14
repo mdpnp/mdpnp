@@ -319,7 +319,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         private final int END_OF_BREATH_BIT = FastStatus.END_OF_BREATH_INDICATION.getBit();
         @Override
         public boolean receiveCO2Wave(int messageNumber, double co2, int status) {
-            reportConnected();
+            reportConnected("received CO2 message");
             
             writeTechnicalAlert("Fast CO2", FastStatus.build(status, messageBuilder));
             

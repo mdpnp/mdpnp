@@ -56,25 +56,26 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
     private final ReadCondition rc;
 
     protected final StateMachine<ice.ConnectionState> stateMachine = new StateMachine<ice.ConnectionState>(legalTransitions,
-            ice.ConnectionState.Disconnected) {
+            ice.ConnectionState.Disconnected, "initial state") {
         @Override
-        public void emit(ice.ConnectionState newState, ice.ConnectionState oldState) {
-            stateChanging(newState, oldState);
-            log.debug(oldState + "==>" + newState);
+        public void emit(ice.ConnectionState newState, ice.ConnectionState oldState, String transitionNote) {
+            stateChanging(newState, oldState, transitionNote);
+            log.debug(oldState + "==>" + newState + " ("+transitionNote+")");
             deviceConnectivity.state = newState;
+            deviceConnectivity.info = transitionNote;
             InstanceHandle_t handle = deviceConnectivityHandle;
             if (handle != null) {
                 writeDeviceConnectivity();
             }
-            stateChanged(newState, oldState);
+            stateChanged(newState, oldState, transitionNote);
         };
     };
 
-    protected void stateChanging(ice.ConnectionState newState, ice.ConnectionState oldState) {
+    protected void stateChanging(ice.ConnectionState newState, ice.ConnectionState oldState, String transitionNote) {
 
     }
 
-    protected void stateChanged(ice.ConnectionState newState, ice.ConnectionState oldState) {
+    protected void stateChanged(ice.ConnectionState newState, ice.ConnectionState oldState, String transitionNote) {
         if (ice.ConnectionState.Connected.equals(oldState) && !ice.ConnectionState.Connected.equals(newState)) {
             eventLoop.doLater(new Runnable() {
                 public void run() {
@@ -169,7 +170,7 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         });
     }
 
-    public abstract void connect(String str);
+    public abstract boolean connect(String str);
 
     public abstract void disconnect();
 

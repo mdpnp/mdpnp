@@ -101,8 +101,8 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
     }
 
     @Override
-    protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
-        super.stateChanged(newState, oldState);
+    protected void stateChanged(ConnectionState newState, ConnectionState oldState, String transitionNote) {
+        super.stateChanged(newState, oldState, transitionNote);
         if (ConnectionState.Connected.equals(oldState) && !ConnectionState.Connected.equals(newState)) {
             failAll();
         }
@@ -366,8 +366,8 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             makeRequest(getDelegate(), issueConnectForPhase);
         }
         if (reportConnected) {
-            log.info("Connection negotiated");
-            reportConnected();
+            log.info("Connection successfully negotiated");
+            reportConnected("Connection successfully negotiated");
             getDelegate().readyFlag = true;
         }
     }

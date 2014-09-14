@@ -12,6 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.devices.philips.intellivue;
 
+import ice.ConnectionState;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -46,14 +48,16 @@ public class DemoSerialIntellivue extends AbstractDemoIntellivue {
 
     @Override
     public void shutdown() {
-        adapter.shutdown();
+        if(null != adapter) {
+            adapter.shutdown();
+        }
         super.shutdown();
     }
 
     protected RS232Adapter adapter;
 
     @Override
-    public void connect(String str) {
+    public boolean connect(String str) {
         if (null != adapter) {
             throw new IllegalStateException("Multiple calls to connect are not currently supported");
         }
@@ -61,10 +65,14 @@ public class DemoSerialIntellivue extends AbstractDemoIntellivue {
             int[] ports = getAvailablePorts(2);
             InetSocketAddress serialSide = new InetSocketAddress(InetAddress.getLoopbackAddress(), ports[0]);
             InetSocketAddress networkSide = new InetSocketAddress(InetAddress.getLoopbackAddress(), ports[1]);
+            state(ConnectionState.Connecting, "initializing RS-232 to UDP adapter");
             adapter = new RS232Adapter(str, serialSide, networkSide, threadGroup, networkLoop);
             connect(serialSide, networkSide);
+            return true;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            state(ConnectionState.Disconnected, "error initializing RS-232 to UDP " + e.getMessage());
+            log.error("error initializing RS-232 to UDP", e);
+            return false;
         }
 
     }

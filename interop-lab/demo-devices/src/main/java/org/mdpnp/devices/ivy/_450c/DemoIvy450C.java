@@ -87,7 +87,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         
         @Override
         protected void receiveLine(String line) {
-            reportConnected();
+            reportConnected("message received");
             super.receiveLine(line);
         }
         

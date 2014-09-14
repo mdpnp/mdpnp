@@ -208,8 +208,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
     
     @Override
-    protected void stateChanged(ConnectionState newState, ConnectionState oldState) {
-        super.stateChanged(newState, oldState);
+    protected void stateChanged(ConnectionState newState, ConnectionState oldState, String transitionNote) {
+        super.stateChanged(newState, oldState, transitionNote);
         if (ice.ConnectionState.Connected.equals(oldState) && !ice.ConnectionState.Connected.equals(newState)) {
             lastDataPoll = 0L;
             lastMessageReceived = 0L;
@@ -910,7 +910,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
     protected final MyIntellivue myIntellivue;
 
-    private static final Logger log = LoggerFactory.getLogger(DemoEthernetIntellivue.class);
+    protected static final Logger log = LoggerFactory.getLogger(DemoEthernetIntellivue.class);
 
     protected final NetworkLoop networkLoop;
     private final Thread networkLoopThread;
@@ -1126,9 +1126,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
     protected final void state(ice.ConnectionState state, String connectionInfo) {
         // So actually the state transition will emit the connection info
-        deviceConnectivity.info = connectionInfo;
-
-        if (!stateMachine.transitionWhenLegal(state, 5000L)) {
+        if (!stateMachine.transitionWhenLegal(state, 5000L, connectionInfo)) {
             throw new RuntimeException("timed out changing state");
         }
 
@@ -1241,6 +1239,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     @Override
     public void disconnect() {
         synchronized (stateMachine) {
+            if (ice.ConnectionState.Disconnected.equals(stateMachine.getState())) {
+                return;
+            }
             if (!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
                 state(ice.ConnectionState.Disconnected, "");
                 return;

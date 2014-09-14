@@ -46,7 +46,7 @@ public class DemoRadical7 extends AbstractSerialDevice {
         @Override
         public void firePulseOximeter() {
             super.firePulseOximeter();
-            reportConnected();
+            reportConnected("message received");
             long tm = getTimestamp().getTime();
             sampleTime.sec = (int) (tm / 1000L);
             sampleTime.nanosec = (int) (tm % 1000L * 1000000L);

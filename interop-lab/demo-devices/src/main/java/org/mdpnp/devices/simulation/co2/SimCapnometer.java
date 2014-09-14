@@ -45,9 +45,9 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
     private final MySimulatedCapnometer capnometer = new MySimulatedCapnometer();
 
     @Override
-    public void connect(String str) {
+    public boolean connect(String str) {
         capnometer.connect(executor);
-        super.connect(str);
+        return super.connect(str);
     }
 
     @Override

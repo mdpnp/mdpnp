@@ -237,7 +237,12 @@ public class DeviceAdapter {
         }
 
         if (null != device && device instanceof AbstractConnectedDevice) {
-            ((AbstractConnectedDevice) device).connect(address);
+            if(!((AbstractConnectedDevice) device).connect(address)) {
+                synchronized(this) {
+                    interrupted = true;
+                    this.notifyAll();
+                }
+            }
         }
 
         // Wait until killAdapter, then report on any threads that didn't come

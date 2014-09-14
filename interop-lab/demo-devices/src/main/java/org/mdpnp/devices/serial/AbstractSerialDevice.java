@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractSerialDevice extends AbstractConnectedDevice implements Runnable {
     protected abstract void doInitCommands() throws IOException;
 
-    protected void reportConnected() {
+    protected void reportConnected(String transitionNote) {
         // Once we transition the watchdog will be watching but we don't want to
         // count elapsed
         // silence from prior to connection
@@ -36,7 +36,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
         }
         synchronized (stateMachine) {
             if (!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
-                if (!stateMachine.transitionIfLegal(ice.ConnectionState.Connected)) {
+                if (!stateMachine.transitionIfLegal(ice.ConnectionState.Connected, transitionNote)) {
                     log.warn("Unable to enter Connected state from " + stateMachine.getState());
                 }
             }
@@ -115,11 +115,11 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
                 log.trace("nothing to do getState()=" + state);
             } else if (ice.ConnectionState.Connecting.equals(state)) {
                 log.trace("getState()=" + state + " entering Disconnecting");
-                stateMachine.transitionIfLegal(ice.ConnectionState.Disconnecting);
+                stateMachine.transitionIfLegal(ice.ConnectionState.Disconnecting, "disconnect requested from Connecting state");
                 shouldCancel = true;
             } else if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Negotiating.equals(state)) {
                 log.trace("getState()=" + state + " entering Disconnecting");
-                stateMachine.transitionIfLegal(ice.ConnectionState.Disconnecting);
+                stateMachine.transitionIfLegal(ice.ConnectionState.Disconnecting, "disconnect requested from Connected or Negotiating states");
                 shouldClose = true;
             }
         }
@@ -167,7 +167,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
     };
 
     @Override
-    public void connect(String portIdentifier) {
+    public boolean connect(String portIdentifier) {
         log.trace("connect requested to " + portIdentifier);
         synchronized (this) {
             this.portIdentifier = portIdentifier;
@@ -175,14 +175,14 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
             if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Negotiating.equals(state)
                     || ice.ConnectionState.Connecting.equals(state)) {
             } else if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
-                stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting);
+                stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting, "connect requested from Disconnected or Disconnecting states");
 
                 currentThread = new Thread(threadGroup, this, "AbstractSerialDevice Processing");
                 currentThread.setDaemon(true);
                 currentThread.start();
             }
-
         }
+        return true;
     }
 
     private long previousAttempt = 0L;
@@ -216,7 +216,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
             } else {
                 synchronized (stateMachine) {
                     if (ice.ConnectionState.Connecting.equals(stateMachine.getState())) {
-                        if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating)) {
+                        if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating, "serial port opened")) {
                             throw new IllegalStateException("Cannot begin negotiating from " + getState());
                         }
                     } else {
@@ -241,7 +241,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
             this.socket = null;
             this.timeAwareInputStream = null;
 
-            stateMachine.transitionIfLegal(ice.ConnectionState.Disconnected);
+            stateMachine.transitionIfLegal(ice.ConnectionState.Disconnected, "serial port reached EOF");
             if (ice.ConnectionState.Connecting.equals(priorState) || ice.ConnectionState.Connected.equals(priorState)
                     || ice.ConnectionState.Negotiating.equals(priorState)) {
                 log.trace("process thread died unexpectedly, trying to reconnect");
@@ -264,7 +264,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
                     if (quietTime > getMaximumQuietTime()) {
 
                         log.warn("WATCHDOG - back to Negotiating after " + quietTime + "ms quiet time (exceeds " + getMaximumQuietTime() + ")");
-                        if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating)) {
+                        if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating, "watchdog "+quietTime + "ms quiet time (exceeds " + getMaximumQuietTime() + ")")) {
                             log.warn("WATCHDOG - unable to move from Connecting to Negotiating state (due to silence on the line)");
                         }
                     }

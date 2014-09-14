@@ -23,12 +23,14 @@ public class StateMachine<T> {
 
     private final T[][] legalTransitions;
     private T state;
+    private String transitionNote;
 
     private static final Logger log = LoggerFactory.getLogger(StateMachine.class);
 
-    public StateMachine(T[][] legalTransitions, T initialState) {
+    public StateMachine(T[][] legalTransitions, T initialState, String transitionNote) {
         this.state = initialState;
         this.legalTransitions = legalTransitions;
+        this.transitionNote = transitionNote;
     }
 
     public synchronized boolean wait(T state, long timeout) {
@@ -65,21 +67,26 @@ public class StateMachine<T> {
         return false;
     }
 
-    public void emit(T newState, T oldState) {
+    public void emit(T newState, T oldState, String transitionNote) {
 
     }
 
     public synchronized T getState() {
         return state;
     }
+    
+    public synchronized String getTransitionNote() {
+        return transitionNote;
+    }
 
-    public synchronized boolean transitionIfLegal(T state) {
+    public synchronized boolean transitionIfLegal(T state, String transitionNote) {
         if (legalTransition(state)) {
             T oldState = this.state;
             // log.trace(this.state + " -----> " + state);
             this.state = state;
+            this.transitionNote = transitionNote;
             this.notifyAll();
-            emit(state, oldState);
+            emit(state, oldState, transitionNote);
             return true;
         } else {
             log.trace("NO " + this.state + " --/--> " + state);
@@ -88,15 +95,15 @@ public class StateMachine<T> {
         }
     }
 
-    public boolean transitionWhenLegal(T state) {
-        return transitionWhenLegal(state, getTransitionTimeout());
+    public boolean transitionWhenLegal(T state, String transitionNote) {
+        return transitionWhenLegal(state, getTransitionTimeout(), transitionNote);
     }
 
-    public boolean transitionWhenLegal(T state, long timeout) {
-        return transitionWhenLegal(state, timeout, null);
+    public boolean transitionWhenLegal(T state, long timeout, String transitionNote) {
+        return transitionWhenLegal(state, timeout, null, transitionNote);
     }
 
-    public synchronized boolean transitionWhenLegal(T state, long timeout, T[] priorState) {
+    public synchronized boolean transitionWhenLegal(T state, long timeout, T[] priorState, String transitionNote) {
         T _priorState;
         long giveup = System.currentTimeMillis() + timeout;
         while (!legalTransition(state) && System.currentTimeMillis() < giveup) {
@@ -107,7 +114,7 @@ public class StateMachine<T> {
             }
         }
         _priorState = this.state;
-        if (!transitionIfLegal(state)) {
+        if (!transitionIfLegal(state, transitionNote)) {
             if (isTimeoutFatal()) {
                 throw new RuntimeException("Unable to transition from " + this.state + " to " + state + " after waiting " + timeout + "ms");
             } else {

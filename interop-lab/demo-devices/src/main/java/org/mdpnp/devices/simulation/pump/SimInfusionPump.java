@@ -66,9 +66,9 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
     }
 
     @Override
-    public void connect(String str) {
+    public boolean connect(String str) {
         pump.connect(executor);
-        super.connect(str);
+        return super.connect(str);
     }
 
     @Override

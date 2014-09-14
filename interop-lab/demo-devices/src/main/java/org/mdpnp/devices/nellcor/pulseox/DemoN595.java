@@ -101,7 +101,7 @@ public class DemoN595 extends AbstractSerialDevice {
 
         @Override
         public void fireDevice() {
-            reportConnected();
+            reportConnected("message received");
             writeDeviceIdentity();
 
         }

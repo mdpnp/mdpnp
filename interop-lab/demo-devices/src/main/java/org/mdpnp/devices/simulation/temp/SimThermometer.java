@@ -38,9 +38,9 @@ public class SimThermometer extends AbstractSimulatedConnectedDevice {
     private final MySimulatedThermometer thermometer = new MySimulatedThermometer();
 
     @Override
-    public void connect(String str) {
+    public boolean connect(String str) {
         thermometer.connect(executor);
-        super.connect(str);
+        return super.connect(str);
     }
 
     @Override

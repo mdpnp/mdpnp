@@ -43,7 +43,7 @@ public class DemoEthernetIntellivue extends AbstractDemoIntellivue {
     private static final Logger log = LoggerFactory.getLogger(DemoEthernetIntellivue.class);
 
     @Override
-    public void connect(String address) {
+    public boolean connect(String address) {
         if (null == address || "".equals(address)) {
             try {
                 String[] hosts = listenForConnectIndication();
@@ -77,7 +77,7 @@ public class DemoEthernetIntellivue extends AbstractDemoIntellivue {
                 log.error("Trying to connect to address", e);
             }
         }
-
+        return true;
     }
 
     public String[] listenForConnectIndication() throws IOException {

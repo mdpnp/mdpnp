@@ -39,11 +39,11 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
     private final MySimulatedPulseOximeter pulseox[];
 
     @Override
-    public void connect(String str) {
+    public boolean connect(String str) {
         for (int i = 0; i < pulseox.length; i++) {
             pulseox[i].connect(executor);
         }
-        super.connect(str);
+        return super.connect(str);
     }
 
     @Override

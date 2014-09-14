@@ -45,9 +45,10 @@ public class FramePanel extends JComponent implements Runnable {
     }
 
     protected final StateMachine<State> stateMachine = new StateMachine<State>(new State[][] { { State.Thawed, State.Freezing },
-            { State.Freezing, State.Frozen }, { State.Frozen, State.Thawing }, { State.Thawing, State.Thawed } }, State.Thawed) {
-        public void emit(State newState, State oldState) {
-            log.debug(oldState + " --> " + newState);
+            { State.Freezing, State.Frozen }, { State.Frozen, State.Thawing }, { State.Thawing, State.Thawed } }, State.Thawed, "initial") {
+        @Override
+        public void emit(State newState, State oldState, String transitionNote) {
+            log.debug(oldState + " --> " + newState +" ("+transitionNote+")");
         };
     };
 
@@ -68,7 +69,7 @@ public class FramePanel extends JComponent implements Runnable {
     }
 
     public void freeze(long exposureTime) {
-        if (stateMachine.transitionIfLegal(State.Freezing)) {
+        if (stateMachine.transitionIfLegal(State.Freezing, "freeze requested")) {
             freezeBy = exposureTime > 0L ? (System.currentTimeMillis() + exposureTime) : 0L;
             log.info("will freeze:" + freezeBy);
         } else {
@@ -77,7 +78,7 @@ public class FramePanel extends JComponent implements Runnable {
     }
 
     public void unfreeze() {
-        if (stateMachine.transitionIfLegal(State.Thawing)) {
+        if (stateMachine.transitionIfLegal(State.Thawing, "unfreeze requested")) {
             log.info("will thaw");
         } else {
             log.info("cannot enter Thawing state");
@@ -168,9 +169,9 @@ public class FramePanel extends JComponent implements Runnable {
     public void run() {
         // We must drive these state transitions regardless of the camera state
         boolean fromFreezingToFrozen = State.Freezing.equals(stateMachine.getState()) && System.currentTimeMillis() >= freezeBy
-                && stateMachine.transitionIfLegal(State.Frozen);
+                && stateMachine.transitionIfLegal(State.Frozen, "freezing time elapsed");
         @SuppressWarnings("unused")
-        boolean fromThawingToThawed = State.Thawing.equals(stateMachine.getState()) && stateMachine.transitionIfLegal(State.Thawed);
+        boolean fromThawingToThawed = State.Thawing.equals(stateMachine.getState()) && stateMachine.transitionIfLegal(State.Thawed, "thawing time elapsed");
 
         // Somebody called setWebcam, let's accept it
         if (proposedWebcam != acceptedWebcam) {

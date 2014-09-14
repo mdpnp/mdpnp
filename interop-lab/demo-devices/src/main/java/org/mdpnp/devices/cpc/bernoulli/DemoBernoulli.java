@@ -248,7 +248,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
     }
 
     @Override
-    public void connect(String str) {
+    public boolean connect(String str) {
         int port = 17008;
         if (str.contains(":")) {
             int colon = str.lastIndexOf(':');
@@ -265,17 +265,17 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
             case ice.ConnectionState._Connected:
             case ice.ConnectionState._Negotiating:
             case ice.ConnectionState._Connecting:
-                return;
+                return true;
             case ice.ConnectionState._Disconnected:
             case ice.ConnectionState._Disconnecting:
-                stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting);
+                stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting, "connect requested");
                 break;
             }
             currentThread = new Thread(this, "BernoulliImpl Processing");
             currentThread.setDaemon(true);
             currentThread.start();
         }
-
+        return true;
     }
 
     private long previousAttempt = 0L;
@@ -310,7 +310,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
             socket = new Socket(host, port);
 
             this.socket = socket;
-            if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating)) {
+            if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating, "socket opened")) {
                 throw new IllegalStateException("Cannot begin negotiating from " + getState());
             }
 
@@ -328,7 +328,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
             log.info(Thread.currentThread().getName() + " (" + Thread.currentThread().getId() + ")  ends");
             ice.ConnectionState priorState = getState();
             close();
-            stateMachine.transitionIfLegal(ice.ConnectionState.Disconnected);
+            stateMachine.transitionIfLegal(ice.ConnectionState.Disconnected, "socket reached EOF");
             switch (priorState.ordinal()) {
             case ice.ConnectionState._Connected:
             case ice.ConnectionState._Connecting:
@@ -377,7 +377,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
             case ice.ConnectionState._Connecting:
             case ice.ConnectionState._Connected:
             case ice.ConnectionState._Negotiating:
-                stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnecting);
+                stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnecting, "disconnect requested");
 
                 try {
                     socket.close();
@@ -461,7 +461,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
                 log.trace(Thread.currentThread().getName() + " (" + Thread.currentThread().getId() + ") ends");
                 if (inited) {
                     log.trace("sendSubscription returns true");
-                    stateMachine.transitionIfLegal(ice.ConnectionState.Connected);
+                    stateMachine.transitionIfLegal(ice.ConnectionState.Connected, "subscription success");
                 } else {
                     log.trace("sendSubscription returns false");
                     if (ice.ConnectionState.Negotiating.equals(getState())) {

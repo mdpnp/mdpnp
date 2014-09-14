@@ -79,9 +79,9 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
     }
 
     @Override
-    public void connect(String str) {
+    public boolean connect(String str) {
         bloodPressure.connect(str);
-        super.connect(str);
+        return super.connect(str);
     }
 
     @Override
