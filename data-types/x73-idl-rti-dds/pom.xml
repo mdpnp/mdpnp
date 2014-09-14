@@ -28,12 +28,12 @@
     <repository>
       <id>arvi</id>
       <name>arvi</name>
-      <url>http://arvi.mgh.harvard.edu:8080/artifactory/ext-release-local</url>
+      <url>https://build.openice.info/artifactory/ext-release-local</url>
     </repository>
     <repository>
       <id>repo1</id>
       <name></name>
-      <url>http://arvi.mgh.harvard.edu:8080/artifactory/repo1</url>
+      <url>https://build.openice.info/artifactory/repo1</url>
     </repository>
   </repositories>
   <dependencies>
@@ -66,7 +66,7 @@
     <dependency>
       <groupId>com.rti.dds</groupId>
       <artifactId>nddsjava</artifactId>
-      <version>5.1-mdpnp-000004</version>
+      <version>5.1-mdpnp-000005</version>
     </dependency>
   </dependencies>
 </project>

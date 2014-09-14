@@ -44,7 +44,7 @@ jar.doFirst {
 
 dependencies {
   // nddsjava.jar is the java binding library for RTI DDS
-  compile group: 'com.rti.dds', name: 'nddsjava', version: '5.1-mdpnp-000004'
+  compile group: 'com.rti.dds', name: 'nddsjava', version: '5.1-mdpnp-000005'
 
   compile project(':data-types:x73-idl')
   testCompile group: 'junit', name: 'junit', version: '4.11'
