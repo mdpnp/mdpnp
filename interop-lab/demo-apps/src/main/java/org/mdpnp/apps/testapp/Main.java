@@ -56,70 +56,87 @@ public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
-    public static final void verify(DomainParticipantQos qos) {
-
+    public static final String verify(String header, DomainParticipantQos qos) {
+        return header;
     }
 
-    public static final void verify(TopicQos qos) {
-
+    public static final String verify(String header, TopicQos qos) {
+        return header;
     }
 
-    public static final void verify(SubscriberQos qos) {
-
+    public static final String verify(String header, SubscriberQos qos) {
+        return header;
     }
 
-    public static final void verify(PublisherQos qos) {
-
+    public static final String verify(String header, PublisherQos qos) {
+        return header;
     }
 
-    public static final void verify(String name, HistoryQosPolicy history, ResourceLimitsQosPolicy resource_limits) {
+    private static String logHeader(String header) {
+        if(null != header) {
+            log.info(header);
+        }
+        return null;
+    }
+    
+    public static final String verify(String header, String name, HistoryQosPolicy history, ResourceLimitsQosPolicy resource_limits) {
         if (history.kind.equals(HistoryQosPolicyKind.KEEP_ALL_HISTORY_QOS)) {
             if (resource_limits.max_samples != ResourceLimitsQosPolicy.LENGTH_UNLIMITED) {
+                header = logHeader(header);
                 log.info("\t"+name+" KEEP_ALL history with max_samples=" + resource_limits.max_samples
                         + " will exclude newer samples when max_samples has been reached");
             }
             if (resource_limits.max_samples_per_instance != ResourceLimitsQosPolicy.LENGTH_UNLIMITED) {
+                header = logHeader(header);
                 log.info("\t"+name+" KEEP_ALL history with max_samples_per_instance=" + resource_limits.max_samples_per_instance
                         + " will exclude newer samples when max_samples_per_instance has been reached");
             }
         } else if (history.kind.equals(HistoryQosPolicyKind.KEEP_LAST_HISTORY_QOS)) {
             int depth = history.depth;
             if (resource_limits.max_samples!=ResourceLimitsQosPolicy.LENGTH_UNLIMITED && resource_limits.max_samples < depth) {
+                header = logHeader(header);
                 log.info("\t"+name+" KEEP_LAST depth=" + depth + " history with max_samples=" + resource_limits.max_samples
                         + " will exclude newer samples when max_samples has been reached");
             }
             if (resource_limits.max_samples_per_instance!=ResourceLimitsQosPolicy.LENGTH_UNLIMITED && resource_limits.max_samples_per_instance < depth) {
+                header = logHeader(header);
                 log.info("\t"+name+" KEEP_LAST depth=" + depth + " history with max_samples_per_instance="
                         + resource_limits.max_samples_per_instance + " will exclude newer samples when max_samples_per_instance has been reached");
             }
         }
+        return header;
     }
     
-    public static final void verify(String name, DurabilityQosPolicy durability, ReliabilityQosPolicy reliability) {
+    public static final String verify(String header, String name, DurabilityQosPolicy durability, ReliabilityQosPolicy reliability) {
         if(!durability.kind.equals(DurabilityQosPolicyKind.VOLATILE_DURABILITY_QOS)) {
             if(!reliability.kind.equals(ReliabilityQosPolicyKind.RELIABLE_RELIABILITY_QOS)) {
+                header = logHeader(header);
                 log.info("\t"+name+" has durability="+durability.kind+" which is ineffective with reliability="+reliability.kind);
             }
         }
+        return header;
     }
 
-    public static final void verify(DataReaderQos qos) {
-        verify("DataReader", qos.history, qos.resource_limits);
-        verify("DataReader", qos.durability, qos.reliability);
+    public static final String verify(String header, DataReaderQos qos) {
+        header = verify(header, "DataReader", qos.history, qos.resource_limits);
+        header = verify(header, "DataReader", qos.durability, qos.reliability);
+        return header;
     }
     
-    public static final void verify(DataWriterQos qos) {
-        verify("DataWriter", qos.history, qos.resource_limits);
-        verify("DataWriter", qos.durability, qos.reliability);
+    public static final String verify(String header, DataWriterQos qos) {
+        header = verify(header, "DataWriter", qos.history, qos.resource_limits);
+        header = verify(header, "DataWriter", qos.durability, qos.reliability);
+        return header;
     }
 
-    public static final void verify(DataReaderQos rqos, DataWriterQos wqos) {
+    public static final String verify(String header, DataReaderQos rqos, DataWriterQos wqos) {
         // Should check for valid RxO for endpoints using the same profile
-
+        return header;
     }
 
-    public static final void verify(SubscriberQos sqos, PublisherQos pqos) {
+    public static final String verify(String header, SubscriberQos sqos, PublisherQos pqos) {
         // Should check for valid RxO for endpoints using the same profile
+        return header;
     }
 
     public static final void verifyQosLibraries() {
@@ -139,7 +156,6 @@ public class Main {
             dpf.get_qos_profiles(profiles, library);
             for (int j = 0; j < profiles.size(); j++) {
                 String profile = (String) profiles.get(j);
-                log.info("Examining QoS profile: " + library + "::" + profile);
                 dpf.get_participant_qos_from_profile(part_qos, library, profile);
                 dpf.get_publisher_qos_from_profile(pub_qos, library, profile);
                 dpf.get_subscriber_qos_from_profile(sub_qos, library, profile);
@@ -147,14 +163,15 @@ public class Main {
                 dpf.get_datareader_qos_from_profile(r_qos, library, profile);
                 dpf.get_topic_qos_from_profile(t_qos, library, profile);
 
-                verify(part_qos);
-                verify(pub_qos);
-                verify(sub_qos);
-                verify(sub_qos, pub_qos);
-                verify(r_qos);
-                verify(w_qos);
-                verify(r_qos, w_qos);
-                verify(t_qos);
+                String header = "Examining QoS profile: " + library + "::" + profile;
+                header = verify(header, part_qos);
+                header = verify(header, pub_qos);
+                header = verify(header, sub_qos);
+                header = verify(header, sub_qos, pub_qos);
+                header = verify(header, r_qos);
+                header = verify(header, w_qos);
+                header = verify(header, r_qos, w_qos);
+                header = verify(header, t_qos);
             }
             profiles.clear();
         }
