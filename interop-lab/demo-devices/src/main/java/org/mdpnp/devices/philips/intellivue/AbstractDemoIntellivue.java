@@ -100,7 +100,7 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.infrastructure.Time_t;
 
 public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
-    protected Time_t sampleTime = new Time_t(0, 0);
+    protected Time_t sampleTimeSampleArray = new Time_t(0, 0);
 
     protected final InstanceHolder<SampleArray> getSampleArrayUpdate(ObservedValue ov, int handle) {
         Map<Integer, InstanceHolder<SampleArray>> forObservedValue = sampleArrayUpdates.get(ov);
@@ -701,6 +701,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             t.nanosec += microseconds * 1000L;
         }
 
+        private Time_t sampleTimeNumeric = new Time_t(0,0);
         private final void handle(int handle, RelativeTime time, NumericObservedValue observed) {
             // log.debug(observed.toString());
             ObservedValue ov = ObservedValue.valueOf(observed.getPhysioId().getType());
@@ -709,13 +710,13 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 if (null != metricId) {
                     // TODO using the local clock instead of device clock in
                     // case device clock is set incorrectly
-                    populateTime(time, sampleTime);
+                    populateTime(time, sampleTimeNumeric);
 
                     if (observed.getMsmtState().isUnavailable()) {
-                        putNumericUpdate(ov, handle, numericSample(getNumericUpdate(ov, handle), (Float) null, metricId, handle, sampleTime));
+                        putNumericUpdate(ov, handle, numericSample(getNumericUpdate(ov, handle), (Float) null, metricId, handle, sampleTimeNumeric));
                     } else {
                         putNumericUpdate(ov, handle,
-                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), metricId, handle, sampleTime));
+                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), metricId, handle, sampleTimeNumeric));
                     }
                 } else {
                     log.debug("Unknown numeric:" + observed);
@@ -969,6 +970,16 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         networkLoop.add(serviceSampleArrays);
     }
 
+    protected static final void mustProgress(Time_t time, int sec, int nanosec) {
+        if(sec > time.sec || (sec == time.sec && nanosec >= time.nanosec)) {
+            // ok because time progressed or stayed the same
+            time.sec = sec;
+            time.nanosec = nanosec;
+        } else {
+            log.warn("Not updating Time_t from sec="+time.sec+" nanosec="+time.nanosec+" to sec="+sec+" nanosec="+nanosec+" because that would move backward in time");
+        }
+    }
+    
     protected void flush() {
         data = sampleArrayQueue.toArray(data);
         long now = System.currentTimeMillis();
@@ -982,8 +993,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 String metricId = sampleArrayMetricIds.get(data[i].getObservedValue());
                 RelativeTime rt = handleToRelativeTime.get(data[i].getHandle());
     
-                sampleTime.sec = (int) (data[i].getTime() / 1000L);
-                sampleTime.nanosec = (int) (data[i].getTime() % 1000L * 1000000L);
+                mustProgress(sampleTimeSampleArray, (int) (data[i].getTime() / 1000L), (int) (data[i].getTime() % 1000L * 1000000L));
                 
     //            log.warn("for " + metricId + " " + data[i].getHandle() + " Sample array at " + df.format(new Date(data[i].getTime().sec*1000L+data[i].getTime().nanosec/1000000L)));
                 putSampleArrayUpdate(
@@ -991,7 +1001,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         data[i].getHandle(),
                         // TODO Check this logic should be 1024ms
                         sampleArraySample(getSampleArrayUpdate(data[i].getObservedValue(), data[i].getHandle()), data[i].getSampleArray().getNumbers(),
-                                metricId, data[i].getHandle(), (int)(1000 / rt.toMilliseconds()), sampleTime));
+                                metricId, data[i].getHandle(), (int)(1000 / rt.toMilliseconds()), sampleTimeSampleArray));
                 SampleArraySample.releaseSample(data[i]);
             } else {
                 // These are sorted no need to continue
