@@ -230,6 +230,7 @@ public class DeviceAdapter {
         } else {
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 public void run() {
+                    log.info("Calling killAdapter from shutdown hook");
                     killAdapter();
                 }
             }));

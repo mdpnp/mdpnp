@@ -180,6 +180,7 @@ public class NetworkLoop implements Runnable {
                         case Terminated:
                             throw new IllegalStateException();
                         case Terminating:
+                            log.info("runLoop in Terminating state; runLoop will end");
                             return;
                         case Pausing:
                             loopState = LoopState.Paused;
@@ -250,6 +251,8 @@ public class NetworkLoop implements Runnable {
                     // }
                 }
             }
+        } catch(Throwable t) {
+            log.error("NetworkLoop.runLoop exiting on uncaught Throwable; this should not happen", t);
         } finally {
             synchronized (this) {
                 myThread = null;

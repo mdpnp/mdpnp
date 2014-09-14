@@ -17,12 +17,14 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @author Jeff Plourde
  *
  */
 public class TaskQueue {
-
     private final ThreadLocal<List<Task<?>>> tasksToDo = new ThreadLocal<List<Task<?>>>() {
         protected java.util.List<TaskQueue.Task<?>> initialValue() {
             return new ArrayList<Task<?>>();
@@ -80,6 +82,8 @@ public class TaskQueue {
         private T t;
         private Throwable e;
         private long interval;
+        
+        private static final Logger log = LoggerFactory.getLogger(TaskImpl.class);
 
         public abstract T doExecute(TaskQueue queue);
 
@@ -114,6 +118,7 @@ public class TaskQueue {
                 return t;
             } catch (Throwable e) {
                 synchronized (this) {
+                    log.error("Caught Throwable in TaskImpl.execute; may not be reported if no call to waitForResult", e);
                     this.e = e;
                     this.notifyAll();
                 }
