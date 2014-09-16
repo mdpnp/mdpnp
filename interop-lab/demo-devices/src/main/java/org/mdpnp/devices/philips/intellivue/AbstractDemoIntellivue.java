@@ -79,12 +79,14 @@ import org.mdpnp.devices.philips.intellivue.data.RelativeTime;
 import org.mdpnp.devices.philips.intellivue.data.SampleArrayCompoundObservedValue;
 import org.mdpnp.devices.philips.intellivue.data.SampleArrayObservedValue;
 import org.mdpnp.devices.philips.intellivue.data.SampleArraySpecification;
+import org.mdpnp.devices.philips.intellivue.data.ScaleAndRangeSpecification;
 import org.mdpnp.devices.philips.intellivue.data.SimpleColor;
 import org.mdpnp.devices.philips.intellivue.data.StrAlMonInfo;
 import org.mdpnp.devices.philips.intellivue.data.SystemModel;
 import org.mdpnp.devices.philips.intellivue.data.TextId;
 import org.mdpnp.devices.philips.intellivue.data.TextIdList;
 import org.mdpnp.devices.philips.intellivue.data.Type;
+import org.mdpnp.devices.philips.intellivue.data.UnitCode;
 import org.mdpnp.devices.philips.intellivue.data.VariableLabel;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportError;
 import org.mdpnp.devices.philips.intellivue.dataexport.DataExportMessage;
@@ -653,6 +655,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         Attribute<SampleArraySpecification> spec = attrs.getAttribute(AbstractDemoIntellivue.this.spec);
                         Attribute<SampleArrayCompoundObservedValue> cov = attrs.getAttribute(AbstractDemoIntellivue.this.cov);
                         Attribute<SampleArrayObservedValue> v = attrs.getAttribute(AbstractDemoIntellivue.this.v);
+                        Attribute<ScaleAndRangeSpecification> sar = attrs.getAttribute(AbstractDemoIntellivue.this.sar);
+                        Attribute<EnumValue<UnitCode>> unitCode = attrs.getAttribute(AbstractDemoIntellivue.this.unitCode);
+                        
 
                         if (null != observed) {
                             handle(handle, result.getRelativeTime(), observed.getValue());
@@ -663,14 +668,19 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 handle(handle, result.getRelativeTime(), nov);
                             }
                         }
+                        
+                        if(null != unitCode) {
+                            handle(handle, unitCode.getValue().getEnum());
+                        }
 
                         if (null != period) {
                             handle(handle, period.getValue());
                         }
-
+                        if (null != sar) {
+                            handle(handle, sar.getValue());
+                        }
                         if (null != spec) {
                             handle(handle, spec.getValue());
-
                         }
                         if (null != cov) {
                             for (SampleArrayObservedValue saov : cov.getValue().getList()) {
@@ -758,9 +768,11 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     log.warn("No metricId for " + ov);
                 } else {
                     SampleArraySpecification sas = handleToSampleArraySpecification.get(handle);
+                    ScaleAndRangeSpecification sar = handleToScaleAndRangeSpecification.get(handle);
+                    UnitCode unitCode = handleToUnitCode.get(handle);
                     RelativeTime rt = handleToRelativeTime.get(handle);
-                    if (null == sas || null == rt) {
-                        log.warn("No SampleArraySpecification or RelativeTime for handle=" + handle + " rt=" + rt + " sas=" + sas);
+                    if (null == sas || null == rt || null == sar || null == unitCode) {
+                        log.warn("No SampleArraySpecification or RelativeTime for handle=" + handle + " rt=" + rt + " sas=" + sas + " sar="+sar+ " unitCode="+unitCode);
                     } else {
                         int cnt = sas.getArraySize();
                         long period = cnt * rt.toMilliseconds();
@@ -768,7 +780,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         SampleArraySample s = SampleArraySample.newSample(ov, handle, nextTime);
                         MySampleArray w = s.getSampleArray();
                         
-                        s.getSampleArray().setSampleArraySpecification(sas);
+                        
+                        w.setSampleArraySpecification(sas);
+                        w.setScaleAndRangeSpecification(sar);
                         
                         int cnt_sa = v.getLength() / (sas.getSampleSize() / Byte.SIZE);
 
@@ -803,15 +817,25 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         }
 
 
+        protected void handle(int handle, ScaleAndRangeSpecification sar) {
+            handleToScaleAndRangeSpecification.put(handle, sar.clone());
+            if(log.isTraceEnabled()) {
+                log.trace("Received a ScaleAndRangeSpecification for " + handle + " " + sar);
+            }
+        }
+
+        protected void handle(int handle, UnitCode unitCode) {
+            handleToUnitCode.put(handle, unitCode);
+            if(log.isTraceEnabled()) {
+                log.trace("Received a unitCode for " + handle + " " + unitCode);
+            }
+        }
         
-
         protected void handle(int handle, SampleArraySpecification spec) {
-            SampleArraySpecification sas = new SampleArraySpecification();
-            sas.setArraySize(spec.getArraySize());
-            sas.setSampleSize(spec.getSampleSize());
-            sas.setSignificantBits(spec.getSignificantBits());
-
-            handleToSampleArraySpecification.put(handle, sas);
+            handleToSampleArraySpecification.put(handle, spec.clone());
+            if(log.isTraceEnabled()) {
+                log.trace("Received a SampleArraySpecification for " + handle + " " + spec);
+            }
         }
 
         protected void handle(int handle, RelativeTime period) {
@@ -1013,6 +1037,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     
     protected static class MySampleArray {
         private short sampleSize, significantBits;
+        private double lowerAbsoluteValue, upperAbsoluteValue;
+        private int lowerScaledValue, upperScaledValue;
         private final List<Number> numbers = new ArrayList<Number>();
 
         public MySampleArray() {
@@ -1048,7 +1074,23 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             if (sampleNumber >= numbers.size()) {
                 log.warn("Received sampleNumber=" + sampleNumber + " where expected size was " + numbers.size());
             } else {
-                numbers.set(sampleNumber, value);
+                // Scale and range the value
+                
+                if(!Double.isNaN(lowerAbsoluteValue) && !Double.isNaN(upperAbsoluteValue)) {
+                    if(upperScaledValue == lowerScaledValue) {
+                        log.error("Not scaling " + value + " between scaled " + lowerScaledValue + " and " + upperScaledValue);
+                    } else {
+                        double prop = 1.0 * (value - lowerScaledValue) / (upperScaledValue - lowerScaledValue);
+                        if(lowerAbsoluteValue == upperAbsoluteValue) {
+                            log.error("Not scaling " + value + " (proportionally " + prop+ ") between " + lowerAbsoluteValue + " and " + upperScaledValue);
+                        } else {
+                            prop = lowerAbsoluteValue + prop * (upperAbsoluteValue - lowerAbsoluteValue);
+                            numbers.set(sampleNumber, prop);
+                        }
+                    } 
+                } else {
+                    numbers.set(sampleNumber, value);
+                }
             }
         }
 
@@ -1122,6 +1164,13 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             setArraySize(sas.getArraySize());
             buildMaskAndShift();
         }
+        
+        public void setScaleAndRangeSpecification(ScaleAndRangeSpecification sar) {
+            this.lowerAbsoluteValue = sar.getLowerAbsoluteValue().doubleValue();
+            this.upperAbsoluteValue = sar.getUpperAbsoluteValue().doubleValue();
+            this.lowerScaledValue = sar.getLowerScaledValue();
+            this.upperScaledValue = sar.getUpperScaledValue();
+        }
     }
 
     protected final void state(ice.ConnectionState state, String connectionInfo) {
@@ -1138,6 +1187,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
     protected final Map<Integer, RelativeTime> handleToRelativeTime = new HashMap<Integer, RelativeTime>();
     protected final Map<Integer, SampleArraySpecification> handleToSampleArraySpecification = new HashMap<Integer, SampleArraySpecification>();
+    protected final Map<Integer, ScaleAndRangeSpecification> handleToScaleAndRangeSpecification = new HashMap<Integer, ScaleAndRangeSpecification>();
+    protected final Map<Integer, UnitCode> handleToUnitCode = new HashMap<Integer, UnitCode>();
+    
 
     protected final Attribute<DeviceAlertCondition> deviceAlertCondition = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_DEV_AL_COND,
             DeviceAlertCondition.class);
@@ -1172,6 +1224,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     protected final Attribute<RelativeTime> period = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_TIME_PD_SAMP, RelativeTime.class);
     protected final Attribute<SampleArraySpecification> spec = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_SA_SPECN,
             SampleArraySpecification.class);
+    protected final Attribute<ScaleAndRangeSpecification> sar = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_SCALE_SPECN_I16, ScaleAndRangeSpecification.class);
+    protected final Attribute<EnumValue<UnitCode>> unitCode = AttributeFactory.getEnumAttribute(AttributeId.NOM_ATTR_UNIT_CODE.asOid(), UnitCode.class);
+
 
     protected Set<SelectionKey> registrationKeys = new HashSet<SelectionKey>();
 
