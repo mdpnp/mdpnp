@@ -25,6 +25,15 @@ public class SampleArraySpecification implements Value {
     private short sampleSize, significantBits;
     private int flags;
 
+    public SampleArraySpecification clone() {
+        SampleArraySpecification dup = new SampleArraySpecification();
+        dup.arraySize = this.arraySize;
+        dup.sampleSize = this.sampleSize;
+        dup.significantBits = this.significantBits;
+        dup.flags = this.flags;
+        return dup;
+    }
+    
     @Override
     public void format(ByteBuffer bb) {
         Bits.putUnsignedShort(bb, arraySize);

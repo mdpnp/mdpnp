@@ -25,7 +25,7 @@ public class ScaleAndRangeSpecification implements Value {
     private final Float lowerAbsoluteValue = new Float();
     private final Float upperAbsoluteValue = new Float();
     private int lowerScaledValue, upperScaledValue;
-
+    
     @Override
     public void format(ByteBuffer bb) {
         lowerAbsoluteValue.format(bb);
@@ -38,10 +38,32 @@ public class ScaleAndRangeSpecification implements Value {
     public void parse(ByteBuffer bb) {
         lowerAbsoluteValue.parse(bb);
         upperAbsoluteValue.parse(bb);
-        Bits.putUnsignedShort(bb, lowerScaledValue);
-        Bits.putUnsignedShort(bb, upperScaledValue);
+        lowerScaledValue = Bits.getUnsignedShort(bb);
+        upperScaledValue = Bits.getUnsignedShort(bb);
     }
 
+    public ScaleAndRangeSpecification clone() {
+        ScaleAndRangeSpecification dup = new ScaleAndRangeSpecification();
+        dup.lowerAbsoluteValue.setFloat(lowerAbsoluteValue.doubleValue());
+        dup.upperAbsoluteValue.setFloat(upperAbsoluteValue.doubleValue());
+        dup.lowerScaledValue = this.lowerScaledValue;
+        dup.upperScaledValue = this.upperScaledValue;
+        return dup;
+    }
+    
+    public Float getLowerAbsoluteValue() {
+        return lowerAbsoluteValue;
+    }
+    public int getLowerScaledValue() {
+        return lowerScaledValue;
+    }
+    public Float getUpperAbsoluteValue() {
+        return upperAbsoluteValue;
+    }
+    public int getUpperScaledValue() {
+        return upperScaledValue;
+    }
+    
     @Override
     public java.lang.String toString() {
         return "[lowerAbsoluteValue=" + lowerAbsoluteValue + ",upperAbsoluteValue=" + upperAbsoluteValue + ",lowerScaledValue=" + lowerScaledValue
