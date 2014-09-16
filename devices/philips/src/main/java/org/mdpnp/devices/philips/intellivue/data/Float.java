@@ -61,13 +61,15 @@ public class Float extends Number implements Value {
 
     private final static double toDouble(int mantissa, byte exp) {
         switch (mantissa) {
-        case 0x7FFFFF:
+        case 0x007FFFFF:
             return java.lang.Double.NaN;
-        case 0x800000:
+            // NOTE THIS VALUE IS SIGN-EXTENDED 
+        case 0xFF800000:
             return java.lang.Double.MIN_NORMAL;
         case 0x7FFFFE:
             return java.lang.Double.POSITIVE_INFINITY;
-        case 0x800002:
+            // NOTE THIS VALUE IS SIGN-EXTENDED 
+        case 0xFF800002:
             return java.lang.Double.NEGATIVE_INFINITY;
         default:
             return mantissa * powersOfTen[exp + 127];
@@ -96,7 +98,7 @@ public class Float extends Number implements Value {
     public void parse(ByteBuffer bb) {
         // Isn't this pretty much IEEE ?
         byte exp = bb.get();
-        int mantissa = (0xFF0000) & (bb.get() << 16);
+        int mantissa = bb.get() << 16;
         mantissa |= (0xFF00 & (bb.get() << 8));
         mantissa |= (0xFF & bb.get());
 
@@ -161,7 +163,7 @@ public class Float extends Number implements Value {
         ByteBuffer bb1 = ByteBuffer.allocate(40);
         bb.order(ByteOrder.BIG_ENDIAN);
         bb1.order(ByteOrder.BIG_ENDIAN);
-        bb.putInt(0x00000040);
+        bb.putInt(0xFEFE7960); // -1000
         bb.putInt(0xfd007d00); // 32
         bb.putInt(0xff000140); // 32
         bb.putInt(0x00800002); // -infinity
