@@ -325,6 +325,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     getDelegate().sendCommand(Command.ReqAlarmsCP2);
                     break;
                 case ReqAlarmsCP2:
+                    clearOldTechnicalAlertInstances();
                     getDelegate().sendCommand(Command.ReqTextMessages);
                     break;
                 default:
