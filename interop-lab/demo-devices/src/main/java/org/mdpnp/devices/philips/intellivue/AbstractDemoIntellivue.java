@@ -642,7 +642,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     }
                 }
             } else {
-
+                log.info("Here begins a pollInfoList at time " + result.getRelativeTime() + " " + result.getAbsoluteTime());
                 for (SingleContextPoll sop : result.getPollInfoList()) {
                     for (ObservationPoll op : sop.getPollInfo()) {
                         int handle = op.getHandle().getHandle();
