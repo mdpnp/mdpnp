@@ -91,7 +91,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         startExpiratoryCycleUpdate = numericSample(startExpiratoryCycleUpdate, 0, ice.MDC_START_EXPIRATORY_CYCLE.VALUE, null);
     }
 
-    private static final int BUFFER_SAMPLES = 10;
+    private static final int BUFFER_SAMPLES = 25;
 
     // Theoretical maximum 16 streams, practical limit seems to be 3
     // Buffering ten points is for testing, size of this buffer might be
