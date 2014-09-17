@@ -405,7 +405,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     private static final RealtimeData[] REQUEST_REALTIME = new RealtimeData[] { RealtimeData.AirwayPressure, RealtimeData.FlowInspExp,
-            RealtimeData.ExpiratoryCO2mmHg, RealtimeData.RespiratoryVolumeSinceInspBegin, RealtimeData.ExpiratoryVolume, RealtimeData.Ptrach,
+        RealtimeData.RespiratoryVolumeSinceInspBegin, RealtimeData.ExpiratoryCO2mmHg, RealtimeData.ExpiratoryVolume, RealtimeData.Ptrach,
             RealtimeData.InspiratoryFlow, RealtimeData.ExpiratoryFlow, RealtimeData.Pleth };
 
     private long lastReqDateTime;

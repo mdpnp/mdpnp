@@ -332,6 +332,7 @@ public class Main {
                     verifyQosLibraries();
                 } catch (Exception e) {
                     log.error("Unable to set factory qos", e);
+                    throw new RuntimeException("Unable to set factory qos", e);
                 }
             }
 
