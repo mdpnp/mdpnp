@@ -101,6 +101,11 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     protected final Topic sampleArrayTopic;
     protected final SampleArrayDataWriter sampleArrayDataWriter;
+    // Resolution of SampleArray samples will be reduced
+    // dynamically based upon what SampleArrays are registered
+    // at what frequency.
+    protected int sampleArrayResolutionNs = 1000000000;
+    
 
     protected final Topic alarmSettingsTopic;
     protected final ice.AlarmSettingsDataWriter alarmSettingsDataWriter;
@@ -291,6 +296,36 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return createSampleArrayInstance(metric_id, instance_id, frequency, null);
     }
 
+    protected void ensureResolutionForFrequency(int frequency, int size) {
+        int periodNs = 1000000000 / frequency;
+        periodNs *= size;
+        if(periodNs < sampleArrayResolutionNs) {
+            log.info("Increase resolution sampleArrayResolutionNs for " + size + " samples at " + frequency + "Hz from minimum period of " + sampleArrayResolutionNs + "ns to " + periodNs + "ns");
+            sampleArrayResolutionNs = periodNs;
+        }
+    }
+    
+    protected Time_t currentTimeSampleArrayResolution(Time_t t) {
+        if(null == t) {
+            t = new Time_t(0,0);
+        }
+        domainParticipant.get_current_time(t);
+        if(sampleArrayResolutionNs>=1000000000) {
+            int seconds = sampleArrayResolutionNs / 1000000000;
+            t.sec -= 0 == seconds ? 0 : (t.sec % seconds);
+            int nanoseconds = sampleArrayResolutionNs % 1000000000;
+            if(nanoseconds == 0) {
+                // max res (min sample period) is an even number of seconds
+                t.nanosec = 0;
+            } else {
+                t.nanosec -= 0 == nanoseconds ? 0 : (t.nanosec % nanoseconds);
+            }
+        } else {
+            t.nanosec -= 0 == sampleArrayResolutionNs ? 0 : (t.nanosec % sampleArrayResolutionNs);
+        }
+        return t;
+    }
+    
     protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id, int frequency, Time_t timestamp) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createSampleArrayInstance");
@@ -302,9 +337,15 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         holder.data.metric_id = metric_id;
         holder.data.instance_id = instance_id;
         holder.data.frequency = frequency;
-        if(sampleArraySpecifySourceTimestamp()) {
-            holder.handle = sampleArrayDataWriter.register_instance_w_timestamp(holder.data, timestamp);
+        
+        // Wish we could set samplearray clock resolution here but we don't know the batch size yet.
+        // That may need to change
+        
+        if(!sampleArraySpecifySourceTimestamp() || null == timestamp) {
+            timestamp = currentTimeSampleArrayResolution(null);
         }
+        holder.handle = sampleArrayDataWriter.register_instance_w_timestamp(holder.data, timestamp);
+
         registeredSampleArrayInstances.add(holder);
         return holder;
     }
@@ -501,11 +542,14 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             holder.data.device_time.sec = 0;
             holder.data.device_time.nanosec = 0;
         }
-        if(sampleArraySpecifySourceTimestamp() && null != deviceTimestamp) {
-            sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, deviceTimestamp);
-        } else {
-            sampleArrayDataWriter.write(holder.data, holder.handle);
+        ensureResolutionForFrequency(holder.data.frequency, newValues.size());
+        
+        Time_t time = deviceTimestamp;
+        
+        if(!sampleArraySpecifySourceTimestamp() || null == deviceTimestamp) {
+            time = currentTimeSampleArrayResolution(null);
         }
+        sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, time);
     }
 
     protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len, Time_t deviceTimestamp) {
@@ -521,11 +565,14 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             holder.data.device_time.sec = 0;
             holder.data.device_time.nanosec = 0;
         }
-        if(sampleArraySpecifySourceTimestamp() && null != deviceTimestamp) {
-            sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, deviceTimestamp);
-        } else {
-            sampleArrayDataWriter.write(holder.data, holder.handle);
+        ensureResolutionForFrequency(holder.data.frequency, len);
+        
+        Time_t time = deviceTimestamp;
+        
+        if(!sampleArraySpecifySourceTimestamp() || null == deviceTimestamp) {
+            time = currentTimeSampleArrayResolution(null);
         }
+        sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, time);
     }
 
     protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, Time_t timestamp) {
