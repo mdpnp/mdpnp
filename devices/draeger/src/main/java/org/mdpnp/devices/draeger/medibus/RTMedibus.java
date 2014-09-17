@@ -91,9 +91,6 @@ public class RTMedibus extends Medibus {
     }
 
     public void receiveSyncByte(int syncByte) {
-        for (int i = 0; i < transmittedDataStreams.length; i++) {
-            transmittedDataStreams[i] = false;
-        }
         dataCounter = 0;
         transmittedDataStreams[0] = 0 != (0x01 & syncByte);
         transmittedDataStreams[1] = 0 != (0x02 & syncByte);
