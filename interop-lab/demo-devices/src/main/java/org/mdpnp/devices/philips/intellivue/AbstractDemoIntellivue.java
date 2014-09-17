@@ -120,94 +120,6 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         forObservedValue.put(handle, value);
     }
     
-    //public final SortedSet<SampleArraySample> sampleArrayQueue = new TreeSet<SampleArraySample>();
-    //private SampleArraySample[] data = new SampleArraySample[10];
-    
-//    protected static final class SampleArraySample implements Comparable<SampleArraySample> {
-//        private long time;
-//        private ObservedValue observedValue;
-//        private int handle;
-//        private final MySampleArray sampleArray = new MySampleArray();
-//        
-//        private SampleArraySample next;
-//        private static SampleArraySample root;
-//        
-//        public synchronized static SampleArraySample newSample(ObservedValue observedValue, int handle, long time) {
-//            SampleArraySample sample = root;
-//            if(null == sample) {
-//                return new SampleArraySample(observedValue, handle, time);
-//            } else {
-//                root = sample.next;
-//                sample.init(observedValue, handle, time);
-//                return sample;
-//            }
-//        }
-//        public synchronized static void releaseSample(SampleArraySample sample) {
-//            sample.next = root;
-//            root = sample;
-//        }
-//        
-//        
-//        private void init(ObservedValue observedValue, int handle, long time) {
-//            this.observedValue = observedValue;
-//            this.handle = handle;
-//            this.time = time;
-//        }
-//        
-//        private SampleArraySample(ObservedValue observedValue, int handle, long time) {
-//            init(observedValue, handle, time);
-//        }
-//
-//        public int getHandle() {
-//            return handle;
-//        }
-//
-//        public ObservedValue getObservedValue() {
-//            return observedValue;
-//        }
-//
-//        public long getTime() {
-//            return time;
-//        }
-//        
-//        public MySampleArray getSampleArray() {
-//            return sampleArray;
-//        }
-//
-//        @Override
-//        public boolean equals(Object obj) {
-//            if (obj instanceof SampleArraySample) {
-//                return 0 == compareTo((SampleArraySample) obj);
-//            } else {
-//                return false;
-//            }
-//        }
-//
-//        @Override
-//        public int compareTo(SampleArraySample o) {
-//            if (o.time == this.time) {
-//                if (o.observedValue.equals(this.observedValue)) {
-//                    if (o.handle == this.handle) {
-//                        return 0;
-//                    } else {
-//                        return Integer.compare(this.handle, o.handle);
-//                    }
-//                } else {
-//                    return Integer.compare(this.observedValue.ordinal(), o.observedValue.ordinal());
-//                }
-//            } else {
-//                return Long.compare(this.time, o.time);
-//            }
-//        }
-//
-//        @Override
-//        public int hashCode() {
-//            return (int) (time - 1000000L) + handle + observedValue.ordinal();
-//        }
-//
-//    }
-
-    
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState, String transitionNote) {
         super.stateChanged(newState, oldState, transitionNote);
@@ -697,8 +609,6 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             super.handle(result);
         }
 
-//        private final DateFormat df = new SimpleDateFormat("HH:mm:ss.SSS");
-
         private final void populateTime(RelativeTime time, Time_t t) {
             t.copy_from(deviceStartTimeInLocalTime);
             long microseconds = time.toMicroseconds();
@@ -771,18 +681,13 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     SampleArraySpecification sas = handleToSampleArraySpecification.get(handle);
                     ScaleAndRangeSpecification sar = handleToScaleAndRangeSpecification.get(handle);
                     UnitCode unitCode = handleToUnitCode.get(handle);
-                    RelativeTime rt = handleToRelativeTime.get(handle);
+                    RelativeTime rt = handleToUpdatePeriod.get(handle);
                     if (null == sas || null == rt || null == sar || null == unitCode) {
                         log.warn("No SampleArraySpecification or RelativeTime for handle=" + handle + " rt=" + rt + " sas=" + sas + " sar="+sar+ " unitCode="+unitCode);
                     } else {
                         int cnt = sas.getArraySize();
-//                        long period = cnt * rt.toMilliseconds();
-//                        long nextTime = nextTimestamp(ov, handle, period, now);
-//                        SampleArraySample s = SampleArraySample.newSample(ov, handle, nextTime);
-//                        MySampleArray w = s.getSampleArray();
                         // TODO these were once cached, no?
                         MySampleArray w = new MySampleArray();
-                        
                         
                         w.setSampleArraySpecification(sas);
                         w.setScaleAndRangeSpecification(sar);
@@ -803,33 +708,42 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 //                                log.info("Expanding to accomodate " + cnt + " samples where " + w.getArraySize() + " were expected");
                                 w.setArraySize(cnt);
                             }
-
+                            
+                            // 
                             for (int i = 0; i < cnt; i++) {
                                 w.applyValue(i, bytes);
                             }
                             
-                            //    TODO Check this logic should be 1024ms
+                            Map<Integer, List<Number>> handleToSampleCache = sampleArrayCache.get(ov);
+                            if(null == handleToSampleCache) {
+                                handleToSampleCache = new HashMap<Integer, List<Number>>();
+                                sampleArrayCache.put(ov, handleToSampleCache);
+                            }
+                            List<Number> sampleCache = handleToSampleCache.get(handle);
+                            if(null == sampleCache) {
+                                sampleCache = new ArrayList<Number>();
+                                handleToSampleCache.put(handle, sampleCache);
+                            }
+
                             int frequency = (int)(1000 / rt.toMilliseconds());
-                            ensureResolutionForFrequency(frequency, cnt);
                             
-                            domainParticipant.get_current_time(sampleTimeSampleArray);
-                            // How many microseconds since the second start in device time?
-                            
-                            sampleTimeSampleArray.nanosec = 1000 * (int)(time.toMicroseconds() % 1000000);
-                            
-                            putSampleArrayUpdate(
-                                    ov,
-                                    handle,
-                                    sampleArraySample(getSampleArrayUpdate(ov, handle), w.getNumbers(),
-                                    metricId, handle, frequency, sampleTimeSampleArray));
-                            
+                            for(Number n : w.getNumbers()) {
+                                sampleCache.add(n);
+                            }
+                            while(sampleCache.size()>=frequency) {
+                                sampleTimeSampleArray = currentTimeSampleArrayResolution(sampleTimeSampleArray);
+                                
+                                // TODO Come back and make this efficient
+                                putSampleArrayUpdate(
+                                        ov, handle,
+                                        sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.subList(0, frequency).toArray(new Number[0]),
+                                        metricId, handle, frequency, sampleTimeSampleArray));
+                                // TODO again this is not efficient.. but does the technique work?
+                                for(int i = 0; i < frequency; i++) {
+                                    sampleCache.remove(0);
+                                }
+                            }
                         }
-                        
-                        
-//                        log.warn("nextTime for " + ov + " " + handle + " is " + df.format(new Date(nextTime)));
-
-//                        sampleArrayQueue.add(s);
-
                     }
                 }
             }
@@ -858,13 +772,12 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         }
 
         protected void handle(int handle, RelativeTime period) {
-            RelativeTime newPeriod = handleToRelativeTime.get(handle);
+            RelativeTime newPeriod = handleToUpdatePeriod.get(handle);
             if (null == newPeriod) {
                 newPeriod = new RelativeTime();
-                handleToRelativeTime.put(handle, newPeriod);
+                handleToUpdatePeriod.put(handle, newPeriod);
             }
             newPeriod.fromMicroseconds(period.toMicroseconds());
-            // handleToRelativeTime.put(handle, newPeriod);
         }
     }
 
@@ -877,7 +790,6 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     @Override
     protected void unregisterAllSampleArrayInstances() {
         sampleArrayUpdates.clear();
-        sampleArrayLastTimestamp.clear();
         super.unregisterAllSampleArrayInstances();
     }
     
@@ -895,25 +807,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
     protected final Map<ObservedValue, Map<Integer, InstanceHolder<ice.Numeric>>> numericUpdates = new HashMap<ObservedValue, Map<Integer, InstanceHolder<ice.Numeric>>>();
     protected final Map<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>> sampleArrayUpdates = new HashMap<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>>();
-    protected final Map<ObservedValue, Map<Integer, Long>> sampleArrayLastTimestamp = new HashMap<ObservedValue, Map<Integer, Long>>();
-
-    protected final long nextTimestamp(ObservedValue observedValue, int handle, long period, long now) {
-        Map<Integer, Long> handleToTime = sampleArrayLastTimestamp.get(observedValue);
-        if(null == handleToTime) {
-            handleToTime = new HashMap<Integer, Long>();
-            sampleArrayLastTimestamp.put(observedValue, handleToTime);
-        }
-        Long time = handleToTime.get(handle);
-        if(null == time) {
-            // TODO this is the kluge to furnish a legitimate timebase
-            time = now;
-            time -= time % period;
-        } else {
-            time += period;
-        }
-        handleToTime.put(handle, time);
-        return time;
-    }
+    protected final Map<ObservedValue, Map<Integer, List<Number>>> sampleArrayCache = new HashMap<ObservedValue, Map<Integer, List<Number>>>();
     
     protected static void loadMap(Map<ObservedValue, String> numericMetricIds, Map<ObservedValue, Label> numericLabels,
             Map<ObservedValue, String> sampleArrayMetricIds, Map<ObservedValue, Label> sampleArrayLabels) {
@@ -1002,15 +896,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         };
         watchdogTask.setInterval(WATCHDOG_INTERVAL);
         networkLoop.add(watchdogTask);
-        
-//        serviceSampleArrays = new TaskQueue.TaskImpl<Object>() {
-//            public Object doExecute(TaskQueue queue) {
-//                flush();
-//                return null;
-//            };
-//        };
-//        serviceSampleArrays.setInterval(500L);
-//        networkLoop.add(serviceSampleArrays);
+
     }
 
     protected static final void mustProgress(Time_t time, int sec, int nanosec) {
@@ -1022,37 +908,6 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             log.warn("Not updating Time_t from sec="+time.sec+" nanosec="+time.nanosec+" to sec="+sec+" nanosec="+nanosec+" because that would move backward in time");
         }
     }
-    
-//    protected void flush() {
-//        data = sampleArrayQueue.toArray(data);
-//        long now = System.currentTimeMillis();
-//        
-//        for (int i = 0; i < data.length; i++) {
-//            if(null == data[i]) {
-//                break;
-//            }
-//            if(now-data[i].getTime()>=1000L) {
-//                sampleArrayQueue.remove(data[i]);
-//                String metricId = sampleArrayMetricIds.get(data[i].getObservedValue());
-//                RelativeTime rt = handleToRelativeTime.get(data[i].getHandle());
-//    
-//                mustProgress(sampleTimeSampleArray, (int) (data[i].getTime() / 1000L), (int) (data[i].getTime() % 1000L * 1000000L));
-//                
-//    //            log.warn("for " + metricId + " " + data[i].getHandle() + " Sample array at " + df.format(new Date(data[i].getTime().sec*1000L+data[i].getTime().nanosec/1000000L)));
-//                putSampleArrayUpdate(
-//                        data[i].getObservedValue(),
-//                        data[i].getHandle(),
-//                        // TODO Check this logic should be 1024ms
-//                        sampleArraySample(getSampleArrayUpdate(data[i].getObservedValue(), data[i].getHandle()), data[i].getSampleArray().getNumbers(),
-//                                metricId, data[i].getHandle(), (int)(1000 / rt.toMilliseconds()), sampleTimeSampleArray));
-//                SampleArraySample.releaseSample(data[i]);
-//            } else {
-//                // These are sorted no need to continue
-//                break;
-//            }
-//        }
-//
-//    }
     
     protected static class MySampleArray {
         private short sampleSize, significantBits;
@@ -1204,10 +1059,11 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         setConnectionInfo(connectionInfo);
     }
 
-    protected final Map<Integer, RelativeTime> handleToRelativeTime = new HashMap<Integer, RelativeTime>();
+    protected final Map<Integer, RelativeTime> handleToUpdatePeriod = new HashMap<Integer, RelativeTime>();
     protected final Map<Integer, SampleArraySpecification> handleToSampleArraySpecification = new HashMap<Integer, SampleArraySpecification>();
     protected final Map<Integer, ScaleAndRangeSpecification> handleToScaleAndRangeSpecification = new HashMap<Integer, ScaleAndRangeSpecification>();
     protected final Map<Integer, UnitCode> handleToUnitCode = new HashMap<Integer, UnitCode>();
+
     
 
     protected final Attribute<DeviceAlertCondition> deviceAlertCondition = AttributeFactory.getAttribute(AttributeId.NOM_ATTR_DEV_AL_COND,

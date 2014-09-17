@@ -7,7 +7,7 @@ module ice {
   typedef sequence<LongString, 128> ValidTargets;
   typedef string<256> TextString;
   typedef sequence<octet, 65530> Raster;
-  typedef sequence<float, 400> Values;
+  typedef sequence<float, 1024> Values;
 
   struct Time_t {
     long sec;
