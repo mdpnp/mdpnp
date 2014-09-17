@@ -172,12 +172,12 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
         @Override
         protected void receiveRespiratoryRate(Integer value, String label, String alarm) {
-            if(null == etco2) {
-                tthorRespiratoryRate = numericSample(tthorRespiratoryRate, value, rosetta.MDC_TTHOR_RESP_RATE.VALUE, null);
-                co2RespiratoryRate = numericSample(co2RespiratoryRate, (Integer)null, rosetta.MDC_CO2_RESP_RATE.VALUE, null);
-            } else {
+            if(null != etco2 && etco2.data.value > 0) {
                 co2RespiratoryRate = numericSample(co2RespiratoryRate, value, rosetta.MDC_CO2_RESP_RATE.VALUE, null);
                 tthorRespiratoryRate = numericSample(tthorRespiratoryRate, (Integer)null, rosetta.MDC_TTHOR_RESP_RATE.VALUE, null);
+            } else {
+                tthorRespiratoryRate = numericSample(tthorRespiratoryRate, value, rosetta.MDC_TTHOR_RESP_RATE.VALUE, null);
+                co2RespiratoryRate = numericSample(co2RespiratoryRate, (Integer)null, rosetta.MDC_CO2_RESP_RATE.VALUE, null);
             }
             alarmIfPresent("RR", alarm);
         }
