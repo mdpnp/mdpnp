@@ -2,6 +2,8 @@ RealtimeData.AirwayPressure	rosetta.MDC_PRESS_AWAY	W
 RealtimeData.FlowInspExp	rosetta.MDC_FLOW_AWAY	W
 #RealtimeData.O2InspExp	rosetta.MDC_FLOW_O2_CONSUMP	W
 RealtimeData.ExpiratoryCO2mmHg	rosetta.MDC_CONC_AWAY_CO2_ET	W
+RealtimeData.Pleth	rosetta.MDC_PULS_OXIM_PLETH	W
+RealtimeData.RespiratoryVolumeSinceInspBegin	rosetta.MDC_VENT_VOL_TIDAL	W
 Setting.ApneaTime	rosetta.MDC_TIME_PD_APNEA	N
 MeasuredDataCP1.PulseRate	rosetta.MDC_PULS_OXIM_PULS_RATE	N
 Setting.InspiratoryTime	ice.MDC_TIME_PD_INSPIRATORY	N
