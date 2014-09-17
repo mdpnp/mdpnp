@@ -157,7 +157,7 @@ public class Configuration {
     }
 
     private final static Logger log = LoggerFactory.getLogger(Configuration.class);
-    private static final String CHARACTER_ENCODING = "ISO8859_1";
+    private static final String CHARACTER_ENCODING = "UTF8";
 
     public static Configuration read(InputStream is) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(is, CHARACTER_ENCODING));
