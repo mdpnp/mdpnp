@@ -218,7 +218,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
         // TODO this should be external
         System.setProperty("java.net.preferIPv4Stack", "true");
-        final boolean debug = false;
+//        final boolean debug = false;
 
         Configuration runConf = null;
 
@@ -337,6 +337,10 @@ public class Main {
 
             switch (runConf.getApplication()) {
             case ICE_Device_Interface:
+                if(null == runConf.getDeviceType()) {
+                    log.error("Unknown device type was specified");
+                    System.exit(-1);
+                }
                 new DeviceAdapter().start(runConf.getDeviceType(), runConf.getDomainId(), runConf.getAddress(), !cmdline);
                 break;
             case ICE_Supervisor:
