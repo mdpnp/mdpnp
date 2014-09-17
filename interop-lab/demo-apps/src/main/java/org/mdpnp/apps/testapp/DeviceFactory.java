@@ -21,6 +21,7 @@ import org.mdpnp.devices.draeger.medibus.DemoApollo;
 import org.mdpnp.devices.draeger.medibus.DemoEvita4;
 import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
 import org.mdpnp.devices.draeger.medibus.DemoV500;
+import org.mdpnp.devices.draeger.medibus.DemoV500_38400;
 import org.mdpnp.devices.fluke.prosim68.DemoProsim68;
 import org.mdpnp.devices.hospira.symbiq.DemoSymbiq;
 import org.mdpnp.devices.ivy._450c.DemoIvy450C;
@@ -70,6 +71,9 @@ public class DeviceFactory {
         case Dr\u00E4gerV500:
         case DraegerV500:
             return new DemoV500(domainId, eventLoop);
+        case Dr\u00E4gerV500_38400:
+        case DraegerV500_38400:
+            return new DemoV500_38400(domainId, eventLoop);
         case Dr\u00E4gerEvita4:
         case DraegerEvita4:
             return new DemoEvita4(domainId, eventLoop);

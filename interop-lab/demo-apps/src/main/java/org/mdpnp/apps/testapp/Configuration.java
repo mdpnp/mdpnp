@@ -53,7 +53,8 @@ public class Configuration {
         IntellivueSerial(ice.ConnectionType.Serial, "Philips", "Intellivue (MIB/RS232)"), 
         Dr\u00E4gerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"), 
         Dr\u00E4gerEvitaXL(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), 
-        Dr\u00E4gerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), 
+        Dr\u00E4gerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"),
+        Dr\u00E4gerV500_38400(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"),
         Dr\u00E4gerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"), 
         Capnostream20(ice.ConnectionType.Serial, "Oridion", "Capnostream20"), 
         NellcorN595(ice.ConnectionType.Serial, "Nellcor", "N-595"), 
@@ -63,6 +64,7 @@ public class Configuration {
         DraegerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"),
         DraegerEvitaXL(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), 
         DraegerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), 
+        DraegerV500_38400(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), 
         DraegerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4");
 
         private final ice.ConnectionType connectionType;
