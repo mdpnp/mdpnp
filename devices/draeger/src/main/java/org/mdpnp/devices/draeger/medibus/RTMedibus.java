@@ -56,11 +56,11 @@ public class RTMedibus extends Medibus {
     public void sendEnableRealtime(int[] traces) throws IOException {
         out.write(SYNC_BYTE);
 
-        out.write(SC_DATASTREAM_1_4);
+        out.write(SC_DATASTREAM_9_12);
         int flags = SYNC_CMD_BYTE;
         for (int t : traces) {
             if (t > 7) {
-                flags |= (0x0F & (t - 8 + 1));
+                flags |= (0x0F & (1<<(t-8)));
             }
         }
         out.write(flags);
@@ -69,7 +69,7 @@ public class RTMedibus extends Medibus {
         flags = SYNC_CMD_BYTE;
         for (int t : traces) {
             if (t > 3 && t <= 7) {
-                flags |= (0x0F & (t - 4 + 1));
+                flags |= (0x0F & (1<<(t-4)));
             }
         }
         out.write(flags);
@@ -78,7 +78,7 @@ public class RTMedibus extends Medibus {
         flags = SYNC_CMD_BYTE;
         for (int t : traces) {
             if (t < 4) {
-                flags |= (0x0F & (t + 1));
+                flags |= (0x0F & (1<<t));
             }
         }
         out.write(flags);
@@ -99,6 +99,7 @@ public class RTMedibus extends Medibus {
         transmittedDataStreams[1] = 0 != (0x02 & syncByte);
         transmittedDataStreams[2] = 0 != (0x04 & syncByte);
         transmittedDataStreams[3] = 0 != (0x08 & syncByte);
+        log.debug("transmittedDataStreams(after sync byte):" + Arrays.toString(transmittedDataStreams));
     }
 
     public void receiveSyncCommand(int command, int argument) {
