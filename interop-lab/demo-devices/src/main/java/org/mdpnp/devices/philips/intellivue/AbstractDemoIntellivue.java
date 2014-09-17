@@ -682,11 +682,13 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             handle(handle, spec.getValue());
                         }
                         if (null != cov) {
+                            log.info("Time for SampleArrayCompoundObservedValue " + result.getRelativeTime().toMicroseconds());
                             for (SampleArrayObservedValue saov : cov.getValue().getList()) {
                                 handle(handle, result.getRelativeTime(), saov, now);
                             }
                         }
                         if (null != v) {
+                            log.info("Time for SampleArrayObservedValue " + result.getRelativeTime().toMicroseconds());
                             handle(handle, result.getRelativeTime(), v.getValue(), now);
                         }
                     }
@@ -812,6 +814,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             
                             domainParticipant.get_current_time(sampleTimeSampleArray);
                             // How many microseconds since the second start in device time?
+                            
                             sampleTimeSampleArray.nanosec = 1000 * (int)(time.toMicroseconds() % 1000000);
                             
                             putSampleArrayUpdate(
