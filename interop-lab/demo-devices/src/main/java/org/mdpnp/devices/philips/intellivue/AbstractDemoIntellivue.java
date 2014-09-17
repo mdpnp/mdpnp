@@ -33,8 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.net.NetworkLoop;
@@ -122,91 +120,92 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         forObservedValue.put(handle, value);
     }
     
-    public final SortedSet<SampleArraySample> sampleArrayQueue = new TreeSet<SampleArraySample>();
-    private SampleArraySample[] data = new SampleArraySample[10];
-    protected static final class SampleArraySample implements Comparable<SampleArraySample> {
-        private long time;
-        private ObservedValue observedValue;
-        private int handle;
-        private final MySampleArray sampleArray = new MySampleArray();
-        
-        private SampleArraySample next;
-        private static SampleArraySample root;
-        
-        public synchronized static SampleArraySample newSample(ObservedValue observedValue, int handle, long time) {
-            SampleArraySample sample = root;
-            if(null == sample) {
-                return new SampleArraySample(observedValue, handle, time);
-            } else {
-                root = sample.next;
-                sample.init(observedValue, handle, time);
-                return sample;
-            }
-        }
-        public synchronized static void releaseSample(SampleArraySample sample) {
-            sample.next = root;
-            root = sample;
-        }
-        
-        
-        private void init(ObservedValue observedValue, int handle, long time) {
-            this.observedValue = observedValue;
-            this.handle = handle;
-            this.time = time;
-        }
-        
-        private SampleArraySample(ObservedValue observedValue, int handle, long time) {
-            init(observedValue, handle, time);
-        }
-
-        public int getHandle() {
-            return handle;
-        }
-
-        public ObservedValue getObservedValue() {
-            return observedValue;
-        }
-
-        public long getTime() {
-            return time;
-        }
-        
-        public MySampleArray getSampleArray() {
-            return sampleArray;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj instanceof SampleArraySample) {
-                return 0 == compareTo((SampleArraySample) obj);
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public int compareTo(SampleArraySample o) {
-            if (o.time == this.time) {
-                if (o.observedValue.equals(this.observedValue)) {
-                    if (o.handle == this.handle) {
-                        return 0;
-                    } else {
-                        return Integer.compare(this.handle, o.handle);
-                    }
-                } else {
-                    return Integer.compare(this.observedValue.ordinal(), o.observedValue.ordinal());
-                }
-            } else {
-                return Long.compare(this.time, o.time);
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return (int) (time - 1000000L) + handle + observedValue.ordinal();
-        }
-
-    }
+    //public final SortedSet<SampleArraySample> sampleArrayQueue = new TreeSet<SampleArraySample>();
+    //private SampleArraySample[] data = new SampleArraySample[10];
+    
+//    protected static final class SampleArraySample implements Comparable<SampleArraySample> {
+//        private long time;
+//        private ObservedValue observedValue;
+//        private int handle;
+//        private final MySampleArray sampleArray = new MySampleArray();
+//        
+//        private SampleArraySample next;
+//        private static SampleArraySample root;
+//        
+//        public synchronized static SampleArraySample newSample(ObservedValue observedValue, int handle, long time) {
+//            SampleArraySample sample = root;
+//            if(null == sample) {
+//                return new SampleArraySample(observedValue, handle, time);
+//            } else {
+//                root = sample.next;
+//                sample.init(observedValue, handle, time);
+//                return sample;
+//            }
+//        }
+//        public synchronized static void releaseSample(SampleArraySample sample) {
+//            sample.next = root;
+//            root = sample;
+//        }
+//        
+//        
+//        private void init(ObservedValue observedValue, int handle, long time) {
+//            this.observedValue = observedValue;
+//            this.handle = handle;
+//            this.time = time;
+//        }
+//        
+//        private SampleArraySample(ObservedValue observedValue, int handle, long time) {
+//            init(observedValue, handle, time);
+//        }
+//
+//        public int getHandle() {
+//            return handle;
+//        }
+//
+//        public ObservedValue getObservedValue() {
+//            return observedValue;
+//        }
+//
+//        public long getTime() {
+//            return time;
+//        }
+//        
+//        public MySampleArray getSampleArray() {
+//            return sampleArray;
+//        }
+//
+//        @Override
+//        public boolean equals(Object obj) {
+//            if (obj instanceof SampleArraySample) {
+//                return 0 == compareTo((SampleArraySample) obj);
+//            } else {
+//                return false;
+//            }
+//        }
+//
+//        @Override
+//        public int compareTo(SampleArraySample o) {
+//            if (o.time == this.time) {
+//                if (o.observedValue.equals(this.observedValue)) {
+//                    if (o.handle == this.handle) {
+//                        return 0;
+//                    } else {
+//                        return Integer.compare(this.handle, o.handle);
+//                    }
+//                } else {
+//                    return Integer.compare(this.observedValue.ordinal(), o.observedValue.ordinal());
+//                }
+//            } else {
+//                return Long.compare(this.time, o.time);
+//            }
+//        }
+//
+//        @Override
+//        public int hashCode() {
+//            return (int) (time - 1000000L) + handle + observedValue.ordinal();
+//        }
+//
+//    }
 
     
     @Override
@@ -775,10 +774,12 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         log.warn("No SampleArraySpecification or RelativeTime for handle=" + handle + " rt=" + rt + " sas=" + sas + " sar="+sar+ " unitCode="+unitCode);
                     } else {
                         int cnt = sas.getArraySize();
-                        long period = cnt * rt.toMilliseconds();
-                        long nextTime = nextTimestamp(ov, handle, period, now);
-                        SampleArraySample s = SampleArraySample.newSample(ov, handle, nextTime);
-                        MySampleArray w = s.getSampleArray();
+//                        long period = cnt * rt.toMilliseconds();
+//                        long nextTime = nextTimestamp(ov, handle, period, now);
+//                        SampleArraySample s = SampleArraySample.newSample(ov, handle, nextTime);
+//                        MySampleArray w = s.getSampleArray();
+                        // TODO these were once cached, no?
+                        MySampleArray w = new MySampleArray();
                         
                         
                         w.setSampleArraySpecification(sas);
@@ -804,12 +805,27 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             for (int i = 0; i < cnt; i++) {
                                 w.applyValue(i, bytes);
                             }
+                            
+                            //    TODO Check this logic should be 1024ms
+                            int frequency = (int)(1000 / rt.toMilliseconds());
+                            ensureResolutionForFrequency(frequency, cnt);
+                            
+                            domainParticipant.get_current_time(sampleTimeSampleArray);
+                            // How many microseconds since the second start in device time?
+                            sampleTimeSampleArray.nanosec = 1000 * (int)(time.toMicroseconds() % 1000000);
+                            
+                            putSampleArrayUpdate(
+                                    ov,
+                                    handle,
+                                    sampleArraySample(getSampleArrayUpdate(ov, handle), w.getNumbers(),
+                                    metricId, handle, frequency, sampleTimeSampleArray));
+                            
                         }
                         
                         
 //                        log.warn("nextTime for " + ov + " " + handle + " is " + df.format(new Date(nextTime)));
 
-                        sampleArrayQueue.add(s);
+//                        sampleArrayQueue.add(s);
 
                     }
                 }
@@ -938,7 +954,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
     protected final NetworkLoop networkLoop;
     private final Thread networkLoopThread;
-    private final TaskQueue.Task<?> watchdogTask, serviceSampleArrays;
+    private final TaskQueue.Task<?> watchdogTask; // ,    serviceSampleArrays;
 
     public AbstractDemoIntellivue(int domainId, EventLoop eventLoop) throws IOException {
         this(domainId, eventLoop, null);
@@ -984,14 +1000,14 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         watchdogTask.setInterval(WATCHDOG_INTERVAL);
         networkLoop.add(watchdogTask);
         
-        serviceSampleArrays = new TaskQueue.TaskImpl<Object>() {
-            public Object doExecute(TaskQueue queue) {
-                flush();
-                return null;
-            };
-        };
-        serviceSampleArrays.setInterval(500L);
-        networkLoop.add(serviceSampleArrays);
+//        serviceSampleArrays = new TaskQueue.TaskImpl<Object>() {
+//            public Object doExecute(TaskQueue queue) {
+//                flush();
+//                return null;
+//            };
+//        };
+//        serviceSampleArrays.setInterval(500L);
+//        networkLoop.add(serviceSampleArrays);
     }
 
     protected static final void mustProgress(Time_t time, int sec, int nanosec) {
@@ -1004,36 +1020,36 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         }
     }
     
-    protected void flush() {
-        data = sampleArrayQueue.toArray(data);
-        long now = System.currentTimeMillis();
-        
-        for (int i = 0; i < data.length; i++) {
-            if(null == data[i]) {
-                break;
-            }
-            if(now-data[i].getTime()>=1000L) {
-                sampleArrayQueue.remove(data[i]);
-                String metricId = sampleArrayMetricIds.get(data[i].getObservedValue());
-                RelativeTime rt = handleToRelativeTime.get(data[i].getHandle());
-    
-                mustProgress(sampleTimeSampleArray, (int) (data[i].getTime() / 1000L), (int) (data[i].getTime() % 1000L * 1000000L));
-                
-    //            log.warn("for " + metricId + " " + data[i].getHandle() + " Sample array at " + df.format(new Date(data[i].getTime().sec*1000L+data[i].getTime().nanosec/1000000L)));
-                putSampleArrayUpdate(
-                        data[i].getObservedValue(),
-                        data[i].getHandle(),
-                        // TODO Check this logic should be 1024ms
-                        sampleArraySample(getSampleArrayUpdate(data[i].getObservedValue(), data[i].getHandle()), data[i].getSampleArray().getNumbers(),
-                                metricId, data[i].getHandle(), (int)(1000 / rt.toMilliseconds()), sampleTimeSampleArray));
-                SampleArraySample.releaseSample(data[i]);
-            } else {
-                // These are sorted no need to continue
-                break;
-            }
-        }
-
-    }
+//    protected void flush() {
+//        data = sampleArrayQueue.toArray(data);
+//        long now = System.currentTimeMillis();
+//        
+//        for (int i = 0; i < data.length; i++) {
+//            if(null == data[i]) {
+//                break;
+//            }
+//            if(now-data[i].getTime()>=1000L) {
+//                sampleArrayQueue.remove(data[i]);
+//                String metricId = sampleArrayMetricIds.get(data[i].getObservedValue());
+//                RelativeTime rt = handleToRelativeTime.get(data[i].getHandle());
+//    
+//                mustProgress(sampleTimeSampleArray, (int) (data[i].getTime() / 1000L), (int) (data[i].getTime() % 1000L * 1000000L));
+//                
+//    //            log.warn("for " + metricId + " " + data[i].getHandle() + " Sample array at " + df.format(new Date(data[i].getTime().sec*1000L+data[i].getTime().nanosec/1000000L)));
+//                putSampleArrayUpdate(
+//                        data[i].getObservedValue(),
+//                        data[i].getHandle(),
+//                        // TODO Check this logic should be 1024ms
+//                        sampleArraySample(getSampleArrayUpdate(data[i].getObservedValue(), data[i].getHandle()), data[i].getSampleArray().getNumbers(),
+//                                metricId, data[i].getHandle(), (int)(1000 / rt.toMilliseconds()), sampleTimeSampleArray));
+//                SampleArraySample.releaseSample(data[i]);
+//            } else {
+//                // These are sorted no need to continue
+//                break;
+//            }
+//        }
+//
+//    }
     
     protected static class MySampleArray {
         private short sampleSize, significantBits;

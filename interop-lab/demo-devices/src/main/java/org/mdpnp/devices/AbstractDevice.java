@@ -305,11 +305,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
     }
     
-    protected Time_t currentTimeSampleArrayResolution(Time_t t) {
-        if(null == t) {
-            t = new Time_t(0,0);
-        }
-        domainParticipant.get_current_time(t);
+    protected Time_t timeSampleArrayResolution(Time_t t) {
         if(sampleArrayResolutionNs>=1000000000) {
             int seconds = sampleArrayResolutionNs / 1000000000;
             t.sec -= 0 == seconds ? 0 : (t.sec % seconds);
@@ -324,6 +320,14 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             t.nanosec -= 0 == sampleArrayResolutionNs ? 0 : (t.nanosec % sampleArrayResolutionNs);
         }
         return t;
+    }
+    
+    protected Time_t currentTimeSampleArrayResolution(Time_t t) {
+        if(null == t) {
+            t = new Time_t(0,0);
+        }
+        domainParticipant.get_current_time(t);
+        return timeSampleArrayResolution(t);
     }
     
     protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id, int frequency, Time_t timestamp) {
