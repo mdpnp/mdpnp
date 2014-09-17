@@ -114,7 +114,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         protected void receiveRespWave(int[] data, int count, int frequency) {
             // This is less than ideal but if the device is reporting etCO2 we'll treat this as a capnogram
             // otherwise it is from respiratory impedance
-            if(null != etco2) {
+            if(null != etco2 && etco2.data.value > 0) {
                 co2Wave = sampleArraySample(co2Wave, data, count, rosetta.MDC_AWAY_CO2.VALUE, 0, frequency);
                 impThorWave = sampleArraySample(impThorWave, null, 0, rosetta.MDC_IMPED_TTHOR.VALUE, 0, frequency);
             } else {
