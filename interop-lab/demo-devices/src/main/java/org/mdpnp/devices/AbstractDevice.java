@@ -643,7 +643,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues,
             String metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
         // if the specified holder doesn't match the specified name
-        if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id)) {
+        if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id || holder.data.frequency != frequency || !holder.data.unit_id.equals(unit_id))) {
             unregisterSampleArrayInstance(holder, timestamp);
             holder = null;
         }
