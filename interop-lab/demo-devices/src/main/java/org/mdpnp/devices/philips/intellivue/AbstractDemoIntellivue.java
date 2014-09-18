@@ -569,6 +569,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         Attribute<ScaleAndRangeSpecification> sar = attrs.getAttribute(AbstractDemoIntellivue.this.sar);
                         Attribute<EnumValue<UnitCode>> unitCode = attrs.getAttribute(AbstractDemoIntellivue.this.unitCode);
                         
+                        if(null != unitCode) {
+                            handle(handle, unitCode.getValue().getEnum());
+                        }
 
                         if (null != observed) {
                             handle(handle, result.getRelativeTime(), observed.getValue());
@@ -580,10 +583,6 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             }
                         }
                         
-                        if(null != unitCode) {
-                            handle(handle, unitCode.getValue().getEnum());
-                        }
-
                         if (null != period) {
                             handle(handle, period.getValue());
                         }

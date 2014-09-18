@@ -421,7 +421,7 @@ public class RosettaUnits {
         case NOM_DIM_MILLI_L_PER_KILO_PASCAL:
         case NOM_DIM_MM_HG_PER_X_L_PER_SEC:
         default:
-            return rosetta.MDC_DIM_DIMLESS.VALUE;
+            return "PHILIPS_"+unit.name();
         }
     }
 }

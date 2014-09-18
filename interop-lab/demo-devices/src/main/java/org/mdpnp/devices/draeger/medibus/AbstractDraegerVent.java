@@ -139,6 +139,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                 return "null";
             } else if(code instanceof Byte) {
                 return "DRAEGER_"+type+"_"+HexUtil.toHexString((Byte)code)+"H";
+            } else if(code instanceof Enum) {
+                return "DRAEGER_"+((Enum<?>)code).name();
             } else {
                 return "DRAEGER_"+code.toString();
             }
@@ -686,7 +688,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         } else if(obj instanceof RealtimeData) {
             return units(((RealtimeData)obj).getUnit());
         } else {
-            return rosetta.MDC_DIM_DIMLESS.VALUE;
+            return "DRAEGER_"+obj;
         }
     }
     
@@ -722,7 +724,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         case TenMlPerMin:
         case mbarPerL:
         default:
-            return rosetta.MDC_DIM_DIMLESS.VALUE;
+            return "DRAEGER_"+unit.name();
         }
     }
 }
