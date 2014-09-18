@@ -691,6 +691,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
     
     protected static final String units(Unit unit) {
+        if(null == unit) {
+            return rosetta.MDC_DIM_DIMLESS.VALUE;
+        }
         switch(unit) {
         case kg:
             return rosetta.MDC_DIM_KILO_G.VALUE;
