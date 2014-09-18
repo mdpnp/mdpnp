@@ -50,8 +50,10 @@ public class DemoRadical7 extends AbstractSerialDevice {
             long tm = getTimestamp().getTime();
             sampleTime.sec = (int) (tm / 1000L);
             sampleTime.nanosec = (int) (tm % 1000L * 1000000L);
-            pulseUpdate = numericSample(pulseUpdate, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, sampleTime);
-            spo2Update = numericSample(spo2Update, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, sampleTime);
+            pulseUpdate = numericSample(pulseUpdate, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 
+                    rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, sampleTime);
+            spo2Update = numericSample(spo2Update, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 
+                    rosetta.MDC_DIM_PERCENT.VALUE, sampleTime);
             String guid = getUniqueId();
             if (guid != null && !guid.equals(deviceIdentity.serial_number)) {
                 deviceIdentity.serial_number = guid;

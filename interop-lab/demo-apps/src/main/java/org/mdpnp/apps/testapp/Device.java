@@ -61,7 +61,7 @@ public class Device {
             di = realIcon.get();
         }
 
-        if (di != null && di.isBlank() && deviceIdentity.icon.raster != null && deviceIdentity.icon.width > 0 && deviceIdentity.icon.height > 0) {
+        if (di != null && di.isBlank() && deviceIdentity.icon.image != null) {
             di = null;
             log.debug("Constructing a new Icon with new ice.Image data");
         }

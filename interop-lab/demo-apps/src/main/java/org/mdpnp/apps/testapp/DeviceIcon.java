@@ -63,7 +63,7 @@ public class DeviceIcon extends ImageIcon {
     }
 
     public void setImage(ice.Image image, double scale) {
-        if (!image.raster.userData.isEmpty()) {
+        if (!image.image.userData.isEmpty()) {
             BufferedImage bi;
             try {
                 bi = IconUtil.image(image);
@@ -81,8 +81,8 @@ public class DeviceIcon extends ImageIcon {
             }
         }
 
-        log.warn("width=" + image.width + ", height=" + image.height + (image.raster.userData == null ? ", raster is null" : "")
-                + ", using WHITE_SQUARE");
+//        log.warn("width=" + image.width + ", height=" + image.height + (image.raster.userData == null ? ", raster is null" : "")
+//                + ", using WHITE_SQUARE");
         setImage(WHITE_SQUARE);
     }
 

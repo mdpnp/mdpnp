@@ -38,7 +38,8 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
             sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
             numericSample(pulse, heartRate, sampleTime);
             numericSample(SimPulseOximeter.this.SpO2, SpO2, sampleTime);
-            pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, frequency, sampleTime);
+            pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, 
+                    rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
         }
     }
 

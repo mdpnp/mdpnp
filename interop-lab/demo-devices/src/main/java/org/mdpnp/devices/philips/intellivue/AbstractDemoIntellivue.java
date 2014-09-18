@@ -632,12 +632,16 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     // TODO using the local clock instead of device clock in
                     // case device clock is set incorrectly
                     populateTime(time, sampleTimeNumeric);
+                    
+                    UnitCode unit = handleToUnitCode.get(handle);
 
                     if (observed.getMsmtState().isUnavailable()) {
-                        putNumericUpdate(ov, handle, numericSample(getNumericUpdate(ov, handle), (Float) null, metricId, handle, sampleTimeNumeric));
+                        putNumericUpdate(ov, handle, numericSample(getNumericUpdate(ov, handle), (Float) null, metricId, handle, 
+                                RosettaUnits.units(unit), sampleTimeNumeric));
                     } else {
                         putNumericUpdate(ov, handle,
-                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), metricId, handle, sampleTimeNumeric));
+                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), metricId, handle,
+                                    RosettaUnits.units(unit), sampleTimeNumeric));
                     }
                 } else {
                     log.debug("Unknown numeric:" + observed);
@@ -737,7 +741,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 putSampleArrayUpdate(
                                         ov, handle,
                                         sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.subList(0, frequency).toArray(new Number[0]),
-                                        metricId, handle, frequency, sampleTimeSampleArray));
+                                        metricId, handle, 
+                                        RosettaUnits.units(unitCode),
+                                        frequency, sampleTimeSampleArray));
                                 // TODO again this is not efficient.. but does the technique work?
                                 for(int i = 0; i < frequency; i++) {
                                     sampleCache.remove(0);

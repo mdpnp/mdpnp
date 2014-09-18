@@ -35,7 +35,8 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
         protected void receiveCO2(long timestamp, Number[] co2Values, int respiratoryRateValue, int etCO2Value, int frequency) {
             sampleTime.sec = (int) (timestamp / 1000L);
             sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
-            co2 = sampleArraySample(co2, co2Values, rosetta.MDC_AWAY_CO2.VALUE, 0, frequency, sampleTime);
+            co2 = sampleArraySample(co2, co2Values, rosetta.MDC_AWAY_CO2.VALUE, 0, 
+                    rosetta.MDC_DIM_MMHG.VALUE, frequency, sampleTime);
             numericSample(respiratoryRate, respiratoryRateValue, sampleTime);
             numericSample(etCO2, etCO2Value, sampleTime);
 

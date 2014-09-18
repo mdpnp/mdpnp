@@ -1,12 +1,12 @@
 module ice {
 
   typedef string<64> UniqueDeviceIdentifier;
-  typedef string<64>  MetricIdentifier;
+  typedef string<64> MetricIdentifier;
   typedef long InstanceIdentifier;
-  typedef string<128> LongString;
+  typedef string<64> UnitIdentifier;
+  typedef wstring<128> LongString;
   typedef sequence<LongString, 128> ValidTargets;
-  typedef string<256> TextString;
-  typedef sequence<octet, 65530> Raster;
+  typedef sequence<octet, 65530> ImageData;
   typedef sequence<float, 1024> Values;
 
   struct Time_t {
@@ -34,9 +34,8 @@ module ice {
   const string TimeSyncTopic = "TimeSync";
 
   struct Image {
-    Raster raster;
-    long width;
-    long height;
+    string<64> content_type;
+    ImageData image;
   }; //@top-level false
 
   struct DeviceIdentity {
@@ -124,31 +123,24 @@ module ice {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
     InstanceIdentifier instance_id; //@key
+    UnitIdentifier unit_id; //@key
     float value;
     Time_t device_time;
   };
-  #pragma keylist Numeric unique_device_identifier metric_id instance_id
+  #pragma keylist Numeric unique_device_identifier metric_id instance_id unit_id
   const string NumericTopic = "Numeric";
 
   struct SampleArray {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
     InstanceIdentifier instance_id; //@key
+    UnitIdentifier unit_id; //@key
     long frequency; //@key
     Values values;
     Time_t device_time;
   };
-  #pragma keylist SampleArray unique_device_identifier metric_id instance_id frequency
+  #pragma keylist SampleArray unique_device_identifier metric_id instance_id unit_id frequency
   const string SampleArrayTopic = "SampleArray";
-
-  struct Text {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
-    MetricIdentifier metric_id; //@key
-    InstanceIdentifier instance_id; //@key
-    TextString value;
-  };
-  #pragma keylist Text unique_device_identifier metric_id instance_id
-  const string TextTopic = "Text";
 
   struct InfusionObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -168,7 +160,7 @@ module ice {
     // derived values are omitted to avoid inconsistent states
 
     // what's in the bag
-    TextString drug_name;
+    wstring<128> drug_name;
     long drug_mass_mcg;
     long solution_volume_ml;
     // concentration can be derived

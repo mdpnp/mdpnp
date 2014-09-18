@@ -32,7 +32,8 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
         @Override
         protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, int frequency) {
-            pleth[ordinal] = sampleArraySample(pleth[ordinal], plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, ordinal, frequency, null);
+            pleth[ordinal] = sampleArraySample(pleth[ordinal], plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, ordinal, 
+                    rosetta.MDC_DIM_DIMLESS.VALUE, frequency, null);
         }
     }
 

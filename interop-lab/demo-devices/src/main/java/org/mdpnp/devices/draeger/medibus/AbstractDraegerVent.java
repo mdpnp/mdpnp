@@ -27,9 +27,11 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.Unit;
 import org.mdpnp.devices.draeger.medibus.RTMedibus.RTTransmit;
 import org.mdpnp.devices.draeger.medibus.types.Command;
 import org.mdpnp.devices.draeger.medibus.types.MeasuredDataCP1;
+import org.mdpnp.devices.draeger.medibus.types.MeasuredDataCP2;
 import org.mdpnp.devices.draeger.medibus.types.RealtimeData;
 import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
@@ -83,12 +85,14 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     protected void processStartInspCycle() {
         // TODO This should not be triggered as a numeric; it's a bad idea
-        startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0, ice.MDC_START_INSPIRATORY_CYCLE.VALUE, null);
+        startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0, ice.MDC_START_INSPIRATORY_CYCLE.VALUE, 
+                rosetta.MDC_DIM_DIMLESS.VALUE, null);
     }
     
     protected void processStartExpCycle() {
         // TODO ditto the bad idea-ness of using Numeric topic for this
-        startExpiratoryCycleUpdate = numericSample(startExpiratoryCycleUpdate, 0, ice.MDC_START_EXPIRATORY_CYCLE.VALUE, null);
+        startExpiratoryCycleUpdate = numericSample(startExpiratoryCycleUpdate, 0, ice.MDC_START_EXPIRATORY_CYCLE.VALUE, 
+                rosetta.MDC_DIM_DIMLESS.VALUE, null);
     }
 
     private static final int BUFFER_SAMPLES = 25;
@@ -123,7 +127,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             sampleArrayUpdates.put(
                             code,
                             sampleArraySample(sampleArrayUpdates.get(code), realtimeBuffer[streamIndex],
-                                   metric_id, frequency, currentTime()));
+                                   metric_id, units(code), frequency, currentTime()));
         }
     }
 
@@ -260,7 +264,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                 } catch (NumberFormatException nfe) {
                     log.error("Bad number format " + d.code + " " + d.data, nfe);
                 }
-                settingUpdates.put(d.code,  numericSample(settingUpdates.get(d.code), f, metric, currentTime()));
+                settingUpdates.put(d.code,  numericSample(settingUpdates.get(d.code), f, metric, units(d.code), currentTime()));
             }
         }
 
@@ -303,7 +307,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                 } catch (NumberFormatException nfe) {
                     log.error("Bad number format " + d.code + " " + d.data, nfe);
                 }
-                numericUpdates.put(d.code,  numericSample(numericUpdates.get(d.code), f, metric, currentTime()));
+                numericUpdates.put(d.code,  numericSample(numericUpdates.get(d.code), f, metric, units(d.code), currentTime()));
             }
         }
 
@@ -671,5 +675,51 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         super.process(inputStream, outputStream);
 
     }
-
+    
+    protected static final String units(Object obj) {
+        if(obj==null) {
+            return rosetta.MDC_DIM_DIMLESS.VALUE;
+        } else if(obj instanceof MeasuredDataCP1) {
+            return units(((MeasuredDataCP1)obj).getUnit());
+        } else if(obj instanceof MeasuredDataCP2) {
+            return units(((MeasuredDataCP2)obj).getUnit());
+        } else if(obj instanceof RealtimeData) {
+            return units(((RealtimeData)obj).getUnit());
+        } else {
+            return rosetta.MDC_DIM_DIMLESS.VALUE;
+        }
+    }
+    
+    protected static final String units(Unit unit) {
+        switch(unit) {
+        case kg:
+            return rosetta.MDC_DIM_KILO_G.VALUE;
+        case kPa:
+            return rosetta.MDC_DIM_KILO_PASCAL.VALUE;
+        case L:
+            return rosetta.MDC_DIM_L.VALUE;
+        case LPerMin:
+            return rosetta.MDC_DIM_L_PER_MIN.VALUE;
+        case mL:
+            return rosetta.MDC_DIM_MILLI_L.VALUE;
+        case mmHg:
+            return rosetta.MDC_DIM_MMHG.VALUE;
+        case mLPerMin:
+            return rosetta.MDC_DIM_MILLI_L_PER_MIN.VALUE;
+        case sec:
+            return rosetta.MDC_DIM_SEC.VALUE;
+        case pct:
+            return rosetta.MDC_DIM_PERCENT.VALUE;
+        case OnePerMin:
+        case pctFullScale:
+        case a:
+        case None:
+        case mlPerMBar:
+        case mbar:
+        case TenMlPerMin:
+        case mbarPerL:
+        default:
+            return rosetta.MDC_DIM_DIMLESS.VALUE;
+        }
+    }
 }

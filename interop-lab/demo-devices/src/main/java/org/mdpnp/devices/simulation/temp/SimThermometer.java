@@ -26,12 +26,16 @@ public class SimThermometer extends AbstractSimulatedConnectedDevice {
     private class MySimulatedThermometer extends SimulatedThermometer {
         @Override
         protected void receiveTemp1(float temperature1) {
-            SimThermometer.this.temperature1 = numericSample(SimThermometer.this.temperature1, temperature1, rosetta.MDC_TEMP_BLD.VALUE, 0, null);
+            // TODO assign a unit type
+            SimThermometer.this.temperature1 = numericSample(SimThermometer.this.temperature1, temperature1, rosetta.MDC_TEMP_BLD.VALUE, 0, 
+                    rosetta.MDC_DIM_DIMLESS.VALUE, null);
         }
 
         @Override
         protected void receiveTemp2(float temperature2) {
-            SimThermometer.this.temperature2 = numericSample(SimThermometer.this.temperature2, temperature2, rosetta.MDC_TEMP_BLD.VALUE, 1, null);
+            // TODO assign a unit type
+            SimThermometer.this.temperature2 = numericSample(SimThermometer.this.temperature2, temperature2, rosetta.MDC_TEMP_BLD.VALUE, 1, 
+                    rosetta.MDC_DIM_DIMLESS.VALUE, null);
         }
     }
 

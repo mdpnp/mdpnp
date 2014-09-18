@@ -71,9 +71,13 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
             sampleTime.sec = (int) (timestamp / 1000L);
             sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
             try {
-                SimElectroCardioGram.this.i = sampleArraySample(SimElectroCardioGram.this.i, iValues, ice.MDC_ECG_LEAD_I.VALUE, 0, frequency, sampleTime);
-                SimElectroCardioGram.this.ii = sampleArraySample(SimElectroCardioGram.this.ii, iiValues, ice.MDC_ECG_LEAD_II.VALUE, 0, frequency, sampleTime);
-                SimElectroCardioGram.this.iii = sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, ice.MDC_ECG_LEAD_III.VALUE, 0, frequency, sampleTime);
+                // TODO should get better data that's actually in millivolts
+                SimElectroCardioGram.this.i = sampleArraySample(SimElectroCardioGram.this.i, iValues, ice.MDC_ECG_LEAD_I.VALUE, 0, 
+                        rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
+                SimElectroCardioGram.this.ii = sampleArraySample(SimElectroCardioGram.this.ii, iiValues, ice.MDC_ECG_LEAD_II.VALUE, 0, 
+                        rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
+                SimElectroCardioGram.this.iii = sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, ice.MDC_ECG_LEAD_III.VALUE, 0, 
+                        rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
 
                 numericSample(heartRate, (float) heartRateValue, sampleTime);
                 numericSample(respiratoryRate, (float) respiratoryRateValue, sampleTime);

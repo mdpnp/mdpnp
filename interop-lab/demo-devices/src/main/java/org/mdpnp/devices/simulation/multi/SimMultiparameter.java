@@ -43,7 +43,8 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
             sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
             numericSample(pulse, heartRate, sampleTime);
             numericSample(SimMultiparameter.this.SpO2, SpO2, sampleTime);
-            pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, frequency, sampleTime);
+            pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, 
+                    rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
         }
     }
     
@@ -53,7 +54,8 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
         protected void receiveCO2(long timestamp, Number[] co2Values, int respiratoryRateValue, int etCO2Value, int frequency) {
             sampleTime.sec = (int) (timestamp / 1000L);
             sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
-            co2 = sampleArraySample(co2, co2Values, rosetta.MDC_AWAY_CO2.VALUE, 0, frequency, sampleTime);
+            co2 = sampleArraySample(co2, co2Values, rosetta.MDC_AWAY_CO2.VALUE, 0, 
+                    rosetta.MDC_DIM_MMHG.VALUE, frequency, sampleTime);
             numericSample(respiratoryRate, respiratoryRateValue, sampleTime);
             numericSample(etCO2, etCO2Value, sampleTime);
 
@@ -68,9 +70,13 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
             sampleTime.sec = (int) (timestamp / 1000L);
             sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
             try {
-                i = sampleArraySample(i, iValues, ice.MDC_ECG_LEAD_I.VALUE, 0, frequency, sampleTime);
-                ii = sampleArraySample(ii, iiValues, ice.MDC_ECG_LEAD_II.VALUE, 0, frequency, sampleTime);
-                iii = sampleArraySample(iii, iiiValues, ice.MDC_ECG_LEAD_III.VALUE, 0, frequency, sampleTime);
+                // TODO get better numbers in actual millivolts
+                i = sampleArraySample(i, iValues, ice.MDC_ECG_LEAD_I.VALUE, 0, 
+                        rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
+                ii = sampleArraySample(ii, iiValues, ice.MDC_ECG_LEAD_II.VALUE, 0, 
+                        rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
+                iii = sampleArraySample(iii, iiiValues, ice.MDC_ECG_LEAD_III.VALUE, 0, 
+                        rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
 
                 numericSample(heartRate, (float) heartRateValue, sampleTime);
                 numericSample(ecgRespiratoryRate, (float) respiratoryRateValue, sampleTime);

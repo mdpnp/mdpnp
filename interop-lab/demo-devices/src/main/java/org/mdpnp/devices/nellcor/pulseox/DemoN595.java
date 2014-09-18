@@ -15,7 +15,6 @@ package org.mdpnp.devices.nellcor.pulseox;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,9 +50,12 @@ public class DemoN595 extends AbstractSerialDevice {
             long tm = getTimestamp().getTime();
             sampleTime.sec = (int) (tm / 1000L);
             sampleTime.nanosec = (int) (tm % 1000L * 1000000L);
-            pulse = numericSample(pulse, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, sampleTime);
-            spo2 = numericSample(spo2, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, sampleTime);
-            pulseAmplitude = numericSample(pulseAmplitude, getPulseAmplitude(), "NELLCOR_PULSE_AMPLITUDE", sampleTime);
+            pulse = numericSample(pulse, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 
+                    rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, sampleTime);
+            spo2 = numericSample(spo2, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 
+                    rosetta.MDC_DIM_PERCENT.VALUE, sampleTime);
+            pulseAmplitude = numericSample(pulseAmplitude, getPulseAmplitude(), "NELLCOR_PULSE_AMPLITUDE", 
+                    rosetta.MDC_DIM_DIMLESS.VALUE, sampleTime);
             markOldPatientAlertInstances();
             statusSet.clear();
             for(Status s : getStatus()) {

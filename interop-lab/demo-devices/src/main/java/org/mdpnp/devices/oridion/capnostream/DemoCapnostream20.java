@@ -26,6 +26,7 @@ import java.util.TimeZone;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.oridion.capnostream.Capnostream.CO2Units;
 import org.mdpnp.devices.oridion.capnostream.Capnostream.Command;
 import org.mdpnp.devices.oridion.capnostream.Capnostream.SetupItem;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
@@ -64,6 +65,37 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     protected String iconResourceName() {
         return "capnostream.png";
     }
+    
+    protected static final String units(CO2Units units) {
+        if(null == units) {
+            return rosetta.MDC_DIM_DIMLESS.VALUE;
+        }
+        switch(units) {
+        case kPa:
+            return rosetta.MDC_DIM_KILO_PASCAL.VALUE;
+        case mmHg:
+            return rosetta.MDC_DIM_MMHG.VALUE;
+        case VolPct:
+            return rosetta.MDC_DIM_VOL_PERCENT.VALUE;
+        default:
+            return rosetta.MDC_DIM_DIMLESS.VALUE;
+        }
+    }
+    
+    protected static final float divisor(CO2Units units) {
+        if(null == units) {
+            return 1f;
+        }
+        switch(units) {
+        case kPa:
+        case VolPct:
+            return 10f;
+        case mmHg:
+            return 1f;
+        default:
+            return 1f;
+        }
+    }    
 
     private static final long MAX_COMMAND_RESPONSE = 1500L;
 
@@ -273,6 +305,8 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         
         private final StringBuilder messageBuilder = new StringBuilder();
         
+        private CO2Units currentUnits = null;
+        
         @Override
         public boolean receiveNumerics(long date, int etCO2, int FiCO2, int respiratoryRate, int spo2, int pulserate, int slowStatus,
                 int co2ActiveAlarms, int spO2ActiveAlarms, int noBreathPeriodSeconds, int etCo2AlarmHigh, int etCo2AlarmLow, int rrAlarmHigh,
@@ -294,14 +328,18 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             sampleTime.nanosec = (int) (date % 1000L * 1000000L);
 
             DemoCapnostream20.this.spo2 = numericSample(DemoCapnostream20.this.spo2, 0xFF == spo2 ? null : spo2, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE,
+                    rosetta.MDC_DIM_PERCENT.VALUE,
                     sampleTime);
 
-            rr = numericSample(rr, 0xFF == respiratoryRate ? null : respiratoryRate, rosetta.MDC_CO2_RESP_RATE.VALUE, sampleTime);
+            rr = numericSample(rr, 0xFF == respiratoryRate ? null : respiratoryRate, rosetta.MDC_CO2_RESP_RATE.VALUE, 
+                    rosetta.MDC_DIM_RESP_PER_MIN.VALUE, sampleTime);
 
-            etco2 = numericSample(etco2, 0xFF == etCO2 ? null : etCO2, rosetta.MDC_AWAY_CO2_ET.VALUE, sampleTime);
+            this.currentUnits = units;
+
+            etco2 = numericSample(etco2, 0xFF == etCO2 ? null : etCO2 / divisor(units), rosetta.MDC_AWAY_CO2_ET.VALUE, units(units), sampleTime);
 
             DemoCapnostream20.this.pulserate = numericSample(DemoCapnostream20.this.pulserate, 0xFF == pulserate ? null : pulserate,
-                    rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, sampleTime);
+                    rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, sampleTime);
 
             DemoCapnostream20.this.spo2AlarmSettings = alarmSettingsSample(DemoCapnostream20.this.spo2AlarmSettings, 0xFF == spo2AlarmLow ? null
                     : (float) spo2AlarmLow, 0xFF == spo2AlarmHigh ? null : (float) spo2AlarmHigh, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
@@ -324,7 +362,8 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             writeTechnicalAlert("Fast CO2", FastStatus.build(status, messageBuilder));
             
             if(0 != (END_OF_BREATH_BIT & status)) {
-                endOfBreath = numericSample(endOfBreath, 0, ice.MDC_END_OF_BREATH.VALUE, null);
+                endOfBreath = numericSample(endOfBreath, 0, ice.MDC_END_OF_BREATH.VALUE, 
+                        rosetta.MDC_DIM_DIMLESS.VALUE, null);
             }
 
             if (0 != (0x40 & status)) {
@@ -336,10 +375,11 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
                 return true;
             }
 
-            realtimeBuffer[realtimeBufferCount++] = co2;
+            realtimeBuffer[realtimeBufferCount++] = co2 / divisor(this.currentUnits);
             if (realtimeBufferCount == realtimeBuffer.length) {
                 realtimeBufferCount = 0;
-                DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, realtimeBuffer, rosetta.MDC_AWAY_CO2.VALUE, 20, null);
+                DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, realtimeBuffer, rosetta.MDC_AWAY_CO2.VALUE, 
+                        units(this.currentUnits), 20, null);
 
             }
             return true;
