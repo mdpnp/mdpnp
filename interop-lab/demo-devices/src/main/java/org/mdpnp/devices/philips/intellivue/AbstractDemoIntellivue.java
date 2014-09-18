@@ -632,7 +632,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     // case device clock is set incorrectly
                     populateTime(time, sampleTimeNumeric);
                     
-                    UnitCode unit = handleToUnitCode.get(handle);
+                    UnitCode unit = UnitCode.valueOf(observed.getUnitCode().getType());
 
                     if (observed.getMsmtState().isUnavailable()) {
                         putNumericUpdate(ov, handle, numericSample(getNumericUpdate(ov, handle), (Float) null, metricId, handle, 
