@@ -33,6 +33,7 @@ import org.mdpnp.devices.draeger.medibus.types.Command;
 import org.mdpnp.devices.draeger.medibus.types.MeasuredDataCP1;
 import org.mdpnp.devices.draeger.medibus.types.MeasuredDataCP2;
 import org.mdpnp.devices.draeger.medibus.types.RealtimeData;
+import org.mdpnp.devices.draeger.medibus.types.Setting;
 import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
@@ -140,9 +141,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             } else if(code instanceof Byte) {
                 return "DRAEGER_"+type+"_"+HexUtil.toHexString((Byte)code)+"H";
             } else if(code instanceof Enum) {
-                return "DRAEGER_"+((Enum<?>)code).name();
+                return "DRAEGER_"+type+"_"+((Enum<?>)code).name();
             } else {
-                return "DRAEGER_"+code.toString();
+                return "DRAEGER_"+type+"_"+code.toString();
             }
         }
     }
@@ -687,6 +688,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             return units(((MeasuredDataCP2)obj).getUnit());
         } else if(obj instanceof RealtimeData) {
             return units(((RealtimeData)obj).getUnit());
+        } else if(obj instanceof Setting) {
+            return units(((Setting)obj).getUnit());
         } else {
             return "DRAEGER_"+obj;
         }
