@@ -259,7 +259,10 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                 log.error(e.getMessage(), e);
             }
             for(Data d : data) {
-                String metric = metricOrCode(null, d.code, "SETTING");
+                // There are a couple of settings that we map to
+                // custom types in the ice package
+                String metric = numerics.get(d.code);
+                metric = metricOrCode(metric, d.code, "SETTING");
                 String s = null == d.data ? null : d.data.toString().trim();
                 Float f = null;
                 try {
