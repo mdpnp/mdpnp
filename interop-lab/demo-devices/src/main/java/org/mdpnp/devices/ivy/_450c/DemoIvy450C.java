@@ -98,8 +98,9 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
 
         @Override
-        protected void receiveECGWave(int[] data, int count, int frequency, String label) {
+        protected void receiveECGWave(float[] data, int count, int frequency, String label) {
             String ecg = nameOfECGWave(label);
+            
             if (ecg != null) {
                 ecgWave = sampleArraySample(ecgWave, data, count, ecg, 0, frequency);
             } else {
@@ -111,7 +112,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
 
         @Override
-        protected void receiveRespWave(int[] data, int count, int frequency) {
+        protected void receiveRespWave(float[] data, int count, int frequency) {
             // This is less than ideal but if the device is reporting etCO2 we'll treat this as a capnogram
             // otherwise it is from respiratory impedance
             if(null != etco2 && etco2.data.value > 0) {
@@ -124,17 +125,17 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         }
 
         @Override
-        protected void receivePlethWave(int[] data, int count, int frequency) {
+        protected void receivePlethWave(float[] data, int count, int frequency) {
             plethWave = sampleArraySample(plethWave, data, count, rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, frequency);
         }
 
         @Override
-        protected void receiveP1Wave(int[] data, int count, int frequency) {
+        protected void receiveP1Wave(float[] data, int count, int frequency) {
             p1Wave = sampleArraySample(p1Wave, data, count, rosetta.MDC_PRESS_BLD.VALUE, 0, frequency);
         }
 
         @Override
-        protected void receiveP2Wave(int[] data, int count, int frequency) {
+        protected void receiveP2Wave(float[] data, int count, int frequency) {
             p2Wave = sampleArraySample(p2Wave, data, count, rosetta.MDC_PRESS_BLD.VALUE, 1, frequency);
         }
 

@@ -168,7 +168,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             received(Phase.GetTime, true);
         }
 
-        private int[] plethBuffer = new int[Packet.FRAMES];
+        private float[] plethBuffer = new float[Packet.FRAMES];
         
         private final Time_t updateTime = new Time_t(0,0);
         private long lastUpdate = 0L;

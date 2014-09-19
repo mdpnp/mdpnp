@@ -41,10 +41,10 @@ public class AnsarB {
 
     private final static int ECG_PTS = 200, RESP_PTS = 50, PLETH_PTS = 50, P1_PTS = 50, P2_PTS = 50;
     private final static int ECG_OFF = 0, RESP_OFF = 200, PLETH_OFF = 250, P1_OFF = 300, P2_OFF = 350;
-    private final static int ECG_OFFSET = 118, RESP_OFFSET = 0, PLETH_OFFSET = 86, P1_OFFSET = 80, P2_OFFSET = 251;
+    private final static int ECG_OFFSET = 100, RESP_OFFSET = 0, PLETH_OFFSET = 86, P1_OFFSET = 80, P2_OFFSET = 251;
     private final static int ECG_FREQUENCY = 200, RESP_FREQUENCY = 50, PLETH_FREQUENCY = 50, P1_FREQUENCY = 50, P2_FREQUENCY = 50;
 
-    private int[] wavedata = new int[ECG_PTS];
+    private float[] wavedata = new float[ECG_PTS];
     private String ecgLabel;
     private final static Charset ASCII = Charset.forName("ASCII");
     private final static int WAVEFORM_LENGTH = 400;
@@ -148,23 +148,23 @@ public class AnsarB {
 
     }
 
-    protected void receiveECGWave(int[] data, int count, int frequency, String label) {
+    protected void receiveECGWave(float[] data, int count, int frequency, String label) {
 
     }
 
-    protected void receiveRespWave(int[] data, int count, int frequency) {
+    protected void receiveRespWave(float[] data, int count, int frequency) {
 
     }
 
-    protected void receivePlethWave(int[] data, int count, int frequency) {
+    protected void receivePlethWave(float[] data, int count, int frequency) {
 
     }
 
-    protected void receiveP1Wave(int[] data, int count, int frequency) {
+    protected void receiveP1Wave(float[] data, int count, int frequency) {
 
     }
 
-    protected void receiveP2Wave(int[] data, int count, int frequency) {
+    protected void receiveP2Wave(float[] data, int count, int frequency) {
 
     }
 
@@ -234,9 +234,9 @@ public class AnsarB {
         }
     }
 
-    private static final void offset(int[] dest, byte[] source, int source_offset, int data_offset, int length) {
+    private static final void offset(float[] dest, byte[] source, int source_offset, int data_offset, int length, float scale) {
         for (int i = 0; i < length; i++) {
-            dest[i] = (0xFF & source[source_offset + i]) + data_offset;
+            dest[i] = scale * ((0xFF & source[source_offset + i]) - data_offset);
         }
     }
 
@@ -253,15 +253,15 @@ public class AnsarB {
         }
 
         // ECG Wave
-        offset(wavedata, message, off + ANSAR_B.length + 1 + ECG_OFF, ECG_OFFSET, ECG_PTS);
+        offset(wavedata, message, off + ANSAR_B.length + 1 + ECG_OFF, ECG_OFFSET, ECG_PTS, 0.02f);
         receiveECGWave(wavedata, ECG_PTS, ECG_FREQUENCY, ecgLabel);
-        offset(wavedata, message, off + ANSAR_B.length + 1 + RESP_OFF, RESP_OFFSET, RESP_PTS);
+        offset(wavedata, message, off + ANSAR_B.length + 1 + RESP_OFF, RESP_OFFSET, RESP_PTS, 1f);
         receiveRespWave(wavedata, RESP_PTS, RESP_FREQUENCY);
-        offset(wavedata, message, off + ANSAR_B.length + 1 + PLETH_OFF, PLETH_OFFSET, PLETH_PTS);
+        offset(wavedata, message, off + ANSAR_B.length + 1 + PLETH_OFF, PLETH_OFFSET, PLETH_PTS, 1f);
         receivePlethWave(wavedata, PLETH_PTS, PLETH_FREQUENCY);
-        offset(wavedata, message, off + ANSAR_B.length + 1 + P1_OFF, P1_OFFSET, P1_PTS);
+        offset(wavedata, message, off + ANSAR_B.length + 1 + P1_OFF, P1_OFFSET, P1_PTS, 1f);
         receiveP1Wave(wavedata, P1_PTS, P1_FREQUENCY);
-        offset(wavedata, message, off + ANSAR_B.length + 1 + P2_OFF, P2_OFFSET, P2_PTS);
+        offset(wavedata, message, off + ANSAR_B.length + 1 + P2_OFF, P2_OFFSET, P2_PTS, 1f);
         receiveP2Wave(wavedata, P2_PTS, P2_FREQUENCY);
 
         return true;

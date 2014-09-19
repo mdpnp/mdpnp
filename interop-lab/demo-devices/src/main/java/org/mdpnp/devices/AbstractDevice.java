@@ -573,7 +573,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, time);
     }
 
-    protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len, Time_t deviceTimestamp) {
+    protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, float[] newValues, int len, Time_t deviceTimestamp) {
         holder.data.values.userData.clear();
         
         for(int i = 0; i < len; i++) {
@@ -605,17 +605,17 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return sampleArraySample(holder, newValues, metric_id, 0, unit_id, frequency, timestamp);
     }
 
-    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len,
+    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, float[] newValues, int len,
             String metric_id, int instance_id, int frequency) {
         return sampleArraySample(holder, newValues, len, metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE, frequency);
     }
     
-    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len,
+    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, float[] newValues, int len,
             String metric_id, int instance_id, String unit_id, int frequency) {
         return sampleArraySample(holder, newValues, len, metric_id, instance_id, unit_id, frequency, null);
     }
 
-    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, int[] newValues, int len, 
+    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, float[] newValues, int len, 
             String metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
         if (null != holder && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id || holder.data.frequency != frequency || !holder.data.unit_id.equals(unit_id))) {
             unregisterSampleArrayInstance(holder, timestamp);
