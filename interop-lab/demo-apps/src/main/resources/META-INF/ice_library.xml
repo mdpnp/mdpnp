@@ -239,7 +239,7 @@
      increased) -->
     <resource_limits>
      <max_samples>-1</max_samples>
-     <max_instances>100</max_instances>
+     <max_instances>-1</max_instances>
      <max_samples_per_instance>-1</max_samples_per_instance>
     </resource_limits>
     <!-- JP 30-Sep-2013 get_key_value is failing on unalive instances maybe 
@@ -315,7 +315,7 @@
 
     <resource_limits>
      <max_samples>-1</max_samples>
-     <max_instances>100</max_instances>
+     <max_instances>-1</max_instances>
      <max_samples_per_instance>-1</max_samples_per_instance>
     </resource_limits>
    </datawriter_qos>
