@@ -124,7 +124,7 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
 
     @Override
     protected String iconResourceName() {
-        return "pulseox.png";
+        return "multi.png";
     }
     
     
@@ -152,4 +152,6 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
     protected boolean sampleArraySpecifySourceTimestamp() {
         return true;
     }
+    
+
 }
