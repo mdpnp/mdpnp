@@ -208,7 +208,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
         previousAttempt = now;
         try {
             log.trace("Invoking SerialProvider.connect(" + portIdentifier + ")");
-            socket = getSerialProvider().connect(portIdentifier, Long.MAX_VALUE);
+            socket = getSerialProvider().connect(portIdentifier, 2000L);
 
             if (null == socket) {
                 log.trace("socket is null after connect");
