@@ -76,21 +76,33 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
     
     private final Device getDevice(String udi, boolean create) {
         if(null == udi) {
+            log.warn("Cannot create device with null udi");
             return null;
         }
         Device device = contentsByUDI.get(udi);
-        if(null == device && create) {
-            device = new Device(udi);
-            IdentityAndParticipant iandp = deviceIdentityByUDI.get(udi);
-            device.setDeviceIdentity(null==iandp?null:iandp.deviceIdentity, null==iandp?null:iandp.participantData);
-            device.setDeviceConnectivity(deviceConnectivityByUDI.get(udi));
-            contentsByUDI.put(udi, device);
-            contents.add(0, device);
-            contentsByIdx.clear();
-            for (int i = 0; i < contents.size(); i++) {
-                contentsByIdx.put(contents.get(i), i);
+        if(null == device) {
+            if(create) {
+                device = new Device(udi);
+                IdentityAndParticipant iandp = deviceIdentityByUDI.get(udi);
+                device.setDeviceIdentity(null==iandp?null:iandp.deviceIdentity, null==iandp?null:iandp.participantData);
+                device.setDeviceConnectivity(deviceConnectivityByUDI.get(udi));
+                contentsByUDI.put(udi, device);
+                contents.add(0, device);
+                contentsByIdx.clear();
+                for (int i = 0; i < contents.size(); i++) {
+                    contentsByIdx.put(contents.get(i), i);
+                }
+                fireIntervalAdded(this, 0, 0);
+                log.debug("Added index=" + 0 + " " + device.getUDI() + " for a total size of " + getSize());
+                // TODO This shouldn't strictly be necessary by the JList is not responding in all cases
+                fireContentsChanged(this, 0, getSize()-1);
+            } else {
+                log.debug("Not creating unfounded device udi="+udi);
             }
-            fireIntervalAdded(DeviceListModel.this, 0, 0);
+        } else {
+            int idx = contentsByIdx.get(device);
+            log.debug("At idx="+idx+" find udi="+device.getUDI());
+            fireContentsChanged(this, idx, idx);
         }
         return device;
     }
@@ -167,9 +179,12 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
     
     private final void remove(Device device) {
         if(null == device) {
+            log.debug("Tried to remove a null device");
             return;
         }
-        contentsByUDI.remove(device.getUDI());
+        if(null == contentsByUDI.remove(device.getUDI())) {
+            log.warn("Attempting to remove a device not present in contentsByUDI " + device.getUDI());
+        }
         final int idx = contentsByIdx.get(device);
         contents.remove(idx);
         contentsByIdx.clear();
@@ -179,7 +194,7 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
         lastRemoved = device;
         fireIntervalRemoved(DeviceListModel.this, idx, idx);
 
-        log.warn("Removed index=" + idx);
+        log.debug("Removed index=" + idx + " " + device.getUDI());
         lastRemoved = null;
     }
     
