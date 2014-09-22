@@ -330,7 +330,7 @@
      <kind>DDS_MANUAL_BY_TOPIC_LIVELINESS_QOS</kind>
      <!-- Point at which writers (and associated instances) become "not alive" -->
      <lease_duration>
-      <sec>3</sec>
+      <sec>5</sec>
       <nanosec>0</nanosec>
      </lease_duration>
     </liveliness>
