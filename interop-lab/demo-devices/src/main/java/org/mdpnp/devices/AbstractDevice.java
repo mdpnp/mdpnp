@@ -668,7 +668,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     protected boolean iconFromResource(DeviceIdentity di, String iconResourceName) throws IOException {
         if (null == iconResourceName) {
-            di.icon.content_type = "image/png";
+            di.icon.content_type = "";
             di.icon.image.clear();
             return true;
         }
@@ -784,6 +784,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             throw new RuntimeException("deviceIdentityWriter not created");
         }
         deviceIdentity = new DeviceIdentity();
+        deviceIdentity.icon.content_type = "image/png";
         deviceIdentity.build = BuildInfo.getDescriptor();
         try {
             iconFromResource(deviceIdentity, iconResourceName());
