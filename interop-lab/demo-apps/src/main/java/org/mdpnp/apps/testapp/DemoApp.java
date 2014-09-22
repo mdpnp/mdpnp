@@ -159,17 +159,7 @@ public class DemoApp {
         final Publisher publisher = participant.create_publisher(pubQos, null, StatusKind.STATUS_MASK_NONE);
         final TimeManager timeManager = new TimeManager(publisher, subscriber, udi, "Supervisor");
 
-        @SuppressWarnings("serial")
-        final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop, timeManager) {
-            @Override
-            protected void notADevice(ice.HeartBeat heartbeat, boolean alive) {
-                if ("Supervisor".equals(heartbeat.type) && alive) {
-                    // TODO Temporarily removing this; is there a requirement that only one Supervisor runs at a time?
-//                    JOptionPane.showMessageDialog(panel, "Another supervisor has been detected on the domain", "Multiple Supervisors",
-//                            JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        };
+        final DeviceListModel nc = new DeviceListModel(subscriber, eventLoop, timeManager);
         
         RunAndDone enable = new RunAndDone() {
             public void run() {
