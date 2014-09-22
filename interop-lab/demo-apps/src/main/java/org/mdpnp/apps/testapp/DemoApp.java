@@ -282,7 +282,7 @@ public class DemoApp {
 
         RapidRespiratoryRate _rrr = null;
         if (!AppType.RRR.isDisabled()) {
-            _rrr = new RapidRespiratoryRate(domainId, eventLoop, deviceCellRenderer);
+            _rrr = new RapidRespiratoryRate(domainId, eventLoop, subscriber, deviceCellRenderer);
             panel.getContent().add(_rrr, AppType.RRR.getId());
         }
         final RapidRespiratoryRate rrr = _rrr;
