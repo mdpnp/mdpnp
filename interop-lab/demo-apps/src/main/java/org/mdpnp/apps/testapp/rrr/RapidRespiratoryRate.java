@@ -18,6 +18,8 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +45,9 @@ import org.mdpnp.guis.waveform.WaveformSource.WaveformIterator;
 import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
+
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriberQos;
 
 @SuppressWarnings("serial")
 /**
@@ -91,7 +96,7 @@ public class RapidRespiratoryRate extends JPanel implements ListDataListener, Ru
     private final EventLoop eventLoop;
 
     @SuppressWarnings("unchecked")
-    public RapidRespiratoryRate(final int domainId, final EventLoop eventLoop, DeviceListCellRenderer deviceCellRenderer) {
+    public RapidRespiratoryRate(final int domainId, final EventLoop eventLoop, final Subscriber subscriber, DeviceListCellRenderer deviceCellRenderer) {
         super(new GridLayout(2, 2));
         this.eventLoop = eventLoop;
         // rrDevice = new RespiratoryRateDevice(domainId, eventLoop);
@@ -127,6 +132,15 @@ public class RapidRespiratoryRate extends JPanel implements ListDataListener, Ru
                 if (device.isSelected()) {
                     if (rrDevice == null) {
                         rrDevice = new RespiratoryRateDevice(domainId, eventLoop);
+                        // TODO Make this more elegant
+                        List<String> strings = new ArrayList<String>();
+                        SubscriberQos qos = new SubscriberQos();
+                        subscriber.get_qos(qos);
+                        
+                        for(int i = 0; i < qos.partition.name.size(); i++) {
+                            strings.add((String)qos.partition.name.get(i));
+                        }
+                        rrDevice.setPartition(strings.toArray(new String[0]));
                     }
                 } else {
                     if (rrDevice != null) {
