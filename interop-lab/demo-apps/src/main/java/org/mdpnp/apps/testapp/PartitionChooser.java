@@ -161,6 +161,11 @@ public class PartitionChooser extends JDialog {
         ok.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                String value = field.getText();
+                if(value != null && !value.isEmpty()) {
+                    partitions.add(value);
+                    field.setText("");
+                }
                 {
                     SubscriberQos qos = new SubscriberQos();
                     
