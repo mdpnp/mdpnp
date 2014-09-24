@@ -13,6 +13,7 @@
 package org.mdpnp.devices.draeger.medibus;
 
 import ice.ConnectionState;
+import ice.SampleArray;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.AbstractDevice.InstanceHolder;
 import org.mdpnp.devices.Unit;
 import org.mdpnp.devices.draeger.medibus.RTMedibus.RTTransmit;
 import org.mdpnp.devices.draeger.medibus.types.Command;
@@ -114,21 +116,29 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         realtimeBuffer[streamIndex][realtimeBufferCount[streamIndex]++] = value;
         if (realtimeBufferCount[streamIndex] == realtimeBuffer[streamIndex].length) {
             realtimeBufferCount[streamIndex] = 0;
-            String metric_id = null;
-            // flush
-            if (code instanceof Enum<?>) {
-                metric_id = waveforms.get(code);
-            }
-            // NOTE: config.interval is the sampling interval expressed in MICRO-seconds
-            // The specification is ambiguous using ms for micro and milli... 
-            // but in the examples '16000' is stated to mean 16 milliseconds
-            int frequency = (int)(1000000f / config.interval / multiplier);
+            InstanceHolder<SampleArray> sa = sampleArrayUpdates.get(code);
+            if(null != sa) {
+                // In this implementation we're not changing the requested realtime data; so we
+                // expedite here using the same preregistered instance
+                sampleArraySample(sa, realtimeBuffer[streamIndex], currentTime());
+            } else {
             
-            metric_id = metricOrCode(metric_id, code, "RT");
-            sampleArrayUpdates.put(
-                            code,
-                            sampleArraySample(sampleArrayUpdates.get(code), realtimeBuffer[streamIndex],
-                                   metric_id, units(code), frequency, currentTime()));
+                String metric_id = null;
+                // flush
+                if (code instanceof Enum<?>) {
+                    metric_id = waveforms.get(code);
+                }
+                // NOTE: config.interval is the sampling interval expressed in MICRO-seconds
+                // The specification is ambiguous using ms for micro and milli... 
+                // but in the examples '16000' is stated to mean 16 milliseconds
+                int frequency = (int)(1000000f / config.interval / multiplier);
+                
+                metric_id = metricOrCode(metric_id, code, "RT");
+                sampleArrayUpdates.put(
+                                code,
+                                sampleArraySample(sa, realtimeBuffer[streamIndex],
+                                       metric_id, units(code), frequency, currentTime()));
+            }
         }
     }
 
