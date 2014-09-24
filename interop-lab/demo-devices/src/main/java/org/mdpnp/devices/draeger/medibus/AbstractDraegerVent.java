@@ -683,21 +683,21 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     @Override
     protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
 
-        Thread t = new Thread(new Runnable() {
-            public void run() {
-                try {
-                    // Will block until the delegate is available
-                    final RTMedibus rtMedibus = getDelegate(false);
-                    rtMedibus.receiveFast();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, "Medibus FAST data");
-        t.setPriority(Thread.MAX_PRIORITY);
-        t.setDaemon(true);
-        t.start();
-        log.trace("spawned a fast data processor");
+//        Thread t = new Thread(new Runnable() {
+//            public void run() {
+//                try {
+//                    // Will block until the delegate is available
+//                    final RTMedibus rtMedibus = getDelegate(false);
+//                    rtMedibus.receiveFast();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }, "Medibus FAST data");
+//        t.setPriority(Thread.MAX_PRIORITY);
+//        t.setDaemon(true);
+//        t.start();
+//        log.trace("spawned a fast data processor");
 
         // really the RTMedibus thread will block until
         // the super.process populates an InputStream to allow

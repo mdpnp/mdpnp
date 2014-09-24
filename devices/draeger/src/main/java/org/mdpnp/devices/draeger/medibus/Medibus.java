@@ -12,7 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.devices.draeger.medibus;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,7 +74,7 @@ public class Medibus {
     private int versionMajor = 3;
     private int versionMinor = 0;
 
-    protected final InputStream slowIn, fastIn;
+    protected final InputStream slowIn;// , fastIn;
     protected final OutputStream out;
 
     /**
@@ -100,7 +99,17 @@ public class Medibus {
 
             @Override
             public boolean passes(int b) {
-                return 0 == (b & 0x80);
+                if(0 == (b & 0x80)) {
+                    fastByte(b);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            
+            @Override
+            public boolean createPipe() {
+                return false;
             }
 
         }, new InputStreamPartition.Filter() {
@@ -117,15 +126,20 @@ public class Medibus {
                 }
                 return 0 != (b & 0x80);
             }
+            
+            public boolean createPipe() { return true; }
 
         } }, in);
         isp.getProcessingThread().setName("Medibus I/O Multiplexor");
         this.slowIn = isp.getInputStream(0);
-        this.fastIn = isp.getInputStream(1);
         this.out = out;
         log.trace("Initialized Medibus");
     }
 
+    protected void fastByte(int b) {
+        
+    }
+    
     private static final byte asciiChar(byte b) {
         if (b < 10) {
             return (byte) ('0' + b);

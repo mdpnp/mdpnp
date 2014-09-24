@@ -42,6 +42,7 @@ public class InputStreamPartition implements Runnable {
      */
     public interface Filter {
         boolean passes(int b);
+        boolean createPipe();
     }
 
     private final Filter[] filters;
@@ -164,10 +165,13 @@ public class InputStreamPartition implements Runnable {
         this.streamsToRead = new PipedInputStream[filters.length];
         this.streamsToWrite = new PipedOutputStream[filters.length];
         for(int i = 0; i < filters.length; i++) {
-            this.streamsToRead[i] = new PipedInputStream();
-            this.streamsToWrite[i] = new PipedOutputStream(this.streamsToRead[i]);
+            if(filters[i].createPipe()) {
+                this.streamsToRead[i] = new PipedInputStream();
+                this.streamsToWrite[i] = new PipedOutputStream(this.streamsToRead[i]);
+            }
         }
         processingThread = new Thread(this);
+        processingThread.setPriority(Thread.NORM_PRIORITY+1);
         processingThread.setDaemon(true);
         processingThread.start();
     }
@@ -197,7 +201,9 @@ public class InputStreamPartition implements Runnable {
 
         if (n < 0) {
             for (int i = 0; i < streamsToWrite.length; i++) {
-                streamsToWrite[i].close();
+                if(streamsToWrite[i]!= null) {
+                    streamsToWrite[i].close();
+                }
 //                synchronized (buffers[i]) {
 //                    nextRead[i] = -1;
 //                    buffers[i].notifyAll();
@@ -209,7 +215,9 @@ public class InputStreamPartition implements Runnable {
             for(int i = 0; i < n; i++) {
                 for (int j = 0; j < filters.length; j++) {
                     if (filters[j].passes(manybytes[i])) {
-                        streamsToWrite[j].write(manybytes[i]);
+                        if(streamsToWrite[j] != null) {
+                            streamsToWrite[j].write(manybytes[i]);
+                        }
 //                        synchronized (buffers[j]) {
 //                            long giveup = System.currentTimeMillis() + 5000L;
 //                            while (nextWrite[j] >= buffers[j].length) {
@@ -275,7 +283,9 @@ public class InputStreamPartition implements Runnable {
             // show love to those who are waiting for this defunct thread
             for(int i = 0; i < this.streamsToWrite.length; i++) {
                 try {
-                    streamsToWrite[i].close();
+                    if(null != streamsToWrite[i]) {
+                        streamsToWrite[i].close();
+                    }
                 } catch (IOException e) {
                     log.error("Unable to close writing side of the pipe", e);
                 }

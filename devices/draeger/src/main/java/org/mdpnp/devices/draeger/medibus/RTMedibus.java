@@ -150,7 +150,7 @@ public class RTMedibus extends Medibus {
         return lastTransmitted;
     }
 
-    public void receiveData(int first, int second) throws IOException {
+    public void receiveData(int first, int second) {
         // which of the transmitted streams is this
         int idx = dataCounter++;
         int i;
@@ -184,30 +184,63 @@ public class RTMedibus extends Medibus {
         log.debug("Received(" + Medibus.toString(realtimeData) + "):" + data);
     }
 
-    public boolean receiveFast() throws IOException {
-        int leading = 0;
-        while (true) {
-            leading = fastIn.read();
-            if (leading < 0) {
-                return false;
+    
+    private int lastFastByte = -1;
+    @Override
+    protected void fastByte(int b) {
+        if(lastFastByte < 0) {
+            // No previous byte
+            switch(SYNC_MASK & b) {
+            case SYNC_BYTE:
+                receiveSyncByte(b);
+                return;
             }
-            if ((RT_BYTE_MASK & leading) == RT_BYTE) {
-                receiveData(leading, fastIn.read());
+            lastFastByte = b;
+        } else {
+            if ((RT_BYTE_MASK & lastFastByte) == RT_BYTE) { 
+                receiveData(lastFastByte, b);
+                lastFastByte = -1;
             } else {
-                int syncMasked = SYNC_MASK & leading;
-                switch (syncMasked) {
-                case SYNC_BYTE:
-                    receiveSyncByte(leading);
-                    break;
+                switch(SYNC_MASK&lastFastByte) {
                 case SYNC_CMD_BYTE:
-                    receiveSyncCommand(leading, fastIn.read());
+                    receiveSyncCommand(lastFastByte, b);
+                    lastFastByte = -1;
                     break;
                 default:
-                    log.warn("Unknown r/t byte:" + Integer.toHexString(leading));
+                    log.warn("Unknown r/t byte:" + Integer.toHexString(lastFastByte));
+                    lastFastByte = -1;
+                    fastByte(b);
+                    break;
                 }
             }
+            
         }
     }
+    
+//    public boolean receiveFast() throws IOException {
+//        int leading = 0;
+//        while (true) {
+//            leading = fastIn.read();
+//            if (leading < 0) {
+//                return false;
+//            }
+//            if ((RT_BYTE_MASK & leading) == RT_BYTE) {
+//                receiveData(leading, fastIn.read());
+//            } else {
+//                int syncMasked = SYNC_MASK & leading;
+//                switch (syncMasked) {
+//                case SYNC_BYTE:
+//                    receiveSyncByte(leading);
+//                    break;
+//                case SYNC_CMD_BYTE:
+//                    receiveSyncCommand(leading, fastIn.read());
+//                    break;
+//                default:
+//                    log.warn("Unknown r/t byte:" + Integer.toHexString(leading));
+//                }
+//            }
+//        }
+//    }
 
     public static final class RTTransmit {
 
