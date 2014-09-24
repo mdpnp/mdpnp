@@ -12,6 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.devices.draeger.medibus;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -118,7 +119,7 @@ public class Medibus {
 
         } }, in);
         isp.getProcessingThread().setName("Medibus I/O Multiplexor");
-        this.slowIn = isp.getInputStream(0);
+        this.slowIn = new BufferedInputStream(isp.getInputStream(0));
         this.fastIn = isp.getInputStream(1);
         this.out = out;
         log.trace("Initialized Medibus");
