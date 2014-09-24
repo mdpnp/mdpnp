@@ -188,6 +188,7 @@ public class RTMedibus extends Medibus {
     private int lastFastByte = -1;
     @Override
     protected void fastByte(int b) {
+        log.warn("FAST BYTE:"+Integer.toHexString(b));
         if(lastFastByte < 0) {
             // No previous byte
             switch(SYNC_MASK & b) {
