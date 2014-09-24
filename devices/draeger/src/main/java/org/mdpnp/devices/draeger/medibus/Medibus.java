@@ -90,7 +90,7 @@ public class Medibus {
      */
     public Medibus(InputStream in, OutputStream out) {
         // Implementing software flow control doesn't seem to be necessary
-        // bis = new SuspendableInputStream(ASCIIByte.DC1, ASCIIByte.DC3, bis);
+         //bis = new SuspendableInputStream(ASCIIByte.DC1, ASCIIByte.DC3, bis);
 
         // partition the slow and fast data
         // fast data have the high order bit set and slow data do not
@@ -105,6 +105,14 @@ public class Medibus {
 
             @Override
             public boolean passes(int b) {
+                switch(b) {
+                case ASCIIByte.DC1:
+                    log.warn("DC1 (0x11) ignored in stream");
+                    break;
+                case ASCIIByte.DC3:
+                    log.warn("DC3 (0x13) ignored in stream");
+                    break;
+                }
                 return 0 != (b & 0x80);
             }
 
