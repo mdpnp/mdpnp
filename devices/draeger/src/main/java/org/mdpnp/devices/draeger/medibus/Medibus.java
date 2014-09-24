@@ -95,43 +95,45 @@ public class Medibus {
 
         // partition the slow and fast data
         // fast data have the high order bit set and slow data do not
-        InputStreamPartition isp = new InputStreamPartition(new InputStreamPartition.Filter[] { new InputStreamPartition.Filter() {
+        InputStreamPartition isp = new InputStreamPartition(new InputStreamPartition.Filter[] { 
+                new InputStreamPartition.Filter() {
 
-            @Override
-            public boolean passes(int b) {
-                if(0 == (b & 0x80)) {
-                    fastByte(b);
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-            
-            @Override
-            public boolean createPipe() {
-                return false;
-            }
+                    @Override
+                    public boolean passes(int b) {
+                        if(0 != (b & 0x80)) {
+                            fastByte(b);
+                            return true;
+                        } else {
+                            return false;
+                        }
 
-        }, new InputStreamPartition.Filter() {
+                    }
+                    
+                    public boolean createPipe() { return false; }
+
+                }, new InputStreamPartition.Filter() {
 
             @Override
             public boolean passes(int b) {
                 switch(b) {
                 case ASCIIByte.DC1:
                     log.warn("DC1 (0x11) ignored in stream");
-                    break;
+                    return false;
                 case ASCIIByte.DC3:
                     log.warn("DC3 (0x13) ignored in stream");
-                    break;
+                    return false;
                 }
-                return 0 != (b & 0x80);
+                return 0 == (b & 0x80);
             }
             
-            public boolean createPipe() { return true; }
+            @Override
+            public boolean createPipe() {
+                return true;
+            }
 
-        } }, in);
+        },  }, in);
         isp.getProcessingThread().setName("Medibus I/O Multiplexor");
-        this.slowIn = isp.getInputStream(0);
+        this.slowIn = isp.getInputStream(1);
         this.out = out;
         log.trace("Initialized Medibus");
     }
