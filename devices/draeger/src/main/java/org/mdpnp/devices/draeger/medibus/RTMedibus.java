@@ -12,7 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.devices.draeger.medibus;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -177,7 +176,8 @@ public class RTMedibus extends Medibus {
                 receiveDataValue(c, lastTransmitted[idx].multiplier, idx, c.realtimeData, (1.0 * binval / c.maxbin) * (c.max - c.min) + c.min);
             }
         } else {
-            receiveDataValue(null, 1, idx, (byte) idx, binval);
+            log.warn("index " + idx + " was not requested in the realtime data");
+//            receiveDataValue(null, 1, idx, (byte) idx, binval);
         }
 
     }
@@ -262,18 +262,18 @@ public class RTMedibus extends Medibus {
         }
     }
 
-    public void sendRTTransmissionCommand(RTTransmit[] transmits) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    public synchronized void sendRTTransmissionCommand(RTTransmit[] transmits) throws IOException {
+        scratchpad.reset();
         for (int i = 0; i < transmits.length; i++) {
             if (transmits[i].realtimeData instanceof RealtimeData) {
-                sendASCIIHex(baos, ((RealtimeData) transmits[i].realtimeData).toByte());
+                sendASCIIHex(scratchpad, ((RealtimeData) transmits[i].realtimeData).toByte());
             } else {
-                sendASCIIHex(baos, ((Integer) transmits[i].realtimeData).byteValue());
+                sendASCIIHex(scratchpad, ((Integer) transmits[i].realtimeData).byteValue());
             }
-            sendASCIIHex(baos, (byte) transmits[i].multiplier);
+            sendASCIIHex(scratchpad, (byte) transmits[i].multiplier);
         }
         this.lastTransmitted = transmits;
-        sendCommand(Command.ConfigureRealtime, baos.toByteArray());
+        sendCommand(Command.ConfigureRealtime, scratchpad);
     }
 
     public static final class RTDataConfig {
@@ -290,8 +290,30 @@ public class RTMedibus extends Medibus {
     // private RTDataConfig[] currentRTDataConfig;
     private RTTransmit[] lastTransmitted;
 
-    private static final int parseInt(byte[] buf, int off, int len) {
-        return Integer.parseInt(new String(buf, off, len).replaceAll(" ", ""));
+    protected static final int parseInt(final byte[] buf) {
+        return parseInt(buf, 0, buf.length);
+    }
+    
+    protected static final int parseInt(final byte[] buf, final int off, final int len) {
+        int result = 0;
+        int powOf10 = 0;
+        int sign = 1;
+        for(int i = off + len - 1; i >= off; i--) {
+            if('.'==buf[i]) {
+                // reset because we were to the right of a decimal and
+                // that's irrelevant to an integer
+                result = 0;
+                powOf10 = 0;
+                sign = 1;
+            } else if(buf[i]>='0'&&buf[i]<='9') {
+                result += (buf[i]-'0')*Math.pow(10.0, powOf10++);
+            } else if(buf[i] == '-') {
+                sign = -1;
+            } else {
+                // unknown digit
+            }
+        }
+        return sign * result;
     }
 
     private void receiveRealtimeConfig(byte[] response, int len) {
@@ -356,12 +378,12 @@ public class RTMedibus extends Medibus {
         if (cmdCode instanceof Command) {
             switch ((Command) cmdCode) {
             case RealtimeConfigChanged:
-                sendResponse(cmdCode, null);
+                sendResponse(cmdCode);
                 sendCommand(Command.ReqRealtimeConfig);
                 break;
             case ConfigureRealtime:
             case ReqRealtimeConfig:
-                sendResponse(cmdCode, null);
+                sendResponse(cmdCode);
                 break;
             default:
                 super.receiveCommand(argument, len);

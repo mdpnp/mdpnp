@@ -74,8 +74,8 @@ public class Medibus {
     private int versionMajor = 3;
     private int versionMinor = 0;
 
-    protected final InputStream slowIn;// , fastIn;
-    protected final OutputStream out;
+    protected final InputStream slowIn;
+    protected final ChecksumOutputStream out;
 
     /**
      * When a consumer of this API has established a connection to a Draeger
@@ -90,9 +90,6 @@ public class Medibus {
      * @throws IOException 
      */
     public Medibus(InputStream in, OutputStream out) throws IOException {
-        // Implementing software flow control doesn't seem to be necessary
-         //bis = new SuspendableInputStream(ASCIIByte.DC1, ASCIIByte.DC3, bis);
-
         // partition the slow and fast data
         // fast data have the high order bit set and slow data do not
         InputStreamPartition isp = new InputStreamPartition(new InputStreamPartition.Filter[] { 
@@ -108,7 +105,8 @@ public class Medibus {
                         }
 
                     }
-                    
+                    // This is an optimization.  Data will be handled in the passes call and there is 
+                    // not need to enqueue data onto a pipe
                     public boolean createPipe() { return false; }
 
                 }, new InputStreamPartition.Filter() {
@@ -134,7 +132,7 @@ public class Medibus {
         },  }, in);
         isp.getProcessingThread().setName("Medibus I/O Multiplexor");
         this.slowIn = isp.getInputStream(1);
-        this.out = out;
+        this.out = new ChecksumOutputStream(out);
         log.trace("Initialized Medibus");
     }
 
@@ -208,7 +206,7 @@ public class Medibus {
      * @throws IOException
      */
     public void sendCommand(Command commandCode) throws IOException {
-        sendCommand(commandCode, null);
+        sendCommand(commandCode, (byte[])null);
     }
 
     /**
@@ -236,22 +234,36 @@ public class Medibus {
             throw new IllegalArgumentException("Arguments may not be specified for medibus versions prior to 3.00 (currently " + versionMajor + "."
                     + versionMinor + ")");
         }
-
+        out.resetChecksum();
         out.write(ASCIIByte.ESC);
         byte cmdByte = commandCode instanceof Command ? ((Command) commandCode).toByte() : (Byte) commandCode;
         out.write(cmdByte);
-        int sum = ASCIIByte.ESC;
-        sum += (0xFF & cmdByte);
         if (argument != null) {
-            for (int i = 0; i < argument.length; i++) {
-                sum += (0xFF & argument[i]);
-            }
             out.write(argument);
         }
-        sendASCIIHex((byte) (0xFF & sum));
+        sendASCIIHex((byte) (0xFF & out.getChecksum()));
         out.write(ASCIIByte.CR);
         out.flush();
-        log.trace("sent command:" + commandCode + " " + (null != argument ? toString(argument) : ""));
+        if(log.isTraceEnabled()) {
+            log.trace("sent command:" + commandCode + " " + (null != argument ? toString(argument) : ""));
+        }
+    }
+    
+    public synchronized void sendCommand(Object commandCode, ByteArrayOutputStream baos) throws IOException {
+        out.resetChecksum();
+        out.write(ASCIIByte.ESC);
+        byte cmdByte = commandCode instanceof Command ? ((Command) commandCode).toByte() : (Byte) commandCode;
+        out.write(cmdByte);
+
+        if (baos != null) {
+            baos.writeTo(out);
+        }
+        sendASCIIHex((byte) (0xFF & out.getChecksum()));
+        out.write(ASCIIByte.CR);
+        out.flush();
+        if(log.isTraceEnabled()) {
+            log.trace("sent command:" + commandCode);
+        }
     }
 
     /**
@@ -264,27 +276,38 @@ public class Medibus {
      * @param response
      * @throws IOException
      */
+    public synchronized void sendResponse(Object command) throws IOException {
+        sendResponse(command, (byte[]) null);
+    }
+    
     public synchronized void sendResponse(Object command, byte[] response) throws IOException {
-        // TODO can't be permanent
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        out.resetChecksum();
         out.write(ASCIIByte.SOH);
         byte cmdByte = command instanceof Command ? ((Command) command).toByte() : (Byte) command;
-
         out.write(cmdByte);
-        int sum = ASCIIByte.SOH;
-        sum += (0xFF & cmdByte);
         if (response != null) {
-            for (int i = 0; i < response.length; i++) {
-                sum += (0xFF & response[i]);
-            }
             out.write(response);
         }
-        sendASCIIHex(out, (byte) (0xFF & sum));
+        sendASCIIHex(out, (byte) (0xFF & out.getChecksum()));
         out.write(ASCIIByte.CR);
-        this.out.write(out.toByteArray());
-        this.out.flush();
-
-        log.trace("sent response:" + command + " " + (null != response ? toString(response) : ""));
+        out.flush();
+        if(log.isTraceEnabled()) {
+            log.trace("sent response:" + command + " " + (null != response ? toString(response) : ""));
+        }
+    }
+    
+    public synchronized void sendResponse(Object command, ByteArrayOutputStream baos) throws IOException {
+        out.resetChecksum();
+        out.write(ASCIIByte.SOH);
+        byte cmdByte = command instanceof Command ? ((Command) command).toByte() : (Byte) command;
+        out.write(cmdByte);
+        baos.writeTo(out);
+        sendASCIIHex(out, (byte) (0xFF & out.getChecksum()));
+        out.write(ASCIIByte.CR);
+        out.flush();
+        if(log.isTraceEnabled()) {
+            log.trace("sent response:" + command + " ");
+        }
     }
 
     public static final String toString(byte[] arr) {
@@ -302,7 +325,7 @@ public class Medibus {
         }
 
     }
-
+    protected final ByteArrayOutputStream scratchpad = new ByteArrayOutputStream();
     /**
      * Sends the ConfigureResponse command with the specified dataTypes as
      * arguments.
@@ -310,12 +333,12 @@ public class Medibus {
      * @param dataTypes
      * @throws IOException
      */
-    public void configureDataResponse(DataType... dataTypes) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    public synchronized void configureDataResponse(DataType... dataTypes) throws IOException {
+        scratchpad.reset();
         for (DataType dt : dataTypes) {
-            sendASCIIHex(baos, dt.toByte());
+            sendASCIIHex(scratchpad, dt.toByte());
         }
-        sendCommand(Command.ConfigureResponse, baos.toByteArray());
+        sendCommand(Command.ConfigureResponse, scratchpad);
     }
 
     protected void receiveCorruptResponse() {
@@ -382,17 +405,37 @@ public class Medibus {
             log.debug("response to unenumerated command " + cmdEcho);
         }
     }
-
+    
     static final class Data {
         Object code;
         String data;
+        Data next;
 
         @Override
         public String toString() {
             return "[code=" + Medibus.toString(code) + ", data=" + data + "]";
         }
+        
+        private static Data root;
+        
+        public synchronized static final Data alloc() {
+            if(null == root) {
+                return new Data();
+            } else {
+                Data root = Data.root;
+                Data.root = root.next;
+                return root;
+            }
+        }
+        public synchronized static final void free(Data data) {
+            if(null != data) {
+                data.next = Data.root;
+                Data.root = data;
+            }
+        }
     }
 
+    private Data[] data = new Data[1];
     protected void receiveDataCodes(Command cmdEcho, byte[] response, int len) {
         int codepage = 0;
 
@@ -412,10 +455,12 @@ public class Medibus {
         }
         len -= 3;
         int n = len / 6;
-        Data[] data = new Data[n];
+        if(data.length < n) {
+            data = new Data[n];
+        }
 
         for (int i = 0; i < n; i++) {
-            data[i] = new Data();
+            data[i] = Data.alloc();
             switch (codepage) {
             case 1:
                 data[i].code = MeasuredDataCP1.fromByteIf((byte) recvASCIIHex(response, 1 + i * 6));
@@ -425,7 +470,11 @@ public class Medibus {
                 break;
             }
 
-            data[i].data = new String(response, 1 + i * 6 + 2, 4);
+            data[i].data = new String(response, 1 + i * 6 + 2, 4).intern();
+        }
+        for(int i = n; i < data.length; i++) {
+            Data.free(data[i]);
+            data[i] = null;
         }
         switch (cmdEcho) {
         case ReqMeasuredDataCP1:
@@ -448,21 +497,27 @@ public class Medibus {
     protected void receiveMeasuredData(Data[] data) {
         log.debug("Measured Data");
         for (Data d : data) {
-            log.debug("\t" + d);
+            if(null != d) {
+                log.debug("\t" + d);
+            }
         }
     }
 
     protected void receiveLowAlarmLimits(Data[] data) {
         log.debug("Low Alarm Limits");
         for (Data d : data) {
-            log.debug("\t" + d);
+            if(null != d) {
+                log.debug("\t" + d);
+            }
         }
     }
 
     protected void receiveHighAlarmLimits(Data[] data) {
         log.debug("High Alarm Limits");
         for (Data d : data) {
-            log.debug("\t" + d);
+            if(null != d) {
+                log.debug("\t" + d);
+            }
         }
     }
 
@@ -480,38 +535,67 @@ public class Medibus {
         byte priority;
         Object alarmCode;
         String alarmPhrase;
+        Alarm next;
 
         @Override
         public String toString() {
             return "[priority=" + priority + ", alarmCode=" + Medibus.toString(alarmCode) + ", alarmPhrase=" + alarmPhrase + "]";
         }
+        private static Alarm root;
+        
+        public synchronized static final Alarm alloc() {
+            if(null == root) {
+                return new Alarm();
+            } else {
+                Alarm root = Alarm.root;
+                Alarm.root = root.next;
+                return root;
+            }
+        }
+        public synchronized static final void free(Alarm alarm) {
+            if(null != alarm) {
+                alarm.next = Alarm.root;
+                Alarm.root = alarm;
+            }
+        }        
     }
-
+    private Alarm[] alarm = new Alarm[1];
     protected void receiveAlarmCodes(Command cmdEcho, byte[] response, int len) {
-        Alarm[] alarms = new Alarm[len / 15];
-        for (int i = 0; i < alarms.length; i++) {
-            alarms[i] = new Alarm();
-            alarms[i].priority = response[1 + 15 * i];
+        int n = len / 15;
+        if(alarm.length < n) {
+            alarm = new Alarm[n];
+        }
+        for (int i = 0; i < n; i++) {
+            alarm[i] = Alarm.alloc();
+            alarm[i].priority = response[1 + 15 * i];
             switch (cmdEcho) {
             case ReqAlarmsCP1:
-                alarms[i].alarmCode = AlarmMessageCP1.fromByteIf((byte) recvASCIIHex(response, 1 + 15 * i + 1));
+                alarm[i].alarmCode = AlarmMessageCP1.fromByteIf((byte) recvASCIIHex(response, 1 + 15 * i + 1));
                 break;
             case ReqAlarmsCP2:
-                alarms[i].alarmCode = AlarmMessageCP2.fromByteIf((byte) recvASCIIHex(response, 1 + 15 * i + 1));
+                alarm[i].alarmCode = AlarmMessageCP2.fromByteIf((byte) recvASCIIHex(response, 1 + 15 * i + 1));
                 break;
             default:
                 throw new RuntimeException("Unknown cmd:" + cmdEcho);
             }
 
-            alarms[i].alarmPhrase = new String(response, 1 + 15 * i + 3, 12);
+            alarm[i].alarmPhrase = new String(response, 1 + 15 * i + 3, 12).intern();
         }
-        receiveAlarms(alarms);
+        for(int i = n; i < alarm.length; i++) {
+            if(null != alarm[i]) {
+                Alarm.free(alarm[i]);
+            }
+            alarm[i] = null;
+        }
+        receiveAlarms(alarm);
     }
 
     protected void receiveAlarms(Alarm[] alarms) {
         log.debug("Alarms");
         for (int i = 0; i < alarms.length; i++) {
-            log.debug("\t" + alarms[i]);
+            if(alarms[i]!=null) {
+                log.debug("\t" + alarms[i]);
+            }
         }
 
     }
@@ -545,7 +629,7 @@ public class Medibus {
     protected void receiveDateTime(byte[] response, int len) {
         Calendar cal = this.calendar.get();
         String s = null;
-        Matcher m = dateTimePattern.matcher(s = new String(response, 1, len - 3));
+        Matcher m = dateTimePattern.matcher(s = new String(response, 1, len - 3).intern());
         log.trace("Attempting to parse datetime " + s);
         if (m.matches()) {
             cal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(m.group(1)));
@@ -569,11 +653,17 @@ public class Medibus {
     protected void receiveDeviceSetting(byte[] response, int len) {
         len -= 3; // leading command and trailing 2byte checksum
         int n = len / 7;
-        Data[] data = new Data[n];
+        if(data.length < n) {
+            data = new Data[n];
+        }
+        
         for (int i = 0; i < n; i++) {
-            data[i] = new Data();
+            data[i] = Data.alloc();
             data[i].code = Setting.fromByteIf((byte) recvASCIIHex(response, 1 + i * 7));
-            data[i].data = new String(response, 1 + i * 7 + 2, 5);
+            data[i].data = new String(response, 1 + i * 7 + 2, 5).intern();
+        }
+        for(int i = n; i < data.length; i++) {
+            data[i] = null;
         }
         receiveDeviceSetting(data);
     }
@@ -581,7 +671,9 @@ public class Medibus {
     protected void receiveDeviceSetting(Data[] data) {
         log.trace("Device Setting");
         for (Data d : data) {
-            log.trace("\t" + d);
+            if(null != d) {
+                log.trace("\t" + d);
+            }
         }
     }
 
@@ -596,14 +688,19 @@ public class Medibus {
             off += 4 + length;
             n++;
         }
-        Data[] data = new Data[n];
+        if(data.length < n) {
+            data = new Data[n];
+        }
         off = 0; 
         for(int i = 0; i < n; i++) {
-            Data d = data[i] = new Data();
+            Data d = data[i] = Data.alloc();
             d.code = TextMessage.fromByteIf((byte) recvASCIIHex(response, 1 + off));
             int length = (0xFF & response[1 + off + 2]) - 0x30;
             d.data = new String(response, 1 + off + 3, length);
             off += 4 + length; // 4 = 2byte code, 1 byte length, 1 byte trailing ETX
+        }
+        for(int i = n; i < data.length; i++) {
+            data[i] = null;
         }
         
         receiveTextMessage(data);
@@ -612,23 +709,24 @@ public class Medibus {
     protected void receiveTextMessage(Data[] data) {
         log.debug("Text Messages");
         for (Data d : data) {
-            log.debug("\t" + d);
+            if(null != d) {
+                log.debug("\t" + d);
+            }
         }
     }
 
     private final static Charset ASCII = Charset.forName("ASCII");
 
-    protected void sendDeviceIdentification(String idNumber, String name, String revision) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    protected synchronized void sendDeviceIdentification(String idNumber, String name, String revision) throws IOException {
+        scratchpad.reset();
 
-        baos.write(idNumber.getBytes(ASCII));
-        baos.write(("'" + name + "'").getBytes(ASCII));
-        StringBuilder sb = new StringBuilder(revision);
-        while (sb.length() < 11) {
-            sb.append(" ");
+        scratchpad.write(idNumber.getBytes(ASCII));
+        scratchpad.write(("'" + name + "'").getBytes(ASCII));
+        scratchpad.write(revision.getBytes(ASCII));
+        for(int i = revision.length(); i < 11; i++) {
+            scratchpad.write(' ');
         }
-        baos.write(sb.toString().getBytes(ASCII));
-        sendResponse(Command.ReqDeviceId, baos.toByteArray());
+        sendResponse(Command.ReqDeviceId, scratchpad);
     }
 
     private static final byte APOSTROPHE = 0x27;
@@ -641,7 +739,7 @@ public class Medibus {
         // }
         if (len >= 4) {
 
-            String idNumber = new String(response, 1, 4);
+            String idNumber = new String(response, 1, 4).intern();
             StringBuilder sb = new StringBuilder();
 
             int off = 4;
@@ -800,16 +898,16 @@ public class Medibus {
         if (cmdCode instanceof Command) {
             switch ((Command) cmdCode) {
             case InitializeComm:
-                sendResponse(cmdCode, null);
+                sendResponse(cmdCode);
                 break;
             case TimeChanged:
-                sendResponse(cmdCode, null);
+                sendResponse(cmdCode);
                 sendCommand(Command.ReqDateTime);
                 break;
             case NoOperation:
             case StopComm:
 
-                sendResponse(cmdCode, null);
+                sendResponse(cmdCode);
                 break;
             case ReqDeviceId:
                 sendDeviceIdentification(getIdNumber(), getName(), getRevision());
@@ -831,13 +929,13 @@ public class Medibus {
 
             case ReqTextMessages:
             default:
-                sendResponse(cmdCode, null);
+                sendResponse(cmdCode);
                 log.debug("Not acting on received command:" + cmdCode);
                 break;
             }
         } else {
             log.debug("Received unenumerated command:" + cmdCode);
-            sendResponse(cmdCode, null);
+            sendResponse(cmdCode);
         }
     }
 }

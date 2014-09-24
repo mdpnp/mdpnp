@@ -308,19 +308,19 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
     
     protected Time_t timeSampleArrayResolution(Time_t t) {
-//        if(sampleArrayResolutionNs>=1000000000) {
-//            int seconds = sampleArrayResolutionNs / 1000000000;
-//            t.sec -= 0 == seconds ? 0 : (t.sec % seconds);
-//            int nanoseconds = sampleArrayResolutionNs % 1000000000;
-//            if(nanoseconds == 0) {
-//                // max res (min sample period) is an even number of seconds
-//                t.nanosec = 0;
-//            } else {
-//                t.nanosec -= 0 == nanoseconds ? 0 : (t.nanosec % nanoseconds);
-//            }
-//        } else {
-//            t.nanosec -= 0 == sampleArrayResolutionNs ? 0 : (t.nanosec % sampleArrayResolutionNs);
-//        }
+        if(sampleArrayResolutionNs>=1000000000) {
+            int seconds = sampleArrayResolutionNs / 1000000000;
+            t.sec -= 0 == seconds ? 0 : (t.sec % seconds);
+            int nanoseconds = sampleArrayResolutionNs % 1000000000;
+            if(nanoseconds == 0) {
+                // max res (min sample period) is an even number of seconds
+                t.nanosec = 0;
+            } else {
+                t.nanosec -= 0 == nanoseconds ? 0 : (t.nanosec % nanoseconds);
+            }
+        } else {
+            t.nanosec -= 0 == sampleArrayResolutionNs ? 0 : (t.nanosec % sampleArrayResolutionNs);
+        }
         return t;
     }
     
