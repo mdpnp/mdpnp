@@ -684,6 +684,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                 }
             }
         }, "Medibus FAST data");
+        t.setPriority(Thread.MAX_PRIORITY);
         t.setDaemon(true);
         t.start();
         log.trace("spawned a fast data processor");

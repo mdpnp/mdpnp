@@ -14,8 +14,6 @@ package org.mdpnp.devices.draeger.medibus;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -166,7 +164,7 @@ public class InputStreamPartition implements Runnable {
         this.streamsToRead = new PipedInputStream[filters.length];
         this.streamsToWrite = new PipedOutputStream[filters.length];
         for(int i = 0; i < filters.length; i++) {
-            this.streamsToRead[i] = new PipedInputStream(CAPACITY);
+            this.streamsToRead[i] = new PipedInputStream();
             this.streamsToWrite[i] = new PipedOutputStream(this.streamsToRead[i]);
         }
         processingThread = new Thread(this);
