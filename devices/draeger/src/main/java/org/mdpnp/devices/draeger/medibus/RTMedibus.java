@@ -96,7 +96,9 @@ public class RTMedibus extends Medibus {
         transmittedDataStreams[1] = 0 != (0x02 & syncByte);
         transmittedDataStreams[2] = 0 != (0x04 & syncByte);
         transmittedDataStreams[3] = 0 != (0x08 & syncByte);
+        if(log.isDebugEnabled()) {
         log.debug("transmittedDataStreams(after sync byte):" + Arrays.toString(transmittedDataStreams));
+    }
     }
 
     public void receiveSyncCommand(int command, int argument) {
@@ -188,7 +190,6 @@ public class RTMedibus extends Medibus {
     private int lastFastByte = -1;
     @Override
     protected void fastByte(int b) {
-        log.warn("FAST BYTE:"+Integer.toHexString(b));
         if(lastFastByte < 0) {
             // No previous byte
             switch(SYNC_MASK & b) {

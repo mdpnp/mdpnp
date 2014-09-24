@@ -214,7 +214,7 @@ public class InputStreamPartition implements Runnable {
         } else {
             for(int i = 0; i < n; i++) {
                 for (int j = 0; j < filters.length; j++) {
-                    if (filters[j].passes(manybytes[i])) {
+                    if (filters[j].passes(0xFF&manybytes[i])) {
                         if(streamsToWrite[j] != null) {
                             streamsToWrite[j].write(manybytes[i]);
                         }
