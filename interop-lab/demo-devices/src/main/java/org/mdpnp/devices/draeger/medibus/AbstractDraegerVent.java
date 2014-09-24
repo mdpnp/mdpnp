@@ -453,8 +453,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     }
                     long now = System.currentTimeMillis();
 
-                    medibus.sendCommand(REQUEST_SLOW[nextSlowDataRequest++]);
-                    nextSlowDataRequest = nextSlowDataRequest%REQUEST_SLOW.length;
+//                    medibus.sendCommand(REQUEST_SLOW[nextSlowDataRequest++]);
+//                    nextSlowDataRequest = nextSlowDataRequest%REQUEST_SLOW.length;
 //                    if (now - lastReqDateTime >= 15000L) {
 //                        log.debug("Slow data too old, requesting DateTime");
 //                        lastReqDateTime = now;
