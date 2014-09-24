@@ -51,13 +51,14 @@ public class InputStreamPartition implements Runnable {
     private final InputStream[] streams;
     private final InputStream in;
 
-    private final static Logger log = LoggerFactory.getLogger(InputStreamPartition.class);
+    protected final static Logger log = LoggerFactory.getLogger(InputStreamPartition.class);
 
     private static final int CAPACITY = 8192;
 
     private class PartitionedInputStream extends java.io.InputStream {
 
         private final int idx;
+        private long lastDrainedAt = System.currentTimeMillis();
 
         public PartitionedInputStream(int idx) {
             this.idx = idx;
@@ -80,6 +81,14 @@ public class InputStreamPartition implements Runnable {
                 System.arraycopy(buffers[idx], nextRead[idx], bytes, off, n);
                 nextRead[idx]+=n;
 
+                long now = System.currentTimeMillis();
+                if(nextRead[idx] >= nextWrite[idx]) {
+                    lastDrainedAt = now;
+                }
+                if(now-lastDrainedAt>1000L) {
+                    log.warn("PartitionedInputStream hasn't been drained for " + (now-lastDrainedAt)+"ms");
+                }
+                
                 System.arraycopy(buffers[idx], nextRead[idx], buffers[idx], 0, nextWrite[idx] - nextRead[idx]);
                 nextWrite[idx] -= nextRead[idx];
                 nextRead[idx] = 0;
@@ -102,6 +111,14 @@ public class InputStreamPartition implements Runnable {
                 }
                 // TODO this won't actually pass through a -1
                 int b = 0xFF & buffers[idx][nextRead[idx]++];
+                
+                long now = System.currentTimeMillis();
+                if(nextRead[idx] >= nextWrite[idx]) {
+                    lastDrainedAt = now;
+                }
+                if(now-lastDrainedAt>1000L) {
+                    log.warn("PartitionedInputStream hasn't been drained for " + (now-lastDrainedAt)+"ms");
+                }                
                 // log.trace("from buffers["+idx+"] copying from src=" +
                 // nextRead[idx] +
                 // " to buffers["+idx+"] dst=0 sizeof="+(nextWrite[idx]-nextRead[idx]));
