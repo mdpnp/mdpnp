@@ -120,8 +120,8 @@ public class Medibus {
 
         } }, in);
         isp.getProcessingThread().setName("Medibus I/O Multiplexor");
-        this.slowIn = new BufferedInputStream(isp.getInputStream(0));
-        this.fastIn = new BufferedInputStream(isp.getInputStream(1));
+        this.slowIn = new BufferedInputStream(isp.getInputStream(0), 128);
+        this.fastIn = isp.getInputStream(1);
         this.out = out;
         log.trace("Initialized Medibus");
     }
