@@ -231,12 +231,12 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
         @Override
         protected void receiveTextMessage(byte[] response, int len) {
-            try {
-                lastReqDateTime = System.currentTimeMillis();
-                getDelegate().sendCommand(Command.ReqDateTime);
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-            }
+//            try {
+//                lastReqDateTime = System.currentTimeMillis();
+//                getDelegate().sendCommand(Command.ReqDateTime);
+//            } catch (IOException e) {
+//                log.error(e.getMessage(), e);
+//            }
             super.receiveTextMessage(response, len);
         }
         
@@ -253,11 +253,11 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
         @Override
         protected void receiveDeviceSetting(Data[] data) {
-            try {
-                getDelegate().sendCommand(Command.ReqMeasuredDataCP1);
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-            }
+//            try {
+//                getDelegate().sendCommand(Command.ReqMeasuredDataCP1);
+//            } catch (IOException e) {
+//                log.error(e.getMessage(), e);
+//            }
             for(Data d : data) {
                 // There are a couple of settings that we map to
                 // custom types in the ice package
@@ -276,29 +276,29 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
         @Override
         protected void receiveDataCodes(Command cmdEcho, byte[] response, int len) {
-            try {
-                switch(cmdEcho) {
-                case ReqMeasuredDataCP1:
-                    getDelegate().sendCommand(Command.ReqMeasuredDataCP2);
-                    break;
-                case ReqMeasuredDataCP2:
-                    getDelegate().sendCommand(Command.ReqLowAlarmLimitsCP1);
-                    break;
-                case ReqLowAlarmLimitsCP1:
-                    getDelegate().sendCommand(Command.ReqLowAlarmLimitsCP2);
-                    break;
-                case ReqLowAlarmLimitsCP2:
-                    getDelegate().sendCommand(Command.ReqHighAlarmLimitsCP1);
-                    break;
-                case ReqHighAlarmLimitsCP1:
-                    markOldTechnicalAlertInstances();
-                    getDelegate().sendCommand(Command.ReqAlarmsCP1);
-                    break;
-                default:
-                }
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-            }
+//            try {
+//                switch(cmdEcho) {
+//                case ReqMeasuredDataCP1:
+//                    getDelegate().sendCommand(Command.ReqMeasuredDataCP2);
+//                    break;
+//                case ReqMeasuredDataCP2:
+//                    getDelegate().sendCommand(Command.ReqLowAlarmLimitsCP1);
+//                    break;
+//                case ReqLowAlarmLimitsCP1:
+//                    getDelegate().sendCommand(Command.ReqLowAlarmLimitsCP2);
+//                    break;
+//                case ReqLowAlarmLimitsCP2:
+//                    getDelegate().sendCommand(Command.ReqHighAlarmLimitsCP1);
+//                    break;
+//                case ReqHighAlarmLimitsCP1:
+//                    markOldTechnicalAlertInstances();
+//                    getDelegate().sendCommand(Command.ReqAlarmsCP1);
+//                    break;
+//                default:
+//                }
+//            } catch (IOException e) {
+//                log.error(e.getMessage(), e);
+//            }
             super.receiveDataCodes(cmdEcho, response, len);
         }
         @Override
@@ -329,20 +329,20 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
         @Override
         protected void receiveAlarmCodes(Command cmdEcho, byte[] response, int len) {
-            try {
-                switch(cmdEcho) {
-                case ReqAlarmsCP1:
-                    getDelegate().sendCommand(Command.ReqAlarmsCP2);
-                    break;
-                case ReqAlarmsCP2:
-                    clearOldTechnicalAlertInstances();
-                    getDelegate().sendCommand(Command.ReqTextMessages);
-                    break;
-                default:
-                }
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-            }
+//            try {
+//                switch(cmdEcho) {
+//                case ReqAlarmsCP1:
+//                    getDelegate().sendCommand(Command.ReqAlarmsCP2);
+//                    break;
+//                case ReqAlarmsCP2:
+//                    clearOldTechnicalAlertInstances();
+//                    getDelegate().sendCommand(Command.ReqTextMessages);
+//                    break;
+//                default:
+//                }
+//            } catch (IOException e) {
+//                log.error(e.getMessage(), e);
+//            }
             super.receiveAlarmCodes(cmdEcho, response, len);
         }
         
@@ -387,12 +387,12 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
         @Override
         protected void receiveDateTime(byte[] response, int len) {
-            try {
-                
-                getDelegate().sendCommand(Command.ReqDeviceSetting);
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-            }
+//            try {
+//                
+//                getDelegate().sendCommand(Command.ReqDeviceSetting);
+//            } catch (IOException e) {
+//                log.error(e.getMessage(), e);
+//            }
             super.receiveDateTime(response, len);
         }
         
@@ -417,8 +417,15 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     private static final RealtimeData[] REQUEST_REALTIME = new RealtimeData[] { RealtimeData.AirwayPressure, RealtimeData.FlowInspExp,
         RealtimeData.RespiratoryVolumeSinceInspBegin, RealtimeData.ExpiratoryCO2mmHg, RealtimeData.ExpiratoryVolume, RealtimeData.Ptrach,
             RealtimeData.InspiratoryFlow, RealtimeData.ExpiratoryFlow, RealtimeData.Pleth };
-
-    private long lastReqDateTime;
+    
+    private static final Command[] REQUEST_SLOW = new Command[] {Command.ReqDateTime, Command.ReqDeviceSetting, 
+        Command.ReqMeasuredDataCP1, Command.ReqMeasuredDataCP2, Command.ReqLowAlarmLimitsCP1, Command.ReqLowAlarmLimitsCP2,
+        Command.ReqHighAlarmLimitsCP1, Command.ReqHighAlarmLimitsCP2, Command.ReqAlarmsCP1, Command.ReqAlarmsCP2,
+        Command.ReqTextMessages};
+    
+    private int nextSlowDataRequest = 0;
+    
+//    private long lastReqDateTime;
 
     private class RequestSlowData implements Runnable {
         public void run() {
@@ -436,12 +443,14 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     }
                     long now = System.currentTimeMillis();
 
-                    if (now - lastReqDateTime >= 15000L) {
-                        log.debug("Slow data too old, requesting DateTime");
-                        lastReqDateTime = now;
-                        medibus.sendCommand(Command.ReqDateTime);
-                        return;
-                    }
+                    medibus.sendCommand(REQUEST_SLOW[nextSlowDataRequest++]);
+                    nextSlowDataRequest = nextSlowDataRequest%REQUEST_SLOW.length;
+//                    if (now - lastReqDateTime >= 15000L) {
+//                        log.debug("Slow data too old, requesting DateTime");
+//                        lastReqDateTime = now;
+//                        medibus.sendCommand(Command.ReqDateTime);
+//                        return;
+//                    }
 
                     // Data is sparse in standby mode; trying to keep alive
                     // TODO need to externalize all these timing settings
@@ -548,7 +557,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     private synchronized void startRequestSlowData() {
         if (null == requestSlowData) {
-            requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 0L, 250L, TimeUnit.MILLISECONDS);
+            requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 0L, 1000L, TimeUnit.MILLISECONDS);
             log.trace("Scheduled slow data request task");
         } else {
             log.trace("Slow data request already scheduled");
