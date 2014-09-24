@@ -46,13 +46,14 @@ public class InputStreamPartition implements Runnable {
 
     private final Filter[] filters;
     private final byte[][] buffers;
+    private final boolean[] notifyBuffers;
     private final int[] nextRead, nextWrite;
     private final InputStream[] streams;
     private final InputStream in;
 
     private final static Logger log = LoggerFactory.getLogger(InputStreamPartition.class);
 
-    private static final int CAPACITY = 8192 * 16;
+    private static final int CAPACITY = 8192;
 
     private class PartitionedInputStream extends java.io.InputStream {
 
@@ -61,7 +62,31 @@ public class InputStreamPartition implements Runnable {
         public PartitionedInputStream(int idx) {
             this.idx = idx;
         }
+        @Override
+        public int read(byte[] bytes, int off, int len) throws IOException {
+            synchronized (buffers[idx]) {
+                while (nextRead[idx] >= nextWrite[idx]) {
+                    try {
+                        buffers[idx].wait();
+                    } catch (InterruptedException e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+                if (nextRead[idx] < 0) {
+                    return -1;
+                }
+                int n = nextWrite[idx]-nextRead[idx];
+                n = n < len ? n : len;
+                System.arraycopy(buffers[idx], nextRead[idx], bytes, off, n);
+                nextRead[idx]+=n;
 
+                System.arraycopy(buffers[idx], nextRead[idx], buffers[idx], 0, nextWrite[idx] - nextRead[idx]);
+                nextWrite[idx] -= nextRead[idx];
+                nextRead[idx] = 0;
+                buffers[idx].notify();
+                return n;
+            }
+        }
         @Override
         public int read() throws IOException {
             synchronized (buffers[idx]) {
@@ -83,6 +108,7 @@ public class InputStreamPartition implements Runnable {
                 System.arraycopy(buffers[idx], nextRead[idx], buffers[idx], 0, nextWrite[idx] - nextRead[idx]);
                 nextWrite[idx] -= nextRead[idx];
                 nextRead[idx] = 0;
+                buffers[idx].notify();
                 return b;
             }
         }
@@ -108,6 +134,7 @@ public class InputStreamPartition implements Runnable {
         this.in = in;
         this.filters = filters;
         this.buffers = new byte[filters.length][];
+        this.notifyBuffers = new boolean[filters.length];
         this.streams = new InputStream[filters.length];
         this.nextRead = new int[filters.length];
         this.nextWrite = new int[filters.length];
@@ -141,7 +168,7 @@ public class InputStreamPartition implements Runnable {
     }
 
     int read() throws IOException {
-        int n = in.read(onebyte, 0, 1);
+        int n = in.read(manybytes, 0, manybytes.length);
 
         if (n < 0) {
             for (int i = 0; i < buffers.length; i++) {
@@ -153,26 +180,36 @@ public class InputStreamPartition implements Runnable {
         } else if (n == 0) {
             return 0;
         } else {
-            for (int i = 0; i < filters.length; i++) {
-                if (filters[i].passes(onebyte[0])) {
-                    synchronized (buffers[i]) {
-                        long giveup = System.currentTimeMillis() + 5000L;
-                        while (nextWrite[i] >= buffers[i].length) {
-                            if (System.currentTimeMillis() >= giveup) {
-                                throw new IllegalStateException("Refusing to overflow buffer that is not being drained");
+            for(int i = 0; i < n; i++) {
+                for (int j = 0; j < filters.length; j++) {
+                    if (filters[j].passes(manybytes[i])) {
+                        synchronized (buffers[j]) {
+                            long giveup = System.currentTimeMillis() + 5000L;
+                            while (nextWrite[j] >= buffers[j].length) {
+                                if (System.currentTimeMillis() >= giveup) {
+                                    throw new IllegalStateException("Refusing to overflow buffer that is not being drained");
+                                }
+                                log.warn("Buffer full (nextWrite[" + j + "]=" + nextWrite[j] + " and buffer[" + j + "].length=" + buffers[j].length
+                                        + "; clumsily hoping someone drains the buffer");
+                                try {
+                                    buffers[j].notify();
+                                    buffers[j].wait(200);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
                             }
-                            log.warn("Buffer full (nextWrite[" + i + "]=" + nextWrite[i] + " and buffer[" + i + "].length=" + buffers[i].length
-                                    + "; clumsily hoping someone drains the buffer");
-                            try {
-                                buffers[i].notify();
-                                buffers[i].wait(200);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+                            buffers[j][nextWrite[j]++] = (byte) manybytes[i];
+                            notifyBuffers[j] = true;
                         }
-                        buffers[i][nextWrite[i]++] = (byte) onebyte[0];
+                    }
+                }
+            }
+            for(int i = 0; i < notifyBuffers.length; i++) {
+                if(notifyBuffers[i]) {
+                    synchronized(buffers[i]) {
                         buffers[i].notify();
                     }
+                    notifyBuffers[i] = false;
                 }
             }
         }
@@ -186,7 +223,7 @@ public class InputStreamPartition implements Runnable {
         processingThread.interrupt();
     }
 
-    private final byte[] onebyte = new byte[1];
+    private final byte[] manybytes = new byte[CAPACITY];
 
     /**
      * reads bytes from the multiplexed InputStream, deposits them into the

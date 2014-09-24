@@ -436,12 +436,12 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     }
                     long now = System.currentTimeMillis();
 
-//                    if (now - lastReqDateTime >= 15000L) {
-//                        log.debug("Slow data too old, requesting DateTime");
-//                        lastReqDateTime = now;
-//                        medibus.sendCommand(Command.ReqDateTime);
-//                        return;
-//                    }
+                    if (now - lastReqDateTime >= 15000L) {
+                        log.debug("Slow data too old, requesting DateTime");
+                        lastReqDateTime = now;
+                        medibus.sendCommand(Command.ReqDateTime);
+                        return;
+                    }
 
                     // Data is sparse in standby mode; trying to keep alive
                     // TODO need to externalize all these timing settings
