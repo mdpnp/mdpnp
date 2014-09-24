@@ -88,8 +88,9 @@ public class Medibus {
      *            Source of data from Draeger device
      * @param out
      *            Destination of data bound for Draeger device
+     * @throws IOException 
      */
-    public Medibus(InputStream in, OutputStream out) {
+    public Medibus(InputStream in, OutputStream out) throws IOException {
         // Implementing software flow control doesn't seem to be necessary
          //bis = new SuspendableInputStream(ASCIIByte.DC1, ASCIIByte.DC3, bis);
 
@@ -120,7 +121,7 @@ public class Medibus {
         } }, in);
         isp.getProcessingThread().setName("Medibus I/O Multiplexor");
         this.slowIn = new BufferedInputStream(isp.getInputStream(0));
-        this.fastIn = isp.getInputStream(1);
+        this.fastIn = new BufferedInputStream(isp.getInputStream(1));
         this.out = out;
         log.trace("Initialized Medibus");
     }

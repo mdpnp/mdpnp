@@ -14,6 +14,8 @@ package org.mdpnp.devices.draeger.medibus;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,91 +47,92 @@ public class InputStreamPartition implements Runnable {
     }
 
     private final Filter[] filters;
-    private final byte[][] buffers;
-    private final boolean[] notifyBuffers;
-    private final int[] nextRead, nextWrite;
-    private final InputStream[] streams;
+//    private final byte[][] buffers;
+//    private final boolean[] notifyBuffers;
+//    private final int[] nextRead, nextWrite;
+    private final PipedInputStream[] streamsToRead;
+    private final PipedOutputStream[] streamsToWrite;
     private final InputStream in;
 
     protected final static Logger log = LoggerFactory.getLogger(InputStreamPartition.class);
 
     private static final int CAPACITY = 8192;
 
-    private class PartitionedInputStream extends java.io.InputStream {
-
-        private final int idx;
-        private long lastDrainedAt = System.currentTimeMillis();
-
-        public PartitionedInputStream(int idx) {
-            this.idx = idx;
-        }
-        @Override
-        public int read(byte[] bytes, int off, int len) throws IOException {
-            synchronized (buffers[idx]) {
-                while (nextRead[idx] >= nextWrite[idx]) {
-                    try {
-                        buffers[idx].wait();
-                    } catch (InterruptedException e) {
-                        log.error(e.getMessage(), e);
-                    }
-                }
-                if (nextRead[idx] < 0) {
-                    return -1;
-                }
-                int n = nextWrite[idx]-nextRead[idx];
-                n = n < len ? n : len;
-                System.arraycopy(buffers[idx], nextRead[idx], bytes, off, n);
-                nextRead[idx]+=n;
-
-                long now = System.currentTimeMillis();
-                if(nextRead[idx] >= nextWrite[idx]) {
-                    lastDrainedAt = now;
-                }
-                if(now-lastDrainedAt>1000L) {
-                    log.warn("PartitionedInputStream hasn't been drained for " + (now-lastDrainedAt)+"ms");
-                }
-                
-                System.arraycopy(buffers[idx], nextRead[idx], buffers[idx], 0, nextWrite[idx] - nextRead[idx]);
-                nextWrite[idx] -= nextRead[idx];
-                nextRead[idx] = 0;
-                buffers[idx].notify();
-                return n;
-            }
-        }
-        @Override
-        public int read() throws IOException {
-            synchronized (buffers[idx]) {
-                while (nextRead[idx] >= nextWrite[idx]) {
-                    try {
-                        buffers[idx].wait();
-                    } catch (InterruptedException e) {
-                        log.error(e.getMessage(), e);
-                    }
-                }
-                if (nextRead[idx] < 0) {
-                    return -1;
-                }
-                // TODO this won't actually pass through a -1
-                int b = 0xFF & buffers[idx][nextRead[idx]++];
-                
-                long now = System.currentTimeMillis();
-                if(nextRead[idx] >= nextWrite[idx]) {
-                    lastDrainedAt = now;
-                }
-                if(now-lastDrainedAt>1000L) {
-                    log.warn("PartitionedInputStream hasn't been drained for " + (now-lastDrainedAt)+"ms");
-                }                
-                // log.trace("from buffers["+idx+"] copying from src=" +
-                // nextRead[idx] +
-                // " to buffers["+idx+"] dst=0 sizeof="+(nextWrite[idx]-nextRead[idx]));
-                System.arraycopy(buffers[idx], nextRead[idx], buffers[idx], 0, nextWrite[idx] - nextRead[idx]);
-                nextWrite[idx] -= nextRead[idx];
-                nextRead[idx] = 0;
-                buffers[idx].notify();
-                return b;
-            }
-        }
-    }
+//    private class PartitionedInputStream extends java.io.InputStream {
+//
+//        private final int idx;
+//        private long lastDrainedAt = System.currentTimeMillis();
+//
+//        public PartitionedInputStream(int idx) {
+//            this.idx = idx;
+//        }
+//        @Override
+//        public int read(byte[] bytes, int off, int len) throws IOException {
+//            synchronized (buffers[idx]) {
+//                while (nextRead[idx] >= nextWrite[idx]) {
+//                    try {
+//                        buffers[idx].wait();
+//                    } catch (InterruptedException e) {
+//                        log.error(e.getMessage(), e);
+//                    }
+//                }
+//                if (nextRead[idx] < 0) {
+//                    return -1;
+//                }
+//                int n = nextWrite[idx]-nextRead[idx];
+//                n = n < len ? n : len;
+//                System.arraycopy(buffers[idx], nextRead[idx], bytes, off, n);
+//                nextRead[idx]+=n;
+//
+//                long now = System.currentTimeMillis();
+//                if(nextRead[idx] >= nextWrite[idx]) {
+//                    lastDrainedAt = now;
+//                }
+//                if(now-lastDrainedAt>1000L) {
+//                    log.warn("PartitionedInputStream hasn't been drained for " + (now-lastDrainedAt)+"ms");
+//                }
+//                
+//                System.arraycopy(buffers[idx], nextRead[idx], buffers[idx], 0, nextWrite[idx] - nextRead[idx]);
+//                nextWrite[idx] -= nextRead[idx];
+//                nextRead[idx] = 0;
+//                buffers[idx].notify();
+//                return n;
+//            }
+//        }
+//        @Override
+//        public int read() throws IOException {
+//            synchronized (buffers[idx]) {
+//                while (nextRead[idx] >= nextWrite[idx]) {
+//                    try {
+//                        buffers[idx].wait();
+//                    } catch (InterruptedException e) {
+//                        log.error(e.getMessage(), e);
+//                    }
+//                }
+//                if (nextRead[idx] < 0) {
+//                    return -1;
+//                }
+//                // TODO this won't actually pass through a -1
+//                int b = 0xFF & buffers[idx][nextRead[idx]++];
+//                
+//                long now = System.currentTimeMillis();
+//                if(nextRead[idx] >= nextWrite[idx]) {
+//                    lastDrainedAt = now;
+//                }
+//                if(now-lastDrainedAt>1000L) {
+//                    log.warn("PartitionedInputStream hasn't been drained for " + (now-lastDrainedAt)+"ms");
+//                }                
+//                // log.trace("from buffers["+idx+"] copying from src=" +
+//                // nextRead[idx] +
+//                // " to buffers["+idx+"] dst=0 sizeof="+(nextWrite[idx]-nextRead[idx]));
+//                System.arraycopy(buffers[idx], nextRead[idx], buffers[idx], 0, nextWrite[idx] - nextRead[idx]);
+//                nextWrite[idx] -= nextRead[idx];
+//                nextRead[idx] = 0;
+//                buffers[idx].notify();
+//                return b;
+//            }
+//        }
+//    }
 
     private Thread processingThread;
 
@@ -146,18 +149,25 @@ public class InputStreamPartition implements Runnable {
      *            receives only bytes that pass that filter
      * @param in
      *            The multiplexed InputStream source
+     * @throws IOException 
      */
-    public InputStreamPartition(Filter[] filters, InputStream in) {
+    public InputStreamPartition(Filter[] filters, InputStream in) throws IOException {
         this.in = in;
         this.filters = filters;
-        this.buffers = new byte[filters.length][];
-        this.notifyBuffers = new boolean[filters.length];
-        this.streams = new InputStream[filters.length];
-        this.nextRead = new int[filters.length];
-        this.nextWrite = new int[filters.length];
-        for (int i = 0; i < buffers.length; i++) {
-            buffers[i] = new byte[CAPACITY];
-            streams[i] = new PartitionedInputStream(i);
+//        this.buffers = new byte[filters.length][];
+//        this.notifyBuffers = new boolean[filters.length];
+//        this.streams = new InputStream[filters.length];
+//        this.nextRead = new int[filters.length];
+//        this.nextWrite = new int[filters.length];
+//        for (int i = 0; i < buffers.length; i++) {
+//            buffers[i] = new byte[CAPACITY];
+//            streams[i] = new PartitionedInputStream(i);
+//        }
+        this.streamsToRead = new PipedInputStream[filters.length];
+        this.streamsToWrite = new PipedOutputStream[filters.length];
+        for(int i = 0; i < filters.length; i++) {
+            this.streamsToRead[i] = new PipedInputStream(CAPACITY);
+            this.streamsToWrite[i] = new PipedOutputStream(this.streamsToRead[i]);
         }
         processingThread = new Thread(this);
         processingThread.setDaemon(true);
@@ -181,18 +191,19 @@ public class InputStreamPartition implements Runnable {
      * @return
      */
     public InputStream getInputStream(int i) {
-        return streams[i];
+        return streamsToRead[i];
     }
 
     int read() throws IOException {
         int n = in.read(manybytes, 0, manybytes.length);
 
         if (n < 0) {
-            for (int i = 0; i < buffers.length; i++) {
-                synchronized (buffers[i]) {
-                    nextRead[i] = -1;
-                    buffers[i].notifyAll();
-                }
+            for (int i = 0; i < streamsToWrite.length; i++) {
+                streamsToWrite[i].close();
+//                synchronized (buffers[i]) {
+//                    nextRead[i] = -1;
+//                    buffers[i].notifyAll();
+//                }
             }
         } else if (n == 0) {
             return 0;
@@ -200,35 +211,36 @@ public class InputStreamPartition implements Runnable {
             for(int i = 0; i < n; i++) {
                 for (int j = 0; j < filters.length; j++) {
                     if (filters[j].passes(manybytes[i])) {
-                        synchronized (buffers[j]) {
-                            long giveup = System.currentTimeMillis() + 5000L;
-                            while (nextWrite[j] >= buffers[j].length) {
-                                if (System.currentTimeMillis() >= giveup) {
-                                    throw new IllegalStateException("Refusing to overflow buffer that is not being drained");
-                                }
-                                log.warn("Buffer full (nextWrite[" + j + "]=" + nextWrite[j] + " and buffer[" + j + "].length=" + buffers[j].length
-                                        + "; clumsily hoping someone drains the buffer");
-                                try {
-                                    buffers[j].notify();
-                                    buffers[j].wait(200);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                            buffers[j][nextWrite[j]++] = (byte) manybytes[i];
-                            notifyBuffers[j] = true;
-                        }
+                        streamsToWrite[j].write(manybytes[i]);
+//                        synchronized (buffers[j]) {
+//                            long giveup = System.currentTimeMillis() + 5000L;
+//                            while (nextWrite[j] >= buffers[j].length) {
+//                                if (System.currentTimeMillis() >= giveup) {
+//                                    throw new IllegalStateException("Refusing to overflow buffer that is not being drained");
+//                                }
+//                                log.warn("Buffer full (nextWrite[" + j + "]=" + nextWrite[j] + " and buffer[" + j + "].length=" + buffers[j].length
+//                                        + "; clumsily hoping someone drains the buffer");
+//                                try {
+//                                    buffers[j].notify();
+//                                    buffers[j].wait(200);
+//                                } catch (InterruptedException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            }
+//                            buffers[j][nextWrite[j]++] = (byte) manybytes[i];
+//                            notifyBuffers[j] = true;
+//                        }
                     }
                 }
             }
-            for(int i = 0; i < notifyBuffers.length; i++) {
-                if(notifyBuffers[i]) {
-                    synchronized(buffers[i]) {
-                        buffers[i].notify();
-                    }
-                    notifyBuffers[i] = false;
-                }
-            }
+//            for(int i = 0; i < notifyBuffers.length; i++) {
+//                if(notifyBuffers[i]) {
+//                    synchronized(buffers[i]) {
+//                        buffers[i].notify();
+//                    }
+//                    notifyBuffers[i] = false;
+//                }
+//            }
         }
         return n;
     }
@@ -263,12 +275,19 @@ public class InputStreamPartition implements Runnable {
         } finally {
             log.trace("InputStreamPartition processing ends");
             // show love to those who are waiting for this defunct thread
-            for (int i = 0; i < buffers.length; i++) {
-                synchronized (buffers[i]) {
-                    nextRead[i] = -1;
-                    buffers[i].notifyAll();
+            for(int i = 0; i < this.streamsToWrite.length; i++) {
+                try {
+                    streamsToWrite[i].close();
+                } catch (IOException e) {
+                    log.error("Unable to close writing side of the pipe", e);
                 }
             }
+//            for (int i = 0; i < buffers.length; i++) {
+//                synchronized (buffers[i]) {
+//                    nextRead[i] = -1;
+//                    buffers[i].notifyAll();
+//                }
+//            }
         }
     }
 }

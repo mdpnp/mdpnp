@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RTMedibus extends Medibus {
 
-    public RTMedibus(InputStream in, OutputStream out) {
+    public RTMedibus(InputStream in, OutputStream out) throws IOException {
         super(in, out);
     }
 

@@ -171,7 +171,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     private class MyRTMedibus extends RTMedibus {
-        public MyRTMedibus(InputStream in, OutputStream out) {
+        public MyRTMedibus(InputStream in, OutputStream out) throws IOException {
             super(in, out);
         }
 
@@ -591,7 +591,11 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     @Override
     protected RTMedibus buildDelegate(InputStream in, OutputStream out) {
         log.trace("Creating an RTMedibus");
-        return new MyRTMedibus(in, out);
+        try {
+            return new MyRTMedibus(in, out);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
