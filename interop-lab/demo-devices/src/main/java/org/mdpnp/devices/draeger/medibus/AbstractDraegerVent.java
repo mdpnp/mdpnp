@@ -103,7 +103,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     // Buffering ten points is for testing, size of this buffer might be
     // a function of the sampling rate
     @SuppressWarnings("unchecked")
-    private final List<Number>[] realtimeBuffer = new List[16]; // [BUFFER_SAMPLES];
+    private final List<Number>[] realtimeBuffer = new List[16];
     private final RTMedibus.RTDataConfig[] realtimeConfig = new RTMedibus.RTDataConfig[16];
     private final int[] realtimeFrequency = new int[16];
     private long lastRealtime;
@@ -118,6 +118,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         realtimeConfig[streamIndex] = config;
         realtimeFrequency[streamIndex] = (int)(1000000f / config.interval / multiplier);
         realtimeBuffer[streamIndex].add(value);
+        startEmitFastData(realtimeFrequency[streamIndex]);
     }
 
     private static final String metricOrCode(String metric_id, Object code, String type) {
@@ -378,11 +379,17 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     private class EmitFastData implements Runnable {
 
+        private final int frequency;
+        
+        public EmitFastData(final int frequency) {
+            this.frequency = frequency;
+        }
+        
         @Override
         public void run() { 
             try {
                 for(int i = 0; i < realtimeBuffer.length; i++) {
-                    if(null == realtimeConfig[i]) {
+                    if(null == realtimeConfig[i] || realtimeFrequency[i] != this.frequency) {
                         continue;
                     }
                         Object code = realtimeConfig[i].realtimeData;
@@ -537,7 +544,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     private ScheduledFuture<?> requestSlowData;
-    private ScheduledFuture<?> emitFastData;
+    private Map<Integer, ScheduledFuture<?>> emitFastDataByFrequency;
 
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState, String transitionNote) {
@@ -547,6 +554,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
         if (!ice.ConnectionState.Connected.equals(newState) && ice.ConnectionState.Connected.equals(oldState)) {
             stopRequestSlowData();
+            stopEmitFastData();
         }
         super.stateChanged(newState, oldState, transitionNote);
     }
@@ -555,21 +563,34 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         if (null != requestSlowData) {
             requestSlowData.cancel(false);
             requestSlowData = null;
-            emitFastData.cancel(false);
-            emitFastData = null;
             log.trace("Canceled slow data request task");
         } else {
             log.trace("Slow data request already canceled");
         }
     }
+    
+    private synchronized void stopEmitFastData() {
+        for(Integer frequency : emitFastDataByFrequency.keySet()) {
+            log.info("stop emit fast data at frequency " + frequency);
+            emitFastDataByFrequency.get(frequency).cancel(false);
+        }
+        emitFastDataByFrequency.clear();
+    }
 
     private synchronized void startRequestSlowData() {
         if (null == requestSlowData) {
             requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 0L, 500L, TimeUnit.MILLISECONDS);
-            emitFastData = executor.scheduleAtFixedRate(new EmitFastData(), 250L-System.currentTimeMillis()%250L, 250L, TimeUnit.MILLISECONDS);
             log.trace("Scheduled slow data request task");
         } else {
             log.trace("Slow data request already scheduled");
+        }
+    }
+    
+    private synchronized void startEmitFastData(int frequency) {
+        long interval = 1000L / frequency * BUFFER_SAMPLES;
+        if(!emitFastDataByFrequency.containsKey(frequency)) {
+            log.info("Start emit fast data at frequency " + frequency);
+            emitFastDataByFrequency.put(frequency, executor.scheduleAtFixedRate(new EmitFastData(frequency), interval-System.currentTimeMillis()%interval, interval, TimeUnit.MILLISECONDS));
         }
     }
 
