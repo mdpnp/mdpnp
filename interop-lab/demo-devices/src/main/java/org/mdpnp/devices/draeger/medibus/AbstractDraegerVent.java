@@ -217,23 +217,13 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             receiveDeviceId(idNumber, name);
         }
 
-        @Override
-        protected void receiveTextMessage(byte[] response, int len) {
-//            try {
-//                lastReqDateTime = System.currentTimeMillis();
-//                getDelegate().sendCommand(Command.ReqDateTime);
-//            } catch (IOException e) {
-//                log.error(e.getMessage(), e);
-//            }
-            super.receiveTextMessage(response, len);
-        }
         
         @Override
         protected void receiveTextMessage(Data[] data) {
             markOldTechnicalAlertInstances();
             for(Data d : data) {
                 if(null != d) {
-                    writePatientAlert(d.code.toString(), d.data);
+                    writeTechnicalAlert(d.code.toString(), d.data);
                 }
             }
             clearOldTechnicalAlertInstances();
@@ -291,6 +281,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         protected void receiveAlarmCodes(Command cmdEcho, byte[] response, int len) {
             switch(cmdEcho) {
             case ReqAlarmsCP1:
+                // Before processing alarms codepage 1, mark current alarms
                 markOldPatientAlertInstances();
                 break;
             default:
@@ -298,6 +289,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             super.receiveAlarmCodes(cmdEcho, response, len);
             switch(cmdEcho) {
             case ReqAlarmsCP2:
+                // After processing alarms codepage 2, clear unrenewed alarms
                 clearOldPatientAlertInstances();
                 break;
             default:
