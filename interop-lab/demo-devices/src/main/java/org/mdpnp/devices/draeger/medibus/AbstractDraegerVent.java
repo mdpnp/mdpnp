@@ -544,7 +544,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     private ScheduledFuture<?> requestSlowData;
-    private Map<Integer, ScheduledFuture<?>> emitFastDataByFrequency;
+    private final Map<Integer, ScheduledFuture<?>> emitFastDataByFrequency = new HashMap<Integer, ScheduledFuture<?>>();
 
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState, String transitionNote) {
