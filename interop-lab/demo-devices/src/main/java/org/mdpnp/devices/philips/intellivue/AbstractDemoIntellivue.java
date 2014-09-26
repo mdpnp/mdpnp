@@ -812,31 +812,39 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     for(Integer handle : sampleCacheByHandle.keySet()) {
                         List<Number> sampleCache = sampleCacheByHandle.get(handle);
                         InstanceHolder<ice.SampleArray> sa = getSampleArrayUpdate(ov, handle);
-                        if(null != sa) {
-                            synchronized(sampleCache) {
-                                if(sampleCache.size() >= BUFFER_SAMPLES) {
-                                    if(sampleCache.size() > BUFFER_SAMPLES) {
-                                        sampleCache.subList(0, sampleCache.size() - BUFFER_SAMPLES).clear();
+                        RelativeTime rt = handleToUpdatePeriod.get(handle);
+                        if (null == rt || null == sampleCache || null == unitCode) {
+                            log.warn("No RelativeTime for handle=" + handle + " rt=" + rt + " sampleCache=" + sampleCache + " unitCode="+unitCode);
+                            continue;
+                        }
+                        int frequency = (int)(1000 / rt.toMilliseconds());
+                        if(this.frequency == frequency) {
+                            if(null != sa) {
+                                synchronized(sampleCache) {
+                                    if(sampleCache.size() >= BUFFER_SAMPLES) {
+                                        if(sampleCache.size() > BUFFER_SAMPLES) {
+                                            sampleCache.subList(0, sampleCache.size() - BUFFER_SAMPLES).clear();
+                                        }
+                                        sampleArraySample(sa, sampleCache, null);
                                     }
-                                    sampleArraySample(sa, sampleCache, null);
                                 }
-                            }
-                        } else {
-                            String metric_id = sampleArrayMetricIds.get(ov);
-                            UnitCode unitCode = handleToUnitCode.get(handle);
-                            synchronized(sampleCache) {
-                                if(sampleCache.size() >= BUFFER_SAMPLES) {
-                                    if(sampleCache.size() > BUFFER_SAMPLES) {
-                                        sampleCache.subList(0, sampleCache.size() - BUFFER_SAMPLES).clear();
+                            } else {
+                                String metric_id = sampleArrayMetricIds.get(ov);
+                                UnitCode unitCode = handleToUnitCode.get(handle);
+                                synchronized(sampleCache) {
+                                    if(sampleCache.size() >= BUFFER_SAMPLES) {
+                                        if(sampleCache.size() > BUFFER_SAMPLES) {
+                                            sampleCache.subList(0, sampleCache.size() - BUFFER_SAMPLES).clear();
+                                        }
+                                        putSampleArrayUpdate(
+                                                ov, handle,
+                                                sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.subList(0, frequency),
+                                                metric_id, handle, 
+                                                RosettaUnits.units(unitCode),
+                                                frequency, null));
+                                        
+                                        
                                     }
-                                    putSampleArrayUpdate(
-                                            ov, handle,
-                                            sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.subList(0, frequency),
-                                            metric_id, handle, 
-                                            RosettaUnits.units(unitCode),
-                                            frequency, null));
-                                    
-                                    
                                 }
                             }
                         }
