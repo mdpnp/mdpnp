@@ -739,14 +739,12 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 // TODO Come back and make this efficient
                                 putSampleArrayUpdate(
                                         ov, handle,
-                                        sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.subList(0, frequency).toArray(new Number[0]),
+                                        sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.subList(0, frequency),
                                         metricId, handle, 
                                         RosettaUnits.units(unitCode),
                                         frequency, sampleTimeSampleArray));
                                 // TODO again this is not efficient.. but does the technique work?
-                                for(int i = 0; i < frequency; i++) {
-                                    sampleCache.remove(0);
-                                }
+                                sampleCache.subList(0, frequency).clear();
                             }
                         }
                     }
