@@ -55,8 +55,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected Map<Object, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Object, InstanceHolder<ice.Numeric>>();
     protected Map<Object, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Object, InstanceHolder<ice.SampleArray>>();
     protected Map<Object, InstanceHolder<ice.AlarmSettings>> alarmSettingsUpdates = new HashMap<Object, InstanceHolder<ice.AlarmSettings>>();
-    
-    
+
     protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate, startExpiratoryCycleUpdate;
 
     protected long deviceClockOffset = 0L;
@@ -87,13 +86,13 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     protected void processStartInspCycle() {
         // TODO This should not be triggered as a numeric; it's a bad idea
-        startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0, ice.MDC_START_INSPIRATORY_CYCLE.VALUE, 
+        startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0, ice.MDC_START_INSPIRATORY_CYCLE.VALUE,
                 rosetta.MDC_DIM_DIMLESS.VALUE, null);
     }
-    
+
     protected void processStartExpCycle() {
         // TODO ditto the bad idea-ness of using Numeric topic for this
-        startExpiratoryCycleUpdate = numericSample(startExpiratoryCycleUpdate, 0, ice.MDC_START_EXPIRATORY_CYCLE.VALUE, 
+        startExpiratoryCycleUpdate = numericSample(startExpiratoryCycleUpdate, 0, ice.MDC_START_EXPIRATORY_CYCLE.VALUE,
                 rosetta.MDC_DIM_DIMLESS.VALUE, null);
     }
 
@@ -108,7 +107,6 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     private final int[] realtimeFrequency = new int[16];
     private long lastRealtime;
 
-
     protected void processRealtime(RTMedibus.RTDataConfig config, int multiplier, int streamIndex, Object code, double value) {
         lastRealtime = System.currentTimeMillis();
         if (streamIndex >= realtimeBuffer.length) {
@@ -116,27 +114,27 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             return;
         }
         realtimeConfig[streamIndex] = config;
-        realtimeFrequency[streamIndex] = (int)(1000000f / config.interval / multiplier);
+        realtimeFrequency[streamIndex] = (int) (1000000f / config.interval / multiplier);
         realtimeBuffer[streamIndex].add(value);
         startEmitFastData(realtimeFrequency[streamIndex]);
     }
 
     private static final String metricOrCode(String metric_id, Object code, String type) {
-        if(null != metric_id) {
+        if (null != metric_id) {
             return metric_id;
         } else {
-            if(code == null) {
+            if (code == null) {
                 return "null";
-            } else if(code instanceof Byte) {
-                return "DRAEGER_"+type+"_"+HexUtil.toHexString((Byte)code)+"H";
-            } else if(code instanceof Enum) {
-                return "DRAEGER_"+type+"_"+((Enum<?>)code).name();
+            } else if (code instanceof Byte) {
+                return "DRAEGER_" + type + "_" + HexUtil.toHexString((Byte) code) + "H";
+            } else if (code instanceof Enum) {
+                return "DRAEGER_" + type + "_" + ((Enum<?>) code).name();
             } else {
-                return "DRAEGER_"+type+"_"+code.toString();
+                return "DRAEGER_" + type + "_" + code.toString();
             }
         }
     }
-    
+
     @Override
     protected void unregisterAllNumericInstances() {
         super.unregisterAllNumericInstances();
@@ -149,7 +147,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         super.unregisterAllSampleArrayInstances();
         sampleArrayUpdates.clear();
     }
-    
+
     @Override
     protected void unregisterAllAlarmSettingsInstances() {
         super.unregisterAllAlarmSettingsInstances();
@@ -218,12 +216,11 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             receiveDeviceId(idNumber, name);
         }
 
-        
         @Override
         protected void receiveTextMessage(Data[] data) {
             markOldTechnicalAlertInstances();
-            for(Data d : data) {
-                if(null != d) {
+            for (Data d : data) {
+                if (null != d) {
                     writeTechnicalAlert(d.code.toString(), d.data);
                 }
             }
@@ -232,8 +229,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
         @Override
         protected void receiveDeviceSetting(Data[] data) {
-            for(Data d : data) {
-                if(null != d) {
+            for (Data d : data) {
+                if (null != d) {
                     // There are a couple of settings that we map to
                     // custom types in the ice package
                     String metric = numerics.get(d.code);
@@ -245,15 +242,15 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     } catch (NumberFormatException nfe) {
                         log.error("Bad number format " + d.code + " " + d.data, nfe);
                     }
-                    settingUpdates.put(d.code,  numericSample(settingUpdates.get(d.code), f, metric, units(d.code), currentTime()));
+                    settingUpdates.put(d.code, numericSample(settingUpdates.get(d.code), f, metric, units(d.code), currentTime()));
                 }
             }
         }
 
         @Override
         protected void receiveMeasuredData(Data[] data) {
-            for(Data d : data) {
-                if(null != d) {
+            for (Data d : data) {
+                if (null != d) {
                     String metric = numerics.get(d.code);
                     metric = metricOrCode(metric, d.code, "MEASURED");
                     String s = null == d.data ? null : d.data.toString().trim();
@@ -263,7 +260,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     } catch (NumberFormatException nfe) {
                         log.error("Bad number format " + d.code + " " + d.data, nfe);
                     }
-                    numericUpdates.put(d.code,  numericSample(numericUpdates.get(d.code), f, metric, units(d.code), currentTime()));
+                    numericUpdates.put(d.code, numericSample(numericUpdates.get(d.code), f, metric, units(d.code), currentTime()));
                 }
             }
         }
@@ -280,7 +277,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
         @Override
         protected void receiveAlarmCodes(Command cmdEcho, byte[] response, int len) {
-            switch(cmdEcho) {
+            switch (cmdEcho) {
             case ReqAlarmsCP1:
                 // Before processing alarms codepage 1, mark current alarms
                 markOldPatientAlertInstances();
@@ -288,7 +285,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             default:
             }
             super.receiveAlarmCodes(cmdEcho, response, len);
-            switch(cmdEcho) {
+            switch (cmdEcho) {
             case ReqAlarmsCP2:
                 // After processing alarms codepage 2, clear unrenewed alarms
                 clearOldPatientAlertInstances();
@@ -296,11 +293,11 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             default:
             }
         }
-        
+
         @Override
         protected void receiveLowAlarmLimits(Data[] data) {
-            for(Data d : data) {
-                if(null != d) {
+            for (Data d : data) {
+                if (null != d) {
                     Float f = null;
                     try {
                         f = Float.parseFloat(d.data);
@@ -310,15 +307,15 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
                     String metric = numerics.get(d.code);
                     metric = metricOrCode(metric, d.code, "ALARM_LIMIT");
-                    alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, f, null==a?Float.MAX_VALUE:a.data.upper, metric));
+                    alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, f, null == a ? Float.MAX_VALUE : a.data.upper, metric));
                 }
             }
         }
-        
+
         @Override
         protected void receiveHighAlarmLimits(Data[] data) {
-            for(Data d : data) {
-                if(null != d) {
+            for (Data d : data) {
+                if (null != d) {
                     Float f = null;
                     try {
                         f = Float.parseFloat(d.data);
@@ -328,20 +325,20 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
                     String metric = numerics.get(d.code);
                     metric = metricOrCode(metric, d.code, "ALARM_LIMIT");
-                    alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, null==a?Float.MIN_VALUE:a.data.lower,f, metric));
+                    alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, null == a ? Float.MIN_VALUE : a.data.lower, f, metric));
                 }
             }
         }
-        
+
         @Override
         protected void receiveAlarms(Alarm[] alarms) {
-            for(Alarm a : alarms) {
-                if(a != null) {
+            for (Alarm a : alarms) {
+                if (a != null) {
                     writeTechnicalAlert(a.alarmCode.toString(), a.alarmPhrase);
                 }
             }
         }
-        
+
         @Override
         protected void receiveDateTime(Date date) {
             deviceClockOffset = date.getTime() - System.currentTimeMillis();
@@ -352,7 +349,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         public void startInspiratoryCycle() {
             processStartInspCycle();
         }
-        
+
         @Override
         public void startExpiratoryCycle() {
             processStartExpCycle();
@@ -361,84 +358,82 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     private static final RealtimeData[] REQUEST_REALTIME = new RealtimeData[] { RealtimeData.AirwayPressure, RealtimeData.FlowInspExp,
-        RealtimeData.RespiratoryVolumeSinceInspBegin, RealtimeData.ExpiratoryCO2mmHg, RealtimeData.ExpiratoryVolume, RealtimeData.Ptrach,
-        RealtimeData.InspiratoryFlow, RealtimeData.ExpiratoryFlow, RealtimeData.Pleth };
-    
-    private static final Command[] REQUEST_SLOW = new Command[] {
-        Command.ReqDateTime, Command.ReqDeviceSetting, 
-        Command.ReqAlarmsCP1, Command.ReqAlarmsCP2,
-        Command.ReqMeasuredDataCP1, Command.ReqMeasuredDataCP2, 
-        Command.ReqAlarmsCP1, Command.ReqAlarmsCP2,
-        Command.ReqLowAlarmLimitsCP1, Command.ReqLowAlarmLimitsCP2,
-        Command.ReqAlarmsCP1, Command.ReqAlarmsCP2,
-        Command.ReqHighAlarmLimitsCP1, Command.ReqHighAlarmLimitsCP2, 
-        Command.ReqAlarmsCP1, Command.ReqAlarmsCP2,
-        Command.ReqTextMessages};
-    
+            RealtimeData.RespiratoryVolumeSinceInspBegin, RealtimeData.ExpiratoryCO2mmHg, RealtimeData.ExpiratoryVolume, RealtimeData.Ptrach,
+            RealtimeData.InspiratoryFlow, RealtimeData.ExpiratoryFlow, RealtimeData.Pleth };
+
+    private static final Command[] REQUEST_SLOW = new Command[] { Command.ReqDateTime, Command.ReqDeviceSetting, Command.ReqAlarmsCP1,
+            Command.ReqAlarmsCP2, Command.ReqMeasuredDataCP1, Command.ReqMeasuredDataCP2, Command.ReqAlarmsCP1, Command.ReqAlarmsCP2,
+            Command.ReqLowAlarmLimitsCP1, Command.ReqLowAlarmLimitsCP2, Command.ReqAlarmsCP1, Command.ReqAlarmsCP2, Command.ReqHighAlarmLimitsCP1,
+            Command.ReqHighAlarmLimitsCP2, Command.ReqAlarmsCP1, Command.ReqAlarmsCP2, Command.ReqTextMessages };
+
     private int nextSlowDataRequest = 0;
 
     private class EmitFastData implements Runnable {
 
         private final int frequency;
-        
+
         public EmitFastData(final int frequency) {
             this.frequency = frequency;
         }
-        
+
         @Override
-        public void run() { 
+        public void run() {
             try {
-                for(int i = 0; i < realtimeBuffer.length; i++) {
-                    if(null == realtimeConfig[i] || realtimeFrequency[i] != this.frequency) {
+                for (int i = 0; i < realtimeBuffer.length; i++) {
+                    if (null == realtimeConfig[i] || realtimeFrequency[i] != this.frequency) {
                         continue;
                     }
-                        Object code = realtimeConfig[i].realtimeData;
-                      InstanceHolder<ice.SampleArray> sa = sampleArrayUpdates.get(code);
-                      if(null != sa) {
-                          // In this implementation we're not changing the requested realtime data; so we
-                      // expedite here using the same preregistered instance
-                          synchronized(realtimeBuffer[i]) {
-                              if(realtimeBuffer[i].size() >= BUFFER_SAMPLES) {
-                                  if(realtimeBuffer[i].size()>BUFFER_SAMPLES) {
-                                      realtimeBuffer[i].subList(0, realtimeBuffer[i].size()-BUFFER_SAMPLES).clear();
-                                  }                                  
-                                  sampleArraySample(sa, realtimeBuffer[i], currentTime());
-                              }
-                          }
-                      } else {
-                      
-                          String metric_id = null;
-                          // flush
-                          if (realtimeConfig[i].realtimeData instanceof Enum<?>) {
-                              metric_id = waveforms.get(realtimeConfig[i].realtimeData);
-                          }
-                      // NOTE: config.interval is the sampling interval expressed in MICRO-seconds
-                      // The specification is ambiguous using ms for micro and milli... 
-                      // but in the examples '16000' is stated to mean 16 milliseconds
-                         // int frequency = (int)(1000000f / realtimeConfig[i].interval / realtimeConfig[i].multiplier);
-                      
-                      metric_id = metricOrCode(metric_id, code, "RT");
-                      synchronized(realtimeBuffer[i]) {
-                          if(realtimeBuffer[i].size()>=25) {
-                              if(realtimeBuffer[i].size()>25) {
-                                  realtimeBuffer[i].subList(0, realtimeBuffer[i].size()-25).clear();
-                              }       
-                          sampleArrayUpdates.put(
-                                          code,
-                                          sampleArraySample(sa, realtimeBuffer[i], metric_id, 0, units(code), realtimeFrequency[i], currentTime()));
-                          realtimeBuffer[i].clear();
-                          }
-                      }
-                      }
-    
+                    Object code = realtimeConfig[i].realtimeData;
+                    InstanceHolder<ice.SampleArray> sa = sampleArrayUpdates.get(code);
+                    if (null != sa) {
+                        // In this implementation we're not changing the
+                        // requested realtime data; so we
+                        // expedite here using the same preregistered instance
+                        synchronized (realtimeBuffer[i]) {
+                            if (realtimeBuffer[i].size() >= BUFFER_SAMPLES) {
+                                if (realtimeBuffer[i].size() > BUFFER_SAMPLES) {
+                                    realtimeBuffer[i].subList(0, realtimeBuffer[i].size() - BUFFER_SAMPLES).clear();
+                                }
+                                sampleArraySample(sa, realtimeBuffer[i], currentTime());
+                            }
+                        }
+                    } else {
+
+                        String metric_id = null;
+                        // flush
+                        if (realtimeConfig[i].realtimeData instanceof Enum<?>) {
+                            metric_id = waveforms.get(realtimeConfig[i].realtimeData);
+                        }
+                        // NOTE: config.interval is the sampling interval
+                        // expressed in MICRO-seconds
+                        // The specification is ambiguous using ms for micro and
+                        // milli...
+                        // but in the examples '16000' is stated to mean 16
+                        // milliseconds
+                        // int frequency = (int)(1000000f /
+                        // realtimeConfig[i].interval /
+                        // realtimeConfig[i].multiplier);
+
+                        metric_id = metricOrCode(metric_id, code, "RT");
+                        synchronized (realtimeBuffer[i]) {
+                            if (realtimeBuffer[i].size() >= BUFFER_SAMPLES) {
+                                if (realtimeBuffer[i].size() > BUFFER_SAMPLES) {
+                                    realtimeBuffer[i].subList(0, realtimeBuffer[i].size() - BUFFER_SAMPLES).clear();
+                                }
+                                sampleArrayUpdates.put(code,
+                                        sampleArraySample(sa, realtimeBuffer[i], metric_id, 0, units(code), realtimeFrequency[i], currentTime()));
+                            }
+                        }
+                    }
+
                 }
             } catch (Throwable t) {
                 log.error("error emitting fast data", t);
             }
         }
-        
+
     }
-    
+
     private class RequestSlowData implements Runnable {
         public void run() {
             if (ice.ConnectionState.Connected.equals(getState())) {
@@ -456,13 +451,13 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     long now = System.currentTimeMillis();
 
                     medibus.sendCommand(REQUEST_SLOW[nextSlowDataRequest++]);
-                    nextSlowDataRequest = nextSlowDataRequest%REQUEST_SLOW.length;
-//                    if (now - lastReqDateTime >= 15000L) {
-//                        log.debug("Slow data too old, requesting DateTime");
-//                        lastReqDateTime = now;
-//                        medibus.sendCommand(Command.ReqDateTime);
-//                        return;
-//                    }
+                    nextSlowDataRequest = nextSlowDataRequest % REQUEST_SLOW.length;
+                    // if (now - lastReqDateTime >= 15000L) {
+                    // log.debug("Slow data too old, requesting DateTime");
+                    // lastReqDateTime = now;
+                    // medibus.sendCommand(Command.ReqDateTime);
+                    // return;
+                    // }
 
                     // Data is sparse in standby mode; trying to keep alive
                     // TODO need to externalize all these timing settings
@@ -568,9 +563,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             log.trace("Slow data request already canceled");
         }
     }
-    
+
     private synchronized void stopEmitFastData() {
-        for(Integer frequency : emitFastDataByFrequency.keySet()) {
+        for (Integer frequency : emitFastDataByFrequency.keySet()) {
             log.info("stop emit fast data at frequency " + frequency);
             emitFastDataByFrequency.get(frequency).cancel(false);
         }
@@ -585,12 +580,13 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             log.trace("Slow data request already scheduled");
         }
     }
-    
+
     private synchronized void startEmitFastData(int frequency) {
         long interval = 1000L / frequency * BUFFER_SAMPLES;
-        if(!emitFastDataByFrequency.containsKey(frequency)) {
+        if (!emitFastDataByFrequency.containsKey(frequency)) {
             log.info("Start emit fast data at frequency " + frequency);
-            emitFastDataByFrequency.put(frequency, executor.scheduleAtFixedRate(new EmitFastData(frequency), interval-System.currentTimeMillis()%interval, interval, TimeUnit.MILLISECONDS));
+            emitFastDataByFrequency.put(frequency, executor.scheduleAtFixedRate(new EmitFastData(frequency), interval - System.currentTimeMillis()
+                    % interval, interval, TimeUnit.MILLISECONDS));
         }
     }
 
@@ -614,7 +610,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     public AbstractDraegerVent(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
-        for(int i = 0; i < realtimeBuffer.length; i++) {
+        for (int i = 0; i < realtimeBuffer.length; i++) {
             realtimeBuffer[i] = Collections.synchronizedList(new ArrayList<Number>());
         }
         init();
@@ -702,28 +698,28 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected long getNegotiateInterval() {
         return 1000L;
     }
-    
+
     protected static final String units(Object obj) {
-        if(obj==null) {
+        if (obj == null) {
             return rosetta.MDC_DIM_DIMLESS.VALUE;
-        } else if(obj instanceof MeasuredDataCP1) {
-            return units(((MeasuredDataCP1)obj).getUnit());
-        } else if(obj instanceof MeasuredDataCP2) {
-            return units(((MeasuredDataCP2)obj).getUnit());
-        } else if(obj instanceof RealtimeData) {
-            return units(((RealtimeData)obj).getUnit());
-        } else if(obj instanceof Setting) {
-            return units(((Setting)obj).getUnit());
+        } else if (obj instanceof MeasuredDataCP1) {
+            return units(((MeasuredDataCP1) obj).getUnit());
+        } else if (obj instanceof MeasuredDataCP2) {
+            return units(((MeasuredDataCP2) obj).getUnit());
+        } else if (obj instanceof RealtimeData) {
+            return units(((RealtimeData) obj).getUnit());
+        } else if (obj instanceof Setting) {
+            return units(((Setting) obj).getUnit());
         } else {
-            return "DRAEGER_"+obj;
+            return "DRAEGER_" + obj;
         }
     }
-    
+
     protected static final String units(Unit unit) {
-        if(null == unit) {
+        if (null == unit) {
             return rosetta.MDC_DIM_DIMLESS.VALUE;
         }
-        switch(unit) {
+        switch (unit) {
         case kg:
             return rosetta.MDC_DIM_KILO_G.VALUE;
         case kPa:
@@ -751,7 +747,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         case TenMlPerMin:
         case mbarPerL:
         default:
-            return "DRAEGER_"+unit.name();
+            return "DRAEGER_" + unit.name();
         }
     }
 }
