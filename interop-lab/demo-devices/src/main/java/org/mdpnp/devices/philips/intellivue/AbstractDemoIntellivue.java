@@ -838,7 +838,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                         }
                                         putSampleArrayUpdate(
                                                 ov, handle,
-                                                sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.subList(0, frequency),
+                                                sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache,
                                                 metric_id, handle, 
                                                 RosettaUnits.units(unitCode),
                                                 frequency, null));
