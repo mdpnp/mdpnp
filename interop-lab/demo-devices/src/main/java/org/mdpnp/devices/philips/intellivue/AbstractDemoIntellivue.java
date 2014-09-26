@@ -27,12 +27,15 @@ import java.nio.channels.SelectionKey;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.net.NetworkLoop;
@@ -128,13 +131,14 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             lastMessageReceived = 0L;
             lastMessageSentTime = 0L;
             lastKeepAlive = 0L;
+            stopEmitFastData();
         }
     }
 
-    @Override
-    protected boolean sampleArraySpecifySourceTimestamp() {
-        return true;
-    }
+//    @Override
+//    protected boolean sampleArraySpecifySourceTimestamp() {
+//        return true;
+//    }
 
     // For a point in time this is currentTime-runTime
     // Or, in other words, the time when the device started
@@ -166,6 +170,26 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     private long lastMessageReceived = 0L;
     private long lastKeepAlive = 0L;
     private long lastMessageSentTime = 0L;
+    
+    private final Map<Integer, ScheduledFuture<?>> emitFastDataByFrequency = new HashMap<Integer, ScheduledFuture<?>>();
+    private static final int BUFFER_SAMPLES = 125;
+    
+    private synchronized void startEmitFastData(int frequency) {
+        long interval = 1000L / frequency * BUFFER_SAMPLES;
+        if (!emitFastDataByFrequency.containsKey(frequency)) {
+            log.info("Start emit fast data at frequency " + frequency);
+            emitFastDataByFrequency.put(frequency, executor.scheduleAtFixedRate(new EmitFastData(frequency), interval - System.currentTimeMillis()
+                    % interval, interval, TimeUnit.MILLISECONDS));
+        }
+    }
+    
+    private synchronized void stopEmitFastData() {
+        for (Integer frequency : emitFastDataByFrequency.keySet()) {
+            log.info("stop emit fast data at frequency " + frequency);
+            emitFastDataByFrequency.get(frequency).cancel(false);
+        }
+        emitFastDataByFrequency.clear();
+    }
 
     protected void watchdog() {
         long now = System.currentTimeMillis();
@@ -670,6 +694,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             }
             forObservedValue.put(handle, value);
         }
+        
+
 
         protected void handle(int handle, RelativeTime time, SampleArrayObservedValue v, long now) {
             short[] bytes = v.getValue();
@@ -724,28 +750,15 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             }
                             List<Number> sampleCache = handleToSampleCache.get(handle);
                             if(null == sampleCache) {
-                                sampleCache = new ArrayList<Number>();
+                                sampleCache = Collections.synchronizedList(new ArrayList<Number>());
                                 handleToSampleCache.put(handle, sampleCache);
                             }
 
                             int frequency = (int)(1000 / rt.toMilliseconds());
                             
-                            for(Number n : w.getNumbers()) {
-                                sampleCache.add(n);
-                            }
-                            while(sampleCache.size()>=frequency) {
-                                sampleTimeSampleArray = currentTimeSampleArrayResolution(sampleTimeSampleArray);
-                                
-                                // TODO Come back and make this efficient
-                                putSampleArrayUpdate(
-                                        ov, handle,
-                                        sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.subList(0, frequency),
-                                        metricId, handle, 
-                                        RosettaUnits.units(unitCode),
-                                        frequency, sampleTimeSampleArray));
-                                // TODO again this is not efficient.. but does the technique work?
-                                sampleCache.subList(0, frequency).clear();
-                            }
+                            startEmitFastData(frequency);
+                            sampleCache.addAll(w.getNumbers());
+
                         }
                     }
                 }
@@ -782,6 +795,59 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             }
             newPeriod.fromMicroseconds(period.toMicroseconds());
         }
+    }
+    private class EmitFastData implements Runnable {
+
+        private final int frequency;
+
+        public EmitFastData(final int frequency) {
+            this.frequency = frequency;
+        }
+
+        @Override
+        public void run() {
+            try {
+                for(ObservedValue ov : sampleArrayCache.keySet()) {
+                    Map<Integer, List<Number>> sampleCacheByHandle = sampleArrayCache.get(ov);
+                    for(Integer handle : sampleCacheByHandle.keySet()) {
+                        List<Number> sampleCache = sampleCacheByHandle.get(handle);
+                        InstanceHolder<ice.SampleArray> sa = getSampleArrayUpdate(ov, handle);
+                        if(null != sa) {
+                            synchronized(sampleCache) {
+                                if(sampleCache.size() >= BUFFER_SAMPLES) {
+                                    if(sampleCache.size() > BUFFER_SAMPLES) {
+                                        sampleCache.subList(0, sampleCache.size() - BUFFER_SAMPLES).clear();
+                                    }
+                                    sampleArraySample(sa, sampleCache, null);
+                                }
+                            }
+                        } else {
+                            String metric_id = sampleArrayMetricIds.get(ov);
+                            UnitCode unitCode = handleToUnitCode.get(handle);
+                            synchronized(sampleCache) {
+                                if(sampleCache.size() >= BUFFER_SAMPLES) {
+                                    if(sampleCache.size() > BUFFER_SAMPLES) {
+                                        sampleCache.subList(0, sampleCache.size() - BUFFER_SAMPLES).clear();
+                                    }
+                                    putSampleArrayUpdate(
+                                            ov, handle,
+                                            sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.subList(0, frequency),
+                                            metric_id, handle, 
+                                            RosettaUnits.units(unitCode),
+                                            frequency, null));
+                                    
+                                    
+                                }
+                            }
+                        }
+                    }
+                }
+
+            } catch (Throwable t) {
+                log.error("error emitting fast data", t);
+            }
+        }
+
     }
 
     @Override
