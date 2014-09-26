@@ -578,7 +578,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     }
                 }
             } else {
-                log.info("Here begins a pollInfoList at time " + result.getRelativeTime() + " " + result.getAbsoluteTime());
+//                log.info("Here begins a pollInfoList at time " + result.getRelativeTime() + " " + result.getAbsoluteTime());
                 for (SingleContextPoll sop : result.getPollInfoList()) {
                     for (ObservationPoll op : sop.getPollInfo()) {
                         int handle = op.getHandle().getHandle();
@@ -617,13 +617,13 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             handle(handle, spec.getValue());
                         }
                         if (null != cov) {
-                            log.info("Time for SampleArrayCompoundObservedValue " + result.getRelativeTime().toMicroseconds());
+//                            log.info("Time for SampleArrayCompoundObservedValue " + result.getRelativeTime().toMicroseconds());
                             for (SampleArrayObservedValue saov : cov.getValue().getList()) {
                                 handle(handle, result.getRelativeTime(), saov, now);
                             }
                         }
                         if (null != v) {
-                            log.info("Time for SampleArrayObservedValue " + result.getRelativeTime().toMicroseconds());
+//                            log.info("Time for SampleArrayObservedValue " + result.getRelativeTime().toMicroseconds());
                             handle(handle, result.getRelativeTime(), v.getValue(), now);
                         }
                     }
