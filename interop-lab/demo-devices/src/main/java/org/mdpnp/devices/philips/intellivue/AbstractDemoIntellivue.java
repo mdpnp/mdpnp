@@ -174,11 +174,14 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     private final Map<Integer, ScheduledFuture<?>> emitFastDataByFrequency = new HashMap<Integer, ScheduledFuture<?>>();
     private static final int BUFFER_SAMPLES = 125;
     
-    private synchronized void startEmitFastData(int frequency) {
-        long interval = 1000L / frequency * BUFFER_SAMPLES;
+    private synchronized void startEmitFastData(long msInterval) {
+        int frequency = (int)(1000 / msInterval);
+        // for the 62.5Hz case; 
+        // TODO client will see an overlapping sample where 62.5Hz is truncated to 62Hz
+        long interval = msInterval * BUFFER_SAMPLES;
         if (!emitFastDataByFrequency.containsKey(frequency)) {
             log.info("Start emit fast data at frequency " + frequency);
-            emitFastDataByFrequency.put(frequency, executor.scheduleAtFixedRate(new EmitFastData(frequency), 2 * interval - System.currentTimeMillis()
+            emitFastDataByFrequency.put(frequency, executor.scheduleAtFixedRate(new EmitFastData(frequency), interval - System.currentTimeMillis()
                     % interval, interval, TimeUnit.MILLISECONDS));
         }
     }
@@ -753,14 +756,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 sampleCache = Collections.synchronizedList(new ArrayList<Number>());
                                 handleToSampleCache.put(handle, sampleCache);
                             }
-
-                            int frequency = (int)(1000 / rt.toMilliseconds());
-
+                            
                             sampleCache.addAll(w.getNumbers());
-                            if(ice.MDC_ECG_LEAD_II.VALUE.equals(metricId)) {
-                                log.info("ECG II added " + w.getNumbers().size() + " samples");
-                            }
-                            startEmitFastData(frequency);
+                            startEmitFastData(rt.toMilliseconds());
                         }
                     }
                 }
@@ -827,9 +825,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                         List<Number> subList = sampleCache.subList(0, BUFFER_SAMPLES);
                                         sampleArraySample(sa, subList, null);
                                         subList.clear();
-                                        if(ice.MDC_ECG_LEAD_II.VALUE.equals(sa.data.metric_id)) {
-                                            log.info("ECG II residual " + sampleCache.size() + " samples");
-                                        }
+                                    } else {
+                                        log.warn("Missed emission of " + sa.data.metric_id + " " + sa.data.instance_id + " because only " + sampleCache.size() + " samples < " + BUFFER_SAMPLES);
                                     }
                                 }
                             } else {
@@ -845,10 +842,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                                 RosettaUnits.units(unitCode),
                                                 frequency, null));
                                         subList.clear();
-                                        if(ice.MDC_ECG_LEAD_II.VALUE.equals(metric_id)) {
-                                            log.info("ECG II residual " + sampleCache.size() + " samples");
-                                        }
-                                        
+                                    } else {
+                                        log.warn("Missed emission of " + metric_id + " " + handle + " because only " + sampleCache.size() + " samples < " + BUFFER_SAMPLES);
                                     }
                                 }
                             }
