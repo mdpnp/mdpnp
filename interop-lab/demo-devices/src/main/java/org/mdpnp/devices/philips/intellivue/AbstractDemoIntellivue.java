@@ -824,13 +824,12 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             if(null != sa) {
                                 synchronized(sampleCache) {
                                     if(sampleCache.size() >= BUFFER_SAMPLES) {
-                                        if(sampleCache.size() > BUFFER_SAMPLES) {
-                                            if(ice.MDC_ECG_LEAD_II.VALUE.equals(sa.data.metric_id)) {
-                                                log.info("ECG II clearing " + (sampleCache.size()-BUFFER_SAMPLES) + " samples");
-                                            }
-                                            sampleCache.subList(0, sampleCache.size() - BUFFER_SAMPLES).clear();
+                                        List<Number> subList = sampleCache.subList(0, BUFFER_SAMPLES);
+                                        sampleArraySample(sa, subList, null);
+                                        subList.clear();
+                                        if(ice.MDC_ECG_LEAD_II.VALUE.equals(sa.data.metric_id)) {
+                                            log.info("ECG II residual " + sampleCache.size() + " samples");
                                         }
-                                        sampleArraySample(sa, sampleCache, null);
                                     }
                                 }
                             } else {
@@ -838,19 +837,17 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 UnitCode unitCode = handleToUnitCode.get(handle);
                                 synchronized(sampleCache) {
                                     if(sampleCache.size() >= BUFFER_SAMPLES) {
-                                        if(sampleCache.size() > BUFFER_SAMPLES) {
-                                            if(ice.MDC_ECG_LEAD_II.VALUE.equals(metric_id)) {
-                                                log.info("ECG II clearing " + (sampleCache.size()-BUFFER_SAMPLES) + " samples");
-                                            }
-                                            sampleCache.subList(0, sampleCache.size() - BUFFER_SAMPLES).clear();
-                                        }
+                                        List<Number> subList = sampleCache.subList(0, BUFFER_SAMPLES);
                                         putSampleArrayUpdate(
                                                 ov, handle,
-                                                sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache,
+                                                sampleArraySample(getSampleArrayUpdate(ov, handle), subList,
                                                 metric_id, handle, 
                                                 RosettaUnits.units(unitCode),
                                                 frequency, null));
-                                        
+                                        subList.clear();
+                                        if(ice.MDC_ECG_LEAD_II.VALUE.equals(metric_id)) {
+                                            log.info("ECG II residual " + sampleCache.size() + " samples");
+                                        }
                                         
                                     }
                                 }
