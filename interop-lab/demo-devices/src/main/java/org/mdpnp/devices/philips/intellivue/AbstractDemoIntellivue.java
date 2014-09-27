@@ -181,7 +181,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         long interval = msInterval * BUFFER_SAMPLES;
         if (!emitFastDataByFrequency.containsKey(frequency)) {
             log.info("Start emit fast data at frequency " + frequency);
-            emitFastDataByFrequency.put(frequency, executor.scheduleAtFixedRate(new EmitFastData(frequency), interval - System.currentTimeMillis()
+            emitFastDataByFrequency.put(frequency, executor.scheduleAtFixedRate(new EmitFastData(frequency), 2* interval - System.currentTimeMillis()
                     % interval, interval, TimeUnit.MILLISECONDS));
         }
     }
@@ -748,7 +748,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             
                             Map<Integer, List<Number>> handleToSampleCache = sampleArrayCache.get(ov);
                             if(null == handleToSampleCache) {
-                                handleToSampleCache = new HashMap<Integer, List<Number>>();
+                                handleToSampleCache = Collections.synchronizedMap( new HashMap<Integer, List<Number>>() );
                                 sampleArrayCache.put(ov, handleToSampleCache);
                             }
                             List<Number> sampleCache = handleToSampleCache.get(handle);
@@ -807,9 +807,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         @Override
         public void run() {
             try {
-                for(ObservedValue ov : sampleArrayCache.keySet()) {
+                for(ObservedValue ov : sampleArrayCache.keySet().toArray(new ObservedValue[0])) {
                     Map<Integer, List<Number>> sampleCacheByHandle = sampleArrayCache.get(ov);
-                    for(Integer handle : sampleCacheByHandle.keySet()) {
+                    for(Integer handle : sampleCacheByHandle.keySet().toArray(new Integer[0])) {
                         List<Number> sampleCache = sampleCacheByHandle.get(handle);
                         InstanceHolder<ice.SampleArray> sa = getSampleArrayUpdate(ov, handle);
                         RelativeTime rt = handleToUpdatePeriod.get(handle);
@@ -884,7 +884,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
     protected final Map<ObservedValue, Map<Integer, InstanceHolder<ice.Numeric>>> numericUpdates = new HashMap<ObservedValue, Map<Integer, InstanceHolder<ice.Numeric>>>();
     protected final Map<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>> sampleArrayUpdates = new HashMap<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>>();
-    protected final Map<ObservedValue, Map<Integer, List<Number>>> sampleArrayCache = new HashMap<ObservedValue, Map<Integer, List<Number>>>();
+    protected final Map<ObservedValue, Map<Integer, List<Number>>> sampleArrayCache = Collections.synchronizedMap(new HashMap<ObservedValue, Map<Integer, List<Number>>>());
     
     protected static void loadMap(Map<ObservedValue, String> numericMetricIds, Map<ObservedValue, Label> numericLabels,
             Map<ObservedValue, String> sampleArrayMetricIds, Map<ObservedValue, Label> sampleArrayLabels) {
