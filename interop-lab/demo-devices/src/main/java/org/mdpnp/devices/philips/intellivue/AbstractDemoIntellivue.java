@@ -804,12 +804,23 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             this.frequency = frequency;
         }
 
+        private ObservedValue[] observedValues = new ObservedValue[10];
+        private Integer[] handles = new Integer[10];
+        
         @Override
         public void run() {
             try {
-                for(ObservedValue ov : sampleArrayCache.keySet().toArray(new ObservedValue[0])) {
+                observedValues = sampleArrayCache.keySet().toArray(observedValues);
+                for(ObservedValue ov : observedValues) {
+                    if(null == ov) {
+                        break;
+                    }
                     Map<Integer, List<Number>> sampleCacheByHandle = sampleArrayCache.get(ov);
-                    for(Integer handle : sampleCacheByHandle.keySet().toArray(new Integer[0])) {
+                    handles = sampleCacheByHandle.keySet().toArray(handles);
+                    for(Integer handle : handles) {
+                        if(null == handle) {
+                            break;
+                        }
                         List<Number> sampleCache = sampleCacheByHandle.get(handle);
                         InstanceHolder<ice.SampleArray> sa = getSampleArrayUpdate(ov, handle);
                         RelativeTime rt = handleToUpdatePeriod.get(handle);
@@ -822,9 +833,14 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             if(null != sa) {
                                 synchronized(sampleCache) {
                                     if(sampleCache.size() >= BUFFER_SAMPLES) {
+                                        // Use the oldest samples
                                         List<Number> subList = sampleCache.subList(0, BUFFER_SAMPLES);
                                         sampleArraySample(sa, subList, null);
-                                        subList.clear();
+                                        // Remove those oldest but making sure that a full BUFFER_SAMPLE will be available to the next round
+                                        if(sampleCache.size()<2*BUFFER_SAMPLES) {
+                                            log.info("Will emit potential duplicate samples of " + sa.data.metric_id + " " + sa.data.instance_id + " because only " + sampleCache.size() + " samples < " + (2*BUFFER_SAMPLES));
+                                        }
+                                        sampleCache.subList(0, sampleCache.size()-BUFFER_SAMPLES).clear();
                                     } else {
                                         log.warn("Missed emission of " + sa.data.metric_id + " " + sa.data.instance_id + " because only " + sampleCache.size() + " samples < " + BUFFER_SAMPLES);
                                     }
@@ -841,7 +857,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                                 metric_id, handle, 
                                                 RosettaUnits.units(unitCode),
                                                 frequency, null));
-                                        subList.clear();
+                                        if(sampleCache.size()<2*BUFFER_SAMPLES) {
+                                            log.info("Will emit potential duplicate samples of " + metric_id + " " + handle + " because only " + sampleCache.size() + " samples < " + (2*BUFFER_SAMPLES));
+                                        }
+                                        sampleCache.subList(0, sampleCache.size()-BUFFER_SAMPLES).clear();
                                     } else {
                                         log.warn("Missed emission of " + metric_id + " " + handle + " because only " + sampleCache.size() + " samples < " + BUFFER_SAMPLES);
                                     }
