@@ -178,7 +178,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         long interval = 1000L / frequency * BUFFER_SAMPLES;
         if (!emitFastDataByFrequency.containsKey(frequency)) {
             log.info("Start emit fast data at frequency " + frequency);
-            emitFastDataByFrequency.put(frequency, executor.scheduleAtFixedRate(new EmitFastData(frequency), interval - System.currentTimeMillis()
+            emitFastDataByFrequency.put(frequency, executor.scheduleAtFixedRate(new EmitFastData(frequency), 2 * interval - System.currentTimeMillis()
                     % interval, interval, TimeUnit.MILLISECONDS));
         }
     }
@@ -755,10 +755,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             }
 
                             int frequency = (int)(1000 / rt.toMilliseconds());
-                            
-                            startEmitFastData(frequency);
-                            sampleCache.addAll(w.getNumbers());
 
+                            sampleCache.addAll(w.getNumbers());
+                            startEmitFastData(frequency);
                         }
                     }
                 }
