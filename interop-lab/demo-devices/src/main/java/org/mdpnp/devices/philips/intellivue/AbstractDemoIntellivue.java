@@ -892,25 +892,28 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         }
         
         public Collection<Number> emitSamples(int n, String s) {
-            if(newSamples.size() < n) {
-                log.warn(s+" will repeat " + (n - newSamples.size()) + " old samples to make up a shortfall");
-            }
-            // Move up to n samples from the old list to the new
-            List<Number> oldestNewSamples = newSamples.subList(0, n > newSamples.size() ? newSamples.size() : n);
-            
-            oldSamples.addAll(oldestNewSamples);
-            oldestNewSamples.clear();
-            
-            // If we have insufficient oldSamples (shouldn't happen except maybe at initialization) fill in values
-            if(oldSamples.size() < n) {
-                log.warn(s+" filling in " + (n - oldSamples.size()) + " zeros; this should not continue happening");
-                while(oldSamples.size() < n) {
-                    oldSamples.add(0, 0);
+            synchronized(newSamples) {
+                if(newSamples.size() < n) {
+                    log.warn(s+" will repeat " + (n - newSamples.size()) + " old samples to make up a shortfall");
                 }
+                // Move up to n samples from the old list to the new
+                List<Number> oldestNewSamples = newSamples.subList(0, n > newSamples.size() ? newSamples.size() : n);
+                
+                oldSamples.addAll(oldestNewSamples);
+                oldestNewSamples.clear();
             }
-            // If we have extra oldSamples then remove them
-            if(oldSamples.size() > n) {
-                oldSamples.subList(0, oldSamples.size()-n).clear();
+            synchronized(oldSamples) {
+                // If we have insufficient oldSamples (shouldn't happen except maybe at initialization) fill in values
+                if(oldSamples.size() < n) {
+                    log.warn(s+" filling in " + (n - oldSamples.size()) + " zeros; this should not continue happening");
+                    while(oldSamples.size() < n) {
+                        oldSamples.add(0, 0);
+                    }
+                }
+                // If we have extra oldSamples then remove them
+                if(oldSamples.size() > n) {
+                    oldSamples.subList(0, oldSamples.size()-n).clear();
+                }
             }
             return oldSamples;
         }
