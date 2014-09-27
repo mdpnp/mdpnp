@@ -27,6 +27,7 @@ import java.nio.channels.SelectionKey;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -746,18 +747,18 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 w.applyValue(i, bytes);
                             }
                             
-                            Map<Integer, List<Number>> handleToSampleCache = sampleArrayCache.get(ov);
+                            Map<Integer, SampleCache> handleToSampleCache = sampleArrayCache.get(ov);
                             if(null == handleToSampleCache) {
-                                handleToSampleCache = Collections.synchronizedMap( new HashMap<Integer, List<Number>>() );
+                                handleToSampleCache = Collections.synchronizedMap( new HashMap<Integer, SampleCache>() );
                                 sampleArrayCache.put(ov, handleToSampleCache);
                             }
-                            List<Number> sampleCache = handleToSampleCache.get(handle);
+                            SampleCache sampleCache = handleToSampleCache.get(handle);
                             if(null == sampleCache) {
-                                sampleCache = Collections.synchronizedList(new ArrayList<Number>());
+                                sampleCache = new SampleCache();
                                 handleToSampleCache.put(handle, sampleCache);
                             }
                             
-                            sampleCache.addAll(w.getNumbers());
+                            sampleCache.addNewSamples(w.getNumbers());
                             startEmitFastData(rt.toMilliseconds());
                         }
                     }
@@ -815,13 +816,13 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     if(null == ov) {
                         break;
                     }
-                    Map<Integer, List<Number>> sampleCacheByHandle = sampleArrayCache.get(ov);
+                    Map<Integer, SampleCache> sampleCacheByHandle = sampleArrayCache.get(ov);
                     handles = sampleCacheByHandle.keySet().toArray(handles);
                     for(Integer handle : handles) {
                         if(null == handle) {
                             break;
                         }
-                        List<Number> sampleCache = sampleCacheByHandle.get(handle);
+                        SampleCache sampleCache = sampleCacheByHandle.get(handle);
                         InstanceHolder<ice.SampleArray> sa = getSampleArrayUpdate(ov, handle);
                         RelativeTime rt = handleToUpdatePeriod.get(handle);
                         if (null == rt || null == sampleCache || null == unitCode) {
@@ -832,38 +833,18 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         if(this.frequency == frequency) {
                             if(null != sa) {
                                 synchronized(sampleCache) {
-                                    if(sampleCache.size() >= BUFFER_SAMPLES) {
-                                        // Use the oldest samples
-                                        List<Number> subList = sampleCache.subList(0, BUFFER_SAMPLES);
-                                        sampleArraySample(sa, subList, null);
-                                        // Remove those oldest but making sure that a full BUFFER_SAMPLE will be available to the next round
-                                        if(sampleCache.size()<2*BUFFER_SAMPLES) {
-                                            log.info("Will emit potential duplicate samples of " + sa.data.metric_id + " " + sa.data.instance_id + " because only " + sampleCache.size() + " samples < " + (2*BUFFER_SAMPLES));
-                                        }
-                                        sampleCache.subList(0, sampleCache.size()-BUFFER_SAMPLES).clear();
-                                    } else {
-                                        log.warn("Missed emission of " + sa.data.metric_id + " " + sa.data.instance_id + " because only " + sampleCache.size() + " samples < " + BUFFER_SAMPLES);
-                                    }
+                                    sampleArraySample(sa, sampleCache.emitSamples(BUFFER_SAMPLES, sa.data.metric_id+" "+sa.data.instance_id), null);
                                 }
                             } else {
                                 String metric_id = sampleArrayMetricIds.get(ov);
                                 UnitCode unitCode = handleToUnitCode.get(handle);
                                 synchronized(sampleCache) {
-                                    if(sampleCache.size() >= BUFFER_SAMPLES) {
-                                        List<Number> subList = sampleCache.subList(0, BUFFER_SAMPLES);
-                                        putSampleArrayUpdate(
-                                                ov, handle,
-                                                sampleArraySample(getSampleArrayUpdate(ov, handle), subList,
-                                                metric_id, handle, 
-                                                RosettaUnits.units(unitCode),
-                                                frequency, null));
-                                        if(sampleCache.size()<2*BUFFER_SAMPLES) {
-                                            log.info("Will emit potential duplicate samples of " + metric_id + " " + handle + " because only " + sampleCache.size() + " samples < " + (2*BUFFER_SAMPLES));
-                                        }
-                                        sampleCache.subList(0, sampleCache.size()-BUFFER_SAMPLES).clear();
-                                    } else {
-                                        log.warn("Missed emission of " + metric_id + " " + handle + " because only " + sampleCache.size() + " samples < " + BUFFER_SAMPLES);
-                                    }
+                                    putSampleArrayUpdate(
+                                            ov, handle,
+                                            sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.emitSamples(BUFFER_SAMPLES, metric_id+" "+handle),
+                                            metric_id, handle, 
+                                            RosettaUnits.units(unitCode),
+                                            frequency, null));
                                 }
                             }
                         }
@@ -901,9 +882,43 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     protected final Map<ObservedValue, Label> numericLabels = new HashMap<ObservedValue, Label>();
     protected final Map<ObservedValue, Label> sampleArrayLabels = new HashMap<ObservedValue, Label>();
 
+    
+    private static final class SampleCache {
+        private final List<Number> newSamples = Collections.synchronizedList(new ArrayList<Number>());
+        private final List<Number> oldSamples = Collections.synchronizedList(new ArrayList<Number>());
+        
+        public void addNewSamples(Collection<Number> coll) {
+            newSamples.addAll(coll);
+        }
+        
+        public Collection<Number> emitSamples(int n, String s) {
+            if(newSamples.size() < n) {
+                log.warn(s+" will repeat " + (n - newSamples.size()) + " old samples to make up a shortfall");
+            }
+            // Move up to n samples from the old list to the new
+            List<Number> oldestNewSamples = newSamples.subList(0, n > newSamples.size() ? newSamples.size() : n);
+            
+            oldSamples.addAll(oldestNewSamples);
+            oldestNewSamples.clear();
+            
+            // If we have insufficient oldSamples (shouldn't happen except maybe at initialization) fill in values
+            if(oldSamples.size() < n) {
+                log.warn(s+" filling in " + (n - oldSamples.size()) + " zeros; this should not continue happening");
+                while(oldSamples.size() < n) {
+                    oldSamples.add(0, 0);
+                }
+            }
+            // If we have extra oldSamples then remove them
+            if(oldSamples.size() > n) {
+                oldSamples.subList(0, oldSamples.size()-n).clear();
+            }
+            return oldSamples;
+        }
+    }
+    
     protected final Map<ObservedValue, Map<Integer, InstanceHolder<ice.Numeric>>> numericUpdates = new HashMap<ObservedValue, Map<Integer, InstanceHolder<ice.Numeric>>>();
     protected final Map<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>> sampleArrayUpdates = new HashMap<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>>();
-    protected final Map<ObservedValue, Map<Integer, List<Number>>> sampleArrayCache = Collections.synchronizedMap(new HashMap<ObservedValue, Map<Integer, List<Number>>>());
+    protected final Map<ObservedValue, Map<Integer, SampleCache>> sampleArrayCache = Collections.synchronizedMap(new HashMap<ObservedValue, Map<Integer, SampleCache>>());
     
     protected static void loadMap(Map<ObservedValue, String> numericMetricIds, Map<ObservedValue, Label> numericLabels,
             Map<ObservedValue, String> sampleArrayMetricIds, Map<ObservedValue, Label> sampleArrayLabels) {
