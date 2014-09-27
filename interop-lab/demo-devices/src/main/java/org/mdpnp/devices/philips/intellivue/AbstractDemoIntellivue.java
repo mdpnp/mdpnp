@@ -757,6 +757,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             int frequency = (int)(1000 / rt.toMilliseconds());
 
                             sampleCache.addAll(w.getNumbers());
+                            if(ice.MDC_ECG_LEAD_II.VALUE.equals(metricId)) {
+                                log.info("ECG II added " + w.getNumbers().size() + " samples");
+                            }
                             startEmitFastData(frequency);
                         }
                     }
@@ -822,6 +825,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 synchronized(sampleCache) {
                                     if(sampleCache.size() >= BUFFER_SAMPLES) {
                                         if(sampleCache.size() > BUFFER_SAMPLES) {
+                                            if(ice.MDC_ECG_LEAD_II.VALUE.equals(sa.data.metric_id)) {
+                                                log.info("ECG II clearing " + (sampleCache.size()-BUFFER_SAMPLES) + " samples");
+                                            }
                                             sampleCache.subList(0, sampleCache.size() - BUFFER_SAMPLES).clear();
                                         }
                                         sampleArraySample(sa, sampleCache, null);
@@ -833,6 +839,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 synchronized(sampleCache) {
                                     if(sampleCache.size() >= BUFFER_SAMPLES) {
                                         if(sampleCache.size() > BUFFER_SAMPLES) {
+                                            if(ice.MDC_ECG_LEAD_II.VALUE.equals(metric_id)) {
+                                                log.info("ECG II clearing " + (sampleCache.size()-BUFFER_SAMPLES) + " samples");
+                                            }
                                             sampleCache.subList(0, sampleCache.size() - BUFFER_SAMPLES).clear();
                                         }
                                         putSampleArrayUpdate(
