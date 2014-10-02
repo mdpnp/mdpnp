@@ -70,23 +70,23 @@ public class DemoRadical7 extends AbstractSerialDevice {
     private final MyMasimoRadical7 fieldDelegate;
 
     @Override
-    protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
+    protected void process(int idx, InputStream inputStream, OutputStream outputStream) throws IOException {
         fieldDelegate.setInputStream(inputStream);
         fieldDelegate.run();
     }
 
     @Override
-    protected long getMaximumQuietTime() {
+    protected long getMaximumQuietTime(int idx) {
         return 1100L;
     }
 
     @Override
-    protected void doInitCommands() throws IOException {
+    protected void doInitCommands(int idx) throws IOException {
     }
 
     @Override
-    public SerialProvider getSerialProvider() {
-        SerialProvider serialProvider = super.getSerialProvider();
+    public SerialProvider getSerialProvider(int idx) {
+        SerialProvider serialProvider = super.getSerialProvider(idx);
         serialProvider.setDefaultSerialSettings(9600, SerialSocket.DataBits.Eight, SerialSocket.Parity.None, SerialSocket.StopBits.One);
         return serialProvider;
     }

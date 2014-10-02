@@ -29,8 +29,8 @@ public class DemoApollo extends AbstractDraegerVent {
     }
 
     @Override
-    public SerialProvider getSerialProvider() {
-        SerialProvider serialProvider = super.getSerialProvider();
+    public SerialProvider getSerialProvider(int idx) {
+        SerialProvider serialProvider = super.getSerialProvider(idx);
         serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.Even, StopBits.One);
         return serialProvider;
     }

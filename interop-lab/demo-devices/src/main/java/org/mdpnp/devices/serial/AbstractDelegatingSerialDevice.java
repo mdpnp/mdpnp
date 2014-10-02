@@ -15,58 +15,75 @@ package org.mdpnp.devices.serial;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class AbstractDelegatingSerialDevice<T> extends AbstractSerialDevice {
-    public AbstractDelegatingSerialDevice(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public AbstractDelegatingSerialDevice(int domainId, EventLoop eventLoop, Class<T> clazz) {
+        this(domainId, eventLoop, 1, clazz);
+    }
+    
+    @SuppressWarnings("unchecked")
+    public AbstractDelegatingSerialDevice(int domainId, EventLoop eventLoop, final int countSerialPorts, Class<T> clazz) {
+        super(domainId, eventLoop, countSerialPorts);
+        inputStream = new InputStream[countSerialPorts];
+        outputStream = new OutputStream[countSerialPorts];
+        delegate = (T[]) Array.newInstance(clazz, countSerialPorts);
     }
 
-    private InputStream inputStream;
-    private OutputStream outputStream;
-    private T delegate;
+    private final InputStream[] inputStream;
+    private final OutputStream[] outputStream;
+    private final T[] delegate;
 
-    protected synchronized void setOutputStream(OutputStream outputStream) {
-        this.outputStream = outputStream;
+    protected synchronized void setOutputStream(int idx, OutputStream outputStream) {
+        this.outputStream[idx] = outputStream;
         notifyAll();
     }
 
-    protected synchronized void setInputStream(InputStream inputStream) {
-        this.inputStream = inputStream;
+    protected synchronized void setInputStream(int idx, InputStream inputStream) {
+        this.inputStream[idx] = inputStream;
         notifyAll();
     }
 
     private final Logger log = LoggerFactory.getLogger(AbstractDelegatingSerialDevice.class);
 
-    protected abstract T buildDelegate(InputStream in, OutputStream out);
+    protected abstract T buildDelegate(int idx, InputStream in, OutputStream out);
 
-    protected abstract boolean delegateReceive(T delegate) throws IOException;
+    protected abstract boolean delegateReceive(int idx, T delegate) throws IOException;
 
     @Override
-    protected void doInitCommands() throws IOException {
-        log.trace("doInitCommands");
+    protected void doInitCommands(int idx) throws IOException {
+        log.trace("doInitCommands("+idx+")");
     }
 
     protected synchronized T getDelegate() {
-        return getDelegate(true);
+        return getDelegate(0, true);
+    }
+    
+    protected synchronized T getDelegate(int idx) {
+        return getDelegate(idx, true);
+    }
+    
+    protected synchronized T getDelegate(boolean b) {
+        return getDelegate(0, b);
     }
 
     // just a failsafe
     private static final long MAX_GET_DELEGATE_WAIT_TIME = 20000L;
 
-    protected synchronized T getDelegate(boolean build) {
+    protected synchronized T getDelegate(final int idx, final boolean build) {
         long giveup = System.currentTimeMillis() + MAX_GET_DELEGATE_WAIT_TIME;
 
-        while (build && null == delegate && (inputStream == null || outputStream == null)) {
+        while (build && null == delegate[idx] && (inputStream[idx] == null || outputStream[idx] == null)) {
             try {
-                log.trace("waiting, inputStream=" + inputStream + ", outputStream=" + outputStream);
+                log.trace("waiting, inputStream("+idx+")=" + inputStream[idx] + ", outputStream("+idx+")=" + outputStream[idx]);
                 long now = System.currentTimeMillis();
                 if (now >= giveup) {
                     throw new IllegalStateException("Exceeded maximum time (" + MAX_GET_DELEGATE_WAIT_TIME
-                            + "ms awaiting calls to doInitCommands and process inputStream=" + inputStream + " and outputStream=" + outputStream);
+                            + "ms awaiting calls to doInitCommands and process inputStream=" + inputStream[idx] + " and outputStream=" + outputStream[idx]);
                 } else {
                     wait(giveup - now);
                 }
@@ -74,30 +91,30 @@ public abstract class AbstractDelegatingSerialDevice<T> extends AbstractSerialDe
                 log.error(e.getMessage(), e);
             }
         }
-        if (build && null == delegate) {
-            delegate = buildDelegate(inputStream, outputStream);
+        if (build && null == delegate[idx]) {
+            delegate[idx] = buildDelegate(idx, inputStream[idx], outputStream[idx]);
         }
-        return delegate;
+        return delegate[idx];
     }
 
     @Override
-    protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
-        log.trace("process inputStream=" + inputStream);
+    protected void process(final int idx, final InputStream inputStream, final OutputStream outputStream) throws IOException {
+        log.trace("process("+idx+") inputStream=" + inputStream);
         // inputStream = new TeeInputStream(inputStream, new
         // FileOutputStream("debug.data"));
         try {
-            setInputStream(inputStream);
-            setOutputStream(outputStream);
-            final T delegate = getDelegate();
+            setInputStream(idx, inputStream);
+            setOutputStream(idx, outputStream);
+            final T delegate = getDelegate(idx);
             boolean keepGoing = true;
             while (keepGoing) {
-                keepGoing = delegateReceive(delegate);
+                keepGoing = delegateReceive(idx, delegate);
             }
         } finally {
-            this.inputStream = null;
-            this.outputStream = null;
-            this.delegate = null;
-            log.trace("process ends");
+            this.inputStream[idx] = null;
+            this.outputStream[idx] = null;
+            this.delegate[idx] = null;
+            log.trace("process("+idx+") ends");
         }
     }
 }

@@ -47,17 +47,17 @@ import com.rti.dds.infrastructure.Time_t;
  */
 public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostream> {
     @Override
-    protected long getMaximumQuietTime() {
+    protected long getMaximumQuietTime(int idx) {
         return 900L;
     }
 
     @Override
-    protected long getConnectInterval() {
+    protected long getConnectInterval(int idx) {
         return 3000L;
     }
 
     @Override
-    protected long getNegotiateInterval() {
+    protected long getNegotiateInterval(int idx) {
         return 200L;
     }
 
@@ -142,7 +142,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     }
 
     public DemoCapnostream20(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+        super(domainId, eventLoop, Capnostream.class);
         init();
     }
 
@@ -416,15 +416,15 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     private final Logger log = LoggerFactory.getLogger(DemoCapnostream20.class);
 
     @Override
-    protected Capnostream buildDelegate(InputStream in, OutputStream out) {
+    protected Capnostream buildDelegate(int idx, InputStream in, OutputStream out) {
         return new MyCapnostream(in, out);
     }
 
     private ScheduledFuture<?> linkIsActive;
 
     @Override
-    protected void doInitCommands() throws IOException {
-        super.doInitCommands();
+    protected void doInitCommands(int idx) throws IOException {
+        super.doInitCommands(idx);
         getDelegate().sendCommand(Command.EnableComm);
     }
 
@@ -452,14 +452,14 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     }
 
     @Override
-    public SerialProvider getSerialProvider() {
-        SerialProvider serialProvider = super.getSerialProvider();
+    public SerialProvider getSerialProvider(int idx) {
+        SerialProvider serialProvider = super.getSerialProvider(idx);
         serialProvider.setDefaultSerialSettings(115200, DataBits.Eight, Parity.None, StopBits.One);
         return serialProvider;
     }
 
     @Override
-    protected boolean delegateReceive(Capnostream delegate) throws IOException {
+    protected boolean delegateReceive(int idx, Capnostream delegate) throws IOException {
         return delegate.receive();
     }
 

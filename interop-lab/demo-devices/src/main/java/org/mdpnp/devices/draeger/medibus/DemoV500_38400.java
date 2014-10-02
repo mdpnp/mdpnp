@@ -28,8 +28,8 @@ public class DemoV500_38400 extends AbstractDraegerVent {
     }
 
     @Override
-    public SerialProvider getSerialProvider() {
-        SerialProvider serialProvider = super.getSerialProvider();
+    public SerialProvider getSerialProvider(int idx) {
+        SerialProvider serialProvider = super.getSerialProvider(idx);
         serialProvider.setDefaultSerialSettings(38400, DataBits.Eight, Parity.None, StopBits.One);
         return serialProvider;
     }
