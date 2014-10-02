@@ -45,6 +45,7 @@ public class PB840Parameters extends PB840 {
             Matcher miscfMatch = miscf.matcher(line);
             if(miscfMatch.matches()) {
                 fieldValues.clear();
+                @SuppressWarnings("unused")
                 int bytes = Integer.parseInt(miscfMatch.group(1));
                 int fields = Integer.parseInt(miscfMatch.group(2));
                 Matcher fieldMatch = dataField.matcher(line.substring(miscfMatch.end()));

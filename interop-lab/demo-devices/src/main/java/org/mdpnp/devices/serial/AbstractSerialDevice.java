@@ -210,29 +210,32 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
         String[] commaSeparated = str.split(",");
         int countSerialPorts = Math.min(commaSeparated.length, serialProvider.length);
         boolean ok = true;
-        for(int idx = 0; idx < countSerialPorts; idx++) {
-            ok = ok && connect(idx, commaSeparated[idx]);
-        }
-        return ok;
-    };
-    
-    
-    public boolean connect(int idx, final String portIdentifier) {
-        log.trace("connect requested to " + portIdentifier);
-        synchronized (this) {
-            this.portIdentifier[idx] = portIdentifier;
+        synchronized(this) {
             ice.ConnectionState state = getState();
+            for(int idx = 0; idx < countSerialPorts; idx++) {
+                log.trace("connect("+idx+") requested to " + portIdentifier);
+                this.portIdentifier[idx] = commaSeparated[idx];
+                if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Negotiating.equals(state)
+                        || ice.ConnectionState.Connecting.equals(state)) {
+                } else if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
+                    connect(idx);
+                }
+
+            }
             if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Negotiating.equals(state)
                     || ice.ConnectionState.Connecting.equals(state)) {
             } else if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
                 stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting, "connect requested from Disconnected or Disconnecting states");
-
-                currentThread[idx] = new Thread(threadGroup, new SerialDevice(idx), "AbstractSerialDevice("+idx+") Processing");
-                currentThread[idx].setDaemon(true);
-                currentThread[idx].start();
             }
+            
         }
-        return true;
+        return ok;
+    }
+    
+    protected void connect(int idx) {
+        currentThread[idx] = new Thread(threadGroup, new SerialDevice(idx), "AbstractSerialDevice("+idx+") Processing");
+        currentThread[idx].setDaemon(true);
+        currentThread[idx].start();
     }
 
     protected final long [] previousAttempt;
@@ -301,7 +304,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
                 if (ice.ConnectionState.Connecting.equals(priorState) || ice.ConnectionState.Connected.equals(priorState)
                         || ice.ConnectionState.Negotiating.equals(priorState)) {
                     log.trace("process thread died unexpectedly, trying to reconnect");
-                    AbstractSerialDevice.this.connect(idx, portIdentifier[idx]);
+                    AbstractSerialDevice.this.connect(idx);
                 }
             }
     
@@ -338,14 +341,17 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
                 for(int idx = 0; idx < AbstractSerialDevice.this.socket.length; idx++) {
                     if (System.currentTimeMillis() >= (lastIssueInitCommands[idx] + getNegotiateInterval(idx))) {
                         log.trace("invoking doInitCommands("+idx+")");
+                        lastIssueInitCommands[idx] = System.currentTimeMillis();
                         SerialSocket socket = AbstractSerialDevice.this.socket[idx];
                         if (null != socket) {
                             try {
+                                
                                 doInitCommands(idx);
-                                lastIssueInitCommands[idx] = System.currentTimeMillis();
                             } catch (IOException e) {
-                                setLastError(e);
+                                setLastError(idx, e);
                             }
+                        } else {
+                            log.warn("Cannot issue doInitCommands("+idx+") in a null socket");
                         }
                     }
                 }
