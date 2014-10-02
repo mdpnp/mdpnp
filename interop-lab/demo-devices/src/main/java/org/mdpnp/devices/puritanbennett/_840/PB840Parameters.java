@@ -32,8 +32,8 @@ public class PB840Parameters extends PB840 {
         out.flush();
     }
     
-    private static final Pattern miscf = Pattern.compile("^MISCF(\\d{4})(\\d{3})\2");
-    private static final Pattern dataField = Pattern.compile("^([^,\2]*)[,\2]{1,2}");
+    private static final Pattern miscf = Pattern.compile("^MISCF(\\d{4})(\\d{3})\\02");
+    private static final Pattern dataField = Pattern.compile("^([^,\\02]*)[,\2]{1,2}");
     
     private static final Logger log = LoggerFactory.getLogger(PB840Parameters.class);
     
@@ -57,6 +57,8 @@ public class PB840Parameters extends PB840 {
                     }
                 }
                 receiveMiscF(fieldValues);
+            } else {
+                log.debug("Not a MISCF response:"+line);
             }
             line = in.readLine();
         }
