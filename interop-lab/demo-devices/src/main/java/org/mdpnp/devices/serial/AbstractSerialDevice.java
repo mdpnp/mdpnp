@@ -41,12 +41,16 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
             tais.promoteLastReadTime();
         }
         // TODO Come back to this for multiple serial ports
-        synchronized (stateMachine) {
-            if (!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
-                if (!stateMachine.transitionIfLegal(ice.ConnectionState.Connected, transitionNote)) {
-                    log.warn("Unable to enter Connected state from " + stateMachine.getState());
+        if(idx == 0) {
+            synchronized (stateMachine) {
+                if (!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
+                    if (!stateMachine.transitionIfLegal(ice.ConnectionState.Connected, transitionNote)) {
+                        log.warn("Unable to enter Connected state from " + stateMachine.getState());
+                    }
                 }
             }
+        } else {
+            log.trace("connection("+idx+") reported connected but is not the control connection");
         }
 
     }
@@ -215,9 +219,15 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
             for(int idx = 0; idx < countSerialPorts; idx++) {
                 log.trace("connect("+idx+") requested to " + portIdentifier);
                 this.portIdentifier[idx] = commaSeparated[idx];
-                if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Negotiating.equals(state)
-                        || ice.ConnectionState.Connecting.equals(state)) {
-                } else if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
+                
+                // TODO Unroll this case; i'm in a hurry at the moment
+                if(idx == 0) {
+                    if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Negotiating.equals(state)
+                            || ice.ConnectionState.Connecting.equals(state)) {
+                    } else if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
+                        connect(idx);
+                    }
+                } else {
                     connect(idx);
                 }
 
@@ -273,18 +283,22 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
                     log.trace("socket is null after connect");
                     return;
                 } else {
-                    synchronized (stateMachine) {
-                        if (ice.ConnectionState.Connecting.equals(stateMachine.getState())) {
-                            if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating, "serial port opened")) {
-                                throw new IllegalStateException("Cannot begin negotiating from " + getState());
+                    // TODO using connection 0 as the control connection
+                    if(idx == 0) {
+                        synchronized (stateMachine) {
+                            if (ice.ConnectionState.Connecting.equals(stateMachine.getState())) {
+                                if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating, "serial port opened")) {
+                                    throw new IllegalStateException("Cannot begin negotiating from " + getState());
+                                }
+                            } else {
+                                // Something happened, perhaps the connect request was
+                                // cancelled?
+                                log.debug("Aborting connection processing because no longer in the Connecting state");
+                                return;
                             }
-                        } else {
-                            // Something happened, perhaps the connect request was
-                            // cancelled?
-                            log.debug("Aborting connection processing because no longer in the Connecting state");
-                            return;
                         }
                     }
+
     
                 }
                 AbstractSerialDevice.this.socket[idx] = socket;
@@ -300,10 +314,14 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
                 AbstractSerialDevice.this.socket[idx] = null;
                 AbstractSerialDevice.this.timeAwareInputStream[idx] = null;
     
-                stateMachine.transitionIfLegal(ice.ConnectionState.Disconnected, "serial port reached EOF");
-                if (ice.ConnectionState.Connecting.equals(priorState) || ice.ConnectionState.Connected.equals(priorState)
-                        || ice.ConnectionState.Negotiating.equals(priorState)) {
-                    log.trace("process thread died unexpectedly, trying to reconnect");
+                if(idx == 0) {
+                    stateMachine.transitionIfLegal(ice.ConnectionState.Disconnected, "serial port reached EOF");
+                    if (ice.ConnectionState.Connecting.equals(priorState) || ice.ConnectionState.Connected.equals(priorState)
+                            || ice.ConnectionState.Negotiating.equals(priorState)) {
+                        log.trace("process thread died unexpectedly, trying to reconnect");
+                        AbstractSerialDevice.this.connect(idx);
+                    }
+                } else {
                     AbstractSerialDevice.this.connect(idx);
                 }
             }
