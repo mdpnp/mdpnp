@@ -5,6 +5,7 @@ import ice.ConnectionState;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
@@ -45,6 +46,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     }
     
     protected InstanceHolder<ice.Numeric> respRateSetting, respRate,exhaledTidalVolume;
+    protected final List<InstanceHolder<ice.Numeric>> otherFields = new ArrayList<InstanceHolder<ice.Numeric>>();
     
     private class MyPB840Parameters extends PB840Parameters {
         public MyPB840Parameters(InputStream input, OutputStream output) {
@@ -66,8 +68,19 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             writeTechnicalAlert("PB_SPONTANEOUS_TYPE", fieldValues.get(6));
             writeTechnicalAlert("PB_TRIGGER_TYPE", fieldValues.get(7));
             respRateSetting = numericSample(respRateSetting, Float.parseFloat(fieldValues.get(8)), "PB_SETTING_RESP_RATE", rosetta.MDC_DIM_RESP_PER_MIN.VALUE, null);
-            respRate = numericSample(respRate, Float.parseFloat(fieldValues.get(65)), rosetta.MDC_RESP_RATE.VALUE, rosetta.MDC_DIM_RESP_PER_MIN.VALUE, null);
-            exhaledTidalVolume = numericSample(exhaledTidalVolume, Float.parseFloat(fieldValues.get(66)), rosetta.MDC_VOL_AWAY_TIDAL_EXP.VALUE, rosetta.MDC_DIM_L_PER_MIN.VALUE, null);
+            for(int i = 9; i < fieldValues.size(); i++) {
+                try {
+                    float f = Float.parseFloat(fieldValues.get(i));
+                    while(i >= otherFields.size()) {
+                        otherFields.add(null);
+                    }
+                    otherFields.set(i, numericSample(otherFields.get(i), f, "PB_F_"+(i+5), rosetta.MDC_DIM_DIMLESS.VALUE, null));
+                } catch(NumberFormatException nfe) {
+                    writeTechnicalAlert("PB_F_"+(i+5), fieldValues.get(i));
+                }
+            }
+//            respRate = numericSample(respRate, Float.parseFloat(fieldValues.get(65)), rosetta.MDC_RESP_RATE.VALUE, rosetta.MDC_DIM_RESP_PER_MIN.VALUE, null);
+//            exhaledTidalVolume = numericSample(exhaledTidalVolume, Float.parseFloat(fieldValues.get(66)), rosetta.MDC_VOL_AWAY_TIDAL_EXP.VALUE, rosetta.MDC_DIM_L_PER_MIN.VALUE, null);
             clearOldTechnicalAlertInstances();
         }
     }
