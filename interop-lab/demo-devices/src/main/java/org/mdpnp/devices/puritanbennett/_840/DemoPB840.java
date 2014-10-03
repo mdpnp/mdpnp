@@ -71,6 +71,14 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         "PB_SETTING_EXP_SENSITIVITY", "PB_SETTING_IBW", "PB_SETTING_TARGET_SUPP_VOLUME", 
     };
     
+    private static Float parseFloat(String s) {
+        if(s == null || s.isEmpty()) {
+            return null;
+        } else {
+            return Float.parseFloat(s);
+        }
+    }
+    
     private class MyPB840Parameters extends PB840Parameters {
         public MyPB840Parameters(InputStream input, OutputStream output) {
             super(input, output);
@@ -82,12 +90,12 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
                 deviceIdentity.serial_number = fieldValues.get(1);
                 writeDeviceIdentity();
             }
-            inspPressure = alarmSettingsSample(inspPressure, Float.parseFloat(fieldValues.get(30)), Float.parseFloat(fieldValues.get(29)), "PB_INSP_PRESSURE");
-            exhaledMV = alarmSettingsSample(exhaledMV, Float.parseFloat(fieldValues.get(32)), Float.parseFloat(fieldValues.get(31)), "PB_EXHALED_MV");
-            exhaledMandTidalVolume = alarmSettingsSample(exhaledMandTidalVolume, Float.parseFloat(fieldValues.get(34)), Float.parseFloat(fieldValues.get(33)), "PB_EXHALED_MAND_TIDAL_VOLUME");
-            exhaledSpontTidalVolume = alarmSettingsSample(exhaledSpontTidalVolume, Float.parseFloat(fieldValues.get(36)), Float.parseFloat(fieldValues.get(35)), "PB_EXHALED_SPONT_TIDAL_VOLUME");
-            respRateAlarm = alarmSettingsSample(respRateAlarm, null, Float.parseFloat(fieldValues.get(37)), "PB_RESP_RATE");
-            inspiredTidalVolume = alarmSettingsSample(inspiredTidalVolume, null, Float.parseFloat(fieldValues.get(38)), "PB_INSPIRED_TIDAL_VOLUME");
+            inspPressure = alarmSettingsSample(inspPressure, parseFloat(fieldValues.get(30)), parseFloat(fieldValues.get(29)), "PB_INSP_PRESSURE");
+            exhaledMV = alarmSettingsSample(exhaledMV, parseFloat(fieldValues.get(32)), parseFloat(fieldValues.get(31)), "PB_EXHALED_MV");
+            exhaledMandTidalVolume = alarmSettingsSample(exhaledMandTidalVolume, parseFloat(fieldValues.get(34)), parseFloat(fieldValues.get(33)), "PB_EXHALED_MAND_TIDAL_VOLUME");
+            exhaledSpontTidalVolume = alarmSettingsSample(exhaledSpontTidalVolume, parseFloat(fieldValues.get(36)), parseFloat(fieldValues.get(35)), "PB_EXHALED_SPONT_TIDAL_VOLUME");
+            respRateAlarm = alarmSettingsSample(respRateAlarm, null, parseFloat(fieldValues.get(37)), "PB_RESP_RATE");
+            inspiredTidalVolume = alarmSettingsSample(inspiredTidalVolume, null, parseFloat(fieldValues.get(38)), "PB_INSPIRED_TIDAL_VOLUME");
             
             markOldTechnicalAlertInstances();
             for(int i = 0; i < fieldValues.size(); i++) {
