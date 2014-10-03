@@ -71,8 +71,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         "PB_SETTING_EXP_SENSITIVITY", "PB_SETTING_IBW", "PB_SETTING_TARGET_SUPP_VOLUME", 
     };
     
-    private static Float parseFloat(String s) {
-        if(s == null || s.isEmpty()) {
+    protected static Float parseFloat(String s) {
+        if(s == null || s.isEmpty() || "OFF".equals(s)) {
             return null;
         } else {
             return Float.parseFloat(s);
