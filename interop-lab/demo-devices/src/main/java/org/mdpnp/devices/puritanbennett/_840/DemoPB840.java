@@ -104,7 +104,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         super.doInitCommands(idx);
         switch(idx) {
         case 0:
-            ((PB840Parameters)getDelegate(idx)).sendReset();
+//            ((PB840Parameters)getDelegate(idx)).sendReset();
             ((PB840Parameters)getDelegate(idx)).sendF();
             break;
         default:

@@ -32,8 +32,8 @@ public class PB840Parameters extends PB840 {
         out.flush();
     }
     
-    private static final Pattern miscf = Pattern.compile("^MISCF(\\d{4})(\\d{3})\\02");
-    private static final Pattern dataField = Pattern.compile("^([^,\\02]*)[,\2]{1,2}");
+//    private static final Pattern miscf = Pattern.compile("^MISCF,(\\d{4}),(\\d{3})\\s*,\\02");
+    private static final Pattern dataField = Pattern.compile("^([^,\\03]*)[,\\03]{1,2}");
     
     private static final Logger log = LoggerFactory.getLogger(PB840Parameters.class);
     
@@ -41,24 +41,32 @@ public class PB840Parameters extends PB840 {
     
     public boolean receive() throws IOException {
         String line = in.readLine();
+        log.trace("READ A PARAMETER LINE:"+line);
         while(line != null) {
-            Matcher miscfMatch = miscf.matcher(line);
-            if(miscfMatch.matches()) {
-                fieldValues.clear();
-                @SuppressWarnings("unused")
-                int bytes = Integer.parseInt(miscfMatch.group(1));
-                int fields = Integer.parseInt(miscfMatch.group(2));
-                Matcher fieldMatch = dataField.matcher(line.substring(miscfMatch.end()));
-                for(int i = 0; i < fields; i++) {
-                    if(fieldMatch.find()) {
-                        fieldValues.add(fieldMatch.group(1));
+            Matcher dataFieldMatch = dataField.matcher(line);
+            fieldValues.clear();
+            if(dataFieldMatch.find() && "MISCF".equals(dataFieldMatch.group(1))) {
+                if(dataFieldMatch.find()) {
+                    int bytes = Integer.parseInt(dataFieldMatch.group(1));
+                    if(dataFieldMatch.find()) {
+                        int fields = Integer.parseInt(dataFieldMatch.group(1));
+                        for(int i = 0; i < fields; i++) {
+                            if(dataFieldMatch.find()) {
+                                fieldValues.add(dataFieldMatch.group(1));
+                            } else {
+                                log.warn("Missing expected field " + (i+1));
+                            }
+                        }
+                        receiveMiscF(fieldValues);
                     } else {
-                        log.warn("Missing expected field " + (i+1));
+                        log.warn("Not a valid MISCF response, no field count:"+line);
                     }
+                } else {
+                    log.warn("Not a valid MISCF response, no bytes:"+line);
                 }
-                receiveMiscF(fieldValues);
+                
             } else {
-                log.debug("Not a MISCF response:"+line);
+                log.warn("Not a MISCF response:"+line);
             }
             line = in.readLine();
         }

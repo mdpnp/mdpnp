@@ -217,13 +217,14 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
         synchronized(this) {
             ice.ConnectionState state = getState();
             for(int idx = 0; idx < countSerialPorts; idx++) {
-                log.trace("connect("+idx+") requested to " + portIdentifier);
                 this.portIdentifier[idx] = commaSeparated[idx];
+                log.trace("connect("+idx+") requested to " + portIdentifier[idx]);
                 
                 // TODO Unroll this case; i'm in a hurry at the moment
                 if(idx == 0) {
                     if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Negotiating.equals(state)
                             || ice.ConnectionState.Connecting.equals(state)) {
+                        log.warn("will not connect("+idx+") where Connected, Connecting, or Negotiating already");
                     } else if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
                         connect(idx);
                     }
