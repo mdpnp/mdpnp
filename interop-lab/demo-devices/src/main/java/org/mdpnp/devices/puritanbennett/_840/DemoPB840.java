@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
+import org.mdpnp.devices.serial.SerialSocket.FlowControl;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
@@ -164,13 +165,13 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     
     @Override
     public SerialProvider getSerialProvider(int idx) {
-        SerialProvider serialProvider = super.getSerialProvider(idx);
+        SerialProvider serialProvider = super.getSerialProvider(idx).duplicate();
         switch(idx) {
         case 0:
-            serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One);
+            serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
             break;
         case 1:
-            serialProvider.setDefaultSerialSettings(38400, DataBits.Eight, Parity.None, StopBits.One);
+            serialProvider.setDefaultSerialSettings(38400, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
             break;
         }
         
