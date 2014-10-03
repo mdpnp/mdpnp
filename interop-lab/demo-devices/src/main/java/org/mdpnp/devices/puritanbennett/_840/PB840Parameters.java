@@ -16,9 +16,9 @@ public class PB840Parameters extends PB840 {
         super(in, out);
     }
     
-    private static final byte[] RSET = new byte[] {'R','S','E','T','\r'};
-    private static final byte[] SNDA = new byte[] {'S', 'N', 'D', 'A', '\r'};
-    private static final byte[] SNDF = new byte[] {'S','N','D','F','\r'};
+    private static final byte[] RSET = new byte[] {'R','S','E','T','\r', '\n'};
+    private static final byte[] SNDA = new byte[] {'S', 'N', 'D', 'A', '\r', '\n'};
+    private static final byte[] SNDF = new byte[] {'S','N','D','F','\r', '\n'};
     public void sendReset() throws IOException {
         out.write(RSET);
         out.flush();
