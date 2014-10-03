@@ -16,9 +16,9 @@ public class PB840Parameters extends PB840 {
         super(in, out);
     }
     
-    private static final byte[] RSET = new byte[] {'R','S','E','T','\r', '\n'};
-    private static final byte[] SNDA = new byte[] {'S', 'N', 'D', 'A', '\r', '\n'};
-    private static final byte[] SNDF = new byte[] {'S','N','D','F','\r', '\n'};
+    private static final byte[] RSET = new byte[] {'R','S','E','T','\r'};
+    private static final byte[] SNDA = new byte[] {'S', 'N', 'D', 'A', '\r'};
+    private static final byte[] SNDF = new byte[] {'S','N','D','F','\r'};
     public void sendReset() throws IOException {
         out.write(RSET);
         out.flush();
@@ -33,7 +33,7 @@ public class PB840Parameters extends PB840 {
     }
     
 //    private static final Pattern miscf = Pattern.compile("^MISCF,(\\d{4}),(\\d{3})\\s*,\\02");
-    private static final Pattern dataField = Pattern.compile("^([^,\\03]*)[,\\03]{1,2}");
+    private static final Pattern dataField = Pattern.compile("([^,\\03]*)[,\\03]{1,2}");
     
     private static final Logger log = LoggerFactory.getLogger(PB840Parameters.class);
     
@@ -47,12 +47,14 @@ public class PB840Parameters extends PB840 {
             fieldValues.clear();
             if(dataFieldMatch.find() && "MISCF".equals(dataFieldMatch.group(1))) {
                 if(dataFieldMatch.find()) {
-                    int bytes = Integer.parseInt(dataFieldMatch.group(1));
+                    @SuppressWarnings("unused")
+                    int bytes = Integer.parseInt(dataFieldMatch.group(1).trim());
                     if(dataFieldMatch.find()) {
-                        int fields = Integer.parseInt(dataFieldMatch.group(1));
+                        String s = dataFieldMatch.group(1).trim();
+                        int fields = Integer.parseInt(s);
                         for(int i = 0; i < fields; i++) {
                             if(dataFieldMatch.find()) {
-                                fieldValues.add(dataFieldMatch.group(1));
+                                fieldValues.add(dataFieldMatch.group(1).trim());
                             } else {
                                 log.warn("Missing expected field " + (i+1));
                             }
