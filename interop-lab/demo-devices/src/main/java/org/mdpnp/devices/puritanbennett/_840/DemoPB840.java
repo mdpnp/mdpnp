@@ -47,7 +47,29 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     }
     
     protected InstanceHolder<ice.Numeric> respRateSetting, respRate,exhaledTidalVolume;
+    protected InstanceHolder<ice.AlarmSettings> inspPressure, exhaledMV, exhaledMandTidalVolume, exhaledSpontTidalVolume, respRateAlarm, inspiredTidalVolume;
+    
     protected final List<InstanceHolder<ice.Numeric>> otherFields = new ArrayList<InstanceHolder<ice.Numeric>>();
+    
+    private static final String[] fieldNames = new String[] {
+        "PB_TIME", null, "PB_DATE", "PB_VENT_TYPE", "PB_MODE", "PB_MANDATORY_TYPE", "PB_SPONTANEOUS_TYPE", "PB_TRIGGER_TYPE",
+        "PB_SETTING_RESP_RATE", "PB_SETTING_TIDAL_VOLUME", "PB_SETTING_PEAK_FLOW", "PB_SETTING_O2PCT",
+        "PB_SETTING_PRESS_SENSITIVITY", "PB_SETTING_PEEP_CPAP", "PB_SETTING_PLATEAU", "PB_SETTING_APNEA_INTERVAL",
+        "PB_SETTING_APNEA_TIDAL_VOLUME", "PB_SETTING_APNEA_RESPIRATORY_RATE", "PB_SETTING_APNEA_PEAK_FLOW",
+        "PB_SETTING_APNEA_O2PCT", "PB_SETTING_PCV_APNEA_INSP_PRESSURE", "PB_SETTING_PCV_APNEA_INSP_TIME",
+        "PB_SETTING_APNEA_FLOW_PATTERN", "PB_SETTING_MANDATORY", "PB_APNEA_IE_INSP_COMPONENT",
+        "PB_SETTING_IE_EXP_COMPONENT", "PB_SETTING_SUPPORT_PRESSURE", "PB_SETTING_FLOW_PATTERN",
+        "PB_SETTING_100PCT_O2_SUCTION", null /* insp press high alarm*/, null /* exp press low alarm*/,
+        null /* exhaled MV high*/, null /* exhaled MV low*/, null /* exhaled mand tidal volume high*/,
+        null /* exhaled mand tidal volume low*/, null /* exhaled spont tidal volume high*/,
+        null /* exhaled spont tidal volume low*/, null /* high resp rate */, null /* high inspired tidal volume*/,
+        "PB_SETTING_BASE_FLOW", "PB_SETTING_FLOW_SENSITIVITY", "PB_SETTING_PCV_INSP_PRESSURE",
+        "PB_SETTING_PCV_INSP_TIME", "PB_SETTING_IE_INSP_COMPONENT", "PB_SETTING_IE_EXP_COMPONENT",
+        "PB_SETTING_CONSTANT_DURING_RATE_CHANGE", "PB_SETTING_TUBE_ID", "PB_SETTING_TUBE_TYPE",
+        "PB_SETTING_HUMIDIFICATION_TYPE", "PB_SETTING_HUMIDIFIER_VOLUME", "PB_SETTING_O2_SENSOR",
+        "PB_SETTING_DISCONNECT_SENSITIVITY", "PB_SETTING_RISE_TIME_PCT", "PB_SETTING_PAVPCT_SUPPORT",
+        "PB_SETTING_EXP_SENSITIVITY", "PB_SETTING_IBW", "PB_SETTING_TARGET_SUPP_VOLUME", 
+    };
     
     private class MyPB840Parameters extends PB840Parameters {
         public MyPB840Parameters(InputStream input, OutputStream output) {
@@ -60,28 +82,28 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
                 deviceIdentity.serial_number = fieldValues.get(1);
                 writeDeviceIdentity();
             }
+            inspPressure = alarmSettingsSample(inspPressure, Float.parseFloat(fieldValues.get(30)), Float.parseFloat(fieldValues.get(29)), "PB_INSP_PRESSURE");
+            exhaledMV = alarmSettingsSample(exhaledMV, Float.parseFloat(fieldValues.get(32)), Float.parseFloat(fieldValues.get(31)), "PB_EXHALED_MV");
+            exhaledMandTidalVolume = alarmSettingsSample(exhaledMandTidalVolume, Float.parseFloat(fieldValues.get(34)), Float.parseFloat(fieldValues.get(33)), "PB_EXHALED_MAND_TIDAL_VOLUME");
+            exhaledSpontTidalVolume = alarmSettingsSample(exhaledSpontTidalVolume, Float.parseFloat(fieldValues.get(36)), Float.parseFloat(fieldValues.get(35)), "PB_EXHALED_SPONT_TIDAL_VOLUME");
+            respRateAlarm = alarmSettingsSample(respRateAlarm, null, Float.parseFloat(fieldValues.get(37)), "PB_RESP_RATE");
+            inspiredTidalVolume = alarmSettingsSample(inspiredTidalVolume, null, Float.parseFloat(fieldValues.get(38)), "PB_INSPIRED_TIDAL_VOLUME");
+            
             markOldTechnicalAlertInstances();
-            writeTechnicalAlert("PB_TIME", fieldValues.get(0));
-            writeTechnicalAlert("PB_DATE", fieldValues.get(2));
-            writeTechnicalAlert("PB_VENT_TYPE", fieldValues.get(3));
-            writeTechnicalAlert("PB_MODE", fieldValues.get(4));
-            writeTechnicalAlert("PB_MANDATORY_TYPE", fieldValues.get(5));
-            writeTechnicalAlert("PB_SPONTANEOUS_TYPE", fieldValues.get(6));
-            writeTechnicalAlert("PB_TRIGGER_TYPE", fieldValues.get(7));
-            respRateSetting = numericSample(respRateSetting, Float.parseFloat(fieldValues.get(8)), "PB_SETTING_RESP_RATE", rosetta.MDC_DIM_RESP_PER_MIN.VALUE, null);
-            for(int i = 9; i < fieldValues.size(); i++) {
-                try {
-                    float f = Float.parseFloat(fieldValues.get(i));
-                    while(i >= otherFields.size()) {
-                        otherFields.add(null);
+            for(int i = 0; i < fieldValues.size(); i++) {
+                String name = i < fieldNames.length ? fieldNames[i] : ("PB_F_"+(i+5));
+                if(null != name) {
+                    try {
+                        float f = Float.parseFloat(fieldValues.get(i));
+                        while(i >= otherFields.size()) {
+                            otherFields.add(null);
+                        }
+                        otherFields.set(i, numericSample(otherFields.get(i), f, name, rosetta.MDC_DIM_DIMLESS.VALUE, null));
+                    } catch(NumberFormatException nfe) {
+                        writeTechnicalAlert(name, fieldValues.get(i));
                     }
-                    otherFields.set(i, numericSample(otherFields.get(i), f, "PB_F_"+(i+5), rosetta.MDC_DIM_DIMLESS.VALUE, null));
-                } catch(NumberFormatException nfe) {
-                    writeTechnicalAlert("PB_F_"+(i+5), fieldValues.get(i));
                 }
             }
-//            respRate = numericSample(respRate, Float.parseFloat(fieldValues.get(65)), rosetta.MDC_RESP_RATE.VALUE, rosetta.MDC_DIM_RESP_PER_MIN.VALUE, null);
-//            exhaledTidalVolume = numericSample(exhaledTidalVolume, Float.parseFloat(fieldValues.get(66)), rosetta.MDC_VOL_AWAY_TIDAL_EXP.VALUE, rosetta.MDC_DIM_L_PER_MIN.VALUE, null);
             clearOldTechnicalAlertInstances();
         }
     }
@@ -105,7 +127,6 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         super.doInitCommands(idx);
         switch(idx) {
         case 0:
-//            ((PB840Parameters)getDelegate(idx)).sendReset();
             ((PB840Parameters)getDelegate(idx)).sendF();
             break;
         default:
@@ -129,7 +150,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     
     private synchronized void startRequestSlowData() {
         if (null == requestSlowData) {
-            requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 0L, 500L, TimeUnit.MILLISECONDS);
+            requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 1000L, 1000L, TimeUnit.MILLISECONDS);
             log.trace("Scheduled slow data request task");
         } else {
             log.trace("Slow data request already scheduled");
