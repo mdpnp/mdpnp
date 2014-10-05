@@ -31,7 +31,7 @@ include 'data-types:x73-idl-rti-dds'
 if(null != System.getenv().get("OSPL_HOME") && null != System.getenv().get("SPLICE_TARGET")) {
   include 'data-types:x73-idl-ospl-dds'
 } else {
-  println "Not building with OpenSplice"
+  println "NOTE: To build with OpenSplice compatibility please set the OSPL_HOME and SPLICE_TARGET environment variables."
 }
 include 'interop-lab:demo-devices'
 include 'interop-lab:demo-apps'
