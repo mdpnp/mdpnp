@@ -570,7 +570,7 @@ public class Medibus {
         }
         for (int i = 0; i < n; i++) {
             alarm[i] = Alarm.alloc();
-            alarm[i].priority = response[1 + 15 * i];
+            alarm[i].priority = (byte)(response[1 + 15 * i] - '0');
             switch (cmdEcho) {
             case ReqAlarmsCP1:
                 alarm[i].alarmCode = AlarmMessageCP1.fromByteIf((byte) recvASCIIHex(response, 1 + 15 * i + 1));
