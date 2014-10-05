@@ -253,18 +253,17 @@ public class Configuration {
         if (Application.ICE_Device_Interface.equals(app)) {
             litr = args.listIterator();
             while (litr.hasNext()) {
+                String x = litr.next();
+                String[] y = x.split("\\=");
                 try {
-                    String x = litr.next();
-                    String[] y = x.split("\\=");
                     deviceType = DeviceType.valueOf(y[0]);
-                    log.error("Unknown DeviceType:"+y[0]);
                     litr.remove();
                     if (y.length > 1) {
                         address = y[1];
                     }
                     break;
                 } catch (IllegalArgumentException iae) {
-
+                    log.error("Unknown DeviceType:"+y[0]);
                 }
             }
         }

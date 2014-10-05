@@ -82,7 +82,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
     
     protected static final String priorityText(int priority) {
-        if(priority < priorities.length) {
+        priority--;
+        if(priority >= 0 && priority < priorities.length) {
             return priorities[priority];
         } else {
             return "("+priority+")";
