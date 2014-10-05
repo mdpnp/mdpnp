@@ -334,7 +334,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         protected void receiveAlarms(Alarm[] alarms) {
             for (Alarm a : alarms) {
                 if (a != null) {
-                    writeTechnicalAlert(a.alarmCode.toString(), a.alarmPhrase);
+                    writePatientAlert(a.alarmCode.toString(), a.alarmPhrase);
                 }
             }
         }
