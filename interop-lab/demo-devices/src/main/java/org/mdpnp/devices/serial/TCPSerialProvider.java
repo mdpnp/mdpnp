@@ -101,5 +101,9 @@ public class TCPSerialProvider implements SerialProvider {
     public void setDefaultSerialSettings(int baudrate, DataBits dataBits, Parity parity, StopBits stopBits, FlowControl flowControl) {
 
     }
-
+    
+    @Override
+    public SerialProvider duplicate() {
+        return new TCPSerialProvider();
+    }
 }

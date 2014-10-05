@@ -123,7 +123,7 @@ public class DemoN595 extends AbstractSerialDevice {
     private OutputStream outputStream;
 
     @Override
-    protected void process(InputStream inputStream, OutputStream outputStream) throws IOException {
+    protected void process(int idx, InputStream inputStream, OutputStream outputStream) throws IOException {
         this.outputStream = outputStream;
         fieldDelegate.setInputStream(inputStream);
         fieldDelegate.run();
@@ -134,7 +134,7 @@ public class DemoN595 extends AbstractSerialDevice {
     private static final byte[] exitInteractiveMode = new byte[] { 0x30, 0x0D, 0x0A };
 
     @Override
-    protected void doInitCommands() throws IOException {
+    protected void doInitCommands(int idx) throws IOException {
         OutputStream outputStream = this.outputStream;
         if (null != outputStream) {
             outputStream.write(enterInteractiveMode);
@@ -157,23 +157,23 @@ public class DemoN595 extends AbstractSerialDevice {
     }
 
     @Override
-    protected long getMaximumQuietTime() {
+    protected long getMaximumQuietTime(int idx) {
         return 2200L;
     }
 
     @Override
-    protected long getConnectInterval() {
+    protected long getConnectInterval(int idx) {
         return 4000L;
     }
 
     @Override
-    protected long getNegotiateInterval() {
+    protected long getNegotiateInterval(int idx) {
         return 2000L;
     }
 
     @Override
-    public SerialProvider getSerialProvider() {
-        SerialProvider serialProvider = super.getSerialProvider();
+    public SerialProvider getSerialProvider(int idx) {
+        SerialProvider serialProvider = super.getSerialProvider(idx);
         serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One);
         return serialProvider;
     }

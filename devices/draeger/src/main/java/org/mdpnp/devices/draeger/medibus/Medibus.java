@@ -606,18 +606,23 @@ public class Medibus {
     private static final Pattern dateTimePattern = Pattern.compile("^(\\d{1,2}):(\\d{2}):?(\\d{0,2})\\s*(\\d+)-([A-Z]+)-(\\d+)");    
     private static final Map<String, Integer> germanMonths = new HashMap<String, Integer>();
     static {
+        // In October 2014 our EvitaXL started emitting OCT as the month;
+        // so I added the english-language equivalents here just in case
         germanMonths.put("JAN", Calendar.JANUARY);
         germanMonths.put("FEB", Calendar.FEBRUARY);
         germanMonths.put("MAR", Calendar.MARCH);
         germanMonths.put("APR", Calendar.APRIL);
         germanMonths.put("MAI", Calendar.MAY);
+        germanMonths.put("MAY", Calendar.MAY);
         germanMonths.put("JUN", Calendar.JUNE);
         germanMonths.put("JUL", Calendar.JULY);
         germanMonths.put("AUG", Calendar.AUGUST);
         germanMonths.put("SEP", Calendar.SEPTEMBER);
         germanMonths.put("OKT", Calendar.OCTOBER);
+        germanMonths.put("OCT", Calendar.OCTOBER);
         germanMonths.put("NOV", Calendar.NOVEMBER);
         germanMonths.put("DEZ", Calendar.DECEMBER);
+        germanMonths.put("DEC", Calendar.DECEMBER);
     }
 
     private final ThreadLocal<Calendar> calendar = new ThreadLocal<Calendar>() {
@@ -632,15 +637,33 @@ public class Medibus {
         Matcher m = dateTimePattern.matcher(s = new String(response, 1, len - 3).intern());
         log.trace("Attempting to parse datetime " + s);
         if (m.matches()) {
-            cal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(m.group(1)));
-            cal.set(Calendar.MINUTE, Integer.parseInt(m.group(2)));
-            cal.set(Calendar.SECOND, m.group(3).length()>0?Integer.parseInt(m.group(3)):0);
-            cal.set(Calendar.MILLISECOND, 0);
-            cal.set(Calendar.DATE, Integer.parseInt(m.group(4)));
-            cal.set(Calendar.MONTH, germanMonths.get(m.group(5)));
-            // Note the V500 as of 12-Mar-2014 emits "14" as the year
-            cal.set(Calendar.YEAR, 2000 + Integer.parseInt(m.group(6)));
-            receiveDateTime(cal.getTime());
+            if(m.groupCount()<6) {
+                // This shouldn't happen because the regex wouldn't have matched
+                log.warn("Insufficient capture groups in datetime:" + s);
+            } else {
+                int field = 1;
+                try {
+                    cal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(m.group(field++)));
+                    cal.set(Calendar.MINUTE, Integer.parseInt(m.group(field++)));
+                    String seconds = m.group(field++);
+                    cal.set(Calendar.SECOND, seconds.length()>0?Integer.parseInt(seconds):0);
+                    cal.set(Calendar.MILLISECOND, 0);
+                    cal.set(Calendar.DATE, Integer.parseInt(m.group(field++)));
+                    String germanMonth = m.group(field++);
+                    Integer month = germanMonths.get(germanMonth);
+                    if(null != month) {
+                        cal.set(Calendar.MONTH, month);
+                        // Note the V500 as of 12-Mar-2014 emits "14" as the year
+                        cal.set(Calendar.YEAR, 2000 + Integer.parseInt(m.group(field++)));
+                        receiveDateTime(cal.getTime());
+                    } else {
+                        log.warn("Cannot process German month \""+germanMonth+"\" in " + s);
+                    }
+                    
+                } catch (NumberFormatException nfe) {
+                    log.warn("Unable to parse a field in datetime " + s + " field was \"" + m.group(field)+"\"");
+                }
+            }
         } else {
             log.warn("Received a bad datetime:" + s);
         }

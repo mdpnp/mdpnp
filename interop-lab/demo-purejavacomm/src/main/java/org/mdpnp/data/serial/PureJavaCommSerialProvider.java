@@ -208,4 +208,9 @@ public class PureJavaCommSerialProvider implements SerialProvider {
             throw new IOException(t);
         }
     }
+    
+    @Override
+    public SerialProvider duplicate() {
+        return new PureJavaCommSerialProvider();
+    }
 }

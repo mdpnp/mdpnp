@@ -62,7 +62,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
     }
 
     public DemoNoninPulseOx(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+        super(domainId, eventLoop, NoninPulseOx.class);
 
         failAll();
 
@@ -293,7 +293,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
     }
 
     @Override
-    protected NoninPulseOx buildDelegate(InputStream in, OutputStream out) {
+    protected NoninPulseOx buildDelegate(int idx, InputStream in, OutputStream out) {
         return new MyNoninPulseOx(in, out);
     }
 
@@ -414,30 +414,31 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         }
 
     }
-
-    public void doInitCommands() throws IOException {
-        super.doInitCommands();
+    
+    @Override
+    public void doInitCommands(int idx) throws IOException {
+        super.doInitCommands(idx);
         send();
     }
 
     @Override
-    protected boolean delegateReceive(NoninPulseOx delegate) throws IOException {
+    protected boolean delegateReceive(int idx, NoninPulseOx delegate) throws IOException {
         return delegate.receive();
     }
 
     @Override
-    protected long getConnectInterval() {
+    protected long getConnectInterval(int idx) {
         return 5000L;
     }
 
     @Override
-    protected long getNegotiateInterval() {
+    protected long getNegotiateInterval(int idx) {
         return 500L;
     }
 
     @Override
     // 3 packets per second mean the theoretical max quiet time is 333ms
-    protected long getMaximumQuietTime() {
+    protected long getMaximumQuietTime(int idx) {
         return 3000L;
     }
 
@@ -447,8 +448,8 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
     }
 
     @Override
-    public SerialProvider getSerialProvider() {
-        SerialProvider serialProvider = super.getSerialProvider();
+    public SerialProvider getSerialProvider(int idx) {
+        SerialProvider serialProvider = super.getSerialProvider(idx);
         serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
         return serialProvider;
     }

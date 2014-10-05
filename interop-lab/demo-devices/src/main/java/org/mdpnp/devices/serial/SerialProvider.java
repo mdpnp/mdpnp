@@ -25,5 +25,7 @@ public interface SerialProvider {
 
     void setDefaultSerialSettings(int baudrate, SerialSocket.DataBits dataBits, SerialSocket.Parity parity, SerialSocket.StopBits stopBits,
             SerialSocket.FlowControl flowControl);
+    
+    SerialProvider duplicate();
 
 }

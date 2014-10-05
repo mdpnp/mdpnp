@@ -29,8 +29,8 @@ public class DemoEvitaXL extends AbstractDraegerVent {
     }
 
     @Override
-    public SerialProvider getSerialProvider() {
-        SerialProvider serialProvider = super.getSerialProvider();
+    public SerialProvider getSerialProvider(int idx) {
+        SerialProvider serialProvider = super.getSerialProvider(idx);
         serialProvider.setDefaultSerialSettings(19200, DataBits.Eight, Parity.None, StopBits.One);
         return serialProvider;
     }

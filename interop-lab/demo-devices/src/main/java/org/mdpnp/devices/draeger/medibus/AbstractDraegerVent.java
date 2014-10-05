@@ -462,7 +462,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     // Data is sparse in standby mode; trying to keep alive
                     // TODO need to externalize all these timing settings
                     // eventually
-                    if ((now - timeAwareInputStream.getLastReadTime()) >= (getMaximumQuietTime() / 2L)) {
+                    if ((now - timeAwareInputStream[0].getLastReadTime()) >= (getMaximumQuietTime(0) / 2L)) {
                         medibus.sendCommand(Command.NoOperation);
                         return;
                     }
@@ -609,7 +609,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     public AbstractDraegerVent(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+        super(domainId, eventLoop, RTMedibus.class);
         for (int i = 0; i < realtimeBuffer.length; i++) {
             realtimeBuffer[i] = Collections.synchronizedList(new ArrayList<Number>());
         }
@@ -618,7 +618,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     @Override
-    protected RTMedibus buildDelegate(InputStream in, OutputStream out) {
+    protected RTMedibus buildDelegate(int idx, InputStream in, OutputStream out) {
         log.trace("Creating an RTMedibus");
         try {
             return new MyRTMedibus(in, out);
@@ -628,7 +628,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     @Override
-    protected boolean delegateReceive(RTMedibus delegate) throws IOException {
+    protected boolean delegateReceive(int idx, RTMedibus delegate) throws IOException {
         return delegate.receive();
     }
 
@@ -652,8 +652,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     @Override
-    protected void doInitCommands() throws IOException {
-        super.doInitCommands();
+    protected void doInitCommands(int idx) throws IOException {
+        super.doInitCommands(idx);
         RTMedibus rtMedibus = getDelegate();
 
         rtMedibus.sendCommand(Command.InitializeComm);
@@ -685,17 +685,17 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     @Override
-    protected long getMaximumQuietTime() {
+    protected long getMaximumQuietTime(int idx) {
         return 3000L;
     }
 
     @Override
-    protected long getConnectInterval() {
+    protected long getConnectInterval(int idx) {
         return 3000L;
     }
 
     @Override
-    protected long getNegotiateInterval() {
+    protected long getNegotiateInterval(int idx) {
         return 1000L;
     }
 

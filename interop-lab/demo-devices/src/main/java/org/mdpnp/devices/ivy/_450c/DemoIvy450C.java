@@ -54,7 +54,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
     private static final Logger log = LoggerFactory.getLogger(DemoIvy450C.class);
 
     public DemoIvy450C(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+        super(domainId, eventLoop, AnsarB.class);
         deviceIdentity.manufacturer = "Ivy";
         deviceIdentity.model = "450C";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
@@ -204,27 +204,27 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
     }
 
     @Override
-    protected AnsarB buildDelegate(InputStream in, OutputStream out) {
+    protected AnsarB buildDelegate(int idx, InputStream in, OutputStream out) {
         return new MyAnsarB(in, out);
     }
 
     @Override
-    protected boolean delegateReceive(AnsarB delegate) throws IOException {
+    protected boolean delegateReceive(int idx, AnsarB delegate) throws IOException {
         return delegate.receive();
     }
 
     @Override
-    protected long getMaximumQuietTime() {
+    protected long getMaximumQuietTime(int idx) {
         return 1100L;
     }
 
     @Override
-    protected long getConnectInterval() {
+    protected long getConnectInterval(int idx) {
         return 2000L;
     }
 
     @Override
-    protected long getNegotiateInterval() {
+    protected long getNegotiateInterval(int idx) {
         return 200L;
     }
     
@@ -235,8 +235,8 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
     }
 
     @Override
-    public SerialProvider getSerialProvider() {
-        SerialProvider serialProvider = super.getSerialProvider();
+    public SerialProvider getSerialProvider(int idx) {
+        SerialProvider serialProvider = super.getSerialProvider(idx);
         serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One);
         return serialProvider;
     }

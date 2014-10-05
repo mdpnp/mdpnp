@@ -65,7 +65,8 @@ public class Configuration {
         DraegerEvitaXL(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), 
         DraegerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), 
         DraegerV500_38400(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), 
-        DraegerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4");
+        DraegerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"),
+        PB840(ice.ConnectionType.Serial, "Puritan Bennett", "840");
 
         private final ice.ConnectionType connectionType;
         private final String manufacturer, model;

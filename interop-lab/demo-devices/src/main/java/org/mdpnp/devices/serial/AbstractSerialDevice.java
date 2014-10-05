@@ -15,6 +15,8 @@ package org.mdpnp.devices.serial;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
@@ -23,34 +25,43 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractSerialDevice extends AbstractConnectedDevice implements Runnable {
-    protected abstract void doInitCommands() throws IOException;
+public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
+    protected abstract void doInitCommands(int idx) throws IOException;
 
     protected void reportConnected(String transitionNote) {
+        reportConnected(0, transitionNote);
+    }
+    
+    protected void reportConnected(int idx, String transitionNote) {
         // Once we transition the watchdog will be watching but we don't want to
         // count elapsed
         // silence from prior to connection
-        TimeAwareInputStream tais = this.timeAwareInputStream;
+        TimeAwareInputStream tais = this.timeAwareInputStream[idx];
         if (null != tais) {
             tais.promoteLastReadTime();
         }
-        synchronized (stateMachine) {
-            if (!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
-                if (!stateMachine.transitionIfLegal(ice.ConnectionState.Connected, transitionNote)) {
-                    log.warn("Unable to enter Connected state from " + stateMachine.getState());
+        // TODO Come back to this for multiple serial ports
+        if(idx == 0) {
+            synchronized (stateMachine) {
+                if (!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
+                    if (!stateMachine.transitionIfLegal(ice.ConnectionState.Connected, transitionNote)) {
+                        log.warn("Unable to enter Connected state from " + stateMachine.getState());
+                    }
                 }
             }
+        } else {
+            log.trace("connection("+idx+") reported connected but is not the control connection");
         }
 
     }
 
-    protected abstract void process(InputStream inputStream, OutputStream outputStream) throws IOException;
+    protected abstract void process(int idx, InputStream inputStream, OutputStream outputStream) throws IOException;
 
-    protected SerialSocket socket;
-    protected TimeAwareInputStream timeAwareInputStream;
-    protected Throwable lastError;
+    protected SerialSocket[] socket;
+    protected TimeAwareInputStream[] timeAwareInputStream;
+    protected Throwable[] lastError;
 
-    protected SerialProvider serialProvider;
+    protected SerialProvider[] serialProvider;
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSerialDevice.class);
 
@@ -67,40 +78,68 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
 
     }
 
-    public AbstractSerialDevice(int domainId, EventLoop eventLoop) {
+    public AbstractSerialDevice(final int domainId, final EventLoop eventLoop) {
+        this(domainId, eventLoop, 1);
+    }
+    
+    public AbstractSerialDevice(final int domainId, final EventLoop eventLoop, final int countSerialPorts) {
         super(domainId, eventLoop);
-
-        if (getMaximumQuietTime() <= 0L) {
-            throw new RuntimeException("A positive maximumQuietTime is required");
+        
+        this.serialProvider = new SerialProvider[countSerialPorts];
+        this.lastError = new Throwable[countSerialPorts];
+        this.socket = new SerialSocket[countSerialPorts];
+        this.timeAwareInputStream = new TimeAwareInputStream[countSerialPorts];
+        this.currentThread = new Thread[countSerialPorts];
+        this.portIdentifier = new String[countSerialPorts];
+        this.previousAttempt = new long[countSerialPorts];
+        this.lastIssueInitCommands = new long[countSerialPorts];
+        
+        Set<String> serialPorts = new HashSet<String>();
+        for(int idx = 0; idx < countSerialPorts; idx++) {
+            if (getMaximumQuietTime(idx) <= 0L) {
+                throw new RuntimeException("A positive maximumQuietTime("+idx+") is required");
+            }
+    
+            if (getMaximumQuietTime(idx) < 100L || 0L != getMaximumQuietTime(idx) % 100L) {
+                log.warn("Watchdog interrupts at 10Hz, consider a different getMaximumQuietTime("+idx+")");
+            }
+            
+            // Hard to imagine this varying by provider but just in case...
+            serialPorts.addAll(getSerialProvider(idx).getPortNames());
         }
-
-        if (getMaximumQuietTime() < 100L || 0L != getMaximumQuietTime() % 100L) {
-            log.warn("Watchdog interrupts at 10Hz, consider a different getMaximumQuietTime()");
-        }
+        
+        deviceConnectivity.valid_targets.userData.addAll(serialPorts);
 
         executor.scheduleAtFixedRate(new Watchdog(), 0L, 100L, TimeUnit.MILLISECONDS);
 
-        deviceConnectivity.valid_targets.userData.addAll(getSerialProvider().getPortNames());
     }
 
-    public void setSerialProvider(SerialProvider serialProvider) {
-        this.serialProvider = serialProvider;
+    public void setSerialProvider(int idx, SerialProvider serialProvider) {
+        this.serialProvider[idx] = serialProvider;
     }
-
-    public SerialProvider getSerialProvider() {
-        if (null == serialProvider) {
-            this.serialProvider = SerialProviderFactory.getDefaultProvider();
+    
+    public SerialProvider getSerialProvider(int idx) {
+        if (null == serialProvider[idx]) {
+            this.serialProvider[idx] = SerialProviderFactory.getDefaultProvider();
         }
-        return serialProvider;
+        return serialProvider[idx];
     }
 
     protected void setLastError(Throwable lastError) {
-        log.error("setLastError", lastError);
-        this.lastError = lastError;
+        setLastError(0, lastError);
+    }
+    
+    protected void setLastError(int idx, Throwable lastError) {
+        log.error("setLastError("+idx+")", lastError);
+        this.lastError[idx] = lastError;
     }
 
     public Throwable getLastError() {
-        return lastError;
+        return getLastError(0);
+    }
+    
+    public Throwable getLastError(int idx) {
+        return lastError[idx];
     }
 
     @Override
@@ -124,8 +163,10 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
             }
         }
         if (shouldCancel) {
-            serialProvider.cancelConnect();
-            log.trace("canceled connecting");
+            for(int idx = 0; idx < serialProvider.length; idx++) {
+                serialProvider[idx].cancelConnect();
+                log.trace("canceled connecting("+idx+")");
+            }
         }
         if (shouldClose) {
             log.trace("closing the AbstractSerialDevice");
@@ -134,9 +175,11 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
     }
 
     private void close() {
-        SerialSocket socket = this.socket;
-        if (null != socket) {
-            close(socket);
+        for(int idx = 0; idx < this.socket.length; idx++) {
+            SerialSocket socket = this.socket[idx];
+            if (null != socket) {
+                close(socket);
+            }
         }
     }
 
@@ -156,9 +199,9 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
         }
     }
 
-    private Thread currentThread;
+    private final Thread[] currentThread;
 
-    private String portIdentifier;
+    private final String[] portIdentifier;
 
     private final ThreadGroup threadGroup = new ThreadGroup("AbstractSerialDevice group") {
         public void uncaughtException(Thread t, Throwable e) {
@@ -167,109 +210,146 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
     };
 
     @Override
-    public boolean connect(String portIdentifier) {
-        log.trace("connect requested to " + portIdentifier);
-        synchronized (this) {
-            this.portIdentifier = portIdentifier;
+    public boolean connect(String str) {
+        String[] commaSeparated = str.split(",");
+        int countSerialPorts = Math.min(commaSeparated.length, serialProvider.length);
+        boolean ok = true;
+        synchronized(this) {
             ice.ConnectionState state = getState();
+            for(int idx = 0; idx < countSerialPorts; idx++) {
+                this.portIdentifier[idx] = commaSeparated[idx];
+                log.trace("connect("+idx+") requested to " + portIdentifier[idx]);
+                
+                // TODO Unroll this case; i'm in a hurry at the moment
+                if(idx == 0) {
+                    if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Negotiating.equals(state)
+                            || ice.ConnectionState.Connecting.equals(state)) {
+                        log.warn("will not connect("+idx+") where Connected, Connecting, or Negotiating already");
+                    } else if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
+                        connect(idx);
+                    }
+                } else {
+                    connect(idx);
+                }
+
+            }
             if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Negotiating.equals(state)
                     || ice.ConnectionState.Connecting.equals(state)) {
             } else if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
                 stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting, "connect requested from Disconnected or Disconnecting states");
-
-                currentThread = new Thread(threadGroup, this, "AbstractSerialDevice Processing");
-                currentThread.setDaemon(true);
-                currentThread.start();
             }
+            
         }
-        return true;
+        return ok;
+    }
+    
+    protected void connect(int idx) {
+        currentThread[idx] = new Thread(threadGroup, new SerialDevice(idx), "AbstractSerialDevice("+idx+") Processing");
+        currentThread[idx].setDaemon(true);
+        currentThread[idx].start();
     }
 
-    private long previousAttempt = 0L;
-
-    public void run() {
-        log.info(Thread.currentThread().getName() + " (" + Thread.currentThread().getId() + ") begins");
-
-        SerialSocket socket = null;
-
-        long now = System.currentTimeMillis();
-
-        // Staying in the Connecting state while awaiting another time interval
-        while (now < (previousAttempt + getConnectInterval())) {
-            setConnectionInfo("Waiting to reconnect... " + ((previousAttempt + getConnectInterval()) - now) + "ms");
-            try {
-                Thread.sleep(100L);
-            } catch (InterruptedException e) {
-                log.error("", e);
-            }
-            now = System.currentTimeMillis();
+    protected final long [] previousAttempt;
+    
+    private class SerialDevice implements Runnable {
+        private final int idx;
+        public SerialDevice(final int idx) {
+            this.idx = idx;
         }
-        setConnectionInfo("");
-        previousAttempt = now;
-        try {
-            log.trace("Invoking SerialProvider.connect(" + portIdentifier + ")");
-            socket = getSerialProvider().connect(portIdentifier, 2000L);
-
-            if (null == socket) {
-                log.trace("socket is null after connect");
-                return;
-            } else {
-                synchronized (stateMachine) {
-                    if (ice.ConnectionState.Connecting.equals(stateMachine.getState())) {
-                        if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating, "serial port opened")) {
-                            throw new IllegalStateException("Cannot begin negotiating from " + getState());
-                        }
-                    } else {
-                        // Something happened, perhaps the connect request was
-                        // cancelled?
-                        log.debug("Aborting connection processing because no longer in the Connecting state");
-                        return;
-                    }
+        
+        public void run() {
+            log.info(Thread.currentThread().getName() + " (" + Thread.currentThread().getId() + ") begins");
+    
+            SerialSocket socket = null;
+    
+            long now = System.currentTimeMillis();
+    
+            // Staying in the Connecting state while awaiting another time interval
+            while (now < (previousAttempt[idx] + getConnectInterval(idx))) {
+                setConnectionInfo("Waiting to reconnect... " + ((previousAttempt[idx] + getConnectInterval(idx)) - now) + "ms");
+                try {
+                    Thread.sleep(100L);
+                } catch (InterruptedException e) {
+                    log.error("", e);
                 }
-
+                now = System.currentTimeMillis();
             }
-            this.socket = socket;
+            setConnectionInfo("");
+            previousAttempt[idx] = now;
+            try {
+                log.trace("Invoking SerialProvider("+idx+").connect(" + portIdentifier[idx] + ")");
+                socket = getSerialProvider(idx).connect(portIdentifier[idx], 2000L);
+    
+                if (null == socket) {
+                    log.trace("socket is null after connect");
+                    return;
+                } else {
+                    // TODO using connection 0 as the control connection
+                    if(idx == 0) {
+                        synchronized (stateMachine) {
+                            if (ice.ConnectionState.Connecting.equals(stateMachine.getState())) {
+                                if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating, "serial port opened")) {
+                                    throw new IllegalStateException("Cannot begin negotiating from " + getState());
+                                }
+                            } else {
+                                // Something happened, perhaps the connect request was
+                                // cancelled?
+                                log.debug("Aborting connection processing because no longer in the Connecting state");
+                                return;
+                            }
+                        }
+                    }
 
-            process(timeAwareInputStream = new TimeAwareInputStream(socket.getInputStream()), socket.getOutputStream());
-        } catch (IOException e) {
-            // Let this thread die, it will be replaced
-            log.error("processing thread ends with IOException", e);
-        } finally {
-            log.info(Thread.currentThread().getName() + " (" + Thread.currentThread().getId() + ")  ends");
-            ice.ConnectionState priorState = getState();
-            close(socket);
-            this.socket = null;
-            this.timeAwareInputStream = null;
-
-            stateMachine.transitionIfLegal(ice.ConnectionState.Disconnected, "serial port reached EOF");
-            if (ice.ConnectionState.Connecting.equals(priorState) || ice.ConnectionState.Connected.equals(priorState)
-                    || ice.ConnectionState.Negotiating.equals(priorState)) {
-                log.trace("process thread died unexpectedly, trying to reconnect");
-                connect(portIdentifier);
+    
+                }
+                AbstractSerialDevice.this.socket[idx] = socket;
+    
+                process(idx, timeAwareInputStream[idx] = new TimeAwareInputStream(socket.getInputStream()), socket.getOutputStream());
+            } catch (IOException e) {
+                // Let this thread die, it will be replaced
+                log.error("processing thread ends with IOException", e);
+            } finally {
+                log.info(Thread.currentThread().getName() + " (" + Thread.currentThread().getId() + ")  ends");
+                ice.ConnectionState priorState = getState();
+                close(socket);
+                AbstractSerialDevice.this.socket[idx] = null;
+                AbstractSerialDevice.this.timeAwareInputStream[idx] = null;
+    
+                if(idx == 0) {
+                    stateMachine.transitionIfLegal(ice.ConnectionState.Disconnected, "serial port reached EOF");
+                    if (ice.ConnectionState.Connecting.equals(priorState) || ice.ConnectionState.Connected.equals(priorState)
+                            || ice.ConnectionState.Negotiating.equals(priorState)) {
+                        log.trace("process thread died unexpectedly, trying to reconnect");
+                        AbstractSerialDevice.this.connect(idx);
+                    }
+                } else {
+                    AbstractSerialDevice.this.connect(idx);
+                }
             }
+    
         }
-
     }
-
-    protected long lastIssueInitCommands;
+    protected final long[] lastIssueInitCommands;
 
     protected void watchdog() {
 
         synchronized (stateMachine) {
             ice.ConnectionState state = getState();
             if (ice.ConnectionState.Connected.equals(state)) {
-                TimeAwareInputStream tais = this.timeAwareInputStream;
-                if (null != tais) {
-                    long quietTime = System.currentTimeMillis() - timeAwareInputStream.getLastReadTime();
-                    if (quietTime > getMaximumQuietTime()) {
-
-                        log.warn("WATCHDOG - back to Negotiating after " + quietTime + "ms quiet time (exceeds " + getMaximumQuietTime() + ")");
-                        if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating, "watchdog "+quietTime + "ms quiet time (exceeds " + getMaximumQuietTime() + ")")) {
-                            log.warn("WATCHDOG - unable to move from Connecting to Negotiating state (due to silence on the line)");
+                for(int idx = 0; idx < this.timeAwareInputStream.length; idx++) {
+                    TimeAwareInputStream tais = AbstractSerialDevice.this.timeAwareInputStream[idx];
+                    if (null != tais) {
+                        long quietTime = System.currentTimeMillis() - AbstractSerialDevice.this.timeAwareInputStream[idx].getLastReadTime();
+                        if (quietTime > getMaximumQuietTime(idx)) {
+    
+                            log.warn("WATCHDOG - back to Negotiating after " + quietTime + "ms quiet time (exceeds " + getMaximumQuietTime(idx) + ")");
+                            if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating, "watchdog "+quietTime + "ms quiet time (exceeds " + getMaximumQuietTime(idx) + ")")) {
+                                log.warn("WATCHDOG - unable to move from Connecting to Negotiating state (due to silence on the line)");
+                            }
                         }
+                        // Rely upon the inheritor to determine when to successfully
+                        // move into the Connected state
                     }
-                    // Rely upon the inheritor to determine when to successfully
-                    // move into the Connected state
                 }
             }
         }
@@ -277,15 +357,20 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
         synchronized (stateMachine) {
             ice.ConnectionState state = getState();
             if (ice.ConnectionState.Negotiating.equals(state)) {
-                if (System.currentTimeMillis() >= (lastIssueInitCommands + getNegotiateInterval())) {
-                    log.trace("invoking doInitCommands");
-                    SerialSocket socket = this.socket;
-                    if (null != socket) {
-                        try {
-                            doInitCommands();
-                            lastIssueInitCommands = System.currentTimeMillis();
-                        } catch (IOException e) {
-                            setLastError(e);
+                for(int idx = 0; idx < AbstractSerialDevice.this.socket.length; idx++) {
+                    if (System.currentTimeMillis() >= (lastIssueInitCommands[idx] + getNegotiateInterval(idx))) {
+                        log.trace("invoking doInitCommands("+idx+")");
+                        lastIssueInitCommands[idx] = System.currentTimeMillis();
+                        SerialSocket socket = AbstractSerialDevice.this.socket[idx];
+                        if (null != socket) {
+                            try {
+                                
+                                doInitCommands(idx);
+                            } catch (IOException e) {
+                                setLastError(idx, e);
+                            }
+                        } else {
+                            log.warn("Cannot issue doInitCommands("+idx+") in a null socket");
                         }
                     }
                 }
@@ -293,7 +378,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
         }
     }
 
-    protected long getMaximumQuietTime() {
+    protected long getMaximumQuietTime(int idx) {
         return -1L;
     }
 
@@ -313,7 +398,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
      * 
      * @return
      */
-    protected long getConnectInterval() {
+    protected long getConnectInterval(int idx) {
         return 20000L;
     }
 
@@ -322,7 +407,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice imple
      * 
      * @return
      */
-    protected long getNegotiateInterval() {
+    protected long getNegotiateInterval(int idx) {
         return 10000L;
     }
 }

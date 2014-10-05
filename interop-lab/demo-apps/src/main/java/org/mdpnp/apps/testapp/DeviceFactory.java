@@ -31,6 +31,7 @@ import org.mdpnp.devices.nonin.pulseox.DemoNoninPulseOx;
 import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
 import org.mdpnp.devices.philips.intellivue.DemoEthernetIntellivue;
 import org.mdpnp.devices.philips.intellivue.DemoSerialIntellivue;
+import org.mdpnp.devices.puritanbennett._840.DemoPB840;
 import org.mdpnp.devices.simulation.co2.SimCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
 import org.mdpnp.devices.simulation.multi.SimMultiparameter;
@@ -48,6 +49,8 @@ public class DeviceFactory {
     public static final AbstractDevice buildDevice(DeviceType type, int domainId, EventLoop eventLoop) throws NoSuchFieldException,
             SecurityException, IOException {
         switch (type) {
+        case PB840:
+            return new DemoPB840(domainId, eventLoop);
         case Nonin:
             return new DemoNoninPulseOx(domainId, eventLoop);
         case NellcorN595:

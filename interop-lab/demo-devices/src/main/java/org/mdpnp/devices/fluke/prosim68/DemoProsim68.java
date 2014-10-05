@@ -60,7 +60,7 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
     protected final GlobalSimulationObjectiveMonitor monitor;
 
     public DemoProsim68(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+        super(domainId, eventLoop, FlukeProSim8.class);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Fluke";
         deviceIdentity.model = "Prosim 6 / 8";
@@ -77,20 +77,20 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
     }
 
     private ScheduledFuture<?> linkIsActive;
-
-    public SerialProvider getSerialProvider() {
-        SerialProvider serialProvider = super.getSerialProvider();
+    @Override
+    public SerialProvider getSerialProvider(int idx) {
+        SerialProvider serialProvider = super.getSerialProvider(idx);
         serialProvider.setDefaultSerialSettings(115200, DataBits.Eight, Parity.None, StopBits.One, FlowControl.Hardware);
         return serialProvider;
     }
 
     @Override
-    protected FlukeProSim8 buildDelegate(InputStream in, OutputStream out) {
+    protected FlukeProSim8 buildDelegate(int idx, InputStream in, OutputStream out) {
         return new MyFlukeProSim8(in, out);
     }
 
     @Override
-    protected boolean delegateReceive(FlukeProSim8 delegate) throws IOException {
+    protected boolean delegateReceive(int idx, FlukeProSim8 delegate) throws IOException {
         delegate.receiveCommand();
 
         return true;
@@ -109,7 +109,7 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
     }
 
     @Override
-    protected void doInitCommands() throws IOException {
+    protected void doInitCommands(int idx) throws IOException {
         log.debug("Ident");
         String identifier = getDelegate().ident();
         if (null == identifier) {
@@ -148,21 +148,21 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
         // e.printStackTrace();
         // }
         reportConnected("message received");
-        super.doInitCommands();
+        super.doInitCommands(idx);
     }
 
     @Override
-    protected long getMaximumQuietTime() {
+    protected long getMaximumQuietTime(int idx) {
         return 5000L;
     }
 
     @Override
-    protected long getConnectInterval() {
+    protected long getConnectInterval(int idx) {
         return 3000L;
     }
 
     @Override
-    protected long getNegotiateInterval() {
+    protected long getNegotiateInterval(int idx) {
         return 1000L;
     }
 
