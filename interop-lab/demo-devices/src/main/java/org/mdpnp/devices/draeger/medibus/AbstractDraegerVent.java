@@ -65,7 +65,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         };
     };
     
-    protected static final String[] priorities = new String[30];
+    protected static final String[] priorities = new String[31];
     static {
         for(int i = 0; i < 6; i++) {
             priorities[i] = "Advisory("+(i+1)+") w/o tone";
@@ -86,7 +86,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         if(priority >= 0 && priority < priorities.length) {
             return priorities[priority];
         } else {
-            return "("+priority+")";
+            return "("+(priority+1)+")";
         }
     }
 
