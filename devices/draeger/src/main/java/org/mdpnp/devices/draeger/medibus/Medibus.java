@@ -155,6 +155,9 @@ public class Medibus {
             return 10 + v - 'A';
         } else if (v >= 'a' && v <= 'f') {
             return 10 + v - 'a';
+        } else if(' ' == v) {
+            // attribute no value to spaces
+            return 0;
         } else {
             throw new IllegalArgumentException(v + " is not a valid ascii character representing a hex digit");
         }
