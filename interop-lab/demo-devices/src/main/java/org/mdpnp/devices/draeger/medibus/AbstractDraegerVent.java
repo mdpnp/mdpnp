@@ -64,6 +64,30 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             return new Time_t(0, 0);
         };
     };
+    
+    protected static final String[] priorities = new String[30];
+    static {
+        for(int i = 0; i < 6; i++) {
+            priorities[i] = "Advisory("+(i+1)+") w/o tone";
+        }
+        for(int i = 6; i < 10; i++) {
+            priorities[i] = "Advisory("+(i+1)+") w/tone";
+        }
+        for(int i = 10; i < 24; i++) {
+            priorities[i] = "Caution("+(i+1)+")";
+        }
+        for(int i = 24; i < 31; i++) {
+            priorities[i] = "Warning("+(i+1)+")";
+        }
+    }
+    
+    protected static final String priorityText(int priority) {
+        if(priority < priorities.length) {
+            return priorities[priority];
+        } else {
+            return "("+priority+")";
+        }
+    }
 
     protected Time_t currentTime() {
         long now = System.currentTimeMillis() + deviceClockOffset;
@@ -330,11 +354,12 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             }
         }
 
+        
         @Override
         protected void receiveAlarms(Alarm[] alarms) {
             for (Alarm a : alarms) {
                 if (a != null) {
-                    writePatientAlert(a.alarmCode.toString(), a.alarmPhrase);
+                    writePatientAlert(a.alarmCode.toString(), a.alarmPhrase+" "+priorityText(a.priority));
                 }
             }
         }
