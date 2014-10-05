@@ -249,6 +249,23 @@ public class Configuration {
         if (null == app) {
             return null;
         }
+        
+        litr = args.listIterator();
+        while (litr.hasNext()) {
+            try {
+                String x = litr.next();
+                try {
+                    domainId = Integer.parseInt(x);
+                    litr.remove();
+                    break;
+                } catch (NumberFormatException nfe) {
+
+                }
+
+            } catch (IllegalArgumentException iae) {
+
+            }
+        }
 
         if (Application.ICE_Device_Interface.equals(app)) {
             litr = args.listIterator();
@@ -268,21 +285,7 @@ public class Configuration {
             }
         }
 
-        litr = args.listIterator();
-        while (litr.hasNext()) {
-            try {
-                String x = litr.next();
-                try {
-                    domainId = Integer.parseInt(x);
-                    break;
-                } catch (NumberFormatException nfe) {
 
-                }
-
-            } catch (IllegalArgumentException iae) {
-
-            }
-        }
 
         return new Configuration(app, domainId, deviceType, address);
     }
