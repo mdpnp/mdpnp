@@ -585,9 +585,7 @@ public class Medibus {
             alarm[i].alarmPhrase = new String(response, 1 + 15 * i + 3, 12).intern();
         }
         for(int i = n; i < alarm.length; i++) {
-            if(null != alarm[i]) {
-                Alarm.free(alarm[i]);
-            }
+            Alarm.free(alarm[i]);
             alarm[i] = null;
         }
         receiveAlarms(alarm);
@@ -689,6 +687,7 @@ public class Medibus {
             data[i].data = new String(response, 1 + i * 7 + 2, 5).intern();
         }
         for(int i = n; i < data.length; i++) {
+            Data.free(data[i]);
             data[i] = null;
         }
         receiveDeviceSetting(data);
@@ -726,6 +725,7 @@ public class Medibus {
             off += 4 + length; // 4 = 2byte code, 1 byte length, 1 byte trailing ETX
         }
         for(int i = n; i < data.length; i++) {
+            Data.free(data[i]);
             data[i] = null;
         }
         
