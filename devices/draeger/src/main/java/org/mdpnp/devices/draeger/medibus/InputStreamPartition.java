@@ -166,7 +166,7 @@ public class InputStreamPartition implements Runnable {
         this.streamsToWrite = new PipedOutputStream[filters.length];
         for(int i = 0; i < filters.length; i++) {
             if(filters[i].createPipe()) {
-                this.streamsToRead[i] = new PipedInputStream();
+                this.streamsToRead[i] = new PipedInputStream(8192);
                 this.streamsToWrite[i] = new PipedOutputStream(this.streamsToRead[i]);
             }
         }

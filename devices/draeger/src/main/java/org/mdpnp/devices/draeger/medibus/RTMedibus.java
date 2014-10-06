@@ -316,7 +316,7 @@ public class RTMedibus extends Medibus {
         return sign * result;
     }
 
-    private void receiveRealtimeConfig(byte[] response, int len) {
+    private void receiveRealtimeConfig(byte[] response, int len) throws CorruptMedibusException {
         // First byte is the command and the last two bytes are the checksum
         len -= 3;
         RTDataConfig[] rtDataConfig = new RTDataConfig[len / 23];
@@ -340,7 +340,7 @@ public class RTMedibus extends Medibus {
     }
 
     @Override
-    protected void receiveResponse(byte[] response, int len) {
+    protected void receiveResponse(byte[] response, int len) throws CorruptMedibusException {
         if (len < 1) {
             return;
         }

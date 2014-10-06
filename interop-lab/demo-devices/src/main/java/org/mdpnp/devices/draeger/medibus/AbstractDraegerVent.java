@@ -220,7 +220,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
 
         @Override
-        protected void receiveResponse(byte[] response, int len) {
+        protected void receiveResponse(byte[] response, int len) throws CorruptMedibusException {
             super.receiveResponse(response, len);
             Object cmdEcho = Command.fromByteIf(response[0]);
             if (cmdEcho instanceof Command) {
@@ -301,7 +301,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
 
         @Override
-        protected void receiveAlarmCodes(Command cmdEcho, byte[] response, int len) {
+        protected void receiveAlarmCodes(Command cmdEcho, byte[] response, int len) throws CorruptMedibusException {
             switch (cmdEcho) {
             case ReqAlarmsCP1:
                 // Before processing alarms codepage 1, mark current alarms

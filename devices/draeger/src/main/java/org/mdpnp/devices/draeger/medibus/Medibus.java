@@ -148,7 +148,7 @@ public class Medibus {
         }
     }
 
-    private static final int asciiValue(int v) {
+    private static final int asciiValue(int v) throws CorruptMedibusException {
         if (v >= '0' && v <= '9') {
             return v - '0';
         } else if (v >= 'A' && v <= 'F') {
@@ -159,15 +159,15 @@ public class Medibus {
             // attribute no value to spaces
             return 0;
         } else {
-            throw new IllegalArgumentException(v + " is not a valid ascii character representing a hex digit");
+            throw new CorruptMedibusException(v + " is not a valid ascii character representing a hex digit");
         }
     }
 
-    protected static final int recvASCIIHex(byte[] buf, int off) {
+    protected static final int recvASCIIHex(byte[] buf, int off) throws CorruptMedibusException {
         return recvASCIIHex(buf, off, 2);
     }
 
-    protected static final int recvASCIIHex(byte[] buf, int off, int len) {
+    protected static final int recvASCIIHex(byte[] buf, int off, int len) throws CorruptMedibusException {
         int v = 0;
         int totalmask = 0;
         for (int i = 0; i < len; i++) {
@@ -352,7 +352,7 @@ public class Medibus {
         log.debug("Unknown command:" + cmdEcho);
     }
 
-    protected void receiveResponse(byte[] buffer, int len) {
+    protected void receiveResponse(byte[] buffer, int len) throws CorruptMedibusException {
         if (len < 1) {
             log.warn("Empty response");
             return;
@@ -439,7 +439,7 @@ public class Medibus {
     }
 
     private Data[] data = new Data[1];
-    protected void receiveDataCodes(Command cmdEcho, byte[] response, int len) {
+    protected void receiveDataCodes(Command cmdEcho, byte[] response, int len) throws CorruptMedibusException {
         int codepage = 0;
 
         switch (cmdEcho) {
@@ -563,7 +563,7 @@ public class Medibus {
         }        
     }
     private Alarm[] alarm = new Alarm[1];
-    protected void receiveAlarmCodes(Command cmdEcho, byte[] response, int len) {
+    protected void receiveAlarmCodes(Command cmdEcho, byte[] response, int len) throws CorruptMedibusException {
         int n = len / 15;
         if(alarm.length < n) {
             alarm = new Alarm[n];
@@ -674,7 +674,7 @@ public class Medibus {
         log.trace("DateTime:" + date);
     }
 
-    protected void receiveDeviceSetting(byte[] response, int len) {
+    protected void receiveDeviceSetting(byte[] response, int len) throws CorruptMedibusException {
         len -= 3; // leading command and trailing 2byte checksum
         int n = len / 7;
         if(data.length < n) {
@@ -702,7 +702,7 @@ public class Medibus {
         }
     }
 
-    protected void receiveTextMessage(byte[] response, int len) {
+    protected void receiveTextMessage(byte[] response, int len) throws CorruptMedibusException {
         int off = 0;
         // Take off the checksum bytes and command code from the count
         len -= 3;
@@ -872,16 +872,24 @@ public class Medibus {
             case ASCIIByte.CR:
                 if (null != topBuffer) {
                     if(log.isTraceEnabled()) {
-                        String msg = HexUtil.dump(ByteBuffer.wrap(topBuffer.receiveBuffer, 0, topBuffer.getCount()), 80);
+                        String msg = topBuffer.getType() + ":"+HexUtil.dump(ByteBuffer.wrap(topBuffer.receiveBuffer, 0, topBuffer.getCount()), 80);
                         log.trace(msg);
                     }
-                    switch (topBuffer.getType()) {
-                    case Command:
-                        receiveCommand(topBuffer.getReceiveBuffer(), topBuffer.getCount());
-                        break;
-                    case Response:
-                        receiveResponse(topBuffer.getReceiveBuffer(), topBuffer.getCount());
-                        break;
+                    try {
+                        switch (topBuffer.getType()) {
+                        case Command:
+                            receiveCommand(topBuffer.getReceiveBuffer(), topBuffer.getCount());
+                            break;
+                        case Response:
+                            receiveResponse(topBuffer.getReceiveBuffer(), topBuffer.getCount());
+                            break;
+                        }
+                    } catch (CorruptMedibusException cme) {
+                        // The contents of this frame were invalid, but we will continue onto the next frame
+                        // depending on intended use this might not be a desired behaviour; or perhaps more likely
+                        // better reporting of this type of error is required.
+                        String msg = topBuffer.getType() + ":"+HexUtil.dump(ByteBuffer.wrap(topBuffer.receiveBuffer, 0, topBuffer.getCount()), 80);
+                        log.error(msg);
                     }
                     freeBuffers.add(topBuffer);
                     buffers.remove(0);
