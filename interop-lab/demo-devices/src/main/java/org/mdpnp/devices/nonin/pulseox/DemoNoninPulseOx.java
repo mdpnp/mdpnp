@@ -87,17 +87,6 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         return true;
     }
 
-    protected void iconOrBlank(String model, String icon) {
-        deviceIdentity.model = model;
-        try {
-            iconFromResource(deviceIdentity, icon);
-        } catch (IOException e) {
-            log.error("Error loading icon resource", e);
-            deviceIdentity.icon.image.userData.clear();
-        }
-        writeDeviceIdentity();
-    }
-
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState, String transitionNote) {
         super.stateChanged(newState, oldState, transitionNote);

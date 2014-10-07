@@ -488,13 +488,26 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     if (null != prodSpec) {
                         log.info("ProductionSpecification");
                         log.info("" + prodSpec.getValue());
-                        VariableLabel vlabel = prodSpec.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER,
-                                ComponentId.ID_COMP_PRODUCT);
-                        if (vlabel != null) {
-                            deviceIdentity.serial_number = vlabel.getString();
-                            writeDeviceIdentity();
+                        VariableLabel serial = prodSpec.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER, ComponentId.ID_COMP_PRODUCT);
+                        VariableLabel part = prodSpec.getValue().getByComponentId(ProductionSpecificationType.PART_NUMBER, ComponentId.ID_COMP_PRODUCT);
+                        if (null != serial) {
+                            deviceIdentity.serial_number = serial.getString();
+                        } else {
+                            log.warn("No serial number found in the ProductionSpecification");
                         }
-                        vlabel = prodSpec.getValue().getByComponentId(ProductionSpecificationType.PART_NUMBER, ComponentId.ID_COMP_PRODUCT);
+                        if(null != part) {
+                            if("865240".equals(part.getString())) {
+                                iconOrBlank("MX800", "mx800.png");
+                            } else {
+                                iconOrBlank("MP70", "mp70.png");
+                            } 
+                        } else {
+                            log.warn("No PART NUMBER for ID COMP PRODUCT");
+                            writeDeviceIdentity();
+                        }                        
+                        
+                    } else {
+                        writeDeviceIdentity();
                     }
 
                     Attribute<org.mdpnp.devices.philips.intellivue.data.String> firstName = attrs.getAttribute(AttributeId.NOM_ATTR_PT_NAME_GIVEN,
