@@ -332,9 +332,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 MdsCreateEvent createEvent = (MdsCreateEvent) eventReport.getEvent();
                 AttributeValueList attrs = createEvent.getAttributes();
                 Attribute<SystemModel> asm = attrs.getAttribute(AttributeId.NOM_ATTR_ID_MODEL, SystemModel.class);
-                Attribute<org.mdpnp.devices.philips.intellivue.data.String> as = attrs.getAttribute(AttributeId.NOM_ATTR_ID_BED_LABEL,
-                        org.mdpnp.devices.philips.intellivue.data.String.class);
-                Attribute<ProductionSpecification> ps = attrs.getAttribute(AttributeId.NOM_ATTR_ID_PROD_SPECN, ProductionSpecification.class);
+//                Attribute<org.mdpnp.devices.philips.intellivue.data.String> as = attrs.getAttribute(AttributeId.NOM_ATTR_ID_BED_LABEL,
+//                        org.mdpnp.devices.philips.intellivue.data.String.class);
 
                 Attribute<AbsoluteTime> clockTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_ABS, AbsoluteTime.class);
                 Attribute<RelativeTime> offsetTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_REL, RelativeTime.class);
@@ -355,22 +354,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     log.info("Device started (in local time) at " + new Date(deviceStartTimeInLocalTime));
                 }
 
-                if (ps != null) {
-                    log.info("ProductionSpecification");
-                    log.info("" + ps.getValue());
-                    VariableLabel vl = ps.getValue().getByComponentId(ProductionSpecificationType.SERIAL_NUMBER, ComponentId.ID_COMP_PRODUCT);
-                    if (null != vl) {
-                        deviceIdentity.serial_number = vl.getString();
-                        writeDeviceIdentity();
-                    }
-                }
-
                 if (null != asm) {
                     deviceIdentity.manufacturer = asm.getValue().getManufacturer().getString();
-                    deviceIdentity.model = asm.getValue().getModelNumber().getString();
-                    writeDeviceIdentity();
-                }
-                if (null != as) {
                 }
                 switch (stateMachine.getState().ordinal()) {
                 case ice.ConnectionState._Negotiating:
