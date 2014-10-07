@@ -604,8 +604,8 @@ public class Medibus {
     // This regex is deliberately constructed
     // Sometimes the evitaXL doesn't emit seconds
     // Sometimes the V500 emits no space
-    private static final Pattern dateTimePattern = Pattern.compile("^(\\d{1,2}):(\\d{2}):?(\\d{0,2})\\s*(\\d+)-([A-Z]+)-(\\d+)");    
-    private static final Map<String, Integer> germanMonths = new HashMap<String, Integer>();
+    protected static final Pattern dateTimePattern = Pattern.compile("^\\s*(\\d{1,2}):(\\d{2}):?(\\d{0,2})\\s*(\\d+)-([A-Z]+)-(\\d+)");    
+    protected static final Map<String, Integer> germanMonths = new HashMap<String, Integer>();
     static {
         // In October 2014 our EvitaXL started emitting OCT as the month;
         // so I added the english-language equivalents here just in case
