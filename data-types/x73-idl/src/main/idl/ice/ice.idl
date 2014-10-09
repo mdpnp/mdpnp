@@ -1,29 +1,108 @@
+/**
+ * @author Jeff Plourde
+ * These are the data types and topic names used by the OpenICE system.
+ * 
+ * A nominal level of namespacing.  In java this will create an ice
+ * package.  In C++ this will create a namespace.  In C this will create
+ * a name prefix.  Type names will also be scoped with an "ice::" prefix.
+ * We do not use such a prefix in topic names because colons are not legal
+ * characters for use in DDS topics per section A.2 of the DDS spec version 1.2
+ * http://www.omg.org/spec/DDS/1.2/
+ * 
+ * Excerpted...
+ * TOPICNAME - A topic name is an identifier for a topic, and is defined as any 
+ * series of characters ‘a’, ..., ‘z’, ‘A’, ..., ‘Z’, ‘0’, ..., ‘9’, ‘-’ but may 
+ * not start with a digit.
+ *
+ * Note: the #pragma syntax for specifying key fields is used by PrismTech OpenSplice.
+ * The RTI Connext code generator currently uses the //@key syntax and will generate
+ * harmless warnings about the #pragma definitions in its preprocessing step.
+ *
+ */
 module ice {
-
+  /**
+   * A placeholder type for evolving FDA work on UDI.  Thus far 64 ISO-8859-1 characters
+   * is sufficient for holding FDA mandated unique device identifiers but we should
+   * monitor for changes.
+   *
+   * http://www.fda.gov/MedicalDevices/DeviceRegulationandGuidance/UniqueDeviceIdentification/
+   */
   typedef string<64> UniqueDeviceIdentifier;
+  
+  /**
+   * A type for representing nomenclature codes from the ISO/IEEE 11073-10101 along with 
+   * further work by the Rosetta Terminology Mapping project as maintained by NIST:
+   * https://rtmms.nist.gov/rtmms/index.htm
+   * 64 ISO-8859-1 characters is sufficient to utilize any "MDC" code currently accepted
+   * in harmonized rosetta.
+   */ 
   typedef string<64> MetricIdentifier;
+  
+  /**
+   * For multiple instances of the same sensor this type is used for disambiguation.
+   * TODO Must these always begin at 0?
+   */
   typedef long InstanceIdentifier;
+  
+  /**
+   * A type for representing unit codes from the ISO/IEEE 11073-10101 along with further work
+   * by the Rosetta Terminology Mapping project as maintained by NIST:
+   * https://rtmms.nist.gov/rtmms/index.htm
+   */
   typedef string<64> UnitIdentifier;
+  
+  /**
+   * A type for "long" string fields such as those descriptive of persons, places, and things.
+   * These are UTF32 encoded to support international use.
+   */
   typedef wstring<128> LongString;
+  
+  /**
+   * For a connected device these are the valid targets the device adapter might connect to.
+   * These are often the names of serial (RS-232) ports available on the adapter.
+   */
   typedef sequence<LongString, 128> ValidTargets;
+  
+  /**
+   * Contains image data with the type specified externally.
+   */
   typedef sequence<octet, 65530> ImageData;
+  
+  /**
+   * A sequence of values sampled at a high data rate (> 3Hz)
+   */
   typedef sequence<float, 1024> Values;
 
+  /**
+   * Definition for absolute time since the epoch in nanosecond resolution in the spirit
+   * of the built-in DDS type and the "struct timespec" structure.
+   * http://pubs.opengroup.org/onlinepubs/7908799/xsh/time.h.html
+   */ 
   struct Time_t {
     long sec;
     long nanosec;
   }; //@top-level false
 
-  
-
+  /**
+   * At regular intervals (currently every 2 seconds) every OpenICE participant should 
+   * publish to this topic. When the instance of HeartBeat associated with a device is no 
+   * longer alive that device should be considered disconnected from the system. The Type 
+   * description indicates whether the heartbeat came from a Device or Supervisor.
+   */
   struct HeartBeat {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     string<32> type;
-    
   }; //@top-level true
   #pragma keylist HeartBeat unique_device_identifier
   const string HeartBeatTopic = "HeartBeat";
   
+  /**
+   * Upon receipt of a HeartBeat sample an OpenICE participant should publish to this 
+   * topic the original source timestamp of that heartbeat as well as the reception time. 
+   * When this TimeSync message arrives back at the participant which originated the heartbeat 
+   * enough information has been gathered to ascertain clock synchronization. So a Supervisory 
+   * participant can determine whether any device clocks are out of sync.
+   */
   struct TimeSync {
     UniqueDeviceIdentifier heartbeat_source; //@key
     UniqueDeviceIdentifier heartbeat_recipient; //@key
@@ -33,11 +112,20 @@ module ice {
   #pragma keylist TimeSync heartbeat_source heartbeat_recipient
   const string TimeSyncTopic = "TimeSync";
 
+  /**
+   * Structure that includes binary image data encoded in the specified MIME type.
+   */
   struct Image {
     string<64> content_type;
     ImageData image;
   }; //@top-level false
 
+  /**
+   * DeviceIdentity allows a device to share identifying information. A device generally 
+   * publishes this information only once. A device with a further connection, perhaps a 
+   * serial RS-232 link, might publish details like serial number only after they become 
+   * available.
+   */
   struct DeviceIdentity {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     LongString manufacturer;
@@ -49,20 +137,43 @@ module ice {
   #pragma keylist DeviceIdentity unique_device_identifier
   const string DeviceIdentityTopic = "DeviceIdentity";
 
+  /**
+   * For a further connected device (device 'adapter') this enumerates the possible states
+   * of the further connection to a device.
+   */
   enum ConnectionState {
+    /** Connection is initialized and data is flowing normally */
     Connected,
+    /** Connection has been physically made (perhaps an open socket or serial port) but no information has been exchanged
     Connecting,
+    /** Information exchange has commenced to establish the connection.  Some devices may skip this state. */
     Negotiating,
+    /** Disconnection has been requested and is being processed. */
     Disconnecting,
+    /** The connection is not active. */
     Disconnected
   };
 
+  /**
+   * For a further connected device (device 'adapter') this enumerates the possible
+   * natures of the further connection.
+   */
   enum ConnectionType {
+    /** An RS-232 connection */
     Serial,
+    /** A simulator that emulates connected device behaviors. */
     Simulated,
+    /** A network connection (typically IP/Ethernet) */
     Network
   };
 
+  /**
+   * DeviceConnectivity shares information about a device that has a further connection to another device, such as 
+   * a serial RS-232 link. The status of that further connection is published as well as additional information about 
+   * the connection (often details about the connection process). Targets are also provided for an associated objective 
+   * topic whereby establishment of the further connection can be requested by another participant. All current OpenICE
+   * device adapters attempt to establish such a connection by default.
+   */
   struct DeviceConnectivity {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     ConnectionState state;
@@ -71,22 +182,24 @@ module ice {
     ValidTargets valid_targets;
   };
   #pragma keylist DeviceConnectivity unique_device_identifier
+  const string DeviceConnectivityTopic = "DeviceConnectivity";
 
+  /**
+   * This topic allows a participant to instruct a further connected device adapter to establish the further connection
+   * to the specified target.
+   */
   struct DeviceConnectivityObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     boolean connected;
     LongString target;
   };
   #pragma keylist DeviceConnectivityObjective unique_device_identifier
-
-
-  const string DeviceConnectivityTopic = "DeviceConnectivity";
   const string DeviceConnectivityObjectiveTopic = "DeviceConnectivityObjective";
 
-
-
-
-  // SPECULATIVE
+  /**
+   * A number of speculative nomenclature codes not (yet) included in the
+   * harmonized rosetta.
+   */
   const string MDC_PRESS_CUFF_NEXT_INFLATION = "MDC_PRESS_CUFF_NEXT_INFLATION";
   const string MDC_PRESS_CUFF_INFLATION = "MDC_PRESS_CUFF_INFLATION";
 
@@ -118,7 +231,16 @@ module ice {
   const string MDC_ECG_LEAD_AVF = "MDC_ECG_LEAD_AVF";
   const string MDC_ECG_LEAD_AVL = "MDC_ECG_LEAD_AVL";
   
-
+  /**
+   * Numerics are values observed by sensors at a relatively slow rate; generally <=3Hz. 
+   * Multiple sensors may exist for the same metric so the instance_id serves to distinguish 
+   * between them. If a timestamp is available from the device's internal clock it is specified 
+   * as device_time. A device ought to register an instance of Numeric when the associated sensor 
+   * might provide observations. If the sensor is physically disconnected or otherwise certain not 
+   * to provide samples then the associated instance should be unregistered. Sensors are encouraged 
+   * to publish a new sample whenever a new observation is made even when the same value is observed.
+   * In this way subscribers are made aware of the timeliness of the observation.
+   */
   struct Numeric {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
@@ -130,6 +252,15 @@ module ice {
   #pragma keylist Numeric unique_device_identifier metric_id instance_id unit_id
   const string NumericTopic = "Numeric";
 
+  /**
+   * SampleArrays are values observed by sensors at a relatively high rate; generally >3Hz. Multiple 
+   * sensors may exist for the same metric so the instance_id serves to distinguish between them. If 
+   * a timestamp is available from the device's internal clock it is specified as device_time. A device 
+   * ought to register an instance of SampleArray when the associated sensor might provide observations. 
+   * If the sensor is physically disconnected or otherwise certain not to provide samples then the associated 
+   * instance should be unregistered. Sourcetimestamp and device_time should both represent the point in time 
+   * at the end of the sample array.
+   */
   struct SampleArray {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
@@ -142,6 +273,13 @@ module ice {
   #pragma keylist SampleArray unique_device_identifier metric_id instance_id unit_id frequency
   const string SampleArrayTopic = "SampleArray";
 
+  /**
+   * Speculative topic used for the PCA demonstration. The supervisory safety app publishes a sample with 
+   * stopInfusion=1 to indicate the infusion pump may not infuse. Currently a third topic, indicating that 
+   * the pump has acknowledged the safety interlock, has not yet been included. We should also explore the 
+   * possibility of a setup whereby the pump receives periodic 'ok to infuse' information and stops when that 
+   * information is not received.
+   */
   struct InfusionObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     LongString requestor;
@@ -149,6 +287,13 @@ module ice {
   };
   #pragma keylist InfusionObjective unique_device_identifier
   const string InfusionObjectiveTopic = "InfusionObjective";
+  
+  /**
+   * Speculative topic used for the PCA demonstration. Only currently used by infusion pump simulators. But 
+   * this is meant to represent the current state of an infusion pump holistically and coherently. While this 
+   * is an early guess at some appropriate fields it does make it evident that many of these fields are not safely 
+   * separable and should be part of the same data sample.
+   */
   struct InfusionStatus {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     // is the pump actively infusing?
@@ -176,9 +321,9 @@ module ice {
   #pragma keylist InfusionStatus unique_device_identifier
   const string InfusionStatusTopic = "InfusionStatus";
 
-
-// Assumes all instances of a given metric have the same alarm settings
-// is this true?
+  /**
+   * The current alarm thresholds for a particular metric on a particular device.
+   */
   struct AlarmSettings {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
@@ -189,15 +334,26 @@ module ice {
   #pragma keylist AlarmSettings unique_device_identifier metric_id
   const string AlarmSettingsTopic = "AlarmSettings";
 
+  /**
+   * This objective is published by a Supervisory participant to request that all 
+   * participants use the specified thresholds for alarms on a particular metric.
+   */
   struct GlobalAlarmSettingsObjective {
     MetricIdentifier metric_id; //@key
     float lower;
     float upper;
-
   };
   #pragma keylist GlobalAlarmSettingsObjective metric_id
   const string GlobalAlarmSettingsObjectiveTopic = "GlobalAlarmSettingsObjective";
 
+  /**
+   * This objective is published by a device to acknowledge that it has received the 
+   * global alarm settings objective for a metric. Eventually its AlarmSettings should 
+   * indicate that the change has been made. So the three AlarmSettingsXXX topics form 
+   * an objective-state form of command and control. At any time any participant can see
+   * the current state of request, acknowledgment of the request, and implementation of 
+   * the requested change.
+   */
   struct LocalAlarmSettingsObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
@@ -207,14 +363,21 @@ module ice {
   #pragma keylist LocalAlarmSettingsObjective unique_device_identifier metric_id
   const string LocalAlarmSettingsObjectiveTopic = "LocalAlarmSettingsObjective";
 
-  // Experimental alarm info... highly speculative
+  /**
+   * In the current iteration this is status text associated with the device globally. 
+   * Meant for the global alarm state of the device. For example is the device audibly 
+   * alarming, visibly alarming, alarming but silenced, etc.
+   */
   struct DeviceAlertCondition {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     string<256> alert_state;
   };
   #pragma keylist DeviceAlertCondition unique_device_identifier
   const string DeviceAlertConditionTopic = "DeviceAlertCondition";
-
+  
+  /**
+   * This type is used by several topics.
+   */
   struct Alert {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     // This is a placeholder for something more harmonized
@@ -222,8 +385,22 @@ module ice {
     string<256> text;
   };
   #pragma keylist Alert unique_device_identifier identifier
+  
+  /**
+   * PatientAlert is an alert message related to patient state. In the current iteration 
+   * publishers may use any identifier they would like to uniquely identify patient alerts. 
+   * The instance ought to be registered and a sample published when the alarm is triggered. 
+   * If the associated text changes during the alarm another sample should be published. When 
+   * the alarm is cancelled the instance should be unregistered. It's still an open question 
+   * whether alarm samples should be published at regular intervals during the alarm condition. 
+   * This, unfortunately, might be necessary to assert the liveliness of the alarm instance to 
+   * late joiners. This is something to investigate with DDS vendors.
+   */
   const string PatientAlertTopic = "PatientAlert";
+  
+  /**
+   * TechnicalAlert is similar to PatientAlert but is meant for technical alarms about the 
+   * operation of the device.
+   */
   const string TechnicalAlertTopic = "TechnicalAlert";
 };
-
-
