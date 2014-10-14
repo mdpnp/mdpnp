@@ -121,7 +121,11 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             forObservedValue = new HashMap<Integer, InstanceHolder<SampleArray>>();
             sampleArrayUpdates.put(ov, forObservedValue);
         }
-        forObservedValue.put(handle, value);
+        if(null == value) {
+            forObservedValue.remove(handle);
+        } else {
+            forObservedValue.put(handle, value);
+        }
     }
     
     @Override
@@ -831,7 +835,12 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         if(this.frequency == frequency) {
                             if(null != sa) {
                                 synchronized(sampleCache) {
-                                    sampleArraySample(sa, sampleCache.emitSamples(BUFFER_SAMPLES, sa.data.metric_id+" "+sa.data.instance_id), null);
+                                    Collection<Number> c = sampleCache.emitSamples(BUFFER_SAMPLES, sa.data.metric_id+" "+sa.data.instance_id);
+                                    if(null == c) {
+                                        putSampleArrayUpdate(ov, handle, null);
+                                    } else {
+                                        sampleArraySample(sa, c, null);
+                                    }
                                 }
                             } else {
                                 String metric_id = sampleArrayMetricIds.get(ov);
@@ -891,6 +900,11 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         
         public Collection<Number> emitSamples(int n, String s) {
             synchronized(newSamples) {
+                if(newSamples.isEmpty()) {
+                    log.warn(s+" no new samples to emit");
+                    return null;
+                }
+                
                 if(newSamples.size() < n) {
                     log.warn(s+" will repeat " + (n - newSamples.size()) + " old samples to make up a shortfall");
                 }
