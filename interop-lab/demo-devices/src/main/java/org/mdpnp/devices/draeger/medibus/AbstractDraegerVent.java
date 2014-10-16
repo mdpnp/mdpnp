@@ -265,7 +265,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     try {
                         f = Float.parseFloat(s);
                     } catch (NumberFormatException nfe) {
-                        log.error("Bad number format " + d.code + " " + d.data, nfe);
+                        // Stack traces here are too noisy
+                        // on our EvitaXL 
+                        log.error("Bad number format for device setting " + d.code + " " + nfe.getMessage());
                     }
                     settingUpdates.put(d.code, numericSample(settingUpdates.get(d.code), f, metric, units(d.code), currentTime()));
                 }
@@ -283,7 +285,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     try {
                         f = Float.parseFloat(s);
                     } catch (NumberFormatException nfe) {
-                        log.error("Bad number format " + d.code + " " + d.data, nfe);
+                        log.error("Bad measured data number format " + d.code + " " + nfe.getMessage());
                     }
                     numericUpdates.put(d.code, numericSample(numericUpdates.get(d.code), f, metric, units(d.code), currentTime()));
                 }
@@ -327,7 +329,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     try {
                         f = Float.parseFloat(d.data);
                     } catch (NumberFormatException nfe) {
-                        log.error("Badly formatted number " + d.data, nfe);
+                        log.error("Bad number format for low alarm " + d.code + " " + nfe.getMessage());
                     }
                     InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
                     String metric = numerics.get(d.code);
@@ -345,7 +347,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     try {
                         f = Float.parseFloat(d.data);
                     } catch (NumberFormatException nfe) {
-                        log.error("Badly formatted number " + d.data, nfe);
+                        log.error("Bad number format for high alarm " + d.code + " " + nfe.getMessage());
                     }
                     InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
                     String metric = numerics.get(d.code);
