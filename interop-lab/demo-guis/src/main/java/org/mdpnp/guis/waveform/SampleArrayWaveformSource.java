@@ -46,17 +46,26 @@ public class SampleArrayWaveformSource extends AbstractDdsWaveformSource<ice.Sam
             try {
                 reader.read_instance(sample_array_seq, sample_info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, instanceHandle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
                 for(int i = 0; i < sample_info_seq.size(); i++) {
-                    Time_t t = ((SampleInfo)sample_info_seq.get(i)).source_timestamp;
+                    SampleInfo si = (SampleInfo) sample_info_seq.get(i);
+                    Time_t t = si.source_timestamp;
                     long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
                     ice.SampleArray sampleArray = (SampleArray) sample_array_seq.get(i);
     
                     final int sz = sampleArray.values.userData.size();
 //                    log.debug(sz + " samples " + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
-                    int msPerSample = 1000 / sampleArray.frequency;
-                    for(int j = 0; j < sz; j++) {
-                        long tm = baseTime - (sz-j) * msPerSample;
-                        float value = sampleArray.values.userData.getFloat(j);
-                        itr.sample(tm, value);
+                    if(si.valid_data) {
+                        if(0 < sampleArray.frequency) {
+                            int msPerSample = 1000 / sampleArray.frequency;
+                            for(int j = 0; j < sz; j++) {
+                                long tm = baseTime - (sz-j) * msPerSample;
+                                float value = sampleArray.values.userData.getFloat(j);
+                                itr.sample(tm, value);
+                            }
+                        } else {
+                            log.warn("Invalid frequency " + sampleArray.frequency + " for " + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
+                        }
+                    } else {
+                        // instance lifecycle event with no attached data.
                     }
                 }
             } catch(RETCODE_NO_DATA noData) {
