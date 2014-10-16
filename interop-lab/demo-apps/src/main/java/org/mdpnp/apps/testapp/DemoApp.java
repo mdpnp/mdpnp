@@ -94,7 +94,11 @@ public class DemoApp {
 
     private static void goback() {
         if (null != goBackAction) {
-            goBackAction.run();
+            try {
+                goBackAction.run();
+            } catch (Throwable t) {
+                log.error("Error in 'go back' logic", t);
+            }
             goBackAction = null;
         }
         panel.getBedLabel().setText(DemoApp.gobackBed);
@@ -309,7 +313,11 @@ public class DemoApp {
             public void windowClosing(WindowEvent e) {
                 refreshScheduler.shutdownNow();
                 if (goBackAction != null) {
-                    goBackAction.run();
+                    try {
+                        goBackAction.run();
+                    } catch (Throwable t) {
+                        log.error("error in 'go back' handler", t);
+                    }
                     goBackAction = null;
                 }
                 if (null != sim) {
@@ -324,14 +332,33 @@ public class DemoApp {
                 if (null != rrr) {
                     rrr.setModel(null);
                 }
-                vitalModel.stop();
-                pumpModel.stop();
-                capnoModel.stop();
-                nc.tearDown();
+                try {
+                    vitalModel.stop();
+                } catch(Throwable t) {
+                    log.error("Error stopping the VitalModel", t);
+                }
+                try {
+                    pumpModel.stop();
+                } catch(Throwable t) {
+                    log.error("Error stopping the PumpModel", t);
+                }
+                try {
+                    capnoModel.stop();
+                } catch(Throwable t) {
+                    log.error("Error stopping the CapnoModel", t);
+                }
+                try {
+                    nc.tearDown();
+                } catch (Throwable t) {
+                    log.error("Error tearing down the network controller", t);
+                }
+                
                 try {
                     handler.shutdown();
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
+                } catch (Throwable t) {
+                    log.error("Shutting down handler", t);
                 }
                 super.windowClosing(e);
             }
