@@ -25,7 +25,7 @@ import com.rti.dds.topic.TypeSupport;
  *
  */
 public class TopicUtil {
-    public static Topic createTopic(DomainParticipant participant, String topicName, Class<? extends TypeSupport> clazz) {
+    public static synchronized Topic createTopic(DomainParticipant participant, String topicName, Class<? extends TypeSupport> clazz) {
         try {
             Method get_type_name = clazz.getMethod("get_type_name");
             String typeName = (String) get_type_name.invoke(null);
@@ -36,7 +36,7 @@ public class TopicUtil {
         }
     }
     
-    public static TopicDescription lookupOrCreateTopic(DomainParticipant participant, String topicName, Class<? extends TypeSupport> clazz) {
+    public synchronized static TopicDescription lookupOrCreateTopic(DomainParticipant participant, String topicName, Class<? extends TypeSupport> clazz) {
         
         TopicDescription topic = participant.lookup_topicdescription(topicName);
         if (null == topic) {
