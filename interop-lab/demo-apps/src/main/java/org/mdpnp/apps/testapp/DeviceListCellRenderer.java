@@ -32,7 +32,6 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
-import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -50,8 +49,8 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
     private final JLabel udi = new JLabel(" ");
     private final JLabel hostname = new JLabel(" ");
     private final JLabel buildDescriptor = new JLabel(" ");
-    private final JLabel clockDifference = new JLabel(" ");
-    private final JLabel roundtripLatency = new JLabel(" ");
+//    private final JLabel clockDifference = new JLabel(" ");
+//    private final JLabel roundtripLatency = new JLabel(" ");
 
     private Dimension myDimension = null;
 
@@ -107,25 +106,25 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         addFinePrint(fineprint, "Hostname:", hostname, gbc, text);
         addFinePrint(fineprint, "Build:", buildDescriptor, gbc, text);
         
-        gbc.gridx++;
-        gbc.gridy = 0;
-        gbc.gridheight = 5;
-        JPanel timeInfo = new JPanel();
-        JLabel clockOffset = new JLabel("<html>Clock Offset<br/>From Local</html>");
-//        JLabel fromLocalDevice = new JLabel("From Local");
-        clockOffset.setOpaque(false);
-//        fromLocalDevice.setOpaque(false);
-        clockDifference.setOpaque(false);
-        timeInfo.setOpaque(false);
-        timeInfo.add(clockOffset);
-//        timeInfo.add(fromLocalDevice);
-        timeInfo.add(clockDifference);
-        text.add(timeInfo, gbc);
-        gbc.gridy++;
-        clockDifference.setOpaque(false);
-        text.add(clockDifference, gbc);
+//        gbc.gridx++;
+//        gbc.gridy = 0;
+//        gbc.gridheight = 5;
+//        JPanel timeInfo = new JPanel();
+//        JLabel clockOffset = new JLabel("<html>Clock Offset<br/>From Local</html>");
+////        JLabel fromLocalDevice = new JLabel("From Local");
+//        clockOffset.setOpaque(false);
+////        fromLocalDevice.setOpaque(false);
+//        clockDifference.setOpaque(false);
+//        timeInfo.setOpaque(false);
+//        timeInfo.add(clockOffset);
+////        timeInfo.add(fromLocalDevice);
+//        timeInfo.add(clockDifference);
+//        text.add(timeInfo, gbc);
 //        gbc.gridy++;
-//        text.add(roundtripLatency, gbc);
+//        clockDifference.setOpaque(false);
+//        text.add(clockDifference, gbc);
+////        gbc.gridy++;
+////        text.add(roundtripLatency, gbc);
 
         add(text, BorderLayout.CENTER);
 
@@ -199,13 +198,13 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
             }
             
             //this.roundtripLatency.setText(""+device.getRoundtripLatencyMs());
-            double clockDiff = device.getClockDifferenceMs();
-            this.clockDifference.setText(""+(Math.round(10.0*clockDiff)/10.0)+"ms");
-            if(clockDiff <= -1000.0 || clockDiff >= 1000.0) {
-                this.clockDifference.setForeground(Color.red);
-            } else {
-                this.clockDifference.setForeground(Color.black);
-            }
+//            double clockDiff = device.getClockDifferenceMs();
+//            this.clockDifference.setText(""+(Math.round(10.0*clockDiff)/10.0)+"ms");
+//            if(clockDiff <= -1000.0 || clockDiff >= 1000.0) {
+//                this.clockDifference.setForeground(Color.red);
+//            } else {
+//                this.clockDifference.setForeground(Color.black);
+//            }
         } else {
             connectionStatus.setText("");
             hostname.setText("");
