@@ -1,8 +1,8 @@
 0x05	BreathingPressure	mbar
 0x06	ComplianceFrac	mlPerMBar
-0x07	Compliance
-0x08	Resistance
-0x09	CarbonDioxideProduction
+0x07	Compliance	LPerBar
+0x08	Resistance	mbarPerLPerSec
+0x09	CarbonDioxideProduction	mLPerMin
 0x0B	ResistanceFrac
 0x2A	rSquared	None
 0x50	InspHalothanekPa	kPa
@@ -65,8 +65,11 @@
 0xD9	RespiratoryRateDerived	OnePerMin
 0xDA	InspCO2Pct	pct
 0xDB	EndTidalCO2Percent	pct
+0xDD	N2OFlow	mLPerMin
+0xDE	AirFlow	mLPerMin
 0xDF	PulseRateDerived	OnePerMin
 0xE1	PulseRateOximeter	OnePerMin
+0xE2	O2Flow	mLPerMin
 0xE3	EndTidalCO2kPa	kPa
 0xE5	InspCO2mmHg	mmHg
 0xE6	EndTidalCO2mmHg	mmHg
