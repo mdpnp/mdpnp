@@ -28,10 +28,11 @@ public enum DataType {
 
     private byte b;
     static {
+        int lineNumber[] = new int[1];
         try {
-            fromByte = EnumHelper.build(DataType.class, "datatype.map");
+            fromByte = EnumHelper.build(DataType.class, "datatype.map", lineNumber);
         } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
+            throw new Error("At line number " + lineNumber[0], e);
         }
 
     }

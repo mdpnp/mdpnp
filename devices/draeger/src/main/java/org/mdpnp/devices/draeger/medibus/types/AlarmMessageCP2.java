@@ -27,10 +27,11 @@ public enum AlarmMessageCP2 {
     private byte b;
 
     static {
+        int lineNumber[] = new int[1];
         try {
-            fromByte = EnumHelper.build(AlarmMessageCP2.class, "alarm-message-cp2.map");
+            fromByte = EnumHelper.build(AlarmMessageCP2.class, "alarm-message-cp2.map", lineNumber);
         } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
+            throw new Error("At line number " + lineNumber[0], e);
         }
 
     }

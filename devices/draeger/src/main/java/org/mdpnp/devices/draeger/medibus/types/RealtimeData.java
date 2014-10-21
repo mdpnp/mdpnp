@@ -53,10 +53,11 @@ public enum RealtimeData {
     private Unit u;
 
     static {
+        int lineNumber[] = new int[1];
         try {
-            fromByte = EnumHelper.build(RealtimeData.class, "realtime-data.map");
+            fromByte = EnumHelper.build(RealtimeData.class, "realtime-data.map", lineNumber);
         } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
+            throw new Error("At line number " + lineNumber[0], e);
         }
 
     }

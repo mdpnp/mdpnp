@@ -30,10 +30,11 @@ public enum AlarmMessageCP1 {
     private byte b;
 
     static {
+        int lineNumber[] = new int[1];
         try {
-            fromByte = EnumHelper.build(AlarmMessageCP1.class, "alarm-message-cp1.map");
+            fromByte = EnumHelper.build(AlarmMessageCP1.class, "alarm-message-cp1.map", lineNumber);
         } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
+            throw new Error("At line number " + lineNumber[0], e);
         }
 
     }

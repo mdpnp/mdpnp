@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 public class EnumHelper {
     private static final Logger log = LoggerFactory.getLogger(EnumHelper.class);
 
-    public static final <T extends Enum<T>> Map<Byte, T> build(Class<T> cls, String resourceName) throws NoSuchFieldException, SecurityException,
+    public static final <T extends Enum<T>> Map<Byte, T> build(Class<T> cls, String resourceName, int[] lineNumber) throws NoSuchFieldException, SecurityException,
             IllegalArgumentException, IllegalAccessException, IOException {
         Map<Byte, T> fromByte = new HashMap<Byte, T>();
         Field byteField = cls.getDeclaredField("b");
@@ -47,7 +47,10 @@ public class EnumHelper {
         InputStream is = cls.getResource(resourceName).openStream();
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
         String line = null;
+        lineNumber[0] = 0;
+        
         while (null != (line = br.readLine())) {
+            lineNumber[0]++;
             String[] arr = line.split("\t");
             java.lang.Byte b = (byte) (0xFF & Integer.decode(arr[0]));
             T t = Enum.valueOf(cls, arr[1]);

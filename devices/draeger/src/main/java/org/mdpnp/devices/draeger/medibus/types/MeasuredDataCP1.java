@@ -45,10 +45,11 @@ public enum MeasuredDataCP1 {
     private Unit u;
 
     static {
+        int lineNumber[] = new int[1];
         try {
-            fromByte = EnumHelper.build(MeasuredDataCP1.class, "measured-data-cp1.map");
+            fromByte = EnumHelper.build(MeasuredDataCP1.class, "measured-data-cp1.map", lineNumber);
         } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
+            throw new Error("At line number " + lineNumber[0], e);
         }
 
     }
