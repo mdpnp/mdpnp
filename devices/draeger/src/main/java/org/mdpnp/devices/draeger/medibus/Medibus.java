@@ -481,23 +481,29 @@ public class Medibus {
         }
         switch (cmdEcho) {
         case ReqMeasuredDataCP1:
+            receiveMeasuredData(1,data);
+            break;
         case ReqMeasuredDataCP2:
-            receiveMeasuredData(data);
+            receiveMeasuredData(2,data);
             break;
         case ReqLowAlarmLimitsCP1:
+            receiveLowAlarmLimits(1, data);
+            break;
         case ReqLowAlarmLimitsCP2:
-            receiveLowAlarmLimits(data);
+            receiveLowAlarmLimits(2, data);
             break;
         case ReqHighAlarmLimitsCP1:
+            receiveHighAlarmLimits(1,data);
+            break;
         case ReqHighAlarmLimitsCP2:
-            receiveHighAlarmLimits(data);
+            receiveHighAlarmLimits(2,data);
             break;
         default:
             throw new IllegalArgumentException("Unknown cmd:" + cmdEcho);
         }
     }
 
-    protected void receiveMeasuredData(Data[] data) {
+    protected void receiveMeasuredData(int codepage, Data[] data) {
         log.debug("Measured Data");
         for (Data d : data) {
             if(null != d) {
@@ -506,7 +512,7 @@ public class Medibus {
         }
     }
 
-    protected void receiveLowAlarmLimits(Data[] data) {
+    protected void receiveLowAlarmLimits(int codepage, Data[] data) {
         log.debug("Low Alarm Limits");
         for (Data d : data) {
             if(null != d) {
@@ -515,7 +521,7 @@ public class Medibus {
         }
     }
 
-    protected void receiveHighAlarmLimits(Data[] data) {
+    protected void receiveHighAlarmLimits(int codepage, Data[] data) {
         log.debug("High Alarm Limits");
         for (Data d : data) {
             if(null != d) {
