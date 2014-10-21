@@ -20,6 +20,8 @@ import ice.LocalAlarmSettingsObjectiveDataWriter;
 import ice.Numeric;
 import ice.NumericDataWriter;
 import ice.NumericTypeSupport;
+import ice.PatientDeviceDataReader;
+import ice.PatientDeviceDataWriter;
 import ice.SampleArray;
 import ice.SampleArrayDataWriter;
 import ice.SampleArrayTypeSupport;
@@ -98,6 +100,14 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     protected final Topic sampleArrayTopic;
     protected final SampleArrayDataWriter sampleArrayDataWriter;
+    
+    protected final Topic patientDeviceTopic;
+    protected final ice.PatientDeviceDataReader patientDeviceReader;
+    protected final ice.PatientDeviceDataWriter patientDeviceWriter;
+    protected ReadCondition patientDeviceCondition;
+    protected InstanceHandle_t patientDeviceLocalInstanceHandle;
+    protected final ice.PatientDevice patientDeviceLocalInstance = new ice.PatientDevice();
+    
     // Resolution of SampleArray samples will be reduced
     // dynamically based upon what SampleArrays are registered
     // at what frequency.
@@ -721,6 +731,17 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             alarmSettingsObjectiveReader.delete_readcondition(alarmSettingsObjectiveCondition);
             alarmSettingsObjectiveCondition = null;
         }
+        
+        if (null != patientDeviceCondition) {
+            eventLoop.removeHandler(patientDeviceCondition);
+            patientDeviceReader.delete_readcondition(patientDeviceCondition);
+            patientDeviceCondition = null;
+        }
+        
+        if (null != patientDeviceLocalInstanceHandle) {
+            patientDeviceWriter.unregister_instance(patientDeviceLocalInstance, patientDeviceLocalInstanceHandle);
+            patientDeviceLocalInstanceHandle = null;
+        }
 
         subscriber.delete_datareader(alarmSettingsObjectiveReader);
 
@@ -754,6 +775,11 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         publisher.delete_datawriter(technicalAlertWriter);
         domainParticipant.delete_topic(technicalAlertTopic);
         ice.AlertTypeSupport.unregister_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
+        
+        domainParticipant.delete_datareader(patientDeviceReader);
+        domainParticipant.delete_datawriter(patientDeviceWriter);
+        domainParticipant.delete_topic(patientDeviceTopic);
+        ice.PatientDeviceTypeSupport.unregister_type(domainParticipant, ice.PatientDeviceTypeSupport.get_type_name());
 
         domainParticipant.delete_publisher(publisher);
         domainParticipant.delete_subscriber(subscriber);
@@ -844,7 +870,14 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         technicalAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(technicalAlertTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
         
-        
+        ice.PatientDeviceTypeSupport.register_type(domainParticipant, ice.PatientDeviceTypeSupport.get_type_name());
+        patientDeviceTopic = domainParticipant.create_topic(ice.PatientDeviceTopic.VALUE, ice.PatientDeviceTypeSupport.get_type_name(),
+                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        // This topic controls partition assignment for the rest of the device and is therefore in the default partition
+        patientDeviceReader = (PatientDeviceDataReader) domainParticipant.create_datareader_with_profile(patientDeviceTopic, QosProfiles.ice_library, QosProfiles.patient_device, 
+                null, StatusKind.STATUS_MASK_NONE);
+        patientDeviceWriter = (PatientDeviceDataWriter) domainParticipant.create_datawriter_with_profile(patientDeviceTopic, QosProfiles.ice_library, QosProfiles.patient_device,
+                null, StatusKind.STATUS_MASK_NONE);
         
         threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "AbstractDevice") {
             @Override
@@ -889,6 +922,11 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             deviceIdentityHandle = deviceIdentityWriter.register_instance(deviceIdentity);
         }
         deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
+        
+        patientDeviceLocalInstance.unique_device_identifier = deviceIdentity.unique_device_identifier;
+        if(patientDeviceLocalInstance.patient_identifier != null && !"".equals(patientDeviceLocalInstance.patient_identifier)) {
+            patientDeviceWriter.register_instance(patientDeviceLocalInstance);
+        }
         
         ice.DeviceAlertCondition alertCondition = (ice.DeviceAlertCondition) ice.DeviceAlertCondition.create();
         alertCondition.unique_device_identifier = deviceIdentity.unique_device_identifier;
@@ -1047,6 +1085,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         if(!f.exists()) {
             // File once existed
             if(lastPartitionFileTime!=0L) {
+                
                 setPartition(new String[0]);
                 lastPartitionFileTime = 0L;
             } else {

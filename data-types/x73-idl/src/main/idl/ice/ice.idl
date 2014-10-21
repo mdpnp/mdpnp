@@ -52,6 +52,15 @@ module ice {
   typedef string<64> UnitIdentifier;
   
   /**
+   * Somewhat speculative but used to uniquely identify a patient within the scope
+   * of connected (coordinated) ICE systems.  This may be a Medical Record Number,
+   * an electronic Master Patient Index identifier, or something entirely different.
+   * In fact this might eventually be specific to an institution or to their preferred
+   * technology for managing their census.
+   */
+  typedef string<64> PatientIdentifier;
+  
+  /**
    * A type for "long" string fields such as those descriptive of persons, places, and 
    * things.  These are UTF32 encoded to support international use.
    */
@@ -413,4 +422,22 @@ module ice {
    * the operation of the device.
    */
   const string TechnicalAlertTopic = "TechnicalAlert";
+  
+  /**
+   * PatientDevice is speculative.  There must be a way to assign devices (equipment) 
+   * to a particular patient without directly accessing the device.  The current generation
+   * of central monitoring technologies have shown that managing equipment in the aggregate
+   * is much easier than managing equipment on an individual basis.  In this first 
+   * attempt a publication of an instance to this topic is that mechanism.  
+   * Publications to this topic should be made in the default partition.
+   * Devices should respond to samples of instances keyed to their UDI by switching their publication
+   * and subscription.
+   */
+  struct PatientDevice {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    PatientIdentifier patient_identifier;
+  };
+  #pragma keylist PatientDevice unique_device_identifier
+  const string PatientDeviceTopic = "PatientDevice";
+
 };

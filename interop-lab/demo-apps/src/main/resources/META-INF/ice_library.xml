@@ -461,6 +461,23 @@
    </datawriter_qos>
 
   </qos_profile>
+  
+  <qos_profile name="patient_device" base_name="state" is_default_qos="false">
+   <datareader_qos>
+    <ownership>
+     <kind>DDS_SHARED_OWNERSHIP_QOS</kind>
+    </ownership>
+    </datareader_qos>
+    <datawriter_qos>
+    <ownership>
+     <kind>DDS_SHARED_OWNERSHIP_QOS</kind>
+    </ownership>
+    <!-- Default is low -->
+    <ownership_strength>
+     <value>1</value>
+    </ownership_strength>
+   </datawriter_qos>
+  </qos_profile>
 
 
   <qos_profile name="observed_data" base_name="default_profile"

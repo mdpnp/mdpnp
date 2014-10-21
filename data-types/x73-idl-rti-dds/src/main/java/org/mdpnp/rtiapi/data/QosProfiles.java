@@ -21,4 +21,5 @@ public interface QosProfiles {
     String waveform_data = "waveform_data";
     String heartbeat = "heartbeat";
     String timesync = "timesync";
+    String patient_device = "patient_device";
 }
