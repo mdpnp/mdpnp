@@ -135,6 +135,12 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
     @Override
     public void synchronization(String remote_udi, Duration_t latency, Duration_t clockDifference) {
         log.trace(remote_udi + " has latency="+latency+" and clockDifference="+clockDifference);
+        Device device = getDevice(remote_udi, false);
+        if(null != device) {
+            device.setClockDifference(clockDifference);
+            device.setRoundtripLatency(latency);
+            update(device);
+        }
     }
     
     private final void update(DeviceConnectivity dc) {

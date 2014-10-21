@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
+import com.rti.dds.infrastructure.Duration_t;
 
 /**
  * Convenience class for storing DeviceIdentity and DeviceConnectivity instances
@@ -37,6 +38,7 @@ public class Device {
     private DeviceIdentity deviceIdentity;
     private DeviceConnectivity deviceConnectivity;
     private ParticipantBuiltinTopicData participantData;
+    private final Duration_t clockDifference = new Duration_t(Duration_t.DURATION_INFINITE), roundtripLatency = new Duration_t(Duration_t.DURATION_INFINITE);
 
     private SoftReference<DeviceIcon> realIcon;
 
@@ -138,6 +140,30 @@ public class Device {
         return null == participantData ? null : ParticipantOnly.getHostname(participantData);
     }
 
+    public void setClockDifference(Duration_t clockDifference) {
+        this.clockDifference.copy_from(clockDifference);
+    }
+    
+    public void setRoundtripLatency(Duration_t roundtripLatency) {
+        this.roundtripLatency.copy_from(roundtripLatency);
+    }
+    
+    public Duration_t getClockDifference() {
+        return clockDifference;
+    }
+    
+    public Duration_t getRoundtripLatency() {
+        return roundtripLatency;
+    }
+    
+    public double getClockDifferenceMs() {
+        return 1000.0 * clockDifference.sec + clockDifference.nanosec / 1000000.0;
+    }
+    
+    public double getRoundtripLatencyMs() {
+        return 1000.0 * roundtripLatency.sec + roundtripLatency.nanosec / 1000000.0;
+    }    
+    
     public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {
         if (null == deviceConnectivity) {
             this.deviceConnectivity = null;
