@@ -158,7 +158,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             realtimeFrequency[streamIndex] = 1000000 / (config.interval*multiplier/realtimeUpsample[streamIndex]);
         }
         for(int i = 0; i < realtimeUpsample[streamIndex]; i++) {
-        realtimeBuffer[streamIndex].add(value);
+            realtimeBuffer[streamIndex].add(value);
         }
         startEmitFastData(realtimeFrequency[streamIndex]);
     }
@@ -243,6 +243,12 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             super.receiveResponse(response, len);
             Object cmdEcho = Command.fromByteIf(response[0]);
             if (cmdEcho instanceof Command) {
+                synchronized(AbstractDraegerVent.this) {
+                    if(lastSlowDataRequest >= 0 && REQUEST_SLOW[lastSlowDataRequest].equals((Command)cmdEcho)) {
+                        log.trace("Response to command acknowledges the prior request" + cmdEcho);
+                        lastSlowDataRequestAcknowledged = true;
+                    }
+                }
                 switch ((Command) cmdEcho) {
                 case InitializeComm:
                     initializeCommAcknowledged();
@@ -408,12 +414,19 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             RealtimeData.RespiratoryVolumeSinceInspBegin, RealtimeData.ExpiratoryCO2mmHg, RealtimeData.ExpiratoryVolume, RealtimeData.Ptrach,
             RealtimeData.InspiratoryFlow, RealtimeData.ExpiratoryFlow, RealtimeData.Pleth };
 
-    private static final Command[] REQUEST_SLOW = new Command[] { Command.ReqDateTime, Command.ReqDeviceSetting, Command.ReqAlarmsCP1,
-            Command.ReqAlarmsCP2, Command.ReqMeasuredDataCP1, Command.ReqMeasuredDataCP2, Command.ReqAlarmsCP1, Command.ReqAlarmsCP2,
-            Command.ReqLowAlarmLimitsCP1, Command.ReqLowAlarmLimitsCP2, Command.ReqAlarmsCP1, Command.ReqAlarmsCP2, Command.ReqHighAlarmLimitsCP1,
-            Command.ReqHighAlarmLimitsCP2, Command.ReqAlarmsCP1, Command.ReqAlarmsCP2, Command.ReqTextMessages };
+    private static final Command[] REQUEST_SLOW = new Command[] { 
+            Command.ReqDateTime, Command.ReqDeviceSetting, 
+            Command.ReqAlarmsCP1, //Command.ReqAlarmsCP2,
+            Command.ReqMeasuredDataCP1, //Command.ReqMeasuredDataCP2, 
+            Command.ReqLowAlarmLimitsCP1, //Command.ReqLowAlarmLimitsCP2, 
+            Command.ReqHighAlarmLimitsCP1,//Command.ReqHighAlarmLimitsCP2, 
+            Command.ReqTextMessages 
+    };
 
-    private int nextSlowDataRequest = 0;
+    private int lastSlowDataRequest = -1;
+    private long lastSlowDataRequestTime = 0L;
+    private volatile boolean lastSlowDataRequestAcknowledged = false;
+    private static final long MAX_WAIT_SLOW_DATA = 5000L;
 
     private class EmitFastData implements Runnable {
 
@@ -484,10 +497,11 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     private class RequestSlowData implements Runnable {
         public void run() {
             if (ice.ConnectionState.Connected.equals(getState())) {
+                long now = System.currentTimeMillis();
                 try {
                     RTMedibus medibus = AbstractDraegerVent.this.getDelegate();
-                    if ((System.currentTimeMillis() - lastRealtime) >= 10000L) {
-                        log.warn("" + (System.currentTimeMillis() - lastRealtime) + "ms since realtime data, requesting realtime config");
+                    if ((now - lastRealtime) >= 10000L) {
+                        log.warn("" + (now - lastRealtime) + "ms since realtime data, requesting realtime config");
                         // Starts a process by requesting the realtime
                         // configuration
                         // see receiveRealtimeConfig(...)
@@ -495,10 +509,26 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                         medibus.sendCommand(Command.ReqRealtimeConfig);
                         return;
                     }
-                    long now = System.currentTimeMillis();
-
-                    medibus.sendCommand(REQUEST_SLOW[nextSlowDataRequest++]);
-                    nextSlowDataRequest = nextSlowDataRequest % REQUEST_SLOW.length;
+                    
+                    synchronized(AbstractDraegerVent.this) {
+                        // Should we send a new request?  If no requests have been sent or the previous request was acknowledged
+                        boolean makeNewRequest = lastSlowDataRequest < 0 || lastSlowDataRequestAcknowledged;
+                        
+                        // If too much time has elapsed since the request was made move on
+                        if(!makeNewRequest && now >= (lastSlowDataRequestTime+MAX_WAIT_SLOW_DATA)) {
+                            log.warn("Timed out waiting for a response to " + REQUEST_SLOW[lastSlowDataRequest] + " after " + (now-lastSlowDataRequestTime));
+                            makeNewRequest = true;
+                        }
+                        
+                        if(makeNewRequest) {
+                            lastSlowDataRequest++;
+                            lastSlowDataRequestTime = now;
+                            lastSlowDataRequest = lastSlowDataRequest % REQUEST_SLOW.length;
+                            lastSlowDataRequestAcknowledged = false;
+                            log.trace("Requesting the slow data for " + REQUEST_SLOW[lastSlowDataRequest]);
+                            medibus.sendCommand(REQUEST_SLOW[lastSlowDataRequest]);
+                        }
+                    }
                     // if (now - lastReqDateTime >= 15000L) {
                     // log.debug("Slow data too old, requesting DateTime");
                     // lastReqDateTime = now;
@@ -621,7 +651,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     private synchronized void startRequestSlowData() {
         if (null == requestSlowData) {
-            requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 0L, 500L, TimeUnit.MILLISECONDS);
+            requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 0L, 200L, TimeUnit.MILLISECONDS);
             log.trace("Scheduled slow data request task");
         } else {
             log.trace("Slow data request already scheduled");
