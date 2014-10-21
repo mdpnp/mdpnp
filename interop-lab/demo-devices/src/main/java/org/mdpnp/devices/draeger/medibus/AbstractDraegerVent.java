@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -129,8 +130,10 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     @SuppressWarnings("unchecked")
     private final List<Number>[] realtimeBuffer = new List[16];
     private final RTMedibus.RTDataConfig[] realtimeConfig = new RTMedibus.RTDataConfig[16];
+    private final int[] realtimeUpsample = new int[16];
     private final int[] realtimeFrequency = new int[16];
     private long lastRealtime;
+    private static final int MAX_UPSAMPLE = 10;
 
     protected void processRealtime(RTMedibus.RTDataConfig config, int multiplier, int streamIndex, Object code, double value) {
         lastRealtime = System.currentTimeMillis();
@@ -139,8 +142,24 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             return;
         }
         realtimeConfig[streamIndex] = config;
-        realtimeFrequency[streamIndex] = (int) (1000000f / config.interval / multiplier);
+        if(0 == realtimeFrequency[streamIndex]) {
+            realtimeUpsample[streamIndex] = 1;
+            while(0 != 1000000 % (config.interval*multiplier/realtimeUpsample[streamIndex])) {
+                realtimeUpsample[streamIndex]++;
+                if(realtimeUpsample[streamIndex] > MAX_UPSAMPLE) {
+                    log.error("Cannot upsample interval of " + (config.interval/multiplier) + "ms to an even number of Hertz");
+                    realtimeUpsample[streamIndex] = 1;
+                    break;
+                }
+            }
+            if(realtimeUpsample[streamIndex] != 1) {
+                log.info("Upsampling " + code + " by factor " + realtimeUpsample[streamIndex]);
+            }
+            realtimeFrequency[streamIndex] = 1000000 / (config.interval*multiplier/realtimeUpsample[streamIndex]);
+        }
+        for(int i = 0; i < realtimeUpsample[streamIndex]; i++) {
         realtimeBuffer[streamIndex].add(value);
+        }
         startEmitFastData(realtimeFrequency[streamIndex]);
     }
 
@@ -275,11 +294,11 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
 
         @Override
-        protected void receiveMeasuredData(Data[] data) {
+        protected void receiveMeasuredData(int codepage, Data[] data) {
             for (Data d : data) {
                 if (null != d) {
                     String metric = numerics.get(d.code);
-                    metric = metricOrCode(metric, d.code, "MEASURED");
+                    metric = metricOrCode(metric, d.code, "MEASURED_CP"+codepage);
                     String s = null == d.data ? null : d.data.toString().trim();
                     Float f = null;
                     try {
@@ -322,7 +341,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
 
         @Override
-        protected void receiveLowAlarmLimits(Data[] data) {
+        protected void receiveLowAlarmLimits(int codepage, Data[] data) {
             for (Data d : data) {
                 if (null != d) {
                     Float f = null;
@@ -333,14 +352,14 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     }
                     InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
                     String metric = numerics.get(d.code);
-                    metric = metricOrCode(metric, d.code, "ALARM_LIMIT");
+                    metric = metricOrCode(metric, d.code, "ALARM_LIMIT_CP"+codepage);
                     alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, f, null == a ? Float.MAX_VALUE : a.data.upper, metric));
                 }
             }
         }
 
         @Override
-        protected void receiveHighAlarmLimits(Data[] data) {
+        protected void receiveHighAlarmLimits(int codepage, Data[] data) {
             for (Data d : data) {
                 if (null != d) {
                     Float f = null;
@@ -351,7 +370,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     }
                     InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
                     String metric = numerics.get(d.code);
-                    metric = metricOrCode(metric, d.code, "ALARM_LIMIT");
+                    metric = metricOrCode(metric, d.code, "ALARM_LIMIT_CP"+codepage);
                     alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, null == a ? Float.MIN_VALUE : a.data.lower, f, metric));
                 }
             }
@@ -695,7 +714,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                 traces[i] = lastTransmitted[i].rtDataConfig.ordinal;
             }
             try {
-                log.trace("Realtime transmits acknowledged so enabling realtime traces:" + traces);
+                log.trace("Realtime transmits acknowledged so enabling realtime traces:" + Arrays.toString(traces));
                 getDelegate().sendEnableRealtime(traces);
             } catch (IOException e) {
                 log.error(e.getMessage(), e);
@@ -739,7 +758,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         } else if (obj instanceof Setting) {
             return units(((Setting) obj).getUnit());
         } else {
-            return "DRAEGER_" + obj;
+            return "DRAEGER_UNKNOWN_UNITS";
         }
     }
 
