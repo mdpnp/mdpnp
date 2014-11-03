@@ -2,6 +2,7 @@ include 'data-types:x73-idl'
 
 
 include 'devices:common'
+include 'devices:covidien'
 include 'devices:oridion'
 include 'devices:cpc'
 include 'devices:draeger'
