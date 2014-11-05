@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
@@ -57,6 +59,13 @@ public class DemoBioPatch extends AbstractDelegatingSerialDevice<BioPatch> {
         if (ConnectionState.Connected.equals(oldState) && !ConnectionState.Connected.equals(newState)) {
 
         }
+        
+        if (ice.ConnectionState.Connected.equals(newState) && !ice.ConnectionState.Connected.equals(oldState)) {
+            startEmitSignOfLife();
+        }
+        if (!ice.ConnectionState.Connected.equals(newState) && ice.ConnectionState.Connected.equals(oldState)) {
+            stopEmitSignOfLife();
+        }
     }
 
     private class MyBioPatch extends BioPatch {
@@ -74,9 +83,21 @@ public class DemoBioPatch extends AbstractDelegatingSerialDevice<BioPatch> {
             respirationRate = numericSample(respirationRate, resprate, rosetta.MDC_TTHOR_RESP_RATE.VALUE, rosetta.MDC_DIM_DIMLESS.VALUE, t);
             skinTemperature = numericSample(skinTemperature, skintemp, rosetta.MDC_TEMP_SKIN.VALUE, rosetta.MDC_DIM_DEGC.VALUE, t);
         }
+        
+        @Override
+        protected void receiveECGDataPacket(long tm, Number[] values) {
+            ecgTrace = sampleArraySample(ecgTrace, values, ice.MDC_ECG_LEAD_I.VALUE, rosetta.MDC_DIM_DIMLESS.VALUE, 250, null);
+        }
+        
+        @Override
+        protected void receiveGetSerialNumber(String s) {
+            deviceIdentity.serial_number = s;
+            writeDeviceIdentity();
+        }
     }
 
     protected InstanceHolder<ice.Numeric> heartRate, respirationRate, skinTemperature;
+    protected InstanceHolder<ice.SampleArray> ecgTrace;
     
     @Override
     protected BioPatch buildDelegate(int idx, InputStream in, OutputStream out) {
@@ -87,7 +108,11 @@ public class DemoBioPatch extends AbstractDelegatingSerialDevice<BioPatch> {
     @Override
     public void doInitCommands(int idx) throws IOException {
         super.doInitCommands(idx);
+        getDelegate().sendGetSerialNumber();
+        
         getDelegate().sendSetGeneralDataPacketTransmitState(true);
+        getDelegate().sendSetECGWaveformPacketTransmitState(true);
+//        getDelegate().sendSetBreathingPacketTransmitState(true);
     }
 
     @Override
@@ -128,6 +153,37 @@ public class DemoBioPatch extends AbstractDelegatingSerialDevice<BioPatch> {
     @Override
     protected boolean sampleArraySpecifySourceTimestamp() {
         return true;
+    }
+    private class EmitSignOfLife implements Runnable {
+        public void run() {
+            if (ice.ConnectionState.Connected.equals(getState())) {
+                try {
+                    getDelegate().sendLifesign();
+                } catch (IOException e) {
+                    log.warn("Error sending LifeSign indication", e);
+                }
+            }
+        }
+    }
+    private ScheduledFuture<?> emitSignOfLife;
+    
+    private synchronized void stopEmitSignOfLife() {
+        if (null != emitSignOfLife) {
+            emitSignOfLife.cancel(false);
+            emitSignOfLife = null;
+            log.trace("Canceled sign of life");
+        } else {
+            log.trace("sign of life request already canceled");
+        }
+    }
+
+    private synchronized void startEmitSignOfLife() {
+        if (null == emitSignOfLife) {
+            emitSignOfLife = executor.scheduleWithFixedDelay(new EmitSignOfLife(), 5000L, 5000L, TimeUnit.MILLISECONDS);
+            log.trace("Scheduled sign of life");
+        } else {
+            log.trace("sign of life request already scheduled");
+        }
     }
 
 }

@@ -16,8 +16,10 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.Calendar;
 
 import org.mdpnp.devices.ASCIIByte;
@@ -36,7 +38,15 @@ public class BioPatch {
     private final Logger log = LoggerFactory.getLogger(BioPatch.class);
 
     public static final int SET_GENERAL_DATA_PACKET_TRANSMIT_STATE = 0x14;
+    public static final int SET_BREATHING_PACKET_TRANSMIT_STATE = 0x15;
+    public static final int SET_ECG_WAVEFORM_PACKET_TRANSMIT_STATE = 0x16;
+    
     public static final int GENERAL_DATA_PACKET = 0x20;
+    public static final int BREATHING_DATA_PACKET = 0x21;
+    public static final int ECG_DATA_PACKET = 0x22;
+    
+    public static final int LIFESIGN = 0x23;
+    public static final int GET_SERIAL_NUMBER = 0x0B;
     
     public BioPatch(InputStream in, OutputStream out) {
         this.in = in;
@@ -47,8 +57,67 @@ public class BioPatch {
         
     }
     
-    protected void receiveGeneralDataPacket(ByteBuffer buffer) {
+    protected void receiveGetSerialNumber(String s) {
+        
+    }
+    
+    protected void receiveGetSerialNumber(ByteBuffer buffer, int bytes) throws UnsupportedEncodingException {
+        receiveGetSerialNumber(new String(buffer.array(), buffer.position(), bytes, "ASCII"));
+    }
+    
+    protected void receiveBreathingDataPacket(ByteBuffer buffer) {
+        
+    }
+    
+    
+    protected void receiveECGDataPacket(long tm, Number[] values) {
+        
+    }
+    
+    protected void receiveECGDataPacket(ByteBuffer buffer, int bytes) {
         int sequenceNumber = buffer.get();
+        bytes--;
+        long tm = timeFromTimestamp(calendar, buffer);
+        bytes-=8;
+        // meant to be 63 samples in 79 bytes.. unpacking 10-bit samples
+        Number[] values = new Number[63];
+        int anchor = buffer.position();
+        
+        if(bytes<79) {
+            log.warn("Insufficient bytes for packed ECG:" + bytes);
+            return;
+        }
+        
+        
+        for(int i = 0; i < 63; i++) {
+            int pkg = i / 4;
+            
+            switch(i%4) {
+            case 0:
+                
+                values[i] = (0xFF & buffer.get(anchor + 5*pkg)) + (0x300&((int)buffer.get(anchor+5*pkg+1)<<8));
+                break;
+            case 1:
+                values[i] = (0x3F & (buffer.get(anchor + 5*pkg+1)>>2)) + (0x3C0&((int)buffer.get(anchor+5*pkg+2)<<6));
+                
+                break;
+            case 2:
+                values[i] = (0x0F & (buffer.get(anchor + 5*pkg+2)>>4)) + (0x3F0 &((int)buffer.get(anchor+5*pkg+3)<<4));
+                
+                break;
+            case 3:
+                values[i] = (0x03 & (buffer.get(anchor + 5*pkg+3)>>6)) + (0x3FC &((int)buffer.get(anchor+5*pkg+4)<<2));
+//                System.err.println(HexUtil.dump(ByteBuffer.wrap(buffer.array(), anchor+5*pkg+3, 2))+" => "+values[i]);
+                break;
+            }
+        }
+        
+        
+        receiveECGDataPacket(tm, values);
+//        log.warn(Arrays.toString(values));
+    }
+    
+    private static long timeFromTimestamp(Calendar calendar, ByteBuffer buffer) {
         int year = buffer.getShort();
         int month = buffer.get();
         int day = buffer.get();
@@ -64,27 +133,42 @@ public class BioPatch {
         calendar.set(Calendar.SECOND, millisecond / 1000);
         millisecond %= 1000;
         calendar.set(Calendar.MILLISECOND, millisecond);
-        
+        return calendar.getTimeInMillis();
+    }
+    
+    protected void receiveGeneralDataPacket(ByteBuffer buffer) {
+        int sequenceNumber = buffer.get();
+        long tm = timeFromTimestamp(calendar, buffer);
         int heartRate = 0xFFFF & buffer.getShort();
         int respirationRate = 0xFFFF & buffer.getShort();
         int skinTemp = buffer.getShort();
         
         receiveGeneralDataPacket(
                 sequenceNumber, 
-                calendar.getTimeInMillis(), 
+                tm, 
                 65535==heartRate?null:heartRate, 
                 65535==respirationRate?null:(respirationRate/10.0f), 
                 -32768==skinTemp?null:(skinTemp/10.0f));
     }
     
     private final void consume(ByteBuffer buffer, short messageId, short bytes) throws IOException {
-        log.warn("messageId=0x"+Integer.toHexString(messageId)+" bytes="+bytes);
+//        log.warn("messageId=0x"+Integer.toHexString(messageId)+" bytes="+bytes);
         int newPosition = buffer.position() + bytes;
         switch(messageId) {
         case GENERAL_DATA_PACKET:
             receiveGeneralDataPacket(buffer);
             break;
+        case GET_SERIAL_NUMBER:
+            receiveGetSerialNumber(buffer, bytes);
+            break;
+        case ECG_DATA_PACKET:
+            receiveECGDataPacket(buffer, bytes);
+            break;
+        case BREATHING_DATA_PACKET:
+            receiveBreathingDataPacket(buffer);
+            break;
         }
+        
         buffer.position(newPosition);
         short crc = (short) (0xFF & buffer.get());
         short etx = (short) (0xFF & buffer.get());
@@ -141,7 +225,10 @@ public class BioPatch {
         return crc;
     }
     
-    protected void send(int messageId, byte [] payload, int off, int len) throws IOException {
+    private final byte[] EMPTY = new byte[0];
+    
+    // synchro only for now
+    protected synchronized void send(int messageId, byte [] payload, int off, int len) throws IOException {
         out.write(ASCIIByte.STX);
         out.write(messageId);
         out.write(len);
@@ -151,9 +238,29 @@ public class BioPatch {
         out.flush();
     }
     
-    protected void sendSetGeneralDataPacketTransmitState(boolean on) throws IOException {
+    protected void sendGetSerialNumber() throws IOException {
+        send(GET_SERIAL_NUMBER, xmitBuffer, 0, 0);
+    }
+    
+    protected void sendSetBoolean(int message_id, boolean on) throws IOException {
         xmitBuffer[0] = (byte)(on?1:0);
-        send(SET_GENERAL_DATA_PACKET_TRANSMIT_STATE, xmitBuffer, 0, 1);
+        send(message_id, xmitBuffer, 0, 1);
+    }
+    
+    protected void sendSetBreathingPacketTransmitState(boolean on) throws IOException {
+        sendSetBoolean(SET_BREATHING_PACKET_TRANSMIT_STATE, on);
+    }
+    
+    protected void sendSetECGWaveformPacketTransmitState(boolean on) throws IOException {
+        sendSetBoolean(SET_ECG_WAVEFORM_PACKET_TRANSMIT_STATE, on);
+    }
+    
+    protected void sendSetGeneralDataPacketTransmitState(boolean on) throws IOException {
+        sendSetBoolean(SET_GENERAL_DATA_PACKET_TRANSMIT_STATE, on);
+    }
+    
+    protected void sendLifesign() throws IOException {
+        send(LIFESIGN, EMPTY, 0, 0);
     }
     
     protected boolean receive() throws IOException {
@@ -167,7 +274,9 @@ public class BioPatch {
         
         try {
             buffer.flip();
-            log.warn("Data:"+HexUtil.dump(buffer));
+            if(buffer.hasRemaining()) {
+//                log.warn("Data:"+HexUtil.dump(buffer));
+            }
             consume(buffer);
         } finally {
             buffer.compact();
