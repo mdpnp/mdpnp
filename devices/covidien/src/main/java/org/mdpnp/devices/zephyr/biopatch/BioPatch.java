@@ -19,11 +19,9 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.Calendar;
 
 import org.mdpnp.devices.ASCIIByte;
-import org.mdpnp.devices.io.util.HexUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
