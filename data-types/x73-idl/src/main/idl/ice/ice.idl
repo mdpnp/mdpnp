@@ -17,6 +17,14 @@
  * Note: the #pragma syntax for specifying key fields is used by PrismTech OpenSplice.
  * The RTI Connext code generator currently uses the //@key syntax and will generate
  * harmless warnings about the #pragma definitions in its preprocessing step.
+ * 
+ * The stability of each data model element will be ranked on a scale 0 to 5.
+ * For more information on the stability levels.
+ * http://nodejs.org/api/documentation.html#documentation_stability_index
+ * A better definition of backward-compatibility is required here with respect to the
+ * Extensible Types Addendum to DDS.  i.e. backward compatibility is influenced
+ * by the use of markers for extensible types (indicating parameterized CDR)
+ * http://www.omg.org/spec/DDS-XTypes/
  *
  */
 module ice {
@@ -35,6 +43,7 @@ module ice {
    * https://rtmms.nist.gov/rtmms/index.htm
    * 64 ISO-8859-1 characters is sufficient to utilize any "MDC" code currently accepted
    * in harmonized rosetta.
+   * 
    */ 
   typedef string<64> MetricIdentifier;
   
@@ -88,6 +97,11 @@ module ice {
    * publish to this topic. When the instance of HeartBeat associated with a device is 
    * no longer alive that device should be considered disconnected from the system. The
    * Type description indicates whether the heartbeat came from a Device or Supervisor.
+   * 
+   * Stability: 2 - Unstable
+   *            An emitted sample from a particular uniquely identified device is
+   *            necessary to determine device presence; however the particulars may
+   *            change.
    */
   struct HeartBeat {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -103,6 +117,10 @@ module ice {
    * the heartbeat enough information has been gathered to ascertain clock 
    * synchronization. So a Supervisory participant can determine whether any device
    * clocks are out of sync.
+   * 
+   * Stability: 1 - Experimental
+   *            It is unclear whether the overhead created by this exceeds the benefit
+   *            of detecting a lack of clock synchronization.
    */
   struct TimeSync {
     UniqueDeviceIdentifier heartbeat_source; //@key
@@ -126,6 +144,8 @@ module ice {
    * publishes this information only once. A device with a further connection, perhaps a 
    * serial RS-232 link, might publish details like serial number only after they become 
    * available.
+   * 
+   * Stability: 2 - Unstable
    */
   struct DeviceIdentity {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -178,6 +198,8 @@ module ice {
    * associated objective topic whereby establishment of the further connection can 
    * be requested by another participant. All current OpenICE device adapters attempt 
    * to establish such a connection by default.
+   * 
+   * Stability: 2 - Unstable
    */
   struct DeviceConnectivity {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -192,6 +214,8 @@ module ice {
   /**
    * This topic allows a participant to instruct a further connected device adapter 
    * to establish the further connection to the specified target.
+   * 
+   * Stability: 0 - Deprecated
    */
   struct DeviceConnectivityObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -246,6 +270,8 @@ module ice {
    * associated instance should be unregistered. Sensors are encouraged to publish a 
    * new sample whenever a new observation is made even when the same value is observed.
    * In this way subscribers are made aware of the timeliness of the observation.
+   * 
+   * Stability: 2 - Unstable
    */
   struct Numeric {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -267,6 +293,8 @@ module ice {
    * is physically disconnected or otherwise certain not to provide samples then the 
    * associated instance should be unregistered. Sourcetimestamp and device_time should
    * both represent the point in time at the end of the sample array.
+   * 
+   * Stability: 2 - Unstable
    */
   struct SampleArray {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -287,6 +315,8 @@ module ice {
    * the safety interlock, has not yet been included. We should also explore the 
    * possibility of a setup whereby the pump receives periodic 'ok to infuse' 
    * information and stops when that information is not received.
+   * 
+   * Stability: 1 - Experimental
    */
   struct InfusionObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -302,6 +332,8 @@ module ice {
    * pump holistically and coherently. While this is an early guess at some appropriate 
    * fields it does make it evident that many of these fields are not safely 
    * separable and should be part of the same data sample.
+   * 
+   * Stability: 0 - Deprecated
    */
   struct InfusionStatus {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -332,6 +364,8 @@ module ice {
 
   /**
    * The current alarm thresholds for a particular metric on a particular device.
+   *
+   * Stability: 1 - Experimental
    */
   struct AlarmSettings {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -346,6 +380,8 @@ module ice {
   /**
    * This objective is published by a Supervisory participant to request that all 
    * participants use the specified thresholds for alarms on a particular metric.
+   * 
+   * Stability: 1 - Experimental
    */
   struct GlobalAlarmSettingsObjective {
     MetricIdentifier metric_id; //@key
@@ -362,6 +398,8 @@ module ice {
    * an objective-state form of command and control. At any time any participant can see
    * the current state of request, acknowledgment of the request, and implementation of 
    * the requested change.
+   * 
+   * Stability: 1 - Experimental
    */
   struct LocalAlarmSettingsObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -376,6 +414,8 @@ module ice {
    * In the current iteration this is status text associated with the device globally. 
    * Meant for the global alarm state of the device. For example is the device audibly 
    * alarming, visibly alarming, alarming but silenced, etc.
+   *
+   * Stability: 1 - Experimental
    */
   struct DeviceAlertCondition {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -386,6 +426,7 @@ module ice {
   
   /**
    * This type is used by several topics.
+   * 
    */
   struct Alert {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -405,12 +446,16 @@ module ice {
    * during the alarm condition. This, unfortunately, might be necessary to assert the 
    * liveliness of the alarm instance to late joiners. This is something to investigate 
    * with DDS vendors.
+   * 
+   * Stability: 1 - Experimental
    */
   const string PatientAlertTopic = "PatientAlert";
   
   /**
    * TechnicalAlert is similar to PatientAlert but is meant for technical alarms about 
    * the operation of the device.
+   *
+   * Stability: 1 - Experimental
    */
   const string TechnicalAlertTopic = "TechnicalAlert";
 };
