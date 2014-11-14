@@ -44,4 +44,4 @@ interop-lab/
     * __demo-guis-swing/__
         * Components to bind demo-guis to Swing
 
-![](http://arvi.mgh.harvard.edu:8080/ht/?SOURCEFORGEMAINCODE)
+![](https://build.openice.info/ht/?SOURCEFORGEMAINCODE)
