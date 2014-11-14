@@ -258,7 +258,8 @@ public class DemoApp {
         if(!AppType.RRR.isDisabled()) {
             StringSeq params = new StringSeq();
             params.add("'"+rosetta.MDC_AWAY_CO2.VALUE+"'");
-            capnoModel.start(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.waveform_data);
+            params.add("'"+rosetta.MDC_IMPED_TTHOR.VALUE+"'");
+            capnoModel.start(subscriber, eventLoop, "metric_id = %0 or metric_id = %1 ", params, QosProfiles.ice_library, QosProfiles.waveform_data);
         }
 
         PCAPanel _pcaPanel = null;
