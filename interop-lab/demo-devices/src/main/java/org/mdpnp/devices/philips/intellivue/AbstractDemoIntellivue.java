@@ -363,7 +363,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 }
                 switch (stateMachine.getState().ordinal()) {
                 case ice.ConnectionState._Negotiating:
-                    state(ice.ConnectionState.Connected, "");
+                    state(ice.ConnectionState.Connected, "Received MDS Create Event");
                     break;
                 }
 
