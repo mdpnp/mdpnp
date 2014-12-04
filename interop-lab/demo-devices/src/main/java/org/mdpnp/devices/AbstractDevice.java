@@ -576,7 +576,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         if(!sampleArraySpecifySourceTimestamp() || null == deviceTimestamp) {
             time = currentTimeSampleArrayResolution(null);
         }
-        sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, time);
+        sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle==null?InstanceHandle_t.HANDLE_NIL:holder.handle, time);
     }
 
     protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, float[] newValues, int len, Time_t deviceTimestamp) {
@@ -599,7 +599,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         if(!sampleArraySpecifySourceTimestamp() || null == deviceTimestamp) {
             time = currentTimeSampleArrayResolution(null);
         }
-        sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle, time);
+        sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle==null?InstanceHandle_t.HANDLE_NIL:holder.handle, time);
     }
 
     protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, Time_t timestamp) {
