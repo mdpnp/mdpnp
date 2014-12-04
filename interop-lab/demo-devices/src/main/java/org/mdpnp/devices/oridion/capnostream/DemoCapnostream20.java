@@ -368,10 +368,10 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
             if (0 != (0x40 & status)) {
                 // filter line not connected
-                if (null != DemoCapnostream20.this.co2) {
-                    unregisterSampleArrayInstance(DemoCapnostream20.this.co2, null);
-                    DemoCapnostream20.this.co2 = null;
-                }
+                // TODO should we flush a partially filled buffer first?
+                DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, null, rosetta.MDC_AWAY_CO2.VALUE, 
+                        units(this.currentUnits), 20, null);
+                realtimeBufferCount = 0;
                 return true;
             }
 
