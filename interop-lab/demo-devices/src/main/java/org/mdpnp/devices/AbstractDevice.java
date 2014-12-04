@@ -265,11 +265,12 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     protected void unregisterSampleArrayInstance(InstanceHolder<SampleArray> holder, Time_t timestamp) {
         registeredSampleArrayInstances.remove(holder);
-        if(sampleArraySpecifySourceTimestamp()&&null!=timestamp) {
-            sampleArrayDataWriter.unregister_instance_w_timestamp(holder.data, holder.handle, timestamp);
-        } else {
-            sampleArrayDataWriter.unregister_instance(holder.data, holder.handle);
+        
+        if(!sampleArraySpecifySourceTimestamp() || null == timestamp) {
+            timestamp = currentTimeSampleArrayResolution(null);
         }
+
+        sampleArrayDataWriter.unregister_instance_w_timestamp(holder.data, holder.handle, timestamp);
     }
 
     protected void unregisterAlarmSettingsInstance(InstanceHolder<ice.AlarmSettings> holder) {
