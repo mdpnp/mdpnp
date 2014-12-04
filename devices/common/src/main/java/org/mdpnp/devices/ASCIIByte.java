@@ -58,4 +58,14 @@ public class ASCIIByte {
      * ASCII End of Text
      */
     public static final byte ETX = 0x03;
+    
+    /**
+     * ASCII Start of Text
+     */
+    public static final byte STX = 0x02;
+    
+    /**
+     * ASCII Acknowledge
+     */
+    public static final byte ACK = 0x06;
 }

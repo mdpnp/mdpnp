@@ -1,4 +1,5 @@
 apply plugin: 'maven'
+apply plugin: 'eclipse'
 defaultTasks 'build'
 
 // builds a gradle wrapper
@@ -50,6 +51,7 @@ version '0.4.3'
 
 subprojects {
     apply plugin: 'maven'
+    apply plugin: 'eclipse'
     group 'org.mdpnp'
     version '0.4.3'
     buildscript {

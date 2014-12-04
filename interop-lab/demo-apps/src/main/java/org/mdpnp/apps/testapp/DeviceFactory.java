@@ -39,6 +39,7 @@ import org.mdpnp.devices.simulation.nibp.DemoSimulatedBloodPressure;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
+import org.mdpnp.devices.zephyr.biopatch.DemoBioPatch;
 import org.mdpnp.rtiapi.data.EventLoop;
 
 /**
@@ -100,6 +101,8 @@ public class DeviceFactory {
             return new DemoProsim68(domainId, eventLoop);
         case Multiparameter:
             return new SimMultiparameter(domainId, eventLoop);
+        case BioPatch:
+            return new DemoBioPatch(domainId, eventLoop);
         default:
             throw new RuntimeException("Unknown type:" + type);
         }
