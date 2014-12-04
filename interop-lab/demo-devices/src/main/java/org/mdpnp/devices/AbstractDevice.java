@@ -628,6 +628,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             holder = null;
         }
         if (null != newValues) {
+            ensureResolutionForFrequency(frequency, newValues.length);
             if (null == holder) {
                 holder = createSampleArrayInstance(metric_id, instance_id, unit_id, frequency, timestamp);
             }
@@ -655,6 +656,9 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
 
         if (null != newValues) {
+            // Call this now so that resolution of instance registration timestamp
+            // is reduced
+            ensureResolutionForFrequency(frequency, newValues.size());
             if (null == holder) {
                 holder = createSampleArrayInstance(metric_id, instance_id, unit_id, frequency, timestamp);
             }
