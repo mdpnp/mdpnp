@@ -34,6 +34,7 @@ import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -353,7 +354,12 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
         holder.handle = sampleArrayDataWriter.register_instance_w_timestamp(holder.data, timestamp);
 
+        if(holder.handle.is_nil()) {
+            log.warn("Unable to register instance " + holder.data + " with timestamp " + new Date(timestamp.sec*1000L+timestamp.nanosec/1000000L));
+            holder.handle = null;
+        } else {
         registeredSampleArrayInstances.add(holder);
+        }
         return holder;
     }
 
