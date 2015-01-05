@@ -14,8 +14,7 @@ package org.mdpnp.apps.testapp;
 
 import java.util.concurrent.ScheduledExecutorService;
 
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
+import javax.swing.*;
 
 import org.mdpnp.apps.testapp.pca.PCAConfig;
 import org.mdpnp.apps.testapp.pca.VitalMonitoring;

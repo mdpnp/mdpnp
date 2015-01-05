@@ -12,14 +12,9 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
+import java.awt.*;
+import java.io.*;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +23,8 @@ import java.util.ListIterator;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.imageio.ImageIO;
 
 /**
  * @author Jeff Plourde
@@ -51,11 +48,11 @@ public class Configuration {
         Nonin(ice.ConnectionType.Serial, "Nonin", "Bluetooth Pulse Oximeter"), 
         IntellivueEthernet(ice.ConnectionType.Network, "Philips", "Intellivue (LAN)"), 
         IntellivueSerial(ice.ConnectionType.Serial, "Philips", "Intellivue (MIB/RS232)"), 
-        Dr\u00E4gerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"), 
-        Dr\u00E4gerEvitaXL(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), 
-        Dr\u00E4gerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"),
-        Dr\u00E4gerV500_38400(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"),
-        Dr\u00E4gerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"), 
+        DrgerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"),
+        DrgerEvitaXL(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"),
+        DrgerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"),
+        DrgerV500_38400(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"),
+        DrgerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"),
         Capnostream20(ice.ConnectionType.Serial, "Oridion", "Capnostream20"), 
         NellcorN595(ice.ConnectionType.Serial, "Nellcor", "N-595"), 
         MasimoRadical7(ice.ConnectionType.Serial, "Masimo", "Radical-7"), 
@@ -289,5 +286,82 @@ public class Configuration {
 
 
         return new Configuration(app, domainId, deviceType, address);
+    }
+
+
+    public static Configuration getInstance(String[] args) throws Exception {
+
+        Configuration runConf = null;
+
+        File jumpStartSettings = new File(".JumpStartSettings");
+        File jumpStartSettingsHome = new File(System.getProperty("user.home"), ".JumpStartSettings");
+
+        boolean cmdline = false;
+
+        if (args.length > 0) {
+            runConf = Configuration.read(args);
+            cmdline = true;
+        } else if (jumpStartSettings.exists() && jumpStartSettings.canRead()) {
+            FileInputStream fis = new FileInputStream(jumpStartSettings);
+            runConf = Configuration.read(fis);
+            fis.close();
+        } else if (jumpStartSettingsHome.exists() && jumpStartSettingsHome.canRead()) {
+            FileInputStream fis = new FileInputStream(jumpStartSettingsHome);
+            runConf = Configuration.read(fis);
+            fis.close();
+        }
+
+        Configuration writeConf = null;
+
+        try {
+            Class<?> cls = Class.forName("com.apple.eawt.Application");
+            Method m1 = cls.getMethod("getApplication");
+            Method m2 = cls.getMethod("setDockIconImage", Image.class);
+            m2.invoke(m1.invoke(null), ImageIO.read(Main.class.getResource("icon.png")));
+        } catch (Throwable t) {
+            log.debug("Not able to set Mac OS X dock icon");
+        }
+
+        if (!cmdline) {
+            ConfigurationDialog d = new ConfigurationDialog(runConf, null);
+
+            d.setIconImage(ImageIO.read(Main.class.getResource("icon.png")));
+            runConf = d.showDialog();
+            // It's nice to be able to change settings even without running
+            if (null == runConf) {
+                writeConf = d.getLastConfiguration();
+            }
+        } else {
+            // fall through to allow configuration via a file
+        }
+
+        if (null != runConf) {
+            writeConf = runConf;
+        }
+
+        if (null != writeConf) {
+            if (!jumpStartSettings.exists()) {
+                jumpStartSettings.createNewFile();
+            }
+
+            if (jumpStartSettings.canWrite()) {
+                FileOutputStream fos = new FileOutputStream(jumpStartSettings);
+                writeConf.write(fos);
+                fos.close();
+            }
+
+            if (!jumpStartSettingsHome.exists()) {
+                jumpStartSettingsHome.createNewFile();
+            }
+
+            if (jumpStartSettingsHome.canWrite()) {
+                FileOutputStream fos = new FileOutputStream(jumpStartSettingsHome);
+                writeConf.write(fos);
+                fos.close();
+            }
+        }
+
+        return runConf;
+
     }
 }

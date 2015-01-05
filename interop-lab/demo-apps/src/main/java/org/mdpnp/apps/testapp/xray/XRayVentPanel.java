@@ -197,6 +197,12 @@ public class XRayVentPanel extends JPanel {
 
     private boolean imageButtonDown = false;
 
+
+    public XRayVentPanel(final Subscriber subscriber, final EventLoop eventLoop, DeviceListCellRenderer deviceCellRenderer) {
+        this(null, subscriber, eventLoop, deviceCellRenderer);
+    }
+
+    @Deprecated
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public XRayVentPanel(DemoPanel demoPanel, final Subscriber subscriber, final EventLoop eventLoop, DeviceListCellRenderer deviceCellRenderer) {
         super(new BorderLayout());
@@ -422,7 +428,7 @@ public class XRayVentPanel extends JPanel {
         params.add("'"+ice.MDC_START_INSPIRATORY_CYCLE.VALUE+"'");
         startOfBreathModel.start(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.numeric_data);
         
-        demoPanel.getBedLabel().setText("X-Ray / Ventilator Synchronization");
+        //MIKEFIX set externally: demoPanel.getBedLabel().setText("X-Ray / Ventilator Synchronization");
         executorNonCritical.schedule(new Runnable() {
             public void run() {
                 cameraModel.start();

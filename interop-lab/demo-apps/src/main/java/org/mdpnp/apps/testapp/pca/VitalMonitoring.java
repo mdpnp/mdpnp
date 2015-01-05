@@ -34,6 +34,8 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.RtConfig;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
@@ -452,17 +454,32 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
 
     public static final void main(String[] args) {
 
-        final DomainParticipant p = DomainParticipantFactory.get_instance().create_participant(0, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT,
-                null, StatusKind.STATUS_MASK_NONE);
-        final Subscriber s = p.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        final Publisher pub = p.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        final VitalModel vm = new VitalModelImpl(null);
+        RtConfig.loadAndSetIceQos();
+
+        RtConfig rtSetup = RtConfig.setupDDS(0);
+        final EventLoop eventLoop=rtSetup.eventLoop;
+        final Publisher pub=rtSetup.publisher;
+        final Subscriber s=rtSetup.subscriber;
+        final DomainParticipant participant=rtSetup.participant;
+        final DeviceListModel nc = rtSetup.deviceListModel;
+        final String udi = rtSetup.udi;
+        final EventLoopHandler handler = rtSetup.handler;
+
+        final VitalModel vm = new VitalModelImpl(nc);
+
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        
-        EventLoop eventLoop = new EventLoop();
+
         final EventLoopHandler eventLoopHandler = new EventLoopHandler(eventLoop);
 
         vm.start(s, pub, eventLoop);
+
+        eventLoop.doLater(new Runnable() {
+            public void run() {
+                VitalSign.SpO2.addToModel(vm);
+                VitalSign.RespiratoryRate.addToModel(vm);
+                VitalSign.EndTidalCO2.addToModel(vm);
+            }
+        });
 
         JFrame frame = new JFrame("UITest");
         frame.getContentPane().setBackground(Color.white);
@@ -483,9 +500,9 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
-                p.delete_subscriber(s);
-                p.delete_contained_entities();
-                DomainParticipantFactory.get_instance().delete_participant(p);
+                participant.delete_subscriber(s);
+                participant.delete_contained_entities();
+                DomainParticipantFactory.get_instance().delete_participant(participant);
                 DomainParticipantFactory.finalize_instance();
                 super.windowClosing(e);
             }
