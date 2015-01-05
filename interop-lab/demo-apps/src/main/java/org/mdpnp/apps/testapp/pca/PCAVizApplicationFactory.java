@@ -14,9 +14,12 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class PCAVizApplicationFactory implements IceApplicationProvider {
 
+    private final IceAppsContainer.AppType PCAViz =
+            new IceAppsContainer.AppType("pcaviz", "Data Visualization", "NOPCAVIZ", DataVisualization.class.getResource("data-viz.png"), 0.75);
+
     @Override
-    public AppType getAppType() {
-        return AppType.PCAViz;
+    public IceAppsContainer.AppType getAppType() {
+        return PCAViz;
 
     }
 
@@ -36,17 +39,17 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
 
             @Override
             public String getId() {
-                return AppType.PCAViz.getId();
+                return PCAViz.getId();
             }
 
             @Override
             public String getName() {
-                return AppType.PCAViz.getName();
+                return PCAViz.getName();
             }
 
             @Override
             public Icon getIcon() {
-                return AppType.PCAViz.getIcon();
+                return PCAViz.getIcon();
             }
 
             @Override

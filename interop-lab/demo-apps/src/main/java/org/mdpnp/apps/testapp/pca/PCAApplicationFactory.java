@@ -14,9 +14,12 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class PCAApplicationFactory implements IceApplicationProvider {
 
+    private final IceAppsContainer.AppType PCA =
+            new  IceAppsContainer.AppType("pca", "Infusion Safety", "NOPCA", IceApplicationProvider.class.getResource("infusion-safety.png"), 0.75);
+
     @Override
-    public AppType getAppType() {
-        return AppType.PCA;
+    public IceAppsContainer.AppType getAppType() {
+        return PCA;
 
     }
 
@@ -36,17 +39,17 @@ public class PCAApplicationFactory implements IceApplicationProvider {
 
             @Override
             public String getId() {
-                return AppType.PCA.getId();
+                return PCA.getId();
             }
 
             @Override
             public String getName() {
-                return AppType.PCA.getName();
+                return PCA.getName();
             }
 
             @Override
             public Icon getIcon() {
-                return AppType.PCA.getIcon();
+                return getIcon();
             }
 
             @Override

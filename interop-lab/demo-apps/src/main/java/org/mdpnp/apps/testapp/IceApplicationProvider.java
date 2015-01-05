@@ -4,6 +4,6 @@ import org.springframework.context.ApplicationContext;
 
 public interface IceApplicationProvider {
 
-    AppType getAppType(); // MIKEF remove - backward compatibility
+    IceAppsContainer.AppType getAppType();
     IceAppsContainer.IceApp create(ApplicationContext context);
 }

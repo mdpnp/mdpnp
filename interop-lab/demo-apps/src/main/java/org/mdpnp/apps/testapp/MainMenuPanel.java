@@ -43,7 +43,7 @@ public class MainMenuPanel extends JPanel {
     private final JList deviceList;
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public MainMenuPanel(AppType[] appTypes) {
+    public MainMenuPanel(IceAppsContainer.AppType[] appTypes) {
         super(new GridBagLayout());
 
         setOpaque(false);

@@ -12,9 +12,12 @@ import java.awt.*;
  */
 public class SimControlFactory implements IceApplicationProvider {
 
+    private final IceAppsContainer.AppType SimControl =
+            new IceAppsContainer.AppType("sim", "Simulation Control", "NOSIM", IceApplicationProvider.class.getResource("sim.png"), 0.75);
+
     @Override
-    public AppType getAppType() {
-        return AppType.SimControl;
+    public IceAppsContainer.AppType getAppType() {
+        return SimControl;
 
     }
 
@@ -40,17 +43,17 @@ public class SimControlFactory implements IceApplicationProvider {
 
             @Override
             public String getId() {
-                return AppType.SimControl.getId();
+                return SimControl.getId();
             }
 
             @Override
             public String getName() {
-                return AppType.SimControl.getName();
+                return SimControl.getName();
             }
 
             @Override
             public Icon getIcon() {
-                return AppType.SimControl.getIcon();
+                return SimControl.getIcon();
             }
 
             @Override

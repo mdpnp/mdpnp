@@ -32,17 +32,17 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
-//
-
-/**
- * @author Jeff Plourde
- *
- */
 public class IceAppsContainer {
+
+    private static final Logger log = LoggerFactory.getLogger(IceAppsContainer.class);
 
     public interface IceApp {
 
@@ -53,7 +53,78 @@ public class IceAppsContainer {
 
         void start(ApplicationContext context);
         void stop();
-    };
+    }
+
+    public static class AppType {
+
+        private final String id;
+        private final String name;
+        private final Icon   icon;
+        private final String disableProperty;
+
+        public AppType(final String id, final String name, final String disableProperty, final URL icon, double scale) {
+            this(id, name, disableProperty, read(icon), scale);
+        }
+
+        public AppType(final String id, final String name, final String disableProperty, final BufferedImage icon, double scale) {
+            this.id = id;
+            this.name = name;
+            this.icon = null == icon ? null : new ImageIcon(scale(icon, scale));
+            this.disableProperty = disableProperty;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Icon getIcon() {
+            return icon;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+        public boolean isDisabled() {
+            return null != disableProperty && Boolean.getBoolean(disableProperty);
+        }
+
+
+        private static BufferedImage read(URL url) {
+            try {
+                return url==null?null:ImageIO.read(url);
+            } catch (IOException e) {
+                log.error("Failed to load image url:" + url.toExternalForm(), e);
+                return null;
+            }
+        }
+
+        private static BufferedImage scale(BufferedImage before, double scale) {
+            if (null == before) {
+                return null;
+            }
+            if (0 == Double.compare(scale, 0.0)) {
+                return before;
+            }
+            int width = before.getWidth();
+            int height = before.getHeight();
+
+            BufferedImage after = new BufferedImage((int) (scale * width), (int) (scale * height), BufferedImage.TYPE_INT_ARGB);
+            java.awt.geom.AffineTransform at = new java.awt.geom.AffineTransform();
+            at.scale(scale, scale);
+
+            AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+            after = scaleOp.filter(before, after);
+            return after;
+        }
+    }
+
+    private static AppType Main  = new AppType("main",   "Main Menu",   null, (URL)null, 0);
+    private static AppType Device= new AppType("device", "Device Info", null, (URL)null, 0);
 
     private static String goback = null;
     private static Runnable goBackAction = null;
@@ -83,8 +154,6 @@ public class IceAppsContainer {
         ol.show(panel.getContent(), IceAppsContainer.goback);
         panel.getBack().setVisible(false);
     }
-
-    private static final Logger log = LoggerFactory.getLogger(IceAppsContainer.class);
 
     @SuppressWarnings("unchecked")
     public static final void start(final int domainId) throws Exception {
@@ -137,7 +206,7 @@ public class IceAppsContainer {
 
 
         final CompositeDevicePanel devicePanel = new CompositeDevicePanel();
-        panel.getContent().add(devicePanel, AppType.Device.getId());
+        panel.getContent().add(devicePanel, Device.getId());
 
 
         ServiceLoader<IceApplicationProvider> l = ServiceLoader.load(IceApplicationProvider.class);
@@ -177,8 +246,8 @@ public class IceAppsContainer {
         AppType[] at = activeApps.keySet().toArray(new AppType[activeApps.size()]);
         final MainMenuPanel mainMenuPanel = new MainMenuPanel(at);
         mainMenuPanel.setOpaque(false);
-        panel.getContent().add(mainMenuPanel, AppType.Main.getId());
-        ol.show(panel.getContent(), AppType.Main.getId());
+        panel.getContent().add(mainMenuPanel, Main.getId());
+        ol.show(panel.getContent(), Main.getId());
 
 
         frame.addWindowListener(new WindowAdapter() {
@@ -303,7 +372,7 @@ public class IceAppsContainer {
                             a.setVisible(true);
                         }
                         else {
-                            setGoBack(AppType.Main.getId(), new Runnable() {
+                            setGoBack(Main.getId(), new Runnable() {
                                 public void run() {
                                     app.stop();
                                 }
@@ -340,7 +409,7 @@ public class IceAppsContainer {
                     t.setDaemon(true);
                     t.start();
 
-                    setGoBack(AppType.Main.getId(), new Runnable() {
+                    setGoBack(Main.getId(), new Runnable() {
                         public void run() {
                             DeviceDataMonitor deviceMonitor = devicePanel.getModel();
                             if (null != deviceMonitor) {
@@ -349,7 +418,7 @@ public class IceAppsContainer {
                             devicePanel.setModel(null);
                         }
                     });
-                    ol.show(panel.getContent(), AppType.Device.getId());
+                    ol.show(panel.getContent(), Device.getId());
                 }
                 super.mouseClicked(e);
             }

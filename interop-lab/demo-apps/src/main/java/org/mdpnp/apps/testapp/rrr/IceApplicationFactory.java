@@ -16,8 +16,11 @@ import java.awt.*;
  */
 public class IceApplicationFactory implements IceApplicationProvider {
 
+    private final IceAppsContainer.AppType RRR =
+            new IceAppsContainer.AppType("rrr", "Respiratory Rate Calc", "NORRR", RapidRespiratoryRate.class.getResource("rrr.png"), 0.75);
+
     @Override
-    public AppType getAppType() { return AppType.RRR;}
+    public IceAppsContainer.AppType getAppType() { return RRR;}
 
     @Override
     public IceAppsContainer.IceApp create(ApplicationContext parentContext) {
@@ -41,17 +44,17 @@ public class IceApplicationFactory implements IceApplicationProvider {
 
             @Override
             public String getId() {
-                return AppType.RRR.getId();
+                return RRR.getId();
             }
 
             @Override
             public String getName() {
-                return AppType.RRR.getName();
+                return RRR.getName();
             }
 
             @Override
             public Icon getIcon() {
-                return AppType.RRR.getIcon();
+                return RRR.getIcon();
             }
 
             @Override
