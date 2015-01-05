@@ -1,9 +1,15 @@
 package org.mdpnp.apps.testapp.pca;
 
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 import org.mdpnp.apps.testapp.*;
 import org.mdpnp.apps.testapp.vital.VitalModel;
+import org.mdpnp.devices.EventLoopHandler;
+import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,14 +18,14 @@ import java.util.concurrent.ScheduledExecutorService;
 /**
  *
  */
-public class PCAVizApplicationFactory implements IceApplicationProvider {
+public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
-    private final IceAppsContainer.AppType PCAViz =
-            new IceAppsContainer.AppType("pcaviz", "Data Visualization", "NOPCAVIZ", DataVisualization.class.getResource("data-viz.png"), 0.75);
+    private final IceAppsContainer.AppType FileAdapter =
+            new IceAppsContainer.AppType("file", "CSV File Exporter", "NOCSV",  DataVisualization.class.getResource("csv-text.png"), 0.75);
 
     @Override
     public IceAppsContainer.AppType getAppType() {
-        return PCAViz;
+        return FileAdapter;
 
     }
 
@@ -39,17 +45,17 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
 
             @Override
             public String getId() {
-                return PCAViz.getId();
+                return FileAdapter.getId();
             }
 
             @Override
             public String getName() {
-                return PCAViz.getName();
+                return FileAdapter.getName();
             }
 
             @Override
             public Icon getIcon() {
-                return PCAViz.getIcon();
+                return FileAdapter.getIcon();
             }
 
             @Override

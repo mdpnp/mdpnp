@@ -17,6 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.swing.*;
 
 import org.mdpnp.apps.testapp.pca.PCAConfig;
+import org.mdpnp.apps.testapp.pca.VitalModelContainer;
 import org.mdpnp.apps.testapp.pca.VitalMonitoring;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
@@ -28,12 +29,18 @@ import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
  */
 public class DataVisualization extends JSplitPane {
     private final PCAConfig pcaConfig;
-    private final VitalMonitoring vitalMonitoring;
+    private final VitalModelContainer vitalMonitoring;
 
-    public DataVisualization(ScheduledExecutorService executor, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListCellRenderer deviceCellRenderer) {
-        super(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(new PCAConfig(executor, objectiveWriter, deviceCellRenderer)), new VitalMonitoring(executor));
+    public DataVisualization(ScheduledExecutorService executor,
+                             ice.InfusionObjectiveDataWriter objectiveWriter,
+                             DeviceListCellRenderer deviceCellRenderer, VitalModelContainer vmc) {
+
+        super(JSplitPane.HORIZONTAL_SPLIT,
+                new JScrollPane(new PCAConfig(executor, objectiveWriter, deviceCellRenderer)),
+                (JComponent)vmc);
+
         this.pcaConfig = (PCAConfig) ((JScrollPane) getLeftComponent()).getViewport().getComponent(0);
-        this.vitalMonitoring = (VitalMonitoring) getRightComponent();
+        this.vitalMonitoring = (VitalModelContainer) getRightComponent();
         setDividerLocation(0.2);
         setDividerSize(10);
     }

@@ -12,16 +12,18 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.pca;
 
-import java.awt.BasicStroke;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Polygon;
-import java.awt.RenderingHints;
-import java.awt.Stroke;
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.RtConfig;
+import org.mdpnp.apps.testapp.vital.*;
+import org.mdpnp.devices.EventLoopHandler;
+import org.mdpnp.rtiapi.data.EventLoop;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
@@ -31,31 +33,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-
-import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.RtConfig;
-import org.mdpnp.apps.testapp.vital.Value;
-import org.mdpnp.apps.testapp.vital.Vital;
-import org.mdpnp.apps.testapp.vital.VitalModel;
-import org.mdpnp.apps.testapp.vital.VitalModelImpl;
-import org.mdpnp.apps.testapp.vital.VitalModelListener;
-import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.rtiapi.data.EventLoop;
-
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.Subscriber;
-
 @SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
  *
  */
-public class VitalMonitoring extends JComponent implements VitalModelListener, Runnable {
+public class VitalMonitoring extends JComponent implements VitalModelListener, VitalModelContainer, Runnable {
 
     private final Dimension size = new Dimension();
     private final Point center = new Point();
@@ -469,8 +452,6 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
 
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-        final EventLoopHandler eventLoopHandler = new EventLoopHandler(eventLoop);
-
         vm.start(s, pub, eventLoop);
 
         eventLoop.doLater(new Runnable() {
@@ -480,6 +461,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
                 VitalSign.EndTidalCO2.addToModel(vm);
             }
         });
+
 
         JFrame frame = new JFrame("UITest");
         frame.getContentPane().setBackground(Color.white);
@@ -496,7 +478,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
             public void windowClosing(WindowEvent e) {
                 vm.stop();
                 try {
-                    eventLoopHandler.shutdown();
+                    handler.shutdown();
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
