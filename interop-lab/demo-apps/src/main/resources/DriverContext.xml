@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN"
+        "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="ignoreResourceNotFound"   value="true"/>
+        <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
+        <property name="locations">
+            <list>
+                <value>classpath:/ice.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="domainId" class="java.lang.Integer">
+        <constructor-arg value="${mdpnp.domain}" />
+    </bean>
+
+    <bean id="rtConfig" class="org.mdpnp.apps.testapp.RtConfig" factory-method="setupDDS">
+        <constructor-arg ref="domainId" />
+    </bean>
+
+    <bean id="domainParticipant" class=" com.rti.dds.domain.DomainParticipant"
+          factory-bean="rtConfig"
+          factory-method="getParticipant">
+    </bean>
+
+    <bean id="deviceListModel" class="org.mdpnp.apps.testapp.DeviceListModel"
+          factory-bean="rtConfig"
+          factory-method="getDeviceListModel"
+          destroy-method="tearDown">
+    </bean>
+
+    <bean id="eventLoop" class="org.mdpnp.rtiapi.data.EventLoop"
+          factory-bean="rtConfig"
+          factory-method="getEventLoop">
+    </bean>
+
+    <bean id="eventLoopHandler" class="org.mdpnp.devices.EventLoopHandler"
+          factory-bean="rtConfig"
+          factory-method="getHandler"
+          destroy-method="shutdown">
+    </bean>
+
+    <bean id="subscriber" class="com.rti.dds.subscription.Subscriber"
+          factory-bean="rtConfig"
+          factory-method="getSubscriber">
+    </bean>
+
+    <bean id="publisher" class="com.rti.dds.publication.Publisher"
+          factory-bean="rtConfig"
+          factory-method="getPublisher">
+    </bean>
+
+
+</beans>
