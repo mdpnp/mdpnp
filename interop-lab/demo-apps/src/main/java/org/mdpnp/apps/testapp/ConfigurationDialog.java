@@ -12,11 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.awt.CardLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.Window;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -26,24 +22,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
 import org.mdpnp.apps.testapp.Configuration.Application;
-import org.mdpnp.apps.testapp.Configuration.DeviceType;
+import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 @SuppressWarnings({ "serial", "rawtypes", "unchecked" })
 /**
@@ -59,7 +46,7 @@ public class ConfigurationDialog extends JDialog {
     private final JButton quit = new JButton("Quit");
     private final JTextField domainId = new JTextField("0", 2);
     private boolean quitPressed = true;
-    private final JComboBox deviceType = new JComboBox(DeviceType.values());
+    private final JComboBox<DeviceDriverProvider> deviceType = makeDeviceTypesUIModel();
     private final JLabel deviceTypeLabel = new JLabel("Device Type:");
 
     private JComboBox serialPorts;
@@ -97,13 +84,51 @@ public class ConfigurationDialog extends JDialog {
         return welcomeText;
     }
 
-    protected void set(Application app, DeviceType deviceType) {
+    private static JComboBox<DeviceDriverProvider> makeDeviceTypesUIModel()
+    {
+        DeviceDriverProvider[] arr = DeviceFactory.getAvailableDevices();
+        DeviceDriverProvider[] l = new DeviceDriverProvider[arr.length+1];
+        System.arraycopy(arr, 0, l, 1, arr.length);
+        l[0] = null;
+
+        JComboBox jcb = new JComboBox(l);
+
+        jcb.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList list,
+                                                          Object value,
+                                                          int index,
+                                                          boolean isSelected,
+                                                          boolean cellHasFocus) {
+                if(value instanceof DeviceDriverProvider) {
+                    DeviceDriverProvider ddp = (DeviceDriverProvider) value;
+                    DeviceDriverProvider.DeviceType dt = ddp.getDeviceType();
+                    return super.getListCellRendererComponent(list, dt, index, isSelected, cellHasFocus);
+                }
+                else {
+                    return super.getListCellRendererComponent(list, "Select One", index, isSelected, cellHasFocus);
+                }
+            }
+        });
+
+        return jcb;
+    }
+
+    protected void set(Application app, DeviceDriverProvider dt) {
         switch (app) {
         case ICE_Device_Interface:
-            this.deviceType.setVisible(true);
+            deviceType.setVisible(true);
             deviceTypeLabel.setVisible(true);
-            start.setText("Start " + deviceType);
-            ice.ConnectionType selected = deviceType.getConnectionType();
+
+            ice.ConnectionType selected = null;
+            if(dt != null) {
+                start.setText("Start " + dt.getDeviceType().getAlias());
+                start.setVisible(true);
+                selected = dt.getDeviceType().getConnectionType();
+            }
+            else {
+                start.setVisible(false);
+            }
             if (ice.ConnectionType.Serial.equals(selected)) {
                 addressLabel.setVisible(true);
                 addressLabel.setText("Serial Port:");
@@ -132,17 +157,18 @@ public class ConfigurationDialog extends JDialog {
             break;
         case ICE_Supervisor:
         case ICE_ParticipantOnly:
-            this.deviceType.setVisible(false);
+            deviceType.setVisible(false);
             deviceTypeLabel.setVisible(false);
             addressLabel.setVisible(false);
             addressPanel.setVisible(false);
+            start.setVisible(true);
             start.setText("Start " + app);
             break;
         }
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 pack();
-                setLocationRelativeTo(null);
+                //setLocationRelativeTo(null);
             }
         });
     }
@@ -178,16 +204,16 @@ public class ConfigurationDialog extends JDialog {
             if (null != conf.getApplication()) {
                 applications.setSelectedItem(conf.getApplication());
             }
-            if (null != conf.getDeviceType()) {
-                deviceType.setSelectedItem(conf.getDeviceType());
+            if (null != conf.getDeviceFactory()) {
+                deviceType.setSelectedItem(conf.getDeviceFactory());
             }
             domainId.setText(Integer.toString(conf.getDomainId()));
 
             if (null != conf.getApplication() && null != conf.getAddress()) {
                 switch (conf.getApplication()) {
                 case ICE_Device_Interface:
-                    if (null != conf.getDeviceType()) {
-                        ice.ConnectionType connType = conf.getDeviceType().getConnectionType();
+                    if (null != conf.getDeviceFactory()) {
+                        ice.ConnectionType connType = conf.getDeviceFactory().getDeviceType().getConnectionType();
                         if (ice.ConnectionType.Network.equals(connType)) {
                             this.address.setText(conf.getAddress());
                         } else if (ice.ConnectionType.Serial.equals(connType)) {
@@ -285,17 +311,23 @@ public class ConfigurationDialog extends JDialog {
         start.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // basic validation of parameters.
+                Application app = (Application)applications.getSelectedItem();
+                if(Application.ICE_Device_Interface.equals(app)) {
+                    DeviceDriverProvider dt = (DeviceDriverProvider) deviceType.getSelectedItem();
+                    if(dt == null)
+                        return;
+                }
                 quitPressed = false;
                 setVisible(false);
             }
         });
 
         applications.addItemListener(new ItemListener() {
-
             @Override
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
-                    set((Application) e.getItem(), (DeviceType) deviceType.getSelectedItem());
+                    set((Application) e.getItem(), (DeviceDriverProvider) deviceType.getSelectedItem());
                 }
             }
 
@@ -305,12 +337,15 @@ public class ConfigurationDialog extends JDialog {
             @Override
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
-                    set((Application) applications.getSelectedItem(), (DeviceType) e.getItem());
+                    set((Application) applications.getSelectedItem(), (DeviceDriverProvider) e.getItem());
                 }
+                else
+                    set((Application) applications.getSelectedItem(), null);
+
             }
         });
 
-        set((Application) applications.getSelectedItem(), (DeviceType) deviceType.getSelectedItem());
+        set((Application) applications.getSelectedItem(), (DeviceDriverProvider)deviceType.getSelectedItem());
     }
 
     private Configuration lastConf;
@@ -325,16 +360,21 @@ public class ConfigurationDialog extends JDialog {
         setVisible(true);
 
         String address = null;
-        switch ((Application) applications.getSelectedItem()) {
+        Application app = (Application) applications.getSelectedItem();
+        DeviceDriverProvider ddp = (DeviceDriverProvider)deviceType.getSelectedItem();
+
+        switch (app) {
         case ICE_Device_Interface:
-            ice.ConnectionType selected = ((DeviceType) deviceType.getSelectedItem()).getConnectionType();
-            if (ice.ConnectionType.Network.equals(selected)) {
-                address = this.address.getText();
-            } else if (ice.ConnectionType.Serial.equals(selected)) {
-                if (SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
+            if(ddp != null) {
+                ice.ConnectionType selected = ddp.getDeviceType().getConnectionType();
+                if (ice.ConnectionType.Network.equals(selected)) {
                     address = this.address.getText();
-                } else {
-                    address = this.serialPorts.getSelectedItem().toString();
+                } else if (ice.ConnectionType.Serial.equals(selected)) {
+                    if (SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
+                        address = this.address.getText();
+                    } else {
+                        address = this.serialPorts.getSelectedItem().toString();
+                    }
                 }
             }
         case ICE_Supervisor:
@@ -343,8 +383,8 @@ public class ConfigurationDialog extends JDialog {
             break;
 
         }
-        lastConf = new Configuration((Application) applications.getSelectedItem(), Integer.parseInt(domainId.getText()),
-                (DeviceType) deviceType.getSelectedItem(), address);
+
+        lastConf = new Configuration(app,Integer.parseInt(domainId.getText()), ddp, address);
 
         dispose();
         return quitPressed ? null : lastConf;

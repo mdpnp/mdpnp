@@ -2,11 +2,9 @@ package org.mdpnp.apps.testapp;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.mdpnp.devices.DeviceDriverProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 
@@ -29,8 +27,8 @@ public class ConfigurationTest {
         InputStream fis = u.openStream();
         try {
             Configuration runConf = Configuration.read(fis);
-            Assert.assertNotNull("Failed to read config", runConf.getDeviceType());
-            Assert.assertEquals("Failed to read config", "PO_Simulator", runConf.getDeviceType().getAlias());
+            Assert.assertNotNull("Failed to read config", runConf.getDeviceFactory());
+            Assert.assertEquals("Failed to read config", "PO_Simulator", runConf.getDeviceFactory().getDeviceType().getAlias());
         }
         finally {
             fis.close();

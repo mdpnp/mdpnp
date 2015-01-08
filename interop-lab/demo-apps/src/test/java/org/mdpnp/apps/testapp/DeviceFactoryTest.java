@@ -16,11 +16,11 @@ public class DeviceFactoryTest {
     @Test
     public void testLocateDrivers()
     {
-        DeviceDriverProvider.DeviceType[] all = DeviceFactory.getAvailableDevices();
+        DeviceDriverProvider[] all =  DeviceFactory.getAvailableDevices();
         Assert.assertNotNull(all);
         Assert.assertNotEquals(all.length, 0);
-
-        for(DeviceDriverProvider.DeviceType dt : all) {
+        for (DeviceDriverProvider ddp : all) {
+            DeviceDriverProvider.DeviceType dt=ddp.getDeviceType();
             log.info(dt.getModel() + " " + dt.getManufacturer() + " " + dt.getAlias());
         }
     }
@@ -28,8 +28,9 @@ public class DeviceFactoryTest {
     @Test
     public void testBackwardsCompatibility()
     {
-        DeviceDriverProvider.DeviceType[] all = DeviceFactory.getAvailableDevices();
-        for(DeviceDriverProvider.DeviceType dt : all) {
+        DeviceDriverProvider[] all =  DeviceFactory.getAvailableDevices();
+        for (DeviceDriverProvider ddp : all) {
+            DeviceDriverProvider.DeviceType dt=ddp.getDeviceType();
             OldDeviceTypeEnum v = OldDeviceTypeEnum.valueOf(dt.getAlias());
             Assert.assertNotNull(v);
             Assert.assertEquals(v.connectionType,dt.getConnectionType());

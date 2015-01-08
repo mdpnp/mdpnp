@@ -12,41 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.awt.Image;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Method;
-
-import javax.imageio.ImageIO;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantFactoryQos;
-import com.rti.dds.domain.DomainParticipantQos;
-import com.rti.dds.infrastructure.DurabilityQosPolicy;
-import com.rti.dds.infrastructure.DurabilityQosPolicyKind;
-import com.rti.dds.infrastructure.HistoryQosPolicy;
-import com.rti.dds.infrastructure.HistoryQosPolicyKind;
-import com.rti.dds.infrastructure.ReliabilityQosPolicy;
-import com.rti.dds.infrastructure.ReliabilityQosPolicyKind;
-import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
-import com.rti.dds.infrastructure.StringSeq;
-import com.rti.dds.publication.DataWriterQos;
-import com.rti.dds.publication.PublisherQos;
-import com.rti.dds.subscription.DataReaderQos;
-import com.rti.dds.subscription.SubscriberQos;
-import com.rti.dds.topic.TopicQos;
 
 /**
  * @author Jeff Plourde
@@ -75,11 +42,11 @@ public class Main {
 
         switch (runConf.getApplication()) {
         case ICE_Device_Interface:
-            if(null == runConf.getDeviceType()) {
+            if(null == runConf.getDeviceFactory()) {
                 log.error("Unknown device type was specified");
                 System.exit(-1);
             }
-            new DeviceAdapter().start(runConf.getDeviceType(), runConf.getDomainId(), runConf.getAddress(), !cmdline);
+            new DeviceAdapter().start(runConf.getDeviceFactory(), runConf.getDomainId(), runConf.getAddress(), !cmdline);
             break;
         case ICE_Supervisor:
             IceAppsContainer.start(runConf.getDomainId());

@@ -19,6 +19,7 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 import org.mdpnp.devices.BuildInfo;
+import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -305,7 +306,7 @@ public class IceAppsContainer {
                 dia.setTitle("Create a local ICE Device Adapter");
                 final DefaultComboBoxModel model = new DefaultComboBoxModel(new Configuration.Application[]{Configuration.Application.ICE_Device_Interface});
                 dia.getApplications().setModel(model);
-                dia.set(Configuration.Application.ICE_Device_Interface, Configuration.DeviceType.PO_Simulator);
+                dia.set(Configuration.Application.ICE_Device_Interface, null);
                 dia.remove(dia.getDomainId());
                 dia.remove(dia.getDomainIdLabel());
                 dia.remove(dia.getApplications());
@@ -340,7 +341,7 @@ public class IceAppsContainer {
                                 }
                                 DeviceAdapter da = new DeviceAdapter();
                                 da.setInitialPartition(partition.toArray(new String[0]));
-                                da.start(c.getDeviceType(), domainId, c.getAddress(), true, false, eventLoop);
+                                da.start(c.getDeviceFactory(), domainId, c.getAddress(), true, false, context);
                                 log.info("DeviceAdapter ended");
                             } catch (Exception e) {
                                 log.error("Error in spawned DeviceAdapter", e);

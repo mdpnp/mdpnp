@@ -26,8 +26,9 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import org.mdpnp.apps.testapp.Configuration.DeviceType;
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.DeviceDriverProvider;
+import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
@@ -37,6 +38,8 @@ import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * @author Jeff Plourde
@@ -61,13 +64,15 @@ public class DeviceAdapter {
         return frame;
     }
 
-    long start() {
-        return System.currentTimeMillis();
-    }
+    private static class Metrics {
+        long start() {
+            return System.currentTimeMillis();
+        }
 
-    long stop(String s, long tm) {
-        log.trace(s + " took " + (System.currentTimeMillis() - tm) + "ms");
-        return start();
+        long stop(String s, long tm) {
+            log.trace(s + " took " + (System.currentTimeMillis() - tm) + "ms");
+            return start();
+        }
     }
 
     private static final void setString(JProgressBar progressBar, String s, int value) {
@@ -82,8 +87,10 @@ public class DeviceAdapter {
     }
 
     private synchronized void killAdapter(final JProgressBar progressBar) {
+
+        Metrics metrics = new Metrics();
         try {
-            long tm = start();
+            long tm = metrics.start();
 
             if (null != device && device instanceof AbstractConnectedDevice) {
                 AbstractConnectedDevice cDevice = (AbstractConnectedDevice) device;
@@ -92,22 +99,22 @@ public class DeviceAdapter {
                 if (!cDevice.awaitState(ice.ConnectionState.Disconnected, 5000L)) {
                     log.warn("ConnectedDevice ended in State:" + cDevice.getState());
                 }
-                tm = stop("disconnect", tm);
+                tm = metrics.stop("disconnect", tm);
             }
 
-            tm = start();
+            tm = metrics.start();
             if (device != null) {
                 setString(progressBar, "Shut down the device", 50);
                 device.shutdown();
-                stop("device.shutdown", tm);
+                metrics.stop("device.shutdown", tm);
                 device = null;
             }
-            tm = start();
+            tm = metrics.start();
             if (handler != null) {
                 try {
                     setString(progressBar, "Stop event processing", 95);
                     handler.shutdown();
-                    stop("handler.shutdown", tm);
+                    metrics.stop("handler.shutdown", tm);
                     handler = null;
                 } catch (InterruptedException e) {
                     log.error("Interrupted in handler.shutdown", e);
@@ -123,25 +130,28 @@ public class DeviceAdapter {
 
     private static final Logger log = LoggerFactory.getLogger(DeviceAdapter.class);
 
-    public void start(DeviceType type, int domainId, final String address, boolean gui) throws Exception {
-        start(type, domainId, address, gui, true, null);
+    public void start(DeviceDriverProvider type, int domainId, final String address, boolean gui) throws Exception {
+
+        System.setProperty("mdpnp.domain", Integer.toString(domainId));
+
+        final AbstractApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"DriverContext.xml"});
+
+        start(type, domainId, address, gui, true, context);
     }
 
-    public void start(DeviceType type, int domainId, final String address, boolean gui, boolean exit, EventLoop eventLoop) throws Exception {
+    public void start(DeviceDriverProvider deviceFactory, int domainId, final String address, boolean gui, boolean exit, AbstractApplicationContext context) throws Exception {
+
+        DeviceType type = deviceFactory.getDeviceType();
+
         log.trace("Starting DeviceAdapter with type=" + type);
         if (null != address && address.contains(":")) {
             SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
             log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
         }
-        if (null == eventLoop) {
-            eventLoop = new EventLoop();
-            handler = new EventLoopHandler(eventLoop);
-        } else {
-            handler = null;
-        }
 
-        device = DeviceFactory.buildDevice(type, domainId, eventLoop);
-        
+
+        device = deviceFactory.create(context);
+
         if(null != initialPartition) {
             device.setPartition(initialPartition);
         }
@@ -156,6 +166,7 @@ public class DeviceAdapter {
             
             // Use the device subscriber so that we
             // automatically maintain the same partition as the device
+            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             deviceMonitor.start(device.getSubscriber(), eventLoop);
 
             frame = new DemoFrame("ICE Device Adapter - " + type);

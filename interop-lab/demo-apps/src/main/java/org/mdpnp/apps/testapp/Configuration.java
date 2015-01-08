@@ -20,11 +20,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
+import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
 
 /**
  * @author Jeff Plourde
@@ -35,72 +37,15 @@ public class Configuration {
         ICE_Supervisor, ICE_Device_Interface, ICE_ParticipantOnly;
     }
 
-    public enum DeviceType {
-        PO_Simulator(ice.ConnectionType.Simulated, "Simulated", "Pulse Oximeter"), 
-        NIBP_Simulator(ice.ConnectionType.Simulated, "Simulated", "Noninvasive Blood Pressure"), 
-        ECG_Simulator(ice.ConnectionType.Simulated, "Simulated", "ElectroCardioGram"), 
-        CO2_Simulator(ice.ConnectionType.Simulated, "Simulated", "Capnometer"), 
-        Temp_Simulator(ice.ConnectionType.Simulated, "Simulated", "Temperature Probe"), 
-        Pump_Simulator(ice.ConnectionType.Simulated, "Simulated", "Infusion Pump"),
-        FlukeProsim68(ice.ConnectionType.Serial, "Fluke", "Prosim 6/8"), 
-        Bernoulli(ice.ConnectionType.Network, "CardioPulmonaryCorp", "Bernoulli"), 
-        Ivy450C(ice.ConnectionType.Serial, "Ivy", "450C Monitor"), 
-        Nonin(ice.ConnectionType.Serial, "Nonin", "Bluetooth Pulse Oximeter"), 
-        IntellivueEthernet(ice.ConnectionType.Network, "Philips", "Intellivue (LAN)"), 
-        IntellivueSerial(ice.ConnectionType.Serial, "Philips", "Intellivue (MIB/RS232)"), 
-        DrgerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"),
-        DrgerEvitaXL(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"),
-        DrgerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"),
-        DrgerV500_38400(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"),
-        DrgerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"),
-        Capnostream20(ice.ConnectionType.Serial, "Oridion", "Capnostream20"), 
-        NellcorN595(ice.ConnectionType.Serial, "Nellcor", "N-595"), 
-        MasimoRadical7(ice.ConnectionType.Serial, "Masimo", "Radical-7"), 
-        Symbiq(ice.ConnectionType.Simulated, "Hospira", "Symbiq"), 
-        Multiparameter(ice.ConnectionType.Simulated, "Simulated", "Multiparameter Monitor"),
-        DraegerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"),
-        DraegerEvitaXL(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), 
-        DraegerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), 
-        DraegerV500_38400(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), 
-        DraegerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"),
-        PB840(ice.ConnectionType.Serial, "Puritan Bennett", "840"),
-        BioPatch(ice.ConnectionType.Serial, "Zephyr", "BioPatch");
-
-        private final ice.ConnectionType connectionType;
-        private final String manufacturer, model;
-
-        private DeviceType(ice.ConnectionType connectionType, String manufacturer, String model) {
-            this.connectionType = connectionType;
-            this.manufacturer = manufacturer;
-            this.model = model;
-        }
-
-        public ice.ConnectionType getConnectionType() {
-            return connectionType;
-        }
-
-        public String getManufacturer() {
-            return manufacturer;
-        }
-
-        public String getModel() {
-            return model;
-        }
-
-        @Override
-        public String toString() {
-            return manufacturer + " " + model;
-        }
-    }
 
     private final Application application;
-    private final DeviceType deviceType;
+    private final DeviceDriverProvider deviceFactory;
     private final String address;
     private final int domainId;
 
-    public Configuration(Application application, int domainId, DeviceType deviceType, String address) {
+    public Configuration(Application application, int domainId, DeviceDriverProvider deviceFactory, String address) {
         this.application = application;
-        this.deviceType = deviceType;
+        this.deviceFactory = deviceFactory;
         this.address = address;
         this.domainId = domainId;
     }
@@ -113,8 +58,8 @@ public class Configuration {
         return domainId;
     }
 
-    public DeviceType getDeviceType() {
-        return deviceType;
+    public DeviceDriverProvider getDeviceFactory() {
+        return deviceFactory;
     }
 
     public String getAddress() {
@@ -122,9 +67,9 @@ public class Configuration {
     }
 
     private static final String APPLICATION = "application";
-    private static final String DOMAIN_ID = "domainId";
+    private static final String DOMAIN_ID   = "domainId";
     private static final String DEVICE_TYPE = "deviceType";
-    private static final String ADDRESS = "address";
+    private static final String ADDRESS     = "address";
 
     public void write(OutputStream os) throws IOException {
         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, CHARACTER_ENCODING));
@@ -138,10 +83,10 @@ public class Configuration {
         bw.write(Integer.toString(domainId));
         bw.write("\n");
 
-        if (null != deviceType) {
+        if (null != deviceFactory) {
             bw.write(DEVICE_TYPE);
             bw.write("\t");
-            bw.write(deviceType.name());
+            bw.write(deviceFactory.getDeviceType().getAlias());
             bw.write("\n");
         }
 
@@ -165,7 +110,7 @@ public class Configuration {
 
         Application app = null;
         int domainId = 0;
-        DeviceType deviceType = null;
+        DeviceDriverProvider deviceType = null;
         String address = null;
 
         while (null != (line = br.readLine())) {
@@ -185,10 +130,10 @@ public class Configuration {
                 }
             } else if (DEVICE_TYPE.equals(v[0])) {
                 try {
-                    deviceType = DeviceType.valueOf(v[1]);
+                    deviceType = DeviceFactory.getDeviceDriverProvider(v[1]);
                 } catch (IllegalArgumentException iae) {
                     deviceType = null;
-                    log.warn("Ignoring unknown devicetype:" + v[1]);
+                    log.warn("Ignoring unknown device type:" + v[1]);
                 }
             } else if (ADDRESS.equals(v[0])) {
                 if (v.length > 1) {
@@ -216,8 +161,10 @@ public class Configuration {
         out.println();
 
         out.println("if Application is " + Application.ICE_Device_Interface.name() + " then DeviceType may be one of:");
-        for (DeviceType d : DeviceType.values()) {
-            out.println("\t" + (ice.ConnectionType.Serial.equals(d.getConnectionType()) ? "*" : "") + d.name());
+        DeviceDriverProvider[] all =  DeviceFactory.getAvailableDevices();
+        for (DeviceDriverProvider ddp : all) {
+           DeviceType d=ddp.getDeviceType();
+           out.println("\t" + (ice.ConnectionType.Serial.equals(d.getConnectionType()) ? "*" : "") + d.getAlias());
         }
         out.println("DeviceAddress is an optional string configuring the address of the device");
         out.println();
@@ -230,7 +177,7 @@ public class Configuration {
     public static Configuration read(String[] args_) {
         Application app = null;
         int domainId = 0;
-        DeviceType deviceType = null;
+        DeviceDriverProvider deviceType = null;
         String address = null;
 
         List<String> args = new ArrayList<String>(Arrays.asList(args_));
@@ -271,7 +218,7 @@ public class Configuration {
                 String x = litr.next();
                 String[] y = x.split("\\=");
                 try {
-                    deviceType = DeviceType.valueOf(y[0]);
+                    deviceType = DeviceFactory.getDeviceDriverProvider(y[0]);
                     litr.remove();
                     if (y.length > 1) {
                         address = y[1];
@@ -282,8 +229,6 @@ public class Configuration {
                 }
             }
         }
-
-
 
         return new Configuration(app, domainId, deviceType, address);
     }
