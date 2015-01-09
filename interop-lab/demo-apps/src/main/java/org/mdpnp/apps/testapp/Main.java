@@ -60,7 +60,7 @@ public class Main {
 
         log.trace("This is the end of Main");
 
-        System.exit(0);
+        //System.exit(0);
     }
 
 }
