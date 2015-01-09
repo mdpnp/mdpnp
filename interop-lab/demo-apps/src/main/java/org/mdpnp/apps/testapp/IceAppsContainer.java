@@ -165,6 +165,7 @@ public class IceAppsContainer {
 
         final AbstractApplicationContext context =
                 new ClassPathXmlApplicationContext(new String[]{"IceAppContainerContext.xml"});
+        context.registerShutdownHook();
 
         RtConfig rtConfig = (RtConfig)context.getBean("rtConfig");
         final EventLoop eventLoop=rtConfig.eventLoop;
@@ -339,9 +340,10 @@ public class IceAppsContainer {
                                 for(int i = 0; i < qos.partition.name.size(); i++) {
                                     partition.add((String)qos.partition.name.get(i));
                                 }
-                                DeviceAdapter da = new DeviceAdapter();
+                                DeviceAdapter da = DeviceAdapter.newGUIAdapter(c.getDeviceFactory(), context);
                                 da.setInitialPartition(partition.toArray(new String[0]));
-                                da.start(c.getDeviceFactory(), domainId, c.getAddress(), true, false, context);
+                                da.start(c.getAddress());
+
                                 log.info("DeviceAdapter ended");
                             } catch (Exception e) {
                                 log.error("Error in spawned DeviceAdapter", e);

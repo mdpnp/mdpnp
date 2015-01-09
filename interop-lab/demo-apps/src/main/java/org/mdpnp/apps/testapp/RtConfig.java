@@ -155,7 +155,7 @@ public class RtConfig {
         }
     }
 
-    public static final void loadAndSetIceQos() {
+    public static boolean loadAndSetIceQos() {
 
         // Unfortunately this throws an Exception if there are errors in
         // XML profiles
@@ -194,6 +194,9 @@ public class RtConfig {
             qos.resource_limits.max_objects_per_thread = 8192;
             factory.set_qos(qos);
             verifyQosLibraries();
+
+            return userIceLibrary;
+
         } catch (Exception e) {
             log.error("Unable to set factory qos", e);
             throw new RuntimeException("Unable to set factory qos", e);

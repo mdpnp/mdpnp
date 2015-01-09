@@ -12,6 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
+import org.mdpnp.devices.DeviceDriverProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ public class Main {
             return;
         }
 
-        RtConfig.loadAndSetIceQos();
+        System.setProperty("mdpnp.domain", Integer.toString(runConf.getDomainId()));
 
         switch (runConf.getApplication()) {
         case ICE_Device_Interface:
@@ -46,7 +47,8 @@ public class Main {
                 log.error("Unknown device type was specified");
                 System.exit(-1);
             }
-            new DeviceAdapter().start(runConf.getDeviceFactory(), runConf.getDomainId(), runConf.getAddress(), !cmdline);
+            DeviceAdapter da = DeviceAdapter.newHeadlessAdapter(runConf.getDeviceFactory());
+            da.start(runConf.getAddress());
             break;
         case ICE_Supervisor:
             IceAppsContainer.start(runConf.getDomainId());
@@ -57,6 +59,8 @@ public class Main {
         }
 
         log.trace("This is the end of Main");
+
+        System.exit(0);
     }
 
 }
