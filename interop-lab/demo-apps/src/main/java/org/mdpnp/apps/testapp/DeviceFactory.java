@@ -66,19 +66,19 @@ public class DeviceFactory {
             return new DemoEthernetIntellivue(domainId, eventLoop);
         case IntellivueSerial:
             return new DemoSerialIntellivue(domainId, eventLoop);
-        case Dr\u00E4gerApollo:
+        //case Dr\u00E4gerApollo:
         case DraegerApollo:
             return new DemoApollo(domainId, eventLoop);
-        case Dr\u00E4gerEvitaXL:
+        //case Dr\u00E4gerEvitaXL:
         case DraegerEvitaXL:
             return new DemoEvitaXL(domainId, eventLoop);
-        case Dr\u00E4gerV500:
+        //case Dr\u00E4gerV500:
         case DraegerV500:
             return new DemoV500(domainId, eventLoop);
-        case Dr\u00E4gerV500_38400:
+        //case Dr\u00E4gerV500_38400:
         case DraegerV500_38400:
             return new DemoV500_38400(domainId, eventLoop);
-        case Dr\u00E4gerEvita4:
+        //case Dr\u00E4gerEvita4:
         case DraegerEvita4:
             return new DemoEvita4(domainId, eventLoop);
         case Bernoulli:
