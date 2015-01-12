@@ -48,7 +48,7 @@
           factory-method="getSubscriber">
     </bean>
 
-    <bean id="publisher" class="com.rti.dds.subscription.Subscriber"
+    <bean id="publisher" class="com.rti.dds.publication.Publisher"
           factory-bean="rtConfig"
           factory-method="getPublisher">
     </bean>

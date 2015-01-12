@@ -160,8 +160,6 @@ public class IceAppsContainer {
         UIManager.setLookAndFeel(new MDPnPLookAndFeel());
         UIManager.put("TabbedPane.contentOpaque", false);
 
-        System.setProperty("mdpnp.domain", Integer.toString(domainId));
-
         final AbstractApplicationContext context =
                 new ClassPathXmlApplicationContext(new String[]{"IceAppContainerContext.xml"});
 
