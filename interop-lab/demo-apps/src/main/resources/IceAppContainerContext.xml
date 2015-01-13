@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN"
-        "http://www.springframework.org/dtd/spring-beans.dtd">
-<beans>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="ignoreResourceNotFound"   value="true"/>
@@ -77,7 +79,9 @@
     </bean>
 
     <bean id="capnoModel" class="org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl" destroy-method="stop">
-        <constructor-arg value="ice.SampleArrayTopic.VALUE" />
+        <constructor-arg>
+            <util:constant static-field="ice.SampleArrayTopic.VALUE"/>
+        </constructor-arg>
     </bean>
 
 </beans>
