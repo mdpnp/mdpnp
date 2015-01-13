@@ -4,6 +4,7 @@ import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.Subscriber;
 import org.mdpnp.apps.testapp.*;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.InstanceModel;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 import org.springframework.context.ApplicationContext;
@@ -14,7 +15,7 @@ import java.awt.*;
 /**
  *
  */
-public class IceApplicationFactory implements IceApplicationProvider {
+public class RapidRespiratoryRateFactory implements IceApplicationProvider {
 
     private final IceAppsContainer.AppType RRR =
             new IceAppsContainer.AppType("rrr", "Respiratory Rate Calc", "NORRR", RapidRespiratoryRate.class.getResource("rrr.png"), 0.75);
@@ -32,7 +33,7 @@ public class IceApplicationFactory implements IceApplicationProvider {
         final Subscriber subscriber= (Subscriber)parentContext.getBean("subscriber");
         final int        domainId  = (Integer)parentContext.getBean("domainId");
 
-        SampleArrayInstanceModel capnoModel =  (SampleArrayInstanceModel)  parentContext.getBean("capnoModel");
+        InstanceModel capnoModel =  (InstanceModel)  parentContext.getBean("capnoModel");
         StringSeq params = new StringSeq();
         params.add("'"+rosetta.MDC_AWAY_CO2.VALUE+"'");
         params.add("'"+rosetta.MDC_IMPED_TTHOR.VALUE+"'");
