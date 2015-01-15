@@ -23,6 +23,7 @@ import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
 import org.mdpnp.devices.draeger.medibus.DemoV500;
 import org.mdpnp.devices.draeger.medibus.DemoV500_38400;
 import org.mdpnp.devices.fluke.prosim68.DemoProsim68;
+import org.mdpnp.devices.ge.serial.DemoGESerial;
 import org.mdpnp.devices.hospira.symbiq.DemoSymbiq;
 import org.mdpnp.devices.ivy._450c.DemoIvy450C;
 import org.mdpnp.devices.masimo.radical.DemoRadical7;
@@ -103,6 +104,8 @@ public class DeviceFactory {
             return new SimMultiparameter(domainId, eventLoop);
         case BioPatch:
             return new DemoBioPatch(domainId, eventLoop);
+        case GESerial:
+            return new DemoGESerial(domainId, eventLoop);
         default:
             throw new RuntimeException("Unknown type:" + type);
         }

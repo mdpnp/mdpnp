@@ -17,18 +17,5 @@ sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
 dependencies {
-  compile project(':devices:covidien')
-  compile project(':devices:philips')
-  compile project(':devices:oridion')
-  compile project(':devices:draeger')
-  compile project(':devices:cpc')
-  compile project(':devices:fluke')
-  compile project(':devices:masimo')
-  compile project(':devices:nellcor')
-  compile project(':devices:nonin')
-  compile project(':devices:simulated')
-  compile project(':devices:ge');
-  compile project(':data-types:x73-idl-rti-dds')
-  testCompile group: 'junit', name: 'junit', version: '4.11'
-
+	compile project(':devices:common')
 }

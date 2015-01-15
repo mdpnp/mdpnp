@@ -67,7 +67,8 @@ public class Configuration {
         DraegerV500_38400(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), 
         DraegerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"),
         PB840(ice.ConnectionType.Serial, "Puritan Bennett", "840"),
-        BioPatch(ice.ConnectionType.Serial, "Zephyr", "BioPatch");
+        BioPatch(ice.ConnectionType.Serial, "Zephyr", "BioPatch"),
+        GESerial(ice.ConnectionType.Serial, "GE", "Serial");
 
         private final ice.ConnectionType connectionType;
         private final String manufacturer, model;
