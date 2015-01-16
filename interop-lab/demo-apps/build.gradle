@@ -173,13 +173,17 @@ dependencies {
     runtime project(':interop-lab:demo-purejavacomm')
 
     runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: SLF4J_VERSION
-    runtime group: 'log4j', name: 'log4j', version: '1.2.17'
     runtime group: 'org.mdpnp.apps.testapp.pca', name: 'mdpnp-sounds', version: '0.1.0'
+
+    //
+    compile group: 'log4j', name: 'log4j', version: '1.2.17'
 
     // Default capture device is a trimmed down piece of OpenIMAJ
     compile group: 'com.github.sarxos', name: 'webcam-capture', version: '0.3.9'
 
     compile 'org.springframework:spring-context:4.1.3.RELEASE'
+
+    testCompile group: 'junit', name: 'junit', version: '4.11'
 }
 
 task createZip(type: Zip) {
