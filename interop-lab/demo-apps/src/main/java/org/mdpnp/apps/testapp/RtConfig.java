@@ -28,7 +28,10 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.TimeZone;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -37,6 +40,7 @@ public class RtConfig {
 
     private static final Logger log = LoggerFactory.getLogger(RtConfig.class);
 
+    public int domainId;
     public String udi;
     public EventLoop eventLoop;
     public Publisher publisher;
@@ -81,22 +85,34 @@ public class RtConfig {
 
         final DeviceListModel deviceListModel = new DeviceListModel(subscriber, eventLoop, timeManager);
 
-        RunAndDone enable = new RunAndDone() {
+        final CountDownLatch startSignal = new CountDownLatch(1);
+
+        Runnable enable = new Runnable() {
             public void run() {
                 deviceListModel.start();
                 participant.enable();
                 timeManager.start();
                 qos.entity_factory.autoenable_created_entities = true;
                 DomainParticipantFactory.get_instance().set_qos(qos);
-                done();
+
+                startSignal.countDown();
             }
         };
 
         eventLoop.doLater(enable);
 
-        enable.waitForIt();
+        try {
+            boolean isOk = startSignal.await(20, TimeUnit.SECONDS);
+            if(!isOk)
+                throw new IllegalStateException("Failed to start DDS");
+
+        }
+        catch(InterruptedException ex) {
+            throw new IllegalStateException("Failed to start DDS", ex);
+        }
 
         RtConfig conf = new RtConfig();
+        conf.domainId = domainId;
         conf.eventLoop = eventLoop;
         conf.publisher = publisher;
         conf.subscriber = subscriber;
@@ -108,6 +124,9 @@ public class RtConfig {
         return conf;
     }
 
+    public int getDomainId() {
+        return domainId;
+    }
 
     public String getUdi() {
         return udi;
@@ -135,24 +154,6 @@ public class RtConfig {
 
     public EventLoopHandler getHandler() {
         return handler;
-    }
-
-    private abstract static class RunAndDone implements Runnable {
-        public boolean done;
-
-        public synchronized void waitForIt() {
-            while(!done) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        protected synchronized void done() {
-            this.done = true;
-            this.notifyAll();
-        }
     }
 
     public static boolean loadAndSetIceQos() {
@@ -204,7 +205,7 @@ public class RtConfig {
     }
 
     //MIKEFIX should be removed.
-    public static void loadAndSetIceQosLibrary() {
+    public static void loadAndSetIceQosLibrary() throws IOException  {
         DomainParticipantFactory dpf = DomainParticipantFactory.get_instance();
         DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
         dpf.get_qos(qos);
@@ -213,9 +214,13 @@ public class RtConfig {
         verifyQosLibraries();
     }
 
-    static void loadIceQosLibrary(DomainParticipantFactoryQos qos) {
-        InputStream is = RtConfig.class.getResourceAsStream("/META-INF/ice_library.xml");
-        if (is != null) {
+    static void loadIceQosLibrary(DomainParticipantFactoryQos qos) throws IOException {
+
+        URL url =  RtConfig.class.getResource("/META-INF/ice_library.xml");
+        if (url != null) {
+            log.info("Loading ice_library.xml from " + url.toExternalForm());
+
+            InputStream is = url.openStream();
             java.util.Scanner scanner = new java.util.Scanner(is);
             try {
                 qos.profile.url_profile.clear();

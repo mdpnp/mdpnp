@@ -15,10 +15,8 @@ package org.mdpnp.apps.testapp;
 import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.ListIterator;
 
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.serial.SerialProviderFactory;
@@ -71,77 +69,56 @@ public class Configuration {
     private static final String DEVICE_TYPE = "deviceType";
     private static final String ADDRESS     = "address";
 
-    public void write(OutputStream os) throws IOException {
-        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, CHARACTER_ENCODING));
-        bw.write(APPLICATION);
-        bw.write("\t");
-        bw.write(application.name());
-        bw.write("\n");
+    private final static Logger log = LoggerFactory.getLogger(Configuration.class);
 
-        bw.write(DOMAIN_ID);
-        bw.write("\t");
-        bw.write(Integer.toString(domainId));
-        bw.write("\n");
+    private void write(PrintWriter os) throws IOException {
+        Properties p = new Properties();
+        p.setProperty(APPLICATION, application.name());
+        p.setProperty(DOMAIN_ID,   Integer.toString(domainId));
+        if (null != deviceFactory)
+            p.setProperty(DEVICE_TYPE, deviceFactory.getDeviceType().getAlias());
+        if (null != address)
+            p.setProperty(ADDRESS, address);
 
-        if (null != deviceFactory) {
-            bw.write(DEVICE_TYPE);
-            bw.write("\t");
-            bw.write(deviceFactory.getDeviceType().getAlias());
-            bw.write("\n");
-        }
-
-        if (null != address) {
-            bw.write(ADDRESS);
-            bw.write("\t");
-            bw.write(address);
-            bw.write("\n");
-        }
-
-        bw.flush();
+        p.list(os);
     }
 
-    private final static Logger log = LoggerFactory.getLogger(Configuration.class);
-    private static final String CHARACTER_ENCODING = "UTF8";
-
     public static Configuration read(InputStream is) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(is, CHARACTER_ENCODING));
 
-        String line = null;
+        Properties p = new Properties();
+        p.load(is);
 
         Application app = null;
         int domainId = 0;
         DeviceDriverProvider deviceType = null;
         String address = null;
 
-        while (null != (line = br.readLine())) {
-            String[] v = line.split("\t");
-            if (APPLICATION.equals(v[0])) {
-                try {
-                    app = Application.valueOf(v[1]);
-                } catch (IllegalArgumentException iae) {
-                    app = null;
-                    log.warn("Ignoring unknown application type:" + v[1]);
-                }
-            } else if (DOMAIN_ID.equals(v[0])) {
-                try {
-                    domainId = Integer.parseInt(v[1]);
-                } catch (NumberFormatException nfe) {
-                    log.warn("Ignoring unknown domainId:" + v[1]);
-                }
-            } else if (DEVICE_TYPE.equals(v[0])) {
-                try {
-                    deviceType = DeviceFactory.getDeviceDriverProvider(v[1]);
-                } catch (IllegalArgumentException iae) {
-                    deviceType = null;
-                    log.warn("Ignoring unknown device type:" + v[1]);
-                }
-            } else if (ADDRESS.equals(v[0])) {
-                if (v.length > 1) {
-                    address = v[1];
-                } else {
-                    address = null;
-                }
+        if(p.containsKey(APPLICATION)) {
+            String s = p.getProperty(APPLICATION);
+            try {
+                app = Application.valueOf(s);
+            } catch (IllegalArgumentException iae) {
+                log.warn("Ignoring unknown application type:" + s);
             }
+        }
+        if(p.containsKey(DOMAIN_ID)) {
+            String s = p.getProperty(DOMAIN_ID);
+            try {
+                domainId = Integer.parseInt(s);
+            } catch (NumberFormatException nfe) {
+                log.warn("Ignoring unknown domainId:" + s);
+            }
+        }
+        if(p.containsKey(DEVICE_TYPE)) {
+            String s = p.getProperty(DEVICE_TYPE);
+            try {
+                deviceType = DeviceFactory.getDeviceDriverProvider(s);
+            } catch (IllegalArgumentException iae) {
+                log.warn("Ignoring unknown device type:" + s);
+            }
+        }
+        if(p.containsKey(ADDRESS)) {
+            address = p.getProperty(ADDRESS);
         }
 
         return new Configuration(app, domainId, deviceType, address);
@@ -290,7 +267,7 @@ public class Configuration {
             }
 
             if (jumpStartSettings.canWrite()) {
-                FileOutputStream fos = new FileOutputStream(jumpStartSettings);
+                PrintWriter fos = new PrintWriter(jumpStartSettings);
                 writeConf.write(fos);
                 fos.close();
             }
@@ -300,7 +277,7 @@ public class Configuration {
             }
 
             if (jumpStartSettingsHome.canWrite()) {
-                FileOutputStream fos = new FileOutputStream(jumpStartSettingsHome);
+                PrintWriter fos = new PrintWriter(jumpStartSettingsHome);
                 writeConf.write(fos);
                 fos.close();
             }

@@ -18,7 +18,7 @@ import org.junit.Test;
 public class RtConfigTest {
 
     @Test
-    public void testVerifyQosLibraries()
+    public void testVerifyQosLibraries() throws Exception
     {
         DomainParticipantFactory dpf = DomainParticipantFactory.get_instance();
         DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
