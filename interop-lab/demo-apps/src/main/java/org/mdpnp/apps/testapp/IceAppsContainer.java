@@ -19,7 +19,6 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 import org.mdpnp.devices.BuildInfo;
-import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -27,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -40,8 +38,9 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
 
-public class IceAppsContainer {
+public class IceAppsContainer implements Configuration.Command {
 
     private static final Logger log = LoggerFactory.getLogger(IceAppsContainer.class);
 
@@ -156,14 +155,26 @@ public class IceAppsContainer {
         panel.getBack().setVisible(false);
     }
 
-    @SuppressWarnings("unchecked")
-    public static final void start(final int domainId) throws Exception {
+    @Override
+    public int execute(Configuration config) throws Exception {
+
+        final Semaphore stopOk = new Semaphore(0);
+        final AbstractApplicationContext context = config.createContext("IceAppContainerContext.xml");
+        context.registerShutdownHook();
+
+        invokeUI(context, stopOk);
+
+        // this will block until the frame is killed
+        stopOk.acquire();
+
+        context.destroy();
+        return 0;
+    }
+
+    private final void invokeUI(final AbstractApplicationContext context, final Semaphore stopOk) throws Exception {
+
         UIManager.setLookAndFeel(new MDPnPLookAndFeel());
         UIManager.put("TabbedPane.contentOpaque", false);
-
-        final AbstractApplicationContext context =
-                new ClassPathXmlApplicationContext(new String[]{"IceAppContainerContext.xml"});
-        context.registerShutdownHook();
 
         RtConfig rtConfig = (RtConfig)context.getBean("rtConfig");
         final EventLoop eventLoop=rtConfig.eventLoop;
@@ -280,7 +291,7 @@ public class IceAppsContainer {
                     }
                 }
 
-                context.destroy();
+                stopOk.release();
 
                 super.windowClosing(e);
             }

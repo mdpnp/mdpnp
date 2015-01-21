@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.concurrent.Semaphore;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -39,17 +40,11 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 
 public abstract class DeviceAdapter {
 
     private static final Logger log = LoggerFactory.getLogger(DeviceAdapter.class);
-
-    public static DeviceAdapter newHeadlessAdapter(DeviceDriverProvider deviceFactory) throws Exception {
-        final AbstractApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"DriverContext.xml"});
-        return newHeadlessAdapter(deviceFactory, context);
-    }
 
     public static DeviceAdapter newHeadlessAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context) throws Exception {
         DeviceAdapter da = new HeadlessAdapter(deviceFactory, context, true);
@@ -61,8 +56,32 @@ public abstract class DeviceAdapter {
         return da;
     }
 
+    public static class DeviceAdapterCommand implements Configuration.Command {
+        public int execute(Configuration config) throws Exception
+        {
+            DeviceDriverProvider ddp = config.getDeviceFactory();
+            if(null == ddp) {
+                log.error("Unknown device type was specified");
+                return -1;
+            }
+
+            final AbstractApplicationContext context = config.createContext("DriverContext.xml");
+
+            DeviceAdapter da;
+            if(config.isHeadless())
+                da = DeviceAdapter.newHeadlessAdapter(ddp, context);
+            else
+                da = DeviceAdapter.newGUIAdapter(ddp, context);
+
+            da.start(config.getAddress());
+
+            // this will block until killAdapter stops everything.
+            context.destroy();
+            return 0;
+        }
+    }
+
     abstract AbstractDevice init() throws Exception;
-    public abstract void stop();
 
     protected void update(String msg, int pct) {
         log.info(pct + "% " + msg);
@@ -70,7 +89,8 @@ public abstract class DeviceAdapter {
 
     protected AbstractDevice device;
     protected String[] initialPartition;
-    protected boolean interrupted  = false;
+
+    private final Semaphore stopOk = new Semaphore(0);
 
     protected final AbstractApplicationContext context;
     protected final DeviceDriverProvider deviceFactory;
@@ -94,19 +114,17 @@ public abstract class DeviceAdapter {
 
         if (null != device && device instanceof AbstractConnectedDevice) {
             if (!((AbstractConnectedDevice) device).connect(address)) {
-                synchronized (this) {
-                    interrupted = true;
-                    this.notifyAll();
-                }
+                stopOk.release();
             }
         }
 
         // Wait until killAdapter
-        synchronized (this) {
-            while (!interrupted) {
-                wait();
-            }
-        }
+        stopOk.acquire();
+    }
+
+    public void stop()
+    {
+        stopOk.release();
     }
 
     static class HeadlessAdapter extends DeviceAdapter {
@@ -179,10 +197,7 @@ public abstract class DeviceAdapter {
                     device = null;
                 }
             } finally {
-                synchronized (this) {
-                    interrupted = true;
-                    this.notifyAll();
-                }
+                super.stop();
             }
         }
 

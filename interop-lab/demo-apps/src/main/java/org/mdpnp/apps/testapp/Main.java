@@ -12,9 +12,11 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import org.mdpnp.devices.DeviceDriverProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.InputStream;
+import java.net.URL;
 
 /**
  * @author Jeff Plourde
@@ -24,41 +26,26 @@ public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
-
     public static void main(String[] args) throws Exception {
-        // TODO this should be external
-        System.setProperty("java.net.preferIPv4Stack", "true");
 
-        boolean cmdline = args.length > 0 ? true : false;
+        URL u = Main.class.getResource("/ice.system.properties");
+        if(u != null) {
+            log.info("Loading System configuration from " + u.toExternalForm());
+            InputStream is = u.openStream();
+            System.getProperties().load(is);
+            is.close();
+        }
 
         Configuration runConf = Configuration.getInstance(args);
-
         if (null == runConf) {
-            if(cmdline)
-                Configuration.help(Main.class, System.out);
             return;
         }
 
-        System.setProperty("mdpnp.domain", Integer.toString(runConf.getDomainId()));
+        Configuration.Command cmd = runConf.getCommand();
+        int retCode = cmd.execute(runConf);
 
-        switch (runConf.getApplication()) {
-        case ICE_Device_Interface:
-            if(null == runConf.getDeviceFactory()) {
-                log.error("Unknown device type was specified");
-                System.exit(-1);
-            }
-            DeviceAdapter da = DeviceAdapter.newHeadlessAdapter(runConf.getDeviceFactory());
-            da.start(runConf.getAddress());
-            break;
-        case ICE_Supervisor:
-            IceAppsContainer.start(runConf.getDomainId());
-            break;
-        case ICE_ParticipantOnly:
-            ParticipantOnly.start(runConf.getDomainId(), cmdline);
-            break;
-        }
-
-        log.trace("This is the end of Main");
+        log.info("This is the end, exit code=" + retCode);
+        System.exit(retCode);
 
     }
 

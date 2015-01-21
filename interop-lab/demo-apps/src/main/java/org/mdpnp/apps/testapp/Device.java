@@ -12,10 +12,14 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
+import com.rti.dds.infrastructure.Locator_t;
+import com.rti.dds.infrastructure.Property_t;
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
 
 import java.lang.ref.SoftReference;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,7 +141,7 @@ public class Device {
     }
     
     public String getHostname() {
-        return null == participantData ? null : ParticipantOnly.getHostname(participantData);
+        return null == participantData ? null : getHostname(participantData);
     }
 
     public void setClockDifference(Duration_t clockDifference) {
@@ -176,4 +180,41 @@ public class Device {
             }
         }
     }
+
+    public static final String getHostname(ParticipantBuiltinTopicData participantData) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < participantData.property.value.size(); i++) {
+            Property_t prop = (Property_t) participantData.property.value.get(i);
+            if ("dds.sys_info.hostname".equals(prop.name)) {
+                sb.append(prop.value).append(" ");
+            }
+        }
+
+        for (int i = 0; i < participantData.default_unicast_locators.size(); i++) {
+            Locator_t locator = (Locator_t) participantData.default_unicast_locators.get(i);
+            try {
+                InetAddress addr = null;
+                switch (locator.kind) {
+                    case Locator_t.KIND_TCPV4_LAN:
+                    case Locator_t.KIND_TCPV4_WAN:
+                    case Locator_t.KIND_TLSV4_LAN:
+                    case Locator_t.KIND_TLSV4_WAN:
+                    case Locator_t.KIND_UDPv4:
+                        addr = InetAddress
+                                .getByAddress(new byte[]{locator.address[12], locator.address[13], locator.address[14], locator.address[15]});
+                        break;
+                    case Locator_t.KIND_UDPv6:
+                    default:
+                        addr = InetAddress.getByAddress(locator.address);
+                        break;
+                }
+                sb.append(addr.getHostAddress()).append(" ");
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+                //                log.error("getting locator address", e);
+            }
+        }
+        return sb.toString();
+    }
+
 }

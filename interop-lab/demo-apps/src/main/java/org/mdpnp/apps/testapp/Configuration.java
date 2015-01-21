@@ -18,6 +18,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 
+import org.apache.commons.cli.*;
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.slf4j.Logger;
@@ -25,27 +26,64 @@ import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
+import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-/**
- * @author Jeff Plourde
- *
- */
+
 public class Configuration {
+
     enum Application {
-        ICE_Supervisor, ICE_Device_Interface, ICE_ParticipantOnly;
+        ICE_Supervisor(IceAppsContainer.class),
+        ICE_Device_Interface(DeviceAdapter.DeviceAdapterCommand.class),
+        ICE_ParticipantOnly(ParticipantOnly.class);
+
+        Application(Class c) {
+            clazz = c;
+        }
+        private Class clazz;
     }
 
+    interface Command {
+        int execute(Configuration config) throws Exception;
+    }
 
-    private final Application application;
+    private final boolean              headless;
+    private final Application          application;
     private final DeviceDriverProvider deviceFactory;
-    private final String address;
-    private final int domainId;
+    private final String               address;
+    private final int                  domainId;
+    private final Properties           cmdLineEnv = new Properties();
 
-    public Configuration(Application application, int domainId, DeviceDriverProvider deviceFactory, String address) {
-        this.application = application;
+    public Configuration(boolean headless, Application application, int domainId, DeviceDriverProvider deviceFactory, String address) {
+        this.headless = headless;
         this.deviceFactory = deviceFactory;
         this.address = address;
         this.domainId = domainId;
+        this.application = application;
+
+        cmdLineEnv.put("mdpnp.domain", Integer.toString(domainId));
+    }
+
+    public boolean isHeadless()
+    {
+        return headless;
+    }
+
+    public Properties getCmdLineEnv() {
+        return cmdLineEnv;
+    }
+
+    public Command getCommand() {
+
+        try {
+            Command command = (Command) application.clazz.newInstance();
+            return command;
+        }
+        catch(Exception ex)
+        {
+            throw new IllegalStateException("Failed to create command instance " + application.clazz.getName());
+        }
     }
 
     public Application getApplication() {
@@ -71,6 +109,22 @@ public class Configuration {
 
     private final static Logger log = LoggerFactory.getLogger(Configuration.class);
 
+    public AbstractApplicationContext createContext(String path)
+    {
+        ClassPathXmlApplicationContext ctx =
+                new ClassPathXmlApplicationContext(new String[] { path }, false);
+
+        Properties props = getCmdLineEnv();
+
+        PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();
+        ppc.setProperties(props);
+        ppc.setOrder(0);
+
+        ctx.addBeanFactoryPostProcessor(ppc);
+        ctx.refresh();
+        return ctx;
+    }
+
     private void write(PrintWriter os) throws IOException {
         Properties p = new Properties();
         p.setProperty(APPLICATION, application.name());
@@ -83,7 +137,7 @@ public class Configuration {
         p.list(os);
     }
 
-    public static Configuration read(InputStream is) throws IOException {
+    static Configuration read(InputStream is) throws IOException {
 
         Properties p = new Properties();
         p.load(is);
@@ -121,169 +175,198 @@ public class Configuration {
             address = p.getProperty(ADDRESS);
         }
 
-        return new Configuration(app, domainId, deviceType, address);
+        return new Configuration(false, app, domainId, deviceType, address);
     }
 
-    public static void help(Class<?> launchClass, PrintStream out) {
-        out.println(launchClass.getName() + " [Application] [domainId] [DeviceType[=DeviceAddress]]");
-        out.println();
-        out.println("For interactive graphical interface specify no command line options");
-        out.println();
-        out.println("Application may be one of:");
-        for (Application a : Application.values()) {
-            out.println("\t" + a.name());
-        }
-        out.println();
-        out.println("domainId must be a DDS domain identifier");
-        out.println();
+    static Configuration read(String[] cmdLineArgs) throws Exception{
 
-        out.println("if Application is " + Application.ICE_Device_Interface.name() + " then DeviceType may be one of:");
+        StringBuilder as = new StringBuilder("Application may be one of:");
+        for (Application a : Application.values()) {
+            as.append("\t" + a.name());
+        }
+        Option appArg = OptionBuilder.withArgName("app")
+                .hasArg()
+                .isRequired(true)
+                .withDescription(as.toString())
+                .create("app");
+
+        Option domainArg = OptionBuilder.withArgName("domain")
+                .hasArg()
+                .isRequired(true)
+                .withDescription("DDS domain identifier")
+                .create("domain");
+
+        StringBuilder ds = new StringBuilder();
+        ds.append("if Application is ").append(Application.ICE_Device_Interface.name()).append(" then DeviceType may be one of:");
         DeviceDriverProvider[] all =  DeviceFactory.getAvailableDevices();
         for (DeviceDriverProvider ddp : all) {
-           DeviceType d=ddp.getDeviceType();
-           out.println("\t" + (ice.ConnectionType.Serial.equals(d.getConnectionType()) ? "*" : "") + d.getAlias());
+            DeviceType d=ddp.getDeviceType();
+            ds.append("\t").append(ice.ConnectionType.Serial.equals(d.getConnectionType()) ? "*" : "").append(d.getAlias());
         }
-        out.println("DeviceAddress is an optional string configuring the address of the device");
-        out.println();
-        out.println("DeviceTypes marked with * are serial devices for which the following DeviceAddress values are currently valid:");
-        for (String s : SerialProviderFactory.getDefaultProvider().getPortNames()) {
-            out.println("\t" + s);
-        }
-    }
+        Option deviceArg = OptionBuilder.withArgName("device")
+                .hasArg()
+                .isRequired(false)
+                .withDescription(ds.toString())
+                .create("device");
 
-    public static Configuration read(String[] args_) {
+        StringBuilder ps = new StringBuilder();
+        ps.append("DeviceTypes marked with * are serial devices which require port specification.");
+        List<String> l = SerialProviderFactory.getDefaultProvider().getPortNames();
+        if(!l.isEmpty()) {
+            ps.append(" The following address values are currently valid:");
+            for (String s : l) {
+                ps.append("\t" + s);
+            }
+        }
+        Option addressArg = OptionBuilder.withArgName("address")
+                .hasArg()
+                .isRequired(false)
+                .withDescription(ps.toString())
+                .create("address");
+
+        Options options = new Options();
+        options.addOption( appArg );
+        options.addOption( domainArg );
+        options.addOption( deviceArg );
+        options.addOption( addressArg );
+
+        CommandLine line = parseCommandLine("ICE", cmdLineArgs, options);
+        if(line == null)
+            return null;
+
         Application app = null;
         int domainId = 0;
         DeviceDriverProvider deviceType = null;
         String address = null;
 
-        List<String> args = new ArrayList<String>(Arrays.asList(args_));
-        ListIterator<String> litr = args.listIterator();
-        while (litr.hasNext()) {
-            try {
-                app = Application.valueOf(litr.next());
-                litr.remove();
-                break;
-            } catch (IllegalArgumentException iae) {
-
-            }
-        }
-        if (null == app) {
-            return null;
-        }
-        
-        litr = args.listIterator();
-        while (litr.hasNext()) {
-            try {
-                String x = litr.next();
-                try {
-                    domainId = Integer.parseInt(x);
-                    litr.remove();
-                    break;
-                } catch (NumberFormatException nfe) {
-
-                }
-
-            } catch (IllegalArgumentException iae) {
-
-            }
+        String v = line.getOptionValue("app");
+        try {
+            app = Application.valueOf(v);
+        }catch (Exception e) {
+            throw new IllegalArgumentException("Invalid app name: " + v );
         }
 
+        v = line.getOptionValue("domain");
+        domainId = Integer.parseInt(v);
         if (Application.ICE_Device_Interface.equals(app)) {
-            litr = args.listIterator();
-            while (litr.hasNext()) {
-                String x = litr.next();
-                String[] y = x.split("\\=");
-                try {
-                    deviceType = DeviceFactory.getDeviceDriverProvider(y[0]);
-                    litr.remove();
-                    if (y.length > 1) {
-                        address = y[1];
-                    }
-                    break;
-                } catch (IllegalArgumentException iae) {
-                    log.error("Unknown DeviceType:"+y[0]);
-                }
+            if(!line.hasOption("device"))
+                throw new IllegalArgumentException("Missing device specification");
+            v = line.getOptionValue("device");
+            deviceType = DeviceFactory.getDeviceDriverProvider(v);
+
+            if(ice.ConnectionType.Serial.equals(deviceType.getDeviceType().getConnectionType())) {
+                if(!line.hasOption("address"))
+                    throw new IllegalArgumentException("Missing address specification");
+                address = line.getOptionValue("address");
             }
         }
 
-        return new Configuration(app, domainId, deviceType, address);
+        boolean headless=!Boolean.getBoolean("mdpnp.ui");
+        return new Configuration(headless, app, domainId, deviceType, address);
     }
 
 
     public static Configuration getInstance(String[] args) throws Exception {
 
-        Configuration runConf = null;
+        File[] searchPath = new File [] {
+                new File(".JumpStartSettings"),
+                new File(System.getProperty("user.home"), ".JumpStartSettings")
+        };
 
-        File jumpStartSettings = new File(".JumpStartSettings");
-        File jumpStartSettingsHome = new File(System.getProperty("user.home"), ".JumpStartSettings");
-
-        boolean cmdline = false;
+        Configuration runConf;
 
         if (args.length > 0) {
-            runConf = Configuration.read(args);
-            cmdline = true;
-        } else if (jumpStartSettings.exists() && jumpStartSettings.canRead()) {
-            FileInputStream fis = new FileInputStream(jumpStartSettings);
-            runConf = Configuration.read(fis);
-            fis.close();
-        } else if (jumpStartSettingsHome.exists() && jumpStartSettingsHome.canRead()) {
-            FileInputStream fis = new FileInputStream(jumpStartSettingsHome);
-            runConf = Configuration.read(fis);
-            fis.close();
+            runConf = read(args);
         }
+        else {
 
-        Configuration writeConf = null;
+            try {
+                Class<?> cls = Class.forName("com.apple.eawt.Application");
+                Method m1 = cls.getMethod("getApplication");
+                Method m2 = cls.getMethod("setDockIconImage", Image.class);
+                m2.invoke(m1.invoke(null), ImageIO.read(Main.class.getResource("icon.png")));
+            } catch (Throwable t) {
+                log.debug("Not able to set Mac OS X dock icon");
+            }
 
-        try {
-            Class<?> cls = Class.forName("com.apple.eawt.Application");
-            Method m1 = cls.getMethod("getApplication");
-            Method m2 = cls.getMethod("setDockIconImage", Image.class);
-            m2.invoke(m1.invoke(null), ImageIO.read(Main.class.getResource("icon.png")));
-        } catch (Throwable t) {
-            log.debug("Not able to set Mac OS X dock icon");
-        }
+            runConf = searchAndLoadSettings(searchPath);
 
-        if (!cmdline) {
             ConfigurationDialog d = new ConfigurationDialog(runConf, null);
 
             d.setIconImage(ImageIO.read(Main.class.getResource("icon.png")));
             runConf = d.showDialog();
+
             // It's nice to be able to change settings even without running
+            // Even if the user presses 'quit' save the state so that it can be used
+            // to boot strap the dialog later.
+            //
             if (null == runConf) {
-                writeConf = d.getLastConfiguration();
-            }
-        } else {
-            // fall through to allow configuration via a file
-        }
-
-        if (null != runConf) {
-            writeConf = runConf;
-        }
-
-        if (null != writeConf) {
-            if (!jumpStartSettings.exists()) {
-                jumpStartSettings.createNewFile();
-            }
-
-            if (jumpStartSettings.canWrite()) {
-                PrintWriter fos = new PrintWriter(jumpStartSettings);
-                writeConf.write(fos);
-                fos.close();
-            }
-
-            if (!jumpStartSettingsHome.exists()) {
-                jumpStartSettingsHome.createNewFile();
-            }
-
-            if (jumpStartSettingsHome.canWrite()) {
-                PrintWriter fos = new PrintWriter(jumpStartSettingsHome);
-                writeConf.write(fos);
-                fos.close();
+                Configuration c = d.getLastConfiguration();
+                searchAndSaveSettings(c, searchPath);
             }
         }
+
+        if(runConf != null)
+            searchAndSaveSettings(runConf, searchPath);
 
         return runConf;
 
     }
+
+    private static Configuration searchAndLoadSettings(File[] fPath) throws IOException {
+
+        for(File f : fPath) {
+            if(f.exists() && f.canRead()) {
+                log.debug("Reading jumpStartSettings from " + f.getAbsolutePath());
+                FileInputStream fis = new FileInputStream(f);
+                Configuration runConf = Configuration.read(fis);
+                fis.close();
+                return runConf;
+            }
+        }
+        return null;
+    }
+
+
+    private static void searchAndSaveSettings(Configuration runConf, File[] fPath) throws IOException {
+
+        if (null == runConf)
+            return;
+
+        for(File f : fPath) {
+            if(!f.exists() && f.getParentFile().exists() && f.getParentFile().canWrite()) {
+                f.createNewFile();
+            }
+            if(f.exists() && f.canWrite()) {
+                log.debug("Saving jumpStartSettings from " + f.getAbsolutePath());
+                PrintWriter fos = new PrintWriter(f);
+                runConf.write(fos);
+                fos.close();
+                break;
+            }
+        }
+    }
+
+    public static CommandLine parseCommandLine(String execName, String args[], Options options) throws ParseException
+    {
+        Option h = OptionBuilder.withDescription("display usage information").create("help");
+
+        Options help = new Options();
+        help.addOption( h );
+
+        CommandLineParser parser = new GnuParser();
+
+        CommandLine line = parser.parse( help, args, true);
+        if (line.hasOption("help"))
+        {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp(execName, options);
+            return null;
+        }
+
+        // now parse for real.
+        line = parser.parse( options, args);
+        return line;
+    }
+
 }

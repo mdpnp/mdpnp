@@ -384,7 +384,8 @@ public class ConfigurationDialog extends JDialog {
 
         }
 
-        lastConf = new Configuration(app,Integer.parseInt(domainId.getText()), ddp, address);
+        boolean headless=!Boolean.getBoolean("mdpnp.ui");
+        lastConf = new Configuration(headless, app,Integer.parseInt(domainId.getText()), ddp, address);
 
         dispose();
         return quitPressed ? null : lastConf;
