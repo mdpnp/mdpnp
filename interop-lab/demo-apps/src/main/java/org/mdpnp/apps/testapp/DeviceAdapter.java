@@ -181,17 +181,17 @@ public abstract class DeviceAdapter {
 
                 if (null != device && device instanceof AbstractConnectedDevice) {
                     AbstractConnectedDevice cDevice = (AbstractConnectedDevice) device;
-                    update("Ask the device to disconnect from the ICE", 20);
+                    update("Ask the device to disconnect from the ICE", 50);
                     cDevice.disconnect();
                     if (!cDevice.awaitState(ice.ConnectionState.Disconnected, 5000L)) {
                         log.warn("ConnectedDevice ended in State:" + cDevice.getState());
                     }
-                    tm = metrics.stop("disconnect", tm);
+                    metrics.stop("disconnect", tm);
                 }
 
                 tm = metrics.start();
                 if (device != null) {
-                    update("Shut down the device", 50);
+                    update("Shutting down the device", 75);
                     device.shutdown();
                     metrics.stop("device.shutdown", tm);
                     device = null;

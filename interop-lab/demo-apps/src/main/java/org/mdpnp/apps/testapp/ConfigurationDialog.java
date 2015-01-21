@@ -205,7 +205,7 @@ public class ConfigurationDialog extends JDialog {
                 applications.setSelectedItem(conf.getApplication());
             }
             if (null != conf.getDeviceFactory()) {
-                deviceType.setSelectedItem(conf.getDeviceFactory());
+                deviceType.getModel().setSelectedItem(conf.getDeviceFactory());
             }
             domainId.setText(Integer.toString(conf.getDomainId()));
 
