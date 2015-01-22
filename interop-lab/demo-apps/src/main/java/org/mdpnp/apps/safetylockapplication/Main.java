@@ -9,7 +9,7 @@ public class Main {
 	
 	public static void main(String[] args) throws Exception{
 
-        org.mdpnp.apps.testapp.RtConfig.loadAndSetIceQosLibrary();
+        org.mdpnp.apps.testapp.RtConfig.loadAndSetIceQos();
 
         SwingUtilities.invokeLater(new Runnable() {
 			@Override
