@@ -31,6 +31,29 @@ import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 
+/**
+ * The purpose of configuration object is to collect essential parameters either from the command line or
+ * from UI dialog to define runtime configuration of the application. The following flow of control defines
+ * the behavior of the component:
+ *
+ *  1.	If any arguments are passed via the command line, the application assumes them to define an
+ *  environment and will start the application in the headless mode (i.e no gui).  If any configuration
+ *  parameters are missing or undefined, the application will terminate with an error exit code.
+ *
+ *  2.	If there are no arguments on the command line, the system assumes a ‘gui’ mode and will
+ *  present user with the configuration dialog to collect all necessary parameters.
+ *
+ *  The dialog is pre-populated with the configuration data from the previous runs. That data will be stored
+ *  in the .JumpStartSettings file.  Current working directory is searched first and if not found, the user
+ *  home directory.
+ *
+ *  Many system configuration parameters can be controlled/overridden via system environment variables.
+ *  Some of those parameters had been exposed via command line arguments (which takes precedence over the
+ *  environment). To pass these values into the application context one should use Configuration::createContext
+ *  helper API when creating top-level spring application context. The api will install logic to ensure the proper
+ *  search order for property resolution.
+ *
+ */
 public class Configuration {
 
     enum Application {
