@@ -15,6 +15,7 @@ package org.mdpnp.apps.testapp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.io.InputStream;
 import java.net.URL;
 
@@ -39,6 +40,11 @@ public class Main {
         Configuration runConf = Configuration.getInstance(args);
         if (null == runConf) {
             return;
+        }
+
+        if(!runConf.isHeadless()) {
+            UIManager.setLookAndFeel(new MDPnPLookAndFeel());
+            UIManager.put("TabbedPane.contentOpaque", false);
         }
 
         Configuration.Command cmd = runConf.getCommand();
