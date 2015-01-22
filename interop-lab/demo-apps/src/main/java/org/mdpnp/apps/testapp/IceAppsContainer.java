@@ -437,7 +437,7 @@ public class IceAppsContainer implements Configuration.Command {
         });
 
         
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setSize(800, 600);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);

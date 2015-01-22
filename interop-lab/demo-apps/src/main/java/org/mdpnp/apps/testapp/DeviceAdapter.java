@@ -22,10 +22,7 @@ import java.io.InputStreamReader;
 import java.util.concurrent.Semaphore;
 
 import javax.imageio.ImageIO;
-import javax.swing.JFrame;
-import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.*;
 
 import ice.ConnectionType;
 import org.mdpnp.devices.AbstractDevice;
@@ -231,7 +228,7 @@ public abstract class DeviceAdapter {
             }
         }
 
-        private void stopComponents() {
+        public void stop() {
 
             try {
                 update("Shut down local monitoring client", 10);
@@ -239,17 +236,27 @@ public abstract class DeviceAdapter {
                 deviceMonitor.stop();
                 update("Shut down local user interface", 20);
                 cdp.reset();
-            } finally {
+            }
+            finally {
+
                 super.stop();
+
+                Runnable r = new Runnable() {
+                    public void run() {
+                        frame.setVisible(false);
+                        frame.dispose();
+                    }
+                };
+
+                if(SwingUtilities.isEventDispatchThread())
+                    r.run();
+                else
+                    SwingUtilities.invokeLater(r);
+
             }
         }
 
-        public void stop() {
 
-            stopComponents();
-            frame.setVisible(false);
-            frame.dispose();
-        }
         AbstractDevice init() throws Exception {
 
             DeviceType type = deviceFactory.getDeviceType();
@@ -284,7 +291,7 @@ public abstract class DeviceAdapter {
 
                     Runnable r = new Runnable() {
                         public void run() {
-                            stopComponents();
+                            stop();
                         }
                     };
                     new Thread(r, "Device shutdown thread").start();
@@ -325,11 +332,21 @@ public abstract class DeviceAdapter {
             return device;
         }
 
-        protected void update(String msg, int pct) {
+        protected void update(final String msg, final int pct) {
             log.info(pct + "% " + msg);
 
-            progressBar.setString(msg);
-            progressBar.setValue(pct);
+            Runnable r = new Runnable() {
+                public void run() {
+                    progressBar.setString(msg);
+                    progressBar.setValue(pct);
+                }
+            };
+
+            if(SwingUtilities.isEventDispatchThread())
+                r.run();
+            else
+                SwingUtilities.invokeLater(r);
+
         }
     }
 }
