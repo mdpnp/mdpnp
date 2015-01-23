@@ -13,14 +13,14 @@ import java.awt.*;
  */
 public class IceApplicationFactory implements IceApplicationProvider {
 
-    private final IceAppsContainer.AppType XRay =
-            new IceAppsContainer.AppType("xray", "X-Ray Ventilator Sync", "NOXRAYVENT", IceApplicationProvider.class.getResource("xray-vent.png"), 0.75);
+    private final IceApplicationProvider.AppType XRay =
+            new IceApplicationProvider.AppType("X-Ray Ventilator Sync", "NOXRAYVENT", IceApplicationProvider.class.getResource("xray-vent.png"), 0.75);
 
     @Override
-    public IceAppsContainer.AppType getAppType() { return XRay;}
+    public IceApplicationProvider.AppType getAppType() { return XRay;}
 
     @Override
-    public IceAppsContainer.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
 
         final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
         final DeviceListCellRenderer deviceCellRenderer = new DeviceListCellRenderer(nc);
@@ -30,21 +30,11 @@ public class IceApplicationFactory implements IceApplicationProvider {
 
         final XRayVentPanel ui = new XRayVentPanel(subscriber, eventLoop, deviceCellRenderer);
 
-        return new IceAppsContainer.IceApp() {
+        return new IceApplicationProvider.IceApp() {
 
             @Override
-            public String getId() {
-                return XRay.getId();
-            }
-
-            @Override
-            public String getName() {
-                return XRay.getName();
-            }
-
-            @Override
-            public Icon getIcon() {
-                return XRay.getIcon();
+            public IceApplicationProvider.AppType getDescriptor() {
+                return XRay;
             }
 
             @Override
@@ -53,7 +43,7 @@ public class IceApplicationFactory implements IceApplicationProvider {
             }
 
             @Override
-            public void start(ApplicationContext context) {
+            public void activate(ApplicationContext context) {
                 final EventLoop  eventLoop = (EventLoop)context.getBean("eventLoop");
                 final Subscriber subscriber= (Subscriber)context.getBean("subscriber");
                 ui.start(subscriber, eventLoop);
@@ -62,6 +52,10 @@ public class IceApplicationFactory implements IceApplicationProvider {
             @Override
             public void stop() {
                 ui.stop();
+            }
+
+            @Override
+            public void destroy() {
             }
         };
     }

@@ -17,14 +17,14 @@ import java.awt.*;
  */
 public class RapidRespiratoryRateFactory implements IceApplicationProvider {
 
-    private final IceAppsContainer.AppType RRR =
-            new IceAppsContainer.AppType("rrr", "Respiratory Rate Calc", "NORRR", RapidRespiratoryRate.class.getResource("rrr.png"), 0.75);
+    private final IceApplicationProvider.AppType RRR =
+            new IceApplicationProvider.AppType("Respiratory Rate Calc", "NORRR", RapidRespiratoryRate.class.getResource("rrr.png"), 0.75);
 
     @Override
-    public IceAppsContainer.AppType getAppType() { return RRR;}
+    public IceApplicationProvider.AppType getAppType() { return RRR;}
 
     @Override
-    public IceAppsContainer.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
 
         final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
         final DeviceListCellRenderer deviceCellRenderer = new DeviceListCellRenderer(nc);
@@ -41,21 +41,11 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
 
         final RapidRespiratoryRate ui = new RapidRespiratoryRate(domainId, eventLoop, subscriber, deviceCellRenderer);
 
-        return new IceAppsContainer.IceApp() {
+        return new IceApplicationProvider.IceApp() {
 
             @Override
-            public String getId() {
-                return RRR.getId();
-            }
-
-            @Override
-            public String getName() {
-                return RRR.getName();
-            }
-
-            @Override
-            public Icon getIcon() {
-                return RRR.getIcon();
+            public IceApplicationProvider.AppType getDescriptor() {
+                return RRR;
             }
 
             @Override
@@ -64,7 +54,7 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
             }
 
             @Override
-            public void start(ApplicationContext context) {
+            public void activate(ApplicationContext context) {
                 SampleArrayInstanceModel capnoModel =  (SampleArrayInstanceModel)  context.getBean("capnoModel");
                 ui.setModel(capnoModel);
             }
@@ -72,6 +62,10 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
             @Override
             public void stop() {
                 ui.setModel(null);
+            }
+
+            @Override
+            public void destroy() {
             }
         };
     }

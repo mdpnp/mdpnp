@@ -14,17 +14,17 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class PCAVizApplicationFactory implements IceApplicationProvider {
 
-    private final IceAppsContainer.AppType PCAViz =
-            new IceAppsContainer.AppType("pcaviz", "Data Visualization", "NOPCAVIZ", DataVisualization.class.getResource("data-viz.png"), 0.75);
+    private final IceApplicationProvider.AppType PCAViz =
+            new IceApplicationProvider.AppType("Data Visualization", "NOPCAVIZ", DataVisualization.class.getResource("data-viz.png"), 0.75);
 
     @Override
-    public IceAppsContainer.AppType getAppType() {
+    public IceApplicationProvider.AppType getAppType() {
         return PCAViz;
 
     }
 
     @Override
-    public IceAppsContainer.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
 
         final ScheduledExecutorService refreshScheduler = (ScheduledExecutorService) parentContext.getBean("refreshScheduler");
         final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
@@ -35,21 +35,11 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
         final DataVisualization ui =
                 new DataVisualization(refreshScheduler, objectiveWriter, deviceCellRenderer, new VitalSimpleTable(refreshScheduler));
 
-        return new IceAppsContainer.IceApp() {
+        return new IceApplicationProvider.IceApp() {
 
             @Override
-            public String getId() {
-                return PCAViz.getId();
-            }
-
-            @Override
-            public String getName() {
-                return PCAViz.getName();
-            }
-
-            @Override
-            public Icon getIcon() {
-                return PCAViz.getIcon();
+            public IceApplicationProvider.AppType getDescriptor() {
+                return PCAViz;
             }
 
             @Override
@@ -58,7 +48,7 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
             }
 
             @Override
-            public void start(ApplicationContext context) {
+            public void activate(ApplicationContext context) {
                 VitalModel vitalModel = (VitalModel)context.getBean("vitalModel");
                 InfusionStatusInstanceModel pumpModel = (InfusionStatusInstanceModel)context.getBean("pumpModel");
                 ui.setModel(vitalModel, pumpModel);
@@ -67,6 +57,10 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
             @Override
             public void stop() {
                 ui.setModel(null, null);
+            }
+
+            @Override
+            public void destroy() {
             }
         };
     }

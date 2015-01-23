@@ -20,17 +20,17 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
-    private final IceAppsContainer.AppType FileAdapter =
-            new IceAppsContainer.AppType("file", "CSV File Exporter", "NOCSV",  DataVisualization.class.getResource("csv-text.png"), 0.75);
+    private final IceApplicationProvider.AppType FileAdapter =
+            new IceApplicationProvider.AppType("CSV File Exporter", "NOCSV",  DataVisualization.class.getResource("csv-text.png"), 0.75);
 
     @Override
-    public IceAppsContainer.AppType getAppType() {
+    public IceApplicationProvider.AppType getAppType() {
         return FileAdapter;
 
     }
 
     @Override
-    public IceAppsContainer.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
 
         final ScheduledExecutorService refreshScheduler = (ScheduledExecutorService) parentContext.getBean("refreshScheduler");
         final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
@@ -41,21 +41,11 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
         final DataVisualization ui =
                 new DataVisualization(refreshScheduler, objectiveWriter, deviceCellRenderer, new VitalSimpleTable(refreshScheduler));
 
-        return new IceAppsContainer.IceApp() {
+        return new IceApplicationProvider.IceApp() {
 
             @Override
-            public String getId() {
-                return FileAdapter.getId();
-            }
-
-            @Override
-            public String getName() {
-                return FileAdapter.getName();
-            }
-
-            @Override
-            public Icon getIcon() {
-                return FileAdapter.getIcon();
+            public IceApplicationProvider.AppType getDescriptor() {
+                return FileAdapter;
             }
 
             @Override
@@ -64,7 +54,7 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
             }
 
             @Override
-            public void start(ApplicationContext context) {
+            public void activate(ApplicationContext context) {
                 VitalModel vitalModel = (VitalModel)context.getBean("vitalModel");
                 InfusionStatusInstanceModel pumpModel = (InfusionStatusInstanceModel)context.getBean("pumpModel");
                 ui.setModel(vitalModel, pumpModel);
@@ -73,6 +63,10 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
             @Override
             public void stop() {
                 ui.setModel(null, null);
+            }
+
+            @Override
+            public void destroy() {
             }
         };
     }

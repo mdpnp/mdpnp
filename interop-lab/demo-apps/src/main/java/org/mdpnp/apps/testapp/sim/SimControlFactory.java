@@ -12,17 +12,17 @@ import java.awt.*;
  */
 public class SimControlFactory implements IceApplicationProvider {
 
-    private final IceAppsContainer.AppType SimControl =
-            new IceAppsContainer.AppType("sim", "Simulation Control", "NOSIM", IceApplicationProvider.class.getResource("sim.png"), 0.75);
+    private final IceApplicationProvider.AppType SimControl =
+            new IceApplicationProvider.AppType("Simulation Control", "NOSIM", IceApplicationProvider.class.getResource("sim.png"), 0.75);
 
     @Override
-    public IceAppsContainer.AppType getAppType() {
+    public IceApplicationProvider.AppType getAppType() {
         return SimControl;
 
     }
 
     @Override
-    public IceAppsContainer.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
 
         final DomainParticipant participant = (DomainParticipant) parentContext.getBean("domainParticipant");
 
@@ -39,21 +39,11 @@ public class SimControlFactory implements IceApplicationProvider {
         ui.setSize(d);
 
 
-        return new IceAppsContainer.IceApp() {
+        return new IceApplicationProvider.IceApp() {
 
             @Override
-            public String getId() {
-                return SimControl.getId();
-            }
-
-            @Override
-            public String getName() {
-                return SimControl.getName();
-            }
-
-            @Override
-            public Icon getIcon() {
-                return SimControl.getIcon();
+            public IceApplicationProvider.AppType getDescriptor() {
+                return SimControl;
             }
 
             @Override
@@ -62,11 +52,16 @@ public class SimControlFactory implements IceApplicationProvider {
             }
 
             @Override
-            public void start(ApplicationContext context) {
+            public void activate(ApplicationContext context) {
             }
 
             @Override
             public void stop() {
+            }
+
+            @Override
+            public void destroy() {
+                ui.dispose();
             }
         };
     }

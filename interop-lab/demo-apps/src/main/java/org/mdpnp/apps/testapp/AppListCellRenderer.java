@@ -57,7 +57,7 @@ public class AppListCellRenderer extends JComponent implements ListCellRenderer 
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        IceAppsContainer.AppType app = value == null ? null : (IceAppsContainer.AppType) value;
+        IceApplicationProvider.AppType app = value == null ? null : (IceApplicationProvider.AppType) value;
 
         appName.setFont(list.getFont());
 

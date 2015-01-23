@@ -57,7 +57,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class Configuration {
 
     enum Application {
-        ICE_Supervisor(IceAppsContainer.class),
+        ICE_Supervisor(IceAppsContainer.IceAppsContainerInvoker.class),
         ICE_Device_Interface(DeviceAdapter.DeviceAdapterCommand.class),
         ICE_ParticipantOnly(ParticipantOnly.class);
 
