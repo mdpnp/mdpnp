@@ -145,43 +145,19 @@ public class IceAppsContainer implements Configuration.Command {
         private static AppType Main = new AppType("main", "Main Menu", null, (URL) null, 0);
         private static AppType Device = new AppType("device", "Device Info", null, (URL) null, 0);
 
-        private String     goback = null;
-        private Runnable   goBackAction = null;
+        DeviceApp driverWrapper = new DeviceApp();
+
         private DemoPanel  panel;
-        private String     gobackBed;
         private CardLayout ol;
 
         private PartitionChooser partitionChooser;
         private DiscoveryPeers   discoveryPeers;
-
-        private void setGoBack(String goback, Runnable goBackAction) {
-            this.goback = goback;
-            this.goBackAction = goBackAction;
-            this.gobackBed = panel.getBedLabel().getText();
-            panel.getBack().setVisible(null != goback);
-        }
-
-        private void goback() {
-            if (null != goBackAction) {
-                try {
-                    goBackAction.run();
-                } catch (Throwable t) {
-                    log.error("Error in 'go back' logic", t);
-                }
-                goBackAction = null;
-            }
-            panel.getBedLabel().setText(gobackBed);
-            ol.show(panel.getContent(), goback);
-            panel.getBack().setVisible(false);
-        }
-
 
         public IceAppsContainerUI(final AbstractApplicationContext context, final Semaphore stopOk) throws Exception {
             super("ICE Supervisor");
 
 
             RtConfig rtConfig = (RtConfig) context.getBean("rtConfig");
-            final EventLoop eventLoop = rtConfig.eventLoop;
             final Publisher publisher = rtConfig.publisher;
             final Subscriber subscriber = rtConfig.subscriber;
             final DomainParticipant participant = rtConfig.participant;
@@ -219,11 +195,9 @@ public class IceAppsContainer implements Configuration.Command {
 
             });
 
-
-            final CompositeDevicePanel devicePanel = new CompositeDevicePanel();
-            panel.getContent().add(devicePanel, Device.getId());
-
-
+            // Locate all available ice application via the service loader.
+            // For documentation refer to http://docs.oracle.com/javase/7/docs/api/java/util/ServiceLoader.html
+            //
             ServiceLoader<IceApplicationProvider> l = ServiceLoader.load(IceApplicationProvider.class);
 
             final Map<AppType, IceAppsContainer.IceApp> activeApps = new HashMap<>();
@@ -258,6 +232,14 @@ public class IceAppsContainer implements Configuration.Command {
             final MainMenuPanel mainMenuPanel = new MainMenuPanel(at);
             mainMenuPanel.setOpaque(false);
             panel.getContent().add(mainMenuPanel, Main.getId());
+
+            // Add a wrapper for the driver adapter display. This is so that the stop logic could
+            // shut it down properly.
+            activeApps.put(Device, driverWrapper);
+            panel.getContent().add(driverWrapper.getUI(), Device.getId());
+
+            // Start with showing the main panel.
+            //
             ol.show(panel.getContent(), Main.getId());
 
 
@@ -267,15 +249,6 @@ public class IceAppsContainer implements Configuration.Command {
 
                     final ExecutorService refreshScheduler = (ExecutorService) context.getBean("refreshScheduler");
                     refreshScheduler.shutdownNow();
-
-                    if (goBackAction != null) {
-                        try {
-                            goBackAction.run();
-                        } catch (Throwable t) {
-                            log.error("error in 'go back' handler", t);
-                        }
-                        goBackAction = null;
-                    }
 
                     for (IceAppsContainer.IceApp a : activeApps.values()) {
                         try {
@@ -295,15 +268,6 @@ public class IceAppsContainer implements Configuration.Command {
                 }
             });
             panel.getBack().setVisible(false);
-
-            panel.getBack().addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    goback();
-                }
-
-            });
 
             panel.getCreateAdapter().addActionListener(new ActionListener() {
 
@@ -381,14 +345,8 @@ public class IceAppsContainer implements Configuration.Command {
                                 a.setLocationRelativeTo(IceAppsContainerUI.this);
                                 a.setVisible(true);
                             } else {
-                                setGoBack(Main.getId(), new Runnable() {
-                                    public void run() {
-                                        app.stop();
-                                    }
-                                });
-                                panel.getBedLabel().setText(appType.getName());
+                                activateGoBack(app);
                                 app.start(context);
-                                ol.show(panel.getContent(), appType.getId());
                             }
                         }
                     }
@@ -401,42 +359,124 @@ public class IceAppsContainer implements Configuration.Command {
                     int idx = mainMenuPanel.getDeviceList().locationToIndex(e.getPoint());
                     if (idx >= 0 && mainMenuPanel.getDeviceList().getCellBounds(idx, idx).contains(e.getPoint())) {
                         final Device device = (Device) mainMenuPanel.getDeviceList().getModel().getElementAt(idx);
-                        // TODO threading model needs to be revisited but here this
-                        // will ultimately deadlock on this AWT EventQueue thread
-                        Thread t = new Thread(new Runnable() {
-                            public void run() {
-                                DeviceDataMonitor deviceMonitor = devicePanel.getModel();
-                                if (null != deviceMonitor) {
-                                    deviceMonitor.stop();
-                                    deviceMonitor = null;
-                                }
-                                deviceMonitor = new DeviceDataMonitor(device.getUDI());
-                                devicePanel.setModel(deviceMonitor);
-                                deviceMonitor.start(subscriber, eventLoop);
-                            }
-                        });
-                        t.setDaemon(true);
-                        t.start();
 
-                        setGoBack(Main.getId(), new Runnable() {
-                            public void run() {
-                                DeviceDataMonitor deviceMonitor = devicePanel.getModel();
-                                if (null != deviceMonitor) {
-                                    deviceMonitor.stop();
-                                }
-                                devicePanel.setModel(null);
-                            }
-                        });
-                        ol.show(panel.getContent(), Device.getId());
+                        activateGoBack(driverWrapper);
+                        driverWrapper.start(context, device);
                     }
                     super.mouseClicked(e);
                 }
             });
 
-
             setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             setSize(800, 600);
             setLocationRelativeTo(null);
+        }
+
+        private void activateGoBack(final IceAppsContainer.IceApp app) {
+            Runnable goBackAction = new Runnable() {
+                public void run() { app.stop(); }
+            };
+            panel.getBedLabel().setText(app.getName());
+            panel.getBack().setAction(new GoBackAction(goBackAction));
+            ol.show(panel.getContent(), app.getId());
+            panel.getBack().setVisible(true);
+        }
+
+        /**
+         * Utility class to be installed as an action handler on the 'back' button
+         * of the main panel to stop the current app and bring the pre-defined 'main'
+         * screen back forward.
+         */
+        private class GoBackAction extends AbstractAction {
+            final Runnable cmdOnExit;
+
+            public GoBackAction(Runnable r) {
+                super("Exit App");
+                cmdOnExit = r;
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (null != cmdOnExit) {
+                    try {
+                        cmdOnExit.run();
+                    } catch (Throwable t) {
+                        log.error("Error in 'go back' logic", t);
+                    }
+                }
+                ol.show(panel.getContent(), Main.getId());
+                ((JButton)e.getSource()).setVisible(false);
+                ((JButton)e.getSource()).setAction(null);
+            }
+        }
+
+        /**
+         * Utility class to wrap the driver object and preset it as a full-fledged
+         * participating application. The main purpose is to enable a formal life-cycle
+         * for startup and shutdown of the container.
+         */
+        private static class DeviceApp implements IceAppsContainer.IceApp {
+
+            CompositeDevicePanel devicePanel = new CompositeDevicePanel();
+
+            @Override
+            public String getId() {
+                return Device.getId();
+            }
+
+            @Override
+            public String getName() {
+                return Device.getName();
+            }
+
+            @Override
+            public Icon getIcon() {
+                return null;
+            }
+
+            @Override
+            public Component getUI() {
+                return devicePanel;
+            }
+
+            @Override
+            public void start(ApplicationContext context) {
+                throw new IllegalStateException("Internal start(context,driver) API should be called for driver wrapper");
+            }
+
+            public void start(ApplicationContext context, final Device device) {
+
+                final EventLoop  eventLoop = (EventLoop)context.getBean("eventLoop");
+                final Subscriber subscriber= (Subscriber)context.getBean("subscriber");
+
+                // TODO threading model needs to be revisited but here this
+                // will ultimately deadlock on this AWT EventQueue thread
+                Thread t = new Thread(threadGroup, new Runnable() {
+                    public void run() {
+                        DeviceDataMonitor deviceMonitor = devicePanel.getModel();
+                        if (null != deviceMonitor) {
+                            deviceMonitor.stop();
+                        }
+                        deviceMonitor = new DeviceDataMonitor(device.getUDI());
+                        devicePanel.setModel(deviceMonitor);
+                        deviceMonitor.start(subscriber, eventLoop);
+                    }
+                }, device.getMakeAndModel());
+
+                t.setDaemon(true);
+                t.start();
+            }
+
+            @Override
+            public void stop() {
+                DeviceDataMonitor deviceMonitor = devicePanel.getModel();
+                if (null != deviceMonitor) {
+                    deviceMonitor.stop();
+                }
+                devicePanel.setModel(null);
+            }
+
+            static final ThreadGroup threadGroup = new ThreadGroup("DeviceApp");
         }
     }
 }
