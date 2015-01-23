@@ -3,15 +3,10 @@ package org.mdpnp.apps.testapp;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
-import com.rti.dds.domain.DomainParticipantQos;
-import com.rti.dds.infrastructure.*;
-import com.rti.dds.publication.DataWriterQos;
+import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.publication.PublisherQos;
-import com.rti.dds.subscription.DataReaderQos;
 import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.SubscriberQos;
-import com.rti.dds.topic.TopicQos;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.devices.TimeManager;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
@@ -35,21 +30,21 @@ import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- *
- */
+//
+// Combined with DriverContext.xml, RtConfig::setupDDS is like @Configuration annotation for spring
+//
 public class RtConfig {
 
     private static final Logger log = LoggerFactory.getLogger(RtConfig.class);
 
-    public int domainId;
-    public String udi;
-    public EventLoop eventLoop;
-    public Publisher publisher;
-    public Subscriber subscriber;
-    public DomainParticipant participant;
-    public DeviceListModel deviceListModel;
-    public EventLoopHandler handler;
+    private int domainId;
+    private String udi;
+    private EventLoop eventLoop;
+    private Publisher publisher;
+    private Subscriber subscriber;
+    private DomainParticipant participant;
+    private DeviceListModel deviceListModel;
+    private EventLoopHandler handler;
 
     public static RtConfig setupDDS(final int domainId) {
         final EventLoop eventLoop = new EventLoop();
@@ -215,7 +210,7 @@ public class RtConfig {
 
     static void loadIceQosLibrary(DomainParticipantFactoryQos qos) throws IOException {
 
-        URL url =  RtConfig.class.getResource("/META-INF/ice_library.xml");
+        URL url = RtConfig.class.getResource("/META-INF/ice_library.xml");
         if (url != null) {
             log.info("Loading ice_library.xml from " + url.toExternalForm());
 
@@ -235,7 +230,4 @@ public class RtConfig {
             }
         }
     }
-
-
-
 }

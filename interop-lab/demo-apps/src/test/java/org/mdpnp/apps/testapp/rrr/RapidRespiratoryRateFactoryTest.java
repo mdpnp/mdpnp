@@ -28,7 +28,7 @@ public class RapidRespiratoryRateFactoryTest {
 
         RtConfig rtConfig = (RtConfig)context.getBean("rtConfig");
 
-        SimMultiparameter device = new SimMultiparameter(rtConfig.domainId, rtConfig.eventLoop);
+        SimMultiparameter device = new SimMultiparameter(rtConfig.getDomainId(), rtConfig.getEventLoop());
         device.connect(null);
 
         RapidRespiratoryRateFactory rrrf = new RapidRespiratoryRateFactory();

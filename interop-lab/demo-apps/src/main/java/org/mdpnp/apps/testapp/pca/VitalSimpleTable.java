@@ -171,14 +171,11 @@ public class VitalSimpleTable extends JComponent implements VitalModelListener, 
         RtConfig.loadAndSetIceQos();
 
         RtConfig rtSetup = RtConfig.setupDDS(0);
-        final EventLoop eventLoop=rtSetup.eventLoop;
-        final Publisher pub=rtSetup.publisher;
-        final Subscriber s=rtSetup.subscriber;
-        final DomainParticipant participant=rtSetup.participant;
-        final DeviceListModel nc = rtSetup.deviceListModel;
-        final String udi = rtSetup.udi;
-        final EventLoopHandler handler = rtSetup.handler;
-
+        final EventLoop eventLoop=rtSetup.getEventLoop();
+        final Publisher pub=rtSetup.getPublisher();
+        final Subscriber s=rtSetup.getSubscriber();
+        final DomainParticipant participant=rtSetup.getParticipant();
+        final DeviceListModel nc = rtSetup.getDeviceListModel();
 
         final VitalModel vm = new VitalModelImpl(nc);
 

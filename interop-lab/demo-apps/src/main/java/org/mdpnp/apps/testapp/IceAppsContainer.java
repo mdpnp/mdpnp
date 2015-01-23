@@ -75,13 +75,13 @@ public class IceAppsContainer extends DemoFrame {
         super("ICE Supervisor");
 
         RtConfig rtConfig = (RtConfig) context.getBean("rtConfig");
-        final Publisher publisher = rtConfig.publisher;
-        final Subscriber subscriber = rtConfig.subscriber;
-        final DomainParticipant participant = rtConfig.participant;
-        final DeviceListModel nc = rtConfig.deviceListModel;
-        final String udi = rtConfig.udi;
+        final Publisher         publisher   = rtConfig.getPublisher();
+        final Subscriber        subscriber  = rtConfig.getSubscriber();
+        final DomainParticipant participant = rtConfig.getParticipant();
+        final String            udi         = rtConfig.getUdi();
 
-        //final DemoFrame frame = new DemoFrame("ICE Supervisor");
+        final DeviceListModel nc = (DeviceListModel) context.getBean("deviceListModel");
+
         setIconImage(ImageIO.read(getClass().getResource("icon.png")));
         panel = new DemoPanel();
         partitionChooser = new PartitionChooser(this);
@@ -193,9 +193,11 @@ public class IceAppsContainer extends DemoFrame {
             @SuppressWarnings({"rawtypes"})
             @Override
             public void actionPerformed(ActionEvent e) {
+
+                DefaultComboBoxModel model = new DefaultComboBoxModel(new Configuration.Application[]{Configuration.Application.ICE_Device_Interface});
+
                 ConfigurationDialog dia = new ConfigurationDialog(null, IceAppsContainer.this);
                 dia.setTitle("Create a local ICE Device Adapter");
-                final DefaultComboBoxModel model = new DefaultComboBoxModel(new Configuration.Application[]{Configuration.Application.ICE_Device_Interface});
                 dia.getApplications().setModel(model);
                 dia.set(Configuration.Application.ICE_Device_Interface, null);
                 dia.remove(dia.getDomainId());
@@ -206,11 +208,14 @@ public class IceAppsContainer extends DemoFrame {
                 dia.getWelcomeText().setColumns(40);
                 // dia.remove(dia.getWelcomeScroll());
                 dia.getWelcomeText()
-                        .setText(
-                                "Typically ICE Device Adapters do not run directly within the ICE Supervisor.  This option is provided for convenient testing.  A window will be created for the device adapter.  To terminate the adapter close that window.  To exit this application you must close the supervisory window.");
+                        .setText("Typically ICE Device Adapters do not run directly within the ICE Supervisor.  " +
+                                 "This option is provided for convenient testing.  A window will be created for the device adapter. " +
+                                 " To terminate the adapter close that window.  To exit this application you must close the supervisory window.");
+
                 dia.getQuit().setText("Close");
                 dia.pack();
                 dia.setLocationRelativeTo(panel);
+
                 final Configuration c = dia.showDialog();
                 if (null != c) {
                     Thread t = new Thread(new Runnable() {
