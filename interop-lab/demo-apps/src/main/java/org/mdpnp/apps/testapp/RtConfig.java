@@ -50,9 +50,6 @@ public class RtConfig {
         final EventLoop eventLoop = new EventLoop();
         final EventLoopHandler handler = new EventLoopHandler(eventLoop);
 
-        // UIManager.put("List.focusSelectedCellHighlightBorder", null);
-        // UIManager.put("List.focusCellHighlightBorder", null);
-
         // This could prove confusing
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
         final String udi = AbstractSimulatedDevice.randomUDI();
@@ -120,6 +117,11 @@ public class RtConfig {
 
         return conf;
     }
+
+    //
+    // ctor is private to ensure that only way to make one is via setupDDS factory method.
+    //
+    private RtConfig() {}
 
     public int getDomainId() {
         return domainId;

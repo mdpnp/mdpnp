@@ -33,7 +33,7 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
         final DeviceListCellRenderer deviceCellRenderer = new DeviceListCellRenderer(nc);
 
         final DataVisualization ui =
-                new DataVisualization(refreshScheduler, objectiveWriter, deviceCellRenderer, new VitalSimpleTable(refreshScheduler));
+                new DataVisualization(refreshScheduler, objectiveWriter, deviceCellRenderer, new VitalMonitoring(refreshScheduler));
 
         return new IceApplicationProvider.IceApp() {
 
