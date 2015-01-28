@@ -24,17 +24,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -62,6 +67,9 @@ public class VitalSimpleTable extends JComponent implements VitalModelListener, 
     private final ScheduledExecutorService executor;
     private ScheduledFuture<?> future;
     private Persister          persister;
+    private JPanel             persisterContainer = new JPanel();
+
+    private Map<String, Persister> supportedPersisters = new HashMap<>();
 
     public VitalSimpleTable() {
         this(null);
@@ -74,19 +82,187 @@ public class VitalSimpleTable extends JComponent implements VitalModelListener, 
         setLayout(new BorderLayout());
         add(new JScrollPane(table), BorderLayout.CENTER);
 
-        persister = new CSVPersister();
-        add(persister, BorderLayout.SOUTH);
+        supportedPersisters.put("csv",  new CSVPersister());
+        supportedPersisters.put("jdbc", new JdbcPersister());
 
+        final CardLayout cl = new CardLayout();
+        final JPanel cards = new JPanel(cl);
+        cards.setBorder(BorderFactory.createLineBorder(Color.gray, 2, true));
+
+        JPanel btns = new JPanel();
+        btns.setLayout(new GridLayout(0,1));
+        btns.setBorder(BorderFactory.createLineBorder(Color.gray, 2, true));
+
+        ButtonGroup group = new ButtonGroup();
+
+        for (Map.Entry<String, Persister> entry : supportedPersisters.entrySet()) {
+            Persister p = entry.getValue();
+            cards.add(p, entry.getKey());
+            JRadioButton btn  = new JRadioButton(entry.getKey());
+            btns.add(btn);
+            group.add(btn);
+            btn.addItemListener(new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    String name = ((JRadioButton)e.getItem()).getActionCommand();
+                    try {
+                        // lock on the main object so that the change of the
+                        // persister is handled in a synchronized way.
+                        //
+                        synchronized(VitalSimpleTable.this) {
+                            Persister p = supportedPersisters.get(name);
+                            if (e.getStateChange() == ItemEvent.DESELECTED) {
+                                p.stop();
+                                persister = null;
+                            }
+                            else if (e.getStateChange() == ItemEvent.SELECTED) {
+                                boolean v = p.start();
+                                if (v) {
+                                    persister = p;
+                                    p.setBackground(Color.lightGray);
+                                } else {
+                                    persister = null;
+                                    p.setBackground(Color.red);
+                                }
+                            }
+                        }
+                        cl.show(cards, name);
+                    } catch(Exception ex) {
+                        JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+            p.putClientProperty("mdpnp.appender", btn);
+        }
+
+        persisterContainer.setLayout(new BorderLayout());
+        persisterContainer.add(cards, BorderLayout.CENTER);
+        persisterContainer.add(btns,  BorderLayout.WEST);
+
+        JRadioButton btn = (JRadioButton)supportedPersisters.get("csv").getClientProperty("mdpnp.appender");
+        group.setSelected(btn.getModel(), true);
+
+        add(persisterContainer, BorderLayout.SOUTH);
     }
 
     private static abstract class Persister extends JPanel
     {
-        public abstract void persist(Value vital);
+        public abstract void persist(Value vital) throws Exception;
+        public abstract void stop()  throws Exception;
+        public abstract boolean start()  throws Exception;
     }
+
+    //
+    //CREATE TABLE VITAL_VALUES (METRIC_ID VARCHAR(25), TIME_TICK TIMESTAMP, INSTANCE_ID INTEGER, VITAL_VALUE DOUBLE)
+    //
+    private static class JdbcPersister extends Persister {
+
+        Connection conn = null;
+        PreparedStatement ps = null;
+
+        final JTextField fDriver   = new JTextField();
+        final JTextField fURL      = new JTextField();
+        final JTextField fUser     = new JTextField();
+        final JTextField fPassword = new JPasswordField();
+
+        public void persist(Value value) throws Exception {
+
+            if(ps != null) {
+                ps.setString(1, value.getMetricId());
+                ps.setTimestamp(2, new Timestamp(value.getNumeric().device_time.sec));
+                ps.setInt(3, value.getInstanceId());
+                ps.setDouble(4, value.getNumeric().value);
+
+                ps.execute();
+
+                conn.commit();
+            }
+        }
+
+        public boolean start() throws Exception {
+            conn = createConnection();
+            if(conn != null)
+                ps = conn.prepareStatement("INSERT INTO VITAL_VALUES (METRIC_ID , TIME_TICK, INSTANCE_ID, VITAL_VALUE) VALUES(?,?,?,?)");
+            return conn != null;
+        }
+
+        public void stop() throws Exception {
+            if(ps != null) ps.close();
+            if(conn != null) conn.close();
+            ps = null;
+            conn = null;
+        }
+
+        public Connection createConnection() throws Exception {
+
+            String driver = fDriver.getText();
+            String url = fURL.getText();
+            String user = fUser.getText();
+            String password= fPassword.getText();
+
+            if(isEmpty(driver) || isEmpty(url) || isEmpty(user))
+                return null;
+
+            try {
+                Class.forName(driver.trim());
+            }
+            catch (ClassNotFoundException ex) {
+                throw new IllegalArgumentException("Invalid driver: " + driver.trim());
+            }
+
+            Connection conn=DriverManager.getConnection(url.trim(), user.trim(), password.trim());
+            if(conn == null)
+                throw new IllegalStateException("Failed to create a connection");
+            return conn;
+        }
+
+        private static boolean isEmpty(String s) {
+            return s == null || s.trim().length()==0;
+        }
+
+        public JdbcPersister() {
+
+            super();
+
+            this.setLayout(new GridLayout(0, 2));
+            this.add(new JLabel("JDBC Driver", JLabel.RIGHT));  this.add(fDriver);
+            this.add(new JLabel("Database URL", JLabel.RIGHT)); this.add(fURL);
+            this.add(new JLabel("User", JLabel.RIGHT));         this.add(fUser);
+            this.add(new JLabel("Password", JLabel.RIGHT));     this.add(fPassword);
+            this.add(new JLabel(""));
+            this.add(new JButton(new AbstractAction("Connect") {
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        stop();
+                        boolean v=start();
+                        JdbcPersister.this.setBackground(v ? Color.lightGray : Color.red);
+                    }
+                    catch (Exception ex) {
+                        JdbcPersister.this.setBackground(Color.red);
+                        JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }) );
+
+            fDriver.setText("org.hsqldb.jdbcDriver");
+            fURL.setText("jdbc:hsqldb:hsql://localhost/testdb");
+            //fUser.setText("SA");
+            fPassword.setText("");
+        }
+    }
+
 
     private static class CSVPersister extends Persister {
 
-        public void persist(Value value) {
+        public boolean start() throws Exception {
+            return true;
+        }
+
+        public void stop() throws Exception {
+            appender.rollOver();
+        }
+
+        public void persist(Value value) throws Exception {
 
             StringBuilder sb = new StringBuilder();
 
@@ -139,15 +315,10 @@ public class VitalSimpleTable extends JComponent implements VitalModelListener, 
             final File defaultLogFileName = new File("demo-app.csv");
 
             JPanel p = new JPanel();
-            p.setLayout(new FlowLayout());
-            p.add(new JLabel("Currently logging to: "));
+            p.setLayout(new FlowLayout(FlowLayout.LEFT));
+            p.add(new JLabel("Logging to: ", JLabel.LEFT));
             final JLabel filePathLabel = new JLabel(defaultLogFileName.getAbsolutePath());
-            //filePathLabel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10)); // top, left, bottom, right
             p.add(filePathLabel);
-            this.add(p);
-
-            JPanel fControl = new JPanel();
-            fControl.setLayout(new FlowLayout());
 
             // Help me here. How do I get JFileChooser have  'new file name' text box on mac os?
             // And FileDialog's file filter does no work.
@@ -183,7 +354,7 @@ public class VitalSimpleTable extends JComponent implements VitalModelListener, 
             */
 
 
-            JButton fileSelector = new JButton("Change File");
+            JButton fileSelector = new JButton("Change");
             fileSelector.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -206,15 +377,18 @@ public class VitalSimpleTable extends JComponent implements VitalModelListener, 
                         appender.setFile(f.getAbsolutePath());
                         appender.activateOptions();
                     }
-
                 }
             });
 
+            p.add(fileSelector);
+            this.add(p);
 
+            // add file size controls.
+            //
+            JPanel fControl = new JPanel();
+            fControl.setLayout(new FlowLayout(FlowLayout.LEFT));
 
-            fControl.add(fileSelector);
-
-            fControl.add(new JLabel("Number of files to keep around:"));
+            fControl.add(new JLabel("Number of files to keep around:", JLabel.LEFT));
             fControl.add(backupIndex);
             fControl.add(new JLabel("Max file size:"));
             fControl.add(fSize);
@@ -268,12 +442,16 @@ public class VitalSimpleTable extends JComponent implements VitalModelListener, 
     }
 
 
-    private void handleVitalChanged(VitalModel model, Vital vital) {
+    private synchronized void handleVitalChanged(VitalModel model, Vital vital) {
 
         for (Value value : vital.getValues()) {
 
             // save it for real
-            persister.persist(value);
+            try {
+                persister.persist(value) ;
+            } catch (Exception ex) {
+                log.error("Failed to save data", ex);
+            }
 
             // and add to the screen for visual.
             String devTime = dateFormats.get().format(new Date(value.getNumeric().device_time.sec * 1000));
@@ -291,7 +469,7 @@ public class VitalSimpleTable extends JComponent implements VitalModelListener, 
     @Override
     public void vitalChanged(VitalModel model, Vital vital) {
 
-        if(vital != null) {
+        if(vital != null && persister != null) {
             handleVitalChanged(model, vital);
         }
 
