@@ -77,8 +77,9 @@ public class VitalSimpleTable extends JComponent implements VitalModelListener, 
         setLayout(new BorderLayout());
         add(new JScrollPane(table), BorderLayout.CENTER);
 
-        supportedPersisters.put("csv",  new CSVPersister());
-        supportedPersisters.put("jdbc", new JdbcPersister());
+        supportedPersisters.put("csv",            new CSVPersister());
+        supportedPersisters.put("jdbc",           new JdbcPersister());
+        supportedPersisters.put("vcd (ieee-1364)",new VerilogVCDPersister());
 
         final CardLayout cl = new CardLayout();
         final JPanel cards = new JPanel(cl);
@@ -114,7 +115,7 @@ public class VitalSimpleTable extends JComponent implements VitalModelListener, 
                                 boolean v = p.start();
                                 if (v) {
                                     persister = p;
-                                    p.setBackground(Color.lightGray);
+                                    p.setBackground(java.awt.SystemColor.window);
                                 } else {
                                     persister = null;
                                     p.setBackground(Color.red);
