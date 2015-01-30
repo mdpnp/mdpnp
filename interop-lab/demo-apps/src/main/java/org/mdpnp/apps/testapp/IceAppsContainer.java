@@ -146,6 +146,12 @@ public class IceAppsContainer extends DemoFrame {
 
         // Now that we have a list of all active components, build up a menu and add it to the app
         IceApplicationProvider.AppType[] at = activeApps.keySet().toArray(new IceApplicationProvider.AppType[activeApps.size()]);
+        Arrays.sort(at, new Comparator<IceApplicationProvider.AppType>() {
+            @Override
+            public int compare(IceApplicationProvider.AppType o1, IceApplicationProvider.AppType o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
         final MainMenuPanel mainMenuPanel = new MainMenuPanel(at);
         mainMenuPanel.setOpaque(false);
         panel.getContent().add(mainMenuPanel, Main.getId());
