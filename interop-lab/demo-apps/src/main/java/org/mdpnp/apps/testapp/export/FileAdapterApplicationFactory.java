@@ -1,10 +1,13 @@
 package org.mdpnp.apps.testapp.export;
 
+import com.rti.dds.domain.DomainParticipant;
 import org.mdpnp.apps.testapp.*;
+import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 import org.springframework.context.ApplicationContext;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -14,7 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
     private final IceApplicationProvider.AppType FileAdapter =
-            new IceApplicationProvider.AppType("CSV File Exporter", "NOCSV",  DataVisualization.class.getResource("csv-text.png"), 0.75);
+            new IceApplicationProvider.AppType("File Exporter", "NOCSV",  DataVisualization.class.getResource("csv-text.png"), 0.75);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {
@@ -25,14 +28,11 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
 
-        final ScheduledExecutorService refreshScheduler = (ScheduledExecutorService) parentContext.getBean("refreshScheduler");
-        final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
-        final ice.InfusionObjectiveDataWriter objectiveWriter = (ice.InfusionObjectiveDataWriter) parentContext.getBean("objectiveWriter");
+        final DomainParticipant participant = (DomainParticipant)parentContext.getBean("domainParticipant");
 
-        final DeviceListCellRenderer deviceCellRenderer = new DeviceListCellRenderer(nc);
+        final DataCollector worker = new DataCollector(participant);
 
-        final DataVisualization ui =
-                new DataVisualization(refreshScheduler, objectiveWriter, deviceCellRenderer, new VitalSimpleTable(refreshScheduler));
+        final DataCollectorApp ui = new DataCollectorApp(worker);
 
         return new IceApplicationProvider.IceApp() {
 
@@ -48,19 +48,29 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void activate(ApplicationContext context) {
-                VitalModel vitalModel = (VitalModel)context.getBean("vitalModel");
-                InfusionStatusInstanceModel pumpModel = (InfusionStatusInstanceModel)context.getBean("pumpModel");
-                ui.setModel(vitalModel, pumpModel);
+                worker.start();
             }
 
             @Override
             public void stop() {
-                ui.setModel(null, null);
+                try {
+                    worker.stop();
+                } catch (Exception ex) {
+                    throw new IllegalStateException("Failed to stop data collector", ex);
+                }
             }
 
             @Override
             public void destroy() {
             }
         };
+    }
+
+
+    public static abstract class PersisterUI extends JPanel implements DataCollector.DataSampleEventListener  {
+
+        public abstract void stop() throws Exception;
+
+        public abstract boolean start() throws Exception;
     }
 }

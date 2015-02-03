@@ -1,6 +1,7 @@
 package org.mdpnp.apps.testapp.export;
 
 
+import ice.Time_t;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,7 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class VerilogVCDPersister extends VitalSimpleTable.Persister {
+public class VerilogVCDPersister extends FileAdapterApplicationFactory.PersisterUI implements DataCollector.DataSampleEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(VerilogVCDPersister.class);
 
@@ -45,14 +46,17 @@ public class VerilogVCDPersister extends VitalSimpleTable.Persister {
         add(filePathLabel);
     }
 
+
     @Override
-    public void persist(Value vital) throws Exception {
+    public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
+        Value vital = (Value)evt.getSource();
         controller.persist(vital);
     }
 
     @Override
     public void stop() throws Exception {
-        controller.stop();
+        if(controller != null)
+            controller.stop();
         controller = null;
     }
 
@@ -94,7 +98,7 @@ public class VerilogVCDPersister extends VitalSimpleTable.Persister {
             VCDFileHandler fileHandler = cache.get(key);
             if (fileHandler == null) {
 
-                long t = vital.getNumeric().device_time.sec;
+                Time_t t = vital.getNumeric().device_time;
 
                 PrintStream ps = makeStream(key);
 
@@ -117,13 +121,13 @@ public class VerilogVCDPersister extends VitalSimpleTable.Persister {
             final PrintStream ps;
             final long firstTimeTic;
 
-            VCDFileHandler(PrintStream out, String key, long t) {
+            VCDFileHandler(PrintStream out, String key, Time_t t) {
 
                 ps = out;
-                firstTimeTic = t;
+                firstTimeTic = t.sec * 1000L + t.nanosec / 1000000L;
 
                 ps.println("$date");
-                ps.println("\t\t" + dateFormats.get().format(new Date(t)));
+                ps.println("\t\t" + dateFormats.get().format(new Date(firstTimeTic)));
                 ps.println("$end");
 
                 ps.println("$version");
@@ -131,7 +135,7 @@ public class VerilogVCDPersister extends VitalSimpleTable.Persister {
                 ps.println("$end");
 
                 ps.println("$timescale");
-                ps.println("\t\t" + "1sec");
+                ps.println("\t\t" + "1ms");
                 ps.println("$end");
 
                 ps.println("$scope module top $end");
@@ -150,10 +154,11 @@ public class VerilogVCDPersister extends VitalSimpleTable.Persister {
 
             public void persist(Value value) throws Exception {
 
-                long t = value.getNumeric().device_time.sec;
+                Time_t t = value.getNumeric().device_time;
+                long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
 
                 StringBuilder sb = new StringBuilder();
-                sb.append("#").append(t - firstTimeTic).append("\n");
+                sb.append("#").append(baseTime - firstTimeTic).append("\n");
                 float f = value.getNumeric().value;
                 String s = floatFormats.get().format(f);
                 sb.append("r").append(s).append(" *").append("\n");

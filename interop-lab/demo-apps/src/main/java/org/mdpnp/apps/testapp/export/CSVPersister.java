@@ -12,7 +12,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-class CSVPersister extends VitalSimpleTable.Persister {
+class CSVPersister extends FileAdapterApplicationFactory.PersisterUI implements DataCollector.DataSampleEventListener  {
 
     static ThreadLocal<SimpleDateFormat> dateFormats = new ThreadLocal<SimpleDateFormat>()
     {
@@ -39,6 +39,12 @@ class CSVPersister extends VitalSimpleTable.Persister {
 
         // LoggingEvent le = new LoggingEvent("", null, Level.ALL, sb.toString(), null);
         cat.info(sb.toString());
+    }
+
+    @Override
+    public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
+        Value vital = (Value)evt.getSource();
+        persist(vital);
     }
 
     public CSVPersister() {

@@ -33,7 +33,9 @@ public class CSVPersisterTest {
             n.device_time.sec = (int)(now + i);
 
             v.updateFrom(n, si);
-            p.persist(v);
+
+            DataCollector.DataSampleEvent evt = new DataCollector.DataSampleEvent(v);
+            p.handleDataSampleEvent(evt);
         }
     }
 }

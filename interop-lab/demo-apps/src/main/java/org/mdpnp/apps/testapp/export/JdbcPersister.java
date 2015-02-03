@@ -14,7 +14,7 @@ import java.sql.Timestamp;
 //
 //CREATE TABLE VITAL_VALUES (METRIC_ID VARCHAR(25), TIME_TICK TIMESTAMP, INSTANCE_ID INTEGER, VITAL_VALUE DOUBLE)
 //
-class JdbcPersister extends VitalSimpleTable.Persister {
+class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements DataCollector.DataSampleEventListener  {
 
     Connection conn = null;
     PreparedStatement ps = null;
@@ -36,6 +36,12 @@ class JdbcPersister extends VitalSimpleTable.Persister {
 
             conn.commit();
         }
+    }
+
+    @Override
+    public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
+        Value vital = (Value)evt.getSource();
+        persist(vital);
     }
 
     public boolean start() throws Exception {
