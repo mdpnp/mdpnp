@@ -21,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.function.BooleanSupplier;
 
 import javax.swing.*;
 
@@ -384,7 +385,11 @@ public class ConfigurationDialog extends JDialog {
 
         }
 
-        boolean headless=!Boolean.getBoolean("mdpnp.ui");
+        // if mdpnp.ui is set to false, force the system to come up in the headless mode.
+        // If not set, default to UI mode i.e headless==false.
+        //
+        String s = System.getProperty("mdpnp.ui");
+        boolean headless = s!=null && Boolean.parseBoolean(s);
         lastConf = new Configuration(headless, app,Integer.parseInt(domainId.getText()), ddp, address);
 
         dispose();

@@ -284,6 +284,9 @@ public class Configuration {
             }
         }
 
+        // if mdpnp.ui is set to true, force the system to come up in the UI mode regardless of
+        // command line having arguments or not. If not set, default to headless==true.
+        //
         boolean headless=!Boolean.getBoolean("mdpnp.ui");
         return new Configuration(headless, app, domainId, deviceType, address);
     }
