@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -81,14 +81,14 @@ public class ParticipantOnly implements Configuration.Command {
         final ParticipantOnlyUI panel = new ParticipantOnlyUI(domainId);
         if (!config.isHeadless()) {
 
-            final Semaphore stopOk = new Semaphore(0);
+            final CountDownLatch stopOk = new CountDownLatch(1);
 
             JFrame frame = new JFrame("ICE Participant Only (" + domainId + ")");
             frame.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
                     panel.stop();
-                    stopOk.release();
+                    stopOk.countDown();
                     super.windowClosing(e);
                 }
             });
@@ -99,7 +99,7 @@ public class ParticipantOnly implements Configuration.Command {
             frame.setVisible(true);
 
             // block until frame is killed.
-            stopOk.acquire();
+            stopOk.await();
 
         } else {
             panel.addTableModelListener(new TableModelListener() {

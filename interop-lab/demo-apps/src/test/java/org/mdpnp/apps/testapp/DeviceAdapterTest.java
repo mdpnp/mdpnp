@@ -2,14 +2,13 @@ package org.mdpnp.apps.testapp;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,7 +45,7 @@ public class DeviceAdapterTest {
 
     private void testDriverAdapter(DeviceDriverProvider ddp, boolean isUI) throws Exception
     {
-        final Semaphore stopOk = new Semaphore(0);
+        final CountDownLatch stopOk = new CountDownLatch(1);
 
         System.setProperty("mdpnp.domain", "0");
 
@@ -62,7 +61,7 @@ public class DeviceAdapterTest {
                     // start will block until stopped.
                     try {
                         da.start(null);
-                        stopOk.release();
+                        stopOk.countDown();
                         log.info("Adapter run loop complete");
                     }
                     catch(Exception ex)  {
@@ -80,7 +79,7 @@ public class DeviceAdapterTest {
             // wait for the middleware to settle
             Thread.sleep(2000);
 
-            boolean isOk=stopOk.tryAcquire(timeout, TimeUnit.SECONDS);
+            boolean isOk=stopOk.await(timeout, TimeUnit.SECONDS);
             if(!isOk)
                 Assert.fail("Failed to stop the adapter");
 

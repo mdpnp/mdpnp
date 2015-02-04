@@ -19,7 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -87,7 +87,7 @@ public abstract class DeviceAdapter {
     protected AbstractDevice device;
     protected String[] initialPartition;
 
-    private final Semaphore stopOk = new Semaphore(0);
+    private final CountDownLatch stopOk = new CountDownLatch(1);
 
     protected final AbstractApplicationContext context;
     protected final DeviceDriverProvider deviceFactory;
@@ -111,17 +111,17 @@ public abstract class DeviceAdapter {
 
         if (null != device && device instanceof AbstractConnectedDevice) {
             if (!((AbstractConnectedDevice) device).connect(address)) {
-                stopOk.release();
+                stopOk.countDown();
             }
         }
 
         // Wait until killAdapter
-        stopOk.acquire();
+        stopOk.await();
     }
 
     public void stop()
     {
-        stopOk.release();
+        stopOk.countDown();
     }
 
     static class HeadlessAdapter extends DeviceAdapter {

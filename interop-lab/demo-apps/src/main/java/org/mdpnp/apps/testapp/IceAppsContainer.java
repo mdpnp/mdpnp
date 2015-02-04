@@ -35,7 +35,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Container responsible for discovery and hosting of ICE applications. Its main purpose is enforcement of
@@ -71,7 +71,7 @@ public class IceAppsContainer extends DemoFrame {
     private PartitionChooser partitionChooser;
     private DiscoveryPeers   discoveryPeers;
 
-    public IceAppsContainer(final AbstractApplicationContext context, final Semaphore stopOk) throws Exception {
+    public IceAppsContainer(final AbstractApplicationContext context, final CountDownLatch stopOk) throws Exception {
         super("ICE Supervisor");
 
         RtConfig rtConfig = (RtConfig) context.getBean("rtConfig");
@@ -187,7 +187,7 @@ public class IceAppsContainer extends DemoFrame {
                     }
                 }
 
-                stopOk.release();
+                stopOk.countDown();
 
                 super.windowClosing(e);
             }
@@ -409,7 +409,7 @@ public class IceAppsContainer extends DemoFrame {
         @Override
         public int execute(Configuration config) throws Exception {
 
-            final Semaphore stopOk = new Semaphore(0);
+            final CountDownLatch stopOk = new CountDownLatch(1);
             final AbstractApplicationContext context = config.createContext("IceAppContainerContext.xml");
             context.registerShutdownHook();
 
@@ -417,7 +417,7 @@ public class IceAppsContainer extends DemoFrame {
             f.setVisible(true);
 
             // this will block until the frame is killed
-            stopOk.acquire();
+            stopOk.await();
 
             context.destroy();
             return 0;
