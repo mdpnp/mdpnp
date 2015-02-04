@@ -21,9 +21,6 @@ public class VerilogVCDPersisterTest {
 
     private final static Logger log = LoggerFactory.getLogger(VerilogVCDPersisterTest.class);
 
-    Vital vital = new MockedVital();
-    SampleInfo si = new SampleInfo();
-
     @Test
     public void testBasicDataStream() throws Exception {
 
@@ -47,10 +44,10 @@ public class VerilogVCDPersisterTest {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         Date d = sdf.parse("01/12/2014");
 
-        long now = d.getTime()/1000;
+        long now = d.getTime();
 
         for(int n=0; n<400; n++) {
-            Value v = build("DEVICE0", "METRIC0", (int) (now + n), mockData(n));
+            Value v = DataCollector.toValue("DEVICE0", "METRIC0", 0, now + n * 1000L, mockData(n));
             p.persist(v);
         }
 
@@ -95,13 +92,13 @@ public class VerilogVCDPersisterTest {
             VerilogVCDPersister.OneWavePerVCD p = new VerilogVCDPersister.OneWavePerVCD(root);
             p.start();
 
-            long now = System.currentTimeMillis() / 1000;
+            long now = System.currentTimeMillis();
 
             for (int n = 0; n < 50; n++) {
-                int t = n + (int) (Math.random() * 10);
+                long t = (n + (int) (Math.random() * 10))*1000;
 
                 for (int m = (int) (Math.random() * 10); m > 0; m--) {
-                    Value v = build("DEVICE0", "METRIC" + m, (int) (now + t), mockData(n));
+                    Value v = DataCollector.toValue("DEVICE0", "METRIC" + m, 0, now + t, mockData(n));
                     p.persist(v);
                 }
             }
@@ -116,19 +113,6 @@ public class VerilogVCDPersisterTest {
             }
             root.delete();
         }
-    }
-
-
-    Value build(String dev, String metric, int t, double val)
-    {
-        Value v = new ValueImpl(dev, metric, 0, vital);
-        Numeric numeric = new Numeric();
-        numeric.value = (float) val;
-        numeric.device_time = new ice.Time_t();
-        numeric.device_time.sec = t;
-
-        v.updateFrom(numeric, si);
-        return v;
     }
 
     private static double mockData(int n)

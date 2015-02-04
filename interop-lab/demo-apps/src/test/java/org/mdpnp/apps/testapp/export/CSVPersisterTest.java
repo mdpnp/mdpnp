@@ -12,13 +12,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 public class CSVPersisterTest {
 
     private final static Logger log = LoggerFactory.getLogger(CSVPersisterTest.class);
-
-    private static final SampleInfo si = new SampleInfo();
 
     @Test
     public void testCVSLine() throws Exception {
@@ -26,15 +25,7 @@ public class CSVPersisterTest {
         SimpleDateFormat dateFormat = DataCollector.dateFormats.get();
         Date d0 = dateFormat.parse("20150203.235809.985-0500");
 
-        Vital vital = new MockedVital();
-
-        Value v =  new ValueImpl("DEVICE0", "METRIC0", 0, vital);
-        Numeric n = new Numeric();
-        n.value = 13.31f;
-        n.device_time = new ice.Time_t();
-        n.device_time.sec = (int)(d0.getTime()/1000);
-
-        v.updateFrom(n, si);
+        Value v =  DataCollector.toValue("DEVICE0", "METRIC0", 0, d0.getTime(), 13.31);
 
         String line = CSVPersister.toCSVLine(v);
         Assert.assertEquals("Invalid csv line", "DEVICE0,METRIC0,0,20150203235809-0500,13.31", line);
@@ -46,21 +37,20 @@ public class CSVPersisterTest {
         CSVPersister p = new CSVPersister();
         p.start();
 
-        long now = System.currentTimeMillis()/1000;
-
-        Vital vital = new MockedVital();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
 
         for(int i=0; i<20; i++) {
-            Value v =  new ValueImpl("DEVICE0", "METRIC0", 0, vital);
-            Numeric n = new Numeric();
-            n.value = (float)Math.sin(i);
-            n.device_time = new ice.Time_t();
-            n.device_time.sec = (int)(now + i);
 
-            v.updateFrom(n, si);
+            long now = calendar.getTime().getTime();
+
+            Value v =  DataCollector.toValue("DEVICE0", "METRIC0", 0, now,  (float)Math.sin(i));
 
             DataCollector.DataSampleEvent evt = new DataCollector.DataSampleEvent(v);
             p.handleDataSampleEvent(evt);
+
+            calendar.add(Calendar.MINUTE, 1);
+
         }
     }
 }

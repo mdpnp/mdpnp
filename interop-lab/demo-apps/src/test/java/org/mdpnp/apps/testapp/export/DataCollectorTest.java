@@ -19,7 +19,7 @@ public class DataCollectorTest {
         Date d0 = dateFormat.parse("20150203.235809.985-0500");
 
         SampleInfo si = new SampleInfo();
-        Value v = DataCollector.toValue(si, "D0", "M0", d0.getTime(),  13.31);
+        Value v = DataCollector.toValue(si, "D0", "M0", 0, d0.getTime(),  13.31);
         Assert.assertEquals("Invalid values for sec",      v.getNumeric().device_time.sec,     1423025889);
         Assert.assertEquals("Invalid values for nanonsec", v.getNumeric().device_time.nanosec, 985000000);
 

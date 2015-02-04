@@ -211,7 +211,7 @@ public class DataCollector {
                                             if (log.isInfoEnabled())
                                                 log.info(dateFormats.get().format(new Date(tm)) + " " + data.metric_id + "=" + value);
 
-                                            Value v = toValue(si, data.unique_device_identifier, data.metric_id, tm, value);
+                                            Value v = toValue(si, data.unique_device_identifier, data.metric_id, data.instance_id, tm, value);
                                             DataSampleEvent ev = new DataSampleEvent(v);
                                             fireDataSampleEvent(ev);
 
@@ -261,7 +261,7 @@ public class DataCollector {
                                     if (log.isInfoEnabled())
                                         log.info(dateFormats.get().format(new Date(baseTime)) + " " + data.metric_id + "=" + data.value);
 
-                                    Value v = toValue(si, data.unique_device_identifier, data.metric_id, baseTime, data.value);
+                                    Value v = toValue(si, data.unique_device_identifier, data.metric_id, data.instance_id, baseTime, data.value);
                                     DataSampleEvent ev = new DataSampleEvent(v);
                                     fireDataSampleEvent(ev);
                                 }
@@ -289,9 +289,9 @@ public class DataCollector {
         return ms;
     }
 
-    static Value toValue(SampleInfo si, String dev, String metric, long tMs, double val)
+    static Value toValue(SampleInfo si, String dev, String metric, int instance_id, long tMs, double val)
     {
-        Value v = new ValueImpl(dev, metric, 0, noopVital);
+        Value v = new ValueImpl(dev, metric, instance_id, noopVital);
         Numeric numeric = new Numeric();
         numeric.value = (float) val;
         numeric.device_time = new ice.Time_t();
@@ -302,7 +302,14 @@ public class DataCollector {
         return v;
     }
 
-    static final Vital noopVital = new Vital() {
+    static Value toValue(String dev, String metric, int instance_id, long tMs, double val)
+    {
+        return toValue(noopInfo, dev, metric, instance_id, tMs, val);
+    }
+
+    private static final SampleInfo noopInfo = new SampleInfo();
+
+    private static final Vital noopVital = new Vital() {
 
         @Override
         public String getLabel() {

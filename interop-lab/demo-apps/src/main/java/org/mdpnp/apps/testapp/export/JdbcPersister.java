@@ -6,18 +6,13 @@ import org.mdpnp.apps.testapp.vital.Value;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.Timestamp;
+import java.sql.*;
 
-//
-//CREATE TABLE VITAL_VALUES (METRIC_ID VARCHAR(25), TIME_TICK TIMESTAMP, INSTANCE_ID INTEGER, VITAL_VALUE DOUBLE)
-//
+
 class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements DataCollector.DataSampleEventListener  {
 
-    Connection conn = null;
-    PreparedStatement ps = null;
+    private Connection conn = null;
+    private PreparedStatement ps = null;
 
     final JTextField fDriver   = new JTextField();
     final JTextField fURL      = new JTextField();
@@ -27,10 +22,11 @@ class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements
     public void persist(Value value) throws Exception {
 
         if(ps != null) {
-            ps.setString(1, value.getMetricId());
-            ps.setTimestamp(2, new Timestamp(value.getNumeric().device_time.sec));
-            ps.setInt(3, value.getInstanceId());
-            ps.setDouble(4, value.getNumeric().value);
+            ps.setString   (1, value.getUniqueDeviceIdentifier());
+            ps.setString   (2, value.getMetricId());
+            ps.setInt      (3, value.getInstanceId());
+            ps.setTimestamp(4, new Timestamp(DataCollector.toMilliseconds(value.getNumeric().device_time)));
+            ps.setDouble   (5, value.getNumeric().value);
 
             ps.execute();
 
@@ -44,10 +40,20 @@ class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements
         persist(vital);
     }
 
+    static void createSchema(Connection conn) throws SQLException {
+        conn.createStatement().execute( "CREATE TABLE VITAL_VALUES " +
+                                        "(DEVICE_ID VARCHAR(25), " +
+                                        "METRIC_ID VARCHAR(25), " +
+                                        "INSTANCE_ID INTEGER, " +
+                                        "TIME_TICK TIMESTAMP, " +
+                                        "VITAL_VALUE DOUBLE)");
+    }
+
+
     public boolean start() throws Exception {
         conn = createConnection();
         if(conn != null)
-            ps = conn.prepareStatement("INSERT INTO VITAL_VALUES (METRIC_ID , TIME_TICK, INSTANCE_ID, VITAL_VALUE) VALUES(?,?,?,?)");
+            ps = conn.prepareStatement("INSERT INTO VITAL_VALUES (DEVICE_ID, METRIC_ID, INSTANCE_ID, TIME_TICK, VITAL_VALUE) VALUES(?,?,?,?,?)");
         return conn != null;
     }
 
@@ -58,15 +64,20 @@ class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements
         conn = null;
     }
 
-    public Connection createConnection() throws Exception {
+    Connection createConnection() throws Exception {
 
         String driver = fDriver.getText();
         String url = fURL.getText();
         String user = fUser.getText();
-        String password= fPassword.getText();
+        String password = fPassword.getText();
 
-        if(isEmpty(driver) || isEmpty(url) || isEmpty(user))
+        if (isEmpty(driver) || isEmpty(url) || isEmpty(user))
             return null;
+
+        return createConnection(driver, url, user, password);
+    }
+
+    Connection createConnection(String driver, String url, String user, String password) throws Exception {
 
         try {
             Class.forName(driver.trim());
@@ -78,6 +89,10 @@ class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements
         Connection conn= DriverManager.getConnection(url.trim(), user.trim(), password.trim());
         if(conn == null)
             throw new IllegalStateException("Failed to create a connection");
+        return conn;
+    }
+
+    Connection getConnection() {
         return conn;
     }
 
