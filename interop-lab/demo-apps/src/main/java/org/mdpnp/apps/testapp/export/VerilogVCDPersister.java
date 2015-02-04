@@ -93,7 +93,8 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
         }
 
         public void persist(Value vital) throws Exception {
-            String key = vital.getInstanceId() + "-" + vital.getMetricId();
+
+            String key = vital.getUniqueDeviceIdentifier() + "-" + vital.getMetricId() + "-" + vital.getInstanceId();
 
             VCDFileHandler fileHandler = cache.get(key);
             if (fileHandler == null) {
@@ -124,7 +125,8 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
             VCDFileHandler(PrintStream out, String key, Time_t t) {
 
                 ps = out;
-                firstTimeTic = t.sec * 1000L + t.nanosec / 1000000L;
+
+                firstTimeTic = DataCollector.toMilliseconds(t);
 
                 ps.println("$date");
                 ps.println("\t\t" + dateFormats.get().format(new Date(firstTimeTic)));
@@ -155,7 +157,7 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
             public void persist(Value value) throws Exception {
 
                 Time_t t = value.getNumeric().device_time;
-                long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
+                long baseTime = DataCollector.toMilliseconds(t);
 
                 StringBuilder sb = new StringBuilder();
                 sb.append("#").append(baseTime - firstTimeTic).append("\n");

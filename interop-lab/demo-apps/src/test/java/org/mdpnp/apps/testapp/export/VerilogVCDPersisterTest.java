@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.export;
 
 import com.rti.dds.subscription.SampleInfo;
 import ice.Numeric;
+import org.junit.Assert;
 import org.junit.Test;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.ValueImpl;
@@ -10,10 +11,11 @@ import org.mdpnp.apps.testapp.vital.Vital;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.PrintStream;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.io.*;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 public class VerilogVCDPersisterTest {
 
@@ -25,25 +27,60 @@ public class VerilogVCDPersisterTest {
     @Test
     public void testBasicDataStream() throws Exception {
 
+        File f = File.createTempFile("VerilogVCDPersisterTest-", ".vcd");
+        f.deleteOnExit();
+        OutputStream fos = new FileOutputStream(f);
+        final PrintStream ps = new PrintStream(fos);
+
         VerilogVCDPersister.OneWavePerVCD p = new VerilogVCDPersister.OneWavePerVCD(null) {
             @Override
             protected PrintStream makeStream(String key) {
-                return System.out;
+                Assert.assertEquals("Invalid file name", "DEVICE0-METRIC0-0", key);
+                return ps; //System.out;
             }
         };
 
         p.start();
 
-        long now = System.currentTimeMillis()/1000;
+        // does not matter what date it is, as long as we have smth
+        // to compare to the 'gold' file
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date d = sdf.parse("01/12/2014");
 
-        for(int n=0; n<200; n++) {
+        long now = d.getTime()/1000;
+
+        for(int n=0; n<400; n++) {
             Value v = build("DEVICE0", "METRIC0", (int) (now + n), mockData(n));
             p.persist(v);
         }
 
         p.stop();
+
+        URL u = getClass().getResource("VCDTestDump0.vcd");
+        Assert.assertNotNull("Failed to locate 'good' data", u);
+        InputStream is = u.openStream();
+        BufferedReader actual   = new BufferedReader(new InputStreamReader(is));
+
+        BufferedReader expected = new BufferedReader(new FileReader(f));
+        try {
+            assertReaders(expected, actual);
+        }
+        finally {
+            actual.close();
+            expected.close();
+        }
     }
 
+    private static void assertReaders(BufferedReader expected,
+                                     BufferedReader actual) throws IOException {
+        String line;
+        while ((line = expected.readLine()) != null) {
+            Assert.assertEquals(line, actual.readLine());
+        }
+
+        Assert.assertNull("Actual had more lines then the expected.", actual.readLine());
+        Assert.assertNull("Expected had more lines then the actual.", expected.readLine());
+    }
 
     @Test
     public void testHandleRandomDatStream() throws Exception {

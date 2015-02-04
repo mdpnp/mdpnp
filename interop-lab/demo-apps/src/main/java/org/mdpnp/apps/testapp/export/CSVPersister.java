@@ -31,14 +31,25 @@ class CSVPersister extends FileAdapterApplicationFactory.PersisterUI implements 
 
     public void persist(Value value) throws Exception {
 
-        StringBuilder sb = new StringBuilder();
-
-        String devTime = dateFormats.get().format(new Date(value.getNumeric().device_time.sec * 1000));
-
-        sb.append(value.getMetricId()).append(",").append(devTime).append(",").append(value.getInstanceId()).append(",").append(value.getNumeric().value);
+        String s = toCSVLine(value);
 
         // LoggingEvent le = new LoggingEvent("", null, Level.ALL, sb.toString(), null);
-        cat.info(sb.toString());
+        cat.info(s);
+    }
+
+    static String toCSVLine(Value value) {
+        StringBuilder sb = new StringBuilder();
+
+        long ms = DataCollector.toMilliseconds(value.getNumeric().device_time);
+        String devTime = dateFormats.get().format(new Date(ms));
+
+        sb.append(value.getUniqueDeviceIdentifier()).append(",")
+            .append(value.getMetricId()).append(",")
+            .append(value.getInstanceId()).append(",")
+            .append(devTime).append(",")
+            .append(value.getNumeric().value);
+
+        return sb.toString();
     }
 
     @Override

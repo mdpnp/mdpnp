@@ -1,12 +1,9 @@
 package org.mdpnp.apps.testapp.export;
 
 import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.Subscriber;
-import org.mdpnp.apps.testapp.DeviceListModel;
+import ice.Numeric;
 import org.mdpnp.apps.testapp.RtConfig;
 import org.mdpnp.apps.testapp.vital.*;
-import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +14,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +25,7 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
 
     DefaultTableModel tblModel = new DefaultTableModel(
             new Object[][]{},
-            new Object[]{"MetricId", "Time", "InstanceId", "Value"});
+            new Object[]{"DeviceId", "MetricId", "InstanceId", "Time", "Value"});
 
     private FileAdapterApplicationFactory.PersisterUI persister;
     private JPanel persisterContainer = new JPanel();
@@ -131,16 +127,18 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
 
         // and add to the screen for visual.
         Value value = (Value)evt.getSource();
-
-        String devTime = DataCollector.dateFormats.get().format(new Date(value.getNumeric().device_time.sec * 1000));
+        Numeric n = value.getNumeric();
+        long ms = DataCollector.toMilliseconds(n.device_time);
+        String devTime = DataCollector.dateFormats.get().format(new Date(ms));
         Object[] row = new Object[]{
+                value.getUniqueDeviceIdentifier(),
                 value.getMetricId(),
-                devTime,
                 value.getInstanceId(),
-                value.getNumeric().value
+                devTime,
+                n.value
         };
         tblModel.insertRow(0, row);
-        tblModel.setRowCount(25);
+        tblModel.setRowCount(250);
     }
 
 

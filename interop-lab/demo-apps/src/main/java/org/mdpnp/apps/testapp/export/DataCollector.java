@@ -29,7 +29,7 @@ public class DataCollector {
 
     static ThreadLocal<SimpleDateFormat> dateFormats = new ThreadLocal<SimpleDateFormat>() {
         protected SimpleDateFormat initialValue() {
-            return new SimpleDateFormat("yyyyMMddHHmmss.SSSZ");
+            return new SimpleDateFormat("yyyyMMdd.HHmmss.SSSZ");
         }
     };
 
@@ -284,6 +284,11 @@ public class DataCollector {
 
     private static Duration_t WAIT_1SEC = Duration_t.from_millis(5000);
 
+    static long toMilliseconds(ice.Time_t t) {
+        long ms = t.sec*1000L + t.nanosec/1000000L;
+        return ms;
+    }
+
     static Value toValue(SampleInfo si, String dev, String metric, long tMs, double val)
     {
         Value v = new ValueImpl(dev, metric, 0, noopVital);
@@ -291,7 +296,7 @@ public class DataCollector {
         numeric.value = (float) val;
         numeric.device_time = new ice.Time_t();
         numeric.device_time.sec = (int)(tMs/1000L);
-        numeric.device_time.nanosec = (int)(tMs%1000L)*1000;
+        numeric.device_time.nanosec = (int)(tMs%1000L)*1000000;
 
         v.updateFrom(numeric, si);
         return v;
