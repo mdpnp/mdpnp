@@ -8,10 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -34,18 +31,67 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
         }
     };
 
+    public static final long FZ_1MB =1000000L;
+    public static final long FZ_10MB=10000000L;
 
     OneWavePerVCD controller = null;
     final JLabel filePathLabel;
+    final JLabel maxSizeLabel;
 
     public VerilogVCDPersister() {
 
-        setLayout(new GridLayout(1, 2));
-        add(new JLabel("Logging trace files to directory: ", JLabel.RIGHT));
-        filePathLabel = new JLabel();
+        GridBagLayout gridbag = new GridBagLayout();
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.insets = new Insets(1, 1, 1, 1);
+
+        setLayout(gridbag);
+        setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+
+        Label label1 = new Label("Trace files:", Label.RIGHT);
+        gridbag.setConstraints(label1, configureLabel(constraints, 0));
+        add(label1);
+
+        JLabel dl = new JLabel("Directory:", JLabel.RIGHT);
+        gridbag.setConstraints(dl, configureLabel(constraints, 1));
+        add(dl);
+
+        filePathLabel = new JLabel("");
+        gridbag.setConstraints(filePathLabel, configureValue(constraints, 1));
         add(filePathLabel);
+
+        JLabel sl = new JLabel("Max file size:", JLabel.RIGHT);
+        gridbag.setConstraints(sl, configureLabel(constraints, 2));
+        add(sl);
+
+        maxSizeLabel = new JLabel("10MB");
+        gridbag.setConstraints(maxSizeLabel, configureValue(constraints, 2));
+        add(maxSizeLabel);
     }
 
+
+
+    private GridBagConstraints configureLabel(GridBagConstraints constraints, int row) {
+        buildConstraints(constraints, 0, row, 1, 1, 0.0, 1.0);
+        constraints.fill = GridBagConstraints.NONE;
+        constraints.anchor = GridBagConstraints.EAST;
+        return constraints;
+    }
+
+    private GridBagConstraints configureValue(GridBagConstraints constraints, int row) {
+        buildConstraints(constraints, 1, row, GridBagConstraints.REMAINDER, 1, 1.0, 1.0);
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.anchor = GridBagConstraints.EAST;
+        return constraints;
+    }
+
+    private void buildConstraints(GridBagConstraints gbc, int gx, int gy, int gw, int gh, double wx, double wy) {
+        gbc.gridx = gx;
+        gbc.gridy = gy;
+        gbc.gridwidth = gw;
+        gbc.gridheight = gh;
+        gbc.weightx = wx;
+        gbc.weighty = wy;
+    }
 
     @Override
     public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
@@ -67,7 +113,7 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
         f.mkdirs();
         filePathLabel.setText(f.getAbsolutePath());
 
-        controller = new OneWavePerVCD(f);
+        controller = new OneWavePerVCD(f, FZ_10MB);
         controller.start();
         return true;
     }
@@ -75,11 +121,13 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
     static class OneWavePerVCD {
 
         final File baseDir;
+        final long maxFileSize;
 
         Map<String, VCDFileHandler> cache = new HashMap<>();
 
-        public OneWavePerVCD(File f) {
+        public OneWavePerVCD(File f, long sz) {
             baseDir = f;
+            maxFileSize = sz;
         }
 
         public boolean start() throws Exception {
@@ -101,30 +149,33 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
 
                 Time_t t = vital.getNumeric().device_time;
 
-                PrintStream ps = makeStream(key);
+                OutputStream os = makeStream(key);
 
-                fileHandler = new VCDFileHandler(ps, key, t);
+                fileHandler = new VCDFileHandler(os, key, t);
                 cache.put(key, fileHandler);
             }
 
-            fileHandler.persist(vital);
+            if(fileHandler.getSize()<maxFileSize)
+                fileHandler.persist(vital);
         }
 
-        protected PrintStream makeStream(String key) throws IOException {
+        protected OutputStream makeStream(String key) throws IOException {
             File f = new File(baseDir, key + ".vcd");
             log.info("Opening File " + f.getAbsolutePath());
             FileOutputStream fos = new FileOutputStream(f);
-            return new PrintStream(fos);
+            return fos;
         }
 
         static class VCDFileHandler {
 
-            final PrintStream ps;
+            final OutputStream os;
+            final PrintStream  ps;
             final long firstTimeTic;
 
-            VCDFileHandler(PrintStream out, String key, Time_t t) {
+            VCDFileHandler(OutputStream out, String key, Time_t t) {
 
-                ps = out;
+                os = out;
+                ps = new PrintStream(out);
 
                 firstTimeTic = DataCollector.toMilliseconds(t);
 
@@ -149,9 +200,21 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
                 ps.println(" $end");
             }
 
-            public void stop() throws Exception {
+            synchronized public void stop() throws Exception {
                 ps.flush();
+                os.flush();
                 ps.close();
+                os.close();
+            }
+
+            synchronized long getSize() throws Exception {
+                if(os instanceof FileOutputStream) {
+                    long l = ((FileOutputStream)os).getChannel().size();
+                    return l;
+                }
+                else {
+                    return 0;
+                }
             }
 
             public void persist(Value value) throws Exception {

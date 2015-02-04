@@ -1,20 +1,14 @@
 package org.mdpnp.apps.testapp.export;
 
-
-import com.rti.dds.subscription.SampleInfo;
-import ice.Numeric;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mdpnp.apps.testapp.vital.Value;
-import org.mdpnp.apps.testapp.vital.ValueImpl;
-import org.mdpnp.apps.testapp.vital.Vital;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 
 public class VerilogVCDPersisterTest {
@@ -26,14 +20,13 @@ public class VerilogVCDPersisterTest {
 
         File f = File.createTempFile("VerilogVCDPersisterTest-", ".vcd");
         f.deleteOnExit();
-        OutputStream fos = new FileOutputStream(f);
-        final PrintStream ps = new PrintStream(fos);
+        final OutputStream fos = new FileOutputStream(f);
 
-        VerilogVCDPersister.OneWavePerVCD p = new VerilogVCDPersister.OneWavePerVCD(null) {
+        VerilogVCDPersister.OneWavePerVCD p = new VerilogVCDPersister.OneWavePerVCD(null, VerilogVCDPersister.FZ_1MB) {
             @Override
-            protected PrintStream makeStream(String key) {
+            protected OutputStream makeStream(String key) {
                 Assert.assertEquals("Invalid file name", "DEVICE0-METRIC0-0", key);
-                return ps; //System.out;
+                return fos;
             }
         };
 
@@ -69,7 +62,7 @@ public class VerilogVCDPersisterTest {
     }
 
     private static void assertReaders(BufferedReader expected,
-                                     BufferedReader actual) throws IOException {
+                                      BufferedReader actual) throws IOException {
         String line;
         while ((line = expected.readLine()) != null) {
             Assert.assertEquals(line, actual.readLine());
@@ -77,6 +70,38 @@ public class VerilogVCDPersisterTest {
 
         Assert.assertNull("Actual had more lines then the expected.", actual.readLine());
         Assert.assertNull("Expected had more lines then the actual.", expected.readLine());
+    }
+
+    @Test
+    public void testFileSizeEnforcement() throws Exception {
+
+        File f = File.createTempFile("VerilogVCDPersisterTest-", ".vcd");
+        f.deleteOnExit();
+        final OutputStream fos = new FileOutputStream(f);
+
+        long sizeLimit=10000;
+        VerilogVCDPersister.OneWavePerVCD p = new VerilogVCDPersister.OneWavePerVCD(null, sizeLimit) {
+            @Override
+            protected OutputStream makeStream(String key) {
+                return fos;
+            }
+        };
+
+        p.start();
+
+        long now = System.currentTimeMillis();
+
+        // if no cap, the loop of 1000 values will produce a 20K bytes file
+        for (int n = 0; n < 1000; n++) {
+            Value v = DataCollector.toValue("DEVICE0", "METRIC0", 0, now + n * 1000L, mockData(n));
+            p.persist(v);
+        }
+
+        p.stop();
+
+        long fileSize = f.length();
+        // allow 1K rounding for the 'last' append
+        Assert.assertTrue("Invalid file size - limit exceeded", Math.abs(sizeLimit-fileSize)<1000);
     }
 
     @Test
@@ -89,7 +114,7 @@ public class VerilogVCDPersisterTest {
         root.mkdirs();
 
         try {
-            VerilogVCDPersister.OneWavePerVCD p = new VerilogVCDPersister.OneWavePerVCD(root);
+            VerilogVCDPersister.OneWavePerVCD p = new VerilogVCDPersister.OneWavePerVCD(root, VerilogVCDPersister.FZ_1MB);
             p.start();
 
             long now = System.currentTimeMillis();
