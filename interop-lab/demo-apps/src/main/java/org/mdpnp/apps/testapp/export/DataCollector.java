@@ -20,7 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.EventListener;
 import java.util.EventObject;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class DataCollector {
@@ -74,7 +74,9 @@ public class DataCollector {
         ice.NumericTypeSupport.register_type(participant, ice.NumericTypeSupport.get_type_name());
 
         // A topic the mechanism by which reader and writer endpoints are matched.
-        TopicDescription sampleArrayTopic = TopicUtil.lookupOrCreateTopic(participant, ice.SampleArrayTopic.VALUE, ice.SampleArrayTypeSupport.class);
+        TopicDescription sampleArrayTopic = TopicUtil.lookupOrCreateTopic(participant,
+                                                                          ice.SampleArrayTopic.VALUE,
+                                                                          ice.SampleArrayTypeSupport.class);
         /*
         Topic sampleArrayTopic = participant.create_topic(ice.SampleArrayTopic.VALUE,
                                                             ice.SampleArrayTypeSupport.get_type_name(),
@@ -83,7 +85,9 @@ public class DataCollector {
         */
 
         // A second topic if for Numeric data
-        TopicDescription numericTopic = TopicUtil.lookupOrCreateTopic(participant, ice.NumericTopic.VALUE, ice.NumericTypeSupport.class);
+        TopicDescription numericTopic = TopicUtil.lookupOrCreateTopic(participant,
+                                                                      ice.NumericTopic.VALUE,
+                                                                      ice.NumericTypeSupport.class);
         /*
         Topic numericTopic = participant.create_topic(ice.NumericTopic.VALUE,
                 ice.NumericTypeSupport.get_type_name(),
@@ -115,12 +119,13 @@ public class DataCollector {
     public synchronized void stop() throws Exception {
         if(worker != null) {
             worker.interrupt();
+            worker = null;
         }
     }
 
     private class DataHandler implements Runnable {
 
-        private final Semaphore stopOk = new Semaphore(0);
+        private final CountDownLatch stopOk = new CountDownLatch(1);
         private boolean keepRunning = true;
 
         @Override
@@ -129,19 +134,24 @@ public class DataCollector {
                 captureData();
             } catch (Exception ex) {
                 log.error("Failed to run data capture loop.", ex);
-                stopOk.release();
+            }
+            finally {
+                stopOk.countDown();
             }
         }
 
         void interrupt() throws Exception {
 
+            // This will force 'captureData' to break out or the loop.
             keepRunning = false;
-            boolean isOK = stopOk.tryAcquire(5, TimeUnit.SECONDS);
+            // we want to hang out here a little longer than the actual loop that could
+            // be waiting for data.
+            boolean isOK = stopOk.await(5 * WAIT_FOR_DATA.sec, TimeUnit.SECONDS);
             if (!isOK)
                 throw new IllegalStateException("Failed to stop data collector");
         }
 
-        void captureData() throws Exception {
+        private void captureData() throws Exception {
 
             // A waitset allows us to wait for various status changes in various entities
             WaitSet ws = new WaitSet();
@@ -153,9 +163,6 @@ public class DataCollector {
 
             // will contain triggered conditions
             ConditionSeq cond_seq = new ConditionSeq();
-
-            // how long to wait for data to become available before we timeout and check interrupted status.
-            Duration_t timeout = WAIT_1SEC;
 
             // Will contain the data samples we read from the reader
             ice.SampleArraySeq sa_data_seq = new ice.SampleArraySeq();
@@ -170,7 +177,7 @@ public class DataCollector {
 
                 try {
                     // Wait for a condition to be triggered
-                    ws.wait(cond_seq, timeout);
+                    ws.wait(cond_seq, WAIT_FOR_DATA);
                 } catch (RETCODE_TIMEOUT ex) {
                     // no data, check 'isInterrupted' and go back to wait
                     continue;
@@ -208,8 +215,8 @@ public class DataCollector {
                                             long tm = baseTime - (sz - j) * msPerSample;
                                             float value = data.values.userData.getFloat(j);
 
-                                            if (log.isInfoEnabled())
-                                                log.info(dateFormats.get().format(new Date(tm)) + " " + data.metric_id + "=" + value);
+                                            if (log.isDebugEnabled())
+                                                log.debug(dateFormats.get().format(new Date(tm)) + " " + data.metric_id + "=" + value);
 
                                             Value v = toValue(si, data.unique_device_identifier, data.metric_id, data.instance_id, tm, value);
                                             DataSampleEvent ev = new DataSampleEvent(v);
@@ -258,8 +265,8 @@ public class DataCollector {
                                     Time_t t = si.source_timestamp;
                                     long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
 
-                                    if (log.isInfoEnabled())
-                                        log.info(dateFormats.get().format(new Date(baseTime)) + " " + data.metric_id + "=" + data.value);
+                                    if (log.isDebugEnabled())
+                                        log.debug(dateFormats.get().format(new Date(baseTime)) + " " + data.metric_id + "=" + data.value);
 
                                     Value v = toValue(si, data.unique_device_identifier, data.metric_id, data.instance_id, baseTime, data.value);
                                     DataSampleEvent ev = new DataSampleEvent(v);
@@ -276,13 +283,14 @@ public class DataCollector {
                     }
                 }
             }
-
-            // clear the latch so that stop can complete.
-            stopOk.release();
         }
     }
 
-    private static Duration_t WAIT_1SEC = Duration_t.from_millis(5000);
+    private static final Duration_t WAIT_1SEC = Duration_t.from_millis(1000);
+    private static final Duration_t WAIT_5SEC = Duration_t.from_millis(5000);
+
+    // how long to wait for data to become available before we timeout and check interrupted status.
+    private static final Duration_t WAIT_FOR_DATA = WAIT_1SEC;
 
     static long toMilliseconds(ice.Time_t t) {
         long ms = t.sec*1000L + t.nanosec/1000000L;
