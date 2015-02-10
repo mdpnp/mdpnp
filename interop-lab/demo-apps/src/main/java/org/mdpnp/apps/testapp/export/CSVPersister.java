@@ -21,20 +21,19 @@ class CSVPersister extends FileAdapterApplicationFactory.PersisterUI implements 
         }
     };
 
+    @Override
+    public String getName() {
+        return "xls (csv)";
+    }
+
+    @Override
     public boolean start() throws Exception {
         return true;
     }
 
+    @Override
     public void stop() throws Exception {
         appender.rollOver();
-    }
-
-    public void persist(Value value) throws Exception {
-
-        String s = toCSVLine(value);
-
-        // LoggingEvent le = new LoggingEvent("", null, Level.ALL, sb.toString(), null);
-        cat.info(s);
     }
 
     static String toCSVLine(Value value) {
@@ -55,7 +54,11 @@ class CSVPersister extends FileAdapterApplicationFactory.PersisterUI implements 
     @Override
     public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
         Value vital = (Value)evt.getSource();
-        persist(vital);
+
+        String s = toCSVLine(vital);
+
+        // LoggingEvent le = new LoggingEvent("", null, Level.ALL, sb.toString(), null);
+        cat.info(s);
     }
 
     public CSVPersister() {

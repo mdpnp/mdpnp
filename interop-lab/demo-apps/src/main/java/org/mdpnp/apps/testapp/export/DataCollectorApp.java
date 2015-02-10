@@ -1,11 +1,12 @@
 package org.mdpnp.apps.testapp.export;
 
-import com.rti.dds.domain.DomainParticipant;
 import ice.Numeric;
-import org.mdpnp.apps.testapp.RtConfig;
+import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.vital.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -14,9 +15,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 
 public class DataCollectorApp extends JComponent implements DataCollector.DataSampleEventListener {
@@ -25,26 +25,25 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
 
     DefaultTableModel tblModel = new DefaultTableModel(
             new Object[][]{},
-            new Object[]{"DeviceId", "MetricId", "InstanceId", "Time", "Value"});
+            new Object[]{"DeviceId", "InstanceId", "MetricId", "Time", "Value"});
 
-    private FileAdapterApplicationFactory.PersisterUI persister;
     private JPanel persisterContainer = new JPanel();
 
     private final DataCollector dataCollector;
 
-    private Map<String, FileAdapterApplicationFactory.PersisterUI> supportedPersisters = new HashMap<>();
-
+    private List<FileAdapterApplicationFactory.PersisterUI> supportedPersisters = new ArrayList<>();
 
     public DataCollectorApp(DataCollector dc) {
         dataCollector = dc;
 
-        JTable table = new JTable(tblModel);
         setLayout(new BorderLayout());
+
+        JTable table = new JTable(tblModel);
         add(new JScrollPane(table), BorderLayout.CENTER);
 
-        supportedPersisters.put("csv",             new CSVPersister());
-        supportedPersisters.put("jdbc",            new JdbcPersister());
-        supportedPersisters.put("vcd (ieee-1364)", new VerilogVCDPersister());
+        supportedPersisters.add(new CSVPersister());
+        supportedPersisters.add(new JdbcPersister());
+        supportedPersisters.add(new VerilogVCDPersister());
 
         final CardLayout cl = new CardLayout();
         final JPanel cards = new JPanel(cl);
@@ -58,58 +57,63 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
 
         dataCollector.addDataSampleListener(this);
 
-        for (Map.Entry<String, FileAdapterApplicationFactory.PersisterUI> entry : supportedPersisters.entrySet()) {
-            FileAdapterApplicationFactory.PersisterUI p = entry.getValue();
-            cards.add(p, entry.getKey());
-            JRadioButton btn = new JRadioButton(entry.getKey());
+        for (FileAdapterApplicationFactory.PersisterUI p : supportedPersisters) {
+
+            cards.add(p, p.getName());
+            JRadioButton btn = new JRadioButton(p.getName());
             btns.add(btn);
             group.add(btn);
             btn.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
-                    String name = ((JRadioButton) e.getItem()).getActionCommand();
+                    JRadioButton btn = (JRadioButton) e.getItem();
+                    FileAdapterApplicationFactory.PersisterUI p =
+                            (FileAdapterApplicationFactory.PersisterUI)btn.getClientProperty("mdpnp.appender");
+
+                    //String name = ((JRadioButton) e.getItem()).getActionCommand();
                     try {
                         // lock on the main object so that the change of the
                         // persister is handled in a synchronized way.
                         //
                         synchronized (DataCollectorApp.this) {
-                            FileAdapterApplicationFactory.PersisterUI p = supportedPersisters.get(name);
                             if (e.getStateChange() == ItemEvent.DESELECTED) {
+                                dataCollector.removeDataSampleListener(p);
                                 p.stop();
-                                persister = null;
                             } else if (e.getStateChange() == ItemEvent.SELECTED) {
                                 boolean v = p.start();
                                 if (v) {
-                                    persister = p;
+                                    dataCollector.addDataSampleListener(p);
                                     p.setBackground(java.awt.SystemColor.window);
                                 } else {
-                                    persister = null;
                                     p.setBackground(Color.red);
                                 }
                             }
                         }
-                        cl.show(cards, name);
+                        cl.show(cards, p.getName());
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             });
+            // link the two so that we can go from one to the other.
+            //
             p.putClientProperty("mdpnp.appender", btn);
+            btn.putClientProperty("mdpnp.appender", p);
         }
 
         persisterContainer.setLayout(new BorderLayout());
         persisterContainer.add(cards, BorderLayout.CENTER);
         persisterContainer.add(btns, BorderLayout.WEST);
 
-        JRadioButton btn = (JRadioButton) supportedPersisters.get("csv").getClientProperty("mdpnp.appender");
+        FileAdapterApplicationFactory.PersisterUI p = supportedPersisters.get(0);
+        JRadioButton btn = (JRadioButton) p.getClientProperty("mdpnp.appender");
         group.setSelected(btn.getModel(), true);
 
         add(persisterContainer, BorderLayout.SOUTH);
     }
 
     public void stop() throws Exception {
-        for (Map.Entry<String, FileAdapterApplicationFactory.PersisterUI> entry : supportedPersisters.entrySet()) {
-            FileAdapterApplicationFactory.PersisterUI p = entry.getValue();
+        for (FileAdapterApplicationFactory.PersisterUI p : supportedPersisters) {
             dataCollector.removeDataSampleListener(p);
             p.stop();
         }
@@ -118,22 +122,16 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
     @Override
     public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
 
-        // save it for real
-        try {
-            persister.handleDataSampleEvent(evt);
-        } catch (Exception ex) {
-            log.error("Failed to save data", ex);
-        }
-
-        // and add to the screen for visual.
+        // Add to the screen for visual.
         Value value = (Value)evt.getSource();
+
         Numeric n = value.getNumeric();
         long ms = DataCollector.toMilliseconds(n.device_time);
         String devTime = DataCollector.dateFormats.get().format(new Date(ms));
         Object[] row = new Object[]{
                 value.getUniqueDeviceIdentifier(),
-                value.getMetricId(),
                 value.getInstanceId(),
+                value.getMetricId(),
                 devTime,
                 n.value
         };
@@ -141,17 +139,17 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
         tblModel.setRowCount(250);
     }
 
-
     public static void main(String[] args) throws Exception {
 
-        RtConfig.loadAndSetIceQos();
+        final AbstractApplicationContext context =
+                new ClassPathXmlApplicationContext(new String[]{"DriverContext.xml"});
+        context.registerShutdownHook();
 
-        final RtConfig rtSetup = RtConfig.setupDDS(0);
-        final DomainParticipant participant = rtSetup.getParticipant();
+        FileAdapterApplicationFactory factory = new FileAdapterApplicationFactory();
+        final IceApplicationProvider.IceApp app = factory.create(context);
 
-        final DataCollector dc = new DataCollector(participant);
-        final DataCollectorApp app = new DataCollectorApp(dc);
-        dc.start();
+        app.activate(context);
+        Component component = app.getUI();
 
         JFrame frame = new JFrame("UITest");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -159,17 +157,16 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
             @Override
             public void windowClosing(WindowEvent e) {
                 try {
-                    dc.stop();
                     app.stop();
-                } catch (Exception e1) {
-                    e1.printStackTrace();
+                } catch (Exception ex) {
+                    log.error("Failed to stop the app", ex);
                 }
                 super.windowClosing(e);
             }
         });
 
         frame.getContentPane().setLayout(new BorderLayout());
-        frame.getContentPane().add(app, BorderLayout.CENTER);
+        frame.getContentPane().add(component, BorderLayout.CENTER);
         frame.setSize(640, 480);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);

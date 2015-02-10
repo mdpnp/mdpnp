@@ -49,7 +49,12 @@ class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements
                                         "VITAL_VALUE DOUBLE)");
     }
 
+    @Override
+    public String getName() {
+        return "sql";
+    }
 
+    @Override
     public boolean start() throws Exception {
         conn = createConnection();
         if(conn != null)
@@ -57,6 +62,7 @@ class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements
         return conn != null;
     }
 
+    @Override
     public void stop() throws Exception {
         if(ps != null) ps.close();
         if(conn != null) conn.close();

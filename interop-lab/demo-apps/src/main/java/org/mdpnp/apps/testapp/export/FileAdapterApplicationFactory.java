@@ -69,6 +69,8 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
     public static abstract class PersisterUI extends JPanel implements DataCollector.DataSampleEventListener  {
 
+        public abstract String getName();
+
         public abstract void stop() throws Exception;
 
         public abstract boolean start() throws Exception;

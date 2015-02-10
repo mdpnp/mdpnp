@@ -13,6 +13,16 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+/**
+ *
+ * The purpose of this component is to demonstrate persistence of the data in the standard IEEE-1364
+ * format that could be read by a variety of tools http://en.wikipedia.org/wiki/Waveform_viewer.
+ * Overview of the history of the format is http://en.wikipedia.org/wiki/Value_change_dump
+ *
+ * The document describing the format of the data (from cadence's Verilog-XL Reference, Product Version 5.6)
+ * is included with the source of the project.
+ *
+ **/
 public class VerilogVCDPersister extends FileAdapterApplicationFactory.PersisterUI implements DataCollector.DataSampleEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(VerilogVCDPersister.class);
@@ -35,19 +45,19 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
     public static final long FZ_10MB=10000000L;
 
     OneWavePerVCD controller = null;
-    final JLabel filePathLabel;
-    final JLabel maxSizeLabel;
+    final JTextField filePathLabel;
+    final JTextField maxSizeLabel;
 
     public VerilogVCDPersister() {
 
         GridBagLayout gridbag = new GridBagLayout();
         GridBagConstraints constraints = new GridBagConstraints();
-        constraints.insets = new Insets(1, 1, 1, 1);
+        constraints.insets = new Insets(2, 5, 2, 5);
 
         setLayout(gridbag);
         setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
 
-        Label label1 = new Label("Trace files:", Label.RIGHT);
+        Label label1 = new Label("Configuration:", Label.RIGHT);
         gridbag.setConstraints(label1, configureLabel(constraints, 0));
         add(label1);
 
@@ -55,7 +65,8 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
         gridbag.setConstraints(dl, configureLabel(constraints, 1));
         add(dl);
 
-        filePathLabel = new JLabel("");
+        filePathLabel = new JTextField("");
+        filePathLabel.setEditable(false);
         gridbag.setConstraints(filePathLabel, configureValue(constraints, 1));
         add(filePathLabel);
 
@@ -63,7 +74,8 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
         gridbag.setConstraints(sl, configureLabel(constraints, 2));
         add(sl);
 
-        maxSizeLabel = new JLabel("10MB");
+        maxSizeLabel = new JTextField("10MB");
+        maxSizeLabel.setEditable(false);
         gridbag.setConstraints(maxSizeLabel, configureValue(constraints, 2));
         add(maxSizeLabel);
     }
@@ -97,6 +109,11 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
     public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
         Value vital = (Value)evt.getSource();
         controller.persist(vital);
+    }
+
+    @Override
+    public String getName() {
+        return "vcd (ieee-1364)";
     }
 
     @Override
