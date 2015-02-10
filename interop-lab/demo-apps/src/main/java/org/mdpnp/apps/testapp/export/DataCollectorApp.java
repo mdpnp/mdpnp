@@ -1,6 +1,7 @@
 package org.mdpnp.apps.testapp.export;
 
 import ice.Numeric;
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.vital.*;
 import org.slf4j.Logger;
@@ -11,10 +12,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -29,17 +27,54 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
 
     private JPanel persisterContainer = new JPanel();
 
-    private final DataCollector dataCollector;
+    private final DataCollector   dataCollector;
+    private final DeviceListModel deviceListModel;
+
+    private final DataFilter      dataFilter;
+    private final DeviceTreeModel deviceTreeModel = new DeviceTreeModel();
+
+    private final AbstractAction  startControl;
 
     private List<FileAdapterApplicationFactory.PersisterUI> supportedPersisters = new ArrayList<>();
 
-    public DataCollectorApp(DataCollector dc) {
-        dataCollector = dc;
+    public DataCollectorApp(DeviceListModel dlm, DataCollector dc) {
+
+        // hold on to the references so that we we can unhook the listeners at the end
+        //
+        dataCollector   = dc;
+        deviceListModel = dlm;
+
+        // device list model maintains the list of what is out there.
+        // add a listener to it so that we can dynamically build a tree representation
+        // of that information.
+        //
+        deviceListModel.addListDataListener(deviceTreeModel);
+        dataCollector.addDataSampleListener(deviceTreeModel);
+
+        // create a data filter - it will act as as proxy between the data collector and
+        // actual data consumers. all internal components with register with it for data
+        // events.
+        dataFilter = new DataFilter(deviceTreeModel);
+        dataCollector.addDataSampleListener(dataFilter);
+
+        // add self as a listener so that we can show some busy
+        // data in the central panel.
+        dataFilter.addDataSampleListener(this);
 
         setLayout(new BorderLayout());
 
+        JTree tree = new JTree();
+        tree.setCellRenderer(new SelectableNode.CheckBoxNodeRenderer());
+        tree.setCellEditor(new SelectableNode.CheckBoxNodeEditor());
+        tree.setEditable(true);
+        tree.setModel(deviceTreeModel);
+
         JTable table = new JTable(tblModel);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+
+        JSplitPane masterPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+                                                new JScrollPane(tree),
+                                                new JScrollPane(table));
+        add(masterPanel, BorderLayout.CENTER);
 
         supportedPersisters.add(new CSVPersister());
         supportedPersisters.add(new JdbcPersister());
@@ -49,13 +84,58 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
         final JPanel cards = new JPanel(cl);
         cards.setBorder(BorderFactory.createLineBorder(Color.gray, 2, true));
 
+        startControl = new AbstractAction("") {
+
+            @Override
+            public void actionPerformed (ActionEvent e){
+
+                String s = e.getActionCommand();
+                FileAdapterApplicationFactory.PersisterUI p =
+                        (FileAdapterApplicationFactory.PersisterUI)getValue("mdpnp.appender");
+
+                if("Start".equals(s) && p != null) {
+                    try {
+                        boolean v = p.start();
+                        if (v) {
+                            p.setBackground(java.awt.SystemColor.window);
+                            dataFilter.addDataSampleListener(p);
+                            putValue(Action.NAME, "Stop");
+                        } else {
+                            p.setBackground(Color.red);
+                        }
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+                else if("Stop".equals(s)) {
+                    if(p != null) {
+                        try {
+                            dataFilter.removeDataSampleListener(p);
+                            p.stop();
+
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                    putValue(Action.NAME, "Start");
+                }
+            }
+
+            @Override
+            public void putValue(String key, Object newValue) {
+                if("mdpnp.appender".equals(key)) {
+                    // if there was one, stop it...
+                    actionPerformed(new ActionEvent(this, 0, "Stop"));
+                }
+                super.putValue(key, newValue);
+            }
+        };
+
         JPanel btns = new JPanel();
         btns.setLayout(new GridLayout(0, 1));
         btns.setBorder(BorderFactory.createLineBorder(Color.gray, 2, true));
 
-        ButtonGroup group = new ButtonGroup();
-
-        dataCollector.addDataSampleListener(this);
+        final ButtonGroup group = new ButtonGroup();
 
         for (FileAdapterApplicationFactory.PersisterUI p : supportedPersisters) {
 
@@ -70,29 +150,12 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
                     FileAdapterApplicationFactory.PersisterUI p =
                             (FileAdapterApplicationFactory.PersisterUI)btn.getClientProperty("mdpnp.appender");
 
-                    //String name = ((JRadioButton) e.getItem()).getActionCommand();
-                    try {
-                        // lock on the main object so that the change of the
-                        // persister is handled in a synchronized way.
-                        //
-                        synchronized (DataCollectorApp.this) {
-                            if (e.getStateChange() == ItemEvent.DESELECTED) {
-                                dataCollector.removeDataSampleListener(p);
-                                p.stop();
-                            } else if (e.getStateChange() == ItemEvent.SELECTED) {
-                                boolean v = p.start();
-                                if (v) {
-                                    dataCollector.addDataSampleListener(p);
-                                    p.setBackground(java.awt.SystemColor.window);
-                                } else {
-                                    p.setBackground(Color.red);
-                                }
-                            }
-                        }
-                        cl.show(cards, p.getName());
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    if (e.getStateChange() == ItemEvent.DESELECTED) {
+                        startControl.putValue("mdpnp.appender", null);
+                    } else if (e.getStateChange() == ItemEvent.SELECTED) {
+                        startControl.putValue("mdpnp.appender", p);
                     }
+                    cl.show(cards, p.getName());
                 }
             });
             // link the two so that we can go from one to the other.
@@ -102,8 +165,9 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
         }
 
         persisterContainer.setLayout(new BorderLayout());
-        persisterContainer.add(cards, BorderLayout.CENTER);
         persisterContainer.add(btns, BorderLayout.WEST);
+        persisterContainer.add(cards, BorderLayout.CENTER);
+        persisterContainer.add(new JButton(startControl), BorderLayout.EAST);
 
         FileAdapterApplicationFactory.PersisterUI p = supportedPersisters.get(0);
         JRadioButton btn = (JRadioButton) p.getClientProperty("mdpnp.appender");
@@ -113,8 +177,13 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
     }
 
     public void stop() throws Exception {
+        dataCollector.removeDataSampleListener(dataFilter);
+        deviceListModel.removeListDataListener(deviceTreeModel);
+
+        startControl.putValue("mdpnp.appender", null);
+
         for (FileAdapterApplicationFactory.PersisterUI p : supportedPersisters) {
-            dataCollector.removeDataSampleListener(p);
+            dataFilter.removeDataSampleListener(p);
             p.stop();
         }
     }
@@ -158,6 +227,8 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
             public void windowClosing(WindowEvent e) {
                 try {
                     app.stop();
+                    app.destroy();
+                    log.info("App " + app.getDescriptor().getName() + " stoped OK");
                 } catch (Exception ex) {
                     log.error("Failed to stop the app", ex);
                 }

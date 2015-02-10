@@ -304,10 +304,19 @@ public class IceAppsContainer extends DemoFrame {
     }
 
     private void activateGoBack(final IceApplicationProvider.IceApp app) {
+
+        final String appName = app.getDescriptor().getName();
+
         Runnable goBackAction = new Runnable() {
-            public void run() { app.stop(); }
+            public void run() {
+                try {
+                    app.stop();
+                } catch (Exception ex) {
+                    log.error("Failed to stop " + appName, ex);
+                }
+            }
         };
-        panel.getBedLabel().setText(app.getDescriptor().getName());
+        panel.getBedLabel().setText(appName);
         panel.getBack().setAction(new GoBackAction(goBackAction));
         ol.show(panel.getContent(), app.getDescriptor().getId());
         panel.getBack().setVisible(true);

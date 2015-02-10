@@ -111,24 +111,10 @@ class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements
         super();
 
         this.setLayout(new GridLayout(0, 2));
-        this.add(new JLabel("JDBC Driver", JLabel.RIGHT));  this.add(fDriver);
-        this.add(new JLabel("Database URL", JLabel.RIGHT)); this.add(fURL);
-        this.add(new JLabel("User", JLabel.RIGHT));         this.add(fUser);
-        this.add(new JLabel("Password", JLabel.RIGHT));     this.add(fPassword);
-        this.add(new JLabel(""));
-        this.add(new JButton(new AbstractAction("Connect") {
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    stop();
-                    boolean v=start();
-                    JdbcPersister.this.setBackground(v ? Color.lightGray : Color.red);
-                }
-                catch (Exception ex) {
-                    JdbcPersister.this.setBackground(Color.red);
-                    JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }) );
+        this.add(new JLabel("JDBC Driver", JLabel.RIGHT)); this.add(fDriver);
+        this.add(new JLabel("Database URL",JLabel.RIGHT)); this.add(fURL);
+        this.add(new JLabel("User",        JLabel.RIGHT)); this.add(fUser);
+        this.add(new JLabel("Password",    JLabel.RIGHT)); this.add(fPassword);
 
         fDriver.setText("org.hsqldb.jdbcDriver");
         fURL.setText("jdbc:hsqldb:hsql://localhost/testdb");

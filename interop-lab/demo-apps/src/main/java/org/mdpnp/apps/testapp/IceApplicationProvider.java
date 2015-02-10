@@ -43,13 +43,13 @@ public interface IceApplicationProvider {
          * No expensive resources are excepted to be freed at this point.
          */
 
-        void stop();
+        void stop() throws Exception;;
 
         /**
          * Destructor for the application. resources should be freed, state cleared. app is not expected
          * to be functional once it had been destroyed.
          */
-        void destroy();
+        void destroy() throws Exception;
     }
 
     /**

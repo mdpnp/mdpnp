@@ -30,9 +30,11 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
         final DomainParticipant participant = (DomainParticipant)parentContext.getBean("domainParticipant");
 
-        final DataCollector worker = new DataCollector(participant);
+        final DeviceListModel deviceModel = (DeviceListModel)parentContext.getBean("deviceListModel");
 
-        final DataCollectorApp ui = new DataCollectorApp(worker);
+        final DataCollector dataCollector = new DataCollector(participant);
+
+        final DataCollectorApp ui = new DataCollectorApp(deviceModel, dataCollector);
 
         return new IceApplicationProvider.IceApp() {
 
@@ -48,20 +50,21 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void activate(ApplicationContext context) {
-                worker.start();
+                dataCollector.start();
             }
 
             @Override
             public void stop() {
                 try {
-                    worker.stop();
+                    dataCollector.stop();
                 } catch (Exception ex) {
                     throw new IllegalStateException("Failed to stop data collector", ex);
                 }
             }
 
             @Override
-            public void destroy() {
+            public void destroy() throws Exception {
+                ui.stop();
             }
         };
     }

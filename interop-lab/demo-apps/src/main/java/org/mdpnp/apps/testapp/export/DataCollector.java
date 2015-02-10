@@ -1,6 +1,5 @@
 package org.mdpnp.apps.testapp.export;
 
-
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.*;
 import com.rti.dds.subscription.*;
@@ -33,13 +32,13 @@ public class DataCollector {
         }
     };
 
-    static class DataSampleEvent extends EventObject {
+    public static class DataSampleEvent extends EventObject {
         public DataSampleEvent(Object source) {
             super(source);
         }
     }
 
-    interface DataSampleEventListener extends EventListener {
+    public interface DataSampleEventListener extends EventListener {
         public void handleDataSampleEvent(DataSampleEvent evt) throws Exception;
     }
 
@@ -53,7 +52,7 @@ public class DataCollector {
         listenerList.remove(DataSampleEventListener.class, l);
     }
 
-    protected void fireDataSampleEvent(DataSampleEvent data) throws Exception{
+    void fireDataSampleEvent(DataSampleEvent data) throws Exception{
         DataSampleEventListener listeners[] = listenerList.getListeners(DataSampleEventListener.class);
         for(DataSampleEventListener l : listeners) {
             l.handleDataSampleEvent(data);
