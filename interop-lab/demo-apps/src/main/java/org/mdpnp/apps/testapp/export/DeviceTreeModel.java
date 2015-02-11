@@ -31,6 +31,24 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
         return new SelectableNode(uData, sel); // DefaultMutableTreeNode(uData);
     }
 
+    public static String textForNode(Object o) {
+        String txt="";
+        if(o instanceof DefaultMutableTreeNode) {
+            o = ((DefaultMutableTreeNode)o).getUserObject();
+        }
+        if(o instanceof Device) {
+            Device d = (Device)o;
+            if(d.getMakeAndModel() != null)
+                txt = d.getMakeAndModel() + " (" + d.getUDI() + ")";
+            else
+                txt = d.getUDI();
+        }
+        else if(o != null) {
+            txt = o.toString();
+        }
+        return txt;
+    }
+
     @Override
     public void valueForPathChanged(TreePath path, Object newValue) {
         MutableTreeNode aNode = (MutableTreeNode)path.getLastPathComponent();

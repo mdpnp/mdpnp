@@ -1,7 +1,5 @@
 package org.mdpnp.apps.testapp.export;
 
-import org.mdpnp.apps.testapp.Device;
-
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -30,23 +28,24 @@ class SelectableNode extends DefaultMutableTreeNode
     }
 
     static class CheckBoxNodeRenderer implements TreeCellRenderer {
-        private JCheckBox checkboxUI = new JCheckBox();
 
-        private DefaultTreeCellRenderer defaultRenderer = new DefaultTreeCellRenderer();
+        private final JCheckBox    checkboxUI = new JCheckBox();
 
-        Color selectionBorderColor;
-        Color selectionForeground;
-        Color selectionBackground;
-        Color textForeground;
-        Color textBackground;
+        private final static DefaultTreeCellRenderer defaultRenderer = new DefaultTreeCellRenderer();
+
+        private final Color selectionBorderColor;
+        private final Color selectionForeground;
+        private final Color selectionBackground;
+        private final Color textForeground;
+        private final Color textBackground;
 
         protected JCheckBox getLeafRenderer() {
             return checkboxUI;
         }
 
         public CheckBoxNodeRenderer() {
-            Font fontValue;
-            fontValue = UIManager.getFont("Tree.font");
+
+            Font fontValue = UIManager.getFont("Tree.font");
             if (fontValue != null) {
                 checkboxUI.setFont(fontValue);
             }
@@ -72,10 +71,6 @@ class SelectableNode extends DefaultMutableTreeNode
 
             SelectableNode node = (SelectableNode)value;
 
-            String stringValue = tree.convertValueToText(value, selected, expanded, leaf, row, false);
-            checkboxUI.setText(stringValue);
-            checkboxUI.setSelected(false);
-
             checkboxUI.setEnabled(tree.isEnabled());
 
             if (selected) {
@@ -86,15 +81,8 @@ class SelectableNode extends DefaultMutableTreeNode
                 checkboxUI.setBackground(textBackground);
             }
 
-            String txt=null;
-            Object o = node.getUserObject();
-            if(o instanceof Device) {
-                txt = ((Device)o).getMakeAndModel() + " (" + ((Device)o).getUDI() + ")";
-            }
-            else {
-                txt = node.toString();
-            }
-            checkboxUI.setText(txt);
+            String stringValue = tree.convertValueToText(value, selected, expanded, leaf, row, false);
+            checkboxUI.setText(stringValue);
             checkboxUI.setSelected(node.isSelected());
 
             return checkboxUI;

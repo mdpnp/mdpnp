@@ -63,7 +63,15 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
 
         setLayout(new BorderLayout());
 
-        JTree tree = new JTree();
+        JTree tree = new JTree() {
+            @Override
+            public String convertValueToText(Object value, boolean selected,
+                                             boolean expanded, boolean leaf, int row,
+                                             boolean hasFocus) {
+                return DeviceTreeModel.textForNode(value);
+
+            }
+        };
         tree.setCellRenderer(new SelectableNode.CheckBoxNodeRenderer());
         tree.setCellEditor(new SelectableNode.CheckBoxNodeEditor());
         tree.setEditable(true);
