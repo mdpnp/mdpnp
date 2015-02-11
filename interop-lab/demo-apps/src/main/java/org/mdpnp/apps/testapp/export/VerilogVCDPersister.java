@@ -65,7 +65,9 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
         gridbag.setConstraints(dl, configureLabel(constraints, 1));
         add(dl);
 
-        filePathLabel = new JTextField("");
+        String f = "<" + dateFormats.get().toPattern() + ">";
+        String p = (new File(f)).getAbsolutePath();
+        filePathLabel = new JTextField(p);
         filePathLabel.setEditable(false);
         gridbag.setConstraints(filePathLabel, configureValue(constraints, 1));
         add(filePathLabel);
