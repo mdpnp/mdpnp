@@ -79,9 +79,9 @@ class CSVPersister extends FileAdapterApplicationFactory.PersisterUI implements 
                                           }
                                       }
         );
-        backupIndex.setSelectedIndex(2);
+        backupIndex.setSelectedIndex(0);
 
-        JComboBox fSize = new JComboBox(new String[] { "1MB", "5MB", "10MB", "50M"});
+        JComboBox fSize = new JComboBox(new String[] { "1MB", "5MB", "50MB", "500MB", "1GB", "5GB", "50GB", "500GB", "1000GB"});
         fSize.addActionListener(new ActionListener()
                                 {
                                     @Override
@@ -95,7 +95,7 @@ class CSVPersister extends FileAdapterApplicationFactory.PersisterUI implements 
                                     }
                                 }
         );
-        fSize.setSelectedIndex(2);
+        fSize.setSelectedIndex(1);
 
         this.setLayout(new GridLayout(2, 1));
 
@@ -184,7 +184,7 @@ class CSVPersister extends FileAdapterApplicationFactory.PersisterUI implements 
 
         appender = new org.apache.log4j.RollingFileAppender();
         appender.setFile(defaultLogFileName.getAbsolutePath());
-        appender.setMaxBackupIndex(Integer.parseInt(backupIndex.getSelectedItem().toString()));
+        appender.setMaxBackupIndex(Integer.parseInt(backupIndex.getSelectedItem().toString())-1);
         appender.setMaxFileSize(fSize.getSelectedItem().toString());
         appender.setAppend(true);
         appender.setLayout(new org.apache.log4j.PatternLayout("%m%n"));
