@@ -17,7 +17,7 @@ import com.rti.dds.subscription.Subscriber;
 public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
     private final IceApplicationProvider.AppType FileAdapter =
-            new IceApplicationProvider.AppType("File Exporter", "NOCSV",  DataVisualization.class.getResource("csv-text.png"), 0.75);
+            new IceApplicationProvider.AppType("Data Recorder", "NOCSV",  DataVisualization.class.getResource("database-server.png"), 0.75);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {
