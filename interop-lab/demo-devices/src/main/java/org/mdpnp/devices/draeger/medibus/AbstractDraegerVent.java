@@ -113,13 +113,13 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected void processStartInspCycle() {
         // TODO This should not be triggered as a numeric; it's a bad idea
         startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0, ice.MDC_START_INSPIRATORY_CYCLE.VALUE,
-                rosetta.MDC_DIM_DIMLESS.VALUE, null);
+                "", rosetta.MDC_DIM_DIMLESS.VALUE, null);
     }
 
     protected void processStartExpCycle() {
         // TODO ditto the bad idea-ness of using Numeric topic for this
         startExpiratoryCycleUpdate = numericSample(startExpiratoryCycleUpdate, 0, ice.MDC_START_EXPIRATORY_CYCLE.VALUE,
-                rosetta.MDC_DIM_DIMLESS.VALUE, null);
+                "", rosetta.MDC_DIM_DIMLESS.VALUE, null);
     }
 
     private static final int BUFFER_SAMPLES = 25;
@@ -163,19 +163,23 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         startEmitFastData(realtimeFrequency[streamIndex]);
     }
 
+    private static final String codeToString(Object code) {
+        if (code == null) {
+            return "null";
+        } else if (code instanceof Byte) {
+            return HexUtil.toHexString((Byte) code) + "H";
+        } else if (code instanceof Enum) {
+            return ((Enum<?>) code).name();
+        } else {
+            return code.toString();
+        }
+    }
+    
     private static final String metricOrCode(String metric_id, Object code, String type) {
         if (null != metric_id) {
             return metric_id;
         } else {
-            if (code == null) {
-                return "null";
-            } else if (code instanceof Byte) {
-                return "DRAEGER_" + type + "_" + HexUtil.toHexString((Byte) code) + "H";
-            } else if (code instanceof Enum) {
-                return "DRAEGER_" + type + "_" + ((Enum<?>) code).name();
-            } else {
-                return "DRAEGER_" + type + "_" + code.toString();
-            }
+            return "DRAEGER_"+type+"_"+codeToString(code);
         }
     }
 
@@ -294,7 +298,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                         // on our EvitaXL 
                         log.error("Bad number format for device setting " + d.code + " " + nfe.getMessage());
                     }
-                    settingUpdates.put(d.code, numericSample(settingUpdates.get(d.code), f, metric, units(d.code), currentTime()));
+                    settingUpdates.put(d.code, numericSample(settingUpdates.get(d.code), f, metric, codeToString(d.code), units(d.code), currentTime()));
                 }
             }
         }
@@ -312,7 +316,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     } catch (NumberFormatException nfe) {
                         log.error("Bad measured data number format " + d.code + " " + nfe.getMessage());
                     }
-                    numericUpdates.put(d.code, numericSample(numericUpdates.get(d.code), f, metric, units(d.code), currentTime()));
+                    numericUpdates.put(d.code, numericSample(numericUpdates.get(d.code), f, metric, codeToString(d.code), units(d.code), currentTime()));
                 }
             }
         }
@@ -481,7 +485,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                                     realtimeBuffer[i].subList(0, realtimeBuffer[i].size() - BUFFER_SAMPLES).clear();
                                 }
                                 sampleArrayUpdates.put(code,
-                                        sampleArraySample(sa, realtimeBuffer[i], metric_id, 0, units(code), realtimeFrequency[i], currentTime()));
+                                        sampleArraySample(sa, realtimeBuffer[i], metric_id, codeToString(code), 0, units(code), realtimeFrequency[i], currentTime()));
                             }
                         }
                     }

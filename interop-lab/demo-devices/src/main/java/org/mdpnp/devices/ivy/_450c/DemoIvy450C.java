@@ -93,7 +93,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         
         @Override
         protected void receiveEndTidalCO2(Integer value, String label, String alarm) {
-            etco2 = numericSample(etco2, value, rosetta.MDC_AWAY_CO2_ET.VALUE, null);
+            etco2 = numericSample(etco2, value, rosetta.MDC_AWAY_CO2_ET.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, null);
             alarmIfPresent("ETCO2", alarm);
         }
 
@@ -102,7 +102,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
             String ecg = nameOfECGWave(label);
             
             if (ecg != null) {
-                ecgWave = sampleArraySample(ecgWave, data, count, ecg, 0, frequency);
+                ecgWave = sampleArraySample(ecgWave, data, count, ecg, label, 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency);
             } else {
                 if (ecgWave != null) {
                     unregisterSampleArrayInstance(ecgWave, null);
@@ -116,89 +116,89 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
             // This is less than ideal but if the device is reporting etCO2 we'll treat this as a capnogram
             // otherwise it is from respiratory impedance
             if(null != etco2 && etco2.data.value > 0) {
-                co2Wave = sampleArraySample(co2Wave, data, count, rosetta.MDC_AWAY_CO2.VALUE, 0, frequency);
-                impThorWave = sampleArraySample(impThorWave, null, 0, rosetta.MDC_IMPED_TTHOR.VALUE, 0, frequency);
+                co2Wave = sampleArraySample(co2Wave, data, count, rosetta.MDC_AWAY_CO2.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency);
+                impThorWave = sampleArraySample(impThorWave, null, 0, rosetta.MDC_IMPED_TTHOR.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency);
             } else {
-                impThorWave = sampleArraySample(impThorWave, data, count, rosetta.MDC_IMPED_TTHOR.VALUE, 0, frequency);
-                co2Wave = sampleArraySample(co2Wave, null, 0, rosetta.MDC_AWAY_CO2.VALUE, 0, frequency);
+                impThorWave = sampleArraySample(impThorWave, data, count, rosetta.MDC_IMPED_TTHOR.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency);
+                co2Wave = sampleArraySample(co2Wave, null, 0, rosetta.MDC_AWAY_CO2.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency);
             }
         }
 
         @Override
         protected void receivePlethWave(float[] data, int count, int frequency) {
-            plethWave = sampleArraySample(plethWave, data, count, rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, frequency);
+            plethWave = sampleArraySample(plethWave, data, count, rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency);
         }
 
         @Override
         protected void receiveP1Wave(float[] data, int count, int frequency) {
-            p1Wave = sampleArraySample(p1Wave, data, count, rosetta.MDC_PRESS_BLD.VALUE, 0, frequency);
+            p1Wave = sampleArraySample(p1Wave, data, count, rosetta.MDC_PRESS_BLD.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency);
         }
 
         @Override
         protected void receiveP2Wave(float[] data, int count, int frequency) {
-            p2Wave = sampleArraySample(p2Wave, data, count, rosetta.MDC_PRESS_BLD.VALUE, 1, frequency);
+            p2Wave = sampleArraySample(p2Wave, data, count, rosetta.MDC_PRESS_BLD.VALUE, "", 1, rosetta.MDC_DIM_DIMLESS.VALUE, frequency);
         }
 
         @Override
         protected void receiveHeartRate(Integer value, String label, String alarm) {
             // should be ECG heart rate? or should it .. depends upon mode
-            heartRate = numericSample(heartRate, value, rosetta.MDC_ECG_HEART_RATE.VALUE, null);
+            heartRate = numericSample(heartRate, value, rosetta.MDC_ECG_HEART_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, null);
             alarmIfPresent("HR", alarm);
         }
 
         @Override
         protected void receiveNIBP(Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label, String alarm) {
-            nibpSystolic = numericSample(nibpSystolic, systolic, rosetta.MDC_PRESS_CUFF_SYS.VALUE, null);
-            nibpDiastolic = numericSample(nibpDiastolic, diastolic, rosetta.MDC_PRESS_CUFF_DIA.VALUE, null);
-            nibpPulse = numericSample(nibpPulse, pulse, rosetta.MDC_PULS_RATE_NON_INV.VALUE, null);
-            nibpMean = numericSample(nibpMean, mean, rosetta.MDC_PRESS_CUFF_MEAN.VALUE, null);
+            nibpSystolic = numericSample(nibpSystolic, systolic, rosetta.MDC_PRESS_CUFF_SYS.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, null);
+            nibpDiastolic = numericSample(nibpDiastolic, diastolic, rosetta.MDC_PRESS_CUFF_DIA.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, null);
+            nibpPulse = numericSample(nibpPulse, pulse, rosetta.MDC_PULS_RATE_NON_INV.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, null);
+            nibpMean = numericSample(nibpMean, mean, rosetta.MDC_PRESS_CUFF_MEAN.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, null);
             alarmIfPresent("NIBP", alarm);
         }
 
         @Override
         protected void receivePressure1(Integer systolic, Integer diastolic, Integer mean, String label, String alarm) {
-            ibpSystolic1 = numericSample(ibpSystolic1, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, 0, null);
-            ibpDiastolic1 = numericSample(ibpDiastolic1, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, 0, null);
-            ibpMean1 = numericSample(ibpMean1, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, 0, null);
+            ibpSystolic1 = numericSample(ibpSystolic1, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, label, 0, null);
+            ibpDiastolic1 = numericSample(ibpDiastolic1, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, label, 0, null);
+            ibpMean1 = numericSample(ibpMean1, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, label, 0, null);
             alarmIfPresent("P1", alarm);
         }
 
         @Override
         protected void receivePressure2(Integer systolic, Integer diastolic, Integer mean, String label, String alarm) {
-            ibpSystolic2 = numericSample(ibpSystolic2, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, 1, null);
-            ibpDiastolic2 = numericSample(ibpDiastolic2, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, 1, null);
-            ibpMean2 = numericSample(ibpMean2, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, 1, null);
+            ibpSystolic2 = numericSample(ibpSystolic2, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, label, 1, null);
+            ibpDiastolic2 = numericSample(ibpDiastolic2, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, label, 1, null);
+            ibpMean2 = numericSample(ibpMean2, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, label, 1, null);
             alarmIfPresent("P2", alarm);
         }
 
         @Override
         protected void receiveRespiratoryRate(Integer value, String label, String alarm) {
             if(null != etco2 && etco2.data.value > 0) {
-                co2RespiratoryRate = numericSample(co2RespiratoryRate, value, rosetta.MDC_CO2_RESP_RATE.VALUE, null);
-                tthorRespiratoryRate = numericSample(tthorRespiratoryRate, (Integer)null, rosetta.MDC_TTHOR_RESP_RATE.VALUE, null);
+                co2RespiratoryRate = numericSample(co2RespiratoryRate, value, rosetta.MDC_CO2_RESP_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, null);
+                tthorRespiratoryRate = numericSample(tthorRespiratoryRate, (Integer)null, rosetta.MDC_TTHOR_RESP_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, null);
             } else {
-                tthorRespiratoryRate = numericSample(tthorRespiratoryRate, value, rosetta.MDC_TTHOR_RESP_RATE.VALUE, null);
-                co2RespiratoryRate = numericSample(co2RespiratoryRate, (Integer)null, rosetta.MDC_CO2_RESP_RATE.VALUE, null);
+                tthorRespiratoryRate = numericSample(tthorRespiratoryRate, value, rosetta.MDC_TTHOR_RESP_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, null);
+                co2RespiratoryRate = numericSample(co2RespiratoryRate, (Integer)null, rosetta.MDC_CO2_RESP_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, null);
             }
             alarmIfPresent("RR", alarm);
         }
 
         @Override
         protected void receiveSpO2(Integer value, String label, Integer pulseRate, String alarm) {
-            spo2 = numericSample(spo2, value, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, null);
-            DemoIvy450C.this.pulseRate = numericSample(DemoIvy450C.this.pulseRate, pulseRate, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, null);
+            spo2 = numericSample(spo2, value, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, null);
+            DemoIvy450C.this.pulseRate = numericSample(DemoIvy450C.this.pulseRate, pulseRate, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, label, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null);
             alarmIfPresent("SPO2", alarm);
         }
 
         @Override
         protected void receiveTemperature1(Float value, String label, String alarm) {
-            t1 = numericSample(t1, value, rosetta.MDC_TEMP_BLD.VALUE, 0, null);
+            t1 = numericSample(t1, value, rosetta.MDC_TEMP_BLD.VALUE, label, 0, null);
             alarmIfPresent("T1", alarm);
         }
 
         @Override
         protected void receiveTemperature2(Float value, String label, String alarm) {
-            t2 = numericSample(t2, value, rosetta.MDC_TEMP_BLD.VALUE, 1, null);
+            t2 = numericSample(t2, value, rosetta.MDC_TEMP_BLD.VALUE, label, 1, null);
             alarmIfPresent("T2", alarm);
         }
     }

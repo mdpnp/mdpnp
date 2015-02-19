@@ -160,15 +160,15 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return domainParticipant;
     }
 
-    protected InstanceHolder<Numeric> createNumericInstance(String metric_id) {
-        return createNumericInstance(metric_id, 0);
+    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, String vendor_metric_id) {
+        return createNumericInstance(metric_id, vendor_metric_id, 0);
     }
     
-    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, int instance_id) {
-        return createNumericInstance(metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE);
+    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, String vendor_metric_id, int instance_id) {
+        return createNumericInstance(metric_id, vendor_metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE);
     }
 
-    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, int instance_id, String unit_id) {
+    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, String vendor_metric_id, int instance_id, String unit_id) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createNumericInstance");
         }
@@ -177,6 +177,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         holder.data = new Numeric();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
+        holder.data.vendor_metric_id = vendor_metric_id;
         holder.data.instance_id = instance_id;
         holder.data.unit_id = unit_id;
         holder.handle = numericDataWriter.register_instance(holder.data);
@@ -295,12 +296,12 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     private final Set<String> oldPatientAlertInstances = new HashSet<String>();
     private final Set<String> oldTechnicalAlertInstances = new HashSet<String>();
 
-    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, String unit_id, int frequency) {
-        return createSampleArrayInstance(metric_id, 0, unit_id, frequency);
+    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, String vendor_metric_id, String unit_id, int frequency) {
+        return createSampleArrayInstance(metric_id, vendor_metric_id, 0, unit_id, frequency);
     }
 
-    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id, String unit_id, int frequency) {
-        return createSampleArrayInstance(metric_id, instance_id, unit_id, frequency, null);
+    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency) {
+        return createSampleArrayInstance(metric_id, vendor_metric_id, instance_id, unit_id, frequency, null);
     }
 
     protected void ensureResolutionForFrequency(int frequency, int size) {
@@ -337,7 +338,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return timeSampleArrayResolution(t);
     }
     
-    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
+    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createSampleArrayInstance");
         }
@@ -346,6 +347,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         holder.data = new SampleArray();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
+        holder.data.vendor_metric_id = vendor_metric_id;
         holder.data.instance_id = instance_id;
         holder.data.unit_id = unit_id;
         holder.data.frequency = frequency;
@@ -445,42 +447,38 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return holder;
     }
 
-    // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, Time_t time) {
-        return numericSample(holder, null == newValue ? ((Float) null) : ((Float) (float) (int) newValue), metric_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
-    }    
     
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, String unit_id, Time_t time) {
-        return numericSample(holder, null == newValue ? ((Float) null) : ((Float) (float) (int) newValue), metric_id, unit_id, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, String vendor_metric_id, String unit_id, Time_t time) {
+        return numericSample(holder, null == newValue ? ((Float) null) : ((Float) (float) (int) newValue), metric_id, vendor_metric_id, unit_id, time);
     }
 
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, int instance_id, Time_t time) {
-        return numericSample(holder, null == newValue ? ((Float) null) : ((Float) (float) (int) newValue), metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, String vendor_metric_id, int instance_id, Time_t time) {
+        return numericSample(holder, null == newValue ? ((Float) null) : ((Float) (float) (int) newValue), metric_id, vendor_metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
     }
     
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, int instance_id, String unit_id, Time_t time) {
-        return numericSample(holder, null == newValue ? ((Float) null) : ((Float) (float) (int) newValue), metric_id, instance_id, unit_id, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, String vendor_metric_id, int instance_id, String unit_id, Time_t time) {
+        return numericSample(holder, null == newValue ? ((Float) null) : ((Float) (float) (int) newValue), metric_id, vendor_metric_id, instance_id, unit_id, time);
     }
 
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String unit_id, Time_t time) {
-        return numericSample(holder, newValue, metric_id, 0, unit_id, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String vendor_metric_id, String unit_id, Time_t time) {
+        return numericSample(holder, newValue, metric_id, vendor_metric_id, 0, unit_id, time);
     }
 
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, int instance_id, Time_t time) {
-        return numericSample(holder, newValue, metric_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String vendor_metric_id, int instance_id, Time_t time) {
+        return numericSample(holder, newValue, metric_id, vendor_metric_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
     }
     
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, int instance_id, String unit_id, Time_t time) {
-        if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id || !holder.data.unit_id.equals(unit_id))) {
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String vendor_metric_id, int instance_id, String unit_id, Time_t time) {
+        if (holder != null && (!holder.data.metric_id.equals(metric_id) || !holder.data.vendor_metric_id.equals(vendor_metric_id) || holder.data.instance_id != instance_id || !holder.data.unit_id.equals(unit_id))) {
             unregisterNumericInstance(holder);
             holder = null;
         }
         if (null != newValue) {
             if (null == holder) {
-                holder = createNumericInstance(metric_id, instance_id, unit_id);
+                holder = createNumericInstance(metric_id, vendor_metric_id, instance_id, unit_id);
             }
             numericSample(holder, newValue, time);
         } else {
@@ -611,30 +609,25 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues,
-            String metric_id, String unit_id, int frequency, Time_t timestamp) {
-        return sampleArraySample(holder, newValues, metric_id, 0, unit_id, frequency, timestamp);
-    }
-
-    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, float[] newValues, int len,
-            String metric_id, int instance_id, int frequency) {
-        return sampleArraySample(holder, newValues, len, metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE, frequency);
+            String metric_id, String vendor_metric_id, String unit_id, int frequency, Time_t timestamp) {
+        return sampleArraySample(holder, newValues, metric_id, vendor_metric_id, 0, unit_id, frequency, timestamp);
     }
     
     protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, float[] newValues, int len,
-            String metric_id, int instance_id, String unit_id, int frequency) {
-        return sampleArraySample(holder, newValues, len, metric_id, instance_id, unit_id, frequency, null);
+            String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency) {
+        return sampleArraySample(holder, newValues, len, metric_id, vendor_metric_id, instance_id, unit_id, frequency, null);
     }
 
     protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, float[] newValues, int len, 
-            String metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
-        if (null != holder && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id || holder.data.frequency != frequency || !holder.data.unit_id.equals(unit_id))) {
+            String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
+        if (null != holder && (!holder.data.metric_id.equals(metric_id) || !holder.data.vendor_metric_id.equals(vendor_metric_id) || holder.data.instance_id != instance_id || holder.data.frequency != frequency || !holder.data.unit_id.equals(unit_id))) {
             unregisterSampleArrayInstance(holder, timestamp);
             holder = null;
         }
         if (null != newValues) {
             ensureResolutionForFrequency(frequency, newValues.length);
             if (null == holder) {
-                holder = createSampleArrayInstance(metric_id, instance_id, unit_id, frequency, timestamp);
+                holder = createSampleArrayInstance(metric_id, vendor_metric_id, instance_id, unit_id, frequency, timestamp);
             }
             sampleArraySample(holder, newValues, len, timestamp);
         } else {
@@ -647,14 +640,14 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, Number[] newValues, 
-            String metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
-        return sampleArraySample(holder, null == newValues ? null : Arrays.asList(newValues), metric_id, instance_id, unit_id, frequency, timestamp);
+            String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
+        return sampleArraySample(holder, null == newValues ? null : Arrays.asList(newValues), metric_id, vendor_metric_id, instance_id, unit_id, frequency, timestamp);
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues,
-            String metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
+            String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
         // if the specified holder doesn't match the specified name
-        if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id || holder.data.frequency != frequency || !holder.data.unit_id.equals(unit_id))) {
+        if (holder != null && (!holder.data.metric_id.equals(metric_id) || !holder.data.vendor_metric_id.equals(vendor_metric_id) || holder.data.instance_id != instance_id || holder.data.frequency != frequency || !holder.data.unit_id.equals(unit_id))) {
             unregisterSampleArrayInstance(holder, timestamp);
             holder = null;
         }
@@ -664,7 +657,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             // is reduced
             ensureResolutionForFrequency(frequency, newValues.size());
             if (null == holder) {
-                holder = createSampleArrayInstance(metric_id, instance_id, unit_id, frequency, timestamp);
+                holder = createSampleArrayInstance(metric_id, vendor_metric_id, instance_id, unit_id, frequency, timestamp);
             }
             sampleArraySample(holder, newValues, timestamp);
         } else {
