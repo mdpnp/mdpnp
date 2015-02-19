@@ -162,7 +162,7 @@ ext {
     buildTime = new java.text.SimpleDateFormat('hh:mm aa').format(buildTimeAndDate)
 }
 
-manifest.mainAttributes("Main-Class" : "org.mdpnp.apps.testapp.Main")
+manifest { attributes "Main-Class" : mainClassName }
 
 def JOGL_version = '2.0.2'
 

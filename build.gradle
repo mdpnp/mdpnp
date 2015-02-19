@@ -5,7 +5,7 @@ defaultTasks 'build'
 // builds a gradle wrapper
 // http://www.gradle.org/docs/current/userguide/gradle_wrapper.html
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
+    gradleVersion = '2.3'
 }
 
 ext {
