@@ -82,7 +82,7 @@ public class Device {
 
     public String getMakeAndModel() {
         if(null == deviceIdentity) {
-            return null;
+            return "";
         }
         if (null==deviceIdentity.manufacturer||deviceIdentity.manufacturer.equals(deviceIdentity.model)||"".equals(deviceIdentity.manufacturer)) {
             return deviceIdentity.model;
