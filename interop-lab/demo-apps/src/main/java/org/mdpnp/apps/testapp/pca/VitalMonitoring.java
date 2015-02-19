@@ -444,13 +444,21 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
         final Publisher pub=rtSetup.getPublisher();
         final Subscriber s=rtSetup.getSubscriber();
         final DomainParticipant participant=rtSetup.getParticipant();
-        final DeviceListModel nc = rtSetup.getDeviceListModel();
+        final DeviceListModel nc = new DeviceListModel(rtSetup.getSubscriber(),
+                rtSetup.getEventLoop(),
+                rtSetup.getTimeManager());
+        
         final EventLoopHandler handler = rtSetup.getHandler();
 
         final VitalModel vm = new VitalModelImpl(nc);
 
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
+        rtSetup.getEventLoop().doLater(new Runnable() {
+            public void run() {
+                nc.start();
+            }
+        });
         vm.start(s, pub, eventLoop);
 
         eventLoop.doLater(new Runnable() {

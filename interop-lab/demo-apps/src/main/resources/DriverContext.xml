@@ -32,12 +32,6 @@
           factory-method="getParticipant">
     </bean>
 
-    <bean id="deviceListModel" class="org.mdpnp.apps.testapp.DeviceListModel"
-          factory-bean="rtConfig"
-          factory-method="getDeviceListModel"
-          destroy-method="tearDown">
-    </bean>
-
     <bean id="eventLoop" class="org.mdpnp.rtiapi.data.EventLoop"
           factory-bean="rtConfig"
           factory-method="getEventLoop">
@@ -57,6 +51,11 @@
     <bean id="publisher" class="com.rti.dds.publication.Publisher"
           factory-bean="rtConfig"
           factory-method="getPublisher">
+    </bean>
+    
+    <bean id="timeManager" class="org.mdpnp.devices.TimeManager"
+          factory-bean="rtConfig"
+          factory-method="getTimeManager">
     </bean>
 
 

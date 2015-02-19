@@ -43,8 +43,8 @@ public class RtConfig {
     private Publisher publisher;
     private Subscriber subscriber;
     private DomainParticipant participant;
-    private DeviceListModel deviceListModel;
     private EventLoopHandler handler;
+    private TimeManager timeManager;
 
     public static RtConfig setupDDS(final int domainId) {
         final EventLoop eventLoop = new EventLoop();
@@ -77,18 +77,14 @@ public class RtConfig {
         final Publisher publisher = participant.create_publisher(pubQos, null, StatusKind.STATUS_MASK_NONE);
         final TimeManager timeManager = new TimeManager(publisher, subscriber, udi, "Supervisor");
 
-        final DeviceListModel deviceListModel = new DeviceListModel(subscriber, eventLoop, timeManager);
-
         final CountDownLatch startSignal = new CountDownLatch(1);
 
         Runnable enable = new Runnable() {
             public void run() {
-                deviceListModel.start();
                 participant.enable();
                 timeManager.start();
                 qos.entity_factory.autoenable_created_entities = true;
                 DomainParticipantFactory.get_instance().set_qos(qos);
-
                 startSignal.countDown();
             }
         };
@@ -111,10 +107,10 @@ public class RtConfig {
         conf.publisher = publisher;
         conf.subscriber = subscriber;
         conf.participant = participant;
-        conf.deviceListModel = deviceListModel;
         conf.handler = handler;
         conf.udi = udi;
-
+        conf.timeManager = timeManager;
+        
         return conf;
     }
 
@@ -147,14 +143,14 @@ public class RtConfig {
         return participant;
     }
 
-    public DeviceListModel getDeviceListModel() {
-        return deviceListModel;
-    }
-
     public EventLoopHandler getHandler() {
         return handler;
     }
 
+    public TimeManager getTimeManager() {
+        return timeManager;
+    }
+    
     public static boolean loadAndSetIceQos() {
 
         // Unfortunately this throws an Exception if there are errors in
