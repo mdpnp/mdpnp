@@ -49,6 +49,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
     private final JLabel udi = new JLabel(" ");
     private final JLabel hostname = new JLabel(" ");
     private final JLabel buildDescriptor = new JLabel(" ");
+    private final JLabel operatingSystem = new JLabel(" ");
 //    private final JLabel clockDifference = new JLabel(" ");
 //    private final JLabel roundtripLatency = new JLabel(" ");
 
@@ -104,6 +105,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         Font fineprint = Font.decode("fixed-8");
         addFinePrint(fineprint, "Unique Device Id:", udi, gbc, text);
         addFinePrint(fineprint, "Hostname:", hostname, gbc, text);
+        addFinePrint(fineprint, "Operating System:", operatingSystem, gbc, text);
         addFinePrint(fineprint, "Build:", buildDescriptor, gbc, text);
         
 //        gbc.gridx++;
@@ -186,9 +188,11 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
             if (null != di) {
                 modelName.setText(device.getMakeAndModel());
                 buildDescriptor.setText(di.build);
+                operatingSystem.setText(di.operating_system);
             } else {
                 modelName.setText("");
                 buildDescriptor.setText("DeviceIdentity not yet found.");
+                operatingSystem.setText("");
             }
 
             if (icon != null) {
@@ -208,6 +212,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         } else {
             connectionStatus.setText("");
             hostname.setText("");
+            operatingSystem.setText("");
             modelName.setText("<unknown>");
             this.icon.setIcon(null);
         }

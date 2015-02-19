@@ -154,6 +154,7 @@ module ice {
     LongString serial_number;
     Image icon;
     string<128> build;
+    string<128> operating_system;
   };
   #pragma keylist DeviceIdentity unique_device_identifier
   const string DeviceIdentityTopic = "DeviceIdentity";

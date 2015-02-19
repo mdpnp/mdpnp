@@ -31,6 +31,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -797,6 +800,22 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         deviceIdentity = new DeviceIdentity();
         deviceIdentity.icon.content_type = "image/png";
         deviceIdentity.build = BuildInfo.getDescriptor();
+        
+        
+        String osName = System.getProperty("os.name");
+        if("Linux".equals(osName)) {
+            Path issue = Paths.get("/etc/issue");
+            File f = issue.toFile();
+            if(f.exists() && f.canRead()) {
+                try {
+                    byte[] b = Files.readAllBytes(issue);
+                    osName = new String(b, "ASCII");
+                } catch (IOException e1) {
+                    log.info("Unable to read /etc/issue on this Linux system", e1);
+                }
+            }
+        }
+        deviceIdentity.operating_system = osName + " " + System.getProperty("os.arch") + " " + System.getProperty("os.version");
         try {
             iconFromResource(deviceIdentity, iconResourceName());
         } catch (IOException e1) {
