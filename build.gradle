@@ -19,7 +19,7 @@ ext {
     ARM = 3
     ARMHF = 4
     ALL = 5
-    SLF4J_VERSION = '1.7.5'
+    SLF4J_VERSION = '1.7.10'
 }
 
 def fromOsName(name) {
