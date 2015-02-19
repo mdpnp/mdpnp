@@ -645,7 +645,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, Number[] newValues, 
             String metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
-        return sampleArraySample(holder, Arrays.asList(newValues), metric_id, instance_id, unit_id, frequency, timestamp);
+        return sampleArraySample(holder, null == newValues ? null : Arrays.asList(newValues), metric_id, instance_id, unit_id, frequency, timestamp);
     }
 
     protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues,
