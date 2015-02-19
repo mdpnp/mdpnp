@@ -360,8 +360,10 @@ public class Configuration {
             return;
 
         for(File f : fPath) {
-            if(!f.exists() && f.getParentFile().exists() && f.getParentFile().canWrite()) {
-                f.createNewFile();
+            if(!f.exists()) {
+                if(null != f.getParentFile() && f.getParentFile().exists() && f.getParentFile().canWrite()) {
+                    f.createNewFile();
+                }
             }
             if(f.exists() && f.canWrite()) {
                 log.debug("Saving jumpStartSettings from " + f.getAbsolutePath());
