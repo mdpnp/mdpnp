@@ -89,7 +89,7 @@ task downloadAppBundler(dependsOn: createBuildToolsDir) << {
 
 task createApp(dependsOn: [downloadAppBundler, copyDeps]) << {
     ant.taskdef(name: 'bundleapp', classname: 'com.oracle.appbundler.AppBundlerTask', classpath: file("build-tools/appbundler-1.0.jar"))
-    ant.bundleapp(outputdirectory: "$buildDir/", name: "MDPnP Demo Apps", displayName: "MDPnP Demo Apps", identifier: "org.mdpnp.apps.testapp.Main", mainclassname: "org.mdpnp.apps.testapp.Main", icon: "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns") {
+    ant.bundleapp(outputdirectory: "$buildDir/", name: "MDPnP Demo Apps", displayName: "MDPnP Demo Apps", identifier: "org.mdpnp.apps.testapp.Main", mainclassname: "org.mdpnp.apps.testapp.Main", icon: "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns", shortversion: project.version) {
         classpath(dir: "$buildDir/deps")
         // Can optionally bundle a JRE but it adds a LOT of size
         // runtime(dir: "$System.env.JAVA_HOME")
