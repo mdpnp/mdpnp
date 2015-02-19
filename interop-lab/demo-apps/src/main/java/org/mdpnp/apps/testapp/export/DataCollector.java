@@ -64,8 +64,10 @@ public class DataCollector {
 
     private DataHandler worker = null;
 
-    public DataCollector(DomainParticipant participant) {
+    public DataCollector(Subscriber subscriber) {
 
+        DomainParticipant participant = subscriber.get_participant();
+        
         // Inform the participant about the sample array data type we would like to use in our endpoints
         ice.SampleArrayTypeSupport.register_type(participant, ice.SampleArrayTypeSupport.get_type_name());
 
@@ -96,11 +98,11 @@ public class DataCollector {
 
         // Create a reader endpoint for waveform data
         saReader =
-                (ice.SampleArrayDataReader) participant.create_datareader_with_profile(sampleArrayTopic,
+                (ice.SampleArrayDataReader) subscriber.create_datareader_with_profile(sampleArrayTopic,
                         QosProfiles.ice_library, QosProfiles.waveform_data, null, StatusKind.STATUS_MASK_NONE);
 
         nReader =
-                (ice.NumericDataReader) participant.create_datareader_with_profile(numericTopic,
+                (ice.NumericDataReader) subscriber.create_datareader_with_profile(numericTopic,
                         QosProfiles.ice_library, QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
 
         // Here we configure the status condition to trigger when new data becomes available to the reader

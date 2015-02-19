@@ -1,7 +1,8 @@
 package org.mdpnp.apps.testapp.export;
 
 
-import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.subscription.Subscriber;
+
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.vital.Value;
@@ -12,6 +13,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
+
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -28,8 +30,8 @@ public class DeviceTreeTest {
         context.registerShutdownHook();
 
         final DeviceListModel nc = (DeviceListModel)context.getBean("deviceListModel");
-        final DomainParticipant participant = (DomainParticipant)context.getBean("domainParticipant");
-        final DataCollector dc = new DataCollector(participant);
+        final Subscriber subscriber = (Subscriber)context.getBean("subscriber");
+        final DataCollector dc = new DataCollector(subscriber);
 
         final DeviceTreeModel tm = new DeviceTreeModel();
         nc.addListDataListener(tm);

@@ -1,15 +1,15 @@
 package org.mdpnp.apps.testapp.export;
 
-import com.rti.dds.domain.DomainParticipant;
-import org.mdpnp.apps.testapp.*;
-import org.mdpnp.apps.testapp.vital.Value;
-import org.mdpnp.apps.testapp.vital.VitalModel;
-import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
+import java.awt.Component;
+
+import javax.swing.JPanel;
+
+import org.mdpnp.apps.testapp.DataVisualization;
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.springframework.context.ApplicationContext;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.concurrent.ScheduledExecutorService;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  *
@@ -28,7 +28,7 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
 
-        final DomainParticipant participant = (DomainParticipant)parentContext.getBean("domainParticipant");
+        final Subscriber participant = (Subscriber)parentContext.getBean("subscriber");
 
         final DeviceListModel deviceModel = (DeviceListModel)parentContext.getBean("deviceListModel");
 
@@ -70,6 +70,7 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
     }
 
 
+    @SuppressWarnings("serial")
     public static abstract class PersisterUI extends JPanel implements DataCollector.DataSampleEventListener  {
 
         public abstract String getName();
