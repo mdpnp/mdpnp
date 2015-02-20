@@ -66,18 +66,25 @@ public class HL7Emitter implements InstanceModelListener<Numeric, NumericDataRea
         log.debug("Starting NumericInstanceModel");
         numericInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.numeric_data);
         log.debug("Started NumericInstanceModel");
-        
-        try {
+        if(host != null && !host.isEmpty()) {
             
-            hapiConnection = context.newClient(host, port, false);
+            try {
+                
+                hapiConnection = context.newClient(host, port, false);
+                ssListeners.fire(started);
+                
+            } catch (HL7Exception e) {
+                log.error("", e);
+                stop();
+            } catch(RuntimeException re) {
+                log.error("", re);
+                stop();
+            }
+        } else {
+            // We'll make it ok to start with no external connection
+            // just to demo the ability to compose HL7 messages
             ssListeners.fire(started);
-            
-        } catch (HL7Exception e) {
-            log.error("", e);
-            stop();
         }
-        
-        
     }
     public void stop() {
         log.debug("Stopping NumericInstanceModel");
@@ -204,18 +211,22 @@ public class HL7Emitter implements InstanceModelListener<Numeric, NumericDataRea
         
                 obx.getObservationValue(0).setData(nm);
         
+                Parser parser = context.getPipeParser();
+
+                String encodedMessage = parser.encode(r01);
+                listeners.fire(new DispatchLine(encodedMessage));
+                
+                
                 // Now, let's encode the message and look at the output
                 Connection hapiConnection = this.hapiConnection;
                 if(null != hapiConnection) {
-                    Parser parser = context.getPipeParser();
 
-                    String encodedMessage = parser.encode(r01);
         
                     Initiator initiator = hapiConnection.getInitiator();
                     Message response = initiator.sendAndReceive(r01);
                     String responseString = parser.encode(response);
                     log.debug("Received Response:"+responseString);
-                    listeners.fire(new DispatchLine(encodedMessage));
+                    
                 }
             } catch (DataTypeException e) {
                 log.error("", e);

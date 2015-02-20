@@ -48,7 +48,8 @@ public class HL7Application extends JComponent implements LineEmitterListener, S
             public void actionPerformed(ActionEvent e) {
                 if("Start".equals(startStop.getText())) {
                     startStop.setEnabled(false);
-                    model.start(host.getText(), Integer.parseInt(port.getText()));
+                    int portNumber = port.getText().isEmpty() ? 0 : Integer.parseInt(port.getText()); 
+                    model.start(host.getText(), portNumber);
                     
                 } else {
                     startStop.setEnabled(false);
