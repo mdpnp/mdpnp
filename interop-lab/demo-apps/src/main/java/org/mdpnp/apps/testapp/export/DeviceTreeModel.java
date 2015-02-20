@@ -162,7 +162,7 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
 
                             nodeLookup.put(key, in);
 
-                            log.info("adding to the tree: " + key);
+                            log.debug("adding to the tree: " + key);
 
                             int idx = mn.getIndex(in);
                             Object path[] = getPathToRoot(mn);
