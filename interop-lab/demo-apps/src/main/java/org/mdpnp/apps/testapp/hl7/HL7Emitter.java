@@ -1,17 +1,27 @@
 package org.mdpnp.apps.testapp.hl7;
 
-import java.io.IOException;
-import java.util.Date;
-
+import ice.AlarmSettings;
+import ice.AlarmSettingsDataReader;
+import ice.Alert;
+import ice.AlertDataReader;
 import ice.Numeric;
 import ice.NumericDataReader;
 
+import java.io.IOException;
+import java.util.Date;
+
+import org.mdpnp.rtiapi.data.AlarmSettingsInstanceModel;
+import org.mdpnp.rtiapi.data.AlarmSettingsInstanceModelImpl;
+import org.mdpnp.rtiapi.data.AlarmSettingsInstanceModelListener;
+import org.mdpnp.rtiapi.data.AlertInstanceModel;
+import org.mdpnp.rtiapi.data.AlertInstanceModelImpl;
+import org.mdpnp.rtiapi.data.AlertInstanceModelListener;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.InstanceModel;
-import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.mdpnp.rtiapi.data.ListenerList;
 import org.mdpnp.rtiapi.data.NumericInstanceModel;
 import org.mdpnp.rtiapi.data.NumericInstanceModelImpl;
+import org.mdpnp.rtiapi.data.NumericInstanceModelListener;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +35,7 @@ import ca.uhn.hl7v2.llp.LLPException;
 import ca.uhn.hl7v2.model.DataTypeException;
 import ca.uhn.hl7v2.model.Message;
 import ca.uhn.hl7v2.model.v26.datatype.NM;
+import ca.uhn.hl7v2.model.v26.datatype.TX;
 import ca.uhn.hl7v2.model.v26.group.ORU_R01_OBSERVATION;
 import ca.uhn.hl7v2.model.v26.group.ORU_R01_ORDER_OBSERVATION;
 import ca.uhn.hl7v2.model.v26.group.ORU_R01_PATIENT;
@@ -37,7 +48,7 @@ import ca.uhn.hl7v2.parser.Parser;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 
-public class HL7Emitter implements InstanceModelListener<Numeric, NumericDataReader> {
+public class HL7Emitter {
     
     protected static final Logger log = LoggerFactory.getLogger(HL7Emitter.class);
     
@@ -45,7 +56,7 @@ public class HL7Emitter implements InstanceModelListener<Numeric, NumericDataRea
     private final Subscriber subscriber;
     private final HapiContext context;
     
-    private Connection hapiConnection;
+    protected Connection hapiConnection;
     
     private final ListenerList<LineEmitterListener> listeners = new ListenerList<LineEmitterListener>(LineEmitterListener.class);
     private final ListenerList<StartStopListener> ssListeners = new ListenerList<StartStopListener>(StartStopListener.class);
@@ -55,16 +66,30 @@ public class HL7Emitter implements InstanceModelListener<Numeric, NumericDataRea
         this.eventLoop = eventLoop;
         context = new DefaultHapiContext();
         numericInstanceModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
+        patientAlertInstanceModel = new AlertInstanceModelImpl(ice.PatientAlertTopic.VALUE);
+        technicalAlertInstanceModel = new AlertInstanceModelImpl(ice.TechnicalAlertTopic.VALUE);
+        alarmSettingsInstanceModel = new AlarmSettingsInstanceModelImpl(ice.AlarmSettingsTopic.VALUE);
+        
+        numericInstanceModel.addListener(numericListener);
+        patientAlertInstanceModel.addListener(patientAlertListener);
+        technicalAlertInstanceModel.addListener(technicalAlertListener);
+        alarmSettingsInstanceModel.addListener(alarmSettingsListener);
 //        numericInstanceTableModel = new NumericInstanceTableModel(numericInstanceModel);
     }
     
     private final NumericInstanceModel numericInstanceModel;
+    private final AlertInstanceModel patientAlertInstanceModel, technicalAlertInstanceModel;
+    private final AlarmSettingsInstanceModel alarmSettingsInstanceModel;
 //    private final NumericInstanceTableModel numericInstanceTableModel;
     
     public void start(String host, int port) {
-        numericInstanceModel.addListener(this);
+        
         log.debug("Starting NumericInstanceModel");
         numericInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.numeric_data);
+        patientAlertInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
+        technicalAlertInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
+        alarmSettingsInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
+        
         log.debug("Started NumericInstanceModel");
         if(host != null && !host.isEmpty()) {
             
@@ -89,6 +114,9 @@ public class HL7Emitter implements InstanceModelListener<Numeric, NumericDataRea
     public void stop() {
         log.debug("Stopping NumericInstanceModel");
         numericInstanceModel.stop();
+        patientAlertInstanceModel.stop();
+        technicalAlertInstanceModel.stop();
+        alarmSettingsInstanceModel.stop();
         ssListeners.fire(stopped);
         log.debug("Stopped NumericInstanceModel");
         if(hapiConnection != null) {
@@ -149,19 +177,19 @@ public class HL7Emitter implements InstanceModelListener<Numeric, NumericDataRea
     public void removeStartStopListener(StartStopListener listener) {
         ssListeners.removeListener(listener);
     }
-    @Override
-    public void instanceAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
-        // TODO Auto-generated method stub
-        
-    }
-    @Override
-    public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder, SampleInfo sampleInfo) {
-        // TODO Auto-generated method stub
-        
-    }
-    @Override
-    public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
-        if(rosetta.MDC_ECG_HEART_RATE.VALUE.equals(data.metric_id)) {
+    
+    final AlertInstanceModelListener patientAlertListener = new AlertInstanceModelListener() {
+
+        @Override
+        public void instanceAlive(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
+        }
+
+        @Override
+        public void instanceNotAlive(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert keyHolder, SampleInfo sampleInfo) {
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
             try {
                 
                 
@@ -193,23 +221,23 @@ public class HL7Emitter implements InstanceModelListener<Numeric, NumericDataRea
                 // Populate the first OBX
                 OBX obx = observation.getOBX();
                 //obx.getSetIDOBX().setValue("1");
-                obx.getObservationIdentifier().getIdentifier().setValue("0002-4182");
-                obx.getObservationIdentifier().getText().setValue("HR");
-                obx.getObservationIdentifier().getCwe3_NameOfCodingSystem().setValue("MDIL");
+                obx.getObservationIdentifier().getIdentifier().setValue(data.identifier);
+                obx.getObservationIdentifier().getText().setValue("");
+                obx.getObservationIdentifier().getCwe3_NameOfCodingSystem().setValue("Unknown");
                 obx.getObservationSubID().setValue("0");
-                obx.getUnits().getIdentifier().setValue("0004-0aa0");
-                obx.getUnits().getText().setValue("bpm");
-                obx.getUnits().getCwe3_NameOfCodingSystem().setValue("MDIL");
+//                obx.getUnits().getIdentifier().setValue("0004-0aa0");
+//                obx.getUnits().getText().setValue("bpm");
+//                obx.getUnits().getCwe3_NameOfCodingSystem().setValue("MDIL");
                 obx.getObservationResultStatus().setValue("F");
         
                 // The first OBX has a value type of CE. So first, we populate OBX-2 with "CE"...
-                obx.getValueType().setValue("NM");
+                obx.getValueType().setValue("TX");
         
-                // "NM" is Numeric
-                NM nm = new NM(r01);
-                nm.setValue(Float.toString(data.value));
+                // "TX" is ?
+                TX tx = new TX(r01);
+                tx.setValue(data.text);
         
-                obx.getObservationValue(0).setData(nm);
+                obx.getObservationValue(0).setData(tx);
         
                 Parser parser = context.getPipeParser();
 
@@ -218,7 +246,101 @@ public class HL7Emitter implements InstanceModelListener<Numeric, NumericDataRea
                 
                 
                 // Now, let's encode the message and look at the output
-                Connection hapiConnection = this.hapiConnection;
+                Connection hapiConnection = HL7Emitter.this.hapiConnection;
+                if(null != hapiConnection) {
+
+        
+                    Initiator initiator = hapiConnection.getInitiator();
+                    Message response = initiator.sendAndReceive(r01);
+                    String responseString = parser.encode(response);
+                    log.debug("Received Response:"+responseString);
+                    
+                }
+            } catch (DataTypeException e) {
+                log.error("", e);
+            } catch (HL7Exception e) {
+                log.error("", e);
+            } catch (IOException e) {
+                log.error("", e);
+            } catch (LLPException e) {
+                log.error("", e);
+            } finally {
+                
+            }
+
+        }
+        
+    };
+    
+    final AlertInstanceModelListener technicalAlertListener = new AlertInstanceModelListener() {
+
+        @Override
+        public void instanceAlive(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
+        }
+
+        @Override
+        public void instanceNotAlive(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert keyHolder, SampleInfo sampleInfo) {
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
+            try {
+                
+                
+                ORU_R01 r01 = new ORU_R01();
+                // ORU is an observation
+                // Event R01 is an unsolicited observation message
+                // "T" for Test, "P" for Production, etc.
+                r01.initQuickstart("ORU", "R01", "T");
+        
+                // Populate the MSH Segment
+                MSH mshSegment = r01.getMSH();
+                mshSegment.getSendingApplication().getNamespaceID().setValue("ICE");
+                mshSegment.getSequenceNumber().setValue("123");
+        
+                // Populate the PID Segment
+                ORU_R01_PATIENT patient = r01.getPATIENT_RESULT().getPATIENT();
+                PID pid = patient.getPID();
+                pid.getPatientName(0).getFamilyName().getSurname().setValue("Doe");
+                pid.getPatientName(0).getGivenName().setValue("John");
+                pid.getPatientIdentifierList(0).getIDNumber().setValue("123456");
+        
+                ORU_R01_ORDER_OBSERVATION orderObservation = r01.getPATIENT_RESULT().getORDER_OBSERVATION();
+        
+                orderObservation.getOBR().getObr7_ObservationDateTime().setValueToSecond(new Date());
+                
+                ORU_R01_OBSERVATION observation = orderObservation.getOBSERVATION(0);
+                
+                
+                // Populate the first OBX
+                OBX obx = observation.getOBX();
+                //obx.getSetIDOBX().setValue("1");
+                obx.getObservationIdentifier().getIdentifier().setValue(data.identifier);
+                obx.getObservationIdentifier().getText().setValue("");
+                obx.getObservationIdentifier().getCwe3_NameOfCodingSystem().setValue("Unknown");
+                obx.getObservationSubID().setValue("0");
+//                obx.getUnits().getIdentifier().setValue("0004-0aa0");
+//                obx.getUnits().getText().setValue("bpm");
+//                obx.getUnits().getCwe3_NameOfCodingSystem().setValue("MDIL");
+                obx.getObservationResultStatus().setValue("F");
+        
+                // The first OBX has a value type of CE. So first, we populate OBX-2 with "CE"...
+                obx.getValueType().setValue("TX");
+        
+                // "TX" is ?
+                TX tx = new TX(r01);
+                tx.setValue(data.text);
+        
+                obx.getObservationValue(0).setData(tx);
+        
+                Parser parser = context.getPipeParser();
+
+                String encodedMessage = parser.encode(r01);
+                listeners.fire(new DispatchLine(encodedMessage));
+                
+                
+                // Now, let's encode the message and look at the output
+                Connection hapiConnection = HL7Emitter.this.hapiConnection;
                 if(null != hapiConnection) {
 
         
@@ -240,5 +362,128 @@ public class HL7Emitter implements InstanceModelListener<Numeric, NumericDataRea
                 
             }
         }
-    }
+        
+    };
+    
+    final NumericInstanceModelListener numericListener = new NumericInstanceModelListener() {
+        
+        @Override
+        public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            if(rosetta.MDC_ECG_HEART_RATE.VALUE.equals(data.metric_id)) {
+                try {
+                    
+                    
+                    ORU_R01 r01 = new ORU_R01();
+                    // ORU is an observation
+                    // Event R01 is an unsolicited observation message
+                    // "T" for Test, "P" for Production, etc.
+                    r01.initQuickstart("ORU", "R01", "T");
+            
+                    // Populate the MSH Segment
+                    MSH mshSegment = r01.getMSH();
+                    mshSegment.getSendingApplication().getNamespaceID().setValue("ICE");
+                    mshSegment.getSequenceNumber().setValue("123");
+            
+                    // Populate the PID Segment
+                    ORU_R01_PATIENT patient = r01.getPATIENT_RESULT().getPATIENT();
+                    PID pid = patient.getPID();
+                    pid.getPatientName(0).getFamilyName().getSurname().setValue("Doe");
+                    pid.getPatientName(0).getGivenName().setValue("John");
+                    pid.getPatientIdentifierList(0).getIDNumber().setValue("123456");
+            
+                    ORU_R01_ORDER_OBSERVATION orderObservation = r01.getPATIENT_RESULT().getORDER_OBSERVATION();
+            
+                    orderObservation.getOBR().getObr7_ObservationDateTime().setValueToSecond(new Date());
+                    
+                    ORU_R01_OBSERVATION observation = orderObservation.getOBSERVATION(0);
+                    
+                    
+                    // Populate the first OBX
+                    OBX obx = observation.getOBX();
+                    //obx.getSetIDOBX().setValue("1");
+                    obx.getObservationIdentifier().getIdentifier().setValue("0002-4182");
+                    obx.getObservationIdentifier().getText().setValue("HR");
+                    obx.getObservationIdentifier().getCwe3_NameOfCodingSystem().setValue("MDIL");
+                    obx.getObservationSubID().setValue("0");
+                    obx.getUnits().getIdentifier().setValue("0004-0aa0");
+                    obx.getUnits().getText().setValue("bpm");
+                    obx.getUnits().getCwe3_NameOfCodingSystem().setValue("MDIL");
+                    obx.getObservationResultStatus().setValue("F");
+            
+                    // The first OBX has a value type of CE. So first, we populate OBX-2 with "CE"...
+                    obx.getValueType().setValue("NM");
+            
+                    // "NM" is Numeric
+                    NM nm = new NM(r01);
+                    nm.setValue(Float.toString(data.value));
+            
+                    obx.getObservationValue(0).setData(nm);
+            
+                    Parser parser = context.getPipeParser();
+
+                    String encodedMessage = parser.encode(r01);
+                    listeners.fire(new DispatchLine(encodedMessage));
+                    
+                    
+                    // Now, let's encode the message and look at the output
+                    Connection hapiConnection = HL7Emitter.this.hapiConnection;
+                    if(null != hapiConnection) {
+
+            
+                        Initiator initiator = hapiConnection.getInitiator();
+                        Message response = initiator.sendAndReceive(r01);
+                        String responseString = parser.encode(response);
+                        log.debug("Received Response:"+responseString);
+                        
+                    }
+                } catch (DataTypeException e) {
+                    log.error("", e);
+                } catch (HL7Exception e) {
+                    log.error("", e);
+                } catch (IOException e) {
+                    log.error("", e);
+                } catch (LLPException e) {
+                    log.error("", e);
+                } finally {
+                    
+                }
+            }
+
+        }
+        
+        @Override
+        public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder, SampleInfo sampleInfo) {
+            // TODO Auto-generated method stub
+            
+        }
+        
+        @Override
+        public void instanceAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            // TODO Auto-generated method stub
+            
+        }
+    };
+    final AlarmSettingsInstanceModelListener alarmSettingsListener = new AlarmSettingsInstanceModelListener() {
+        
+        @Override
+        public void instanceSample(InstanceModel<AlarmSettings, AlarmSettingsDataReader> model, AlarmSettingsDataReader reader, AlarmSettings data,
+                SampleInfo sampleInfo) {
+            // TODO Auto-generated method stub
+            
+        }
+        
+        @Override
+        public void instanceNotAlive(InstanceModel<AlarmSettings, AlarmSettingsDataReader> model, AlarmSettingsDataReader reader,
+                AlarmSettings keyHolder, SampleInfo sampleInfo) {
+            // TODO Auto-generated method stub
+            
+        }
+        
+        @Override
+        public void instanceAlive(InstanceModel<AlarmSettings, AlarmSettingsDataReader> model, AlarmSettingsDataReader reader, AlarmSettings data,
+                SampleInfo sampleInfo) {
+            // TODO Auto-generated method stub
+            
+        }
+    };
 }
