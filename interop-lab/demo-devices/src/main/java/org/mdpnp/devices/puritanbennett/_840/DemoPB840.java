@@ -421,21 +421,21 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             inspiredTidalVolume = alarmSettingsSample(inspiredTidalVolume, null, parseFloat(fieldValues.get(38)), "PB_INSPIRED_TIDAL_VOLUME");
             
             //settings
-            respRateSetting = numericSample(respRateSetting, parseInt(fieldValues.get(8)) /*field 13*/, miscFfieldNames[8], null /*new Time_t(0)*/);
-            tidalVolSetting = numericSample(tidalVolSetting, parseInt(fieldValues.get(9)) /*field 14*/, miscFfieldNames[9], null /*new Time_t(0)*/); 
-            peakFlowSetting = numericSample(peakFlowSetting, parseInt(fieldValues.get(10)) /*field 15*/, miscFfieldNames[10], null /*new Time_t(0)*/);
-            o2PctSetting = numericSample(o2PctSetting, parseInt(fieldValues.get(11)) /*field 16*/, miscFfieldNames[11], null /*new Time_t(0)*/);
-            pressureSensitivitySetting = numericSample(pressureSensitivitySetting, parseInt(fieldValues.get(12)) /*field 17*/, miscFfieldNames[12], null /*new Time_t(0)*/);
-            apneaIntervalSetting = numericSample(apneaIntervalSetting, parseInt(fieldValues.get(15)) /*field 20*/, miscFfieldNames[15], null /*new Time_t(0)*/);
-            apneaTidalVolSetting = numericSample(apneaTidalVolSetting, parseInt(fieldValues.get(16)) /*field 21*/, miscFfieldNames[16], null /*new Time_t(0)*/);
-            apneaRespiratoryRateSetting = numericSample(apneaRespiratoryRateSetting, parseInt(fieldValues.get(17)) /*field 22*/, miscFfieldNames[17], null /*new Time_t(0)*/);
-            apneaPeakFlowSetting = numericSample(apneaPeakFlowSetting, parseInt(fieldValues.get(18)) /*field 23*/, miscFfieldNames[18], null /*new Time_t(0)*/);
-            apneaO2PctSetting = numericSample(apneaO2PctSetting, parseInt(fieldValues.get(19)) /*field 24*/, miscFfieldNames[19], null /*new Time_t(0)*/);
+            respRateSetting = numericSample(respRateSetting, parseInt(fieldValues.get(8)) /*field 13*/, miscFfieldNames[8], miscFfieldNames[8], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            tidalVolSetting = numericSample(tidalVolSetting, parseInt(fieldValues.get(9)) /*field 14*/, miscFfieldNames[9], miscFfieldNames[9], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/); 
+            peakFlowSetting = numericSample(peakFlowSetting, parseInt(fieldValues.get(10)) /*field 15*/, miscFfieldNames[10], miscFfieldNames[10], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            o2PctSetting = numericSample(o2PctSetting, parseInt(fieldValues.get(11)) /*field 16*/, miscFfieldNames[11],  miscFfieldNames[11],rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            pressureSensitivitySetting = numericSample(pressureSensitivitySetting, parseInt(fieldValues.get(12)) /*field 17*/, miscFfieldNames[12], miscFfieldNames[12], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            apneaIntervalSetting = numericSample(apneaIntervalSetting, parseInt(fieldValues.get(15)) /*field 20*/, miscFfieldNames[15], miscFfieldNames[15], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            apneaTidalVolSetting = numericSample(apneaTidalVolSetting, parseInt(fieldValues.get(16)) /*field 21*/, miscFfieldNames[16], miscFfieldNames[16], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            apneaRespiratoryRateSetting = numericSample(apneaRespiratoryRateSetting, parseInt(fieldValues.get(17)) /*field 22*/, miscFfieldNames[17], miscFfieldNames[17], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            apneaPeakFlowSetting = numericSample(apneaPeakFlowSetting, parseInt(fieldValues.get(18)) /*field 23*/, miscFfieldNames[18], miscFfieldNames[18], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            apneaO2PctSetting = numericSample(apneaO2PctSetting, parseInt(fieldValues.get(19)) /*field 24*/, miscFfieldNames[19], miscFfieldNames[19], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
             
             //monitored values
-            respRate = numericSample(respRate, parseInt(fieldValues.get(65)) /*field 70*/ , "PB_RESPIRATORY_RATE", null);
-            exhaledTidalVolume = numericSample(exhaledTidalVolume, parseInt(fieldValues.get(66)) /* field 71*/, "PB_EXHALED_TIDAL_VOL", null);
-            exhaledMinuteVolume = numericSample(exhaledMinuteVolume, parseInt(fieldValues.get(67)) /* field 72*/, miscFfieldNames[67], null);
+            respRate = numericSample(respRate, parseInt(fieldValues.get(65)) /*field 70*/ , "PB_RESPIRATORY_RATE", "PB_RESPIRATORY_RATE", rosetta.MDC_DIM_DIMLESS.VALUE, null);
+            exhaledTidalVolume = numericSample(exhaledTidalVolume, parseInt(fieldValues.get(66)) /* field 71*/, "PB_EXHALED_TIDAL_VOL", "PB_EXHALED_TIDAL_VOL", rosetta.MDC_DIM_DIMLESS.VALUE, null);
+            exhaledMinuteVolume = numericSample(exhaledMinuteVolume, parseInt(fieldValues.get(67)) /* field 72*/, miscFfieldNames[67], miscFfieldNames[67], rosetta.MDC_DIM_DIMLESS.VALUE, null);
             
             markOldTechnicalAlertInstances();
             for(int i = 0; i < fieldValues.size(); i++) {
@@ -447,7 +447,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
                         while(i >= otherFields.size()) {
                             otherFields.add(null);
                         }
-                        otherFields.set(i, numericSample(otherFields.get(i), f, name, rosetta.MDC_DIM_DIMLESS.VALUE, null));
+                        otherFields.set(i, numericSample(otherFields.get(i), f, name, name, rosetta.MDC_DIM_DIMLESS.VALUE, null));
                     } catch(NumberFormatException nfe) {
                         writeTechnicalAlert(name, fieldValues.get(i));
                     }
@@ -465,22 +465,22 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             }
             
             //MISCA settings
-            respRateSetting = numericSample(respRateSetting, parseInt(fieldValues.get(5)) /*field 10*/, miscAfieldNames[5], null /*new Time_t(0)*/);
-            tidalVolSetting = numericSample(tidalVolSetting, parseInt(fieldValues.get(6)) /*field 11*/, miscAfieldNames[6], null /*new Time_t(0)*/);
-            peakFlowSetting = numericSample(peakFlowSetting, parseInt(fieldValues.get(7)) /*field 12*/, miscAfieldNames[7], null /*new Time_t(0)*/);
-            o2PctSetting = numericSample(o2PctSetting, parseInt(fieldValues.get(8)) /*field 13*/, miscAfieldNames[8], null /*new Time_t(0)*/);
-            pressureSensitivitySetting = numericSample(pressureSensitivitySetting, parseInt(fieldValues.get(9)) /*field 14*/, miscAfieldNames[9], null /*new Time_t(0)*/);
-            apneaIntervalSetting = numericSample(apneaIntervalSetting, parseInt(fieldValues.get(16)) /*field 21*/, miscAfieldNames[16], null /*new Time_t(0)*/);
-            apneaTidalVolSetting = numericSample(apneaTidalVolSetting, parseInt(fieldValues.get(17)) /*field 22*/, miscAfieldNames[17], null /*new Time_t(0)*/);
-            apneaRespiratoryRateSetting = numericSample(apneaRespiratoryRateSetting, parseInt(fieldValues.get(18)) /*field 23*/, miscAfieldNames[18], null /*new Time_t(0)*/);
-            apneaPeakFlowSetting = numericSample(apneaPeakFlowSetting, parseInt(fieldValues.get(19)) /*field 24*/, miscAfieldNames[19], null /*new Time_t(0)*/);
-            apneaO2PctSetting = numericSample(apneaO2PctSetting, parseInt(fieldValues.get(20)) /*field 25*/, miscAfieldNames[20], null /*new Time_t(0)*/);           
+            respRateSetting = numericSample(respRateSetting, parseInt(fieldValues.get(5)) /*field 10*/, miscAfieldNames[5], miscAfieldNames[5], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            tidalVolSetting = numericSample(tidalVolSetting, parseInt(fieldValues.get(6)) /*field 11*/, miscAfieldNames[6], miscAfieldNames[6], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            peakFlowSetting = numericSample(peakFlowSetting, parseInt(fieldValues.get(7)) /*field 12*/, miscAfieldNames[7], miscAfieldNames[7], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            o2PctSetting = numericSample(o2PctSetting, parseInt(fieldValues.get(8)) /*field 13*/, miscAfieldNames[8], miscAfieldNames[8], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            pressureSensitivitySetting = numericSample(pressureSensitivitySetting, parseInt(fieldValues.get(9)) /*field 14*/, miscAfieldNames[9], miscAfieldNames[9], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            apneaIntervalSetting = numericSample(apneaIntervalSetting, parseInt(fieldValues.get(16)) /*field 21*/, miscAfieldNames[16], miscAfieldNames[16], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            apneaTidalVolSetting = numericSample(apneaTidalVolSetting, parseInt(fieldValues.get(17)) /*field 22*/, miscAfieldNames[17], miscAfieldNames[17], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            apneaRespiratoryRateSetting = numericSample(apneaRespiratoryRateSetting, parseInt(fieldValues.get(18)) /*field 23*/, miscAfieldNames[18], miscAfieldNames[18], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            apneaPeakFlowSetting = numericSample(apneaPeakFlowSetting, parseInt(fieldValues.get(19)) /*field 24*/, miscAfieldNames[19], miscAfieldNames[19], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
+            apneaO2PctSetting = numericSample(apneaO2PctSetting, parseInt(fieldValues.get(20)) /*field 25*/, miscAfieldNames[20], miscAfieldNames[20], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);           
             
             //monitored values
-            totalRespiratoryRate = numericSample(totalRespiratoryRate, parseInt(fieldValues.get(29)) /* field 34*/, miscAfieldNames[29], null); 
-            exhaledTidalVolume = numericSample(exhaledTidalVolume, parseInt(fieldValues.get(30)) /* field 35*/, miscAfieldNames[30], null); 
-            exhaledMinuteVolume = numericSample(exhaledMinuteVolume, parseInt(fieldValues.get(31)) /* field 36*/, miscAfieldNames[31], null); 
-            spontMinuteVol  = numericSample(spontMinuteVol, parseInt(fieldValues.get(32)) /* field 37*/, miscAfieldNames[32], null);
+            totalRespiratoryRate = numericSample(totalRespiratoryRate, parseInt(fieldValues.get(29)) /* field 34*/, miscAfieldNames[29], miscAfieldNames[29], rosetta.MDC_DIM_DIMLESS.VALUE, null); 
+            exhaledTidalVolume = numericSample(exhaledTidalVolume, parseInt(fieldValues.get(30)) /* field 35*/, miscAfieldNames[30], miscAfieldNames[30], rosetta.MDC_DIM_DIMLESS.VALUE, null); 
+            exhaledMinuteVolume = numericSample(exhaledMinuteVolume, parseInt(fieldValues.get(31)) /* field 36*/, miscAfieldNames[31], miscAfieldNames[31], rosetta.MDC_DIM_DIMLESS.VALUE, null); 
+            spontMinuteVol  = numericSample(spontMinuteVol, parseInt(fieldValues.get(32)) /* field 37*/, miscAfieldNames[32], miscAfieldNames[32], rosetta.MDC_DIM_DIMLESS.VALUE, null);
             
             
             
