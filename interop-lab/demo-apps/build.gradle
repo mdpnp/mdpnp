@@ -27,21 +27,21 @@ launch4j {
 
 buildscript {
     dependencies {
-        classpath 'edu.sc.seis:gradle-launch4j:1.0.5'
+        classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
     }
 }
 
-def launch4jPath = 'http://downloads.sourceforge.net/project/launch4j/launch4j-3/3.1.0-beta1/'
+def launch4jPath = 'http://downloads.sourceforge.net/projects/launch4j/launch4j-3/3.6/'
 def launch4jName = ''
 switch(localOsName) {
     case WINDOWS:
-    launch4jName = 'launch4j-3.1.0-beta1-win32.zip'
+    launch4jName = 'launch4j-3.6.1-win32.zip'
     break
     case MAC:
-    launch4jName = 'launch4j-3.1.0-beta1-macosx-x86-10.8.tgz'
+    launch4jName = 'launch4j-3.6-macosx-x86-10.8.tgz'
     break
     case LINUX:
-    launch4jName = 'launch4j-3.1.0-beta1-linux.zip'
+    launch4jName = 'launch4j-3.6-linux.tgz'
     break
 }
 
@@ -89,7 +89,7 @@ task downloadAppBundler(dependsOn: createBuildToolsDir) << {
 
 task createApp(dependsOn: [downloadAppBundler, copyDeps]) << {
     ant.taskdef(name: 'bundleapp', classname: 'com.oracle.appbundler.AppBundlerTask', classpath: file("build-tools/appbundler-1.0.jar"))
-    ant.bundleapp(outputdirectory: "$buildDir/", name: "MDPnP Demo Apps", displayName: "MDPnP Demo Apps", identifier: "org.mdpnp.apps.testapp.Main", mainclassname: "org.mdpnp.apps.testapp.Main", icon: "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns") {
+    ant.bundleapp(outputdirectory: "$buildDir/", name: "MDPnP Demo Apps", displayName: "MDPnP Demo Apps", identifier: "org.mdpnp.apps.testapp.Main", mainclassname: "org.mdpnp.apps.testapp.Main", icon: "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns", shortversion: project.version) {
         classpath(dir: "$buildDir/deps")
         // Can optionally bundle a JRE but it adds a LOT of size
         // runtime(dir: "$System.env.JAVA_HOME")
@@ -162,9 +162,9 @@ ext {
     buildTime = new java.text.SimpleDateFormat('hh:mm aa').format(buildTimeAndDate)
 }
 
-manifest.mainAttributes("Main-Class" : "org.mdpnp.apps.testapp.Main")
+manifest { attributes "Main-Class" : mainClassName }
 
-def JOGL_version = '2.0.2'
+def JOGL_version = '2.2.4'
 
 dependencies {
     compile project(':interop-lab:demo-devices')
@@ -173,11 +173,24 @@ dependencies {
     runtime project(':interop-lab:demo-purejavacomm')
 
     runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: SLF4J_VERSION
-    runtime group: 'log4j', name: 'log4j', version: '1.2.17'
     runtime group: 'org.mdpnp.apps.testapp.pca', name: 'mdpnp-sounds', version: '0.1.0'
 
+    //
+    compile group: 'log4j', name: 'log4j', version: '1.2.17'
+    compile group: 'commons-cli', name: 'commons-cli', version: '1.2'
+    
     // Default capture device is a trimmed down piece of OpenIMAJ
-    compile group: 'com.github.sarxos', name: 'webcam-capture', version: '0.3.9'
+    compile group: 'com.github.sarxos', name: 'webcam-capture', version: '0.3.10'
+
+    compile group: 'org.springframework', name: 'spring-context', version: '4.1.3.RELEASE'
+    compile group: 'com.google.guava',    name: 'guava',          version: '18.0'
+
+    compile group: 'ca.uhn.hapi', name: 'hapi-base', version: '2.2'
+    compile group: 'ca.uhn.hapi', name: 'hapi-structures-v26', version: '2.2'
+    
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    testRuntime group: 'org.hsqldb', name: 'hsqldb', version: '2.3.2'
 }
 
 task createZip(type: Zip) {

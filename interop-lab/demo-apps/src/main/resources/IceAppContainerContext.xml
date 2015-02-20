@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+                           http://www.springframework.org/schema/util
+                           http://www.springframework.org/schema/util/spring-util-4.1.xsd">
+
+    <import resource="classpath:DriverContext.xml"/>
+    
+    <bean id="refreshScheduler" class="java.util.concurrent.Executors"
+          factory-method="newSingleThreadScheduledExecutor"
+          destroy-method="shutdownNow">
+    </bean>
+
+    <!-- This is only needed when PCA apps are installed -->
+    <bean id="objectiveWriter" class="org.mdpnp.rtiapi.data.InfusionObjectiveDataWriterFactory" lazy-init="true">
+        <constructor-arg ref="publisher" />
+        <constructor-arg ref="domainParticipant" />
+    </bean>
+    
+    <bean id="deviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory" lazy-init="true" destroy-method="stop">
+        <constructor-arg ref="eventLoop" />
+        <constructor-arg ref="subscriber" />
+        <constructor-arg ref="timeManager" />
+    </bean>    
+
+    <bean id="pumpModel" class="org.mdpnp.rtiapi.data.InfusionStatusInstanceModelFactory" lazy-init="true" destroy-method="stop">
+        <constructor-arg ref="subscriber" />
+        <constructor-arg ref="eventLoop" />
+    </bean>
+
+    <bean id="vitalModel" class="org.mdpnp.apps.testapp.vital.VitalModelFactory" lazy-init="true" destroy-method="stop">
+        <constructor-arg ref="deviceListModel" />
+        <constructor-arg ref="publisher" />
+        <constructor-arg ref="subscriber" />
+        <constructor-arg ref="eventLoop" />
+    </bean>
+
+    <bean id="capnoModel" class="org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl" destroy-method="stop">
+        <constructor-arg>
+            <util:constant static-field="ice.SampleArrayTopic.VALUE"/>
+        </constructor-arg>
+    </bean>
+
+</beans>

@@ -35,8 +35,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         }
         @Override
         public void receiveBreath(Collection<Number> flow, Collection<Number> pressure) {
-            flowSampleArray = sampleArraySample(flowSampleArray, flow, rosetta.MDC_FLOW_AWAY.VALUE, 0, rosetta.MDC_DIM_L_PER_MIN.VALUE, 50, null);
-            pressureSampleArray = sampleArraySample(pressureSampleArray, pressure, rosetta.MDC_PRESS_AWAY.VALUE, 0, rosetta.MDC_DIM_CM_H2O.VALUE, 50, null);
+            flowSampleArray = sampleArraySample(flowSampleArray, flow, "", rosetta.MDC_FLOW_AWAY.VALUE, 0, rosetta.MDC_DIM_L_PER_MIN.VALUE, 50, null);
+            pressureSampleArray = sampleArraySample(pressureSampleArray, pressure, "", rosetta.MDC_PRESS_AWAY.VALUE, 0, rosetta.MDC_DIM_CM_H2O.VALUE, 50, null);
         }
     }
     
@@ -493,7 +493,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
                         while(i >= otherFields.size()) {
                             otherFields.add(null);
                         }
-                        otherFields.set(i, numericSample(otherFields.get(i), f, name, rosetta.MDC_DIM_DIMLESS.VALUE, null));
+                        otherFields.set(i, numericSample(otherFields.get(i), f, name, ""+(i+5), rosetta.MDC_DIM_DIMLESS.VALUE, null));
                     } catch(NumberFormatException nfe) {
                         writeTechnicalAlert(name, fieldValues.get(i));
                     }

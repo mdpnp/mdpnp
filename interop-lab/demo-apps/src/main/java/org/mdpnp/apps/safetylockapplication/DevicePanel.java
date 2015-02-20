@@ -76,7 +76,6 @@ public class DevicePanel extends JPanel implements PatientEventListener, ActionL
 		//for pulse oximeter numerics
 		rReceiver = new ReceivePulseOximeterNumerics();
         int domainId = 15;
-        org.mdpnp.apps.testapp.Main.loadAndSetIceQosLibrary();
         final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId,
                 DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);

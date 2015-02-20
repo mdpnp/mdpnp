@@ -328,18 +328,18 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             sampleTime.nanosec = (int) (date % 1000L * 1000000L);
 
             DemoCapnostream20.this.spo2 = numericSample(DemoCapnostream20.this.spo2, 0xFF == spo2 ? null : spo2, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE,
-                    rosetta.MDC_DIM_PERCENT.VALUE,
+                    "", rosetta.MDC_DIM_PERCENT.VALUE,
                     sampleTime);
 
             rr = numericSample(rr, 0xFF == respiratoryRate ? null : respiratoryRate, rosetta.MDC_CO2_RESP_RATE.VALUE, 
-                    rosetta.MDC_DIM_RESP_PER_MIN.VALUE, sampleTime);
+                    "", rosetta.MDC_DIM_RESP_PER_MIN.VALUE, sampleTime);
 
             this.currentUnits = units;
 
-            etco2 = numericSample(etco2, 0xFF == etCO2 ? null : etCO2 / divisor(units), rosetta.MDC_AWAY_CO2_ET.VALUE, units(units), sampleTime);
+            etco2 = numericSample(etco2, 0xFF == etCO2 ? null : etCO2 / divisor(units), rosetta.MDC_AWAY_CO2_ET.VALUE, "", units(units), sampleTime);
 
             DemoCapnostream20.this.pulserate = numericSample(DemoCapnostream20.this.pulserate, 0xFF == pulserate ? null : pulserate,
-                    rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, sampleTime);
+                    rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, sampleTime);
 
             DemoCapnostream20.this.spo2AlarmSettings = alarmSettingsSample(DemoCapnostream20.this.spo2AlarmSettings, 0xFF == spo2AlarmLow ? null
                     : (float) spo2AlarmLow, 0xFF == spo2AlarmHigh ? null : (float) spo2AlarmHigh, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
@@ -362,14 +362,14 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             writeTechnicalAlert("Fast CO2", FastStatus.build(status, messageBuilder));
             
             if(0 != (END_OF_BREATH_BIT & status)) {
-                endOfBreath = numericSample(endOfBreath, 0, ice.MDC_END_OF_BREATH.VALUE, 
+                endOfBreath = numericSample(endOfBreath, 0, ice.MDC_END_OF_BREATH.VALUE, "",
                         rosetta.MDC_DIM_DIMLESS.VALUE, null);
             }
 
             if (0 != (0x40 & status)) {
                 // filter line not connected
                 // TODO should we flush a partially filled buffer first?
-                DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, null, rosetta.MDC_AWAY_CO2.VALUE, 
+                DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, null, rosetta.MDC_AWAY_CO2.VALUE, "",
                         units(this.currentUnits), 20, null);
                 realtimeBufferCount = 0;
                 return true;
@@ -378,7 +378,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             realtimeBuffer[realtimeBufferCount++] = co2 / divisor(this.currentUnits);
             if (realtimeBufferCount == realtimeBuffer.length) {
                 realtimeBufferCount = 0;
-                DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, realtimeBuffer, rosetta.MDC_AWAY_CO2.VALUE, 
+                DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, realtimeBuffer, rosetta.MDC_AWAY_CO2.VALUE, "",
                         units(this.currentUnits), 20, null);
 
             }

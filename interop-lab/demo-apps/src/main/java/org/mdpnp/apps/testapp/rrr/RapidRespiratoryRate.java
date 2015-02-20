@@ -87,7 +87,7 @@ public class RapidRespiratoryRate extends JPanel implements ListDataListener, Ru
             // TODO clearly a synchronization issue here.
             // enforce a singular calling thread or synchronize accesses
             this.rate = numericSample(this.rate, (int) Math.round(rate), rosetta.MDC_CO2_RESP_RATE.VALUE, 
-                    rosetta.MDC_DIM_DIMLESS.VALUE, null);
+                    "", rosetta.MDC_DIM_DIMLESS.VALUE, null);
         }
     }
 

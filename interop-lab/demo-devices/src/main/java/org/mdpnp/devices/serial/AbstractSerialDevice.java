@@ -370,7 +370,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
                                 setLastError(idx, e);
                             }
                         } else {
-                            log.warn("Cannot issue doInitCommands("+idx+") in a null socket");
+                            log.warn("Cannot issue doInitCommands("+idx+") on a null socket");
                         }
                     }
                 }

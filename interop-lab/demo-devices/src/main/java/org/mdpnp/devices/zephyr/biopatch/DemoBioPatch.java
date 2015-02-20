@@ -79,14 +79,14 @@ public class DemoBioPatch extends AbstractDelegatingSerialDevice<BioPatch> {
             reportConnected("Received General Data Packet");
             log.warn("sequenceNumber="+sequenceNumber+" timeofday="+new Date(timeofday)+" heartrate="+heartrate+" respirationRate="+resprate+" skinTemp="+skintemp);
             Time_t t = new Time_t((int)(timeofday / 1000L), (int)(timeofday % 1000L * 1000000L));
-            heartRate = numericSample(heartRate, heartrate, rosetta.MDC_ECG_HEART_RATE.VALUE, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, t);
-            respirationRate = numericSample(respirationRate, resprate, rosetta.MDC_TTHOR_RESP_RATE.VALUE, rosetta.MDC_DIM_DIMLESS.VALUE, t);
-            skinTemperature = numericSample(skinTemperature, skintemp, rosetta.MDC_TEMP_SKIN.VALUE, rosetta.MDC_DIM_DEGC.VALUE, t);
+            heartRate = numericSample(heartRate, heartrate, rosetta.MDC_ECG_HEART_RATE.VALUE, "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, t);
+            respirationRate = numericSample(respirationRate, resprate, rosetta.MDC_TTHOR_RESP_RATE.VALUE, "", rosetta.MDC_DIM_DIMLESS.VALUE, t);
+            skinTemperature = numericSample(skinTemperature, skintemp, rosetta.MDC_TEMP_SKIN.VALUE, "", rosetta.MDC_DIM_DEGC.VALUE, t);
         }
         
         @Override
         protected void receiveECGDataPacket(long tm, Number[] values) {
-            ecgTrace = sampleArraySample(ecgTrace, values, ice.MDC_ECG_LEAD_I.VALUE, rosetta.MDC_DIM_DIMLESS.VALUE, 250, null);
+            ecgTrace = sampleArraySample(ecgTrace, values, ice.MDC_ECG_LEAD_I.VALUE, "", rosetta.MDC_DIM_DIMLESS.VALUE, 250, null);
         }
         
         @Override

@@ -48,6 +48,11 @@ module ice {
   typedef string<64> MetricIdentifier;
   
   /**
+   * A type for representing identifying information from a proprietary vendor nomenclature.
+   */
+  typedef string<64> VendorMetricIdentifier;
+  
+  /**
    * For multiple instances of the same sensor this type is used for disambiguation.
    * TODO Must these always begin at 0?
    */
@@ -106,7 +111,7 @@ module ice {
   struct HeartBeat {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     string<32> type;
-  }; //@top-level true
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist HeartBeat unique_device_identifier
   const string HeartBeatTopic = "HeartBeat";
   
@@ -127,7 +132,7 @@ module ice {
     UniqueDeviceIdentifier heartbeat_recipient; //@key
     Time_t source_source_timestamp;
     Time_t recipient_receipt_timestamp;
-  }; //@top-level true
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist TimeSync heartbeat_source heartbeat_recipient
   const string TimeSyncTopic = "TimeSync";
 
@@ -154,7 +159,8 @@ module ice {
     LongString serial_number;
     Image icon;
     string<128> build;
-  };
+    string<128> operating_system;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist DeviceIdentity unique_device_identifier
   const string DeviceIdentityTopic = "DeviceIdentity";
 
@@ -207,7 +213,7 @@ module ice {
     ConnectionType type;
     LongString info;
     ValidTargets valid_targets;
-  };
+  }; //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist DeviceConnectivity unique_device_identifier
   const string DeviceConnectivityTopic = "DeviceConnectivity";
 
@@ -221,7 +227,7 @@ module ice {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     boolean connected;
     LongString target;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist DeviceConnectivityObjective unique_device_identifier
   const string DeviceConnectivityObjectiveTopic = "DeviceConnectivityObjective";
 
@@ -271,17 +277,21 @@ module ice {
    * new sample whenever a new observation is made even when the same value is observed.
    * In this way subscribers are made aware of the timeliness of the observation.
    * 
+   * vendor_metric_id is informational only, may be left blank, and must not be expected.
+   * If non-blank it contains a nomenclature code from a proprietary interface.
+   * 
    * Stability: 2 - Unstable
    */
   struct Numeric {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
+    VendorMetricIdentifier vendor_metric_id; //@key
     InstanceIdentifier instance_id; //@key
     UnitIdentifier unit_id; //@key
     float value;
     Time_t device_time;
-  };
-  #pragma keylist Numeric unique_device_identifier metric_id instance_id unit_id
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist Numeric unique_device_identifier metric_id vendor_metric_id instance_id unit_id
   const string NumericTopic = "Numeric";
 
   /**
@@ -293,18 +303,22 @@ module ice {
    * is physically disconnected or otherwise certain not to provide samples then the 
    * associated instance should be unregistered. Sourcetimestamp and device_time should
    * both represent the point in time at the end of the sample array.
+   *
+   * vendor_metric_id is informational only, may be left blank, and must not be expected.
+   * If non-blank it contains a nomenclature code from a proprietary interface.
    * 
    * Stability: 2 - Unstable
    */
   struct SampleArray {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
+    VendorMetricIdentifier vendor_metric_id; //@key    
     InstanceIdentifier instance_id; //@key
     UnitIdentifier unit_id; //@key
     long frequency; //@key
     Values values;
     Time_t device_time;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist SampleArray unique_device_identifier metric_id instance_id unit_id frequency
   const string SampleArrayTopic = "SampleArray";
 
@@ -322,7 +336,7 @@ module ice {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     LongString requestor;
     boolean stopInfusion;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist InfusionObjective unique_device_identifier
   const string InfusionObjectiveTopic = "InfusionObjective";
   
@@ -358,7 +372,7 @@ module ice {
 
     // what is the progress through the program?
     float infusion_fraction_complete;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist InfusionStatus unique_device_identifier
   const string InfusionStatusTopic = "InfusionStatus";
 
@@ -372,8 +386,7 @@ module ice {
     MetricIdentifier metric_id; //@key
     float lower;
     float upper;
-
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist AlarmSettings unique_device_identifier metric_id
   const string AlarmSettingsTopic = "AlarmSettings";
 
@@ -387,7 +400,7 @@ module ice {
     MetricIdentifier metric_id; //@key
     float lower;
     float upper;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist GlobalAlarmSettingsObjective metric_id
   const string GlobalAlarmSettingsObjectiveTopic = "GlobalAlarmSettingsObjective";
 
@@ -406,7 +419,7 @@ module ice {
     MetricIdentifier metric_id; //@key
     float lower;
     float upper;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist LocalAlarmSettingsObjective unique_device_identifier metric_id
   const string LocalAlarmSettingsObjectiveTopic = "LocalAlarmSettingsObjective";
 
@@ -420,7 +433,7 @@ module ice {
   struct DeviceAlertCondition {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     string<256> alert_state;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist DeviceAlertCondition unique_device_identifier
   const string DeviceAlertConditionTopic = "DeviceAlertCondition";
   
@@ -433,7 +446,7 @@ module ice {
     // This is a placeholder for something more harmonized
     string<256> identifier; //@key
     string<256> text;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist Alert unique_device_identifier identifier
   
   /**
