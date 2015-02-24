@@ -16,9 +16,6 @@ public class PB840Parameters extends PB840 {
         super(in, out);
     }
     
-	private static final int STX = 0x02; //start of transmission
-	private static final int ETX = 0x03; //end of transmission
-	
     private static final byte[] RSET = new byte[] {'R','S','E','T','\r'};
     private static final byte[] SNDA = new byte[] {'S', 'N', 'D', 'A', '\r'};
     private static final byte[] SNDF = new byte[] {'S','N','D','F','\r'};

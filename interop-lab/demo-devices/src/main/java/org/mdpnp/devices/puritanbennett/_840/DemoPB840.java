@@ -2,9 +2,12 @@ package org.mdpnp.devices.puritanbennett._840;
 
 import ice.ConnectionState;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -567,6 +570,63 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     @Override
     protected String iconResourceName() {
         return "pb840.png";
+    }
+    
+    protected void loadFields(Map<String, PB840Field[]> fields) {
+
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(DemoPB840.class.getResourceAsStream("pb840.fields")));
+            String line = null;
+
+            List<PB840Field> currentFields = new ArrayList<PB840Field>();
+            String currentResponseType = null;
+            int lineNumber = 0;
+            
+            while (null != (line = br.readLine())) {
+                lineNumber++;
+                line = line.trim();
+                if ('#' != line.charAt(0)) {
+                    String v[] = line.split("\t");
+
+                    if (v.length < 1) {
+                        log.warn("Bad line" + lineNumber + ":" + line);
+                    } else if(v.length < 2) {
+                        if(null != currentResponseType) {
+                            fields.put(currentResponseType, currentFields.toArray(new PB840Field[0]));
+                            currentFields.clear();
+                        }
+                        if(!currentFields.isEmpty()) {
+                            log.warn(currentFields.size() + " orphaned fields:"+currentFields);
+                            currentFields.clear();
+                        }
+                        currentResponseType = v[0];
+                    } else {
+                        if("N".equals(v[0]) && v.length == 5) {
+                            currentFields.add(new PB840Numeric(v[1], v[2], v[3], Integer.parseInt(v[4])));
+                        } else if("AS".equals(v[0]) && v.length == 4) {
+                            currentFields.add(new PB840AlarmSetting(v[1], Integer.parseInt(v[2]), Integer.parseInt(v[3])));
+                        } else if("PA".equals(v[0]) && v.length == 3) {
+                            currentFields.add(new PB840PatientAlert(v[1], Integer.parseInt(v[2])));
+                        } else if("TA".equals(v[0]) && v.length == 3) {
+                            currentFields.add(new PB840TechnicalAlert(v[1], Integer.parseInt(v[2])));
+                        } else {
+                            
+                        }
+                    }
+                }
+            }
+            if(null != currentResponseType) {
+                fields.put(currentResponseType, currentFields.toArray(new PB840Field[0]));
+                currentFields.clear();
+            }
+            if(!currentFields.isEmpty()) {
+                log.warn(currentFields.size() + " orphaned fields:"+currentFields);
+                currentFields.clear();
+            }
+            currentResponseType = null;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
