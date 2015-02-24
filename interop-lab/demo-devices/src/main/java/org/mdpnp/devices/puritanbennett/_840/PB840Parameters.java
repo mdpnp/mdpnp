@@ -35,76 +35,37 @@ public class PB840Parameters extends PB840 {
         out.flush();
     }
     
-    private static final String miscaRegex =
-    		"MISCA(\\d{3})(\\d{2})2((.{6})+)3";
-    
-    private static final String miscfRegex =
-    		"MISCF(\\d{3})(\\d{2})2((.{6})+)3";
-    
-//    private static final Pattern miscf = Pattern.compile("^MISCF,(\\d{4}),(\\d{3})\\s*,\\02");
     private static final Pattern dataField = Pattern.compile("([^,\\03]*)[,\\03]{1,2}");
     
     private static final Logger log = LoggerFactory.getLogger(PB840Parameters.class);
     
-    protected final List<String> fieldValues = new ArrayList<String>();
+    protected final List<String> fieldValues = new ArrayList<String>(173);
     
-    
-    public boolean receive() throws IOException {
-        String line = in.readLine();
-        log.trace("READ A PARAMETER LINE:"+line);
-        while(line != null) {
-            Matcher dataFieldMatch = dataField.matcher(line);
-            fieldValues.clear();
-            if(dataFieldMatch.find() && "MISCF".equals(dataFieldMatch.group(1))) {
-                if(dataFieldMatch.find()) {
-                    @SuppressWarnings("unused")
-                    int bytes = Integer.parseInt(dataFieldMatch.group(1).trim());
-                    //#bytes between <STX> and <CR>
-                    if(dataFieldMatch.find()) {
-                        String s = dataFieldMatch.group(1).trim();
-                        int fields = Integer.parseInt(s);//#fields between <STX> and <CR>
-                        for(int i = 0; i < fields; i++) {
-                            if(dataFieldMatch.find()) {
-                                fieldValues.add(dataFieldMatch.group(1).trim());
-                            } else {
-                                log.warn("Missing expected field " + (i+1));
-                            }
-                        }
-                        receiveMiscF(fieldValues);
-                    } else {
-                        log.warn("Not a valid MISCF response, no field count:"+line);
-                    }
-                } else {
-                    log.warn("Not a valid MISCF response, no bytes:"+line);
-                }
-                
-            } else {
-                log.warn("Not a MISCF response:"+line);
-            }
-            line = in.readLine();
-        }
-        return true;
-    }
     
     /**
      * Receives and parses a MISCA or MISCF response from the PB840
      * @return
      * @throws IOException
      */
-    public boolean receiveResponse() throws IOException {
+    public boolean receive() throws IOException {
         String line = in.readLine();
         log.trace("READ A PARAMETER LINE:"+line);
         while(line != null) {
             Matcher dataFieldMatch = dataField.matcher(line);
             fieldValues.clear();
+            fieldValues.add("ZERO");
             if(dataFieldMatch.find() && "MISCF".equals(dataFieldMatch.group(1))) {
+                fieldValues.add("MISCF");
                 if(dataFieldMatch.find()) {
+                    fieldValues.add(dataFieldMatch.group(1).trim());
                     @SuppressWarnings("unused")
                     int bytes = Integer.parseInt(dataFieldMatch.group(1).trim());
                     //#bytes between <STX> and <CR>
                     if(dataFieldMatch.find()) {
                         String s = dataFieldMatch.group(1).trim();
+                        fieldValues.add(s);
                         int fields = Integer.parseInt(s);//#fields between <STX> and <CR>
+                        fieldValues.add("<STX"); // This will keep field numbers consistent
                         for(int i = 0; i < fields; i++) {
                             if(dataFieldMatch.find()) {
                                 fieldValues.add(dataFieldMatch.group(1).trim());
@@ -112,6 +73,8 @@ public class PB840Parameters extends PB840 {
                                 log.warn("Missing expected field " + (i+1));
                             }
                         }
+                        fieldValues.add("<ETX>"); // for consistency
+                        fieldValues.add("<CR>");
                         receiveMiscF(fieldValues);
                     } else {
                         log.warn("Not a valid MISCF response, no field count:"+line);
@@ -121,13 +84,17 @@ public class PB840Parameters extends PB840 {
                 }
                 
             } else if(dataFieldMatch.find() && "MISCA".equals(dataFieldMatch.group(1))) {
-            	if(dataFieldMatch.find()) {
+                fieldValues.add("MISCA");
+                if(dataFieldMatch.find()) {
+                    fieldValues.add(dataFieldMatch.group(1).trim());
                     @SuppressWarnings("unused")
                     int bytes = Integer.parseInt(dataFieldMatch.group(1).trim());
                     //#bytes between <STX> and <CR>
                     if(dataFieldMatch.find()) {
                         String s = dataFieldMatch.group(1).trim();
+                        fieldValues.add(s);
                         int fields = Integer.parseInt(s);//#fields between <STX> and <CR>
+                        fieldValues.add("<STX>");
                         for(int i = 0; i < fields; i++) {
                             if(dataFieldMatch.find()) {
                                 fieldValues.add(dataFieldMatch.group(1).trim());
@@ -135,6 +102,8 @@ public class PB840Parameters extends PB840 {
                                 log.warn("Missing expected field " + (i+1));
                             }
                         }
+                        fieldValues.add("<ETX>");
+                        fieldValues.add("<CR>");
                         receiveMiscA(fieldValues);
                     } else {
                         log.warn("Not a valid MISCA response, no field count:"+line);

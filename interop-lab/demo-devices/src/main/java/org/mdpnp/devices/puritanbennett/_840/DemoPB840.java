@@ -5,9 +5,10 @@ import ice.ConnectionState;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -25,21 +26,21 @@ import org.slf4j.LoggerFactory;
 public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     private static final Logger log = LoggerFactory.getLogger(DemoPB840.class);
     private InstanceHolder<ice.SampleArray> flowSampleArray, pressureSampleArray;
-    
-    private static final int IGNORED_FIELDS = 5;// to skip fields: header, # of bytes, # of fields, <STX>
-    
+
     private class MyPB840Waveforms extends PB840Waveforms {
 
         public MyPB840Waveforms(InputStream input, OutputStream output) {
             super(input, output);
         }
+
         @Override
         public void receiveBreath(Collection<Number> flow, Collection<Number> pressure) {
             flowSampleArray = sampleArraySample(flowSampleArray, flow, "", rosetta.MDC_FLOW_AWAY.VALUE, 0, rosetta.MDC_DIM_L_PER_MIN.VALUE, 50, null);
-            pressureSampleArray = sampleArraySample(pressureSampleArray, pressure, "", rosetta.MDC_PRESS_AWAY.VALUE, 0, rosetta.MDC_DIM_CM_H2O.VALUE, 50, null);
+            pressureSampleArray = sampleArraySample(pressureSampleArray, pressure, "", rosetta.MDC_PRESS_AWAY.VALUE, 0, rosetta.MDC_DIM_CM_H2O.VALUE,
+                    50, null);
         }
     }
-    
+
     public DemoPB840(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop, 2, PB840.class);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
@@ -47,490 +48,445 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         deviceIdentity.model = "840";
         writeDeviceIdentity();
     }
-    
-    //settings
-    protected InstanceHolder<ice.Numeric> respRateSetting, tidalVolSetting, peakFlowSetting, o2PctSetting, pressureSensitivitySetting;
-    protected InstanceHolder<ice.Numeric> apneaIntervalSetting, apneaTidalVolSetting, apneaRespiratoryRateSetting, apneaPeakFlowSetting, apneaO2PctSetting;
-    //monitored data
-    protected InstanceHolder<ice.Numeric> respRate, totalRespiratoryRate, exhaledTidalVolume, exhaledMinuteVolume, spontMinuteVol;
-    //alarms
-    protected InstanceHolder<ice.AlarmSettings> inspPressure, exhaledMV, exhaledMandTidalVolume, exhaledSpontTidalVolume, respRateAlarm, inspiredTidalVolume;
-    
-    //System Alarms
-    protected InstanceHolder<ice.Alert> alarmSilence;//field 105 XXX what should be the most appropriate type for these?
-    //Patient Alarms
-    //protected InstanceHolder<ice.PatientAlertTopic> Patient Alarms
-    
-    protected final List<InstanceHolder<ice.Numeric>> otherFields = new ArrayList<InstanceHolder<ice.Numeric>>();
-    
-//    private static final String[] fieldNames = new String[] {
-//        "PB_TIME", null, "PB_DATE", "PB_VENT_TYPE", "PB_MODE", "PB_MANDATORY_TYPE", "PB_SPONTANEOUS_TYPE", "PB_TRIGGER_TYPE",
-//        "PB_SETTING_RESP_RATE", "PB_SETTING_TIDAL_VOLUME", "PB_SETTING_PEAK_FLOW", "PB_SETTING_O2PCT",
-//        "PB_SETTING_PRESS_SENSITIVITY", "PB_SETTING_PEEP_CPAP", "PB_SETTING_PLATEAU", "PB_SETTING_APNEA_INTERVAL",
-//        "PB_SETTING_APNEA_TIDAL_VOLUME", "PB_SETTING_APNEA_RESPIRATORY_RATE", "PB_SETTING_APNEA_PEAK_FLOW",
-//        "PB_SETTING_APNEA_O2PCT", "PB_SETTING_PCV_APNEA_INSP_PRESSURE", "PB_SETTING_PCV_APNEA_INSP_TIME",
-//        "PB_SETTING_APNEA_FLOW_PATTERN", "PB_SETTING_MANDATORY", "PB_APNEA_IE_INSP_COMPONENT",
-//        "PB_SETTING_IE_EXP_COMPONENT", "PB_SETTING_SUPPORT_PRESSURE", "PB_SETTING_FLOW_PATTERN",
-//        "PB_SETTING_100PCT_O2_SUCTION", null /* insp press high alarm*/, null /* exp press low alarm*/,
-//        null /* exhaled MV high*/, null /* exhaled MV low*/, null /* exhaled mand tidal volume high*/,
-//        null /* exhaled mand tidal volume low*/, null /* exhaled spont tidal volume high*/,
-//        null /* exhaled spont tidal volume low*/, null /* high resp rate */, null /* high inspired tidal volume*/,
-//        "PB_SETTING_BASE_FLOW", "PB_SETTING_FLOW_SENSITIVITY", "PB_SETTING_PCV_INSP_PRESSURE",
-//        "PB_SETTING_PCV_INSP_TIME", "PB_SETTING_IE_INSP_COMPONENT", "PB_SETTING_IE_EXP_COMPONENT",
-//        "PB_SETTING_CONSTANT_DURING_RATE_CHANGE", "PB_SETTING_TUBE_ID", "PB_SETTING_TUBE_TYPE",
-//        "PB_SETTING_HUMIDIFICATION_TYPE", "PB_SETTING_HUMIDIFIER_VOLUME", "PB_SETTING_O2_SENSOR",
-//        "PB_SETTING_DISCONNECT_SENSITIVITY", "PB_SETTING_RISE_TIME_PCT", "PB_SETTING_PAVPCT_SUPPORT",
-//        "PB_SETTING_EXP_SENSITIVITY", "PB_SETTING_IBW", "PB_SETTING_TARGET_SUPP_VOLUME", 
-//    };
-    
-    private static final String[] miscFfieldNames = new String[] {
-    	"PB_TIME",//field 5
-    	null, //ventilator ID
-    	"PB_DATE", 
-    	"PB_VENT_TYPE",
-    	"PB_MODE",
 
-    	"PB_MANDATORY_TYPE", //field 10
-    	"PB_SPONTANEOUS_TYPE",
-    	"PB_TRIGGER_TYPE",
-    	"PB_SETTING_RESP_RATE",
-    	"PB_SETTING_TIDAL_VOLUME",
-    	"PB_SETTING_PEAK_FLOW",
-    	"PB_SETTING_O2PCT",
-    	"PB_SETTING_PRESS_SENSITIVITY", //field 17
-    	"PB_SETTING_PEEP_CPAP",
-    	"PB_SETTING_PLATEAU",
+    abstract class PB840Field {
+        final String name;
 
-    	"PB_SETTING_APNEA_INTERVAL",//field 20
-    	"PB_SETTING_APNEA_TIDAL_VOLUME",
-    	"PB_SETTING_APNEA_RESPIRATORY_RATE",
-    	"PB_SETTING_APNEA_PEAK_FLOW",
-    	"PB_SETTING_APNEA_O2PCT",
-    	"PB_SETTING_PCV_APNEA_INSP_PRESSURE",
-    	"PB_SETTING_PCV_APNEA_INSP_TIME", //field 26
-    	"PB_SETTING_APNEA_FLOW_PATTERN",
-    	"PB_SETTING_MANDATORY_TYPE",
-    	"PB_APNEA_IE_INSP_COMPONENT",
+        public PB840Field(final String name) {
+            this.name = name;
+        }
 
-    	"PB_SETTING_IE_EXP_COMPONENT",//field 30
-    	"PB_SETTING_SUPPORT_PRESSURE",
-    	"PB_SETTING_FLOW_PATTERN",
-    	"PB_SETTING_100PCT_O2_SUCTION",
-    	null /* insp press high alarm*/,
-    	null /* exp press low alarm*/,
-    	null /* exhaled MV high*/,
-    	null /* exhaled MV low*/,
-    	null /* exhaled mand tidal volume high*/,
-    	null /* exhaled mand tidal volume low*/,
+        abstract void handle(List<String> fieldValues);
+    }
 
-    	null /* exhaled spont tidal volume high*/,//field 40
-    	null /* exhaled spont tidal volume low*/,
-    	null /* high resp rate */,
-    	null /* high inspired tidal volume*/,
-    	"PB_SETTING_BASE_FLOW",//field 44
-    	"PB_SETTING_FLOW_SENSITIVITY",
-    	"PB_SETTING_PCV_INSP_PRESSURE",
-    	"PB_SETTING_PCV_INSP_TIME",
-    	"PB_SETTING_IE_INSP_COMPONENT",
-    	"PB_SETTING_IE_EXP_COMPONENT",
+    class PB840Numeric extends PB840Field {
+        final int fieldNumber;
+        final String units;
 
-    	"PB_SETTING_CONSTANT_DURING_RATE_CHANGE",//field 50
-    	"PB_SETTING_TUBE_ID",//field 51
-    	"PB_SETTING_TUBE_TYPE",
-    	"PB_SETTING_HUMIDIFICATION_TYPE",
-    	"PB_SETTING_HUMIDIFIER_VOLUME",
-    	"PB_SETTING_O2_SENSOR",
-    	"PB_SETTING_DISCONNECT_SENSITIVITY",
-    	"PB_SETTING_RISE_TIME_PCT",
-    	"PB_SETTING_PAVPCT_SUPPORT",
-    	"PB_SETTING_EXP_SENSITIVITY",
+        public PB840Numeric(final String name, final String units, final int fieldNumber) {
+            super(name);
+            this.fieldNumber = fieldNumber;
+            this.units = units;
+        }
 
-    	"PB_SETTING_IBW", //field 60
-    	"PB_SETTING_TARGET_SUPP_VOLUME",
-    	"PB_SETTING_HIGH_PEEP",
-    	"PB_SETTING_LOW_PEEP",
-    	"PB_SETTING_HIGH_PEEP_TIME",
-    	"PB_SETTING_HIGH_SP_INS_TIME_LIM",
-    	"PB_SETTING_CIRCUIT_TYPE",
-    	"PB_SETTING_LOW_PEEP_TIME",
-    	"PB_SETTING_EXPIRATORY_TIME",
-    	"PB_END_INSPIRATORY_PRESSURE",
+        @Override
+        void handle(List<String> fieldValues) {
+            try {
+                numericInstances.put(name,
+                        numericSample(numericInstances.get(name), parseFloat(fieldValues.get(fieldNumber)), name, name, units, null));
+            } catch (NumberFormatException nfe) {
+                log.warn("Poorly formatted numeric " + name + " " + fieldValues.get(fieldNumber), nfe);
+            }
+        }
+    }
 
-    	"PB_RESPIRATORY_RATE",//FIELD 70
-    	"PB_EXHALED_TIDAL_VOL",
-    	"PB_PATIENT_EXHALED_TIDAL_VOL",
-    	"PB_PEAK_AIRWAY_PRESSURE",
-    	"PB_MEAN_AIRWAY_PRESS",
-    	"PB_EXPIRATORY_COMPONENT_IE_RATION",
-    	"PB_IE_RATIO",
-    	"PB_DELIVERED_O2",
-    	"PB_INSPIRED_TIDAL_VOLUME",
-    	"PB_INTRINSIC_PEEP",
+    class PB840AlarmSetting extends PB840Field {
+        final int lowFieldNumber, highFieldNumber;
 
-    	"PB_ESTIMATED_TOTAL_RESISTANCE", //FIELD 80 
-    	"PB_ESTIMATED_PATIENT_RESISTANCE",
-    	"PB_ESTIMATED_PATIENT_ELASTANCE",
-    	"PB_ESTIMATED_PATIENT_COMPLIANCE",
-    	"PB_SALLOW_BREATHING_INDEX",
-    	"PB_SPONTANEOUS_PCT_INSPIRATORY_TIME",
-    	"PB_MONITORED_PEEP_CMH2O",
-    	"PB_SPONTANEOUS_INSPIRATORY_TIME",
-    	"PB_EXHALED_SPONTANEOUS_MINUTE_VOL",
+        public PB840AlarmSetting(final String name, final int lowFieldNumber, final int highFieldNumber) {
+            super(name);
+            this.lowFieldNumber = lowFieldNumber;
+            this.highFieldNumber = highFieldNumber;
+        }
 
-    	"PB_INTRINSIC_PEEP_EXPIRATORY_PAUSE", //FIELD 90
-    	"PB_TOTAL_PEEP_EXPIRATORY_PAUSE",
-    	"PB_STATIC_COMPLIANCE_INSPIRATORY_PAUSE",
-    	"PB_STATIC_RESISTANCE_INSPIRATORY_PAUSE",
-    	"PB_PLATEAU_PRESSURE_INSPIRATORY_PAUSE",
-    	"PB_HIGH_SPONTANEOUS_INSPIRATORY_ALERT",
-    	"PB_DYNAMIC_COMPLIANCE_ML_CMH2O_",
-    	"PB_DYNAMIC_RESISTANCE_CMH2OL",
-    	"PB_PEAK_SPONTANEOUS_FLOW",
-    	"PB_PEAK_EXPIRATORY_FLOW",
+        @Override
+        void handle(List<String> fieldValues) {
+            try {
+                // TODO using FLOAT_MIN, FLOAT_MAX as reserved values because
+                // otherwise cannot publish AlarmSettings
+                // with only one boundary condition
+                alarmSettingsInstances.put(
+                        name,
+                        alarmSettingsSample(alarmSettingsInstances.get(name),
+                                lowFieldNumber >= 0 ? parseFloat(fieldValues.get(lowFieldNumber), Float.MIN_VALUE) : Float.MIN_VALUE,
+                                highFieldNumber >= 0 ? parseFloat(fieldValues.get(highFieldNumber), Float.MAX_VALUE) : Float.MAX_VALUE, name));
+            } catch (NumberFormatException nfe) {
+                log.warn("Poorly formatted alarm setting " + name + " " + (lowFieldNumber >= 0 ? fieldValues.get(lowFieldNumber) : null) + " "
+                        + (highFieldNumber >= 0 ? fieldValues.get(highFieldNumber) : null), nfe);
+            }
+        }
+    }
 
-    	"PB_END_EXPIRATORY_FOW",//FIELD 100
-    	null,//reserved
-    	"PB_NEGATIVE_INSPIRATORY_FORCE",
-    	"PB_P01_PRESSURE_CHANGE",
-    	"PB_VITAL_CAPACITY",
-    	"PB_ALARM_SILENCE",
-    	"PB_APNEA_VENTILATION_ALARM",
-    	"PB_HIGH_EXHALED_MINUTE_ALARM",
-    	"PB_HIGH_EXHALED_TIDAL_VOL",
-    	"PB_HIGH_O2_PCT_ALARM", 
+    class PB840PatientAlert extends PB840Field {
+        final int fieldNumber;
 
-    	"PB_HIGH_INSPIRATORY_PRESSURE_ALARM",//FIELD 110
-    	"PB_HIGH_VENTILATOR_PRESSURE_ALARM",
-    	"PB_HIGH_RESPIRATORY_RATE_ALARM",
-    	"PB_AC_POWER_LOST_ALARM",
-    	"PB_INOPERATIVE_BATTERY_ALARM",
-    	"PB_LOW_BATTERY_ALARM",
-    	"PB_LOSS_POWER_ALARM",
-    	"PB_LOW_EXHA_MANDATORY_TIDAL_VOL",
-    	"PB_LOW_EXHA_MINUTE_TIDAL_VOL",
-    	"PB_LOW_EXHA_SPONTANEOUS_TIDAL_VOL",
+        public PB840PatientAlert(String name, final int fieldNumber) {
+            super(name);
+            this.fieldNumber = fieldNumber;
+        }
 
-    	"PB_LOW_O2_ALARM",//FIELD 120
-    	"PB_LOW_AIR_SUPPLY_PRESSURE_ALRM",
-    	"PB_LOW_O2_SUPPLY_PRESS_ALARM",
-    	"PB_COMPRESSOR_INOPERATIVE_ALARM",
-    	"PB_DISCONNECT_ALARM",
-    	"PB_SEVERE_OCCLUSION_ALARM",
-    	"PB_INSPIRATION_TOO_LONG_ALARM",
-    	"PB_PROCEDURE_ERROR",
-    	"PB_COMPLIANCE_LIMITED_TIDAL_VOL",
-    	"PB_HIGH_INSP_SPT_TIDAL_VOL",
+        @Override
+        void handle(List<String> fieldValues) {
+            writePatientAlert(name, fieldValues.get(fieldNumber));
+        }
+    }
 
-    	"PB_HIGH_INSPIRED_MANDATORY_TIDAL_VOL",//FIELD 130
-    	"PB_HIGH_COMPENSATION_LIMIT",
-    	"PB_PAV_STARTUP_TOOLONG_ALARM",
-    	"PB_RC_NOT_ASSESSED_ALARM",
-    	"PB_VOLUME_NOT_DELIVERED_VC_ALARM",
-    	"PB_VOLUMEN_NOT_DELIVERED_VS_ALARM",
-    	"PB_LOW_INSPIRATORY_PRESS_ALARM",
-    	"PB_TECH_MALFC_A5",
-    	"PB_TECH_MALFC_A10",
-    	"PB_TECH_MALFC_A15",
+    class PB840TechnicalAlert extends PB840Field {
+        final int fieldNumber;
 
-    	"PB_TECH_MALFC_A20", //FIELD 140
-    	"PB_TECH_MALFC_A25",
-    	"PB_TECH_MALFC_A30",
-    	"PB_TECH_MALFC_A35",
-    	"PB_TECH_MALFC_A40",
-    	"PB_TECH_MALFC_A45",
-    	"PB_TECH_MALFC_A50",
-    	"PB_TECH_MALFC_A55",
-    	"PB_TECH_MALFC_A60",
-    	"PB_TECH_MALFC_A65",
+        public PB840TechnicalAlert(String name, final int fieldNumber) {
+            super(name);
+            this.fieldNumber = fieldNumber;
+        }
 
-    	"PB_TECH_MALFC_A70",//FIELD 150
-    	"PB_TECH_MALFC_A75",
-    	"PB_TECH_MALFC_A80",
-    	"PB_TECH_MALFC_A85",
-    	"PB_SP_TIDAL_VOL",
-    	"PB_TOTAL_WORK_BREATHING",
-    	"PB_LEAK_COMPENSATOIN_STATE",
-    	"PB_PCT_LEAK",
-    	"PB_LEAK_AT_PEEP",
-    	"PB_V_LEAK",
+        @Override
+        void handle(List<String> fieldValues) {
+            writeTechnicalAlert(name, fieldValues.get(fieldNumber));
+        }
+    }
 
-    	null, //field 160
-    	null,
-    	null,
-    	null,
-    	null,
-    	null,
-    	null,
-    	null,
-    	null,
-    	null,
+    class PB840VentilatorId extends PB840Field {
+        final int fieldNumber;
 
-    	null, //field 170
-    	null,
-    	
+        public PB840VentilatorId(final int fieldNumber) {
+            super(null);
+            this.fieldNumber = fieldNumber;
+        }
+
+        @Override
+        void handle(List<String> fieldValues) {
+            if (!fieldValues.get(fieldNumber).equals(deviceIdentity.serial_number)) {
+                deviceIdentity.serial_number = fieldValues.get(fieldNumber);
+                writeDeviceIdentity();
+            }
+        }
+    }
+
+    protected Map<String, InstanceHolder<ice.Numeric>> numericInstances = new HashMap<String, InstanceHolder<ice.Numeric>>();
+    protected Map<String, InstanceHolder<ice.AlarmSettings>> alarmSettingsInstances = new HashMap<String, InstanceHolder<ice.AlarmSettings>>();
+
+    @Override
+    protected void unregisterAllAlarmSettingsInstances() {
+        alarmSettingsInstances.clear();
+        super.unregisterAllAlarmSettingsInstances();
+    }
+
+    @Override
+    protected void unregisterAllNumericInstances() {
+        numericInstances.clear();
+        super.unregisterAllNumericInstances();
+    }
+
+    private final PB840Field[] miscFFields = new PB840Field[] {
+            // TODO these should be externalized in a resource file
+            new PB840TechnicalAlert("PB_TIME", 5),
+            new PB840VentilatorId(6),
+            new PB840TechnicalAlert("PB_DATE", 7),
+            new PB840TechnicalAlert("PB_VENT_TYPE", 8),
+            new PB840TechnicalAlert("PB_MODE", 9),
+            new PB840TechnicalAlert("PB_MANDATORY_TYPE", 10),
+            new PB840TechnicalAlert("PB_SPONTANEOUS_TYPE", 11),
+            new PB840TechnicalAlert("PB_TRIGGER_TYPE", 12),
+            new PB840Numeric("PB_SETTING_RESP_RATE", rosetta.MDC_DIM_DIMLESS.VALUE, 13),
+            new PB840Numeric("PB_SETTING_TIDAL_VOLUME", rosetta.MDC_DIM_L.VALUE, 14),
+            new PB840Numeric("PB_SETTING_PEAK_FLOW", rosetta.MDC_DIM_L_PER_MIN.VALUE, 15),
+            new PB840Numeric("PB_SETTING_O2PCT", rosetta.MDC_DIM_PERCENT.VALUE, 16),
+            new PB840Numeric("PB_SETTING_PRESS_SENSITIVITY", rosetta.MDC_DIM_CM_H2O.VALUE, 17),
+            new PB840Numeric("PB_SETTING_PEEP_CPAP", rosetta.MDC_DIM_CM_H2O.VALUE, 18),
+            new PB840Numeric("PB_SETTING_PLATEAU", rosetta.MDC_DIM_SEC.VALUE, 19),
+            new PB840Numeric("PB_SETTING_APNEA_INTERVAL", rosetta.MDC_DIM_SEC.VALUE, 20),
+            new PB840Numeric("PB_SETTING_APNEA_TIDAL_VOLUME", rosetta.MDC_DIM_L.VALUE, 21),
+            new PB840Numeric("PB_SETTING_APNEA_RESPIRATORY_RATE", rosetta.MDC_DIM_DIMLESS.VALUE, 22),
+            new PB840Numeric("PB_SETTING_APNEA_PEAK_FLOW", rosetta.MDC_DIM_L_PER_MIN.VALUE, 23),
+            new PB840Numeric("PB_SETTING_APNEA_O2PCT", rosetta.MDC_DIM_PERCENT.VALUE, 24),
+            new PB840Numeric("PB_SETTING_PCV_APNEA_INSP_PRESSURE", rosetta.MDC_DIM_CM_H2O.VALUE, 25),
+            new PB840Numeric("PB_SETTING_PCV_APNEA_INSP_TIME", rosetta.MDC_DIM_SEC.VALUE, 26),
+            new PB840TechnicalAlert("PB_SETTING_APNEA_FLOW_PATTERN", 27),
+            new PB840TechnicalAlert("PB_SETTING_MANDATORY_TYPE", 28),
+            new PB840Numeric("PB_APNEA_IE_INSP_COMPONENT", rosetta.MDC_DIM_DIMLESS.VALUE, 29),
+            new PB840Numeric("PB_SETTING_IE_EXP_COMPONENT", rosetta.MDC_DIM_DIMLESS.VALUE, 30),
+            new PB840Numeric("PB_SETTING_SUPPORT_PRESSURE", rosetta.MDC_DIM_CM_H2O.VALUE, 31),
+            new PB840TechnicalAlert("PB_SETTING_FLOW_PATTERN", 32),
+            new PB840TechnicalAlert("PB_SETTING_100PCT_O2_SUCTION", 33),
+            new PB840AlarmSetting("PB_INSP_PRESSURE", 35, 34),
+            new PB840AlarmSetting("PB_EXHALED_MV", 37, 36),
+            new PB840AlarmSetting("PB_EXHALED_MAND_TIDAL_VOLUME", 39, 38),
+            new PB840AlarmSetting("PB_EXHALED_SPONT_TIDAL_VOLUME", 41, 40),
+            new PB840AlarmSetting("PB_RESP_RATE", -1, 42), // or "OFF" ... could
+                                                           // be a problem
+            new PB840AlarmSetting("PB_INSPIRED_TIDAL_VOLUME", -1, 43),
+            new PB840Numeric("PB_SETTING_BASE_FLOW", rosetta.MDC_DIM_L_PER_MIN.VALUE, 44),
+            new PB840Numeric("PB_SETTING_FLOW_SENSITIVITY", rosetta.MDC_DIM_L_PER_MIN.VALUE, 45),
+            new PB840Numeric("PB_SETTING_PCV_INSP_PRESSURE", rosetta.MDC_DIM_SEC.VALUE, 46),
+            new PB840Numeric("PB_SETTING_PCV_INSP_TIME", rosetta.MDC_DIM_SEC.VALUE, 47),
+            new PB840Numeric("PB_SETTING_IE_INSP_COMPONENT", rosetta.MDC_DIM_DIMLESS.VALUE, 48),
+            new PB840Numeric("PB_SETTING_IE_EXP_COMPONENT", rosetta.MDC_DIM_DIMLESS.VALUE, 49),
+            new PB840Numeric("PB_SETTING_CONSTANT_DURING_RATE_CHANGE", rosetta.MDC_DIM_DIMLESS.VALUE, 50),
+            new PB840Numeric("PB_SETTING_TUBE_ID", rosetta.MDC_DIM_MILLI_M.VALUE, 51),
+            new PB840TechnicalAlert("PB_SETTING_TUBE_TYPE", 52),
+            new PB840TechnicalAlert("PB_SETTING_HUMIDIFICATION_TYPE", 53),
+            new PB840Numeric("PB_SETTING_HUMIDIFIER_VOLUME", rosetta.MDC_DIM_L.VALUE, 54),
+            new PB840TechnicalAlert("PB_SETTING_O2_SENSOR", 55),
+            new PB840Numeric("PB_SETTING_DISCONNECT_SENSITIVITY", rosetta.MDC_DIM_PERCENT.VALUE, 56), // or
+                                                                                                      // "OFF"
+            new PB840Numeric("PB_SETTING_RISE_TIME_PCT", rosetta.MDC_DIM_PERCENT.VALUE, 57),
+            new PB840Numeric("PB_SETTING_PAVPCT_SUPPORT", rosetta.MDC_DIM_PERCENT.VALUE, 58),
+            new PB840Numeric("PB_SETTING_EXP_SENSITIVITY", rosetta.MDC_DIM_DIMLESS.VALUE, 59),
+            new PB840Numeric("PB_SETTING_IBW", rosetta.MDC_DIM_KILO_G.VALUE, 60),
+            new PB840Numeric("PB_SETTING_TARGET_SUPP_VOLUME", rosetta.MDC_DIM_L.VALUE, 61),
+            new PB840Numeric("PB_SETTING_HIGH_PEEP", rosetta.MDC_DIM_CM_H2O.VALUE, 62),
+            new PB840Numeric("PB_SETTING_LOW_PEEP", rosetta.MDC_DIM_CM_H2O.VALUE, 63),
+            new PB840Numeric("PB_SETTING_HIGH_PEEP_TIME", rosetta.MDC_DIM_SEC.VALUE, 64),
+            new PB840Numeric("PB_SETTING_HIGH_SP_INS_TIME_LIM", rosetta.MDC_DIM_SEC.VALUE, 65),
+            new PB840TechnicalAlert("PB_SETTING_CIRCUIT_TYPE", 66),
+            new PB840Numeric("PB_SETTING_LOW_PEEP_TIME", rosetta.MDC_DIM_SEC.VALUE, 67),
+            new PB840Numeric("PB_SETTING_EXPIRATORY_TIME", rosetta.MDC_DIM_SEC.VALUE, 68),
+            new PB840Numeric("PB_END_INSPIRATORY_PRESSURE", rosetta.MDC_DIM_CM_H2O.VALUE, 69),
+            new PB840Numeric("PB_RESPIRATORY_RATE", rosetta.MDC_DIM_DIMLESS.VALUE, 70),
+            new PB840Numeric("PB_EXHALED_TIDAL_VOL", rosetta.MDC_DIM_L.VALUE, 71),
+            new PB840Numeric("PB_PATIENT_EXHALED_MINUTE_VOL", rosetta.MDC_DIM_L_PER_MIN.VALUE, 72),
+            new PB840Numeric("PB_PEAK_AIRWAY_PRESSURE", rosetta.MDC_DIM_CM_H2O.VALUE, 73),
+            new PB840Numeric("PB_MEAN_AIRWAY_PRESS", rosetta.MDC_DIM_CM_H2O.VALUE, 74),
+            new PB840Numeric("PB_EXPIRATORY_COMPONENT_IE_RATION", rosetta.MDC_DIM_DIMLESS.VALUE, 75),
+            new PB840TechnicalAlert("PB_IE_RATIO", 76),
+            new PB840Numeric("PB_DELIVERED_O2_PCT", rosetta.MDC_DIM_PERCENT.VALUE, 77),
+            new PB840Numeric("PB_INSPIRED_TIDAL_VOLUME", rosetta.MDC_DIM_L.VALUE, 78),
+            new PB840Numeric("PB_INTRINSIC_PEEP", rosetta.MDC_DIM_CM_H2O.VALUE, 79),
+            new PB840Numeric("PB_ESTIMATED_TOTAL_RESISTANCE", rosetta.MDC_DIM_CM_H2O_PER_L_PER_SEC.VALUE, 80),
+            new PB840Numeric("PB_ESTIMATED_PATIENT_RESISTANCE", rosetta.MDC_DIM_CM_H2O_PER_L_PER_SEC.VALUE, 81),
+            new PB840Numeric("PB_ESTIMATED_PATIENT_ELASTANCE", rosetta.MDC_DIM_CM_H2O_PER_L.VALUE, 82),
+            new PB840Numeric("PB_ESTIMATED_PATIENT_COMPLIANCE", rosetta.MDC_DIM_MILLI_L_PER_CM_H2O.VALUE, 83),
+            new PB840Numeric("PB_NORM_RAPID_SHALLOW_BREATHING_INDEX", rosetta.MDC_DIM_DIMLESS.VALUE, 84),
+            new PB840Numeric("PB_RAPID_SHALLOW_BREATHING_INDEX", rosetta.MDC_DIM_DIMLESS.VALUE, 85),
+            new PB840Numeric("PB_SPONTANEOUS_PCT_INSPIRATORY_TIME", rosetta.MDC_DIM_DIMLESS.VALUE, 86),
+            new PB840Numeric("PB_MONITORED_PEEP_CMH2O", rosetta.MDC_DIM_CM_H2O.VALUE, 87),
+            new PB840Numeric("PB_SPONTANEOUS_INSPIRATORY_TIME", rosetta.MDC_DIM_SEC.VALUE, 88),
+            new PB840Numeric("PB_EXHALED_SPONTANEOUS_MINUTE_VOL", rosetta.MDC_DIM_L_PER_MIN.VALUE, 89),
+            new PB840Numeric("PB_INTRINSIC_PEEP_EXPIRATORY_PAUSE", rosetta.MDC_DIM_CM_H2O.VALUE, 90),
+            new PB840Numeric("PB_TOTAL_PEEP_EXPIRATORY_PAUSE", rosetta.MDC_DIM_CM_H2O.VALUE, 91),
+            new PB840Numeric("PB_STATIC_COMPLIANCE_INSPIRATORY_PAUSE", rosetta.MDC_DIM_MILLI_L_PER_CM_H2O.VALUE, 92),
+            new PB840Numeric("PB_STATIC_RESISTANCE_INSPIRATORY_PAUSE", rosetta.MDC_DIM_CM_H2O_PER_L_PER_SEC.VALUE, 93),
+            new PB840Numeric("PB_PLATEAU_PRESSURE_INSPIRATORY_PAUSE", rosetta.MDC_DIM_CM_H2O.VALUE, 94),
+            new PB840TechnicalAlert("PB_HIGH_SPONTANEOUS_INSPIRATORY_ALERT", 95),
+            new PB840Numeric("PB_DYNAMIC_COMPLIANCE_ML_CMH2O_", rosetta.MDC_DIM_MILLI_L_PER_CM_H2O.VALUE, 96),
+            new PB840Numeric("PB_DYNAMIC_RESISTANCE_CMH2OL", rosetta.MDC_DIM_CM_H2O_PER_L_PER_SEC.VALUE, 97),
+            new PB840Numeric("PB_PEAK_SPONTANEOUS_FLOW", rosetta.MDC_DIM_L_PER_MIN.VALUE, 98),
+            new PB840Numeric("PB_PEAK_EXPIRATORY_FLOW", rosetta.MDC_DIM_L_PER_MIN.VALUE, 99),
+            new PB840Numeric("PB_END_EXPIRATORY_FOW", rosetta.MDC_DIM_L_PER_MIN.VALUE, 100),
+            // 101 is reserved
+            new PB840Numeric("PB_NEGATIVE_INSPIRATORY_FORCE", rosetta.MDC_DIM_CM_H2O.VALUE, 102),
+            new PB840Numeric("PB_P01_PRESSURE_CHANGE", rosetta.MDC_DIM_CM_H2O.VALUE, 103),
+            new PB840Numeric("PB_VITAL_CAPACITY", rosetta.MDC_DIM_L.VALUE, 104),
+            new PB840PatientAlert("PB_ALARM_SILENCE", 105),
+            new PB840PatientAlert("PB_APNEA_VENTILATION", 106),
+            new PB840PatientAlert("PB_HIGH_EXHALED_MINUTE_VOLUME", 107),
+            new PB840PatientAlert("PB_HIGH_EXHALED_TIDAL_VOLUME", 108),
+            new PB840PatientAlert("PB_HIGH_O2_PCT", 109),
+
+            new PB840PatientAlert("PB_HIGH_INSPIRATORY_PRESSURE", 110), // FIELD
+                                                                        // 110
+            new PB840PatientAlert("PB_HIGH_VENTILATOR_PRESSURE", 111),
+            new PB840PatientAlert("PB_HIGH_RESPIRATORY_RATE", 112),
+            new PB840TechnicalAlert("PB_AC_POWER_LOSS", 113),
+            new PB840TechnicalAlert("PB_INOPERATIVE_BATTERY", 114),
+            new PB840TechnicalAlert("PB_LOW_BATTERY", 115),
+            new PB840TechnicalAlert("PB_LOSS_OF_POWER", 116),
+            new PB840PatientAlert("PB_LOW_EXHALED_MANDATORY_TIDAL_VOLUME", 117),
+            new PB840PatientAlert("PB_LOW_EXHALED_MINUTE_VOLUME", 118),
+            new PB840PatientAlert("PB_LOW_EXHALED_SPONTANEOUS_TIDAL_VOLUME", 119),
+
+            new PB840PatientAlert("PB_LOW_O2_PCT", 120), // FIELD 120
+            new PB840PatientAlert("PB_LOW_AIR_SUPPLY_PRESSURE", 121),
+            new PB840PatientAlert("PB_LOW_O2_SUPPLY_PRESSURE", 122),
+            new PB840TechnicalAlert("PB_COMPRESSOR_INOPERATIVE_ALARM", 123),
+            new PB840TechnicalAlert("PB_DISCONNECT", 124),
+            new PB840PatientAlert("PB_SEVERE_OCCLUSION", 125),
+            new PB840PatientAlert("PB_INSPIRATION_TOO_LONG", 126),
+            new PB840PatientAlert("PB_PROCEDURE_ERROR", 127),
+            new PB840PatientAlert("PB_COMPLIANCE_LIMITED_TIDAL_VOLUME", 128),
+            new PB840PatientAlert("PB_HIGH_INSPIRED_SPONTANEOUS_TIDAL_VOLUME", 129),
+
+            new PB840PatientAlert("PB_HIGH_INSPIRED_MANDATORY_TIDAL_VOLUME", 130), // FIELD
+                                                                                   // 130
+            new PB840PatientAlert("PB_HIGH_COMPENSATION_LIMIT", 131),
+            new PB840PatientAlert("PB_PAV_STARTUP_TOO LONG", 132),
+            new PB840PatientAlert("PB_RC_NOT_ASSESSED", 133),
+            new PB840PatientAlert("PB_VOLUME_NOT_DELIVERED_VC", 134),
+            new PB840PatientAlert("PB_VOLUME_NOT_DELIVERED_VS", 135),
+            new PB840PatientAlert("PB_LOW_INSPIRATORY_PRESSURE", 136),
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A5", 137),
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A10", 138),
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A15", 139),
+
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A20", 140), // FIELD
+                                                                     // 140
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A25", 141), new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A30", 142),
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A35", 143),
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A40", 144),
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A45", 145),
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A50", 146),
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A55", 147),
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A60", 148),
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A65", 149),
+
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A70", 150), // FIELD
+                                                                     // 150
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A75", 151), new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A80", 152),
+            new PB840TechnicalAlert("PB_TECH_MALFUNCTION_A85", 153), new PB840Numeric("PB_SP_TIDAL_VOL", rosetta.MDC_DIM_L.VALUE, 154),
+            new PB840Numeric("PB_TOTAL_WORK_BREATHING", rosetta.MDC_DIM_JOULES_PER_L.VALUE, 155),
+            new PB840TechnicalAlert("PB_LEAK_COMPENSATOIN_STATE", 156), new PB840TechnicalAlert("PB_PCT_LEAK", 157),
+            new PB840TechnicalAlert("PB_LEAK_AT_PEEP", 158), new PB840TechnicalAlert("PB_V_LEAK", 159),
+    // 160-171 reserved
     };
-    
+
     /**
      * field names for the miscA response
      */
-    private static final String[] miscAfieldNames = new String[] {
-    	"PB_TIME",//field 5
-    	null, //ventilator ID
-    	null,
-    	"PB_DATE", 
-    	"PB_MODE",
+    private final PB840Field[] miscAFields = new PB840Field[] {
+            // TODO these should be externalized in a resource file
+            new PB840TechnicalAlert("PB_TIME", 5),
+            new PB840VentilatorId(6),
+            // 7 not used
+            new PB840Numeric("PB_SETTING_RESP_RATE", rosetta.MDC_DIM_DIMLESS.VALUE, 10),
+            new PB840Numeric("PB_SETTING_TIDAL_VOLUME", rosetta.MDC_DIM_L.VALUE, 11),
+            new PB840Numeric("PB_SETTING_PEAK_FLOW", rosetta.MDC_DIM_L_PER_MIN.VALUE, 12),
+            new PB840Numeric("PB_SETTING_O2PCT", rosetta.MDC_DIM_PERCENT.VALUE, 13),
+            new PB840Numeric("PB_SETTING_PRESS_SENSITIVITY", rosetta.MDC_DIM_CM_H2O.VALUE, 14),
+            new PB840Numeric("PB_SETTING_PEEP_OR_PEEP_LOW", rosetta.MDC_DIM_CM_H2O.VALUE, 15),
+            new PB840Numeric("PB_SETTING_PLATEAU", rosetta.MDC_DIM_SEC.VALUE, 16),
+            new PB840Numeric("PB_SETTING_APNEA_INTERVAL", rosetta.MDC_DIM_SEC.VALUE, 21),
+            new PB840Numeric("PB_SETTING_APNEA_TIDAL_VOLUME", rosetta.MDC_DIM_L.VALUE, 22),
+            new PB840Numeric("PB_SETTING_APNEA_RESPIRATORY_RATE", rosetta.MDC_DIM_DIMLESS.VALUE, 23),
+            new PB840Numeric("PB_SETTING_APNEA_PEAK_FLOW", rosetta.MDC_DIM_L_PER_MIN.VALUE, 24),
+            new PB840Numeric("PB_SETTING_APNEA_O2PCT", rosetta.MDC_DIM_PERCENT.VALUE, 25),
+            new PB840Numeric("PB_SETTING_SUPPORT_PRESSURE", rosetta.MDC_DIM_CM_H2O.VALUE, 26),
+            new PB840TechnicalAlert("PB_SETTING_FLOW_PATTERN", 27),
+            new PB840TechnicalAlert("PB_SETTING_100PCT_O2_STATE", 30),
+            new PB840Numeric("PB_RESPIRATORY_RATE", rosetta.MDC_DIM_DIMLESS.VALUE, 34),
+            new PB840Numeric("PB_EXHALED_TIDAL_VOL", rosetta.MDC_DIM_L.VALUE, 35),
+            new PB840Numeric("PB_EXHALED_MINUTE_VOLUME", rosetta.MDC_DIM_L.VALUE, 36), // TODO
+                                                                                       // shouldn't
+                                                                                       // MV
+                                                                                       // be
+                                                                                       // L/min?
+                                                                                       // spec
+                                                                                       // says
+                                                                                       // liters...
+            new PB840Numeric("PB_EXHALED_SPONTANEOUS_MINUTE_VOL", rosetta.MDC_DIM_L_PER_MIN.VALUE, 37), // TODO
+                                                                                                        // also
+                                                                                                        // shouldn't
+                                                                                                        // this
+                                                                                                        // be
+                                                                                                        // a
+                                                                                                        // rate?
+            new PB840Numeric("PB_MAX_CIRCUIT_PRESSURE", rosetta.MDC_DIM_CM_H2O.VALUE, 38),
+            new PB840Numeric("PB_MEAN_AIRWAY_PRESSURE", rosetta.MDC_DIM_CM_H2O.VALUE, 39),
+            new PB840Numeric("PB_END_INSPIRATORY_PRESSURE", rosetta.MDC_DIM_CM_H2O.VALUE, 40),
+            new PB840Numeric("PB_EXP_COMP_IE_RATIO", rosetta.MDC_DIM_DIMLESS.VALUE, 41),
+            new PB840Numeric("PB_HIGH_CIRCUIT_PRESSURE_LIMIT", rosetta.MDC_DIM_CM_H2O.VALUE, 42),
+            new PB840AlarmSetting("PB_EXHALED_TIDAL_VOLUME", 45, -1), new PB840AlarmSetting("PB_EXHALED_MINUTE_VOLUME", 46, -1),
+            new PB840TechnicalAlert("PB_CIRCUIT_PRESSURE", 48), new PB840PatientAlert("PB_EXHALED_TIDAL_VOLUME", 51),
+            new PB840PatientAlert("PB_EXHALED_MINUTE_VOLUME", 52), new PB840PatientAlert("PB_RESPIRATORY_RATE", 53),
+            new PB840TechnicalAlert("PB_NO_O2_SUPPLY", 54), new PB840TechnicalAlert("PB_NO_AIR_SUPPLY", 55), new PB840TechnicalAlert("PB_APNEA", 57),
+            new PB840TechnicalAlert("PB_TIME2", 60), new PB840TechnicalAlert("PB_DATE", 62),
+            new PB840Numeric("PB_STATIC_COMPLIANCE_FROM_INSP_PAUSE", rosetta.MDC_DIM_MILLI_L_PER_CM_H2O.VALUE, 63),
+            new PB840Numeric("PB_STATIC_RESISTANCE_FROM_INSP_PAUSE", rosetta.MDC_DIM_CM_H2O_PER_L_PER_SEC.VALUE, 64),
+            new PB840Numeric("PB_DYNAMIC_COMPLIANCE", rosetta.MDC_DIM_MILLI_L_PER_CM_H2O.VALUE, 65),
+            new PB840Numeric("PB_DYNAMIC_RESISTANCE", rosetta.MDC_DIM_CM_H2O_PER_L_PER_SEC.VALUE, 66),
+            new PB840Numeric("PB_NEGATIVE_INSP_FORCE", rosetta.MDC_DIM_CM_H2O.VALUE, 67),
+            new PB840Numeric("PB_VITAL_CAPACITY", rosetta.MDC_DIM_L.VALUE, 68),
+            new PB840Numeric("PB_PEAK_SPONTANEOUS_FLOW", rosetta.MDC_DIM_L_PER_MIN.VALUE, 69),
+            new PB840Numeric("PB_VENTILATOR_SET_BASE_FLOW", rosetta.MDC_DIM_L_PER_MIN.VALUE, 70),
+            new PB840Numeric("PB_SETTING_FLOW_SENSITIVITY", rosetta.MDC_DIM_L_PER_MIN.VALUE, 71),
+            new PB840Numeric("PB_END_INSPIRATORY_PRESSURE", rosetta.MDC_DIM_CM_H2O.VALUE, 84),
+            new PB840Numeric("PB_INSP_PRESSURE_OR_PEEP_HIGH_SETTING", rosetta.MDC_DIM_CM_H2O.VALUE, 85),
+            new PB840Numeric("PB_INSP_TIME_OR_PEEP_HIGH_TIME_SETTING", rosetta.MDC_DIM_SEC.VALUE, 86),
+            new PB840Numeric("PB_SETTING_APNEA_INTERVAL", rosetta.MDC_DIM_SEC.VALUE, 87),
+            new PB840Numeric("PB_SETTING_APNEA_INSP_PRESSURE", rosetta.MDC_DIM_CM_H2O.VALUE, 88),
+            new PB840Numeric("PB_SETTING_APNEA_RESP_RATE", rosetta.MDC_DIM_DIMLESS.VALUE, 89),
+            new PB840Numeric("PB_SETTING_APNEA_INSP_TIME", rosetta.MDC_DIM_SEC.VALUE, 90),
+            new PB840Numeric("PB_SETTING_APNEA_O2_PCT", rosetta.MDC_DIM_PERCENT.VALUE, 91),
+            new PB840Numeric("PB_APNEA_HIGH_CIRCUIT_PRESSURE_LIMIT", rosetta.MDC_DIM_CM_H2O.VALUE, 92),
+            new PB840TechnicalAlert("PB_ALARM_SILENCE_STATE", 93), new PB840TechnicalAlert("PB_APNEA_ALARM_STATUS", 94),
+            new PB840TechnicalAlert("PB_SEVERE_OCCLUSION_DISCONNECT", 95), new PB840TechnicalAlert("PB_SETTING_INSP_COMPONENT_OF_IE_RATIO", 96),
+            new PB840TechnicalAlert("PB_SETTING_EXP_COMPONENT_OF_IE_RATIO", 97),
+            new PB840TechnicalAlert("PB_SETTING_INSP_COMPONENT_OF_APNEA_IE_RATIO", 98),
+            new PB840TechnicalAlert("PB_SETTING_EXP_COMPONENT_OF_APNEA_IE_RATION", 99),
+            new PB840TechnicalAlert("PB_CONSTANT_DURING_RATE_SETTING_CHANGE", 100), new PB840TechnicalAlert("PB_MONITORED_VALUE_OF_IE_RATIO", 101), };
 
-    	"PB_SETTING_RESP_RATE",//field 10
-    	"PB_SETTING_TIDAL_VOLUME",
-    	"PB_SETTING_PEAK_FLOW",
-    	"PB_SETTING_O2PCT",
-    	"PB_SETTING_PRESS_SENSITIVITY",
-    	"PB_SETTING_PEEP_CPAP",
-    	"PB_SETTING_PLATEAU",
-    	null,
-    	null,
-    	null,
+    protected static Float parseFloat(String s) throws NumberFormatException {
+        return parseFloat(s, null);
+    }
 
-    	null,//field 20
-    	"PB_SETTING_APNEA_INTERVAL",
-    	"PB_SETTING_APNEA_TIDAL_VOLUME",
-    	"PB_SETTING_APNEA_RESPIRATORY_RATE",
-    	"PB_SETTING_APNEA_PEAK_FLOW",
-    	"PB_SETTING_APNEA_O2PCT",
-    	"PB_SETTING_PCV_APNEA_INSP_PRESSURE",
-    	"PB_SETTING_PRESSURE_SUPPORT", 
-    	"PB_SETTING_FLOW_PATTERN",//field 27
-    	null,
-    	null,
-
-    	"PB_O2_PCT_STATE", //field 30
-    	null,
-    	null,
-    	null,
-    	"PB_TOTAL_REPS_RATE",
-    	"PB_EXHALED_TIDAL_VOL",
-    	"PB_EXHALED_MINUTE_VOL",
-    	"PB_SPONTANEOUS_VOL_", 
-    	"PB_MAX_CIRCUIT_PRESSURE",
-    	"PB_MEAN_AIRWAY_PRESSURE",
-
-    	"PB_END_INSPIRATORY_PRESS",//FIELD 40
-    	"PB_EXPIRATORY_COMPONENT_IE_RAT",
-    	"PB_HIGH_CIRCUIT_PRESS_LIMIT", 
-    	null,
-    	null,
-    	"PB_LOW_EXHALED_TIDAL_VOL",
-    	"PB_LOW_EXHALED_MINUTE_VOL",
-    	"PB_HIGH_RESP_RATE_LIMIT",
-    	"PB_HIGH_CIRCUIT_PRESS_ALARM",
-    	null,
-
-    	null, //field 50
-    	"PB_LOW_EXHALED_TIDAL_VOL_ALARAM",
-    	"PB_LOW_EXHALED_MINUTE_VOL_ALARM",
-    	"PB_HIGH_RESPIRATORY_RATE_ALARM",
-    	"PB_NO_O2_ALARM",
-    	"PB_NO_AIR_SUPPLY",
-    	null,
-    	"PB_APNEA_ALARM",
-    	null,
-    	null,
-
-    	"PB_VENTILATOR_TIME", //FIELD 60
-    	null,
-    	"PB_DATE",
-    	"PB_SATIC_COMPLIANCE",
-    	"PB_SATIC_RESISTANCE",
-    	"PB_NEGATIVE_INSPIRATORY_FORCE",
-    	"PB_VITAL_CAPACITY",
-    	"PB_PEAK_SPONTANEOUS_FLOW",
-
-    	"PB_VENTILATOR_SETBASE_FLOW", //FIELD 70
-    	"PB_FLOW_SENSITIVITY_SETTINGS",
-    	null,
-    	null,
-    	null,
-    	null,
-    	null,
-    	null,
-    	null,
-    	null,
-
-    	null,//field 80
-    	null,
-    	null,
-    	null,
-    	"PB_END_INSPIRATORY_PRESS",
-    	"PB_INSPIRATORY_PRESS",
-    	"PB_INSPIRATORY_TIME",
-    	"PB_SETTING_APNEA_INTERVAL",
-    	"PB_APNEA_INSPIRATORY_PRESS_SETTING",
-    	"PB_APNEA_RESPIRATORY_RATE_SETTING",
-
-    	"PB_APENA_INPIRATORY_TIME_SETTING",//FIELD 90
-    	"PB_APENA_O2_SETTING",
-    	"PB_APENEA_HIGH_CIRCUIT_PRESS",
-    	"PB_ALARM_SILENCE_STATUS",
-    	"PB_APENA_ALARM_STATUS",
-    	"PB_SEVERE_OCC_ALARM",
-    	"PB_INSPIRATORY_IE",
-    	"PB_EXPIRATORY_COMPONENT_IE",
-    	"PB_APNEA_INSPIRATORY_COMPONENT",
-    	"PB_APNEA_EXPIRATORY_COMPONENT",
-
-    	"PB_MAN_BREATHS",//FIELD 100
-    	"PB_MONITORED_IE_VAL",   	
-    };
-    
-    protected static Float parseFloat(String s) {
-        if(s == null || s.isEmpty() || "OFF".equals(s)) {
-            return null;
+    protected static Float parseFloat(String s, Float ifNull) throws NumberFormatException {
+        if (s == null || s.isEmpty() || "OFF".equals(s)) {
+            return ifNull;
         } else {
             return Float.parseFloat(s);
         }
     }
-    
-    protected static Integer parseInt(String s){
-    	Integer i;
-    	try{
-    		//checks null and empty cases. Are there others, like "OFF"
-    		i = Integer.valueOf(s);
-    		return i;
-    	}catch(NumberFormatException e){
-    		return null;
-    	}
-    }
-    
+
     private class MyPB840Parameters extends PB840Parameters {
         public MyPB840Parameters(InputStream input, OutputStream output) {
             super(input, output);
         }
+
         @Override
         public void receiveMiscF(List<String> fieldValues) {
             reportConnected("Received MISCF");
-            if(!fieldValues.get(1).equals(deviceIdentity.serial_number)) {
-                deviceIdentity.serial_number = fieldValues.get(1);
-                writeDeviceIdentity();
-            }
-            //alarms
-            inspPressure = alarmSettingsSample(inspPressure, parseFloat(fieldValues.get(30)), parseFloat(fieldValues.get(29)), "PB_INSP_PRESSURE");
-            exhaledMV = alarmSettingsSample(exhaledMV, parseFloat(fieldValues.get(32)), parseFloat(fieldValues.get(31)), "PB_EXHALED_MV");
-            exhaledMandTidalVolume = alarmSettingsSample(exhaledMandTidalVolume, parseFloat(fieldValues.get(34)), parseFloat(fieldValues.get(33)), "PB_EXHALED_MAND_TIDAL_VOLUME");
-            exhaledSpontTidalVolume = alarmSettingsSample(exhaledSpontTidalVolume, parseFloat(fieldValues.get(36)), parseFloat(fieldValues.get(35)), "PB_EXHALED_SPONT_TIDAL_VOLUME");
-            respRateAlarm = alarmSettingsSample(respRateAlarm, null, parseFloat(fieldValues.get(37)), "PB_RESP_RATE");
-            inspiredTidalVolume = alarmSettingsSample(inspiredTidalVolume, null, parseFloat(fieldValues.get(38)), "PB_INSPIRED_TIDAL_VOLUME");
-            
-            //settings
-            respRateSetting = numericSample(respRateSetting, parseInt(fieldValues.get(8)) /*field 13*/, miscFfieldNames[8], miscFfieldNames[8], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            tidalVolSetting = numericSample(tidalVolSetting, parseInt(fieldValues.get(9)) /*field 14*/, miscFfieldNames[9], miscFfieldNames[9], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/); 
-            peakFlowSetting = numericSample(peakFlowSetting, parseInt(fieldValues.get(10)) /*field 15*/, miscFfieldNames[10], miscFfieldNames[10], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            o2PctSetting = numericSample(o2PctSetting, parseInt(fieldValues.get(11)) /*field 16*/, miscFfieldNames[11],  miscFfieldNames[11],rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            pressureSensitivitySetting = numericSample(pressureSensitivitySetting, parseInt(fieldValues.get(12)) /*field 17*/, miscFfieldNames[12], miscFfieldNames[12], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            apneaIntervalSetting = numericSample(apneaIntervalSetting, parseInt(fieldValues.get(15)) /*field 20*/, miscFfieldNames[15], miscFfieldNames[15], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            apneaTidalVolSetting = numericSample(apneaTidalVolSetting, parseInt(fieldValues.get(16)) /*field 21*/, miscFfieldNames[16], miscFfieldNames[16], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            apneaRespiratoryRateSetting = numericSample(apneaRespiratoryRateSetting, parseInt(fieldValues.get(17)) /*field 22*/, miscFfieldNames[17], miscFfieldNames[17], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            apneaPeakFlowSetting = numericSample(apneaPeakFlowSetting, parseInt(fieldValues.get(18)) /*field 23*/, miscFfieldNames[18], miscFfieldNames[18], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            apneaO2PctSetting = numericSample(apneaO2PctSetting, parseInt(fieldValues.get(19)) /*field 24*/, miscFfieldNames[19], miscFfieldNames[19], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            
-            //monitored values
-            respRate = numericSample(respRate, parseInt(fieldValues.get(65)) /*field 70*/ , "PB_RESPIRATORY_RATE", "PB_RESPIRATORY_RATE", rosetta.MDC_DIM_DIMLESS.VALUE, null);
-            exhaledTidalVolume = numericSample(exhaledTidalVolume, parseInt(fieldValues.get(66)) /* field 71*/, "PB_EXHALED_TIDAL_VOL", "PB_EXHALED_TIDAL_VOL", rosetta.MDC_DIM_DIMLESS.VALUE, null);
-            exhaledMinuteVolume = numericSample(exhaledMinuteVolume, parseInt(fieldValues.get(67)) /* field 72*/, miscFfieldNames[67], miscFfieldNames[67], rosetta.MDC_DIM_DIMLESS.VALUE, null);
-            
+
+            markOldPatientAlertInstances();
             markOldTechnicalAlertInstances();
-            for(int i = 0; i < fieldValues.size(); i++) {
-//                String name = i < fieldNames.length ? fieldNames[i] : ("PB_F_"+(i+5));
-            	String name = i < miscFfieldNames.length ? miscFfieldNames[i] : ("PB_F_"+(i+IGNORED_FIELDS));//5
-                if(null != name) {
-                    try {
-                        float f = Float.parseFloat(fieldValues.get(i));
-                        while(i >= otherFields.size()) {
-                            otherFields.add(null);
-                        }
-                        otherFields.set(i, numericSample(otherFields.get(i), f, name, name, rosetta.MDC_DIM_DIMLESS.VALUE, null));
-                    } catch(NumberFormatException nfe) {
-                        writeTechnicalAlert(name, fieldValues.get(i));
-                    }
-                }
+
+            for (PB840Field field : miscFFields) {
+                field.handle(fieldValues);
             }
+
+            clearOldPatientAlertInstances();
             clearOldTechnicalAlertInstances();
         }
-        
+
         @Override
         public void receiveMiscA(List<String> fieldValues) {
-            reportConnected("Received MISCF");
-            if(!fieldValues.get(1).equals(deviceIdentity.serial_number)) {
-                deviceIdentity.serial_number = fieldValues.get(1);
-                writeDeviceIdentity();
-            }
-            
-            //MISCA settings
-            respRateSetting = numericSample(respRateSetting, parseInt(fieldValues.get(5)) /*field 10*/, miscAfieldNames[5], miscAfieldNames[5], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            tidalVolSetting = numericSample(tidalVolSetting, parseInt(fieldValues.get(6)) /*field 11*/, miscAfieldNames[6], miscAfieldNames[6], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            peakFlowSetting = numericSample(peakFlowSetting, parseInt(fieldValues.get(7)) /*field 12*/, miscAfieldNames[7], miscAfieldNames[7], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            o2PctSetting = numericSample(o2PctSetting, parseInt(fieldValues.get(8)) /*field 13*/, miscAfieldNames[8], miscAfieldNames[8], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            pressureSensitivitySetting = numericSample(pressureSensitivitySetting, parseInt(fieldValues.get(9)) /*field 14*/, miscAfieldNames[9], miscAfieldNames[9], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            apneaIntervalSetting = numericSample(apneaIntervalSetting, parseInt(fieldValues.get(16)) /*field 21*/, miscAfieldNames[16], miscAfieldNames[16], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            apneaTidalVolSetting = numericSample(apneaTidalVolSetting, parseInt(fieldValues.get(17)) /*field 22*/, miscAfieldNames[17], miscAfieldNames[17], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            apneaRespiratoryRateSetting = numericSample(apneaRespiratoryRateSetting, parseInt(fieldValues.get(18)) /*field 23*/, miscAfieldNames[18], miscAfieldNames[18], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            apneaPeakFlowSetting = numericSample(apneaPeakFlowSetting, parseInt(fieldValues.get(19)) /*field 24*/, miscAfieldNames[19], miscAfieldNames[19], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);
-            apneaO2PctSetting = numericSample(apneaO2PctSetting, parseInt(fieldValues.get(20)) /*field 25*/, miscAfieldNames[20], miscAfieldNames[20], rosetta.MDC_DIM_DIMLESS.VALUE, null /*new Time_t(0)*/);           
-            
-            //monitored values
-            totalRespiratoryRate = numericSample(totalRespiratoryRate, parseInt(fieldValues.get(29)) /* field 34*/, miscAfieldNames[29], miscAfieldNames[29], rosetta.MDC_DIM_DIMLESS.VALUE, null); 
-            exhaledTidalVolume = numericSample(exhaledTidalVolume, parseInt(fieldValues.get(30)) /* field 35*/, miscAfieldNames[30], miscAfieldNames[30], rosetta.MDC_DIM_DIMLESS.VALUE, null); 
-            exhaledMinuteVolume = numericSample(exhaledMinuteVolume, parseInt(fieldValues.get(31)) /* field 36*/, miscAfieldNames[31], miscAfieldNames[31], rosetta.MDC_DIM_DIMLESS.VALUE, null); 
-            spontMinuteVol  = numericSample(spontMinuteVol, parseInt(fieldValues.get(32)) /* field 37*/, miscAfieldNames[32], miscAfieldNames[32], rosetta.MDC_DIM_DIMLESS.VALUE, null);
-            
-            
-            
+            reportConnected("Received MISCA");
+
             markOldTechnicalAlertInstances();
-            for(int i = 0; i < fieldValues.size(); i++) {
-                String name = i < miscAfieldNames.length ? miscAfieldNames[i] : ("PB_F_"+(i+IGNORED_FIELDS));//+5
-                if(null != name) {
-                    try {
-                        float f = Float.parseFloat(fieldValues.get(i));
-                        while(i >= otherFields.size()) {
-                            otherFields.add(null);
-                        }
-                        otherFields.set(i, numericSample(otherFields.get(i), f, name, ""+(i+5), rosetta.MDC_DIM_DIMLESS.VALUE, null));
-                    } catch(NumberFormatException nfe) {
-                        writeTechnicalAlert(name, fieldValues.get(i));
-                    }
-                }
+            markOldPatientAlertInstances();
+
+            for (PB840Field field : miscAFields) {
+                field.handle(fieldValues);
             }
+
             clearOldTechnicalAlertInstances();
+            clearOldPatientAlertInstances();
         }
     }
 
     private class RequestSlowData implements Runnable {
         public void run() {
+            log.trace("RequestSlowData called");
             if (ice.ConnectionState.Connected.equals(getState())) {
                 try {
                     PB840Parameters params = (PB840Parameters) getDelegate(0);
                     params.sendF();
+                    log.trace("Issued SENDF");
                 } catch (Throwable t) {
                     log.error(t.getMessage(), t);
                 }
+            } else {
+                log.trace("Not issuing SENDF where state=" + getState());
             }
 
         }
     }
-    
+
     @Override
     protected void doInitCommands(int idx) throws IOException {
         super.doInitCommands(idx);
-        switch(idx) {
+        switch (idx) {
         case 0:
-            ((PB840Parameters)getDelegate(idx)).sendF();
+            ((PB840Parameters) getDelegate(idx)).sendReset();
+            log.trace("Issued a RSET for doInitCommands");
+            ((PB840Parameters) getDelegate(idx)).sendF();
+            log.trace("Issued a SNDF for doInitCommands");
             break;
         default:
-            
+
         }
     }
-    
+
     private ScheduledFuture<?> requestSlowData;
-    
+
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState, String transitionNote) {
 
@@ -541,8 +497,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             stopRequestSlowData();
         }
         super.stateChanged(newState, oldState, transitionNote);
-    }    
-    
+    }
+
     private synchronized void startRequestSlowData() {
         if (null == requestSlowData) {
             requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 1000L, 1000L, TimeUnit.MILLISECONDS);
@@ -551,6 +507,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             log.trace("Slow data request already scheduled");
         }
     }
+
     private synchronized void stopRequestSlowData() {
         if (null != requestSlowData) {
             requestSlowData.cancel(false);
@@ -561,10 +518,9 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         }
     }
 
-    
     @Override
     protected PB840 buildDelegate(int idx, InputStream in, OutputStream out) {
-        switch(idx) {
+        switch (idx) {
         case 0:
             return new MyPB840Parameters(in, out);
         case 1:
@@ -578,11 +534,11 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     protected boolean delegateReceive(int idx, PB840 delegate) throws IOException {
         return delegate.receive();
     }
-    
+
     @Override
     public SerialProvider getSerialProvider(int idx) {
         SerialProvider serialProvider = super.getSerialProvider(idx).duplicate();
-        switch(idx) {
+        switch (idx) {
         case 0:
             serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
             break;
@@ -590,15 +546,25 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             serialProvider.setDefaultSerialSettings(38400, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
             break;
         }
-        
+
         return serialProvider;
     }
-    
+
     @Override
     protected long getMaximumQuietTime(int idx) {
-        return 5000L;
+        switch (idx) {
+        case 0:
+            return 5000L;
+        case 1:
+            // There is no protocol negotiation for waveform data
+            // so there is no utility in interrupting the main parameter
+            // collection when waveform data is absent
+            return Long.MAX_VALUE;
+        default:
+            return super.getMaximumQuietTime(idx);
+        }
     }
-    
+
     @Override
     protected String iconResourceName() {
         return "pb840.png";
