@@ -2,8 +2,10 @@ package org.mdpnp.devices.puritanbennett._840;
 
 import ice.ConnectionState;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.Collection;
@@ -12,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.puritanbennett._840.PB840.Units;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
@@ -30,6 +33,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     private InstanceHolder<ice.SampleArray> flowSampleArray, pressureSampleArray;
     private final Calendar currentDeviceTime = Calendar.getInstance();
     private final Time_t currentDeviceTimeAsTimeT = new Time_t(0,0); 
+    protected final Map<PB840.Units, String> unitsMap = new HashMap<PB840.Units, String>();
+    protected final Map<String, String> terms = new HashMap<String, String>();
 
     private class MyPB840Waveforms extends PB840Waveforms {
 
@@ -39,14 +44,16 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
 
         @Override
         public void receiveBreath(Collection<Number> flow, Collection<Number> pressure) {
-            flowSampleArray = sampleArraySample(flowSampleArray, flow, "", rosetta.MDC_FLOW_AWAY.VALUE, 0, rosetta.MDC_DIM_L_PER_MIN.VALUE, 50, null);
-            pressureSampleArray = sampleArraySample(pressureSampleArray, pressure, "", rosetta.MDC_PRESS_AWAY.VALUE, 0, rosetta.MDC_DIM_CM_H2O.VALUE,
-                    50, null);
+            flowSampleArray = sampleArraySample(flowSampleArray, flow, rosetta.MDC_FLOW_AWAY.VALUE, rosetta.MDC_FLOW_AWAY.VALUE, 0, rosetta.MDC_DIM_L_PER_MIN.VALUE, 50, currentDeviceTimeAsTimeT);
+            pressureSampleArray = sampleArraySample(pressureSampleArray, pressure, rosetta.MDC_PRESS_AWAY.VALUE, rosetta.MDC_PRESS_AWAY.VALUE, 0, rosetta.MDC_DIM_CM_H2O.VALUE,
+                    50, currentDeviceTimeAsTimeT);
         }
     }
 
     public DemoPB840(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop, 2, PB840.class);
+        loadUnits(unitsMap);
+        loadTerms(terms);
         currentDeviceTime.set(Calendar.SECOND, 0);
         currentDeviceTime.set(Calendar.MILLISECOND, 0);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
@@ -84,37 +91,53 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         }
     }
 
+    protected static final void loadUnits(Map<PB840.Units, String> map) {
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(PB840Parameters.class.getResourceAsStream("units")));
+            String line = null;
+
+            int lineNumber = 0;
+            
+            while (null != (line = br.readLine())) {
+                lineNumber++;
+                line = line.trim();
+                if ('#' != line.charAt(0)) {
+                    String v[] = line.split("\t");
+
+                    if (v.length != 2) {
+                        log.warn("Bad line" + lineNumber + ":" + line);
+                    } else {
+                        map.put(Units.valueOf(v[0]), v[1]);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
     
-    
-    protected static String standardUnits(PB840.Units units) {
-        switch(units) {
-        case CMH2O:
-            return rosetta.MDC_DIM_CM_H2O.VALUE;
-        case LITERS:
-            return rosetta.MDC_DIM_L.VALUE;
-        case LITERS_PER_MIN:
-            return rosetta.MDC_DIM_L_PER_MIN.VALUE;
-        case PERCENT:
-            return rosetta.MDC_DIM_PERCENT.VALUE;
-        case SECONDS:
-            return rosetta.MDC_DIM_SEC.VALUE;
-        case MILLIMETERS:
-            return rosetta.MDC_DIM_MILLI_M.VALUE;
-        case KILOGRAMS:
-            return rosetta.MDC_DIM_KILO_G.VALUE;
-        case CMH2O_PER_L_PER_SEC:
-            return rosetta.MDC_DIM_CM_H2O_PER_L_PER_SEC.VALUE;
-        case CMH2O_PER_L:
-            return rosetta.MDC_DIM_CM_H2O_PER_L.VALUE;
-        case ML_PER_CMH2O:
-            return rosetta.MDC_DIM_MILLI_L_PER_CM_H2O.VALUE;
-        case JOULES_PER_LITER:
-            return rosetta.MDC_DIM_JOULES_PER_L.VALUE;
-        case BREATHS_PER_MIN:
-            // TODO Can't find breaths per minute in rosetta units
-        case UNKNOWN:    
-        default:
-            return rosetta.MDC_DIM_DIMLESS.VALUE;
+    protected static final void loadTerms(Map<String, String> map) {
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(PB840Parameters.class.getResourceAsStream("terms")));
+            String line = null;
+
+            int lineNumber = 0;
+            
+            while (null != (line = br.readLine())) {
+                lineNumber++;
+                line = line.trim();
+                if ('#' != line.charAt(0)) {
+                    String v[] = line.split("\t");
+
+                    if (v.length != 2) {
+                        log.warn("Bad line" + lineNumber + ":" + line);
+                    } else {
+                        map.put(v[0], v[1]);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
     
@@ -125,10 +148,12 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
 
         @Override
         public void receiveNumeric(String name, Units units, String value) {
+            String canonicalName = terms.get(name);
+            canonicalName = null == canonicalName ? name : canonicalName;
             try {
                 numericInstances.put(name,
                         numericSample(numericInstances.get(name), parseFloat(value), 
-                                name, name, standardUnits(units), currentDeviceTimeAsTimeT));
+                                canonicalName, name, unitsMap.get(units), currentDeviceTimeAsTimeT));
             } catch (NumberFormatException nfe) {
                 log.warn("Poorly formatted numeric " + name + " " + value, nfe);
             }
