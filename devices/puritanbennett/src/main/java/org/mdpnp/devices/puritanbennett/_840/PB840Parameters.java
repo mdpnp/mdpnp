@@ -191,7 +191,9 @@ public class PB840Parameters extends PB840 {
 
         @Override
         void handle(List<String> fieldValues) {
-            receiveAlarmSetting(name, fieldValues.get(lowFieldNumber), fieldValues.get(highFieldNumber));
+            receiveAlarmSetting(name, 
+                    lowFieldNumber < 0 ? null : fieldValues.get(lowFieldNumber), 
+                    highFieldNumber < 0 ? null : fieldValues.get(highFieldNumber));
         }
         
         @Override
@@ -255,6 +257,8 @@ public class PB840Parameters extends PB840 {
             return "VentilatorId["+name+","+fieldNumber+"]";
         }
     }
+    
+    
     private final Field[] miscFFields = new Field[] {
             // TODO these should be externalized in a resource file
             new TechnicalAlert("PB_TIME", 5),
