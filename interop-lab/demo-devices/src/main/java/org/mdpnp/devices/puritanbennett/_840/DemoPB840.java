@@ -43,6 +43,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
 
     public DemoPB840(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop, 2, PB840.class);
+        fields.put("MISCF", miscFFields);
+        fields.put("MISCA", miscAFields);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Puritan Bennett";
         deviceIdentity.model = "840";
@@ -404,6 +406,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             new PB840TechnicalAlert("PB_SETTING_EXP_COMPONENT_OF_APNEA_IE_RATION", 99),
             new PB840TechnicalAlert("PB_CONSTANT_DURING_RATE_SETTING_CHANGE", 100), new PB840TechnicalAlert("PB_MONITORED_VALUE_OF_IE_RATIO", 101), };
 
+    protected final Map<String, PB840Field[]> fields = new HashMap<String, PB840Field[]>();
+    
     protected static Float parseFloat(String s) throws NumberFormatException {
         return parseFloat(s, null);
     }
@@ -422,33 +426,23 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         }
 
         @Override
-        public void receiveMiscF(List<String> fieldValues) {
-            reportConnected("Received MISCF");
+        public void receive(String responseType, List<String> fieldValues) {
+            final PB840Field[] fields = DemoPB840.this.fields.get(responseType);
+            if(fields != null) {
+                reportConnected("Received "+responseType);
 
-            markOldPatientAlertInstances();
-            markOldTechnicalAlertInstances();
-
-            for (PB840Field field : miscFFields) {
-                field.handle(fieldValues);
+                markOldPatientAlertInstances();
+                markOldTechnicalAlertInstances();
+    
+                for (PB840Field field : fields) {
+                    field.handle(fieldValues);
+                }
+    
+                clearOldPatientAlertInstances();
+                clearOldTechnicalAlertInstances();
+            } else {
+                log.warn("Unknown response type " + responseType);
             }
-
-            clearOldPatientAlertInstances();
-            clearOldTechnicalAlertInstances();
-        }
-
-        @Override
-        public void receiveMiscA(List<String> fieldValues) {
-            reportConnected("Received MISCA");
-
-            markOldTechnicalAlertInstances();
-            markOldPatientAlertInstances();
-
-            for (PB840Field field : miscAFields) {
-                field.handle(fieldValues);
-            }
-
-            clearOldTechnicalAlertInstances();
-            clearOldPatientAlertInstances();
         }
     }
 

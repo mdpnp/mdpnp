@@ -54,8 +54,9 @@ public class PB840Parameters extends PB840 {
             Matcher dataFieldMatch = dataField.matcher(line);
             fieldValues.clear();
             fieldValues.add("ZERO");
-            if(dataFieldMatch.find() && "MISCF".equals(dataFieldMatch.group(1))) {
-                fieldValues.add("MISCF");
+            if(dataFieldMatch.find()) {
+                final String responseType = dataFieldMatch.group(1).trim();
+                fieldValues.add(responseType);
                 if(dataFieldMatch.find()) {
                     fieldValues.add(dataFieldMatch.group(1).trim());
                     @SuppressWarnings("unused")
@@ -70,50 +71,20 @@ public class PB840Parameters extends PB840 {
                             if(dataFieldMatch.find()) {
                                 fieldValues.add(dataFieldMatch.group(1).trim());
                             } else {
-                                log.warn("Missing expected field " + (i+1));
+                                log.warn("Missing next expected field " + fieldValues.size());
                             }
                         }
                         fieldValues.add("<ETX>"); // for consistency
                         fieldValues.add("<CR>");
-                        receiveMiscF(fieldValues);
+                        receive(responseType, fieldValues);
                     } else {
-                        log.warn("Not a valid MISCF response, no field count:"+line);
+                        log.warn("Not a valid response, no field count:"+line);
                     }
                 } else {
-                    log.warn("Not a valid MISCF response, no bytes:"+line);
+                    log.warn("Not a valid response, no bytes:"+line);
                 }
-                
-            } else if(dataFieldMatch.find() && "MISCA".equals(dataFieldMatch.group(1))) {
-                fieldValues.add("MISCA");
-                if(dataFieldMatch.find()) {
-                    fieldValues.add(dataFieldMatch.group(1).trim());
-                    @SuppressWarnings("unused")
-                    int bytes = Integer.parseInt(dataFieldMatch.group(1).trim());
-                    //#bytes between <STX> and <CR>
-                    if(dataFieldMatch.find()) {
-                        String s = dataFieldMatch.group(1).trim();
-                        fieldValues.add(s);
-                        int fields = Integer.parseInt(s);//#fields between <STX> and <CR>
-                        fieldValues.add("<STX>");
-                        for(int i = 0; i < fields; i++) {
-                            if(dataFieldMatch.find()) {
-                                fieldValues.add(dataFieldMatch.group(1).trim());
-                            } else {
-                                log.warn("Missing expected field " + (i+1));
-                            }
-                        }
-                        fieldValues.add("<ETX>");
-                        fieldValues.add("<CR>");
-                        receiveMiscA(fieldValues);
-                    } else {
-                        log.warn("Not a valid MISCA response, no field count:"+line);
-                    }
-                } else {
-                    log.warn("Not a valid MISCA response, no bytes:"+line);
-                }
-            	
-            }else {         
-                log.warn("Not a MISCF/MISCA response:"+line);
+            } else {         
+                log.warn("Not a valid response:"+line);
             }
             line = in.readLine();
         }
@@ -122,21 +93,14 @@ public class PB840Parameters extends PB840 {
     
 
     /**
-     * Receives the response for a MISCF command (request for ventilator settigns, 
-     * monitored data and alarm information)
+     * Receives the response for a command type
+     * e.g. MISCF - request for ventilator settings, 
+     *              monitored data and alarm information
+     *      MISCA - request for ventilator settings 
+     *              and monitored data
      * @param fieldValues
      */
-    public void receiveMiscF(List<String> fieldValues) {
-        
-    }
-    
-    /**
-     * Receives the response for a MISCA command (requests info on ventilator settings
-     *  and monitored data)
-     * 
-     * @param fieldValues
-     */
-    public void receiveMiscA(List<String> fieldValues) {
+    public void receive(String type, List<String> fieldValues) {
         
     }
 }
