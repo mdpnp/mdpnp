@@ -63,19 +63,24 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
 
     class PB840Numeric extends PB840Field {
         final int fieldNumber;
-        final String units;
+        final String vendor_name, units;
 
         public PB840Numeric(final String name, final String units, final int fieldNumber) {
+            this(name, name, units, fieldNumber);
+        }
+        
+        public PB840Numeric(final String name, final String vendor_name, final String units, final int fieldNumber) {
             super(name);
-            this.fieldNumber = fieldNumber;
+            this.vendor_name = vendor_name;
             this.units = units;
+            this.fieldNumber = fieldNumber;
         }
 
         @Override
         void handle(List<String> fieldValues) {
             try {
                 numericInstances.put(name,
-                        numericSample(numericInstances.get(name), parseFloat(fieldValues.get(fieldNumber)), name, name, units, null));
+                        numericSample(numericInstances.get(name), parseFloat(fieldValues.get(fieldNumber)), name, vendor_name, units, null));
             } catch (NumberFormatException nfe) {
                 log.warn("Poorly formatted numeric " + name + " " + fieldValues.get(fieldNumber), nfe);
             }
