@@ -12,7 +12,7 @@ public abstract class PB840 {
     protected final OutputStream out;
     
     public PB840(InputStream in, OutputStream out) {
-        this.in = new BufferedReader(new InputStreamReader(in, Charset.forName("ASCII")));;
+        this.in = new BufferedReader(new InputStreamReader(in, Charset.forName("ASCII")));
         this.out = out;
     }
     public abstract boolean receive() throws IOException;
