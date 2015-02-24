@@ -5,6 +5,7 @@ import ice.ConnectionState;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,9 +23,13 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.infrastructure.Time_t;
+
 public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     private static final Logger log = LoggerFactory.getLogger(DemoPB840.class);
     private InstanceHolder<ice.SampleArray> flowSampleArray, pressureSampleArray;
+    private final Calendar currentDeviceTime = Calendar.getInstance();
+    private final Time_t currentDeviceTimeAsTimeT = new Time_t(0,0); 
 
     private class MyPB840Waveforms extends PB840Waveforms {
 
@@ -42,6 +47,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
 
     public DemoPB840(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop, 2, PB840.class);
+        currentDeviceTime.set(Calendar.SECOND, 0);
+        currentDeviceTime.set(Calendar.MILLISECOND, 0);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Puritan Bennett";
         deviceIdentity.model = "840";
@@ -77,6 +84,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         }
     }
 
+    
+    
     protected static String standardUnits(PB840.Units units) {
         switch(units) {
         case CMH2O:
@@ -119,7 +128,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             try {
                 numericInstances.put(name,
                         numericSample(numericInstances.get(name), parseFloat(value), 
-                                name, name, standardUnits(units), null));
+                                name, name, standardUnits(units), currentDeviceTimeAsTimeT));
             } catch (NumberFormatException nfe) {
                 log.warn("Poorly formatted numeric " + name + " " + value, nfe);
             }
@@ -159,6 +168,25 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
                 deviceIdentity.serial_number = id;
                 writeDeviceIdentity();
             }
+        }
+        
+        @Override
+        public void receiveTime(int hour, int minute) {
+            currentDeviceTime.set(Calendar.HOUR_OF_DAY, hour);
+            currentDeviceTime.set(Calendar.MINUTE, minute);
+            long tm = currentDeviceTime.getTimeInMillis();
+            currentDeviceTimeAsTimeT.sec = (int) (tm / 1000L);
+            currentDeviceTimeAsTimeT.nanosec = (int)(1000000L * (tm % 1000L));
+        }
+        
+        @Override
+        public void receiveDate(int month, int day, int year) {
+            currentDeviceTime.set(Calendar.MONTH, month);
+            currentDeviceTime.set(Calendar.DATE, day);
+            currentDeviceTime.set(Calendar.YEAR, year);
+            long tm = currentDeviceTime.getTimeInMillis();
+            currentDeviceTimeAsTimeT.sec = (int) (tm / 1000L);
+            currentDeviceTimeAsTimeT.nanosec = (int)(1000000L * (tm % 1000L));
         }
         
         @Override
