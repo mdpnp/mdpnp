@@ -18,6 +18,7 @@ import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
+
 import org.mdpnp.devices.BuildInfo;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
@@ -29,6 +30,7 @@ import org.springframework.context.support.AbstractApplicationContext;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.net.URL;
@@ -56,6 +58,7 @@ import java.util.concurrent.CountDownLatch;
  * @see IceApplicationProvider
  *
  */
+@SuppressWarnings("serial")
 public class IceAppsContainer extends DemoFrame {
 
     private static final Logger log = LoggerFactory.getLogger(IceAppsContainer.class);
@@ -78,7 +81,7 @@ public class IceAppsContainer extends DemoFrame {
         final Publisher         publisher   = rtConfig.getPublisher();
         final Subscriber        subscriber  = rtConfig.getSubscriber();
         final DomainParticipant participant = rtConfig.getParticipant();
-        final String            udi         = rtConfig.getUdi();
+        final String            udi         = (String) context.getBean("supervisorUdi");
 
         final DeviceListModel nc = (DeviceListModel) context.getBean("deviceListModel");
 
@@ -164,7 +167,6 @@ public class IceAppsContainer extends DemoFrame {
         // Start with showing the main panel.
         //
         ol.show(panel.getContent(), Main.getId());
-
 
         addWindowListener(new WindowAdapter() {
             @Override

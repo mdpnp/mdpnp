@@ -12,18 +12,16 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.pca;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.Subscriber;
-import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.RtConfig;
-import org.mdpnp.apps.testapp.vital.*;
-import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.rtiapi.data.EventLoop;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
@@ -32,6 +30,26 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.RtConfig;
+import org.mdpnp.apps.testapp.vital.Value;
+import org.mdpnp.apps.testapp.vital.Vital;
+import org.mdpnp.apps.testapp.vital.VitalModel;
+import org.mdpnp.apps.testapp.vital.VitalModelImpl;
+import org.mdpnp.apps.testapp.vital.VitalModelListener;
+import org.mdpnp.devices.EventLoopHandler;
+import org.mdpnp.devices.TimeManager;
+import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
+import org.mdpnp.rtiapi.data.EventLoop;
+
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 @SuppressWarnings("serial")
 /**
@@ -444,9 +462,11 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
         final Publisher pub=rtSetup.getPublisher();
         final Subscriber s=rtSetup.getSubscriber();
         final DomainParticipant participant=rtSetup.getParticipant();
+        final TimeManager timeManager = new TimeManager(pub, s, 
+                AbstractSimulatedDevice.randomUDI(), "VitalMonitoring");
         final DeviceListModel nc = new DeviceListModel(rtSetup.getSubscriber(),
                 rtSetup.getEventLoop(),
-                rtSetup.getTimeManager());
+                timeManager);
         
         final EventLoopHandler handler = rtSetup.getHandler();
 

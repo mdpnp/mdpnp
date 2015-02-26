@@ -53,10 +53,4 @@
           factory-method="getPublisher">
     </bean>
     
-    <bean id="timeManager" class="org.mdpnp.devices.TimeManager"
-          factory-bean="rtConfig"
-          factory-method="getTimeManager">
-    </bean>
-
-
 </beans>

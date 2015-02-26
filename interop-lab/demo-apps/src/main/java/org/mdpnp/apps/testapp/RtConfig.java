@@ -1,15 +1,18 @@
 package org.mdpnp.apps.testapp;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantFactoryQos;
-import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.publication.PublisherQos;
-import com.rti.dds.subscription.Subscriber;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.TimeZone;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.devices.TimeManager;
-import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
@@ -19,16 +22,13 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.TimeZone;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.domain.DomainParticipantFactoryQos;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.publication.PublisherQos;
+import com.rti.dds.subscription.Subscriber;
 
 //
 // Combined with DriverContext.xml, RtConfig::setupDDS is like @Configuration annotation for spring
@@ -38,13 +38,11 @@ public class RtConfig {
     private static final Logger log = LoggerFactory.getLogger(RtConfig.class);
 
     private int domainId;
-    private String udi;
     private EventLoop eventLoop;
     private Publisher publisher;
     private Subscriber subscriber;
     private DomainParticipant participant;
     private EventLoopHandler handler;
-    private TimeManager timeManager;
 
     public static RtConfig setupDDS(final int domainId) {
         final EventLoop eventLoop = new EventLoop();
@@ -52,7 +50,6 @@ public class RtConfig {
 
         // This could prove confusing
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
-        final String udi = AbstractSimulatedDevice.randomUDI();
 
         final DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
         DomainParticipantFactory.get_instance().get_qos(qos);
@@ -75,14 +72,12 @@ public class RtConfig {
 
         final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final Publisher publisher = participant.create_publisher(pubQos, null, StatusKind.STATUS_MASK_NONE);
-        final TimeManager timeManager = new TimeManager(publisher, subscriber, udi, "Supervisor");
 
         final CountDownLatch startSignal = new CountDownLatch(1);
 
         Runnable enable = new Runnable() {
             public void run() {
                 participant.enable();
-                timeManager.start();
                 qos.entity_factory.autoenable_created_entities = true;
                 DomainParticipantFactory.get_instance().set_qos(qos);
                 startSignal.countDown();
@@ -108,8 +103,6 @@ public class RtConfig {
         conf.subscriber = subscriber;
         conf.participant = participant;
         conf.handler = handler;
-        conf.udi = udi;
-        conf.timeManager = timeManager;
         
         return conf;
     }
@@ -121,10 +114,6 @@ public class RtConfig {
 
     public int getDomainId() {
         return domainId;
-    }
-
-    public String getUdi() {
-        return udi;
     }
 
     public EventLoop getEventLoop() {
@@ -147,10 +136,6 @@ public class RtConfig {
         return handler;
     }
 
-    public TimeManager getTimeManager() {
-        return timeManager;
-    }
-    
     public static boolean loadAndSetIceQos() {
 
         // Unfortunately this throws an Exception if there are errors in
