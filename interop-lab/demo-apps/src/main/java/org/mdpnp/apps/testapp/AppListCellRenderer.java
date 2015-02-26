@@ -19,12 +19,14 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 
+import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
+
 @SuppressWarnings({ "serial", "rawtypes" })
 /**
  * @author Jeff Plourde
  *
  */
-public class AppListCellRenderer extends JLabel implements ListCellRenderer {
+public class AppListCellRenderer extends JLabel implements ListCellRenderer<AppType> {
 
     public AppListCellRenderer() {
         super();
@@ -34,8 +36,8 @@ public class AppListCellRenderer extends JLabel implements ListCellRenderer {
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        IceApplicationProvider.AppType app = value == null ? null : (IceApplicationProvider.AppType) value;
+    public Component getListCellRendererComponent(JList list, AppType value, int index, boolean isSelected, boolean cellHasFocus) {
+        IceApplicationProvider.AppType app = value == null ? null : value;
 
         if (null != app) {
             setIcon(app.getIcon());

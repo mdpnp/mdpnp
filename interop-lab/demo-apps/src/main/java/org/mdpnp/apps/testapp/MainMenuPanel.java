@@ -23,6 +23,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
+import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,12 +35,9 @@ import org.slf4j.LoggerFactory;
 public class MainMenuPanel extends JPanel {
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(MainMenuPanel.class);
-    @SuppressWarnings("rawtypes")
-    private final JList appList;
-    @SuppressWarnings("rawtypes")
-    private final JList deviceList;
+    private final JList<AppType> appList;
+    private final JList<Device> deviceList;
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     public MainMenuPanel(IceApplicationProvider.AppType[] appTypes) {
         super(new GridBagLayout());
 
@@ -49,13 +47,13 @@ public class MainMenuPanel extends JPanel {
 
         GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(2, 10,
                 2, 10), 0, 0);
-        appList = new JList(appTypes);
+        appList = new JList<AppType>(appTypes);
         appList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         appList.setVisibleRowCount(0);
         appList.setFixedCellHeight(150);
         appList.setFixedCellWidth(150);
         
-        deviceList = new JList();
+        deviceList = new JList<Device>();
         deviceList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         deviceList.setVisibleRowCount(0);
         deviceList.setFixedCellHeight(150);
@@ -66,7 +64,7 @@ public class MainMenuPanel extends JPanel {
         
         lcr.setHorizontalAlignment(SwingConstants.CENTER);
         lcr.setVerticalAlignment(SwingConstants.CENTER);
-
+        
         dlcr.setHorizontalAlignment(SwingConstants.CENTER);
         dlcr.setVerticalAlignment(SwingConstants.CENTER);
 
@@ -109,13 +107,11 @@ public class MainMenuPanel extends JPanel {
 
     }
 
-    @SuppressWarnings("rawtypes")
-    public JList getAppList() {
+    public JList<AppType> getAppList() {
         return appList;
     }
 
-    @SuppressWarnings("rawtypes")
-    public JList getDeviceList() {
+    public JList<Device> getDeviceList() {
         return deviceList;
     }
 

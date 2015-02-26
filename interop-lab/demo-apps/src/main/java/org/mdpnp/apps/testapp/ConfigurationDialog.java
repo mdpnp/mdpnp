@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public class ConfigurationDialog extends JDialog {
     private final JTextArea welcomeText = new JTextArea(8, 50);
     private final JScrollPane welcomeScroll = new JScrollPane(welcomeText);
-    private final JComboBox applications = new JComboBox(Application.values());
+    private final JComboBox<Configuration.Application> applications = new JComboBox<Configuration.Application>(Application.values());
     private final JLabel applicationsLabel = new JLabel("Application:");
     private final JButton start = new JButton("Start");
     private final JButton quit = new JButton("Quit");
@@ -56,7 +56,7 @@ public class ConfigurationDialog extends JDialog {
     private final JPanel addressPanel = new JPanel(addressCards);
     private final JLabel domainIdLabel = new JLabel("Domain Id:");
 
-    public JComboBox getApplications() {
+    public JComboBox<Configuration.Application> getApplications() {
         return applications;
     }
 
