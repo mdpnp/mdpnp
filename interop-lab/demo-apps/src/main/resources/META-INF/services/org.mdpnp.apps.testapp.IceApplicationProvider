@@ -5,3 +5,4 @@ org.mdpnp.apps.testapp.xray.IceApplicationFactory
 org.mdpnp.apps.testapp.sim.SimControlFactory
 org.mdpnp.apps.testapp.export.FileAdapterApplicationFactory
 org.mdpnp.apps.testapp.hl7.HL7ApplicationFactory
+org.mdpnp.apps.testapp.diag.DiagnosticApplicationFactory

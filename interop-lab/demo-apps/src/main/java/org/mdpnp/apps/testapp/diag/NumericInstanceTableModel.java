@@ -1,26 +1,17 @@
-package org.mdpnp.apps.testapp.hl7;
+package org.mdpnp.apps.testapp.diag;
 
-import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
-import org.mdpnp.rtiapi.data.NumericInstanceModel;
+import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.InstanceTableModel;
 
 @SuppressWarnings("serial")
-public class NumericInstanceTableModel extends AbstractTableModel implements TableModel, ListDataListener {
-    private final NumericInstanceModel numericInstanceModel;
+public class NumericInstanceTableModel extends InstanceTableModel<ice.Numeric, ice.NumericDataReader> implements TableModel, ListDataListener {
     
-    public NumericInstanceTableModel(final NumericInstanceModel numericInstanceModel) {
-        this.numericInstanceModel = numericInstanceModel;
-        this.numericInstanceModel.addListDataListener(this);
+    public NumericInstanceTableModel(final InstanceModel<ice.Numeric, ice.NumericDataReader> instanceModel) {
+        super(instanceModel);
     }
-    
-    @Override
-    public int getRowCount() {
-        return numericInstanceModel.getSize();
-    }
-    
 
     @Override
     public int getColumnCount() {
@@ -66,8 +57,7 @@ public class NumericInstanceTableModel extends AbstractTableModel implements Tab
     }
 
     @Override
-    public Object getValueAt(int rowIndex, int columnIndex) {
-        ice.Numeric data = numericInstanceModel.getElementAt(rowIndex);
+    public Object getValueAt(ice.Numeric data, int columnIndex) {
         switch(columnIndex) {
         case 0:
             return data.unique_device_identifier;
@@ -83,21 +73,6 @@ public class NumericInstanceTableModel extends AbstractTableModel implements Tab
             return data.value;
         }
         return null;
-    }
-
-    @Override
-    public void intervalAdded(ListDataEvent e) {
-        fireTableRowsInserted(e.getIndex0(), e.getIndex1());
-    }
-
-    @Override
-    public void intervalRemoved(ListDataEvent e) {
-        fireTableRowsDeleted(e.getIndex0(), e.getIndex1());
-    }
-
-    @Override
-    public void contentsChanged(ListDataEvent e) {
-        fireTableRowsUpdated(e.getIndex0(), e.getIndex1());
     }
 
 }
