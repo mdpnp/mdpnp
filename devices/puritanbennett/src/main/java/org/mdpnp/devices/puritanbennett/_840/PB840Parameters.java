@@ -176,13 +176,15 @@ public class PB840Parameters extends PB840 {
     }
     
     abstract class Field {
-        final String name;
+        final String name, description;
 
-        public Field(final String name) {
+        public Field(final String name, final String description) {
             this.name = name;
+            this.description = description;
         }
 
         abstract void handle(List<String> fieldValues);
+        
     }
 
     class Numeric extends Field {
@@ -190,8 +192,8 @@ public class PB840Parameters extends PB840 {
         final Units units;
 
         
-        public Numeric(final String name, final Units units, final int fieldNumber) {
-            super(name);
+        public Numeric(final String name, final String description, final Units units, final int fieldNumber) {
+            super(name, description);
             this.units = units;
             this.fieldNumber = fieldNumber;
         }
@@ -203,14 +205,14 @@ public class PB840Parameters extends PB840 {
         
         @Override
         public String toString() {
-            return "Numeric["+name+","+units+","+fieldNumber+"]";
+            return "Numeric["+name+","+description+","+units+","+fieldNumber+"]";
         }
     }
     class AlarmSetting extends Field {
         final int lowFieldNumber, highFieldNumber;
 
-        public AlarmSetting(final String name, final int lowFieldNumber, final int highFieldNumber) {
-            super(name);
+        public AlarmSetting(final String name, final String description, final int lowFieldNumber, final int highFieldNumber) {
+            super(name, description);
             this.lowFieldNumber = lowFieldNumber;
             this.highFieldNumber = highFieldNumber;
         }
@@ -224,15 +226,15 @@ public class PB840Parameters extends PB840 {
         
         @Override
         public String toString() {
-            return "AlarmSetting["+name+","+lowFieldNumber+","+highFieldNumber+"]";
+            return "AlarmSetting["+name+","+description+","+lowFieldNumber+","+highFieldNumber+"]";
         }
     }
     
     class PatientAlert extends Field {
         final int fieldNumber;
 
-        public PatientAlert(String name, final int fieldNumber) {
-            super(name);
+        public PatientAlert(final String name, final String description, final int fieldNumber) {
+            super(name, description);
             this.fieldNumber = fieldNumber;
         }
 
@@ -242,15 +244,15 @@ public class PB840Parameters extends PB840 {
         }
         @Override
         public String toString() {
-            return "PatientAlert["+name+","+fieldNumber+"]";
+            return "PatientAlert["+name+","+description+","+fieldNumber+"]";
         }
     }
     
     class TechnicalAlert extends Field {
         final int fieldNumber;
 
-        public TechnicalAlert(String name, final int fieldNumber) {
-            super(name);
+        public TechnicalAlert(final String name, final String description, final int fieldNumber) {
+            super(name, description);
             this.fieldNumber = fieldNumber;
         }
 
@@ -261,7 +263,7 @@ public class PB840Parameters extends PB840 {
         
         @Override
         public String toString() {
-            return "TechnicalAlert["+name+","+fieldNumber+"]";
+            return "TechnicalAlert["+name+","+description+","+fieldNumber+"]";
         }
     }
     
@@ -269,7 +271,7 @@ public class PB840Parameters extends PB840 {
         final int fieldNumber;
 
         public VentilatorId(final int fieldNumber) {
-            super(null);
+            super(null, null);
             this.fieldNumber = fieldNumber;
         }
 
@@ -280,7 +282,7 @@ public class PB840Parameters extends PB840 {
         
         @Override
         public String toString() {
-            return "VentilatorId["+name+","+fieldNumber+"]";
+            return "VentilatorId["+name+","+description+","+fieldNumber+"]";
         }
     }
     
@@ -288,7 +290,7 @@ public class PB840Parameters extends PB840 {
         final int fieldNumber;
 
         public Time(final int fieldNumber) {
-            super(null);
+            super(null, null);
             this.fieldNumber = fieldNumber;
         }
         
@@ -322,7 +324,7 @@ public class PB840Parameters extends PB840 {
         final int fieldNumber;
         
         public Date(final int fieldNumber) {
-            super(null);
+            super(null, null);
             this.fieldNumber = fieldNumber;
         }
         @Override
@@ -339,17 +341,18 @@ public class PB840Parameters extends PB840 {
 
     protected final Map<String, Field[]> fields = new HashMap<String, Field[]>();
     protected void loadFields(Map<String, Field[]> fields) {
-
+        int lineNumber = 0;
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(PB840Parameters.class.getResourceAsStream("pb840.fields")));
             String line = null;
 
             List<Field> currentFields = new ArrayList<Field>();
             String currentResponseType = null;
-            int lineNumber = 0;
+            
             
             while (null != (line = br.readLine())) {
-                lineNumber++;
+                // A header row is included
+                if(0==lineNumber++) { continue; }
                 line = line.trim();
                 if ('#' != line.charAt(0)) {
                     String v[] = line.split("\t");
@@ -367,22 +370,29 @@ public class PB840Parameters extends PB840 {
                         }
                         currentResponseType = v[0];
                     } else {
-                        if("N".equals(v[0]) && v.length == 4) {
-                            currentFields.add(new Numeric(v[1], Units.valueOf(v[2]), Integer.parseInt(v[3])));
-                        } else if("AS".equals(v[0]) && v.length == 4) {
-                            currentFields.add(new AlarmSetting(v[1], Integer.parseInt(v[2]), Integer.parseInt(v[3])));
-                        } else if("PA".equals(v[0]) && v.length == 3) {
-                            currentFields.add(new PatientAlert(v[1], Integer.parseInt(v[2])));
-                        } else if("TA".equals(v[0]) && v.length == 3) {
-                            currentFields.add(new TechnicalAlert(v[1], Integer.parseInt(v[2])));
-                        } else if("ID".equals(v[0]) && v.length == 2) {
-                            currentFields.add(new VentilatorId(Integer.parseInt(v[1])));
-                        } else if("TM".equals(v[0]) && v.length == 2) {
-                            currentFields.add(new Time(Integer.parseInt(v[1])));
-                        } else if("DT".equals(v[0]) && v.length == 2) {
-                            currentFields.add(new Date(Integer.parseInt(v[1])));
-                        } else if(v.length > 0) {
-                            throw new IllegalArgumentException("Unknown field type " + v[0] + " with " + v.length + " total elements");
+                        String type = v[0];
+                        String name =  v[1];
+                        String units = v.length > 2 ? v[2] : null;
+                        String field1 = v.length > 3 ? v[3] : null;
+                        String field2 = v.length > 4 ? v[4] : null;
+                        String description = v.length > 5 ? v[5] : null;
+                        
+                        if("N".equals(type)) {
+                            currentFields.add(new Numeric(name, description, Units.valueOf(units), Integer.parseInt(field1)));
+                        } else if("AS".equals(type)) {
+                            currentFields.add(new AlarmSetting(name, description, Integer.parseInt(field1), Integer.parseInt(field2)));
+                        } else if("PA".equals(type)) {
+                            currentFields.add(new PatientAlert(name, description, Integer.parseInt(field1)));
+                        } else if("TA".equals(type)) {
+                            currentFields.add(new TechnicalAlert(name, description, Integer.parseInt(field1)));
+                        } else if("ID".equals(type)) {
+                            currentFields.add(new VentilatorId(Integer.parseInt(field1)));
+                        } else if("TM".equals(type)) {
+                            currentFields.add(new Time(Integer.parseInt(field1)));
+                        } else if("DT".equals(type)) {
+                            currentFields.add(new Date(Integer.parseInt(field1)));
+                        } else {
+                            throw new IllegalArgumentException("Unknown field type " + type + " with " + v.length + " total elements");
                         }
                     }
                 }
@@ -397,7 +407,7 @@ public class PB840Parameters extends PB840 {
             }
             currentResponseType = null;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error at line " + lineNumber, e);
         }
     }
 
