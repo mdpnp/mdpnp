@@ -12,7 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -22,9 +21,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
+import javax.swing.SwingConstants;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,23 +50,22 @@ public class MainMenuPanel extends JPanel {
         GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.BASELINE, GridBagConstraints.BOTH, new Insets(2, 10,
                 2, 10), 0, 0);
         appList = new JList(appTypes);
-        appList.setSelectionBackground(appList.getBackground());
-        appList.setSelectionForeground(appList.getForeground());
-        appList.setBorder(null);
-
+        appList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+        appList.setVisibleRowCount(0);
+        appList.setFixedCellHeight(150);
+        appList.setFixedCellWidth(150);
+        
         deviceList = new JList();
-        appList.setFont(bigFont);
-        deviceList.setFont(bigFont);
-        deviceList.setBorder(null);
-
+        deviceList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+        deviceList.setVisibleRowCount(0);
+        deviceList.setFixedCellHeight(150);
+        deviceList.setFixedCellWidth(150);
+        
         AppListCellRenderer lcr = new AppListCellRenderer();
         DeviceListCellRenderer dlcr = new DeviceListCellRenderer();
-
-        CompoundBorder cb = new CompoundBorder(new EmptyBorder(5, 5, 5, 5), new LineBorder(Color.black, 1, true));
-        CompoundBorder cb1 = new CompoundBorder(new EmptyBorder(5, 5, 5, 5), new LineBorder(Color.black, 1, true));
-
-        lcr.setBorder(cb);
-        dlcr.setBorder(cb1);
+        
+        lcr.setHorizontalAlignment(SwingConstants.CENTER);
+        lcr.setVerticalAlignment(SwingConstants.CENTER);
 
         appList.setCellRenderer(lcr);
         deviceList.setCellRenderer(dlcr);
@@ -80,6 +76,7 @@ public class MainMenuPanel extends JPanel {
         gbc.gridy++;
         gbc.weighty = 100.0;
         JScrollPane scrollAppList = new JScrollPane(appList);
+        
         scrollAppList.setBorder(null);
         scrollAppList.getViewport().setOpaque(false);
         add(scrollAppList, gbc);
@@ -100,6 +97,7 @@ public class MainMenuPanel extends JPanel {
         gbc.weighty = 100.0;
 
         JScrollPane scrollDeviceList = new JScrollPane(deviceList);
+        
         scrollDeviceList.setBorder(null);
         add(scrollDeviceList, gbc);
         scrollDeviceList.setOpaque(false);

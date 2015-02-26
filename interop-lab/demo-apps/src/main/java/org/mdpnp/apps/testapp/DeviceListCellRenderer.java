@@ -15,130 +15,34 @@ package org.mdpnp.apps.testapp;
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
+import javax.swing.SwingConstants;
 
 @SuppressWarnings({ "serial", "rawtypes" })
 /**
  * @author Jeff Plourde
  *
  */
-public class DeviceListCellRenderer extends JComponent implements ListCellRenderer {
+public class DeviceListCellRenderer extends JLabel implements ListCellRenderer {
     private final DeviceListModel model;
-    private final JLabel icon = new JLabel();
-    private final JLabel modelName = new JLabel(" ");
-    private final JLabel connectionStatus = new JLabel(" ");
-    private final JLabel udi = new JLabel(" ");
-    private final JLabel hostname = new JLabel(" ");
-    private final JLabel buildDescriptor = new JLabel(" ");
-    private final JLabel operatingSystem = new JLabel(" ");
-//    private final JLabel clockDifference = new JLabel(" ");
-//    private final JLabel roundtripLatency = new JLabel(" ");
 
-    private Dimension myDimension = null;
-
-    
-    @Override
-    protected void paintComponent(Graphics g) {
-        if (isOpaque()) {
-            g.setColor(getBackground());
-            myDimension = getSize(myDimension);
-            g.fillRect(0, 0, myDimension.width, myDimension.height);
-        }
-        super.paintComponent(g);
-    }
-
-    private static final void addFinePrint(Font fineprint, String label, JComponent component, GridBagConstraints gbc, Container container) {
-        JPanel pnl = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        pnl.setBorder(new EmptyBorder(0, 0, 0, 0));
-        pnl.setOpaque(false);
-        JLabel lbl = new JLabel(label);
-        pnl.add(lbl);
-        lbl.setFont(fineprint);
-        pnl.add(component);
-        component.setFont(fineprint);
-        container.add(pnl, gbc);
-        gbc.gridy++;
-    }
-    
     public DeviceListCellRenderer() {
         this(null);
     }
     
-    public DeviceListCellRenderer(DeviceListModel model) {
+    public DeviceListCellRenderer(final DeviceListModel model) {
         super();
         this.model = model;
-        setLayout(new BorderLayout());
-        setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
-        setOpaque(true);
-
-        add(icon, BorderLayout.WEST);
-
-        JPanel text = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,
-                0, 0, 0), 0, 0);
-        text.setOpaque(false);
-
-        text.add(modelName, gbc);
-        gbc.gridy++;
-        text.add(connectionStatus, gbc);
-        gbc.gridy++;
-        
-        Font fineprint = Font.decode("fixed-8");
-        addFinePrint(fineprint, "Unique Device Id:", udi, gbc, text);
-        addFinePrint(fineprint, "Hostname:", hostname, gbc, text);
-        addFinePrint(fineprint, "Operating System:", operatingSystem, gbc, text);
-        addFinePrint(fineprint, "Build:", buildDescriptor, gbc, text);
-        
-//        gbc.gridx++;
-//        gbc.gridy = 0;
-//        gbc.gridheight = 5;
-//        JPanel timeInfo = new JPanel();
-//        JLabel clockOffset = new JLabel("<html>Clock Offset<br/>From Local</html>");
-////        JLabel fromLocalDevice = new JLabel("From Local");
-//        clockOffset.setOpaque(false);
-////        fromLocalDevice.setOpaque(false);
-//        clockDifference.setOpaque(false);
-//        timeInfo.setOpaque(false);
-//        timeInfo.add(clockOffset);
-////        timeInfo.add(fromLocalDevice);
-//        timeInfo.add(clockDifference);
-//        text.add(timeInfo, gbc);
-//        gbc.gridy++;
-//        clockDifference.setOpaque(false);
-//        text.add(clockDifference, gbc);
-////        gbc.gridy++;
-////        text.add(roundtripLatency, gbc);
-
-        add(text, BorderLayout.CENTER);
-
+        setVerticalTextPosition(SwingConstants.BOTTOM);
+        setHorizontalTextPosition(SwingConstants.CENTER);
     }
-
-    private final Border selectedBorder = new LineBorder(Color.blue, 1);
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        modelName.setFont(list.getFont());
-        connectionStatus.setFont(list.getFont());
-
         String udi;
         Device device = null;
         
@@ -159,16 +63,7 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
             device = model.getByUniqueDeviceIdentifier(udi);
         }
         
-        if (null == udi) {
-            this.udi.setText("<unknown UDI>");
-        } else {
-            this.udi.setText(udi);
-        }
-        
         if (null != device) {
-            hostname.setText(device.getHostname());
-            
-
             DeviceIcon icon = device.getIcon();
 
             DeviceConnectivity dc = device.getDeviceConnectivity();
@@ -176,47 +71,29 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
                 if (icon != null) {
                     icon.setConnected(ice.ConnectionState.Connected.equals(dc.state));
                 }
-                connectionStatus.setText(dc.state.toString());
             } else {
                 if (icon != null) {
                     icon.setConnected(true);
                 }
-                connectionStatus.setText("");
             }
 
             DeviceIdentity di = device.getDeviceIdentity();
             if (null != di) {
-                modelName.setText(device.getMakeAndModel());
-                buildDescriptor.setText(di.build);
-                operatingSystem.setText(di.operating_system);
+                setText(device.getMakeAndModel());
             } else {
-                modelName.setText("");
-                buildDescriptor.setText("DeviceIdentity not yet found.");
-                operatingSystem.setText("");
+                setText("<unknown>");
             }
 
             if (icon != null) {
-                this.icon.setIcon(icon);
+                setIcon(icon);
             } else {
-                this.icon.setIcon(DeviceIcon.WHITE_SQUARE_ICON);
+                setIcon(DeviceIcon.WHITE_SQUARE_ICON);
             }
             
-            //this.roundtripLatency.setText(""+device.getRoundtripLatencyMs());
-//            double clockDiff = device.getClockDifferenceMs();
-//            this.clockDifference.setText(""+(Math.round(10.0*clockDiff)/10.0)+"ms");
-//            if(clockDiff <= -1000.0 || clockDiff >= 1000.0) {
-//                this.clockDifference.setForeground(Color.red);
-//            } else {
-//                this.clockDifference.setForeground(Color.black);
-//            }
         } else {
-            connectionStatus.setText("");
-            hostname.setText("");
-            operatingSystem.setText("");
-            modelName.setText("<unknown>");
-            this.icon.setIcon(null);
+            setText("<unknown>");
+            setIcon(DeviceIcon.WHITE_SQUARE_ICON);
         }
-        setBorder(isSelected ? selectedBorder : null);
         return this;
     }
 }
