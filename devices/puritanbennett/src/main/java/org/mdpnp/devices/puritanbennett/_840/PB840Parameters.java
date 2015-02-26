@@ -163,7 +163,7 @@ public class PB840Parameters extends PB840 {
         
     }
     
-    public void receiveVentilatorId(String id) {
+    public void receiveVentilatorId(String model, String id) {
         
     }
     
@@ -298,7 +298,8 @@ public class PB840Parameters extends PB840 {
 
         @Override
         void handle(List<String> fieldValues) {
-            receiveVentilatorId(fieldValues.get(fieldNumber));
+            String[] modelSerial = fieldValues.get(fieldNumber).split(" ");
+            receiveVentilatorId(modelSerial.length > 1 ? modelSerial[0] : "840", modelSerial.length > 1 ? modelSerial[1] : modelSerial[0]);
         }
         
         @Override

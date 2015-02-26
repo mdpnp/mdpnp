@@ -58,7 +58,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         currentDeviceTime.set(Calendar.MILLISECOND, 0);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Puritan Bennett";
-        deviceIdentity.model = "840";
+        deviceIdentity.model = "";
         writeDeviceIdentity();
     }
 
@@ -194,9 +194,11 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         }
         
         @Override
-        public void receiveVentilatorId(String id) {
-            if (!id.equals(deviceIdentity.serial_number)) {
+        public void receiveVentilatorId(String model, String id) {
+            if (!id.equals(deviceIdentity.serial_number) || 
+                !model.equals(deviceIdentity.model)) {
                 deviceIdentity.serial_number = id;
+                deviceIdentity.model = model;
                 writeDeviceIdentity();
             }
         }
