@@ -67,6 +67,9 @@ public class MainMenuPanel extends JPanel {
         lcr.setHorizontalAlignment(SwingConstants.CENTER);
         lcr.setVerticalAlignment(SwingConstants.CENTER);
 
+        dlcr.setHorizontalAlignment(SwingConstants.CENTER);
+        dlcr.setVerticalAlignment(SwingConstants.CENTER);
+
         appList.setCellRenderer(lcr);
         deviceList.setCellRenderer(dlcr);
 
