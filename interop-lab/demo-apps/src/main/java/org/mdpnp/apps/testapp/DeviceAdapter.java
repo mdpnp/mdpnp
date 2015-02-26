@@ -217,17 +217,6 @@ public abstract class DeviceAdapter {
             return frame;
         }
 
-        private static class Metrics {
-            long start() {
-                return System.currentTimeMillis();
-            }
-
-            long stop(String s, long tm) {
-                log.trace(s + " took " + (System.currentTimeMillis() - tm) + "ms");
-                return start();
-            }
-        }
-
         public void stop() {
 
             try {
