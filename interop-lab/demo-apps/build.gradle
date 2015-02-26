@@ -188,6 +188,8 @@ dependencies {
     compile group: 'ca.uhn.hapi', name: 'hapi-base', version: '2.2'
     compile group: 'ca.uhn.hapi', name: 'hapi-structures-v26', version: '2.2'
     
+    compile group: 'com.jeffplourde', name: 'Utility', version: '0.0.1'
+    
     testCompile group: 'junit', name: 'junit', version: '4.12'
 
     testRuntime group: 'org.hsqldb', name: 'hsqldb', version: '2.3.2'

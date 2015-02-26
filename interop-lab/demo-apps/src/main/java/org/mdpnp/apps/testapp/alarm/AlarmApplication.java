@@ -1,7 +1,6 @@
 package org.mdpnp.apps.testapp.alarm;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.text.DateFormat;
 import java.util.Date;
 
@@ -14,10 +13,12 @@ import javax.swing.table.TableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeffplourde.util.gui.table.XTable;
+
 @SuppressWarnings("serial")
 public class AlarmApplication extends JPanel {    
     protected static final Logger log = LoggerFactory.getLogger(AlarmApplication.class);
-    protected final JTable table = new JTable();
+    protected final XTable table = new XTable(null, Integer.MAX_VALUE, true, true, true, true);
     
     public AlarmApplication() {
         setLayout(new BorderLayout());
