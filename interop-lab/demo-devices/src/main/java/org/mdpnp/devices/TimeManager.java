@@ -89,10 +89,8 @@ public class TimeManager implements Runnable {
     private final Map<String,TimeSyncHolder> sync = new HashMap<String, TimeSyncHolder>();
     
     public TimeManager(DomainParticipant participant, String uniqueDeviceIdentifier, String type) {
-        this.subscriber = participant.get_implicit_subscriber();
-        this.publisher = participant.get_implicit_publisher();
-        this.uniqueDeviceIdentifier = uniqueDeviceIdentifier;
-        this.type = type;
+        this(participant.get_implicit_publisher(), participant.get_implicit_subscriber(),
+                uniqueDeviceIdentifier, type);
     }
     
     public TimeManager(Publisher publisher, Subscriber subscriber, String uniqueDeviceIdentifier, String type) {
@@ -107,9 +105,7 @@ public class TimeManager implements Runnable {
     
     public void start() {
         DomainParticipant participant = publisher.get_participant();
-        
-        
-        
+
         hbTopic = (Topic) participant.lookup_topicdescription(ice.HeartBeatTopic.VALUE);
         if(null == hbTopic) {
             ownHbTopic = true;

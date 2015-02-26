@@ -15,10 +15,24 @@
           destroy-method="shutdownNow">
     </bean>
 
+    <bean id="supervisorUdi" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="staticMethod" value="org.mdpnp.devices.simulation.AbstractSimulatedDevice.randomUDI"/>
+    </bean>
+    
     <!-- This is only needed when PCA apps are installed -->
     <bean id="objectiveWriter" class="org.mdpnp.rtiapi.data.InfusionObjectiveDataWriterFactory" lazy-init="true">
         <constructor-arg ref="publisher" />
         <constructor-arg ref="domainParticipant" />
+    </bean>
+    
+    <bean id="timeManager" class="org.mdpnp.devices.TimeManagerFactory" lazy-init="true" destroy-method="stop">
+      <constructor-arg ref="eventLoop"/>
+      <constructor-arg ref="publisher" />
+      <constructor-arg ref="subscriber" />
+      <constructor-arg ref="supervisorUdi" />
+      <constructor-arg>
+        <value type="java.lang.String">Supervisor</value>
+      </constructor-arg>
     </bean>
     
     <bean id="deviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory" lazy-init="true" destroy-method="stop">
