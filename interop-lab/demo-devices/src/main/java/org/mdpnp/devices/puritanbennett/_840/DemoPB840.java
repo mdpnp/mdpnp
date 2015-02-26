@@ -147,6 +147,12 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         }
 
         @Override
+        public void receiveSetting(String name, Units units, String value) {
+            // TODO settings might not always be on the same topic as numerics
+            receiveNumeric(name, units, value);
+        }
+        
+        @Override
         public void receiveNumeric(String name, Units units, String value) {
             String canonicalName = terms.get(name);
             canonicalName = null == canonicalName ? name : canonicalName;

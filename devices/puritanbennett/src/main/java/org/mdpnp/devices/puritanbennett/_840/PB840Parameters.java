@@ -143,7 +143,7 @@ public class PB840Parameters extends PB840 {
         
     }
     
-    public void receiveSetting(String name, String value) {
+    public void receiveSetting(String name, Units units, String value) {
         
     }
     
@@ -208,6 +208,27 @@ public class PB840Parameters extends PB840 {
             return "Numeric["+name+","+description+","+units+","+fieldNumber+"]";
         }
     }
+    class Setting extends Field {
+        final int fieldNumber;
+        final Units units;
+
+        
+        public Setting(final String name, final String description, final Units units, final int fieldNumber) {
+            super(name, description);
+            this.units = units;
+            this.fieldNumber = fieldNumber;
+        }
+
+        @Override
+        void handle(List<String> fieldValues) {
+            receiveSetting(name, units, fieldValues.get(fieldNumber));
+        }
+        
+        @Override
+        public String toString() {
+            return "Setting["+name+","+description+","+units+","+fieldNumber+"]";
+        }
+    }    
     class AlarmSetting extends Field {
         final int lowFieldNumber, highFieldNumber;
 
@@ -376,8 +397,9 @@ public class PB840Parameters extends PB840 {
                         String field1 = v.length > 3 ? v[3] : null;
                         String field2 = v.length > 4 ? v[4] : null;
                         String description = v.length > 5 ? v[5] : null;
-                        
-                        if("N".equals(type)) {
+                        if("S".equals(type)) {
+                            currentFields.add(new Setting(name, description, Units.valueOf(units), Integer.parseInt(field1)));
+                        } else if("N".equals(type)) {
                             currentFields.add(new Numeric(name, description, Units.valueOf(units), Integer.parseInt(field1)));
                         } else if("AS".equals(type)) {
                             currentFields.add(new AlarmSetting(name, description, Integer.parseInt(field1), Integer.parseInt(field2)));
