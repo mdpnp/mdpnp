@@ -113,13 +113,13 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected void processStartInspCycle() {
         // TODO This should not be triggered as a numeric; it's a bad idea
         startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0, ice.MDC_START_INSPIRATORY_CYCLE.VALUE,
-                "", rosetta.MDC_DIM_DIMLESS.VALUE, null);
+                "", rosetta.MDC_DIM_DIMLESS.VALUE, currentTime());
     }
 
     protected void processStartExpCycle() {
         // TODO ditto the bad idea-ness of using Numeric topic for this
         startExpiratoryCycleUpdate = numericSample(startExpiratoryCycleUpdate, 0, ice.MDC_START_EXPIRATORY_CYCLE.VALUE,
-                "", rosetta.MDC_DIM_DIMLESS.VALUE, null);
+                "", rosetta.MDC_DIM_DIMLESS.VALUE, currentTime());
     }
 
     private static final int BUFFER_SAMPLES = 25;
