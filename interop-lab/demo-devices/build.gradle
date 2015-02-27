@@ -17,6 +17,7 @@ sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
 dependencies {
+  compile project(':devices:covidien')
   compile project(':devices:philips')
   compile project(':devices:oridion')
   compile project(':devices:draeger')
@@ -24,6 +25,7 @@ dependencies {
   compile project(':devices:fluke')
   compile project(':devices:masimo')
   compile project(':devices:nellcor')
+  compile project(':devices:puritanbennett')
   compile project(':devices:nonin')
   compile project(':devices:simulated')
   compile project(':data-types:x73-idl-rti-dds')

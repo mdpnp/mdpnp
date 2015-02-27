@@ -363,7 +363,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                 }
                 switch (stateMachine.getState().ordinal()) {
                 case ice.ConnectionState._Negotiating:
-                    state(ice.ConnectionState.Connected, "");
+                    state(ice.ConnectionState.Connected, "Received MDS Create Event");
                     break;
                 }
 
@@ -665,11 +665,11 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     UnitCode unit = UnitCode.valueOf(observed.getUnitCode().getType());
 
                     if (observed.getMsmtState().isUnavailable()) {
-                        putNumericUpdate(ov, handle, numericSample(getNumericUpdate(ov, handle), (Float) null, metricId, handle, 
+                        putNumericUpdate(ov, handle, numericSample(getNumericUpdate(ov, handle), (Float) null, metricId, ov.toString(), handle, 
                                 RosettaUnits.units(unit), sampleTimeNumeric));
                     } else {
                         putNumericUpdate(ov, handle,
-                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), metricId, handle,
+                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), metricId, ov.toString(), handle,
                                     RosettaUnits.units(unit), sampleTimeNumeric));
                     }
                 } else {
@@ -849,7 +849,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                     putSampleArrayUpdate(
                                             ov, handle,
                                             sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.emitSamples(BUFFER_SAMPLES, metric_id+" "+handle),
-                                            metric_id, handle, 
+                                            metric_id, ov.toString(), handle, 
                                             RosettaUnits.units(unitCode),
                                             frequency, null));
                                 }

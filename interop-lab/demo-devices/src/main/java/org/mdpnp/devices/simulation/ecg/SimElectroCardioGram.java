@@ -72,11 +72,11 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
             sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
             try {
                 // TODO should get better data that's actually in millivolts
-                SimElectroCardioGram.this.i = sampleArraySample(SimElectroCardioGram.this.i, iValues, ice.MDC_ECG_LEAD_I.VALUE, 0, 
+                SimElectroCardioGram.this.i = sampleArraySample(SimElectroCardioGram.this.i, iValues, ice.MDC_ECG_LEAD_I.VALUE, "", 0, 
                         rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
-                SimElectroCardioGram.this.ii = sampleArraySample(SimElectroCardioGram.this.ii, iiValues, ice.MDC_ECG_LEAD_II.VALUE, 0, 
+                SimElectroCardioGram.this.ii = sampleArraySample(SimElectroCardioGram.this.ii, iiValues, ice.MDC_ECG_LEAD_II.VALUE, "", 0, 
                         rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
-                SimElectroCardioGram.this.iii = sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, ice.MDC_ECG_LEAD_III.VALUE, 0, 
+                SimElectroCardioGram.this.iii = sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, ice.MDC_ECG_LEAD_III.VALUE, "", 0, 
                         rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
 
                 numericSample(heartRate, (float) heartRateValue, sampleTime);
@@ -109,8 +109,8 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
     public SimElectroCardioGram(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
-        respiratoryRate = createNumericInstance(rosetta.MDC_TTHOR_RESP_RATE.VALUE);
-        heartRate = createNumericInstance(rosetta.MDC_ECG_HEART_RATE.VALUE);
+        respiratoryRate = createNumericInstance(rosetta.MDC_TTHOR_RESP_RATE.VALUE, "");
+        heartRate = createNumericInstance(rosetta.MDC_ECG_HEART_RATE.VALUE, "");
 
         deviceIdentity.model = "ECG (Simulated)";
         writeDeviceIdentity();

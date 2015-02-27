@@ -12,99 +12,101 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.awt.*;
+import java.io.*;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.List;
-import java.util.ListIterator;
 
+import org.apache.commons.cli.*;
+import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
+import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
+import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+
 /**
- * @author Jeff Plourde
+ * The purpose of configuration object is to collect essential parameters either from the command line or
+ * from UI dialog to define runtime configuration of the application. The following flow of control defines
+ * the behavior of the component:
+ *
+ *  1.	If any arguments are passed via the command line, the application assumes them to define an
+ *  environment and will start the application in the headless mode (i.e no gui).  If any configuration
+ *  parameters are missing or undefined, the application will terminate with an error exit code.
+ *
+ *  2.	If there are no arguments on the command line, the system assumes a ‘gui’ mode and will
+ *  present user with the configuration dialog to collect all necessary parameters.
+ *
+ *  The dialog is pre-populated with the configuration data from the previous runs. That data will be stored
+ *  in the .JumpStartSettings file.  Current working directory is searched first and if not found, the user
+ *  home directory.
+ *
+ *  Many system configuration parameters can be controlled/overridden via system environment variables.
+ *  Some of those parameters had been exposed via command line arguments (which takes precedence over the
+ *  environment). To pass these values into the application context one should use Configuration::createContext
+ *  helper API when creating top-level spring application context. The api will install logic to ensure the proper
+ *  search order for property resolution.
  *
  */
 public class Configuration {
+
     enum Application {
-        ICE_Supervisor, ICE_Device_Interface, ICE_ParticipantOnly;
+        ICE_Supervisor(IceAppsContainer.IceAppsContainerInvoker.class),
+        ICE_Device_Interface(DeviceAdapter.DeviceAdapterCommand.class),
+        ICE_ParticipantOnly(ParticipantOnly.class);
+
+        Application(Class c) {
+            clazz = c;
+        }
+        private Class clazz;
     }
 
-    public enum DeviceType {
-        PO_Simulator(ice.ConnectionType.Simulated, "Simulated", "Pulse Oximeter"), 
-        NIBP_Simulator(ice.ConnectionType.Simulated, "Simulated", "Noninvasive Blood Pressure"), 
-        ECG_Simulator(ice.ConnectionType.Simulated, "Simulated", "ElectroCardioGram"), 
-        CO2_Simulator(ice.ConnectionType.Simulated, "Simulated", "Capnometer"), 
-        Temp_Simulator(ice.ConnectionType.Simulated, "Simulated", "Temperature Probe"), 
-        Pump_Simulator(ice.ConnectionType.Simulated, "Simulated", "Infusion Pump"),
-        FlukeProsim68(ice.ConnectionType.Serial, "Fluke", "Prosim 6/8"), 
-        Bernoulli(ice.ConnectionType.Network, "CardioPulmonaryCorp", "Bernoulli"), 
-        Ivy450C(ice.ConnectionType.Serial, "Ivy", "450C Monitor"), 
-        Nonin(ice.ConnectionType.Serial, "Nonin", "Bluetooth Pulse Oximeter"), 
-        IntellivueEthernet(ice.ConnectionType.Network, "Philips", "Intellivue (LAN)"), 
-        IntellivueSerial(ice.ConnectionType.Serial, "Philips", "Intellivue (MIB/RS232)"), 
-        Dr\u00E4gerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"), 
-        Dr\u00E4gerEvitaXL(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), 
-        Dr\u00E4gerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"),
-        Dr\u00E4gerV500_38400(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"),
-        Dr\u00E4gerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"), 
-        Capnostream20(ice.ConnectionType.Serial, "Oridion", "Capnostream20"), 
-        NellcorN595(ice.ConnectionType.Serial, "Nellcor", "N-595"), 
-        MasimoRadical7(ice.ConnectionType.Serial, "Masimo", "Radical-7"), 
-        Symbiq(ice.ConnectionType.Simulated, "Hospira", "Symbiq"), 
-        Multiparameter(ice.ConnectionType.Simulated, "Simulated", "Multiparameter Monitor"),
-        DraegerApollo(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo"),
-        DraegerEvitaXL(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL"), 
-        DraegerV500(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), 
-        DraegerV500_38400(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500"), 
-        DraegerEvita4(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4"),
-        PB840(ice.ConnectionType.Serial, "Puritan Bennett", "840");
-
-        private final ice.ConnectionType connectionType;
-        private final String manufacturer, model;
-
-        private DeviceType(ice.ConnectionType connectionType, String manufacturer, String model) {
-            this.connectionType = connectionType;
-            this.manufacturer = manufacturer;
-            this.model = model;
-        }
-
-        public ice.ConnectionType getConnectionType() {
-            return connectionType;
-        }
-
-        public String getManufacturer() {
-            return manufacturer;
-        }
-
-        public String getModel() {
-            return model;
-        }
-
-        @Override
-        public String toString() {
-            return manufacturer + " " + model;
-        }
+    interface Command {
+        int execute(Configuration config) throws Exception;
     }
 
-    private final Application application;
-    private final DeviceType deviceType;
-    private final String address;
-    private final int domainId;
+    private final boolean              headless;
+    private final Application          application;
+    private final DeviceDriverProvider deviceFactory;
+    private final String               address;
+    private final int                  domainId;
+    private final Properties           cmdLineEnv = new Properties();
 
-    public Configuration(Application application, int domainId, DeviceType deviceType, String address) {
-        this.application = application;
-        this.deviceType = deviceType;
+    public Configuration(boolean headless, Application application, int domainId, DeviceDriverProvider deviceFactory, String address) {
+        this.headless = headless;
+        this.deviceFactory = deviceFactory;
         this.address = address;
         this.domainId = domainId;
+        this.application = application;
+
+        cmdLineEnv.put("mdpnp.domain", Integer.toString(domainId));
+    }
+
+    public boolean isHeadless()
+    {
+        return headless;
+    }
+
+    public Properties getCmdLineEnv() {
+        return cmdLineEnv;
+    }
+
+    public Command getCommand() {
+
+        try {
+            Command command = (Command) application.clazz.newInstance();
+            return command;
+        }
+        catch(Exception ex)
+        {
+            throw new IllegalStateException("Failed to create command instance " + application.clazz.getName());
+        }
     }
 
     public Application getApplication() {
@@ -115,8 +117,8 @@ public class Configuration {
         return domainId;
     }
 
-    public DeviceType getDeviceType() {
-        return deviceType;
+    public DeviceDriverProvider getDeviceFactory() {
+        return deviceFactory;
     }
 
     public String getAddress() {
@@ -124,169 +126,275 @@ public class Configuration {
     }
 
     private static final String APPLICATION = "application";
-    private static final String DOMAIN_ID = "domainId";
+    private static final String DOMAIN_ID   = "domainId";
     private static final String DEVICE_TYPE = "deviceType";
-    private static final String ADDRESS = "address";
-
-    public void write(OutputStream os) throws IOException {
-        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, CHARACTER_ENCODING));
-        bw.write(APPLICATION);
-        bw.write("\t");
-        bw.write(application.name());
-        bw.write("\n");
-
-        bw.write(DOMAIN_ID);
-        bw.write("\t");
-        bw.write(Integer.toString(domainId));
-        bw.write("\n");
-
-        if (null != deviceType) {
-            bw.write(DEVICE_TYPE);
-            bw.write("\t");
-            bw.write(deviceType.name());
-            bw.write("\n");
-        }
-
-        if (null != address) {
-            bw.write(ADDRESS);
-            bw.write("\t");
-            bw.write(address);
-            bw.write("\n");
-        }
-
-        bw.flush();
-    }
+    private static final String ADDRESS     = "address";
 
     private final static Logger log = LoggerFactory.getLogger(Configuration.class);
-    private static final String CHARACTER_ENCODING = "UTF8";
 
-    public static Configuration read(InputStream is) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(is, CHARACTER_ENCODING));
+    public AbstractApplicationContext createContext(String path)
+    {
+        ClassPathXmlApplicationContext ctx =
+                new ClassPathXmlApplicationContext(new String[] { path }, false);
 
-        String line = null;
+        Properties props = getCmdLineEnv();
+
+        PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();
+        ppc.setProperties(props);
+        ppc.setOrder(0);
+
+        ctx.addBeanFactoryPostProcessor(ppc);
+        ctx.refresh();
+        return ctx;
+    }
+
+    private void write(PrintWriter os) throws IOException {
+        Properties p = new Properties();
+        p.setProperty(APPLICATION, application.name());
+        p.setProperty(DOMAIN_ID,   Integer.toString(domainId));
+        if (null != deviceFactory)
+            p.setProperty(DEVICE_TYPE, deviceFactory.getDeviceType().getAlias());
+        if (null != address)
+            p.setProperty(ADDRESS, address);
+
+        p.list(os);
+    }
+
+    static Configuration read(InputStream is) throws IOException {
+
+        Properties p = new Properties();
+        p.load(is);
 
         Application app = null;
         int domainId = 0;
-        DeviceType deviceType = null;
+        DeviceDriverProvider deviceType = null;
         String address = null;
 
-        while (null != (line = br.readLine())) {
-            String[] v = line.split("\t");
-            if (APPLICATION.equals(v[0])) {
-                try {
-                    app = Application.valueOf(v[1]);
-                } catch (IllegalArgumentException iae) {
-                    app = null;
-                    log.warn("Ignoring unknown application type:" + v[1]);
-                }
-            } else if (DOMAIN_ID.equals(v[0])) {
-                try {
-                    domainId = Integer.parseInt(v[1]);
-                } catch (NumberFormatException nfe) {
-                    log.warn("Ignoring unknown domainId:" + v[1]);
-                }
-            } else if (DEVICE_TYPE.equals(v[0])) {
-                try {
-                    deviceType = DeviceType.valueOf(v[1]);
-                } catch (IllegalArgumentException iae) {
-                    deviceType = null;
-                    log.warn("Ignoring unknown devicetype:" + v[1]);
-                }
-            } else if (ADDRESS.equals(v[0])) {
-                if (v.length > 1) {
-                    address = v[1];
-                } else {
-                    address = null;
-                }
-            }
-        }
-
-        return new Configuration(app, domainId, deviceType, address);
-    }
-
-    public static void help(Class<?> launchClass, PrintStream out) {
-        out.println(launchClass.getName() + " [Application] [domainId] [DeviceType[=DeviceAddress]]");
-        out.println();
-        out.println("For interactive graphical interface specify no command line options");
-        out.println();
-        out.println("Application may be one of:");
-        for (Application a : Application.values()) {
-            out.println("\t" + a.name());
-        }
-        out.println();
-        out.println("domainId must be a DDS domain identifier");
-        out.println();
-
-        out.println("if Application is " + Application.ICE_Device_Interface.name() + " then DeviceType may be one of:");
-        for (DeviceType d : DeviceType.values()) {
-            out.println("\t" + (ice.ConnectionType.Serial.equals(d.getConnectionType()) ? "*" : "") + d.name());
-        }
-        out.println("DeviceAddress is an optional string configuring the address of the device");
-        out.println();
-        out.println("DeviceTypes marked with * are serial devices for which the following DeviceAddress values are currently valid:");
-        for (String s : SerialProviderFactory.getDefaultProvider().getPortNames()) {
-            out.println("\t" + s);
-        }
-    }
-
-    public static Configuration read(String[] args_) {
-        Application app = null;
-        int domainId = 0;
-        DeviceType deviceType = null;
-        String address = null;
-
-        List<String> args = new ArrayList<String>(Arrays.asList(args_));
-        ListIterator<String> litr = args.listIterator();
-        while (litr.hasNext()) {
+        if(p.containsKey(APPLICATION)) {
+            String s = p.getProperty(APPLICATION);
             try {
-                app = Application.valueOf(litr.next());
-                litr.remove();
-                break;
+                app = Application.valueOf(s);
             } catch (IllegalArgumentException iae) {
-
+                log.warn("Ignoring unknown application type:" + s);
             }
         }
-        if (null == app) {
+        if(p.containsKey(DOMAIN_ID)) {
+            String s = p.getProperty(DOMAIN_ID);
+            try {
+                domainId = Integer.parseInt(s);
+            } catch (NumberFormatException nfe) {
+                log.warn("Ignoring unknown domainId:" + s);
+            }
+        }
+        if(p.containsKey(DEVICE_TYPE)) {
+            String s = p.getProperty(DEVICE_TYPE);
+            try {
+                deviceType = DeviceFactory.getDeviceDriverProvider(s);
+            } catch (IllegalArgumentException iae) {
+                log.warn("Ignoring unknown device type:" + s);
+            }
+        }
+        if(p.containsKey(ADDRESS)) {
+            address = p.getProperty(ADDRESS);
+        }
+
+        return new Configuration(false, app, domainId, deviceType, address);
+    }
+
+    static Configuration read(String[] cmdLineArgs) throws Exception{
+
+        StringBuilder as = new StringBuilder("Application may be one of:");
+        for (Application a : Application.values()) {
+            as.append("\t" + a.name());
+        }
+        Option appArg = OptionBuilder.withArgName("app")
+                .hasArg()
+                .isRequired(true)
+                .withDescription(as.toString())
+                .create("app");
+
+        Option domainArg = OptionBuilder.withArgName("domain")
+                .hasArg()
+                .isRequired(true)
+                .withDescription("DDS domain identifier")
+                .create("domain");
+
+        StringBuilder ds = new StringBuilder();
+        ds.append("if Application is ").append(Application.ICE_Device_Interface.name()).append(" then DeviceType may be one of:");
+        DeviceDriverProvider[] all =  DeviceFactory.getAvailableDevices();
+        for (DeviceDriverProvider ddp : all) {
+            DeviceType d=ddp.getDeviceType();
+            ds.append("\t").append(ice.ConnectionType.Serial.equals(d.getConnectionType()) ? "*" : "").append(d.getAlias());
+        }
+        Option deviceArg = OptionBuilder.withArgName("device")
+                .hasArg()
+                .isRequired(false)
+                .withDescription(ds.toString())
+                .create("device");
+
+        StringBuilder ps = new StringBuilder();
+        ps.append("DeviceTypes marked with * are serial devices which require port specification.");
+        List<String> l = SerialProviderFactory.getDefaultProvider().getPortNames();
+        if(!l.isEmpty()) {
+            ps.append(" The following address values are currently valid:");
+            for (String s : l) {
+                ps.append("\t" + s);
+            }
+        }
+        Option addressArg = OptionBuilder.withArgName("address")
+                .hasArg()
+                .isRequired(false)
+                .withDescription(ps.toString())
+                .create("address");
+
+        Options options = new Options();
+        options.addOption( appArg );
+        options.addOption( domainArg );
+        options.addOption( deviceArg );
+        options.addOption( addressArg );
+
+        CommandLine line = parseCommandLine("ICE", cmdLineArgs, options);
+        if(line == null)
+            return null;
+
+        Application app = null;
+        int domainId = 0;
+        DeviceDriverProvider deviceType = null;
+        String address = null;
+
+        String v = line.getOptionValue("app");
+        try {
+            app = Application.valueOf(v);
+        }catch (Exception e) {
+            throw new IllegalArgumentException("Invalid app name: " + v );
+        }
+
+        v = line.getOptionValue("domain");
+        domainId = Integer.parseInt(v);
+        if (Application.ICE_Device_Interface.equals(app)) {
+            if(!line.hasOption("device"))
+                throw new IllegalArgumentException("Missing device specification");
+            v = line.getOptionValue("device");
+            deviceType = DeviceFactory.getDeviceDriverProvider(v);
+
+            if(ice.ConnectionType.Serial.equals(deviceType.getDeviceType().getConnectionType())) {
+                if(!line.hasOption("address"))
+                    throw new IllegalArgumentException("Missing address specification");
+                address = line.getOptionValue("address");
+            }
+        }
+
+        // if mdpnp.ui is set to true, force the system to come up in the UI mode regardless of
+        // command line having arguments or not. If not set, default to headless==true.
+        //
+        boolean headless=!Boolean.getBoolean("mdpnp.ui");
+        return new Configuration(headless, app, domainId, deviceType, address);
+    }
+
+
+    public static Configuration getInstance(String[] args) throws Exception {
+
+        File[] searchPath = new File [] {
+                new File(".JumpStartSettings"),
+                new File(System.getProperty("user.home"), ".JumpStartSettings")
+        };
+
+        Configuration runConf;
+
+        if (args.length > 0) {
+            runConf = read(args);
+        }
+        else {
+
+            try {
+                Class<?> cls = Class.forName("com.apple.eawt.Application");
+                Method m1 = cls.getMethod("getApplication");
+                Method m2 = cls.getMethod("setDockIconImage", Image.class);
+                m2.invoke(m1.invoke(null), ImageIO.read(Main.class.getResource("icon.png")));
+            } catch (Throwable t) {
+                log.debug("Not able to set Mac OS X dock icon");
+            }
+
+            runConf = searchAndLoadSettings(searchPath);
+
+            ConfigurationDialog d = new ConfigurationDialog(runConf, null);
+
+            d.setIconImage(ImageIO.read(Main.class.getResource("icon.png")));
+            runConf = d.showDialog();
+
+            // It's nice to be able to change settings even without running
+            // Even if the user presses 'quit' save the state so that it can be used
+            // to boot strap the dialog later.
+            //
+            if (null == runConf) {
+                Configuration c = d.getLastConfiguration();
+                searchAndSaveSettings(c, searchPath);
+            }
+        }
+
+        if(runConf != null)
+            searchAndSaveSettings(runConf, searchPath);
+
+        return runConf;
+
+    }
+
+    private static Configuration searchAndLoadSettings(File[] fPath) throws IOException {
+
+        for(File f : fPath) {
+            if(f.exists() && f.canRead()) {
+                log.debug("Reading jumpStartSettings from " + f.getAbsolutePath());
+                FileInputStream fis = new FileInputStream(f);
+                Configuration runConf = Configuration.read(fis);
+                fis.close();
+                return runConf;
+            }
+        }
+        return null;
+    }
+
+
+    private static void searchAndSaveSettings(Configuration runConf, File[] fPath) throws IOException {
+
+        if (null == runConf)
+            return;
+
+        for(File f : fPath) {
+            if(!f.exists()) {
+                if(null != f.getParentFile() && f.getParentFile().exists() && f.getParentFile().canWrite()) {
+                    f.createNewFile();
+                }
+            }
+            if(f.exists() && f.canWrite()) {
+                log.debug("Saving jumpStartSettings from " + f.getAbsolutePath());
+                PrintWriter fos = new PrintWriter(f);
+                runConf.write(fos);
+                fos.close();
+                break;
+            }
+        }
+    }
+
+    public static CommandLine parseCommandLine(String execName, String args[], Options options) throws ParseException
+    {
+        Option h = OptionBuilder.withDescription("display usage information").create("help");
+
+        Options help = new Options();
+        help.addOption( h );
+
+        CommandLineParser parser = new GnuParser();
+
+        CommandLine line = parser.parse( help, args, true);
+        if (line.hasOption("help"))
+        {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp(execName, options);
             return null;
         }
-        
-        litr = args.listIterator();
-        while (litr.hasNext()) {
-            try {
-                String x = litr.next();
-                try {
-                    domainId = Integer.parseInt(x);
-                    litr.remove();
-                    break;
-                } catch (NumberFormatException nfe) {
 
-                }
-
-            } catch (IllegalArgumentException iae) {
-
-            }
-        }
-
-        if (Application.ICE_Device_Interface.equals(app)) {
-            litr = args.listIterator();
-            while (litr.hasNext()) {
-                String x = litr.next();
-                String[] y = x.split("\\=");
-                try {
-                    deviceType = DeviceType.valueOf(y[0]);
-                    litr.remove();
-                    if (y.length > 1) {
-                        address = y[1];
-                    }
-                    break;
-                } catch (IllegalArgumentException iae) {
-                    log.error("Unknown DeviceType:"+y[0]);
-                }
-            }
-        }
-
-
-
-        return new Configuration(app, domainId, deviceType, address);
+        // now parse for real.
+        line = parser.parse( options, args);
+        return line;
     }
+
 }

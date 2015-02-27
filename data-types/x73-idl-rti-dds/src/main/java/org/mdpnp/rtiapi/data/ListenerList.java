@@ -13,7 +13,7 @@ public class ListenerList<L> {
     }
     
 
-    interface Dispatcher<L> {
+    public interface Dispatcher<L> {
         void dispatch(L l);
     }
     
@@ -42,7 +42,7 @@ public class ListenerList<L> {
             }
         }
     }
-    protected void fire(Dispatcher<L> dispatcher) {
+    public void fire(Dispatcher<L> dispatcher) {
         L[] listeners = this.listeners;
         for(L l : listeners) {
             if(l != null) {

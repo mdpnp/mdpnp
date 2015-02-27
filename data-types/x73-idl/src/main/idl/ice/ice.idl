@@ -17,6 +17,14 @@
  * Note: the #pragma syntax for specifying key fields is used by PrismTech OpenSplice.
  * The RTI Connext code generator currently uses the //@key syntax and will generate
  * harmless warnings about the #pragma definitions in its preprocessing step.
+ * 
+ * The stability of each data model element will be ranked on a scale 0 to 5.
+ * For more information on the stability levels.
+ * http://nodejs.org/api/documentation.html#documentation_stability_index
+ * A better definition of backward-compatibility is required here with respect to the
+ * Extensible Types Addendum to DDS.  i.e. backward compatibility is influenced
+ * by the use of markers for extensible types (indicating parameterized CDR)
+ * http://www.omg.org/spec/DDS-XTypes/
  *
  */
 module ice {
@@ -35,8 +43,14 @@ module ice {
    * https://rtmms.nist.gov/rtmms/index.htm
    * 64 ISO-8859-1 characters is sufficient to utilize any "MDC" code currently accepted
    * in harmonized rosetta.
+   * 
    */ 
   typedef string<64> MetricIdentifier;
+  
+  /**
+   * A type for representing identifying information from a proprietary vendor nomenclature.
+   */
+  typedef string<64> VendorMetricIdentifier;
   
   /**
    * For multiple instances of the same sensor this type is used for disambiguation.
@@ -97,11 +111,16 @@ module ice {
    * publish to this topic. When the instance of HeartBeat associated with a device is 
    * no longer alive that device should be considered disconnected from the system. The
    * Type description indicates whether the heartbeat came from a Device or Supervisor.
+   * 
+   * Stability: 2 - Unstable
+   *            An emitted sample from a particular uniquely identified device is
+   *            necessary to determine device presence; however the particulars may
+   *            change.
    */
   struct HeartBeat {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     string<32> type;
-  }; //@top-level true
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist HeartBeat unique_device_identifier
   const string HeartBeatTopic = "HeartBeat";
   
@@ -112,13 +131,17 @@ module ice {
    * the heartbeat enough information has been gathered to ascertain clock 
    * synchronization. So a Supervisory participant can determine whether any device
    * clocks are out of sync.
+   * 
+   * Stability: 1 - Experimental
+   *            It is unclear whether the overhead created by this exceeds the benefit
+   *            of detecting a lack of clock synchronization.
    */
   struct TimeSync {
     UniqueDeviceIdentifier heartbeat_source; //@key
     UniqueDeviceIdentifier heartbeat_recipient; //@key
     Time_t source_source_timestamp;
     Time_t recipient_receipt_timestamp;
-  }; //@top-level true
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist TimeSync heartbeat_source heartbeat_recipient
   const string TimeSyncTopic = "TimeSync";
 
@@ -135,6 +158,8 @@ module ice {
    * publishes this information only once. A device with a further connection, perhaps a 
    * serial RS-232 link, might publish details like serial number only after they become 
    * available.
+   * 
+   * Stability: 2 - Unstable
    */
   struct DeviceIdentity {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -143,7 +168,8 @@ module ice {
     LongString serial_number;
     Image icon;
     string<128> build;
-  };
+    string<128> operating_system;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist DeviceIdentity unique_device_identifier
   const string DeviceIdentityTopic = "DeviceIdentity";
 
@@ -187,6 +213,8 @@ module ice {
    * associated objective topic whereby establishment of the further connection can 
    * be requested by another participant. All current OpenICE device adapters attempt 
    * to establish such a connection by default.
+   * 
+   * Stability: 2 - Unstable
    */
   struct DeviceConnectivity {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -194,19 +222,21 @@ module ice {
     ConnectionType type;
     LongString info;
     ValidTargets valid_targets;
-  };
+  }; //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist DeviceConnectivity unique_device_identifier
   const string DeviceConnectivityTopic = "DeviceConnectivity";
 
   /**
    * This topic allows a participant to instruct a further connected device adapter 
    * to establish the further connection to the specified target.
+   * 
+   * Stability: 0 - Deprecated
    */
   struct DeviceConnectivityObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     boolean connected;
     LongString target;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist DeviceConnectivityObjective unique_device_identifier
   const string DeviceConnectivityObjectiveTopic = "DeviceConnectivityObjective";
 
@@ -255,16 +285,22 @@ module ice {
    * associated instance should be unregistered. Sensors are encouraged to publish a 
    * new sample whenever a new observation is made even when the same value is observed.
    * In this way subscribers are made aware of the timeliness of the observation.
+   * 
+   * vendor_metric_id is informational only, may be left blank, and must not be expected.
+   * If non-blank it contains a nomenclature code from a proprietary interface.
+   * 
+   * Stability: 2 - Unstable
    */
   struct Numeric {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
+    VendorMetricIdentifier vendor_metric_id; //@key
     InstanceIdentifier instance_id; //@key
     UnitIdentifier unit_id; //@key
     float value;
     Time_t device_time;
-  };
-  #pragma keylist Numeric unique_device_identifier metric_id instance_id unit_id
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist Numeric unique_device_identifier metric_id vendor_metric_id instance_id unit_id
   const string NumericTopic = "Numeric";
 
   /**
@@ -276,16 +312,22 @@ module ice {
    * is physically disconnected or otherwise certain not to provide samples then the 
    * associated instance should be unregistered. Sourcetimestamp and device_time should
    * both represent the point in time at the end of the sample array.
+   *
+   * vendor_metric_id is informational only, may be left blank, and must not be expected.
+   * If non-blank it contains a nomenclature code from a proprietary interface.
+   * 
+   * Stability: 2 - Unstable
    */
   struct SampleArray {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
+    VendorMetricIdentifier vendor_metric_id; //@key    
     InstanceIdentifier instance_id; //@key
     UnitIdentifier unit_id; //@key
     long frequency; //@key
     Values values;
     Time_t device_time;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist SampleArray unique_device_identifier metric_id instance_id unit_id frequency
   const string SampleArrayTopic = "SampleArray";
 
@@ -296,12 +338,14 @@ module ice {
    * the safety interlock, has not yet been included. We should also explore the 
    * possibility of a setup whereby the pump receives periodic 'ok to infuse' 
    * information and stops when that information is not received.
+   * 
+   * Stability: 1 - Experimental
    */
   struct InfusionObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     LongString requestor;
     boolean stopInfusion;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist InfusionObjective unique_device_identifier
   const string InfusionObjectiveTopic = "InfusionObjective";
   
@@ -311,6 +355,8 @@ module ice {
    * pump holistically and coherently. While this is an early guess at some appropriate 
    * fields it does make it evident that many of these fields are not safely 
    * separable and should be part of the same data sample.
+   * 
+   * Stability: 0 - Deprecated
    */
   struct InfusionStatus {
     UniqueDeviceIdentifier unique_device_identifier; //@key
@@ -335,32 +381,35 @@ module ice {
 
     // what is the progress through the program?
     float infusion_fraction_complete;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist InfusionStatus unique_device_identifier
   const string InfusionStatusTopic = "InfusionStatus";
 
   /**
    * The current alarm thresholds for a particular metric on a particular device.
+   *
+   * Stability: 1 - Experimental
    */
   struct AlarmSettings {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
     float lower;
     float upper;
-
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist AlarmSettings unique_device_identifier metric_id
   const string AlarmSettingsTopic = "AlarmSettings";
 
   /**
    * This objective is published by a Supervisory participant to request that all 
    * participants use the specified thresholds for alarms on a particular metric.
+   * 
+   * Stability: 1 - Experimental
    */
   struct GlobalAlarmSettingsObjective {
     MetricIdentifier metric_id; //@key
     float lower;
     float upper;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist GlobalAlarmSettingsObjective metric_id
   const string GlobalAlarmSettingsObjectiveTopic = "GlobalAlarmSettingsObjective";
 
@@ -371,13 +420,15 @@ module ice {
    * an objective-state form of command and control. At any time any participant can see
    * the current state of request, acknowledgment of the request, and implementation of 
    * the requested change.
+   * 
+   * Stability: 1 - Experimental
    */
   struct LocalAlarmSettingsObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
     float lower;
     float upper;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist LocalAlarmSettingsObjective unique_device_identifier metric_id
   const string LocalAlarmSettingsObjectiveTopic = "LocalAlarmSettingsObjective";
 
@@ -385,23 +436,26 @@ module ice {
    * In the current iteration this is status text associated with the device globally. 
    * Meant for the global alarm state of the device. For example is the device audibly 
    * alarming, visibly alarming, alarming but silenced, etc.
+   *
+   * Stability: 1 - Experimental
    */
   struct DeviceAlertCondition {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     string<256> alert_state;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist DeviceAlertCondition unique_device_identifier
   const string DeviceAlertConditionTopic = "DeviceAlertCondition";
   
   /**
    * This type is used by several topics.
+   * 
    */
   struct Alert {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     // This is a placeholder for something more harmonized
     string<256> identifier; //@key
     string<256> text;
-  };
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist Alert unique_device_identifier identifier
   
   /**
@@ -414,12 +468,16 @@ module ice {
    * during the alarm condition. This, unfortunately, might be necessary to assert the 
    * liveliness of the alarm instance to late joiners. This is something to investigate 
    * with DDS vendors.
+   * 
+   * Stability: 1 - Experimental
    */
   const string PatientAlertTopic = "PatientAlert";
   
   /**
    * TechnicalAlert is similar to PatientAlert but is meant for technical alarms about 
    * the operation of the device.
+   *
+   * Stability: 1 - Experimental
    */
   const string TechnicalAlertTopic = "TechnicalAlert";
   

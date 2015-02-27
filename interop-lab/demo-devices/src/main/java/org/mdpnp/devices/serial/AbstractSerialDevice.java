@@ -342,9 +342,9 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
                         long quietTime = System.currentTimeMillis() - AbstractSerialDevice.this.timeAwareInputStream[idx].getLastReadTime();
                         if (quietTime > getMaximumQuietTime(idx)) {
     
-                            log.warn("WATCHDOG - back to Negotiating after " + quietTime + "ms quiet time (exceeds " + getMaximumQuietTime(idx) + ")");
-                            if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating, "watchdog "+quietTime + "ms quiet time (exceeds " + getMaximumQuietTime(idx) + ")")) {
-                                log.warn("WATCHDOG - unable to move from Connecting to Negotiating state (due to silence on the line)");
+                            log.warn("WATCHDOG("+idx+") - back to Negotiating after " + quietTime + "ms quiet time (exceeds " + getMaximumQuietTime(idx) + ")");
+                            if (!stateMachine.transitionIfLegal(ice.ConnectionState.Negotiating, "watchdog("+idx+") "+quietTime + "ms quiet time (exceeds " + getMaximumQuietTime(idx) + ")")) {
+                                log.warn("WATCHDOG("+idx+") - unable to move from Connecting to Negotiating state (due to silence on the line)");
                             }
                         }
                         // Rely upon the inheritor to determine when to successfully
@@ -370,7 +370,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
                                 setLastError(idx, e);
                             }
                         } else {
-                            log.warn("Cannot issue doInitCommands("+idx+") in a null socket");
+                            log.warn("Cannot issue doInitCommands("+idx+") on a null socket");
                         }
                     }
                 }

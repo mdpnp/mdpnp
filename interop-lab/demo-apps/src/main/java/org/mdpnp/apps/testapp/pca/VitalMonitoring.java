@@ -34,17 +34,20 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.RtConfig;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
 import org.mdpnp.devices.EventLoopHandler;
+import org.mdpnp.devices.TimeManager;
+import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
@@ -53,7 +56,7 @@ import com.rti.dds.subscription.Subscriber;
  * @author Jeff Plourde
  *
  */
-public class VitalMonitoring extends JComponent implements VitalModelListener, Runnable {
+public class VitalMonitoring extends JComponent implements VitalModelListener, VitalModelContainer, Runnable {
 
     private final Dimension size = new Dimension();
     private final Point center = new Point();
@@ -452,17 +455,40 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
 
     public static final void main(String[] args) {
 
-        final DomainParticipant p = DomainParticipantFactory.get_instance().create_participant(0, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT,
-                null, StatusKind.STATUS_MASK_NONE);
-        final Subscriber s = p.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        final Publisher pub = p.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        final VitalModel vm = new VitalModelImpl(null);
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        
-        EventLoop eventLoop = new EventLoop();
-        final EventLoopHandler eventLoopHandler = new EventLoopHandler(eventLoop);
+        RtConfig.loadAndSetIceQos();
 
+        RtConfig rtSetup = RtConfig.setupDDS(0);
+        final EventLoop eventLoop=rtSetup.getEventLoop();
+        final Publisher pub=rtSetup.getPublisher();
+        final Subscriber s=rtSetup.getSubscriber();
+        final DomainParticipant participant=rtSetup.getParticipant();
+        final TimeManager timeManager = new TimeManager(pub, s, 
+                AbstractSimulatedDevice.randomUDI(), "VitalMonitoring");
+        final DeviceListModel nc = new DeviceListModel(rtSetup.getSubscriber(),
+                rtSetup.getEventLoop(),
+                timeManager);
+        
+        final EventLoopHandler handler = rtSetup.getHandler();
+
+        final VitalModel vm = new VitalModelImpl(nc);
+
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+
+        rtSetup.getEventLoop().doLater(new Runnable() {
+            public void run() {
+                nc.start();
+            }
+        });
         vm.start(s, pub, eventLoop);
+
+        eventLoop.doLater(new Runnable() {
+            public void run() {
+                VitalSign.SpO2.addToModel(vm);
+                VitalSign.RespiratoryRate.addToModel(vm);
+                VitalSign.EndTidalCO2.addToModel(vm);
+            }
+        });
+
 
         JFrame frame = new JFrame("UITest");
         frame.getContentPane().setBackground(Color.white);
@@ -479,13 +505,13 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, R
             public void windowClosing(WindowEvent e) {
                 vm.stop();
                 try {
-                    eventLoopHandler.shutdown();
+                    handler.shutdown();
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
-                p.delete_subscriber(s);
-                p.delete_contained_entities();
-                DomainParticipantFactory.get_instance().delete_participant(p);
+                participant.delete_subscriber(s);
+                participant.delete_contained_entities();
+                DomainParticipantFactory.get_instance().delete_participant(participant);
                 DomainParticipantFactory.finalize_instance();
                 super.windowClosing(e);
             }

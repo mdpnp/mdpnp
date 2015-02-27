@@ -28,10 +28,11 @@ public enum TextMessage {
     private byte b;
 
     static {
+        int lineNumber[] = new int[1];
         try {
-            fromByte = EnumHelper.build(TextMessage.class, "text-message.map");
+            fromByte = EnumHelper.build(TextMessage.class, "text-message.map", lineNumber);
         } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
+            throw new Error("At line number " + lineNumber[0], e);
         }
 
     }

@@ -30,10 +30,11 @@ public enum Setting {
     private Unit u;
 
     static {
+        int lineNumber[] = new int[1];
         try {
-            fromByte = EnumHelper.build(Setting.class, "setting.map");
+            fromByte = EnumHelper.build(Setting.class, "setting.map", lineNumber);
         } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
+            throw new Error("At line number " + lineNumber[0], e);
         }
 
     }

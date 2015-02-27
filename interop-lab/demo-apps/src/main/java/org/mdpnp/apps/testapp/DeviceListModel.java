@@ -135,6 +135,12 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
     @Override
     public void synchronization(String remote_udi, Duration_t latency, Duration_t clockDifference) {
         log.trace(remote_udi + " has latency="+latency+" and clockDifference="+clockDifference);
+        Device device = getDevice(remote_udi, false);
+        if(null != device) {
+            device.setClockDifference(clockDifference);
+            device.setRoundtripLatency(latency);
+            update(device);
+        }
     }
     
     private final void update(DeviceConnectivity dc) {
@@ -352,12 +358,18 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
         // in this PArticipant
         eventLoop.doLater(new Runnable() {
             public void run() {
-                eventLoop.removeHandler(idReader.get_statuscondition());
-                eventLoop.removeHandler(connReader.get_statuscondition());
-                idReader.delete_contained_entities();
-                subscriber.delete_datareader(idReader);
-                connReader.delete_contained_entities();
-                subscriber.delete_datareader(connReader);
+                if(idReader != null) {
+                    eventLoop.removeHandler(idReader.get_statuscondition());
+                    idReader.delete_contained_entities();
+                    subscriber.delete_datareader(idReader);
+                }
+                if(connReader != null) {
+                    eventLoop.removeHandler(connReader.get_statuscondition());
+                    connReader.delete_contained_entities();
+                    subscriber.delete_datareader(connReader);
+                }
+                idReader = null;
+                connReader = null;
             }
         });
 

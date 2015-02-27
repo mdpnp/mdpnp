@@ -95,9 +95,9 @@ public class RTMedibus extends Medibus {
         transmittedDataStreams[1] = 0 != (0x02 & syncByte);
         transmittedDataStreams[2] = 0 != (0x04 & syncByte);
         transmittedDataStreams[3] = 0 != (0x08 & syncByte);
-        if(log.isDebugEnabled()) {
-        log.debug("transmittedDataStreams(after sync byte):" + Arrays.toString(transmittedDataStreams));
-    }
+        if(log.isTraceEnabled()) {
+            log.trace("transmittedDataStreams(after sync byte):" + Arrays.toString(transmittedDataStreams));
+        }
     }
 
     public void receiveSyncCommand(int command, int argument) {
@@ -113,7 +113,9 @@ public class RTMedibus extends Medibus {
             dataStreamEnabled[offset + 1] = 0 != (0x02 & argument);
             dataStreamEnabled[offset + 2] = 0 != (0x04 & argument);
             dataStreamEnabled[offset + 3] = 0 != (0x08 & argument);
-            log.debug("dataStreamEnabled:" + Arrays.toString(dataStreamEnabled));
+            if(log.isTraceEnabled()) {
+                log.trace("dataStreamEnabled:" + Arrays.toString(dataStreamEnabled));
+            }
             break;
         case SC_TX_DATASTREAM_9_12:
             offset += 4;

@@ -30,10 +30,11 @@ public enum Command {
     private byte b;
 
     static {
+        int lineNumber[] = new int[1];
         try {
-            fromByte = EnumHelper.build(Command.class, "command.map");
+            fromByte = EnumHelper.build(Command.class, "command.map", lineNumber);
         } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
+            throw new Error("At line number " + lineNumber[0], e);
         }
 
     }

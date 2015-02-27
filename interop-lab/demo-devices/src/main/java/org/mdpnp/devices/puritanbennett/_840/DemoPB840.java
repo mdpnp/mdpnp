@@ -2,15 +2,19 @@ package org.mdpnp.devices.puritanbennett._840;
 
 import ice.ConnectionState;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.puritanbennett._840.PB840.Units;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
@@ -22,60 +26,118 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.infrastructure.Time_t;
+
 public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     private static final Logger log = LoggerFactory.getLogger(DemoPB840.class);
     private InstanceHolder<ice.SampleArray> flowSampleArray, pressureSampleArray;
-    
+    private final Calendar currentDeviceTime = Calendar.getInstance();
+    private final Time_t currentDeviceTimeAsTimeT = new Time_t(0,0); 
+    protected final Map<PB840.Units, String> unitsMap = new HashMap<PB840.Units, String>();
+    protected final Map<String, String> terms = new HashMap<String, String>();
+
     private class MyPB840Waveforms extends PB840Waveforms {
 
         public MyPB840Waveforms(InputStream input, OutputStream output) {
             super(input, output);
         }
+
         @Override
         public void receiveBreath(Collection<Number> flow, Collection<Number> pressure) {
-            flowSampleArray = sampleArraySample(flowSampleArray, flow, rosetta.MDC_FLOW_AWAY.VALUE, 0, rosetta.MDC_DIM_L_PER_MIN.VALUE, 50, null);
-            pressureSampleArray = sampleArraySample(pressureSampleArray, pressure, rosetta.MDC_PRESS_AWAY.VALUE, 0, rosetta.MDC_DIM_CM_H2O.VALUE, 50, null);
+            flowSampleArray = sampleArraySample(flowSampleArray, flow, rosetta.MDC_FLOW_AWAY.VALUE, rosetta.MDC_FLOW_AWAY.VALUE, 0, rosetta.MDC_DIM_L_PER_MIN.VALUE, 50, currentDeviceTimeAsTimeT);
+            pressureSampleArray = sampleArraySample(pressureSampleArray, pressure, rosetta.MDC_PRESS_AWAY.VALUE, rosetta.MDC_PRESS_AWAY.VALUE, 0, rosetta.MDC_DIM_CM_H2O.VALUE,
+                    50, currentDeviceTimeAsTimeT);
+        }
+    }
+
+    public DemoPB840(int domainId, EventLoop eventLoop) {
+        super(domainId, eventLoop, 2, PB840.class);
+        loadUnits(unitsMap);
+        loadTerms(terms);
+        currentDeviceTime.set(Calendar.SECOND, 0);
+        currentDeviceTime.set(Calendar.MILLISECOND, 0);
+        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        deviceIdentity.manufacturer = "Puritan Bennett";
+        deviceIdentity.model = "";
+        writeDeviceIdentity();
+    }
+
+
+    protected Map<String, InstanceHolder<ice.Numeric>> numericInstances = new HashMap<String, InstanceHolder<ice.Numeric>>();
+    protected Map<String, InstanceHolder<ice.AlarmSettings>> alarmSettingsInstances = new HashMap<String, InstanceHolder<ice.AlarmSettings>>();
+
+    @Override
+    protected void unregisterAllAlarmSettingsInstances() {
+        alarmSettingsInstances.clear();
+        super.unregisterAllAlarmSettingsInstances();
+    }
+
+    @Override
+    protected void unregisterAllNumericInstances() {
+        numericInstances.clear();
+        super.unregisterAllNumericInstances();
+    }
+
+    
+    protected static Float parseFloat(String s) throws NumberFormatException {
+        return parseFloat(s, null);
+    }
+
+    protected static Float parseFloat(String s, Float ifNull) throws NumberFormatException {
+        if (s == null || s.isEmpty() || "OFF".equals(s)) {
+            return ifNull;
+        } else {
+            return Float.parseFloat(s);
+        }
+    }
+
+    protected static final void loadUnits(Map<PB840.Units, String> map) {
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(PB840Parameters.class.getResourceAsStream("units")));
+            String line = null;
+
+            int lineNumber = 0;
+            
+            while (null != (line = br.readLine())) {
+                lineNumber++;
+                line = line.trim();
+                if ('#' != line.charAt(0)) {
+                    String v[] = line.split("\t");
+
+                    if (v.length != 2) {
+                        log.warn("Bad line" + lineNumber + ":" + line);
+                    } else {
+                        map.put(Units.valueOf(v[0]), v[1]);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
     
-    public DemoPB840(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop, 2, PB840.class);
-        AbstractSimulatedDevice.randomUDI(deviceIdentity);
-        deviceIdentity.manufacturer = "Puritan Bennett";
-        deviceIdentity.model = "840";
-        writeDeviceIdentity();
-    }
-    
-    protected InstanceHolder<ice.Numeric> respRateSetting, respRate,exhaledTidalVolume;
-    protected InstanceHolder<ice.AlarmSettings> inspPressure, exhaledMV, exhaledMandTidalVolume, exhaledSpontTidalVolume, respRateAlarm, inspiredTidalVolume;
-    
-    protected final List<InstanceHolder<ice.Numeric>> otherFields = new ArrayList<InstanceHolder<ice.Numeric>>();
-    
-    private static final String[] fieldNames = new String[] {
-        "PB_TIME", null, "PB_DATE", "PB_VENT_TYPE", "PB_MODE", "PB_MANDATORY_TYPE", "PB_SPONTANEOUS_TYPE", "PB_TRIGGER_TYPE",
-        "PB_SETTING_RESP_RATE", "PB_SETTING_TIDAL_VOLUME", "PB_SETTING_PEAK_FLOW", "PB_SETTING_O2PCT",
-        "PB_SETTING_PRESS_SENSITIVITY", "PB_SETTING_PEEP_CPAP", "PB_SETTING_PLATEAU", "PB_SETTING_APNEA_INTERVAL",
-        "PB_SETTING_APNEA_TIDAL_VOLUME", "PB_SETTING_APNEA_RESPIRATORY_RATE", "PB_SETTING_APNEA_PEAK_FLOW",
-        "PB_SETTING_APNEA_O2PCT", "PB_SETTING_PCV_APNEA_INSP_PRESSURE", "PB_SETTING_PCV_APNEA_INSP_TIME",
-        "PB_SETTING_APNEA_FLOW_PATTERN", "PB_SETTING_MANDATORY", "PB_APNEA_IE_INSP_COMPONENT",
-        "PB_SETTING_IE_EXP_COMPONENT", "PB_SETTING_SUPPORT_PRESSURE", "PB_SETTING_FLOW_PATTERN",
-        "PB_SETTING_100PCT_O2_SUCTION", null /* insp press high alarm*/, null /* exp press low alarm*/,
-        null /* exhaled MV high*/, null /* exhaled MV low*/, null /* exhaled mand tidal volume high*/,
-        null /* exhaled mand tidal volume low*/, null /* exhaled spont tidal volume high*/,
-        null /* exhaled spont tidal volume low*/, null /* high resp rate */, null /* high inspired tidal volume*/,
-        "PB_SETTING_BASE_FLOW", "PB_SETTING_FLOW_SENSITIVITY", "PB_SETTING_PCV_INSP_PRESSURE",
-        "PB_SETTING_PCV_INSP_TIME", "PB_SETTING_IE_INSP_COMPONENT", "PB_SETTING_IE_EXP_COMPONENT",
-        "PB_SETTING_CONSTANT_DURING_RATE_CHANGE", "PB_SETTING_TUBE_ID", "PB_SETTING_TUBE_TYPE",
-        "PB_SETTING_HUMIDIFICATION_TYPE", "PB_SETTING_HUMIDIFIER_VOLUME", "PB_SETTING_O2_SENSOR",
-        "PB_SETTING_DISCONNECT_SENSITIVITY", "PB_SETTING_RISE_TIME_PCT", "PB_SETTING_PAVPCT_SUPPORT",
-        "PB_SETTING_EXP_SENSITIVITY", "PB_SETTING_IBW", "PB_SETTING_TARGET_SUPP_VOLUME", 
-    };
-    
-    protected static Float parseFloat(String s) {
-        if(s == null || s.isEmpty() || "OFF".equals(s)) {
-            return null;
-        } else {
-            return Float.parseFloat(s);
+    protected static final void loadTerms(Map<String, String> map) {
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(PB840Parameters.class.getResourceAsStream("terms")));
+            String line = null;
+
+            int lineNumber = 0;
+            
+            while (null != (line = br.readLine())) {
+                lineNumber++;
+                line = line.trim();
+                if ('#' != line.charAt(0)) {
+                    String v[] = line.split("\t");
+
+                    if (v.length != 2) {
+                        log.warn("Bad line" + lineNumber + ":" + line);
+                    } else {
+                        map.put(v[0], v[1]);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
     
@@ -83,67 +145,132 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         public MyPB840Parameters(InputStream input, OutputStream output) {
             super(input, output);
         }
+
         @Override
-        public void receiveMiscF(List<String> fieldValues) {
-            reportConnected("Received MISCF");
-            if(!fieldValues.get(1).equals(deviceIdentity.serial_number)) {
-                deviceIdentity.serial_number = fieldValues.get(1);
+        public void receiveSetting(String name, Units units, String value) {
+            // TODO settings might not always be on the same topic as numerics
+            receiveNumeric(name, units, value);
+        }
+        
+        @Override
+        public void receiveNumeric(String name, Units units, String value) {
+            String canonicalName = terms.get(name);
+            canonicalName = null == canonicalName ? name : canonicalName;
+            try {
+                numericInstances.put(name,
+                        numericSample(numericInstances.get(name), parseFloat(value), 
+                                canonicalName, name, unitsMap.get(units), currentDeviceTimeAsTimeT));
+            } catch (NumberFormatException nfe) {
+                log.warn("Poorly formatted numeric " + name + " " + value, nfe);
+            }
+        }
+        
+        @Override
+        public void receiveAlarmSetting(String name, String lower, String upper) {
+            try {
+                // TODO using FLOAT_MIN, FLOAT_MAX as reserved values because
+                // otherwise cannot publish AlarmSettings
+                // with only one boundary condition
+                alarmSettingsInstances.put(
+                        name,
+                        alarmSettingsSample(alarmSettingsInstances.get(name),
+                                parseFloat(lower, Float.MIN_VALUE),
+                                parseFloat(upper, Float.MAX_VALUE),
+                                name));
+            } catch (NumberFormatException nfe) {
+                log.warn("Poorly formatted alarm setting " + name + " " + lower + " "
+                        + upper, nfe);
+            }
+        }
+        
+        @Override
+        public void receivePatientAlert(String name, String value) {
+            writePatientAlert(name, value);
+        }
+        
+        @Override
+        public void receiveTechnicalAlert(String name, String value) {
+            writeTechnicalAlert(name, value);
+        }
+        
+        @Override
+        public void receiveVentilatorId(String model, String id) {
+            if (!id.equals(deviceIdentity.serial_number) || 
+                !model.equals(deviceIdentity.model)) {
+                deviceIdentity.serial_number = id;
+                deviceIdentity.model = model;
                 writeDeviceIdentity();
             }
-            inspPressure = alarmSettingsSample(inspPressure, parseFloat(fieldValues.get(30)), parseFloat(fieldValues.get(29)), "PB_INSP_PRESSURE");
-            exhaledMV = alarmSettingsSample(exhaledMV, parseFloat(fieldValues.get(32)), parseFloat(fieldValues.get(31)), "PB_EXHALED_MV");
-            exhaledMandTidalVolume = alarmSettingsSample(exhaledMandTidalVolume, parseFloat(fieldValues.get(34)), parseFloat(fieldValues.get(33)), "PB_EXHALED_MAND_TIDAL_VOLUME");
-            exhaledSpontTidalVolume = alarmSettingsSample(exhaledSpontTidalVolume, parseFloat(fieldValues.get(36)), parseFloat(fieldValues.get(35)), "PB_EXHALED_SPONT_TIDAL_VOLUME");
-            respRateAlarm = alarmSettingsSample(respRateAlarm, null, parseFloat(fieldValues.get(37)), "PB_RESP_RATE");
-            inspiredTidalVolume = alarmSettingsSample(inspiredTidalVolume, null, parseFloat(fieldValues.get(38)), "PB_INSPIRED_TIDAL_VOLUME");
-            
+        }
+        
+        @Override
+        public void receiveTime(int hour, int minute) {
+            currentDeviceTime.set(Calendar.HOUR_OF_DAY, hour);
+            currentDeviceTime.set(Calendar.MINUTE, minute);
+            long tm = currentDeviceTime.getTimeInMillis();
+            currentDeviceTimeAsTimeT.sec = (int) (tm / 1000L);
+            currentDeviceTimeAsTimeT.nanosec = (int)(1000000L * (tm % 1000L));
+        }
+        
+        @Override
+        public void receiveDate(int month, int day, int year) {
+            currentDeviceTime.set(Calendar.MONTH, month);
+            currentDeviceTime.set(Calendar.DATE, day);
+            currentDeviceTime.set(Calendar.YEAR, year);
+            long tm = currentDeviceTime.getTimeInMillis();
+            currentDeviceTimeAsTimeT.sec = (int) (tm / 1000L);
+            currentDeviceTimeAsTimeT.nanosec = (int)(1000000L * (tm % 1000L));
+        }
+        
+        @Override
+        public void receiveStartResponse(String responseType) {
+            reportConnected("Received "+responseType);
+            markOldPatientAlertInstances();
             markOldTechnicalAlertInstances();
-            for(int i = 0; i < fieldValues.size(); i++) {
-                String name = i < fieldNames.length ? fieldNames[i] : ("PB_F_"+(i+5));
-                if(null != name) {
-                    try {
-                        float f = Float.parseFloat(fieldValues.get(i));
-                        while(i >= otherFields.size()) {
-                            otherFields.add(null);
-                        }
-                        otherFields.set(i, numericSample(otherFields.get(i), f, name, rosetta.MDC_DIM_DIMLESS.VALUE, null));
-                    } catch(NumberFormatException nfe) {
-                        writeTechnicalAlert(name, fieldValues.get(i));
-                    }
-                }
-            }
+        }
+        
+        @Override
+        public void receiveEndResponse() {
+            clearOldPatientAlertInstances();
             clearOldTechnicalAlertInstances();
         }
     }
 
     private class RequestSlowData implements Runnable {
         public void run() {
+            log.trace("RequestSlowData called");
             if (ice.ConnectionState.Connected.equals(getState())) {
                 try {
                     PB840Parameters params = (PB840Parameters) getDelegate(0);
                     params.sendF();
+                    log.trace("Issued SENDF");
                 } catch (Throwable t) {
                     log.error(t.getMessage(), t);
                 }
+            } else {
+                log.trace("Not issuing SENDF where state=" + getState());
             }
 
         }
     }
-    
+
     @Override
     protected void doInitCommands(int idx) throws IOException {
         super.doInitCommands(idx);
-        switch(idx) {
+        switch (idx) {
         case 0:
-            ((PB840Parameters)getDelegate(idx)).sendF();
+            ((PB840Parameters) getDelegate(idx)).sendReset();
+            log.trace("Issued a RSET for doInitCommands");
+            ((PB840Parameters) getDelegate(idx)).sendF();
+            log.trace("Issued a SNDF for doInitCommands");
             break;
         default:
-            
+
         }
     }
-    
+
     private ScheduledFuture<?> requestSlowData;
-    
+
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState, String transitionNote) {
 
@@ -154,8 +281,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             stopRequestSlowData();
         }
         super.stateChanged(newState, oldState, transitionNote);
-    }    
-    
+    }
+
     private synchronized void startRequestSlowData() {
         if (null == requestSlowData) {
             requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 1000L, 1000L, TimeUnit.MILLISECONDS);
@@ -164,6 +291,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             log.trace("Slow data request already scheduled");
         }
     }
+
     private synchronized void stopRequestSlowData() {
         if (null != requestSlowData) {
             requestSlowData.cancel(false);
@@ -174,10 +302,9 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         }
     }
 
-    
     @Override
     protected PB840 buildDelegate(int idx, InputStream in, OutputStream out) {
-        switch(idx) {
+        switch (idx) {
         case 0:
             return new MyPB840Parameters(in, out);
         case 1:
@@ -191,11 +318,11 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     protected boolean delegateReceive(int idx, PB840 delegate) throws IOException {
         return delegate.receive();
     }
-    
+
     @Override
     public SerialProvider getSerialProvider(int idx) {
         SerialProvider serialProvider = super.getSerialProvider(idx).duplicate();
-        switch(idx) {
+        switch (idx) {
         case 0:
             serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
             break;
@@ -203,18 +330,29 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             serialProvider.setDefaultSerialSettings(38400, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
             break;
         }
-        
+
         return serialProvider;
     }
-    
+
     @Override
     protected long getMaximumQuietTime(int idx) {
-        return 5000L;
+        switch (idx) {
+        case 0:
+            return 5000L;
+        case 1:
+            // There is no protocol negotiation for waveform data
+            // so there is no utility in interrupting the main parameter
+            // collection when waveform data is absent
+            return Long.MAX_VALUE;
+        default:
+            return super.getMaximumQuietTime(idx);
+        }
     }
-    
+
     @Override
     protected String iconResourceName() {
         return "pb840.png";
     }
+    
 
 }

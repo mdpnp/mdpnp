@@ -138,7 +138,7 @@ public class VentilatorPanel extends DevicePanel {
 
         @Override
         public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
-            if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(data.metric_id)) {
+            if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(data.metric_id) || rosetta.MDC_AWAY_RESP_RATE.VALUE.equals(data.metric_id)) {
                 respiratoryRate.setText(Integer.toString((int) data.value));
             } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(data.metric_id)) {
                 endTidalCO2.setText(Integer.toString((int) data.value));

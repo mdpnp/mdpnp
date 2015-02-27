@@ -14,7 +14,7 @@ public interface InstanceModel<D extends Copyable, R extends DataReaderImpl> ext
     void iterateAndAddListener(InstanceModelListener<D,R> listener, int maxSamples);
     void removeListener(InstanceModelListener<D,R> listener);
     
-    public void start(Subscriber subscriber, EventLoop eventLoop, String expression, StringSeq params, String qosLibrary, String qosProfile);
+    void start(Subscriber subscriber, EventLoop eventLoop, String expression, StringSeq params, String qosLibrary, String qosProfile);
 
     void stop();
 
@@ -22,4 +22,5 @@ public interface InstanceModel<D extends Copyable, R extends DataReaderImpl> ext
     EventLoop getEventLoop();
 
     void start(Subscriber subscriber, EventLoop eventLoop, String qosLibrary, String qosProfile);
+    void start(Subscriber subscriber, EventLoop eventLoop);
 }

@@ -49,6 +49,9 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
     private final JLabel udi = new JLabel(" ");
     private final JLabel hostname = new JLabel(" ");
     private final JLabel buildDescriptor = new JLabel(" ");
+    private final JLabel operatingSystem = new JLabel(" ");
+//    private final JLabel clockDifference = new JLabel(" ");
+//    private final JLabel roundtripLatency = new JLabel(" ");
 
     private Dimension myDimension = null;
 
@@ -102,7 +105,28 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
         Font fineprint = Font.decode("fixed-8");
         addFinePrint(fineprint, "Unique Device Id:", udi, gbc, text);
         addFinePrint(fineprint, "Hostname:", hostname, gbc, text);
+        addFinePrint(fineprint, "Operating System:", operatingSystem, gbc, text);
         addFinePrint(fineprint, "Build:", buildDescriptor, gbc, text);
+        
+//        gbc.gridx++;
+//        gbc.gridy = 0;
+//        gbc.gridheight = 5;
+//        JPanel timeInfo = new JPanel();
+//        JLabel clockOffset = new JLabel("<html>Clock Offset<br/>From Local</html>");
+////        JLabel fromLocalDevice = new JLabel("From Local");
+//        clockOffset.setOpaque(false);
+////        fromLocalDevice.setOpaque(false);
+//        clockDifference.setOpaque(false);
+//        timeInfo.setOpaque(false);
+//        timeInfo.add(clockOffset);
+////        timeInfo.add(fromLocalDevice);
+//        timeInfo.add(clockDifference);
+//        text.add(timeInfo, gbc);
+//        gbc.gridy++;
+//        clockDifference.setOpaque(false);
+//        text.add(clockDifference, gbc);
+////        gbc.gridy++;
+////        text.add(roundtripLatency, gbc);
 
         add(text, BorderLayout.CENTER);
 
@@ -164,9 +188,11 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
             if (null != di) {
                 modelName.setText(device.getMakeAndModel());
                 buildDescriptor.setText(di.build);
+                operatingSystem.setText(di.operating_system);
             } else {
                 modelName.setText("");
                 buildDescriptor.setText("DeviceIdentity not yet found.");
+                operatingSystem.setText("");
             }
 
             if (icon != null) {
@@ -174,9 +200,19 @@ public class DeviceListCellRenderer extends JComponent implements ListCellRender
             } else {
                 this.icon.setIcon(DeviceIcon.WHITE_SQUARE_ICON);
             }
+            
+            //this.roundtripLatency.setText(""+device.getRoundtripLatencyMs());
+//            double clockDiff = device.getClockDifferenceMs();
+//            this.clockDifference.setText(""+(Math.round(10.0*clockDiff)/10.0)+"ms");
+//            if(clockDiff <= -1000.0 || clockDiff >= 1000.0) {
+//                this.clockDifference.setForeground(Color.red);
+//            } else {
+//                this.clockDifference.setForeground(Color.black);
+//            }
         } else {
             connectionStatus.setText("");
             hostname.setText("");
+            operatingSystem.setText("");
             modelName.setText("<unknown>");
             this.icon.setIcon(null);
         }

@@ -22,17 +22,18 @@ import org.mdpnp.devices.Unit;
  *
  */
 public enum MeasuredDataCP2 {
-    Tlowmax, PressureVariability, VTspon, ElastanceE, Tau, InspiratoryTidalVolumeVTi, ExpiratoryTidalVolumeVTe, EIP;
+    Tlowmax, PressureVariability, VTspon, ElastanceE, Tau, InspiratoryTidalVolumeVTi, ExpiratoryTidalVolumeVTe, EIP;    
     private static final Map<java.lang.Byte, MeasuredDataCP2> fromByte;
 
     private byte b;
     private Unit u;
 
     static {
+        int lineNumber[] = new int[1];
         try {
-            fromByte = EnumHelper.build(MeasuredDataCP2.class, "measured-data-cp2.map");
+            fromByte = EnumHelper.build(MeasuredDataCP2.class, "measured-data-cp2.map", lineNumber);
         } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
+            throw new Error("At line number " + lineNumber[0], e);
         }
 
     }

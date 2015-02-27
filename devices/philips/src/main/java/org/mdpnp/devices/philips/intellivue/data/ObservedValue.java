@@ -526,6 +526,12 @@ public enum ObservedValue implements OrdinalEnum.IntType {
      */
     NOM_AWAY_RESP_RATE(0x5012),
     /**
+     * Added by JJP on 3-Nov-2014 trying to get respiration rate from a Respiratory Motion
+     * ExSpiron Device
+     * This field is NOT in the Philips Data Export specification
+     */
+    NOM_VENT_RESP_RATE(0x5022),
+    /**
      * VC Vital Lung Capacity
      */
     NOM_CAPAC_VITAL(0x5080),

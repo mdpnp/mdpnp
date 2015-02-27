@@ -7,9 +7,11 @@ import org.mdpnp.apps.testapp.DemoFrame;
 
 public class Main {
 	
-	public static void main(String[] args) {
-		
-		SwingUtilities.invokeLater(new Runnable() {
+	public static void main(String[] args) throws Exception{
+
+        org.mdpnp.apps.testapp.RtConfig.loadAndSetIceQos();
+
+        SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
 			    DemoFrame.setQuitStrategy("CLOSE_ALL_WINDOWS");
