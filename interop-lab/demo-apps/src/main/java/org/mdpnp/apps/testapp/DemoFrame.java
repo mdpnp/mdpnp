@@ -22,6 +22,9 @@ import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+
 import javax.swing.JFrame;
 
 import org.slf4j.Logger;
@@ -32,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * @author Jeff Plourde
  *
  */
-public class DemoFrame extends JFrame {
+public class DemoFrame extends Scene {
     public DemoFrame() {
         this("");
     }
@@ -72,8 +75,8 @@ public class DemoFrame extends JFrame {
 
     private boolean apple;
 
-    public DemoFrame(String title) {
-        super(title);
+    public DemoFrame(Parent root) {
+        super(root);
         apple = setWindowCanFullScreen(true);
         setQuitStrategy("CLOSE_ALL_WINDOWS");
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventPostProcessor(new PostProcessKey());

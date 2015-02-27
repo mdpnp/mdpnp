@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?scenebuilder-stylesheet application.css?>
+
+<BorderPane prefHeight="600.0" prefWidth="800.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.mdpnp.apps.testapp.Controller">
+  <!-- TODO Add Nodes -->
+  <bottom>
+    <BorderPane prefHeight="-1.0" prefWidth="-1.0" />
+  </bottom>
+  <center>
+    <StackPane prefHeight="150.0" prefWidth="200.0" visible="true" />
+  </center>
+  <top>
+    <BorderPane prefHeight="-1.0" prefWidth="-1.0">
+      <center>
+        <Label text="OpenICE" />
+      </center>
+    </BorderPane>
+  </top>
+</BorderPane>

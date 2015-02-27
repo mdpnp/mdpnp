@@ -28,6 +28,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
@@ -71,8 +77,8 @@ public class IceAppsContainer extends DemoFrame {
     private DemoPanel  panel;
     private CardLayout ol;
 
-    private PartitionChooser partitionChooser;
-    private DiscoveryPeers   discoveryPeers;
+//    private PartitionChooser partitionChooser;
+//    private DiscoveryPeers   discoveryPeers;
 
     public IceAppsContainer(final AbstractApplicationContext context, final CountDownLatch stopOk) throws Exception {
         super("ICE Supervisor");
@@ -85,21 +91,21 @@ public class IceAppsContainer extends DemoFrame {
 
         final DeviceListModel nc = (DeviceListModel) context.getBean("deviceListModel");
 
-        setIconImage(ImageIO.read(getClass().getResource("icon.png")));
+//        setIconImage(ImageIO.read(getClass().getResource("icon.png")));
         panel = new DemoPanel();
-        partitionChooser = new PartitionChooser(this);
-        partitionChooser.setSize(320, 240);
-        partitionChooser.set(subscriber);
-        partitionChooser.set(publisher);
-
-        discoveryPeers = new DiscoveryPeers(this);
-        discoveryPeers.setSize(320, 240);
-        discoveryPeers.set(participant);
+//        partitionChooser = new PartitionChooser(this);
+//        partitionChooser.setSize(320, 240);
+//        partitionChooser.set(subscriber);
+//        partitionChooser.set(publisher);
+//
+//        discoveryPeers = new DiscoveryPeers(this);
+//        discoveryPeers.setSize(320, 240);
+//        discoveryPeers.set(participant);
 
         panel.getBedLabel().setText("OpenICE");
         panel.getVersion().setText(BuildInfo.getDescriptor());
 
-        getContentPane().add(panel);
+//        getContentPane().add(panel);
         ol = new CardLayout();
         panel.getContent().setLayout(ol);
         panel.getUdi().setText(udi);
@@ -108,9 +114,9 @@ public class IceAppsContainer extends DemoFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                partitionChooser.refresh();
-                partitionChooser.setLocationRelativeTo(panel);
-                partitionChooser.setVisible(true);
+//                partitionChooser.refresh();
+//                partitionChooser.setLocationRelativeTo(panel);
+//                partitionChooser.setVisible(true);
             }
 
         });
@@ -168,7 +174,7 @@ public class IceAppsContainer extends DemoFrame {
         //
         ol.show(panel.getContent(), Main.getId());
 
-        addWindowListener(new WindowAdapter() {
+        /*addWindowListener(*/new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
 
@@ -193,7 +199,7 @@ public class IceAppsContainer extends DemoFrame {
 
                 super.windowClosing(e);
             }
-        });
+        }/*)*/;
         panel.getBack().setVisible(false);
 
         panel.getCreateAdapter().addActionListener(new ActionListener() {
@@ -204,7 +210,7 @@ public class IceAppsContainer extends DemoFrame {
 
                 DefaultComboBoxModel model = new DefaultComboBoxModel(new Configuration.Application[]{Configuration.Application.ICE_Device_Interface});
 
-                ConfigurationDialog dia = new ConfigurationDialog(null, IceAppsContainer.this);
+                ConfigurationDialog dia = new ConfigurationDialog(null, null);
                 dia.setTitle("Create a local ICE Device Adapter");
                 dia.getApplications().setModel(model);
                 dia.set(Configuration.Application.ICE_Device_Interface, null);
@@ -232,10 +238,10 @@ public class IceAppsContainer extends DemoFrame {
                                 DomainParticipantQos pQos = new DomainParticipantQos();
                                 DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
                                 pQos.discovery.initial_peers.clear();
-                                for (int i = 0; i < discoveryPeers.peers.getSize(); i++) {
-                                    pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
-                                    System.err.println("PEER:" + discoveryPeers.peers.getElementAt(i));
-                                }
+//                                for (int i = 0; i < discoveryPeers.peers.getSize(); i++) {
+//                                    pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
+//                                    System.err.println("PEER:" + discoveryPeers.peers.getElementAt(i));
+//                                }
                                 DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
                                 SubscriberQos qos = new SubscriberQos();
                                 subscriber.get_qos(qos);
@@ -274,7 +280,7 @@ public class IceAppsContainer extends DemoFrame {
                     if (app != null) {
                         if (app.getUI() instanceof JFrame) {
                             JFrame a = (JFrame) app.getUI();
-                            a.setLocationRelativeTo(IceAppsContainer.this);
+//                            a.setLocationRelativeTo(IceAppsContainer.this);
                             app.activate(context);
                             a.setVisible(true);
                         } else {
@@ -300,9 +306,9 @@ public class IceAppsContainer extends DemoFrame {
             }
         });
 
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(800, 600);
-        setLocationRelativeTo(null);
+//        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//        setSize(800, 600);
+//        setLocationRelativeTo(null);
     }
 
     private void activateGoBack(final IceApplicationProvider.IceApp app) {
@@ -415,7 +421,7 @@ public class IceAppsContainer extends DemoFrame {
         static final ThreadGroup threadGroup = new ThreadGroup("DeviceApp");
     }
 
-    public static class IceAppsContainerInvoker implements Configuration.Command {
+    public static class IceAppsContainerInvoker extends Application implements Configuration.Command {
 
         @Override
         public int execute(Configuration config) throws Exception {
@@ -424,14 +430,27 @@ public class IceAppsContainer extends DemoFrame {
             final AbstractApplicationContext context = config.createContext("IceAppContainerContext.xml");
             context.registerShutdownHook();
 
-            JFrame f = new IceAppsContainer(context, stopOk);
-            f.setVisible(true);
+            
+            launch();
+//            JFrame f = new IceAppsContainer(context, stopOk);
+//            f.setVisible(true);
 
             // this will block until the frame is killed
             stopOk.await();
 
             context.destroy();
             return 0;
+        }
+        
+        @Override
+        public void start(Stage primaryStage) throws Exception {
+            primaryStage.setTitle("OpenICE");
+            BorderPane root = (BorderPane)FXMLLoader.load(getClass().getResource("Sample.fxml"));
+            Scene scene = new IceApps
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+            primaryStage.setScene(scene);
+            primaryStage.show();
         }
     }
 }
