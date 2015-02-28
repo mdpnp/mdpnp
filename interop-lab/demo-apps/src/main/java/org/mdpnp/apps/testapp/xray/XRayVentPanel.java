@@ -283,7 +283,7 @@ public class XRayVentPanel extends JPanel {
             }
         });
 
-        final Border border = new LineBorder(DemoPanel.darkBlue, 2);
+//        final Border border = new LineBorder(DemoPanel.darkBlue, 2);
 
         JPanel enclosingFramePanel = new JPanel(new BorderLayout());
         JLabel l;
@@ -314,7 +314,7 @@ public class XRayVentPanel extends JPanel {
 
         waveformPanel = new SwingWaveformPanel();
         if (waveformPanel instanceof JComponent) {
-            ((JComponent) waveformPanel).setBorder(border);
+//            ((JComponent) waveformPanel).setBorder(border);
         }
 
         enclosingWaveformPanel.add(waveformPanel.asComponent(), BorderLayout.CENTER);
@@ -402,7 +402,7 @@ public class XRayVentPanel extends JPanel {
 
         add(panel, BorderLayout.CENTER);
 
-        DemoPanel.setChildrenOpaque(this, false);
+//        DemoPanel.setChildrenOpaque(this, false);
     }
 
     public void stop() {

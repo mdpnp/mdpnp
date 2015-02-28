@@ -12,19 +12,18 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.awt.BorderLayout;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import ice.ConnectionType;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.CountDownLatch;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
+import javax.swing.JProgressBar;
+import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 
-import ice.ConnectionType;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
@@ -203,7 +202,7 @@ public abstract class DeviceAdapter {
 
     static class GUIAdapter extends HeadlessAdapter {
 
-        private JFrame               frame;
+        private DemoFrame               frame;
         private DeviceDataMonitor    deviceMonitor;
         private CompositeDevicePanel cdp;
 
@@ -213,7 +212,7 @@ public abstract class DeviceAdapter {
             super(deviceFactory, context, false);
         }
 
-        public JFrame getFrame() {
+        public DemoFrame getFrame() {
             return frame;
         }
 
@@ -232,8 +231,8 @@ public abstract class DeviceAdapter {
 
                 Runnable r = new Runnable() {
                     public void run() {
-                        frame.setVisible(false);
-                        frame.dispose();
+//                        frame.setVisible(false);
+//                        frame.dispose();
                     }
                 };
 
@@ -262,35 +261,35 @@ public abstract class DeviceAdapter {
             EventLoop eventLoop = (EventLoop) context.getBean("eventLoop");
             deviceMonitor.start(device.getSubscriber(), eventLoop);
 
-            frame = new DemoFrame("ICE Device Adapter - " + type);
-            frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
-            frame.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosing(WindowEvent e) {
-
-                    progressBar.setStringPainted(true);
-                    update("Shutting down", 1);
-
-                    frame.getContentPane().removeAll();
-
-                    frame.getContentPane().setLayout(new BorderLayout());
-                    frame.getContentPane().add(progressBar, BorderLayout.NORTH);
-                    frame.validate();
-                    frame.repaint();
-
-                    Runnable r = new Runnable() {
-                        public void run() {
-                            stop();
-                        }
-                    };
-                    new Thread(r, "Device shutdown thread").start();
-                    super.windowClosing(e);
-                }
-            });
-            frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-            frame.setSize(640, 480);
-            frame.setLocationRelativeTo(null);
-            frame.getContentPane().setLayout(new BorderLayout());
+            frame = new DemoFrame();
+//            frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
+//            frame.addWindowListener(new WindowAdapter() {
+//                @Override
+//                public void windowClosing(WindowEvent e) {
+//
+//                    progressBar.setStringPainted(true);
+//                    update("Shutting down", 1);
+//
+//                    frame.getContentPane().removeAll();
+//
+//                    frame.getContentPane().setLayout(new BorderLayout());
+//                    frame.getContentPane().add(progressBar, BorderLayout.NORTH);
+//                    frame.validate();
+//                    frame.repaint();
+//
+//                    Runnable r = new Runnable() {
+//                        public void run() {
+//                            stop();
+//                        }
+//                    };
+//                    new Thread(r, "Device shutdown thread").start();
+//                    super.windowClosing(e);
+//                }
+//            });
+//            frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+//            frame.setSize(640, 480);
+//            frame.setLocationRelativeTo(null);
+//            frame.getContentPane().setLayout(new BorderLayout());
             JTextArea descriptionText = new JTextArea();
             descriptionText.setEditable(false);
             descriptionText.setLineWrap(true);
@@ -312,11 +311,11 @@ public abstract class DeviceAdapter {
                 }
             }
 
-            frame.getContentPane().add(new JScrollPane(descriptionText), BorderLayout.NORTH);
-            frame.getContentPane().add(cdp, BorderLayout.CENTER);
-
-            frame.getContentPane().validate();
-            frame.setVisible(true);
+//            frame.getContentPane().add(new JScrollPane(descriptionText), BorderLayout.NORTH);
+//            frame.getContentPane().add(cdp, BorderLayout.CENTER);
+//
+//            frame.getContentPane().validate();
+//            frame.setVisible(true);
 
             return device;
         }

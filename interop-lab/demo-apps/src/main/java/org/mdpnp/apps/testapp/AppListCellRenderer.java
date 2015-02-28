@@ -40,7 +40,7 @@ public class AppListCellRenderer extends JLabel implements ListCellRenderer<AppT
         IceApplicationProvider.AppType app = value == null ? null : value;
 
         if (null != app) {
-            setIcon(app.getIcon());
+//            setIcon(app.getIcon());
             setText(app.getName());
         }
         return this;

@@ -35,9 +35,9 @@ import org.slf4j.LoggerFactory;
  * @author Jeff Plourde
  *
  */
-public class DemoFrame extends Scene {
+public class DemoFrame {
     public DemoFrame() {
-        this("");
+//        this("");
     }
 
     private class PostProcessKey implements KeyEventPostProcessor {
@@ -55,16 +55,16 @@ public class DemoFrame extends Scene {
                     break;
                 case KeyEvent.VK_Q:
                     if (e.isControlDown()) {
-                        dispatchEvent(new WindowEvent(DemoFrame.this, WindowEvent.WINDOW_CLOSING));
+//                        dispatchEvent(new WindowEvent(DemoFrame.this, WindowEvent.WINDOW_CLOSING));
                         return true;
                     }
                     break;
                 case KeyEvent.VK_W:
-                    if (e.isMetaDown() && DemoFrame.this.isFocused()) {
-                        dispatchEvent(new WindowEvent(DemoFrame.this, WindowEvent.WINDOW_CLOSING));
+//                    if (e.isMetaDown() && DemoFrame.this.isFocused()) {
+//                        dispatchEvent(new WindowEvent(DemoFrame.this, WindowEvent.WINDOW_CLOSING));
                         return true;
-                    }
-                    break;
+//                    }
+//                    break;
                 }
                 break;
             }
@@ -76,8 +76,8 @@ public class DemoFrame extends Scene {
     private boolean apple;
 
     public DemoFrame(Parent root) {
-        super(root);
-        apple = setWindowCanFullScreen(true);
+//        super(root);
+//        apple = setWindowCanFullScreen(true);
         setQuitStrategy("CLOSE_ALL_WINDOWS");
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventPostProcessor(new PostProcessKey());
     }
@@ -128,7 +128,7 @@ public class DemoFrame extends Scene {
             try {
                 Method method = getApplicationClass().getMethod("requestToggleFullScreen", Window.class);
                 method.invoke(getApplication(), this);
-                repaint();
+//                repaint();
                 return true;
             } catch (ClassNotFoundException e1) {
                 // e1.printStackTrace();
@@ -139,18 +139,18 @@ public class DemoFrame extends Scene {
         } else {
             final GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
             if (null == gd.getFullScreenWindow()) {
-                gd.setFullScreenWindow(this);
+//                gd.setFullScreenWindow(this);
             } else {
                 gd.setFullScreenWindow(null);
             }
-            repaint();
+//            repaint();
             return true;
         }
     }
 
-    public final boolean setWindowCanFullScreen(boolean b) {
-        return setWindowCanFullScreen(b, this);
-    }
+//    public final boolean setWindowCanFullScreen(boolean b) {
+//        return setWindowCanFullScreen(b, this);
+//    }
     
     public final static boolean setWindowCanFullScreen(boolean b, JFrame frame) {
         Class<?> util;

@@ -42,10 +42,10 @@ public class Main {
             return;
         }
 
-        if(!runConf.isHeadless()) {
-            UIManager.setLookAndFeel(new MDPnPLookAndFeel());
-            UIManager.put("TabbedPane.contentOpaque", false);
-        }
+//        if(!runConf.isHeadless()) {
+//            UIManager.setLookAndFeel(new MDPnPLookAndFeel());
+//            UIManager.put("TabbedPane.contentOpaque", false);
+//        }
 
         Configuration.Command cmd = runConf.getCommand();
         int retCode = cmd.execute(runConf);

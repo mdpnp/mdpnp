@@ -28,7 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.AbstractListModel;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import org.mdpnp.devices.TimeManager;
 import org.mdpnp.devices.TimeManagerListener;
@@ -65,13 +66,17 @@ import com.rti.dds.topic.TopicDescription;
  * @author Jeff Plourde 
  *
  */
-public class DeviceListModel extends AbstractListModel<Device> implements TimeManagerListener {
+public class DeviceListModel implements TimeManagerListener {
     
     public Device getByUniqueDeviceIdentifier(String udi) {
         if(null == udi) {
             return null;
         }
         return contentsByUDI.get(udi);
+    }
+    
+    public ObservableList<Device> getContents() {
+        return contents;
     }
     
     private final Device getDevice(String udi, boolean create) {
@@ -92,17 +97,15 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
                 for (int i = 0; i < contents.size(); i++) {
                     contentsByIdx.put(contents.get(i), i);
                 }
-                fireIntervalAdded(this, 0, 0);
-                log.debug("Added index=" + 0 + " " + device.getUDI() + " for a total size of " + getSize());
-                // TODO This shouldn't strictly be necessary by the JList is not responding in all cases
-                fireContentsChanged(this, 0, getSize()-1);
+                log.debug("Added index=" + 0 + " " + device.getUDI() + " for a total size of " + contents.size());
             } else {
                 log.debug("Not creating unfounded device udi="+udi);
             }
         } else {
             int idx = contentsByIdx.get(device);
             log.debug("At idx="+idx+" find udi="+device.getUDI());
-            fireContentsChanged(this, idx, idx);
+            // TODO does this really trigger a change event?
+            contents.set(idx, device);
         }
         return device;
     }
@@ -198,7 +201,7 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
             contentsByIdx.put(contents.get(i), i);
         }
         lastRemoved = device;
-        fireIntervalRemoved(DeviceListModel.this, idx, idx);
+//        fireIntervalRemoved(DeviceListModel.this, idx, idx);
 
         log.debug("Removed index=" + idx + " " + device.getUDI());
         lastRemoved = null;
@@ -207,7 +210,8 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
     private final boolean update(Device device) {
         final int idx = contentsByIdx.get(device);
         if(idx >= 0) {
-            fireContentsChanged(DeviceListModel.this, idx, idx);
+            contents.set(idx, device);
+//            fireContentsChanged(DeviceListModel.this, idx, idx);
             return true;
         } else {
             return false;
@@ -216,7 +220,7 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
 
     private static final Logger log = LoggerFactory.getLogger(DeviceListModel.class);
 
-    protected final List<Device> contents = new ArrayList<Device>();
+    protected final ObservableList<Device> contents = FXCollections.observableArrayList();
     protected final Map<Device, Integer> contentsByIdx = new HashMap<Device, Integer>();
     
     protected final Map<String, Device> contentsByUDI = new java.util.concurrent.ConcurrentHashMap<String, Device>();
@@ -375,13 +379,4 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
 
     }
 
-    @Override
-    public int getSize() {
-        return contents.size();
-    }
-
-    @Override
-    public Device getElementAt(int index) {
-        return contents.get(index);
-    }
 }

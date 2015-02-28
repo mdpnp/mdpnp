@@ -12,28 +12,49 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import javax.swing.plaf.metal.MetalLookAndFeel;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.control.ListView;
 
-@SuppressWarnings("serial")
+import org.controlsfx.control.GridView;
+import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @author Jeff Plourde
  *
  */
-public class MDPnPLookAndFeel extends MetalLookAndFeel {
+public class MainMenu {
+    @SuppressWarnings("unused")
+    private static final Logger log = LoggerFactory.getLogger(MainMenu.class);
+    
+    @FXML
+    protected GridView<IceApplicationProvider.AppType> appList;
+    
+    @FXML
+    protected GridView<Device> deviceList;
 
-    @Override
-    public String getName() {
-        return "MDPnP Look And Feel";
+    public MainMenu setTypes(IceApplicationProvider.AppType[] appTypes) {
+        appList.setItems(FXCollections.observableArrayList(appTypes));
+        return this;
+    }
+    
+    public MainMenu setDevices(ObservableList<Device> devices) {
+        deviceList.setItems(devices);
+        return this;
+    }
+    
+    public MainMenu() {
+
     }
 
-    @Override
-    public String getID() {
-        return "MDPNP";
+    public GridView<AppType> getAppList() {
+        return appList;
     }
 
-    @Override
-    public String getDescription() {
-        return "For MDPnP ICE Components";
+    public GridView<Device> getDeviceList() {
+        return deviceList;
     }
-
 }

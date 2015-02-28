@@ -48,7 +48,8 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
         // add a listener to it so that we can dynamically build a tree representation
         // of that information.
         //
-        deviceListModel.addListDataListener(deviceTreeModel);
+        // TODO Change this to the observablelist paradigm
+//        deviceListModel.addListDataListener(deviceTreeModel);
         dataCollector.addDataSampleListener(deviceTreeModel);
 
         // create a data filter - it will act as as proxy between the data collector and
@@ -186,7 +187,8 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
 
     public void stop() throws Exception {
         dataCollector.removeDataSampleListener(dataFilter);
-        deviceListModel.removeListDataListener(deviceTreeModel);
+        // TODO change to observablelist concept
+//        deviceListModel.removeListDataListener(deviceTreeModel);
 
         startControl.putValue("mdpnp.appender", null);
 

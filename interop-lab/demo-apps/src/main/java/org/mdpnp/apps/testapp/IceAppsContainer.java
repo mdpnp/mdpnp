@@ -19,6 +19,7 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 
+import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.mdpnp.devices.BuildInfo;
 import org.mdpnp.guis.swing.CompositeDevicePanel;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
@@ -28,20 +29,34 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 
+import javafx.event.EventHandler;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.JFrame;
+import javax.swing.JButton;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.CountDownLatch;
 
@@ -65,7 +80,7 @@ import java.util.concurrent.CountDownLatch;
  *
  */
 @SuppressWarnings("serial")
-public class IceAppsContainer extends DemoFrame {
+public class IceAppsContainer extends Application {
 
     private static final Logger log = LoggerFactory.getLogger(IceAppsContainer.class);
 
@@ -74,241 +89,20 @@ public class IceAppsContainer extends DemoFrame {
 
     DeviceApp driverWrapper = new DeviceApp();
 
-    private DemoPanel  panel;
-    private CardLayout ol;
+    private DemoPanel panelController;
+    private Parent panelRoot;
+    
+    private MainMenu mainMenuController;
+    private Parent mainMenuRoot;
+//    private CardLayout ol;
 
-//    private PartitionChooser partitionChooser;
+    private PartitionChooserModel partitionChooserModel;
 //    private DiscoveryPeers   discoveryPeers;
 
-    public IceAppsContainer(final AbstractApplicationContext context, final CountDownLatch stopOk) throws Exception {
-        super("ICE Supervisor");
-
-        RtConfig rtConfig = (RtConfig) context.getBean("rtConfig");
-        final Publisher         publisher   = rtConfig.getPublisher();
-        final Subscriber        subscriber  = rtConfig.getSubscriber();
-        final DomainParticipant participant = rtConfig.getParticipant();
-        final String            udi         = (String) context.getBean("supervisorUdi");
-
-        final DeviceListModel nc = (DeviceListModel) context.getBean("deviceListModel");
-
-//        setIconImage(ImageIO.read(getClass().getResource("icon.png")));
-        panel = new DemoPanel();
-//        partitionChooser = new PartitionChooser(this);
-//        partitionChooser.setSize(320, 240);
-//        partitionChooser.set(subscriber);
-//        partitionChooser.set(publisher);
-//
-//        discoveryPeers = new DiscoveryPeers(this);
-//        discoveryPeers.setSize(320, 240);
-//        discoveryPeers.set(participant);
-
-        panel.getBedLabel().setText("OpenICE");
-        panel.getVersion().setText(BuildInfo.getDescriptor());
-
-//        getContentPane().add(panel);
-        ol = new CardLayout();
-        panel.getContent().setLayout(ol);
-        panel.getUdi().setText(udi);
-
-        panel.getChangePartition().addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-//                partitionChooser.refresh();
-//                partitionChooser.setLocationRelativeTo(panel);
-//                partitionChooser.setVisible(true);
-            }
-
-        });
-
-        // Locate all available ice application via the service loader.
-        // For documentation refer to http://docs.oracle.com/javase/7/docs/api/java/util/ServiceLoader.html
-        //
-        ServiceLoader<IceApplicationProvider> l = ServiceLoader.load(IceApplicationProvider.class);
-
-        final Map<IceApplicationProvider.AppType, IceApplicationProvider.IceApp> activeApps = new HashMap<>();
-
-        final Iterator<IceApplicationProvider> iter = l.iterator();
-        while (iter.hasNext()) {
-            IceApplicationProvider ap = iter.next();
-            if (ap.getAppType().isDisabled())
-                continue;
-
-            try {
-                IceApplicationProvider.IceApp a = ap.create(context);
-                activeApps.put(ap.getAppType(), a);
-                Component ui = a.getUI();
-                if (ui instanceof JFrame) {
-                    // not a part of tabbed panel; do nothing
-                } else if (ui != null) {
-                    panel.getContent().add(ui, a.getDescriptor().getId());
-                } else {
-                    log.info("No UI component for " + a.getDescriptor().getName());
-                }
-            } catch (Exception ex) {
-                // continue as there is nothing mich that can be done,
-                // but print the error out to the log.
-                log.error("Failed to create " + ap.getAppType(), ex);
-            }
-        }
-
-
-        // Now that we have a list of all active components, build up a menu and add it to the app
-        IceApplicationProvider.AppType[] at = activeApps.keySet().toArray(new IceApplicationProvider.AppType[activeApps.size()]);
-        Arrays.sort(at, new Comparator<IceApplicationProvider.AppType>() {
-            @Override
-            public int compare(IceApplicationProvider.AppType o1, IceApplicationProvider.AppType o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
-        final MainMenuPanel mainMenuPanel = new MainMenuPanel(at);
-        mainMenuPanel.setOpaque(false);
-        panel.getContent().add(mainMenuPanel, Main.getId());
-
-        // Add a wrapper for the driver adapter display. This is so that the stop logic could
-        // shut it down properly.
-        activeApps.put(Device, driverWrapper);
-        panel.getContent().add(driverWrapper.getUI(), Device.getId());
-
-        // Start with showing the main panel.
-        //
-        ol.show(panel.getContent(), Main.getId());
-
-        /*addWindowListener(*/new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-
-                final ExecutorService refreshScheduler = (ExecutorService) context.getBean("refreshScheduler");
-                refreshScheduler.shutdownNow();
-
-                for (IceApplicationProvider.IceApp a : activeApps.values()) {
-                    String aName = a.getDescriptor().getName();
-                    try {
-                        log.info("Shutting down " + aName + "...");
-                        a.stop();
-                        a.destroy();
-                        log.info("Shut down " + aName + " OK");
-                    } catch (Exception ex) {
-                        // continue as there is nothing mich that can be done,
-                        // but print the error out to the log.
-                        log.error("Failed to stop/destroy " + aName, ex);
-                    }
-                }
-
-                stopOk.countDown();
-
-                super.windowClosing(e);
-            }
-        }/*)*/;
-        panel.getBack().setVisible(false);
-
-        panel.getCreateAdapter().addActionListener(new ActionListener() {
-
-            @SuppressWarnings({"rawtypes"})
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-                DefaultComboBoxModel model = new DefaultComboBoxModel(new Configuration.Application[]{Configuration.Application.ICE_Device_Interface});
-
-                ConfigurationDialog dia = new ConfigurationDialog(null, null);
-                dia.setTitle("Create a local ICE Device Adapter");
-                dia.getApplications().setModel(model);
-                dia.set(Configuration.Application.ICE_Device_Interface, null);
-                dia.remove(dia.getDomainId());
-                dia.remove(dia.getDomainIdLabel());
-                dia.remove(dia.getApplications());
-                dia.remove(dia.getApplicationsLabel());
-                dia.getWelcomeText().setRows(4);
-                dia.getWelcomeText().setColumns(40);
-                // dia.remove(dia.getWelcomeScroll());
-                dia.getWelcomeText()
-                        .setText("Typically ICE Device Adapters do not run directly within the ICE Supervisor.  " +
-                                 "This option is provided for convenient testing.  A window will be created for the device adapter. " +
-                                 " To terminate the adapter close that window.  To exit this application you must close the supervisory window.");
-
-                dia.getQuit().setText("Close");
-                dia.pack();
-                dia.setLocationRelativeTo(panel);
-
-                final Configuration c = dia.showDialog();
-                if (null != c) {
-                    Thread t = new Thread(new Runnable() {
-                        public void run() {
-                            try {
-                                DomainParticipantQos pQos = new DomainParticipantQos();
-                                DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-                                pQos.discovery.initial_peers.clear();
-//                                for (int i = 0; i < discoveryPeers.peers.getSize(); i++) {
-//                                    pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
-//                                    System.err.println("PEER:" + discoveryPeers.peers.getElementAt(i));
-//                                }
-                                DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
-                                SubscriberQos qos = new SubscriberQos();
-                                subscriber.get_qos(qos);
-                                List<String> partition = new ArrayList<String>();
-                                for (int i = 0; i < qos.partition.name.size(); i++) {
-                                    partition.add((String) qos.partition.name.get(i));
-                                }
-                                DeviceAdapter da = DeviceAdapter.newGUIAdapter(c.getDeviceFactory(), context);
-                                da.setInitialPartition(partition.toArray(new String[0]));
-                                da.start(c.getAddress());
-
-                                log.info("DeviceAdapter ended");
-                            } catch (Exception e) {
-                                log.error("Error in spawned DeviceAdapter", e);
-                            }
-                        }
-                    });
-                    t.setDaemon(true);
-                    t.start();
-                }
-            }
-
-        });
-
-        mainMenuPanel.getDeviceList().setModel(nc);
-
-        mainMenuPanel.getAppList().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int idx = mainMenuPanel.getAppList().locationToIndex(e.getPoint());
-                if (idx >= 0 && mainMenuPanel.getAppList().getCellBounds(idx, idx).contains(e.getPoint())) {
-                    Object o = mainMenuPanel.getAppList().getModel().getElementAt(idx);
-                    IceApplicationProvider.AppType appType = (IceApplicationProvider.AppType) o;
-
-                    final IceApplicationProvider.IceApp app = activeApps.get(appType);
-                    if (app != null) {
-                        if (app.getUI() instanceof JFrame) {
-                            JFrame a = (JFrame) app.getUI();
-//                            a.setLocationRelativeTo(IceAppsContainer.this);
-                            app.activate(context);
-                            a.setVisible(true);
-                        } else {
-                            activateGoBack(app);
-                            app.activate(context);
-                        }
-                    }
-                }
-                super.mouseClicked(e);
-            }
-        });
-        mainMenuPanel.getDeviceList().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int idx = mainMenuPanel.getDeviceList().locationToIndex(e.getPoint());
-                if (idx >= 0 && mainMenuPanel.getDeviceList().getCellBounds(idx, idx).contains(e.getPoint())) {
-                    final Device device = (Device) mainMenuPanel.getDeviceList().getModel().getElementAt(idx);
-
-                    activateGoBack(driverWrapper);
-                    driverWrapper.start(context, device);
-                }
-                super.mouseClicked(e);
-            }
-        });
-
-//        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-//        setSize(800, 600);
-//        setLocationRelativeTo(null);
+    protected static Configuration config;
+    
+    public IceAppsContainer() throws Exception {
+        
     }
 
     private void activateGoBack(final IceApplicationProvider.IceApp app) {
@@ -324,10 +118,10 @@ public class IceAppsContainer extends DemoFrame {
                 }
             }
         };
-        panel.getBedLabel().setText(appName);
-        panel.getBack().setAction(new GoBackAction(goBackAction));
-        ol.show(panel.getContent(), app.getDescriptor().getId());
-        panel.getBack().setVisible(true);
+//        panel.getBedLabel().setText(appName);
+//        panel.getBack().setAction(new GoBackAction(goBackAction));
+//        ol.show(panel.getContent(), app.getDescriptor().getId());
+//        panel.getBack().setVisible(true);
     }
 
     /**
@@ -352,7 +146,7 @@ public class IceAppsContainer extends DemoFrame {
                     log.error("Error in 'go back' logic", t);
                 }
             }
-            ol.show(panel.getContent(), Main.getId());
+//            ol.show(panel.getContent(), Main.getId());
             ((JButton)e.getSource()).setVisible(false);
             ((JButton)e.getSource()).setAction(null);
         }
@@ -421,36 +215,304 @@ public class IceAppsContainer extends DemoFrame {
         static final ThreadGroup threadGroup = new ThreadGroup("DeviceApp");
     }
 
-    public static class IceAppsContainerInvoker extends Application implements Configuration.Command {
+    public static class IceAppsContainerInvoker implements Configuration.Command {
 
         @Override
         public int execute(Configuration config) throws Exception {
-
-            final CountDownLatch stopOk = new CountDownLatch(1);
-            final AbstractApplicationContext context = config.createContext("IceAppContainerContext.xml");
-            context.registerShutdownHook();
-
-            
-            launch();
-//            JFrame f = new IceAppsContainer(context, stopOk);
-//            f.setVisible(true);
-
-            // this will block until the frame is killed
-            stopOk.await();
-
-            context.destroy();
+            IceAppsContainer.config = config;
+            launch(IceAppsContainer.class);
             return 0;
         }
         
-        @Override
-        public void start(Stage primaryStage) throws Exception {
-            primaryStage.setTitle("OpenICE");
-            BorderPane root = (BorderPane)FXMLLoader.load(getClass().getResource("Sample.fxml"));
-            Scene scene = new IceApps
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
-            primaryStage.setScene(scene);
-            primaryStage.show();
+    }
+
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        primaryStage.setTitle("OpenICE");
+
+        Scene panelScene = new Scene(panelRoot);
+//        Scene mainMenuScene = new Scene(mainMenuRoot);
+        
+        
+        
+        primaryStage.setScene(panelScene);
+        primaryStage.show();
+    }
+    
+    private CountDownLatch stopOk;
+    private AbstractApplicationContext context;
+    
+    @Override
+    public void init() throws Exception {
+        super.init();
+        stopOk = new CountDownLatch(1);
+        context = config.createContext("IceAppContainerContext.xml");
+        context.registerShutdownHook();
+
+        RtConfig rtConfig = (RtConfig) context.getBean("rtConfig");
+        final Publisher         publisher   = rtConfig.getPublisher();
+        final Subscriber        subscriber  = rtConfig.getSubscriber();
+        final DomainParticipant participant = rtConfig.getParticipant();
+        final String            udi         = (String) context.getBean("supervisorUdi");
+
+        
+        
+        final DeviceListModel nc = (DeviceListModel) context.getBean("deviceListModel");
+
+//        setIconImage(ImageIO.read(getClass().getResource("icon.png")));
+        partitionChooserModel = new PartitionChooserModel(subscriber, publisher);
+        
+        FXMLLoader loader = new FXMLLoader(DemoPanel.class.getResource("DemoPanel.fxml"));
+        panelRoot = loader.load();
+        panelController = ((DemoPanel)loader.getController())
+            .setModel(partitionChooserModel)
+            .setUdi(udi)
+            .setVersion(BuildInfo.getDescriptor());
+        panelRoot.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+//
+//        discoveryPeers = new DiscoveryPeers(this);
+//        discoveryPeers.setSize(320, 240);
+//        discoveryPeers.set(participant);
+
+//        getContentPane().add(panel);
+//        ol = new CardLayout();
+//        panel.getContent().setLayout(ol);
+
+
+        // Locate all available ice application via the service loader.
+        // For documentation refer to http://docs.oracle.com/javase/7/docs/api/java/util/ServiceLoader.html
+        //
+        ServiceLoader<IceApplicationProvider> l = ServiceLoader.load(IceApplicationProvider.class);
+
+        final Map<IceApplicationProvider.AppType, IceApplicationProvider.IceApp> activeApps = new HashMap<>();
+
+        final Iterator<IceApplicationProvider> iter = l.iterator();
+        while (iter.hasNext()) {
+            IceApplicationProvider ap = iter.next();
+            if (ap.getAppType().isDisabled())
+                continue;
+
+            try {
+                IceApplicationProvider.IceApp a = ap.create(context);
+                activeApps.put(ap.getAppType(), a);
+//                Component ui = a.getUI();
+//                if (ui instanceof JFrame) {
+                    // not a part of tabbed panel; do nothing
+//                } else if (ui != null) {
+//                    panel.getContent().add(ui, a.getDescriptor().getId());
+//                } else {
+//                    log.info("No UI component for " + a.getDescriptor().getName());
+//                }
+            } catch (Exception ex) {
+                // continue as there is nothing mich that can be done,
+                // but print the error out to the log.
+                log.error("Failed to create " + ap.getAppType(), ex);
+            }
         }
+
+
+        // Now that we have a list of all active components, build up a menu and add it to the app
+        IceApplicationProvider.AppType[] at = activeApps.keySet().toArray(new IceApplicationProvider.AppType[activeApps.size()]);
+        Arrays.sort(at, new Comparator<IceApplicationProvider.AppType>() {
+            @Override
+            public int compare(IceApplicationProvider.AppType o1, IceApplicationProvider.AppType o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+        
+        loader = new FXMLLoader(MainMenu.class.getResource("MainMenu.fxml"));
+        mainMenuRoot = loader.load();
+        final MainMenu mainMenuController = loader.getController();
+        mainMenuController.setTypes(at).setDevices(nc.getContents());
+        panelController.getContent().setCenter(mainMenuRoot);
+        mainMenuController.getAppList().setCellFactory(new AppTypeCellFactory());
+        
+//        panelController.getContent().needsLayoutProperty();
+        
+        
+//        panel.getContent().add(mainMenuPanel, Main.getId());
+
+        // Add a wrapper for the driver adapter display. This is so that the stop logic could
+        // shut it down properly.
+        activeApps.put(Device, driverWrapper);
+//        panel.getContent().add(driverWrapper.getUI(), Device.getId());
+
+        // Start with showing the main panel.
+        //
+//        ol.show(panel.getContent(), Main.getId());
+
+        /*addWindowListener(*/new WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+
+                final ExecutorService refreshScheduler = (ExecutorService) context.getBean("refreshScheduler");
+                refreshScheduler.shutdownNow();
+
+                for (IceApplicationProvider.IceApp a : activeApps.values()) {
+                    String aName = a.getDescriptor().getName();
+                    try {
+                        log.info("Shutting down " + aName + "...");
+                        a.stop();
+                        a.destroy();
+                        log.info("Shut down " + aName + " OK");
+                    } catch (Exception ex) {
+                        // continue as there is nothing mich that can be done,
+                        // but print the error out to the log.
+                        log.error("Failed to stop/destroy " + aName, ex);
+                    }
+                }
+
+                stopOk.countDown();
+
+                super.windowClosing(e);
+            }
+        }/*)*/;
+//        panel.getBack().setVisible(false);
+
+//        panel.getCreateAdapter().addActionListener(new ActionListener() {
+//
+//            @SuppressWarnings({"rawtypes"})
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//
+//                DefaultComboBoxModel model = new DefaultComboBoxModel(new Configuration.Application[]{Configuration.Application.ICE_Device_Interface});
+//
+//                ConfigurationDialog dia = new ConfigurationDialog(null, null);
+//                dia.setTitle("Create a local ICE Device Adapter");
+//                dia.getApplications().setModel(model);
+//                dia.set(Configuration.Application.ICE_Device_Interface, null);
+//                dia.remove(dia.getDomainId());
+//                dia.remove(dia.getDomainIdLabel());
+//                dia.remove(dia.getApplications());
+//                dia.remove(dia.getApplicationsLabel());
+//                dia.getWelcomeText().setRows(4);
+//                dia.getWelcomeText().setColumns(40);
+//                // dia.remove(dia.getWelcomeScroll());
+//                dia.getWelcomeText()
+//                        .setText("Typically ICE Device Adapters do not run directly within the ICE Supervisor.  " +
+//                                 "This option is provided for convenient testing.  A window will be created for the device adapter. " +
+//                                 " To terminate the adapter close that window.  To exit this application you must close the supervisory window.");
+//
+//                dia.getQuit().setText("Close");
+//                dia.pack();
+//                dia.setLocationRelativeTo(panel);
+//
+//                final Configuration c = dia.showDialog();
+//                if (null != c) {
+//                    Thread t = new Thread(new Runnable() {
+//                        public void run() {
+//                            try {
+//                                DomainParticipantQos pQos = new DomainParticipantQos();
+//                                DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
+//                                pQos.discovery.initial_peers.clear();
+////                                for (int i = 0; i < discoveryPeers.peers.getSize(); i++) {
+////                                    pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
+////                                    System.err.println("PEER:" + discoveryPeers.peers.getElementAt(i));
+////                                }
+//                                DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
+//                                SubscriberQos qos = new SubscriberQos();
+//                                subscriber.get_qos(qos);
+//                                List<String> partition = new ArrayList<String>();
+//                                for (int i = 0; i < qos.partition.name.size(); i++) {
+//                                    partition.add((String) qos.partition.name.get(i));
+//                                }
+//                                DeviceAdapter da = DeviceAdapter.newGUIAdapter(c.getDeviceFactory(), context);
+//                                da.setInitialPartition(partition.toArray(new String[0]));
+//                                da.start(c.getAddress());
+//
+//                                log.info("DeviceAdapter ended");
+//                            } catch (Exception e) {
+//                                log.error("Error in spawned DeviceAdapter", e);
+//                            }
+//                        }
+//                    });
+//                    t.setDaemon(true);
+//                    t.start();
+//                }
+//            }
+//
+//        });
+
+        
+//        mainMenuController.getAppList().setCellFactory(new Callback<ListView<AppType>,ListCell<AppType>>() {
+//
+//            @Override
+//            public ListCell<AppType> call(ListView<AppType> param) {
+//                ListCell<AppType> listCell = new ListCell<AppType>() {
+//                    
+//                };
+//                listCell.setOnMouseClicked(new EventHandler<MouseEvent>() {
+//
+//                    @Override
+//                    public void handle(MouseEvent event) {
+//                        System.out.println(event.getSource());
+//                    }
+//                    
+//                });
+//                return listCell;
+//            }
+//            
+//        });
+        
+        mainMenuController.getAppList().addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+
+            @Override
+            public void handle(MouseEvent event) {
+                
+            }
+            
+        });
+//        mainMenuPanel.getDeviceList().setModel(nc);
+//
+//        mainMenuPanel.getAppList().addMouseListener(new MouseAdapter() {
+//            @Override
+//            public void mouseClicked(MouseEvent e) {
+//                int idx = mainMenuPanel.getAppList().locationToIndex(e.getPoint());
+//                if (idx >= 0 && mainMenuPanel.getAppList().getCellBounds(idx, idx).contains(e.getPoint())) {
+//                    Object o = mainMenuPanel.getAppList().getModel().getElementAt(idx);
+//                    IceApplicationProvider.AppType appType = (IceApplicationProvider.AppType) o;
+//
+//                    final IceApplicationProvider.IceApp app = activeApps.get(appType);
+//                    if (app != null) {
+//                        if (app.getUI() instanceof JFrame) {
+//                            JFrame a = (JFrame) app.getUI();
+////                            a.setLocationRelativeTo(IceAppsContainer.this);
+//                            app.activate(context);
+//                            a.setVisible(true);
+//                        } else {
+//                            activateGoBack(app);
+//                            app.activate(context);
+//                        }
+//                    }
+//                }
+//                super.mouseClicked(e);
+//            }
+//        });
+//        mainMenuPanel.getDeviceList().addMouseListener(new MouseAdapter() {
+//            @Override
+//            public void mouseClicked(MouseEvent e) {
+//                int idx = mainMenuPanel.getDeviceList().locationToIndex(e.getPoint());
+//                if (idx >= 0 && mainMenuPanel.getDeviceList().getCellBounds(idx, idx).contains(e.getPoint())) {
+//                    final Device device = (Device) mainMenuPanel.getDeviceList().getModel().getElementAt(idx);
+//
+//                    activateGoBack(driverWrapper);
+//                    driverWrapper.start(context, device);
+//                }
+//                super.mouseClicked(e);
+//            }
+//        });
+
+//        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//        setSize(800, 600);
+//        setLocationRelativeTo(null);
+
+    }
+    
+    @Override
+    public void stop() throws Exception {
+        // this will block until the frame is killed
+        stopOk.await();
+        context.destroy();
+        super.stop();
     }
 }

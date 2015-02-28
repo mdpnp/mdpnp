@@ -4,13 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.AffineTransformOp;
-import java.awt.image.BufferedImage;
+import java.awt.Component;
 import java.io.IOException;
 import java.net.URL;
+
+import javafx.scene.image.Image;
 
 public interface IceApplicationProvider {
 
@@ -28,6 +26,7 @@ public interface IceApplicationProvider {
         /**
          * @return java.awt.Component (either JFrame or Panel) or null for headless application.
          */
+        // TODO this will be needed
         Component getUI();
 
         /**
@@ -61,17 +60,17 @@ public interface IceApplicationProvider {
 
         private final String id;
         private final String name;
-        private final Icon icon;
+        private final Image icon;
         private final String disableProperty;
 
         public AppType(final String name, final String disableProperty, final URL icon, double scale) {
-            this(name, disableProperty, read(icon), scale);
+            this(name, disableProperty, null == icon ? null : new Image(icon.toExternalForm()), scale);
         }
 
-        public AppType(final String name, final String disableProperty, final BufferedImage icon, double scale) {
+        public AppType(final String name, final String disableProperty, final Image icon, double scale) {
             this.id   = generateId(name);
             this.name = name;
-            this.icon = null == icon ? null : new ImageIcon(scale(icon, scale));
+            this.icon = icon;
             this.disableProperty = disableProperty;
         }
 
@@ -89,7 +88,7 @@ public interface IceApplicationProvider {
             return name;
         }
 
-        public Icon getIcon() {
+        public Image getIcon() {
             return icon;
         }
 
@@ -110,32 +109,32 @@ public interface IceApplicationProvider {
         }
         private static int instanceCount=0;
 
-        private static BufferedImage read(URL url) {
-            try {
-                return url==null?null: ImageIO.read(url);
-            } catch (IOException e) {
-                log.error("Failed to load image url:" + url.toExternalForm(), e);
-                return null;
-            }
-        }
+//        private static BufferedImage read(URL url) {
+//            try {
+//                return url==null?null: ImageIO.read(url);
+//            } catch (IOException e) {
+//                log.error("Failed to load image url:" + url.toExternalForm(), e);
+//                return null;
+//            }
+//        }
 
-        private static BufferedImage scale(BufferedImage before, double scale) {
-            if (null == before) {
-                return null;
-            }
-            if (0 == Double.compare(scale, 0.0)) {
-                return before;
-            }
-            int width = before.getWidth();
-            int height = before.getHeight();
-
-            BufferedImage after = new BufferedImage((int) (scale * width), (int) (scale * height), BufferedImage.TYPE_INT_ARGB);
-            java.awt.geom.AffineTransform at = new java.awt.geom.AffineTransform();
-            at.scale(scale, scale);
-
-            AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
-            after = scaleOp.filter(before, after);
-            return after;
-        }
+//        private static BufferedImage scale(BufferedImage before, double scale) {
+//            if (null == before) {
+//                return null;
+//            }
+//            if (0 == Double.compare(scale, 0.0)) {
+//                return before;
+//            }
+//            int width = before.getWidth();
+//            int height = before.getHeight();
+//
+//            BufferedImage after = new BufferedImage((int) (scale * width), (int) (scale * height), BufferedImage.TYPE_INT_ARGB);
+//            java.awt.geom.AffineTransform at = new java.awt.geom.AffineTransform();
+//            at.scale(scale, scale);
+//
+//            AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+//            after = scaleOp.filter(before, after);
+//            return after;
+//        }
     }
 }
