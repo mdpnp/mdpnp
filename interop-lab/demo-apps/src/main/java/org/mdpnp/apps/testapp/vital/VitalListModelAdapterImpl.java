@@ -20,7 +20,6 @@ import java.awt.Color;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
-import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.publication.Publisher;
@@ -242,10 +241,10 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
         return model.getDeviceConnectivity(udi);
     }
 
-    @Override
-    public DeviceIcon getDeviceIcon(String udi) {
-        return model.getDeviceIcon(udi);
-    }
+//    @Override
+//    public DeviceIcon getDeviceIcon(String udi) {
+//        return model.getDeviceIcon(udi);
+//    }
 
     @Override
     public ice.GlobalAlarmSettingsObjectiveDataWriter getWriter() {

@@ -64,18 +64,18 @@ public class DeviceListCellRenderer extends JLabel implements ListCellRenderer {
         }
         
         if (null != device) {
-            DeviceIcon icon = device.getIcon();
-
-            DeviceConnectivity dc = device.getDeviceConnectivity();
-            if (null != dc) {
-                if (icon != null) {
-                    icon.setConnected(ice.ConnectionState.Connected.equals(dc.state));
-                }
-            } else {
-                if (icon != null) {
-                    icon.setConnected(true);
-                }
-            }
+//            DeviceIcon icon = device.getIcon();
+//
+//            DeviceConnectivity dc = device.getDeviceConnectivity();
+//            if (null != dc) {
+//                if (icon != null) {
+//                    icon.setConnected(ice.ConnectionState.Connected.equals(dc.state));
+//                }
+//            } else {
+//                if (icon != null) {
+//                    icon.setConnected(true);
+//                }
+//            }
 
             DeviceIdentity di = device.getDeviceIdentity();
             if (null != di) {
@@ -84,15 +84,15 @@ public class DeviceListCellRenderer extends JLabel implements ListCellRenderer {
                 setText("<unknown>");
             }
 
-            if (icon != null) {
-                setIcon(icon);
-            } else {
-                setIcon(DeviceIcon.WHITE_SQUARE_ICON);
-            }
+//            if (icon != null) {
+//                setIcon(icon);
+//            } else {
+//                setIcon(DeviceIcon.WHITE_SQUARE_ICON);
+//            }
             
         } else {
             setText("<unknown>");
-            setIcon(DeviceIcon.WHITE_SQUARE_ICON);
+//            setIcon(DeviceIcon.WHITE_SQUARE_ICON);
         }
         return this;
     }

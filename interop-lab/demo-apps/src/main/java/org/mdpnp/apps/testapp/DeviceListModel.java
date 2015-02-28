@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -92,20 +93,34 @@ public class DeviceListModel implements TimeManagerListener {
                 device.setDeviceIdentity(null==iandp?null:iandp.deviceIdentity, null==iandp?null:iandp.participantData);
                 device.setDeviceConnectivity(deviceConnectivityByUDI.get(udi));
                 contentsByUDI.put(udi, device);
-                contents.add(0, device);
-                contentsByIdx.clear();
-                for (int i = 0; i < contents.size(); i++) {
-                    contentsByIdx.put(contents.get(i), i);
-                }
-                log.debug("Added index=" + 0 + " " + device.getUDI() + " for a total size of " + contents.size());
+                final Device updateDevice = device;
+                Platform.runLater(new Runnable() {
+                    public void run() {
+                        contents.add(0, updateDevice);
+                        contentsByIdx.clear();
+                        for (int i = 0; i < contents.size(); i++) {
+                            contentsByIdx.put(contents.get(i), i);
+                        }
+                        log.debug("Added index=" + 0 + " " + updateDevice.getUDI() + " for a total size of " + contents.size());
+                    }
+                });
+
+                
             } else {
                 log.debug("Not creating unfounded device udi="+udi);
             }
         } else {
-            int idx = contentsByIdx.get(device);
-            log.debug("At idx="+idx+" find udi="+device.getUDI());
+
+            final Device updateDevice = device;
             // TODO does this really trigger a change event?
-            contents.set(idx, device);
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    final int idx = contentsByIdx.get(updateDevice);
+                    log.debug("At idx="+idx+" find udi="+updateDevice.getUDI());
+                    contents.set(idx, updateDevice);
+                }
+            });
+            
         }
         return device;
     }
@@ -194,28 +209,31 @@ public class DeviceListModel implements TimeManagerListener {
         if(null == contentsByUDI.remove(device.getUDI())) {
             log.warn("Attempting to remove a device not present in contentsByUDI " + device.getUDI());
         }
-        final int idx = contentsByIdx.get(device);
-        contents.remove(idx);
-        contentsByIdx.clear();
-        for (int i = 0; i < contents.size(); i++) {
-            contentsByIdx.put(contents.get(i), i);
-        }
-        lastRemoved = device;
-//        fireIntervalRemoved(DeviceListModel.this, idx, idx);
-
-        log.debug("Removed index=" + idx + " " + device.getUDI());
-        lastRemoved = null;
+        
+        Platform.runLater(new Runnable() {
+            public void run() {
+                int idx = contentsByIdx.get(device);
+                lastRemoved = device;
+                contents.remove(idx);
+                contentsByIdx.clear();
+                for (int i = 0; i < contents.size(); i++) {
+                    contentsByIdx.put(contents.get(i), i);
+                }
+                log.debug("Removed index=" + idx + " " + device.getUDI());
+                lastRemoved = null;
+            }
+        });
     }
     
-    private final boolean update(Device device) {
-        final int idx = contentsByIdx.get(device);
-        if(idx >= 0) {
-            contents.set(idx, device);
-//            fireContentsChanged(DeviceListModel.this, idx, idx);
-            return true;
-        } else {
-            return false;
-        }
+    private final void update(final Device device) {
+        Platform.runLater(new Runnable() {
+            public void run() {
+                int idx = contentsByIdx.get(device);
+                if(idx >= 0) {
+                    contents.set(idx, device);
+                }
+            }
+        });
     }
 
     private static final Logger log = LoggerFactory.getLogger(DeviceListModel.class);

@@ -14,12 +14,17 @@ package org.mdpnp.apps.testapp;
 
 import com.rti.dds.infrastructure.Locator_t;
 import com.rti.dds.infrastructure.Property_t;
+
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+
+import javafx.scene.image.Image;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +49,7 @@ public class Device {
     private ParticipantBuiltinTopicData participantData;
     private final Duration_t clockDifference = new Duration_t(Duration_t.DURATION_INFINITE), roundtripLatency = new Duration_t(Duration_t.DURATION_INFINITE);
 
-    private SoftReference<DeviceIcon> realIcon;
+    private SoftReference<Image> image;
 
     public final static int SHORT_UDI_LENGTH = 20;
 
@@ -57,27 +62,22 @@ public class Device {
         this.udi = udi;
     }
 
-    public DeviceIcon getIcon() {
-        if (null == deviceIdentity) {
+    public Image getIcon() {
+        ice.DeviceIdentity deviceIdentity = this.deviceIdentity;
+        
+        if (null == deviceIdentity || deviceIdentity.icon.image.userData.isEmpty()) {
             return null;
         }
-
-        DeviceIcon di = null;
-        if (null != realIcon) {
-            di = realIcon.get();
+        
+        Image img = null == this.image ? null : this.image.get();
+        
+        if(null == img) {
+            InputStream is = new ByteArrayInputStream(deviceIdentity.icon.image.userData.toArrayByte(new byte[deviceIdentity.icon.image.userData.size()]));
+            img = new Image(is);
+            this.image = new SoftReference<Image>(img);
         }
 
-        if (di != null && di.isBlank() && deviceIdentity.icon.image != null) {
-            di = null;
-            log.debug("Constructing a new Icon with new ice.Image data");
-        }
-
-        if (null == di) {
-            di = new DeviceIcon(deviceIdentity.icon);
-            realIcon = new SoftReference<DeviceIcon>(di);
-        }
-
-        return di;
+        return img;
     }
 
     public String getMakeAndModel() {
@@ -108,9 +108,9 @@ public class Device {
     }
 
     public void setDeviceIdentity(DeviceIdentity deviceIdentity, ParticipantBuiltinTopicData participantData) {
-        this.realIcon = null;
         if (null == deviceIdentity) {
             this.deviceIdentity = null;
+            this.image = null;
         } else {
             changeUdi(deviceIdentity.unique_device_identifier);
             if (null == this.deviceIdentity) {
@@ -119,6 +119,7 @@ public class Device {
             } else {
                 this.deviceIdentity.copy_from(deviceIdentity);
             }
+            this.image = null;
             if(null == this.participantData) {
                 this.participantData = new ParticipantBuiltinTopicData();
                 this.participantData.copy_from(participantData);
@@ -216,5 +217,12 @@ public class Device {
         }
         return sb.toString();
     }
-
+    public boolean isConnected() {
+        ice.DeviceConnectivity conn = this.deviceConnectivity;
+        if(null == conn) {
+            return false;
+        } else {
+            return ice.ConnectionState.Connected.equals(conn.state);
+        }
+    }
 }

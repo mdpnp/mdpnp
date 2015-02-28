@@ -229,6 +229,8 @@ public class IceAppsContainer extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         primaryStage.setTitle("OpenICE");
+        primaryStage.setWidth(800);
+        primaryStage.setHeight(600);
 
         Scene panelScene = new Scene(panelRoot);
 //        Scene mainMenuScene = new Scene(mainMenuRoot);
@@ -326,6 +328,7 @@ public class IceAppsContainer extends Application {
         mainMenuController.setTypes(at).setDevices(nc.getContents());
         panelController.getContent().setCenter(mainMenuRoot);
         mainMenuController.getAppList().setCellFactory(new AppTypeCellFactory());
+        mainMenuController.getDeviceList().setCellFactory(new DeviceCellFactory());
         
 //        panelController.getContent().needsLayoutProperty();
         

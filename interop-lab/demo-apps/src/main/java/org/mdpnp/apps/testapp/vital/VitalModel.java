@@ -14,7 +14,6 @@ package org.mdpnp.apps.testapp.vital;
 
 import java.awt.Color;
 
-import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.publication.Publisher;
@@ -44,7 +43,7 @@ public interface VitalModel {
 
     ice.DeviceConnectivity getDeviceConnectivity(String udi);
 
-    DeviceIcon getDeviceIcon(String udi);
+//    DeviceIcon getDeviceIcon(String udi);
 
     ice.GlobalAlarmSettingsObjectiveDataWriter getWriter();
 

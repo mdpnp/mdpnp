@@ -20,7 +20,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -28,7 +27,6 @@ import javax.swing.ListCellRenderer;
 import javax.swing.border.LineBorder;
 
 import org.mdpnp.apps.testapp.Device;
-import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
@@ -97,10 +95,10 @@ public class VitalsListCellRenderer extends JPanel implements ListCellRenderer {
         } else {
             Device device = deviceListModel.getByUniqueDeviceIdentifier(vital.getValues().get(0).getUniqueDeviceIdentifier());
             if (null != device) {
-                DeviceIcon di = device.getIcon();
-                if (null != di) {
-                    icon.setIcon(new ImageIcon(di.getImage()));
-                }
+//                DeviceIcon di = device.getIcon();
+//                if (null != di) {
+//                    icon.setIcon(new ImageIcon(di.getImage()));
+//                }
                 deviceName.setText(device.getMakeAndModel());
                 udi.setText(device.getShortUDI());
             } else {

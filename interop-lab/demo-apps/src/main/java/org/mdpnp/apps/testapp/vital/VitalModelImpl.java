@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.mdpnp.apps.testapp.Device;
-import org.mdpnp.apps.testapp.DeviceIcon;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -299,10 +298,10 @@ public class VitalModelImpl implements VitalModel {
         return null == deviceListModel ? null : deviceListModel.getByUniqueDeviceIdentifier(udi);
     }
 
-    public DeviceIcon getDeviceIcon(String udi) {
-        Device device = getDevice(udi);
-        return null == device ? null : device.getIcon();
-    }
+//    public DeviceIcon getDeviceIcon(String udi) {
+//        Device device = getDevice(udi);
+//        return null == device ? null : device.getIcon();
+//    }
 
     @Override
     public DeviceIdentity getDeviceIdentity(String udi) {
