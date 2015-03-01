@@ -1,15 +1,17 @@
 package org.mdpnp.apps.testapp.sim;
 
-import com.rti.dds.domain.DomainParticipant;
+import java.io.IOException;
 
-import org.mdpnp.apps.testapp.*;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+
+import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.springframework.context.ApplicationContext;
 
-import javafx.scene.Parent;
-
-import javax.swing.*;
-
-import java.awt.*;
+import com.rti.dds.domain.DomainParticipant;
 
 /**
  *
@@ -26,23 +28,18 @@ public class SimControlFactory implements IceApplicationProvider {
     }
 
     @Override
-    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
         final DomainParticipant participant = (DomainParticipant) parentContext.getBean("domainParticipant");
 
-        SimControl simControl = new SimControl(participant);
+        FXMLLoader loader = new FXMLLoader(SimControl.class.getResource("SimControl.fxml"));
+        
+        final Parent ui = loader.load();
+        
+        final SimControl controller = ((SimControl)loader.getController());
+        controller.setup(participant);
 
-        final JFrame ui = new JFrame("Sim Control");
-        ui.getContentPane().add(new JScrollPane(simControl));
-        ui.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        ui.setAlwaysOnTop(true);
-        ui.pack();
-        Dimension d = new Dimension();
-        ui.getSize(d);
-        d.width = 2 * d.width;
-        ui.setSize(d);
-
-
+        
         return new IceApplicationProvider.IceApp() {
 
             @Override
@@ -52,20 +49,30 @@ public class SimControlFactory implements IceApplicationProvider {
 
             @Override
             public Parent getUI() {
-                return null;
+                return ui;
             }
 
             @Override
             public void activate(ApplicationContext context) {
+                
+//                final Stage dialog = new Stage(StageStyle.UTILITY);
+//                dialog.setAlwaysOnTop(true);
+//                Scene scene = new Scene(ui);
+//                dialog.setScene(scene);
+//                dialog.sizeToScene();
+//                dialog.show();
+
+                controller.start();
             }
 
             @Override
             public void stop() {
+                controller.stop();
             }
 
             @Override
             public void destroy() {
-                ui.dispose();
+                controller.tearDown();
             }
         };
     }

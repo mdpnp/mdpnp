@@ -1,23 +1,20 @@
 package org.mdpnp.apps.testapp.rrr;
 
-import com.rti.dds.infrastructure.StringSeq;
-import com.rti.dds.subscription.Subscriber;
+import java.io.IOException;
 
-import org.mdpnp.apps.testapp.*;
-import org.mdpnp.apps.testapp.hl7.HL7Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.InstanceModel;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 import org.springframework.context.ApplicationContext;
 
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-
-import javax.swing.*;
-
-import java.awt.*;
-import java.io.IOException;
+import com.rti.dds.infrastructure.StringSeq;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  *
@@ -34,7 +31,6 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
         final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
-        final DeviceListCellRenderer deviceCellRenderer = new DeviceListCellRenderer(nc);
 
         final EventLoop  eventLoop = (EventLoop)parentContext.getBean("eventLoop");
         final Subscriber subscriber= (Subscriber)parentContext.getBean("subscriber");

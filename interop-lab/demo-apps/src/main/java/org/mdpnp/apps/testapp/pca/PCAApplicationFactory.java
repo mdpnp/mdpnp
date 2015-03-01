@@ -4,7 +4,6 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import javafx.scene.Parent;
 
-import org.mdpnp.apps.testapp.DeviceListCellRenderer;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.vital.VitalModel;
@@ -32,9 +31,7 @@ public class PCAApplicationFactory implements IceApplicationProvider {
         final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
         final ice.InfusionObjectiveDataWriter objectiveWriter = (ice.InfusionObjectiveDataWriter) parentContext.getBean("objectiveWriter");
 
-        final DeviceListCellRenderer deviceCellRenderer = new DeviceListCellRenderer(nc);
-
-        final PCAPanel ui = new PCAPanel(refreshScheduler, objectiveWriter, deviceCellRenderer);
+        final PCAPanel ui = new PCAPanel(refreshScheduler, objectiveWriter);
         ui.setOpaque(false);
 
         return new IceApplicationProvider.IceApp() {

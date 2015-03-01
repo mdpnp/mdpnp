@@ -1,13 +1,10 @@
 package org.mdpnp.apps.testapp.alarm;
 
-import java.awt.Component;
 import java.io.IOException;
 import java.net.URL;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-
-import javax.swing.JPanel;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.export.DataCollector;
@@ -72,15 +69,5 @@ public class AlarmApplicationFactory implements IceApplicationProvider {
         };
     }
 
-
-    @SuppressWarnings("serial")
-    public static abstract class PersisterUI extends JPanel implements DataCollector.DataSampleEventListener  {
-
-        public abstract String getName();
-
-        public abstract void stop() throws Exception;
-
-        public abstract boolean start() throws Exception;
-    }
 
 }

@@ -48,7 +48,6 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.mdpnp.apps.testapp.DeviceListCellRenderer;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
@@ -69,7 +68,7 @@ public class PCAConfig extends JComponent implements VitalModelListener, ListDat
     private final ice.InfusionObjectiveDataWriter objectiveWriter;
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public PCAConfig(ScheduledExecutorService executor, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListCellRenderer deviceCellRenderer) {
+    public PCAConfig(ScheduledExecutorService executor, ice.InfusionObjectiveDataWriter objectiveWriter) {
         setLayout(new GridBagLayout());
         this.objectiveWriter = objectiveWriter;
         pumpProgress = new JProgressAnimation2(executor);
@@ -149,7 +148,7 @@ public class PCAConfig extends JComponent implements VitalModelListener, ListDat
             }
 
         });
-        pumpList.setCellRenderer(deviceCellRenderer);
+//        pumpList.setCellRenderer(deviceCellRenderer);
         buildGUI();
     }
 

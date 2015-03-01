@@ -33,10 +33,10 @@ public class DataVisualization extends JSplitPane {
 
     public DataVisualization(ScheduledExecutorService executor,
                              ice.InfusionObjectiveDataWriter objectiveWriter,
-                             DeviceListCellRenderer deviceCellRenderer, VitalModelContainer vmc) {
+                             VitalModelContainer vmc) {
 
         super(JSplitPane.HORIZONTAL_SPLIT,
-                new JScrollPane(new PCAConfig(executor, objectiveWriter, deviceCellRenderer)),
+                new JScrollPane(new PCAConfig(executor, objectiveWriter)),
                 (JComponent)vmc);
 
         this.pcaConfig = (PCAConfig) ((JScrollPane) getLeftComponent()).getViewport().getComponent(0);

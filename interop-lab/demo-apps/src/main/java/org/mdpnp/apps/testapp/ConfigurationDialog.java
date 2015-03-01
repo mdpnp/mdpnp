@@ -12,17 +12,26 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
-import javax.swing.*;
+import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.util.Callback;
 
 import org.mdpnp.apps.testapp.Configuration.Application;
 import org.mdpnp.devices.DeviceDriverProvider;
@@ -31,88 +40,75 @@ import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-@SuppressWarnings({ "serial", "rawtypes", "unchecked" })
 /**
  * @author Jeff Plourde
  *
  */
-public class ConfigurationDialog extends JDialog {
-    private final JTextArea welcomeText = new JTextArea(8, 50);
-    private final JScrollPane welcomeScroll = new JScrollPane(welcomeText);
-    private final JComboBox<Configuration.Application> applications = new JComboBox<Configuration.Application>(Application.values());
-    private final JLabel applicationsLabel = new JLabel("Application:");
-    private final JButton start = new JButton("Start");
-    private final JButton quit = new JButton("Quit");
-    private final JTextField domainId = new JTextField("0", 2);
-    private boolean quitPressed = true;
-    private final JComboBox<DeviceDriverProvider> deviceType = makeDeviceTypesUIModel();
-    private final JLabel deviceTypeLabel = new JLabel("Device Type:");
+public class ConfigurationDialog {
+    @FXML
+    BorderPane main;
+    @FXML
+    Button start, quit;
+    @FXML
+    TextField domainId;
+    @FXML
+    ComboBox<Configuration.Application> applications;
+    @FXML
+    ComboBox<DeviceDriverProvider> deviceType;
+    @FXML
+    Label deviceTypeLabel, serialPortsLabel, addressLabel;
 
-    private JComboBox serialPorts;
-    private final JTextField address = new JTextField("", 10);
-    private final JLabel addressLabel = new JLabel("Address:");
-    private final CardLayout addressCards = new CardLayout();
-    private final JPanel addressPanel = new JPanel(addressCards);
-    private final JLabel domainIdLabel = new JLabel("Domain Id:");
+    @FXML
+    ComboBox<String> serialPorts;
 
-    public JComboBox<Configuration.Application> getApplications() {
+    @FXML
+    TextField address;
+
+    public boolean quitPressed;
+
+    public ComboBox<Configuration.Application> getApplications() {
         return applications;
     }
 
-    public JLabel getApplicationsLabel() {
-        return applicationsLabel;
-    }
-
-    public JTextField getDomainId() {
+    public TextField getDomainId() {
         return domainId;
     }
 
-    public JLabel getDomainIdLabel() {
-        return domainIdLabel;
-    }
-
-    public JButton getQuit() {
+    public Button getQuit() {
         return quit;
     }
 
-    public JScrollPane getWelcomeScroll() {
-        return welcomeScroll;
-    }
-
-    public JTextArea getWelcomeText() {
-        return welcomeText;
-    }
-
-    private static JComboBox<DeviceDriverProvider> makeDeviceTypesUIModel()
-    {
-        DeviceDriverProvider[] arr = DeviceFactory.getAvailableDevices();
-        DeviceDriverProvider[] l = new DeviceDriverProvider[arr.length+1];
-        System.arraycopy(arr, 0, l, 1, arr.length);
-        l[0] = null;
-
-        JComboBox jcb = new JComboBox(l);
-
-        jcb.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList list,
-                                                          Object value,
-                                                          int index,
-                                                          boolean isSelected,
-                                                          boolean cellHasFocus) {
-                if(value instanceof DeviceDriverProvider) {
-                    DeviceDriverProvider ddp = (DeviceDriverProvider) value;
-                    DeviceDriverProvider.DeviceType dt = ddp.getDeviceType();
-                    return super.getListCellRendererComponent(list, dt, index, isSelected, cellHasFocus);
-                }
-                else {
-                    return super.getListCellRendererComponent(list, "Select One", index, isSelected, cellHasFocus);
-                }
-            }
-        });
-
-        return jcb;
-    }
+    // private static ComboBox<DeviceDriverProvider> makeDeviceTypesUIModel()
+    // {
+    // DeviceDriverProvider[] arr = DeviceFactory.getAvailableDevices();
+    // DeviceDriverProvider[] l = new DeviceDriverProvider[arr.length+1];
+    // System.arraycopy(arr, 0, l, 1, arr.length);
+    // l[0] = null;
+    //
+    // JComboBox jcb = new JComboBox(l);
+    //
+    // jcb.setRenderer(new DefaultListCellRenderer() {
+    // @Override
+    // public Component getListCellRendererComponent(JList list,
+    // Object value,
+    // int index,
+    // boolean isSelected,
+    // boolean cellHasFocus) {
+    // if(value instanceof DeviceDriverProvider) {
+    // DeviceDriverProvider ddp = (DeviceDriverProvider) value;
+    // DeviceDriverProvider.DeviceType dt = ddp.getDeviceType();
+    // return super.getListCellRendererComponent(list, dt, index, isSelected,
+    // cellHasFocus);
+    // }
+    // else {
+    // return super.getListCellRendererComponent(list, "Select One", index,
+    // isSelected, cellHasFocus);
+    // }
+    // }
+    // });
+    //
+    // return jcb;
+    // }
 
     protected void set(Application app, DeviceDriverProvider dt) {
         switch (app) {
@@ -121,38 +117,36 @@ public class ConfigurationDialog extends JDialog {
             deviceTypeLabel.setVisible(true);
 
             ice.ConnectionType selected = null;
-            if(dt != null) {
+            if (dt != null) {
                 start.setText("Start " + dt.getDeviceType().getAlias());
                 start.setVisible(true);
                 selected = dt.getDeviceType().getConnectionType();
-            }
-            else {
+            } else {
                 start.setVisible(false);
             }
             if (ice.ConnectionType.Serial.equals(selected)) {
-                addressLabel.setVisible(true);
-                addressLabel.setText("Serial Port:");
-                addressPanel.setVisible(true);
-                if (null == serialPorts) {
-                    serialPorts = new JComboBox(SerialProviderFactory.getDefaultProvider().getPortNames().toArray());
-                    addressPanel.add(serialPorts, "serial");
-                }
                 if (SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
-                    addressCards.show(addressPanel, "address");
-                    addressLabel.setText("IP/Port:");
+                    addressLabel.setVisible(true);
+                    address.setVisible(true);
+                    serialPortsLabel.setVisible(false);
+                    serialPorts.setVisible(false);
                 } else {
-                    addressCards.show(addressPanel, "serial");
+                    addressLabel.setVisible(false);
+                    address.setVisible(false);
+                    serialPortsLabel.setVisible(true);
+                    serialPorts.setVisible(true);
                 }
 
             } else if (ice.ConnectionType.Network.equals(selected)) {
                 addressLabel.setVisible(true);
-                addressLabel.setText("IP Address:");
-                addressPanel.setVisible(true);
-                addressCards.show(addressPanel, "address");
+                address.setVisible(true);
+                serialPortsLabel.setVisible(false);
+                serialPorts.setVisible(false);
             } else {
                 addressLabel.setVisible(false);
-                addressLabel.setText("");
-                addressPanel.setVisible(false);
+                address.setVisible(false);
+                serialPortsLabel.setVisible(false);
+                serialPorts.setVisible(false);
             }
             break;
         case ICE_Supervisor:
@@ -160,52 +154,50 @@ public class ConfigurationDialog extends JDialog {
             deviceType.setVisible(false);
             deviceTypeLabel.setVisible(false);
             addressLabel.setVisible(false);
-            addressPanel.setVisible(false);
+            address.setVisible(false);
+            serialPortsLabel.setVisible(false);
+            serialPorts.setVisible(false);
             start.setVisible(true);
             start.setText("Start " + app);
             break;
         }
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                pack();
-                //setLocationRelativeTo(null);
-            }
-        });
     }
 
     private final static Logger log = LoggerFactory.getLogger(ConfigurationDialog.class);
 
-    private final void addWithAnchor(JComponent c, GridBagConstraints gbc, int anchor, int fill) {
-        int previousAnchor = gbc.anchor;
-        int previousFill = gbc.fill;
-        gbc.anchor = anchor;
-        gbc.fill = fill;
-        getContentPane().add(c, gbc);
-        gbc.anchor = previousAnchor;
-        gbc.fill = previousFill;
+    public static class DeviceDriverProviderCell extends ListCell<DeviceDriverProvider> {
+        @Override
+        protected void updateItem(DeviceDriverProvider item, boolean empty) {
+            super.updateItem(item, empty);
+            setGraphic(null);
+            if (item != null) {
+                setText(item.getDeviceType().toString());
+            }
+        }
     }
 
-    private final void addLabel(JComponent c, GridBagConstraints gbc) {
-        addWithAnchor(c, gbc, GridBagConstraints.EAST, GridBagConstraints.NONE);
-    }
+    public ConfigurationDialog set(Configuration conf, final Stage currentStage) {
+        deviceType.setButtonCell(new DeviceDriverProviderCell());
+        deviceType.setCellFactory(new Callback<ListView<DeviceDriverProvider>, ListCell<DeviceDriverProvider>>() {
 
-    private final void addOption(JComponent c, GridBagConstraints gbc) {
-        addWithAnchor(c, gbc, GridBagConstraints.WEST, GridBagConstraints.NONE);
-    }
+            @Override
+            public ListCell<DeviceDriverProvider> call(ListView<DeviceDriverProvider> param) {
+                return new DeviceDriverProviderCell();
+            }
 
-    public ConfigurationDialog(Window window) {
-        this(null, window);
-    }
+        });
 
-    public ConfigurationDialog(Configuration conf, Window window) {
-        super(window, ModalityType.APPLICATION_MODAL);
+        deviceType.setItems(FXCollections.observableArrayList(DeviceFactory.getAvailableDevices()));
+        applications.setItems(FXCollections.observableArrayList(Application.values()));
+        serialPorts.setItems(FXCollections.observableList(SerialProviderFactory.getDefaultProvider().getPortNames()));
+        main.layout();
 
         if (null != conf) {
             if (null != conf.getApplication()) {
-                applications.setSelectedItem(conf.getApplication());
+                applications.getSelectionModel().select(conf.getApplication());
             }
             if (null != conf.getDeviceFactory()) {
-                deviceType.getModel().setSelectedItem(conf.getDeviceFactory());
+                deviceType.getSelectionModel().select(conf.getDeviceFactory());
             }
             domainId.setText(Integer.toString(conf.getDomainId()));
 
@@ -217,11 +209,7 @@ public class ConfigurationDialog extends JDialog {
                         if (ice.ConnectionType.Network.equals(connType)) {
                             this.address.setText(conf.getAddress());
                         } else if (ice.ConnectionType.Serial.equals(connType)) {
-                            if (null == this.serialPorts) {
-                                this.serialPorts = new JComboBox(SerialProviderFactory.getDefaultProvider().getPortNames().toArray());
-                                addressPanel.add(serialPorts, "serial");
-                            }
-                            this.serialPorts.setSelectedItem(conf.getAddress());
+                            this.serialPorts.getSelectionModel().select(conf.getAddress());
                             this.address.setText(conf.getAddress());
                         }
                     }
@@ -232,120 +220,48 @@ public class ConfigurationDialog extends JDialog {
                 }
             }
         }
-
-        setTitle("MD PnP Demo Apps");
-
-        setLayout(new GridBagLayout());
-
-        domainId.setHorizontalAlignment(SwingConstants.RIGHT);
-
-        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-                new Insets(2, 0, 2, 0), 2, 2);
-
-        InputStream is = ConfigurationDialog.class.getResourceAsStream("welcome");
-        if (null != is) {
-            try {
-
-                BufferedReader br = new BufferedReader(new InputStreamReader(is));
-                StringBuffer sb = new StringBuffer();
-                String line = null;
-                while (null != (line = br.readLine())) {
-                    sb.append(line).append("\n");
-                }
-                br.close();
-                gbc.gridwidth = 3;
-                gbc.gridheight = 4;
-                welcomeText.setLineWrap(true);
-                welcomeText.setWrapStyleWord(true);
-                welcomeText.setEditable(false);
-                welcomeText.setText(sb.toString());
-                addWithAnchor(welcomeScroll, gbc, GridBagConstraints.CENTER, GridBagConstraints.BOTH);
-                gbc.gridwidth = 1;
-                gbc.gridheight = 1;
-                gbc.gridy += 4;
-            } catch (IOException ioe) {
-                log.warn("No welcome text", ioe);
-            }
-        }
-
-        gbc.gridx = 0;
-        addLabel(applicationsLabel, gbc);
-        gbc.gridx++;
-        addOption(applications, gbc);
-
-        gbc.gridy++;
-        gbc.gridx = 0;
-        addLabel(deviceTypeLabel, gbc);
-        gbc.gridx++;
-        addOption(deviceType, gbc);
-
-        addressPanel.add(address, "address");
-        gbc.gridy++;
-        gbc.gridx = 0;
-        addLabel(addressLabel, gbc);
-        gbc.gridx++;
-        addOption(addressPanel, gbc);
-
-        gbc.gridy++;
-        gbc.gridx = 0;
-        addLabel(domainIdLabel, gbc);
-        gbc.gridx++;
-        addOption(domainId, gbc);
-
-        gbc.gridy++;
-        gbc.gridx = 0;
-        addOption(quit, gbc);
-        gbc.gridx++;
-        addLabel(start, gbc);
-
-        getRootPane().setDefaultButton(start);
-        start.requestFocus(false);
-
-        quit.addActionListener(new ActionListener() {
+        quit.setOnAction(new EventHandler<ActionEvent>() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                setVisible(false);
+            public void handle(ActionEvent event) {
+                quitPressed = true;
+                currentStage.hide();
             }
+
         });
-
-        start.addActionListener(new ActionListener() {
+        start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                // basic validation of parameters.
-                Application app = (Application)applications.getSelectedItem();
-                if(Application.ICE_Device_Interface.equals(app)) {
-                    DeviceDriverProvider dt = (DeviceDriverProvider) deviceType.getSelectedItem();
-                    if(dt == null)
+            public void handle(ActionEvent event) {
+                // // basic validation of parameters.
+                Application app = (Application) applications.getSelectionModel().getSelectedItem();
+                if (Application.ICE_Device_Interface.equals(app)) {
+                    DeviceDriverProvider dt = (DeviceDriverProvider) deviceType.getSelectionModel().getSelectedItem();
+                    if (dt == null)
                         return;
                 }
                 quitPressed = false;
-                setVisible(false);
+                currentStage.hide();
             }
         });
 
-        applications.addItemListener(new ItemListener() {
+        EventHandler<ActionEvent> handler = new EventHandler<ActionEvent>() {
+
             @Override
-            public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    set((Application) e.getItem(), (DeviceDriverProvider) deviceType.getSelectedItem());
-                }
+            public void handle(ActionEvent event) {
+                set(applications.getSelectionModel().getSelectedItem(), deviceType.getSelectionModel().getSelectedItem());
             }
 
-        });
+        };
 
-        deviceType.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    set((Application) applications.getSelectedItem(), (DeviceDriverProvider) e.getItem());
-                }
-                else
-                    set((Application) applications.getSelectedItem(), null);
+        applications.setOnAction(handler);
+        deviceType.setOnAction(handler);
 
-            }
-        });
+        set((Application) applications.getSelectionModel().getSelectedItem(), deviceType.getSelectionModel().getSelectedItem());
 
-        set((Application) applications.getSelectedItem(), (DeviceDriverProvider)deviceType.getSelectedItem());
+        return this;
+    }
+
+    public ConfigurationDialog() {
+
     }
 
     private Configuration lastConf;
@@ -353,45 +269,77 @@ public class ConfigurationDialog extends JDialog {
     public Configuration getLastConfiguration() {
         return lastConf;
     }
-
-    public Configuration showDialog() {
-        pack();
-        setLocationRelativeTo(null);
-        setVisible(true);
-
-        String address = null;
-        Application app = (Application) applications.getSelectedItem();
-        DeviceDriverProvider ddp = (DeviceDriverProvider)deviceType.getSelectedItem();
-
-        switch (app) {
-        case ICE_Device_Interface:
-            if(ddp != null) {
-                ice.ConnectionType selected = ddp.getDeviceType().getConnectionType();
-                if (ice.ConnectionType.Network.equals(selected)) {
-                    address = this.address.getText();
-                } else if (ice.ConnectionType.Serial.equals(selected)) {
-                    if (SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
-                        address = this.address.getText();
-                    } else {
-                        address = this.serialPorts.getSelectedItem().toString();
-                    }
-                }
-            }
-        case ICE_Supervisor:
-            break;
-        default:
-            break;
-
-        }
-
-        // if mdpnp.ui is set to false, force the system to come up in the headless mode.
-        // If not set, default to UI mode i.e headless==false.
-        //
-        String s = System.getProperty("mdpnp.ui");
-        boolean headless = s!=null && Boolean.parseBoolean(s);
-        lastConf = new Configuration(headless, app,Integer.parseInt(domainId.getText()), ddp, address);
-
-        dispose();
-        return quitPressed ? null : lastConf;
+    
+    public boolean getQuitPressed() {
+        return quitPressed;
     }
+
+    public static ConfigurationDialog showDialog(Configuration configuration) throws IOException {
+        FXMLLoader loader = new FXMLLoader(ConfigurationDialog.class.getResource("ConfigurationDialog.fxml"));
+        Parent ui = loader.load();
+        ConfigurationDialog d = loader.getController();
+        Stage currentStage = new Stage(StageStyle.UTILITY);
+        d.set(configuration, currentStage);
+
+        
+
+        currentStage.initModality(Modality.APPLICATION_MODAL);
+        currentStage.setTitle("MD PnP Demo Apps");
+        currentStage.setAlwaysOnTop(true);
+        currentStage.setScene(new Scene(ui));
+        currentStage.showAndWait();
+
+        String s = System.getProperty("mdpnp.ui");
+        boolean headless = s != null && Boolean.parseBoolean(s);
+
+        d.lastConf = new Configuration(headless, d.applications.getSelectionModel().getSelectedItem(), Integer.parseInt(d.domainId.getText()), d.deviceType
+                .getSelectionModel().getSelectedItem(), d.address.getText());
+
+        return d;
+    }
+
+    // public Configuration showDialog() {
+    // pack();
+    // setLocationRelativeTo(null);
+    // setVisible(true);
+    //
+    // String address = null;
+    // Application app = (Application) applications.getSelectedItem();
+    // DeviceDriverProvider ddp =
+    // (DeviceDriverProvider)deviceType.getSelectedItem();
+    //
+    // switch (app) {
+    // case ICE_Device_Interface:
+    // if(ddp != null) {
+    // ice.ConnectionType selected = ddp.getDeviceType().getConnectionType();
+    // if (ice.ConnectionType.Network.equals(selected)) {
+    // address = this.address.getText();
+    // } else if (ice.ConnectionType.Serial.equals(selected)) {
+    // if (SerialProviderFactory.getDefaultProvider() instanceof
+    // TCPSerialProvider) {
+    // address = this.address.getText();
+    // } else {
+    // address = this.serialPorts.getSelectedItem().toString();
+    // }
+    // }
+    // }
+    // case ICE_Supervisor:
+    // break;
+    // default:
+    // break;
+    //
+    // }
+    //
+    // // if mdpnp.ui is set to false, force the system to come up in the
+    // headless mode.
+    // // If not set, default to UI mode i.e headless==false.
+    // //
+    // String s = System.getProperty("mdpnp.ui");
+    // boolean headless = s!=null && Boolean.parseBoolean(s);
+    // lastConf = new Configuration(headless,
+    // app,Integer.parseInt(domainId.getText()), ddp, address);
+    //
+    // // dispose();
+    // return quitPressed ? null : lastConf;
+    // }
 }

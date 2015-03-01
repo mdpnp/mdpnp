@@ -32,7 +32,6 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
-import org.mdpnp.apps.testapp.DeviceListCellRenderer;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
@@ -66,13 +65,13 @@ public class PCAPanel extends JPanel implements VitalModelListener {
         return new ByteArrayInputStream(baos.toByteArray());
     }
 
-    public PCAPanel(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListCellRenderer deviceCellRenderer) {
+    public PCAPanel(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter) {
         // super(JSplitPane.HORIZONTAL_SPLIT, true, new
         // PCAConfig(refreshScheduler), new VitalMonitoring(refreshScheduler));
         super(new BorderLayout());
         // pcaConfig = (PCAConfig) getLeftComponent();
         // vitalMonitor = (VitalMonitoring) getRightComponent();
-        pcaConfig = new PCAConfig(refreshScheduler, objectiveWriter, deviceCellRenderer);
+        pcaConfig = new PCAConfig(refreshScheduler, objectiveWriter);
 
         setBorder(EMPTY_BORDER);
 

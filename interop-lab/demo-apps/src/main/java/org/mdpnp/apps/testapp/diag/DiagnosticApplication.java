@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.diag;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
 
+import org.mdpnp.apps.testapp.MyAlert;
 import org.mdpnp.apps.testapp.MyNumeric;
 import org.mdpnp.apps.testapp.MySampleArray;
 import org.slf4j.Logger;
@@ -14,7 +15,7 @@ public class DiagnosticApplication {
         
     @FXML protected TableView<MyNumeric> numericTable;
     @FXML protected TableView<MySampleArray> sampleArrayTable;
-    @FXML protected TableView <ice.Alert> patientAlertTable, technicalAlertTable;
+    @FXML protected TableView <MyAlert> patientAlertTable, technicalAlertTable;
     
     public DiagnosticApplication() {
     }
@@ -26,9 +27,9 @@ public class DiagnosticApplication {
 
     public void setModel(Diagnostic diagnostic) {
         numericTable.setItems(diagnostic.getNumericModel());
-//        numericTable.setModel(diagnostic.getNumericModel());
-//        patientAlertTable.setModel(diagnostic.getPatientAlertModel());
-//        technicalAlertTable.setModel(diagnostic.getTechnicalAlertModel());
+        sampleArrayTable.setItems(diagnostic.getSampleArrayModel());
+        patientAlertTable.setItems(diagnostic.getPatientAlertModel());
+        technicalAlertTable.setItems(diagnostic.getTechnicalAlertModel());
         
     }
 }

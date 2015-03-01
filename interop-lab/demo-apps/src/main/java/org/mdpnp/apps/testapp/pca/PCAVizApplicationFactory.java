@@ -1,16 +1,15 @@
 package org.mdpnp.apps.testapp.pca;
 
-import org.mdpnp.apps.testapp.*;
-import org.mdpnp.apps.testapp.vital.VitalModel;
-import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
-import org.springframework.context.ApplicationContext;
+import java.util.concurrent.ScheduledExecutorService;
 
 import javafx.scene.Parent;
 
-import javax.swing.*;
-
-import java.awt.*;
-import java.util.concurrent.ScheduledExecutorService;
+import org.mdpnp.apps.testapp.DataVisualization;
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.IceApplicationProvider;
+import org.mdpnp.apps.testapp.vital.VitalModel;
+import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
+import org.springframework.context.ApplicationContext;
 
 /**
  *
@@ -33,10 +32,8 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
         final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
         final ice.InfusionObjectiveDataWriter objectiveWriter = (ice.InfusionObjectiveDataWriter) parentContext.getBean("objectiveWriter");
 
-        final DeviceListCellRenderer deviceCellRenderer = new DeviceListCellRenderer(nc);
-
         final DataVisualization ui =
-                new DataVisualization(refreshScheduler, objectiveWriter, deviceCellRenderer, new VitalMonitoring(refreshScheduler));
+                new DataVisualization(refreshScheduler, objectiveWriter, new VitalMonitoring(refreshScheduler));
 
         return new IceApplicationProvider.IceApp() {
 

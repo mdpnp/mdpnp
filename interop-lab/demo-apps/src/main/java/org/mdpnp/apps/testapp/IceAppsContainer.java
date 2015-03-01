@@ -22,7 +22,6 @@ import java.util.ServiceLoader;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
-import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -67,7 +66,7 @@ import com.rti.dds.subscription.Subscriber;
  *
  */
 @SuppressWarnings("serial")
-public class IceAppsContainer extends Application {
+public class IceAppsContainer extends IceApplication {
 
     private static final Logger log = LoggerFactory.getLogger(IceAppsContainer.class);
 
@@ -87,10 +86,8 @@ public class IceAppsContainer extends Application {
 
     private PartitionChooserModel partitionChooserModel;
 //    private DiscoveryPeers   discoveryPeers;
-
-    protected static Configuration config;
     
-    public IceAppsContainer() throws Exception {
+    public IceAppsContainer() {
         
     }
 
@@ -204,17 +201,6 @@ public class IceAppsContainer extends Application {
         static final ThreadGroup threadGroup = new ThreadGroup("DeviceApp");
     }
 
-    public static class IceAppsContainerInvoker implements Configuration.Command {
-
-        @Override
-        public int execute(Configuration config) throws Exception {
-            IceAppsContainer.config = config;
-            launch(IceAppsContainer.class);
-            return 0;
-        }
-        
-    }
-
     @Override
     public void start(Stage primaryStage) throws Exception {
         primaryStage.setTitle("OpenICE");
@@ -260,7 +246,7 @@ public class IceAppsContainer extends Application {
     public void init() throws Exception {
         super.init();
         stopOk = new CountDownLatch(1);
-        context = config.createContext("IceAppContainerContext.xml");
+        context = getConfiguration().createContext("IceAppContainerContext.xml");
         context.registerShutdownHook();
 
         RtConfig rtConfig = (RtConfig) context.getBean("rtConfig");

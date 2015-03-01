@@ -167,8 +167,8 @@ public class MySampleArray {
         setInstance_id(v.instance_id);
         setUnit_id(v.unit_id);
         setFrequency(v.frequency);
-        valuesProperty().clear();
-        valuesProperty().addAll(v.values.userData);
+//        valuesProperty().clear();
+//        valuesProperty().addAll(v.values.userData);
         _device_time.setTime(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L);
         setDevice_time(_device_time);
     }

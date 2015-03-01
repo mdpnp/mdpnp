@@ -12,20 +12,33 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.awt.*;
-import java.io.*;
+import java.awt.Image;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
+import java.util.Properties;
 
-import org.apache.commons.cli.*;
+import javafx.application.Application.Parameters;
+
+import javax.imageio.ImageIO;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.mdpnp.devices.DeviceDriverProvider;
+import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.imageio.ImageIO;
-import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -57,7 +70,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class Configuration {
 
     enum Application {
-        ICE_Supervisor(IceAppsContainer.IceAppsContainerInvoker.class),
+        ICE_Supervisor(IceAppsContainer.class),
         ICE_Device_Interface(DeviceAdapter.DeviceAdapterCommand.class),
         ICE_ParticipantOnly(ParticipantOnly.class);
 
@@ -65,10 +78,6 @@ public class Configuration {
             clazz = c;
         }
         private Class clazz;
-    }
-
-    interface Command {
-        int execute(Configuration config) throws Exception;
     }
 
     private final boolean              headless;
@@ -97,10 +106,11 @@ public class Configuration {
         return cmdLineEnv;
     }
 
-    public Command getCommand() {
+    public IceApplication getIceApplication() {
 
         try {
-            Command command = (Command) application.clazz.newInstance();
+            IceApplication command = (IceApplication) application.clazz.newInstance();
+            command.setConfiguration(this);
             return command;
         }
         catch(Exception ex)
@@ -292,7 +302,7 @@ public class Configuration {
     }
 
 
-    public static Configuration getInstance(String[] args) throws Exception {
+    public static Configuration getInstance(Parameters params) throws Exception {
 
         File[] searchPath = new File [] {
                 new File(".JumpStartSettings"),
@@ -300,7 +310,8 @@ public class Configuration {
         };
 
         Configuration runConf;
-
+        String[] args = params.getRaw().toArray(new String[0]);
+        
         if (args.length > 0) {
             runConf = read(args);
         }
@@ -316,19 +327,21 @@ public class Configuration {
             }
 
             runConf = searchAndLoadSettings(searchPath);
-
-            ConfigurationDialog d = new ConfigurationDialog(runConf, null);
-
-            d.setIconImage(ImageIO.read(Main.class.getResource("icon.png")));
-            runConf = d.showDialog();
+            
+            ConfigurationDialog d = ConfigurationDialog.showDialog(runConf);
+//            d.setIconImage(ImageIO.read(Main.class.getResource("icon.png")));
+//            runConf = d.showDialog();
 
             // It's nice to be able to change settings even without running
             // Even if the user presses 'quit' save the state so that it can be used
             // to boot strap the dialog later.
             //
-            if (null == runConf) {
+            if (d.getQuitPressed()) {
                 Configuration c = d.getLastConfiguration();
                 searchAndSaveSettings(c, searchPath);
+                runConf = null;
+            } else {
+                runConf = d.getLastConfiguration();
             }
         }
 

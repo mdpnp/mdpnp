@@ -20,6 +20,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.CountDownLatch;
 
+import javafx.stage.Stage;
+
 import javax.swing.JProgressBar;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
@@ -52,28 +54,28 @@ public abstract class DeviceAdapter {
         return da;
     }
 
-    public static class DeviceAdapterCommand implements Configuration.Command {
-        public int execute(Configuration config) throws Exception
+    public static class DeviceAdapterCommand extends IceApplication {
+        @Override
+        public void start(Stage primaryStage) throws Exception
         {
-            DeviceDriverProvider ddp = config.getDeviceFactory();
+            DeviceDriverProvider ddp = getConfiguration().getDeviceFactory();
             if(null == ddp) {
                 log.error("Unknown device type was specified");
-                return -1;
+                throw new Exception("Unknown device type was specified");
             }
 
-            final AbstractApplicationContext context = config.createContext("DriverContext.xml");
+            final AbstractApplicationContext context = getConfiguration().createContext("DriverContext.xml");
 
             DeviceAdapter da;
-            if(config.isHeadless())
+            if(getConfiguration().isHeadless())
                 da = DeviceAdapter.newHeadlessAdapter(ddp, context);
             else
                 da = DeviceAdapter.newGUIAdapter(ddp, context);
 
-            da.start(config.getAddress());
+            da.start(getConfiguration().getAddress());
 
             // this will block until killAdapter stops everything.
             context.destroy();
-            return 0;
         }
     }
 
@@ -202,7 +204,6 @@ public abstract class DeviceAdapter {
 
     static class GUIAdapter extends HeadlessAdapter {
 
-        private DemoFrame               frame;
         private DeviceDataMonitor    deviceMonitor;
         private CompositeDevicePanel cdp;
 
@@ -210,10 +211,6 @@ public abstract class DeviceAdapter {
 
         public GUIAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context) {
             super(deviceFactory, context, false);
-        }
-
-        public DemoFrame getFrame() {
-            return frame;
         }
 
         public void stop() {
@@ -261,7 +258,7 @@ public abstract class DeviceAdapter {
             EventLoop eventLoop = (EventLoop) context.getBean("eventLoop");
             deviceMonitor.start(device.getSubscriber(), eventLoop);
 
-            frame = new DemoFrame();
+//            frame = new DemoFrame();
 //            frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
 //            frame.addWindowListener(new WindowAdapter() {
 //                @Override

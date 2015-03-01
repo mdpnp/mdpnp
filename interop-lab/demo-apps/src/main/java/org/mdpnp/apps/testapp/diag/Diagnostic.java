@@ -63,7 +63,7 @@ public class Diagnostic {
         numericModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.numeric_data);
         patientAlertModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
         technicalAlertModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
-        sampleArrayModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
+        sampleArrayModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.waveform_data);
     }
     
     public void stop() {

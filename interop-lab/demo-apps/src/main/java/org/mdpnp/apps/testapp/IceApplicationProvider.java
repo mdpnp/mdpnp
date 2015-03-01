@@ -1,15 +1,13 @@
 package org.mdpnp.apps.testapp;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-
-import java.awt.Component;
-import java.io.IOException;
 import java.net.URL;
 
 import javafx.scene.Parent;
 import javafx.scene.image.Image;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 
 public interface IceApplicationProvider {
 
@@ -50,6 +48,7 @@ public interface IceApplicationProvider {
          * to be functional once it had been destroyed.
          */
         void destroy() throws Exception;
+        
     }
 
     /**

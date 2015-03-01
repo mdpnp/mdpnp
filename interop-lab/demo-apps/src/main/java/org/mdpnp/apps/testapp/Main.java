@@ -12,18 +12,21 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.*;
 import java.io.InputStream;
 import java.net.URL;
+
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.stage.Stage;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Jeff Plourde
  * 
  */
-public class Main {
+public class Main extends Application {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
@@ -37,22 +40,40 @@ public class Main {
             is.close();
         }
 
-        Configuration runConf = Configuration.getInstance(args);
-        if (null == runConf) {
-            return;
-        }
+        launch(Main.class, args);
 
-//        if(!runConf.isHeadless()) {
-//            UIManager.setLookAndFeel(new MDPnPLookAndFeel());
-//            UIManager.put("TabbedPane.contentOpaque", false);
-//        }
-
-        Configuration.Command cmd = runConf.getCommand();
-        int retCode = cmd.execute(runConf);
-
-        log.info("This is the end, exit code=" + retCode);
-        System.exit(retCode);
 
     }
 
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        runConf = Configuration.getInstance(getParameters());
+        if (null == runConf) {
+            stop();
+            Platform.exit();
+            
+        } else {
+            IceApplication app = runConf.getIceApplication();
+            app.init();
+            app.start(primaryStage);
+        }
+//        int retCode = cmd.execute(runConf, primaryStage);
+//        log.info("This is the end, exit code=" + retCode);
+//        System.exit(retCode);
+
+    }
+    
+    private Configuration runConf;
+    
+    @Override
+    public void init() throws Exception {
+        super.init();
+
+    }
+    
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+
+    }
 }
