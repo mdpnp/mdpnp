@@ -1,13 +1,15 @@
 package org.mdpnp.apps.testapp.pca;
 
-import org.mdpnp.apps.testapp.*;
+import java.util.concurrent.ScheduledExecutorService;
+
+import javafx.scene.Parent;
+
+import org.mdpnp.apps.testapp.DeviceListCellRenderer;
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 import org.springframework.context.ApplicationContext;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  *
@@ -43,8 +45,8 @@ public class PCAApplicationFactory implements IceApplicationProvider {
             }
 
             @Override
-            public Component getUI() {
-                return ui;
+            public Parent getUI() {
+                return null;
             }
 
             @Override

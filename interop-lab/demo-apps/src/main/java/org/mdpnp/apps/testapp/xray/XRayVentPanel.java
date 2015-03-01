@@ -97,8 +97,6 @@ public class XRayVentPanel extends JPanel {
         EndInspiration, EndExpiration
     }
 
-    private final DemoPanel demoPanel;
-
     private final JButton imageButton = new JButton("IMAGE <space bar>");
     private final JButton resetButton = new JButton("RESET <escape>");
     private final ButtonGroup strategiesGroup = new ButtonGroup();
@@ -128,15 +126,20 @@ public class XRayVentPanel extends JPanel {
 
     private NumericInstanceModel startOfBreathModel, deviceNumericModel;
     private SampleArrayInstanceModel sampleArrayModel;
-    
+
     private InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
-        public void instanceAlive(org.mdpnp.rtiapi.data.InstanceModel<Numeric,NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
-            
+        public void instanceAlive(org.mdpnp.rtiapi.data.InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data,
+                SampleInfo sampleInfo) {
+
         };
-        public void instanceNotAlive(org.mdpnp.rtiapi.data.InstanceModel<Numeric,NumericDataReader> model, NumericDataReader reader, Numeric keyHolder, SampleInfo sampleInfo) {
-            
+
+        public void instanceNotAlive(org.mdpnp.rtiapi.data.InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader,
+                Numeric keyHolder, SampleInfo sampleInfo) {
+
         };
-        public void instanceSample(org.mdpnp.rtiapi.data.InstanceModel<Numeric,NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+
+        public void instanceSample(org.mdpnp.rtiapi.data.InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data,
+                SampleInfo sampleInfo) {
             if (sampleInfo.valid_data) {
                 long previousPeriod = period;
                 if (ice.MDC_TIME_PD_INSPIRATORY.VALUE.equals(data.metric_id)) {
@@ -150,7 +153,7 @@ public class XRayVentPanel extends JPanel {
                     log.trace("START_INSPIRATORY_CYCLE");
                     Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
                     TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
-  
+
                     switch (strategy) {
                     case Automatic:
                         autoSync(targetTime);
@@ -162,34 +165,39 @@ public class XRayVentPanel extends JPanel {
             }
         };
     };
-    
+
     private InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader> sampleArrayListener = new InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader>() {
-        public void instanceAlive(org.mdpnp.rtiapi.data.InstanceModel<SampleArray,SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data, SampleInfo sampleInfo) {
+        public void instanceAlive(org.mdpnp.rtiapi.data.InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader,
+                SampleArray data, SampleInfo sampleInfo) {
             if (sampleInfo.valid_data) {
                 if (rosetta.MDC_FLOW_AWAY.VALUE.equals(data.metric_id)) {
                     waveformPanel.setSource(new SampleArrayWaveformSource(reader, data));
                 }
             }
         };
-        public void instanceNotAlive(org.mdpnp.rtiapi.data.InstanceModel<SampleArray,SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder, SampleInfo sampleInfo) {
-            
+
+        public void instanceNotAlive(org.mdpnp.rtiapi.data.InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader,
+                SampleArray keyHolder, SampleInfo sampleInfo) {
+
         };
-        public void instanceSample(org.mdpnp.rtiapi.data.InstanceModel<SampleArray,SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data, SampleInfo sampleInfo) {
+
+        public void instanceSample(org.mdpnp.rtiapi.data.InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader,
+                SampleArray data, SampleInfo sampleInfo) {
 
         };
     };
-    
+
     public void changeSource(String source, Subscriber subscriber, EventLoop eventLoop) {
         deviceNumericModel.stop();
         sampleArrayModel.stop();
         waveformPanel.setSource(null);
-        
+
         StringSeq params = new StringSeq();
-        params.add("'"+rosetta.MDC_FLOW_AWAY.VALUE+"'");
+        params.add("'" + rosetta.MDC_FLOW_AWAY.VALUE + "'");
         sampleArrayModel.addListener(sampleArrayListener);
         sampleArrayModel.start(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.waveform_data);
         params = new StringSeq();
-        params.add("'"+source+"'");
+        params.add("'" + source + "'");
         deviceNumericModel.addListener(numericListener);
         deviceNumericModel.start(subscriber, eventLoop, "unique_device_identifier = %0", params, QosProfiles.ice_library, QosProfiles.numeric_data);
         log.trace("new source is " + source);
@@ -197,18 +205,7 @@ public class XRayVentPanel extends JPanel {
 
     private boolean imageButtonDown = false;
 
-
-    public XRayVentPanel(final Subscriber subscriber, final EventLoop eventLoop, DeviceListCellRenderer deviceCellRenderer) {
-        this(null, subscriber, eventLoop, deviceCellRenderer);
-    }
-
-    @Deprecated
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public XRayVentPanel(DemoPanel demoPanel, final Subscriber subscriber, final EventLoop eventLoop, DeviceListCellRenderer deviceCellRenderer) {
-        super(new BorderLayout());
-
-        this.demoPanel = demoPanel;
-
+    public XRayVentPanel set(final Subscriber subscriber, final EventLoop eventLoop) {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
 
             @Override
@@ -251,25 +248,6 @@ public class XRayVentPanel extends JPanel {
                 log.info("" + imageButtonDown);
             }
         });
-        JPanel panel = new JPanel(new GridLayout(2, 2));
-
-        JPanel textPanel = new JPanel(new BorderLayout());
-        JLabel text = new JLabel();
-
-        text.setText("Sources");
-        text.setFont(text.getFont().deriveFont(FONT_SIZE));
-        textPanel.add(text, BorderLayout.NORTH);
-        
-        
-        startOfBreathModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
-        sampleArrayModel = new SampleArrayInstanceModelImpl(ice.SampleArrayTopic.VALUE);
-        deviceNumericModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
-        
-        deviceList = new JList(startOfBreathModel);
-        deviceList.setCellRenderer(deviceCellRenderer);
-        textPanel.add(new JScrollPane(deviceList), BorderLayout.CENTER);
-        panel.add(textPanel);
-
         deviceList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -283,7 +261,31 @@ public class XRayVentPanel extends JPanel {
             }
         });
 
-//        final Border border = new LineBorder(DemoPanel.darkBlue, 2);
+        return this;
+    }
+
+    public XRayVentPanel() {
+        super(new BorderLayout());
+
+        JPanel panel = new JPanel(new GridLayout(2, 2));
+
+        JPanel textPanel = new JPanel(new BorderLayout());
+        JLabel text = new JLabel();
+
+        text.setText("Sources");
+        text.setFont(text.getFont().deriveFont(FONT_SIZE));
+        textPanel.add(text, BorderLayout.NORTH);
+
+        startOfBreathModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
+        sampleArrayModel = new SampleArrayInstanceModelImpl(ice.SampleArrayTopic.VALUE);
+        deviceNumericModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
+
+        deviceList = new JList(startOfBreathModel);
+        // deviceList.setCellRenderer(deviceCellRenderer);
+        textPanel.add(new JScrollPane(deviceList), BorderLayout.CENTER);
+        panel.add(textPanel);
+
+        // final Border border = new LineBorder(DemoPanel.darkBlue, 2);
 
         JPanel enclosingFramePanel = new JPanel(new BorderLayout());
         JLabel l;
@@ -314,7 +316,7 @@ public class XRayVentPanel extends JPanel {
 
         waveformPanel = new SwingWaveformPanel();
         if (waveformPanel instanceof JComponent) {
-//            ((JComponent) waveformPanel).setBorder(border);
+            // ((JComponent) waveformPanel).setBorder(border);
         }
 
         enclosingWaveformPanel.add(waveformPanel.asComponent(), BorderLayout.CENTER);
@@ -402,7 +404,7 @@ public class XRayVentPanel extends JPanel {
 
         add(panel, BorderLayout.CENTER);
 
-//        DemoPanel.setChildrenOpaque(this, false);
+        // DemoPanel.setChildrenOpaque(this, false);
     }
 
     public void stop() {
@@ -423,11 +425,11 @@ public class XRayVentPanel extends JPanel {
     public void start(Subscriber subscriber, EventLoop eventLoop) {
 
         deviceList.getSelectionModel().clearSelection();
-        
+
         StringSeq params = new StringSeq();
-        params.add("'"+ice.MDC_START_INSPIRATORY_CYCLE.VALUE+"'");
+        params.add("'" + ice.MDC_START_INSPIRATORY_CYCLE.VALUE + "'");
         startOfBreathModel.start(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.numeric_data);
-        
+
         executorNonCritical.schedule(new Runnable() {
             public void run() {
                 cameraModel.start();

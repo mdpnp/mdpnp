@@ -228,7 +228,7 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
         final IceApplicationProvider.IceApp app = factory.create(context);
 
         app.activate(context);
-        Component component = app.getUI();
+//        Component component = app.getUI();
 
         JFrame frame = new JFrame("UITest");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -247,7 +247,7 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
         });
 
         frame.getContentPane().setLayout(new BorderLayout());
-        frame.getContentPane().add(component, BorderLayout.CENTER);
+//        frame.getContentPane().add(component, BorderLayout.CENTER);
         frame.setSize(640, 480);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);

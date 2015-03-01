@@ -1,10 +1,14 @@
 package org.mdpnp.apps.testapp.sim;
 
 import com.rti.dds.domain.DomainParticipant;
+
 import org.mdpnp.apps.testapp.*;
 import org.springframework.context.ApplicationContext;
 
+import javafx.scene.Parent;
+
 import javax.swing.*;
+
 import java.awt.*;
 
 /**
@@ -47,8 +51,8 @@ public class SimControlFactory implements IceApplicationProvider {
             }
 
             @Override
-            public Component getUI() {
-                return ui;
+            public Parent getUI() {
+                return null;
             }
 
             @Override

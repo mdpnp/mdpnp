@@ -34,7 +34,7 @@
              <cellValueFactory>
               <PropertyValueFactory property="source_timestamp" />
              </cellValueFactory>
-            </TableColumn>           
+            </TableColumn>
             <TableColumn prefWidth="75.0" text="UDI">
              <cellValueFactory>
               <PropertyValueFactory property="unique_device_identifier" />
@@ -59,7 +59,7 @@
              <cellValueFactory>
               <PropertyValueFactory property="unit_id" />
              </cellValueFactory>
-            </TableColumn>                        
+            </TableColumn>
             <TableColumn prefWidth="75.0" text="Value">
              <cellValueFactory>
               <PropertyValueFactory property="value" />
@@ -69,7 +69,7 @@
              <cellValueFactory>
               <PropertyValueFactory property="device_time" />
              </cellValueFactory>
-            </TableColumn>            
+            </TableColumn>
 
 
            </columns>
@@ -102,8 +102,26 @@
                AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
                AnchorPane.topAnchor="0.0">
                <columns>
-                <TableColumn prefWidth="75.0" text="Column X" />
-                <TableColumn prefWidth="75.0" text="Column X" />
+                <TableColumn prefWidth="75.0" text="Source Time">
+                 <cellValueFactory>
+                  <PropertyValueFactory property="source_timestamp" />
+                 </cellValueFactory>
+                </TableColumn>
+                <TableColumn prefWidth="75.0" text="UDI">
+                 <cellValueFactory>
+                  <PropertyValueFactory property="unique_device_identifier" />
+                 </cellValueFactory>
+                </TableColumn>
+                <TableColumn prefWidth="75.0" text="Identifier">
+                 <cellValueFactory>
+                  <PropertyValueFactory property="identifier" />
+                 </cellValueFactory>
+                </TableColumn>
+                <TableColumn prefWidth="75.0" text="Text">
+                 <cellValueFactory>
+                  <PropertyValueFactory property="text" />
+                 </cellValueFactory>
+                </TableColumn>
                </columns>
               </TableView>
              </children>
@@ -127,8 +145,26 @@
                AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
                AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                <columns>
-                <TableColumn prefWidth="75.0" text="Column X" />
-                <TableColumn prefWidth="75.0" text="Column X" />
+                <TableColumn prefWidth="75.0" text="Source Time">
+                 <cellValueFactory>
+                  <PropertyValueFactory property="source_timestamp" />
+                 </cellValueFactory>
+                </TableColumn>
+                <TableColumn prefWidth="75.0" text="UDI">
+                 <cellValueFactory>
+                  <PropertyValueFactory property="unique_device_identifier" />
+                 </cellValueFactory>
+                </TableColumn>
+                <TableColumn prefWidth="75.0" text="Identifier">
+                 <cellValueFactory>
+                  <PropertyValueFactory property="identifier" />
+                 </cellValueFactory>
+                </TableColumn>
+                <TableColumn prefWidth="75.0" text="Text">
+                 <cellValueFactory>
+                  <PropertyValueFactory property="text" />
+                 </cellValueFactory>
+                </TableColumn>
                </columns>
               </TableView>
              </children>

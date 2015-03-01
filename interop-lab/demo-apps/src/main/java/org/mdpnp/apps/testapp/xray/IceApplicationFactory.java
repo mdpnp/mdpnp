@@ -1,12 +1,17 @@
 package org.mdpnp.apps.testapp.xray;
 
-import com.rti.dds.subscription.Subscriber;
-import org.mdpnp.apps.testapp.*;
+import java.io.IOException;
+
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+
+import org.mdpnp.apps.testapp.DeviceListCellRenderer;
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
 
-import javax.swing.*;
-import java.awt.*;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  *
@@ -20,7 +25,7 @@ public class IceApplicationFactory implements IceApplicationProvider {
     public IceApplicationProvider.AppType getAppType() { return XRay;}
 
     @Override
-    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
         final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
         final DeviceListCellRenderer deviceCellRenderer = new DeviceListCellRenderer(nc);
@@ -28,7 +33,13 @@ public class IceApplicationFactory implements IceApplicationProvider {
         final EventLoop  eventLoop = (EventLoop)parentContext.getBean("eventLoop");
         final Subscriber subscriber= (Subscriber)parentContext.getBean("subscriber");
 
-        final XRayVentPanel ui = new XRayVentPanel(subscriber, eventLoop, deviceCellRenderer);
+        FXMLLoader loader = new FXMLLoader(XRayVentPanel.class.getResource("XRayVentPanel.fxml"));
+        
+        final Parent ui = loader.load();
+        
+        final XRayVentPanel controller = ((XRayVentPanel)loader.getController());
+
+        controller.set(subscriber, eventLoop);
 
         return new IceApplicationProvider.IceApp() {
 
@@ -38,7 +49,7 @@ public class IceApplicationFactory implements IceApplicationProvider {
             }
 
             @Override
-            public Component getUI() {
+            public Parent getUI() {
                 return ui;
             }
 
@@ -46,12 +57,12 @@ public class IceApplicationFactory implements IceApplicationProvider {
             public void activate(ApplicationContext context) {
                 final EventLoop  eventLoop = (EventLoop)context.getBean("eventLoop");
                 final Subscriber subscriber= (Subscriber)context.getBean("subscriber");
-                ui.start(subscriber, eventLoop);
+                controller.start(subscriber, eventLoop);
             }
 
             @Override
             public void stop() {
-                ui.stop();
+                controller.stop();
             }
 
             @Override

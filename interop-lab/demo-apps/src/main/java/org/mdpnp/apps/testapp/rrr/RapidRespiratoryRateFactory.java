@@ -2,15 +2,22 @@ package org.mdpnp.apps.testapp.rrr;
 
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.Subscriber;
+
 import org.mdpnp.apps.testapp.*;
+import org.mdpnp.apps.testapp.hl7.HL7Application;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.InstanceModel;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 import org.springframework.context.ApplicationContext;
 
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+
 import javax.swing.*;
+
 import java.awt.*;
+import java.io.IOException;
 
 /**
  *
@@ -24,7 +31,7 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
     public IceApplicationProvider.AppType getAppType() { return RRR;}
 
     @Override
-    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
         final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
         final DeviceListCellRenderer deviceCellRenderer = new DeviceListCellRenderer(nc);
@@ -39,7 +46,13 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
         params.add("'"+rosetta.MDC_IMPED_TTHOR.VALUE+"'");
         capnoModel.start(subscriber, eventLoop, "metric_id = %0 or metric_id = %1 ", params, QosProfiles.ice_library, QosProfiles.waveform_data);
 
-        final RapidRespiratoryRate ui = new RapidRespiratoryRate(domainId, eventLoop, subscriber, deviceCellRenderer);
+        FXMLLoader loader = new FXMLLoader(RapidRespiratoryRate.class.getResource("RapidRespiratoryRate.fxml"));
+        
+        final Parent ui = loader.load();
+        
+        final RapidRespiratoryRate controller = ((RapidRespiratoryRate)loader.getController());
+
+        controller.set(domainId, eventLoop, subscriber);
 
         return new IceApplicationProvider.IceApp() {
 
@@ -49,19 +62,19 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
             }
 
             @Override
-            public Component getUI() {
+            public Parent getUI() {
                 return ui;
             }
 
             @Override
             public void activate(ApplicationContext context) {
                 SampleArrayInstanceModel capnoModel =  (SampleArrayInstanceModel)  context.getBean("capnoModel");
-                ui.setModel(capnoModel);
+                controller.setModel(capnoModel);
             }
 
             @Override
             public void stop() {
-                ui.setModel(null);
+                controller.setModel(null);
             }
 
             @Override

@@ -2,6 +2,8 @@ package org.mdpnp.apps.testapp.export;
 
 import java.awt.Component;
 
+import javafx.scene.Parent;
+
 import javax.swing.JPanel;
 
 import org.mdpnp.apps.testapp.DataVisualization;
@@ -44,8 +46,8 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
             }
 
             @Override
-            public Component getUI() {
-                return ui;
+            public Parent getUI() {
+                return null;
             }
 
             @Override

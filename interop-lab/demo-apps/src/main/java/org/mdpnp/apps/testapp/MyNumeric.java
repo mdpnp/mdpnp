@@ -1,4 +1,4 @@
-package org.mdpnp.apps.testapp.diag;
+package org.mdpnp.apps.testapp;
 
 import java.util.Date;
 

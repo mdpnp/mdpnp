@@ -5,7 +5,10 @@ import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 import org.springframework.context.ApplicationContext;
 
+import javafx.scene.Parent;
+
 import javax.swing.*;
+
 import java.awt.*;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -43,8 +46,8 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
             }
 
             @Override
-            public Component getUI() {
-                return ui;
+            public Parent getUI() {
+                return null;
             }
 
             @Override
