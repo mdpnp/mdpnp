@@ -37,3 +37,4 @@ docbox-himss-2014/src_dds
 .keystore
 *.iml
 interop-lab/demo-apps/demo-app.csv*
+id_file

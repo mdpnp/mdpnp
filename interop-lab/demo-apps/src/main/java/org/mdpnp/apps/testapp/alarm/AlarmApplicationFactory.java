@@ -1,7 +1,11 @@
 package org.mdpnp.apps.testapp.alarm;
 
 import java.awt.Component;
+import java.io.IOException;
 import java.net.URL;
+
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 
 import javax.swing.JPanel;
 
@@ -23,7 +27,7 @@ public class AlarmApplicationFactory implements IceApplicationProvider {
     }
 
     @Override
-    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
         final Subscriber subscriber = (Subscriber)parentContext.getBean("subscriber");
 
@@ -31,9 +35,13 @@ public class AlarmApplicationFactory implements IceApplicationProvider {
         
         final AlarmHistoryModel model = new AlarmHistoryModel(ice.PatientAlertTopic.VALUE, ice.TechnicalAlertTopic.VALUE);
 
-        final AlarmApplication ui = new AlarmApplication();
+        FXMLLoader loader = new FXMLLoader(AlarmApplication.class.getResource("AlarmApplication.fxml"));
         
-        ui.setModel(model);
+        final Parent ui = loader.load();
+        
+        final AlarmApplication controller = ((AlarmApplication)loader.getController());
+        
+        controller.setModel(model.getContents());
 
         return new IceApplicationProvider.IceApp() {
 
@@ -43,7 +51,7 @@ public class AlarmApplicationFactory implements IceApplicationProvider {
             }
 
             @Override
-            public Component getUI() {
+            public Parent getUI() {
                 return ui;
             }
 
@@ -59,7 +67,7 @@ public class AlarmApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void destroy() throws Exception {
-                ui.stop();
+                controller.stop();
             }
         };
     }

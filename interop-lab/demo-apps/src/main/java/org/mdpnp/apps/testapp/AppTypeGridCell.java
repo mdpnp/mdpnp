@@ -18,7 +18,7 @@ public final class AppTypeGridCell extends GridCell<AppType> {
     private ImageView icon;
     
     public AppTypeGridCell() {
-
+        
     }
     
     @Override
@@ -42,7 +42,7 @@ public final class AppTypeGridCell extends GridCell<AppType> {
         }
         text.setText(item.getName());
         icon.setImage(item.getIcon());
-        root.setUserData(item);
+        setUserData(item);
         setText(item.getName());
         setGraphic(root);
     }

@@ -8,12 +8,13 @@ import java.awt.Component;
 import java.io.IOException;
 import java.net.URL;
 
+import javafx.scene.Parent;
 import javafx.scene.image.Image;
 
 public interface IceApplicationProvider {
 
     IceApplicationProvider.AppType getAppType();
-    IceApplicationProvider.IceApp create(ApplicationContext context);
+    IceApplicationProvider.IceApp create(ApplicationContext context) throws java.io.IOException;
 
 
     public interface IceApp {
@@ -27,7 +28,7 @@ public interface IceApplicationProvider {
          * @return java.awt.Component (either JFrame or Panel) or null for headless application.
          */
         // TODO this will be needed
-        Component getUI();
+        Parent getUI();
 
         /**
          * Activate the component. It is assumed that the all heavy lifting had already been done by the

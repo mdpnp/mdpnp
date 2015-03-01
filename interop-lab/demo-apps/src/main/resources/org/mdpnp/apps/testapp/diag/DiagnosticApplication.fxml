@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.cell.*?>
+
+<BorderPane prefHeight="386.0" prefWidth="377.0"
+ xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2"
+ fx:controller="org.mdpnp.apps.testapp.diag.DiagnosticApplication">
+ <!-- TODO Add Nodes -->
+ <center>
+  <SplitPane dividerPositions="0.5" focusTraversable="true"
+   orientation="VERTICAL" prefHeight="-1.0" prefWidth="-1.0">
+   <items>
+    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0"
+     prefWidth="160.0">
+     <children>
+      <ScrollPane fitToHeight="true" fitToWidth="true"
+       prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0"
+       AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+       AnchorPane.topAnchor="0.0">
+       <content>
+        <AnchorPane id="Content" minHeight="0.0" minWidth="0.0"
+         prefHeight="-1.0" prefWidth="-1.0">
+         <children>
+          <TableView fx:id="numericTable" prefHeight="-1.0"
+           prefWidth="-1.0" AnchorPane.bottomAnchor="0.0"
+           AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+           AnchorPane.topAnchor="0.0">
+           <columns>
+            <TableColumn prefWidth="75.0" text="Source Time">
+             <cellValueFactory>
+              <PropertyValueFactory property="source_timestamp" />
+             </cellValueFactory>
+            </TableColumn>           
+            <TableColumn prefWidth="75.0" text="UDI">
+             <cellValueFactory>
+              <PropertyValueFactory property="unique_device_identifier" />
+             </cellValueFactory>
+            </TableColumn>
+            <TableColumn prefWidth="75.0" text="Metric">
+             <cellValueFactory>
+              <PropertyValueFactory property="metric_id" />
+             </cellValueFactory>
+            </TableColumn>
+            <TableColumn prefWidth="75.0" text="Vendor Metric">
+             <cellValueFactory>
+              <PropertyValueFactory property="vendor_metric_id" />
+             </cellValueFactory>
+            </TableColumn>
+            <TableColumn prefWidth="75.0" text="Instance">
+             <cellValueFactory>
+              <PropertyValueFactory property="instance_id" />
+             </cellValueFactory>
+            </TableColumn>
+            <TableColumn prefWidth="75.0" text="Units">
+             <cellValueFactory>
+              <PropertyValueFactory property="unit_id" />
+             </cellValueFactory>
+            </TableColumn>                        
+            <TableColumn prefWidth="75.0" text="Value">
+             <cellValueFactory>
+              <PropertyValueFactory property="value" />
+             </cellValueFactory>
+            </TableColumn>
+            <TableColumn prefWidth="75.0" text="Device Time">
+             <cellValueFactory>
+              <PropertyValueFactory property="device_time" />
+             </cellValueFactory>
+            </TableColumn>            
+
+
+           </columns>
+          </TableView>
+         </children>
+        </AnchorPane>
+       </content>
+      </ScrollPane>
+     </children>
+    </AnchorPane>
+    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="-1.0"
+     prefWidth="-1.0">
+     <children>
+      <SplitPane dividerPositions="0.5" focusTraversable="true"
+       layoutX="0.0" layoutY="0.0" prefHeight="-1.0" prefWidth="-1.0">
+       <items>
+        <AnchorPane minHeight="0.0" minWidth="0.0"
+         prefHeight="-1.0" prefWidth="-1.0">
+         <children>
+          <ScrollPane fitToHeight="true" fitToWidth="true"
+           prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0"
+           AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+           AnchorPane.topAnchor="0.0">
+           <content>
+            <AnchorPane id="Content" minHeight="0.0"
+             minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0">
+             <children>
+              <TableView fx:id="patientAlertTable" prefHeight="-1.0"
+               prefWidth="-1.0" AnchorPane.bottomAnchor="0.0"
+               AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+               AnchorPane.topAnchor="0.0">
+               <columns>
+                <TableColumn prefWidth="75.0" text="Column X" />
+                <TableColumn prefWidth="75.0" text="Column X" />
+               </columns>
+              </TableView>
+             </children>
+            </AnchorPane>
+           </content>
+          </ScrollPane>
+         </children>
+        </AnchorPane>
+        <AnchorPane minHeight="0.0" minWidth="0.0"
+         prefHeight="-1.0" prefWidth="-1.0">
+         <children>
+          <ScrollPane prefHeight="-1.0" prefWidth="-1.0"
+           AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+           AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+           <content>
+            <AnchorPane id="Content" minHeight="0.0"
+             minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0">
+             <children>
+              <TableView fx:id="technicalAlertTable"
+               prefHeight="-1.0" prefWidth="-1.0"
+               AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+               AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <columns>
+                <TableColumn prefWidth="75.0" text="Column X" />
+                <TableColumn prefWidth="75.0" text="Column X" />
+               </columns>
+              </TableView>
+             </children>
+            </AnchorPane>
+           </content>
+          </ScrollPane>
+         </children>
+        </AnchorPane>
+       </items>
+      </SplitPane>
+     </children>
+    </AnchorPane>
+   </items>
+  </SplitPane>
+ </center>
+</BorderPane>

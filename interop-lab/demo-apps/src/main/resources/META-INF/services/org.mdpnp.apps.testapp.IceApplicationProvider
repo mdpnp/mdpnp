@@ -1,9 +1,9 @@
-org.mdpnp.apps.testapp.pca.PCAApplicationFactory
-org.mdpnp.apps.testapp.pca.PCAVizApplicationFactory
-org.mdpnp.apps.testapp.rrr.RapidRespiratoryRateFactory
-org.mdpnp.apps.testapp.xray.IceApplicationFactory
-org.mdpnp.apps.testapp.sim.SimControlFactory
-org.mdpnp.apps.testapp.export.FileAdapterApplicationFactory
+#org.mdpnp.apps.testapp.pca.PCAApplicationFactory
+#org.mdpnp.apps.testapp.pca.PCAVizApplicationFactory
+#org.mdpnp.apps.testapp.rrr.RapidRespiratoryRateFactory
+#org.mdpnp.apps.testapp.xray.IceApplicationFactory
+#org.mdpnp.apps.testapp.sim.SimControlFactory
+#org.mdpnp.apps.testapp.export.FileAdapterApplicationFactory
 org.mdpnp.apps.testapp.hl7.HL7ApplicationFactory
 org.mdpnp.apps.testapp.diag.DiagnosticApplicationFactory
 org.mdpnp.apps.testapp.alarm.AlarmApplicationFactory

@@ -35,7 +35,7 @@
   <top>
     <GridPane alignment="CENTER" maxHeight="-1.0" maxWidth="-1.0" pickOnBounds="true" prefHeight="-1.0" prefWidth="-1.0" BorderPane.alignment="CENTER">
       <children>
-        <Label fx:id="title" text="OpenICE" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+        <Label id="title" fx:id="bedLabel" text="OpenICE" GridPane.columnIndex="1" GridPane.rowIndex="0" />
         <ImageView fx:id="logo" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="0" GridPane.rowIndex="0">
           <image>
             <Image url="@mdpnp-small.png" />

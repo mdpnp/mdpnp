@@ -3,12 +3,14 @@ package org.mdpnp.apps.testapp.alarm;
 import ice.Alert;
 import ice.AlertDataReader;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 
-import javax.swing.table.AbstractTableModel;
+import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import org.mdpnp.rtiapi.data.AlertInstanceModel;
 import org.mdpnp.rtiapi.data.AlertInstanceModelImpl;
@@ -19,12 +21,17 @@ import org.mdpnp.rtiapi.data.InstanceModel;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 
-@SuppressWarnings("serial")
-public class AlarmHistoryModel extends AbstractTableModel {
+public class AlarmHistoryModel {
 
+    private final ObservableList<HistoricAlarm> contents = FXCollections.observableArrayList();
+    
+    public ObservableList<HistoricAlarm> getContents() {
+        return contents;
+    }
+    
     static class HistoricAlarm {
-        private final Date timestamp;
-        private final String type;
+        private Date timestamp;
+        private String type;
         private final ice.Alert alert;
         public HistoricAlarm(final String type, final Date timestamp, final ice.Alert alert ) {
             this.type = type;
@@ -63,8 +70,13 @@ public class AlarmHistoryModel extends AbstractTableModel {
 
         @Override
         public void instanceSample(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert alert, SampleInfo sampleInfo) {
-            data.add(0,new HistoricAlarm(type, new Date(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L), new ice.Alert(alert)));
-            fireTableRowsInserted(0, 0);
+            final HistoricAlarm ha = new HistoricAlarm(type, new Date(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L), new ice.Alert(alert));
+            System.out.println("CREATED AN ALERT INSTANCE");
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    contents.add(0, ha);
+                }
+            });
         }
         
         
@@ -93,67 +105,4 @@ public class AlarmHistoryModel extends AbstractTableModel {
         technicalAlerts.iterateAndAddListener(new Listener("Technical"));
     }
     
-    protected final List<HistoricAlarm> data = Collections.synchronizedList(new ArrayList<HistoricAlarm>(100));
-    
-    @Override
-    public int getRowCount() {
-        return data.size();
-    }
-
-    @Override
-    public int getColumnCount() {
-        return 5;
-    }
-
-    @Override
-    public Object getValueAt(int rowIndex, int columnIndex) {
-        HistoricAlarm ha = data.get(rowIndex);
-        switch(columnIndex) {
-        case 0:
-            return ha.getTimestamp();
-        case 1:
-            return ha.getAlert().unique_device_identifier;
-        case 2:
-            return ha.getType();
-        case 3:
-            return ha.getAlert().identifier;
-        case 4:
-            return ha.getAlert().text;
-        default:
-            return null;
-        }
-    }
-    
-    @Override
-    public Class<?> getColumnClass(int columnIndex) {
-        switch(columnIndex) {
-        case 0:
-            return Date.class;
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-            return String.class;
-        default:
-            return null;
-        }
-    }
-
-    @Override
-    public String getColumnName(int column) {
-        switch(column) {
-        case 0:
-            return "Time";
-        case 1:
-            return "UDI";
-        case 2:
-            return "Type";
-        case 3:
-            return "Identifier";
-        case 4:
-            return "Value";
-        default:
-            return null;
-        }
-    }
 }

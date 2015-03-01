@@ -12,12 +12,26 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantQos;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.SubscriberQos;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+
+import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.input.MouseEvent;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.mdpnp.devices.BuildInfo;
@@ -29,36 +43,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 
-import javafx.event.EventHandler;
-import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.stage.Stage;
-import javafx.util.Callback;
-
-import javax.imageio.ImageIO;
-import javax.swing.AbstractAction;
-import javax.swing.JFrame;
-import javax.swing.JButton;
-
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.CountDownLatch;
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  * Container responsible for discovery and hosting of ICE applications. Its main purpose is enforcement of
@@ -88,6 +75,8 @@ public class IceAppsContainer extends Application {
     private static IceApplicationProvider.AppType Device = new IceApplicationProvider.AppType("Device Info", null, (URL) null, 0);
 
     DeviceApp driverWrapper = new DeviceApp();
+    
+    final Map<IceApplicationProvider.AppType, IceApplicationProvider.IceApp> activeApps = new HashMap<>();
 
     private DemoPanel panelController;
     private Parent panelRoot;
@@ -118,10 +107,10 @@ public class IceAppsContainer extends Application {
                 }
             }
         };
-//        panel.getBedLabel().setText(appName);
-//        panel.getBack().setAction(new GoBackAction(goBackAction));
-//        ol.show(panel.getContent(), app.getDescriptor().getId());
-//        panel.getBack().setVisible(true);
+        panelController.bedLabel.setText(appName);
+        panelController.back.setVisible(true);
+        panelController.content.setCenter(app.getUI());
+        panelController.getBack().setOnAction(new GoBackAction(goBackAction));
     }
 
     /**
@@ -129,16 +118,15 @@ public class IceAppsContainer extends Application {
      * of the main panel to stop the current app and bring the pre-defined 'main'
      * screen back forward.
      */
-    private class GoBackAction extends AbstractAction {
+    private class GoBackAction implements EventHandler<ActionEvent> {
         final Runnable cmdOnExit;
 
         public GoBackAction(Runnable r) {
-            super("Exit App");
             cmdOnExit = r;
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void handle(ActionEvent event) {
             if (null != cmdOnExit) {
                 try {
                     cmdOnExit.run();
@@ -146,9 +134,9 @@ public class IceAppsContainer extends Application {
                     log.error("Error in 'go back' logic", t);
                 }
             }
-//            ol.show(panel.getContent(), Main.getId());
-            ((JButton)e.getSource()).setVisible(false);
-            ((JButton)e.getSource()).setAction(null);
+            panelController.content.setCenter(mainMenuRoot);
+            ((Button)event.getSource()).setVisible(false);
+            ((Button)event.getSource()).setOnAction(null);
         }
     }
 
@@ -167,8 +155,9 @@ public class IceAppsContainer extends Application {
         }
 
         @Override
-        public Component getUI() {
-            return devicePanel;
+        public Parent getUI() {
+            // TODO this
+            return null;
         }
 
         @Override
@@ -233,8 +222,31 @@ public class IceAppsContainer extends Application {
         primaryStage.setHeight(600);
 
         Scene panelScene = new Scene(panelRoot);
-//        Scene mainMenuScene = new Scene(mainMenuRoot);
-        
+        primaryStage.setOnHiding(new EventHandler<WindowEvent>() {
+
+            @Override
+            public void handle(WindowEvent event) {
+                final ExecutorService refreshScheduler = (ExecutorService) context.getBean("refreshScheduler");
+                refreshScheduler.shutdownNow();
+
+                for (IceApplicationProvider.IceApp a : activeApps.values()) {
+                    String aName = a.getDescriptor().getName();
+                    try {
+                        log.info("Shutting down " + aName + "...");
+                        a.stop();
+                        a.destroy();
+                        log.info("Shut down " + aName + " OK");
+                    } catch (Exception ex) {
+                        // continue as there is nothing mich that can be done,
+                        // but print the error out to the log.
+                        log.error("Failed to stop/destroy " + aName, ex);
+                    }
+                }
+
+                stopOk.countDown();
+            }
+            
+        });
         
         
         primaryStage.setScene(panelScene);
@@ -286,8 +298,6 @@ public class IceAppsContainer extends Application {
         //
         ServiceLoader<IceApplicationProvider> l = ServiceLoader.load(IceApplicationProvider.class);
 
-        final Map<IceApplicationProvider.AppType, IceApplicationProvider.IceApp> activeApps = new HashMap<>();
-
         final Iterator<IceApplicationProvider> iter = l.iterator();
         while (iter.hasNext()) {
             IceApplicationProvider ap = iter.next();
@@ -327,10 +337,30 @@ public class IceAppsContainer extends Application {
         final MainMenu mainMenuController = loader.getController();
         mainMenuController.setTypes(at).setDevices(nc.getContents());
         panelController.getContent().setCenter(mainMenuRoot);
-        mainMenuController.getAppList().setCellFactory(new AppTypeCellFactory());
+        mainMenuController.getAppList().setCellFactory(new AppTypeCellFactory(new EventHandler<MouseEvent>() {
+
+            @Override
+            public void handle(MouseEvent event) {
+                AppTypeGridCell cell = (AppTypeGridCell) event.getSource();
+                AppType appType = (AppType) cell.getUserData();
+                final IceApplicationProvider.IceApp app = activeApps.get(appType);
+                if (app != null) {
+                    // TODO top level "apps" (devices)
+//                    if (app.getUI() instanceof JFrame) {
+//                        JFrame a = (JFrame) app.getUI();
+    //                                            a.setLocationRelativeTo(IceAppsContainer.this);
+//                        app.activate(context);
+//                        a.setVisible(true);
+//                    } else {
+                        activateGoBack(app);
+                        app.activate(context);
+//                    }
+                }
+                
+            }
+            
+        }));
         mainMenuController.getDeviceList().setCellFactory(new DeviceCellFactory());
-        
-//        panelController.getContent().needsLayoutProperty();
         
         
 //        panel.getContent().add(mainMenuPanel, Main.getId());
@@ -340,36 +370,7 @@ public class IceAppsContainer extends Application {
         activeApps.put(Device, driverWrapper);
 //        panel.getContent().add(driverWrapper.getUI(), Device.getId());
 
-        // Start with showing the main panel.
-        //
-//        ol.show(panel.getContent(), Main.getId());
 
-        /*addWindowListener(*/new WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent e) {
-
-                final ExecutorService refreshScheduler = (ExecutorService) context.getBean("refreshScheduler");
-                refreshScheduler.shutdownNow();
-
-                for (IceApplicationProvider.IceApp a : activeApps.values()) {
-                    String aName = a.getDescriptor().getName();
-                    try {
-                        log.info("Shutting down " + aName + "...");
-                        a.stop();
-                        a.destroy();
-                        log.info("Shut down " + aName + " OK");
-                    } catch (Exception ex) {
-                        // continue as there is nothing mich that can be done,
-                        // but print the error out to the log.
-                        log.error("Failed to stop/destroy " + aName, ex);
-                    }
-                }
-
-                stopOk.countDown();
-
-                super.windowClosing(e);
-            }
-        }/*)*/;
 //        panel.getBack().setVisible(false);
 
 //        panel.getCreateAdapter().addActionListener(new ActionListener() {
@@ -436,61 +437,7 @@ public class IceAppsContainer extends Application {
 //
 //        });
 
-        
-//        mainMenuController.getAppList().setCellFactory(new Callback<ListView<AppType>,ListCell<AppType>>() {
-//
-//            @Override
-//            public ListCell<AppType> call(ListView<AppType> param) {
-//                ListCell<AppType> listCell = new ListCell<AppType>() {
-//                    
-//                };
-//                listCell.setOnMouseClicked(new EventHandler<MouseEvent>() {
-//
-//                    @Override
-//                    public void handle(MouseEvent event) {
-//                        System.out.println(event.getSource());
-//                    }
-//                    
-//                });
-//                return listCell;
-//            }
-//            
-//        });
-        
-        mainMenuController.getAppList().addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 
-            @Override
-            public void handle(MouseEvent event) {
-                
-            }
-            
-        });
-//        mainMenuPanel.getDeviceList().setModel(nc);
-//
-//        mainMenuPanel.getAppList().addMouseListener(new MouseAdapter() {
-//            @Override
-//            public void mouseClicked(MouseEvent e) {
-//                int idx = mainMenuPanel.getAppList().locationToIndex(e.getPoint());
-//                if (idx >= 0 && mainMenuPanel.getAppList().getCellBounds(idx, idx).contains(e.getPoint())) {
-//                    Object o = mainMenuPanel.getAppList().getModel().getElementAt(idx);
-//                    IceApplicationProvider.AppType appType = (IceApplicationProvider.AppType) o;
-//
-//                    final IceApplicationProvider.IceApp app = activeApps.get(appType);
-//                    if (app != null) {
-//                        if (app.getUI() instanceof JFrame) {
-//                            JFrame a = (JFrame) app.getUI();
-////                            a.setLocationRelativeTo(IceAppsContainer.this);
-//                            app.activate(context);
-//                            a.setVisible(true);
-//                        } else {
-//                            activateGoBack(app);
-//                            app.activate(context);
-//                        }
-//                    }
-//                }
-//                super.mouseClicked(e);
-//            }
-//        });
 //        mainMenuPanel.getDeviceList().addMouseListener(new MouseAdapter() {
 //            @Override
 //            public void mouseClicked(MouseEvent e) {
@@ -505,9 +452,6 @@ public class IceAppsContainer extends Application {
 //            }
 //        });
 
-//        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-//        setSize(800, 600);
-//        setLocationRelativeTo(null);
 
     }
     

@@ -1,11 +1,16 @@
 package org.mdpnp.apps.testapp.diag;
 
 import java.awt.Component;
+import java.io.IOException;
 import java.net.URL;
+
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 
 import javax.swing.JPanel;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider;
+import org.mdpnp.apps.testapp.alarm.AlarmApplication;
 import org.mdpnp.apps.testapp.export.DataCollector;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
@@ -23,7 +28,7 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
     }
 
     @Override
-    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
         final Subscriber subscriber = (Subscriber)parentContext.getBean("subscriber");
 
@@ -31,9 +36,13 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
 
         final Diagnostic diagnostic = new Diagnostic(subscriber, eventLoop);
 
-        final DiagnosticApplication ui = new DiagnosticApplication();
+        FXMLLoader loader = new FXMLLoader(DiagnosticApplication.class.getResource("DiagnosticApplication.fxml"));
         
-        ui.setModel(diagnostic);
+        final Parent ui = loader.load();
+        
+        final DiagnosticApplication controller = ((DiagnosticApplication)loader.getController());
+        
+        controller.setModel(diagnostic);
 
         return new IceApplicationProvider.IceApp() {
 
@@ -43,7 +52,7 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
             }
 
             @Override
-            public Component getUI() {
+            public Parent getUI() {
                 return ui;
             }
 
@@ -64,7 +73,7 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void destroy() throws Exception {
-                ui.stop();
+                controller.stop();
             }
         };
     }

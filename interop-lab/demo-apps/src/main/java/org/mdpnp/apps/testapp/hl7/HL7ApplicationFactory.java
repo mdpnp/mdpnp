@@ -1,9 +1,10 @@
 package org.mdpnp.apps.testapp.hl7;
 
-import java.awt.Component;
+import java.io.IOException;
 import java.net.URL;
 
-import javax.swing.JPanel;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.export.DataCollector;
@@ -23,7 +24,7 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
     }
 
     @Override
-    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
         final Subscriber subscriber = (Subscriber)parentContext.getBean("subscriber");
 
@@ -31,9 +32,14 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
 
         final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop);
 
-        final HL7Application ui = new HL7Application();
+        FXMLLoader loader = new FXMLLoader(HL7Application.class.getResource("HL7Application.fxml"));
         
-        ui.setModel(emitter);
+        final Parent ui = loader.load();
+        
+        final HL7Application controller = ((HL7Application)loader.getController());
+
+        controller.setModel(emitter);
+        
 
         return new IceApplicationProvider.IceApp() {
 
@@ -43,7 +49,7 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
             }
 
             @Override
-            public Component getUI() {
+            public Parent getUI() {
                 return ui;
             }
 
@@ -55,7 +61,7 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
             @Override
             public void stop() {
 //                try {
-////                    emitter.stop();
+                    emitter.stop();
 //                } catch (Exception ex) {
 //                    throw new IllegalStateException("Failed to stop data collector", ex);
 //                }
@@ -63,20 +69,9 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void destroy() throws Exception {
-                ui.stop();
+                controller.stop();
             }
         };
-    }
-
-
-    @SuppressWarnings("serial")
-    public static abstract class PersisterUI extends JPanel implements DataCollector.DataSampleEventListener  {
-
-        public abstract String getName();
-
-        public abstract void stop() throws Exception;
-
-        public abstract boolean start() throws Exception;
     }
 
 }

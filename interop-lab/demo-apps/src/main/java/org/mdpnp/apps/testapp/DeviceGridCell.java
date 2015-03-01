@@ -44,7 +44,7 @@ public class DeviceGridCell extends GridCell<Device> {
         text.setText(item.getMakeAndModel());
         icon.setImage(item.getIcon());
         overlay.setVisible(!item.isConnected());
-        root.setUserData(item);
+        setUserData(item);
         setText(item.getMakeAndModel());
         setGraphic(root);
     }

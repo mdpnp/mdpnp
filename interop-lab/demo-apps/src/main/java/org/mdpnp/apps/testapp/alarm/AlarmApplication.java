@@ -4,41 +4,38 @@ import java.awt.BorderLayout;
 import java.text.DateFormat;
 import java.util.Date;
 
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableModel;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.control.TableView;
 
+import org.mdpnp.apps.testapp.alarm.AlarmHistoryModel.HistoricAlarm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeffplourde.util.gui.table.XTable;
-
 @SuppressWarnings("serial")
-public class AlarmApplication extends JPanel {    
+public class AlarmApplication {    
     protected static final Logger log = LoggerFactory.getLogger(AlarmApplication.class);
-    protected final XTable table = new XTable(null, Integer.MAX_VALUE, true, true, true, true);
     
-    public AlarmApplication() {
-        setLayout(new BorderLayout());
-        
-        table.setDefaultRenderer(Date.class, new DefaultTableCellRenderer() {
-            DateFormat formatter;
+    
+    @FXML protected TableView<HistoricAlarm> table;
 
-            public void setValue(Object value) {
-                if (formatter==null) {
-                    formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM);
-                }
-                setText((value == null) ? "" : formatter.format(value));
-            }
-        });
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+    public AlarmApplication() {
+//        table.setDefaultRenderer(Date.class, new DefaultTableCellRenderer() {
+//            DateFormat formatter;
+//
+//            public void setValue(Object value) {
+//                if (formatter==null) {
+//                    formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM);
+//                }
+//                setText((value == null) ? "" : formatter.format(value));
+//            }
+//        });
+//        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+//        add(new JScrollPane(table), BorderLayout.CENTER);
     }
     
-    public void setModel(TableModel model) {
-        table.setModel(model);
+    public void setModel(ObservableList<HistoricAlarm> model) {
+        table.setItems(model);
     }
 
     public void stop() {
