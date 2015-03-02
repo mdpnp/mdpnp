@@ -12,8 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.pca;
 
-import java.lang.reflect.InvocationTargetException;
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -22,10 +20,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.FlowPane;
 
-import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 
-@SuppressWarnings("serial")
 public final class VitalView {
     private Vital vital;
     
@@ -118,26 +114,26 @@ public final class VitalView {
         // name.setText(vital.getLabel());
         try {
             if (N != vitalValues.getChildren().size()) {
-                Runnable r = new Runnable() {
-                    public void run() {
-
-                        while (vitalValues.getChildren().size() < N) {
-                            for (int i = 0; i < (N - vitalValues.getChildren().size()); i++) {
-                                ValueView val = new ValueView();
-                                
-//                                val.setBorder(new LineBorder(Color.black));
-//                                vitalValues.getChildren().add(val);
-                            }
-//                            validate();
-                        }
-                        while (N < vitalValues.getChildren().size()) {
-                            for (int i = 0; i < (vitalValues.getChildren().size() - N); i++) {
-//                                vitalValues.remove(0);
-                            }
-                        }
-
-                    }
-                };
+//                Runnable r = new Runnable() {
+//                    public void run() {
+//
+//                        while (vitalValues.getChildren().size() < N) {
+//                            for (int i = 0; i < (N - vitalValues.getChildren().size()); i++) {
+//                                ValueView val = new ValueView();
+//                                
+////                                val.setBorder(new LineBorder(Color.black));
+////                                vitalValues.getChildren().add(val);
+//                            }
+////                            validate();
+//                        }
+//                        while (N < vitalValues.getChildren().size()) {
+//                            for (int i = 0; i < (vitalValues.getChildren().size() - N); i++) {
+////                                vitalValues.remove(0);
+//                            }
+//                        }
+//
+//                    }
+//                };
 
             }
 //        } catch (InvocationTargetException e) {
@@ -157,10 +153,10 @@ public final class VitalView {
 //            ((ValueView) vitalValues.getChildren().get(0)).update(null, null, "<NO SOURCES>", null, null, 0L, 0L);
         } else {
             for (int i = 0; i < vital.getValues().size(); i++) {
-                Value val = vital.getValues().get(i);
+//                Value val = vital.getValues().get(i);
 //                ValueView lbl = (ValueView) vitalValues.getComponent(i);
 
-                ice.DeviceIdentity di = vital.getParent().getDeviceIdentity(val.getUniqueDeviceIdentifier());
+//                ice.DeviceIdentity di = vital.getParent().getDeviceIdentity(val.getUniqueDeviceIdentifier());
 //                DeviceIcon dicon = vital.getParent().getDeviceIcon(val.getUniqueDeviceIdentifier());
                 // dicon = null == dicon ? null : new ScaledDeviceIcon(dicon,
                 // 0.5);

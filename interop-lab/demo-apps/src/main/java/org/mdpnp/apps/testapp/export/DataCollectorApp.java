@@ -1,22 +1,45 @@
 package org.mdpnp.apps.testapp.export;
 
 import ice.Numeric;
-import org.mdpnp.apps.testapp.DeviceListModel;
+
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.table.DefaultTableModel;
+
 import org.mdpnp.apps.testapp.IceApplicationProvider;
-import org.mdpnp.apps.testapp.vital.*;
+import org.mdpnp.apps.testapp.vital.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import java.util.List;
 
-
+@SuppressWarnings("serial")
 public class DataCollectorApp extends JComponent implements DataCollector.DataSampleEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(DataCollectorApp.class);
@@ -28,7 +51,6 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
     private JPanel persisterContainer = new JPanel();
 
     private final DataCollector   dataCollector;
-    private final DeviceListModel deviceListModel;
 
     private final DataFilter      dataFilter;
     private final DeviceTreeModel deviceTreeModel = new DeviceTreeModel();
@@ -37,12 +59,11 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
 
     private List<FileAdapterApplicationFactory.PersisterUI> supportedPersisters = new ArrayList<>();
 
-    public DataCollectorApp(DeviceListModel dlm, DataCollector dc) {
+    public DataCollectorApp(DataCollector dc) {
 
         // hold on to the references so that we we can unhook the listeners at the end
         //
         dataCollector   = dc;
-        deviceListModel = dlm;
 
         // device list model maintains the list of what is out there.
         // add a listener to it so that we can dynamically build a tree representation

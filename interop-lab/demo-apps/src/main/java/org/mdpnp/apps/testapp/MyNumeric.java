@@ -2,8 +2,6 @@ package org.mdpnp.apps.testapp;
 
 import java.util.Date;
 
-import com.rti.dds.subscription.SampleInfo;
-
 import javafx.beans.property.FloatProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -12,6 +10,8 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+
+import com.rti.dds.subscription.SampleInfo;
 
 public class MyNumeric {
     private ObjectProperty<Date> source_timestamp;

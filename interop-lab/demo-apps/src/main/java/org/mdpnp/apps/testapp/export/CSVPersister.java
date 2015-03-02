@@ -1,17 +1,26 @@
 package org.mdpnp.apps.testapp.export;
 
 
-import org.apache.log4j.Level;
-import org.mdpnp.apps.testapp.vital.Value;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.FileDialog;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
+import org.apache.log4j.Level;
+import org.mdpnp.apps.testapp.vital.Value;
+
+@SuppressWarnings("serial")
 class CSVPersister extends FileAdapterApplicationFactory.PersisterUI implements DataCollector.DataSampleEventListener  {
 
     static ThreadLocal<SimpleDateFormat> dateFormats = new ThreadLocal<SimpleDateFormat>()
@@ -65,13 +74,14 @@ class CSVPersister extends FileAdapterApplicationFactory.PersisterUI implements 
 
         super();
 
-        JComboBox backupIndex = new JComboBox(new String[] { "1", "5", "10", "20"});
+        JComboBox<String> backupIndex = new JComboBox<String>(new String[] { "1", "5", "10", "20"});
         backupIndex.addActionListener(new ActionListener()
                                       {
                                           @Override
                                           public void actionPerformed(ActionEvent e) {
 
-                                              Object o = ((JComboBox)e.getSource()).getSelectedItem();
+                                              @SuppressWarnings("unchecked")
+                                            Object o = ((JComboBox<String>)e.getSource()).getSelectedItem();
                                               if(appender != null) {
                                                   appender.setMaxBackupIndex(Integer.parseInt(o.toString()));
                                                   appender.activateOptions();
@@ -81,13 +91,14 @@ class CSVPersister extends FileAdapterApplicationFactory.PersisterUI implements 
         );
         backupIndex.setSelectedIndex(0);
 
-        JComboBox fSize = new JComboBox(new String[] { "1MB", "5MB", "50MB", "500MB", "1GB", "5GB", "50GB", "500GB", "1000GB"});
+        JComboBox<String> fSize = new JComboBox<String>(new String[] { "1MB", "5MB", "50MB", "500MB", "1GB", "5GB", "50GB", "500GB", "1000GB"});
         fSize.addActionListener(new ActionListener()
                                 {
                                     @Override
                                     public void actionPerformed(ActionEvent e) {
 
-                                        Object o = ((JComboBox)e.getSource()).getSelectedItem();
+                                        @SuppressWarnings("unchecked")
+                                        Object o = ((JComboBox<String>)e.getSource()).getSelectedItem();
                                         if(appender != null) {
                                             appender.setMaxFileSize(o.toString());
                                             appender.activateOptions();

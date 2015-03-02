@@ -5,10 +5,8 @@ import java.io.IOException;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
-import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.InstanceModel;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 import org.springframework.context.ApplicationContext;
@@ -29,14 +27,11 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
 
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
-
-        final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
-
         final EventLoop  eventLoop = (EventLoop)parentContext.getBean("eventLoop");
         final Subscriber subscriber= (Subscriber)parentContext.getBean("subscriber");
         final int        domainId  = (Integer)parentContext.getBean("domainId");
 
-        InstanceModel capnoModel =  (InstanceModel)  parentContext.getBean("capnoModel");
+        SampleArrayInstanceModel capnoModel =  (SampleArrayInstanceModel)  parentContext.getBean("capnoModel");
         StringSeq params = new StringSeq();
         params.add("'"+rosetta.MDC_AWAY_CO2.VALUE+"'");
         params.add("'"+rosetta.MDC_IMPED_TTHOR.VALUE+"'");

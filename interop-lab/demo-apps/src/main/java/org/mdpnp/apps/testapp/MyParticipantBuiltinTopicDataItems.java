@@ -74,8 +74,6 @@ public class MyParticipantBuiltinTopicDataItems implements DataReaderListener {
 
                         if (0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & si.instance_state)) {
                             if (si.valid_data) {
-                                int idx = -1;
-                                boolean inserted = false;
                                 ParticipantBuiltinTopicData d1 = new ParticipantBuiltinTopicData();
                                 d1.copy_from(d);
                                 Platform.runLater(new Runnable() {

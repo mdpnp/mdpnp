@@ -12,22 +12,17 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.pca;
 
-import java.awt.GridBagConstraints;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.paint.Color;
 
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
@@ -132,7 +127,7 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
     }
 
     private VitalModel model;
-    private InfusionStatusInstanceModel pumpModel;
+//    private InfusionStatusInstanceModel pumpModel;
 
     protected void updateVitals() {
 //        if (SwingUtilities.isEventDispatchThread()) {
@@ -186,7 +181,6 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
 //        }
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void setModel(VitalModel model, InfusionStatusInstanceModel pumpModel) {
 //        String selectedUdi = null;
 //        ice.InfusionStatus selected = pumpList.getSelectedValue();

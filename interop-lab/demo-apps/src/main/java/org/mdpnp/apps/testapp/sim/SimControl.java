@@ -40,7 +40,7 @@ public class SimControl {
     
     private static final class NumericValue {
         public final String name, metricId;
-        public final float lowerBound, upperBound, initialValue, increment;
+        public final float lowerBound, upperBound, initialValue; // , increment;
 
         public NumericValue(final String name, final String metricId, final float lowerBound, final float upperBound, final float initialValue,
                 final float increment) {
@@ -49,7 +49,7 @@ public class SimControl {
             this.lowerBound = lowerBound;
             this.upperBound = upperBound;
             this.initialValue = initialValue;
-            this.increment = increment;
+//            this.increment = increment;
         }
     }
 

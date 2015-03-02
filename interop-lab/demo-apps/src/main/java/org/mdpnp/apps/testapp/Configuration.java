@@ -74,10 +74,10 @@ public class Configuration {
         ICE_Device_Interface(DeviceAdapter.DeviceAdapterCommand.class),
         ICE_ParticipantOnly(ParticipantOnly.class);
 
-        Application(Class c) {
+        Application(Class<?> c) {
             clazz = c;
         }
-        private Class clazz;
+        private Class<?> clazz;
     }
 
     private final boolean              headless;
@@ -211,6 +211,7 @@ public class Configuration {
         return new Configuration(false, app, domainId, deviceType, address);
     }
 
+    @SuppressWarnings("static-access")
     static Configuration read(String[] cmdLineArgs) throws Exception{
 
         StringBuilder as = new StringBuilder("Application may be one of:");
@@ -388,6 +389,7 @@ public class Configuration {
         }
     }
 
+    @SuppressWarnings("static-access")
     public static CommandLine parseCommandLine(String execName, String args[], Options options) throws ParseException
     {
         Option h = OptionBuilder.withDescription("display usage information").create("help");

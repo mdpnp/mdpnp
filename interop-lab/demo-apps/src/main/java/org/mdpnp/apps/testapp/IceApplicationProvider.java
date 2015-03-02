@@ -56,6 +56,7 @@ public interface IceApplicationProvider {
      */
     public static class AppType {
 
+        @SuppressWarnings("unused")
         private static final Logger log = LoggerFactory.getLogger(AppType.class);
 
         private final String id;

@@ -12,9 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import com.rti.dds.infrastructure.Locator_t;
-import com.rti.dds.infrastructure.Property_t;
-
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
 
@@ -31,6 +28,8 @@ import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
 import com.rti.dds.infrastructure.Duration_t;
+import com.rti.dds.infrastructure.Locator_t;
+import com.rti.dds.infrastructure.Property_t;
 
 /**
  * Convenience class for storing DeviceIdentity and DeviceConnectivity instances

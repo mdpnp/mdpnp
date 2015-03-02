@@ -1,13 +1,9 @@
 package org.mdpnp.apps.testapp;
 
-import java.util.Date;
-
-import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
-
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+
+import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
 
 public class MyParticipantBuiltinTopicData {
     private StringProperty key;

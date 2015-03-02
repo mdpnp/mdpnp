@@ -1,10 +1,11 @@
 package org.mdpnp.apps.testapp;
 
+import ice.Numeric;
+import ice.NumericDataReader;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import ice.Numeric;
-import ice.NumericDataReader;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

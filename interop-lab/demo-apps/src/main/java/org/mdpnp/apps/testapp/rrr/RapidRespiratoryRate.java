@@ -12,12 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.rrr;
 
-import ice.Numeric;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -48,7 +44,7 @@ public class RapidRespiratoryRate implements Runnable {
     @FXML protected LineChart<Number, Number> wavePanel;
     @FXML protected Label rrLabel;
 
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+//    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     private final class RespiratoryRateDevice extends AbstractDevice {
 
@@ -66,14 +62,14 @@ public class RapidRespiratoryRate implements Runnable {
             writeDeviceIdentity();
         }
 
-        private InstanceHolder<Numeric> rate;
+//        private InstanceHolder<Numeric> rate;
 
-        void updateRate(float rate) {
-            // TODO clearly a synchronization issue here.
-            // enforce a singular calling thread or synchronize accesses
-            this.rate = numericSample(this.rate, (int) Math.round(rate), rosetta.MDC_CO2_RESP_RATE.VALUE, 
-                    "", rosetta.MDC_DIM_DIMLESS.VALUE, null);
-        }
+//        void updateRate(float rate) {
+//            // TODO clearly a synchronization issue here.
+//            // enforce a singular calling thread or synchronize accesses
+//            this.rate = numericSample(this.rate, (int) Math.round(rate), rosetta.MDC_CO2_RESP_RATE.VALUE, 
+//                    "", rosetta.MDC_DIM_DIMLESS.VALUE, null);
+//        }
     }
 
     private RespiratoryRateDevice rrDevice;
@@ -136,15 +132,14 @@ public class RapidRespiratoryRate implements Runnable {
 //        }, 1000L, 200L, TimeUnit.MILLISECONDS);
     }
 
-    private SampleArrayInstanceModel model;
+//    private SampleArrayInstanceModel model;
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void setModel(SampleArrayInstanceModel model) {
-        String selectedUdi = null;
-        ice.SampleArray selected = capnoSources.getSelectionModel().getSelectedItem();
-        if (null != selected) {
-            selectedUdi = selected.unique_device_identifier;
-        }
+//        String selectedUdi = null;
+//        ice.SampleArray selected = capnoSources.getSelectionModel().getSelectedItem();
+//        if (null != selected) {
+//            selectedUdi = selected.unique_device_identifier;
+//        }
 
 //        capnoSources.setItems(null == model ? FXCollections.emptyObservableList() : model);
 //        if (null != selectedUdi && model != null) {
@@ -166,7 +161,7 @@ public class RapidRespiratoryRate implements Runnable {
     }
 
 
-    private double rr;
+//    private double rr;
     
     protected float min, max;
     protected Long lastCrossing, lastInterval;

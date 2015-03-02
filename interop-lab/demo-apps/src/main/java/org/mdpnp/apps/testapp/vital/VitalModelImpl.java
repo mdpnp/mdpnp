@@ -214,7 +214,8 @@ public class VitalModelImpl implements VitalModel {
 
             ListIterator<Value> li = vital.getValues().listIterator();
             while (li.hasNext()) {
-                Value v = li.next();
+//                Value v = li.next();
+                li.next();
                 li.remove();
             }
             vital.destroy();
@@ -231,7 +232,8 @@ public class VitalModelImpl implements VitalModel {
 
             ListIterator<Value> li = v.getValues().listIterator();
             while (li.hasNext()) {
-                Value va = li.next();
+//                Value va = li.next();
+                li.next();
                 li.remove();
             }
             v.destroy();

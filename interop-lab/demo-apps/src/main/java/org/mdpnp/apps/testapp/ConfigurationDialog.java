@@ -163,6 +163,7 @@ public class ConfigurationDialog {
         }
     }
 
+    @SuppressWarnings("unused")
     private final static Logger log = LoggerFactory.getLogger(ConfigurationDialog.class);
 
     public static class DeviceDriverProviderCell extends ListCell<DeviceDriverProvider> {

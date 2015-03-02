@@ -23,9 +23,7 @@ import ice.DeviceIdentitySeq;
 import ice.DeviceIdentityTypeSupport;
 import ice.HeartBeat;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javafx.application.Platform;
@@ -55,7 +53,6 @@ import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.TopicDescription;
 
-@SuppressWarnings("serial")
 /**
  * A data model tracking all active participants; joining participant info, device
  * identity, and device connectivity information.

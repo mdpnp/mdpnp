@@ -1,14 +1,21 @@
 package org.mdpnp.apps.testapp.export;
 
 
+import java.awt.GridLayout;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+
+import javax.swing.JLabel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+
 import org.mdpnp.apps.testapp.vital.Value;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.sql.*;
 
-
+@SuppressWarnings("serial")
 class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements DataCollector.DataSampleEventListener  {
 
     private Connection conn = null;

@@ -5,7 +5,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import javafx.scene.Parent;
 
 import org.mdpnp.apps.testapp.DataVisualization;
-import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
@@ -29,7 +28,6 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
 
         final ScheduledExecutorService refreshScheduler = (ScheduledExecutorService) parentContext.getBean("refreshScheduler");
-        final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
         final ice.InfusionObjectiveDataWriter objectiveWriter = (ice.InfusionObjectiveDataWriter) parentContext.getBean("objectiveWriter");
 
         final DataVisualization ui =

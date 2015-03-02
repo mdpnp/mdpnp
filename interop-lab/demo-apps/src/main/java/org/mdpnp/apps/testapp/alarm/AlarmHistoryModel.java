@@ -2,11 +2,7 @@ package org.mdpnp.apps.testapp.alarm;
 
 import ice.Alert;
 import ice.AlertDataReader;
-
-import java.util.Date;
-
 import javafx.application.Platform;
-import javafx.beans.property.ObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 

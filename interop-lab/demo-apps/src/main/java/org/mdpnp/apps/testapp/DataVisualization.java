@@ -14,11 +14,10 @@ package org.mdpnp.apps.testapp;
 
 import java.util.concurrent.ScheduledExecutorService;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JSplitPane;
 
-import org.mdpnp.apps.testapp.pca.PCAConfig;
 import org.mdpnp.apps.testapp.pca.VitalModelContainer;
-import org.mdpnp.apps.testapp.pca.VitalMonitoring;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 

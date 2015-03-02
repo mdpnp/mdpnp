@@ -2,12 +2,12 @@ package org.mdpnp.apps.testapp;
 
 import java.util.Date;
 
-import com.rti.dds.subscription.SampleInfo;
-
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+
+import com.rti.dds.subscription.SampleInfo;
 
 public class MyAlert {
     private ObjectProperty<Date> source_timestamp;

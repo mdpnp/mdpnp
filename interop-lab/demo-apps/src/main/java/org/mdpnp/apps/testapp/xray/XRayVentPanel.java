@@ -30,7 +30,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.text.NumberFormat;
-import java.util.Dictionary;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -276,7 +275,7 @@ public class XRayVentPanel extends JPanel {
         sampleArrayModel = new SampleArrayInstanceModelImpl(ice.SampleArrayTopic.VALUE);
         deviceNumericModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
 
-        deviceList = new JList(startOfBreathModel);
+        deviceList = new JList<ice.Numeric>(startOfBreathModel);
         // deviceList.setCellRenderer(deviceCellRenderer);
         textPanel.add(new JScrollPane(deviceList), BorderLayout.CENTER);
         panel.add(textPanel);
@@ -344,20 +343,20 @@ public class XRayVentPanel extends JPanel {
         exposureTime.setName("Exposure Time");
         exposureTime.setPaintTicks(true);
         exposureTime.setPaintLabels(true);
-        Dictionary dict = exposureTime.createStandardLabels(100, 0);
+//        Dictionary dict = exposureTime.createStandardLabels(100, 0);
         NumberFormat nf = NumberFormat.getNumberInstance();
         nf.setMinimumFractionDigits(1);
         nf.setMaximumFractionDigits(1);
         exposureTime.setFont(exposureTime.getFont().deriveFont(FONT_SIZE));
         // TOTAL KLUGE
-        for (int i = exposureTime.getMinimum(); i <= exposureTime.getMaximum(); i += 100) {
-            Object o = dict.get(i);
-            if (o != null && o instanceof JLabel) {
-                ((JLabel) o).setText(nf.format(i / 1000.0));
-            }
-        }
-
-        exposureTime.setLabelTable(dict);
+//        for (int i = exposureTime.getMinimum(); i <= exposureTime.getMaximum(); i += 100) {
+//            Object o = dict.get(i);
+//            if (o != null && o instanceof JLabel) {
+//                ((JLabel) o).setText(nf.format(i / 1000.0));
+//            }
+//        }
+//
+//        exposureTime.setLabelTable(dict);
 
         controlsPanel.add(exposureTime, gbc);
 

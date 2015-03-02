@@ -15,7 +15,6 @@ package org.mdpnp.apps.testapp;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.ListView;
 
 import org.controlsfx.control.GridView;
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;

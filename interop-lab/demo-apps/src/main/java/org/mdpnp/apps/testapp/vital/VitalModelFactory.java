@@ -1,13 +1,14 @@
 package org.mdpnp.apps.testapp.vital;
 
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.Subscriber;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.pca.VitalSign;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
+
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  *

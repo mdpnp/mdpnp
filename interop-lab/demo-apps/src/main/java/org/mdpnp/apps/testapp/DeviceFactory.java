@@ -12,7 +12,11 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.ServiceLoader;
+import java.util.TreeSet;
 
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;

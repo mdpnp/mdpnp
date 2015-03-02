@@ -1,10 +1,16 @@
 package org.mdpnp.apps.testapp.export;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.infrastructure.*;
-import com.rti.dds.subscription.*;
-import com.rti.dds.topic.TopicDescription;
 import ice.Numeric;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.EventListener;
+import java.util.EventObject;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import javax.swing.event.EventListenerList;
+
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.ValueImpl;
 import org.mdpnp.apps.testapp.vital.Vital;
@@ -14,13 +20,22 @@ import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.event.EventListenerList;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.EventListener;
-import java.util.EventObject;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.infrastructure.ConditionSeq;
+import com.rti.dds.infrastructure.Duration_t;
+import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.infrastructure.WaitSet;
+import com.rti.dds.subscription.InstanceStateKind;
+import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleStateKind;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.ViewStateKind;
+import com.rti.dds.topic.TopicDescription;
 
 public class DataCollector {
 
@@ -32,6 +47,7 @@ public class DataCollector {
         }
     };
 
+    @SuppressWarnings("serial")
     public static class DataSampleEvent extends EventObject {
         public DataSampleEvent(Object source) {
             super(source);
@@ -288,6 +304,7 @@ public class DataCollector {
     }
 
     private static final Duration_t WAIT_1SEC = Duration_t.from_millis(1000);
+    @SuppressWarnings("unused")
     private static final Duration_t WAIT_5SEC = Duration_t.from_millis(5000);
 
     // how long to wait for data to become available before we timeout and check interrupted status.

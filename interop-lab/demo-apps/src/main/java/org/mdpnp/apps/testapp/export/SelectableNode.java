@@ -1,15 +1,22 @@
 package org.mdpnp.apps.testapp.export;
 
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.TreeCellEditor;
-import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.EventObject;
 
+import javax.swing.AbstractCellEditor;
+import javax.swing.JCheckBox;
+import javax.swing.JTree;
+import javax.swing.UIManager;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.TreeCellEditor;
+import javax.swing.tree.TreeCellRenderer;
+
+@SuppressWarnings("serial")
 class SelectableNode extends DefaultMutableTreeNode
 {
     boolean selected;
@@ -33,6 +40,7 @@ class SelectableNode extends DefaultMutableTreeNode
 
         private final static DefaultTreeCellRenderer defaultRenderer = new DefaultTreeCellRenderer();
 
+        @SuppressWarnings("unused")
         private final Color selectionBorderColor;
         private final Color selectionForeground;
         private final Color selectionBackground;

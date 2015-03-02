@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 
-import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
@@ -65,11 +64,11 @@ import com.rti.dds.subscription.Subscriber;
  * @see IceApplicationProvider
  *
  */
-@SuppressWarnings("serial")
 public class IceAppsContainer extends IceApplication {
 
     private static final Logger log = LoggerFactory.getLogger(IceAppsContainer.class);
 
+    @SuppressWarnings("unused")
     private static IceApplicationProvider.AppType Main   = new IceApplicationProvider.AppType("Main Menu", null, (URL) null, 0);
     private static IceApplicationProvider.AppType Device = new IceApplicationProvider.AppType("Device Info", null, (URL) null, 0);
 
@@ -80,6 +79,7 @@ public class IceAppsContainer extends IceApplication {
     private DemoPanel panelController;
     private Parent panelRoot;
     
+    @SuppressWarnings("unused")
     private MainMenu mainMenuController;
     private Parent mainMenuRoot;
 //    private CardLayout ol;
@@ -162,6 +162,7 @@ public class IceAppsContainer extends IceApplication {
             throw new IllegalStateException("Internal activate(context,driver) API should be called for driver wrapper");
         }
 
+        @SuppressWarnings("unused")
         public void start(ApplicationContext context, final Device device) {
 
             final EventLoop  eventLoop = (EventLoop)context.getBean("eventLoop");
@@ -252,7 +253,6 @@ public class IceAppsContainer extends IceApplication {
         RtConfig rtConfig = (RtConfig) context.getBean("rtConfig");
         final Publisher         publisher   = rtConfig.getPublisher();
         final Subscriber        subscriber  = rtConfig.getSubscriber();
-        final DomainParticipant participant = rtConfig.getParticipant();
         final String            udi         = (String) context.getBean("supervisorUdi");
 
         

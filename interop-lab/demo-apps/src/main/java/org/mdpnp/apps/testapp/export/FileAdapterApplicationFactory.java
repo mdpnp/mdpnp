@@ -1,13 +1,10 @@
 package org.mdpnp.apps.testapp.export;
 
-import java.awt.Component;
-
 import javafx.scene.Parent;
 
 import javax.swing.JPanel;
 
 import org.mdpnp.apps.testapp.DataVisualization;
-import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.springframework.context.ApplicationContext;
 
@@ -32,11 +29,9 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
         final Subscriber participant = (Subscriber)parentContext.getBean("subscriber");
 
-        final DeviceListModel deviceModel = (DeviceListModel)parentContext.getBean("deviceListModel");
-
         final DataCollector dataCollector = new DataCollector(participant);
 
-        final DataCollectorApp ui = new DataCollectorApp(deviceModel, dataCollector);
+        final DataCollectorApp ui = new DataCollectorApp(dataCollector);
 
         return new IceApplicationProvider.IceApp() {
 

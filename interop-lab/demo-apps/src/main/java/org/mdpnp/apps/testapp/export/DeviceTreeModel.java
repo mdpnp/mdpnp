@@ -1,22 +1,26 @@
 package org.mdpnp.apps.testapp.export;
 
-import com.google.common.collect.MapMaker;
-import org.mdpnp.apps.testapp.Device;
-import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.vital.Value;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Enumeration;
+import java.util.concurrent.ConcurrentMap;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.Enumeration;
-import java.util.concurrent.ConcurrentMap;
 
+import org.mdpnp.apps.testapp.Device;
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.vital.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.MapMaker;
+
+@SuppressWarnings("serial")
 public class DeviceTreeModel extends DefaultTreeModel implements ListDataListener, DataCollector.DataSampleEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(DeviceTreeModel.class);
@@ -64,7 +68,7 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
         node.setSelected(v);
         nodeChanged(node);
         if(!node.isLeaf()) {
-            Enumeration iter = node.children();
+            Enumeration<?> iter = node.children();
             while (iter.hasMoreElements()) {
                 SelectableNode n = (SelectableNode) iter.nextElement();
                 cascadeChildren(n, v);
@@ -82,6 +86,7 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
             public void run() {
 
                 DefaultMutableTreeNode treeRoot = (DefaultMutableTreeNode) getRoot();
+                @SuppressWarnings("unchecked")
                 AbstractListModel<Device> dlm = (AbstractListModel<Device>)e.getSource();
 
                 for(int idx=e.getIndex0(); idx<=e.getIndex1(); idx++) {
@@ -112,6 +117,7 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
             public void run() {
 
                 DefaultMutableTreeNode treeRoot = (DefaultMutableTreeNode) getRoot();
+                @SuppressWarnings("rawtypes")
                 Enumeration iter = treeRoot.children();
                 for(int idx=0; iter.hasMoreElements(); idx++) {
                     DefaultMutableTreeNode n = (DefaultMutableTreeNode) iter.nextElement();
@@ -152,6 +158,7 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
                 public void run() {
 
                     DefaultMutableTreeNode treeRoot = (DefaultMutableTreeNode) getRoot();
+                    @SuppressWarnings("rawtypes")
                     Enumeration iter = treeRoot.children();
                     while (iter.hasMoreElements()) {
                         DefaultMutableTreeNode dn = (DefaultMutableTreeNode) iter.nextElement();
@@ -184,6 +191,7 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
 
     DefaultMutableTreeNode ensureMetricNode(DefaultMutableTreeNode d, Value value)
     {
+        @SuppressWarnings("rawtypes")
         Enumeration iter = d.children();
         while (iter.hasMoreElements()) {
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) iter.nextElement();
@@ -199,6 +207,7 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
 
     DefaultMutableTreeNode ensureInstanceNode(DefaultMutableTreeNode d, Value value)
     {
+        @SuppressWarnings("rawtypes")
         Enumeration iter = d.children();
         while (iter.hasMoreElements()) {
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) iter.nextElement();
