@@ -41,8 +41,17 @@
     -fx-color: -fx-hover-base;
 }
 
-.multirange-slider .range-bar {
-    -fx-background-color: -fx-focus-color;
+.multirange-slider .range-bar-lowest,
+.multirange-slider .range-bar-highest {
+    -fx-background-color: red;
+}
+.multirange-slider .range-bar-lower,
+.multirange-slider .range-bar-higher {
+    -fx-background-color: yellow;
+}
+
+.multirange-slider .range-bar-mid {
+    -fx-background-color: green;
 }
 
 .multirange-slider .lowest-thumb:pressed,

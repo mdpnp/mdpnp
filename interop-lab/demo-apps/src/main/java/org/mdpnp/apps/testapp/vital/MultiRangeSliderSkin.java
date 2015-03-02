@@ -5,7 +5,11 @@ import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild
 import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.LOWER_THUMB;
 import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.LOWEST_THUMB;
 import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.NONE;
-import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR;
+import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_LOWEST;
+import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_LOWER;
+import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_MID;
+import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_HIGHER;
+import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_HIGHEST;
 import org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild;
 
 import javafx.beans.binding.ObjectBinding;
@@ -51,13 +55,13 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
     private double trackLength;
     private double lowestThumbPos;
     private double lowerThumbPos;
-    private double rangeEnd;
-    private double rangeStart;
+    private double rangeStartLowest, rangeStartLower, rangeStartMid, rangeStartHigher, rangeStartHighest;
+    private double rangeEndLowest, rangeEndLower, rangeEndMid, rangeEndHigher, rangeEndHighest;
     private ThumbPane lowestThumb;
     private ThumbPane lowerThumb;
     private ThumbPane higherThumb;
     private ThumbPane highestThumb;
-    private StackPane rangeBar; // the bar between the two thumbs, can be dragged
+    private StackPane rangeBarLowest, rangeBarLower, rangeBarMid, rangeBarHigher, rangeBarHighest; // the bar between the two thumbs, can be dragged
     
     // temp fields for mouse drag handling
     private double preDragPos;          // used as a temp value for low and high thumbs
@@ -68,15 +72,20 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
     public MultiRangeSliderSkin(final MultiRangeSlider rangeSlider) {
         super(rangeSlider, new MultiRangeSliderBehavior(rangeSlider));
         orientation = getSkinnable().getOrientation();
+        initTrack();
+        rangeBarLowest = initRangeBar("range-bar-lowest");
+        rangeBarLower  = initRangeBar("range-bar-lower");
+        rangeBarMid    = initRangeBar("range-bar-mid");
+        rangeBarHigher  = initRangeBar("range-bar-higher");
+        rangeBarHighest= initRangeBar("range-bar-highest");
         initFirstThumb();
         initSecondThumb();
         initThirdThumb();
         initFourthThumb();
-        initRangeBar();
         registerChangeListener(rangeSlider.lowestValueProperty(), "LOWEST_VALUE"); //$NON-NLS-1$
         registerChangeListener(rangeSlider.lowerValueProperty(), "LOWER_VALUE"); //$NON-NLS-1$
         registerChangeListener(rangeSlider.higherValueProperty(), "HIGHER_VALUE"); //$NON-NLS-1$
-        registerChangeListener(rangeSlider.higherValueProperty(), "HIGHER_VALUE"); //$NON-NLS-1$
+        registerChangeListener(rangeSlider.highestValueProperty(), "HIGHEST_VALUE"); //$NON-NLS-1$
         registerChangeListener(rangeSlider.minProperty(), "MIN"); //$NON-NLS-1$
         registerChangeListener(rangeSlider.maxProperty(), "MAX"); //$NON-NLS-1$
         registerChangeListener(rangeSlider.orientationProperty(), "ORIENTATION"); //$NON-NLS-1$
@@ -112,13 +121,41 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
                 }
             }
         });        
-        rangeBar.focusedProperty().addListener(new ChangeListener<Boolean>() {
+        rangeBarLowest.focusedProperty().addListener(new ChangeListener<Boolean>() {
             @Override public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean hasFocus) {
                 if (hasFocus) {
-                    currentFocus = RANGE_BAR;
+                    currentFocus = FocusedChild.RANGE_BAR_LOWEST;
                 }
             }
         });
+        rangeBarLower.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean hasFocus) {
+                if (hasFocus) {
+                    currentFocus = FocusedChild.RANGE_BAR_LOWER;
+                }
+            }
+        });
+        rangeBarMid.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean hasFocus) {
+                if (hasFocus) {
+                    currentFocus = FocusedChild.RANGE_BAR_MID;
+                }
+            }
+        });
+        rangeBarHigher.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean hasFocus) {
+                if (hasFocus) {
+                    currentFocus = FocusedChild.RANGE_BAR_HIGHER;
+                }
+            }
+        });
+        rangeBarHighest.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean hasFocus) {
+                if (hasFocus) {
+                    currentFocus = FocusedChild.RANGE_BAR_HIGHEST;
+                }
+            }
+        });        
         rangeSlider.focusedProperty().addListener(new ChangeListener<Boolean>() {
             @Override public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean hasFocus) {
                 if (hasFocus) {
@@ -133,52 +170,52 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
             }
         });
 
-        EventHandler<KeyEvent> keyEventHandler = new EventHandler<KeyEvent>() {
-            @Override public void handle(KeyEvent event) {
-                if (KeyCode.TAB.equals(event.getCode())) {
-                    if (lowestThumb.isFocused()) {
-                        if (event.isShiftDown()) {
-                            lowestThumb.setFocus(false);
-                            new ParentTraversalEngine(rangeSlider).select(rangeSlider, Direction.PREVIOUS);
-                        } else {
-                            lowestThumb.setFocus(false);
-                            lowerThumb.setFocus(true);
-                        }
-                        event.consume();
-                    } else if(lowerThumb.isFocused()) {
-                        if (event.isShiftDown()) {
-                            lowerThumb.setFocus(false);
-                            new ParentTraversalEngine(rangeSlider).select(rangeSlider, Direction.PREVIOUS);
-                        } else {
-                            lowerThumb.setFocus(false);
-                            higherThumb.setFocus(true);
-                        }
-                        event.consume();
-                    } else if (higherThumb.isFocused()) {
-                        // TODO is this right?
-                        if(!event.isShiftDown()) {
-                            higherThumb.setFocus(false);
-                            highestThumb.setFocus(true);
-                        } else {
-                            higherThumb.setFocus(false);
-                            new ParentTraversalEngine(rangeSlider).select(rangeSlider, Direction.NEXT);
-                        }
-                        event.consume();
-                    } else if (highestThumb.isFocused()) {
-                        // TODO is this right?
-                        if(event.isShiftDown()) {
-                            highestThumb.setFocus(false);
-                            higherThumb.setFocus(true);
-                        } else {
-                            highestThumb.setFocus(false);
-                            new ParentTraversalEngine(rangeSlider).select(rangeSlider, Direction.NEXT);
-                        }
-                        event.consume();
-                    }
-                }
-            }
-        };
-        getSkinnable().addEventHandler(KeyEvent.KEY_PRESSED, keyEventHandler);  
+//        EventHandler<KeyEvent> keyEventHandler = new EventHandler<KeyEvent>() {
+//            @Override public void handle(KeyEvent event) {
+//                if (KeyCode.TAB.equals(event.getCode())) {
+//                    if (lowestThumb.isFocused()) {
+//                        if (event.isShiftDown()) {
+//                            lowestThumb.setFocus(false);
+//                            new ParentTraversalEngine(rangeSlider).select(rangeSlider, Direction.PREVIOUS);
+//                        } else {
+//                            lowestThumb.setFocus(false);
+//                            lowerThumb.setFocus(true);
+//                        }
+//                        event.consume();
+//                    } else if(lowerThumb.isFocused()) {
+//                        if (event.isShiftDown()) {
+//                            lowerThumb.setFocus(false);
+//                            lowestThumb.setFocus(true);
+//                        } else {
+//                            lowerThumb.setFocus(false);
+//                            higherThumb.setFocus(true);
+//                        }
+//                        event.consume();
+//                    } else if (higherThumb.isFocused()) {
+//                        // TODO is this right?
+//                        if(event.isShiftDown()) {
+//                            higherThumb.setFocus(false);
+//                            lowerThumb.setFocus(true);
+//                        } else {
+//                            higherThumb.setFocus(false);
+//                            highestThumb.setFocus(true);
+//                        }
+//                        event.consume();
+//                    } else if (highestThumb.isFocused()) {
+//                        // TODO is this right?
+//                        if(event.isShiftDown()) {
+//                            highestThumb.setFocus(false);
+//                            higherThumb.setFocus(true);
+//                        } else {
+//                            highestThumb.setFocus(false);
+//                                new ParentTraversalEngine(rangeSlider).select(rangeSlider, Direction.NEXT);
+//                        }
+//                        event.consume();
+//                    }
+//                }
+//            }
+//        };
+//        getSkinnable().addEventHandler(KeyEvent.KEY_PRESSED, keyEventHandler);  
         // set up a callback on the behavior to indicate which thumb is currently 
         // selected (via enum).
         getBehavior().setSelectedValue(new Callback<Void, FocusedChild>() {
@@ -188,16 +225,13 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         });
     }
     
-    private void initFirstThumb() {
-        lowestThumb = new ThumbPane();
-        lowestThumb.getStyleClass().setAll("lowest-thumb"); //$NON-NLS-1$
-        lowestThumb.setFocusTraversable(true);
+    private void initTrack() {
         track = new StackPane();
         track.getStyleClass().setAll("track"); //$NON-NLS-1$
 
-        getChildren().clear();
-        getChildren().addAll(track, lowestThumb);
-        setShowTickMarks(getSkinnable().isShowTickMarks(), getSkinnable().isShowTickLabels());
+//        getChildren().clear();
+//        getChildren().addAll(track);
+        
         track.setOnMousePressed( new EventHandler<javafx.scene.input.MouseEvent>() {
             @Override public void handle(javafx.scene.input.MouseEvent me) {
                 if (!lowestThumb.isPressed() && !lowerThumb.isPressed() && !higherThumb.isPressed() && !highestThumb.isPressed()) {
@@ -217,6 +251,17 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
                 getBehavior().trackRelease(me, 0.0f);
             }
         });
+    }
+    
+    
+    private void initFirstThumb() {
+        lowestThumb = new ThumbPane();
+        lowestThumb.getStyleClass().setAll("lowest-thumb"); //$NON-NLS-1$
+        lowestThumb.setFocusTraversable(true);
+        
+        getChildren().add(lowestThumb);
+        
+        setShowTickMarks(getSkinnable().isShowTickMarks(), getSkinnable().isShowTickLabels());
 
         lowestThumb.setOnMousePressed(new EventHandler<javafx.scene.input.MouseEvent>() {
             @Override public void handle(javafx.scene.input.MouseEvent me) {
@@ -362,8 +407,8 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         });
     }    
     
-    private void initRangeBar() {
-        rangeBar = new StackPane();
+    private StackPane initRangeBar(String cssClass) {
+        StackPane rangeBar = new StackPane();
         rangeBar.cursorProperty().bind(new ObjectBinding<Cursor>() {
             { bind(rangeBar.hoverProperty()); }
 
@@ -371,29 +416,30 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
                 return rangeBar.isHover() ? Cursor.HAND : Cursor.DEFAULT;
             }
         });
-        rangeBar.getStyleClass().setAll("range-bar"); //$NON-NLS-1$
+        rangeBar.getStyleClass().setAll(cssClass); //$NON-NLS-1$
         
-        rangeBar.setOnMousePressed(new EventHandler<MouseEvent>() {
-            @Override public void handle(MouseEvent e) {
-                rangeBar.requestFocus();
-                preDragPos = isHorizontal() ? e.getX() : -e.getY();
-            }
-        });
-        
-        rangeBar.setOnMouseDragged(new EventHandler<MouseEvent>() {
-            @Override public void handle(MouseEvent e) {
-                double delta = (isHorizontal() ? e.getX() : -e.getY()) - preDragPos;
-                ((MultiRangeSliderBehavior) getBehavior()).moveRange(delta);
-            }
-        });
-        
-         rangeBar.setOnMouseReleased(new EventHandler<MouseEvent>() {
-            @Override public void handle(MouseEvent e) {
-                ((MultiRangeSliderBehavior) getBehavior()).confirmRange();
-            }
-        });
+//        rangeBar.setOnMousePressed(new EventHandler<MouseEvent>() {
+//            @Override public void handle(MouseEvent e) {
+//                rangeBar.requestFocus();
+//                preDragPos = isHorizontal() ? e.getX() : -e.getY();
+//            }
+//        });
+//        
+//        rangeBar.setOnMouseDragged(new EventHandler<MouseEvent>() {
+//            @Override public void handle(MouseEvent e) {
+//                double delta = (isHorizontal() ? e.getX() : -e.getY()) - preDragPos;
+//                ((MultiRangeSliderBehavior) getBehavior()).moveRange(delta);
+//            }
+//        });
+//        
+//         rangeBar.setOnMouseReleased(new EventHandler<MouseEvent>() {
+//            @Override public void handle(MouseEvent e) {
+//                ((MultiRangeSliderBehavior) getBehavior()).confirmRange();
+//            }
+//        });
         
         getChildren().add(rangeBar);
+        return rangeBar;
     }
 
     private void setShowTickMarks(boolean ticksVisible, boolean labelsVisible) {
@@ -419,7 +465,7 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         //                tickLine.setFormatTickLabel(slider.getLabelFormatter());
         //            tickLine.dataChanged();
                 getChildren().clear();
-                getChildren().addAll(tickLine, track, lowestThumb);
+                getChildren().addAll(tickLine, track, rangeBarLowest, rangeBarLower, rangeBarMid, rangeBarHigher, rangeBarHighest, lowestThumb);
             } else {
                 tickLine.setTickLabelsVisible(labelsVisible);
                 tickLine.setTickMarkVisible(ticksVisible);
@@ -428,7 +474,7 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         } 
         else  {
             getChildren().clear();
-            getChildren().addAll(track, lowestThumb);
+            getChildren().addAll(tickLine, track, rangeBarLowest, rangeBarLower, rangeBarMid, rangeBarHigher, rangeBarHighest, lowestThumb);
 //            tickLine = null;
         }
 
@@ -448,11 +494,16 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
                 tickLine.setLowerBound(getSkinnable().getMin());
             }
             getSkinnable().requestLayout();
+            rangeBarLowest.resizeRelocate(rangeStartLowest, rangeBarLowest.getLayoutY(),
+                    rangeEndLowest - rangeStartLowest, rangeBarLowest.getHeight());
+            
         } else if ("MAX".equals(p)) { //$NON-NLS-1$
             if (showTickMarks && tickLine != null) {
                 tickLine.setUpperBound(getSkinnable().getMax());
             }
             getSkinnable().requestLayout();
+            rangeBarHighest.resizeRelocate(rangeStartHighest, rangeBarHighest.getLayoutY(),
+                    rangeEndHighest - rangeStartHighest, rangeBarHighest.getHeight());
         } else if ("SHOW_TICK_MARKS".equals(p) || "SHOW_TICK_LABELS".equals(p)) { //$NON-NLS-1$ //$NON-NLS-2$
             setShowTickMarks(getSkinnable().isShowTickMarks(), getSkinnable().isShowTickLabels());
         }  else if ("MAJOR_TICK_UNIT".equals(p)) { //$NON-NLS-1$
@@ -467,18 +518,24 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
             }
         } else if ("LOWEST_VALUE".equals(p)) { //$NON-NLS-1$
             positionLowestThumb();
-            rangeBar.resizeRelocate(rangeStart, rangeBar.getLayoutY(), 
-                    rangeEnd - rangeStart, rangeBar.getHeight());
+            rangeBarLowest.resize(rangeEndLowest - rangeStartLowest, rangeBarLowest.getHeight());
+            rangeBarLower.resizeRelocate(rangeStartLower, rangeBarLower.getLayoutY(), 
+                    rangeEndLower - rangeStartLower, rangeBarLower.getHeight());
         } else if ("LOWER_VALUE".equals(p)) {
             positionLowerThumb();
-            rangeBar.resizeRelocate(rangeStart, rangeBar.getLayoutY(), 
-                    rangeEnd - rangeStart, rangeBar.getHeight());            
+            rangeBarLower.resize(rangeEndLower - rangeStartLower, rangeBarLower.getHeight());
+            rangeBarMid.resizeRelocate(rangeStartMid, rangeBarMid.getLayoutY(), 
+                    rangeEndMid - rangeStartMid, rangeBarMid.getHeight());
         } else if ("HIGHER_VALUE".equals(p)) { //$NON-NLS-1$
             positionHigherThumb();
-            rangeBar.resize(rangeEnd-rangeStart, rangeBar.getHeight());
+            rangeBarMid.resize(rangeEndMid - rangeStartMid, rangeBarMid.getHeight());
+            rangeBarHigher.resizeRelocate(rangeStartHigher, rangeBarHigher.getLayoutY(), 
+                    rangeEndHigher - rangeStartHigher, rangeBarHigher.getHeight());
         } else if ("HIGHEST_VALUE".equals(p)) { //$NON-NLS-1$
             positionHighestThumb();
-            rangeBar.resize(rangeEnd-rangeStart, rangeBar.getHeight());            
+            rangeBarHigher.resize(rangeEndHigher - rangeStartHigher, rangeBarHigher.getHeight());
+            rangeBarHighest.resizeRelocate(rangeStartHighest, rangeBarHighest.getLayoutY(), 
+                    rangeEndHighest - rangeStartHighest, rangeBarHighest.getHeight());            
         } else if ("SHOW_TICK_MARKS".equals(p) || "SHOW_TICK_LABELS".equals(p)) { //$NON-NLS-1$ //$NON-NLS-2$
             if (!getChildren().contains(lowerThumb))
                 getChildren().add(lowerThumb);
@@ -514,7 +571,9 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
                 (getMaxMinusMinNoZero()))); //  - thumbHeight/2
         lowestThumb.setLayoutX(lx);
         lowestThumb.setLayoutY(ly);
-        if (horizontal) rangeStart = lx + thumbWidth; else rangeEnd = ly;
+        if (horizontal) rangeStartLowest = trackStart; else rangeEndLowest = trackStart + trackLength;
+        if (horizontal) rangeEndLowest = lx; else rangeStartLowest = ly;
+        if (horizontal) rangeStartLower = lx; else rangeEndLower = ly;
     }
     private void positionLowerThumb() {
         MultiRangeSlider s = getSkinnable();
@@ -531,7 +590,8 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
                 (getMaxMinusMinNoZero()))); //  - thumbHeight/2
         lowerThumb.setLayoutX(lx);
         lowerThumb.setLayoutY(ly);
-        if (horizontal) rangeStart = lx + thumbWidth; else rangeEnd = ly;
+        if (horizontal) rangeEndLower = lx; else rangeStartLower = ly;
+        if (horizontal) rangeStartMid = lx; else rangeEndMid = ly;
     }    
 
     /**
@@ -555,7 +615,8 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         double y = orientation ? lowestThumb.getLayoutY() : (getSkinnable().getInsets().getTop() + trackLength) - trackLength * ((slider.getHigherValue() - slider.getMin()) / (getMaxMinusMinNoZero()));
         higherThumb.setLayoutX(x);
         higherThumb.setLayoutY(y);
-        if (orientation) rangeEnd = x; else rangeStart = y + thumbWidth;
+        if (orientation) rangeStartHigher = x; else rangeEndHigher = y;
+        if (orientation) rangeEndMid = x; else rangeStartMid = y;
     }
     
     private void positionHighestThumb() {
@@ -576,7 +637,9 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         double y = orientation ? lowestThumb.getLayoutY() : (getSkinnable().getInsets().getTop() + trackLength) - trackLength * ((slider.getHighestValue() - slider.getMin()) / (getMaxMinusMinNoZero()));
         highestThumb.setLayoutX(x);
         highestThumb.setLayoutY(y);
-        if (orientation) rangeEnd = x; else rangeStart = y + thumbWidth;
+        if (orientation) rangeEndHigher = x; else rangeStartHigher = y;
+        if (orientation) rangeStartHighest = x; else rangeEndHighest = y;
+        if (orientation) rangeEndHighest = trackStart + trackLength; else rangeStartHighest = trackStart;
     }    
     
     @Override protected void layoutChildren(final double x, final double y,
@@ -607,7 +670,11 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
             positionHigherThumb();
             positionHighestThumb();
             // layout range bar
-            rangeBar.resizeRelocate(rangeStart, trackTop, rangeEnd - rangeStart, trackHeight);
+            rangeBarLowest.resizeRelocate(rangeStartLowest, trackTop, rangeEndLowest - rangeStartLowest, trackHeight);
+            rangeBarLower.resizeRelocate(rangeStartLower, trackTop, rangeEndLower - rangeStartLower, trackHeight);
+            rangeBarMid.resizeRelocate(rangeStartMid, trackTop, rangeEndMid - rangeStartMid, trackHeight);
+            rangeBarHigher.resizeRelocate(rangeStartHigher, trackTop, rangeEndHigher - rangeStartHigher, trackHeight);
+            rangeBarHighest.resizeRelocate(rangeStartHighest, trackTop, rangeEndHighest - rangeStartHighest, trackHeight);
             // layout tick line
             if (showTickMarks) {
                 tickLine.setLayoutX(trackStart);
@@ -639,7 +706,11 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
             positionHigherThumb();
             positionHighestThumb();
             // layout range bar
-            rangeBar.resizeRelocate(trackLeft, rangeStart, trackWidth, rangeEnd - rangeStart);
+            rangeBarLowest.resizeRelocate(trackLeft, rangeStartLowest, trackWidth, rangeEndLowest - rangeStartLowest);
+            rangeBarLower.resizeRelocate(trackLeft, rangeStartLower, trackWidth, rangeEndLower - rangeStartLower);
+            rangeBarMid.resizeRelocate(trackLeft, rangeStartMid, trackWidth, rangeEndMid - rangeStartMid);
+            rangeBarHigher.resizeRelocate(trackLeft, rangeStartHigher, trackWidth, rangeEndHigher - rangeStartHigher);
+            rangeBarHighest.resizeRelocate(trackLeft, rangeStartHighest, trackWidth, rangeEndHighest - rangeStartHighest);
             // layout tick line
             if (showTickMarks) {
                 tickLine.setLayoutX(trackLeft+trackWidth+trackToTickGap);

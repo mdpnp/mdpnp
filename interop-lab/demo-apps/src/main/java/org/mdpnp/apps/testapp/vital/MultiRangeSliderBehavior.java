@@ -411,7 +411,11 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
         LOWER_THUMB,
         HIGHER_THUMB,
         HIGHEST_THUMB,
-        RANGE_BAR,
+        RANGE_BAR_LOWEST,
+        RANGE_BAR_LOWER,
+        RANGE_BAR_MID,
+        RANGE_BAR_HIGHER,
+        RANGE_BAR_HIGHEST,
         NONE
     }
 }

@@ -356,7 +356,7 @@ public class MultiRangeSlider extends Control {
         if (highestValueChanging == null) {
             highestValueChanging = new SimpleBooleanProperty(this, "highestValueChanging", false); //$NON-NLS-1$
         }
-        return higherValueChanging;
+        return highestValueChanging;
     }
     private BooleanProperty highestValueChanging;    
 
@@ -1000,6 +1000,9 @@ public class MultiRangeSlider extends Control {
         } else if (getLowerValue() >= getHigherValue() && (getHigherValue() >= getMin() && getHigherValue() <= getMax())) {
             double value = Utils.clamp(getMin(), getLowerValue(), getHigherValue());
             setLowerValue(value);
+        } else if (getLowerValue() <= getLowestValue() && (getLowestValue() >= getMin() && getHigherValue() <= getMax())) {
+            double value = Utils.clamp(getLowestValue(), getLowerValue(), getHigherValue());
+            setLowerValue(value);
         }
     }
     
@@ -1025,6 +1028,8 @@ public class MultiRangeSlider extends Control {
             setHigherValue(Utils.clamp(getMin(), getHigherValue(), getMax()));
         } else if (getHigherValue() < getLowerValue() && (getLowerValue() >= getMin() && getLowerValue() <= getMax())) {
             setHigherValue(Utils.clamp(getLowerValue(), getHigherValue(), getMax()));
+        } else if (getHigherValue() > getHighestValue() && (getHighestValue() >= getMin() && getHighestValue() < getMax())) {
+            setHigherValue(Utils.clamp(getLowerValue(), getHigherValue(), getHighestValue()));
         }
     }
     
