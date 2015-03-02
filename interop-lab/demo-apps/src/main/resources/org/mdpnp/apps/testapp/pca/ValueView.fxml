@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane prefHeight="308.0" prefWidth="404.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2">
+  <center>
+    <BorderPane prefHeight="-1.0" prefWidth="-1.0">
+      <bottom>
+        <Label alignment="CENTER" text="Timestamp" BorderPane.alignment="CENTER" />
+      </bottom>
+      <top>
+        <Label fx:id="deviceName" text="Device Name" BorderPane.alignment="CENTER" />
+      </top>
+    </BorderPane>
+  </center>
+  <left>
+    <ImageView fx:id="icon" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
+  </left>
+  <right>
+    <Label fx:id="value" text="999" BorderPane.alignment="CENTER" />
+  </right>
+</BorderPane>

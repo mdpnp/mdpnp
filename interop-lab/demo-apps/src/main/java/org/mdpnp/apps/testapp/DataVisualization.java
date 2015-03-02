@@ -28,7 +28,7 @@ import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
  *
  */
 public class DataVisualization extends JSplitPane {
-    private final PCAConfig pcaConfig;
+//    private final PCAConfig pcaConfig;
     private final VitalModelContainer vitalMonitoring;
 
     public DataVisualization(ScheduledExecutorService executor,
@@ -36,17 +36,17 @@ public class DataVisualization extends JSplitPane {
                              VitalModelContainer vmc) {
 
         super(JSplitPane.HORIZONTAL_SPLIT,
-                new JScrollPane(new PCAConfig(executor, objectiveWriter)),
+                null, // new JScrollPane(new PCAConfig(executor, objectiveWriter)),
                 (JComponent)vmc);
 
-        this.pcaConfig = (PCAConfig) ((JScrollPane) getLeftComponent()).getViewport().getComponent(0);
+//        this.pcaConfig = (PCAConfig) ((JScrollPane) getLeftComponent()).getViewport().getComponent(0);
         this.vitalMonitoring = (VitalModelContainer) getRightComponent();
         setDividerLocation(0.2);
         setDividerSize(10);
     }
 
     public void setModel(VitalModel vitalModel, InfusionStatusInstanceModel pumpModel) {
-        pcaConfig.setModel(vitalModel, pumpModel);
+//        pcaConfig.setModel(vitalModel, pumpModel);
         vitalMonitoring.setModel(vitalModel);
     }
 }

@@ -1,7 +1,9 @@
 package org.mdpnp.apps.testapp.pca;
 
+import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
 import org.mdpnp.apps.testapp.DeviceListModel;
@@ -25,14 +27,18 @@ public class PCAApplicationFactory implements IceApplicationProvider {
     }
 
     @Override
-    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
         final ScheduledExecutorService refreshScheduler = (ScheduledExecutorService) parentContext.getBean("refreshScheduler");
         final DeviceListModel nc = (DeviceListModel)parentContext.getBean("deviceListModel");
         final ice.InfusionObjectiveDataWriter objectiveWriter = (ice.InfusionObjectiveDataWriter) parentContext.getBean("objectiveWriter");
 
-        final PCAPanel ui = new PCAPanel(refreshScheduler, objectiveWriter);
-        ui.setOpaque(false);
+        
+        FXMLLoader loader = new FXMLLoader(PCAPanel.class.getResource("PCAPanel.fxml"));
+        Parent ui = loader.load();
+        
+        final PCAPanel controller = loader.getController();
+        controller.set(refreshScheduler, objectiveWriter);
 
         return new IceApplicationProvider.IceApp() {
 
@@ -43,19 +49,19 @@ public class PCAApplicationFactory implements IceApplicationProvider {
 
             @Override
             public Parent getUI() {
-                return null;
+                return ui;
             }
 
             @Override
             public void activate(ApplicationContext context) {
                 VitalModel vitalModel = (VitalModel)context.getBean("vitalModel");
                 InfusionStatusInstanceModel pumpModel = (InfusionStatusInstanceModel)context.getBean("pumpModel");
-                ui.setModel(vitalModel, pumpModel);
+                controller.setModel(vitalModel, pumpModel);
             }
 
             @Override
             public void stop() {
-                ui.setModel(null, null);
+                controller.setModel(null, null);
             }
 
             @Override

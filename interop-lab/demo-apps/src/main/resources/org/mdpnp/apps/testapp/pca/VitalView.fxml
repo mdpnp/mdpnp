@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+  <!-- TODO Add Nodes -->
+  <left>
+    <Label fx:id="name" text="Label" />
+    </left>
+    <center>
+    <Slider fx:id="slider" />
+    </center>
+   <bottom>
+      <FlowPane BorderPane.alignment="CENTER">
+         <children>
+            <CheckBox fx:id="ignoreZeroBox" mnemonicParsing="false" onAction="#ignoreZeroAction" text="Ignore Zero" />
+            <CheckBox fx:id="requiredBox" mnemonicParsing="false" onAction="#requiredAction" text="Required" />
+            <Button fx:id="deleteButton" mnemonicParsing="false" onAction="#deleteButtonAction" text="Remove" />
+         </children>
+      </FlowPane>
+   </bottom>
+   <right>
+      <FlowPane fx:id="vitalValues" BorderPane.alignment="CENTER" />
+   </right>
+  
+</BorderPane>

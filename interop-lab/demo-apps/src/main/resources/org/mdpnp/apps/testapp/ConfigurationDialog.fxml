@@ -24,7 +24,7 @@
         <Label text="Application:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
         <Label fx:id="deviceTypeLabel" text="Device Type:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
         <Label text="Domain Id:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-        <ComboBox fx:id="applications" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="0">
+        <ComboBox fx:id="applications" editable="false" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="0">
           <items>
             <FXCollections fx:factory="observableArrayList">
               <String fx:value="Item 1" />

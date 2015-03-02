@@ -12,13 +12,21 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.pca;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ScheduledExecutorService;
+
+import javafx.application.Platform;
+import javafx.fxml.FXML;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.paint.Color;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -27,29 +35,23 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.JPanel;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 
-@SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
  *
  */
-public class PCAPanel extends JPanel implements VitalModelListener {
+public class PCAPanel implements VitalModelListener {
+    @FXML BorderPane main;
+    
+    @FXML protected BorderPane pcaConfig;
 
-    private final PCAConfig pcaConfig;
-    // private final VitalMonitoring vitalMonitor;
-
-    private static final Border EMPTY_BORDER = new EmptyBorder(15, 15, 15, 15);
-    private static final Border YELLOW_BORDER = new LineBorder(Color.yellow, 15, false);
-    private static final Border RED_BORDER = new LineBorder(Color.red, 15, false);
+    private static final Border YELLOW_BORDER = new Border(new BorderStroke(Color.YELLOW, BorderStrokeStyle.SOLID, new CornerRadii(3), new BorderWidths(15) ));
+    private static final Border RED_BORDER = new Border(new BorderStroke(Color.RED, BorderStrokeStyle.SOLID, new CornerRadii(3), new BorderWidths(15) ));
 
     private Clip drugDeliveryAlarm, generalAlarm;
 
@@ -65,19 +67,23 @@ public class PCAPanel extends JPanel implements VitalModelListener {
         return new ByteArrayInputStream(baos.toByteArray());
     }
 
-    public PCAPanel(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter) {
+    public PCAPanel set(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter) {
+        return this;
+    }
+    
+    public PCAPanel() {
         // super(JSplitPane.HORIZONTAL_SPLIT, true, new
         // PCAConfig(refreshScheduler), new VitalMonitoring(refreshScheduler));
-        super(new BorderLayout());
+//        super(new BorderLayout());
         // pcaConfig = (PCAConfig) getLeftComponent();
         // vitalMonitor = (VitalMonitoring) getRightComponent();
-        pcaConfig = new PCAConfig(refreshScheduler, objectiveWriter);
+        //pcaConfig = new PCAConfig(refreshScheduler, objectiveWriter);
 
-        setBorder(EMPTY_BORDER);
+//        main.setBorder(Border.EMPTY);
 
         // pcaConfig.setBackground(Color.orange);
 
-        add(pcaConfig, BorderLayout.CENTER);
+//        add(pcaConfig, BorderLayout.CENTER);
 
         // setDividerSize(4);
 
@@ -124,7 +130,7 @@ public class PCAPanel extends JPanel implements VitalModelListener {
         if (this.model != null) {
             this.model.addListener(this);
         }
-        pcaConfig.setModel(model, pumpModel);
+//        pcaConfig.setModel(model, pumpModel);
         // vitalMonitor.setModel(vitalModel);
     }
 
@@ -162,14 +168,18 @@ public class PCAPanel extends JPanel implements VitalModelListener {
             default:
             }
         }
-
-        if (model.isInfusionStopped() || model.getState().equals(VitalModel.State.Alarm)) {
-            setBorder(RED_BORDER);
-        } else if (VitalModel.State.Warning.equals(model.getState())) {
-            setBorder(YELLOW_BORDER);
-        } else {
-            setBorder(EMPTY_BORDER);
-        }
+        Platform.runLater(new Runnable() {
+            public void run() {
+                if (model.isInfusionStopped() || model.getState().equals(VitalModel.State.Alarm)) {
+                    main.setBorder(RED_BORDER);
+                } else if (VitalModel.State.Warning.equals(model.getState())) {
+                    main.setBorder(YELLOW_BORDER);
+                } else {
+                    main.setBorder(Border.EMPTY);
+                }
+                
+            }
+        });
 
     }
 
