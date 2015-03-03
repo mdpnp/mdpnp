@@ -37,7 +37,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -288,24 +287,14 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         alarmSettingsObjectiveWriter.unregister_instance(holder.data, holder.handle);
     }
 
-    // TODO Synchronizing access to all these collections as a bit of a precaution
-    // What is really needed is a careful analysis of which threads really have access
-    private final List<InstanceHolder<SampleArray>> registeredSampleArrayInstances = 
-            Collections.synchronizedList(new ArrayList<InstanceHolder<SampleArray>>());
-    private final List<InstanceHolder<Numeric>> registeredNumericInstances = 
-            Collections.synchronizedList(new ArrayList<InstanceHolder<Numeric>>());
-    private final List<InstanceHolder<ice.AlarmSettings>> registeredAlarmSettingsInstances = 
-            Collections.synchronizedList(new ArrayList<InstanceHolder<ice.AlarmSettings>>());
-    private final List<InstanceHolder<ice.LocalAlarmSettingsObjective>> registeredAlarmSettingsObjectiveInstances = 
-            Collections.synchronizedList(new ArrayList<InstanceHolder<ice.LocalAlarmSettingsObjective>>());
-    private final Map<String, InstanceHolder<ice.Alert>> patientAlertInstances = 
-            Collections.synchronizedMap(new HashMap<String, InstanceHolder<ice.Alert>>());
-    private final Map<String, InstanceHolder<ice.Alert>> technicalAlertInstances = 
-            Collections.synchronizedMap(new HashMap<String, InstanceHolder<ice.Alert>>());
-    private final Set<String> oldPatientAlertInstances = 
-            Collections.synchronizedSet(new HashSet<String>());
-    private final Set<String> oldTechnicalAlertInstances = 
-            Collections.synchronizedSet(new HashSet<String>());
+    private final List<InstanceHolder<SampleArray>> registeredSampleArrayInstances = new ArrayList<InstanceHolder<SampleArray>>();
+    private final List<InstanceHolder<Numeric>> registeredNumericInstances = new ArrayList<InstanceHolder<Numeric>>();
+    private final List<InstanceHolder<ice.AlarmSettings>> registeredAlarmSettingsInstances = new ArrayList<InstanceHolder<ice.AlarmSettings>>();
+    private final List<InstanceHolder<ice.LocalAlarmSettingsObjective>> registeredAlarmSettingsObjectiveInstances = new ArrayList<InstanceHolder<ice.LocalAlarmSettingsObjective>>();
+    private final Map<String, InstanceHolder<ice.Alert>> patientAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>();
+    private final Map<String, InstanceHolder<ice.Alert>> technicalAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>();
+    private final Set<String> oldPatientAlertInstances = new HashSet<String>();
+    private final Set<String> oldTechnicalAlertInstances = new HashSet<String>();
 
     protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, String vendor_metric_id, String unit_id, int frequency) {
         return createSampleArrayInstance(metric_id, vendor_metric_id, 0, unit_id, frequency);
@@ -393,17 +382,19 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
 
     protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper) {
+        newLower = null == newLower ? Float.NEGATIVE_INFINITY : newLower;
+        newUpper = null == newUpper ? Float.POSITIVE_INFINITY : newUpper;
         if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
-            holder.data.lower = null == newLower ? Float.NEGATIVE_INFINITY : newLower;
-            holder.data.upper = null == newUpper ? Float.POSITIVE_INFINITY : newUpper;
+            holder.data.lower = newLower;
+            holder.data.upper = newUpper;
             alarmSettingsDataWriter.write(holder.data, holder.handle);
         }
     }
 
-    protected void alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, Float newLower, Float newUpper) {
+    protected void alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, float newLower, float newUpper) {
         if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
-            holder.data.lower = null == newLower ? Float.NEGATIVE_INFINITY : newLower;
-            holder.data.upper = null == newUpper ? Float.POSITIVE_INFINITY : newUpper;
+            holder.data.lower = newLower;
+            holder.data.upper = newUpper;
             alarmSettingsObjectiveWriter.write(holder.data, holder.handle);
         }
     }
@@ -414,24 +405,10 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             unregisterAlarmSettingsInstance(holder);
             holder = null;
         }
-        if (null != newLower && null != newUpper) {
-            if (null == holder) {
-                holder = createAlarmSettingsInstance(metric_id);
-            }
-            alarmSettingsSample(holder, newLower, newUpper);
-        } else {
-            if (null != newLower) {
-                log.warn("Not setting only a lower limit on " + metric_id + " for " + deviceIdentity.unique_device_identifier);
-            }
-            if (null != newUpper) {
-                log.warn("Not setting only an upper limit on " + metric_id + " for " + deviceIdentity.unique_device_identifier);
-            }
-            if (null != holder) {
-                unregisterAlarmSettingsInstance(holder);
-                holder = null;
-            }
-
+        if (null == holder) {
+            holder = createAlarmSettingsInstance(metric_id);
         }
+        alarmSettingsSample(holder, newLower, newUpper);
 
         return holder;
     }
