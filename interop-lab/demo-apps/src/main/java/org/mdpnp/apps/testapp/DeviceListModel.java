@@ -27,8 +27,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javafx.application.Platform;
+import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.util.Callback;
 
 import org.mdpnp.devices.TimeManager;
 import org.mdpnp.devices.TimeManagerListener;
@@ -106,18 +108,6 @@ public class DeviceListModel implements TimeManagerListener {
             } else {
                 log.debug("Not creating unfounded device udi="+udi);
             }
-        } else {
-
-            final Device updateDevice = device;
-            // TODO does this really trigger a change event?
-            Platform.runLater(new Runnable() {
-                public void run() {
-                    final int idx = contentsByIdx.get(updateDevice);
-                    log.debug("At idx="+idx+" find udi="+updateDevice.getUDI());
-                    contents.set(idx, updateDevice);
-                }
-            });
-            
         }
         return device;
     }
@@ -129,7 +119,7 @@ public class DeviceListModel implements TimeManagerListener {
     @Override
     public void aliveHeartbeat(SampleInfo sampleInfo, HeartBeat heartbeat) {
         if("Device".equals(heartbeat.type)) {
-            log.trace(heartbeat.unique_device_identifier + " IS STILL ALIVE");
+//            log.trace(heartbeat.unique_device_identifier + " IS STILL ALIVE");
             getDevice(heartbeat.unique_device_identifier, true);
         } else {
             notADevice(heartbeat, true);
@@ -149,16 +139,15 @@ public class DeviceListModel implements TimeManagerListener {
     
     @Override
     public void synchronization(String remote_udi, Duration_t latency, Duration_t clockDifference) {
-        log.trace(remote_udi + " has latency="+latency+" and clockDifference="+clockDifference);
+//        log.trace(remote_udi + " has latency="+latency+" and clockDifference="+clockDifference);
         Device device = getDevice(remote_udi, false);
         if(null != device) {
             device.setClockDifference(clockDifference);
             device.setRoundtripLatency(latency);
-            update(device);
         }
     }
     
-    private final void update(DeviceConnectivity dc) {
+    private final void update(final DeviceConnectivity dc) {
         if (!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
         }
@@ -167,14 +156,18 @@ public class DeviceListModel implements TimeManagerListener {
         } else {
             deviceConnectivityByUDI.put(dc.unique_device_identifier, new DeviceConnectivity(dc));
         }
-        Device device = getDevice(dc.unique_device_identifier, false);
+        final Device device = getDevice(dc.unique_device_identifier, false);
         if(null != device) {
-            device.setDeviceConnectivity(dc);
-            update(device);
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    device.setDeviceConnectivity(dc);
+                }
+            });
+            
         }
     }
 
-    private final void update(DeviceIdentity di, ParticipantBuiltinTopicData data) {
+    private final void update(final DeviceIdentity di, final ParticipantBuiltinTopicData data) {
         
         if (!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
@@ -191,8 +184,12 @@ public class DeviceListModel implements TimeManagerListener {
         }
         Device device = getDevice(di.unique_device_identifier, false);
         if(null != device) {
-            device.setDeviceIdentity(di, data);
-            update(device);
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    device.setDeviceIdentity(di, data);
+                }
+            });
+            
         }
     }
 
@@ -222,20 +219,16 @@ public class DeviceListModel implements TimeManagerListener {
         });
     }
     
-    private final void update(final Device device) {
-        Platform.runLater(new Runnable() {
-            public void run() {
-                int idx = contentsByIdx.get(device);
-                if(idx >= 0) {
-                    contents.set(idx, device);
-                }
-            }
-        });
-    }
-
     private static final Logger log = LoggerFactory.getLogger(DeviceListModel.class);
 
-    protected final ObservableList<Device> contents = FXCollections.observableArrayList();
+    protected final ObservableList<Device> contents = FXCollections.observableArrayList(new Callback<Device, Observable[]>() {
+
+        @Override
+        public Observable[] call(Device param) {
+            return new Observable[] { param.connectedProperty(), param.imageProperty(), param.makeAndModelProperty() };
+        }
+        
+    });
     protected final Map<Device, Integer> contentsByIdx = new HashMap<Device, Integer>();
     
     protected final Map<String, Device> contentsByUDI = new java.util.concurrent.ConcurrentHashMap<String, Device>();

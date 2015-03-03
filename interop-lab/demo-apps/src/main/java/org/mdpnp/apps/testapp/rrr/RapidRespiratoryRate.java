@@ -14,18 +14,34 @@ package org.mdpnp.apps.testapp.rrr;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.chart.LineChart;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Slider;
+import javafx.util.Duration;
 
+import org.mdpnp.apps.testapp.MySampleArray;
+import org.mdpnp.apps.testapp.MySampleArrayItems;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
+import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
+import org.mdpnp.guis.waveform.WaveformCanvas;
+import org.mdpnp.guis.waveform.WaveformRenderer;
+import org.mdpnp.guis.waveform.WaveformSource.WaveformIterator;
+import org.mdpnp.guis.waveform.javafx.JavaFXWaveformCanvas;
+import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 
@@ -38,13 +54,13 @@ import com.rti.dds.subscription.SubscriberQos;
  */
 public class RapidRespiratoryRate implements Runnable {
 
-    @FXML protected ListView<ice.SampleArray> capnoSources;
+    @FXML protected ListView<MySampleArray> capnoSources;
     @FXML protected Slider thresholdSlider;
     @FXML protected CheckBox device;
-    @FXML protected LineChart<Number, Number> wavePanel;
+    @FXML protected JavaFXWaveformPane wavePanel;
     @FXML protected Label rrLabel;
 
-//    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     private final class RespiratoryRateDevice extends AbstractDevice {
 
@@ -62,19 +78,47 @@ public class RapidRespiratoryRate implements Runnable {
             writeDeviceIdentity();
         }
 
-//        private InstanceHolder<Numeric> rate;
+        private InstanceHolder<ice.Numeric> rate;
 
-//        void updateRate(float rate) {
-//            // TODO clearly a synchronization issue here.
-//            // enforce a singular calling thread or synchronize accesses
-//            this.rate = numericSample(this.rate, (int) Math.round(rate), rosetta.MDC_CO2_RESP_RATE.VALUE, 
-//                    "", rosetta.MDC_DIM_DIMLESS.VALUE, null);
-//        }
+        void updateRate(float rate) {
+            // TODO clearly a synchronization issue here.
+            // enforce a singular calling thread or synchronize accesses
+            this.rate = numericSample(this.rate, (int) Math.round(rate), rosetta.MDC_CO2_RESP_RATE.VALUE, 
+                    "", rosetta.MDC_DIM_DIMLESS.VALUE, null);
+        }
     }
 
     private RespiratoryRateDevice rrDevice;
     
     public RapidRespiratoryRate set(final int domainId, final EventLoop eventLoop, final Subscriber subscriber) {
+//        ((NumberAxis)wavePanel.getXAxis()).forceZeroInRangeProperty().set(false);
+//        ((NumberAxis)wavePanel.getYAxis()).forceZeroInRangeProperty().set(false);
+//        ((NumberAxis)wavePanel.getYAxis()).autoRangingProperty().set(true);
+//        ((NumberAxis)wavePanel.getXAxis()).autoRangingProperty().set(true);
+        canvas = new JavaFXWaveformCanvas(wavePanel);
+        Timeline waveformRender = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {
+
+            @Override
+            public void handle(ActionEvent event) {
+//                if(wavePanel.getData().isEmpty()) {
+//                    System.out.println("NO DATA");
+//                } else {
+//                    System.out.println("Points:"+wavePanel.getData().get(0).getData().size());
+//                }
+//                wavePanel.getXAxis().setAutoRanging(false);
+                long tm = System.currentTimeMillis();
+                
+                renderer.render(source, canvas, tm-12000L, tm-2000L);
+                
+//                ((NumberAxis)wavePanel.getXAxis()).setLowerBound(tm-12000L);
+//                ((NumberAxis)wavePanel.getXAxis()).setUpperBound(tm-2000L);
+            }
+            
+        }));
+        waveformRender.setCycleCount(Timeline.INDEFINITE);
+        waveformRender.play();
+        
+        
         device.setOnAction(new EventHandler<ActionEvent>() {
 
             @Override
@@ -102,66 +146,74 @@ public class RapidRespiratoryRate implements Runnable {
             }
             
         });
+        capnoSources.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<MySampleArray>() {
+
+            @Override
+            public void changed(ObservableValue<? extends MySampleArray> observable, MySampleArray oldValue, MySampleArray newValue) {
+                
+                SampleArrayInstanceModel model = RapidRespiratoryRate.this.model;
+                if(model != null && newValue != null) {
+                    ice.SampleArray keyHolder = new ice.SampleArray();
+                    model.getReader().get_key_value(keyHolder, newValue.getHandle());
+                    source = new SampleArrayWaveformSource(model.getReader(), keyHolder);
+                    System.out.println("Source is " + keyHolder);
+                }
+//                wavePanel.getData().clear();
+//                Series<Number,Number> series = data.getSeries(newValue.getHandle());
+//                System.out.println(series);
+//                wavePanel.getData().add(series);
+                
+            }
+            
+        });
+   
         return this;
     }
-    
+
     public RapidRespiratoryRate() {
 
-//        capnoSources.addListSelectionListener(new ListSelectionListener() {
-//
-//            @Override
-//            public void valueChanged(ListSelectionEvent e) {
-//                ice.SampleArray sa = capnoSources.getSelectedValue();
-//                if(null == sa) {
-//                    waveformSource = null;
-//                    wavePanel.setSource(waveformSource);
-//                } else {
-//                    waveformSource = new SampleArrayWaveformSource(model.getReader(), sa);
-//                    wavePanel.setSource(waveformSource);
-//                }
-//            }
-//            
-//        });
+
 //
 //        wavePanel.start();
-//        executor.scheduleAtFixedRate(new Runnable() {
-//            public void run() {
-//                RapidRespiratoryRate.this.run();
-////                eventLoop.doLater(RapidRespiratoryRate.this);
-//            }
-//        }, 1000L, 200L, TimeUnit.MILLISECONDS);
+        executor.scheduleAtFixedRate(new Runnable() {
+            public void run() {
+                RapidRespiratoryRate.this.run();
+//                eventLoop.doLater(RapidRespiratoryRate.this);
+            }
+        }, 1000L, 200L, TimeUnit.MILLISECONDS);
     }
-
-//    private SampleArrayInstanceModel model;
-
+    private SampleArrayInstanceModel model;
+//    private MySampleArrayData data;
+    private SampleArrayWaveformSource source;
+    private final WaveformRenderer renderer = new WaveformRenderer();
+    private WaveformCanvas canvas;
+    
     public void setModel(SampleArrayInstanceModel model) {
-//        String selectedUdi = null;
-//        ice.SampleArray selected = capnoSources.getSelectionModel().getSelectedItem();
-//        if (null != selected) {
-//            selectedUdi = selected.unique_device_identifier;
-//        }
+        this.model = model;
+//        this.data = new MySampleArrayData(model, 100);
+        
+        String selectedUdi = null;
+        MySampleArray selected = capnoSources.getSelectionModel().getSelectedItem();
+        if (null != selected) {
+            selectedUdi = selected.getUnique_device_identifier();
+        }
 
-//        capnoSources.setItems(null == model ? FXCollections.emptyObservableList() : model);
-//        if (null != selectedUdi && model != null) {
-//            for (int i = 0; i < model.getSize(); i++) {
-//                if (selectedUdi.equals(model.getElementAt(i).unique_device_identifier)) {
-//                    capnoSources.setSelectedValue(model.getElementAt(i), true);
-//                }
-//            }
-//        }
-//
-//        capnoSources.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-//        if (this.model != null) {
-//            this.model.removeListDataListener(this);
-//        }
-//        this.model = model;
-//        if (this.model != null) {
-//            this.model.addListDataListener(this);
-//        }
+        MySampleArrayItems items = new MySampleArrayItems();
+        items.setModel(model);
+        capnoSources.setItems(items.getItems());
+        
+        
+        if (null != selectedUdi && model != null) {
+            for(MySampleArray sa : items.getItems()) {
+                if(selectedUdi.equals(sa.getUnique_device_identifier())) {
+                    capnoSources.getSelectionModel().select(sa);
+                }
+            }
+        }
     }
 
 
-//    private double rr;
+    private double rr;
     
     protected float min, max;
     protected Long lastCrossing, lastInterval;
@@ -169,72 +221,78 @@ public class RapidRespiratoryRate implements Runnable {
     
     @Override
     public void run() {
-//        SampleArrayWaveformSource source = this.waveformSource;
-//        if(source != null) {
-//            source.iterate(new WaveformIterator() {
-//
-//                @Override
-//                public void begin() {
-//                    min = Float.MAX_VALUE;
-//                    max = Float.MIN_VALUE;
-//                }
-//
-//                @Override
-//                public void sample(long time, float value) {
-//                    if(value > max) {
-//                        max = value;
-//                    } else if(value < min) {
-//                        min = value;
-//                    }
-//                }
-//
-//                @Override
-//                public void end() {
-//                    
-//                }
-//                
-//            });
-//            final float threshold = max - 1f * thresholdSlider.getValue() / 100f * (max - min);
-//            source.iterate(new WaveformIterator() {
-//
-//                @Override
-//                public void begin() {
-//                    lastCrossing = null;
-//                    lastInterval = null;
-//                    lastValue = null;
-//                }
-//
-//                @Override
-//                public void sample(long time, float value) {
-//                    if(null != lastValue) {
-//                        if(value >= threshold && lastValue < threshold) {
-//                            if(lastCrossing != null) {
-//                                lastInterval = time - lastCrossing;
-//                            }
-//                            lastCrossing = time;
-//                        }
-//                        
-//                    }
-//                    lastValue = value;
-//                }
-//
-//                @Override
-//                public void end() {
-//                    // ms per breath to breaths/ms
-//                    if(null != lastInterval) {
-//                        rr = Math.round(1.0 / (lastInterval / 60000.0));
-//                    }
-////                    System.err.println("lastInterval="+lastInterval+ " lastCrossing="+lastCrossing+ " rr="+rr);
-//                    
-//                }
-//                
-//            });
-//        } else {
-//            rr = 0;
-//        }
-//        this.rrLabel.setText(""+Math.round(rr));
-//        if (rrDevice != null) {
-//            rrDevice.updateRate((float) Math.round(rr));
-//        }
+        SampleArrayWaveformSource source = this.source;
+        if(source != null) {
+            source.iterate(new WaveformIterator() {
+
+                @Override
+                public void begin() {
+                    min = Float.MAX_VALUE;
+                    max = Float.MIN_VALUE;
+                }
+
+                @Override
+                public void sample(long time, float value) {
+                    if(value > max) {
+                        max = value;
+                    } else if(value < min) {
+                        min = value;
+                    }
+                }
+
+                @Override
+                public void end() {
+                    
+                }
+                
+            });
+            final double threshold = max - 1f * thresholdSlider.getValue() / 100f * (max - min);
+            source.iterate(new WaveformIterator() {
+
+                @Override
+                public void begin() {
+                    lastCrossing = null;
+                    lastInterval = null;
+                    lastValue = null;
+                }
+
+                @Override
+                public void sample(long time, float value) {
+                    if(null != lastValue) {
+                        if(value >= threshold && lastValue < threshold) {
+                            if(lastCrossing != null) {
+                                lastInterval = time - lastCrossing;
+                            }
+                            lastCrossing = time;
+                        }
+                        
+                    }
+                    lastValue = value;
+                }
+
+                @Override
+                public void end() {
+                    // ms per breath to breaths/ms
+                    if(null != lastInterval) {
+                        rr = Math.round(1.0 / (lastInterval / 60000.0));
+                    }
+//                    System.err.println("lastInterval="+lastInterval+ " lastCrossing="+lastCrossing+ " rr="+rr);
+                    
+                }
+                
+            });
+        } else {
+            rr = 0;
+        }
+        Platform.runLater(updateLabel);
+        this.rrLabel.setText(""+Math.round(rr));
+        if (rrDevice != null) {
+            rrDevice.updateRate((float) Math.round(rr));
+        }
     }
+    protected Runnable updateLabel = new Runnable() {
+        public void run() {
+            rrLabel.setText(""+Math.round(rr));
+        }
+    };
 }

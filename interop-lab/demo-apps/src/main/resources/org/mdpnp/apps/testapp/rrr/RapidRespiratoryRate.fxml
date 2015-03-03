@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.lang.*?>
+<?import javafx.scene.canvas.*?>
 <?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.GridPane?>
+<?import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane?>
 
 <GridPane prefHeight="344.0" prefWidth="369.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.mdpnp.apps.testapp.rrr.RapidRespiratoryRate">
   <!-- TODO Add Nodes -->
@@ -24,15 +26,8 @@
         <CheckBox fx:id="device" minHeight="-1.0" minWidth="-1.0" mnemonicParsing="false" prefHeight="-1.0" prefWidth="-1.0" text="Create Device" VBox.vgrow="ALWAYS" />
       </children>
     </VBox>
-    <LineChart id="LineChartNxN" fx:id="wavePanel" minHeight="0.0" minWidth="0.0" prefHeight="0.0" prefWidth="0.0" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
-      <xAxis>
-        <NumberAxis side="BOTTOM" />
-      </xAxis>
-      <yAxis>
-        <NumberAxis side="LEFT" />
-      </yAxis>
-    </LineChart>
     <Label fx:id="rrLabel" text="???" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+    <JavaFXWaveformPane fx:id="wavePanel" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS" />
   </children>
   <columnConstraints>
     <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />

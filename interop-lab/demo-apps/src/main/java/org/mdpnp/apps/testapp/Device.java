@@ -17,10 +17,17 @@ import ice.DeviceIdentity;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.lang.ref.SoftReference;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 
 import org.slf4j.Logger;
@@ -42,52 +49,64 @@ import com.rti.dds.infrastructure.Property_t;
  * 
  */
 public class Device {
+    private static Image unknownImage = new Image(Device.class.getResourceAsStream("unknown.png"));
     private String udi;
     private DeviceIdentity deviceIdentity;
     private DeviceConnectivity deviceConnectivity;
     private ParticipantBuiltinTopicData participantData;
     private final Duration_t clockDifference = new Duration_t(Duration_t.DURATION_INFINITE), roundtripLatency = new Duration_t(Duration_t.DURATION_INFINITE);
 
-    private SoftReference<Image> image;
-
     public final static int SHORT_UDI_LENGTH = 20;
 
     private final static Logger log = LoggerFactory.getLogger(Device.class);
 
+    private ObjectProperty<Image> image;
+    public ObjectProperty<Image> imageProperty() {
+        if(null == image) {
+            image = new SimpleObjectProperty<Image>(this, "image", unknownImage);
+        }
+        return image;
+    }
+    public Image getImage() {
+        return image.get();
+    }
+    public void setImage(Image image) {
+        this.image.set(image);
+    }
+    
+    private StringProperty makeAndModel;
+    public StringProperty makeAndModelProperty() {
+        if(null == makeAndModel) {
+            makeAndModel = new SimpleStringProperty(this, "makeAndModel", "Unknown Device");
+        }
+        return makeAndModel;
+    }
+    public String getMakeAndModel() {
+        return makeAndModelProperty().get();
+    }
+    public void setMakeAndModel(String makeAndModel) {
+        makeAndModelProperty().set(makeAndModel);
+    }
+    
+    private BooleanProperty connected;
+    public BooleanProperty connectedProperty() {
+        if(null == connected) {
+            connected = new SimpleBooleanProperty(this, "connected");
+        }
+        return connected;
+    }
+    public boolean getConnected() {
+        return connectedProperty().get();
+    }
+    public void setConnected(boolean connected) {
+        connectedProperty().set(connected);
+    }
+    
     public Device() {
     }
 
     public Device(String udi) {
         this.udi = udi;
-    }
-
-    public Image getIcon() {
-        ice.DeviceIdentity deviceIdentity = this.deviceIdentity;
-        
-        if (null == deviceIdentity || deviceIdentity.icon.image.userData.isEmpty()) {
-            return null;
-        }
-        
-        Image img = null == this.image ? null : this.image.get();
-        
-        if(null == img) {
-            InputStream is = new ByteArrayInputStream(deviceIdentity.icon.image.userData.toArrayByte(new byte[deviceIdentity.icon.image.userData.size()]));
-            img = new Image(is);
-            this.image = new SoftReference<Image>(img);
-        }
-
-        return img;
-    }
-
-    public String getMakeAndModel() {
-        if(null == deviceIdentity) {
-            return "";
-        }
-        if (null==deviceIdentity.manufacturer||deviceIdentity.manufacturer.equals(deviceIdentity.model)||"".equals(deviceIdentity.manufacturer)) {
-            return deviceIdentity.model;
-        } else {
-            return deviceIdentity.manufacturer + " " + deviceIdentity.model;
-        }
     }
 
     public String getShortUDI() {
@@ -106,10 +125,18 @@ public class Device {
         return udi;
     }
 
-    public void setDeviceIdentity(DeviceIdentity deviceIdentity, ParticipantBuiltinTopicData participantData) {
+    public void setDeviceIdentity(final DeviceIdentity deviceIdentity, ParticipantBuiltinTopicData participantData) {
+        System.out.println(deviceIdentity);
         if (null == deviceIdentity) {
             this.deviceIdentity = null;
-            this.image = null;
+//            Platform.runLater(new Runnable() {
+//                public void run() {
+//                    imageProperty().set(null);
+//                    makeAndModelProperty().set("");
+//                }
+//            });
+            
+
         } else {
             changeUdi(deviceIdentity.unique_device_identifier);
             if (null == this.deviceIdentity) {
@@ -118,7 +145,31 @@ public class Device {
             } else {
                 this.deviceIdentity.copy_from(deviceIdentity);
             }
-            this.image = null;
+            Task<Image> task = new Task<Image>() {
+                @Override
+                protected Image call() throws Exception {
+                    InputStream is = new ByteArrayInputStream(deviceIdentity.icon.image.userData.toArrayByte(new byte[deviceIdentity.icon.image.userData.size()]));
+                    final Image image = new Image(is);
+                    System.out.println("Image Loaded " + image);
+                    return image;
+                }
+            };
+            imageProperty().bind(task.valueProperty());
+            new Thread(task).start();
+            
+            
+//            Platform.runLater(new Runnable() {
+//                public void run() {
+                    if (null==deviceIdentity.manufacturer||deviceIdentity.manufacturer.equals(deviceIdentity.model)||"".equals(deviceIdentity.manufacturer)) {
+                        makeAndModelProperty().set(deviceIdentity.model);
+                    } else {
+                        makeAndModelProperty().set(deviceIdentity.manufacturer + " " + deviceIdentity.model);
+                    }
+        
+//                    imageProperty().set(image);
+//                }
+//            });
+            
             if(null == this.participantData) {
                 this.participantData = new ParticipantBuiltinTopicData();
                 this.participantData.copy_from(participantData);
@@ -171,6 +222,7 @@ public class Device {
     public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {
         if (null == deviceConnectivity) {
             this.deviceConnectivity = null;
+            connectedProperty().set(false);
         } else {
             changeUdi(deviceConnectivity.unique_device_identifier);
             if (null == this.deviceConnectivity) {
@@ -178,6 +230,11 @@ public class Device {
             } else {
                 this.deviceConnectivity.copy_from(deviceConnectivity);
             }
+//            Platform.runLater(new Runnable() {
+//                public void run() {
+                    connectedProperty().set(ice.ConnectionState.Connected.equals(Device.this.deviceConnectivity.state));
+//                }
+//            });
         }
     }
 
@@ -216,12 +273,14 @@ public class Device {
         }
         return sb.toString();
     }
-    public boolean isConnected() {
-        ice.DeviceConnectivity conn = this.deviceConnectivity;
-        if(null == conn) {
-            return false;
+    @Override
+    public String toString() {
+        Image img = imageProperty().get();
+        if(null != img) {
+            return udi + " " + makeAndModelProperty().get() + " height=" + img.getHeight() + " width="+img.getWidth();
         } else {
-            return ice.ConnectionState.Connected.equals(conn.state);
+            return udi + " " + makeAndModelProperty().get();
         }
     }
+
 }

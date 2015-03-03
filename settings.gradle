@@ -19,6 +19,7 @@ include 'interop-lab:demo-purejavacomm'
 include 'interop-lab:demo-guis'
 include 'interop-lab:demo-guis-swing'
 include 'interop-lab:demo-guis-jogl'
+include 'interop-lab:demo-guis-javafx'
 
 // Omits android projects is android sdk is not available
 if(hasProperty('sdk.dir') || null != System.getenv().get("ANDROID_HOME")) {

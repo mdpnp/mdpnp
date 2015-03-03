@@ -14,12 +14,13 @@ import org.mdpnp.rtiapi.data.InstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 
+import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.SampleInfo;
 
 public class MySampleArrayItems implements InstanceModelListener<SampleArray, SampleArrayDataReader> {
     private SampleArrayInstanceModel model;
     protected final ObservableList<MySampleArray> items = FXCollections.observableArrayList();
-    protected final Map<String, MySampleArray> sampleArraysByKey = new HashMap<String, MySampleArray>();
+    protected final Map<InstanceHandle_t, MySampleArray> byHandle = new HashMap<InstanceHandle_t, MySampleArray>();
     
     public MySampleArrayItems() {
         
@@ -36,7 +37,7 @@ public class MySampleArrayItems implements InstanceModelListener<SampleArray, Sa
             this.model.removeListener(this);
             Platform.runLater(new Runnable() {
                 public void run() {
-                    sampleArraysByKey.clear();
+                    byHandle.clear();
                     items.clear();
                 }
             });
@@ -61,10 +62,11 @@ public class MySampleArrayItems implements InstanceModelListener<SampleArray, Sa
     public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data, SampleInfo sampleInfo) {
         final ice.SampleArray d = new ice.SampleArray(data);
         SampleInfo s = new SampleInfo();
+        InstanceHandle_t handle = new InstanceHandle_t(sampleInfo.instance_handle);
         s.copy_from(sampleInfo);
         Platform.runLater(new Runnable() {
             public void run() {
-                MySampleArray n = sampleArraysByKey.get(MySampleArray.key(d));
+                MySampleArray n = byHandle.get(handle);
                 if(n != null) {
                     n.update(d, s);
                 }
@@ -74,10 +76,10 @@ public class MySampleArrayItems implements InstanceModelListener<SampleArray, Sa
     
     @Override
     public void instanceNotAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder, SampleInfo sampleInfo) {
-        final ice.SampleArray key = new ice.SampleArray(keyHolder);
+        final InstanceHandle_t instance = new InstanceHandle_t(sampleInfo.instance_handle);
         Platform.runLater(new Runnable() {
             public void run() {
-                MySampleArray n = sampleArraysByKey.remove(MySampleArray.key(key));
+                MySampleArray n = byHandle.remove(instance);
                 if(n != null) {
                     items.remove(n);
                 }
@@ -90,7 +92,7 @@ public class MySampleArrayItems implements InstanceModelListener<SampleArray, Sa
         final MySampleArray n = new MySampleArray(data, sampleInfo);
         Platform.runLater(new Runnable() {
             public void run() {
-                sampleArraysByKey.put(n.key(), n);
+                byHandle.put(n.getHandle(), n);
                 items.add(n);
             }
         });

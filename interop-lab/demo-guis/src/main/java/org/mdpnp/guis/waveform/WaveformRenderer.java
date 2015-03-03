@@ -134,6 +134,9 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
 
         extent = canvas.getExtent();
         
+        canvas.clearRect(extent.getMinX(), extent.getMinY(), extent.getMaxX(), extent.getMaxY());
+
+        
         if (continuousRescale) {
             minY = Float.MAX_VALUE;
             maxY = Float.MIN_VALUE;
@@ -157,6 +160,7 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
     @Override
     public void begin() {
         aged_segment = true;
+        
     }
 
     @Override

@@ -14,6 +14,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 
+import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.SampleInfo;
 
 public class MySampleArray {
@@ -141,18 +142,14 @@ public class MySampleArray {
         return device_time;
     }
     
-    private final String key;
+    private final InstanceHandle_t handle;
     
-    public final String key() {
-        return this.key;
-    }
-    
-    public static final String key(ice.SampleArray v) {
-        return (v.unique_device_identifier+v.metric_id+v.vendor_metric_id+v.instance_id+v.unit_id+v.frequency).intern();
+    public InstanceHandle_t getHandle() {
+        return handle;
     }
     
     public MySampleArray(ice.SampleArray v, SampleInfo s) {
-        key = key(v);
+        this.handle = new InstanceHandle_t(s.instance_handle);
         update(v, s);
     }
     
@@ -175,13 +172,13 @@ public class MySampleArray {
     
     @Override
     public int hashCode() {
-        return key.hashCode();
+        return handle.hashCode();
     }
     
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof MySampleArray) {
-            return key.equals(((MySampleArray)obj).key);
+            return handle.equals(((MySampleArray)obj).handle);
         } else {
             return false;
         }

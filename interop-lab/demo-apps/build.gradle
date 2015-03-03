@@ -169,7 +169,8 @@ def JOGL_version = '2.2.4'
 dependencies {
     compile project(':interop-lab:demo-devices')
     compile project(':interop-lab:demo-guis')
-    compile project(':interop-lab:demo-guis-swing')
+//    compile project(':interop-lab:demo-guis-swing')
+    compile project(':interop-lab:demo-guis-javafx')
     runtime project(':interop-lab:demo-purejavacomm')
 
     runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: SLF4J_VERSION
