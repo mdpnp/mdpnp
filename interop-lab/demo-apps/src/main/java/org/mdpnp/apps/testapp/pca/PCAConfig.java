@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -24,6 +25,8 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.MouseEvent;
 
+import org.mdpnp.apps.testapp.MyInfusionStatus;
+import org.mdpnp.apps.testapp.MyInfusionStatusItems;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
@@ -37,7 +40,7 @@ import com.rti.dds.infrastructure.InstanceHandle_t;
  */
 public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
 
-    @FXML protected ListView<ice.InfusionStatus> pumpList;
+    @FXML protected ListView<MyInfusionStatus> pumpList;
     @FXML protected TextArea warningStatus;
     @FXML protected ComboBox<Integer> warningsToAlarm;
     @FXML protected ComboBox<VitalSign> vitalSigns;
@@ -55,6 +58,7 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
             values.add(i + 1);
         }
         warningsToAlarm.setItems(FXCollections.observableList(values));
+        vitalSigns.setItems(FXCollections.observableArrayList(VitalSign.values()));
         return this;
     }
     
@@ -71,12 +75,6 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
     }
     
     public PCAConfig() {
-        
-//        pumpProgress = new JProgressAnimation2(executor);
-//        pumpProgress.setForeground(Color.green);
-        // pumpProgress.setBackground(new Color(1f,1f,1f,.5f));
-        // pumpProgress.setFont(Font.decode("fixed-20"));
-
 //        configureModeBox.addActionListener(new ActionListener() {
 //
 //            @Override
@@ -182,39 +180,36 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
     }
 
     public void setModel(VitalModel model, InfusionStatusInstanceModel pumpModel) {
-//        String selectedUdi = null;
-//        ice.InfusionStatus selected = pumpList.getSelectedValue();
-//        if (null != selected) {
-//            selectedUdi = selected.unique_device_identifier;
-//        }
-//        pumpList.setModel(null == pumpModel ? new DefaultListModel() : pumpModel);
-//        if (null != selectedUdi && pumpModel != null) {
-//            for (int i = 0; i < pumpModel.getSize(); i++) {
-//                ice.InfusionStatus status = pumpModel.getElementAt(i);
-//                if (selectedUdi.equals(status.unique_device_identifier)) {
-//                    pumpList.setSelectedValue(status, true);
-//                }
-//            }
-//        }
-//        pumpList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-//
-//        if (this.pumpModel != null) {
-//            this.pumpModel.removeListDataListener(this);
-//        }
-//        this.pumpModel = pumpModel;
-//        if (this.pumpModel != null) {
-//            this.pumpModel.addListDataListener(this);
-//        }
-//
-//        if (this.model != null) {
-//            this.model.removeListener(this);
-//        }
-//        this.model = model;
-//        if (this.model != null) {
-//            this.model.addListener(this);
-//        }
-//        updateVitals();
-//        vitalChanged(this.model, null);
+        String selectedUdi = null;
+        MyInfusionStatus selected = pumpList.getSelectionModel().getSelectedItem();
+        if (null != selected) {
+            selectedUdi = selected.getUnique_device_identifier();
+        }
+        ObservableList<MyInfusionStatus> items;
+        if(pumpModel == null) {
+            items = FXCollections.observableArrayList();
+        } else {
+            items = new MyInfusionStatusItems().setModel(pumpModel).getItems();
+        }
+        pumpList.setItems(items);
+        if (null != selectedUdi) {
+            for (int i = 0; i < pumpList.getItems().size(); i++) {
+                MyInfusionStatus status = pumpList.getItems().get(i);
+                if (selectedUdi.equals(status.getUnique_device_identifier())) {
+                    pumpList.getSelectionModel().select(status);
+                }
+            }
+        }
+
+        if (this.model != null) {
+            this.model.removeListener(this);
+        }
+        this.model = model;
+        if (this.model != null) {
+            this.model.addListener(this);
+        }
+        updateVitals();
+        vitalChanged(this.model, null);
     }
 
     @Override

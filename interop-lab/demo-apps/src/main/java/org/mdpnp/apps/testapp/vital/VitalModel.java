@@ -39,10 +39,6 @@ public interface VitalModel {
 
     boolean removeListener(VitalModelListener vitalModelListener);
 
-    ice.DeviceIdentity getDeviceIdentity(String udi);
-
-    ice.DeviceConnectivity getDeviceConnectivity(String udi);
-
 //    DeviceIcon getDeviceIcon(String udi);
 
     ice.GlobalAlarmSettingsObjectiveDataWriter getWriter();

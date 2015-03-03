@@ -32,7 +32,6 @@ import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
-import org.mdpnp.guis.swing.CompositeDevicePanel;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
@@ -205,7 +204,7 @@ public abstract class DeviceAdapter {
     static class GUIAdapter extends HeadlessAdapter {
 
         private DeviceDataMonitor    deviceMonitor;
-        private CompositeDevicePanel cdp;
+//        private CompositeDevicePanel cdp;
 
         final JProgressBar      progressBar = new JProgressBar(1, 100);
 
@@ -217,10 +216,10 @@ public abstract class DeviceAdapter {
 
             try {
                 update("Shut down local monitoring client", 10);
-                cdp.stop();
+//                cdp.stop();
                 deviceMonitor.stop();
                 update("Shut down local user interface", 20);
-                cdp.reset();
+//                cdp.reset();
             }
             finally {
 
@@ -250,8 +249,8 @@ public abstract class DeviceAdapter {
 
             deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier);
 
-            cdp = new CompositeDevicePanel();
-            cdp.setModel(deviceMonitor);
+//            cdp = new CompositeDevicePanel();
+//            cdp.setModel(deviceMonitor);
 
             // Use the device subscriber so that we
             // automatically maintain the same partition as the device

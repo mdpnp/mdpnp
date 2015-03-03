@@ -53,7 +53,6 @@ import javax.swing.event.ListSelectionListener;
 
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
-import org.mdpnp.guis.waveform.swing.SwingWaveformPanel;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.mdpnp.rtiapi.data.NumericInstanceModel;
@@ -80,7 +79,7 @@ public class XRayVentPanel extends JPanel {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private JComboBox cameraBox = new JComboBox(cameraModel);
 
-    private WaveformPanel waveformPanel;
+//    private WaveformPanel waveformPanel;
 
     private JList<ice.Numeric> deviceList;
 
@@ -166,7 +165,7 @@ public class XRayVentPanel extends JPanel {
                 SampleArray data, SampleInfo sampleInfo) {
             if (sampleInfo.valid_data) {
                 if (rosetta.MDC_FLOW_AWAY.VALUE.equals(data.metric_id)) {
-                    waveformPanel.setSource(new SampleArrayWaveformSource(reader, data));
+//                    waveformPanel.setSource(new SampleArrayWaveformSource(reader, data));
                 }
             }
         };
@@ -185,7 +184,7 @@ public class XRayVentPanel extends JPanel {
     public void changeSource(String source, Subscriber subscriber, EventLoop eventLoop) {
         deviceNumericModel.stop();
         sampleArrayModel.stop();
-        waveformPanel.setSource(null);
+//        waveformPanel.setSource(null);
 
         StringSeq params = new StringSeq();
         params.add("'" + rosetta.MDC_FLOW_AWAY.VALUE + "'");
@@ -309,12 +308,12 @@ public class XRayVentPanel extends JPanel {
         enclosingWaveformPanel.add(l = new JLabel("Flow Inspiration/Expiration"), BorderLayout.NORTH);
         l.setFont(l.getFont().deriveFont(FONT_SIZE));
 
-        waveformPanel = new SwingWaveformPanel();
-        if (waveformPanel instanceof JComponent) {
+//        waveformPanel = new SwingWaveformPanel();
+//        if (waveformPanel instanceof JComponent) {
             // ((JComponent) waveformPanel).setBorder(border);
-        }
+//        }
 
-        enclosingWaveformPanel.add(waveformPanel.asComponent(), BorderLayout.CENTER);
+//        enclosingWaveformPanel.add(waveformPanel.asComponent(), BorderLayout.CENTER);
         panel.add(enclosingWaveformPanel);
 
         JPanel controlsPanel = new JPanel(new GridBagLayout());
@@ -405,13 +404,13 @@ public class XRayVentPanel extends JPanel {
     public void stop() {
         executorNonCritical.schedule(new Runnable() {
             public void run() {
-                waveformPanel.stop();
+//                waveformPanel.stop();
                 cameraModel.stop();
                 cameraPanel.stop();
 
             }
         }, 0L, TimeUnit.MILLISECONDS);
-        waveformPanel.setSource(null);
+//        waveformPanel.setSource(null);
         startOfBreathModel.stop();
         sampleArrayModel.stop();
         deviceNumericModel.stop();
@@ -428,7 +427,7 @@ public class XRayVentPanel extends JPanel {
         executorNonCritical.schedule(new Runnable() {
             public void run() {
                 cameraModel.start();
-                waveformPanel.start();
+//                waveformPanel.start();
                 cameraPanel.start();
             }
         }, 0L, TimeUnit.MILLISECONDS);

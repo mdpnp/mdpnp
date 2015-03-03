@@ -2,55 +2,44 @@ package org.mdpnp.apps.testapp;
 
 import java.io.IOException;
 
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 
 import org.controlsfx.control.GridCell;
 
 public class DeviceGridCell extends GridCell<Device> {
-    private Parent root;
+    @FXML public ImageView icon, overlay;
+    @FXML public Label text;
     
-    public Label text;
-
-    public ImageView icon, overlay;
-    
-    public DeviceGridCell() {
-
+    public DeviceGridCell() throws IOException {
+        FXMLLoader loader = new FXMLLoader(AppTypeGridCell.class.getResource("DeviceListCell.fxml"));
+        loader.setController(this);
+        setGraphic(loader.load());
+        setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
     }
+    
+    
     
     @Override
     protected void updateItem(Device item, boolean empty) {
         super.updateItem(item, empty);
 
-        if(null == root) {
-            FXMLLoader loader = new FXMLLoader(AppTypeGridCell.class.getResource("DeviceListCell.fxml"));
-            try {
-                root = loader.load();
-                setGraphic(root);
-                text = (Label) root.lookup("#text");
-                icon = (ImageView) root.lookup("#icon");
-                overlay = (ImageView) root.lookup("#overlay");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        System.out.println("updateItem:"+item);
-        if(null == item || empty) {
-            text.textProperty().unbind();
-            text.setText("");
-            icon.imageProperty().unbind();
+        icon.imageProperty().unbind();
+        overlay.visibleProperty().unbind();
+        text.textProperty().unbind();
+        
+        if(null == item) {
             icon.setImage(null);
-            overlay.visibleProperty().unbind();
             overlay.setVisible(true);
-            return;
+            text.setText("");
+        } else {
+            icon.imageProperty().bind(item.imageProperty());
+            overlay.visibleProperty().bind(item.connectedProperty().not());
+            text.textProperty().bind(item.makeAndModelProperty());
         }
-        text.textProperty().bind(item.makeAndModelProperty());
-        icon.imageProperty().bind(item.imageProperty());
-        overlay.visibleProperty().bind(item.connectedProperty().not());
-//        setUserData(item);
-//        textProperty().set(item.makeAndModelProperty().get());
         
     }
 }

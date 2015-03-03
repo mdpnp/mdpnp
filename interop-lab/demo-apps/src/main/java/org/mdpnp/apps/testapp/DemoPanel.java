@@ -163,5 +163,61 @@ public class DemoPanel implements Runnable {
             }
         }
     }
+    
+    @FXML public void clickCreateAdapter(ActionEvent evt) {
+//      DefaultComboBoxModel model = new DefaultComboBoxModel(new Configuration.Application[]{Configuration.Application.ICE_Device_Interface});
+//
+//      ConfigurationDialog dia = new ConfigurationDialog(null, null);
+//      dia.setTitle("Create a local ICE Device Adapter");
+//      dia.getApplications().setModel(model);
+//      dia.set(Configuration.Application.ICE_Device_Interface, null);
+//      dia.remove(dia.getDomainId());
+//      dia.remove(dia.getDomainIdLabel());
+//      dia.remove(dia.getApplications());
+//      dia.remove(dia.getApplicationsLabel());
+//      dia.getWelcomeText().setRows(4);
+//      dia.getWelcomeText().setColumns(40);
+//      // dia.remove(dia.getWelcomeScroll());
+//      dia.getWelcomeText()
+//              .setText("");
+//
+//      dia.getQuit().setText("Close");
+//      dia.pack();
+//      dia.setLocationRelativeTo(panel);
+//
+//      final Configuration c = dia.showDialog();
+//      if (null != c) {
+//          Thread t = new Thread(new Runnable() {
+//              public void run() {
+//                  try {
+//                      DomainParticipantQos pQos = new DomainParticipantQos();
+//                      DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
+//                      pQos.discovery.initial_peers.clear();
+////                      for (int i = 0; i < discoveryPeers.peers.getSize(); i++) {
+////                          pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
+////                          System.err.println("PEER:" + discoveryPeers.peers.getElementAt(i));
+////                      }
+//                      DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
+//                      SubscriberQos qos = new SubscriberQos();
+//                      subscriber.get_qos(qos);
+//                      List<String> partition = new ArrayList<String>();
+//                      for (int i = 0; i < qos.partition.name.size(); i++) {
+//                          partition.add((String) qos.partition.name.get(i));
+//                      }
+//                      DeviceAdapter da = DeviceAdapter.newGUIAdapter(c.getDeviceFactory(), context);
+//                      da.setInitialPartition(partition.toArray(new String[0]));
+//                      da.start(c.getAddress());
+//
+//                      log.info("DeviceAdapter ended");
+//                  } catch (Exception e) {
+//                      log.error("Error in spawned DeviceAdapter", e);
+//                  }
+//              }
+//          });
+//          t.setDaemon(true);
+//          t.start();
+//      }
+
+    }
 
 }

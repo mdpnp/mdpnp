@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
 <?import java.lang.*?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane fx:id="demoPanel" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.DemoPanel">
+<BorderPane fx:id="demoPanel" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.mdpnp.apps.testapp.DemoPanel">
   <!-- TODO Add Nodes -->
   <bottom>
     <GridPane prefHeight="69.0" prefWidth="286.0">
@@ -15,7 +15,7 @@
         <Label fx:id="version" text="Version" GridPane.columnIndex="0" GridPane.rowIndex="1" />
         <Button fx:id="back" contentDisplay="LEFT" mnemonicParsing="false" text="Exit App" textAlignment="LEFT" visible="false" GridPane.columnIndex="0" GridPane.halignment="LEFT" GridPane.rowIndex="0" />
         <Button fx:id="changePartition" mnemonicParsing="false" onAction="#clickChangePartition" text="Change Partition..." GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="0" />
-        <Button fx:id="createAdapter" mnemonicParsing="false" text="Create an ICE Device Adapter..." GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" />
+        <Button fx:id="createAdapter" mnemonicParsing="false" onAction="#clickCreateAdapter" text="Create an ICE Device Adapter..." GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" />
         <Hyperlink onAction="#clickURL" text="https://openice.info" GridPane.columnIndex="2" GridPane.halignment="RIGHT" GridPane.rowIndex="0" />
         <Label fx:id="udi" text="UDI" GridPane.columnIndex="2" GridPane.halignment="RIGHT" GridPane.rowIndex="1" />
       </children>
@@ -33,6 +33,9 @@
   <center>
     <BorderPane fx:id="content" prefHeight="-1.0" prefWidth="-1.0" />
   </center>
+  <padding>
+    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+  </padding>
   <top>
     <GridPane alignment="CENTER" maxHeight="-1.0" maxWidth="-1.0" pickOnBounds="true" prefHeight="-1.0" prefWidth="-1.0" BorderPane.alignment="CENTER">
       <children>
@@ -49,12 +52,9 @@
         <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" percentWidth="33.0" />
         <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" percentWidth="33.0" />
       </columnConstraints>
-         <rowConstraints>
-            <RowConstraints />
-         </rowConstraints>
+      <rowConstraints>
+        <RowConstraints />
+      </rowConstraints>
     </GridPane>
   </top>
-   <padding>
-      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-   </padding>
 </BorderPane>

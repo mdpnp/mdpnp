@@ -20,10 +20,11 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.LongProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -51,10 +52,6 @@ import com.rti.dds.infrastructure.Property_t;
 public class Device {
     private static Image unknownImage = new Image(Device.class.getResourceAsStream("unknown.png"));
     private String udi;
-    private DeviceIdentity deviceIdentity;
-    private DeviceConnectivity deviceConnectivity;
-    private ParticipantBuiltinTopicData participantData;
-    private final Duration_t clockDifference = new Duration_t(Duration_t.DURATION_INFINITE), roundtripLatency = new Duration_t(Duration_t.DURATION_INFINITE);
 
     public final static int SHORT_UDI_LENGTH = 20;
 
@@ -91,7 +88,7 @@ public class Device {
     private BooleanProperty connected;
     public BooleanProperty connectedProperty() {
         if(null == connected) {
-            connected = new SimpleBooleanProperty(this, "connected");
+            connected = new SimpleBooleanProperty(this, "connected", false);
         }
         return connected;
     }
@@ -102,23 +99,57 @@ public class Device {
         connectedProperty().set(connected);
     }
     
-    public Device() {
+    private StringProperty hostname;
+    public StringProperty hostnameProperty() {
+        if(null == hostname) {
+            hostname = new SimpleStringProperty(this, "hostname", "");
+        }
+        return hostname;
+    }
+    public String getHostname() {
+        return hostnameProperty().get();
+    }
+    public void setHostname(String hostname) {
+        this.hostnameProperty().set(hostname);
+    }
+    
+    private LongProperty clockDifference;
+    public LongProperty clockDifferenceProperty() {
+        if(null == clockDifference) {
+            clockDifference = new SimpleLongProperty(this, "clockDifference", 0L);
+        }
+        return clockDifference;
+    }
+    public long getClockDifference() {
+        return clockDifferenceProperty().get();
+    }
+    public void setClockDifference(long clockDifference) {
+        clockDifferenceProperty().set(clockDifference);
+    }
+    
+    private LongProperty roundtripLatency;
+    public LongProperty roundtripLatencyProperty() {
+        if(null == roundtripLatency) {
+            roundtripLatency = new SimpleLongProperty(this, "roundtripLatency", 0L);
+        }
+        return roundtripLatency;
+    }
+    
+    public long getRoundtripLatency() {
+        return roundtripLatencyProperty().get();
+    }
+    
+    public void setRoundtripLatency(long roundtripLatency) {
+        roundtripLatencyProperty().set(roundtripLatency);
     }
 
     public Device(String udi) {
         this.udi = udi;
+        makeAndModelProperty().set(udi);
     }
 
     public String getShortUDI() {
         return null == udi ? null : udi.substring(0, SHORT_UDI_LENGTH);
-    }
-
-    public DeviceIdentity getDeviceIdentity() {
-        return deviceIdentity;
-    }
-
-    public DeviceConnectivity getDeviceConnectivity() {
-        return deviceConnectivity;
     }
 
     public String getUDI() {
@@ -126,56 +157,24 @@ public class Device {
     }
 
     public void setDeviceIdentity(final DeviceIdentity deviceIdentity, ParticipantBuiltinTopicData participantData) {
-        System.out.println(deviceIdentity);
-        if (null == deviceIdentity) {
-            this.deviceIdentity = null;
-//            Platform.runLater(new Runnable() {
-//                public void run() {
-//                    imageProperty().set(null);
-//                    makeAndModelProperty().set("");
-//                }
-//            });
-            
-
-        } else {
+        if (null != deviceIdentity) {
             changeUdi(deviceIdentity.unique_device_identifier);
-            if (null == this.deviceIdentity) {
-                log.debug("see first deviceIdentity sample for udi="+deviceIdentity.unique_device_identifier);
-                this.deviceIdentity = new DeviceIdentity(deviceIdentity);
+            if (null==deviceIdentity.manufacturer||deviceIdentity.manufacturer.equals(deviceIdentity.model)||"".equals(deviceIdentity.manufacturer)) {
+                makeAndModelProperty().set(deviceIdentity.model);
             } else {
-                this.deviceIdentity.copy_from(deviceIdentity);
+                makeAndModelProperty().set(deviceIdentity.manufacturer + " " + deviceIdentity.model);
             }
+            hostnameProperty().set(getHostname(participantData));
             Task<Image> task = new Task<Image>() {
                 @Override
                 protected Image call() throws Exception {
                     InputStream is = new ByteArrayInputStream(deviceIdentity.icon.image.userData.toArrayByte(new byte[deviceIdentity.icon.image.userData.size()]));
                     final Image image = new Image(is);
-                    System.out.println("Image Loaded " + image);
                     return image;
                 }
             };
             imageProperty().bind(task.valueProperty());
             new Thread(task).start();
-            
-            
-//            Platform.runLater(new Runnable() {
-//                public void run() {
-                    if (null==deviceIdentity.manufacturer||deviceIdentity.manufacturer.equals(deviceIdentity.model)||"".equals(deviceIdentity.manufacturer)) {
-                        makeAndModelProperty().set(deviceIdentity.model);
-                    } else {
-                        makeAndModelProperty().set(deviceIdentity.manufacturer + " " + deviceIdentity.model);
-                    }
-        
-//                    imageProperty().set(image);
-//                }
-//            });
-            
-            if(null == this.participantData) {
-                this.participantData = new ParticipantBuiltinTopicData();
-                this.participantData.copy_from(participantData);
-            } else {
-                this.participantData.copy_from(participantData);
-            }
         }
     }
     
@@ -191,51 +190,9 @@ public class Device {
         }
     }
     
-    public String getHostname() {
-        return null == participantData ? null : getHostname(participantData);
-    }
-
-    public void setClockDifference(Duration_t clockDifference) {
-        this.clockDifference.copy_from(clockDifference);
-    }
-    
-    public void setRoundtripLatency(Duration_t roundtripLatency) {
-        this.roundtripLatency.copy_from(roundtripLatency);
-    }
-    
-    public Duration_t getClockDifference() {
-        return clockDifference;
-    }
-    
-    public Duration_t getRoundtripLatency() {
-        return roundtripLatency;
-    }
-    
-    public double getClockDifferenceMs() {
-        return 1000.0 * clockDifference.sec + clockDifference.nanosec / 1000000.0;
-    }
-    
-    public double getRoundtripLatencyMs() {
-        return 1000.0 * roundtripLatency.sec + roundtripLatency.nanosec / 1000000.0;
-    }    
-    
     public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {
-        if (null == deviceConnectivity) {
-            this.deviceConnectivity = null;
-            connectedProperty().set(false);
-        } else {
-            changeUdi(deviceConnectivity.unique_device_identifier);
-            if (null == this.deviceConnectivity) {
-                this.deviceConnectivity = new DeviceConnectivity(deviceConnectivity);
-            } else {
-                this.deviceConnectivity.copy_from(deviceConnectivity);
-            }
-//            Platform.runLater(new Runnable() {
-//                public void run() {
-                    connectedProperty().set(ice.ConnectionState.Connected.equals(Device.this.deviceConnectivity.state));
-//                }
-//            });
-        }
+        changeUdi(deviceConnectivity.unique_device_identifier);
+        connectedProperty().set(ice.ConnectionState.Connected.equals(deviceConnectivity.state));
     }
 
     public static final String getHostname(ParticipantBuiltinTopicData participantData) {

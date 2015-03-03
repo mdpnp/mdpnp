@@ -22,6 +22,7 @@ import java.util.ServiceLoader;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -34,8 +35,6 @@ import javafx.stage.WindowEvent;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.mdpnp.devices.BuildInfo;
-import org.mdpnp.guis.swing.CompositeDevicePanel;
-import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -144,7 +143,7 @@ public class IceAppsContainer extends IceApplication {
      */
     private static class DeviceApp implements IceApplicationProvider.IceApp {
 
-        CompositeDevicePanel devicePanel = new CompositeDevicePanel();
+//        CompositeDevicePanel devicePanel = new CompositeDevicePanel();
 
         @Override
         public IceApplicationProvider.AppType getDescriptor() {
@@ -172,13 +171,13 @@ public class IceAppsContainer extends IceApplication {
             // will ultimately deadlock on this AWT EventQueue thread
             Thread t = new Thread(threadGroup, new Runnable() {
                 public void run() {
-                    DeviceDataMonitor deviceMonitor = devicePanel.getModel();
-                    if (null != deviceMonitor) {
-                        deviceMonitor.stop();
-                    }
-                    deviceMonitor = new DeviceDataMonitor(device.getUDI());
-                    devicePanel.setModel(deviceMonitor);
-                    deviceMonitor.start(subscriber, eventLoop);
+//                    DeviceDataMonitor deviceMonitor = devicePanel.getModel();
+//                    if (null != deviceMonitor) {
+//                        deviceMonitor.stop();
+//                    }
+//                    DeviceDataMonitor deviceMonitor = new DeviceDataMonitor(device.getUDI());
+//                    devicePanel.setModel(deviceMonitor);
+//                    deviceMonitor.start(subscriber, eventLoop);
                 }
             }, device.getMakeAndModel());
 
@@ -188,11 +187,11 @@ public class IceAppsContainer extends IceApplication {
 
         @Override
         public void stop() {
-            DeviceDataMonitor deviceMonitor = devicePanel.getModel();
-            if (null != deviceMonitor) {
-                deviceMonitor.stop();
-            }
-            devicePanel.setModel(null);
+//            DeviceDataMonitor deviceMonitor = devicePanel.getModel();
+//            if (null != deviceMonitor) {
+//                deviceMonitor.stop();
+//            }
+//            devicePanel.setModel(null);
         }
 
         @Override
@@ -321,8 +320,8 @@ public class IceAppsContainer extends IceApplication {
         loader = new FXMLLoader(MainMenu.class.getResource("MainMenu.fxml"));
         mainMenuRoot = loader.load();
         final MainMenu mainMenuController = loader.getController();
-        mainMenuController.setTypes(at).setDevices(nc.getContents());
-        panelController.getContent().setCenter(mainMenuRoot);
+        
+        
         mainMenuController.getAppList().setCellFactory(new AppTypeCellFactory(new EventHandler<MouseEvent>() {
 
             @Override
@@ -354,74 +353,14 @@ public class IceAppsContainer extends IceApplication {
         // Add a wrapper for the driver adapter display. This is so that the stop logic could
         // shut it down properly.
         activeApps.put(Device, driverWrapper);
+        mainMenuController.setTypes(at).setDevices(nc.getContents());
 //        panel.getContent().add(driverWrapper.getUI(), Device.getId());
 
-
-//        panel.getBack().setVisible(false);
-
-//        panel.getCreateAdapter().addActionListener(new ActionListener() {
-//
-//            @SuppressWarnings({"rawtypes"})
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//
-//                DefaultComboBoxModel model = new DefaultComboBoxModel(new Configuration.Application[]{Configuration.Application.ICE_Device_Interface});
-//
-//                ConfigurationDialog dia = new ConfigurationDialog(null, null);
-//                dia.setTitle("Create a local ICE Device Adapter");
-//                dia.getApplications().setModel(model);
-//                dia.set(Configuration.Application.ICE_Device_Interface, null);
-//                dia.remove(dia.getDomainId());
-//                dia.remove(dia.getDomainIdLabel());
-//                dia.remove(dia.getApplications());
-//                dia.remove(dia.getApplicationsLabel());
-//                dia.getWelcomeText().setRows(4);
-//                dia.getWelcomeText().setColumns(40);
-//                // dia.remove(dia.getWelcomeScroll());
-//                dia.getWelcomeText()
-//                        .setText("Typically ICE Device Adapters do not run directly within the ICE Supervisor.  " +
-//                                 "This option is provided for convenient testing.  A window will be created for the device adapter. " +
-//                                 " To terminate the adapter close that window.  To exit this application you must close the supervisory window.");
-//
-//                dia.getQuit().setText("Close");
-//                dia.pack();
-//                dia.setLocationRelativeTo(panel);
-//
-//                final Configuration c = dia.showDialog();
-//                if (null != c) {
-//                    Thread t = new Thread(new Runnable() {
-//                        public void run() {
-//                            try {
-//                                DomainParticipantQos pQos = new DomainParticipantQos();
-//                                DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-//                                pQos.discovery.initial_peers.clear();
-////                                for (int i = 0; i < discoveryPeers.peers.getSize(); i++) {
-////                                    pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
-////                                    System.err.println("PEER:" + discoveryPeers.peers.getElementAt(i));
-////                                }
-//                                DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
-//                                SubscriberQos qos = new SubscriberQos();
-//                                subscriber.get_qos(qos);
-//                                List<String> partition = new ArrayList<String>();
-//                                for (int i = 0; i < qos.partition.name.size(); i++) {
-//                                    partition.add((String) qos.partition.name.get(i));
-//                                }
-//                                DeviceAdapter da = DeviceAdapter.newGUIAdapter(c.getDeviceFactory(), context);
-//                                da.setInitialPartition(partition.toArray(new String[0]));
-//                                da.start(c.getAddress());
-//
-//                                log.info("DeviceAdapter ended");
-//                            } catch (Exception e) {
-//                                log.error("Error in spawned DeviceAdapter", e);
-//                            }
-//                        }
-//                    });
-//                    t.setDaemon(true);
-//                    t.start();
-//                }
-//            }
-//
-//        });
+        Platform.runLater(new Runnable() {
+            public void run() {
+                panelController.getContent().setCenter(mainMenuRoot);
+            }
+        });
 
 
 //        mainMenuPanel.getDeviceList().addMouseListener(new MouseAdapter() {
@@ -446,6 +385,7 @@ public class IceAppsContainer extends IceApplication {
         // this will block until the frame is killed
         stopOk.await();
         context.destroy();
+        Platform.exit();
         super.stop();
     }
 }

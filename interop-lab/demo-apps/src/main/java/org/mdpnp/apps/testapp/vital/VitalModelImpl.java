@@ -306,18 +306,6 @@ public class VitalModelImpl implements VitalModel {
 //    }
 
     @Override
-    public DeviceIdentity getDeviceIdentity(String udi) {
-        Device device = getDevice(udi);
-        return null == device ? null : device.getDeviceIdentity();
-    }
-
-    @Override
-    public DeviceConnectivity getDeviceConnectivity(String udi) {
-        Device device = getDevice(udi);
-        return null == device ? null : device.getDeviceConnectivity();
-    }
-
-    @Override
     public void start(final Subscriber subscriber, final Publisher publisher, final EventLoop eventLoop) {
 
         eventLoop.doLater(new Runnable() {

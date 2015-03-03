@@ -72,22 +72,6 @@ public class PCAPanel implements VitalModelListener {
     }
     
     public PCAPanel() {
-        // super(JSplitPane.HORIZONTAL_SPLIT, true, new
-        // PCAConfig(refreshScheduler), new VitalMonitoring(refreshScheduler));
-//        super(new BorderLayout());
-        // pcaConfig = (PCAConfig) getLeftComponent();
-        // vitalMonitor = (VitalMonitoring) getRightComponent();
-        //pcaConfig = new PCAConfig(refreshScheduler, objectiveWriter);
-
-//        main.setBorder(Border.EMPTY);
-
-        // pcaConfig.setBackground(Color.orange);
-
-//        add(pcaConfig, BorderLayout.CENTER);
-
-        // setDividerSize(4);
-
-        // setDividerLocation(0.5);
 
         try {
             // http://www.anaesthesia.med.usyd.edu.au/resources/alarms/
@@ -130,8 +114,8 @@ public class PCAPanel implements VitalModelListener {
         if (this.model != null) {
             this.model.addListener(this);
         }
-//        pcaConfig.setModel(model, pumpModel);
-        // vitalMonitor.setModel(vitalModel);
+
+//        vitalMonitor.setModel(vitalModel);
     }
 
     public VitalModel getVitalModel() {

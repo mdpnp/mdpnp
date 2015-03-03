@@ -2,24 +2,31 @@
 
 <?import java.lang.*?>
 <?import javafx.collections.*?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane fx:id="main" prefHeight="314.0000999999975" prefWidth="626.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.mdpnp.apps.testapp.ConfigurationDialog">
+<BorderPane fx:id="main" prefHeight="337.0000999999975" prefWidth="647.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.mdpnp.apps.testapp.ConfigurationDialog">
   <!-- TODO Add Nodes -->
   <bottom>
     <BorderPane prefHeight="-1.0" prefWidth="-1.0">
       <left>
         <Button fx:id="quit" cancelButton="true" mnemonicParsing="false" text="Quit" />
       </left>
+      <padding>
+        <Insets bottom="10.0" left="10.0" right="10.0" />
+      </padding>
       <right>
         <Button fx:id="start" defaultButton="true" mnemonicParsing="false" text="Start" />
       </right>
+      <BorderPane.margin>
+        <Insets fx:id="x1" />
+      </BorderPane.margin>
     </BorderPane>
   </bottom>
   <center>
-    <GridPane id="deviceTypeRow" alignment="CENTER" BorderPane.alignment="TOP_CENTER">
+    <GridPane id="deviceTypeRow" alignment="CENTER" BorderPane.alignment="TOP_CENTER" BorderPane.margin="$x1">
       <children>
         <Label text="Application:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
         <Label fx:id="deviceTypeLabel" text="Device Type:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
@@ -74,7 +81,7 @@
       <content>
         <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0">
           <children>
-            <TextArea editable="false" prefColumnCount="50" prefHeight="136.0" prefRowCount="8" prefWidth="624.0" text="Welcome to the MD PnP Demonstration Applications!&#10;&#10;Please select the component you would like to launch:&#10;&#10;ICE_Supervisor&#10;The Supervisor is the host for clinical apps.  Launching this component will also create an ICE Network Controller.&#10;&#10;ICE_Device_Interface&#10;The Device Interface allows you to connect devices to the ICE Supervisor.  Don't worry if you have no devices as several simulated devices are available.&#10;&#10;If you selected ICE_Device_Interface you will further be asked which device you would like to connect.  If the device is connected via a serial port please select that port under &quot;Address&quot;.  If the device is connected on the network type it's address in the provided text field.&#10;" wrapText="true" AnchorPane.bottomAnchor="-38.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+            <TextArea editable="false" prefColumnCount="50" prefHeight="-1.0" prefRowCount="8" prefWidth="-1.0" text="Welcome to the MD PnP Demonstration Applications!&#10;&#10;Please select the component you would like to launch:&#10;&#10;ICE_Supervisor&#10;The Supervisor is the host for clinical apps.  Launching this component will also create an ICE Network Controller.&#10;&#10;ICE_Device_Interface&#10;The Device Interface allows you to connect devices to the ICE Supervisor.  Don't worry if you have no devices as several simulated devices are available.&#10;&#10;If you selected ICE_Device_Interface you will further be asked which device you would like to connect.  If the device is connected via a serial port please select that port under &quot;Address&quot;.  If the device is connected on the network type it's address in the provided text field.&#10;" wrapText="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
           </children>
         </AnchorPane>
       </content>

@@ -381,7 +381,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
                     String metric = numerics.get(d.code);
                     metric = metricOrCode(metric, d.code, "ALARM_LIMIT_CP"+codepage);
-                    alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, null == a ? Float.MIN_VALUE : a.data.lower, f, metric));
+                    alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, null == a ? Float.NEGATIVE_INFINITY : a.data.lower, f, metric));
                 }
             }
         }

@@ -108,9 +108,10 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
             throw new IllegalArgumentException("Contact had changed - the model must throw one event per deletion.");
 
         DeviceListModel dlm = (DeviceListModel)e.getSource();
-        final Device d = dlm.getLastRemoved();
-        if(d == null)
-            throw new IllegalArgumentException("Model does not tell us which device had been deleted.");
+        // This is going to need to change for JavaFX
+//        final Device d = dlm.getLastRemoved();
+//        if(d == null)
+//            throw new IllegalArgumentException("Model does not tell us which device had been deleted.");
 
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -121,15 +122,15 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
                 Enumeration iter = treeRoot.children();
                 for(int idx=0; iter.hasMoreElements(); idx++) {
                     DefaultMutableTreeNode n = (DefaultMutableTreeNode) iter.nextElement();
-                    if (n.getUserObject().equals(d)) {
-                        treeRoot.remove(n);
-                        DeviceTreeModel.this.fireTreeNodesRemoved(
-                                DeviceTreeModel.this,
-                                getPathToRoot(treeRoot),
-                                new int[]{idx},
-                                new Object[]{n});
-                        break;
-                    }
+//                    if (n.getUserObject().equals(d)) {
+//                        treeRoot.remove(n);
+//                        DeviceTreeModel.this.fireTreeNodesRemoved(
+//                                DeviceTreeModel.this,
+//                                getPathToRoot(treeRoot),
+//                                new int[]{idx},
+//                                new Object[]{n});
+//                        break;
+//                    }
                 }
             }
         });

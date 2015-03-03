@@ -392,18 +392,18 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             numericDataWriter.write(holder.data, holder.handle);
         }
 
-    protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, float newLower, float newUpper) {
+    protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper) {
         if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
-            holder.data.lower = newLower;
-            holder.data.upper = newUpper;
+            holder.data.lower = null == newLower ? Float.NEGATIVE_INFINITY : newLower;
+            holder.data.upper = null == newUpper ? Float.POSITIVE_INFINITY : newUpper;
             alarmSettingsDataWriter.write(holder.data, holder.handle);
         }
     }
 
-    protected void alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, float newLower, float newUpper) {
+    protected void alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, Float newLower, Float newUpper) {
         if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
-            holder.data.lower = newLower;
-            holder.data.upper = newUpper;
+            holder.data.lower = null == newLower ? Float.NEGATIVE_INFINITY : newLower;
+            holder.data.upper = null == newUpper ? Float.POSITIVE_INFINITY : newUpper;
             alarmSettingsObjectiveWriter.write(holder.data, holder.handle);
         }
     }

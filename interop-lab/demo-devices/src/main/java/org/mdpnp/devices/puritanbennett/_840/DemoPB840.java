@@ -174,8 +174,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
                 alarmSettingsInstances.put(
                         name,
                         alarmSettingsSample(alarmSettingsInstances.get(name),
-                                parseFloat(lower, Float.MIN_VALUE),
-                                parseFloat(upper, Float.MAX_VALUE),
+                                parseFloat(lower, Float.NEGATIVE_INFINITY),
+                                parseFloat(upper, Float.POSITIVE_INFINITY),
                                 name));
             } catch (NumberFormatException nfe) {
                 log.warn("Poorly formatted alarm setting " + name + " " + lower + " "

@@ -173,6 +173,8 @@ public class ConfigurationDialog {
             setGraphic(null);
             if (item != null) {
                 setText(item.getDeviceType().toString());
+            } else {
+                setText("");
             }
         }
     }
@@ -191,7 +193,7 @@ public class ConfigurationDialog {
         deviceType.setItems(FXCollections.observableArrayList(DeviceFactory.getAvailableDevices()));
         applications.setItems(FXCollections.observableArrayList(Application.values()));
         serialPorts.setItems(FXCollections.observableList(SerialProviderFactory.getDefaultProvider().getPortNames()));
-        main.layout();
+//        main.layout();
 
         if (null != conf) {
             if (null != conf.getApplication()) {

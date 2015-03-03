@@ -231,16 +231,6 @@ public class VitalListModelAdapterImpl implements VitalListModelAdapter {
         return model.getCountWarningsBecomeAlarm();
     }
 
-    @Override
-    public DeviceIdentity getDeviceIdentity(String udi) {
-        return model.getDeviceIdentity(udi);
-    }
-
-    @Override
-    public DeviceConnectivity getDeviceConnectivity(String udi) {
-        return model.getDeviceConnectivity(udi);
-    }
-
 //    @Override
 //    public DeviceIcon getDeviceIcon(String udi) {
 //        return model.getDeviceIcon(udi);
