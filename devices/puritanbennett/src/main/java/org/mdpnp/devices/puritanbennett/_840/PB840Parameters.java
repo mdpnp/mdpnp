@@ -107,12 +107,15 @@ public class PB840Parameters extends PB840 {
                             fieldValues.add("<CR>");
                             final Field[] fields = this.fields.get(responseType);
                             if(fields != null) {
-                                for (Field field : fields) {
+                                for (int i = 0; i < fields.length; i++) {
+                                    field = fields[i];
                                     field.handle(fieldValues);
                                 }
                             } else {
                                 log.warn("Unknown response type " + responseType);
                             }
+                        } catch(NumberFormatException nfe) {
+                            log.error("Error in field " + field);
                         } finally {
                             receiveEndResponse();
                         }
