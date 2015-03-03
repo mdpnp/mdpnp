@@ -88,13 +88,15 @@ public class PB840Parameters extends PB840 {
                             continue;
                         }
                         fieldValues.add("<STX"); // This will keep field numbers consistent
+                        Field field = null;
                         try {
                             receiveStartResponse(responseType);
                             for(int i = 0; i < fieldCount; i++) {
                                 if(dataFieldMatch.find()) {
                                     fieldValues.add(dataFieldMatch.group(1).trim());
                                 } else {
-                                    log.warn("Missing expected field " + (i+1));
+                                    log.warn("Missing expected field " + (i+1) +", aborting this line...");
+                                    continue;
                                 }
                             }
                             if(fieldValues.size() < (fieldCount + 5)) {
