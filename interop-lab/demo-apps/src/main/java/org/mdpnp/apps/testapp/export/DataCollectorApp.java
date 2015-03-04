@@ -92,7 +92,7 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         //
         // TODO Change this to the observablelist paradigm
 //        deviceListModel.addListDataListener(deviceTreeModel);
-//        dataCollector.addDataSampleListener(deviceTreeModel);
+        dataCollector.addDataSampleListener(deviceTreeModel);
 
         // create a data filter - it will act as as proxy between the data collector and
         // actual data consumers. all internal components with register with it for data

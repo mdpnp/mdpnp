@@ -23,12 +23,16 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.MouseEvent;
+import javafx.util.Callback;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.MyInfusionStatus;
 import org.mdpnp.apps.testapp.MyInfusionStatusItems;
+import org.mdpnp.apps.testapp.MyInfusionStatusListCell;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
@@ -53,8 +57,16 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
     
     private ice.InfusionObjectiveDataWriter objectiveWriter;
 
-    public PCAConfig set(ScheduledExecutorService executor, ice.InfusionObjectiveDataWriter objectiveWriter) {
+    public PCAConfig set(ScheduledExecutorService executor, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListModel deviceListModel) {
         this.objectiveWriter = objectiveWriter;
+        pumpList.setCellFactory(new Callback<ListView<MyInfusionStatus>, ListCell<MyInfusionStatus>>() {
+
+            @Override
+            public ListCell<MyInfusionStatus> call(ListView<MyInfusionStatus> param) {
+                return new MyInfusionStatusListCell(deviceListModel);
+            }
+            
+        });
         List<Integer> values = new ArrayList<Integer>();
         for (int i = 0; i < VitalSign.values().length; i++) {
             values.add(i + 1);

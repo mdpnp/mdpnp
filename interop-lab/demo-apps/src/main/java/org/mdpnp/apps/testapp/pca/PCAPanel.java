@@ -36,6 +36,7 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import org.mdpnp.apps.testapp.DeviceFactory.Pump_SimulatorProvider;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
@@ -68,6 +69,7 @@ public class PCAPanel implements VitalModelListener {
     }
 
     public PCAPanel set(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter) {
+        
         return this;
     }
     

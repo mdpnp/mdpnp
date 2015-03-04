@@ -28,12 +28,16 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Slider;
+import javafx.util.Callback;
 import javafx.util.Duration;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.MySampleArray;
 import org.mdpnp.apps.testapp.MySampleArrayItems;
+import org.mdpnp.apps.testapp.MySampleArrayListCell;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
@@ -90,11 +94,19 @@ public class RapidRespiratoryRate implements Runnable {
 
     private RespiratoryRateDevice rrDevice;
     
-    public RapidRespiratoryRate set(final int domainId, final EventLoop eventLoop, final Subscriber subscriber) {
+    public RapidRespiratoryRate set(final int domainId, final EventLoop eventLoop, final Subscriber subscriber, final DeviceListModel deviceListModel) {
 //        ((NumberAxis)wavePanel.getXAxis()).forceZeroInRangeProperty().set(false);
 //        ((NumberAxis)wavePanel.getYAxis()).forceZeroInRangeProperty().set(false);
 //        ((NumberAxis)wavePanel.getYAxis()).autoRangingProperty().set(true);
 //        ((NumberAxis)wavePanel.getXAxis()).autoRangingProperty().set(true);
+        capnoSources.setCellFactory(new Callback<ListView<MySampleArray>,ListCell<MySampleArray>>() {
+
+            @Override
+            public ListCell<MySampleArray> call(ListView<MySampleArray> param) {
+                return new MySampleArrayListCell(deviceListModel);
+            }
+            
+        });
         canvas = new JavaFXWaveformCanvas(wavePanel);
         Timeline waveformRender = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {
 
@@ -285,7 +297,7 @@ public class RapidRespiratoryRate implements Runnable {
             rr = 0;
         }
         Platform.runLater(updateLabel);
-        this.rrLabel.setText(""+Math.round(rr));
+        //.rrLabel.setText(""+Math.round(rr));
         if (rrDevice != null) {
             rrDevice.updateRate((float) Math.round(rr));
         }

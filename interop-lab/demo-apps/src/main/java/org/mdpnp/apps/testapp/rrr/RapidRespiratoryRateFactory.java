@@ -5,6 +5,7 @@ import java.io.IOException;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
@@ -30,7 +31,8 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
         final EventLoop  eventLoop = (EventLoop)parentContext.getBean("eventLoop");
         final Subscriber subscriber= (Subscriber)parentContext.getBean("subscriber");
         final int        domainId  = (Integer)parentContext.getBean("domainId");
-
+        final DeviceListModel deviceListModel = (DeviceListModel) parentContext.getBean("deviceListModel");
+        
         SampleArrayInstanceModel capnoModel =  (SampleArrayInstanceModel)  parentContext.getBean("capnoModel");
         StringSeq params = new StringSeq();
         params.add("'"+rosetta.MDC_AWAY_CO2.VALUE+"'");
@@ -43,7 +45,7 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
         
         final RapidRespiratoryRate controller = ((RapidRespiratoryRate)loader.getController());
 
-        controller.set(domainId, eventLoop, subscriber);
+        controller.set(domainId, eventLoop, subscriber, deviceListModel);
 
         return new IceApplicationProvider.IceApp() {
 

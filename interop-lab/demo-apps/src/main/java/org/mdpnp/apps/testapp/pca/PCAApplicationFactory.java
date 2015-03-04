@@ -9,6 +9,7 @@ import javafx.util.Builder;
 import javafx.util.BuilderFactory;
 import javafx.util.Callback;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.DeviceFactory.Pump_SimulatorProvider;
 import org.mdpnp.apps.testapp.vital.VitalModel;
@@ -35,6 +36,7 @@ public class PCAApplicationFactory implements IceApplicationProvider {
         final ScheduledExecutorService refreshScheduler = (ScheduledExecutorService) parentContext.getBean("refreshScheduler");
         final ice.InfusionObjectiveDataWriter objectiveWriter = (ice.InfusionObjectiveDataWriter) parentContext.getBean("objectiveWriter");
         final VitalModel vitalModel = (VitalModel) parentContext.getBean("vitalModel");
+        DeviceListModel deviceListModel = (DeviceListModel) parentContext.getBean("deviceListModel");
         final InfusionStatusInstanceModel pumpModel = (InfusionStatusInstanceModel) parentContext.getBean("pumpModel");
         FXMLLoader loader = new FXMLLoader(PCAPanel.class.getResource("PCAPanel.fxml"));
         final PCAPanel pcaPanel = new PCAPanel();
@@ -68,7 +70,7 @@ public class PCAApplicationFactory implements IceApplicationProvider {
         
         pcaPanel.set(refreshScheduler, objectiveWriter);
         pcaPanel.setModel(vitalModel, pumpModel);
-        pcaConfig.set(refreshScheduler, objectiveWriter);
+        pcaConfig.set(refreshScheduler, objectiveWriter, deviceListModel);
         pcaConfig.setModel(vitalModel, pumpModel);
 
         return new IceApplicationProvider.IceApp() {
