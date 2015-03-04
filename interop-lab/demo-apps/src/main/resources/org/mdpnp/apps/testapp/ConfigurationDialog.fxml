@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane fx:id="main" prefHeight="337.0000999999975" prefWidth="647.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.mdpnp.apps.testapp.ConfigurationDialog">
+<BorderPane fx:id="main" prefHeight="-1" prefWidth="-1" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.ConfigurationDialog">
   <!-- TODO Add Nodes -->
   <bottom>
     <BorderPane prefHeight="-1.0" prefWidth="-1.0">
@@ -26,11 +26,23 @@
     </BorderPane>
   </bottom>
   <center>
-    <GridPane id="deviceTypeRow" alignment="CENTER" BorderPane.alignment="TOP_CENTER" BorderPane.margin="$x1">
+    <GridPane id="deviceTypeRow" fx:id="gridPane" alignment="CENTER" hgap="5.0" BorderPane.alignment="TOP_CENTER" BorderPane.margin="$x1">
       <children>
-        <Label text="Application:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-        <Label fx:id="deviceTypeLabel" text="Device Type:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-        <Label text="Domain Id:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+        <Label text="Application" GridPane.columnIndex="0" GridPane.rowIndex="0">
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+               <GridPane.margin>
+                  <Insets bottom="5.0" top="5.0" />
+               </GridPane.margin></Label>
+        <Label fx:id="deviceTypeLabel" text="Device Type" GridPane.columnIndex="0" GridPane.rowIndex="1">
+               <GridPane.margin>
+                  <Insets bottom="5.0" top="5.0" />
+               </GridPane.margin></Label>
+        <Label text="Domain Id" GridPane.columnIndex="0" GridPane.rowIndex="4">
+               <GridPane.margin>
+                  <Insets bottom="5.0" top="5.0" />
+               </GridPane.margin></Label>
         <ComboBox fx:id="applications" editable="false" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="0">
           <items>
             <FXCollections fx:factory="observableArrayList">
@@ -39,8 +51,11 @@
               <String fx:value="Item 3" />
             </FXCollections>
           </items>
+               <GridPane.margin>
+                  <Insets bottom="5.0" top="5.0" />
+               </GridPane.margin>
         </ComboBox>
-        <ComboBox fx:id="deviceType" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="1">
+        <ComboBox fx:id="deviceType" GridPane.columnIndex="1" GridPane.rowIndex="1">
           <items>
             <FXCollections fx:factory="observableArrayList">
               <String fx:value="Item 1" />
@@ -48,9 +63,18 @@
               <String fx:value="Item 3" />
             </FXCollections>
           </items>
+               <GridPane.margin>
+                  <Insets bottom="5.0" top="5.0" />
+               </GridPane.margin>
         </ComboBox>
-        <TextField fx:id="domainId" minWidth="-1.0" prefColumnCount="2" prefWidth="-1.0" promptText="" text="0" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.hgrow="NEVER" GridPane.rowIndex="4" />
-        <Label fx:id="serialPortsLabel" text="Serial Port:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+        <TextField fx:id="domainId" alignment="CENTER_RIGHT" maxWidth="40.0" minWidth="-1.0" prefColumnCount="2" prefWidth="30.0" promptText="" text="0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="4">
+               <GridPane.margin>
+                  <Insets bottom="5.0" top="5.0" />
+               </GridPane.margin></TextField>
+        <Label fx:id="serialPortsLabel" text="Serial Port" GridPane.columnIndex="0" GridPane.rowIndex="2">
+               <GridPane.margin>
+                  <Insets bottom="5.0" right="5.0" top="5.0" />
+               </GridPane.margin></Label>
         <ComboBox fx:id="serialPorts" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="2">
           <items>
             <FXCollections fx:factory="observableArrayList">
@@ -59,20 +83,29 @@
               <String fx:value="Item 3" />
             </FXCollections>
           </items>
+               <GridPane.margin>
+                  <Insets bottom="5.0" top="5.0" />
+               </GridPane.margin>
         </ComboBox>
-        <Label fx:id="addressLabel" text="IP Address:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-        <TextField fx:id="address" prefWidth="-1.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="3" />
+        <Label fx:id="addressLabel" text="IP Address" GridPane.columnIndex="0" GridPane.rowIndex="3">
+               <GridPane.margin>
+                  <Insets bottom="5.0" top="5.0" />
+               </GridPane.margin></Label>
+        <TextField fx:id="address" maxWidth="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
+               <GridPane.margin>
+                  <Insets bottom="5.0" top="5.0" />
+               </GridPane.margin></TextField>
       </children>
       <columnConstraints>
-        <ColumnConstraints halignment="RIGHT" hgrow="NEVER" minWidth="10.0" prefWidth="100.0" />
+        <ColumnConstraints halignment="RIGHT" hgrow="NEVER" minWidth="10.0" percentWidth="25.0" prefWidth="100.0" />
         <ColumnConstraints halignment="LEFT" hgrow="NEVER" minWidth="10.0" prefWidth="100.0" />
       </columnConstraints>
       <rowConstraints>
-        <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="CENTER" vgrow="NEVER" />
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
+        <RowConstraints minHeight="0" prefHeight="-1" valignment="CENTER" vgrow="NEVER" />
+        <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
+        <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
+        <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
+        <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
       </rowConstraints>
     </GridPane>
   </center>
@@ -81,7 +114,7 @@
       <content>
         <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0">
           <children>
-            <TextArea editable="false" prefColumnCount="50" prefHeight="-1.0" prefRowCount="8" prefWidth="-1.0" text="Welcome to the MD PnP Demonstration Applications!&#10;&#10;Please select the component you would like to launch:&#10;&#10;ICE_Supervisor&#10;The Supervisor is the host for clinical apps.  Launching this component will also create an ICE Network Controller.&#10;&#10;ICE_Device_Interface&#10;The Device Interface allows you to connect devices to the ICE Supervisor.  Don't worry if you have no devices as several simulated devices are available.&#10;&#10;If you selected ICE_Device_Interface you will further be asked which device you would like to connect.  If the device is connected via a serial port please select that port under &quot;Address&quot;.  If the device is connected on the network type it's address in the provided text field.&#10;" wrapText="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+            <TextArea editable="false" prefColumnCount="50" prefHeight="-1.0" prefRowCount="6" prefWidth="-1.0" text="Welcome to the MD PnP Demonstration Applications!&#10;&#10;Please select the component you would like to launch:&#10;&#10;ICE_Supervisor&#10;The Supervisor is the host for clinical apps.  Launching this component will also create an ICE Network Controller.&#10;&#10;ICE_Device_Interface&#10;The Device Interface allows you to connect devices to the ICE Supervisor.  Don't worry if you have no devices as several simulated devices are available.&#10;&#10;If you selected ICE_Device_Interface you will further be asked which device you would like to connect.  If the device is connected via a serial port please select that port under &quot;Address&quot;.  If the device is connected on the network type it's address in the provided text field.&#10;" wrapText="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
           </children>
         </AnchorPane>
       </content>

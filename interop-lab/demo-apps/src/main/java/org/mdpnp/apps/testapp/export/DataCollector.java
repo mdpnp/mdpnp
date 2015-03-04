@@ -131,6 +131,7 @@ public class DataCollector {
     public synchronized void start() {
         worker = new DataHandler();
         (new Thread(worker, "DataCollector")).start();
+        System.out.println("Start your data collectors");
     }
 
     public synchronized void stop() throws Exception {
@@ -199,7 +200,7 @@ public class DataCollector {
                     // no data, check 'isInterrupted' and go back to wait
                     continue;
                 }
-
+                
                 // Check that our status condition was indeed triggered
                 if (cond_seq.contains(saReader.get_statuscondition())) {
                     // read the actual status changes

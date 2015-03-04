@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
-import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.infrastructure.Locator_t;
 import com.rti.dds.infrastructure.Property_t;
 
@@ -55,93 +54,114 @@ public class Device {
 
     public final static int SHORT_UDI_LENGTH = 20;
 
+    @SuppressWarnings("unused")
     private final static Logger log = LoggerFactory.getLogger(Device.class);
 
     private ObjectProperty<Image> image;
+
     public ObjectProperty<Image> imageProperty() {
-        if(null == image) {
+        if (null == image) {
             image = new SimpleObjectProperty<Image>(this, "image", unknownImage);
         }
         return image;
     }
+
     public Image getImage() {
         return image.get();
     }
+
     public void setImage(Image image) {
         this.image.set(image);
     }
-    
+
     private StringProperty makeAndModel;
+
     public StringProperty makeAndModelProperty() {
-        if(null == makeAndModel) {
+        if (null == makeAndModel) {
             makeAndModel = new SimpleStringProperty(this, "makeAndModel", "Unknown Device");
         }
         return makeAndModel;
     }
+
     public String getMakeAndModel() {
         return makeAndModelProperty().get();
     }
+
     public void setMakeAndModel(String makeAndModel) {
         makeAndModelProperty().set(makeAndModel);
     }
-    
+
     private BooleanProperty connected;
+
     public BooleanProperty connectedProperty() {
-        if(null == connected) {
+        if (null == connected) {
             connected = new SimpleBooleanProperty(this, "connected", false);
         }
         return connected;
     }
+
     public boolean getConnected() {
         return connectedProperty().get();
     }
+
     public void setConnected(boolean connected) {
         connectedProperty().set(connected);
     }
-    
+
     private StringProperty hostname;
+
     public StringProperty hostnameProperty() {
-        if(null == hostname) {
+        if (null == hostname) {
             hostname = new SimpleStringProperty(this, "hostname", "");
         }
         return hostname;
     }
+
     public String getHostname() {
         return hostnameProperty().get();
     }
+
     public void setHostname(String hostname) {
         this.hostnameProperty().set(hostname);
     }
-    
+
     private LongProperty clockDifference;
+
     public LongProperty clockDifferenceProperty() {
-        if(null == clockDifference) {
+        if (null == clockDifference) {
             clockDifference = new SimpleLongProperty(this, "clockDifference", 0L);
         }
         return clockDifference;
     }
+
     public long getClockDifference() {
         return clockDifferenceProperty().get();
     }
+
     public void setClockDifference(long clockDifference) {
         clockDifferenceProperty().set(clockDifference);
     }
-    
+
     private LongProperty roundtripLatency;
+
     public LongProperty roundtripLatencyProperty() {
-        if(null == roundtripLatency) {
+        if (null == roundtripLatency) {
             roundtripLatency = new SimpleLongProperty(this, "roundtripLatency", 0L);
         }
         return roundtripLatency;
     }
-    
+
     public long getRoundtripLatency() {
         return roundtripLatencyProperty().get();
     }
-    
+
     public void setRoundtripLatency(long roundtripLatency) {
         roundtripLatencyProperty().set(roundtripLatency);
     }
+
+    private StringProperty operating_system = new SimpleStringProperty(this, "operating_system", "");
+    private StringProperty build = new SimpleStringProperty(this, "build", "");
+    private StringProperty serial_number = new SimpleStringProperty(this, "serial_number", "");
 
     public Device(String udi) {
         this.udi = udi;
@@ -159,16 +179,22 @@ public class Device {
     public void setDeviceIdentity(final DeviceIdentity deviceIdentity, ParticipantBuiltinTopicData participantData) {
         if (null != deviceIdentity) {
             changeUdi(deviceIdentity.unique_device_identifier);
-            if (null==deviceIdentity.manufacturer||deviceIdentity.manufacturer.equals(deviceIdentity.model)||"".equals(deviceIdentity.manufacturer)) {
+            if (null == deviceIdentity.manufacturer || deviceIdentity.manufacturer.equals(deviceIdentity.model)
+                    || "".equals(deviceIdentity.manufacturer)) {
                 makeAndModelProperty().set(deviceIdentity.model);
             } else {
                 makeAndModelProperty().set(deviceIdentity.manufacturer + " " + deviceIdentity.model);
             }
             hostnameProperty().set(getHostname(participantData));
+            operating_systemProperty().set(deviceIdentity.operating_system);
+            buildProperty().set(deviceIdentity.build);
+            serial_numberProperty().set(deviceIdentity.build);
+            
             Task<Image> task = new Task<Image>() {
                 @Override
                 protected Image call() throws Exception {
-                    InputStream is = new ByteArrayInputStream(deviceIdentity.icon.image.userData.toArrayByte(new byte[deviceIdentity.icon.image.userData.size()]));
+                    InputStream is = new ByteArrayInputStream(
+                            deviceIdentity.icon.image.userData.toArrayByte(new byte[deviceIdentity.icon.image.userData.size()]));
                     final Image image = new Image(is);
                     return image;
                 }
@@ -177,19 +203,19 @@ public class Device {
             new Thread(task).start();
         }
     }
-    
+
     private void changeUdi(String udi) {
-        if(null != udi) {
-            if(this.udi == null) {
+        if (null != udi) {
+            if (this.udi == null) {
                 this.udi = udi;
             } else {
-                if(!udi.equals(this.udi)) {
+                if (!udi.equals(this.udi)) {
                     throw new IllegalArgumentException("UDI currently " + this.udi + " not changing to " + udi + " found in user QoS");
                 }
             }
         }
     }
-    
+
     public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {
         changeUdi(deviceConnectivity.unique_device_identifier);
         connectedProperty().set(ice.ConnectionState.Connected.equals(deviceConnectivity.state));
@@ -209,35 +235,72 @@ public class Device {
             try {
                 InetAddress addr = null;
                 switch (locator.kind) {
-                    case Locator_t.KIND_TCPV4_LAN:
-                    case Locator_t.KIND_TCPV4_WAN:
-                    case Locator_t.KIND_TLSV4_LAN:
-                    case Locator_t.KIND_TLSV4_WAN:
-                    case Locator_t.KIND_UDPv4:
-                        addr = InetAddress
-                                .getByAddress(new byte[]{locator.address[12], locator.address[13], locator.address[14], locator.address[15]});
-                        break;
-                    case Locator_t.KIND_UDPv6:
-                    default:
-                        addr = InetAddress.getByAddress(locator.address);
-                        break;
+                case Locator_t.KIND_TCPV4_LAN:
+                case Locator_t.KIND_TCPV4_WAN:
+                case Locator_t.KIND_TLSV4_LAN:
+                case Locator_t.KIND_TLSV4_WAN:
+                case Locator_t.KIND_UDPv4:
+                    addr = InetAddress
+                            .getByAddress(new byte[] { locator.address[12], locator.address[13], locator.address[14], locator.address[15] });
+                    break;
+                case Locator_t.KIND_UDPv6:
+                default:
+                    addr = InetAddress.getByAddress(locator.address);
+                    break;
                 }
                 sb.append(addr.getHostAddress()).append(" ");
             } catch (UnknownHostException e) {
                 e.printStackTrace();
-                //                log.error("getting locator address", e);
+                // log.error("getting locator address", e);
             }
         }
         return sb.toString();
     }
+
     @Override
     public String toString() {
         Image img = imageProperty().get();
-        if(null != img) {
-            return udi + " " + makeAndModelProperty().get() + " height=" + img.getHeight() + " width="+img.getWidth();
+        if (null != img) {
+            return udi + " " + makeAndModelProperty().get() + " height=" + img.getHeight() + " width=" + img.getWidth();
         } else {
             return udi + " " + makeAndModelProperty().get();
         }
+    }
+
+    public final StringProperty operating_systemProperty() {
+        return this.operating_system;
+    }
+
+    public final java.lang.String getOperating_system() {
+        return this.operating_systemProperty().get();
+    }
+
+    public final void setOperating_system(final java.lang.String operating_system) {
+        this.operating_systemProperty().set(operating_system);
+    }
+
+    public final StringProperty buildProperty() {
+        return this.build;
+    }
+
+    public final java.lang.String getBuild() {
+        return this.buildProperty().get();
+    }
+
+    public final void setBuild(final java.lang.String build) {
+        this.buildProperty().set(build);
+    }
+
+    public final StringProperty serial_numberProperty() {
+        return this.serial_number;
+    }
+
+    public final java.lang.String getSerial_number() {
+        return this.serial_numberProperty().get();
+    }
+
+    public final void setSerial_number(final java.lang.String serial_number) {
+        this.serial_numberProperty().set(serial_number);
     }
 
 }

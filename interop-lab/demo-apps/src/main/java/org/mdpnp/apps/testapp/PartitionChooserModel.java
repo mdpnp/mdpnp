@@ -58,4 +58,11 @@ public class PartitionChooserModel {
         }
         list.addAll(parts);
     }
+    
+    public Publisher getPublisher() {
+        return publisher;
+    }
+    public Subscriber getSubscriber() {
+        return subscriber;
+    }
 }

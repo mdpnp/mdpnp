@@ -18,11 +18,22 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.support.AbstractApplicationContext;
+
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.domain.DomainParticipantQos;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriberQos;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -42,6 +53,8 @@ import javafx.stage.StageStyle;
  *
  */
 public class DemoPanel implements Runnable {
+    private final static Logger log = LoggerFactory.getLogger(DemoPanel.class);
+    
     @FXML
     protected Label bedLabel, clock, version, udi;
     
@@ -101,6 +114,11 @@ public class DemoPanel implements Runnable {
     
     public DemoPanel() throws IOException {
         this.timeFuture = executor.scheduleAtFixedRate(this, 1000L - (System.currentTimeMillis() % 1000L) + 10L, 1000L, TimeUnit.MILLISECONDS);
+    }
+    
+    public DemoPanel set(AbstractApplicationContext context) {
+        this.context = context;
+        return this;
     }
     
     @FXML public void clickChangePartition(ActionEvent evt) throws IOException {
@@ -164,59 +182,48 @@ public class DemoPanel implements Runnable {
         }
     }
     
+    private AbstractApplicationContext context;
+    
     @FXML public void clickCreateAdapter(ActionEvent evt) {
-//      DefaultComboBoxModel model = new DefaultComboBoxModel(new Configuration.Application[]{Configuration.Application.ICE_Device_Interface});
-//
-//      ConfigurationDialog dia = new ConfigurationDialog(null, null);
-//      dia.setTitle("Create a local ICE Device Adapter");
-//      dia.getApplications().setModel(model);
-//      dia.set(Configuration.Application.ICE_Device_Interface, null);
-//      dia.remove(dia.getDomainId());
-//      dia.remove(dia.getDomainIdLabel());
-//      dia.remove(dia.getApplications());
-//      dia.remove(dia.getApplicationsLabel());
-//      dia.getWelcomeText().setRows(4);
-//      dia.getWelcomeText().setColumns(40);
-//      // dia.remove(dia.getWelcomeScroll());
-//      dia.getWelcomeText()
-//              .setText("");
-//
-//      dia.getQuit().setText("Close");
-//      dia.pack();
-//      dia.setLocationRelativeTo(panel);
-//
-//      final Configuration c = dia.showDialog();
-//      if (null != c) {
-//          Thread t = new Thread(new Runnable() {
-//              public void run() {
-//                  try {
-//                      DomainParticipantQos pQos = new DomainParticipantQos();
-//                      DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-//                      pQos.discovery.initial_peers.clear();
-////                      for (int i = 0; i < discoveryPeers.peers.getSize(); i++) {
-////                          pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
-////                          System.err.println("PEER:" + discoveryPeers.peers.getElementAt(i));
-////                      }
-//                      DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
-//                      SubscriberQos qos = new SubscriberQos();
-//                      subscriber.get_qos(qos);
-//                      List<String> partition = new ArrayList<String>();
-//                      for (int i = 0; i < qos.partition.name.size(); i++) {
-//                          partition.add((String) qos.partition.name.get(i));
+        try {
+            final Subscriber subscriber = partitionChooserModel.getSubscriber();
+            Configuration c = CreateAdapter.showDialog(subscriber.get_participant().get_domain_id());
+          if (null != c) {
+          Thread t = new Thread(new Runnable() {
+              public void run() {
+                  try {
+                      
+                      DomainParticipantQos pQos = new DomainParticipantQos();
+                      DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
+                      pQos.discovery.initial_peers.clear();
+//                      for (int i = 0; i < discoveryPeers.peers.getSize(); i++) {
+//                          pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
+//                          System.err.println("PEER:" + discoveryPeers.peers.getElementAt(i));
 //                      }
-//                      DeviceAdapter da = DeviceAdapter.newGUIAdapter(c.getDeviceFactory(), context);
-//                      da.setInitialPartition(partition.toArray(new String[0]));
-//                      da.start(c.getAddress());
-//
-//                      log.info("DeviceAdapter ended");
-//                  } catch (Exception e) {
-//                      log.error("Error in spawned DeviceAdapter", e);
-//                  }
-//              }
-//          });
-//          t.setDaemon(true);
-//          t.start();
-//      }
+                      DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
+                      SubscriberQos qos = new SubscriberQos();
+                      subscriber.get_qos(qos);
+                      List<String> partition = new ArrayList<String>();
+                      for (int i = 0; i < qos.partition.name.size(); i++) {
+                          partition.add((String) qos.partition.name.get(i));
+                      }
+                      DeviceAdapter da = DeviceAdapter.newGUIAdapter(c.getDeviceFactory(), context);
+                      da.setInitialPartition(partition.toArray(new String[0]));
+                      da.start(c.getAddress());
+
+                      log.info("DeviceAdapter ended");
+                  } catch (Exception e) {
+                      log.error("Error in spawned DeviceAdapter", e);
+                  }
+              }
+          });
+          t.setDaemon(true);
+          t.start();
+      }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 

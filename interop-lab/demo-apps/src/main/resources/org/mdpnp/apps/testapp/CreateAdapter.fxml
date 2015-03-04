@@ -7,11 +7,11 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane fx:id="main" prefHeight="337.0000999999975" prefWidth="647.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.mdpnp.apps.testapp.ConfigurationDialog">
+<BorderPane fx:controller="org.mdpnp.apps.testapp.CreateAdapter" fx:id="main" prefHeight="337.0000999999975" prefWidth="647.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" >
   <bottom>
     <BorderPane prefHeight="-1.0" prefWidth="-1.0">
       <left>
-        <Button fx:id="quit" cancelButton="true" mnemonicParsing="false" text="Quit" />
+        <Button fx:id="close" cancelButton="true" mnemonicParsing="false" text="Close" />
       </left>
       <padding>
         <Insets bottom="10.0" left="10.0" right="10.0" />
@@ -29,23 +29,9 @@
       <children>
         <Label fx:id="deviceTypeLabel" text="Device Type:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
         <ComboBox fx:id="deviceType" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="0">
-          <items>
-            <FXCollections fx:factory="observableArrayList">
-              <String fx:value="Item 1" />
-              <String fx:value="Item 2" />
-              <String fx:value="Item 3" />
-            </FXCollections>
-          </items>
         </ComboBox>
         <Label fx:id="serialPortsLabel" text="Serial Port:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
         <ComboBox fx:id="serialPorts" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="1">
-          <items>
-            <FXCollections fx:factory="observableArrayList">
-              <String fx:value="Item 1" />
-              <String fx:value="Item 2" />
-              <String fx:value="Item 3" />
-            </FXCollections>
-          </items>
         </ComboBox>
         <Label fx:id="addressLabel" text="IP Address:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
         <TextField fx:id="address" prefWidth="-1.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="2" />
@@ -66,7 +52,7 @@
       <content>
         <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0">
           <children>
-            <TextArea editable="false" prefColumnCount="50" prefHeight="-1.0" prefRowCount="8" prefWidth="-1.0" text="Typically ICE Device Adapters do not run directly within the ICE Supervisor.  &quot; +&#10;//                       &quot;This option is provided for convenient testing.  A window will be created for the device adapter. &quot; +&#10;//                       &quot; To terminate the adapter close that window.  To exit this application you must close the supervisory window." wrapText="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+            <TextArea editable="false" prefColumnCount="50" prefHeight="-1.0" prefRowCount="8" prefWidth="-1.0" text="Typically ICE Device Adapters do not run directly within the ICE Supervisor.  This option is provided for convenient testing.  A window will be created for the device adapter.  To terminate the adapter close that window.  To exit this application you must close the supervisory window." wrapText="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
           </children>
         </AnchorPane>
       </content>

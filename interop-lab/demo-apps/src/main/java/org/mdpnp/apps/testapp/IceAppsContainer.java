@@ -266,7 +266,8 @@ public class IceAppsContainer extends IceApplication {
         panelController = ((DemoPanel)loader.getController())
             .setModel(partitionChooserModel)
             .setUdi(udi)
-            .setVersion(BuildInfo.getDescriptor());
+            .setVersion(BuildInfo.getDescriptor())
+            .set(context);
         panelRoot.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 //
 //        discoveryPeers = new DiscoveryPeers(this);

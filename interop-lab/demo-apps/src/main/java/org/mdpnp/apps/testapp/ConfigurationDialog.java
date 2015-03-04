@@ -28,6 +28,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -57,6 +58,8 @@ public class ConfigurationDialog {
     ComboBox<DeviceDriverProvider> deviceType;
     @FXML
     Label deviceTypeLabel, serialPortsLabel, addressLabel;
+    @FXML
+    GridPane gridPane;
 
     @FXML
     ComboBox<String> serialPorts;
@@ -113,8 +116,10 @@ public class ConfigurationDialog {
     protected void set(Application app, DeviceDriverProvider dt) {
         switch (app) {
         case ICE_Device_Interface:
-            deviceType.setVisible(true);
-            deviceTypeLabel.setVisible(true);
+            if(!gridPane.getChildren().contains(deviceType)) { gridPane.getChildren().add(deviceType); }
+//            deviceType.setVisible(true);
+            if(!gridPane.getChildren().contains(deviceTypeLabel)) { gridPane.getChildren().add(deviceTypeLabel); }
+//            deviceTypeLabel.setVisible(true);
 
             ice.ConnectionType selected = null;
             if (dt != null) {
@@ -126,41 +131,65 @@ public class ConfigurationDialog {
             }
             if (ice.ConnectionType.Serial.equals(selected)) {
                 if (SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
-                    addressLabel.setVisible(true);
-                    address.setVisible(true);
-                    serialPortsLabel.setVisible(false);
-                    serialPorts.setVisible(false);
+                    if(!gridPane.getChildren().contains(addressLabel)) { gridPane.getChildren().add(addressLabel); }
+//                    addressLabel.setVisible(true);
+                    if(!gridPane.getChildren().contains(address)) { gridPane.getChildren().add(address); }
+//                    address.setVisible(true);
+                    gridPane.getChildren().remove(serialPortsLabel);
+//                    serialPortsLabel.setVisible(false);
+                    gridPane.getChildren().remove(serialPorts);
+//                    serialPorts.setVisible(false);
                 } else {
-                    addressLabel.setVisible(false);
-                    address.setVisible(false);
-                    serialPortsLabel.setVisible(true);
-                    serialPorts.setVisible(true);
+                    gridPane.getChildren().remove(addressLabel);
+//                    addressLabel.setVisible(false);
+                    gridPane.getChildren().remove(address);
+//                    address.setVisible(false);
+                    if(!gridPane.getChildren().contains(serialPortsLabel)) { gridPane.getChildren().add(serialPortsLabel); }
+//                    serialPortsLabel.setVisible(true);
+                    if(!gridPane.getChildren().contains(serialPorts)) { gridPane.getChildren().add(serialPorts); }
+//                    serialPorts.setVisible(true);
                 }
 
             } else if (ice.ConnectionType.Network.equals(selected)) {
-                addressLabel.setVisible(true);
-                address.setVisible(true);
-                serialPortsLabel.setVisible(false);
-                serialPorts.setVisible(false);
+                if(!gridPane.getChildren().contains(addressLabel)) { gridPane.getChildren().add(addressLabel); }
+//                addressLabel.setVisible(true);
+                if(!gridPane.getChildren().contains(address)) { gridPane.getChildren().add(address); }
+//                address.setVisible(true);
+                gridPane.getChildren().remove(serialPortsLabel);
+//                serialPortsLabel.setVisible(false);
+                gridPane.getChildren().remove(serialPorts);
+//                serialPorts.setVisible(false);
             } else {
-                addressLabel.setVisible(false);
-                address.setVisible(false);
-                serialPortsLabel.setVisible(false);
-                serialPorts.setVisible(false);
+                gridPane.getChildren().remove(addressLabel);
+//                addressLabel.setVisible(false);
+                gridPane.getChildren().remove(address);
+//                address.setVisible(false);
+                gridPane.getChildren().remove(serialPortsLabel);
+//                serialPortsLabel.setVisible(false);
+                gridPane.getChildren().remove(serialPorts);
+//                serialPorts.setVisible(false);
             }
             break;
         case ICE_Supervisor:
         case ICE_ParticipantOnly:
-            deviceType.setVisible(false);
-            deviceTypeLabel.setVisible(false);
-            addressLabel.setVisible(false);
-            address.setVisible(false);
-            serialPortsLabel.setVisible(false);
-            serialPorts.setVisible(false);
+            gridPane.getChildren().remove(deviceType);
+//            deviceType.setVisible(false);
+            gridPane.getChildren().remove(deviceTypeLabel);
+//            deviceTypeLabel.setVisible(false);
+            gridPane.getChildren().remove(addressLabel);
+//            addressLabel.setVisible(false);
+            gridPane.getChildren().remove(address);
+//            address.setVisible(false);
+            gridPane.getChildren().remove(serialPortsLabel);
+//            serialPortsLabel.setVisible(false);
+            gridPane.getChildren().remove(serialPorts);
+//            serialPorts.setVisible(false);
             start.setVisible(true);
             start.setText("Start " + app);
             break;
         }
+        gridPane.requestLayout();
+        currentStage.sizeToScene();
     }
 
     @SuppressWarnings("unused")
@@ -181,6 +210,7 @@ public class ConfigurationDialog {
 
     public ConfigurationDialog set(Configuration conf, final Stage currentStage) {
         deviceType.setButtonCell(new DeviceDriverProviderCell());
+        
         deviceType.setCellFactory(new Callback<ListView<DeviceDriverProvider>, ListCell<DeviceDriverProvider>>() {
 
             @Override
@@ -200,7 +230,12 @@ public class ConfigurationDialog {
                 applications.getSelectionModel().select(conf.getApplication());
             }
             if (null != conf.getDeviceFactory()) {
-                deviceType.getSelectionModel().select(conf.getDeviceFactory());
+                for(DeviceDriverProvider ddp : deviceType.getItems()) {
+                    if(conf.getDeviceFactory().equals(ddp)) {
+                        deviceType.getSelectionModel().select(ddp);
+                        break;
+                    }
+                }
             }
             domainId.setText(Integer.toString(conf.getDomainId()));
 
@@ -229,7 +264,6 @@ public class ConfigurationDialog {
                 quitPressed = true;
                 currentStage.hide();
             }
-
         });
         start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -276,21 +310,24 @@ public class ConfigurationDialog {
     public boolean getQuitPressed() {
         return quitPressed;
     }
+    private Stage currentStage;
 
     public static ConfigurationDialog showDialog(Configuration configuration) throws IOException {
         FXMLLoader loader = new FXMLLoader(ConfigurationDialog.class.getResource("ConfigurationDialog.fxml"));
         Parent ui = loader.load();
         ConfigurationDialog d = loader.getController();
-        Stage currentStage = new Stage(StageStyle.UTILITY);
-        d.set(configuration, currentStage);
+        d.currentStage = new Stage(StageStyle.DECORATED);
+        d.set(configuration, d.currentStage);
 
         
 
-        currentStage.initModality(Modality.APPLICATION_MODAL);
-        currentStage.setTitle("MD PnP Demo Apps");
-        currentStage.setAlwaysOnTop(true);
-        currentStage.setScene(new Scene(ui));
-        currentStage.showAndWait();
+        d.currentStage.initModality(Modality.APPLICATION_MODAL);
+        d.currentStage.setTitle("MD PnP Demo Apps");
+        d.currentStage.setAlwaysOnTop(true);
+        d.currentStage.setScene(new Scene(ui));
+        d.currentStage.sizeToScene();
+        d.currentStage.centerOnScreen();
+        d.currentStage.showAndWait();
 
         String s = System.getProperty("mdpnp.ui");
         boolean headless = s != null && Boolean.parseBoolean(s);

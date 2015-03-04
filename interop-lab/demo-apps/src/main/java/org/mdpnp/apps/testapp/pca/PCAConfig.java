@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -59,6 +61,21 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
         }
         warningsToAlarm.setItems(FXCollections.observableList(values));
         vitalSigns.setItems(FXCollections.observableArrayList(VitalSign.values()));
+        
+        pumpList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<MyInfusionStatus>() {
+
+            @Override
+            public void changed(ObservableValue<? extends MyInfusionStatus> observable, MyInfusionStatus oldValue, MyInfusionStatus newValue) {
+                vitalChanged(model, null);
+              if (null == newValue) {
+//                  pumpProgress.setPopulated(false);
+              } else {
+//                  contentsChanged(null);
+              }
+            }
+            
+        });
+        
         return this;
     }
     
@@ -90,20 +107,7 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
 //
 //        });
 
-//        pumpList.addListSelectionListener(new ListSelectionListener() {
-//
-//            @Override
-//            public void valueChanged(ListSelectionEvent e) {
-//                vitalChanged(model, null);
-//                if (null == pumpList.getSelectedValue()) {
-//                    pumpProgress.setPopulated(false);
-//                } else {
-//                    contentsChanged(null);
-//                }
-//            }
-//
-//        });
-//        pumpList.setCellRenderer(deviceCellRenderer);
+
         buildGUI();
     }
 
@@ -214,45 +218,45 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
 
     @Override
     public void vitalChanged(VitalModel model, Vital vital) {
-//        if (model != null) {
-//            warningsToAlarm.setSelectedItem((Integer) model.getCountWarningsBecomeAlarm());
-//            ice.InfusionStatus p = pumpList.getSelectedValue();
-//
-//            if (model.isInfusionStopped()) {
-//                if (null != p) {
-//                    setStop(p, true);
-//                }
+        if (model != null) {
+            warningsToAlarm.getSelectionModel().select(model.getCountWarningsBecomeAlarm());
+            MyInfusionStatus p = pumpList.getSelectionModel().getSelectedItem();
+
+            if (model.isInfusionStopped()) {
+                if (null != p) {
+                    setStop(p, true);
+                }
 //                pumpProgress.setInterlockText(model.getInterlockText());
-//            } else {
-//                if (null != p) {
-//                    setStop(p, false);
-//                }
+            } else {
+                if (null != p) {
+                    setStop(p, false);
+                }
 //                pumpProgress.setInterlockText(null);
-//            }
-//
-//            switch (model.getState()) {
-//            case Alarm:
-//                warningStatus.setBackground(Color.RED);
-//                break;
-//            case Warning:
+            }
+
+            switch (model.getState()) {
+            case Alarm:
+//                warningStatus.setBackground(new Background(Color.RED));
+                break;
+            case Warning:
 //                warningStatus.setBackground(Color.YELLOW);
-//                break;
-//            case Normal:
+                break;
+            case Normal:
 //                warningStatus.setBackground(getBackground());
-//                break;
-//            }
-//            warningStatus.setText(model.getWarningText());
-//        }
-//        if (vital != null) {
+                break;
+            }
+            warningStatus.setText(model.getWarningText());
+        }
+        if (vital != null) {
 //            for (Component c : vitalsPanel.getComponents()) {
 //                if (c instanceof JVital && ((JVital) c).getVital().equals(vital)) {
 //                    ((JVital) c).updateData();
 //                    return;
 //                }
 //            }
-//            // fell through if the specified vital was not found
-//            updateVitals();
-//        }
+            // fell through if the specified vital was not found
+            updateVitals();
+        }
 
     }
 
@@ -290,10 +294,10 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
 //        }
 //    }
 
-    public void setStop(ice.InfusionStatus status, boolean stop) {
+    public void setStop(MyInfusionStatus status, boolean stop) {
         ice.InfusionObjective obj = new ice.InfusionObjective();
         obj.requestor = "ME";
-        obj.unique_device_identifier = status.unique_device_identifier;
+        obj.unique_device_identifier = status.getUnique_device_identifier();
         obj.stopInfusion = stop;
         objectiveWriter.write(obj, InstanceHandle_t.HANDLE_NIL);
     }

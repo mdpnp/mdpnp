@@ -1,5 +1,8 @@
 package org.mdpnp.apps.testapp.export;
 
+import java.io.IOException;
+
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
 import javax.swing.JPanel;
@@ -25,13 +28,18 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
     }
 
     @Override
-    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
-        final Subscriber participant = (Subscriber)parentContext.getBean("subscriber");
+        final Subscriber subscriber = (Subscriber)parentContext.getBean("subscriber");
 
-        final DataCollector dataCollector = new DataCollector(participant);
+        final DataCollector dataCollector = new DataCollector(subscriber);
 
-        final DataCollectorApp ui = new DataCollectorApp(dataCollector);
+        FXMLLoader loader = new FXMLLoader(DataCollectorApp.class.getResource("DataCollectorApp.fxml"));
+        final Parent ui = loader.load();
+        
+        final DataCollectorApp controller = loader.getController();
+        
+        controller.set(dataCollector);
 
         return new IceApplicationProvider.IceApp() {
 
@@ -42,7 +50,7 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
             @Override
             public Parent getUI() {
-                return null;
+                return ui;
             }
 
             @Override
@@ -61,7 +69,7 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void destroy() throws Exception {
-                ui.stop();
+                controller.stop();
             }
         };
     }

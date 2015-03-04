@@ -2,34 +2,21 @@ package org.mdpnp.apps.testapp.export;
 
 import ice.Numeric;
 
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.JTree;
-import javax.swing.table.DefaultTableModel;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TreeView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.vital.Value;
@@ -38,29 +25,63 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-
-@SuppressWarnings("serial")
-public class DataCollectorApp extends JComponent implements DataCollector.DataSampleEventListener {
+public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(DataCollectorApp.class);
 
-    DefaultTableModel tblModel = new DefaultTableModel(
-            new Object[][]{},
-            new Object[]{"DeviceId", "InstanceId", "MetricId", "Time", "Value"});
+    @FXML protected TreeView tree;
+    @FXML protected TableView<Row> table;
+    @FXML protected SplitPane masterPanel;
+    @FXML protected BorderPane persisterContainer;
+    @FXML protected Button startControl;
+    @FXML protected VBox btns;
+    
+    protected ObservableList<Row> tblModel = FXCollections.observableArrayList();
 
-    private JPanel persisterContainer = new JPanel();
+    protected static class Row {
+        private final String uniqueDeviceIdentifier, instanceId, metricId, devTime;
+        private final float value;
+        
+        public Row(final String uniqueDeviceIdentifier, final String instanceId, 
+                   final String metricId, final String devTime, final float value) {
+            this.uniqueDeviceIdentifier = uniqueDeviceIdentifier;
+            this.instanceId = instanceId;
+            this.metricId = metricId;
+            this.devTime = devTime;
+            this.value = value;
+        }
+        
+        public float getValue() {
+            return value;
+        }
+        
+        public String getDevTime() {
+            return devTime;
+        }
+        public String getInstanceId() {
+            return instanceId;
+        }
+        public String getMetricId() {
+            return metricId;
+        }
+        public String getUniqueDeviceIdentifier() {
+            return uniqueDeviceIdentifier;
+        }
+    }
+    
+    private DataCollector   dataCollector;
 
-    private final DataCollector   dataCollector;
-
-    private final DataFilter      dataFilter;
+    private DataFilter      dataFilter;
     private final DeviceTreeModel deviceTreeModel = new DeviceTreeModel();
-
-    private final AbstractAction  startControl;
 
     private List<FileAdapterApplicationFactory.PersisterUI> supportedPersisters = new ArrayList<>();
 
-    public DataCollectorApp(DataCollector dc) {
-
+    public DataCollectorApp() {
+        
+    }
+    
+    public DataCollectorApp set(DataCollector dc) {
+        table.setItems(tblModel);
         // hold on to the references so that we we can unhook the listeners at the end
         //
         dataCollector   = dc;
@@ -71,147 +92,133 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
         //
         // TODO Change this to the observablelist paradigm
 //        deviceListModel.addListDataListener(deviceTreeModel);
-        dataCollector.addDataSampleListener(deviceTreeModel);
+//        dataCollector.addDataSampleListener(deviceTreeModel);
 
         // create a data filter - it will act as as proxy between the data collector and
         // actual data consumers. all internal components with register with it for data
         // events.
         dataFilter = new DataFilter(deviceTreeModel);
-        dataCollector.addDataSampleListener(dataFilter);
+//        dataCollector.addDataSampleListener(dataFilter);
 
         // add self as a listener so that we can show some busy
         // data in the central panel.
-        dataFilter.addDataSampleListener(this);
+        dataCollector.addDataSampleListener(this);
 
-        setLayout(new BorderLayout());
-
-        JTree tree = new JTree() {
-            @Override
-            public String convertValueToText(Object value, boolean selected,
-                                             boolean expanded, boolean leaf, int row,
-                                             boolean hasFocus) {
-                return DeviceTreeModel.textForNode(value);
-
-            }
-        };
-        tree.setCellRenderer(new SelectableNode.CheckBoxNodeRenderer());
-        tree.setCellEditor(new SelectableNode.CheckBoxNodeEditor());
-        tree.setEditable(true);
-        tree.setModel(deviceTreeModel);
-
-        JTable table = new JTable(tblModel);
-
-        JSplitPane masterPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-                                                new JScrollPane(tree),
-                                                new JScrollPane(table));
-        add(masterPanel, BorderLayout.CENTER);
-
+//        JTree tree = new JTree() {
+//            @Override
+//            public String convertValueToText(Object value, boolean selected,
+//                                             boolean expanded, boolean leaf, int row,
+//                                             boolean hasFocus) {
+//                return DeviceTreeModel.textForNode(value);
+//
+//            }
+//        };
+//        tree.setCellRenderer(new SelectableNode.CheckBoxNodeRenderer());
+//        tree.setCellEditor(new SelectableNode.CheckBoxNodeEditor());
+//        tree.setEditable(true);
+//        tree.setModel(deviceTreeModel);
+//
         supportedPersisters.add(new CSVPersister());
         supportedPersisters.add(new JdbcPersister());
         supportedPersisters.add(new VerilogVCDPersister());
 
-        final CardLayout cl = new CardLayout();
-        final JPanel cards = new JPanel(cl);
-        cards.setBorder(BorderFactory.createLineBorder(Color.gray, 2, true));
 
-        startControl = new AbstractAction("") {
+//        startControl = new AbstractAction("") {
+//
+//            @Override
+//            public void actionPerformed (ActionEvent e){
+//
+//            }
+//
+//            @Override
+//            public void putValue(String key, Object newValue) {
+//                if("mdpnp.appender".equals(key)) {
+//                    // if there was one, stop it...
+//                    actionPerformed(new ActionEvent(this, 0, "Stop"));
+//                }
+//                super.putValue(key, newValue);
+//            }
+//        };
+//
+//
+//        final ButtonGroup group = new ButtonGroup();
 
-            @Override
-            public void actionPerformed (ActionEvent e){
-
-                String s = e.getActionCommand();
-                FileAdapterApplicationFactory.PersisterUI p =
-                        (FileAdapterApplicationFactory.PersisterUI)getValue("mdpnp.appender");
-
-                if("Start".equals(s) && p != null) {
-                    try {
-                        boolean v = p.start();
-                        if (v) {
-                            p.setBackground(java.awt.SystemColor.window);
-                            dataFilter.addDataSampleListener(p);
-                            putValue(Action.NAME, "Stop");
-                        } else {
-                            p.setBackground(Color.red);
-                        }
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-                else if("Stop".equals(s)) {
-                    if(p != null) {
-                        try {
-                            dataFilter.removeDataSampleListener(p);
-                            p.stop();
-
-                        } catch (Exception ex) {
-                            JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                    putValue(Action.NAME, "Start");
-                }
-            }
-
-            @Override
-            public void putValue(String key, Object newValue) {
-                if("mdpnp.appender".equals(key)) {
-                    // if there was one, stop it...
-                    actionPerformed(new ActionEvent(this, 0, "Stop"));
-                }
-                super.putValue(key, newValue);
-            }
-        };
-
-        JPanel btns = new JPanel();
-        btns.setLayout(new GridLayout(0, 1));
-        btns.setBorder(BorderFactory.createLineBorder(Color.gray, 2, true));
-
-        final ButtonGroup group = new ButtonGroup();
-
-        for (FileAdapterApplicationFactory.PersisterUI p : supportedPersisters) {
-
-            cards.add(p, p.getName());
-            JRadioButton btn = new JRadioButton(p.getName());
-            btns.add(btn);
-            group.add(btn);
-            btn.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    JRadioButton btn = (JRadioButton) e.getItem();
-                    FileAdapterApplicationFactory.PersisterUI p =
-                            (FileAdapterApplicationFactory.PersisterUI)btn.getClientProperty("mdpnp.appender");
-
-                    if (e.getStateChange() == ItemEvent.DESELECTED) {
-                        startControl.putValue("mdpnp.appender", null);
-                    } else if (e.getStateChange() == ItemEvent.SELECTED) {
-                        startControl.putValue("mdpnp.appender", p);
-                    }
-                    cl.show(cards, p.getName());
-                }
-            });
-            // link the two so that we can go from one to the other.
-            //
-            p.putClientProperty("mdpnp.appender", btn);
-            btn.putClientProperty("mdpnp.appender", p);
-        }
-
-        persisterContainer.setLayout(new BorderLayout());
-        persisterContainer.add(btns, BorderLayout.WEST);
-        persisterContainer.add(cards, BorderLayout.CENTER);
-        persisterContainer.add(new JButton(startControl), BorderLayout.EAST);
-
-        FileAdapterApplicationFactory.PersisterUI p = supportedPersisters.get(0);
-        JRadioButton btn = (JRadioButton) p.getClientProperty("mdpnp.appender");
-        group.setSelected(btn.getModel(), true);
-
-        add(persisterContainer, BorderLayout.SOUTH);
+//        for (FileAdapterApplicationFactory.PersisterUI p : supportedPersisters) {
+//
+//            cards.add(p, p.getName());
+//            JRadioButton btn = new JRadioButton(p.getName());
+//            btns.add(btn);
+//            group.add(btn);
+//            btn.addItemListener(new ItemListener() {
+//                @Override
+//                public void itemStateChanged(ItemEvent e) {
+//                    JRadioButton btn = (JRadioButton) e.getItem();
+//                    FileAdapterApplicationFactory.PersisterUI p =
+//                            (FileAdapterApplicationFactory.PersisterUI)btn.getClientProperty("mdpnp.appender");
+//
+//                    if (e.getStateChange() == ItemEvent.DESELECTED) {
+//                        startControl.putValue("mdpnp.appender", null);
+//                    } else if (e.getStateChange() == ItemEvent.SELECTED) {
+//                        startControl.putValue("mdpnp.appender", p);
+//                    }
+//                    cl.show(cards, p.getName());
+//                }
+//            });
+//            // link the two so that we can go from one to the other.
+//            //
+//            p.putClientProperty("mdpnp.appender", btn);
+//            btn.putClientProperty("mdpnp.appender", p);
+//        }
+//
+//        persisterContainer.add(btns, BorderLayout.WEST);
+//        persisterContainer.add(cards, BorderLayout.CENTER);
+//
+//        FileAdapterApplicationFactory.PersisterUI p = supportedPersisters.get(0);
+//        JRadioButton btn = (JRadioButton) p.getClientProperty("mdpnp.appender");
+//        group.setSelected(btn.getModel(), true);
+        return this;
     }
 
+    public void clickStartControl(ActionEvent evt) {
+//        String s = e.getActionCommand();
+//        FileAdapterApplicationFactory.PersisterUI p =
+//                (FileAdapterApplicationFactory.PersisterUI)getValue("mdpnp.appender");
+//
+//        if("Start".equals(s) && p != null) {
+//            try {
+//                boolean v = p.start();
+//                if (v) {
+//                    p.setBackground(java.awt.SystemColor.window);
+//                    dataFilter.addDataSampleListener(p);
+//                    putValue(Action.NAME, "Stop");
+//                } else {
+//                    p.setBackground(Color.red);
+//                }
+//            } catch (Exception ex) {
+//                JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+//            }
+//        }
+//        else if("Stop".equals(s)) {
+//            if(p != null) {
+//                try {
+//                    dataFilter.removeDataSampleListener(p);
+//                    p.stop();
+//
+//                } catch (Exception ex) {
+//                    JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+//                }
+//            }
+//            putValue(Action.NAME, "Start");
+//        }
+//
+    }
+    
     public void stop() throws Exception {
         dataCollector.removeDataSampleListener(dataFilter);
         // TODO change to observablelist concept
 //        deviceListModel.removeListDataListener(deviceTreeModel);
 
-        startControl.putValue("mdpnp.appender", null);
+//        startControl.putValue("mdpnp.appender", null);
 
         for (FileAdapterApplicationFactory.PersisterUI p : supportedPersisters) {
             dataFilter.removeDataSampleListener(p);
@@ -221,22 +228,23 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
 
     @Override
     public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
-
         // Add to the screen for visual.
         Value value = (Value)evt.getSource();
 
         Numeric n = value.getNumeric();
         long ms = DataCollector.toMilliseconds(n.device_time);
         String devTime = DataCollector.dateFormats.get().format(new Date(ms));
-        Object[] row = new Object[]{
-                value.getUniqueDeviceIdentifier(),
-                value.getInstanceId(),
-                value.getMetricId(),
-                devTime,
-                n.value
-        };
-        tblModel.insertRow(0, row);
-        tblModel.setRowCount(250);
+        final Row row = new Row(value.getUniqueDeviceIdentifier(), ""+value.getInstanceId(),
+                          value.getMetricId(), devTime, n.value);
+        Platform.runLater(new Runnable() {
+            public void run() {
+                tblModel.add(0, row);
+                if(tblModel.size()>250) {
+                    tblModel.subList(250, tblModel.size()).clear();
+                }
+                
+            }
+        });
     }
 
     public static void main(String[] args) throws Exception {
@@ -251,27 +259,27 @@ public class DataCollectorApp extends JComponent implements DataCollector.DataSa
         app.activate(context);
 //        Component component = app.getUI();
 
-        JFrame frame = new JFrame("UITest");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                try {
-                    app.stop();
-                    app.destroy();
-                    log.info("App " + app.getDescriptor().getName() + " stoped OK");
-                } catch (Exception ex) {
-                    log.error("Failed to stop the app", ex);
-                }
-                super.windowClosing(e);
-            }
-        });
-
-        frame.getContentPane().setLayout(new BorderLayout());
+//        JFrame frame = new JFrame("UITest");
+//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//        frame.addWindowListener(new WindowAdapter() {
+//            @Override
+//            public void windowClosing(WindowEvent e) {
+//                try {
+//                    app.stop();
+//                    app.destroy();
+//                    log.info("App " + app.getDescriptor().getName() + " stoped OK");
+//                } catch (Exception ex) {
+//                    log.error("Failed to stop the app", ex);
+//                }
+//                super.windowClosing(e);
+//            }
+//        });
+//
+//        frame.getContentPane().setLayout(new BorderLayout());
 //        frame.getContentPane().add(component, BorderLayout.CENTER);
-        frame.setSize(640, 480);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+//        frame.setSize(640, 480);
+//        frame.setLocationRelativeTo(null);
+//        frame.setVisible(true);
     }
 
 }
