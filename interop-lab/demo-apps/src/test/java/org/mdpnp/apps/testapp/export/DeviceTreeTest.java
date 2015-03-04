@@ -64,7 +64,7 @@ public class DeviceTreeTest {
         tree.setCellRenderer(new SelectableNode.CheckBoxNodeRenderer());
         tree.setCellEditor(new SelectableNode.CheckBoxNodeEditor());
         tree.setEditable(true);
-        tree.setModel(tm);
+//        tree.setModel(tm);
 
         JFrame frame = new JFrame("UITest");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -124,12 +124,12 @@ public class DeviceTreeTest {
 
         long now = System.currentTimeMillis();
 
-        tm.intervalAdded(new ListDataEvent(dlm, ListDataEvent.INTERVAL_ADDED, 0, 0));
-        sleep(1000);
-        tm.intervalAdded(new ListDataEvent(dlm, ListDataEvent.INTERVAL_ADDED, 1, 1));
-        sleep(1000);
-        tm.intervalAdded(new ListDataEvent(dlm, ListDataEvent.INTERVAL_ADDED, 2, 2));
-        sleep(1000);
+//        tm.intervalAdded(new ListDataEvent(dlm, ListDataEvent.INTERVAL_ADDED, 0, 0));
+//        sleep(1000);
+//        tm.intervalAdded(new ListDataEvent(dlm, ListDataEvent.INTERVAL_ADDED, 1, 1));
+//        sleep(1000);
+//        tm.intervalAdded(new ListDataEvent(dlm, ListDataEvent.INTERVAL_ADDED, 2, 2));
+//        sleep(1000);
 
         for (int n = 0; n < 100; n++) {
             long t = (n%10)*1000;
@@ -169,12 +169,12 @@ public class DeviceTreeTest {
 
         long now = System.currentTimeMillis();
 
-        tm.intervalAdded(new ListDataEvent(dlm, ListDataEvent.INTERVAL_ADDED, 0, 0));
-        sleep(1000);
-        tm.intervalAdded(new ListDataEvent(dlm, ListDataEvent.INTERVAL_ADDED, 1, 1));
-        sleep(1000);
-        tm.intervalAdded(new ListDataEvent(dlm, ListDataEvent.INTERVAL_ADDED, 2, 2));
-        sleep(1000);
+//        tm.intervalAdded(new ListDataEvent(dlm, ListDataEvent.INTERVAL_ADDED, 0, 0));
+//        sleep(1000);
+//        tm.intervalAdded(new ListDataEvent(dlm, ListDataEvent.INTERVAL_ADDED, 1, 1));
+//        sleep(1000);
+//        tm.intervalAdded(new ListDataEvent(dlm, ListDataEvent.INTERVAL_ADDED, 2, 2));
+//        sleep(1000);
 
         for (int n = 0; n < 100; n++) {
             long t = (n + (int) (Math.random() * 10))*1000;

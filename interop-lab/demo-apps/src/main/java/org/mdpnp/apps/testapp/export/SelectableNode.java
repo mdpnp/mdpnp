@@ -7,6 +7,9 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.EventObject;
 
+import javafx.scene.control.CheckBoxTreeItem;
+import javafx.scene.control.TreeItem;
+
 import javax.swing.AbstractCellEditor;
 import javax.swing.JCheckBox;
 import javax.swing.JTree;
@@ -17,21 +20,10 @@ import javax.swing.tree.TreeCellEditor;
 import javax.swing.tree.TreeCellRenderer;
 
 @SuppressWarnings("serial")
-class SelectableNode extends DefaultMutableTreeNode
+class SelectableNode extends CheckBoxTreeItem<Object>
 {
-    boolean selected;
-
     public SelectableNode(Object userObject, boolean sel) {
         super(userObject);
-        selected = sel;
-    }
-
-    public boolean isSelected() {
-        return selected;
-    }
-
-    public void setSelected(boolean v) {
-        selected = v;
     }
 
     static class CheckBoxNodeRenderer implements TreeCellRenderer {

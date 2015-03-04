@@ -15,9 +15,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TreeView;
+import javafx.scene.control.cell.CheckBoxTreeCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.slf4j.Logger;
@@ -29,7 +31,7 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(DataCollectorApp.class);
 
-    @FXML protected TreeView tree;
+    @FXML protected TreeView<Object> tree;
     @FXML protected TableView<Row> table;
     @FXML protected SplitPane masterPanel;
     @FXML protected BorderPane persisterContainer;
@@ -73,6 +75,7 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 
     private DataFilter      dataFilter;
     private final DeviceTreeModel deviceTreeModel = new DeviceTreeModel();
+    private DeviceListModel deviceListModel;
 
     private List<FileAdapterApplicationFactory.PersisterUI> supportedPersisters = new ArrayList<>();
 
@@ -80,7 +83,8 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         
     }
     
-    public DataCollectorApp set(DataCollector dc) {
+    public DataCollectorApp set(DataCollector dc, DeviceListModel deviceListModel) {
+        this.deviceListModel = deviceListModel;
         table.setItems(tblModel);
         // hold on to the references so that we we can unhook the listeners at the end
         //
@@ -90,8 +94,7 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         // add a listener to it so that we can dynamically build a tree representation
         // of that information.
         //
-        // TODO Change this to the observablelist paradigm
-//        deviceListModel.addListDataListener(deviceTreeModel);
+        deviceListModel.getContents().addListener(deviceTreeModel);
         dataCollector.addDataSampleListener(deviceTreeModel);
 
         // create a data filter - it will act as as proxy between the data collector and
@@ -102,7 +105,9 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 
         // add self as a listener so that we can show some busy
         // data in the central panel.
-        dataCollector.addDataSampleListener(this);
+        dataCollector.addDataSampleListener(dataFilter);
+        
+        dataFilter.addDataSampleListener(this);
 
 //        JTree tree = new JTree() {
 //            @Override
@@ -116,7 +121,10 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 //        tree.setCellRenderer(new SelectableNode.CheckBoxNodeRenderer());
 //        tree.setCellEditor(new SelectableNode.CheckBoxNodeEditor());
 //        tree.setEditable(true);
-//        tree.setModel(deviceTreeModel);
+        tree.setCellFactory(CheckBoxTreeCell.<Object>forTreeView());
+
+        tree.setShowRoot(false);
+        tree.setRoot(deviceTreeModel);
 //
         supportedPersisters.add(new CSVPersister());
         supportedPersisters.add(new JdbcPersister());
@@ -215,8 +223,7 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
     
     public void stop() throws Exception {
         dataCollector.removeDataSampleListener(dataFilter);
-        // TODO change to observablelist concept
-//        deviceListModel.removeListDataListener(deviceTreeModel);
+        deviceListModel.getContents().removeListener(deviceTreeModel);
 
 //        startControl.putValue("mdpnp.appender", null);
 

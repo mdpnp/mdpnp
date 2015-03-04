@@ -1,16 +1,14 @@
 package org.mdpnp.apps.testapp.export;
 
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.swing.AbstractListModel;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreePath;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.collections.ListChangeListener;
+import javafx.scene.control.CheckBoxTreeItem;
+import javafx.scene.control.TreeItem;
 
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
@@ -20,25 +18,35 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.MapMaker;
 
-@SuppressWarnings("serial")
-public class DeviceTreeModel extends DefaultTreeModel implements ListDataListener, DataCollector.DataSampleEventListener {
+public class DeviceTreeModel extends SelectableNode implements ListChangeListener<Device>, DataCollector.DataSampleEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(DeviceTreeModel.class);
 
     public DeviceTreeModel() {
-        super(new DefaultMutableTreeNode("ICE"));
+        super("ICE", true);
+        setExpanded(true);
+        setSelected(true);
     }
 
-    protected DefaultMutableTreeNode makeNewNodeFactory(DefaultMutableTreeNode parent, Object uData)
+    protected SelectableNode makeNewNodeFactory(TreeItem<Object> parent, Object uData)
     {
         boolean sel = parent instanceof SelectableNode ? ((SelectableNode)parent).isSelected() : true;
-        return new SelectableNode(uData, sel); // DefaultMutableTreeNode(uData);
+        final SelectableNode node = new SelectableNode(uData, sel);
+        node.selectedProperty().addListener(new InvalidationListener() {
+
+            @Override
+            public void invalidated(Observable observable) {
+                cascadeChildren(node, node.isSelected());
+            }
+            
+        });
+        return node;
     }
 
     public static String textForNode(Object o) {
         String txt="";
-        if(o instanceof DefaultMutableTreeNode) {
-            o = ((DefaultMutableTreeNode)o).getUserObject();
+        if(o instanceof TreeItem) {
+            o = ((TreeItem)o).getValue();
         }
         if(o instanceof Device) {
             Device d = (Device)o;
@@ -53,92 +61,30 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
         return txt;
     }
 
-    @Override
-    public void valueForPathChanged(TreePath path, Object newValue) {
-        MutableTreeNode aNode = (MutableTreeNode)path.getLastPathComponent();
-        if(aNode instanceof SelectableNode && newValue instanceof Boolean)  {
-            cascadeChildren((SelectableNode)aNode, (Boolean)newValue);
-        }
-        else {
-            super.valueForPathChanged(path, newValue);
-        }
-    }
+//    @Override
+//    public void valueForPathChanged(TreePath path, Object newValue) {
+//        MutableTreeNode aNode = (MutableTreeNode)path.getLastPathComponent();
+//        if(aNode instanceof SelectableNode && newValue instanceof Boolean)  {
+//            cascadeChildren((SelectableNode)aNode, (Boolean)newValue);
+//        }
+//        else {
+//            super.valueForPathChanged(path, newValue);
+//        }
+//    }
 
     private void cascadeChildren(SelectableNode node, boolean v) {
         node.setSelected(v);
-        nodeChanged(node);
+//        nodeChanged(node);
         if(!node.isLeaf()) {
-            Enumeration<?> iter = node.children();
-            while (iter.hasMoreElements()) {
-                SelectableNode n = (SelectableNode) iter.nextElement();
-                cascadeChildren(n, v);
+            Iterator<TreeItem<Object>> iter = node.getChildren().iterator();
+            while (iter.hasNext()) {
+                Object o = iter.next();
+                if(o instanceof SelectableNode) {
+                    SelectableNode n = (SelectableNode) o;
+                    cascadeChildren(n, v);
+                }
             }
         }
-    }
-
-    @Override
-    public void intervalAdded(final ListDataEvent e) {
-
-        log.info("Device Added", e.toString());
-
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-
-                DefaultMutableTreeNode treeRoot = (DefaultMutableTreeNode) getRoot();
-                @SuppressWarnings("unchecked")
-                AbstractListModel<Device> dlm = (AbstractListModel<Device>)e.getSource();
-
-                for(int idx=e.getIndex0(); idx<=e.getIndex1(); idx++) {
-                    Device d = dlm.getElementAt(idx);
-                    treeRoot.add(makeNewNodeFactory(treeRoot, d));
-                }
-
-                reload();  
-            }
-        });
-    }
-
-    @Override
-    public void intervalRemoved(final ListDataEvent e) {
-
-        log.info("Device Removed", e.toString());
-
-        if(e.getIndex0() != e.getIndex1())
-            throw new IllegalArgumentException("Contact had changed - the model must throw one event per deletion.");
-
-        DeviceListModel dlm = (DeviceListModel)e.getSource();
-        // This is going to need to change for JavaFX
-//        final Device d = dlm.getLastRemoved();
-//        if(d == null)
-//            throw new IllegalArgumentException("Model does not tell us which device had been deleted.");
-
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-
-                DefaultMutableTreeNode treeRoot = (DefaultMutableTreeNode) getRoot();
-                @SuppressWarnings("rawtypes")
-                Enumeration iter = treeRoot.children();
-                for(int idx=0; iter.hasMoreElements(); idx++) {
-                    DefaultMutableTreeNode n = (DefaultMutableTreeNode) iter.nextElement();
-//                    if (n.getUserObject().equals(d)) {
-//                        treeRoot.remove(n);
-//                        DeviceTreeModel.this.fireTreeNodesRemoved(
-//                                DeviceTreeModel.this,
-//                                getPathToRoot(treeRoot),
-//                                new int[]{idx},
-//                                new Object[]{n});
-//                        break;
-//                    }
-                }
-            }
-        });
-    }
-
-    @Override
-    public void contentsChanged(ListDataEvent e) {
-        // heartbeat message that we do not cared about
     }
 
     @Override
@@ -153,36 +99,28 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
         final String key = toKey(value);
 
         if (nodeLookup.get(key) == null) {
+            @SuppressWarnings("rawtypes")
+            Iterator<TreeItem<Object>> iter = getChildren().iterator();
+            while (iter.hasNext()) {
+                TreeItem<Object> dn = (TreeItem<Object>) iter.next();
+                Device d = (Device) dn.getValue();
+                if (d.getUDI().equals(value.getUniqueDeviceIdentifier())) {
+                    final TreeItem<Object> mn = ensureMetricNode(dn, value);
+                    final TreeItem<Object> in = ensureInstanceNode(mn, value);
 
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
+                    nodeLookup.put(key, in);
 
-                    DefaultMutableTreeNode treeRoot = (DefaultMutableTreeNode) getRoot();
-                    @SuppressWarnings("rawtypes")
-                    Enumeration iter = treeRoot.children();
-                    while (iter.hasMoreElements()) {
-                        DefaultMutableTreeNode dn = (DefaultMutableTreeNode) iter.nextElement();
-                        Device d = (Device) dn.getUserObject();
-                        if (d.getUDI().equals(value.getUniqueDeviceIdentifier())) {
-                            final DefaultMutableTreeNode mn = ensureMetricNode(dn, value);
-                            final DefaultMutableTreeNode in = ensureInstanceNode(mn, value);
+                    log.debug("adding to the tree: " + key);
 
-                            nodeLookup.put(key, in);
-
-                            log.debug("adding to the tree: " + key);
-
-                            int idx = mn.getIndex(in);
-                            Object path[] = getPathToRoot(mn);
-                            DeviceTreeModel.this.fireTreeNodesInserted(
-                                    DeviceTreeModel.this,
-                                    path,
-                                    new int[]{idx},
-                                    new Object[]{in});
-                        }
-                    }
+//                    int idx = mn.getIndex(in);
+//                    Object path[] = getPathToRoot(mn);
+//                    DeviceTreeModel.this.fireTreeNodesInserted(
+//                            DeviceTreeModel.this,
+//                            path,
+//                            new int[]{idx},
+//                            new Object[]{in});
                 }
-            });
+            }
         }
     }
 
@@ -190,35 +128,34 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
         return value.getUniqueDeviceIdentifier() + "/" + value.getMetricId() + "/" + value.getInstanceId();
     }
 
-    DefaultMutableTreeNode ensureMetricNode(DefaultMutableTreeNode d, Value value)
+    TreeItem<Object> ensureMetricNode(TreeItem<Object> d, Value value)
     {
         @SuppressWarnings("rawtypes")
-        Enumeration iter = d.children();
-        while (iter.hasMoreElements()) {
-            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) iter.nextElement();
-            if (tn.getUserObject().equals(value.getMetricId())) {
+        Iterator<TreeItem<Object>> iter = d.getChildren().iterator();
+        while (iter.hasNext()) {
+            TreeItem<Object> tn = (TreeItem<Object>) iter.next();
+            if (tn.getValue().equals(value.getMetricId())) {
                     return tn;
             }
         }
 
-        DefaultMutableTreeNode tn = makeNewNodeFactory(d, value.getMetricId());
-        d.add(tn);
+        TreeItem<Object> tn = makeNewNodeFactory(d, value.getMetricId());
+        d.getChildren().add(tn);
         return tn;
     }
 
-    DefaultMutableTreeNode ensureInstanceNode(DefaultMutableTreeNode d, Value value)
+    TreeItem<Object> ensureInstanceNode(TreeItem<Object> d, Value value)
     {
-        @SuppressWarnings("rawtypes")
-        Enumeration iter = d.children();
-        while (iter.hasMoreElements()) {
-            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) iter.nextElement();
-            if (tn.getUserObject().equals(value.getInstanceId())) {
+        Iterator<TreeItem<Object>> iter = d.getChildren().iterator();
+        while (iter.hasNext()) {
+            TreeItem<Object> tn = (TreeItem<Object>) iter.next();
+            if (tn.getValue().equals(value.getInstanceId())) {
                 return tn;
             }
         }
 
-        DefaultMutableTreeNode tn = makeNewNodeFactory(d, value.getInstanceId());
-        d.add(tn);
+        TreeItem<Object> tn = makeNewNodeFactory(d, value.getInstanceId());
+        d.getChildren().add(tn);
         return tn;
     }
 
@@ -227,13 +164,45 @@ public class DeviceTreeModel extends DefaultTreeModel implements ListDataListene
         // this call back is going to happen A LOT. need fast lookup of the nodes.
         //
         final String key = toKey(value);
-        DefaultMutableTreeNode node = nodeLookup.get(key);
+        TreeItem<Object> node = nodeLookup.get(key);
         if(node instanceof SelectableNode) {
             return ((SelectableNode)node).isSelected();
         }
         return false;
     }
 
-    ConcurrentMap<String, DefaultMutableTreeNode> nodeLookup = new MapMaker().weakValues().makeMap();
+    ConcurrentMap<String, TreeItem<Object>> nodeLookup = new MapMaker().weakValues().makeMap();
+
+    @Override
+    public void onChanged(javafx.collections.ListChangeListener.Change<? extends Device> c) {
+        while(c.next()) {
+            if(c.wasPermutated()) {
+                // what does this mean? indices changed?
+            } else if(c.wasUpdated()) {
+                // heartbeat message that we do not cared about
+            } else {
+                for(Device d : c.getRemoved()) {
+                    log.info("Device Removed", d.toString());
+
+                    @SuppressWarnings("rawtypes")
+                    Iterator<TreeItem<Object>> itr = getChildren().iterator();
+                    while(itr.hasNext()) {
+                        if(d.equals(itr.next())) {
+                            itr.remove();
+                        }
+                    }
+                }
+                for(Device d : c.getAddedSubList()) {
+                    log.info("Device Added", d.toString());
+                    // TODO preserve the sort order of the underlying list
+                    
+                    getChildren().add(makeNewNodeFactory(this, d));
+
+//                    reload();  
+                }
+            }
+        }
+        
+    }
 
 }

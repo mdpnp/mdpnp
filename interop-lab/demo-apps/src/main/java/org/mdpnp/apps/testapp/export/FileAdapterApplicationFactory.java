@@ -8,6 +8,7 @@ import javafx.scene.Parent;
 import javax.swing.JPanel;
 
 import org.mdpnp.apps.testapp.DataVisualization;
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.springframework.context.ApplicationContext;
 
@@ -31,15 +32,15 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
         final Subscriber subscriber = (Subscriber)parentContext.getBean("subscriber");
-
+        final DeviceListModel deviceListModel = (DeviceListModel) parentContext.getBean("deviceListModel");
         final DataCollector dataCollector = new DataCollector(subscriber);
-
+        
         FXMLLoader loader = new FXMLLoader(DataCollectorApp.class.getResource("DataCollectorApp.fxml"));
         final Parent ui = loader.load();
         
         final DataCollectorApp controller = loader.getController();
         
-        controller.set(dataCollector);
+        controller.set(dataCollector, deviceListModel);
 
         return new IceApplicationProvider.IceApp() {
 

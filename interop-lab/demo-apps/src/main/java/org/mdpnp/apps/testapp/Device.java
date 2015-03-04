@@ -302,5 +302,19 @@ public class Device {
     public final void setSerial_number(final java.lang.String serial_number) {
         this.serial_numberProperty().set(serial_number);
     }
+    
+    @Override
+    public int hashCode() {
+        return udi.hashCode();
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof Device) {
+            return udi.equals(((Device)obj).udi);
+        } else {
+            return false;
+        }
+    }
 
 }
