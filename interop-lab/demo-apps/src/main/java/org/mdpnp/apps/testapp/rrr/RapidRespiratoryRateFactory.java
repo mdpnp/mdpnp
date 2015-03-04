@@ -34,6 +34,7 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
         final DeviceListModel deviceListModel = (DeviceListModel) parentContext.getBean("deviceListModel");
         
         SampleArrayInstanceModel capnoModel =  (SampleArrayInstanceModel)  parentContext.getBean("capnoModel");
+        // TODO this should be externalized
         StringSeq params = new StringSeq();
         params.add("'"+rosetta.MDC_AWAY_CO2.VALUE+"'");
         params.add("'"+rosetta.MDC_IMPED_TTHOR.VALUE+"'");

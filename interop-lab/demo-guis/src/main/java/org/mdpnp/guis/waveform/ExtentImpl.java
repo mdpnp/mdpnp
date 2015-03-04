@@ -17,9 +17,9 @@ package org.mdpnp.guis.waveform;
  *
  */
 public class ExtentImpl implements WaveformCanvas.Extent {
-    private int minX, maxX, minY, maxY;
+    private double minX, maxX, minY, maxY;
 
-    public ExtentImpl(int minX, int maxX, int minY, int maxY) {
+    public ExtentImpl(double minX, double maxX, double minY, double maxY) {
         this.minX = minX;
         this.maxX = maxX;
         this.minY = minY;
@@ -27,22 +27,22 @@ public class ExtentImpl implements WaveformCanvas.Extent {
     }
 
     @Override
-    public int getMinX() {
+    public double getMinX() {
         return minX;
     }
 
     @Override
-    public int getMaxX() {
+    public double getMaxX() {
         return maxX;
     }
 
     @Override
-    public int getMinY() {
+    public double getMinY() {
         return minY;
     }
 
     @Override
-    public int getMaxY() {
+    public double getMaxY() {
         return maxY;
     }
 

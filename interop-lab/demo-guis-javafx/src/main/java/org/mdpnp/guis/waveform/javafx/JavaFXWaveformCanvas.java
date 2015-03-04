@@ -22,40 +22,43 @@ public class JavaFXWaveformCanvas implements WaveformCanvas {
     protected static class ExtentImpl extends Rectangle implements Extent {
 
         @Override
-        public int getMinX() {
+        public double getMinX() {
             return (int) getX();
         }
 
         @Override
-        public int getMaxX() {
+        public double getMaxX() {
             return (int) (getX()+getWidth());
         }
 
         @Override
-        public int getMinY() {
+        public double getMinY() {
             return (int) getY();
         }
 
         @Override
-        public int getMaxY() {
+        public double getMaxY() {
             return (int) (getY()+getHeight());
         }
     }
     
 
     @Override
-    public void drawLine(int x0, int y0, int x1, int y1) {
-        currentContext.strokeLine(x0, y0, x1, y1);
+    public void drawLine(double x0, double y0, double x1, double y1) {
+        double height = extent.getMaxY() - extent.getMinY();
+        currentContext.strokeLine(x0, height - y0, x1, height - y1);
     }
 
     @Override
-    public void clearRect(int x, int y, int width, int height) {
+    public void clearRect(double x, double y, double width, double height) {
+        // TODO Reorient?
         currentContext.clearRect(x, y, width, height);
     }
 
     @Override
-    public void drawString(String str, int x, int y) {
-        currentContext.strokeText(str, x, y);
+    public void drawString(String str, double x, double y) {
+        double height = extent.getMaxY() - extent.getMinY();
+        currentContext.strokeText(str, x, height-y);
     }
 
     @Override

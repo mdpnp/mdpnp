@@ -187,7 +187,7 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
                     @SuppressWarnings("rawtypes")
                     Iterator<TreeItem<Object>> itr = getChildren().iterator();
                     while(itr.hasNext()) {
-                        if(d.equals(itr.next())) {
+                        if(d.equals(itr.next().getValue())) {
                             itr.remove();
                         }
                     }

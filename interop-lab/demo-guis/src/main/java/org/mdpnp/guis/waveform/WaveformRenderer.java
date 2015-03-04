@@ -26,24 +26,24 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
 
     private WaveformCanvas.Extent extent;
     
-    private float minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
-    private int last_x = -1, last_y = -1;
+    private double minY = Double.MAX_VALUE, maxY = Double.MIN_VALUE;
+    private double last_x = -1, last_y = -1;
     private long t0, t1, t2;
     private WaveformCanvas canvas;
     private boolean continuousRescale = false;
     private boolean overwrite = true;
-    private float gapSize = 0.02f;
+    private double gapSize = 0.02;
     boolean aged_segment = true;
 
     public void setOverwrite(boolean overwrite) {
         this.overwrite = overwrite;
     }
     
-    public void setGapSize(float gapSize) {
+    public void setGapSize(double gapSize) {
         this.gapSize = gapSize;
     }
     
-    public float getGapSize() {
+    public double getGapSize() {
         return gapSize;
     }
     
@@ -58,8 +58,8 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
     
 
     public void rescaleValue() {
-        minY = Integer.MAX_VALUE;
-        maxY = Integer.MIN_VALUE;
+        minY = Double.MAX_VALUE;
+        maxY = Double.MIN_VALUE;
     }
     
     
@@ -70,13 +70,13 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
             minY = Math.min(value, minY);
             maxY = Math.max(value, maxY);
 
-            if(0==Float.compare(minY, maxY)) {
-                maxY = minY + 0.01f;
+            if(0==Double.compare(minY, maxY)) {
+                maxY = minY + 0.01;
             }
         }
-        float x_prop = -1f;
+        double x_prop = -1.0;
         if(overwrite) {
-            float split_prop = 1f * (t2 - t0) / (t2 - t1);
+            double split_prop = 1.0 * (t2 - t0) / (t2 - t1);
             if(time >= t0 && time < t2) {
                 // the newer data (left)
                 if(aged_segment) {
@@ -84,31 +84,31 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
                     last_y = -1;
                     aged_segment = false;
                 }
-                x_prop = 1f * (time - t0) / (t2-t0);
+                x_prop = 1.0 * (time - t0) / (t2-t0);
                 x_prop *= split_prop;
             } else if(time >= t1 && time < t0) {
                 // the older data (right)
-                x_prop = 1f * (time - t1) / (t0-t1);
-                x_prop *= (1f-split_prop);
+                x_prop = 1.0 * (time - t1) / (t0-t1);
+                x_prop *= (1.0-split_prop);
                 if(x_prop < gapSize) {
-                    x_prop = -1f;
+                    x_prop = -1.0;
                 } else {
                     x_prop += split_prop;
                 }
             } else {
-                x_prop = -1f;
+                x_prop = -1.0;
             }
         } else {
-            x_prop = 1f * (time - t1) / (t2-t1);
+            x_prop = 1.0 * (time - t1) / (t2-t1);
         }
         
-        float y_prop = 1f * (value - minY) / (maxY-minY);
+        double y_prop = 1.0 * (value - minY) / (maxY-minY);
         
-        int x = extent.getMinX() + (int) (x_prop * (extent.getMaxX()-extent.getMinX()));
-        int y = extent.getMinY() + (int) (y_prop * (extent.getMaxY()-extent.getMinY())) + 1;
+        double x = extent.getMinX() + x_prop * (extent.getMaxX()-extent.getMinX());
+        double y = extent.getMinY() + y_prop * (extent.getMaxY()-extent.getMinY()) + 1.0;
         
-        if(x_prop>=0f&&x_prop<1f&&y_prop>=0f&&y_prop<1f) {
-            if(last_x>=0||last_y>=0&&x>last_x) {
+        if(x_prop>=0.0&&x_prop<1.0&&y_prop>=0.0&&y_prop<1.0) {
+            if(last_x>=0.0||last_y>=0.0&&x>last_x) {
                 canvas.drawLine(last_x, last_y, x, y);
             }
             last_x = x;
@@ -138,8 +138,8 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
 
         
         if (continuousRescale) {
-            minY = Float.MAX_VALUE;
-            maxY = Float.MIN_VALUE;
+            minY = Double.MAX_VALUE;
+            maxY = Double.MIN_VALUE;
         }
         
         if(overwrite) {

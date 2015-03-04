@@ -29,6 +29,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(DataCollectorApp.class);
 
     @FXML protected TreeView<Object> tree;

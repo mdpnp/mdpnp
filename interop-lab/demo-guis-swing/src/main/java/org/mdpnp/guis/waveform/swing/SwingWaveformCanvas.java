@@ -21,22 +21,22 @@ public abstract class SwingWaveformCanvas implements WaveformCanvas {
     protected static class ExtentImpl extends Dimension implements Extent {
 
         @Override
-        public int getMinX() {
+        public double getMinX() {
             return 0;
         }
 
         @Override
-        public int getMaxX() {
+        public double getMaxX() {
             return width;
         }
 
         @Override
-        public int getMinY() {
+        public double getMinY() {
             return 0;
         }
 
         @Override
-        public int getMaxY() {
+        public double getMaxY() {
             return height;
         }
     }
@@ -46,9 +46,10 @@ public abstract class SwingWaveformCanvas implements WaveformCanvas {
     }
 
     @Override
-    public void clearRect(int x, int y, int width, int height) {
+    public void clearRect(double x, double y, double width, double height) {
         currentGraphics.setColor(component.asComponent().getBackground());
-        currentGraphics.fillRect(x, y, width, height);
+        // TODO Reorient?
+        currentGraphics.fillRect((int)x, (int)y, (int)width, (int)height);
     }
 
     @Override
@@ -69,7 +70,7 @@ public abstract class SwingWaveformCanvas implements WaveformCanvas {
             long now = System.currentTimeMillis();
             component.asComponent().getSize(extent);
             currentGraphics.setColor(component.asComponent().getBackground());
-            currentGraphics.fillRect(extent.getMinX(), extent.getMinY(), extent.getMaxX(), extent.getMaxY());
+            currentGraphics.fillRect((int)extent.getMinX(), (int)extent.getMinY(), (int)extent.getMaxX(), (int)extent.getMaxY());
             currentGraphics.setColor(component.asComponent().getForeground());
             renderer.render(component.getSource(), this, now - 2000L - timeDomain, now - 2000L);
             currentGraphics.dispose();
