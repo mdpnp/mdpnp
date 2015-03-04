@@ -13,6 +13,7 @@
 apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'launch4j'
+apply plugin: "me.champeau.jbake"
 
 defaultTasks 'build'
 
@@ -25,9 +26,22 @@ launch4j {
     opt = '-Dsun.java2d.noddraw=true'
 }
 
+jbake {
+    srcDirName = 'src/docs'
+    destDirName = 'docs'
+}
+
 buildscript {
+
+    repositories {
+        maven {
+            url="https://dl.bintray.com/calmdev/gradle-plugins"
+        }
+    }
+
     dependencies {
         classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
+        classpath "me.champeau.gradle:jbake-gradle-plugin:0.2.1"
     }
 }
 
