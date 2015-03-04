@@ -381,7 +381,9 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             numericDataWriter.write(holder.data, holder.handle);
         }
 
-    protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, float newLower, float newUpper) {
+    protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper) {
+        newLower = null == newLower ? Float.NEGATIVE_INFINITY : newLower;
+        newUpper = null == newUpper ? Float.POSITIVE_INFINITY : newUpper;
         if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
             holder.data.lower = newLower;
             holder.data.upper = newUpper;
@@ -403,24 +405,10 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             unregisterAlarmSettingsInstance(holder);
             holder = null;
         }
-        if (null != newLower && null != newUpper) {
-            if (null == holder) {
-                holder = createAlarmSettingsInstance(metric_id);
-            }
-            alarmSettingsSample(holder, newLower, newUpper);
-        } else {
-            if (null != newLower) {
-                log.warn("Not setting only a lower limit on " + metric_id + " for " + deviceIdentity.unique_device_identifier);
-            }
-            if (null != newUpper) {
-                log.warn("Not setting only an upper limit on " + metric_id + " for " + deviceIdentity.unique_device_identifier);
-            }
-            if (null != holder) {
-                unregisterAlarmSettingsInstance(holder);
-                holder = null;
-            }
-
+        if (null == holder) {
+            holder = createAlarmSettingsInstance(metric_id);
         }
+        alarmSettingsSample(holder, newLower, newUpper);
 
         return holder;
     }

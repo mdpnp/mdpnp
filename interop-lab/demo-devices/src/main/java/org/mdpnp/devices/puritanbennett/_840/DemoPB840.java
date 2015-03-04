@@ -161,7 +161,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
                         numericSample(numericInstances.get(name), parseFloat(value), 
                                 canonicalName, name, unitsMap.get(units), currentDeviceTimeAsTimeT));
             } catch (NumberFormatException nfe) {
-                log.warn("Poorly formatted numeric " + name + " " + value, nfe);
+                log.warn("Poorly formatted numeric " + name + " " + value);
+                throw nfe;
             }
         }
         
@@ -174,12 +175,13 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
                 alarmSettingsInstances.put(
                         name,
                         alarmSettingsSample(alarmSettingsInstances.get(name),
-                                parseFloat(lower, Float.MIN_VALUE),
-                                parseFloat(upper, Float.MAX_VALUE),
+                                parseFloat(lower, null),
+                                parseFloat(upper, null),
                                 name));
             } catch (NumberFormatException nfe) {
                 log.warn("Poorly formatted alarm setting " + name + " " + lower + " "
-                        + upper, nfe);
+                        + upper);
+                throw nfe;
             }
         }
         
