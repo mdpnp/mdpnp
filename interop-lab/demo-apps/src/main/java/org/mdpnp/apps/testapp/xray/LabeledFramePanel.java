@@ -39,7 +39,7 @@ import com.github.sarxos.webcam.WebcamException;
 public class LabeledFramePanel extends FramePanel {
 
     public LabeledFramePanel(ScheduledExecutorService executor) {
-        super(executor);
+//        super(executor);
     }
 
     private static final String ACQUIRING_IMAGE = "Acquiring image...";
@@ -55,55 +55,55 @@ public class LabeledFramePanel extends FramePanel {
     private static Font bigFont;
     private static final Logger log = LoggerFactory.getLogger(LabeledFramePanel.class);
 
-    @Override
-    public void paint(Graphics g) {
-        super.paint(g);
-        FontMetrics fontMetrics;
-
-        if (null == bigFont) {
-            float fontSize = 50f;
-            String s = System.getProperty("XRAYVENTFONTSIZE");
-            if (null != s) {
-                try {
-                    fontSize = Float.parseFloat(s);
-                } catch (NumberFormatException nfe) {
-                    log.error("Cannot read XRAYVENTFONTSIZE system property", nfe);
-                }
-            }
-            bigFont = g.getFont().deriveFont(fontSize);
-            // System.out.println("bigFont");
-        }
-        g.setFont(bigFont);
-
-        fontMetrics = g.getFontMetrics();
-        final int Y = 70;
-        final int X = 20;
-        int y = Y - fontMetrics.getHeight() + fontMetrics.getDescent();
-
-        switch (stateMachine.getState()) {
-        case Freezing:
-            g.setColor(transparentWhite);
-            g.fillRect(X, y, fontMetrics.stringWidth(acquiringImage), fontMetrics.getHeight());
-            g.setColor(Color.black);
-            g.drawString(acquiringImage, X, Y);
-            break;
-        case Frozen:
-            g.setColor(transparentRed);
-            g.fillRect(X, y, fontMetrics.stringWidth(imageAcquired), fontMetrics.getHeight());
-            g.setColor(Color.black);
-            g.drawString(imageAcquired, X, Y);
-            break;
-        case Thawed:
-            g.setColor(transparentWhite);
-            if (liveVideo != null) {
-                g.fillRect(X, y, fontMetrics.stringWidth(liveVideo), fontMetrics.getHeight());
-                g.setColor(Color.black);
-                g.drawString(liveVideo, X, Y);
-            }
-            break;
-        default:
-        }
-    }
+//    @Override
+//    public void paint(Graphics g) {
+//        super.paint(g);
+//        FontMetrics fontMetrics;
+//
+//        if (null == bigFont) {
+//            float fontSize = 50f;
+//            String s = System.getProperty("XRAYVENTFONTSIZE");
+//            if (null != s) {
+//                try {
+//                    fontSize = Float.parseFloat(s);
+//                } catch (NumberFormatException nfe) {
+//                    log.error("Cannot read XRAYVENTFONTSIZE system property", nfe);
+//                }
+//            }
+//            bigFont = g.getFont().deriveFont(fontSize);
+//            // System.out.println("bigFont");
+//        }
+//        g.setFont(bigFont);
+//
+//        fontMetrics = g.getFontMetrics();
+//        final int Y = 70;
+//        final int X = 20;
+//        int y = Y - fontMetrics.getHeight() + fontMetrics.getDescent();
+//
+//        switch (stateMachine.getState()) {
+//        case Freezing:
+//            g.setColor(transparentWhite);
+//            g.fillRect(X, y, fontMetrics.stringWidth(acquiringImage), fontMetrics.getHeight());
+//            g.setColor(Color.black);
+//            g.drawString(acquiringImage, X, Y);
+//            break;
+//        case Frozen:
+//            g.setColor(transparentRed);
+//            g.fillRect(X, y, fontMetrics.stringWidth(imageAcquired), fontMetrics.getHeight());
+//            g.setColor(Color.black);
+//            g.drawString(imageAcquired, X, Y);
+//            break;
+//        case Thawed:
+//            g.setColor(transparentWhite);
+//            if (liveVideo != null) {
+//                g.fillRect(X, y, fontMetrics.stringWidth(liveVideo), fontMetrics.getHeight());
+//                g.setColor(Color.black);
+//                g.drawString(liveVideo, X, Y);
+//            }
+//            break;
+//        default:
+//        }
+//    }
 
     public static void main(String[] args) throws WebcamException, TimeoutException {
         liveVideo = null;
@@ -114,7 +114,7 @@ public class LabeledFramePanel extends FramePanel {
         final FramePanel panel = new LabeledFramePanel(Executors.newSingleThreadScheduledExecutor());
         panel.setWebcam(webcam);
         top.getContentPane().setLayout(new BorderLayout());
-        top.getContentPane().add(panel, BorderLayout.CENTER);
+//        top.getContentPane().add(panel, BorderLayout.CENTER);
 
         top.addWindowListener(new WindowAdapter() {
             @Override

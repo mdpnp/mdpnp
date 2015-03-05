@@ -17,42 +17,26 @@ import ice.NumericDataReader;
 import ice.SampleArray;
 import ice.SampleArrayDataReader;
 
-import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
 import java.text.NumberFormat;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.SwingConstants;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.Slider;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
 
-import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
-import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.mdpnp.rtiapi.data.NumericInstanceModel;
@@ -68,20 +52,22 @@ import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 
-@SuppressWarnings("serial")
+import org.mdpnp.apps.testapp.MyNumeric;
+import org.mdpnp.apps.testapp.MyNumericItems;
+
 /**
  * @author Jeff Plourde
  *
  */
-public class XRayVentPanel extends JPanel {
-    private final FramePanel cameraPanel;
-    private CameraComboBoxModel cameraModel = new CameraComboBoxModel();
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    private JComboBox cameraBox = new JComboBox(cameraModel);
+public class XRayVentPanel {
+    @FXML protected FramePanel cameraPanel;
+    private CameraComboBoxModel cameraModel;
+
+    @FXML protected ComboBox<Webcam> cameraBox; // = new ComboBox(cameraModel);
 
 //    private WaveformPanel waveformPanel;
 
-    private JList<ice.Numeric> deviceList;
+    @FXML protected ListView<MyNumeric> deviceList;
 
     public enum Strategy {
         Manual, Automatic
@@ -90,31 +76,12 @@ public class XRayVentPanel extends JPanel {
     public enum TargetTime {
         EndInspiration, EndExpiration
     }
-
-    private final JButton imageButton = new JButton("IMAGE <space bar>");
-    private final JButton resetButton = new JButton("RESET <escape>");
-    private final ButtonGroup strategiesGroup = new ButtonGroup();
-    private final ButtonGroup targetTimesGroup = new ButtonGroup();
-    private static final float FONT_SIZE = 20f;
-
-    protected JPanel buildRadioButtons(Object[] values, ButtonGroup buttonGroup) {
-        JPanel panel = new JPanel(new GridLayout(values.length, 1));
-        boolean seenFirstButton = false;
-
-        for (Object o : values) {
-            JRadioButton r = new JRadioButton(o.toString());
-            r.setFont(r.getFont().deriveFont(FONT_SIZE));
-            r.setActionCommand(o.toString());
-            if (!seenFirstButton) {
-                r.setSelected(true);
-                seenFirstButton = true;
-            }
-            buttonGroup.add(r);
-            panel.add(r);
-        }
-
-        return panel;
-    }
+    
+    @FXML protected ToggleGroup strategy, targetTime;
+    @FXML protected RadioButton manual, automatic, endInspiration, endExpiration;
+    @FXML protected Button imageButton, resetButton;
+    @FXML protected Label camText;
+    @FXML protected ImageView camImage;
 
     private static final Logger log = LoggerFactory.getLogger(XRayVentPanel.class);
 
@@ -145,8 +112,8 @@ public class XRayVentPanel extends JPanel {
                     }
                 } else if (ice.MDC_START_INSPIRATORY_CYCLE.VALUE.equals(data.metric_id)) {
                     log.trace("START_INSPIRATORY_CYCLE");
-                    Strategy strategy = Strategy.valueOf(strategiesGroup.getSelection().getActionCommand());
-                    TargetTime targetTime = TargetTime.valueOf(targetTimesGroup.getSelection().getActionCommand());
+                    Strategy strategy = (Strategy) XRayVentPanel.this.strategy.getSelectedToggle().getUserData();
+                    TargetTime targetTime = (TargetTime) XRayVentPanel.this.targetTime.getSelectedToggle().getUserData();
 
                     switch (strategy) {
                     case Automatic:
@@ -200,113 +167,35 @@ public class XRayVentPanel extends JPanel {
     private boolean imageButtonDown = false;
 
     public XRayVentPanel set(final Subscriber subscriber, final EventLoop eventLoop) {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
-
-            @Override
-            public boolean dispatchKeyEvent(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                    switch (e.getID()) {
-                    case KeyEvent.KEY_PRESSED:
-                        imageButton.getModel().setSelected(true);
-                        imageButton.getModel().setPressed(true);
-                        return true;
-                    case KeyEvent.KEY_RELEASED:
-                        imageButton.getModel().setPressed(false);
-                        imageButton.getModel().setSelected(false);
-                        return true;
-                    default:
-                        return false;
-                    }
-                } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-                    switch (e.getID()) {
-                    case KeyEvent.KEY_RELEASED:
-                        resetButton.doClick();
-                        return true;
-                    default:
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
-
-            }
-        });
-
-        imageButton.getModel().addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                imageButtonDown = imageButton.getModel().isPressed();
-                if (imageButtonDown && Strategy.Manual.equals(Strategy.valueOf(strategiesGroup.getSelection().getActionCommand()))) {
-                    noSync();
-                }
-                log.info("" + imageButtonDown);
-            }
-        });
-        deviceList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                int idx = deviceList.getSelectedIndex();
-                if (idx >= 0) {
-                    ice.Numeric device = startOfBreathModel.getElementAt(idx);
-                    if (null != device) {
-                        changeSource(device.unique_device_identifier, subscriber, eventLoop);
-                    }
-                }
-            }
-        });
-
-        return this;
-    }
-
-    public XRayVentPanel() {
-        super(new BorderLayout());
-
-        JPanel panel = new JPanel(new GridLayout(2, 2));
-
-        JPanel textPanel = new JPanel(new BorderLayout());
-        JLabel text = new JLabel();
-
-        text.setText("Sources");
-        text.setFont(text.getFont().deriveFont(FONT_SIZE));
-        textPanel.add(text, BorderLayout.NORTH);
-
+        cameraPanel.set(executorNonCritical);
+        manual.setUserData(Strategy.Manual);
+        automatic.setUserData(Strategy.Automatic);
+        endInspiration.setUserData(TargetTime.EndInspiration);
+        endExpiration.setUserData(TargetTime.EndExpiration);
+        
+        
+        cameraModel = new CameraComboBoxModel();
+        cameraBox.setItems(cameraModel.getItems());
+        
         startOfBreathModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
         sampleArrayModel = new SampleArrayInstanceModelImpl(ice.SampleArrayTopic.VALUE);
         deviceNumericModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
 
-        deviceList = new JList<ice.Numeric>(startOfBreathModel);
-        // deviceList.setCellRenderer(deviceCellRenderer);
-        textPanel.add(new JScrollPane(deviceList), BorderLayout.CENTER);
-        panel.add(textPanel);
-
-        // final Border border = new LineBorder(DemoPanel.darkBlue, 2);
-
-        JPanel enclosingFramePanel = new JPanel(new BorderLayout());
-        JLabel l;
-        enclosingFramePanel.add(l = new JLabel("X-Ray Viewer"), BorderLayout.NORTH);
-        l.setFont(l.getFont().deriveFont(FONT_SIZE));
-        cameraPanel = new LabeledFramePanel(executorNonCritical);
-        enclosingFramePanel.add(cameraPanel, BorderLayout.CENTER);
-        enclosingFramePanel.add(cameraBox, BorderLayout.SOUTH);
-
-        cameraBox.addItemListener(new ItemListener() {
+        deviceList.setItems(new MyNumericItems().setModel(startOfBreathModel).getItems());
+        
+        cameraBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Webcam>() {
 
             @Override
-            public void itemStateChanged(ItemEvent e) {
+            public void changed(ObservableValue observable, Webcam oldValue, Webcam newValue) {
                 executorNonCritical.schedule(new Runnable() {
                     public void run() {
-                        cameraPanel.setWebcam((Webcam) cameraBox.getSelectedItem());
+                      cameraPanel.setWebcam((Webcam) cameraBox.getSelectionModel().getSelectedItem());                        
                     }
                 }, 0L, TimeUnit.MILLISECONDS);
-
             }
-
+            
         });
-        panel.add(enclosingFramePanel);
-
-        JPanel enclosingWaveformPanel = new JPanel(new BorderLayout());
-        enclosingWaveformPanel.add(l = new JLabel("Flow Inspiration/Expiration"), BorderLayout.NORTH);
-        l.setFont(l.getFont().deriveFont(FONT_SIZE));
+        
 
 //        waveformPanel = new SwingWaveformPanel();
 //        if (waveformPanel instanceof JComponent) {
@@ -314,103 +203,77 @@ public class XRayVentPanel extends JPanel {
 //        }
 
 //        enclosingWaveformPanel.add(waveformPanel.asComponent(), BorderLayout.CENTER);
-        panel.add(enclosingWaveformPanel);
 
-        JPanel controlsPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.ipadx = 10;
-        gbc.ipady = 0;
-        gbc.insets = new Insets(0, 10, 0, 10);
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-
-        gbc.gridwidth = 2;
-
-        controlsPanel.add(l = new JLabel("Exposure Time (seconds)"), gbc);
-        l.setFont(l.getFont().deriveFont(FONT_SIZE));
-
-        gbc.gridy++;
-
-        exposureTime.setMajorTickSpacing(100);
-        exposureTime.setSnapToTicks(true);
-        exposureTime.setName("Exposure Time");
-        exposureTime.setPaintTicks(true);
-        exposureTime.setPaintLabels(true);
-//        Dictionary dict = exposureTime.createStandardLabels(100, 0);
-        NumberFormat nf = NumberFormat.getNumberInstance();
-        nf.setMinimumFractionDigits(1);
-        nf.setMaximumFractionDigits(1);
-        exposureTime.setFont(exposureTime.getFont().deriveFont(FONT_SIZE));
-        // TOTAL KLUGE
-//        for (int i = exposureTime.getMinimum(); i <= exposureTime.getMaximum(); i += 100) {
-//            Object o = dict.get(i);
-//            if (o != null && o instanceof JLabel) {
-//                ((JLabel) o).setText(nf.format(i / 1000.0));
-//            }
-//        }
+//        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
 //
-//        exposureTime.setLabelTable(dict);
+//            @Override
+//            public boolean dispatchKeyEvent(KeyEvent e) {
+//                if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+//                    switch (e.getID()) {
+//                    case KeyEvent.KEY_PRESSED:
+//                        imageButton.getModel().setSelected(true);
+//                        imageButton.getModel().setPressed(true);
+//                        return true;
+//                    case KeyEvent.KEY_RELEASED:
+//                        imageButton.getModel().setPressed(false);
+//                        imageButton.getModel().setSelected(false);
+//                        return true;
+//                    default:
+//                        return false;
+//                    }
+//                } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+//                    switch (e.getID()) {
+//                    case KeyEvent.KEY_RELEASED:
+//                        resetButton.doClick();
+//                        return true;
+//                    default:
+//                        return false;
+//                    }
+//                } else {
+//                    return false;
+//                }
+//
+//            }
+//        });
 
-        controlsPanel.add(exposureTime, gbc);
+        imageButton.pressedProperty().addListener(new ChangeListener<Boolean>() {
 
-        gbc.gridy++;
-        gbc.gridwidth = 1;
-
-        JLabel strategyLabel = new JLabel("Synchronization Strategy");
-        strategyLabel.setFont(strategyLabel.getFont().deriveFont(FONT_SIZE));
-        strategyLabel.setHorizontalAlignment(SwingConstants.LEFT);
-        strategyLabel.setHorizontalTextPosition(SwingConstants.LEFT);
-        controlsPanel.add(strategyLabel, gbc);
-
-        gbc.gridx = 1;
-
-        JLabel targetTimeLabel = new JLabel("Phase of Ventilation");
-        targetTimeLabel.setFont(targetTimeLabel.getFont().deriveFont(FONT_SIZE));
-        targetTimeLabel.setHorizontalAlignment(SwingConstants.LEFT);
-        targetTimeLabel.setHorizontalTextPosition(SwingConstants.LEFT);
-        controlsPanel.add(targetTimeLabel, gbc);
-
-        gbc.gridy++;
-        gbc.gridx = 0;
-        controlsPanel.add(buildRadioButtons(Strategy.values(), strategiesGroup), gbc);
-        gbc.gridx++;
-
-        controlsPanel.add(buildRadioButtons(TargetTime.values(), targetTimesGroup), gbc);
-        gbc.gridy++;
-        gbc.gridx = 0;
-        controlsPanel.add(imageButton, gbc);
-
-        gbc.gridx = 1;
-        controlsPanel.add(resetButton, gbc);
-        resetButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                cameraPanel.unfreeze();
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean imageButtonDown) {
+                XRayVentPanel.this.imageButtonDown = imageButtonDown;
+                if (imageButtonDown && Strategy.Manual.equals(XRayVentPanel.this.strategy.getSelectedToggle().getUserData())) {
+                    noSync();
+                }
+            }
+            
+        });
+        deviceList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<MyNumeric>() {
+
+            @Override
+            public void changed(ObservableValue<? extends MyNumeric> observable, MyNumeric oldValue, MyNumeric newValue) {
+                changeSource(newValue.getUnique_device_identifier(), subscriber, eventLoop);
             }
         });
-        panel.add(controlsPanel);
 
-        add(panel, BorderLayout.CENTER);
-
-        // DemoPanel.setChildrenOpaque(this, false);
+        return this;
     }
 
+    public XRayVentPanel() {
+
+    }
+
+    @FXML public void clickReset(ActionEvent evt) {
+        cameraPanel.unfreeze();
+    }
+    
     public void stop() {
         executorNonCritical.schedule(new Runnable() {
             public void run() {
-//                waveformPanel.stop();
                 cameraModel.stop();
                 cameraPanel.stop();
 
             }
         }, 0L, TimeUnit.MILLISECONDS);
-//        waveformPanel.setSource(null);
         startOfBreathModel.stop();
         sampleArrayModel.stop();
         deviceNumericModel.stop();
@@ -442,16 +305,16 @@ public class XRayVentPanel extends JPanel {
         @Override
         public Void call() throws Exception {
             if (imageButtonDown) {
-                cameraPanel.freeze(exposureTime.getValue());
+                cameraPanel.freeze((long)(1000.0*exposureTime.getValue()));
             }
             return null;
         }
     };
 
-    private JSlider exposureTime = new JSlider(0, 1000, 0);
+    @FXML protected Slider exposureTime;
 
     private final void noSync() {
-        cameraPanel.freeze(exposureTime.getValue());
+        cameraPanel.freeze((long)(1000.0*exposureTime.getValue()));
 
     }
 

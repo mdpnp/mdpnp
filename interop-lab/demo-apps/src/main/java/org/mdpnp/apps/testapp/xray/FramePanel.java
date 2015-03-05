@@ -25,6 +25,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
+
 import javax.swing.JComponent;
 
 import org.mdpnp.devices.io.util.StateMachine;
@@ -33,12 +42,11 @@ import org.slf4j.LoggerFactory;
 
 import com.github.sarxos.webcam.Webcam;
 
-@SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
  *
  */
-public class FramePanel extends JComponent implements Runnable {
+public class FramePanel extends StackPane implements Runnable {
 
     public enum State {
         Freezing, Frozen, Thawed, Thawing
@@ -52,16 +60,35 @@ public class FramePanel extends JComponent implements Runnable {
         };
     };
 
-    private final ScheduledExecutorService executor;
+    private ScheduledExecutorService executor;
+    
+    private Label text = new Label();
+    private ImageView image = new ImageView();
 
     public void setWebcam(Webcam webcam) {
         this.proposedWebcam = webcam;
         log.debug("Proposed webcam:" + webcam);
     }
 
-    public FramePanel(ScheduledExecutorService executor) {
+    public FramePanel() {
+        InvalidationListener listener = new InvalidationListener() {
+
+            @Override
+            public void invalidated(Observable observable) {
+                resizeAt = System.currentTimeMillis() + RESIZE_DELAY;
+                log.trace("Resizing at : " + resizeAt);
+            }
+            
+        };
+//        heightProperty().addListener(listener);
+//        widthProperty().addListener(listener);
+        getChildren().add(text);
+        getChildren().add(image);
+    }
+    
+    public FramePanel set(ScheduledExecutorService executor) {
         this.executor = executor;
-        enableEvents(ComponentEvent.COMPONENT_RESIZED);
+        return this;
     }
 
     public void freeze() {
@@ -194,8 +221,9 @@ public class FramePanel extends JComponent implements Runnable {
         // There's been a resize
         if (System.currentTimeMillis() >= resizeAt) {
             log.trace("resizeAt has expired");
-            getSize(size);
-            if (size.width <= 0 || size.height <= 0) {
+            size.width = (int) getWidth();
+            size.height = (int) getHeight();
+            if (size.width <= 0.0 || size.height <= 0.0) {
                 log.trace("Not resizing to " + size);
                 return;
             }
@@ -208,7 +236,7 @@ public class FramePanel extends JComponent implements Runnable {
                     renderCameraGraphics = null;
                 }
                 renderCameraImage = null;
-                repaint();
+//                repaint();
 
                 if (acceptedWebcam.isOpen()) {
                     log.trace("Closing the accepted webcam for resize");
@@ -268,64 +296,65 @@ public class FramePanel extends JComponent implements Runnable {
                 renderCameraGraphics.setComposite(composite);
             } else {
                 // Add to the composite
-                renderCameraGraphics.drawImage(bufferedCameraImage, 0, 0, this);
+//                renderCameraGraphics.drawImage(bufferedCameraImage, 0, 0, this);
             }
             break;
         case Thawed:
-            bufferedCameraImage = grabFrame();
+//            bufferedCameraImage = grabFrame();
+            final BufferedImage image = acceptedWebcam.getImage();
+            if(null != image) {
+                Platform.runLater(new Runnable() {
+                    public void run() {
+                        Image mainimage = SwingFXUtils.toFXImage(image, null);
+                        FramePanel.this.image.imageProperty().set(mainimage);
+                    }
+                });
+
+                image.flush();
+
+            }
             break;
         default:
         }
 
-        repaint();
+//        repaint();
     }
 
     public BufferedImage getBufferedCameraImage() {
         return bufferedCameraImage;
     }
 
-    @Override
-    protected void processComponentEvent(ComponentEvent e) {
-        switch (e.getID()) {
-        case ComponentEvent.COMPONENT_RESIZED:
-            resizeAt = System.currentTimeMillis() + RESIZE_DELAY;
-            log.trace("Resizing at : " + resizeAt);
-            break;
-        }
-        super.processComponentEvent(e);
-    }
-
     private final Dimension size = new Dimension();
-    private final Dimension paintSize = new Dimension();
+//    private final Dimension paintSize = new Dimension();
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        getSize(paintSize);
-
-        BufferedImage imageToPaint = null;
-
-        switch (stateMachine.getState()) {
-        case Freezing:
-        case Thawing:
-        case Frozen:
-            imageToPaint = renderCameraImage;
-            break;
-        case Thawed:
-        default:
-            imageToPaint = bufferedCameraImage;
-            break;
-        }
-
-        if (paintSize.width > 0 && paintSize.height > 0) {
-            if (null != imageToPaint && imageToPaint.getWidth() > 0 && imageToPaint.getHeight() > 0) {
-                g.drawImage(imageToPaint, (paintSize.width - imageToPaint.getWidth()) / 2, (paintSize.height - imageToPaint.getHeight()) / 2, this);
-            } else {
-                Color c = g.getColor();
-                g.setColor(Color.gray);
-                g.fillRect(0, 0, paintSize.width, paintSize.height);
-                g.setColor(c);
-            }
-        }
-    }
+//    @Override
+//    protected void paintComponent(Graphics g) {
+//        super.paintComponent(g);
+//        getSize(paintSize);
+//
+//        BufferedImage imageToPaint = null;
+//
+//        switch (stateMachine.getState()) {
+//        case Freezing:
+//        case Thawing:
+//        case Frozen:
+//            imageToPaint = renderCameraImage;
+//            break;
+//        case Thawed:
+//        default:
+//            imageToPaint = bufferedCameraImage;
+//            break;
+//        }
+//
+//        if (paintSize.width > 0 && paintSize.height > 0) {
+//            if (null != imageToPaint && imageToPaint.getWidth() > 0 && imageToPaint.getHeight() > 0) {
+//                g.drawImage(imageToPaint, (paintSize.width - imageToPaint.getWidth()) / 2, (paintSize.height - imageToPaint.getHeight()) / 2, this);
+//            } else {
+//                Color c = g.getColor();
+//                g.setColor(Color.gray);
+//                g.fillRect(0, 0, paintSize.width, paintSize.height);
+//                g.setColor(c);
+//            }
+//        }
+//    }
 }
