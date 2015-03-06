@@ -12,6 +12,10 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.pca;
 
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -20,16 +24,19 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.FlowPane;
 
+import org.mdpnp.apps.testapp.vital.MultiRangeSlider;
 import org.mdpnp.apps.testapp.vital.Vital;
 
 public final class VitalView {
     private Vital vital;
     
-    @FXML protected Slider slider;
+    @FXML protected MultiRangeSlider slider;
     @FXML protected Label name;
     @FXML protected Button deleteButton;
     @FXML protected CheckBox ignoreZeroBox, requiredBox;
     @FXML protected FlowPane vitalValues;
+    
+    
 //    private final JMultiSlider slider, slider2;
 
     // private JLabel limitsLabel = new JLabel("Limits:");
@@ -41,16 +48,45 @@ public final class VitalView {
         return vital;
     }
 
-    public void deleteButtonAction(ActionEvent evt) {
-        vital.getParent().removeVital(vital);
+    @FXML public void deleteButtonAction(ActionEvent evt) {
+        vital.getParent().remove(vital);
     }
     
-    public void ignoreZeroAction(ActionEvent evt) {
+    @FXML public void ignoreZeroAction(ActionEvent evt) {
         vital.setIgnoreZero(ignoreZeroBox.isSelected());
     }
     
-    public void requiredAction(ActionEvent evt) {
+    @FXML public void requiredAction(ActionEvent evt) {
         vital.setNoValueWarning(requiredBox.isSelected());
+    }
+    
+    private static class ConcreteDoubleProperty extends SimpleDoubleProperty implements InvalidationListener {
+        private final ObjectProperty<Double> source;
+        private final double reportIfNull;
+        public ConcreteDoubleProperty(ObjectProperty<Double> source) {
+            this(source, Double.NaN);
+        }
+        
+        public ConcreteDoubleProperty(ObjectProperty<Double> source, double reportIfNull) {
+            this.source = source;
+            this.reportIfNull = reportIfNull;
+            // TODO register listener weakly
+            source.addListener(this);
+        }
+        @Override
+        public void set(double newValue) {
+            super.set(newValue);
+            source.set(newValue);
+        }
+        @Override
+        public double get() {
+            Double s = source.get();
+            return null == s ? reportIfNull : s;
+        }
+        @Override
+        public void invalidated(Observable observable) {
+            fireValueChangedEvent();
+        }
     }
     
     public VitalView set(final Vital vital) {
@@ -63,7 +99,56 @@ public final class VitalView {
         } else {
             lbl = lbl + " (" + vital.getUnits() + ")";
         }
-        name.setText(lbl);
+        name.textProperty().bind(vital.labelProperty());
+        slider.maxProperty().bind(vital.maximumProperty());
+        slider.minProperty().bind(vital.minimumProperty());
+        slider.lowestValueVisibleProperty().bind(vital.criticalLowProperty().isNotNull());
+        slider.lowerValueVisibleProperty().bind(vital.warningLowProperty().isNotNull());
+        slider.higherValueVisibleProperty().bind(vital.warningHighProperty().isNotNull());
+        slider.highestValueVisibleProperty().bind(vital.criticalHighProperty().isNotNull());
+        
+        vital.warningLowProperty().addListener(new InvalidationListener() {
+
+            @Override
+            public void invalidated(Observable observable) {
+                System.out.println("WARNING LOW CHANGED TO " + vital.getWarningLow());
+            }
+            
+        });  
+        vital.warningHighProperty().addListener(new InvalidationListener() {
+
+            @Override
+            public void invalidated(Observable observable) {
+                System.out.println("WARNING HIGH CHANGED TO " + vital.getWarningHigh());
+            }
+            
+        });
+        vital.criticalLowProperty().addListener(new InvalidationListener() {
+
+            @Override
+            public void invalidated(Observable observable) {
+                System.out.println("CRITICAL LOW CHANGED TO " + vital.getCriticalLow());
+            }
+            
+        });        
+        vital.criticalHighProperty().addListener(new InvalidationListener() {
+
+            @Override
+            public void invalidated(Observable observable) {
+                System.out.println("CRITICAL HIGH CHANGED TO " + vital.getCriticalHigh());
+            }
+            
+        });        
+        
+        
+      
+        // Cripes if you think about it the order here is really quite important since values will be clamped
+        // down
+        slider.highestValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.criticalHighProperty()));
+        slider.lowestValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.criticalLowProperty()));
+        slider.higherValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.warningHighProperty()));
+        slider.lowerValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.warningLowProperty()));
+        
 //        VitalBoundedRangeMulti range = new VitalBoundedRangeMulti(vital);
 //        slider = new JMultiSlider(range);
 //        slider.setRangeColor(0, Color.red);
@@ -79,10 +164,11 @@ public final class VitalView {
         return this;
     }
     
-    public VitalView(final Vital vital) {
+    public VitalView() {
 
 
     }
+
 
     public void setShowConfiguration(boolean showConfiguration) {
 //        slider.setDrawThumbs(showConfiguration);

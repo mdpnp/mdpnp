@@ -4,14 +4,15 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
+<?import org.mdpnp.apps.testapp.vital.MultiRangeSlider?>
 
-<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane fx:controller="org.mdpnp.apps.testapp.pca.VitalView" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
   <!-- TODO Add Nodes -->
   <left>
     <Label fx:id="name" text="Label" />
     </left>
     <center>
-    <Slider fx:id="slider" />
+    <MultiRangeSlider fx:id="slider" showTickLabels="true" showTickMarks="true" />
     </center>
    <bottom>
       <FlowPane BorderPane.alignment="CENTER">

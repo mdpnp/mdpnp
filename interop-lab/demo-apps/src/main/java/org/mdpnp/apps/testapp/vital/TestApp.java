@@ -1,6 +1,10 @@
 package org.mdpnp.apps.testapp.vital;
 
+import com.sun.javafx.Utils;
+
 import javafx.application.Application;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -11,6 +15,7 @@ import javafx.stage.Stage;
 
 public class TestApp extends Application {
     public static void main(String[] args) {
+//        System.out.println(Utils.clamp(100, 0.6, 100.0));
         launch(args);
     }
 
@@ -28,11 +33,21 @@ public class TestApp extends Application {
     
     public static class Controller {
         @FXML protected MultiRangeSlider slider;
+        
+        DoubleProperty myOtherProperty = new SimpleDoubleProperty(this, "myOtherProperty", 0.0);
         public void setup() {
             slider.lowestValueProperty().addListener(new PropertyChangeListener("lowest"));
             slider.lowerValueProperty().addListener(new PropertyChangeListener("lower"));
             slider.higherValueProperty().addListener(new PropertyChangeListener("higher"));
             slider.highestValueProperty().addListener(new PropertyChangeListener("highest"));
+            
+//            slider.setLowestValue(-1);
+//            slider.setMin(100.0);
+            
+//            myOtherProperty.bindBidirectional(slider.lowestValueProperty());
+//            slider.lowestValueProperty().bindBidirectional(myOtherProperty);
+            
+//            myOtherProperty.addListener(new PropertyChangeListener("myOtherProperty"));
         }
     }
     

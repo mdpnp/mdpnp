@@ -176,6 +176,16 @@ public class MultiRangeSlider extends Control {
      **************************************************************************/
     
     // --- low value
+    
+    private BooleanProperty lowerValueVisible = new SimpleBooleanProperty(this, "lowerValueVisible");
+    
+    public final BooleanProperty lowerValueVisibleProperty() {
+        return lowerValueVisible;
+    }    
+    
+    public boolean isLowerValueVisible() {
+        return lowerValueVisible.get();
+    }
     /**
      * The low value property represents the current position of the low value
      * thumb, and is within the allowable range as specified by the
@@ -194,6 +204,16 @@ public class MultiRangeSlider extends Control {
     public final DoubleProperty lowestValueProperty() {
         return lowestValue;
     }
+    private BooleanProperty lowestValueVisible = new SimpleBooleanProperty(this, "lowestValueVisible");
+    
+    public final BooleanProperty lowestValueVisibleProperty() {
+        return lowestValueVisible;
+    }
+    
+    public boolean isLowestValueVisible() {
+        return lowestValueVisible.get();
+    }
+    
     private DoubleProperty lowestValue = new SimpleDoubleProperty(this, "lowestValue", 0.0D) { //$NON-NLS-1$
         @Override protected void invalidated() {
             adjustLowestValues();
@@ -275,6 +295,15 @@ public class MultiRangeSlider extends Control {
     }
     
     // --- high value
+    private BooleanProperty higherValueVisible = new SimpleBooleanProperty(this, "higherValueVisible");
+    
+    public final BooleanProperty higherValueVisibleProperty() {
+        return higherValueVisible;
+    }
+    
+    public final boolean isHigherValueVisible() {
+        return higherValueVisible.get();
+    }
     /**
      * The high value property represents the current position of the high value
      * thumb, and is within the allowable range as specified by the
@@ -297,6 +326,16 @@ public class MultiRangeSlider extends Control {
             return "higherValue"; //$NON-NLS-1$
         }
     };
+    
+    private BooleanProperty highestValueVisible = new SimpleBooleanProperty(this, "highestValueVisible");
+    
+    public final BooleanProperty highestValueVisibleProperty() {
+        return highestValueVisible;
+    }
+    
+    public boolean isHighestValueVisible() {
+        return highestValueVisible.get();
+    }
     
     public final DoubleProperty highestValueProperty() {
         return highestValue;
@@ -582,6 +621,7 @@ public class MultiRangeSlider extends Control {
         if (min == null) {
             min = new DoublePropertyBase(0) {
                 @Override protected void invalidated() {
+                    System.out.println("In minProperty invalidate " + get() + " " + getMax());
                     if (get() > getMax()) {
                         setMax(get());
                     }
@@ -977,7 +1017,7 @@ public class MultiRangeSlider extends Control {
          * wrong, and therefore force the lowValue to change in a wrong way
          * which may end up in an infinite loop.
          */
-        } else if (getLowestValue() >= getLowerValue() && (getLowerValue() >= getMin() && getLowerValue() <= getMax())) {
+        } else if (getLowestValue() > getLowerValue() && (getLowerValue() >= getMin() && getLowerValue() <= getMax())) {
             double value = Utils.clamp(getMin(), getLowestValue(), getLowerValue());
             setLowestValue(value);
         }
@@ -989,6 +1029,7 @@ public class MultiRangeSlider extends Control {
          */
         if (getLowerValue() < getMin() || getLowerValue() > getMax()) {
             double value = Utils.clamp(getMin(), getLowerValue(), getMax());
+            System.out.println(getMin() + " " + getLowerValue() + " " + getMax() + " --> " + value);
             setLowerValue(value);
         /**
          * If the LowValue seems right, we check if it's not superior to
@@ -997,10 +1038,11 @@ public class MultiRangeSlider extends Control {
          * wrong, and therefore force the lowValue to change in a wrong way
          * which may end up in an infinite loop.
          */
-        } else if (getLowerValue() >= getHigherValue() && (getHigherValue() >= getMin() && getHigherValue() <= getMax())) {
+        } else if (getLowerValue() > getHigherValue() && (getHigherValue() >= getMin() && getHigherValue() <= getMax())) {
             double value = Utils.clamp(getMin(), getLowerValue(), getHigherValue());
+            System.out.println(getMin() + " " + getLowerValue() + " " + getMax() + " --> " + value);
             setLowerValue(value);
-        } else if (getLowerValue() <= getLowestValue() && (getLowestValue() >= getMin() && getHigherValue() <= getMax())) {
+        } else if (getLowerValue() < getLowestValue() && (getLowestValue() >= getMin() && getHigherValue() <= getMax())) {
             double value = Utils.clamp(getLowestValue(), getLowerValue(), getHigherValue());
             setLowerValue(value);
         }

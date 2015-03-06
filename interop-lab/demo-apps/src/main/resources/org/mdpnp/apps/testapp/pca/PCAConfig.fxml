@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane prefHeight="301.0" prefWidth="517.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.mdpnp.apps.testapp.pca.PCAConfig">
+<BorderPane prefHeight="301.0" prefWidth="517.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pca.PCAConfig">
   <bottom>
     <FlowPane prefHeight="-1.0" prefWidth="-1.0">
       <children>
@@ -84,4 +84,7 @@
       </right>
     </BorderPane>
   </top>
+   <center>
+      <VBox fx:id="vitalsPanel" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER" />
+   </center>
 </BorderPane>

@@ -12,6 +12,17 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.LongProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyLongProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
+
 
 public interface Vital {
     /**
@@ -19,6 +30,7 @@ public interface Vital {
      * 
      * @return
      */
+    ReadOnlyStringProperty labelProperty();
     String getLabel();
 
     /**
@@ -26,6 +38,7 @@ public interface Vital {
      * 
      * @return
      */
+    ReadOnlyStringProperty unitsProperty();
     String getUnits();
 
     /**
@@ -33,6 +46,7 @@ public interface Vital {
      * 
      * @return
      */
+    ReadOnlyObjectProperty<String[]> metricIdsProperty();
     String[] getMetricIds();
 
     /**
@@ -40,17 +54,21 @@ public interface Vital {
      * 
      * @return
      */
-    float getMinimum();
+    ReadOnlyDoubleProperty minimumProperty();
+    double getMinimum();
 
     /**
      * The maximum value in the domain of values for this vital sign
      * 
      * @return
      */
-    float getMaximum();
+    ReadOnlyDoubleProperty maximumProperty();
+    double getMaximum();
 
+    ObjectProperty<Long> valueMsWarningLowProperty();
     Long getValueMsWarningLow();
 
+    ObjectProperty<Long> valueMsWarningHighProperty();
     Long getValueMsWarningHigh();
 
     /**
@@ -59,7 +77,8 @@ public interface Vital {
      * 
      * @return
      */
-    Float getWarningLow();
+    ObjectProperty<Double> warningLowProperty();
+    Double getWarningLow();
 
     /**
      * A Value at or above this warning high will generate a warning Further
@@ -67,35 +86,40 @@ public interface Vital {
      * 
      * @return
      */
-    Float getWarningHigh();
+    ObjectProperty<Double> warningHighProperty();
+    Double getWarningHigh();
 
     /**
      * A Value at or below this critical low will generate an alarm
      * 
      * @return
      */
-    Float getCriticalLow();
+    ObjectProperty<Double> criticalLowProperty();
+    Double getCriticalLow();
 
     /**
      * A Value at or above this critical high will generate an alarm
      * 
      * @return
      */
-    Float getCriticalHigh();
+    ObjectProperty<Double> criticalHighProperty();
+    Double getCriticalHigh();
 
     /**
      * Used for display purposes (warning high - warning low) / 2 + warning high
      * 
      * @return
      */
-    float getDisplayMaximum();
+    ReadOnlyDoubleProperty displayMaximumProperty();
+    double getDisplayMaximum();
 
     /**
      * Used for display purposes warning low - (warning high - warning low) / 2
      * 
      * @return
      */
-    float getDisplayMinimum();
+    ReadOnlyDoubleProperty displayMinimumProperty();
+    double getDisplayMinimum();
 
     /**
      * The display minimum formatted as a string and filtering out values below
@@ -103,6 +127,7 @@ public interface Vital {
      * 
      * @return
      */
+    ReadOnlyStringProperty labelMinimumProperty();
     String getLabelMinimum();
 
     /**
@@ -111,6 +136,7 @@ public interface Vital {
      * 
      * @return
      */
+    ReadOnlyStringProperty labelMaximumProperty();
     String getLabelMaximum();
 
     /**
@@ -118,6 +144,7 @@ public interface Vital {
      * 
      * @return
      */
+    BooleanProperty noValueWarningProperty();
     boolean isNoValueWarning();
 
     void setNoValueWarning(boolean noValueWarning);
@@ -127,19 +154,20 @@ public interface Vital {
      * 
      * @return
      */
+    LongProperty warningAgeBecomesAlarmProperty();
     long getWarningAgeBecomesAlarm();
 
     void setWarningAgeBecomesAlarm(long warningAgeBecomesAlarm);
 
     void destroy();
 
-    void setWarningLow(Float low);
+    void setWarningLow(Double low);
 
-    void setWarningHigh(Float high);
+    void setWarningHigh(Double high);
 
-    void setCriticalLow(Float low);
+    void setCriticalLow(Double low);
 
-    void setCriticalHigh(Float high);
+    void setCriticalHigh(Double high);
 
     void setValueMsWarningLow(Long low);
 
@@ -149,10 +177,13 @@ public interface Vital {
 
     VitalModel getParent();
 
+    ReadOnlyBooleanProperty anyOutOfBoundsProperty();
     boolean isAnyOutOfBounds();
 
+    ReadOnlyIntegerProperty countOutOfBoundsProperty();
     int countOutOfBounds();
 
+    BooleanProperty ignoreZeroProperty();
     boolean isIgnoreZero();
 
     void setIgnoreZero(boolean ignoreZero);

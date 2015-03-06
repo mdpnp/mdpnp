@@ -7,6 +7,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import org.mdpnp.apps.testapp.xray.FramePanel?>
+<?import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane?>
 
 <GridPane prefHeight="461.0" prefWidth="598.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.xray.XRayVentPanel">
    <rowConstraints>
@@ -49,6 +50,9 @@
          <top>
             <Label text="Flow Inspiration/Expiration" BorderPane.alignment="CENTER" />
          </top>
+         <center>
+         <JavaFXWaveformPane fx:id="waveformPanel"/>
+         </center>
       </BorderPane>
       <VBox GridPane.columnIndex="1" GridPane.rowIndex="1">
          <children>

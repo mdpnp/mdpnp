@@ -109,13 +109,13 @@ public class PCAPanel implements VitalModelListener {
     private VitalModel model;
 
     public void setModel(VitalModel vitalModel, InfusionStatusInstanceModel pumpModel) {
-        if (this.model != null) {
-            this.model.removeListener(this);
-        }
+//        if (this.model != null) {
+//            this.model.removeListener(this);
+//        }
         this.model = vitalModel;
-        if (this.model != null) {
-            this.model.addListener(this);
-        }
+//        if (this.model != null) {
+//            this.model.addListener(this);
+//        }
 
 //        vitalMonitor.setModel(vitalModel);
     }

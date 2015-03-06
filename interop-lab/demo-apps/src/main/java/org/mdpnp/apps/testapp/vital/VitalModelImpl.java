@@ -12,8 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
-import ice.DeviceConnectivity;
-import ice.DeviceIdentity;
 import ice.Numeric;
 import ice.NumericDataReader;
 import ice.NumericSeq;
@@ -28,6 +26,19 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.ModifiableObservableListBase;
 
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
@@ -58,18 +69,16 @@ import com.rti.dds.topic.TopicDescription;
  * @author Jeff Plourde
  *
  */
-public class VitalModelImpl implements VitalModel {
+public class VitalModelImpl extends ModifiableObservableListBase<Vital> implements VitalModel {
 
     private final List<Vital> vitals = Collections.synchronizedList(new ArrayList<Vital>());
-
-    private VitalModelListener[] listeners = new VitalModelListener[0];
 
     protected NumericDataReader numericReader;
 
     protected Subscriber subscriber;
     protected Publisher publisher;
     protected EventLoop eventLoop;
-    private State state = State.Normal;
+    private ObjectProperty<State> state = new SimpleObjectProperty<State>(this, "state", State.Normal);
 
     private static final Logger log = LoggerFactory.getLogger(VitalModelImpl.class);
 
@@ -132,9 +141,6 @@ public class VitalModelImpl implements VitalModel {
                         }
                     }
                 }
-                if (updated) {
-                    fireVitalChanged(v);
-                }
             }
         }
     }
@@ -178,7 +184,6 @@ public class VitalModelImpl implements VitalModel {
                             va.updateFrom(n, si);
                             v.getValues().add(va);
                         }
-                        fireVitalChanged(v);
                     }
                 }
             }
@@ -186,110 +191,12 @@ public class VitalModelImpl implements VitalModel {
     }
 
     @Override
-    public int getCount() {
-        return vitals.size();
-    }
-
-    @Override
-    public Vital getVital(int i) {
-        return vitals.get(i);
-    }
-
-    @Override
-    public Vital addVital(String label, String units, String[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum,
-            float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
+    public Vital addVital(String label, String units, String[] names, Double low, Double high, Double criticalLow, Double criticalHigh, double minimum,
+            double maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
         Vital v = new VitalImpl(this, label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow,
                 valueMsWarningHigh, color);
-        vitals.add(v);
-//        addQueryConditions(v);
-        fireVitalAdded(v);
+        add(v);
         return v;
-    }
-
-    @Override
-    public boolean removeVital(Vital vital) {
-        boolean r = vitals.remove(vital);
-        if (r) {
-//            removeQueryConditions(vital);
-
-            ListIterator<Value> li = vital.getValues().listIterator();
-            while (li.hasNext()) {
-//                Value v = li.next();
-                li.next();
-                li.remove();
-            }
-            vital.destroy();
-            fireVitalRemoved(vital);
-        }
-        return r;
-    }
-
-    @Override
-    public Vital removeVital(int i) {
-        Vital v = vitals.remove(i);
-        if (v != null) {
-//            removeQueryConditions(v);
-
-            ListIterator<Value> li = v.getValues().listIterator();
-            while (li.hasNext()) {
-//                Value va = li.next();
-                li.next();
-                li.remove();
-            }
-            v.destroy();
-            fireVitalRemoved(v);
-        }
-        return v;
-    }
-
-    @Override
-    public synchronized void addListener(VitalModelListener vitalModelListener) {
-        VitalModelListener[] oldListeners = this.listeners;
-        VitalModelListener[] newListeners = new VitalModelListener[oldListeners.length + 1];
-        System.arraycopy(oldListeners, 0, newListeners, 0, oldListeners.length);
-        newListeners[newListeners.length - 1] = vitalModelListener;
-        this.listeners = newListeners;
-    }
-
-    @Override
-    public synchronized boolean removeListener(VitalModelListener vitalModelListener) {
-        VitalModelListener[] oldListeners = this.listeners;
-        List<VitalModelListener> newListeners = new ArrayList<VitalModelListener>();
-        boolean found = false;
-        for (VitalModelListener vml : oldListeners) {
-            if (vitalModelListener.equals(vml)) {
-                found = true;
-            } else {
-                newListeners.add(vml);
-            }
-        }
-
-        this.listeners = newListeners.toArray(new VitalModelListener[0]);
-        return found;
-    }
-
-    protected void fireVitalAdded(Vital v) {
-        updateState();
-        VitalModelListener[] listeners = this.listeners;
-        for (VitalModelListener vml : listeners) {
-            vml.vitalAdded(this, v);
-        }
-    }
-
-    protected void fireVitalRemoved(Vital v) {
-        updateState();
-        VitalModelListener[] listeners = this.listeners;
-        for (VitalModelListener vml : listeners) {
-            vml.vitalRemoved(this, v);
-        }
-    }
-
-    protected void fireVitalChanged(Vital v) {
-        updateState();
-        VitalModelListener[] listeners = this.listeners;
-        for (VitalModelListener vml : listeners) {
-            vml.vitalChanged(this, v);
-        }
     }
 
     public Device getDevice(String udi) {
@@ -299,11 +206,6 @@ public class VitalModelImpl implements VitalModel {
         DeviceListModel deviceListModel = this.deviceListModel;
         return null == deviceListModel ? null : deviceListModel.getByUniqueDeviceIdentifier(udi);
     }
-
-//    public DeviceIcon getDeviceIcon(String udi) {
-//        Device device = getDevice(udi);
-//        return null == device ? null : device.getIcon();
-//    }
 
     @Override
     public void start(final Subscriber subscriber, final Publisher publisher, final EventLoop eventLoop) {
@@ -341,7 +243,7 @@ public class VitalModelImpl implements VitalModel {
             eventLoop.doLater(new Runnable() {
                 public void run() {
                     while (!vitals.isEmpty()) {
-                        removeVital(0);
+                        remove(0);
                     }
                     eventLoop.removeHandler(numericReader.get_statuscondition());
                     publisher.delete_datawriter(writer);
@@ -364,23 +266,23 @@ public class VitalModelImpl implements VitalModel {
         Publisher pub = p.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         VitalModel vm = new VitalModelImpl(null);
 
-        vm.addListener(new VitalModelListener() {
-
-            @Override
-            public void vitalRemoved(VitalModel model, Vital vital) {
-                System.out.println("Removed:" + vital);
-            }
-
-            @Override
-            public void vitalChanged(VitalModel model, Vital vital) {
-                System.out.println(new Date() + " Changed:" + vital);
-            }
-
-            @Override
-            public void vitalAdded(VitalModel model, Vital vital) {
-                System.out.println("Added:" + vital);
-            }
-        });
+//        vm.addListener(new VitalModelListener() {
+//
+//            @Override
+//            public void vitalRemoved(VitalModel model, Vital vital) {
+//                System.out.println("Removed:" + vital);
+//            }
+//
+//            @Override
+//            public void vitalChanged(VitalModel model, Vital vital) {
+//                System.out.println(new Date() + " Changed:" + vital);
+//            }
+//
+//            @Override
+//            public void vitalAdded(VitalModel model, Vital vital) {
+//                System.out.println("Added:" + vital);
+//            }
+//        });
         // vm.addVital("Heart Rate", "bpm", new int[] {
         // ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 20, 200, 10, 210, 0, 200);
         EventLoop eventLoop = new EventLoop();
@@ -396,8 +298,14 @@ public class VitalModelImpl implements VitalModel {
     private String[] advisories = new String[0];
     private final Date now = new Date();
     private final StringBuilder warningTextBuilder = new StringBuilder();
-    private String warningText = "", interlockText = DEFAULT_INTERLOCK_TEXT;
-    private boolean interlock = false;
+    private StringProperty warningText = new SimpleStringProperty(this, "warningText", "");
+    private StringProperty interlockText = new SimpleStringProperty(this, "interlockText", DEFAULT_INTERLOCK_TEXT);
+    private BooleanProperty interlock = new SimpleBooleanProperty(this, "interlock", false);
+   
+    @Override
+    public ReadOnlyBooleanProperty isInfusionStoppedProperty() {
+        return interlock;
+    }
 
     // TODO I synchronized this because I saw a transient concurrent mod
     // exception
@@ -405,7 +313,7 @@ public class VitalModelImpl implements VitalModel {
     // should be calling it
     // am I mixing AWT and ELH calls?
     private final synchronized void updateState() {
-        int N = getCount();
+        int N = size();
 
         while (advisories.length < N) {
             advisories = new String[2 * N + 1];
@@ -416,7 +324,7 @@ public class VitalModelImpl implements VitalModel {
         int countWarnings = 0;
 
         for (int i = 0; i < N; i++) {
-            Vital vital = getVital(i);
+            Vital vital = get(i);
             advisories[i] = null;
             if (vital.isNoValueWarning() && vital.getValues().isEmpty()) {
                 countWarnings++;
@@ -444,27 +352,27 @@ public class VitalModelImpl implements VitalModel {
                 }
             }
             warningTextBuilder.append("at ").append(time);
-            warningText = warningTextBuilder.toString();
-            state = State.Warning;
+            warningText.set(warningTextBuilder.toString());
+            state.set(State.Warning);
         } else {
-            warningText = "";
-            state = State.Normal;
+            warningText.set("");
+            state.set(State.Normal);
         }
 
-        if (countWarnings >= countWarningsBecomeAlarm) {
-            state = State.Alarm;
+        if (countWarnings >= getCountWarningsBecomeAlarm()) {
+            state.set(State.Alarm);
             stopInfusion("Pump Stopped\r\n" + warningText + "\r\nnurse alerted");
         } else {
             for (int i = 0; i < N; i++) {
-                Vital vital = getVital(i);
+                Vital vital = get(i);
                 for (Value val : vital.getValues()) {
                     if (val.isAtOrBelowCriticalLow()) {
-                        state = State.Alarm;
+                        state.set(State.Alarm);
                         stopInfusion("Pump Stopped\r\n- low " + vital.getLabel() + " " + val.getNumeric().value + " " + vital.getUnits() + "\r\nat "
                                 + time + "\r\nnurse alerted");
                         break;
                     } else if (val.isAtOrAboveCriticalHigh()) {
-                        state = State.Alarm;
+                        state.set(State.Alarm);
                         stopInfusion("Pump Stopped\r\n- high " + vital.getLabel() + " " + +val.getNumeric().value + " " + vital.getUnits()
                                 + "\r\nat " + time + "\r\nnurse alerted");
                         break;
@@ -476,55 +384,101 @@ public class VitalModelImpl implements VitalModel {
     }
 
     private final void stopInfusion(String str) {
-        if (!interlock) {
-            interlock = true;
-            interlockText = str;
+        if (!interlock.get()) {
+            interlock.set(true);
+            interlockText.set(str);
         }
     }
-
+    
     @Override
-    public State getState() {
+    public ReadOnlyObjectProperty<State> stateProperty() {
         return state;
     }
 
     @Override
-    public String getInterlockText() {
+    public State getState() {
+        return state.get();
+    }
+    
+    @Override
+    public ReadOnlyStringProperty interlockTextProperty() {
         return interlockText;
     }
 
     @Override
-    public String getWarningText() {
+    public String getInterlockText() {
+        return interlockText.get();
+    }
+
+    @Override
+    public ReadOnlyStringProperty warningTextProperty() {
         return warningText;
+    }
+    @Override
+    public String getWarningText() {
+        return warningText.get();
     }
 
     @Override
     public void resetInfusion() {
-        interlock = false;
-        interlockText = DEFAULT_INTERLOCK_TEXT;
-        fireVitalChanged(null);
+        interlock.set(false);
+        interlockText.set(DEFAULT_INTERLOCK_TEXT);
     }
 
     @Override
     public boolean isInfusionStopped() {
-        return interlock;
+        return interlock.get();
     }
 
-    private int countWarningsBecomeAlarm = 2;
+    private IntegerProperty countWarningsBecomeAlarm = new SimpleIntegerProperty(this, "countWarningsBecomeAlarm", 2);
 
     @Override
+    public IntegerProperty countWarningsBecomeAlarmProperty() {
+        return countWarningsBecomeAlarm;
+    }
+    
+    @Override
     public void setCountWarningsBecomeAlarm(int countWarningsBecomeAlarm) {
-        this.countWarningsBecomeAlarm = countWarningsBecomeAlarm;
-        fireVitalChanged(null);
+        this.countWarningsBecomeAlarm.set(countWarningsBecomeAlarm);
     }
 
     @Override
     public int getCountWarningsBecomeAlarm() {
-        return countWarningsBecomeAlarm;
+        return countWarningsBecomeAlarm.get();
     }
 
     final DeviceListModel deviceListModel;
 
     public VitalModelImpl(DeviceListModel deviceListModel) {
         this.deviceListModel = deviceListModel;
+    }
+
+    @Override
+    public Vital get(int index) {
+        return vitals.get(index);
+    }
+
+    @Override
+    public int size() {
+        return vitals.size();
+    }
+
+    @Override
+    protected void doAdd(int index, Vital element) {
+        vitals.add(index, element);
+    }
+
+    @Override
+    protected Vital doSet(int index, Vital element) {
+        return vitals.set(index, element);
+    }
+
+    @Override
+    protected Vital doRemove(int index) {
+        Vital v = vitals.remove(index);
+        if(null != v) {
+            v.destroy();
+        }
+        return v;
     }
 }

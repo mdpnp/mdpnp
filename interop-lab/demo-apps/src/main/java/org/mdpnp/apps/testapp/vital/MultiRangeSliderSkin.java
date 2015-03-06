@@ -10,6 +10,7 @@ import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild
 import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_MID;
 import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_HIGHER;
 import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_HIGHEST;
+
 import org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild;
 
 import javafx.beans.binding.ObjectBinding;
@@ -24,6 +25,7 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.StackPane;
 import javafx.util.Callback;
 
@@ -86,6 +88,10 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         registerChangeListener(rangeSlider.lowerValueProperty(), "LOWER_VALUE"); //$NON-NLS-1$
         registerChangeListener(rangeSlider.higherValueProperty(), "HIGHER_VALUE"); //$NON-NLS-1$
         registerChangeListener(rangeSlider.highestValueProperty(), "HIGHEST_VALUE"); //$NON-NLS-1$
+        registerChangeListener(rangeSlider.lowestValueVisibleProperty(), "LOWEST_VALUE_VISIBLE"); //$NON-NLS-1$
+        registerChangeListener(rangeSlider.lowerValueVisibleProperty(), "LOWER_VALUE_VISIBLE"); //$NON-NLS-1$
+        registerChangeListener(rangeSlider.higherValueVisibleProperty(), "HIGHER_VALUE_VISIBLE"); //$NON-NLS-1$
+        registerChangeListener(rangeSlider.highestValueVisibleProperty(), "HIGHEST_VALUE_VISIBLE"); //$NON-NLS-1$
         registerChangeListener(rangeSlider.minProperty(), "MIN"); //$NON-NLS-1$
         registerChangeListener(rangeSlider.maxProperty(), "MAX"); //$NON-NLS-1$
         registerChangeListener(rangeSlider.orientationProperty(), "ORIENTATION"); //$NON-NLS-1$
@@ -474,8 +480,8 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         } 
         else  {
             getChildren().clear();
-            getChildren().addAll(tickLine, track, rangeBarLowest, rangeBarLower, rangeBarMid, rangeBarHigher, rangeBarHighest, lowestThumb);
-//            tickLine = null;
+            getChildren().addAll(track, rangeBarLowest, rangeBarLower, rangeBarMid, rangeBarHigher, rangeBarHighest, lowestThumb);
+            tickLine = null;
         }
 
         getSkinnable().requestLayout();
@@ -483,6 +489,7 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
 
     @Override protected void handleControlPropertyChanged(String p) {
         super.handleControlPropertyChanged(p);
+        MultiRangeSlider slider = (MultiRangeSlider) getSkinnable();
         if ("ORIENTATION".equals(p)) { //$NON-NLS-1$
             orientation = getSkinnable().getOrientation();
             if (showTickMarks && tickLine != null) {
@@ -535,7 +542,15 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
             positionHighestThumb();
             rangeBarHigher.resize(rangeEndHigher - rangeStartHigher, rangeBarHigher.getHeight());
             rangeBarHighest.resizeRelocate(rangeStartHighest, rangeBarHighest.getLayoutY(), 
-                    rangeEndHighest - rangeStartHighest, rangeBarHighest.getHeight());            
+                    rangeEndHighest - rangeStartHighest, rangeBarHighest.getHeight());    
+        } else if("LOWEST_VALUE_VISIBLE".equals(p)) {
+            lowestThumb.setVisible(slider.isLowestValueVisible());
+        } else if("LOWER_VALUE_VISIBLE".equals(p)) {
+            lowerThumb.setVisible(slider.isLowerValueVisible());
+        } else if("HIGHER_VALUE_VISIBLE".equals(p)) {
+            higherThumb.setVisible(slider.isHigherValueVisible());
+        } else if("HIGHEST_VALUE_VISIBLE".equals(p)) {
+            highestThumb.setVisible(slider.isHighestValueVisible());
         } else if ("SHOW_TICK_MARKS".equals(p) || "SHOW_TICK_LABELS".equals(p)) { //$NON-NLS-1$ //$NON-NLS-2$
             if (!getChildren().contains(lowerThumb))
                 getChildren().add(lowerThumb);
@@ -564,16 +579,30 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
     private void positionLowestThumb() {
         MultiRangeSlider s = getSkinnable();
         boolean horizontal = isHorizontal();
-        double lx = (horizontal) ? trackStart + (((trackLength * ((s.getLowestValue() - s.getMin()) /
-                (getMaxMinusMinNoZero()))) - thumbWidth/2)) : lowestThumbPos;
+        BackgroundFill fill = track.getBackground().getFills().isEmpty() ? null : track.getBackground().getFills().get(0);
+        double pad = null == fill ? 0 : (horizontal ? fill.getRadii().getTopLeftHorizontalRadius() : fill.getRadii().getTopLeftVerticalRadius());
+        
+        double thumbWidth = lowestThumb.getWidth();
+        double thumbHeight = lowestThumb.getHeight();
+        highestThumb.resize(thumbWidth, thumbHeight);
+ 
+        double trackStart = horizontal ? track.getLayoutX() : track.getLayoutY();
+        trackStart += pad;
+        double trackLength = horizontal ? track.getWidth() : track.getHeight();
+        trackLength -= 2 * pad;
+        
+        double lx = (horizontal) ? trackStart + (
+                ((trackLength * ((s.getLowestValue() - s.getMin()) /
+                 (getMaxMinusMinNoZero()))) - thumbWidth/2)) 
+                 : lowestThumbPos;
         double ly = (horizontal) ? lowestThumbPos :
             getSkinnable().getInsets().getTop() + trackLength - (trackLength * ((s.getLowestValue() - s.getMin()) /
                 (getMaxMinusMinNoZero()))); //  - thumbHeight/2
         lowestThumb.setLayoutX(lx);
         lowestThumb.setLayoutY(ly);
         if (horizontal) rangeStartLowest = trackStart; else rangeEndLowest = trackStart + trackLength;
-        if (horizontal) rangeEndLowest = lx; else rangeStartLowest = ly;
-        if (horizontal) rangeStartLower = lx; else rangeEndLower = ly;
+        if (horizontal) rangeEndLowest = lx + thumbWidth / 2D; else rangeStartLowest = ly + thumbWidth / 2D;
+        if (horizontal) rangeStartLower = lx + thumbWidth / 2D; else rangeEndLower = ly + thumbWidth / 2D;
     }
     private void positionLowerThumb() {
         MultiRangeSlider s = getSkinnable();
@@ -590,8 +619,8 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
                 (getMaxMinusMinNoZero()))); //  - thumbHeight/2
         lowerThumb.setLayoutX(lx);
         lowerThumb.setLayoutY(ly);
-        if (horizontal) rangeEndLower = lx; else rangeStartLower = ly;
-        if (horizontal) rangeStartMid = lx; else rangeEndMid = ly;
+        if (horizontal) rangeEndLower = lx + thumbWidth / 2D; else rangeStartLower = ly + thumbWidth / 2D;
+        if (horizontal) rangeStartMid = lx + thumbWidth / 2D; else rangeEndMid = ly + thumbWidth / 2D;
     }    
 
     /**
@@ -605,7 +634,8 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         double thumbHeight = lowestThumb.getHeight();
         higherThumb.resize(thumbWidth, thumbHeight);
 
-        double pad = 0;//track.impl_getBackgroundFills() == null || track.impl_getBackgroundFills().length <= 0 ? 0.0D : track.impl_getBackgroundFills()[0].getTopLeftCornerRadius();
+        BackgroundFill fill = track.getBackground().getFills().isEmpty() ? null : track.getBackground().getFills().get(0);
+        double pad = null == fill ? 0 : (orientation ? fill.getRadii().getTopLeftHorizontalRadius() : fill.getRadii().getTopLeftVerticalRadius());
         double trackStart = orientation ? track.getLayoutX() : track.getLayoutY();
         trackStart += pad;
         double trackLength = orientation ? track.getWidth() : track.getHeight();
@@ -615,8 +645,8 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         double y = orientation ? lowestThumb.getLayoutY() : (getSkinnable().getInsets().getTop() + trackLength) - trackLength * ((slider.getHigherValue() - slider.getMin()) / (getMaxMinusMinNoZero()));
         higherThumb.setLayoutX(x);
         higherThumb.setLayoutY(y);
-        if (orientation) rangeStartHigher = x; else rangeEndHigher = y;
-        if (orientation) rangeEndMid = x; else rangeStartMid = y;
+        if (orientation) rangeStartHigher = x + thumbWidth / 2D; else rangeEndHigher = y + thumbWidth / 2D;
+        if (orientation) rangeEndMid = x + thumbWidth / 2D; else rangeStartMid = y + thumbWidth / 2D;
     }
     
     private void positionHighestThumb() {
@@ -627,7 +657,8 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         double thumbHeight = lowestThumb.getHeight();
         highestThumb.resize(thumbWidth, thumbHeight);
 
-        double pad = 0;//track.impl_getBackgroundFills() == null || track.impl_getBackgroundFills().length <= 0 ? 0.0D : track.impl_getBackgroundFills()[0].getTopLeftCornerRadius();
+        BackgroundFill fill = track.getBackground().getFills().isEmpty() ? null : track.getBackground().getFills().get(0);
+        double pad = null == fill ? 0 : (orientation ? fill.getRadii().getTopLeftHorizontalRadius() : fill.getRadii().getTopLeftVerticalRadius()); 
         double trackStart = orientation ? track.getLayoutX() : track.getLayoutY();
         trackStart += pad;
         double trackLength = orientation ? track.getWidth() : track.getHeight();
@@ -637,8 +668,8 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         double y = orientation ? lowestThumb.getLayoutY() : (getSkinnable().getInsets().getTop() + trackLength) - trackLength * ((slider.getHighestValue() - slider.getMin()) / (getMaxMinusMinNoZero()));
         highestThumb.setLayoutX(x);
         highestThumb.setLayoutY(y);
-        if (orientation) rangeEndHigher = x; else rangeStartHigher = y;
-        if (orientation) rangeStartHighest = x; else rangeEndHighest = y;
+        if (orientation) rangeEndHigher = x + thumbWidth / 2D; else rangeStartHigher = y + thumbWidth /2D;
+        if (orientation) rangeStartHighest = x + thumbWidth / 2D; else rangeEndHighest = y + thumbWidth /2D;
         if (orientation) rangeEndHighest = trackStart + trackLength; else rangeStartHighest = trackStart;
     }    
     

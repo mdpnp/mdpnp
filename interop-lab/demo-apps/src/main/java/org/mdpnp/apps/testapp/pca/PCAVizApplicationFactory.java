@@ -49,12 +49,12 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
             public void activate(ApplicationContext context) {
                 VitalModel vitalModel = (VitalModel)context.getBean("vitalModel");
                 InfusionStatusInstanceModel pumpModel = (InfusionStatusInstanceModel)context.getBean("pumpModel");
-                ui.setModel(vitalModel, pumpModel);
+//                ui.setModel(vitalModel, pumpModel);
             }
 
             @Override
             public void stop() {
-                ui.setModel(null, null);
+//                ui.setModel(null, null);
             }
 
             @Override

@@ -93,11 +93,11 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
                 future.cancel(true);
                 future = null;
             }
-            this.model.removeListener(this);
+//            this.model.removeListener(this);
         }
         this.model = model;
         if (null != this.model) {
-            this.model.addListener(this);
+//            this.model.addListener(this);
             if (executor != null) {
                 future = executor.scheduleAtFixedRate(this, 0L, REFRESH_RATE_MS, TimeUnit.MILLISECONDS);
             }
@@ -132,19 +132,19 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
             return;
         }
 
-        int N = model.getCount();
+//        int N = model.getCount();
 
         getSize(size);
         center.y = size.height / 2;
         center.x = size.width / 2;
 
-        if (N < 3) {
-            String s = "Please add at least three vital signs.";
-            int width = g.getFontMetrics().stringWidth(s);
-            int height = g.getFontMetrics().getHeight();
-            g.drawString("Please add at least three vital signs.", center.x - width / 2, center.y + height / 2);
-            return;
-        }
+//        if (N < 3) {
+//            String s = "Please add at least three vital signs.";
+//            int width = g.getFontMetrics().stringWidth(s);
+//            int height = g.getFontMetrics().getHeight();
+//            g.drawString("Please add at least three vital signs.", center.x - width / 2, center.y + height / 2);
+//            return;
+//        }
 
         int radius = (int) (0.8 * Math.min(center.x, center.y));
         double radiansPerArc = 2.0 * Math.PI / N;

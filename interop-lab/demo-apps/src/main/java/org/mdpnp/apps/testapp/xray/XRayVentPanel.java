@@ -23,9 +23,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -36,6 +39,7 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
+import javafx.util.Duration;
 
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
@@ -54,6 +58,11 @@ import com.rti.dds.subscription.Subscriber;
 
 import org.mdpnp.apps.testapp.MyNumeric;
 import org.mdpnp.apps.testapp.MyNumericItems;
+import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
+import org.mdpnp.guis.waveform.WaveformCanvas;
+import org.mdpnp.guis.waveform.WaveformRenderer;
+import org.mdpnp.guis.waveform.javafx.JavaFXWaveformCanvas;
+import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 
 /**
  * @author Jeff Plourde
@@ -63,9 +72,11 @@ public class XRayVentPanel {
     @FXML protected FramePanel cameraPanel;
     private CameraComboBoxModel cameraModel;
 
-    @FXML protected ComboBox<Webcam> cameraBox; // = new ComboBox(cameraModel);
+    @FXML protected ComboBox<Webcam> cameraBox;
 
-//    private WaveformPanel waveformPanel;
+    @FXML protected JavaFXWaveformPane waveformPanel;
+    private final WaveformRenderer renderer = new WaveformRenderer();
+    private WaveformCanvas canvas;
 
     @FXML protected ListView<MyNumeric> deviceList;
 
@@ -87,6 +98,7 @@ public class XRayVentPanel {
 
     private NumericInstanceModel startOfBreathModel, deviceNumericModel;
     private SampleArrayInstanceModel sampleArrayModel;
+    private SampleArrayWaveformSource source;
 
     private InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
         public void instanceAlive(org.mdpnp.rtiapi.data.InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data,
@@ -132,7 +144,7 @@ public class XRayVentPanel {
                 SampleArray data, SampleInfo sampleInfo) {
             if (sampleInfo.valid_data) {
                 if (rosetta.MDC_FLOW_AWAY.VALUE.equals(data.metric_id)) {
-//                    waveformPanel.setSource(new SampleArrayWaveformSource(reader, data));
+                    XRayVentPanel.this.source = new SampleArrayWaveformSource(reader, data);
                 }
             }
         };
@@ -149,9 +161,9 @@ public class XRayVentPanel {
     };
 
     public void changeSource(String source, Subscriber subscriber, EventLoop eventLoop) {
+        this.source = null;
         deviceNumericModel.stop();
         sampleArrayModel.stop();
-//        waveformPanel.setSource(null);
 
         StringSeq params = new StringSeq();
         params.add("'" + rosetta.MDC_FLOW_AWAY.VALUE + "'");
@@ -167,6 +179,8 @@ public class XRayVentPanel {
     private boolean imageButtonDown = false;
 
     public XRayVentPanel set(final Subscriber subscriber, final EventLoop eventLoop) {
+        canvas = new JavaFXWaveformCanvas(waveformPanel);
+        
         cameraPanel.set(executorNonCritical);
         manual.setUserData(Strategy.Manual);
         automatic.setUserData(Strategy.Automatic);
@@ -254,7 +268,20 @@ public class XRayVentPanel {
                 changeSource(newValue.getUnique_device_identifier(), subscriber, eventLoop);
             }
         });
+        Timeline waveformRender = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {
 
+            @Override
+            public void handle(ActionEvent event) {
+                long tm = System.currentTimeMillis();
+                SampleArrayWaveformSource source = XRayVentPanel.this.source;
+                if(null != source) {
+                    renderer.render(source, canvas, tm-12000L, tm-2000L);
+                }
+            }
+            
+        }));
+        waveformRender.setCycleCount(Timeline.INDEFINITE);
+        waveformRender.play();
         return this;
     }
 

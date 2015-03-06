@@ -12,15 +12,22 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyLongProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
 import ice.Numeric;
 
 import com.rti.dds.subscription.SampleInfo;
 
 public interface Value {
+    ReadOnlyStringProperty uniqueDeviceIdentifierProperty();
     String getUniqueDeviceIdentifier();
 
+    ReadOnlyStringProperty metricIdProperty();
     String getMetricId();
 
+    ReadOnlyIntegerProperty instanceIdProperty();
     int getInstanceId();
 
     Numeric getNumeric();
@@ -29,30 +36,42 @@ public interface Value {
 
     Vital getParent();
 
+    ReadOnlyBooleanProperty atOrAboveHighProperty();
     boolean isAtOrAboveHigh();
 
+    ReadOnlyBooleanProperty atOrBelowLowProperty();
     boolean isAtOrBelowLow();
 
+    ReadOnlyBooleanProperty atOrOutsideOfBoundsProperty();
     boolean isAtOrOutsideOfBounds();
 
+    ReadOnlyBooleanProperty atOrAboveCriticalHighProperty();
     boolean isAtOrAboveCriticalHigh();
 
+    ReadOnlyBooleanProperty atOrBelowCriticalLowProperty();
     boolean isAtOrBelowCriticalLow();
 
+    ReadOnlyBooleanProperty atOrOutsideOfCriticalBoundsProperty();
     boolean isAtOrOutsideOfCriticalBounds();
 
+    ReadOnlyBooleanProperty atOrAboveValueMsHighProperty();
     boolean isAtOrAboveValueMsHigh();
 
+    ReadOnlyBooleanProperty atOrAboveValueMsLowProperty();
     boolean isAtOrAboveValueMsLow();
 
+    ReadOnlyBooleanProperty ignoreProperty();
     boolean isIgnore();
 
+    ReadOnlyLongProperty ageInMillisecondsProperty();
     long getAgeInMilliseconds();
 
     void updateFrom(Numeric numeric, SampleInfo sampleInfo);
 
+    ReadOnlyLongProperty valueMsBelowLowProperty();
     long getValueMsBelowLow();
 
+    ReadOnlyLongProperty valueMsAboveHighProperty();
     long getValueMsAboveHigh();
 
     int getHistoryCount();
