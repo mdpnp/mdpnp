@@ -1,0 +1,76 @@
+/*******************************************************************************
+ * Copyright (c) 2014, MD PnP Program
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+apply plugin: 'java'
+apply plugin: 'application'
+apply from: 'javafx.plugin'
+
+jfxDeploy {
+    // verbose output of the deployment, to the info chanel
+    // it leaves files in the temp dir if set to true
+    verbose = false
+}
+
+javafx {
+    appID 'ClampyApp'
+    appName 'Clampy App'
+    mainClass 'org.mdpnp.devices.clamp.ClampyApp'
+    
+
+    profiles {
+        macosx {
+            category = 'public.app-category.developer-tools'
+            javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_31.jdk/'
+
+            bundleArguments = [
+                // for mac apps
+                //'mac.category' : 'public.app-category.developer-tools',
+                'mac.CFBundleIdentifier' : 'org.mdpnp.devices.clamp.ClampApp',
+                'mac.CFBundleName' : 'Clamp App',
+                'mac.signing-key-user-name' : 'JEFFREY PLOURDE',
+                'mac.signing-key-developer-id-app' : 'Developer ID Application: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
+                'mac.bundle-id-signing-prefix' : 'org.mdpnp.devices.clamp.',
+
+                // for PKG bundles
+                'mac.signing-key-developer-id-installer' : 'Developer ID Installer: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
+
+                // for Mac App Store Ready bundles
+                //'mac.app-store-entitlements' : 'src/deploy/package/NetworkEntitlements.entitlements',
+                //'mac.signing-key-app' : '3rd Party Mac Developer Applicaiton: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
+                //'mac.signing-key-pkg' : '3rd Party Mac Developer Installer: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
+
+            ]
+        }
+    }
+}
+
+defaultTasks 'build'
+
+sourceCompatibility = JAVA_VERSION_SOURCE
+targetCompatibility = JAVA_VERSION_CLASSES
+
+dependencies {
+	compile project(':devices:common')
+	testCompile group: 'junit', name: 'junit', version: '4.11'
+    compile 'net.java.dev.jna:jna:4.1.0'
+    compile group: 'com.sparetimelabs', name: 'purejavacomm', version: '0.0.22'
+}
+buildscript {
+    repositories {
+        mavenLocal()
+    }
+}
+
+repositories {
+    mavenLocal()
+
+}

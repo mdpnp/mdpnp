@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.devices.clamp.Clampy">
+ <top>
+  <HBox spacing="10.0" BorderPane.alignment="CENTER">
+   <children>
+            <Label alignment="CENTER" contentDisplay="CENTER" text="Choose Serial Port" HBox.hgrow="SOMETIMES">
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin></Label>
+    <ComboBox fx:id="serialPorts" onAction="#changeSerialPort" />
+    <Button fx:id="connectButton" mnemonicParsing="false" onAction="#connect" prefWidth="100.0" text="Connect" />
+   </children>
+         <BorderPane.margin>
+            <Insets bottom="10.0" />
+         </BorderPane.margin>
+  </HBox>
+ </top>
+ <center>
+  <HBox spacing="20.0">
+   <children>
+    <GridPane hgap="10.0" BorderPane.alignment="CENTER">
+     <columnConstraints>
+      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+     </columnConstraints>
+     <rowConstraints>
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+     </rowConstraints>
+     <children>
+      <Label text="Load Cell" />
+      <TextField fx:id="loadCell" editable="false" prefColumnCount="5" GridPane.columnIndex="1" />
+      <Label text="Battery Life" GridPane.rowIndex="1" />
+      <TextField fx:id="batteryLife" editable="false" prefColumnCount="5" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+      <CheckBox fx:id="triggerSolenoid" disable="true" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+      <CheckBox fx:id="lockoutSolenoid" disable="true" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+      <CheckBox fx:id="triggerSwitch" disable="true" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+      <CheckBox fx:id="tubeSwitchIn" disable="true" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+      <CheckBox fx:id="doorSwitchShut" disable="true" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+      <Label text="Trigger Solenoid Status" GridPane.rowIndex="2" />
+      <Label text="Lockout Solenoid Status" GridPane.rowIndex="3" />
+      <Label text="Trigger Switch Status" GridPane.rowIndex="4" />
+      <Label text="Tube Switch Status In" GridPane.rowIndex="5" />
+      <Label text="Door Switch Status Shut" GridPane.rowIndex="6" />
+     </children>
+    </GridPane>
+    <VBox HBox.hgrow="SOMETIMES">
+     <children>
+      <Label text="Trigger" VBox.vgrow="SOMETIMES" />
+      <HBox spacing="10.0" VBox.vgrow="SOMETIMES">
+         <children>
+          <Button mnemonicParsing="false" onAction="#lockTrigger" text="Lock" />
+          <Button mnemonicParsing="false" onAction="#unlockTrigger" text="Unlock" />
+         </children>
+      </HBox>
+      <Label text="Lockout" />
+      <HBox spacing="10.0" VBox.vgrow="SOMETIMES">
+         <children>
+          <Button mnemonicParsing="false" onAction="#lockLockout" text="Lock" />
+          <Button mnemonicParsing="false" onAction="#unlockLockout" text="Unlock" />
+         </children>
+      </HBox>
+      <Label text="Power" />
+      <HBox spacing="10.0" VBox.vgrow="SOMETIMES">
+         <children>
+          <Button mnemonicParsing="false" onAction="#powerRed" text="Red" />
+          <Button mnemonicParsing="false" onAction="#powerGreen" text="Green" />
+          <Button mnemonicParsing="false" onAction="#powerOff" text="Off" />
+         </children>
+      </HBox>
+      <Label text="Ready" />
+      <HBox spacing="10.0" VBox.vgrow="SOMETIMES">
+         <children>
+          <Button mnemonicParsing="false" onAction="#readyRed" text="Red" />
+          <Button mnemonicParsing="false" onAction="#readyGreen" text="Green" />
+          <Button mnemonicParsing="false" onAction="#readyOff" text="Off" />
+         </children>
+      </HBox>
+     </children>
+    </VBox>
+   </children>
+  </HBox>
+ </center>
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+</BorderPane>
