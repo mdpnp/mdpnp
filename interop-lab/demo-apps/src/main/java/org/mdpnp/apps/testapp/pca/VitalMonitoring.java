@@ -132,7 +132,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
             return;
         }
 
-//        int N = model.getCount();
+        int N = model.size();
 
         getSize(size);
         center.y = size.height / 2;
@@ -166,7 +166,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
 
         // find the vertices of the data axes
         for (int v = 0; v < N; v++) {
-            Vital vital = model.getVital(v);
+            Vital vital = model.get(v);
             // countVitalsOut += vital.countOutOfBounds();
             double r1 = v * radiansPerArc;
             double r2 = (v == (N - 1) ? 0 : (v + 1)) * radiansPerArc;
@@ -179,14 +179,14 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
             final boolean REVERSE_DIRECTION = y2 > y1;
             final boolean VERTICAL = Math.abs(x2 - x1) <= 1;
 
-            float minimum = REVERSE_DIRECTION ? vital.getDisplayMaximum() : vital.getDisplayMinimum();
-            float maximum = REVERSE_DIRECTION ? vital.getDisplayMinimum() : vital.getDisplayMaximum();
+            double minimum = REVERSE_DIRECTION ? vital.getDisplayMaximum() : vital.getDisplayMinimum();
+            double maximum = REVERSE_DIRECTION ? vital.getDisplayMinimum() : vital.getDisplayMaximum();
 
             String minimumLabel = REVERSE_DIRECTION ? vital.getLabelMaximum() : vital.getLabelMinimum();
             String maximumLabel = REVERSE_DIRECTION ? vital.getLabelMinimum() : vital.getLabelMaximum();
 
-            Float low = vital.getWarningLow();
-            Float high = vital.getWarningHigh();
+            Double low = vital.getWarningLow();
+            Double high = vital.getWarningHigh();
 
             if (null == low) {
                 if (null == high) {
@@ -322,7 +322,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
                 if (null != vital.getWarningLow()) {
                     Color c = g.getColor();
                     g.setColor(IDEAL_COLOR);
-                    lbl = Integer.toString((int) (float) low);
+                    lbl = Integer.toString((int) (double) low);
                     str_w = g.getFontMetrics().stringWidth(lbl);
                     double proportion = 1.0 * (low - minimum) / (maximum - minimum);
                     proportion -= 0.5;
@@ -352,7 +352,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
                 if (null != vital.getWarningHigh()) {
                     Color c = g.getColor();
                     g.setColor(IDEAL_COLOR);
-                    lbl = Integer.toString((int) (float) high);
+                    lbl = Integer.toString((int) (double) high);
                     str_w = g.getFontMetrics().stringWidth(lbl);
                     double proportion = 1.0 * (high - minimum) / (maximum - minimum);
                     proportion -= 0.5;

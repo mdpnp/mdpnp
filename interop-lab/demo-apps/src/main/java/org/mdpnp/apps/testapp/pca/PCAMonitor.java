@@ -29,7 +29,6 @@ import javax.swing.JTextArea;
 import javax.swing.ListModel;
 
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.vital.VitalListModelAdapterImpl;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelListener;
 import org.slf4j.Logger;
@@ -64,13 +63,13 @@ public class PCAMonitor extends JPanel implements VitalModelListener {
     @SuppressWarnings("unchecked")
     public void setModel(VitalModel model) {
         if (this.model != null) {
-            this.model.removeListener(this);
+//            this.model.removeListener(this);
             this.list.setModel(EMPTY_MODEL);
         }
         this.model = model;
         if (this.model != null) {
-            this.model.addListener(this);
-            this.list.setModel(new VitalListModelAdapterImpl(this.model));
+//            this.model.addListener(this);
+//            this.list.setModel(new VitalListModelAdapterImpl(this.model));
         }
     }
 
