@@ -20,15 +20,17 @@ jfxDeploy {
     verbose = false
 }
 
+mainClassName = 'org.mdpnp.devices.clamp.ClampApp'
+
 javafx {
     appID 'ClampyApp'
     appName 'Clampy App'
-    mainClass 'org.mdpnp.devices.clamp.ClampyApp'
+    mainClass 'org.mdpnp.devices.clamp.ClampApp'
     
 
     profiles {
         macosx {
-            category = 'public.app-category.developer-tools'
+            //category = 'public.app-category.developer-tools'
             javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_31.jdk/'
 
             bundleArguments = [
@@ -63,6 +65,11 @@ dependencies {
 	testCompile group: 'junit', name: 'junit', version: '4.11'
     compile 'net.java.dev.jna:jna:4.1.0'
     compile group: 'com.sparetimelabs', name: 'purejavacomm', version: '0.0.22'
+    compile group: 'log4j', name: 'log4j', version: '1.2.17'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.10'
+    runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.10'
+    
+    
 }
 buildscript {
     repositories {
