@@ -6,8 +6,18 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.EventListener;
 import java.util.EventObject;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.LongProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
 
 import javax.swing.event.EventListenerList;
 
@@ -339,7 +349,18 @@ public class DataCollector {
     private static final Vital noopVital = new Vital() {
 
         @Override
+        public ReadOnlyStringProperty labelProperty() {
+
+            return null;
+        }
+
+        @Override
         public String getLabel() {
+            return null;
+        }
+
+        @Override
+        public ReadOnlyStringProperty unitsProperty() {
             return null;
         }
 
@@ -349,22 +370,47 @@ public class DataCollector {
         }
 
         @Override
+        public ReadOnlyObjectProperty<String[]> metricIdsProperty() {
+            return null;
+        }
+
+        @Override
         public String[] getMetricIds() {
-            return new String[0];
+            return null;
         }
 
         @Override
-        public float getMinimum() {
+        public ReadOnlyDoubleProperty minimumProperty() {
+            return null;
+        }
+
+        @Override
+        public double getMinimum() {
             return 0;
         }
 
         @Override
-        public float getMaximum() {
+        public ReadOnlyDoubleProperty maximumProperty() {
+            return null;
+        }
+
+        @Override
+        public double getMaximum() {
             return 0;
+        }
+
+        @Override
+        public ObjectProperty<Long> valueMsWarningLowProperty() {
+            return null;
         }
 
         @Override
         public Long getValueMsWarningLow() {
+            return null;
+        }
+
+        @Override
+        public ObjectProperty<Long> valueMsWarningHighProperty() {
             return null;
         }
 
@@ -374,33 +420,68 @@ public class DataCollector {
         }
 
         @Override
-        public Float getWarningLow() {
-            return (float)0.0;
-        }
-
-        @Override
-        public Float getWarningHigh() {
-            return (float)0.0;
-        }
-
-        @Override
-        public Float getCriticalLow() {
+        public ObjectProperty<Double> warningLowProperty() {
             return null;
         }
 
         @Override
-        public Float getCriticalHigh() {
+        public Double getWarningLow() {
             return null;
         }
 
         @Override
-        public float getDisplayMaximum() {
+        public ObjectProperty<Double> warningHighProperty() {
+            return null;
+        }
+
+        @Override
+        public Double getWarningHigh() {
+            return null;
+        }
+
+        @Override
+        public ObjectProperty<Double> criticalLowProperty() {
+            return null;
+        }
+
+        @Override
+        public Double getCriticalLow() {
+            return null;
+        }
+
+        @Override
+        public ObjectProperty<Double> criticalHighProperty() {
+            return null;
+        }
+
+        @Override
+        public Double getCriticalHigh() {
+            return null;
+        }
+
+        @Override
+        public ReadOnlyDoubleProperty displayMaximumProperty() {
+            return null;
+        }
+
+        @Override
+        public double getDisplayMaximum() {
             return 0;
         }
 
         @Override
-        public float getDisplayMinimum() {
+        public ReadOnlyDoubleProperty displayMinimumProperty() {
+            return null;
+        }
+
+        @Override
+        public double getDisplayMinimum() {
             return 0;
+        }
+
+        @Override
+        public ReadOnlyStringProperty labelMinimumProperty() {
+            return null;
         }
 
         @Override
@@ -409,7 +490,17 @@ public class DataCollector {
         }
 
         @Override
+        public ReadOnlyStringProperty labelMaximumProperty() {
+            return null;
+        }
+
+        @Override
         public String getLabelMaximum() {
+            return null;
+        }
+
+        @Override
+        public BooleanProperty noValueWarningProperty() {
             return null;
         }
 
@@ -420,7 +511,12 @@ public class DataCollector {
 
         @Override
         public void setNoValueWarning(boolean noValueWarning) {
+            
+        }
 
+        @Override
+        public LongProperty warningAgeBecomesAlarmProperty() {
+            return null;
         }
 
         @Override
@@ -430,46 +526,46 @@ public class DataCollector {
 
         @Override
         public void setWarningAgeBecomesAlarm(long warningAgeBecomesAlarm) {
-
+            
         }
 
         @Override
         public void destroy() {
-
+            
         }
 
         @Override
-        public void setWarningLow(Float low) {
-
+        public void setWarningLow(Double low) {
+            
         }
 
         @Override
-        public void setWarningHigh(Float high) {
-
+        public void setWarningHigh(Double high) {
+            
         }
 
         @Override
-        public void setCriticalLow(Float low) {
-
+        public void setCriticalLow(Double low) {
+            
         }
 
         @Override
-        public void setCriticalHigh(Float high) {
-
+        public void setCriticalHigh(Double high) {
+            
         }
 
         @Override
         public void setValueMsWarningLow(Long low) {
-
+            
         }
 
         @Override
         public void setValueMsWarningHigh(Long high) {
-
+            
         }
 
         @Override
-        public java.util.List<Value> getValues() {
+        public List<Value> getValues() {
             return null;
         }
 
@@ -479,13 +575,28 @@ public class DataCollector {
         }
 
         @Override
+        public ReadOnlyBooleanProperty anyOutOfBoundsProperty() {
+            return null;
+        }
+
+        @Override
         public boolean isAnyOutOfBounds() {
             return false;
         }
 
         @Override
+        public ReadOnlyIntegerProperty countOutOfBoundsProperty() {
+            return null;
+        }
+
+        @Override
         public int countOutOfBounds() {
             return 0;
+        }
+
+        @Override
+        public BooleanProperty ignoreZeroProperty() {
+            return null;
         }
 
         @Override
@@ -495,7 +606,8 @@ public class DataCollector {
 
         @Override
         public void setIgnoreZero(boolean ignoreZero) {
-
+            
         }
+
     };
 }
