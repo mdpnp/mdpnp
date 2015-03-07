@@ -12,12 +12,14 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
+import javafx.beans.property.FloatProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -31,7 +33,7 @@ import com.rti.dds.subscription.SampleInfo;
  *
  */
 public class ValueImpl implements Value {
-
+    private final FloatProperty value = new SimpleFloatProperty(this, "value", 0f);
     private final StringProperty uniqueDeviceIdentifier = new SimpleStringProperty(this, "uniqueDeviceIdentifier", "");
     private final StringProperty metricId = new SimpleStringProperty(this, "metricId", "");
     private final IntegerProperty instanceId = new SimpleIntegerProperty(this, "instanceId", 0);
@@ -164,6 +166,8 @@ public class ValueImpl implements Value {
         float wasValue = this.numeric.value;
         long wasTime = this.sampleInfo.source_timestamp.sec * 1000L + this.sampleInfo.source_timestamp.nanosec / 1000000L;
 
+        this.value.set(numeric.value);
+        
         // update the sample info
         this.numeric.copy_from(numeric);
         this.sampleInfo.copy_from(sampleInfo);
@@ -317,5 +321,14 @@ public class ValueImpl implements Value {
     public ReadOnlyLongProperty valueMsAboveHighProperty() {
         // TODO Auto-generated method stub
         return null;
+    }
+    public FloatProperty valueProperty() {
+        return value;
+    }
+    public float getValue() {
+        return this.value.get();
+    }
+    public void setValue(float value) {
+        this.value.set(value);
     }
 }

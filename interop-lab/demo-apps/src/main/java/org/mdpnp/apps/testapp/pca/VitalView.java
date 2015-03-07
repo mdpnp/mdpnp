@@ -12,22 +12,33 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.pca;
 
+import java.io.IOException;
+import java.util.Iterator;
+
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
+import javafx.scene.control.TreeItem;
 import javafx.scene.layout.FlowPane;
 
+import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.vital.MultiRangeSlider;
+import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
+import org.mdpnp.apps.testapp.vital.VitalModelImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public final class VitalView {
+public final class VitalView implements ListChangeListener<Value> {
     private Vital vital;
     
     @FXML protected MultiRangeSlider slider;
@@ -107,38 +118,6 @@ public final class VitalView {
         slider.higherValueVisibleProperty().bind(vital.warningHighProperty().isNotNull());
         slider.highestValueVisibleProperty().bind(vital.criticalHighProperty().isNotNull());
         
-        vital.warningLowProperty().addListener(new InvalidationListener() {
-
-            @Override
-            public void invalidated(Observable observable) {
-                System.out.println("WARNING LOW CHANGED TO " + vital.getWarningLow());
-            }
-            
-        });  
-        vital.warningHighProperty().addListener(new InvalidationListener() {
-
-            @Override
-            public void invalidated(Observable observable) {
-                System.out.println("WARNING HIGH CHANGED TO " + vital.getWarningHigh());
-            }
-            
-        });
-        vital.criticalLowProperty().addListener(new InvalidationListener() {
-
-            @Override
-            public void invalidated(Observable observable) {
-                System.out.println("CRITICAL LOW CHANGED TO " + vital.getCriticalLow());
-            }
-            
-        });        
-        vital.criticalHighProperty().addListener(new InvalidationListener() {
-
-            @Override
-            public void invalidated(Observable observable) {
-                System.out.println("CRITICAL HIGH CHANGED TO " + vital.getCriticalHigh());
-            }
-            
-        });        
         
         
       
@@ -161,6 +140,12 @@ public final class VitalView {
 //        slider2.setRangeColor(1, Color.green);
 //        slider2.setDrawThumbs(true);
 
+        for(Value v : vital) {
+            add(v);
+        }
+        // TODO how do I cope with this... how can i iterate and add listener atomically?
+        vital.addListener(this);
+        
         return this;
     }
     
@@ -194,7 +179,7 @@ public final class VitalView {
     // }
 
     public void updateData() {
-        final int N = vital.getValues().isEmpty() ? 1 : vital.getValues().size();
+        final int N = vital.isEmpty() ? 1 : vital.size();
         ignoreZeroBox.setSelected(vital.isIgnoreZero());
         requiredBox.setSelected(vital.isNoValueWarning());
         // name.setText(vital.getLabel());
@@ -231,14 +216,14 @@ public final class VitalView {
         }
         finally {}
 
-        if (vital.getValues().isEmpty()) {
+        if (vital.isEmpty()) {
             // ((JLabel)vitalValues.getComponent(0)).setForeground(Color.yellow);
             // ((JLabel)vitalValues.getComponent(0)).setBackground(Color.yellow);
             
             // TODO include this
 //            ((ValueView) vitalValues.getChildren().get(0)).update(null, null, "<NO SOURCES>", null, null, 0L, 0L);
         } else {
-            for (int i = 0; i < vital.getValues().size(); i++) {
+            for (int i = 0; i < vital.size(); i++) {
 //                Value val = vital.getValues().get(i);
 //                ValueView lbl = (ValueView) vitalValues.getComponent(i);
 
@@ -255,5 +240,37 @@ public final class VitalView {
 
             }
         }
+    }
+    private static final Logger log = LoggerFactory.getLogger(VitalView.class);
+    private void add(Value value) {
+        try {
+            FXMLLoader loader = new FXMLLoader(ValueView.class.getResource("ValueView.fxml"));
+            Parent node = loader.load();
+            ValueView v = loader.getController();
+            v.set(value);
+            vitalValues.getChildren().add(node);
+        } catch (IOException ioe) {
+            log.error("Unable to load a UI for new Value", ioe);
+        }
+        
+    }
+
+    @Override
+    public void onChanged(javafx.collections.ListChangeListener.Change<? extends Value> c) {
+        while(c.next()) {
+            if(c.wasPermutated()) {
+                // what does this mean? indices changed?
+            } else if(c.wasUpdated()) {
+                // TODO Rely on property bindings or should the list emit updates?
+                // maybe this represents a "set" operation?
+            } else {
+                for(Value v : c.getRemoved()) {
+                }
+                for(Value v : c.getAddedSubList()) {
+                    add(v);
+                }
+            }
+        }
+
     }
 }

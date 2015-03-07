@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane prefHeight="308.0" prefWidth="404.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2">
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pca.ValueView">
   <center>
     <BorderPane prefHeight="-1.0" prefWidth="-1.0">
       <bottom>
@@ -18,7 +18,7 @@
     </BorderPane>
   </center>
   <left>
-    <ImageView fx:id="icon" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
+    <ImageView fx:id="icon" fitHeight="75.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
   </left>
   <right>
     <Label fx:id="value" text="999" BorderPane.alignment="CENTER" />

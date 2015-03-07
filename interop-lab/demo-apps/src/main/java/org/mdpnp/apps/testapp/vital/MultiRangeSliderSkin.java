@@ -82,8 +82,12 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         rangeBarHighest= initRangeBar("range-bar-highest");
         initFirstThumb();
         initSecondThumb();
-        initThirdThumb();
+        // It is important that the highest thumb is "below" the higher thumb in the Z-order
+        // Otherwise when both are at the max the mouse cannot be used to drag down the higher
+        // trapping the highest at the max extent
         initFourthThumb();
+        initThirdThumb();
+        
         registerChangeListener(rangeSlider.lowestValueProperty(), "LOWEST_VALUE"); //$NON-NLS-1$
         registerChangeListener(rangeSlider.lowerValueProperty(), "LOWER_VALUE"); //$NON-NLS-1$
         registerChangeListener(rangeSlider.higherValueProperty(), "HIGHER_VALUE"); //$NON-NLS-1$
@@ -554,10 +558,11 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         } else if ("SHOW_TICK_MARKS".equals(p) || "SHOW_TICK_LABELS".equals(p)) { //$NON-NLS-1$ //$NON-NLS-2$
             if (!getChildren().contains(lowerThumb))
                 getChildren().add(lowerThumb);
+            if (!getChildren().contains(highestThumb))
+                getChildren().add(highestThumb);            
             if (!getChildren().contains(higherThumb))
                 getChildren().add(higherThumb);
-            if (!getChildren().contains(highestThumb))
-                getChildren().add(highestThumb);
+
         }
         super.handleControlPropertyChanged(p);
     }

@@ -13,6 +13,7 @@
 package org.mdpnp.apps.testapp.vital;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyFloatProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
@@ -21,6 +22,9 @@ import ice.Numeric;
 import com.rti.dds.subscription.SampleInfo;
 
 public interface Value {
+    ReadOnlyFloatProperty valueProperty();
+    float getValue();
+    
     ReadOnlyStringProperty uniqueDeviceIdentifierProperty();
     String getUniqueDeviceIdentifier();
 

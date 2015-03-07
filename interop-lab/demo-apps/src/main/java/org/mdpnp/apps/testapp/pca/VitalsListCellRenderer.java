@@ -87,13 +87,13 @@ public class VitalsListCellRenderer extends JPanel implements ListCellRenderer {
 
         this.name.setText(name);
         String s = "";
-        if (vital.getValues().isEmpty()) {
+        if (vital.isEmpty()) {
             s = "<NO SOURCES>";
             icon.setIcon(null);
             deviceName.setText("");
             udi.setText("");
         } else {
-            Device device = deviceListModel.getByUniqueDeviceIdentifier(vital.getValues().get(0).getUniqueDeviceIdentifier());
+            Device device = deviceListModel.getByUniqueDeviceIdentifier(vital.get(0).getUniqueDeviceIdentifier());
             if (null != device) {
 //                DeviceIcon di = device.getIcon();
 //                if (null != di) {
@@ -104,9 +104,9 @@ public class VitalsListCellRenderer extends JPanel implements ListCellRenderer {
             } else {
                 icon.setIcon(null);
                 deviceName.setText("");
-                udi.setText(vital.getValues().get(0).getUniqueDeviceIdentifier().substring(0, Device.SHORT_UDI_LENGTH));
+                udi.setText(vital.get(0).getUniqueDeviceIdentifier().substring(0, Device.SHORT_UDI_LENGTH));
             }
-            for (Value v : vital.getValues()) {
+            for (Value v : vital) {
                 s += v.getNumeric().value + " ";
             }
             s += units;

@@ -3,13 +3,17 @@ package org.mdpnp.apps.testapp.export;
 import ice.Numeric;
 
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.EventListener;
 import java.util.EventObject;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.ObjectProperty;
@@ -18,6 +22,7 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.collections.ListChangeListener;
 
 import javax.swing.event.EventListenerList;
 
@@ -565,11 +570,6 @@ public class DataCollector {
         }
 
         @Override
-        public List<Value> getValues() {
-            return null;
-        }
-
-        @Override
         public VitalModel getParent() {
             return null;
         }
@@ -606,6 +606,204 @@ public class DataCollector {
 
         @Override
         public void setIgnoreZero(boolean ignoreZero) {
+            
+        }
+
+        @Override
+        public void addListener(ListChangeListener<? super Value> listener) {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        public void removeListener(ListChangeListener<? super Value> listener) {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        public boolean addAll(Value... elements) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean setAll(Value... elements) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean setAll(Collection<? extends Value> col) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean removeAll(Value... elements) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean retainAll(Value... elements) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public void remove(int from, int to) {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        public int size() {
+            // TODO Auto-generated method stub
+            return 0;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean contains(Object o) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public Iterator<Value> iterator() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public Object[] toArray() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public <T> T[] toArray(T[] a) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public boolean add(Value e) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean remove(Object o) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean containsAll(Collection<?> c) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends Value> c) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean addAll(int index, Collection<? extends Value> c) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean removeAll(Collection<?> c) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean retainAll(Collection<?> c) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public void clear() {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        public Value get(int index) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public Value set(int index, Value element) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public void add(int index, Value element) {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        public Value remove(int index) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public int indexOf(Object o) {
+            // TODO Auto-generated method stub
+            return 0;
+        }
+
+        @Override
+        public int lastIndexOf(Object o) {
+            // TODO Auto-generated method stub
+            return 0;
+        }
+
+        @Override
+        public ListIterator<Value> listIterator() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public ListIterator<Value> listIterator(int index) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public List<Value> subList(int fromIndex, int toIndex) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public void addListener(InvalidationListener listener) {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        public void removeListener(InvalidationListener listener) {
+            // TODO Auto-generated method stub
             
         }
 

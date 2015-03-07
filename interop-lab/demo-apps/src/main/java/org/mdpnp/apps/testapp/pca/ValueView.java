@@ -89,6 +89,12 @@ public class ValueView {
     private final Date date = new Date();
     private final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
+    
+    public void set(Value value) {
+        this.value.textProperty().bind(value.valueProperty().asString());
+        
+    }
+    
     public void update(Value value, Image icon, String deviceName, ice.Numeric numeric, SampleInfo si, long valueMsBelowLow, long valueMsAboveHigh) {
         // if(value.isAtOrOutsideOfBounds()) {
         // setBackground(Color.yellow);

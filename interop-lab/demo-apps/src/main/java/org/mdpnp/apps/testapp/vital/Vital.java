@@ -22,9 +22,10 @@ import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.collections.ObservableList;
 
 
-public interface Vital {
+public interface Vital extends ObservableList<Value> {
     /**
      * A String describing this vital sign
      * 
@@ -172,8 +173,6 @@ public interface Vital {
     void setValueMsWarningLow(Long low);
 
     void setValueMsWarningHigh(Long high);
-
-    java.util.List<Value> getValues();
 
     VitalModel getParent();
 

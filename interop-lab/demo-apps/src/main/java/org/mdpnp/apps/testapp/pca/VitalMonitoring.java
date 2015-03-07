@@ -381,16 +381,16 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
 
             }
 
-            if (vital.getValues().isEmpty()) {
+            if (vital.isEmpty()) {
                 // countVitalsAbsent++;
                 continue;
             } else {
-                while (vital.getValues().size() > vital_values.length) {
+                while (vital.size() > vital_values.length) {
                     vital_values = new float[vital_values.length * 2 + 1];
                 }
 
                 int i = 0;
-                for (Value val : vital.getValues()) {
+                for (Value val : vital) {
                     if (!val.isIgnore()) {
                         vital_values[i++] = val.getNumeric().value;
                     }

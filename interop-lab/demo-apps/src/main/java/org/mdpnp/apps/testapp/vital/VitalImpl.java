@@ -291,11 +291,6 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
     }
 
     @Override
-    public List<Value> getValues() {
-        return values;
-    }
-
-    @Override
     public VitalModel getParent() {
         return parent;
     }
@@ -308,12 +303,12 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
     @Override
     public String toString() {
         return "[label=" + label + ",names=" + Arrays.toString(metricIds.get()) + ",minimum=" + minimum + ",maximum=" + maximum + ",low=" + warningLow
-                + ",high=" + warningHigh + ",values=" + values.toString() + "]";
+                + ",high=" + warningHigh + ",values=" + super.toString() + "]";
     }
 
     @Override
     public boolean isAnyOutOfBounds() {
-        for (Value v : values) {
+        for (Value v : this) {
             if (v.isAtOrOutsideOfBounds()) {
                 return true;
             }
@@ -324,7 +319,7 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
     @Override
     public int countOutOfBounds() {
         int cnt = 0;
-        for (Value v : values) {
+        for (Value v : this) {
             cnt += v.isAtOrAboveHigh() ? 1 : 0;
             cnt += v.isAtOrBelowLow() ? 1 : 0;
         }
@@ -486,11 +481,6 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
     }
 
     @Override
-    public Value get(int index) {
-        return values.get(index);
-    }
-
-    @Override
     public int size() {
         return values.size();
     }
@@ -508,6 +498,12 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
     @Override
     protected Value doRemove(int index) {
         return values.remove(index);
+    }
+
+
+    @Override
+    public Value get(int index) {
+        return values.get(index);
     }
 
 }

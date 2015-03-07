@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -131,7 +132,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
             if (v != null) {
                 for (String x : v.getMetricIds()) {
                     if (x.equals(metric_id)) {
-                        ListIterator<Value> li = v.getValues().listIterator();
+                        ListIterator<Value> li = v.listIterator();
                         while (li.hasNext()) {
                             Value va = li.next();
                             if (va.getUniqueDeviceIdentifier().equals(udi) && va.getInstanceId() == instance_id) {
@@ -160,34 +161,41 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     }
 
     protected void updateNumeric(Numeric n, SampleInfo si) {
-        Vital[] vitals = vitalBuffer.get();
-        vitals = this.vitals.toArray(vitals);
-        vitalBuffer.set(vitals);
-        // TODO linear search? Query Condition should be vital specific
-        // or maybe these should be hashed because creating myriad
-        // QueryConditions is not advisable
-        for (Vital v : vitals) {
-            if (v != null) {
-                for (String x : v.getMetricIds()) {
-                    // Change to this vital from a source
-                    if (x.equals(n.metric_id)) {
-                        boolean updated = false;
-                        for (Value va : v.getValues()) {
-                            if (va.getInstanceId() == n.instance_id && va.getMetricId().equals(n.metric_id)
-                                    && va.getUniqueDeviceIdentifier().equals(n.unique_device_identifier)) {
-                                va.updateFrom(n, si);
-                                updated = true;
+        Platform.runLater(new Runnable() {
+            public void run() {
+                // TODO linear search? Query Condition should be vital specific
+                // or maybe these should be hashed because creating myriad
+                // QueryConditions is not advisable
+                for (Vital v : vitals) {
+                    if (v != null) {
+                        for (String x : v.getMetricIds()) {
+                            // Change to this vital from a source
+                            if (x.equals(n.metric_id)) {
+                                boolean updated = false;
+                                for (Value va : v) {
+                                    if (va.getInstanceId() == n.instance_id && va.getMetricId().equals(n.metric_id)
+                                            && va.getUniqueDeviceIdentifier().equals(n.unique_device_identifier)) {
+                                        va.updateFrom(n, si);
+                                        updated = true;
+                                        break;
+                                    }
+                                }
+                                if (!updated) {
+                                    final Value va = new ValueImpl(n.unique_device_identifier, n.metric_id, n.instance_id, v);
+                                    va.updateFrom(n, si);
+                                    v.add(va);
+                                    
+                                }
                             }
-                        }
-                        if (!updated) {
-                            Value va = new ValueImpl(n.unique_device_identifier, n.metric_id, n.instance_id, v);
-                            va.updateFrom(n, si);
-                            v.getValues().add(va);
                         }
                     }
                 }
             }
-        }
+        });
+//        Vital[] vitals = vitalBuffer.get();
+//        vitals = this.vitals.toArray(vitals);
+//        vitalBuffer.set(vitals);
+
     }
 
     @Override
@@ -326,11 +334,11 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         for (int i = 0; i < N; i++) {
             Vital vital = get(i);
             advisories[i] = null;
-            if (vital.isNoValueWarning() && vital.getValues().isEmpty()) {
+            if (vital.isNoValueWarning() && vital.isEmpty()) {
                 countWarnings++;
                 advisories[i] = "- no source of " + vital.getLabel() + "\r\n";
             } else {
-                for (Value val : vital.getValues()) {
+                for (Value val : vital) {
                     if (val.isAtOrBelowLow()) {
                         countWarnings++;
                         advisories[i] = "- low " + vital.getLabel() + " " + val.getNumeric().value + " " + vital.getUnits() + "\r\n";
@@ -365,7 +373,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         } else {
             for (int i = 0; i < N; i++) {
                 Vital vital = get(i);
-                for (Value val : vital.getValues()) {
+                for (Value val : vital) {
                     if (val.isAtOrBelowCriticalLow()) {
                         state.set(State.Alarm);
                         stopInfusion("Pump Stopped\r\n- low " + vital.getLabel() + " " + val.getNumeric().value + " " + vital.getUnits() + "\r\nat "
