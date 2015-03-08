@@ -107,7 +107,7 @@ public class VitalsListCellRenderer extends JPanel implements ListCellRenderer {
                 udi.setText(vital.get(0).getUniqueDeviceIdentifier().substring(0, Device.SHORT_UDI_LENGTH));
             }
             for (Value v : vital) {
-                s += v.getNumeric().value + " ";
+                s += v.getValue() + " ";
             }
             s += units;
         }

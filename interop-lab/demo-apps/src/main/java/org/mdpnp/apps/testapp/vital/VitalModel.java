@@ -20,6 +20,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.collections.ObservableList;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.publication.Publisher;
@@ -29,6 +30,7 @@ public interface VitalModel extends ObservableList<Vital> {
     enum State {
         Alarm, Warning, Normal
     };
+    DeviceListModel getDeviceListModel();
 
     Vital addVital(String label, String units, String[] names, Double low, Double high, Double criticalLow, Double criticalHigh, double minimum,
             double maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color);

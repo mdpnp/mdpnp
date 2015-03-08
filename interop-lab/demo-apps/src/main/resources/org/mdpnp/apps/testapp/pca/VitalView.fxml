@@ -7,7 +7,6 @@
 <?import org.mdpnp.apps.testapp.vital.MultiRangeSlider?>
 
 <BorderPane fx:controller="org.mdpnp.apps.testapp.pca.VitalView" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
-  <!-- TODO Add Nodes -->
   <left>
     <Label fx:id="name" text="Label" />
     </left>
@@ -24,7 +23,11 @@
       </FlowPane>
    </bottom>
    <right>
-      <FlowPane fx:id="vitalValues" BorderPane.alignment="CENTER" />
+      <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
+          <content>
+              <HBox fx:id="vitalValues" BorderPane.alignment="CENTER" />
+          </content>
+      </ScrollPane>
    </right>
   
 </BorderPane>

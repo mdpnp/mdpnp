@@ -12,6 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
+import org.mdpnp.apps.testapp.Device;
+
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyFloatProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
@@ -25,7 +27,10 @@ public interface Value {
     ReadOnlyFloatProperty valueProperty();
     float getValue();
     
-    ReadOnlyStringProperty uniqueDeviceIdentifierProperty();
+    ReadOnlyLongProperty timestampProperty();
+    long getTimestamp();
+    
+    Device getDevice();
     String getUniqueDeviceIdentifier();
 
     ReadOnlyStringProperty metricIdProperty();
@@ -33,10 +38,6 @@ public interface Value {
 
     ReadOnlyIntegerProperty instanceIdProperty();
     int getInstanceId();
-
-    Numeric getNumeric();
-
-    SampleInfo getSampleInfo();
 
     Vital getParent();
 

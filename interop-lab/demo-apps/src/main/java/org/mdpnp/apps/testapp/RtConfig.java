@@ -44,6 +44,17 @@ public class RtConfig {
     private DomainParticipant participant;
     private EventLoopHandler handler;
 
+    public void stop() {
+        publisher.delete_contained_entities();
+        participant.delete_publisher(publisher);
+        subscriber.delete_contained_entities();
+        participant.delete_subscriber(subscriber);
+        participant.delete_contained_entities();
+        DomainParticipantFactory.get_instance().delete_participant(participant);
+        DomainParticipantFactory.finalize_instance();
+    }
+    
+    
     public static RtConfig setupDDS(final int domainId) {
         final EventLoop eventLoop = new EventLoop();
         final EventLoopHandler handler = new EventLoopHandler(eventLoop);

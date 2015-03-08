@@ -7,10 +7,10 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane fx:id="demoPanel" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.mdpnp.apps.testapp.DemoPanel">
+<BorderPane fx:id="demoPanel" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.DemoPanel">
   <!-- TODO Add Nodes -->
   <bottom>
-    <GridPane prefHeight="69.0" prefWidth="286.0">
+    <GridPane prefHeight="-1.0" prefWidth="-1.0">
       <children>
         <Label fx:id="version" text="Version" GridPane.columnIndex="0" GridPane.rowIndex="1" />
         <Button fx:id="back" contentDisplay="LEFT" mnemonicParsing="false" text="Exit App" textAlignment="LEFT" visible="false" GridPane.columnIndex="0" GridPane.halignment="LEFT" GridPane.rowIndex="0" />
@@ -20,9 +20,9 @@
         <Label fx:id="udi" text="UDI" GridPane.columnIndex="2" GridPane.halignment="RIGHT" GridPane.rowIndex="1" />
       </children>
       <columnConstraints>
-        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="-1.0" />
+        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="-1.0" />
+        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="-1.0" />
       </columnConstraints>
       <rowConstraints>
         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -48,9 +48,9 @@
         <Label fx:id="clock" text="Time" GridPane.columnIndex="2" GridPane.hgrow="NEVER" GridPane.rowIndex="0" />
       </children>
       <columnConstraints>
-        <ColumnConstraints hgrow="ALWAYS" percentWidth="33.0" />
-        <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" percentWidth="33.0" />
-        <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" percentWidth="33.0" />
+        <ColumnConstraints hgrow="ALWAYS" />
+        <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" />
+        <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" />
       </columnConstraints>
       <rowConstraints>
         <RowConstraints />

@@ -48,14 +48,14 @@ class CSVPersister extends FileAdapterApplicationFactory.PersisterUI implements 
     static String toCSVLine(Value value) {
         StringBuilder sb = new StringBuilder();
 
-        long ms = DataCollector.toMilliseconds(value.getNumeric().device_time);
+        long ms = value.getTimestamp(); // //DataCollector.toMilliseconds(value.getNumeric().device_time);
         String devTime = dateFormats.get().format(new Date(ms));
 
         sb.append(value.getUniqueDeviceIdentifier()).append(",")
             .append(value.getMetricId()).append(",")
             .append(value.getInstanceId()).append(",")
             .append(devTime).append(",")
-            .append(value.getNumeric().value);
+            .append(value.getValue());
 
         return sb.toString();
     }

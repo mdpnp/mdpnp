@@ -200,7 +200,9 @@ public class Device {
                 }
             };
             imageProperty().bind(task.valueProperty());
-            new Thread(task).start();
+            Thread t = new Thread(task, "Load Device Image");
+            t.setDaemon(true);
+            t.start();
         }
     }
 

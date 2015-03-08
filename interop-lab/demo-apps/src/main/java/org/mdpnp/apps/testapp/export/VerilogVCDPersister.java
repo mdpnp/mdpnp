@@ -180,11 +180,9 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
             VCDFileHandler fileHandler = cache.get(key);
             if (fileHandler == null) {
 
-                Time_t t = vital.getNumeric().device_time;
-
                 OutputStream os = makeStream(key);
 
-                fileHandler = new VCDFileHandler(os, key, t);
+                fileHandler = new VCDFileHandler(os, key, vital.getTimestamp());
                 cache.put(key, fileHandler);
             }
 
@@ -205,12 +203,12 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
             final PrintStream  ps;
             final long firstTimeTic;
 
-            VCDFileHandler(OutputStream out, String key, Time_t t) {
+            VCDFileHandler(OutputStream out, String key, long t) {
 
                 os = out;
                 ps = new PrintStream(out);
 
-                firstTimeTic = DataCollector.toMilliseconds(t);
+                firstTimeTic = t;
 
                 ps.println("$date");
                 ps.println("\t\t" + dateFormats.get().format(new Date(firstTimeTic)));
@@ -252,12 +250,12 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
 
             public void persist(Value value) throws Exception {
 
-                Time_t t = value.getNumeric().device_time;
-                long baseTime = DataCollector.toMilliseconds(t);
+//                Time_t t = value.getNumeric().device_time;
+                long baseTime = value.getTimestamp();
 
                 StringBuilder sb = new StringBuilder();
                 sb.append("#").append(baseTime - firstTimeTic).append("\n");
-                float f = value.getNumeric().value;
+                float f = value.getValue();
                 String s = floatFormats.get().format(f);
                 sb.append("r").append(s).append(" *").append("\n");
 

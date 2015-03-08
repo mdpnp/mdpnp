@@ -147,6 +147,7 @@ public class DemoPanel implements Runnable {
 
     public void stop() {
         timeFuture.cancel(true);
+        executor.shutdownNow();
     }
     
     private ScheduledFuture<?> timeFuture;

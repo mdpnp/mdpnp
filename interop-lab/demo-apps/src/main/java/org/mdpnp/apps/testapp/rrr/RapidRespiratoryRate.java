@@ -307,4 +307,7 @@ public class RapidRespiratoryRate implements Runnable {
             rrLabel.setText(""+Math.round(rr));
         }
     };
+    public void stop() {
+        executor.shutdownNow();
+    }
 }

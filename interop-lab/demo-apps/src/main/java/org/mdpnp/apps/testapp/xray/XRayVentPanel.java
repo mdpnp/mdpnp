@@ -304,6 +304,8 @@ public class XRayVentPanel {
         startOfBreathModel.stop();
         sampleArrayModel.stop();
         deviceNumericModel.stop();
+        executorNonCritical.shutdownNow();
+        executorCritical.shutdownNow();
     }
 
     public void start(Subscriber subscriber, EventLoop eventLoop) {

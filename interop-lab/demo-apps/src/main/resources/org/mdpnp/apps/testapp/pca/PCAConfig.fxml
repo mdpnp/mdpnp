@@ -6,35 +6,19 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane prefHeight="301.0" prefWidth="517.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pca.PCAConfig">
+<BorderPane prefHeight="-1.0" prefWidth="-1.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pca.PCAConfig">
   <bottom>
     <FlowPane prefHeight="-1.0" prefWidth="-1.0">
       <children>
-        <ComboBox fx:id="warningsToAlarm" onAction="#warningsToAlarmSet">
-          <items>
-            <FXCollections fx:factory="observableArrayList">
-              <String fx:value="Item 1" />
-              <String fx:value="Item 2" />
-              <String fx:value="Item 3" />
-            </FXCollections>
-          </items>
-        </ComboBox>
+        <ComboBox fx:id="warningsToAlarm" onAction="#warningsToAlarmSet" />
         <Label text="Warnings become an alarm" />
-        <ComboBox fx:id="vitalSigns">
-          <items>
-            <FXCollections fx:factory="observableArrayList">
-              <String fx:value="Item 1" />
-              <String fx:value="Item 2" />
-              <String fx:value="Item 3" />
-            </FXCollections>
-          </items>
-        </ComboBox>
+        <ComboBox fx:id="vitalSigns" />
         <Button fx:id="add" mnemonicParsing="false" onAction="#addVitalSign" text="Add" />
       </children>
     </FlowPane>
   </bottom>
   <top>
-    <BorderPane prefHeight="-1.0" prefWidth="-1.0">
+    <BorderPane maxHeight="200.0" prefHeight="-1.0" prefWidth="-1.0">
       <center>
         <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
           <content>
@@ -51,7 +35,7 @@
           <center>
             <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
               <content>
-                <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
+                <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0">
                   <children>
                     <ListView fx:id="pumpList" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                   </children>
@@ -85,6 +69,10 @@
     </BorderPane>
   </top>
    <center>
-      <VBox fx:id="vitalsPanel" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER" />
+      <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
+          <content>
+              <VBox fx:id="vitalsPanel" prefHeight="-1.0" prefWidth="-1.0" BorderPane.alignment="CENTER" />
+          </content>
+      </ScrollPane>
    </center>
 </BorderPane>

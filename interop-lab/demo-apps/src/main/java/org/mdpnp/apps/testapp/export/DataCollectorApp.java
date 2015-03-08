@@ -239,11 +239,11 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         // Add to the screen for visual.
         Value value = (Value)evt.getSource();
 
-        Numeric n = value.getNumeric();
-        long ms = DataCollector.toMilliseconds(n.device_time);
+//        Numeric n = value.getNumeric();
+        long ms = value.getTimestamp(); // DataCollector.toMilliseconds(n.device_time);
         String devTime = DataCollector.dateFormats.get().format(new Date(ms));
         final Row row = new Row(value.getUniqueDeviceIdentifier(), ""+value.getInstanceId(),
-                          value.getMetricId(), devTime, n.value);
+                          value.getMetricId(), devTime, value.getValue());
         Platform.runLater(new Runnable() {
             public void run() {
                 tblModel.add(0, row);

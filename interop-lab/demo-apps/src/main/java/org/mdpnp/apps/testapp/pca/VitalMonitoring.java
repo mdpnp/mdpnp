@@ -61,22 +61,16 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
     private final Dimension size = new Dimension();
     private final Point center = new Point();
 
-    private static final long REFRESH_RATE_MS = 100L;
+//    private static final long REFRESH_RATE_MS = 100L;
 
     protected static Color deriveColor(Color c, float a) {
         return new Color(c.getRed(), c.getGreen(), c.getBlue(), (int) (255f * a));
     }
 
-    private final ScheduledExecutorService executor;
+//    private final ScheduledExecutorService executor;
     private ScheduledFuture<?> future;
 
     public VitalMonitoring() {
-        this(null);
-    }
-
-    public VitalMonitoring(ScheduledExecutorService executor) {
-        this.executor = executor;
-
     }
 
     public void run() {
@@ -98,9 +92,9 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
         this.model = model;
         if (null != this.model) {
 //            this.model.addListener(this);
-            if (executor != null) {
-                future = executor.scheduleAtFixedRate(this, 0L, REFRESH_RATE_MS, TimeUnit.MILLISECONDS);
-            }
+//            if (executor != null) {
+//                future = executor.scheduleAtFixedRate(this, 0L, REFRESH_RATE_MS, TimeUnit.MILLISECONDS);
+//            }
         }
     }
 
@@ -392,7 +386,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
                 int i = 0;
                 for (Value val : vital) {
                     if (!val.isIgnore()) {
-                        vital_values[i++] = val.getNumeric().value;
+                        vital_values[i++] = val.getValue();
                     }
                 }
                 Arrays.sort(vital_values, 0, i);
@@ -492,7 +486,7 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
 
         JFrame frame = new JFrame("UITest");
         frame.getContentPane().setBackground(Color.white);
-        final VitalMonitoring uiTest = new VitalMonitoring(null);
+        final VitalMonitoring uiTest = new VitalMonitoring();
         uiTest.setModel(vm);
         executor.scheduleAtFixedRate(new Runnable() {
             public void run() {
@@ -526,22 +520,22 @@ public class VitalMonitoring extends JComponent implements VitalModelListener, V
 
     @Override
     public void vitalChanged(VitalModel model, Vital vital) {
-        if (null == executor) {
-            repaint();
-        }
+//        if (null == executor) {
+//            repaint();
+//        }
     }
 
     @Override
     public void vitalRemoved(VitalModel model, Vital vital) {
-        if (null == executor) {
-            repaint();
-        }
+//        if (null == executor) {
+//            repaint();
+//        }
     }
 
     @Override
     public void vitalAdded(VitalModel model, Vital vital) {
-        if (null == executor) {
-            repaint();
-        }
+//        if (null == executor) {
+//            repaint();
+//        }
     }
 }

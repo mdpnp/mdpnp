@@ -16,10 +16,17 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javafx.application.Application;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.beans.binding.StringBinding;
+import javafx.beans.property.ReadOnlyLongProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
 
 import org.mdpnp.apps.testapp.vital.Value;
 
@@ -30,7 +37,7 @@ import com.rti.dds.subscription.SampleInfo;
  *
  */
 public class ValueView {
-    @FXML protected ImageView icon;
+    @FXML protected ImageView icon, crossout;
     @FXML protected Label deviceName, time, value;
 
 //    private final JLabel valueMsAbove = new JLabel();
@@ -85,13 +92,43 @@ public class ValueView {
 //        add(value, gbc);
 
     }
+    
+    private static class TimestampProperty extends SimpleStringProperty implements InvalidationListener {
+        private final ReadOnlyLongProperty source;
+        private final Date date = new Date();
 
-    private final Date date = new Date();
-    private final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
+        public TimestampProperty(ReadOnlyLongProperty readOnlyLongProperty) {
+            this.source = readOnlyLongProperty;
+            // TODO register listener weakly
+            readOnlyLongProperty.addListener(this);
+        }
+        @Override
+        public void set(String newValue) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public String get() {
+            date.setTime(source.get());
+            return timeFormat.format(date);
+        }
+        @Override
+        public void invalidated(Observable observable) {
+            fireValueChangedEvent();
+        }
+    }
+
+
+    
+    protected static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
+    
 
     
     public void set(Value value) {
-        this.value.textProperty().bind(value.valueProperty().asString());
+        this.value.textProperty().bind(value.valueProperty().asString("%.0f"));
+        this.deviceName.textProperty().bind(value.getDevice().makeAndModelProperty());
+        this.crossout.visibleProperty().bind(value.getDevice().connectedProperty().not());
+        this.icon.imageProperty().bind(value.getDevice().imageProperty());
+        this.time.textProperty().bind(new TimestampProperty(value.timestampProperty()));
         
     }
     
@@ -107,14 +144,14 @@ public class ValueView {
 
         this.deviceName.setText(deviceName);
         if (si != null && numeric != null) {
-            date.setTime(1000L * si.source_timestamp.sec + si.source_timestamp.nanosec / 1000000L);
+//            date.setTime(1000L * si.source_timestamp.sec + si.source_timestamp.nanosec / 1000000L);
             String s = Integer.toString(Math.round(numeric.value));
             while (s.length() < 3) {
                 s = " " + s;
             }
             this.value.setText(s);
 
-            this.time.setText(timeFormat.format(date));
+//            this.time.setText(timeFormat.format(date));
         } else {
             this.value.setText("   ");
             this.time.setText("");
@@ -123,5 +160,15 @@ public class ValueView {
 //        this.valueMsBelow.setText(0L == valueMsBelowLow ? "" : Long.toString(valueMsBelowLow / 1000L));
 //        this.valueChart.setValue(value);
 
+    }
+    
+    public static class ValueViewApp extends Application {
+        public static void main(String[] args) {
+            launch(args);
+        }
+        @Override
+        public void start(Stage primaryStage) throws Exception {
+            
+        }
     }
 }

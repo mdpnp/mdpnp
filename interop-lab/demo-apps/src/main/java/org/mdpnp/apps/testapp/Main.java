@@ -29,8 +29,9 @@ import org.slf4j.LoggerFactory;
 public class Main extends Application {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
+    private IceApplication app;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(final String[] args) throws Exception {
 
         URL u = Main.class.getResource("/ice.system.properties");
         if(u != null) {
@@ -39,41 +40,29 @@ public class Main extends Application {
             System.getProperties().load(is);
             is.close();
         }
-
+        
         launch(Main.class, args);
-
-
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        runConf = Configuration.getInstance(getParameters());
+        Configuration runConf = Configuration.getInstance(getParameters());
         if (null == runConf) {
-            stop();
             Platform.exit();
-            
         } else {
-            IceApplication app = runConf.getIceApplication();
+            app = runConf.getIceApplication();
             app.init();
             app.start(primaryStage);
         }
-//        int retCode = cmd.execute(runConf, primaryStage);
-//        log.info("This is the end, exit code=" + retCode);
-//        System.exit(retCode);
-
-    }
-    
-    private Configuration runConf;
-    
-    @Override
-    public void init() throws Exception {
-        super.init();
-
     }
     
     @Override
     public void stop() throws Exception {
         super.stop();
-        Platform.exit();
+        if(null != app) {
+            app.stop();
+            app = null;
+        }
     }
+
 }

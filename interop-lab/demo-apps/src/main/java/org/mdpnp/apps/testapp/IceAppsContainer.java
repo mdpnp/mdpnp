@@ -385,6 +385,7 @@ public class IceAppsContainer extends IceApplication {
     public void stop() throws Exception {
         // this will block until the frame is killed
         stopOk.await();
+        panelController.stop();
         context.destroy();
         Platform.exit();
         super.stop();

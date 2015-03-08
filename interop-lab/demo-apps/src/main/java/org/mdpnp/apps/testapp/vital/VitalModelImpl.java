@@ -160,7 +160,15 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         return writer;
     }
 
-    protected void updateNumeric(Numeric n, SampleInfo si) {
+    public DeviceListModel getDeviceListModel() {
+        return deviceListModel;
+    }
+    
+    protected void updateNumeric(final Numeric _n, final SampleInfo _si) {
+        final Numeric n = new Numeric(_n);
+        final SampleInfo si = new SampleInfo();
+        si.copy_from(_si);
+//        final Device device = deviceListModel.getByUniqueDeviceIdentifier(n.unique_device_identifier);
         Platform.runLater(new Runnable() {
             public void run() {
                 // TODO linear search? Query Condition should be vital specific
@@ -341,11 +349,11 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
                 for (Value val : vital) {
                     if (val.isAtOrBelowLow()) {
                         countWarnings++;
-                        advisories[i] = "- low " + vital.getLabel() + " " + val.getNumeric().value + " " + vital.getUnits() + "\r\n";
+                        advisories[i] = "- low " + vital.getLabel() + " " + val.getValue() + " " + vital.getUnits() + "\r\n";
                     }
                     if (val.isAtOrAboveHigh()) {
                         countWarnings++;
-                        advisories[i] = "- high " + vital.getLabel() + " " + val.getNumeric().value + " " + vital.getUnits() + "\r\n";
+                        advisories[i] = "- high " + vital.getLabel() + " " + val.getValue() + " " + vital.getUnits() + "\r\n";
                     }
                 }
             }
@@ -376,12 +384,12 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
                 for (Value val : vital) {
                     if (val.isAtOrBelowCriticalLow()) {
                         state.set(State.Alarm);
-                        stopInfusion("Pump Stopped\r\n- low " + vital.getLabel() + " " + val.getNumeric().value + " " + vital.getUnits() + "\r\nat "
+                        stopInfusion("Pump Stopped\r\n- low " + vital.getLabel() + " " + val.getValue() + " " + vital.getUnits() + "\r\nat "
                                 + time + "\r\nnurse alerted");
                         break;
                     } else if (val.isAtOrAboveCriticalHigh()) {
                         state.set(State.Alarm);
-                        stopInfusion("Pump Stopped\r\n- high " + vital.getLabel() + " " + +val.getNumeric().value + " " + vital.getUnits()
+                        stopInfusion("Pump Stopped\r\n- high " + vital.getLabel() + " " + +val.getValue() + " " + vital.getUnits()
                                 + "\r\nat " + time + "\r\nnurse alerted");
                         break;
                     }

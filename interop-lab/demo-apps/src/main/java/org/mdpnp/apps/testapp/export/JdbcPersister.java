@@ -32,8 +32,8 @@ class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements
             ps.setString   (1, value.getUniqueDeviceIdentifier());
             ps.setString   (2, value.getMetricId());
             ps.setInt      (3, value.getInstanceId());
-            ps.setTimestamp(4, new Timestamp(DataCollector.toMilliseconds(value.getNumeric().device_time)));
-            ps.setDouble   (5, value.getNumeric().value);
+            ps.setTimestamp(4, new Timestamp(value.getTimestamp()));
+            ps.setDouble   (5, value.getValue());
 
             ps.execute();
 

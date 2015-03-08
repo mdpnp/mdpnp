@@ -74,10 +74,14 @@ public class Configuration {
         ICE_Device_Interface(DeviceAdapter.DeviceAdapterCommand.class),
         ICE_ParticipantOnly(ParticipantOnly.class);
 
-        Application(Class<?> c) {
+        Application(Class<? extends IceApplication> c) {
             clazz = c;
         }
-        private Class<?> clazz;
+        private Class<? extends IceApplication> clazz;
+        
+        public Class<? extends IceApplication> getAppClass() {
+            return clazz;
+        }
     }
 
     private final boolean              headless;
@@ -303,7 +307,7 @@ public class Configuration {
     }
 
 
-    public static Configuration getInstance(Parameters params) throws Exception {
+    public static Configuration getInstance(final Parameters params) throws Exception {
 
         File[] searchPath = new File [] {
                 new File(".JumpStartSettings"),
@@ -311,7 +315,7 @@ public class Configuration {
         };
 
         Configuration runConf;
-        String[] args = params.getRaw().toArray(new String[0]);
+        final String[] args = params.getRaw().toArray(new String[0]);
         
         if (args.length > 0) {
             runConf = read(args);

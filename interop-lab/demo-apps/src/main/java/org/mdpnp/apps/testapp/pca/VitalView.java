@@ -29,6 +29,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.vital.MultiRangeSlider;
@@ -45,7 +46,7 @@ public final class VitalView implements ListChangeListener<Value> {
     @FXML protected Label name;
     @FXML protected Button deleteButton;
     @FXML protected CheckBox ignoreZeroBox, requiredBox;
-    @FXML protected FlowPane vitalValues;
+    @FXML protected HBox vitalValues;
     
     
 //    private final JMultiSlider slider, slider2;

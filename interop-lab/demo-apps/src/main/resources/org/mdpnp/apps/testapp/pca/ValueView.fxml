@@ -10,7 +10,7 @@
   <center>
     <BorderPane prefHeight="-1.0" prefWidth="-1.0">
       <bottom>
-        <Label alignment="CENTER" text="Timestamp" BorderPane.alignment="CENTER" />
+        <Label fx:id="time" alignment="CENTER" text="Timestamp" BorderPane.alignment="CENTER" />
       </bottom>
       <top>
         <Label fx:id="deviceName" text="Device Name" BorderPane.alignment="CENTER" />
@@ -18,9 +18,20 @@
     </BorderPane>
   </center>
   <left>
-    <ImageView fx:id="icon" fitHeight="75.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
+      <StackPane>
+         <children>
+          <ImageView fx:id="icon" fitHeight="50.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER">
+               <image>
+                  <Image url="@../unknown.png" />
+               </image>
+            </ImageView>
+            <ImageView fx:id="crossout" fitHeight="50.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../crossout.png" />
+               </image>
+            </ImageView>
+          <Label fx:id="value" styleClass="overlaid-text" stylesheets="@../application.css" text="999" />
+         </children>
+      </StackPane>
   </left>
-  <right>
-    <Label fx:id="value" text="999" BorderPane.alignment="CENTER" />
-  </right>
 </BorderPane>

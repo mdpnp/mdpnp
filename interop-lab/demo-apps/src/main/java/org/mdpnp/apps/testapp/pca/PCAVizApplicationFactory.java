@@ -30,8 +30,8 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
         final ScheduledExecutorService refreshScheduler = (ScheduledExecutorService) parentContext.getBean("refreshScheduler");
         final ice.InfusionObjectiveDataWriter objectiveWriter = (ice.InfusionObjectiveDataWriter) parentContext.getBean("objectiveWriter");
 
-        final DataVisualization ui =
-                new DataVisualization(refreshScheduler, objectiveWriter, new VitalMonitoring(refreshScheduler));
+//        final DataVisualization ui =
+//                new DataVisualization(refreshScheduler, objectiveWriter, new VitalMonitoring(refreshScheduler));
 
         return new IceApplicationProvider.IceApp() {
 

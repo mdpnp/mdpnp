@@ -69,6 +69,10 @@ import com.rti.dds.topic.TopicDescription;
 public class DeviceListModel implements TimeManagerListener {
     
     public Device getByUniqueDeviceIdentifier(String udi) {
+        return getByUniqueDeviceIdentifier(udi, false);
+    }
+    
+    private Device getByUniqueDeviceIdentifier(String udi, boolean create) {
         if(!Platform.isFxApplicationThread()) {
             throw new IllegalThreadStateException("call getDevice only from the FX App Thread");
         }
@@ -83,12 +87,21 @@ public class DeviceListModel implements TimeManagerListener {
         }
         for(Device d : recycledContents) {
             if(udi.equals(d.getUDI())) {
-                log.debug("Resurrected " + udi);
-                contents.add(0, d);
+                if(create) {
+                    log.debug("Resurrected " + udi);
+                    contents.add(0, d);
+                }
                 return d;
             }
         }
-        return null;
+        // Add an inactive placeholder
+        Device d = new Device(udi);
+        if(create) {
+            contents.add(d);
+        } else {
+            recycledContents.add(d);
+        }
+        return d;
     }
     
     public ObservableList<Device> getContents() {
@@ -103,12 +116,7 @@ public class DeviceListModel implements TimeManagerListener {
             log.warn("Cannot create device with null udi");
             return null;
         }
-        Device device = getByUniqueDeviceIdentifier(udi);
-        if(null == device && create) {
-            device = new Device(udi);
-            contents.add(0, device);
-        }
-        return device;
+        return getByUniqueDeviceIdentifier(udi, create);
     }
     
     protected void notADevice(ice.HeartBeat heartbeat, boolean alive) {

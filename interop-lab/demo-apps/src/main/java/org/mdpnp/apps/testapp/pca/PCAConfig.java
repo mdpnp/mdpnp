@@ -48,6 +48,7 @@ import org.mdpnp.apps.testapp.vital.VitalModelListener;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import javafx.scene.control.Button;
 
 /**
  * @author Jeff Plourde
@@ -152,6 +153,7 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
 
     private VitalModel model;
 //    private InfusionStatusInstanceModel pumpModel;
+    @FXML Button add;
 
     protected void updateVitals() {
         if(Platform.isFxApplicationThread()) {

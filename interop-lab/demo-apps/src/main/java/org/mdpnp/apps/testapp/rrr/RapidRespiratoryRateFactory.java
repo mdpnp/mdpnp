@@ -73,6 +73,7 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
 
             @Override
             public void destroy() {
+                controller.stop();
             }
         };
     }

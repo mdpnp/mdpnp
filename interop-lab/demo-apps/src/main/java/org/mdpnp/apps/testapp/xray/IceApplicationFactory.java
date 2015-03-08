@@ -61,6 +61,7 @@ public class IceApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void destroy() {
+                
             }
         };
     }
