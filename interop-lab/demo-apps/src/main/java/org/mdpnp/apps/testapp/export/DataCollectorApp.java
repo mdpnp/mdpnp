@@ -1,7 +1,7 @@
 package org.mdpnp.apps.testapp.export;
 
-import ice.Numeric;
-
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -10,17 +10,24 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableView;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.CheckBoxTreeCell;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
+import org.mdpnp.apps.testapp.export.FileAdapterApplicationFactory.PersisterUIController;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,13 +85,13 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
     private final DeviceTreeModel deviceTreeModel = new DeviceTreeModel();
     private DeviceListModel deviceListModel;
 
-    private List<FileAdapterApplicationFactory.PersisterUI> supportedPersisters = new ArrayList<>();
+    private List<PersisterUIController> supportedPersisters = new ArrayList<>();
 
     public DataCollectorApp() {
         
     }
     
-    public DataCollectorApp set(DataCollector dc, DeviceListModel deviceListModel) {
+    public DataCollectorApp set(DataCollector dc, DeviceListModel deviceListModel) throws IOException {
         this.deviceListModel = deviceListModel;
         table.setItems(tblModel);
         // hold on to the references so that we we can unhook the listeners at the end
@@ -127,9 +134,10 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         tree.setShowRoot(false);
         tree.setRoot(deviceTreeModel);
 //
-        supportedPersisters.add(new CSVPersister());
-        supportedPersisters.add(new JdbcPersister());
-        supportedPersisters.add(new VerilogVCDPersister());
+        List<URL> supportedPersisterURLs = new ArrayList<URL>();
+        supportedPersisterURLs.add(CSVPersister.class.getResource("CSVPersister.fxml"));
+        supportedPersisterURLs.add(JdbcPersister.class.getResource("JdbcPersister.fxml"));
+        supportedPersisterURLs.add(VerilogVCDPersister.class.getResource("VerilogVCDPersister.fxml"));
 
 
 //        startControl = new AbstractAction("") {
@@ -150,34 +158,47 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 //        };
 //
 //
-//        final ButtonGroup group = new ButtonGroup();
+        
+        final ToggleGroup group = new ToggleGroup();
+        StackPane cards = new StackPane();
+        persisterContainer.setCenter(cards);
+        
 
-//        for (FileAdapterApplicationFactory.PersisterUI p : supportedPersisters) {
-//
-//            cards.add(p, p.getName());
-//            JRadioButton btn = new JRadioButton(p.getName());
-//            btns.add(btn);
-//            group.add(btn);
-//            btn.addItemListener(new ItemListener() {
-//                @Override
-//                public void itemStateChanged(ItemEvent e) {
+        for (URL u : supportedPersisterURLs) {
+            FXMLLoader loader = new FXMLLoader(u);
+            Node parent = loader.load();
+            PersisterUIController controller = loader.getController();
+            cards.getChildren().add(parent);
+            RadioButton btn = new RadioButton(controller.getName());
+            btns.getChildren().add(btn);
+            group.getToggles().add(btn);
+            btn.setOnAction(new EventHandler<ActionEvent>() {
+
+                @Override
+                public void handle(ActionEvent event) {
+                    for(Node n : cards.getChildren()) {
+                        n.setVisible(false);
+                    }
+                    parent.setVisible(true);
 //                    JRadioButton btn = (JRadioButton) e.getItem();
 //                    FileAdapterApplicationFactory.PersisterUI p =
 //                            (FileAdapterApplicationFactory.PersisterUI)btn.getClientProperty("mdpnp.appender");
-//
+
 //                    if (e.getStateChange() == ItemEvent.DESELECTED) {
 //                        startControl.putValue("mdpnp.appender", null);
 //                    } else if (e.getStateChange() == ItemEvent.SELECTED) {
 //                        startControl.putValue("mdpnp.appender", p);
 //                    }
 //                    cl.show(cards, p.getName());
-//                }
-//            });
-//            // link the two so that we can go from one to the other.
-//            //
+                }
+                
+            });
+
+            // link the two so that we can go from one to the other.
+            //
 //            p.putClientProperty("mdpnp.appender", btn);
 //            btn.putClientProperty("mdpnp.appender", p);
-//        }
+        }
 //
 //        persisterContainer.add(btns, BorderLayout.WEST);
 //        persisterContainer.add(cards, BorderLayout.CENTER);
@@ -228,7 +249,7 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 
 //        startControl.putValue("mdpnp.appender", null);
 
-        for (FileAdapterApplicationFactory.PersisterUI p : supportedPersisters) {
+        for (FileAdapterApplicationFactory.PersisterUIController p : supportedPersisters) {
             dataFilter.removeDataSampleListener(p);
             p.stop();
         }

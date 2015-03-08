@@ -5,8 +5,6 @@ import java.io.IOException;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
-import javax.swing.JPanel;
-
 import org.mdpnp.apps.testapp.DataVisualization;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
@@ -75,9 +73,7 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
         };
     }
 
-
-    @SuppressWarnings("serial")
-    public static abstract class PersisterUI extends JPanel implements DataCollector.DataSampleEventListener  {
+    public static abstract class PersisterUIController implements DataCollector.DataSampleEventListener  {
 
         public abstract String getName();
 

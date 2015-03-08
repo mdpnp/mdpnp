@@ -1,12 +1,6 @@
 package org.mdpnp.apps.testapp.export;
 
 
-import ice.Time_t;
-
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.Label;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,9 +12,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
+import javafx.fxml.FXML;
+import javafx.scene.control.TextField;
 
 import org.mdpnp.apps.testapp.vital.Value;
 import org.slf4j.Logger;
@@ -36,8 +29,7 @@ import org.slf4j.LoggerFactory;
  * is included with the source of the project.
  *
  **/
-@SuppressWarnings("serial")
-public class VerilogVCDPersister extends FileAdapterApplicationFactory.PersisterUI implements DataCollector.DataSampleEventListener {
+public class VerilogVCDPersister extends FileAdapterApplicationFactory.PersisterUIController implements DataCollector.DataSampleEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(VerilogVCDPersister.class);
 
@@ -59,66 +51,16 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
     public static final long FZ_10MB=10000000L;
 
     OneWavePerVCD controller = null;
-    final JTextField filePathLabel;
-    final JTextField maxSizeLabel;
+    @FXML TextField filePathLabel, maxSizeLabel;
 
     public VerilogVCDPersister() {
 
-        GridBagLayout gridbag = new GridBagLayout();
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.insets = new Insets(2, 5, 2, 5);
+    }
 
-        setLayout(gridbag);
-        setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
-
-        Label label1 = new Label("Configuration:", Label.RIGHT);
-        gridbag.setConstraints(label1, configureLabel(constraints, 0));
-        add(label1);
-
-        JLabel dl = new JLabel("Directory:", JLabel.RIGHT);
-        gridbag.setConstraints(dl, configureLabel(constraints, 1));
-        add(dl);
-
+    public void set() {
         String f = "<" + dateFormats.get().toPattern() + ">";
         String p = (new File(f)).getAbsolutePath();
-        filePathLabel = new JTextField(p);
-        filePathLabel.setEditable(false);
-        gridbag.setConstraints(filePathLabel, configureValue(constraints, 1));
-        add(filePathLabel);
-
-        JLabel sl = new JLabel("Max file size:", JLabel.RIGHT);
-        gridbag.setConstraints(sl, configureLabel(constraints, 2));
-        add(sl);
-
-        maxSizeLabel = new JTextField("10MB");
-        maxSizeLabel.setEditable(false);
-        gridbag.setConstraints(maxSizeLabel, configureValue(constraints, 2));
-        add(maxSizeLabel);
-    }
-
-
-
-    private GridBagConstraints configureLabel(GridBagConstraints constraints, int row) {
-        buildConstraints(constraints, 0, row, 1, 1, 0.0, 1.0);
-        constraints.fill = GridBagConstraints.NONE;
-        constraints.anchor = GridBagConstraints.EAST;
-        return constraints;
-    }
-
-    private GridBagConstraints configureValue(GridBagConstraints constraints, int row) {
-        buildConstraints(constraints, 1, row, GridBagConstraints.REMAINDER, 1, 1.0, 1.0);
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        constraints.anchor = GridBagConstraints.EAST;
-        return constraints;
-    }
-
-    private void buildConstraints(GridBagConstraints gbc, int gx, int gy, int gw, int gh, double wx, double wy) {
-        gbc.gridx = gx;
-        gbc.gridy = gy;
-        gbc.gridwidth = gw;
-        gbc.gridheight = gh;
-        gbc.weightx = wx;
-        gbc.weighty = wy;
+        filePathLabel.setText(p);        
     }
 
     @Override

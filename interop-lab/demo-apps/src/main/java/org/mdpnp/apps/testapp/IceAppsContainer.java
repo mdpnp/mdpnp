@@ -236,6 +236,9 @@ public class IceAppsContainer extends IceApplication {
         
         
         primaryStage.setScene(panelScene);
+        primaryStage.setWidth(800);
+        primaryStage.setHeight(600);
+        primaryStage.centerOnScreen();
         primaryStage.show();
     }
     

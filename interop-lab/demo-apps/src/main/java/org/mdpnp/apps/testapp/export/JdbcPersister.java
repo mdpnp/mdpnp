@@ -1,30 +1,24 @@
 package org.mdpnp.apps.testapp.export;
 
-
-import java.awt.GridLayout;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
-import javax.swing.JLabel;
-import javax.swing.JPasswordField;
-import javax.swing.JTextField;
+import javafx.fxml.FXML;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 
 import org.mdpnp.apps.testapp.vital.Value;
 
-
-@SuppressWarnings("serial")
-class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements DataCollector.DataSampleEventListener  {
+public class JdbcPersister extends FileAdapterApplicationFactory.PersisterUIController implements DataCollector.DataSampleEventListener  {
 
     private Connection conn = null;
     private PreparedStatement ps = null;
 
-    final JTextField fDriver   = new JTextField();
-    final JTextField fURL      = new JTextField();
-    final JTextField fUser     = new JTextField();
-    final JTextField fPassword = new JPasswordField();
+    @FXML TextField fDriver, fURL, fUser;
+    @FXML PasswordField fPassword;
 
     public void persist(Value value) throws Exception {
 
@@ -116,16 +110,5 @@ class JdbcPersister extends FileAdapterApplicationFactory.PersisterUI implements
     public JdbcPersister() {
 
         super();
-
-        this.setLayout(new GridLayout(0, 2));
-        this.add(new JLabel("JDBC Driver", JLabel.RIGHT)); this.add(fDriver);
-        this.add(new JLabel("Database URL",JLabel.RIGHT)); this.add(fURL);
-        this.add(new JLabel("User",        JLabel.RIGHT)); this.add(fUser);
-        this.add(new JLabel("Password",    JLabel.RIGHT)); this.add(fPassword);
-
-        fDriver.setText("org.hsqldb.jdbcDriver");
-        fURL.setText("jdbc:hsqldb:hsql://localhost/testdb");
-        //fUser.setText("SA");
-        fPassword.setText("");
     }
 }

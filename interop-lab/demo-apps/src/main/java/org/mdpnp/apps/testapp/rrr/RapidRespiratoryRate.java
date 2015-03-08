@@ -108,7 +108,7 @@ public class RapidRespiratoryRate implements Runnable {
             
         });
         canvas = new JavaFXWaveformCanvas(wavePanel);
-        Timeline waveformRender = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {
+        waveformRender = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {
 
             @Override
             public void handle(ActionEvent event) {
@@ -199,6 +199,7 @@ public class RapidRespiratoryRate implements Runnable {
     private SampleArrayWaveformSource source;
     private final WaveformRenderer renderer = new WaveformRenderer();
     private WaveformCanvas canvas;
+    private Timeline waveformRender;
     
     public void setModel(SampleArrayInstanceModel model) {
         this.model = model;
@@ -308,6 +309,7 @@ public class RapidRespiratoryRate implements Runnable {
         }
     };
     public void stop() {
+        waveformRender.stop();
         executor.shutdownNow();
     }
 }

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.collections.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.GridPane?>
+
+<GridPane fx:controller="org.mdpnp.apps.testapp.export.CSVPersister" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+   <columnConstraints>
+      <ColumnConstraints hgrow="SOMETIMES" />
+   </columnConstraints>
+   <rowConstraints>
+      <RowConstraints />
+      <RowConstraints minHeight="10.0" />
+   </rowConstraints>
+   <children>
+      <FlowPane GridPane.columnIndex="0" GridPane.rowIndex="0">
+         <children>
+            <Label text="Logging to: " />
+            <Label fx:id="filePathLabel" text="Label" />
+            <Button mnemonicParsing="false" onAction="#clickChange" text="Change" />
+         </children>
+      </FlowPane>
+      <FlowPane GridPane.columnIndex="0" GridPane.rowIndex="1">
+         <children>
+            <Label text="Number of files to keep around:" />
+            <ComboBox fx:id="backupIndex" onAction="#clickBackupIndex">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="1" />
+                        <String fx:value="5" />
+                        <String fx:value="10" />
+                        <String fx:value="20" />
+                    </FXCollections>
+                </items>
+            </ComboBox>
+            <Label text="Max file size:" />
+            <ComboBox fx:id="fSize" onAction="#clickFSize">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="1MB" />
+                        <String fx:value="5MB" />
+                        <String fx:value="50MB" />
+                        <String fx:value="500MB" />
+                        <String fx:value="1GB" />
+                        <String fx:value="5GB" />
+                        <String fx:value="50GB" />
+                        <String fx:value="500GB" />
+                        <String fx:value="1000GB" />
+                    </FXCollections>
+                </items>
+            </ComboBox>
+         </children>
+      </FlowPane>
+   </children>
+</GridPane>
