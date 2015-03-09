@@ -287,7 +287,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
 
     private synchronized void startRequestSlowData() {
         if (null == requestSlowData) {
-            requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 1000L, 1000L, TimeUnit.MILLISECONDS);
+            requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 1000L, 2000L, TimeUnit.MILLISECONDS);
             log.trace("Scheduled slow data request task");
         } else {
             log.trace("Slow data request already scheduled");

@@ -65,6 +65,11 @@ public class PB840Parameters extends PB840 {
             fieldValues.add("ZERO");
             if(dataFieldMatch.find()) {
                 final String responseType = dataFieldMatch.group(1).trim();
+                if(!this.fields.containsKey(responseType)) {
+                    log.warn(line);
+                    log.warn("Unknown response type: "+responseType);
+                    continue;
+                }
                 fieldValues.add(responseType);
                 if(dataFieldMatch.find()) {
                     fieldValues.add(dataFieldMatch.group(1).trim());
@@ -73,6 +78,7 @@ public class PB840Parameters extends PB840 {
                     try {
                         bytes = Integer.parseInt(dataFieldMatch.group(1).trim());
                     } catch(NumberFormatException nfe) {
+                        log.warn(line);
                         log.warn("Received an invalid byte count ", nfe);
                         continue;
                     }
@@ -84,6 +90,7 @@ public class PB840Parameters extends PB840 {
                         try {
                             fieldCount = Integer.parseInt(s);//#fields between <STX> and <CR>
                         } catch(NumberFormatException nfe) {
+                            log.warn(line);
                             log.warn("Received an invalid field count ", nfe);
                             continue;
                         }
@@ -95,11 +102,13 @@ public class PB840Parameters extends PB840 {
                                 if(dataFieldMatch.find()) {
                                     fieldValues.add(dataFieldMatch.group(1).trim());
                                 } else {
+                                    log.warn(line);
                                     log.warn("Missing expected field " + (i+1) +", aborting this line...");
                                     continue;
                                 }
                             }
                             if(fieldValues.size() < (fieldCount + 5)) {
+                                log.warn(line);
                                 log.warn("Received " + fieldValues.size() + " fields where " + (fieldCount+5) + " expected");
                                 continue;
                             }
@@ -112,6 +121,7 @@ public class PB840Parameters extends PB840 {
                                     field.handle(fieldValues);
                                 }
                             } else {
+                                log.warn(line);
                                 log.warn("Unknown response type " + responseType);
                             }
                         } catch(NumberFormatException nfe) {
@@ -120,12 +130,15 @@ public class PB840Parameters extends PB840 {
                             receiveEndResponse();
                         }
                     } else {
+                        log.warn(line);
                         log.warn("Not a valid response, no field count:"+line);
                     }
                 } else {
+                    log.warn(line);
                     log.warn("Not a valid response, no bytes:"+line);
                 }
-            } else {         
+            } else {
+                log.warn(line);
                 log.warn("Not a valid response:"+line);
             }
         }
