@@ -15,14 +15,11 @@ package org.mdpnp.apps.testapp.pca;
 import java.io.IOException;
 import java.util.Iterator;
 
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -32,6 +29,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 
 import org.mdpnp.apps.testapp.Device;
+import org.mdpnp.apps.testapp.vital.ConcreteDoubleProperty;
 import org.mdpnp.apps.testapp.vital.MultiRangeSlider;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
@@ -70,35 +68,6 @@ public final class VitalView implements ListChangeListener<Value> {
     
     @FXML public void requiredAction(ActionEvent evt) {
         vital.setNoValueWarning(requiredBox.isSelected());
-    }
-    
-    private static class ConcreteDoubleProperty extends SimpleDoubleProperty implements InvalidationListener {
-        private final ObjectProperty<Double> source;
-        private final double reportIfNull;
-        public ConcreteDoubleProperty(ObjectProperty<Double> source) {
-            this(source, Double.NaN);
-        }
-        
-        public ConcreteDoubleProperty(ObjectProperty<Double> source, double reportIfNull) {
-            this.source = source;
-            this.reportIfNull = reportIfNull;
-            // TODO register listener weakly
-            source.addListener(this);
-        }
-        @Override
-        public void set(double newValue) {
-            super.set(newValue);
-            source.set(newValue);
-        }
-        @Override
-        public double get() {
-            Double s = source.get();
-            return null == s ? reportIfNull : s;
-        }
-        @Override
-        public void invalidated(Observable observable) {
-            fireValueChangedEvent();
-        }
     }
     
     public VitalView set(final Vital vital) {
@@ -249,6 +218,7 @@ public final class VitalView implements ListChangeListener<Value> {
             Parent node = loader.load();
             ValueView v = loader.getController();
             v.set(value);
+            node.setUserData(value);
             vitalValues.getChildren().add(node);
         } catch (IOException ioe) {
             log.error("Unable to load a UI for new Value", ioe);
@@ -261,15 +231,21 @@ public final class VitalView implements ListChangeListener<Value> {
         while(c.next()) {
             if(c.wasPermutated()) {
                 // what does this mean? indices changed?
-            } else if(c.wasUpdated()) {
+            }
+            if(c.wasUpdated()) {
                 // TODO Rely on property bindings or should the list emit updates?
                 // maybe this represents a "set" operation?
-            } else {
-                for(Value v : c.getRemoved()) {
+            }
+            for(Value v : c.getRemoved()) {
+                for(Iterator<Node> itr = vitalValues.getChildren().iterator(); itr.hasNext(); ) {
+                    if(v.equals(itr.next().getUserData())) {
+                       log.debug("Removed a UI element for " + v.getMetricId());
+                        itr.remove();
+                    }
                 }
-                for(Value v : c.getAddedSubList()) {
-                    add(v);
-                }
+            }
+            for(Value v : c.getAddedSubList()) {
+                add(v);
             }
         }
 

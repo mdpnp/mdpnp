@@ -78,14 +78,4 @@ public interface Value {
 
     ReadOnlyLongProperty valueMsAboveHighProperty();
     long getValueMsAboveHigh();
-
-    int getHistoryCount();
-
-    float getHistoryValue(int x);
-
-    long getHistoryTime(int x);
-
-    int getHistoryCurrent();
-
-    // long getRateOfChange();
 }

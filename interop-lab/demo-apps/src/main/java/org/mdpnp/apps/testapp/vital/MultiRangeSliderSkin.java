@@ -1,18 +1,10 @@
 package org.mdpnp.apps.testapp.vital;
 
-import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.HIGHEST_THUMB;
 import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.HIGHER_THUMB;
+import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.HIGHEST_THUMB;
 import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.LOWER_THUMB;
 import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.LOWEST_THUMB;
 import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.NONE;
-import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_LOWEST;
-import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_LOWER;
-import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_MID;
-import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_HIGHER;
-import static org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild.RANGE_BAR_HIGHEST;
-
-import org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild;
-
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -22,17 +14,15 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Side;
 import javafx.scene.Cursor;
 import javafx.scene.chart.NumberAxis;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.StackPane;
 import javafx.util.Callback;
 
+import org.mdpnp.apps.testapp.vital.MultiRangeSliderBehavior.FocusedChild;
+
 import com.sun.javafx.css.StyleManager;
 import com.sun.javafx.scene.control.skin.BehaviorSkinBase;
-import com.sun.javafx.scene.traversal.Direction;
-import com.sun.javafx.scene.traversal.ParentTraversalEngine;
 
 public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, MultiRangeSliderBehavior> {
     

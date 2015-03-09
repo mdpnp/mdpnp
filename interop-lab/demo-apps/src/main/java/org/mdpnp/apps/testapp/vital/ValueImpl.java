@@ -12,8 +12,9 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
-import org.mdpnp.apps.testapp.Device;
-
+import ice.Numeric;
+import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.FloatProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.LongProperty;
@@ -21,12 +22,14 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import ice.Numeric;
+
+import org.mdpnp.apps.testapp.Device;
 
 import com.rti.dds.subscription.SampleInfo;
 
@@ -40,20 +43,21 @@ public class ValueImpl implements Value {
     private final StringProperty uniqueDeviceIdentifier = new SimpleStringProperty(this, "uniqueDeviceIdentifier", "");
     private final StringProperty metricId = new SimpleStringProperty(this, "metricId", "");
     private final IntegerProperty instanceId = new SimpleIntegerProperty(this, "instanceId", 0);
-//    private final Numeric numeric = (Numeric) Numeric.create();
-//    private final SampleInfo sampleInfo = new SampleInfo();
     private final LongProperty timestamp = new SimpleLongProperty(this, "timestamp", 0L);
     private final Vital parent;
 
-    private LongProperty valueMsBelowLow = new SimpleLongProperty(this, "valueMsBelowLow", 0L);
-    private LongProperty valueMsAboveHigh = new SimpleLongProperty(this, "valueMsAboveHigh", 0L);
-
-    private static final int HISTORY_SAMPLES = 1500;
-    private int historyCount = 0;
-    private boolean historyWrapped = false;
-
-    private long[] historyTime = new long[HISTORY_SAMPLES];
-    private float[] historyValue = new float[HISTORY_SAMPLES];
+    private final LongProperty valueMsBelowLow = new SimpleLongProperty(this, "valueMsBelowLow", 0L);
+    private final LongProperty valueMsAboveHigh = new SimpleLongProperty(this, "valueMsAboveHigh", 0L);
+    
+    private final BooleanProperty ignore = new SimpleBooleanProperty(this, "ignore", false); 
+    private final BooleanProperty atOrAboveHigh = new SimpleBooleanProperty(this, "atOrAboveHigh", false);
+    private final BooleanProperty atOrBelowLow = new SimpleBooleanProperty(this, "atOrBelowLow", false);
+    private final BooleanProperty atOrOutsideBounds = new SimpleBooleanProperty(this, "atOrOutsideBounds", false);
+    private final BooleanProperty atOrAboveCriticalHigh = new SimpleBooleanProperty(this, "atOrAboveCriticalHigh", false);
+    private final BooleanProperty atOrBelowCriticalLow  = new SimpleBooleanProperty(this, "atOrBelowCriticalLow", false);
+    private final BooleanProperty atOrOutsideCriticalBounds = new SimpleBooleanProperty(this, "atOrOutsideCriticalBounds", false);
+    private final BooleanProperty atOrAboveValueMsLow = new SimpleBooleanProperty(this, "atOrAboveValueMsLow", false);
+    private final BooleanProperty atOrAboveValueMsHigh = new SimpleBooleanProperty(this, "atOrAboveValueMsHigh", false);
 
     public ValueImpl(final String udi, String metricId, int instanceId, Vital parent) {
         this.uniqueDeviceIdentifier.set(udi);
@@ -61,6 +65,15 @@ public class ValueImpl implements Value {
         this.instanceId.set(instanceId);
         this.parent = parent;
         this.device = parent.getParent().getDeviceListModel().getByUniqueDeviceIdentifier(udi);
+        ignore.bind(parent.ignoreZeroProperty().and(value.isEqualTo(0.0, 0.00001).or(value.isEqualTo(Double.NaN, 0.0))));
+        atOrAboveHigh.bind(ignore.not().and(parent.warningHighProperty().isNotNull()).and(value.greaterThanOrEqualTo(new ConcreteDoubleProperty(parent.warningHighProperty(), Double.POSITIVE_INFINITY))));
+        atOrBelowLow.bind(ignore.not().and(parent.warningLowProperty().isNotNull()).and(value.lessThanOrEqualTo(new ConcreteDoubleProperty(parent.warningLowProperty(), Double.NEGATIVE_INFINITY))));
+        atOrOutsideBounds.bind(atOrBelowLow.or(atOrAboveHigh));
+        atOrAboveCriticalHigh.bind(ignore.not().and(parent.criticalHighProperty().isNotNull()).and(value.greaterThanOrEqualTo(new ConcreteDoubleProperty(parent.criticalHighProperty(), Double.POSITIVE_INFINITY))));
+        atOrBelowCriticalLow.bind(ignore.not().and(parent.criticalLowProperty().isNotNull()).and(value.lessThanOrEqualTo(new ConcreteDoubleProperty(parent.criticalLowProperty(), Double.NEGATIVE_INFINITY))));
+        atOrOutsideBounds.bind(atOrBelowCriticalLow.or(atOrAboveCriticalHigh));
+        atOrAboveValueMsHigh.bind(ignore.not().and(parent.valueMsWarningHighProperty().isNotNull()).and(valueMsAboveHigh.greaterThanOrEqualTo(new ConcreteLongProperty(parent.valueMsWarningHighProperty(), Long.MAX_VALUE))));
+        atOrAboveValueMsLow.bind(ignore.not().and(parent.valueMsWarningLowProperty().isNotNull()).and(valueMsBelowLow.greaterThanOrEqualTo(new ConcreteLongProperty(parent.valueMsWarningLowProperty(), Long.MIN_VALUE))));
     }
     
     @Override
@@ -85,41 +98,37 @@ public class ValueImpl implements Value {
 
     @Override
     public boolean isIgnore() {
-        return parent.isIgnoreZero() && (0 == Float.compare(0f, value.get()) || Float.isNaN(value.get()));
+        return ignore.get();
     }
 
     @Override
     public boolean isAtOrAboveHigh() {
-        Double warningHigh = parent.getWarningHigh();
-        return (isIgnore() || null == warningHigh) ? false : (Double.compare(value.get(), warningHigh) >= 0);
+        return atOrAboveHigh.get();
     }
 
     @Override
     public boolean isAtOrBelowLow() {
-        Double warningLow = parent.getWarningLow();
-        return (isIgnore() || null == warningLow) ? false : (Double.compare(warningLow, value.get()) >= 0);
+        return atOrBelowLow.get();
     }
 
     @Override
     public boolean isAtOrOutsideOfBounds() {
-        return isAtOrAboveHigh() || isAtOrBelowLow();
+        return atOrOutsideBounds.get();
     }
 
     @Override
     public boolean isAtOrAboveCriticalHigh() {
-        Double criticalHigh = parent.getCriticalHigh();
-        return (isIgnore() || null == criticalHigh) ? false : (Double.compare(value.get(), criticalHigh) >= 0);
+        return atOrAboveCriticalHigh.get();
     }
 
     @Override
     public boolean isAtOrBelowCriticalLow() {
-        Double criticalLow = parent.getCriticalLow();
-        return (isIgnore() || null == criticalLow) ? false : (Double.compare(criticalLow, value.get()) >= 0);
+        return atOrBelowCriticalLow.get();
     }
 
     @Override
     public boolean isAtOrOutsideOfCriticalBounds() {
-        return isAtOrAboveCriticalHigh() || isAtOrBelowCriticalLow();
+        return atOrOutsideCriticalBounds.get();
     }
 
     @Override
@@ -137,27 +146,11 @@ public class ValueImpl implements Value {
     }
 
     @Override
-    public int getHistoryCount() {
-        return historyWrapped ? HISTORY_SAMPLES : historyCount;
-    }
-
-    @Override
-    public long getHistoryTime(int x) {
-        return historyTime[x];
-    }
-
-    @Override
-    public float getHistoryValue(int x) {
-        return historyValue[x];
-    }
-
-    @Override
-    public int getHistoryCurrent() {
-        return historyCount;
-    }
-
-    @Override
     public void updateFrom(Numeric numeric, SampleInfo sampleInfo) {
+        if(!Platform.isFxApplicationThread()) {
+            throw new IllegalThreadStateException("ValueImpl must be updated on the FX Application thread");
+        }
+        
         // characterize the previous sample
         boolean wasBelow = isAtOrBelowLow();
         boolean wasAbove = isAtOrAboveHigh();
@@ -166,26 +159,10 @@ public class ValueImpl implements Value {
 
         this.value.set(numeric.value);
         this.timestamp.set(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
-        
-        // update the sample info
-//        this.numeric.copy_from(numeric);
-//        this.sampleInfo.copy_from(sampleInfo);
 
         // characterize the new sample
         boolean isAbove = isAtOrAboveHigh();
         boolean isBelow = isAtOrBelowLow();
-        
-//        float isValue = this.numeric.value;
-//        
-
-        // store for history
-        historyTime[historyCount] = timestamp.get();
-        historyValue[historyCount] = value.get();
-
-        if (++historyCount >= HISTORY_SAMPLES) {
-            historyWrapped = true;
-            historyCount = 0;
-        }
 
         // Integrate
         if (isAbove) {
@@ -226,14 +203,12 @@ public class ValueImpl implements Value {
 
     @Override
     public boolean isAtOrAboveValueMsHigh() {
-        Long warningHigh = parent.getValueMsWarningHigh();
-        return (isIgnore() || null == warningHigh) ? false : Long.compare(valueMsAboveHigh.get(), warningHigh) >= 0;
+        return atOrAboveValueMsHigh.get();
     }
 
     @Override
     public boolean isAtOrAboveValueMsLow() {
-        Long warningLow = parent.getValueMsWarningLow();
-        return (isIgnore() || null == warningLow) ? false : (Long.compare(warningLow, valueMsBelowLow.get()) >= 0);
+        return atOrAboveValueMsLow.get();
     }
 
     @Override
@@ -248,74 +223,63 @@ public class ValueImpl implements Value {
 
     @Override
     public ReadOnlyBooleanProperty atOrAboveHighProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        return atOrAboveHigh;
     }
 
     @Override
     public ReadOnlyBooleanProperty atOrBelowLowProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        return atOrBelowLow;
     }
 
     @Override
     public ReadOnlyBooleanProperty atOrOutsideOfBoundsProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        return atOrOutsideBounds;
     }
 
     @Override
     public ReadOnlyBooleanProperty atOrAboveCriticalHighProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        return atOrAboveCriticalHigh;
     }
 
     @Override
     public ReadOnlyBooleanProperty atOrBelowCriticalLowProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        return atOrBelowCriticalLow;
     }
 
     @Override
     public ReadOnlyBooleanProperty atOrOutsideOfCriticalBoundsProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        return atOrOutsideCriticalBounds;
     }
 
     @Override
     public ReadOnlyBooleanProperty atOrAboveValueMsHighProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        return atOrAboveValueMsHigh;
     }
 
     @Override
     public ReadOnlyBooleanProperty atOrAboveValueMsLowProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        return atOrAboveValueMsLow;
     }
 
     @Override
     public ReadOnlyBooleanProperty ignoreProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        return ignore;
     }
 
     @Override
     public ReadOnlyLongProperty ageInMillisecondsProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        // TODO fixme
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public ReadOnlyLongProperty valueMsBelowLowProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        return valueMsBelowLow;
     }
 
     @Override
     public ReadOnlyLongProperty valueMsAboveHighProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        return valueMsAboveHigh;
     }
     public FloatProperty valueProperty() {
         return value;

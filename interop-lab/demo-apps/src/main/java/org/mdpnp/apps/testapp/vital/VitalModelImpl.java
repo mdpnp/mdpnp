@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.ListIterator;
 
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -39,7 +41,9 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ModifiableObservableListBase;
+import javafx.util.Callback;
 
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
@@ -71,11 +75,32 @@ import com.rti.dds.topic.TopicDescription;
  *
  */
 public class VitalModelImpl extends ModifiableObservableListBase<Vital> implements VitalModel {
+    private final Callback<Vital, Observable[]> extractor = new Callback<Vital, Observable[]>() {
 
+        @Override
+        public Observable[] call(Vital param) {
+            return new Observable[] {
+//                    param.anyOutOfBoundsProperty(),
+//                    param.countOutOfBoundsProperty(),
+                    param.criticalHighProperty(),
+                    param.criticalLowProperty(),
+                    param.warningHighProperty(),
+                    param.warningLowProperty(),
+                    param.ignoreZeroProperty(),
+                    param.noValueWarningProperty(),
+                    param.valueMsWarningHighProperty(),
+                    param.valueMsWarningLowProperty()
+            };
+        }
+        
+    };
+    
+    
+    
     private final List<Vital> vitals = Collections.synchronizedList(new ArrayList<Vital>());
 
     protected NumericDataReader numericReader;
-
+    
     protected Subscriber subscriber;
     protected Publisher publisher;
     protected EventLoop eventLoop;
@@ -93,8 +118,11 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
                 for (;;) {
                     try {
                         numericReader.read(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
-                        for (int i = 0; i < info_seq.size(); i++) {
+                        final int size = info_seq.size();
+                        for (int i = 0; i < size; i++) {
+
                             SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
+
                             if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
                                 Numeric keyHolder = new Numeric();
                                 numericReader.get_key_value(keyHolder, sampleInfo.instance_handle);
@@ -123,35 +151,27 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         }
     };
 
-    protected void removeNumeric(String udi, String metric_id, int instance_id) {
-        Vital[] vitals = vitalBuffer.get();
-        vitals = this.vitals.toArray(vitals);
-        vitalBuffer.set(vitals);
-        for (Vital v : vitals) {
-            boolean updated = false;
-            if (v != null) {
-                for (String x : v.getMetricIds()) {
-                    if (x.equals(metric_id)) {
-                        ListIterator<Value> li = v.listIterator();
-                        while (li.hasNext()) {
-                            Value va = li.next();
-                            if (va.getUniqueDeviceIdentifier().equals(udi) && va.getInstanceId() == instance_id) {
-                                li.remove();
-                                updated = true;
+    protected void removeNumeric(final String udi, final String metric_id, final int instance_id) {
+        Platform.runLater(new Runnable() {
+            public void run() {
+                for (Vital v : vitals) {
+                    if (v != null) {
+                        for (String x : v.getMetricIds()) {
+                            if (x.equals(metric_id)) {
+                                ListIterator<Value> li = v.listIterator();
+                                while (li.hasNext()) {
+                                    Value va = li.next();
+                                    if (va.getUniqueDeviceIdentifier().equals(udi) && va.getInstanceId() == instance_id) {
+                                        li.remove();
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
-        }
+        });
     }
-
-    ThreadLocal<Vital[]> vitalBuffer = new ThreadLocal<Vital[]>() {
-        @Override
-        protected Vital[] initialValue() {
-            return new Vital[0];
-        }
-    };
 
     private ice.GlobalAlarmSettingsObjectiveDataWriter writer;
     private Topic globalAlarmSettingsTopic;
@@ -200,18 +220,19 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
                 }
             }
         });
-//        Vital[] vitals = vitalBuffer.get();
-//        vitals = this.vitals.toArray(vitals);
-//        vitalBuffer.set(vitals);
-
     }
 
     @Override
     public Vital addVital(String label, String units, String[] names, Double low, Double high, Double criticalLow, Double criticalHigh, double minimum,
             double maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
-        Vital v = new VitalImpl(this, label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow,
+        final Vital v = new VitalImpl(this, label, units, names, low, high, criticalLow, criticalHigh, minimum, maximum, valueMsWarningLow,
                 valueMsWarningHigh, color);
-        add(v);
+        Platform.runLater(new Runnable() {
+            public void run() {
+                add(v);
+            }
+        });
+        
         return v;
     }
 
@@ -225,7 +246,6 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
 
     @Override
     public void start(final Subscriber subscriber, final Publisher publisher, final EventLoop eventLoop) {
-
         eventLoop.doLater(new Runnable() {
             public void run() {
                 VitalModelImpl.this.subscriber = subscriber;
@@ -246,9 +266,10 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
                 numericReader = (NumericDataReader) subscriber.create_datareader_with_profile(nTopic, QosProfiles.ice_library,
                         QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
 
+                
+
                 eventLoop.addHandler(numericReader.get_statuscondition(), numericHandler);
                 numericReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
-
             }
         });
     }
@@ -281,7 +302,25 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         Subscriber s = p.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         Publisher pub = p.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         VitalModel vm = new VitalModelImpl(null);
-
+        vm.addListener(new ListChangeListener<Vital>() {
+            @Override
+            public void onChanged(javafx.collections.ListChangeListener.Change<? extends Vital> c) {
+                while(c.next()) {
+                    if(c.wasPermutated()) {
+                        
+                    }
+                    if(c.wasUpdated()) {
+                        
+                    }
+                    if(c.wasRemoved()) {
+                        
+                    }
+                    if(c.wasAdded()) {
+                        
+                    }
+                }
+            }
+        });
 //        vm.addListener(new VitalModelListener() {
 //
 //            @Override
@@ -306,6 +345,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         new EventLoopHandler(eventLoop);
 
         vm.start(s, pub, eventLoop);
+        
     }
 
     private static final String DEFAULT_INTERLOCK_TEXT = "Drug: Morphine\r\nRate: 4cc / hour";
@@ -464,9 +504,40 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     }
 
     final DeviceListModel deviceListModel;
-
+    private final ElementObserver<Vital> elementObserver;
+    
     public VitalModelImpl(DeviceListModel deviceListModel) {
         this.deviceListModel = deviceListModel;
+        this.elementObserver = new ElementObserver<Vital>(extractor, new Callback<Vital, InvalidationListener>() {
+
+            @Override
+            public InvalidationListener call(final Vital e) {
+                return new InvalidationListener() {
+
+                    @Override
+                    public void invalidated(Observable observable) {
+                        beginChange();
+                        int i = 0;
+                        final int size = size();
+                        for (; i < size; ++i) {
+                            if (get(i) == e) {
+                                nextUpdate(i);
+                            }
+                        }
+                        endChange();
+                    }
+                };
+            }
+        }, this);
+        
+        addListener(new ListChangeListener<Vital>() {
+
+            @Override
+            public void onChanged(javafx.collections.ListChangeListener.Change<? extends Vital> c) {
+                updateState();
+            }
+            
+        });
     }
 
     @Override
@@ -481,20 +552,43 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
 
     @Override
     protected void doAdd(int index, Vital element) {
+        elementObserver.attachListener(element);
         vitals.add(index, element);
     }
 
     @Override
     protected Vital doSet(int index, Vital element) {
-        return vitals.set(index, element);
+        Vital removed =  vitals.set(index, element);
+        elementObserver.detachListener(removed);
+        elementObserver.attachListener(element);
+        return removed;
     }
 
     @Override
     protected Vital doRemove(int index) {
         Vital v = vitals.remove(index);
+        elementObserver.detachListener(v);
         if(null != v) {
             v.destroy();
         }
         return v;
     }
+    @Override
+    public void clear() {
+        if (elementObserver != null) {
+            final int sz = size();
+            for (int i = 0; i < sz; ++i) {
+                elementObserver.detachListener(get(i));
+            }
+        }
+        if (hasListeners()) {
+            beginChange();
+            nextRemove(0, this);
+        }
+        vitals.clear();
+        ++modCount;
+        if (hasListeners()) {
+            endChange();
+        }
+    }    
 }

@@ -30,7 +30,6 @@ import javax.swing.ListModel;
 
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.vital.VitalModel;
-import org.mdpnp.apps.testapp.vital.VitalModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +38,7 @@ import org.slf4j.LoggerFactory;
  * @author Jeff Plourde
  *
  */
-public class PCAMonitor extends JPanel implements VitalModelListener {
+public class PCAMonitor extends JPanel {
     @SuppressWarnings("rawtypes")
     private final JList list;
     private final JProgressAnimation pumpProgress;
@@ -170,18 +169,18 @@ public class PCAMonitor extends JPanel implements VitalModelListener {
         warnings.setText(model.getWarningText());
     }
 
-    @Override
-    public void vitalChanged(VitalModel model, org.mdpnp.apps.testapp.vital.Vital vital) {
-        reflectState();
-    }
-
-    @Override
-    public void vitalRemoved(VitalModel model, org.mdpnp.apps.testapp.vital.Vital vital) {
-        reflectState();
-    }
-
-    @Override
-    public void vitalAdded(VitalModel model, org.mdpnp.apps.testapp.vital.Vital vital) {
-        reflectState();
-    }
+//    @Override
+//    public void vitalChanged(VitalModel model, org.mdpnp.apps.testapp.vital.Vital vital) {
+//        reflectState();
+//    }
+//
+//    @Override
+//    public void vitalRemoved(VitalModel model, org.mdpnp.apps.testapp.vital.Vital vital) {
+//        reflectState();
+//    }
+//
+//    @Override
+//    public void vitalAdded(VitalModel model, org.mdpnp.apps.testapp.vital.Vital vital) {
+//        reflectState();
+//    }
 }

@@ -341,7 +341,9 @@ public class IceAppsContainer extends IceApplication {
 //                        app.activate(context);
 //                        a.setVisible(true);
 //                    } else {
+                    if(app.getUI() != null) {
                         activateGoBack(app);
+                    }
                         app.activate(context);
 //                    }
                 }

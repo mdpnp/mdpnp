@@ -28,7 +28,6 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
-import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -38,11 +37,29 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ModifiableObservableListBase;
+import javafx.util.Callback;
 
 import org.mdpnp.devices.AbstractDevice.InstanceHolder;
 
-class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
+class VitalImpl extends ModifiableObservableListBase<Value> implements Vital { 
+    private final Callback<Value, Observable[]> extractor = new Callback<Value, Observable[]>() {
 
+        @Override
+        public Observable[] call(final Value param) {
+            return new Observable[] {
+//                param.ageInMillisecondsProperty(),
+                param.atOrAboveCriticalHighProperty(),
+                param.atOrBelowCriticalLowProperty(),
+                param.atOrAboveHighProperty(),
+                param.atOrBelowLowProperty(),
+                param.atOrAboveValueMsHighProperty(),
+                param.atOrAboveValueMsLowProperty(),
+                param.valueProperty()
+            };
+        }
+        
+    };
+    
     private final VitalModelImpl parent;
     private final StringProperty label = new SimpleStringProperty(this, "label", null);
     private final StringProperty units = new SimpleStringProperty(this, "units", null);
@@ -113,7 +130,7 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
     private final DoubleProperty displayMaximum = new SimpleDoubleProperty(this, "displayMaximum", 0f);
     private final StringProperty labelMinimum = new SimpleStringProperty(this, "labelMinimum", "");
     private final StringProperty labelMaximum = new SimpleStringProperty(this, "labelMaximum", "");
-    
+    private final ElementObserver<Value> elementObserver;
     
     private final InstanceHolder<ice.GlobalAlarmSettingsObjective>[] alarmObjectives;
 
@@ -151,7 +168,28 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
         this.minimum.addListener(computeDisplayMinMax);
         this.maximum.addListener(computeDisplayMinMax);
         
-        
+        this.elementObserver = new ElementObserver<Value>(extractor, new Callback<Value, InvalidationListener>() {
+
+            @Override
+            public InvalidationListener call(final Value e) {
+                return new InvalidationListener() {
+
+                    @Override
+                    public void invalidated(Observable observable) {
+                        beginChange();
+                        int i = 0;
+                        final int size = size();
+                        for (; i < size; ++i) {
+                            if (get(i) == e) {
+                                nextUpdate(i);
+                            }
+                        }
+                        endChange();
+                    }
+                };
+            }
+        }, this);
+
     }
 
     
@@ -465,14 +503,14 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
 
     @Override
     public ReadOnlyBooleanProperty anyOutOfBoundsProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        // TODO support it
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public ReadOnlyIntegerProperty countOutOfBoundsProperty() {
-        // TODO Auto-generated method stub
-        return null;
+        // TODO support it
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -487,23 +525,49 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
 
     @Override
     protected void doAdd(int index, Value element) {
+        elementObserver.attachListener(element);
         values.add(index, element);
     }
 
     @Override
     protected Value doSet(int index, Value element) {
-        return values.set(index, element);
+        Value removed =  values.set(index, element);
+        elementObserver.detachListener(removed);
+        elementObserver.attachListener(element);
+        return removed;
     }
 
     @Override
     protected Value doRemove(int index) {
-        return values.remove(index);
+        Value v = values.remove(index);
+        elementObserver.detachListener(v);
+        return v;
     }
 
 
     @Override
+    public void clear() {
+        if (elementObserver != null) {
+            final int sz = size();
+            for (int i = 0; i < sz; ++i) {
+                elementObserver.detachListener(get(i));
+            }
+        }
+        if (hasListeners()) {
+            beginChange();
+            nextRemove(0, this);
+        }
+        values.clear();
+        ++modCount;
+        if (hasListeners()) {
+            endChange();
+        }
+    }
+    
+    @Override
     public Value get(int index) {
         return values.get(index);
     }
+
 
 }

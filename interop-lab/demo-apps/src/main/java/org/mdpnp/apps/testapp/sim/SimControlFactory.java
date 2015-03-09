@@ -4,6 +4,9 @@ import java.io.IOException;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.springframework.context.ApplicationContext;
@@ -35,6 +38,11 @@ public class SimControlFactory implements IceApplicationProvider {
         
         final SimControl controller = ((SimControl)loader.getController());
         controller.setup(participant);
+      final Stage dialog = new Stage(StageStyle.UTILITY);
+      dialog.setAlwaysOnTop(true);
+      Scene scene = new Scene(ui);
+      dialog.setScene(scene);
+      dialog.sizeToScene();
 
         
         return new IceApplicationProvider.IceApp() {
@@ -46,24 +54,20 @@ public class SimControlFactory implements IceApplicationProvider {
 
             @Override
             public Parent getUI() {
-                return ui;
+                return null;
             }
 
             @Override
             public void activate(ApplicationContext context) {
                 
-//                final Stage dialog = new Stage(StageStyle.UTILITY);
-//                dialog.setAlwaysOnTop(true);
-//                Scene scene = new Scene(ui);
-//                dialog.setScene(scene);
-//                dialog.sizeToScene();
-//                dialog.show();
+                dialog.show();
 
                 controller.start();
             }
 
             @Override
             public void stop() {
+//                dialog.hide();
                 controller.stop();
             }
 

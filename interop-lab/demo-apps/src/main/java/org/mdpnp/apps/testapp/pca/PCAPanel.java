@@ -36,20 +36,20 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import org.mdpnp.apps.testapp.DeviceFactory.Pump_SimulatorProvider;
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
-import org.mdpnp.apps.testapp.vital.VitalModelListener;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 
 /**
  * @author Jeff Plourde
  *
  */
-public class PCAPanel implements VitalModelListener {
+public class PCAPanel {
     @FXML BorderPane main;
     
     @FXML protected BorderPane pcaConfig;
+    @FXML protected PCAConfig pcaConfigController;
 
     private static final Border YELLOW_BORDER = new Border(new BorderStroke(Color.YELLOW, BorderStrokeStyle.SOLID, new CornerRadii(3), new BorderWidths(15) ));
     private static final Border RED_BORDER = new Border(new BorderStroke(Color.RED, BorderStrokeStyle.SOLID, new CornerRadii(3), new BorderWidths(15) ));
@@ -68,8 +68,8 @@ public class PCAPanel implements VitalModelListener {
         return new ByteArrayInputStream(baos.toByteArray());
     }
 
-    public PCAPanel set(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter) {
-        
+    public PCAPanel set(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListModel deviceListModel) {
+        pcaConfigController.set(refreshScheduler, objectiveWriter, deviceListModel);
         return this;
     }
     
@@ -113,6 +113,7 @@ public class PCAPanel implements VitalModelListener {
 //            this.model.removeListener(this);
 //        }
         this.model = vitalModel;
+        pcaConfigController.setModel(vitalModel, pumpModel);
 //        if (this.model != null) {
 //            this.model.addListener(this);
 //        }
@@ -124,7 +125,7 @@ public class PCAPanel implements VitalModelListener {
         return model;
     }
 
-    @Override
+//    @Override
     public void vitalChanged(VitalModel model, Vital vital) {
         if (model.isInfusionStopped()) {
             if (null != drugDeliveryAlarm && !drugDeliveryAlarm.isRunning()) {
@@ -169,14 +170,14 @@ public class PCAPanel implements VitalModelListener {
 
     }
 
-    @Override
-    public void vitalRemoved(VitalModel model, Vital vital) {
-        vitalChanged(model, vital);
-    }
-
-    @Override
-    public void vitalAdded(VitalModel model, Vital vital) {
-        vitalChanged(model, vital);
-    }
+//    @Override
+//    public void vitalRemoved(VitalModel model, Vital vital) {
+//        vitalChanged(model, vital);
+//    }
+//
+//    @Override
+//    public void vitalAdded(VitalModel model, Vital vital) {
+//        vitalChanged(model, vital);
+//    }
 
 }

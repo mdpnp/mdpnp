@@ -29,6 +29,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -41,20 +42,17 @@ import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.MyInfusionStatus;
 import org.mdpnp.apps.testapp.MyInfusionStatusItems;
 import org.mdpnp.apps.testapp.MyInfusionStatusListCell;
-import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
-import org.mdpnp.apps.testapp.vital.VitalModelListener;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 
 import com.rti.dds.infrastructure.InstanceHandle_t;
-import javafx.scene.control.Button;
 
 /**
  * @author Jeff Plourde
  *
  */
-public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
+public class PCAConfig  {
 
     @FXML protected ListView<MyInfusionStatus> pumpList;
     @FXML protected TextArea warningStatus;
@@ -244,11 +242,15 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
 //        if (this.model != null) {
 //            this.model.addListener(this);
 //        }
+        if(model != null) {
+            warningStatus.textProperty().bind(model.warningTextProperty());
+        } else { 
+            warningStatus.textProperty().unbind();
+        }
         updateVitals();
         vitalChanged(this.model, null);
     }
 
-    @Override
     public void vitalChanged(final VitalModel model, Vital vital) {
         if (model != null) {
             Platform.runLater(new Runnable() {
@@ -279,7 +281,7 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
         //                warningStatus.setBackground(getBackground());
                         break;
                     }
-                    warningStatus.setText(model.getWarningText());
+//                    warningStatus.setText(model.getWarningText());
                 
                     if (vital != null) {
             //            for (Component c : vitalsPanel.getComponents()) {
@@ -297,16 +299,16 @@ public class PCAConfig implements VitalModelListener /*, ListDataListener*/ {
 
     }
 
-    @Override
-    public void vitalRemoved(VitalModel model, Vital vital) {
-        updateVitals();
-        vitalChanged(model, null);
-    }
-
-    @Override
-    public void vitalAdded(VitalModel model, Vital vital) {
-        vitalChanged(model, vital);
-    }
+//    @Override
+//    public void vitalRemoved(VitalModel model, Vital vital) {
+//        updateVitals();
+//        vitalChanged(model, null);
+//    }
+//
+//    @Override
+//    public void vitalAdded(VitalModel model, Vital vital) {
+//        vitalChanged(model, vital);
+//    }
 
 //    @Override
 //    public void intervalAdded(ListDataEvent e) {
