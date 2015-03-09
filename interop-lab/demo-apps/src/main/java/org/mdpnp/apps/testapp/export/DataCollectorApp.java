@@ -25,7 +25,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.DeviceListModelImpl;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.export.FileAdapterApplicationFactory.PersisterUIController;
 import org.mdpnp.apps.testapp.vital.Value;
@@ -83,7 +83,7 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 
     private DataFilter      dataFilter;
     private final DeviceTreeModel deviceTreeModel = new DeviceTreeModel();
-    private DeviceListModel deviceListModel;
+    private DeviceListModelImpl deviceListModel;
 
     private List<PersisterUIController> supportedPersisters = new ArrayList<>();
 
@@ -91,7 +91,7 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         
     }
     
-    public DataCollectorApp set(DataCollector dc, DeviceListModel deviceListModel) throws IOException {
+    public DataCollectorApp set(DataCollector dc, DeviceListModelImpl deviceListModel) throws IOException {
         this.deviceListModel = deviceListModel;
         table.setItems(tblModel);
         // hold on to the references so that we we can unhook the listeners at the end

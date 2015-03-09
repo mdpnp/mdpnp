@@ -259,7 +259,7 @@ public class IceAppsContainer extends IceApplication {
 
         
         
-        final DeviceListModel nc = (DeviceListModel) context.getBean("deviceListModel");
+        final DeviceListModelImpl nc = (DeviceListModelImpl) context.getBean("deviceListModel");
 
 //        setIconImage(ImageIO.read(getClass().getResource("icon.png")));
         partitionChooserModel = new PartitionChooserModel(subscriber, publisher);

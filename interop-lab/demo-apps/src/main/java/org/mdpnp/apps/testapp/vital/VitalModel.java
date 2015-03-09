@@ -86,4 +86,8 @@ public interface VitalModel extends ObservableList<Vital> {
      */
     ReadOnlyStringProperty interlockTextProperty();
     String getInterlockText();
+
+    void updateNumeric(final String unique_device_identifier, final String metric_id, final int instance_id, final long timestamp, final float value);
+
+    void removeNumeric(final String udi, final String metric_id, final int instance_id);
 }

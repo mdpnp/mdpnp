@@ -8,19 +8,19 @@ import org.springframework.beans.factory.FactoryBean;
 
 import com.rti.dds.subscription.Subscriber;
 
-public class DeviceListModelFactory implements FactoryBean<DeviceListModel> {
+public class DeviceListModelFactory implements FactoryBean<DeviceListModelImpl> {
     private static final Logger log = LoggerFactory.getLogger(DeviceListModelFactory.class);
 
-    private DeviceListModel instance;
+    private DeviceListModelImpl instance;
 
     private final EventLoop eventLoop;
     private final Subscriber subscriber;
     private final TimeManager timeManager;
 
     @Override
-    public DeviceListModel getObject() throws Exception {
+    public DeviceListModelImpl getObject() throws Exception {
         if(instance == null) {
-            instance = new DeviceListModel(subscriber, eventLoop, timeManager);
+            instance = new DeviceListModelImpl(subscriber, eventLoop, timeManager);
             eventLoop.doLater(new Runnable() {
                 @Override
                 public void run() {
@@ -33,7 +33,7 @@ public class DeviceListModelFactory implements FactoryBean<DeviceListModel> {
 
     @Override
     public Class<?> getObjectType() {
-        return DeviceListModel.class;
+        return DeviceListModelImpl.class;
     }
 
     @Override

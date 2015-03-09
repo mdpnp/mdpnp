@@ -24,7 +24,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Polygon;
 import javafx.scene.transform.Affine;
 
-import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.DeviceListModelImpl;
 import org.mdpnp.apps.testapp.RtConfig;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;

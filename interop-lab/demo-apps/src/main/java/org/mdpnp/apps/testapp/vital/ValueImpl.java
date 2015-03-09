@@ -12,7 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
-import ice.Numeric;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.FloatProperty;
@@ -30,8 +29,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 import org.mdpnp.apps.testapp.Device;
-
-import com.rti.dds.subscription.SampleInfo;
 
 /**
  * @author Jeff Plourde
@@ -146,7 +143,7 @@ public class ValueImpl implements Value {
     }
 
     @Override
-    public void updateFrom(Numeric numeric, SampleInfo sampleInfo) {
+    public void updateFrom(final long timestamp, float value) {
         if(!Platform.isFxApplicationThread()) {
             throw new IllegalThreadStateException("ValueImpl must be updated on the FX Application thread");
         }
@@ -157,8 +154,8 @@ public class ValueImpl implements Value {
         float wasValue = this.value.get();
         long wasTime = this.timestamp.get();
 
-        this.value.set(numeric.value);
-        this.timestamp.set(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+        this.value.set(value);
+        this.timestamp.set(timestamp);
 
         // characterize the new sample
         boolean isAbove = isAtOrAboveHigh();
@@ -168,7 +165,7 @@ public class ValueImpl implements Value {
         if (isAbove) {
             if (wasAbove) {
                 // persisting above the bound ...
-                valueMsAboveHigh.add((long) ((timestamp.get() - wasTime) * (wasValue - parent.getWarningHigh())));
+                valueMsAboveHigh.add((long) ((this.timestamp.get() - wasTime) * (wasValue - parent.getWarningHigh())));
             } else {
                 // above the bound but it wasn't previously ... so restart at
                 // zero
@@ -181,7 +178,7 @@ public class ValueImpl implements Value {
         if (isBelow) {
             if (wasBelow) {
                 // persisting below the bound ...
-                valueMsBelowLow.add((long) ((timestamp.get() - wasTime) * (parent.getWarningLow() - wasValue)));
+                valueMsBelowLow.add((long) ((this.timestamp.get() - wasTime) * (parent.getWarningLow() - wasValue)));
             } else {
                 valueMsBelowLow.set(0L);
             }

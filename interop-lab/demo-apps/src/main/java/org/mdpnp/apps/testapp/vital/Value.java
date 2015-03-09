@@ -12,16 +12,13 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
-import org.mdpnp.apps.testapp.Device;
-
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyFloatProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
-import ice.Numeric;
 
-import com.rti.dds.subscription.SampleInfo;
+import org.mdpnp.apps.testapp.Device;
 
 public interface Value {
     ReadOnlyFloatProperty valueProperty();
@@ -71,7 +68,7 @@ public interface Value {
     ReadOnlyLongProperty ageInMillisecondsProperty();
     long getAgeInMilliseconds();
 
-    void updateFrom(Numeric numeric, SampleInfo sampleInfo);
+    void updateFrom(long timestamp, float value);
 
     ReadOnlyLongProperty valueMsBelowLowProperty();
     long getValueMsBelowLow();

@@ -334,13 +334,7 @@ public class DataCollector {
     static Value toValue(SampleInfo si, String dev, String metric, int instance_id, long tMs, double val)
     {
         Value v = new ValueImpl(dev, metric, instance_id, noopVital);
-        Numeric numeric = new Numeric();
-        numeric.value = (float) val;
-        numeric.device_time = new ice.Time_t();
-        numeric.device_time.sec = (int)(tMs/1000L);
-        numeric.device_time.nanosec = (int)(tMs%1000L)*1000000;
-
-        v.updateFrom(numeric, si);
+        v.updateFrom(tMs, (float) val);
         return v;
     }
 
