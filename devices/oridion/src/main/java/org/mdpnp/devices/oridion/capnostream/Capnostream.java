@@ -24,15 +24,12 @@ import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.io.MergeBytesInputStream;
 import org.mdpnp.devices.io.SplitBytesOutputStream;
 import org.slf4j.Logger;
@@ -48,13 +45,15 @@ public class Capnostream {
 
     private final InputStream inputStream;
     private final SplitBytesOutputStream outputStream;
+    private final CapnostreamClock deviceClock;
 
     // Header + 2-byte length + 255 2-byte body + 2-byte checksum
     private static final int WORST_CASE_MSG_LENGTH = 1 + 2 + 2 * 255 + 2;
 
-    public Capnostream(InputStream is, OutputStream os) {
+    public Capnostream(DeviceClock referenceClock, InputStream is, OutputStream os) {
         this.inputStream = new MergeBytesInputStream(new BufferedInputStream(is, WORST_CASE_MSG_LENGTH));
         this.outputStream = new SplitBytesOutputStream(new BufferedOutputStream(os, WORST_CASE_MSG_LENGTH));
+        this.deviceClock = new CapnostreamClock(referenceClock);
     }
 
     private final byte[] inBuffer = new byte[WORST_CASE_MSG_LENGTH];
@@ -368,10 +367,10 @@ public class Capnostream {
         return true;
     }
 
-    public boolean receiveCO2Wave(int messageNumber, double co2, int status) {
+    public boolean receiveCO2Wave(DeviceClock.Reading sampleTime, int messageNumber, double co2, int status) {
         log.trace("CO2Wave: " + messageNumber + " " + co2 + " " + status);
         for (CapnostreamListener listener : listeners) {
-            listener.co2Wave(messageNumber, co2, status);
+            listener.co2Wave(sampleTime, messageNumber, co2, status);
         }
         return true;
     }
@@ -380,12 +379,12 @@ public class Capnostream {
         return (0xFF & buf[off]) + (0xFF & buf[off + 1]) / 256.0;
     }
 
-    public boolean receiveNumerics(long date, int etCO2, int FiCO2, int respiratoryRate, int spo2, int pulserate, int slowStatus,
+    public boolean receiveNumerics(DeviceClock.Reading sampleTime, int etCO2, int FiCO2, int respiratoryRate, int spo2, int pulserate, int slowStatus,
             int CO2ActiveAlarms, int SpO2ActiveAlarms, int noBreathPeriodSeconds, int etCo2AlarmHigh, int etCo2AlarmLow, int rrAlarmHigh,
             int rrAlarmLow, int fico2AlarmHigh, int spo2AlarmHigh, int spo2AlarmLow, int pulseAlarmHigh, int pulseAlarmLow, CO2Units units,
             int extendedCO2Status) {
         for (CapnostreamListener listener : listeners) {
-            listener.numerics(date, etCO2, FiCO2, respiratoryRate, spo2, pulserate, slowStatus, CO2ActiveAlarms, SpO2ActiveAlarms,
+            listener.numerics(sampleTime, etCO2, FiCO2, respiratoryRate, spo2, pulserate, slowStatus, CO2ActiveAlarms, SpO2ActiveAlarms,
                     noBreathPeriodSeconds, etCo2AlarmHigh, etCo2AlarmLow, rrAlarmHigh, rrAlarmLow, fico2AlarmHigh, spo2AlarmHigh, spo2AlarmLow,
                     pulseAlarmHigh, pulseAlarmLow, units, extendedCO2Status);
         }
@@ -400,6 +399,7 @@ public class Capnostream {
             return true;
         }
         long dt = 1000L * getUnsignedInt(payload, 0);
+
         int etco2 = 0xFF & payload[4];
         int fico2 = 0xFF & payload[5];
         int rr = 0xFF & payload[6];
@@ -436,7 +436,9 @@ public class Capnostream {
         priorRespiratoryRate = rr;
 
         // TODO there is more stuff here
-        return receiveNumerics(dt, etco2, fico2, rr, spo2, pulse, slowStatus, co2ActiveAlarms, spo2ActiveAlarms, noBreathPeriodSeconds,
+        DeviceClock.Reading sampleTime = deviceClock.instant(dt);
+
+        return receiveNumerics(sampleTime, etco2, fico2, rr, spo2, pulse, slowStatus, co2ActiveAlarms, spo2ActiveAlarms, noBreathPeriodSeconds,
                 etCo2AlarmHigh, etCo2AlarmLow, rrAlarmHigh, rrAlarmLow, fico2AlarmHigh, spo2AlarmHigh, spo2AlarmLow, pulseAlarmHigh, pulseAlarmLow,
                 units, extendedCO2Status);
     }
@@ -451,7 +453,8 @@ public class Capnostream {
     }
 
     public boolean receiveCO2Wave(byte[] payload, int length) {
-        return receiveCO2Wave(payload[0], co2(payload, 1), payload[3]);
+        DeviceClock.Reading sampleTime = deviceClock.instant();
+        return receiveCO2Wave(sampleTime, payload[0], co2(payload, 1), payload[3]);
     }
 
     public boolean receiveMessage(Object response, byte[] payload, int length) {
@@ -499,12 +502,9 @@ public class Capnostream {
         Masimo, Nellcor
     }
 
-    public static void main(String[] args) {
-        Capnostream c = new Capnostream(null, null);
-        c.receiveDeviceIdSoftwareVersion("V45.67 02/24/2008 B355987654  ");
-    }
 
-    public boolean receiveDeviceIdSoftwareVersion(String softwareVersion, Date softwareReleaseDate, PulseOximetry pulseOximetry, String revision,
+    public boolean receiveDeviceIdSoftwareVersion(String softwareVersion, Date softwareReleaseDate,
+                                                  PulseOximetry pulseOximetry, String revision,
             String number) {
         log.debug("softwareVersion=" + softwareVersion + ", softwareReleaseDate=" + softwareReleaseDate + ", pulseOximetry=" + pulseOximetry
                 + ", revision=" + revision + ", number=" + number);
@@ -658,4 +658,31 @@ public class Capnostream {
     public void removeListener(CapnostreamListener listener) {
         listeners.remove(listener);
     }
+
+
+    static class CapnostreamClock implements DeviceClock {
+
+        private final DeviceClock ref;
+
+        static final TimeZone localTimeZone = TimeZone.getDefault();
+
+        CapnostreamClock(DeviceClock ref) {
+            this.ref = ref;
+
+        }
+
+        @Override
+        public Reading instant() {
+            return ref.instant();
+        }
+
+        public Reading instant(long deviceReading) {
+            int offset = localTimeZone.getOffset(deviceReading);
+            long currentTime = deviceReading - offset;
+
+            Reading deviceTime = new DeviceClock.ReadingImpl(currentTime);
+            return new CombinedReading(instant(), deviceTime);
+        }
+    }
+
 }

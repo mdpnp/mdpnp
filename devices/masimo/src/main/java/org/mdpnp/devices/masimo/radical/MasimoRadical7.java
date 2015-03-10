@@ -17,17 +17,18 @@ import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.io.ASCIIFieldDelegate;
 
 /**
  * @author Jeff Plourde
  *
  */
-public class MasimoRadical7 extends ASCIIFieldDelegate {
+public class MasimoRadical7 extends ASCIIFieldDelegate implements DeviceClock {
 
     private Integer heartRate, spo2, perfusionIndex, spco, spmet, desat, pidelta, pvi;
     private String guid, alarm;
-    private Date lastPoint;
+    private Date lastPoint=new Date(0);
 
     public MasimoRadical7() throws IOException, NoSuchFieldException, SecurityException {
         super(MasimoRadical7.class.getResource("masimo-radical-7.spec"));
@@ -84,8 +85,9 @@ public class MasimoRadical7 extends ASCIIFieldDelegate {
         return spmet;
     }
 
-    public Date getTimestamp() {
-        return lastPoint;
+    @Override
+    public Reading instant() {
+        return new ReadingImpl(lastPoint.getTime());
     }
 
     public String getUniqueId() {

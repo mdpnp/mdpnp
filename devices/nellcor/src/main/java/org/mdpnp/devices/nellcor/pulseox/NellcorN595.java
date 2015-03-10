@@ -17,19 +17,20 @@ import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.io.ASCIIFieldDelegate;
 
 /**
  * @author Jeff Plourde
  *
  */
-public class NellcorN595 extends ASCIIFieldDelegate {
+public class NellcorN595 extends ASCIIFieldDelegate implements DeviceClock {
     public NellcorN595() throws NoSuchFieldException, SecurityException, IOException {
         super(NellcorN595.class.getResource("nellcor-n595.spec"));
     }
 
     private Integer heartRate, spo2, pulseAmplitude, satS;
-    private Date lastPoint;
+    private Date lastPoint = new Date(0);
     private Status[] status = new Status[10];
 
     private String version, crc, spO2Units, pRUnits;
@@ -37,8 +38,9 @@ public class NellcorN595 extends ASCIIFieldDelegate {
     private LimitsType limitsType;
     private SpO2RespMode spO2RespMode;
 
-    public Date getTimestamp() {
-        return lastPoint;
+    @Override
+    public Reading instant() {
+        return new ReadingImpl(lastPoint.getTime());
     }
 
     public Integer getPulseAmplitude() {

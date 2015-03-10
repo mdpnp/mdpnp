@@ -22,9 +22,9 @@ import java.nio.ByteOrder;
 import java.util.Calendar;
 
 import org.mdpnp.devices.ASCIIByte;
+import org.mdpnp.devices.DeviceClock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 /**
  * @author Jeff Plourde
  *
@@ -33,6 +33,8 @@ public class BioPatch {
 
     private final InputStream in;
     private final OutputStream out;
+    private final BioPatchClock deviceClock;
+
     private final Logger log = LoggerFactory.getLogger(BioPatch.class);
 
     public static final int SET_GENERAL_DATA_PACKET_TRANSMIT_STATE = 0x14;
@@ -46,13 +48,14 @@ public class BioPatch {
     public static final int LIFESIGN = 0x23;
     public static final int GET_SERIAL_NUMBER = 0x0B;
     
-    public BioPatch(InputStream in, OutputStream out) {
+    public BioPatch(DeviceClock referenceClock, InputStream in, OutputStream out) {
+        this.deviceClock = new BioPatchClock(referenceClock);
         this.in = in;
         this.out = new BufferedOutputStream(out);
     }
 
-    protected void receiveGeneralDataPacket(int sequenceNumber, long timeofday, Integer heartrate, Float respirationRate, Float skinTemperature) {
-        
+    protected void receiveGeneralDataPacket(DeviceClock.Reading timeofday, int sequenceNumber, Integer heartrate, Float respirationRate, Float skinTemperature) {
+
     }
     
     protected void receiveGetSerialNumber(String s) {
@@ -68,15 +71,16 @@ public class BioPatch {
     }
     
     
-    protected void receiveECGDataPacket(long tm, Number[] values) {
+    protected void receiveECGDataPacket(DeviceClock.Reading timeofday, Number[] values) {
         
     }
     
     protected void receiveECGDataPacket(ByteBuffer buffer, int bytes) {
         int sequenceNumber = buffer.get();
         bytes--;
-        long tm = timeFromTimestamp(calendar, buffer);
+        DeviceClock.Reading sampleTime = deviceClock.instant(buffer);
         bytes-=8;
+
         // meant to be 63 samples in 79 bytes.. unpacking 10-bit samples
         Number[] values = new Number[63];
         int anchor = buffer.position();
@@ -109,41 +113,24 @@ public class BioPatch {
                 break;
             }
         }
-        
-        
-        receiveECGDataPacket(tm, values);
+
+        receiveECGDataPacket(sampleTime, values);
 //        log.warn(Arrays.toString(values));
     }
     
-    private static long timeFromTimestamp(Calendar calendar, ByteBuffer buffer) {
-        int year = buffer.getShort();
-        int month = buffer.get();
-        int day = buffer.get();
-        int millisecond = buffer.getInt();
-        
-        calendar.set(Calendar.YEAR, year);
-        calendar.set(Calendar.MONTH, month - 1);
-        calendar.set(Calendar.DAY_OF_MONTH, day);
-        calendar.set(Calendar.HOUR_OF_DAY, millisecond / 3600000);
-        millisecond %= 3600000;
-        calendar.set(Calendar.MINUTE, millisecond / 60000);
-        millisecond %= 60000;
-        calendar.set(Calendar.SECOND, millisecond / 1000);
-        millisecond %= 1000;
-        calendar.set(Calendar.MILLISECOND, millisecond);
-        return calendar.getTimeInMillis();
-    }
+
     
     protected void receiveGeneralDataPacket(ByteBuffer buffer) {
         int sequenceNumber = buffer.get();
-        long tm = timeFromTimestamp(calendar, buffer);
+        DeviceClock.Reading sampleTime = deviceClock.instant(buffer);
+
         int heartRate = 0xFFFF & buffer.getShort();
         int respirationRate = 0xFFFF & buffer.getShort();
         int skinTemp = buffer.getShort();
         
         receiveGeneralDataPacket(
-                sequenceNumber, 
-                tm, 
+                sampleTime,
+                sequenceNumber,
                 65535==heartRate?null:heartRate, 
                 65535==respirationRate?null:(respirationRate/10.0f), 
                 -32768==skinTemp?null:(skinTemp/10.0f));
@@ -202,7 +189,7 @@ public class BioPatch {
     private final byte[] _buffer = new byte[65536];
     private final ByteBuffer buffer = ByteBuffer.wrap(_buffer).order(ByteOrder.LITTLE_ENDIAN);
     private final byte[] xmitBuffer = new byte[4096];
-    private final Calendar calendar = Calendar.getInstance();
+
 
     protected final static int crcByte(int crc, int b) {
         crc = crc ^ b;
@@ -283,4 +270,51 @@ public class BioPatch {
 
         return true;
     }
+
+    static class BioPatchClock implements DeviceClock {
+
+        private final DeviceClock ref;
+
+        private final Calendar calendar = Calendar.getInstance();
+
+        BioPatchClock(DeviceClock ref) {
+            this.ref = ref;
+
+        }
+
+        @Override
+        public Reading instant() {
+            return ref.instant();
+        }
+
+        // The device has no timezone setting ... so we're getting milliseconds since the epoch in local time
+        // which is an unusual value to get... and hence we need to do something unusual to cope with it
+
+        public Reading instant(ByteBuffer buffer) {
+            long currentTime = timeFromTimestamp(calendar, buffer);
+            Reading deviceTime = new DeviceClock.ReadingImpl(currentTime);
+            return new CombinedReading(instant(), deviceTime);
+        }
+
+        static synchronized long timeFromTimestamp(Calendar calendar, ByteBuffer buffer) {
+            int year = buffer.getShort();
+            int month = buffer.get();
+            int day = buffer.get();
+            int millisecond = buffer.getInt();
+
+            calendar.set(Calendar.YEAR, year);
+            calendar.set(Calendar.MONTH, month - 1);
+            calendar.set(Calendar.DAY_OF_MONTH, day);
+            calendar.set(Calendar.HOUR_OF_DAY, millisecond / 3600000);
+            millisecond %= 3600000;
+            calendar.set(Calendar.MINUTE, millisecond / 60000);
+            millisecond %= 60000;
+            calendar.set(Calendar.SECOND, millisecond / 1000);
+            millisecond %= 1000;
+            calendar.set(Calendar.MILLISECOND, millisecond);
+            return calendar.getTimeInMillis();
+        }
+
+    }
+
 }

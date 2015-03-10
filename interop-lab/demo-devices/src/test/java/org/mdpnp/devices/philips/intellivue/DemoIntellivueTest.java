@@ -12,18 +12,24 @@
  ******************************************************************************/
 package org.mdpnp.devices.philips.intellivue;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.mdpnp.devices.philips.intellivue.data.Label;
 import org.mdpnp.devices.philips.intellivue.data.ObservedValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * @author Jeff Plourde
- *
- */
-public class TestDemoIntellivue {
+
+public class DemoIntellivueTest {
+
+    private final Logger log = LoggerFactory.getLogger(DemoIntellivueTest.class);
+
     @Test
     public void testLoadMap() throws Exception {
         Map<ObservedValue, String> numericMetricIds = new HashMap<ObservedValue, String>();
@@ -31,9 +37,28 @@ public class TestDemoIntellivue {
         Map<ObservedValue, String> sampleArrayMetricIds = new HashMap<ObservedValue, String>();
         Map<ObservedValue, Label> sampleArrayLabels = new HashMap<ObservedValue, Label>();
         DemoEthernetIntellivue.loadMap(numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
-        System.out.println(numericMetricIds);
-        System.out.println(numericLabels);
-        System.out.println(sampleArrayMetricIds);
-        System.out.println(sampleArrayLabels);
+
+        URL url = DemoEthernetIntellivue.class.getResource("intellivue.map");
+        if(url==null)
+            throw new IllegalArgumentException("Cannot locate intellivue.map");
+        try {
+            InputStream is = url.openStream();
+            DemoEthernetIntellivue.loadMap(is, numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
+            is.close();
+        }
+        catch (IOException ex) {
+            throw new IllegalStateException("Failed to load maps", ex);
+        }
+
+        log.info("numericMetricIds" + numericMetricIds);
+        log.info("numericLabels" + numericLabels);
+        log.info("sampleArrayMetricIds" + sampleArrayMetricIds);
+        log.info("sampleArrayLabels" + sampleArrayLabels);
+
+        Assert.assertEquals("Failed to load numerics ids",    15, numericMetricIds.size());
+        Assert.assertEquals("Failed to load numerics labels", 15, numericLabels.size());
+        Assert.assertEquals("Failed to load array metrics",    7, sampleArrayMetricIds.size());
+        Assert.assertEquals("Failed to load array labels ",    7, sampleArrayLabels.size());
+
     }
 }

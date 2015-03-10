@@ -7,13 +7,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.puritanbennett._840.PB840.Units;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
@@ -26,13 +24,10 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.infrastructure.Time_t;
-
 public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     private static final Logger log = LoggerFactory.getLogger(DemoPB840.class);
     private InstanceHolder<ice.SampleArray> flowSampleArray, pressureSampleArray;
-    private final Calendar currentDeviceTime = Calendar.getInstance();
-    private final Time_t currentDeviceTimeAsTimeT = new Time_t(0,0); 
+    private final PB840Clock deviceClock = new PB840Clock();
     protected final Map<PB840.Units, String> unitsMap = new HashMap<PB840.Units, String>();
     protected final Map<String, String> terms = new HashMap<String, String>();
 
@@ -44,9 +39,20 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
 
         @Override
         public void receiveBreath(Collection<Number> flow, Collection<Number> pressure) {
-            flowSampleArray = sampleArraySample(flowSampleArray, flow, rosetta.MDC_FLOW_AWAY.VALUE, rosetta.MDC_FLOW_AWAY.VALUE, 0, rosetta.MDC_DIM_L_PER_MIN.VALUE, 50, currentDeviceTimeAsTimeT);
-            pressureSampleArray = sampleArraySample(pressureSampleArray, pressure, rosetta.MDC_PRESS_AWAY.VALUE, rosetta.MDC_PRESS_AWAY.VALUE, 0, rosetta.MDC_DIM_CM_H2O.VALUE,
-                    50, currentDeviceTimeAsTimeT);
+            DeviceClock.Reading sampleTime = deviceClock.instant();
+
+            flowSampleArray =
+                    sampleArraySample(flowSampleArray, flow,
+                                      rosetta.MDC_FLOW_AWAY.VALUE,
+                                      rosetta.MDC_FLOW_AWAY.VALUE, 0,
+                                      rosetta.MDC_DIM_L_PER_MIN.VALUE, 50,
+                                      sampleTime);
+            pressureSampleArray =
+                    sampleArraySample(pressureSampleArray, pressure,
+                                      rosetta.MDC_PRESS_AWAY.VALUE,
+                                      rosetta.MDC_PRESS_AWAY.VALUE, 0,
+                                      rosetta.MDC_DIM_CM_H2O.VALUE, 50,
+                                      sampleTime);
         }
     }
 
@@ -54,8 +60,6 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         super(domainId, eventLoop, 2, PB840.class);
         loadUnits(unitsMap);
         loadTerms(terms);
-        currentDeviceTime.set(Calendar.SECOND, 0);
-        currentDeviceTime.set(Calendar.MILLISECOND, 0);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Puritan Bennett";
         deviceIdentity.model = "";
@@ -157,9 +161,13 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             String canonicalName = terms.get(name);
             canonicalName = null == canonicalName ? name : canonicalName;
             try {
+                DeviceClock.Reading sampleTime = deviceClock.instant();
                 numericInstances.put(name,
-                        numericSample(numericInstances.get(name), parseFloat(value), 
-                                canonicalName, name, unitsMap.get(units), currentDeviceTimeAsTimeT));
+                        numericSample(numericInstances.get(name),
+                                      parseFloat(value),
+                                      canonicalName, name,
+                                      unitsMap.get(units),
+                                      sampleTime));
             } catch (NumberFormatException nfe) {
                 log.warn("Poorly formatted numeric " + name + " " + value);
                 throw nfe;
@@ -207,21 +215,12 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         
         @Override
         public void receiveTime(int hour, int minute) {
-            currentDeviceTime.set(Calendar.HOUR_OF_DAY, hour);
-            currentDeviceTime.set(Calendar.MINUTE, minute);
-            long tm = currentDeviceTime.getTimeInMillis();
-            currentDeviceTimeAsTimeT.sec = (int) (tm / 1000L);
-            currentDeviceTimeAsTimeT.nanosec = (int)(1000000L * (tm % 1000L));
+            deviceClock.receiveTime(hour, minute);
         }
         
         @Override
         public void receiveDate(int month, int day, int year) {
-            currentDeviceTime.set(Calendar.MONTH, month);
-            currentDeviceTime.set(Calendar.DATE, day);
-            currentDeviceTime.set(Calendar.YEAR, year);
-            long tm = currentDeviceTime.getTimeInMillis();
-            currentDeviceTimeAsTimeT.sec = (int) (tm / 1000L);
-            currentDeviceTimeAsTimeT.nanosec = (int)(1000000L * (tm % 1000L));
+            deviceClock.receiveDate(month, day, year);
         }
         
         @Override
@@ -287,7 +286,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
 
     private synchronized void startRequestSlowData() {
         if (null == requestSlowData) {
-            requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 1000L, 1000L, TimeUnit.MILLISECONDS);
+            requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 1000L, 2000L, TimeUnit.MILLISECONDS);
             log.trace("Scheduled slow data request task");
         } else {
             log.trace("Slow data request already scheduled");
@@ -355,6 +354,32 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     protected String iconResourceName() {
         return "pb840.png";
     }
-    
 
+
+    class PB840Clock implements DeviceClock {
+
+        private final Calendar currentDeviceTime = Calendar.getInstance();
+
+        public PB840Clock() {
+            currentDeviceTime.set(Calendar.SECOND, 0);
+            currentDeviceTime.set(Calendar.MILLISECOND, 0);
+        }
+
+        public void receiveTime(int hour, int minute) {
+            currentDeviceTime.set(Calendar.HOUR_OF_DAY, hour);
+            currentDeviceTime.set(Calendar.MINUTE, minute);
+        }
+
+        public void receiveDate(int month, int day, int year) {
+            currentDeviceTime.set(Calendar.MONTH, month);
+            currentDeviceTime.set(Calendar.DATE, day);
+            currentDeviceTime.set(Calendar.YEAR, year);
+        }
+
+        @Override
+        public Reading instant() {
+            return new ReadingImpl(currentDeviceTime.getTimeInMillis());
+        }
+
+    }
 }

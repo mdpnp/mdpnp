@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
@@ -68,25 +69,24 @@ public class DemoBioPatch extends AbstractDelegatingSerialDevice<BioPatch> {
         }
     }
 
-    private class MyBioPatch extends BioPatch {
+    private class BioPatchExt extends BioPatch {
 
-        public MyBioPatch(InputStream in, OutputStream out) {
-            super(in, out);
+        public BioPatchExt(DeviceClock referenceClock, InputStream in, OutputStream out) {
+            super(referenceClock, in, out);
         }
         
         @Override
-        protected void receiveGeneralDataPacket(int sequenceNumber, long timeofday, Integer heartrate, Float resprate, Float skintemp) {
+        protected void receiveGeneralDataPacket(DeviceClock.Reading timeofday, int sequenceNumber, Integer heartrate, Float resprate, Float skintemp) {
             reportConnected("Received General Data Packet");
-            log.warn("sequenceNumber="+sequenceNumber+" timeofday="+new Date(timeofday)+" heartrate="+heartrate+" respirationRate="+resprate+" skinTemp="+skintemp);
-            Time_t t = new Time_t((int)(timeofday / 1000L), (int)(timeofday % 1000L * 1000000L));
-            heartRate = numericSample(heartRate, heartrate, rosetta.MDC_ECG_HEART_RATE.VALUE, "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, t);
-            respirationRate = numericSample(respirationRate, resprate, rosetta.MDC_TTHOR_RESP_RATE.VALUE, "", rosetta.MDC_DIM_DIMLESS.VALUE, t);
-            skinTemperature = numericSample(skinTemperature, skintemp, rosetta.MDC_TEMP_SKIN.VALUE, "", rosetta.MDC_DIM_DEGC.VALUE, t);
+            log.warn("sequenceNumber="+sequenceNumber+" timeofday="+timeofday+" heartrate="+heartrate+" respirationRate="+resprate+" skinTemp="+skintemp);
+            heartRate = numericSample(heartRate, heartrate, rosetta.MDC_ECG_HEART_RATE.VALUE, "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeofday);
+            respirationRate = numericSample(respirationRate, resprate, rosetta.MDC_TTHOR_RESP_RATE.VALUE, "", rosetta.MDC_DIM_DIMLESS.VALUE, timeofday);
+            skinTemperature = numericSample(skinTemperature, skintemp, rosetta.MDC_TEMP_SKIN.VALUE, "", rosetta.MDC_DIM_DEGC.VALUE, timeofday);
         }
         
         @Override
-        protected void receiveECGDataPacket(long tm, Number[] values) {
-            ecgTrace = sampleArraySample(ecgTrace, values, ice.MDC_ECG_LEAD_I.VALUE, "", rosetta.MDC_DIM_DIMLESS.VALUE, 250, null);
+        protected void receiveECGDataPacket(DeviceClock.Reading timeofday, Number[] values) {
+            ecgTrace = sampleArraySample(ecgTrace, values, ice.MDC_ECG_LEAD_I.VALUE, "", rosetta.MDC_DIM_DIMLESS.VALUE, 250, timeofday);
         }
         
         @Override
@@ -101,7 +101,7 @@ public class DemoBioPatch extends AbstractDelegatingSerialDevice<BioPatch> {
     
     @Override
     protected BioPatch buildDelegate(int idx, InputStream in, OutputStream out) {
-        return new MyBioPatch(in, out);
+        return new BioPatchExt(getClockProvider(), in, out);
     }
 
     
@@ -150,10 +150,6 @@ public class DemoBioPatch extends AbstractDelegatingSerialDevice<BioPatch> {
 
     protected static boolean response = false;
 
-    @Override
-    protected boolean sampleArraySpecifySourceTimestamp() {
-        return true;
-    }
     private class EmitSignOfLife implements Runnable {
         public void run() {
             if (ice.ConnectionState.Connected.equals(getState())) {
