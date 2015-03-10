@@ -15,6 +15,7 @@ package org.mdpnp.devices;
 import ice.Alert;
 import ice.DeviceIdentity;
 import ice.DeviceIdentityDataWriter;
+import ice.DeviceIdentityTypeCode;
 import ice.DeviceIdentityTypeSupport;
 import ice.LocalAlarmSettingsObjectiveDataWriter;
 import ice.Numeric;
@@ -31,6 +32,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,12 +51,15 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
+import org.mdpnp.rtiapi.data.TypeCodeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantQos;
+import com.rti.dds.infrastructure.BadKind;
+import com.rti.dds.infrastructure.Bounds;
 import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
@@ -704,7 +709,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         executor.shutdown();
         log.info("AbstractDevice shutdown complete");
     }
-    
+
     public AbstractDevice(int domainId, EventLoop eventLoop) {
         DomainParticipantQos pQos = new DomainParticipantQos();
         DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
@@ -730,19 +735,53 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         
         
         String osName = System.getProperty("os.name");
-        if("Linux".equals(osName)) {
-            Path issue = Paths.get("/etc/issue");
-            File f = issue.toFile();
-            if(f.exists() && f.canRead()) {
-                try {
-                    byte[] b = Files.readAllBytes(issue);
-                    osName = new String(b, "ASCII");
-                } catch (IOException e1) {
-                    log.info("Unable to read /etc/issue on this Linux system", e1);
+        
+        int maxOperatingSystemLength = 0;
+        try {
+            maxOperatingSystemLength = TypeCodeHelper.fieldLength(DeviceIdentityTypeCode.VALUE, "operating_system");
+        } catch (BadKind | Bounds e) {
+            log.warn("Unable to find length of DeviceIdentity.operating_system", e);
+        }
+        
+        if(maxOperatingSystemLength > 0) {
+            if("Linux".equals(osName)) {
+            
+                final String OS_RELEASE_FILE = "/etc/os-release";
+                Path osRelease = Paths.get(OS_RELEASE_FILE);
+                File f = osRelease.toFile();
+                if(f.exists() && f.canRead()) {
+                    try {
+                        
+                        List<String> definitions = Files.readAllLines(osRelease, Charset.forName("UTF-8"));
+                        for (String line : definitions) {
+                            try {
+                                if (line.startsWith("PRETTY_NAME=")) {
+                                    String value = line.substring(line.indexOf("=") + 1);
+                                    if (value.startsWith("\"")) { // Remove the quotes around the value.
+                                        value = value.substring(1, value.length() - 1);
+                                    }
+                                    osName = value;
+                                    break;
+                                }
+                            } catch (IndexOutOfBoundsException e) {
+                                log.debug(e.getMessage(), e);
+                            }
+                        }
+                    } catch (IOException e1) {
+                        log.info("Unable to read " + OS_RELEASE_FILE + " on this Linux system", e1);
+                    }
                 }
             }
+            String operatingSystem = osName + " " + System.getProperty("os.arch") + " " + System.getProperty("os.version");
+
+            if (operatingSystem.length() > maxOperatingSystemLength) {
+                operatingSystem = operatingSystem.substring(0, maxOperatingSystemLength);
+            }
+            deviceIdentity.operating_system = operatingSystem;
+        } else {
+            deviceIdentity.operating_system = "";
         }
-        deviceIdentity.operating_system = osName + " " + System.getProperty("os.arch") + " " + System.getProperty("os.version");
+
         try {
             iconFromResource(deviceIdentity, iconResourceName());
         } catch (IOException e1) {
