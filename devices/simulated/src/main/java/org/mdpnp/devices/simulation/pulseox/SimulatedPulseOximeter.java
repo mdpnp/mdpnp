@@ -17,6 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.math.DCT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,14 +36,11 @@ public class SimulatedPulseOximeter {
         return count;
     }
 
-    private final class MyTask implements Runnable {
+    private final class DataPublisher implements Runnable {
         private final Number[] plethValues = new Number[SAMPLES_PER_UPDATE];
 
-        public MyTask(long lastTime) {
-            this.lastTime = lastTime;
-        }
+        public DataPublisher(){}
         
-        long lastTime;
 
         @Override
         public void run() {
@@ -51,10 +49,11 @@ public class SimulatedPulseOximeter {
                     plethValues[i] = pleth[postIncrCount()];
                 }
                 nextDraw();
-                
-                lastTime+=UPDATE_PERIOD;
 
-                receivePulseOx(lastTime, (int) Math.round(heartRate), (int) Math.round(spO2), plethValues, FREQUENCY);
+                DeviceClock.Reading  t = deviceClock.instant();
+
+                receivePulseOx(t, (int) Math.round(heartRate), (int) Math.round(spO2), plethValues, FREQUENCY);
+
             } catch (Throwable t) {
                 log.error("Error sending simulated pulse oximetry data", t);
             }
@@ -62,9 +61,11 @@ public class SimulatedPulseOximeter {
 
     };
 
-    protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, int frequency) {
+    protected void receivePulseOx(DeviceClock.Reading timestamp, int heartRate, int SpO2, Number[] plethValues, int frequency) {
 
     }
+
+    private final DeviceClock deviceClock;
 
     protected static final long UPDATE_PERIOD = 1000L;
     protected static final double MILLISECONDS_PER_SAMPLE = 10L;
@@ -96,7 +97,7 @@ public class SimulatedPulseOximeter {
             task = null;
         }
         long now = System.currentTimeMillis();
-        task = executor.scheduleAtFixedRate(new MyTask(now-now%UPDATE_PERIOD), UPDATE_PERIOD - now % UPDATE_PERIOD, UPDATE_PERIOD, TimeUnit.MILLISECONDS);
+        task = executor.scheduleAtFixedRate(new DataPublisher(), UPDATE_PERIOD - now % UPDATE_PERIOD, UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
 
     public void disconnect() {
@@ -106,7 +107,14 @@ public class SimulatedPulseOximeter {
         }
     }
 
-    public SimulatedPulseOximeter() {
+    public SimulatedPulseOximeter(final DeviceClock referenceClock) {
+        deviceClock = new DeviceClock() {
+            final DeviceClock dev=new DeviceClock.Metronome(UPDATE_PERIOD);
+            @Override
+            public Reading instant() {
+                return new CombinedReading(referenceClock.instant(), dev.instant());
+            }
+        };
         initPleth();
     }
 

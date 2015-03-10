@@ -31,6 +31,10 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
     protected void reportConnected(String transitionNote) {
         reportConnected(0, transitionNote);
     }
+
+    protected void reportConnected(long timeStamp, String transitionNote) {
+        reportConnected(0, transitionNote);
+    }
     
     protected void reportConnected(int idx, String transitionNote) {
         // Once we transition the watchdog will be watching but we don't want to

@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Date;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.io.util.HexUtil;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
@@ -34,8 +35,6 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.rti.dds.infrastructure.Time_t;
 
 /**
  * @author Jeff Plourde
@@ -97,8 +96,11 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
     private class MyNoninPulseOx extends NoninPulseOx {
 
+        private final DeviceClock deviceClock;
+
         public MyNoninPulseOx(InputStream in, OutputStream out) {
             super(in, out);
+            deviceClock = new DemoNoninPulseOxClock(getClockProvider());
         }
 
         @Override
@@ -157,12 +159,11 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             received(Phase.GetTime, true);
         }
 
-        private float[] plethBuffer = new float[Packet.FRAMES];
+        private Integer[] plethBuffer = new Integer[Packet.FRAMES];
         
-        private final Time_t updateTime = new Time_t(0,0);
-        private long lastUpdate = 0L;
+        private long lastUpdate3 = 0L;
 
-        private static final long MS_PER_PACKET = (long)( Packet.FRAMES * NoninPulseOx.MILLISECONDS_PER_SAMPLE );
+        private static final long MS_PER_PACKET3 = (long)( Packet.FRAMES * NoninPulseOx.MILLISECONDS_PER_SAMPLE );
         
         @Override
         public void receivePacket(Packet currentPacket) {
@@ -174,33 +175,14 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             for (int i = 0; i < Packet.FRAMES; i++) {
                 plethBuffer[i] = currentPacket.getPleth(i);
             }
-            
-            
-            // Complex way of finding the nearest millisecond on an even second
-            // or 333ms or 666ms into the second
-            long now = System.currentTimeMillis();
-            long nearest_second = 1000L * (now / 1000L);
-            long mod = (now-nearest_second) / MS_PER_PACKET;
-            now = nearest_second + mod * MS_PER_PACKET;
-            if((now%1000L)==999L) {
-                now+=1L;
-            }
 
-            if(now <= lastUpdate) { 
-                now = lastUpdate + MS_PER_PACKET;
-                if((now%1000L)==999L) {
-                    now+=1L;
-                }
-            }
-            lastUpdate = now;
-            
-            updateTime.sec = (int) (now / 1000L);
-            updateTime.nanosec = (int) ((now % 1000L) * 1000000L);
-            
-            pleth = sampleArraySample(pleth, plethBuffer, plethBuffer.length, 
+            DeviceClock.Reading timeStamp = deviceClock.instant();
+
+            pleth = sampleArraySample(pleth, plethBuffer,
                     rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
                     rosetta.MDC_DIM_DIMLESS.VALUE,
-                    NoninPulseOx.FREQUENCY, updateTime);
+                    NoninPulseOx.FREQUENCY, timeStamp);
+
             Status status = getCurrentPacket().getCurrentStatus();
             Perfusion perfusion = perfusion(status);
             writeTechnicalAlert("Perfusion", null != perfusion ? perfusion.toString() : null);
@@ -215,50 +197,50 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             if (currentPacket.getCurrentStatus().isArtifact() || currentPacket.getCurrentStatus().isSensorAlarm()
                     || currentPacket.getCurrentStatus().isOutOfTrack()) {
                 pulse = numericSample(pulse, (Integer) null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 
-                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null);
+                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
                 SpO2 = numericSample(SpO2, (Integer) null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 
-                        "", rosetta.MDC_DIM_PERCENT.VALUE, null);
+                        "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
                 avgHeartRateFourBeat = numericSample(avgHeartRateFourBeat, (Integer) null, "NONIN_AVG_HR_4BEAT", 
-                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null);
+                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
                 avgSpO2FourBeat = numericSample(avgSpO2FourBeat, (Integer) null, "NONIN_AVG_SPO2_4BEAT", 
-                        "", rosetta.MDC_DIM_PERCENT.VALUE, null);
+                        "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
                 avgSpO2FourBeatFast = numericSample(avgSpO2FourBeatFast, (Integer) null, "NONIN_SPO2_4BEAT_FAST", 
-                        "", rosetta.MDC_DIM_PERCENT.VALUE, null);
+                        "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
                 SpO2BeatToBeat = numericSample(SpO2BeatToBeat, (Integer) null, "NONIN_SPO2_BTB", 
-                        "", rosetta.MDC_DIM_PERCENT.VALUE, null);
+                        "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
                 avgHeartRateEightBeat = numericSample(avgHeartRateEightBeat, (Integer)null, "NONIN_AVG_HR_8BEAT",
                         "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null);
                 avgSpO2EightBeat = numericSample(avgSpO2EightBeat, (Integer)null, "NONIN_SPO2_8BEAT", 
-                        "", rosetta.MDC_DIM_PERCENT.VALUE, null);
+                        "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
                 avgSpO2EightBeatForDisplay = numericSample(avgSpO2EightBeatForDisplay, (Integer) null, "NONIN_SPO2_8BEAT_FOR_DISPLAY", 
-                        "", rosetta.MDC_DIM_PERCENT.VALUE, null);
+                        "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
                 avgHeartRateFourBeatForDisplay = numericSample(avgHeartRateFourBeatForDisplay, (Integer) null, "NONIN_HR_4BEAT_FOR_DISPLAY", 
-                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null);
+                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
                 avgHeartRateEightBeatForDisplay = numericSample(avgHeartRateEightBeatForDisplay, (Integer) null, "NONIN_HR_8BEAT_FOR_DISPLAY",
-                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null);
+                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
             } else {
                 pulse = numericSample(pulse, maxOut(getHeartRate(), MAX_HR), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 
-                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null);
+                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
                 SpO2 = numericSample(SpO2, maxOut(getSpO2(), MAX_SPO2), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 
-                        "", rosetta.MDC_DIM_PERCENT.VALUE, null);
+                        "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
                 avgHeartRateFourBeat = numericSample(avgHeartRateFourBeat, maxOut(getAvgHeartRateFourBeat(), MAX_HR), "NONIN_AVG_HR_4BEAT",
-                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null);
+                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
                 avgSpO2FourBeat = numericSample(avgSpO2FourBeat, maxOut(getAvgSpO2FourBeat(), MAX_SPO2), "NONIN_AVG_SPO2_4BEAT", 
-                        "", rosetta.MDC_DIM_PERCENT.VALUE, null);
+                        "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
                 avgSpO2FourBeatFast = numericSample(avgSpO2FourBeatFast, maxOut(getAvgSpO2FourBeatFast(), MAX_SPO2), "NONIN_SPO2_4BEAT_FAST",
-                        "", rosetta.MDC_DIM_PERCENT.VALUE, null);
+                        "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
                 SpO2BeatToBeat = numericSample(SpO2BeatToBeat, maxOut(getSpO2BeatToBeat(), MAX_SPO2), "NONIN_SPO2_BTB", 
-                        "", rosetta.MDC_DIM_PERCENT.VALUE, null);
+                        "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
                 avgHeartRateEightBeat = numericSample(avgHeartRateEightBeat, maxOut(getAvgHeartRateEightBeat(), MAX_HR), "NONIN_AVG_HR_8BEAT",
-                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null);
+                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
                 avgSpO2EightBeat = numericSample(avgSpO2EightBeat, maxOut(getAvgSpO2EightBeat(), MAX_SPO2), "NONIN_SPO2_8BEAT",
-                        "", rosetta.MDC_DIM_PERCENT.VALUE, null);
+                        "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
                 avgSpO2EightBeatForDisplay = numericSample(avgSpO2EightBeatForDisplay, maxOut(getAvgSpO2EightBeatForDisplay(), MAX_SPO2), "NONIN_SPO2_8BEAT_FOR_DISPLAY", 
-                        "", rosetta.MDC_DIM_PERCENT.VALUE, null);
+                        "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
                 avgHeartRateFourBeatForDisplay = numericSample(avgHeartRateFourBeatForDisplay, maxOut(getAvgHeartRateFourBeatForDisplay(), MAX_HR), "NONIN_HR_4BEAT_FOR_DISPLAY", 
-                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null);
+                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
                 avgHeartRateEightBeatForDisplay = numericSample(avgHeartRateEightBeatForDisplay, maxOut(getAvgHeartRateEightBeatForDisplay(), MAX_HR), "NONIN_HR_8BEAT_FOR_DISPLAY", 
-                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null);
+                        "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
             }
 
         }
@@ -445,11 +427,43 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
     protected static boolean response = false;
 
-    @Override
-    protected boolean sampleArraySpecifySourceTimestamp() {
-        return true;
+    static class DemoNoninPulseOxClock implements DeviceClock {
+
+        private static final long MS_PER_PACKET = (long)( Packet.FRAMES * NoninPulseOx.MILLISECONDS_PER_SAMPLE );
+
+        private long lastUpdate = 0L;
+
+        private final DeviceClock systemClock;
+
+        public DemoNoninPulseOxClock(DeviceClock ref) {
+            systemClock = ref;
+        }
+
+        @Override
+        public Reading instant() {
+
+            // Complex way of finding the nearest millisecond on an even second
+            // or 333ms or 666ms into the second
+            long now = System.currentTimeMillis();
+            long nearest_second = 1000L * (now / 1000L);
+            long mod = (now-nearest_second) / MS_PER_PACKET;
+            now = nearest_second + mod * MS_PER_PACKET;
+            if((now%1000L)==999L) {
+                now+=1L;
+            }
+
+            if(now <= lastUpdate) {
+                now = lastUpdate + MS_PER_PACKET;
+                if((now%1000L)==999L) {
+                    now+=1L;
+                }
+            }
+            lastUpdate = now;
+
+            return new CombinedReading(systemClock.instant(), new DeviceClock.ReadingImpl(lastUpdate));
+        }
     }
-    
+
     // This main program resets the device to data type 13 (which is the
     // default)
     public static void main(String[] args) throws IOException {

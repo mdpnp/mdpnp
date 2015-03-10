@@ -17,11 +17,9 @@ import ice.SampleArray;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.text.Normalizer;
@@ -29,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -38,6 +35,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.net.NetworkLoop;
 import org.mdpnp.devices.net.TaskQueue;
@@ -104,7 +102,6 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.infrastructure.Time_t;
 
 public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
-    protected Time_t sampleTimeSampleArray = new Time_t(0, 0);
 
     protected final InstanceHolder<SampleArray> getSampleArrayUpdate(ObservedValue ov, int handle) {
         Map<Integer, InstanceHolder<SampleArray>> forObservedValue = sampleArrayUpdates.get(ov);
@@ -140,21 +137,6 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         }
     }
 
-//    @Override
-//    protected boolean sampleArraySpecifySourceTimestamp() {
-//        return true;
-//    }
-
-    // For a point in time this is currentTime-runTime
-    // Or, in other words, the time when the device started
-    // according to the device clock
-    protected long deviceStartTimeInDeviceTime;
-
-    // For a point in time this is System.currentTimeInMillis()-runTime
-    // Or, in other words, the time when the device started according
-    // to the local clock
-    protected Time_t deviceStartTimeInLocalTime = new Time_t(0, 0);
-
     protected final static long WATCHDOG_INTERVAL = 200L;
     // Maximum time between message receipt
     protected final static long IN_CONNECTION_TIMEOUT = 5000L;
@@ -178,7 +160,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     
     private final Map<Integer, ScheduledFuture<?>> emitFastDataByFrequency = new HashMap<Integer, ScheduledFuture<?>>();
     private static final int BUFFER_SAMPLES = 125;
-    
+
     private synchronized void startEmitFastData(long msInterval) {
         int frequency = (int)(1000 / msInterval);
         // for the 62.5Hz case; 
@@ -259,11 +241,15 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         }
     }
 
-    private class MyIntellivue extends Intellivue {
-        private final Logger log = LoggerFactory.getLogger(MyIntellivue.class);
+    private class IntellivueExt extends Intellivue {
 
-        public MyIntellivue() {
+        private final Logger log = LoggerFactory.getLogger(IntellivueExt.class);
+
+        private final DemoIntellivueClock deviceClock;
+
+        public IntellivueExt(DeviceClock referenceClock) {
             super();
+            deviceClock = new DemoIntellivueClock(referenceClock);
         }
 
         @Override
@@ -339,24 +325,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 //                Attribute<org.mdpnp.devices.philips.intellivue.data.String> as = attrs.getAttribute(AttributeId.NOM_ATTR_ID_BED_LABEL,
 //                        org.mdpnp.devices.philips.intellivue.data.String.class);
 
-                Attribute<AbsoluteTime> clockTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_ABS, AbsoluteTime.class);
-                Attribute<RelativeTime> offsetTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_REL, RelativeTime.class);
-
-                if (null == clockTime) {
-                    log.warn("No NOM_ATTR_TIME_ABS in MDS Create");
-                } else if (null == offsetTime) {
-                    log.warn("No NOM_ATTR_TIME_REL in MDS Create");
-                } else {
-                    long currentTime = clockTime.getValue().getDate().getTime();
-                    long runTime = offsetTime.getValue().toMilliseconds();
-                    deviceStartTimeInDeviceTime = currentTime - runTime;
-                    // TODO these all assume near-zero latency
-                    long deviceStartTimeInLocalTime = System.currentTimeMillis() - runTime;
-                    AbstractDemoIntellivue.this.deviceStartTimeInLocalTime.sec = (int) (deviceStartTimeInLocalTime / 1000L);
-                    AbstractDemoIntellivue.this.deviceStartTimeInLocalTime.nanosec = (int) ((deviceStartTimeInLocalTime % 1000L) * 1000000L);
-                    log.info("Device started (in device time) at " + new Date(deviceStartTimeInDeviceTime));
-                    log.info("Device started (in local time) at " + new Date(deviceStartTimeInLocalTime));
-                }
+                deviceClock.receiveDateTime(attrs);
 
                 if (null != asm) {
                     deviceIdentity.manufacturer = asm.getValue().getManufacturer().getString();
@@ -537,6 +506,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
         @Override
         protected void handle(ExtendedPollDataResult result) {
+
+            DeviceClock.Reading sampleTime = deviceClock.instant(result.getRelativeTime());
+
             long now = System.currentTimeMillis();
             // we could track gaps in poll sequence numbers but instead we're
             // relying on consumers of the data
@@ -604,12 +576,12 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                         }
 
                         if (null != observed) {
-                            handle(handle, result.getRelativeTime(), observed.getValue());
+                            handle(handle, sampleTime, observed.getValue());
                         }
 
                         if (null != compoundObserved) {
                             for (NumericObservedValue nov : compoundObserved.getValue().getList()) {
-                                handle(handle, result.getRelativeTime(), nov);
+                                handle(handle, sampleTime, nov);
                             }
                         }
                         
@@ -623,14 +595,12 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             handle(handle, spec.getValue());
                         }
                         if (null != cov) {
-//                            log.info("Time for SampleArrayCompoundObservedValue " + result.getRelativeTime().toMicroseconds());
                             for (SampleArrayObservedValue saov : cov.getValue().getList()) {
-                                handle(handle, result.getRelativeTime(), saov, now);
+                                handle(handle, sampleTime, saov, now);
                             }
                         }
                         if (null != v) {
-//                            log.info("Time for SampleArrayObservedValue " + result.getRelativeTime().toMicroseconds());
-                            handle(handle, result.getRelativeTime(), v.getValue(), now);
+                            handle(handle, sampleTime, v.getValue(), now);
                         }
                     }
                 }
@@ -638,39 +608,22 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             super.handle(result);
         }
 
-        private final void populateTime(RelativeTime time, Time_t t) {
-            t.copy_from(deviceStartTimeInLocalTime);
-            long microseconds = time.toMicroseconds();
-            t.sec += microseconds / 1000000L;
-            microseconds %= 1000000L;
-            // Check for overflow ... will we create an entire second?
-            if ((microseconds + t.nanosec / 1000L) >= 1000000L) {
-                t.sec++;
-                microseconds -= 1000000L;
-            }
-            t.nanosec += microseconds * 1000L;
-        }
-
-        private Time_t sampleTimeNumeric = new Time_t(0,0);
-        private final void handle(int handle, RelativeTime time, NumericObservedValue observed) {
+        private final void handle(int handle, DeviceClock.Reading sampleTime, NumericObservedValue observed) {
             // log.debug(observed.toString());
             ObservedValue ov = ObservedValue.valueOf(observed.getPhysioId().getType());
             if (null != ov) {
                 String metricId = numericMetricIds.get(ov);
                 if (null != metricId) {
-                    // TODO using the local clock instead of device clock in
-                    // case device clock is set incorrectly
-                    populateTime(time, sampleTimeNumeric);
-                    
+
                     UnitCode unit = UnitCode.valueOf(observed.getUnitCode().getType());
 
                     if (observed.getMsmtState().isUnavailable()) {
                         putNumericUpdate(ov, handle, numericSample(getNumericUpdate(ov, handle), (Float) null, metricId, ov.toString(), handle, 
-                                RosettaUnits.units(unit), sampleTimeNumeric));
+                                RosettaUnits.units(unit), sampleTime));
                     } else {
                         putNumericUpdate(ov, handle,
                                 numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), metricId, ov.toString(), handle,
-                                    RosettaUnits.units(unit), sampleTimeNumeric));
+                                    RosettaUnits.units(unit), sampleTime));
                     }
                 } else {
                     log.debug("Unknown numeric:" + observed);
@@ -703,7 +656,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         
 
 
-        protected void handle(int handle, RelativeTime time, SampleArrayObservedValue v, long now) {
+        protected void handle(int handle, DeviceClock.Reading time, SampleArrayObservedValue v, long now) {
             short[] bytes = v.getValue();
             ObservedValue ov = ObservedValue.valueOf(v.getPhysioId().getType());
             if (null == ov) {
@@ -832,6 +785,9 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             continue;
                         }
                         int frequency = (int)(1000 / rt.toMilliseconds());
+
+                        DeviceClock.Reading fakeSampleTime = getClockProvider().instant();
+
                         if(this.frequency == frequency) {
                             if(null != sa) {
                                 synchronized(sampleCache) {
@@ -839,7 +795,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                     if(null == c) {
                                         putSampleArrayUpdate(ov, handle, null);
                                     } else {
-                                        sampleArraySample(sa, c, null);
+                                        sampleArraySample(sa, c, fakeSampleTime);
                                     }
                                 }
                             } else {
@@ -851,7 +807,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                             sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.emitSamples(BUFFER_SAMPLES, metric_id+" "+handle),
                                             metric_id, ov.toString(), handle, 
                                             RosettaUnits.units(unitCode),
-                                            frequency, null));
+                                            frequency, fakeSampleTime));
                                 }
                             }
                         }
@@ -876,12 +832,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         sampleArrayUpdates.clear();
         super.unregisterAllSampleArrayInstances();
     }
-    
-    @Override
-    protected void unregisterSampleArrayInstance(InstanceHolder<SampleArray> holder, Time_t timestamp) {
-        
-        super.unregisterSampleArrayInstance(holder, timestamp);
-    }
+
 
     protected final Map<ObservedValue, String> numericMetricIds = new HashMap<ObservedValue, String>();
     protected final Map<ObservedValue, String> sampleArrayMetricIds = new HashMap<ObservedValue, String>();
@@ -934,12 +885,34 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     protected final Map<ObservedValue, Map<Integer, InstanceHolder<ice.Numeric>>> numericUpdates = new HashMap<ObservedValue, Map<Integer, InstanceHolder<ice.Numeric>>>();
     protected final Map<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>> sampleArrayUpdates = new HashMap<ObservedValue, Map<Integer, InstanceHolder<ice.SampleArray>>>();
     protected final Map<ObservedValue, Map<Integer, SampleCache>> sampleArrayCache = Collections.synchronizedMap(new HashMap<ObservedValue, Map<Integer, SampleCache>>());
-    
-    protected static void loadMap(Map<ObservedValue, String> numericMetricIds, Map<ObservedValue, Label> numericLabels,
-            Map<ObservedValue, String> sampleArrayMetricIds, Map<ObservedValue, Label> sampleArrayLabels) {
+
+    static void loadMap(Map<ObservedValue, String> numericMetricIds,
+                        Map<ObservedValue, Label> numericLabels,
+                        Map<ObservedValue, String> sampleArrayMetricIds,
+                        Map<ObservedValue, Label> sampleArrayLabels) {
+
+        URL url = DemoEthernetIntellivue.class.getResource("intellivue.map");
+        if(url==null)
+            throw new IllegalArgumentException("Cannot locate intellivue.map");
+        try {
+            InputStream is = url.openStream();
+            loadMap(is, numericMetricIds,numericLabels,sampleArrayMetricIds,sampleArrayLabels);
+            is.close();
+        }
+        catch (IOException ex) {
+            throw new IllegalStateException("Failed to load maps", ex);
+        }
+
+    }
+
+    static void loadMap(InputStream is,
+                        Map<ObservedValue, String> numericMetricIds,
+                        Map<ObservedValue, Label> numericLabels,
+                        Map<ObservedValue, String> sampleArrayMetricIds,
+                        Map<ObservedValue, Label> sampleArrayLabels) {
 
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(DemoEthernetIntellivue.class.getResourceAsStream("intellivue.map")));
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
             String line = null;
 
             while (null != (line = br.readLine())) {
@@ -971,7 +944,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         }
     }
 
-    protected final MyIntellivue myIntellivue;
+    protected final Intellivue myIntellivue;
 
     protected static final Logger log = LoggerFactory.getLogger(DemoEthernetIntellivue.class);
 
@@ -1011,7 +984,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             networkLoopThread = null;
         }
 
-        myIntellivue = new MyIntellivue();
+        myIntellivue = new IntellivueExt(getClockProvider());
 
         watchdogTask = new TaskQueue.TaskImpl<Object>() {
             @Override
@@ -1330,5 +1303,53 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     @Override
     protected String iconResourceName() {
         return "mp70.png";
+    }
+
+    static class DemoIntellivueClock implements DeviceClock {
+
+        private final DeviceClock ref;
+
+        DemoIntellivueClock(DeviceClock ref) {
+            this.ref = ref;
+
+        }
+        // For a point in time this is currentTime-runTime
+        // Or, in other words, the time when the device started
+        // according to the device clock
+        private long startTimeInDeviceTime;
+
+        @Override
+        public Reading instant() {
+            return ref.instant();
+        }
+
+        public Reading instant(RelativeTime time) {
+            Reading deviceTime = new DeviceClock.ReadingImpl(receiveDateTime(time));
+            return new CombinedReading(instant(), deviceTime);
+        }
+
+        void receiveDateTime(AttributeValueList attrs) {
+
+            Attribute<AbsoluteTime> clockTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_ABS, AbsoluteTime.class);
+            Attribute<RelativeTime> offsetTime = attrs.getAttribute(AttributeId.NOM_ATTR_TIME_REL, RelativeTime.class);
+
+            if (null == clockTime) {
+                log.warn("No NOM_ATTR_TIME_ABS in MDS Create");
+            } else if (null == offsetTime) {
+                log.warn("No NOM_ATTR_TIME_REL in MDS Create");
+            } else {
+                long currentTime = clockTime.getValue().getDate().getTime();
+                long runTime = offsetTime.getValue().toMilliseconds();
+                startTimeInDeviceTime = currentTime - runTime;
+            }
+        }
+
+        long receiveDateTime(RelativeTime time) {
+            // TBD - make it handle microseconds
+            // long microseconds = time.toMicroseconds();
+            long runningTime = time.toMilliseconds();
+            long currentTimeInDeviceTime = startTimeInDeviceTime + runningTime;
+            return currentTimeInDeviceTime;
+        }
     }
 }

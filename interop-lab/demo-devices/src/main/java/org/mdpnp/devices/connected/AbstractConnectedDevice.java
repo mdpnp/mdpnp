@@ -23,6 +23,7 @@ import ice.DeviceConnectivityTopic;
 import ice.DeviceConnectivityTypeSupport;
 
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.io.util.StateMachine;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;

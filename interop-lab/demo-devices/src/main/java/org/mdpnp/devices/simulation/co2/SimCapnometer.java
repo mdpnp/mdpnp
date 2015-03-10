@@ -14,6 +14,7 @@ package org.mdpnp.devices.simulation.co2;
 
 import ice.GlobalSimulationObjective;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 
@@ -25,16 +26,18 @@ import com.rti.dds.infrastructure.Time_t;
  */
 public class SimCapnometer extends AbstractSimulatedConnectedDevice {
 
-    protected InstanceHolder<ice.SampleArray> co2;
-    protected final InstanceHolder<ice.Numeric> respiratoryRate, etCO2;
+    private InstanceHolder<ice.SampleArray> co2;
+    private final InstanceHolder<ice.Numeric> respiratoryRate, etCO2;
+    private final SimulatedCapnometer capnometer;
 
-    private final Time_t sampleTime = new Time_t(0, 0);
-    
-    private class MySimulatedCapnometer extends SimulatedCapnometer {
+    private class SimulatedCapnometerExt  extends SimulatedCapnometer {
+
+        public SimulatedCapnometerExt(DeviceClock referenceClock) {
+            super(referenceClock);
+        }
+
         @Override
-        protected void receiveCO2(long timestamp, Number[] co2Values, int respiratoryRateValue, int etCO2Value, int frequency) {
-            sampleTime.sec = (int) (timestamp / 1000L);
-            sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
+        protected void receiveCO2(DeviceClock.Reading sampleTime, Number[] co2Values, int respiratoryRateValue, int etCO2Value, int frequency) {
             co2 = sampleArraySample(co2, co2Values, rosetta.MDC_AWAY_CO2.VALUE, "", 0, 
                     rosetta.MDC_DIM_MMHG.VALUE, frequency, sampleTime);
             numericSample(respiratoryRate, respiratoryRateValue, sampleTime);
@@ -43,7 +46,6 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
         }
     }
 
-    private final MySimulatedCapnometer capnometer = new MySimulatedCapnometer();
 
     @Override
     public boolean connect(String str) {
@@ -59,6 +61,9 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
 
     public SimCapnometer(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
+
+        DeviceClock referenceClock = super.getClockProvider();
+        capnometer = new SimulatedCapnometerExt(referenceClock);
 
         respiratoryRate = createNumericInstance(rosetta.MDC_CO2_RESP_RATE.VALUE, "");
         etCO2 = createNumericInstance(rosetta.MDC_AWAY_CO2_ET.VALUE, "");
@@ -80,9 +85,5 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
             capnometer.setEndTidalCO2((int) obj.value);
         }
     }
-    
-    @Override
-    protected boolean sampleArraySpecifySourceTimestamp() {
-        return true;
-    }
+
 }

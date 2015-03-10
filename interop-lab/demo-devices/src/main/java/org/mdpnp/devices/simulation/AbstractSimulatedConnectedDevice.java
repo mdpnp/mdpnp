@@ -21,6 +21,7 @@ import ice.Numeric;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
@@ -121,8 +122,9 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
         // TODO really should also check alarm violation on threshold change here but it will be tricky to get the right
         // sample of Numeric
     }
-    
-    protected void numericSample(InstanceHolder<Numeric> holder, float newValue, Time_t time) {
+
+    @Override
+    protected void numericSample(InstanceHolder<Numeric> holder, float newValue, DeviceClock.Reading time) {
         super.numericSample(holder, newValue, time);
         String identifier = holder.data.metric_id + "-" + holder.data.instance_id;
         InstanceHolder<ice.AlarmSettings> alarmSettings = this.alarmSettings.get(holder.data.metric_id);
