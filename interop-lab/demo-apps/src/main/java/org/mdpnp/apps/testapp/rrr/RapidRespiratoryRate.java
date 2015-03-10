@@ -112,11 +112,6 @@ public class RapidRespiratoryRate implements Runnable {
 
             @Override
             public void handle(ActionEvent event) {
-//                if(wavePanel.getData().isEmpty()) {
-//                    System.out.println("NO DATA");
-//                } else {
-//                    System.out.println("Points:"+wavePanel.getData().get(0).getData().size());
-//                }
 //                wavePanel.getXAxis().setAutoRanging(false);
                 long tm = System.currentTimeMillis();
                 
@@ -168,11 +163,9 @@ public class RapidRespiratoryRate implements Runnable {
                     ice.SampleArray keyHolder = new ice.SampleArray();
                     model.getReader().get_key_value(keyHolder, newValue.getHandle());
                     source = new SampleArrayWaveformSource(model.getReader(), keyHolder);
-                    System.out.println("Source is " + keyHolder);
                 }
 //                wavePanel.getData().clear();
 //                Series<Number,Number> series = data.getSeries(newValue.getHandle());
-//                System.out.println(series);
 //                wavePanel.getData().add(series);
                 
             }

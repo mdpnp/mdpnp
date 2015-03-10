@@ -2,8 +2,6 @@ package org.mdpnp.apps.testapp.export;
 
 import javax.swing.event.EventListenerList;
 
-import org.mdpnp.apps.testapp.vital.Value;
-
 public class DataFilter implements DataCollector.DataSampleEventListener {
 
     private final DeviceTreeModel controller;

@@ -29,10 +29,10 @@ public class Diagnostic {
     private final SampleArrayInstanceModel sampleArrayModel;
     private final MySampleArrayItems sampleArrayItems;
     
-    public Diagnostic(Subscriber subscriber, EventLoop eventLoop) {
+    public Diagnostic(Subscriber subscriber, EventLoop eventLoop, NumericInstanceModel model) {
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
-        numericModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
+        numericModel = model;
         numericItems = new MyNumericItems().setModel(numericModel);
         patientAlertModel = new AlertInstanceModelImpl(ice.PatientAlertTopic.VALUE);
         patientAlertItems = new MyAlertItems().setModel(patientAlertModel);
@@ -59,15 +59,12 @@ public class Diagnostic {
     }
     
     public void start() {
-        System.out.println("Starting the models");
-        numericModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.numeric_data);
         patientAlertModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
         technicalAlertModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
         sampleArrayModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.waveform_data);
     }
     
     public void stop() {
-        numericModel.stop();
         patientAlertModel.stop();
         technicalAlertModel.stop();
         sampleArrayModel.stop();

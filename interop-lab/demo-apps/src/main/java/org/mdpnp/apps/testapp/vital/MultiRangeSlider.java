@@ -621,7 +621,6 @@ public class MultiRangeSlider extends Control {
         if (min == null) {
             min = new DoublePropertyBase(0) {
                 @Override protected void invalidated() {
-                    System.out.println("In minProperty invalidate " + get() + " " + getMax());
                     if (get() > getMax()) {
                         setMax(get());
                     }
@@ -1029,7 +1028,6 @@ public class MultiRangeSlider extends Control {
          */
         if (getLowerValue() < getMin() || getLowerValue() > getMax()) {
             double value = Utils.clamp(getMin(), getLowerValue(), getMax());
-            System.out.println(getMin() + " " + getLowerValue() + " " + getMax() + " --> " + value);
             setLowerValue(value);
         /**
          * If the LowValue seems right, we check if it's not superior to
@@ -1040,7 +1038,6 @@ public class MultiRangeSlider extends Control {
          */
         } else if (getLowerValue() > getHigherValue() && (getHigherValue() >= getMin() && getHigherValue() <= getMax())) {
             double value = Utils.clamp(getMin(), getLowerValue(), getHigherValue());
-            System.out.println(getMin() + " " + getLowerValue() + " " + getMax() + " --> " + value);
             setLowerValue(value);
         } else if (getLowerValue() < getLowestValue() && (getLowestValue() >= getMin() && getHigherValue() <= getMax())) {
             double value = Utils.clamp(getLowestValue(), getLowerValue(), getHigherValue());

@@ -35,6 +35,11 @@
       </constructor-arg>
     </bean>
     
+    <bean id="numericInstanceModel" class="org.mdpnp.apps.testapp.NumericInstanceModelFactory" lazy-init="true" destroy-method="stop">
+        <constructor-arg ref="eventLoop" />
+        <constructor-arg ref="subscriber" />
+    </bean>
+    
     <bean id="deviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory" lazy-init="true" destroy-method="stop">
         <constructor-arg ref="eventLoop" />
         <constructor-arg ref="subscriber" />
@@ -49,8 +54,8 @@
     <bean id="vitalModel" class="org.mdpnp.apps.testapp.vital.VitalModelFactory" lazy-init="true" destroy-method="stop">
         <constructor-arg ref="deviceListModel" />
         <constructor-arg ref="publisher" />
-        <constructor-arg ref="subscriber" />
         <constructor-arg ref="eventLoop" />
+        <constructor-arg ref="numericInstanceModel"/>
     </bean>
 
     <bean id="capnoModel" class="org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl" destroy-method="stop">

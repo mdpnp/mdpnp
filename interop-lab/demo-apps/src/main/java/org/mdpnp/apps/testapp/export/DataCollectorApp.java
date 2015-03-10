@@ -28,7 +28,6 @@ import javafx.scene.layout.VBox;
 import org.mdpnp.apps.testapp.DeviceListModelImpl;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.export.FileAdapterApplicationFactory.PersisterUIController;
-import org.mdpnp.apps.testapp.vital.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
@@ -261,10 +260,10 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         Value value = (Value)evt.getSource();
 
 //        Numeric n = value.getNumeric();
-        long ms = value.getTimestamp(); // DataCollector.toMilliseconds(n.device_time);
+        long ms = value.getDevTime(); // DataCollector.toMilliseconds(n.device_time);
         String devTime = DataCollector.dateFormats.get().format(new Date(ms));
         final Row row = new Row(value.getUniqueDeviceIdentifier(), ""+value.getInstanceId(),
-                          value.getMetricId(), devTime, value.getValue());
+                          value.getMetricId(), devTime, (float) value.getValue());
         Platform.runLater(new Runnable() {
             public void run() {
                 tblModel.add(0, row);

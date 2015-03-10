@@ -1,14 +1,16 @@
 package org.mdpnp.apps.testapp.vital;
 
+import javafx.application.Platform;
+
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.pca.VitalSign;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.NumericInstanceModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
 
 import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.Subscriber;
 
 /**
  *
@@ -21,22 +23,23 @@ public class VitalModelFactory implements FactoryBean<VitalModel> {
 
     private final DeviceListModel deviceListModel;
     private final EventLoop eventLoop;
-    private final Subscriber subscriber;
+    private final NumericInstanceModel numericInstanceModel;
     private final Publisher publisher;
+    private VitalModelNumericProvider provider;
 
     @Override
     public VitalModel getObject() throws Exception {
         if(instance == null) {
             instance = new VitalModelImpl(deviceListModel);
-            instance.start(subscriber, publisher, eventLoop);
-
-            eventLoop.doLater(new Runnable() {
-                @Override
-                public void run() {
-                    VitalSign.SpO2.addToModel(instance);
-                    VitalSign.RespiratoryRate.addToModel(instance);
-                    VitalSign.EndTidalCO2.addToModel(instance);
-                }
+            provider = new VitalModelNumericProvider(instance);
+            numericInstanceModel.iterateAndAddListener(provider);
+            
+            instance.start(publisher, eventLoop);
+            
+            Platform.runLater( () -> {
+                VitalSign.SpO2.addToModel(instance);
+                VitalSign.RespiratoryRate.addToModel(instance);
+                VitalSign.EndTidalCO2.addToModel(instance);
             });
         }
         return instance;
@@ -52,16 +55,17 @@ public class VitalModelFactory implements FactoryBean<VitalModel> {
         return true;
     }
 
-    public VitalModelFactory(EventLoop eventLoop, Subscriber subscriber,  Publisher publisher, DeviceListModel deviceListModel) {
+    public VitalModelFactory(EventLoop eventLoop, Publisher publisher, DeviceListModel deviceListModel, NumericInstanceModel numericInstanceModel) {
         this.eventLoop = eventLoop;
-        this.subscriber = subscriber;
         this.publisher = publisher;
         this.deviceListModel = deviceListModel;
+        this.numericInstanceModel = numericInstanceModel;
     }
 
     public void stop() {
         if(instance != null) {
             log.info("Shutting down the model");
+            numericInstanceModel.removeListener(provider);
             instance.stop();
         }
     }

@@ -5,7 +5,6 @@ import com.rti.dds.subscription.SampleInfo;
 import ice.Numeric;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mdpnp.apps.testapp.vital.Value;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

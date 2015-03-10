@@ -8,6 +8,7 @@ import javafx.scene.Parent;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.NumericInstanceModel;
 import org.springframework.context.ApplicationContext;
 
 import com.rti.dds.subscription.Subscriber;
@@ -29,7 +30,9 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
 
         final EventLoop eventLoop = (EventLoop)parentContext.getBean("eventLoop");
 
-        final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop);
+        final NumericInstanceModel numericInstanceModel = (NumericInstanceModel) parentContext.getBean("numericInstanceModel");
+        
+        final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, numericInstanceModel);
 
         FXMLLoader loader = new FXMLLoader(HL7Application.class.getResource("HL7Application.fxml"));
         

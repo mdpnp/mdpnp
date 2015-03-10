@@ -5,9 +5,6 @@ import com.rti.dds.subscription.SampleInfo;
 import ice.Numeric;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mdpnp.apps.testapp.vital.Value;
-import org.mdpnp.apps.testapp.vital.ValueImpl;
-import org.mdpnp.apps.testapp.vital.Vital;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

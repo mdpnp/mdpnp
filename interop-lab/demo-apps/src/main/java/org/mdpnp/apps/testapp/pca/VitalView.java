@@ -24,16 +24,12 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.TreeItem;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 
-import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.vital.ConcreteDoubleProperty;
 import org.mdpnp.apps.testapp.vital.MultiRangeSlider;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
-import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,23 +89,15 @@ public final class VitalView implements ListChangeListener<Value> {
       
         // Cripes if you think about it the order here is really quite important since values will be clamped
         // down
+//        slider.highestValueProperty().set(vital.criticalHighProperty().get());
+//        slider.lowestValueProperty().set(vital.criticalLowProperty().get());
+//        slider.higherValueProperty().set(vital.warningHighProperty().get());
+//        slider.lowerValueProperty().set(vital.warningLowProperty().get());
         slider.highestValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.criticalHighProperty()));
         slider.lowestValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.criticalLowProperty()));
         slider.higherValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.warningHighProperty()));
         slider.lowerValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.warningLowProperty()));
         
-//        VitalBoundedRangeMulti range = new VitalBoundedRangeMulti(vital);
-//        slider = new JMultiSlider(range);
-//        slider.setRangeColor(0, Color.red);
-//        slider.setRangeColor(1, Color.yellow);
-//        slider.setRangeColor(2, Color.green);
-//        VitalValueMsBoundedRangeMulti range2 = new VitalValueMsBoundedRangeMulti(vital);
-//        slider2 = new JMultiSlider(range2);
-//        slider2.setFont(font);
-//        slider2.setRangeColor(0, Color.yellow);
-//        slider2.setRangeColor(1, Color.green);
-//        slider2.setDrawThumbs(true);
-
         for(Value v : vital) {
             add(v);
         }

@@ -88,6 +88,5 @@ public class MySampleArrayData implements InstanceModelListener<SampleArray, Sam
 //            }
             list.add(d);
         }
-        System.out.println("Data Points:"+list.size());
     }
 }

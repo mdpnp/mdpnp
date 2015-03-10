@@ -71,7 +71,6 @@ public class LabeledFramePanel extends FramePanel {
 //                }
 //            }
 //            bigFont = g.getFont().deriveFont(fontSize);
-//            // System.out.println("bigFont");
 //        }
 //        g.setFont(bigFont);
 //

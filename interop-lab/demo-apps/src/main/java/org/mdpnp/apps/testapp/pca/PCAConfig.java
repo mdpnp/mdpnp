@@ -24,6 +24,7 @@ import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -45,6 +46,8 @@ import org.mdpnp.apps.testapp.MyInfusionStatusListCell;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rti.dds.infrastructure.InstanceHandle_t;
 
@@ -52,7 +55,7 @@ import com.rti.dds.infrastructure.InstanceHandle_t;
  * @author Jeff Plourde
  *
  */
-public class PCAConfig  {
+public class PCAConfig implements ListChangeListener<Vital> {
 
     @FXML protected ListView<MyInfusionStatus> pumpList;
     @FXML protected TextArea warningStatus;
@@ -60,6 +63,7 @@ public class PCAConfig  {
     @FXML protected ComboBox<VitalSign> vitalSigns;
     @FXML protected VBox vitalsPanel;
     
+    private static final Logger log = LoggerFactory.getLogger(PCAConfig.class);
     
 //    JCheckBox configureModeBox = new JCheckBox("Configuration Mode");
 //    JPanel configurePanel = new JPanel();
@@ -127,27 +131,9 @@ public class PCAConfig  {
 //            }
 //
 //        });
-
-
-        buildGUI();
     }
 
-    private void buildGUI() {
 
-
-//        gbc.gridwidth = 3;
-//        add(configureModeBox, gbc);
-//
-//        gbc.gridy++;
-//        gbc.gridwidth = 4;
-//
-//        add(vitalsPanel, gbc);
-//        // gbcVitalsStart = (GridBagConstraints) gbc.clone();
-//
-//        gbc.gridy++;
-//        configurePanel.setVisible(configureModeBox.isSelected());
-//        add(configurePanel, gbc);
-    }
 
     private VitalModel model;
 //    private InfusionStatusInstanceModel pumpModel;
@@ -169,7 +155,6 @@ public class PCAConfig  {
 
 
     protected void _updateVitals() {
-//
         Map<Vital, Node> existentJVitals = new HashMap<Vital, Node>();
         
         for(Iterator<Node> itr = vitalsPanel.getChildren().iterator(); itr.hasNext();) {
@@ -177,13 +162,9 @@ public class PCAConfig  {
             existentJVitals.put((Vital)n.getUserData(), n);
             itr.remove();
         }
-//        // remove(configurePanel);
-//
-//        // GridBagConstraints gbc = (GridBagConstraints) gbcVitalsStart.clone();
-//
+
         final VitalModel model = this.model;
         if (model != null) {
-//            vitalsPanel.setLayout(new GridLayout(model.getCount(), 1));
             for( Iterator<Vital> itr = model.iterator(); itr.hasNext(); ) {
                 final Vital vital = itr.next();
 
@@ -195,7 +176,7 @@ public class PCAConfig  {
                     try {
                         jVital = loader.load();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        log.warn("",e);
                         continue;
                     }
                     VitalView view = loader.getController();
@@ -206,10 +187,7 @@ public class PCAConfig  {
 
                 vitalsPanel.getChildren().add(jVital);
             }
-            // gbc.weighty = 0.1;
             // configurePanel.setVisible(configureModeBox.isSelected());
-            // add(configurePanel, gbc);
-
         }
     }
 
@@ -235,20 +213,23 @@ public class PCAConfig  {
             }
         }
 
-//        if (this.model != null) {
-//            this.model.removeListener(this);
-//        }
+        if (this.model != null) {
+            this.model.removeListener(this);
+        }
         this.model = model;
-//        if (this.model != null) {
-//            this.model.addListener(this);
-//        }
-        if(model != null) {
-            warningStatus.textProperty().bind(model.warningTextProperty());
-        } else { 
-            warningStatus.textProperty().unbind();
+        
+        if (this.model != null) {
+            this.model.addListener(this);
         }
         updateVitals();
-        vitalChanged(this.model, null);
+        if(model != null) {
+            warningStatus.textProperty().bind(model.warningTextProperty());
+        } else {
+            vitalsPanel.getChildren().clear();
+            warningStatus.textProperty().unbind();
+        }
+        
+//        vitalChanged(this.model, null);
     }
 
     public void vitalChanged(final VitalModel model, Vital vital) {
@@ -291,7 +272,7 @@ public class PCAConfig  {
             //                }
             //            }
                         // fell through if the specified vital was not found
-                        updateVitals();
+//                        updateVitals();
                     }
                 }
             });
@@ -299,26 +280,6 @@ public class PCAConfig  {
 
     }
 
-//    @Override
-//    public void vitalRemoved(VitalModel model, Vital vital) {
-//        updateVitals();
-//        vitalChanged(model, null);
-//    }
-//
-//    @Override
-//    public void vitalAdded(VitalModel model, Vital vital) {
-//        vitalChanged(model, vital);
-//    }
-
-//    @Override
-//    public void intervalAdded(ListDataEvent e) {
-//        vitalChanged(this.model, null);
-//    }
-//
-//    @Override
-//    public void intervalRemoved(ListDataEvent e) {
-//        vitalChanged(this.model, null);
-//    }
 //
 //    @Override
 //    public void contentsChanged(ListDataEvent e) {
@@ -341,4 +302,12 @@ public class PCAConfig  {
         objectiveWriter.write(obj, InstanceHandle_t.HANDLE_NIL);
     }
 
+    @Override
+    public void onChanged(javafx.collections.ListChangeListener.Change<? extends Vital> c) {
+        while(c.next()) {
+            if(c.wasAdded() || c.wasRemoved()) {
+                updateVitals();
+            }
+        }
+    }
 }

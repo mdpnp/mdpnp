@@ -20,7 +20,6 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.InstanceModel;
 import org.mdpnp.rtiapi.data.ListenerList;
 import org.mdpnp.rtiapi.data.NumericInstanceModel;
-import org.mdpnp.rtiapi.data.NumericInstanceModelImpl;
 import org.mdpnp.rtiapi.data.NumericInstanceModelListener;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
@@ -61,31 +60,26 @@ public class HL7Emitter {
     private final ListenerList<LineEmitterListener> listeners = new ListenerList<LineEmitterListener>(LineEmitterListener.class);
     private final ListenerList<StartStopListener> ssListeners = new ListenerList<StartStopListener>(StartStopListener.class);
     
-    public HL7Emitter(final Subscriber subscriber, final EventLoop eventLoop) {
+    public HL7Emitter(final Subscriber subscriber, final EventLoop eventLoop, final NumericInstanceModel numericInstanceModel) {
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
         context = new DefaultHapiContext();
-        numericInstanceModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
+        this.numericInstanceModel = numericInstanceModel;
         patientAlertInstanceModel = new AlertInstanceModelImpl(ice.PatientAlertTopic.VALUE);
         technicalAlertInstanceModel = new AlertInstanceModelImpl(ice.TechnicalAlertTopic.VALUE);
         alarmSettingsInstanceModel = new AlarmSettingsInstanceModelImpl(ice.AlarmSettingsTopic.VALUE);
         
-        numericInstanceModel.addListener(numericListener);
         patientAlertInstanceModel.addListener(patientAlertListener);
         technicalAlertInstanceModel.addListener(technicalAlertListener);
         alarmSettingsInstanceModel.addListener(alarmSettingsListener);
-//        numericInstanceTableModel = new NumericInstanceTableModel(numericInstanceModel);
     }
     
     private final NumericInstanceModel numericInstanceModel;
     private final AlertInstanceModel patientAlertInstanceModel, technicalAlertInstanceModel;
     private final AlarmSettingsInstanceModel alarmSettingsInstanceModel;
-//    private final NumericInstanceTableModel numericInstanceTableModel;
     
     public void start(String host, int port) {
-        
-        log.debug("Starting NumericInstanceModel");
-        numericInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.numeric_data);
+        numericInstanceModel.iterateAndAddListener(numericListener);
         patientAlertInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
         technicalAlertInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
         alarmSettingsInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
@@ -112,17 +106,16 @@ public class HL7Emitter {
         }
     }
     public void stop() {
-        log.debug("Stopping NumericInstanceModel");
-        numericInstanceModel.stop();
+        numericInstanceModel.removeListener(numericListener);
         patientAlertInstanceModel.stop();
         technicalAlertInstanceModel.stop();
         alarmSettingsInstanceModel.stop();
         ssListeners.fire(stopped);
-        log.debug("Stopped NumericInstanceModel");
         if(hapiConnection != null) {
             hapiConnection.close();
             hapiConnection = null;
         }
+        
     }
     
     static class DispatchStartStop implements ListenerList.Dispatcher<StartStopListener> {
@@ -160,9 +153,6 @@ public class HL7Emitter {
         return numericInstanceModel;
     }
     
-//    public NumericInstanceTableModel getNumericInstanceTableModel() {
-//        return numericInstanceTableModel;
-//    }
     public void addLineEmitterListener(LineEmitterListener listener) {
         listeners.addListener(listener);
     }

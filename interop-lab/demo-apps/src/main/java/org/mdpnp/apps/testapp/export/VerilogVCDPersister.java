@@ -15,7 +15,6 @@ import java.util.Map;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 
-import org.mdpnp.apps.testapp.vital.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,7 +123,7 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
 
                 OutputStream os = makeStream(key);
 
-                fileHandler = new VCDFileHandler(os, key, vital.getTimestamp());
+                fileHandler = new VCDFileHandler(os, key, vital.getDevTime());
                 cache.put(key, fileHandler);
             }
 
@@ -193,11 +192,11 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
             public void persist(Value value) throws Exception {
 
 //                Time_t t = value.getNumeric().device_time;
-                long baseTime = value.getTimestamp();
+                long baseTime = value.getDevTime();
 
                 StringBuilder sb = new StringBuilder();
                 sb.append("#").append(baseTime - firstTimeTic).append("\n");
-                float f = value.getValue();
+                float f = (float) value.getValue();
                 String s = floatFormats.get().format(f);
                 sb.append("r").append(s).append(" *").append("\n");
 

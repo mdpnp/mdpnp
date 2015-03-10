@@ -72,9 +72,13 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
             Double low = newValue;
             if (null != low) {
                 if (criticalLow.get() != null && low < criticalLow.get()) {
+                    System.err.println("Promote warning low " + low + " to criticalLow " + criticalLow.get());
                     low = criticalLow.get();
                 } else if (warningHigh.get() != null && low > warningHigh.get()) {
+                    System.err.println("Demote warning low " + low + " to warningHigh " + warningHigh.get());
                     low = warningHigh.get();
+                } else {
+                    System.err.println("set warning low " + low);
                 }
             }
             super.set(low);
@@ -103,8 +107,8 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
                     low = warningLow.get();
                 }
             }
-            writeCriticalLimits();
             super.set(low);
+            writeCriticalLimits();
         };
     };
     private final ObjectProperty<Double> criticalHigh = new SimpleObjectProperty<Double>(this, "criticalHigh", null) {
@@ -117,8 +121,9 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
                     high = warningHigh.get();
                 }
             }
-            writeCriticalLimits();
+            
             super.set(high);
+            writeCriticalLimits();
         };
     };
     private final ObjectProperty<Long> valueMsWarningLow = new SimpleObjectProperty<Long>(this, "valueMsWarningLow", null);
@@ -332,8 +337,10 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
     }
 
     public void destroy() {
-        for (int i = 0; i < alarmObjectives.length; i++) {
-            getParent().getWriter().unregister_instance(alarmObjectives[i].data, alarmObjectives[i].handle);
+        if(null != alarmObjectives) {
+            for (int i = 0; i < alarmObjectives.length; i++) {
+                getParent().getWriter().unregister_instance(alarmObjectives[i].data, alarmObjectives[i].handle);
+            }
         }
     }
 
@@ -349,8 +356,8 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
 
     @Override
     public String toString() {
-        return "[label=" + label + ",names=" + Arrays.toString(metricIds.get()) + ",minimum=" + minimum + ",maximum=" + maximum + ",low=" + warningLow
-                + ",high=" + warningHigh + ",values=" + super.toString() + "]";
+        return "[label=" + getLabel() + ",names=" + Arrays.toString(metricIds.get()) + ",minimum=" + getMinimum() + ",maximum=" + getMaximum() + ",low=" + getWarningLow()
+                + ",high=" + getWarningHigh() + ",values=" + values.toString() + "]";
     }
 
     @Override

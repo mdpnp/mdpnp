@@ -9,7 +9,6 @@ import javafx.collections.ListChangeListener;
 import javafx.scene.control.TreeItem;
 
 import org.mdpnp.apps.testapp.Device;
-import org.mdpnp.apps.testapp.vital.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

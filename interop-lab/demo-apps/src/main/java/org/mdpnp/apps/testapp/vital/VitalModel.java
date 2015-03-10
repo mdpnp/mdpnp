@@ -37,7 +37,7 @@ public interface VitalModel extends ObservableList<Vital> {
 
     ice.GlobalAlarmSettingsObjectiveDataWriter getWriter();
 
-    void start(Subscriber subscriber, Publisher publisher, EventLoop eventLoop);
+    void start(Publisher publisher, EventLoop eventLoop);
 
     void stop();
 

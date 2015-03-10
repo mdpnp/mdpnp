@@ -12,7 +12,6 @@ import javafx.scene.control.Label;
 import javafx.stage.FileChooser;
 
 import org.apache.log4j.Level;
-import org.mdpnp.apps.testapp.vital.Value;
 
 public class CSVPersister extends FileAdapterApplicationFactory.PersisterUIController implements DataCollector.DataSampleEventListener  {
 
@@ -44,7 +43,7 @@ public class CSVPersister extends FileAdapterApplicationFactory.PersisterUIContr
     static String toCSVLine(Value value) {
         StringBuilder sb = new StringBuilder();
 
-        long ms = value.getTimestamp(); // //DataCollector.toMilliseconds(value.getNumeric().device_time);
+        long ms = value.getDevTime(); // //DataCollector.toMilliseconds(value.getNumeric().device_time);
         String devTime = dateFormats.get().format(new Date(ms));
 
         sb.append(value.getUniqueDeviceIdentifier()).append(",")

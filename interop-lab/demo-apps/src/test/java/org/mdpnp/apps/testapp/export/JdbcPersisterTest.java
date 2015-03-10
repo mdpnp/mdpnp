@@ -1,12 +1,7 @@
 package org.mdpnp.apps.testapp.export;
 
-
-import ice.Numeric;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mdpnp.apps.testapp.vital.Value;
-import org.mdpnp.apps.testapp.vital.ValueImpl;
-import org.mdpnp.apps.testapp.vital.Vital;
 
 import java.sql.*;
 import java.util.Calendar;

@@ -71,8 +71,8 @@ public class HL7Application implements LineEmitterListener, StartStopListener {
         if(model != null) {
             model.stop();
             model = null;
-           
         }
+        text.clear();
     }
 
     @Override
@@ -82,7 +82,7 @@ public class HL7Application implements LineEmitterListener, StartStopListener {
             public void run() {
                 text.insertText(0, l);
                 if(text.getLength()>MAX_CHARS) {
-                    text.deleteText(MAX_CHARS, text.getLength()-MAX_CHARS);
+                    text.deleteText(MAX_CHARS, text.getLength());
                 }
             }
         });

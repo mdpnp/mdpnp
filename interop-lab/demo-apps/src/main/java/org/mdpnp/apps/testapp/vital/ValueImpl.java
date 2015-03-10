@@ -29,6 +29,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 import org.mdpnp.apps.testapp.Device;
+import org.mdpnp.apps.testapp.DeviceListModel;
 
 /**
  * @author Jeff Plourde
@@ -61,7 +62,17 @@ public class ValueImpl implements Value {
         this.metricId.set(metricId);
         this.instanceId.set(instanceId);
         this.parent = parent;
-        this.device = parent.getParent().getDeviceListModel().getByUniqueDeviceIdentifier(udi);
+        if(null != parent) {
+            VitalModel model = parent.getParent();
+            if(null != model) {
+                DeviceListModel deviceListModel = model.getDeviceListModel();
+                this.device = deviceListModel.getByUniqueDeviceIdentifier(udi);
+            } else {
+                this.device = null;
+            }
+        } else {
+            this.device = null;
+        }
         ignore.bind(parent.ignoreZeroProperty().and(value.isEqualTo(0.0, 0.00001).or(value.isEqualTo(Double.NaN, 0.0))));
         atOrAboveHigh.bind(ignore.not().and(parent.warningHighProperty().isNotNull()).and(value.greaterThanOrEqualTo(new ConcreteDoubleProperty(parent.warningHighProperty(), Double.POSITIVE_INFINITY))));
         atOrBelowLow.bind(ignore.not().and(parent.warningLowProperty().isNotNull()).and(value.lessThanOrEqualTo(new ConcreteDoubleProperty(parent.warningLowProperty(), Double.NEGATIVE_INFINITY))));
@@ -80,7 +91,7 @@ public class ValueImpl implements Value {
 
     @Override
     public String getUniqueDeviceIdentifier() {
-        return device.getUDI();
+        return this.uniqueDeviceIdentifier.get();
     }
 
     @Override
@@ -90,7 +101,7 @@ public class ValueImpl implements Value {
 
     @Override
     public String toString() {
-        return "[udi=" + device.getUDI() + ",value=" + value + "]";
+        return "[udi=" + getUniqueDeviceIdentifier() + ",value=" + getValue() + "]";
     }
 
     @Override

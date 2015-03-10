@@ -243,8 +243,6 @@ public class FramePanel extends StackPane implements Runnable {
                     acceptedWebcam.close();
                 }
 
-                System.out.println("SCREEN REZ:"+Toolkit.getDefaultToolkit().getScreenResolution());
-                System.out.println("WEBCAM WINDOW SIZE:"+size);
                 // cam holds references to these dimensions
                 acceptedWebcam.setCustomViewSizes(new Dimension[] { new Dimension(size) });
                 acceptedWebcam.setViewSize(new Dimension(size));

@@ -12,12 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
-import ice.Numeric;
-import ice.NumericDataReader;
-import ice.NumericSeq;
-import ice.NumericTopic;
-import ice.NumericTypeSupport;
-
 import java.awt.Color;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -26,6 +20,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.concurrent.CountDownLatch;
 
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -47,28 +42,15 @@ import javafx.util.Callback;
 
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
-import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.infrastructure.Condition;
-import com.rti.dds.infrastructure.RETCODE_NO_DATA;
-import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.InstanceStateKind;
-import com.rti.dds.subscription.SampleInfo;
-import com.rti.dds.subscription.SampleInfoSeq;
-import com.rti.dds.subscription.SampleStateKind;
-import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
-import com.rti.dds.topic.TopicDescription;
 
 /**
  * @author Jeff Plourde
@@ -99,60 +81,11 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     
     private final List<Vital> vitals = Collections.synchronizedList(new ArrayList<Vital>());
 
-    protected NumericDataReader numericReader;
-    
-    protected Subscriber subscriber;
     protected Publisher publisher;
     protected EventLoop eventLoop;
     private ObjectProperty<State> state = new SimpleObjectProperty<State>(this, "state", State.Normal);
 
     private static final Logger log = LoggerFactory.getLogger(VitalModelImpl.class);
-
-    private final EventLoop.ConditionHandler numericHandler = new EventLoop.ConditionHandler() {
-        private final NumericSeq num_seq = new NumericSeq();
-        private final SampleInfoSeq info_seq = new SampleInfoSeq();
-
-        @Override
-        public void conditionChanged(Condition condition) {
-            try {
-                for (;;) {
-                    try {
-                        numericReader.read(num_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
-                        final int size = info_seq.size();
-                        for (int i = 0; i < size; i++) {
-
-                            SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
-
-                            if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
-                                Numeric keyHolder = new Numeric();
-                                numericReader.get_key_value(keyHolder, sampleInfo.instance_handle);
-                                log.debug("Numeric NOT ALIVE:" + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
-                                removeNumeric(keyHolder.unique_device_identifier, keyHolder.metric_id, keyHolder.instance_id);
-                            } else {
-                                if (sampleInfo.valid_data) {
-                                    Numeric n = (Numeric) num_seq.get(i);
-                                    updateNumeric(n.unique_device_identifier, n.metric_id,
-                                            n.instance_id, 
-                                            1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L,
-                                            n.value);
-                                } else {
-                                    Numeric n = new Numeric();
-                                    numericReader.get_key_value(n, sampleInfo.instance_handle);
-                                    log.warn("Numeric ALIVE (WITH NO VALID DATA):" + n.unique_device_identifier + " " + n.metric_id + " " + n.instance_id);
-                                }
-                            }
-                        }
-                    } finally {
-                        numericReader.return_loan(num_seq, info_seq);
-                    }
-                }
-            } catch (RETCODE_NO_DATA noData) {
-
-            } finally {
-
-            }
-        }
-    };
 
     @Override
     public void removeNumeric(final String udi, final String metric_id, final int instance_id) {
@@ -259,33 +192,27 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     }
 
     @Override
-    public void start(final Subscriber subscriber, final Publisher publisher, final EventLoop eventLoop) {
-        eventLoop.doLater(new Runnable() {
-            public void run() {
-                VitalModelImpl.this.subscriber = subscriber;
-                VitalModelImpl.this.publisher = publisher;
-                VitalModelImpl.this.eventLoop = eventLoop;
-                DomainParticipant participant = subscriber.get_participant();
+    public void start(final Publisher publisher, final EventLoop eventLoop) {
+        this.eventLoop = eventLoop;
+        final CountDownLatch latch = new CountDownLatch(1);
+        eventLoop.doLater(() -> {
+            VitalModelImpl.this.publisher = publisher;
+            DomainParticipant participant = publisher.get_participant();
 
-                ice.GlobalAlarmSettingsObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name());
+            ice.GlobalAlarmSettingsObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name());
 
-                globalAlarmSettingsTopic = participant.create_topic(ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
-                        ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
-                        StatusKind.STATUS_MASK_NONE);
-                writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(globalAlarmSettingsTopic, QosProfiles.ice_library,
-                        QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-
-                NumericTypeSupport.register_type(participant, NumericTypeSupport.get_type_name());
-                TopicDescription nTopic = TopicUtil.lookupOrCreateTopic(participant, NumericTopic.VALUE, NumericTypeSupport.class);
-                numericReader = (NumericDataReader) subscriber.create_datareader_with_profile(nTopic, QosProfiles.ice_library,
-                        QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
-
-                
-
-                eventLoop.addHandler(numericReader.get_statuscondition(), numericHandler);
-                numericReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
-            }
+            globalAlarmSettingsTopic = participant.create_topic(ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
+                    ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
+                    StatusKind.STATUS_MASK_NONE);
+            writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(globalAlarmSettingsTopic, QosProfiles.ice_library,
+                    QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+            latch.countDown();
         });
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -293,73 +220,13 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         if(eventLoop != null) {
             eventLoop.doLater(new Runnable() {
                 public void run() {
-                    while (!vitals.isEmpty()) {
-                        remove(0);
-                    }
-                    eventLoop.removeHandler(numericReader.get_statuscondition());
                     publisher.delete_datawriter(writer);
-                    subscriber.get_participant().delete_topic(globalAlarmSettingsTopic);
-                    numericReader.delete_contained_entities();
-                    subscriber.delete_datareader(numericReader);
     
-                    VitalModelImpl.this.subscriber = null;
                     VitalModelImpl.this.eventLoop = null;
                 }
             });
 
         }
-    }
-
-    public static void main(String[] args) {
-        DomainParticipant p = DomainParticipantFactory.get_instance().create_participant(0, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null,
-                StatusKind.STATUS_MASK_NONE);
-        Subscriber s = p.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        Publisher pub = p.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        VitalModel vm = new VitalModelImpl(null);
-        vm.addListener(new ListChangeListener<Vital>() {
-            @Override
-            public void onChanged(javafx.collections.ListChangeListener.Change<? extends Vital> c) {
-                while(c.next()) {
-                    if(c.wasPermutated()) {
-                        
-                    }
-                    if(c.wasUpdated()) {
-                        
-                    }
-                    if(c.wasRemoved()) {
-                        
-                    }
-                    if(c.wasAdded()) {
-                        
-                    }
-                }
-            }
-        });
-//        vm.addListener(new VitalModelListener() {
-//
-//            @Override
-//            public void vitalRemoved(VitalModel model, Vital vital) {
-//                System.out.println("Removed:" + vital);
-//            }
-//
-//            @Override
-//            public void vitalChanged(VitalModel model, Vital vital) {
-//                System.out.println(new Date() + " Changed:" + vital);
-//            }
-//
-//            @Override
-//            public void vitalAdded(VitalModel model, Vital vital) {
-//                System.out.println("Added:" + vital);
-//            }
-//        });
-        // vm.addVital("Heart Rate", "bpm", new int[] {
-        // ice.MDC_PULS_OXIM_PULS_RATE.VALUE }, 20, 200, 10, 210, 0, 200);
-        EventLoop eventLoop = new EventLoop();
-
-        new EventLoopHandler(eventLoop);
-
-        vm.start(s, pub, eventLoop);
-        
     }
 
     private static final String DEFAULT_INTERLOCK_TEXT = "Drug: Morphine\r\nRate: 4cc / hour";
@@ -377,12 +244,13 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         return interlock;
     }
 
-    // TODO I synchronized this because I saw a transient concurrent mod
-    // exception
-    // but it's unclear to me which thread other than the EventLoopHandler
-    // should be calling it
-    // am I mixing AWT and ELH calls?
-    private final synchronized void updateState() {
+
+    private final void updateState() {
+        // This used to be synchronized but now we do this instead
+        if(!Platform.isFxApplicationThread()) {
+            throw new IllegalThreadStateException("Must be on the Fx App Thread");
+        }
+        
         int N = size();
 
         while (advisories.length < N) {

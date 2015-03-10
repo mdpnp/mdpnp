@@ -276,8 +276,6 @@ public class VitalMonitoring implements VitalModelContainer, Runnable {
                     FLIP = true;
                 }
                 int FLIP_SIGN = FLIP ? -1 : 1;
-                // System.out.println(vital.getLabel() + " rotate " +
-                // Math.toDegrees(rotate));
                 g.rotate(rotate);
                 // String lbl = v < LABEL.length ? LABEL[v] : "";
 
@@ -386,8 +384,6 @@ public class VitalMonitoring implements VitalModelContainer, Runnable {
                 Arrays.sort(vital_values, 0, i);
 
                 if (REVERSE_DIRECTION && i > 1) {
-                    // System.out.println(i+ " "
-                    // +Arrays.toString(vital_values));
                     for (int k = 0; k < i / 2; k++) {
                         float tmp = vital_values[k];
                         vital_values[k] = vital_values[i - 1 - k];

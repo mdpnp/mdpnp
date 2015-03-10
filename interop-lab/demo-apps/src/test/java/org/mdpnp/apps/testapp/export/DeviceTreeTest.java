@@ -5,7 +5,6 @@ import com.rti.dds.subscription.Subscriber;
 
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.Device;
-import org.mdpnp.apps.testapp.vital.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;

@@ -8,6 +8,7 @@ import javafx.scene.Parent;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.NumericInstanceModel;
 import org.springframework.context.ApplicationContext;
 
 import com.rti.dds.subscription.Subscriber;
@@ -28,8 +29,10 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
         final Subscriber subscriber = (Subscriber)parentContext.getBean("subscriber");
 
         final EventLoop eventLoop = (EventLoop)parentContext.getBean("eventLoop");
+        
+        final NumericInstanceModel numericInstanceModel = (NumericInstanceModel) parentContext.getBean("numericInstanceModel");
 
-        final Diagnostic diagnostic = new Diagnostic(subscriber, eventLoop);
+        final Diagnostic diagnostic = new Diagnostic(subscriber, eventLoop, numericInstanceModel);
 
         FXMLLoader loader = new FXMLLoader(DiagnosticApplication.class.getResource("DiagnosticApplication.fxml"));
         

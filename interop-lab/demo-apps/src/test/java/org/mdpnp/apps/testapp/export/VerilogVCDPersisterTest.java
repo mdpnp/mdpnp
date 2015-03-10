@@ -2,7 +2,6 @@ package org.mdpnp.apps.testapp.export;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.mdpnp.apps.testapp.vital.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
