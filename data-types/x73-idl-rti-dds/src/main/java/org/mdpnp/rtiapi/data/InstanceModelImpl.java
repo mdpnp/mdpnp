@@ -198,6 +198,10 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
                 for (int i = 0; i < info_seq.size(); i++) {
                     SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
                     if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
+                        D d = (D) sa_seq.get(i);
+                        if(!sampleInfo.valid_data) {
+                            getKeyValue.invoke(reader, d, sampleInfo.instance_handle);
+                        }
                         fireInstanceNotAlive((D) sa_seq.get(i), sampleInfo);
                         int idx = instances.indexOf(sampleInfo.instance_handle);
                         if(idx>=0) {
