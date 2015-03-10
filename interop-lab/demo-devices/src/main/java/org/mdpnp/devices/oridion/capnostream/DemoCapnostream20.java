@@ -22,7 +22,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -39,8 +38,6 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.rti.dds.infrastructure.Time_t;
 
 /**
  * @author Jeff Plourde
@@ -354,7 +351,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             
             if(0 != (END_OF_BREATH_BIT & status)) {
                 endOfBreath = numericSample(endOfBreath, 0, ice.MDC_END_OF_BREATH.VALUE, "",
-                        rosetta.MDC_DIM_DIMLESS.VALUE, null);
+                        rosetta.MDC_DIM_DIMLESS.VALUE, sampleTime);
             }
 
             if (0 != (0x40 & status)) {
