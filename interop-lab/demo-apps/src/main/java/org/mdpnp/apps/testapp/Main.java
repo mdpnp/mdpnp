@@ -12,10 +12,14 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
+import java.awt.Image;
+import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.URL;
 
-import javafx.application.Application;
+import javax.imageio.ImageIO;
+
 import javafx.application.Platform;
 import javafx.stage.Stage;
 
@@ -26,13 +30,12 @@ import org.slf4j.LoggerFactory;
  * @author Jeff Plourde
  * 
  */
-public class Main extends Application {
+public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
-    private IceApplication app;
 
     public static void main(final String[] args) throws Exception {
-
+        System.err.println("This should be the entry point");
         URL u = Main.class.getResource("/ice.system.properties");
         if(u != null) {
             log.info("Loading System configuration from " + u.toExternalForm());
@@ -41,28 +44,30 @@ public class Main extends Application {
             is.close();
         }
         
-        launch(Main.class, args);
+        Configuration runConf;
+        if(args.length > 0) {
+            System.err.println("Arguments specified, no UI");
+            runConf = Configuration.read(args);
+
+            if(null == runConf) {
+                return;
+            } else {
+                Configuration.searchAndSaveSettings(runConf, searchPath);
+            }
+            Configuration.Command cmd = runConf.getCommand();
+            int retCode = cmd.execute(runConf);
+            log.info("This is the end, exit code=" + retCode);
+            System.exit(retCode);
+            
+        } else {
+            System.err.println("Arguments NOT specified, UI is coming");
+            javafx.application.Application.launch(MainApplication.class, args);
+        }
     }
 
-    @Override
-    public void start(Stage primaryStage) throws Exception {
-        Configuration runConf = Configuration.getInstance(getParameters());
-        if (null == runConf) {
-            Platform.exit();
-        } else {
-            app = runConf.getIceApplication();
-            app.init();
-            app.start(primaryStage);
-        }
-    }
-    
-    @Override
-    public void stop() throws Exception {
-        super.stop();
-        if(null != app) {
-            app.stop();
-            app = null;
-        }
-    }
+    private final static File[] searchPath = new File [] {
+        new File(".JumpStartSettings"),
+        new File(System.getProperty("user.home"), ".JumpStartSettings")
+    };
 
 }

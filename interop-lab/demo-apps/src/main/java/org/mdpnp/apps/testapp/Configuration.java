@@ -12,19 +12,13 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.awt.Image;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Properties;
-
-import javafx.application.Application.Parameters;
-
-import javax.imageio.ImageIO;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -74,15 +68,19 @@ public class Configuration {
         ICE_Device_Interface(DeviceAdapter.DeviceAdapterCommand.class),
         ICE_ParticipantOnly(ParticipantOnly.class);
 
-        Application(Class<? extends IceApplication> c) {
+        Application(Class<?> c) {
             clazz = c;
         }
-        private Class<? extends IceApplication> clazz;
+        private Class<?> clazz;
         
-        public Class<? extends IceApplication> getAppClass() {
+        public Class<?> getAppClass() {
             return clazz;
         }
     }
+    
+    interface Command {
+        int execute(Configuration config) throws Exception;
+    }    
 
     private final boolean              headless;
     private final Application          application;
@@ -110,11 +108,10 @@ public class Configuration {
         return cmdLineEnv;
     }
 
-    public IceApplication getIceApplication() {
+    public Command getCommand() {
 
         try {
-            IceApplication command = (IceApplication) application.clazz.newInstance();
-            command.setConfiguration(this);
+            Command command = (Command) application.clazz.newInstance();
             return command;
         }
         catch(Exception ex)
@@ -306,58 +303,7 @@ public class Configuration {
         return new Configuration(headless, app, domainId, deviceType, address);
     }
 
-
-    public static Configuration getInstance(final Parameters params) throws Exception {
-
-        File[] searchPath = new File [] {
-                new File(".JumpStartSettings"),
-                new File(System.getProperty("user.home"), ".JumpStartSettings")
-        };
-
-        Configuration runConf;
-        final String[] args = params.getRaw().toArray(new String[0]);
-        
-        if (args.length > 0) {
-            runConf = read(args);
-        }
-        else {
-
-            try {
-                Class<?> cls = Class.forName("com.apple.eawt.Application");
-                Method m1 = cls.getMethod("getApplication");
-                Method m2 = cls.getMethod("setDockIconImage", Image.class);
-                m2.invoke(m1.invoke(null), ImageIO.read(Main.class.getResource("icon.png")));
-            } catch (Throwable t) {
-                log.debug("Not able to set Mac OS X dock icon");
-            }
-
-            runConf = searchAndLoadSettings(searchPath);
-            
-            ConfigurationDialog d = ConfigurationDialog.showDialog(runConf);
-//            d.setIconImage(ImageIO.read(Main.class.getResource("icon.png")));
-//            runConf = d.showDialog();
-
-            // It's nice to be able to change settings even without running
-            // Even if the user presses 'quit' save the state so that it can be used
-            // to boot strap the dialog later.
-            //
-            if (d.getQuitPressed()) {
-                Configuration c = d.getLastConfiguration();
-                searchAndSaveSettings(c, searchPath);
-                runConf = null;
-            } else {
-                runConf = d.getLastConfiguration();
-            }
-        }
-
-        if(runConf != null)
-            searchAndSaveSettings(runConf, searchPath);
-
-        return runConf;
-
-    }
-
-    private static Configuration searchAndLoadSettings(File[] fPath) throws IOException {
+    public static Configuration searchAndLoadSettings(File[] fPath) throws IOException {
 
         for(File f : fPath) {
             if(f.exists() && f.canRead()) {
@@ -372,7 +318,7 @@ public class Configuration {
     }
 
 
-    private static void searchAndSaveSettings(Configuration runConf, File[] fPath) throws IOException {
+    public static void searchAndSaveSettings(Configuration runConf, File[] fPath) throws IOException {
 
         if (null == runConf)
             return;

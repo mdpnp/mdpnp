@@ -20,8 +20,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.CountDownLatch;
 
-import javafx.stage.Stage;
-
 import javax.swing.JProgressBar;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
@@ -53,28 +51,30 @@ public abstract class DeviceAdapter {
         return da;
     }
 
-    public static class DeviceAdapterCommand extends IceApplication {
+    public static class DeviceAdapterCommand implements Configuration.Command {
         @Override
-        public void start(Stage primaryStage) throws Exception
+        public int execute(final Configuration conf) throws Exception
         {
-            DeviceDriverProvider ddp = getConfiguration().getDeviceFactory();
+            DeviceDriverProvider ddp = conf.getDeviceFactory();
             if(null == ddp) {
                 log.error("Unknown device type was specified");
                 throw new Exception("Unknown device type was specified");
             }
 
-            final AbstractApplicationContext context = getConfiguration().createContext("DriverContext.xml");
+            final AbstractApplicationContext context = conf.createContext("DriverContext.xml");
 
             DeviceAdapter da;
-            if(getConfiguration().isHeadless())
+            if(conf.isHeadless())
                 da = DeviceAdapter.newHeadlessAdapter(ddp, context);
             else
                 da = DeviceAdapter.newGUIAdapter(ddp, context);
 
-            da.start(getConfiguration().getAddress());
+            da.start(conf.getAddress());
 
             // this will block until killAdapter stops everything.
             context.destroy();
+            
+            return 0;
         }
     }
 
