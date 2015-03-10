@@ -131,6 +131,8 @@ public class IceAppsContainer extends IceApplication {
                 }
             }
             panelController.content.setCenter(mainMenuRoot);
+            // TODO make this more elegant
+            panelController.getBedLabel().setText("OpenICE");
             ((Button)event.getSource()).setVisible(false);
             ((Button)event.getSource()).setOnAction(null);
         }
