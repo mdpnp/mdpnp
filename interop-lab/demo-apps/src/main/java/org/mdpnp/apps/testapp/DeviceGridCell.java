@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 
 import org.controlsfx.control.GridCell;
@@ -27,6 +28,11 @@ public class DeviceGridCell extends GridCell<Device> {
     protected void updateItem(Device item, boolean empty) {
         super.updateItem(item, empty);
 
+        if(null == getTooltip()) {
+            setTooltip(new Tooltip(""));
+        }
+        
+        tooltipProperty().get().textProperty().unbind();
         icon.imageProperty().unbind();
         overlay.visibleProperty().unbind();
         text.textProperty().unbind();
@@ -35,10 +41,12 @@ public class DeviceGridCell extends GridCell<Device> {
             icon.setImage(null);
             overlay.setVisible(true);
             text.setText("");
+            tooltipProperty().get().textProperty().set("");
         } else {
             icon.imageProperty().bind(item.imageProperty());
             overlay.visibleProperty().bind(item.connectedProperty().not());
             text.textProperty().bind(item.makeAndModelProperty());
+            tooltipProperty().get().textProperty().bind(item.hostnameProperty());
         }
         
     }
