@@ -1,6 +1,8 @@
 package org.mdpnp.apps.testapp.export;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,14 +16,20 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
@@ -36,7 +44,6 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 
-    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(DataCollectorApp.class);
 
     @FXML protected TreeView<Object> tree;
@@ -86,10 +93,13 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
     private DeviceListModelImpl deviceListModel;
 
     private List<PersisterUIController> supportedPersisters = new ArrayList<>();
-
+    protected PersisterUIController currentPersister;
+    
     public DataCollectorApp() {
         
     }
+    
+    
     
     public DataCollectorApp set(DataCollector dc, DeviceListModelImpl deviceListModel) throws IOException {
         this.deviceListModel = deviceListModel;
@@ -117,19 +127,6 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         
         dataFilter.addDataSampleListener(this);
 
-//        JTree tree = new JTree() {
-//            @Override
-//            public String convertValueToText(Object value, boolean selected,
-//                                             boolean expanded, boolean leaf, int row,
-//                                             boolean hasFocus) {
-//                return DeviceTreeModel.textForNode(value);
-//
-//            }
-//        };
-//        tree.setCellRenderer(new SelectableNode.CheckBoxNodeRenderer());
-//        tree.setCellEditor(new SelectableNode.CheckBoxNodeEditor());
-//        tree.setEditable(true);
-//        tree.setCellFactory(CheckBoxTreeCell.<Object>forTreeView());
         tree.setCellFactory(new Callback<TreeView<Object>,TreeCell<Object>>() {
 
             @Override
@@ -141,32 +138,12 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 
         tree.setShowRoot(false);
         tree.setRoot(deviceTreeModel);
-//
+
         List<URL> supportedPersisterURLs = new ArrayList<URL>();
         supportedPersisterURLs.add(CSVPersister.class.getResource("CSVPersister.fxml"));
         supportedPersisterURLs.add(JdbcPersister.class.getResource("JdbcPersister.fxml"));
         supportedPersisterURLs.add(VerilogVCDPersister.class.getResource("VerilogVCDPersister.fxml"));
 
-
-//        startControl = new AbstractAction("") {
-//
-//            @Override
-//            public void actionPerformed (ActionEvent e){
-//
-//            }
-//
-//            @Override
-//            public void putValue(String key, Object newValue) {
-//                if("mdpnp.appender".equals(key)) {
-//                    // if there was one, stop it...
-//                    actionPerformed(new ActionEvent(this, 0, "Stop"));
-//                }
-//                super.putValue(key, newValue);
-//            }
-//        };
-//
-//
-        
         final ToggleGroup group = new ToggleGroup();
         StackPane cards = new StackPane();
         persisterContainer.setCenter(cards);
@@ -175,81 +152,101 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         for (URL u : supportedPersisterURLs) {
             FXMLLoader loader = new FXMLLoader(u);
             Node parent = loader.load();
-            PersisterUIController controller = loader.getController();
+            final PersisterUIController controller = loader.getController();
+            controller.setup();
             parent.setVisible(false);
             cards.getChildren().add(parent);
             RadioButton btn = new RadioButton(controller.getName());
+            btn.setUserData(controller);
             btns.getChildren().add(btn);
             group.getToggles().add(btn);
+            supportedPersisters.add(controller);
             btn.setOnAction(new EventHandler<ActionEvent>() {
 
                 @Override
                 public void handle(ActionEvent event) {
+                    if(null != currentPersister) {
+                        dataFilter.removeDataSampleListener(currentPersister);
+                        try {
+                            currentPersister.stop();
+                        } catch (Exception e) {
+                            log.error("Stopping persister", e);
+                        }
+                        currentPersister = null;
+                        startControl.setText("Start");
+                    }
+                    currentPersister = controller;
                     for(Node n : cards.getChildren()) {
                         n.setVisible(false);
                     }
+                    
                     parent.setVisible(true);
-//                    JRadioButton btn = (JRadioButton) e.getItem();
-//                    FileAdapterApplicationFactory.PersisterUI p =
-//                            (FileAdapterApplicationFactory.PersisterUI)btn.getClientProperty("mdpnp.appender");
-
-//                    if (e.getStateChange() == ItemEvent.DESELECTED) {
-//                        startControl.putValue("mdpnp.appender", null);
-//                    } else if (e.getStateChange() == ItemEvent.SELECTED) {
-//                        startControl.putValue("mdpnp.appender", p);
-//                    }
-//                    cl.show(cards, p.getName());
                 }
-                
             });
-
-            // link the two so that we can go from one to the other.
-            //
-//            p.putClientProperty("mdpnp.appender", btn);
-//            btn.putClientProperty("mdpnp.appender", p);
         }
-//
-//        persisterContainer.add(btns, BorderLayout.WEST);
-//        persisterContainer.add(cards, BorderLayout.CENTER);
-//
-//        FileAdapterApplicationFactory.PersisterUI p = supportedPersisters.get(0);
-//        JRadioButton btn = (JRadioButton) p.getClientProperty("mdpnp.appender");
-//        group.setSelected(btn.getModel(), true);
+        ((RadioButton)btns.getChildren().get(0)).fire();
+        
         return this;
     }
 
-    public void clickStartControl(ActionEvent evt) {
-//        String s = e.getActionCommand();
-//        FileAdapterApplicationFactory.PersisterUI p =
-//                (FileAdapterApplicationFactory.PersisterUI)getValue("mdpnp.appender");
-//
-//        if("Start".equals(s) && p != null) {
-//            try {
-//                boolean v = p.start();
-//                if (v) {
-//                    p.setBackground(java.awt.SystemColor.window);
-//                    dataFilter.addDataSampleListener(p);
-//                    putValue(Action.NAME, "Stop");
-//                } else {
-//                    p.setBackground(Color.red);
-//                }
-//            } catch (Exception ex) {
-//                JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-//            }
-//        }
-//        else if("Stop".equals(s)) {
-//            if(p != null) {
-//                try {
-//                    dataFilter.removeDataSampleListener(p);
-//                    p.stop();
-//
-//                } catch (Exception ex) {
-//                    JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-//                }
-//            }
-//            putValue(Action.NAME, "Start");
-//        }
-//
+    public static void exceptionDialog(Throwable t) {
+        log.warn("Exception displayed to user", t);
+        Alert alert = new Alert(AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("An Exception has occurred");
+        alert.setContentText(t.getMessage());
+
+        // Create expandable Exception.
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        t.printStackTrace(pw);
+        String exceptionText = sw.toString();
+
+        Label label = new Label("The exception stacktrace was:");
+
+        TextArea textArea = new TextArea(exceptionText);
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
+
+        GridPane expContent = new GridPane();
+        expContent.setMaxWidth(Double.MAX_VALUE);
+        expContent.add(label, 0, 0);
+        expContent.add(textArea, 0, 1);
+
+        // Set expandable Exception into the dialog pane.
+        alert.getDialogPane().setExpandableContent(expContent);
+
+        alert.showAndWait();
+    }
+    
+    @FXML public void clickStart(ActionEvent evt) {
+        if("Start".equals(startControl.getText()) && currentPersister != null) {
+            boolean v;
+            try {
+                v = currentPersister.start();
+                if (v) {
+                    dataFilter.addDataSampleListener(currentPersister);
+                    startControl.setText("Stop");
+                }
+            } catch (Exception e) {
+                exceptionDialog(e);
+            }
+
+        } else if("Stop".equals(startControl.getText()) && currentPersister != null) {
+            dataFilter.removeDataSampleListener(currentPersister);
+            try {
+                currentPersister.stop();
+            } catch (Exception e) {
+                exceptionDialog(e);
+            }
+            startControl.setText("Start");
+        }
+
     }
     
     public void stop() throws Exception {

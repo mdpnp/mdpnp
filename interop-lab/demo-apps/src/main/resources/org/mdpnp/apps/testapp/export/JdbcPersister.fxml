@@ -5,11 +5,10 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.GridPane?>
 
-
-<GridPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="org.mdpnp.apps.testapp.export.JdbcPersister">
+<GridPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.export.JdbcPersister">
    <columnConstraints>
       <ColumnConstraints />
-      <ColumnConstraints minWidth="10.0" prefWidth="100.0" />
+      <ColumnConstraints fillWidth="false" />
    </columnConstraints>
    <rowConstraints>
       <RowConstraints />
@@ -19,12 +18,12 @@
    </rowConstraints>
    <children>
       <Label text="JDBC Driver" textAlignment="RIGHT" />
-      <TextField fx:id="fDriver" text="org.hsqldb.jdbcDriver" GridPane.columnIndex="1" />
+      <TextField fx:id="fDriver" prefColumnCount="30" text="org.hsqldb.jdbcDriver" GridPane.columnIndex="1" />
       <Label text="Database URL" GridPane.rowIndex="1" />
       <Label text="User" GridPane.rowIndex="2" />
       <Label text="Password" GridPane.rowIndex="3" />
-      <TextField fx:id="fURL" text="jdbc:hsqldb:hsql://localhost/testdb" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-      <TextField fx:id="fUser" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-      <PasswordField fx:id="fPassword" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+      <TextField fx:id="fURL" prefColumnCount="30" text="jdbc:hsqldb:hsql://localhost/testdb" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+      <TextField fx:id="fUser" prefColumnCount="30" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+      <PasswordField fx:id="fPassword" prefColumnCount="30" GridPane.columnIndex="1" GridPane.rowIndex="3" />
    </children>
 </GridPane>

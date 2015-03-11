@@ -5,11 +5,10 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.GridPane?>
 
-
-<GridPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="org.mdpnp.apps.testapp.export.VerilogVCDPersister">
+<GridPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.export.VerilogVCDPersister">
    <columnConstraints>
       <ColumnConstraints />
-      <ColumnConstraints minWidth="10.0" prefWidth="100.0" />
+      <ColumnConstraints fillWidth="false" />
    </columnConstraints>
    <rowConstraints>
       <RowConstraints />
@@ -20,7 +19,7 @@
       <Label text="Configuration" />
       <Label text="Directory:" GridPane.rowIndex="1" />
       <Label text="Max file size:" GridPane.rowIndex="2" />
-      <TextField editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-      <TextField editable="false" text="10MB" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+      <TextField fx:id="filePathLabel" editable="false" prefColumnCount="30" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+      <TextField fx:id="maxSizeLabel" editable="false" prefColumnCount="5" text="10MB" GridPane.columnIndex="1" GridPane.rowIndex="2" />
    </children>
 </GridPane>

@@ -56,7 +56,7 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
 
     }
 
-    public void set() {
+    public void setup() {
         String f = "<" + dateFormats.get().toPattern() + ">";
         String p = (new File(f)).getAbsolutePath();
         filePathLabel.setText(p);        

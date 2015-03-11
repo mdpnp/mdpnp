@@ -43,7 +43,7 @@ public class CSVPersister extends FileAdapterApplicationFactory.PersisterUIContr
     static String toCSVLine(Value value) {
         StringBuilder sb = new StringBuilder();
 
-        long ms = value.getDevTime(); // //DataCollector.toMilliseconds(value.getNumeric().device_time);
+        long ms = value.getDevTime();
         String devTime = dateFormats.get().format(new Date(ms));
 
         sb.append(value.getUniqueDeviceIdentifier()).append(",")
@@ -86,36 +86,24 @@ public class CSVPersister extends FileAdapterApplicationFactory.PersisterUIContr
     }
     
     @FXML public void clickChange(ActionEvent evt) {
-//        while(frame != null && !(frame instanceof JFrame))
-//            frame = frame.getParent();
-//        if(frame == null)
-//            throw new IllegalStateException("Could not locate window frame");
-
         FileChooser fc = new FileChooser();
         fc.setTitle("Choose a file");
-//        fc.setInitialDirectory(defaultLogFileName.getParent());
+        fc.setInitialDirectory(defaultLogFileName.getParentFile());
         
-//        fd.setDirectory(defaultLogFileName.getParent());
-//        fd.setVisible(true);
-
-//        fc.showSaveDialog(null);
-//        String fName = fc.getFile();
-//        String dir = fc.getDirectory();
-//        if(dir != null && fName != null) {
-//            File f = new File(dir, fName);
         File f = fc.showSaveDialog(null);
+        if(null != f) {
             filePathLabel.setText(f.getAbsolutePath());
             appender.setFile(f.getAbsolutePath());
             appender.activateOptions();
-//        }
+        }
     }
     
-    public void set() {
+    private File defaultLogFileName = new File("demo-app.csv");
+    
+    public void setup() {
         backupIndex.getSelectionModel().select(0);
         fSize.getSelectionModel().select(1);
 
-        final File defaultLogFileName = new File("demo-app.csv");
-        
         filePathLabel.setText(defaultLogFileName.getAbsolutePath());
 
 

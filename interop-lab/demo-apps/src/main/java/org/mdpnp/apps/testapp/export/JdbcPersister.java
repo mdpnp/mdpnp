@@ -106,6 +106,11 @@ public class JdbcPersister extends FileAdapterApplicationFactory.PersisterUICont
     private static boolean isEmpty(String s) {
         return s == null || s.trim().length()==0;
     }
+    
+    @Override
+    public void setup() {
+        
+    }
 
     public JdbcPersister() {
 

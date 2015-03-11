@@ -76,6 +76,8 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
     public static abstract class PersisterUIController implements DataCollector.DataSampleEventListener  {
 
         public abstract String getName();
+        
+        public abstract void setup();
 
         public abstract void stop() throws Exception;
 
