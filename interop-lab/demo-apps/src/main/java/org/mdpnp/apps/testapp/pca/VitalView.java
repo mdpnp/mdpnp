@@ -83,8 +83,8 @@ public final class VitalView implements ListChangeListener<Value> {
         slider.lowerValueVisibleProperty().bind(vital.warningLowProperty().isNotNull());
         slider.higherValueVisibleProperty().bind(vital.warningHighProperty().isNotNull());
         slider.highestValueVisibleProperty().bind(vital.criticalHighProperty().isNotNull());
-        
-        
+        ignoreZeroBox.selectedProperty().bindBidirectional(vital.ignoreZeroProperty());
+        requiredBox.selectedProperty().bindBidirectional(vital.requiredProperty());
         
       
         // Cripes if you think about it the order here is really quite important since values will be clamped

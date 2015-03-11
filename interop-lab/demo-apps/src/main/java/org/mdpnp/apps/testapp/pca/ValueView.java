@@ -19,7 +19,6 @@ import java.util.Date;
 import javafx.application.Application;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.binding.StringBinding;
 import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;

@@ -72,13 +72,9 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
             Double low = newValue;
             if (null != low) {
                 if (criticalLow.get() != null && low < criticalLow.get()) {
-                    System.err.println("Promote warning low " + low + " to criticalLow " + criticalLow.get());
                     low = criticalLow.get();
                 } else if (warningHigh.get() != null && low > warningHigh.get()) {
-                    System.err.println("Demote warning low " + low + " to warningHigh " + warningHigh.get());
                     low = warningHigh.get();
-                } else {
-                    System.err.println("set warning low " + low);
                 }
             }
             super.set(low);
@@ -381,7 +377,8 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
     }
 
     private final BooleanProperty ignoreZero = new SimpleBooleanProperty(this, "ignoreZero", true);
-
+    private final BooleanProperty required = new SimpleBooleanProperty(this, "required", false);
+    
     @Override
     public boolean isIgnoreZero() {
         return ignoreZero.get();
@@ -583,6 +580,21 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
     @Override
     public Value get(int index) {
         return values.get(index);
+    }
+
+
+    public final BooleanProperty requiredProperty() {
+        return this.required;
+    }
+
+
+    public final boolean isRequired() {
+        return this.requiredProperty().get();
+    }
+
+
+    public final void setRequired(final boolean required) {
+        this.requiredProperty().set(required);
     }
 
 

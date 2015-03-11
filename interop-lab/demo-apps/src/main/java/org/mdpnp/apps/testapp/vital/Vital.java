@@ -182,6 +182,9 @@ public interface Vital extends ObservableList<Value> {
 
     BooleanProperty ignoreZeroProperty();
     boolean isIgnoreZero();
-
     void setIgnoreZero(boolean ignoreZero);
+    
+    BooleanProperty requiredProperty();
+    boolean isRequired();
+    void setRequired(boolean required);
 }
