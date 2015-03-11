@@ -5,7 +5,6 @@ import java.io.IOException;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
-import org.mdpnp.apps.testapp.DataVisualization;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.springframework.context.ApplicationContext;
@@ -16,7 +15,7 @@ import org.springframework.context.ApplicationContext;
 public class PCAVizApplicationFactory implements IceApplicationProvider {
 
     private final IceApplicationProvider.AppType PCAViz =
-            new IceApplicationProvider.AppType("Data Visualization", "NOPCAVIZ", DataVisualization.class.getResource("data-viz.png"), 0.75);
+            new IceApplicationProvider.AppType("Data Visualization", "NOPCAVIZ", VitalMonitoring.class.getResource("data-viz.png"), 0.75);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {

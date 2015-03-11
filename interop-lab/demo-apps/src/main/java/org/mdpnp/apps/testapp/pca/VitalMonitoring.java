@@ -24,7 +24,6 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.scene.shape.Polygon;
 import javafx.scene.transform.Affine;
 import javafx.util.Duration;
 
@@ -87,20 +86,60 @@ public class VitalMonitoring implements VitalModelContainer {
     }
 
     private static final Color IDEAL_COLOR = deriveColor(Color.BLUE, 0.8f);
-//    private static final Color DATA_COLOR = deriveColor(Color.GREEN, 0.3f);
-//    private static final Color WARN_DATA_COLOR = deriveColor(Color.YELLOW, 0.5f);
-//    private static final Color ALARM_DATA_COLOR = deriveColor(Color.RED, 0.9f);
+    private static final Color DATA_COLOR = deriveColor(Color.GREEN, 0.3f);
+    private static final Color WARN_DATA_COLOR = deriveColor(Color.YELLOW, 0.5f);
+    private static final Color ALARM_DATA_COLOR = deriveColor(Color.RED, 0.9f);
     private static final Color WHITEN_COLOR = deriveColor(Color.WHITE, 0.8f);
 //    private static final Stroke LINE_STROKE = new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 
     private float[] vital_values = new float[10];
 
-    // For use only in rendering (AWT event queue)
-    private final Polygon chartArea = new Polygon();
-    private final Polygon dataArea = new Polygon();
-    private final Polygon idealArea = new Polygon();
+    private static class Polygon {
+        private double[] x_points, y_points;
+        private int count;
+        
+        Polygon(int N) {
+            x_points = new double[N];
+            y_points = new double[N];
+        }
+        void addPoint(double x, double y) {
+            if(count >= x_points.length) {
+                x_points = Arrays.copyOf(x_points, 2 * x_points.length + 1);
+                y_points = Arrays.copyOf(y_points, 2 * y_points.length + 1);
+            }
+            x_points[count] = x;
+            y_points[count] = y;
+            count++;
+        }
+        void fill(GraphicsContext g) {
+            g.fillPolygon(x_points, y_points, count);
+        }
+        void stroke(GraphicsContext g) {
+            g.strokePolygon(x_points, y_points, count);
+        }
+        void clear() {
+            count = 0;
+        }
+        public int getCount() {
+            return count;
+        }
+        public double[] getXPoints() {
+            return x_points;
+        }
+        public double[] getYPoints() {
+            return y_points;
+        }
+       
+    }
+    
+    // For use only in rendering
+    private final Polygon chartArea = new Polygon(10);
+    private final Polygon dataArea = new Polygon(10);
+    private final Polygon idealArea = new Polygon(10);
 
-    // / THIS LOGIC SHOULD LIVE OUTSIDE OF THE AWT THREAD
+    
+    
+    // / THIS LOGIC SHOULD LIVE OUTSIDE OF THE FX THREAD
     // / and probably draw an offscreen buffer
     public void render(GraphicsContext g) {
         
@@ -115,19 +154,18 @@ public class VitalMonitoring implements VitalModelContainer {
         height = g.getCanvas().getHeight();
 
         g.clearRect(0, 0, width, height);
-        
-//        System.err.println("RENDER "+width+" "+height);
 
         center_y = height / 2;
         center_x = width / 2;
 
-//        if (N < 3) {
-//            String s = "Please add at least three vital signs.";
-//            int width = g.getFontMetrics().stringWidth(s);
-//            int height = g.getFontMetrics().getHeight();
-//            g.drawString("Please add at least three vital signs.", center.x - width / 2, center.y + height / 2);
-//            return;
-//        }
+        if (N < 3) {
+            final String s = "Please add at least three vital signs.";
+            final FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(g.getFont());
+            final float height = fm.getLineHeight();
+            final float str_w = fm.computeStringWidth(s);
+            g.fillText("Please add at least three vital signs.", center_x - width / 2, center_y + height / 2);
+            return;
+        }
 
         int radius = (int) (0.8 * Math.min(center_x, center_y));
         double radiansPerArc = 2.0 * Math.PI / N;
@@ -141,9 +179,9 @@ public class VitalMonitoring implements VitalModelContainer {
         g.setStroke(Color.BLACK);
         g.setFill(Color.BLACK);
 
-        chartArea.getPoints().clear();
-        dataArea.getPoints().clear();
-        idealArea.getPoints().clear();
+        chartArea.clear();
+        dataArea.clear();
+        idealArea.clear();
 
         // int countVitalsOut = 0;
         // int countVitalsAbsent = 0;
@@ -193,7 +231,7 @@ public class VitalMonitoring implements VitalModelContainer {
 
             // Draw an axis line for this vital
             g.strokeLine(x1, y1, x2, y2);
-            chartArea.getPoints().addAll(x1, y1);
+            chartArea.addPoint(x1, y1);
 
             double slope = 1.0 * (y2 - y1) / (x2 - x1);
             double intercept = y1 - slope * x1;
@@ -207,7 +245,7 @@ public class VitalMonitoring implements VitalModelContainer {
                     x_ideal = x1;
                     y_ideal = (int) (proportion * (y2 - y1) + y1);
                 }
-                idealArea.getPoints().addAll(x_ideal, y_ideal);
+                idealArea.addPoint(x_ideal, y_ideal);
 
                 proportion = 1.0 * (low - minimum) / (maximum - minimum);
                 x_ideal = proportion * (x2 - x1) + x1;
@@ -217,7 +255,7 @@ public class VitalMonitoring implements VitalModelContainer {
                     x_ideal = x1;
                     y_ideal = (int) (proportion * (y2 - y1) + y1);
                 }
-                idealArea.getPoints().addAll(x_ideal, y_ideal);
+                idealArea.addPoint(x_ideal, y_ideal);
 
             } else {
                 double proportion = 1.0 * (low - minimum) / (maximum - minimum);
@@ -229,7 +267,7 @@ public class VitalMonitoring implements VitalModelContainer {
                     y_ideal = (int) (proportion * (y2 - y1) + y1);
                 }
 
-                idealArea.getPoints().addAll(x_ideal, y_ideal);
+                idealArea.addPoint(x_ideal, y_ideal);
 
                 proportion = 1.0 * (high - minimum) / (maximum - minimum);
                 x_ideal = (int) (proportion * (x2 - x1) + x1);
@@ -240,7 +278,7 @@ public class VitalMonitoring implements VitalModelContainer {
                     y_ideal = (int) (proportion * (y2 - y1) + y1);
                 }
 
-                idealArea.getPoints().addAll(x_ideal, y_ideal);
+                idealArea.addPoint(x_ideal, y_ideal);
             }
 //            g.setFont(g.getFont()
             double length = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
@@ -403,38 +441,40 @@ public class VitalMonitoring implements VitalModelContainer {
                         x = x1;
                         y = (int) (proportion * (y2 - y1) + y1);
                     }
-                    dataArea.getPoints().addAll(x, y);
+                    dataArea.addPoint(x, y);
                 }
             }
         }
         g.setFill(WHITEN_COLOR);
-//        g.fill(chartArea);
-//        g.setColor(Color.black);
-//        g.drawPolygon(chartArea);
-
-//        g.setColor(IDEAL_COLOR);
-//        g.drawPolygon(idealArea);
+        chartArea.fill(g);
+        g.setStroke(Color.BLACK);
+        chartArea.stroke(g);
+        g.setStroke(IDEAL_COLOR);
+        idealArea.stroke(g);
 
         switch (model.getState()) {
         case Alarm:
-//            g.setColor(ALARM_DATA_COLOR);
+            g.setStroke(ALARM_DATA_COLOR);
+            g.setFill(ALARM_DATA_COLOR);
             break;
         case Warning:
-//            g.setColor(WARN_DATA_COLOR);
+            g.setStroke(WARN_DATA_COLOR);
+            g.setFill(WARN_DATA_COLOR);
             break;
         case Normal:
-//            g.setColor(DATA_COLOR);
+            g.setStroke(DATA_COLOR);
+            g.setFill(DATA_COLOR);
             break;
         default:
         }
 
-//        if (dataArea.npoints > 1) {
-//            if (dataArea.npoints < 3) {
-//                g.drawLine(dataArea.xpoints[0], dataArea.ypoints[0], dataArea.xpoints[1], dataArea.ypoints[1]);
-//            } else {
-//                g.fillPolygon(dataArea);
-//            }
-//        }
+        if (dataArea.getCount() > 1) {
+            if (dataArea.getCount() < 3) {
+                g.strokeLine(dataArea.getXPoints()[0], dataArea.getYPoints()[0], dataArea.getXPoints()[1], dataArea.getYPoints()[1]);
+            } else {
+                dataArea.fill(g);
+            }
+        }
     }
 
     public static final void main(String[] args) {

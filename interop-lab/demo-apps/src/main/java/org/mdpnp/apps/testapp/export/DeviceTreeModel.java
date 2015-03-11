@@ -59,7 +59,7 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
         final Value value = (Value) evt.getSource();
 
         // This call back is going to happen A LOT. need fast lookup of the nodes.
-        // And only of we see this for the first timer burden the swing thread with
+        // And only of we see this for the first timer burden the FX thread with
         // tree model modifications.
         //
         final String key = toKey(value);

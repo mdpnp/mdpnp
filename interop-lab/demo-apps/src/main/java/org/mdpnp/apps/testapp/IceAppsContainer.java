@@ -50,7 +50,7 @@ import com.rti.dds.subscription.Subscriber;
  *
  * Any application that implements IceApplicationProvider interface and complies with java's
  * <a href="http://docs.oracle.com/javase/7/docs/api/java/util/ServiceLoader.html">ServiceLoader</a> pattern
- * will be discovered by this container. The application could be either swing UI or headless background
+ * will be discovered by this container. The application could be either JavaFX UI or headless background
  * thread (but not a console-based green-screen). For the UI apps, it could be either standalone frames or
  * embeddable panels.
  *

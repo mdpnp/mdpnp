@@ -5,7 +5,6 @@ import java.io.IOException;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
-import org.mdpnp.apps.testapp.DataVisualization;
 import org.mdpnp.apps.testapp.DeviceListModelImpl;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.springframework.context.ApplicationContext;
@@ -18,7 +17,7 @@ import com.rti.dds.subscription.Subscriber;
 public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
     private final IceApplicationProvider.AppType FileAdapter =
-            new IceApplicationProvider.AppType("Data Recorder", "NOCSV",  DataVisualization.class.getResource("database-server.png"), 0.75);
+            new IceApplicationProvider.AppType("Data Recorder", "NOCSV",  FileAdapterApplicationFactory.class.getResource("database-server.png"), 0.75);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {
