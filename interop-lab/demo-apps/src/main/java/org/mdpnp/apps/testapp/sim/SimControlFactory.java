@@ -38,7 +38,8 @@ public class SimControlFactory implements IceApplicationProvider {
         
         final SimControl controller = ((SimControl)loader.getController());
         controller.setup(participant);
-      final Stage dialog = new Stage(StageStyle.UTILITY);
+      final Stage dialog = new Stage(StageStyle.DECORATED);
+      dialog.setTitle("Simulator Control");
       dialog.setAlwaysOnTop(true);
       Scene scene = new Scene(ui);
       dialog.setScene(scene);

@@ -12,6 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.sim;
 
+import java.text.NumberFormat;
+
 import ice.GlobalSimulationObjective;
 import ice.GlobalSimulationObjectiveDataWriter;
 import javafx.beans.value.ChangeListener;
@@ -20,7 +22,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.text.TextAlignment;
+import javafx.util.converter.NumberStringConverter;
 
 import org.mdpnp.rtiapi.data.QosProfiles;
 
@@ -36,11 +39,11 @@ import com.rti.dds.topic.Topic;
  */
 public class SimControl {
 
-    @FXML protected VBox main;
+    @FXML protected GridPane main;
     
     private static final class NumericValue {
         public final String name, metricId;
-        public final float lowerBound, upperBound, initialValue; // , increment;
+        public final float lowerBound, upperBound, initialValue, increment;
 
         public NumericValue(final String name, final String metricId, final float lowerBound, final float upperBound, final float initialValue,
                 final float increment) {
@@ -49,7 +52,7 @@ public class SimControl {
             this.lowerBound = lowerBound;
             this.upperBound = upperBound;
             this.initialValue = initialValue;
-//            this.increment = increment;
+            this.increment = increment;
         }
     }
 
@@ -72,7 +75,7 @@ public class SimControl {
     private ice.GlobalSimulationObjectiveDataWriter writer;
     private final ice.GlobalSimulationObjective[] objectives = new ice.GlobalSimulationObjective[numericValues.length];
     private final InstanceHandle_t[] handles = new InstanceHandle_t[numericValues.length];
-
+    
     public SimControl setup(final DomainParticipant participant) {
         this.participant = participant;
         publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
@@ -86,21 +89,28 @@ public class SimControl {
         final Label[] labels = new Label[numericValues.length];
         final Label[] currentValues = new Label[numericValues.length];
 
+        final NumberFormat numberFormat = NumberFormat.getNumberInstance();
+        numberFormat.setMaximumFractionDigits(2);
+        numberFormat.setMinimumFractionDigits(2);
+        numberFormat.setMinimumIntegerDigits(1);
+        
         for (int i = 0; i < objectives.length; i++) {
             objectives[i] = (GlobalSimulationObjective) ice.GlobalSimulationObjective.create();
             objectives[i].metric_id = numericValues[i].metricId;
             objectives[i].value = numericValues[i].initialValue;
             handles[i] = writer.register_instance(objectives[i]);
             sliders[i] = new Slider(numericValues[i].lowerBound, numericValues[i].upperBound, objectives[i].value);
+            sliders[i].setMajorTickUnit(numericValues[i].increment);
+            sliders[i].setMinorTickCount(0);
             sliders[i].setShowTickLabels(true);
             sliders[i].setShowTickMarks(true);
+            sliders[i].setSnapToTicks(true);
             labels[i] = new Label(numericValues[i].name);
+            labels[i].setTextAlignment(TextAlignment.RIGHT);
             currentValues[i] = new Label("" + sliders[i].getValue());
-            GridPane gridPane = new GridPane();
-            gridPane.add(labels[i], 0, i);
-            gridPane.add(sliders[i], 1, i);
-            gridPane.add(currentValues[i], 2, i);
-            main.getChildren().add(gridPane);
+            main.add(labels[i], 0, i);
+            main.add(sliders[i], 1, i);
+            main.add(currentValues[i], 2, i);
 
             writer.write(objectives[i], handles[i]);
 
@@ -110,12 +120,13 @@ public class SimControl {
             final Label currentValue = currentValues[i];
             final InstanceHandle_t handle = handles[i];
 
+            
+            currentValue.textProperty().bindBidirectional(slider.valueProperty(), new NumberStringConverter(numberFormat));
             sliders[i].valueProperty().addListener(new ChangeListener<Number>() {
 
                 @Override
                 public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                    obj.value = (float) slider.getValue();
-                    currentValue.setText("" + obj.value);
+                    obj.value = newValue.floatValue();
                     writer.write(obj, handle);
                 }
                 
