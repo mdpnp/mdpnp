@@ -95,7 +95,7 @@ public class Device {
 
     public BooleanProperty connectedProperty() {
         if (null == connected) {
-            connected = new SimpleBooleanProperty(this, "connected", false);
+            connected = new SimpleBooleanProperty(this, "connected", true);
         }
         return connected;
     }
