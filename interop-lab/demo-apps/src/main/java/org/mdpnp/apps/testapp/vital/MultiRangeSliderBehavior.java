@@ -147,7 +147,6 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
         final MultiRangeSlider rangeSlider = getControl();
         if (!rangeSlider.isFocused())  rangeSlider.requestFocus();
         rangeSlider.setLowerValueChanging(true);
-        System.err.println("PRESSED");
     }
     public void lowestThumbPressed(MouseEvent e, double position) {
         // If not already focused, request focus
@@ -166,7 +165,6 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
                 (position * (rangeSlider.getMax() - rangeSlider.getMin())) + rangeSlider.getMin(), 
                 rangeSlider.getMax());
         rangeSlider.setLowerValue(newValue);
-        System.err.println("DRAGGED " + position + " " + newValue);
     }
     
     public void lowestThumbDragged(MouseEvent e, double position) {
@@ -188,7 +186,6 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
         if (rangeSlider.isSnapToTicks()) {
             rangeSlider.setLowerValue(snapValueToTicks(rangeSlider.getLowerValue()));
         }
-        System.err.println("RELEASED");
     }
     
     public void lowestThumbReleased(MouseEvent e) {

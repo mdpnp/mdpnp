@@ -35,7 +35,6 @@ public class Main {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(final String[] args) throws Exception {
-        System.err.println("This should be the entry point");
         URL u = Main.class.getResource("/ice.system.properties");
         if(u != null) {
             log.info("Loading System configuration from " + u.toExternalForm());
@@ -46,7 +45,6 @@ public class Main {
         
         Configuration runConf;
         if(args.length > 0) {
-            System.err.println("Arguments specified, no UI");
             runConf = Configuration.read(args);
 
             if(null == runConf) {
@@ -60,7 +58,6 @@ public class Main {
             System.exit(retCode);
             
         } else {
-            System.err.println("Arguments NOT specified, UI is coming");
             javafx.application.Application.launch(MainApplication.class, args);
         }
     }
