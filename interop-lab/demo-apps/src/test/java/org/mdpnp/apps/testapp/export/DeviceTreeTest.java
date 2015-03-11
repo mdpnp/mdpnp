@@ -51,18 +51,18 @@ public class DeviceTreeTest {
 
 
 
-        JTree tree = new JTree() {
-            @Override
-            public String convertValueToText(Object value, boolean selected,
-                                             boolean expanded, boolean leaf, int row,
-                                             boolean hasFocus) {
-                return DeviceTreeModel.textForNode(value);
-
-            }
-        };
-        tree.setCellRenderer(new SelectableNode.CheckBoxNodeRenderer());
-        tree.setCellEditor(new SelectableNode.CheckBoxNodeEditor());
-        tree.setEditable(true);
+//        JTree tree = new JTree() {
+//            @Override
+//            public String convertValueToText(Object value, boolean selected,
+//                                             boolean expanded, boolean leaf, int row,
+//                                             boolean hasFocus) {
+//                return DeviceTreeModel.textForNode(value);
+//
+//            }
+//        };
+//        tree.setCellRenderer(new SelectableNode.CheckBoxNodeRenderer());
+//        tree.setCellEditor(new SelectableNode.CheckBoxNodeEditor());
+//        tree.setEditable(true);
 //        tree.setModel(tm);
 
         JFrame frame = new JFrame("UITest");
@@ -92,7 +92,7 @@ public class DeviceTreeTest {
         })).start();
 
         frame.getContentPane().setLayout(new BorderLayout());
-        frame.getContentPane().add(tree, BorderLayout.CENTER);
+//        frame.getContentPane().add(tree, BorderLayout.CENTER);
         frame.setSize(640, 480);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);

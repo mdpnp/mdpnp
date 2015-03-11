@@ -19,11 +19,12 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeView;
-import javafx.scene.control.cell.CheckBoxTreeCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Callback;
 
 import org.mdpnp.apps.testapp.DeviceListModelImpl;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
@@ -128,7 +129,15 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 //        tree.setCellRenderer(new SelectableNode.CheckBoxNodeRenderer());
 //        tree.setCellEditor(new SelectableNode.CheckBoxNodeEditor());
 //        tree.setEditable(true);
-        tree.setCellFactory(CheckBoxTreeCell.<Object>forTreeView());
+//        tree.setCellFactory(CheckBoxTreeCell.<Object>forTreeView());
+        tree.setCellFactory(new Callback<TreeView<Object>,TreeCell<Object>>() {
+
+            @Override
+            public TreeCell<Object> call(TreeView<Object> param) {
+                return new DeviceTreeCell();
+            }
+            
+        });
 
         tree.setShowRoot(false);
         tree.setRoot(deviceTreeModel);
@@ -167,6 +176,7 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
             FXMLLoader loader = new FXMLLoader(u);
             Node parent = loader.load();
             PersisterUIController controller = loader.getController();
+            parent.setVisible(false);
             cards.getChildren().add(parent);
             RadioButton btn = new RadioButton(controller.getName());
             btns.getChildren().add(btn);

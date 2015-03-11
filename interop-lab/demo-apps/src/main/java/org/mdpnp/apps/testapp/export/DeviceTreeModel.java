@@ -39,38 +39,8 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
         return node;
     }
 
-    public static String textForNode(Object o) {
-        String txt="";
-        if(o instanceof TreeItem) {
-            o = ((TreeItem)o).getValue();
-        }
-        if(o instanceof Device) {
-            Device d = (Device)o;
-            if(d.getMakeAndModel() != null)
-                txt = d.getMakeAndModel() + " (" + d.getUDI() + ")";
-            else
-                txt = d.getUDI();
-        }
-        else if(o != null) {
-            txt = o.toString();
-        }
-        return txt;
-    }
-
-//    @Override
-//    public void valueForPathChanged(TreePath path, Object newValue) {
-//        MutableTreeNode aNode = (MutableTreeNode)path.getLastPathComponent();
-//        if(aNode instanceof SelectableNode && newValue instanceof Boolean)  {
-//            cascadeChildren((SelectableNode)aNode, (Boolean)newValue);
-//        }
-//        else {
-//            super.valueForPathChanged(path, newValue);
-//        }
-//    }
-
     private void cascadeChildren(SelectableNode node, boolean v) {
         node.setSelected(v);
-//        nodeChanged(node);
         if(!node.isLeaf()) {
             Iterator<TreeItem<Object>> iter = node.getChildren().iterator();
             while (iter.hasNext()) {
@@ -95,7 +65,6 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
         final String key = toKey(value);
 
         if (nodeLookup.get(key) == null) {
-            @SuppressWarnings("rawtypes")
             Iterator<TreeItem<Object>> iter = getChildren().iterator();
             while (iter.hasNext()) {
                 TreeItem<Object> dn = (TreeItem<Object>) iter.next();
@@ -106,15 +75,7 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
 
                     nodeLookup.put(key, in);
 
-                    log.debug("adding to the tree: " + key);
-
-//                    int idx = mn.getIndex(in);
-//                    Object path[] = getPathToRoot(mn);
-//                    DeviceTreeModel.this.fireTreeNodesInserted(
-//                            DeviceTreeModel.this,
-//                            path,
-//                            new int[]{idx},
-//                            new Object[]{in});
+                    log.debug("adding to the tree: {}", key);
                 }
             }
         }
@@ -126,7 +87,6 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
 
     TreeItem<Object> ensureMetricNode(TreeItem<Object> d, Value value)
     {
-        @SuppressWarnings("rawtypes")
         Iterator<TreeItem<Object>> iter = d.getChildren().iterator();
         while (iter.hasNext()) {
             TreeItem<Object> tn = (TreeItem<Object>) iter.next();
@@ -180,7 +140,6 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
                 for(Device d : c.getRemoved()) {
                     log.info("Device Removed", d.toString());
 
-                    @SuppressWarnings("rawtypes")
                     Iterator<TreeItem<Object>> itr = getChildren().iterator();
                     while(itr.hasNext()) {
                         if(d.equals(itr.next().getValue())) {
@@ -191,10 +150,7 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
                 for(Device d : c.getAddedSubList()) {
                     log.info("Device Added", d.toString());
                     // TODO preserve the sort order of the underlying list
-                    
                     getChildren().add(makeNewNodeFactory(this, d));
-
-//                    reload();  
                 }
             }
         }
