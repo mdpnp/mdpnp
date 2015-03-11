@@ -25,7 +25,7 @@ public class BioPatchTest {
         bb.rewind();
 
         DeviceClock.Reading t = clock.instant(bb);
-        long ms = t.getDeviceTime();
+        long ms = t.getDeviceTime().toEpochMilli();
 
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(ms);
