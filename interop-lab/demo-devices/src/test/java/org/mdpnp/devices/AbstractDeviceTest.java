@@ -1,7 +1,5 @@
 package org.mdpnp.devices;
 
-
-import com.rti.dds.infrastructure.Time_t;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -61,42 +59,4 @@ public class AbstractDeviceTest {
         }
         Assert.assertEquals(n, 5);
     }
-
-    @Test
-    public void testConversion() {
-
-        long l0 = System.currentTimeMillis();
-        Time_t t = DomainClock.toDDSTime(l0);
-        long l1 = DomainClock.toMilliseconds(t);
-
-        Assert.assertEquals(l0, l1);
-    }
-
-    @Test
-    public void testClockDecoration() {
-
-        final long now = System.currentTimeMillis();
-
-        DeviceClock ref = new DeviceClock()
-        {
-            @Override
-            public Reading instant() {
-                return new DeviceClock.ReadingImpl(now);
-            }
-        };
-
-        DeviceClock epoch = new DeviceClock()
-        {
-            @Override
-            public Reading instant() {
-                return new DeviceClock.ReadingImpl(0);
-            }
-        };
-
-        DeviceClock.Reading r = new DeviceClock.CombinedReading(ref.instant(), epoch.instant());
-
-        Assert.assertEquals(r.getTime(), 0);
-
-    }
-
 }

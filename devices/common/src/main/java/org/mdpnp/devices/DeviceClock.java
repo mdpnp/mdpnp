@@ -1,5 +1,6 @@
 package org.mdpnp.devices;
 
+import java.time.Instant;
 import java.util.Date;
 
 public interface DeviceClock {
@@ -21,10 +22,10 @@ public interface DeviceClock {
      * @see CombinedReading
      */
     public interface Reading {
-        long getTime();
+        Instant getTime();
         boolean hasDeviceTime();
-        long getDeviceTime();
-        Reading refineResolutionForFrequency(int frequency, int size);
+        Instant getDeviceTime();
+        Reading refineResolutionForFrequency(int hertz, int size);
     };
 
 
@@ -59,24 +60,27 @@ public interface DeviceClock {
     }
 
     public static class ReadingImpl implements DeviceClock.Reading {
-        private final long ms;
+        private final Instant ms;
 
         public ReadingImpl(long time) {
+            this(Instant.ofEpochMilli(time));
+        }
+        public ReadingImpl(Instant time) {
             ms = time;
         }
 
         @Override
         public String toString() {
-            return (new Date(ms)).toString();
+            return ms.toString();
         }
 
         @Override
-        public long getTime() {
+        public Instant getTime() {
             return ms;
         }
 
         @Override
-        public long getDeviceTime() {
+        public Instant getDeviceTime() {
             return ms;
         }
 
@@ -86,7 +90,7 @@ public interface DeviceClock {
         }
 
         @Override
-        public Reading refineResolutionForFrequency(int frequency, int size) {
+        public Reading refineResolutionForFrequency(int hertz, int size) {
             return this;
         }
     }
@@ -107,7 +111,7 @@ public interface DeviceClock {
         }
 
         @Override
-        public long getTime() {
+        public Instant getTime() {
             return ref.getTime();
         }
 
@@ -117,13 +121,13 @@ public interface DeviceClock {
         }
 
         @Override
-        public long getDeviceTime() {
+        public Instant getDeviceTime() {
             return dev.getTime();
         }
 
         @Override
-        public Reading refineResolutionForFrequency(int frequency, int size) {
-            ref.refineResolutionForFrequency(frequency, size);
+        public Reading refineResolutionForFrequency(int hertz, int size) {
+            ref.refineResolutionForFrequency(hertz, size);
             return this;
         }
     }

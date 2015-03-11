@@ -268,7 +268,9 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
         registeredSampleArrayInstances.remove(holder);
 
-        sampleArrayDataWriter.unregister_instance_w_timestamp(holder.data, holder.handle, DomainClock.toDDSTime(timestamp));
+        sampleArrayDataWriter.unregister_instance_w_timestamp(holder.data,
+                                                              holder.handle,
+                                                              DomainClock.toDDSTime(timestamp.getTime()));
     }
 
     protected void unregisterAlarmSettingsInstance(InstanceHolder<ice.AlarmSettings> holder) {
@@ -305,7 +307,8 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         holder.data.unit_id = unit_id;
         holder.data.frequency = frequency;
 
-        holder.handle = sampleArrayDataWriter.register_instance_w_timestamp(holder.data, DomainClock.toDDSTime(timestamp));
+        holder.handle = sampleArrayDataWriter.register_instance_w_timestamp(holder.data,
+                                                                            DomainClock.toDDSTime(timestamp.getTime()));
 
         if(holder.handle.is_nil()) {
             log.warn("Unable to register instance " + holder.data + " with timestamp " + timestamp);
@@ -587,7 +590,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
         sampleArrayDataWriter.write_w_timestamp(holder.data,
                                                 holder.handle==null?InstanceHandle_t.HANDLE_NIL:holder.handle,
-                                                DomainClock.toDDSTime(adjusted));
+                                                DomainClock.toDDSTime(adjusted.getTime()));
     }
 
     private InstanceHolder<SampleArray> ensureHolderConsistency(InstanceHolder<SampleArray> holder,

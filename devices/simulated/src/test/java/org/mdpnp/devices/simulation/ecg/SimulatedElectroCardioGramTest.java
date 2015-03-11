@@ -40,7 +40,7 @@ public class SimulatedElectroCardioGramTest {
             @Override
             protected void receiveECG(DeviceClock.Reading sampleTime, Number[] i, Number[] ii, Number[] iii, double heartRate, double respiratoryRate, int frequency) {
 
-                Date dt = new Date(sampleTime.getTime());
+                Date dt = new Date(sampleTime.getTime().toEpochMilli());
                 log.info(dateFormat.format(dt) + " data size=" + i.length + " heartRate=" + heartRate + " respiratoryRate=" + respiratoryRate + " frequency=" + frequency);
                 stopOk.countDown();
             }
@@ -64,7 +64,7 @@ public class SimulatedElectroCardioGramTest {
             @Override
             protected void receiveECG(DeviceClock.Reading sampleTime, Number[] i, Number[] ii, Number[] iii, double heartRate, double respiratoryRate, int frequency) {
 
-                Date dt = new Date(sampleTime.getTime());
+                Date dt = new Date(sampleTime.getTime().toEpochMilli());
                 log.info(dateFormat.format(dt) + " data size=" + i.length + " heartRate=" + heartRate + " respiratoryRate=" + respiratoryRate + " frequency=" + frequency);
                 stopOk.countDown();
             }

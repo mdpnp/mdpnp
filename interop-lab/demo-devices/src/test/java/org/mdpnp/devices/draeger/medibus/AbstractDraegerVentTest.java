@@ -69,13 +69,13 @@ public class AbstractDraegerVentTest {
         long delta0 = deviceClock.receiveDateTime(new Date(cal.getTimeInMillis()));
         Assert.assertEquals("Invalid time delta",  0L, delta0);
 
-        long dt0 = deviceClock.instant().getTime();
+        long dt0 = deviceClock.instant().getTime().toEpochMilli();
         Assert.assertEquals("Invalid device time",  new Date(cal.getTimeInMillis()), new Date(dt0));
 
         // pretend the device got faster than the system clock
         cal.add(Calendar.MILLISECOND, -20);
 
-        long dt1 = deviceClock.instant().getTime();
+        long dt1 = deviceClock.instant().getTime().toEpochMilli();
         Assert.assertEquals("Invalid device time",  new Date(dt0), new Date(dt1));
 
         // device is still slower, but there is a drift.
@@ -83,7 +83,7 @@ public class AbstractDraegerVentTest {
         long delta1 = deviceClock.receiveDateTime(new Date(cal.getTimeInMillis()-50));
         Assert.assertEquals("Invalid time delta", -50L, delta1);
 
-        long dt3 = deviceClock.instant().getTime();
+        long dt3 = deviceClock.instant().getTime().toEpochMilli();
         Assert.assertEquals("Invalid device time",  new Date(cal.getTimeInMillis()-50L), new Date(dt3));
 
     }
