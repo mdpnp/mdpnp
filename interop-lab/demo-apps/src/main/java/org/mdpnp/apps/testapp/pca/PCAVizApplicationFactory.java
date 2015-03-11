@@ -1,13 +1,13 @@
 package org.mdpnp.apps.testapp.pca;
 
-import java.util.concurrent.ScheduledExecutorService;
+import java.io.IOException;
 
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
 import org.mdpnp.apps.testapp.DataVisualization;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.vital.VitalModel;
-import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -25,14 +25,12 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
     }
 
     @Override
-    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) {
-
-        final ScheduledExecutorService refreshScheduler = (ScheduledExecutorService) parentContext.getBean("refreshScheduler");
-        final ice.InfusionObjectiveDataWriter objectiveWriter = (ice.InfusionObjectiveDataWriter) parentContext.getBean("objectiveWriter");
-
-//        final DataVisualization ui =
-//                new DataVisualization(refreshScheduler, objectiveWriter, new VitalMonitoring(refreshScheduler));
-
+    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
+        FXMLLoader loader = new FXMLLoader(VitalMonitoring.class.getResource("VitalMonitoring.fxml"));
+        final Parent ui = loader.load();
+        final VitalMonitoring vitalMonitoring = loader.getController(); 
+        vitalMonitoring.setup();
+        
         return new IceApplicationProvider.IceApp() {
 
             @Override
@@ -42,19 +40,18 @@ public class PCAVizApplicationFactory implements IceApplicationProvider {
 
             @Override
             public Parent getUI() {
-                return null;
+                return ui;
             }
 
             @Override
             public void activate(ApplicationContext context) {
                 VitalModel vitalModel = (VitalModel)context.getBean("vitalModel");
-                InfusionStatusInstanceModel pumpModel = (InfusionStatusInstanceModel)context.getBean("pumpModel");
-//                ui.setModel(vitalModel, pumpModel);
+                vitalMonitoring.setModel(vitalModel);
             }
 
             @Override
             public void stop() {
-//                ui.setModel(null, null);
+                vitalMonitoring.setModel(null);
             }
 
             @Override

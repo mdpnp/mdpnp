@@ -13,32 +13,25 @@
 package org.mdpnp.apps.testapp.pca;
 
 import java.util.Arrays;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Polygon;
 import javafx.scene.transform.Affine;
+import javafx.util.Duration;
 
-import org.mdpnp.apps.testapp.DeviceListModelImpl;
-import org.mdpnp.apps.testapp.RtConfig;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
-import org.mdpnp.apps.testapp.vital.VitalModelImpl;
-import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.devices.TimeManager;
-import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
-import org.mdpnp.rtiapi.data.EventLoop;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.Subscriber;
 import com.sun.javafx.tk.FontMetrics;
 import com.sun.javafx.tk.Toolkit;
 
@@ -46,44 +39,46 @@ import com.sun.javafx.tk.Toolkit;
  * @author Jeff Plourde
  *
  */
-public class VitalMonitoring implements VitalModelContainer, Runnable {
-
+public class VitalMonitoring implements VitalModelContainer {
+    @FXML BorderPane container;
+    @FXML Canvas canvas;
+    
     private double width, height, center_x, center_y;
 
-//    private static final long REFRESH_RATE_MS = 100L;
-
     protected static Color deriveColor(Color c, float a) {
-        return new Color(c.getRed(), c.getGreen(), c.getBlue(), (int) (255f * a));
+        return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
     }
 
-//    private final ScheduledExecutorService executor;
-    private ScheduledFuture<?> future;
 
     public VitalMonitoring() {
     }
 
-    public void run() {
-//        if (isVisible()) {
-//            repaint();
-//        }
+    public void setup() {
+        canvas.widthProperty().bind(
+                container.widthProperty());
+        canvas.heightProperty().bind(
+                container.heightProperty());
     }
-
+    
     private VitalModel model;
+    private Timeline timeline = new Timeline(new KeyFrame(new Duration(100L), new EventHandler<ActionEvent>() {
 
+        @Override
+        public void handle(ActionEvent event) {
+            render(canvas.getGraphicsContext2D());
+        }
+        
+    }));
+    
     public void setModel(VitalModel model) {
+        
         if (null != this.model) {
-            if (future != null) {
-                future.cancel(true);
-                future = null;
-            }
-//            this.model.removeListener(this);
+            timeline.stop();
         }
         this.model = model;
         if (null != this.model) {
-//            this.model.addListener(this);
-//            if (executor != null) {
-//                future = executor.scheduleAtFixedRate(this, 0L, REFRESH_RATE_MS, TimeUnit.MILLISECONDS);
-//            }
+            timeline.setCycleCount(Timeline.INDEFINITE);
+            timeline.play();
         }
     }
 
@@ -92,9 +87,9 @@ public class VitalMonitoring implements VitalModelContainer, Runnable {
     }
 
     private static final Color IDEAL_COLOR = deriveColor(Color.BLUE, 0.8f);
-    private static final Color DATA_COLOR = deriveColor(Color.GREEN, 0.3f);
-    private static final Color WARN_DATA_COLOR = deriveColor(Color.YELLOW, 0.5f);
-    private static final Color ALARM_DATA_COLOR = deriveColor(Color.RED, 0.9f);
+//    private static final Color DATA_COLOR = deriveColor(Color.GREEN, 0.3f);
+//    private static final Color WARN_DATA_COLOR = deriveColor(Color.YELLOW, 0.5f);
+//    private static final Color ALARM_DATA_COLOR = deriveColor(Color.RED, 0.9f);
     private static final Color WHITEN_COLOR = deriveColor(Color.WHITE, 0.8f);
 //    private static final Stroke LINE_STROKE = new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 
@@ -108,6 +103,7 @@ public class VitalMonitoring implements VitalModelContainer, Runnable {
     // / THIS LOGIC SHOULD LIVE OUTSIDE OF THE AWT THREAD
     // / and probably draw an offscreen buffer
     public void render(GraphicsContext g) {
+        
         VitalModel model = this.model;
         if (model == null) {
             return;
@@ -117,6 +113,8 @@ public class VitalMonitoring implements VitalModelContainer, Runnable {
 
         width = g.getCanvas().getWidth();
         height = g.getCanvas().getHeight();
+        
+//        System.err.println("RENDER "+width+" "+height);
 
         center_y = height / 2;
         center_x = width / 2;
