@@ -12,16 +12,9 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.awt.Image;
 import java.io.File;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.net.URL;
-
-import javax.imageio.ImageIO;
-
-import javafx.application.Platform;
-import javafx.stage.Stage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

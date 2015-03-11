@@ -113,6 +113,8 @@ public class VitalMonitoring implements VitalModelContainer {
 
         width = g.getCanvas().getWidth();
         height = g.getCanvas().getHeight();
+
+        g.clearRect(0, 0, width, height);
         
 //        System.err.println("RENDER "+width+" "+height);
 
@@ -137,6 +139,7 @@ public class VitalMonitoring implements VitalModelContainer {
 //        }
 
         g.setStroke(Color.BLACK);
+        g.setFill(Color.BLACK);
 
         chartArea.getPoints().clear();
         dataArea.getPoints().clear();
@@ -189,7 +192,7 @@ public class VitalMonitoring implements VitalModelContainer {
             // vital.getHigh();
 
             // Draw an axis line for this vital
-            // g.drawLine(x1, y1, x2, y2);
+            g.strokeLine(x1, y1, x2, y2);
             chartArea.getPoints().addAll(x1, y1);
 
             double slope = 1.0 * (y2 - y1) / (x2 - x1);
@@ -274,7 +277,7 @@ public class VitalMonitoring implements VitalModelContainer {
                     FLIP = true;
                 }
                 int FLIP_SIGN = FLIP ? -1 : 1;
-                g.rotate(rotate);
+                g.rotate(Math.toDegrees(rotate));
                 // String lbl = v < LABEL.length ? LABEL[v] : "";
 
                 // Vital name
@@ -407,7 +410,6 @@ public class VitalMonitoring implements VitalModelContainer {
         g.setFill(WHITEN_COLOR);
 //        g.fill(chartArea);
 //        g.setColor(Color.black);
-
 //        g.drawPolygon(chartArea);
 
 //        g.setColor(IDEAL_COLOR);
