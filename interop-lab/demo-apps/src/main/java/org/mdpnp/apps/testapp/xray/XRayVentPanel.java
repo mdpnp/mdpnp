@@ -17,7 +17,6 @@ import ice.NumericDataReader;
 import ice.SampleArray;
 import ice.SampleArrayDataReader;
 
-import java.text.NumberFormat;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -30,17 +29,32 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.Pane;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.GridPane;
+import javafx.util.Callback;
 import javafx.util.Duration;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.MyNumeric;
+import org.mdpnp.apps.testapp.MyNumericItems;
+import org.mdpnp.apps.testapp.MyNumericListCell;
+import org.mdpnp.apps.testapp.MySampleArray;
+import org.mdpnp.apps.testapp.MySampleArrayListCell;
+import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
+import org.mdpnp.guis.waveform.WaveformCanvas;
+import org.mdpnp.guis.waveform.WaveformRenderer;
+import org.mdpnp.guis.waveform.javafx.JavaFXWaveformCanvas;
+import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.mdpnp.rtiapi.data.NumericInstanceModel;
@@ -56,20 +70,13 @@ import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 
-import org.mdpnp.apps.testapp.MyNumeric;
-import org.mdpnp.apps.testapp.MyNumericItems;
-import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
-import org.mdpnp.guis.waveform.WaveformCanvas;
-import org.mdpnp.guis.waveform.WaveformRenderer;
-import org.mdpnp.guis.waveform.javafx.JavaFXWaveformCanvas;
-import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
-
 /**
  * @author Jeff Plourde
  *
  */
 public class XRayVentPanel {
     @FXML protected FramePanel cameraPanel;
+    @FXML protected GridPane main;
     private CameraComboBoxModel cameraModel;
 
     @FXML protected ComboBox<Webcam> cameraBox;
@@ -178,7 +185,7 @@ public class XRayVentPanel {
 
     private boolean imageButtonDown = false;
 
-    public XRayVentPanel set(final Subscriber subscriber, final EventLoop eventLoop) {
+    public XRayVentPanel set(final Subscriber subscriber, final EventLoop eventLoop, final DeviceListModel deviceListModel) {
         canvas = new JavaFXWaveformCanvas(waveformPanel);
         
         cameraPanel.set(executorNonCritical);
@@ -195,12 +202,21 @@ public class XRayVentPanel {
         sampleArrayModel = new SampleArrayInstanceModelImpl(ice.SampleArrayTopic.VALUE);
         deviceNumericModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
 
+        deviceList.setCellFactory(new Callback<ListView<MyNumeric>,ListCell<MyNumeric>>() {
+
+            @Override
+            public ListCell<MyNumeric> call(ListView<MyNumeric> param) {
+                return new MyNumericListCell(deviceListModel);
+            }
+            
+        });
+        
         deviceList.setItems(new MyNumericItems().setModel(startOfBreathModel).getItems());
         
         cameraBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Webcam>() {
 
             @Override
-            public void changed(ObservableValue observable, Webcam oldValue, Webcam newValue) {
+            public void changed(ObservableValue<? extends Webcam> observable, Webcam oldValue, Webcam newValue) {
                 executorNonCritical.schedule(new Runnable() {
                     public void run() {
                       cameraPanel.setWebcam((Webcam) cameraBox.getSelectionModel().getSelectedItem());                        
@@ -210,45 +226,6 @@ public class XRayVentPanel {
             
         });
         
-
-//        waveformPanel = new SwingWaveformPanel();
-//        if (waveformPanel instanceof JComponent) {
-            // ((JComponent) waveformPanel).setBorder(border);
-//        }
-
-//        enclosingWaveformPanel.add(waveformPanel.asComponent(), BorderLayout.CENTER);
-
-//        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
-//
-//            @Override
-//            public boolean dispatchKeyEvent(KeyEvent e) {
-//                if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-//                    switch (e.getID()) {
-//                    case KeyEvent.KEY_PRESSED:
-//                        imageButton.getModel().setSelected(true);
-//                        imageButton.getModel().setPressed(true);
-//                        return true;
-//                    case KeyEvent.KEY_RELEASED:
-//                        imageButton.getModel().setPressed(false);
-//                        imageButton.getModel().setSelected(false);
-//                        return true;
-//                    default:
-//                        return false;
-//                    }
-//                } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-//                    switch (e.getID()) {
-//                    case KeyEvent.KEY_RELEASED:
-//                        resetButton.doClick();
-//                        return true;
-//                    default:
-//                        return false;
-//                    }
-//                } else {
-//                    return false;
-//                }
-//
-//            }
-//        });
 
         imageButton.pressedProperty().addListener(new ChangeListener<Boolean>() {
 
@@ -294,6 +271,11 @@ public class XRayVentPanel {
     }
     
     public void stop() {
+        Scene scene = main.getScene();
+        if(null != scene) {
+            scene.removeEventFilter(KeyEvent.KEY_PRESSED, keyEventHandler);
+            scene.removeEventFilter(KeyEvent.KEY_RELEASED, keyEventHandler);
+        }
         executorNonCritical.schedule(new Runnable() {
             public void run() {
                 cameraModel.stop();
@@ -307,6 +289,8 @@ public class XRayVentPanel {
         executorNonCritical.shutdownNow();
         executorCritical.shutdownNow();
     }
+    
+    private EventHandler<KeyEvent> keyEventHandler;
 
     public void start(Subscriber subscriber, EventLoop eventLoop) {
 
@@ -314,6 +298,7 @@ public class XRayVentPanel {
 
         StringSeq params = new StringSeq();
         params.add("'" + ice.MDC_START_INSPIRATORY_CYCLE.VALUE + "'");
+//        params.add("'" + rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE + "'");
         startOfBreathModel.start(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.numeric_data);
 
         executorNonCritical.schedule(new Runnable() {
@@ -323,6 +308,34 @@ public class XRayVentPanel {
                 cameraPanel.start();
             }
         }, 0L, TimeUnit.MILLISECONDS);
+        
+        keyEventHandler = new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                switch(event.getCode()) {
+                case SPACE:
+                    if(KeyEvent.KEY_PRESSED.equals(event.getEventType())) {
+                        System.err.println("SPACE PRESSED");
+                        imageButton.arm();
+                    } else if(KeyEvent.KEY_RELEASED.equals(event.getEventType())) {
+                        System.err.println("SPACE RELEASED");
+                        imageButton.fire();
+                    }
+                    event.consume();
+                    break;
+                case ESCAPE:
+                    if(KeyEvent.KEY_RELEASED.equals(event.getEventType())) {
+                        resetButton.fire();
+                        event.consume();
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        };
+        main.getScene().addEventFilter(KeyEvent.KEY_PRESSED, keyEventHandler);
+        main.getScene().addEventFilter(KeyEvent.KEY_RELEASED, keyEventHandler);        
     }
 
     protected long inspiratoryTime;

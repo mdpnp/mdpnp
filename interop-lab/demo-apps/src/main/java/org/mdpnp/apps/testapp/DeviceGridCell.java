@@ -37,6 +37,8 @@ public class DeviceGridCell extends GridCell<Device> {
         overlay.visibleProperty().unbind();
         text.textProperty().unbind();
         
+        setUserData(item);
+        
         if(null == item) {
             icon.setImage(null);
             overlay.setVisible(true);

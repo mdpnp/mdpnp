@@ -33,7 +33,7 @@ public class PartitionChooser {
     
    
    
-    public void releaseTextKey(KeyEvent evt) {
+    @FXML public void releaseTextKey(KeyEvent evt) {
         String value = field.getText();
         if(value != null && !value.isEmpty()) {
             switch(evt.getCode()) {
@@ -45,7 +45,7 @@ public class PartitionChooser {
         }
     }
     
-    public void releaseListKey(KeyEvent evt) {
+    @FXML public void releaseListKey(KeyEvent evt) {
         switch(evt.getCode()) {
         case BACK_SPACE:
         case DELETE:
@@ -58,7 +58,7 @@ public class PartitionChooser {
         }
     }
     
-    public void clickOk(ActionEvent evt) {
+    @FXML public void clickOk(ActionEvent evt) {
         String value = field.getText();
         if(value != null && !value.isEmpty()) {
             list.getItems().add(value);

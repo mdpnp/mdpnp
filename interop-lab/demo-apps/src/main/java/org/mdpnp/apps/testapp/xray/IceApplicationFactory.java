@@ -5,6 +5,7 @@ import java.io.IOException;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
@@ -26,6 +27,7 @@ public class IceApplicationFactory implements IceApplicationProvider {
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
         final EventLoop  eventLoop = (EventLoop)parentContext.getBean("eventLoop");
         final Subscriber subscriber= (Subscriber)parentContext.getBean("subscriber");
+        final DeviceListModel deviceListModel = (DeviceListModel)parentContext.getBean("deviceListModel");
 
         FXMLLoader loader = new FXMLLoader(XRayVentPanel.class.getResource("XRayVentPanel.fxml"));
         
@@ -33,7 +35,7 @@ public class IceApplicationFactory implements IceApplicationProvider {
         
         final XRayVentPanel controller = ((XRayVentPanel)loader.getController());
 
-        controller.set(subscriber, eventLoop);
+        controller.set(subscriber, eventLoop, deviceListModel);
 
         return new IceApplicationProvider.IceApp() {
 

@@ -20,10 +20,20 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.CountDownLatch;
 
-import javax.swing.JProgressBar;
-import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
+import javafx.application.Platform;
+import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 
+import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
@@ -204,9 +214,8 @@ public abstract class DeviceAdapter {
     static class GUIAdapter extends HeadlessAdapter {
 
         private DeviceDataMonitor    deviceMonitor;
-//        private CompositeDevicePanel cdp;
 
-        final JProgressBar      progressBar = new JProgressBar(1, 100);
+        final ProgressBar      progressBar = new ProgressBar();
 
         public GUIAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context) {
             super(deviceFactory, context, false);
@@ -232,10 +241,11 @@ public abstract class DeviceAdapter {
                     }
                 };
 
-                if(SwingUtilities.isEventDispatchThread())
+                if(Platform.isFxApplicationThread()) {
                     r.run();
-                else
-                    SwingUtilities.invokeLater(r);
+                } else { 
+                    Platform.runLater(r);
+                }
 
             }
         }
@@ -249,47 +259,19 @@ public abstract class DeviceAdapter {
 
             deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier);
 
-//            cdp = new CompositeDevicePanel();
-//            cdp.setModel(deviceMonitor);
+            FXMLLoader loader = new FXMLLoader(DeviceView.class.getResource("DeviceView.fxml"));
+            Parent node = loader.load();
+            final DeviceView deviceView = loader.getController();
+            deviceView.set(deviceMonitor);
 
             // Use the device subscriber so that we
             // automatically maintain the same partition as the device
             EventLoop eventLoop = (EventLoop) context.getBean("eventLoop");
             deviceMonitor.start(device.getSubscriber(), eventLoop);
 
-//            frame = new DemoFrame();
-//            frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
-//            frame.addWindowListener(new WindowAdapter() {
-//                @Override
-//                public void windowClosing(WindowEvent e) {
-//
-//                    progressBar.setStringPainted(true);
-//                    update("Shutting down", 1);
-//
-//                    frame.getContentPane().removeAll();
-//
-//                    frame.getContentPane().setLayout(new BorderLayout());
-//                    frame.getContentPane().add(progressBar, BorderLayout.NORTH);
-//                    frame.validate();
-//                    frame.repaint();
-//
-//                    Runnable r = new Runnable() {
-//                        public void run() {
-//                            stop();
-//                        }
-//                    };
-//                    new Thread(r, "Device shutdown thread").start();
-//                    super.windowClosing(e);
-//                }
-//            });
-//            frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-//            frame.setSize(640, 480);
-//            frame.setLocationRelativeTo(null);
-//            frame.getContentPane().setLayout(new BorderLayout());
-            JTextArea descriptionText = new JTextArea();
+            TextArea descriptionText = new TextArea();
             descriptionText.setEditable(false);
-            descriptionText.setLineWrap(true);
-            descriptionText.setWrapStyleWord(true);
+            descriptionText.setWrapText(true);
             InputStream is = ConfigurationDialog.class.getResourceAsStream("device-adapter");
             if (null != is) {
                 try {
@@ -306,13 +288,45 @@ public abstract class DeviceAdapter {
                     log.error("Error getting window text", e);
                 }
             }
-
-//            frame.getContentPane().add(new JScrollPane(descriptionText), BorderLayout.NORTH);
-//            frame.getContentPane().add(cdp, BorderLayout.CENTER);
-//
-//            frame.getContentPane().validate();
-//            frame.setVisible(true);
-
+            BorderPane root = new BorderPane();
+            root.setTop(new ScrollPane(descriptionText));
+            root.setCenter(node);
+            
+            Runnable r = new Runnable() {
+                public void run() {
+                    final Stage deviceStage = new Stage(StageStyle.DECORATED);
+        //          frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
+                    deviceStage.setOnHiding(new EventHandler<WindowEvent>() {
+        
+                        @Override
+                        public void handle(WindowEvent event) {
+                            progressBar.setProgress(0.0);
+                            update("Shutting down", 1);
+                            root.getChildren().clear();
+                            root.setTop(progressBar);
+        
+                            Runnable r = new Runnable() {
+                                public void run() {
+                                    stop();
+                                }
+                            };
+                            new Thread(r, "Device shutdown thread").start();
+                        }
+                        
+                    });
+                    deviceStage.setScene(new Scene(root));
+                    deviceStage.setWidth(640);
+                    deviceStage.setHeight(480);
+                    deviceStage.centerOnScreen();
+                  
+                    deviceStage.show();
+                }
+            };
+            if(Platform.isFxApplicationThread()) {
+                r.run();
+            } else {
+                Platform.runLater(r);
+            }
             return device;
         }
 
@@ -321,15 +335,15 @@ public abstract class DeviceAdapter {
 
             Runnable r = new Runnable() {
                 public void run() {
-                    progressBar.setString(msg);
-                    progressBar.setValue(pct);
+                    progressBar.setProgress(pct / 100.0);
                 }
             };
 
-            if(SwingUtilities.isEventDispatchThread())
+            if(Platform.isFxApplicationThread()) {
                 r.run();
-            else
-                SwingUtilities.invokeLater(r);
+            } else {
+                Platform.runLater(r);
+            }
 
         }
     }

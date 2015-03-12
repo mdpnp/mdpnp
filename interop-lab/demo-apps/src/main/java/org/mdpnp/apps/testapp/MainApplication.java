@@ -53,10 +53,15 @@ public class MainApplication extends javafx.application.Application {
             Platform.exit();
         } else {
             runConf = d.getLastConfiguration();
-            app = (IceApplication) runConf.getApplication().getAppClass().newInstance();
-            app.setConfiguration(runConf);
-            app.init();
-            app.start(primaryStage);
+            Object o = runConf.getApplication().getAppClass().newInstance();
+            if(o instanceof IceApplication) {
+                app = (IceApplication) o;
+                app.setConfiguration(runConf);
+                app.init();
+                app.start(primaryStage);
+            } else if(o instanceof Configuration.Command) {
+                ((Configuration.Command)o).execute(runConf);
+            }
         }
     }
     

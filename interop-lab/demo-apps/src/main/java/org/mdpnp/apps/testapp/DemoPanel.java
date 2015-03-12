@@ -44,6 +44,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -56,13 +57,16 @@ public class DemoPanel implements Runnable {
     private final static Logger log = LoggerFactory.getLogger(DemoPanel.class);
     
     @FXML
-    protected Label bedLabel, clock, version, udi;
+    protected Label bedLabel, clock;
     
     @FXML
     protected Button back, changePartition, createAdapter;
     
     @FXML
     protected BorderPane content;
+    
+    @FXML
+    protected Hyperlink openiceURL;
 
     private PartitionChooserModel partitionChooserModel;
     
@@ -71,10 +75,6 @@ public class DemoPanel implements Runnable {
 
     public BorderPane getContent() {
         return content;
-    }
-
-    public Label getUdi() {
-        return udi;
     }
 
     public Label getBedLabel() {
@@ -92,23 +92,28 @@ public class DemoPanel implements Runnable {
     public Button getCreateAdapter() {
         return createAdapter;
     }
-    
-    public Label getVersion() {
-        return version;
-    }    
 
     public DemoPanel setModel(PartitionChooserModel partitionChooserModel) {
         this.partitionChooserModel = partitionChooserModel;
         return this;
     }
     
+    private String udiText = "";
+    private String versionText = "";
+    
+    private void setTooltip() {
+        openiceURL.setTooltip(new Tooltip(udiText+"\n"+versionText));
+    }
+    
     public DemoPanel setUdi(String udi) {
-        this.udi.setText(udi);
+        udiText = udi;
+        setTooltip();
         return this;
     }
     
     public DemoPanel setVersion(String version) {
-        this.version.setText(version);
+        versionText = version;
+        setTooltip();
         return this;
     }
     
@@ -138,7 +143,7 @@ public class DemoPanel implements Runnable {
         Scene scene = new Scene(root);
         dialog.setScene(scene);
         dialog.sizeToScene();
-        
+
         dialog.showAndWait();
 ////    partitionChooser.refresh();
 ////    partitionChooser.setLocationRelativeTo(panel);
@@ -184,6 +189,8 @@ public class DemoPanel implements Runnable {
     }
     
     private AbstractApplicationContext context;
+
+    @FXML BorderPane demoPanel;
     
     @FXML public void clickCreateAdapter(ActionEvent evt) {
         try {
@@ -223,7 +230,7 @@ public class DemoPanel implements Runnable {
       }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("",e);
         }
 
     }

@@ -15,8 +15,6 @@ package org.mdpnp.apps.testapp.xray;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.concurrent.Executors;
@@ -31,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import com.github.sarxos.webcam.Webcam;
 import com.github.sarxos.webcam.WebcamException;
 
-@SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
  *

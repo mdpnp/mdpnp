@@ -12,6 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -34,7 +35,9 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
+import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.BuildInfo;
+import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -144,8 +147,8 @@ public class IceAppsContainer extends IceApplication {
      * for startup and shutdown of the container.
      */
     private static class DeviceApp implements IceApplicationProvider.IceApp {
-
-//        CompositeDevicePanel devicePanel = new CompositeDevicePanel();
+        private Parent ui;
+        private DeviceView devicePanel;
 
         @Override
         public IceApplicationProvider.AppType getDescriptor() {
@@ -154,8 +157,7 @@ public class IceAppsContainer extends IceApplication {
 
         @Override
         public Parent getUI() {
-            // TODO this
-            return null;
+            return ui;
         }
 
         @Override
@@ -163,44 +165,49 @@ public class IceAppsContainer extends IceApplication {
             throw new IllegalStateException("Internal activate(context,driver) API should be called for driver wrapper");
         }
 
-        @SuppressWarnings("unused")
-        public void start(ApplicationContext context, final Device device) {
+        public void start(ApplicationContext context, final Device device) throws IOException {
 
             final EventLoop  eventLoop = (EventLoop)context.getBean("eventLoop");
             final Subscriber subscriber= (Subscriber)context.getBean("subscriber");
 
+            FXMLLoader loader = new FXMLLoader(DeviceView.class.getResource("DeviceView.fxml"));
+            ui = loader.load();
+            devicePanel = loader.getController();
+            
             // TODO threading model needs to be revisited but here this
             // will ultimately deadlock on this AWT EventQueue thread
-            Thread t = new Thread(threadGroup, new Runnable() {
-                public void run() {
-//                    DeviceDataMonitor deviceMonitor = devicePanel.getModel();
-//                    if (null != deviceMonitor) {
-//                        deviceMonitor.stop();
-//                    }
-//                    DeviceDataMonitor deviceMonitor = new DeviceDataMonitor(device.getUDI());
-//                    devicePanel.setModel(deviceMonitor);
-//                    deviceMonitor.start(subscriber, eventLoop);
-                }
-            }, device.getMakeAndModel());
+//            Thread t = new Thread(threadGroup, new Runnable() {
+//                public void run() {
+                    DeviceDataMonitor deviceMonitor = devicePanel.getModel();
+                    if (null != deviceMonitor) {
+                        deviceMonitor.stop();
+                    }
+                    deviceMonitor = new DeviceDataMonitor(device.getUDI());
+                    System.err.println("Monitor device " + device.getUDI());
+                    devicePanel.set(device);
+                    devicePanel.set(deviceMonitor);
+                    deviceMonitor.start(subscriber, eventLoop);
+//                }
+//            }, device.getMakeAndModel());
 
-            t.setDaemon(true);
-            t.start();
+//            t.setDaemon(true);
+//            t.start();
         }
 
         @Override
         public void stop() {
-//            DeviceDataMonitor deviceMonitor = devicePanel.getModel();
-//            if (null != deviceMonitor) {
-//                deviceMonitor.stop();
-//            }
-//            devicePanel.setModel(null);
+            DeviceDataMonitor deviceMonitor = devicePanel.getModel();
+            if (null != deviceMonitor) {
+                deviceMonitor.stop();
+            }
+            devicePanel.set((DeviceDataMonitor)null);
         }
 
         @Override
         public void destroy() {
         }
 
-        static final ThreadGroup threadGroup = new ThreadGroup("DeviceApp");
+//        static final ThreadGroup threadGroup = new ThreadGroup("DeviceApp");
     }
 
     @Override
@@ -353,7 +360,21 @@ public class IceAppsContainer extends IceApplication {
             }
             
         }));
-        mainMenuController.getDeviceList().setCellFactory(new DeviceCellFactory());
+        mainMenuController.getDeviceList().setCellFactory(new DeviceCellFactory(new EventHandler<MouseEvent> () {
+
+            @Override
+            public void handle(MouseEvent event) {
+                DeviceGridCell cell = (DeviceGridCell) event.getSource();
+                Device device = (org.mdpnp.apps.testapp.Device) cell.getUserData();
+                try {
+                    driverWrapper.start(context, device);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                activateGoBack(driverWrapper);
+            }
+            
+        }));
         
         
 //        panel.getContent().add(mainMenuPanel, Main.getId());

@@ -13,12 +13,8 @@
 package org.mdpnp.apps.testapp.xray;
 
 import java.awt.AlphaComposite;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Toolkit;
-import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.util.concurrent.ScheduledExecutorService;
@@ -33,8 +29,6 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
-
-import javax.swing.JComponent;
 
 import org.mdpnp.devices.io.util.StateMachine;
 import org.slf4j.Logger;
