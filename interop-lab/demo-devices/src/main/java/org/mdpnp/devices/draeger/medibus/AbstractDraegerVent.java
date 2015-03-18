@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.Unit;
 import org.mdpnp.devices.draeger.medibus.RTMedibus.RTTransmit;
 import org.mdpnp.devices.draeger.medibus.types.Command;
@@ -42,8 +44,6 @@ import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.rti.dds.infrastructure.Time_t;
 
 public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice<RTMedibus> {
 
@@ -59,13 +59,6 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate, startExpiratoryCycleUpdate;
 
-    protected long deviceClockOffset = 0L;
-    private final ThreadLocal<Time_t> currentTime = new ThreadLocal<Time_t>() {
-        protected Time_t initialValue() {
-            return new Time_t(0, 0);
-        };
-    };
-    
     protected static final String[] priorities = new String[31];
     static {
         for(int i = 0; i < 6; i++) {
@@ -91,35 +84,19 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         }
     }
 
-    protected Time_t currentTime() {
-        long now = System.currentTimeMillis() + deviceClockOffset;
-        Time_t currentTime = this.currentTime.get();
-        long then = currentTime.sec * 1000L + currentTime.nanosec / 1000000L;
-
-        if (then - now > 0L) {
-            // This happens too routinely to expend the I/O here
-            // tried using the desination_order.source_timestamp_tolerance but
-            // that was even too tight
-            // TODO reconsider how we are deriving a device timestamp
-            // log.warn("Not emitting timestamp="+new
-            // Date(now)+" where last timestamp was "+new Date(then));
-        } else {
-            currentTime.sec = (int) (now / 1000L);
-            currentTime.nanosec = (int) (now % 1000L * 1000000L);
-        }
-        return currentTime;
-    }
-
     protected void processStartInspCycle() {
         // TODO This should not be triggered as a numeric; it's a bad idea
-        startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0, ice.MDC_START_INSPIRATORY_CYCLE.VALUE,
-                rosetta.MDC_DIM_DIMLESS.VALUE, null);
+        startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0,
+                                                    ice.MDC_START_INSPIRATORY_CYCLE.VALUE, "",
+                                                    rosetta.MDC_DIM_DIMLESS.VALUE, deviceClock.instant());
     }
 
     protected void processStartExpCycle() {
         // TODO ditto the bad idea-ness of using Numeric topic for this
-        startExpiratoryCycleUpdate = numericSample(startExpiratoryCycleUpdate, 0, ice.MDC_START_EXPIRATORY_CYCLE.VALUE,
-                rosetta.MDC_DIM_DIMLESS.VALUE, null);
+        startExpiratoryCycleUpdate = numericSample(startExpiratoryCycleUpdate, 0,
+                                                   ice.MDC_START_EXPIRATORY_CYCLE.VALUE,
+                                                   "", rosetta.MDC_DIM_DIMLESS.VALUE,
+                                                   deviceClock.instant());
     }
 
     private static final int BUFFER_SAMPLES = 25;
@@ -163,19 +140,23 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         startEmitFastData(realtimeFrequency[streamIndex]);
     }
 
+    private static final String codeToString(Object code) {
+        if (code == null) {
+            return "null";
+        } else if (code instanceof Byte) {
+            return HexUtil.toHexString((Byte) code) + "H";
+        } else if (code instanceof Enum) {
+            return ((Enum<?>) code).name();
+        } else {
+            return code.toString();
+        }
+    }
+    
     private static final String metricOrCode(String metric_id, Object code, String type) {
         if (null != metric_id) {
             return metric_id;
         } else {
-            if (code == null) {
-                return "null";
-            } else if (code instanceof Byte) {
-                return "DRAEGER_" + type + "_" + HexUtil.toHexString((Byte) code) + "H";
-            } else if (code instanceof Enum) {
-                return "DRAEGER_" + type + "_" + ((Enum<?>) code).name();
-            } else {
-                return "DRAEGER_" + type + "_" + code.toString();
-            }
+            return "DRAEGER_"+type+"_"+codeToString(code);
         }
     }
 
@@ -294,7 +275,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                         // on our EvitaXL 
                         log.error("Bad number format for device setting " + d.code + " " + nfe.getMessage());
                     }
-                    settingUpdates.put(d.code, numericSample(settingUpdates.get(d.code), f, metric, units(d.code), currentTime()));
+                    settingUpdates.put(d.code,
+                                       numericSample(settingUpdates.get(d.code), f, metric, codeToString(d.code), units(d.code), deviceClock.instant()));
                 }
             }
         }
@@ -312,7 +294,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     } catch (NumberFormatException nfe) {
                         log.error("Bad measured data number format " + d.code + " " + nfe.getMessage());
                     }
-                    numericUpdates.put(d.code, numericSample(numericUpdates.get(d.code), f, metric, units(d.code), currentTime()));
+                    numericUpdates.put(d.code,
+                                       numericSample(numericUpdates.get(d.code), f, metric, codeToString(d.code), units(d.code), deviceClock.instant()));
                 }
             }
         }
@@ -377,7 +360,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
                     String metric = numerics.get(d.code);
                     metric = metricOrCode(metric, d.code, "ALARM_LIMIT_CP"+codepage);
-                    alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, null == a ? Float.MIN_VALUE : a.data.lower, f, metric));
+                    alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, null == a ? Float.NEGATIVE_INFINITY : a.data.lower, f, metric));
                 }
             }
         }
@@ -394,8 +377,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
         @Override
         protected void receiveDateTime(Date date) {
-            deviceClockOffset = date.getTime() - System.currentTimeMillis();
-            log.debug("Device says date is: " + date + " - Local clock offset " + deviceClockOffset + "ms from device");
+            deviceClock.receiveDateTime(date);
         }
 
         @Override
@@ -408,6 +390,51 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             processStartExpCycle();
         }
 
+    }
+
+    DraegerVentClock deviceClock = new DraegerVentClock();
+
+    static class DraegerVentClock implements DeviceClock  {
+
+        private final ThreadLocal<Long> currentTime = new ThreadLocal<Long>() {
+            protected Long initialValue() {
+                return 0L;
+            };
+        };
+
+        protected long deviceClockOffset = 0L;
+
+        protected long receiveDateTime(Date date) {
+            deviceClockOffset = date.getTime() - systemCurrentTimeMillis();
+            log.debug("Device says date is: " + date + " - Local clock offset " + deviceClockOffset + "ms from device");
+            return deviceClockOffset;
+        }
+
+        long systemCurrentTimeMillis() {
+            return System.currentTimeMillis();
+        }
+
+        @Override
+        public Reading instant() {
+            return new DeviceClock.ReadingImpl(currentTimeAdjusted());
+        }
+
+        protected long currentTimeAdjusted() {
+            long now =  systemCurrentTimeMillis() + deviceClockOffset;
+            long then = currentTime.get();
+            if (then - now > 0L) {
+                // This happens too routinely to expend the I/O here
+                // tried using the desination_order.source_timestamp_tolerance but
+                // that was even too tight
+                // TODO reconsider how we are deriving a device timestamp
+                // log.warn("Not emitting timestamp="+new
+                // Date(now)+" where last timestamp was "+new Date(then));
+                return then;
+            } else {
+                currentTime.set(now);
+                return now;
+            }
+        }
     }
 
     private static final RealtimeData[] REQUEST_REALTIME = new RealtimeData[] { RealtimeData.AirwayPressure, RealtimeData.FlowInspExp,
@@ -454,7 +481,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                                 if (realtimeBuffer[i].size() > BUFFER_SAMPLES) {
                                     realtimeBuffer[i].subList(0, realtimeBuffer[i].size() - BUFFER_SAMPLES).clear();
                                 }
-                                sampleArraySample(sa, realtimeBuffer[i], currentTime());
+                                sampleArraySample(sa, realtimeBuffer[i], deviceClock.instant());
                             }
                         }
                     } else {
@@ -481,7 +508,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                                     realtimeBuffer[i].subList(0, realtimeBuffer[i].size() - BUFFER_SAMPLES).clear();
                                 }
                                 sampleArrayUpdates.put(code,
-                                        sampleArraySample(sa, realtimeBuffer[i], metric_id, 0, units(code), realtimeFrequency[i], currentTime()));
+                                        sampleArraySample(sa, realtimeBuffer[i], metric_id, codeToString(code), 0, units(code), realtimeFrequency[i], deviceClock.instant()));
                             }
                         }
                     }
@@ -577,10 +604,22 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         writeDeviceIdentity();
     }
 
-    protected static void loadMap(Map<Enum<?>, String> numerics, Map<Enum<?>, String> waveforms) {
+    static void loadMap(Map<Enum<?>, String> numerics, Map<Enum<?>, String> waveforms) {
+        loadMap(AbstractDraegerVent.class.getResource("draeger.map"), numerics, waveforms);
+    }
+
+    static void loadMap(URL uri, Map<Enum<?>, String> numerics, Map<Enum<?>, String> waveforms) {
+
+        InputStream source;
+        try {
+            source = uri.openStream();
+        }
+        catch(IOException ex) {
+            throw new IllegalArgumentException("Cannot open input stream");
+        }
 
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(AbstractDraegerVent.class.getResourceAsStream("draeger.map")));
+            BufferedReader br = new BufferedReader(new InputStreamReader(source));
             String line = null;
             String draegerPrefix = MeasuredDataCP1.class.getPackage().getName() + ".";
 
@@ -612,6 +651,13 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+        finally {
+            try {
+                source.close();
+            } catch (IOException e) {
+                //
+            }
         }
     }
 

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.GridPane?>
+
+<GridPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.export.VerilogVCDPersister">
+   <columnConstraints>
+      <ColumnConstraints />
+      <ColumnConstraints fillWidth="false" />
+   </columnConstraints>
+   <rowConstraints>
+      <RowConstraints />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" />
+   </rowConstraints>
+   <children>
+      <Label text="Configuration" />
+      <Label text="Directory:" GridPane.rowIndex="1" />
+      <Label text="Max file size:" GridPane.rowIndex="2" />
+      <TextField fx:id="filePathLabel" editable="false" prefColumnCount="30" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+      <TextField fx:id="maxSizeLabel" editable="false" prefColumnCount="5" text="10MB" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+   </children>
+</GridPane>

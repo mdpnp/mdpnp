@@ -1,0 +1,1699 @@
+title=Wavefile Format (IEEE 1364)
+type=doc
+status=published
+description=Verilog-XL Reference
+~~~~~~
+
+<small>this information was copied from
+    <a href="http://support.ema-eda.com/search/eslfiles/default/main/sl_legacy_releaseinfo/staging/sl3/release_info/psd142/vlogref/chap20.html">verilog manual</a>
+</small>
+<br>
+
+<h1>
+    <a name="pagetop"> </a>The Value Change Dump File
+</h1>
+
+<ul>
+    <a name="1031810"></a><li><p><a href="#1031824">Overview</a></p>
+
+    <a name="1031814"></a><li><p><a href="#1031834">Creating the Value Change Dump File</a></p>
+
+    <a name="1031818"></a><li><p><a href="#1031979">Format of the Value Change Dump File</a></p>
+
+    <a name="1031822"></a><li><p><a href="#1032340">Using the $dumpports System Task</a></p>
+</ul>
+<br>
+<h2>
+    <a name="1031824"> </a>Overview</h2>
+
+
+<p>
+    <a name="1031826"> </a>Verilog-XL can produce a file called a value change dump (VCD) file that contains information about value changes on selected variables in a design. You can use this VCD file for developing various applications programs and postprocessing tools. Here are some examples:</p>
+
+<ul>
+    <a name="1031827"></a><li><p>An applications program can graphically display the results of an overnight simulation.</p>
+
+    <a name="1031828"></a><li><p>A postprocessor can process the simulation results and forward them to a device tester or to a board tester.</p>
+</ul>
+<p>
+    <a name="1031829"> </a>The value change dumper is more efficient than the <code>$monitor</code> task, both in performance and in storage space. With the VCD feature, you can save the value changes of variables in any portion of the design hierarchy during any specified time interval. You can also save these results globally, without having to explicitly name all signals involved.</p>
+
+
+<br><br>
+<h2>
+    <a name="1031834"> </a>Creating the Value Change Dump File</h2>
+
+
+<p>
+    <a name="1031835"> </a>The steps involved in creating the VCD file are listed below and illustrated in the following figure:</p>
+
+<ol type="1">
+    <li value="1"><p><a name="1031837"> </a>Insert the VCD system tasks in the Verilog source file to define the dump filename and to specify the variables to be dumped. You may also choose to invoke these tasks interactively during the simulation instead of adding them to your source file.</p>
+    <li value="2"><p><a name="1031879"> </a>Run the simulation.</p>
+        <dl>
+            <p>
+                <a name="1032811"> </a><img src="images/chap20x1.png" border="0">
+            </p>
+
+        </dl></ol>
+
+<p>
+    <a name="1031880"> </a>Verilog-XL produces an ASCII dump file that contains header information, variable definitions, and the value changes for all variables specified in the task calls.</p>
+
+
+<p>
+    <a name="1031881"> </a>Several system tasks can be inserted in the source description or invoked interactively to create the VCD file. The sections that follow describe the tasks listed in the following example:</p>
+
+
+<pre><a name="1031882"></a><nobr>$dumpfile(&lt;filename&gt; );<br>$dumpvars;<br>$dumpvars(&lt;levels&gt; &lt;, &lt;module_or_variable&gt;&gt;* );<br>$dumpoff; <br>$dumpon; <br>$dumpall;<br>$dumplimit( &lt;filesize&gt; );<br>$dumpflush;</nobr></pre>
+
+<br><br>
+<h3>
+    <a name="1031890"> </a>Specifying the Dump File Name ($dumpfile)</h3>
+
+
+<p>
+    <a name="1031891"> </a>Use the <code>$dumpfile</code> task to specify the name of the VCD file as follows:</p>
+
+
+<pre><a name="1031892"></a><nobr>initial <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$dumpfile ("module1.dump")</nobr></pre>
+
+<p>
+    <a name="1031893"> </a>The filename is optional. If you do not specify a dump filename, the program uses the default name "<code>verilog.dump</code>". </p>
+
+
+<p>
+    <a name="1031894"> </a>The <code>$dumpfile</code> task can be invoked only once during the simulation, and it must precede all other dump file tasks, as described in the sections that follow.</p>
+
+
+<br><br>
+<h3>
+    <a name="1031898"> </a>Specifying Variables for Dumping ($dumpvars)</h3>
+
+
+<p>
+    <a name="1031899"> </a>Use the <code>$dumpvars</code> task to determine which variables Verilog-XL dumps into the file specified by <code>$dumpfile</code>. You can invoke the <code>$dumpvars</code> task throughout the design as often as necessary but these <code>$dumpvars</code> tasks must all execute at the same simulation time. You cannot add variables to be dumped once dumping begins.</p>
+
+
+<p>
+    <a name="1031900"> </a>You can use the <code>$dumpvars</code> task with or without arguments. The syntax for calling the task without arguments is as follows:</p>
+
+
+<a name="1031901"></a><dl><dt><code>$dumpvars;</code></dt></dl>
+
+<p>
+    <a name="1031902"> </a>When invoked with no arguments, <code>$dumpvars</code> dumps all variables in the design, except those in source-protected regions, to the VCD file. If you want to include a variable from a source-protected region in the VCD file, you must include the variable in the <code>$dumpvars</code> argument list.</p>
+
+
+<p>
+    <a name="1031903"> </a>The syntax for calling the <code>$dumpvars</code> system task with arguments is as follows:</p>
+
+
+<a name="1031904"></a><dl>
+    <dt>
+        <code>
+            $dumpvars(&lt;levels&gt; &lt;, &lt;module_or_variable&gt;&gt;* );
+        </code>
+    </dt>
+</dl>
+
+<p>
+    <a name="1031905"> </a>When you specify <code>$dumpvars</code> with arguments, the <code><em>&lt;levels&gt;</code></em> variable indicates the number of hierarchical levels below each specified module instance that <code>$dumpvars</code> affects. Subsequent <code><em>&lt;module_or_variable&gt;</code></em> variable arguments specify which scopes of the design to dump. These subsequent arguments can specify entire modules or individual variables within a module. Here is an example:</p>
+
+
+<pre><a name="1031906"></a><nobr>$dumpvars (1, top);</nobr></pre>
+
+<p>
+    <a name="1031907"> </a>Because the first argument in the previous example is a 1, this invocation dumps all variables within the module <code>top</code>; it does not dump variables in any of the modules instantiated by module <code>top</code>.</p>
+
+
+<p>
+    <a name="1031908"> </a>Setting the first argument to <code>0</code> causes a dump of all variables in the specified module and in all module instances below the specified module. Note that the argument <code>0</code> applies only to subsequent arguments that specify module instances, and not to individual variables.</p>
+
+
+<p>
+    <a name="1031909"> </a>In the following example, the <code>$dumpvars</code> task dumps all variables in the module <code>top</code> and in all module instances below module <code>top</code> in the design hierarchy:</p>
+
+
+<pre><a name="1031910"></a><nobr>$dumpvars (0, top);</nobr></pre>
+
+<p>
+    <a name="1031911"> </a>The next example shows how the <code>$dumpvars</code> task can specify both modules and individual variables:</p>
+
+
+<pre><a name="1031912"></a><nobr>$dumpvars (0, top.mod1, top.mod2.net1);</nobr></pre>
+
+<p>
+    <a name="1031913"> </a>This call dumps all variables in module <code>mod1</code> and in all module instances below <code>mod1</code>, along with variable <code>net1</code> in module <code>mod2</code>. Note that the argument 0 applies only to the module instance <code>top.mod1</code>, and not to the individual variable <code>top.mod2.net1</code>.</p>
+
+
+<p>
+    <a name="1031914"> </a>If you wish to dump individual bits of a vector net, first make sure that the net is expanded. Declaring a vector net with the keyword <code>scalared</code> guarantees that it is expanded. Using the <code>-x</code> command-line option expands all nets, but this procedure is not recommended due to its negative impact on memory usage and performance.</p>
+
+
+<p>
+    <a name="1031918"> </a>If the <code>$dumpvars</code> task is invoked with no arguments, all variables in the design except those in a source-protected region are dumped. However, if you include the name of a variable in a source-protected region  in the <code>$dumpvars</code> argument list, then that variable is dumped. For example, if the <code>$dumpvars</code> argument list contains the variable name <code>'top.mod2.net1'</code>, then that variable is dumped even though module <code>'top.mod2'</code> may be source protected.</p>
+
+
+<br><br>
+<h3>
+    <a name="1031924"> </a>Stopping and Resuming the Dump ($dumpoff/$dumpon)</h3>
+
+
+<p>
+    <a name="1031925"> </a>Executing the <code>$dumpvars</code> task causes value change dumping to start at the end of the current simulation time unit. To suspend the dump, invoke the <code>$dumpoff</code> task. To resume the dump, invoke <code>$dumpon</code>.</p>
+
+
+<p>
+    <a name="1031926"> </a>When <code>$dumpoff</code> is executed, a checkpoint is made in which every variable is dumped as an <code>x</code> value. When <code>$dumpon</code> is later executed, each variable is dumped with its value at that time. In the interval between <code>$dumpoff</code> and <code>$dumpon</code>, no value changes are dumped.</p>
+
+
+<p>
+    <a name="1031927"> </a>The <code>$dumpoff</code> and <code>$dumpon</code> tasks allow you to specify the simulation period during which the dump takes place. Here is an example:</p>
+
+
+<pre><a name="1031928"></a><nobr>initial <br>&nbsp;&nbsp;begin<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$dumpvars(0, top.mod1, top.mod2.net1);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$dumpoff;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#800&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$dumpon;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#900&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$dumpoff;<br>&nbsp;&nbsp;end</nobr></pre>
+
+<p>
+    <a name="1031929"> </a>This example starts the value change dumper after 10 time units, stops it 200 time units later (at time 210), restarts it again 800 time units later (at time 1010) and stops it again 900 time units later (at time 1910).</p>
+
+
+<br><br>
+<h3>
+    <a name="1031939"> </a>Generating a Checkpoint ($dumpall)</h3>
+
+
+<p>
+    <a name="1031940"> </a>The <code>$dumpall</code> task creates a checkpoint in the dump file that shows the current value of all VCD variables. It has no arguments. An example is shown in <a href="#1031969">"Sample Source Description Containing VCD Tasks"</a>.</p>
+
+
+<p>
+    <a name="1031944"> </a>When dumping is enabled, the value change dumper records the values of the variables that change during each time increment. Values of variables that do not change during a time increment are not dumped.</p>
+
+
+<p>
+    <a name="1031945"> </a>Periodically during a dump, an applications program might find it useful to check the values of all specified variables, as a convenient checkpoint. For example, a program can save considerable time obtaining a variable value by quickly backtracking to the most recent checkpoint, rather than returning to the last time the variable changed value.</p>
+
+
+<br><br>
+<h3>
+    <a name="1031949"> </a>Limiting the Size of the Dump File ($dumplimit)</h3>
+
+
+<p>
+    <a name="1031950"> </a>Use <code>$dumplimit</code> to set the size of the VCD file as follows:</p>
+
+
+<a name="1031951"></a><dl>
+    <dt>
+        <code>$dumplimit(&lt;filesize&gt;);</code>
+    </dt>
+</dl>
+
+<p>
+    <a name="1031952"> </a>This task takes a single argument that specifies the maximum size of the dump file in bytes. When the dump file reaches this maximum size, the dumping stops and the system inserts a comment in the dump file indicating that the dump limit was reached. The simulation continues uninterrupted.</p>
+
+
+<br><br>
+<h3>
+    <a name="1031956"> </a>Reading the Dump File During Simulation ($dumpflush)</h3>
+
+
+<p>
+    <a name="1031957"> </a>The <code>$dumpflush</code> task empties the operating system's dump file buffer and ensures that all the data in that buffer is stored in the dump file. After executing a <code>$dumpflush</code> task, the system resumes dumping as before, so that no value changes are lost.</p>
+
+
+<p>
+    <a name="1031958"> </a>A common application is to call <code>$dumpflush</code> to update the dump file so that an applications program can read the file during a simulation. </p>
+
+
+<p>
+    <a name="1031959"> </a>Here is an example of using the <code>$dumpflush</code> task in a Verilog source file:</p>
+
+
+<pre><a name="1031960"></a><nobr>initial<br>&nbsp;&nbsp;&nbsp;begin &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$dumpvars<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$dumpflush<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(applications program)<br>&nbsp;&nbsp;&nbsp;end</nobr></pre>
+
+<p>
+    <a name="1031963"> </a>There are two ways of flushing the dump file buffer:</p>
+
+<ul>
+    <a name="1031964"></a><li><p>Insert the <code>$dumpflush</code> task in the Verilog source description, as described above.</p>
+
+    <a name="1031965"></a><li><p>Include a call to the PLI C-function <code>tf_dumpflush()</code> in your applications program C code.</p>
+</ul>
+<p>
+    <a name="1031966"> </a>The <code>$dumpflush</code> task and the PLI <code>tf_dumpflush()</code> functions are equivalent.</p>
+
+
+<br><br>
+<h3>
+    <a name="1031969"> </a>Sample Source Description Containing VCD Tasks</h3>
+
+
+<p>
+    <a name="1031970"> </a>This section contains a simple source description example that produces a value change dump file. In this example, the name of the dump file is "<code>verilog.dump</code>". Verilog-XL dumps value changes for variables in the circuit. Dumping begins when event <code>do_dump</code> occurs. The dumping continues for 500 clock cycles, then stops and waits for event <code>do_dump</code> to be triggered again. At every 10000 time steps, the current values of all VCD variables are dumped.</p>
+
+
+<pre><a name="1031971"></a><nobr>module dump;<br>&nbsp;&nbsp;&nbsp;event do_dump;<br>initial $dumpfile("verilog.dump");&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//Same as default file<br>initial @do_dump<br>$dumpvars; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//Dump variables in the design<br>always @do_dump &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//To begin the dump at event do_dump<br>begin <br>&nbsp;&nbsp;&nbsp;$dumpon; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//No effect the first time through<br>&nbsp;&nbsp;&nbsp;repeat (500) @(posedge clock);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//Dump for 500 cycles<br>&nbsp;&nbsp;&nbsp;$dumpoff; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//Stop the dump<br>end</nobr></pre>
+
+<pre><a name="1031973"></a><nobr>initial &nbsp;&nbsp;&nbsp;@(do_dump)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forever #10000 $dumpall;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//Dump all variables for checkpoint<br>endmodule </nobr></pre>
+
+<br><br>
+<h2>
+    <a name="1031979"> </a>Format of the Value Change Dump File</h2>
+
+
+<p>
+    <a name="1031980"> </a>The information in this section pertains to users who write their own application programs to postprocess the VCD file.</p>
+
+
+<br><br>
+<h3>
+    <a name="1031982"> </a>Contents of the Dump File</h3>
+
+
+<p>
+    <a name="1031983"> </a>As shown in the following figure, the VCD file starts with the header information (the date, the version number of Verilog-XL used for the simulation, and the timescale used). Next, the file lists the definitions of the scope and the type of variables being dumped, followed by the actual value changes at each time increment.</p>
+
+
+<p>
+    <a name="1032836"> </a><img src="images/chap20x2.png" border="0">
+</p>
+
+
+<p>
+    <a name="1032001"> </a>Only the variables that change value during a time increment are listed. Value changes for non-real variables are specified by 0, 1, X, or Z values. Value changes for real variables are specified by real numbers. Strength information and memories are not dumped. </p>
+
+
+<p>
+    <strong>Note:&nbsp;</strong>
+    <a name="1032002"> </a>You cannot dump part of a vector. For example, you cannot dump only bits 8 through 15 (8:15) of a 16-bit vector. You must dump the entire vector (0:15). In addition, you cannot dump expressions, such as a + b.
+</p>
+
+<br><br>
+<h3>
+    <a name="1032005"> </a>Structure of the Dump File</h3>
+
+
+<p>
+    <a name="1032006"> </a>The dump file is structured in a free format. White space is used to separate commands and to make the file easily readable by a text editor. Output data in the VCD file is case sensitive.</p>
+
+
+<p>
+    <a name="1032007"> </a>To simplify postprocessing of the VCD file, the value change dumper automatically generates 1- to 4-character identifier codes (taken from the visible ASCII characters) to represent variables. The examples in <a href="VerilogVCD.html#1032083">"Description of Keyword Commands"</a> show these identifier codes, such as <code>*@</code> and <code>(k</code>.</p>
+
+
+<p>
+    <a name="1032011"> </a>Note that the value change dump file contains limited structural information, including information about the design hierarchy, but has no interconnection information. As a result, the VCD file by itself does not allow a postprocessor to display the drivers and loads on a net.</p>
+
+
+<br><br>
+<h3>
+    <a name="1032013"> </a>Formats of Dumped Variable Values</h3>
+
+
+<p>
+    <a name="1032014"> </a>Variables may be either scalars or vectors. Each type has its own format in the VCD file. Dumps of value changes to scalar variables contain no white space between the value and the identifier code, as in this example:</p>
+
+
+<pre><a name="1032015"></a><nobr>1*@&nbsp;&nbsp;&nbsp;    // No space between the value 1 and the identifier code *@</nobr></pre>
+
+<p>
+    <a name="1032016"> </a>Dumps of value changes to vectors contain no white space between the base letter and the value digits, but they do contain white space between the value digits and the identifier code, as in this example:</p>
+
+
+<pre><a name="1032017"></a><nobr>b1100x01z (k&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//No space between the b and 1100x01z, but space between b1100x01z and (k</nobr></pre>
+
+<p>
+    <a name="1032018"> </a>The output format for each value is right-justified. Vector values appear in the shortest form possible: the VCD eliminates redundant bit values that result from left-extending values to fill a particular vector size. </p>
+
+
+<p>
+    <a name="1032040"> </a>The rules for left-extending vector values are as follows:</p>
+
+
+<p>
+    <a name="1033809"> </a><p>
+    <br>
+<table valign="top" border="1" bordercolorlight="#FFFFFF" bordercolordark="#000000"
+       cellpadding="5" cellspacing="0">
+    <div align="left"></div>
+    <tr bgcolor="#CCCCCC"><div align="center">
+        <th><font face="Verdana, Arial, Helvetica, sans-serif" color="#003366"><div align="left"><p><strong><a name="1032021"> </a>When the value is:</strong></p></div></font></th>
+        <th><font face="Verdana, Arial, Helvetica, sans-serif" color="#003366"><div align="left"><p><strong><a name="1032023"> </a>VCD left-extends with:</strong></p></div></font></th>
+    </div></tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032025"> </a>1</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032027"> </a>0</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032029"> </a>0</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032031"> </a>0</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032033"> </a>Z</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032035"> </a>Z</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032037"> </a>X</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032039"> </a>X</p>
+        </td>
+    </tr>
+</table>
+<br>
+
+
+</p>
+</p>
+
+
+<p>
+    <a name="1032072"> </a>The following table shows how the VCD shortens values:</p>
+
+
+<p>
+    <a name="1033813"> </a><p>
+    <br>
+<table valign="top" border="1" bordercolorlight="#FFFFFF" bordercolordark="#000000"
+       cellpadding="5" cellspacing="0">
+    <div align="left"></div>
+    <tr bgcolor="#CCCCCC"><div align="center">
+        <th><font face="Verdana, Arial, Helvetica, sans-serif" color="#003366"><div align="left"><p><strong><a name="1032043"> </a>The binary value:</strong></p></div></font></th>
+        <th><font face="Verdana, Arial, Helvetica, sans-serif" color="#003366"><div align="left"><p><strong><a name="1032045"> </a>Extends to fill a 4-bit register as:</strong></p></div></font></th>
+        <th><font face="Verdana, Arial, Helvetica, sans-serif" color="#003366"><div align="left"><p><strong><a name="1032047"> </a>Appears in the VCD file as:</strong></p></div></font></th>
+    </div></tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032049"> </a>10</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032051"> </a>0010</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032053"> </a>b10</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032055"> </a>X10</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032057"> </a>XX10</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032059"> </a>bX10</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032061"> </a>ZX0</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032063"> </a>ZZX0</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032065"> </a>bZX0</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032067"> </a>0X10</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032069"> </a>0X10</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032071"> </a>b0X10</p>
+        </td>
+    </tr>
+</table>
+<br>
+
+
+</p>
+</p>
+
+
+<p>
+    <a name="1032073"> </a>Events are dumped in the same format as scalars (for example, <code>1*%)</code>. For events, however, the value (1 in this example) is irrelevant. Only the identifier code <code>(*%</code> in this example) is significant. It appears in the VCD file as a marker to indicate that the event was triggered during the time step.</p>
+
+
+<br><br>
+<h3>
+    <a name="1032076"> </a>Using Keyword Commands</h3>
+
+
+<p>
+    <a name="1032077"> </a>Much of the general information in the value change dump file is presented as a series of keyword commands that a postprocessor can parse. Refer to <a href="VerilogVCD.html#1032274">"Syntax of the VCD File"</a> for information about keyword commands use.</p>
+
+
+<p>
+    <a name="1032081"> </a>If a postprocessor reads a keyword command that it does not recognize, it can perform error processing such as displaying a warning message and ignoring the text that appears between the keyword command and the <code>$end</code>.</p>
+
+
+<br><br>
+<h3>
+    <a name="1032083"> </a>Description of Keyword Commands</h3>
+
+
+<p>
+    <a name="1032084"> </a>Keyword commands provide a means of inserting information into the VCD file. Keyword commands can be inserted either by the dumper or by you, as shown in the example in <a href="VerilogVCD.html#1032290">"Value Change Dump File Format Example"</a>. This section deals with the following keyword commands:</p>
+
+
+<p>
+    <a name="1033814"> </a><p>
+<table valign="top" border="0" bordercolorlight="#FFFFFF" bordercolordark="#000000"
+       cellpadding="5" cellspacing="0">
+    <div align="left"></div>
+    <tr>
+        <td valign="top"><p>
+            <a name="1033455"> </a><a href="VerilogVCD.html#1032128"><code>$comment</code></a></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1033581"> </a><a href="VerilogVCD.html#1032154"><code>$dumpoff</code></a></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1033469"> </a><a href="VerilogVCD.html#1032180"><code>$enddefinitions</code></a></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1033483"> </a><a href="VerilogVCD.html#1032235"><code>$upscope</code></a></p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1033497"> </a><a href="VerilogVCD.html#1032137"><code>$date</code></a></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1033595"> </a><a href="VerilogVCD.html#1032162"><code>$dumpon</code></a></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1033511"> </a><a href="VerilogVCD.html#1032186"><code>$scope</code></a></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1033525"> </a><a href="VerilogVCD.html#1032241"><code>$var</code></a></p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1033539"> </a><a href="VerilogVCD.html#1032145"><code>$dumpall</code></a></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1033609"> </a><a href="VerilogVCD.html#1032171"><code>$dumpvars</code></a></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1033553"> </a><a href="VerilogVCD.html#1032217"><code>$timescale</code></a></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1033567"> </a><a href="VerilogVCD.html#1032264"><code>$version</code></a></p>
+        </td>
+    </tr>
+</table>
+<br>
+
+
+</p>
+
+</p>
+
+
+<p>
+    <a name="1032125"> </a>Applications programs that read the value change dump file must be able to recognize and process the standard keyword commands defined in the following pages. You also can define additional keyword commands for each application.</p>
+
+
+
+
+<h4>
+    <a name="1032128"> </a>$comment</h4>
+
+
+<p>
+    <a name="1032129"> </a>The <code>$comment</code> keyword provides a means of inserting a comment in the VCD file.</p>
+
+
+<h4>  <a name="1032130"> </a><i>Syntax</i>
+</h4>
+
+
+<pre><a name="1032132"></a><nobr>$comment</nobr></pre>
+
+<pre><a name="1032845"></a><nobr>&nbsp;&nbsp;&nbsp;&nbsp;&lt;comment_text&gt;</nobr></pre>
+
+<pre><a name="1032840"></a><nobr>$end</nobr></pre>
+
+<h4>  <a name="1032133"> </a><i>Examples</i>
+</h4>
+
+
+<pre><a name="1032134"></a><nobr>$comment &nbsp;&nbsp;&nbsp;This is a single-line comment &nbsp;&nbsp;&nbsp;$end </nobr></pre>
+
+<pre><a name="1032135"></a><nobr>$comment &nbsp;&nbsp;&nbsp;This is a<br>multiple-line comment<br>$end&nbsp;&nbsp;&nbsp;</nobr></pre>
+
+
+
+<h4>
+    <a name="1032137"> </a>$date</h4>
+
+
+<p>
+    <a name="1032138"> </a>The date stamp allows the system to indicate the date on which the VCD file was generated.</p>
+
+
+<h4>  <a name="1032139"> </a><i>Syntax</i>
+</h4>
+
+
+<pre><a name="1032141"></a><nobr>$date<br>     &lt;date_text&gt;<br>$end </nobr></pre>
+
+<h4>  <a name="1032142"> </a><i>Example</i>
+</h4>
+
+
+<pre><a name="1032143"></a><nobr>$date <br>&nbsp;&nbsp;&nbsp;&nbsp;June 25, 1989 09:24:35<br>$end</nobr></pre>
+
+
+
+<h4>
+    <a name="1032145"> </a>$dumpall</h4>
+
+
+<p>
+    <a name="1032146"> </a><code>$dumpall</code> lists the current values of all the variables dumped.</p>
+
+
+<h4>  <a name="1032147"> </a><i>Syntax</i>
+</h4>
+
+
+<a name="1032149"></a><dl><dt><code>$dumpall    $end</code></dt></dl>
+
+<h4>  <a name="1032151"> </a><i>Example</i>
+</h4>
+
+
+<pre><a name="1032152"></a><nobr>$dumpall   1*@  x*#   0*$   bx   (k   $end &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</nobr></pre>
+
+
+
+<h4>
+    <a name="1032154"> </a>$dumpoff</h4>
+
+
+<p>
+    <a name="1032155"> </a><code>$dumpoff</code> lists all the variables dumped with X values and then stops dumping.</p>
+
+
+<h4>  <a name="1032156"> </a><i>Syntax</i>
+</h4>
+
+
+<a name="1032158"></a><dl><dt><code>$dumpoff   $end</code><dt></dl>
+
+<h4>  <a name="1032159"> </a><i>Example</i>
+</h4>
+
+
+<pre><a name="1032160"></a><nobr>$dumpoff  x*@  x*#   x*$   bx   (k   $end &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</nobr></pre>
+
+
+
+<h4>
+    <a name="1032162"> </a>$dumpon</h4>
+
+
+<p>
+    <a name="1032163"> </a><code>$dumpon</code> resumes dumping and list current values of all variables dumped.</p>
+
+
+<h4>  <a name="1032164"> </a><i>Syntax</i>
+</h4>
+
+
+<a name="1032167"></a><dl><dt><code>$dumpon    $end</code></dt></dl>
+
+<h4>  <a name="1032168"> </a><i>Example</i>
+</h4>
+
+
+<pre><a name="1032169"></a><nobr>$dumpon   x*@  0*#   x*$   b1   (k   $end &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</nobr></pre>
+
+
+
+<h4>
+    <a name="1032171"> </a>$dumpvars</h4>
+
+
+<p>
+    <a name="1032172"> </a><code>$dumpvars</code> lists the initial values of all the variables dumped.</p>
+
+
+<h4>  <a name="1032173"> </a><i>Syntax</i>
+</h4>
+
+
+<a name="1032176"></a><dl><dt><code>$dumpvars  &lt;value_changes&gt;* $end</code></dt></dl>
+
+<h4>  <a name="1032177"> </a><i>Example</i>
+</h4>
+
+
+<pre><a name="1032178"></a><nobr>$dumpvars   x*@   z*$   b0   (k   $end</nobr></pre>
+
+
+
+<h4>
+    <a name="1032180"> </a>$enddefinitions</h4>
+
+
+<p>
+    <a name="1032181"> </a><code>$enddefinitions </code>marks the end of the header information and definitions.</p>
+
+
+<h4>  <a name="1032182"> </a><i>Syntax</i>
+</h4>
+
+
+<a name="1032184"></a><dl>
+    <dt><code>$enddefinitions&nbsp;&nbsp;&nbsp;     $end
+    </code></dt></dl>
+
+
+
+<h4>
+    <a name="1032186"> </a>$scope</h4>
+
+
+<p>
+    <a name="1032187"> </a>Scope definition defines the scope of the dump.</p>
+
+
+<h4>  <a name="1032188"> </a><i>Syntax</i>
+</h4>
+
+
+<pre><a name="1032190"></a><nobr>$scope<br>     &lt;scope_type&gt; &lt;identifier&gt;<br>$end</nobr></pre>
+
+<h4>  <a name="1032191"> </a><i>Definitions</i>
+</h4>
+
+
+<p>
+    <a name="1032213"> </a><code><em>&lt;scope_type&gt;</code></em> is one of the following keywords:</p>
+
+
+<p>
+    <a name="1033815"> </a><p>
+    <br>
+<table valign="top" border="1" bordercolorlight="#FFFFFF" bordercolordark="#000000"
+       cellpadding="5" cellspacing="0">
+    <div align="left"></div>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032194"> </a><code>module</code></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032196"> </a>for top-level module and module instances</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032198"> </a><code>task</code></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032200"> </a>for a task</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032202"> </a><code>function</code></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032204"> </a>for a function</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032206"> </a><code>begin</code></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032208"> </a>for named sequential blocks</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032210"> </a><code>fork</code></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032212"> </a>for named parallel blocks</p>
+        </td>
+    </tr>
+</table>
+<br>
+
+
+</p>
+</p>
+
+
+<h4>  <a name="1032214"> </a><i>Example</i>
+</h4>
+
+
+<pre><a name="1032215"></a><nobr>$scope<br>&nbsp;&nbsp;&nbsp;module top<br>$end</nobr></pre>
+
+
+
+<h4>
+    <a name="1032217"> </a>$timescale</h4>
+
+
+<p>
+    <a name="1032218"> </a><code>$timescale</code> specifies the timescale that Verilog-XL used for the simulation.</p>
+
+
+<h4>  <a name="1032219"> </a><i>Syntax</i>
+</h4>
+
+
+<a name="1032221"></a><dl>
+    <dt><code>$timescale &lt;number&gt; &lt;time_dimension&gt;   $end
+    </code></dt></dl>
+
+<h4>  <a name="1032222"> </a><i>Definitions</i>
+</h4>
+
+
+<p>
+    <a name="1032223"> </a><code><em>&lt;number&gt;</code></em> is one of the following:</p>
+
+
+<pre><a name="1032224"></a><nobr><code>&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;10&nbsp;&nbsp;&nbsp;100</code></nobr></pre>
+
+<p>
+    <a name="1032225"> </a><code><em>&lt;time_dimension&gt;</code></em>  is one of the following:</p>
+
+
+<pre><a name="1032226"></a><nobr><code>&nbsp;&nbsp;&nbsp;s&nbsp;&nbsp;&nbsp;ms &nbsp;&nbsp;&nbsp;us&nbsp;&nbsp;&nbsp;ns&nbsp;&nbsp;&nbsp;ps&nbsp;&nbsp;&nbsp;fs</code></nobr></pre>
+
+<p>
+    <a name="1032231"> </a>For more information see <a href="chap17.html#1031803">Chapter 17, "Timescales."</a></p>
+
+
+<h4>  <a name="1032232"> </a><i>Example</i>
+</h4>
+
+
+<pre><a name="1032233"></a><nobr>$timescale  10  ns  $end</nobr></pre>
+
+
+
+<h4>
+    <a name="1032235"> </a>$upscope</h4>
+
+
+<p>
+    <a name="1032236"> </a><code>$upscope</code> changes the scope to the next higher level in the design hierarchy.</p>
+
+
+<h4>  <a name="1032237"> </a><i>Syntax</i>
+</h4>
+
+
+<a name="1032239"></a><dl>
+    <dt><code>$upscope $end</code></dt>
+</dl>
+
+
+
+<h4>
+    <a name="1032241"> </a>$var</h4>
+
+
+<p>
+    <a name="1032242"> </a><code>$var</code> prints the names and identifier codes of the variables being dumped.</p>
+
+
+<h4>  <a name="1032243"> </a><i>Syntax</i>
+</h4>
+
+
+<pre><a name="1032245"></a><nobr>$var<br>     &lt;var_type&gt; &lt;size&gt; &lt;identifier_code&gt;<br>     &lt;reference&gt;<br>$end</nobr></pre>
+
+<h4>  <a name="1032246"> </a><i>Definitions</i>
+</h4>
+
+
+<p>
+    <a name="1032247"> </a><code><em>&lt;var_type&gt;</code></em> specifies the variable type and can be one of the following keywords:</p>
+
+
+<pre><a name="1032248"></a><nobr><code>event&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;integer&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parameter&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;real&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reg<br>supply0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;supply1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;time&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tri&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;triand<br>trior&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;trireg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tri0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tri1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wand<br>wire&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wor</code></nobr></pre>
+
+<p>
+    <a name="1032249"> </a><code><em>&lt;size&gt;</code></em> is a decimal number that specifies how many bits are in the variable.</p>
+
+
+<p>
+    <a name="1032250"> </a><code><em>&lt;identifier_code&gt;</code></em> specifies the name of the variable using printable ASCII characters, as described in <a href="VerilogVCD.html#1032005">"Structure of the Dump File"</a>.</p>
+
+
+<p>
+    <a name="1032254"> </a>&lt;<code><em>reference</code></em>&gt; is a reference name you specify in the source file. More than one &lt;reference&gt; name may be mapped to the same &lt;<code><em>identifier_code</code></em>&gt;. For example, net10 and net15 may be interconnected in the circuit, and therefore will have the same &lt;<code><em>identifier_code</code></em>&gt;. A &lt;<code><em>reference</code></em>&gt; can have the following components:</p>
+
+
+<pre><a name="1032255"></a><nobr>&nbsp;&nbsp;&nbsp;::= &lt;identifier&gt;<br>&nbsp;&nbsp;&nbsp;||= &lt;identifier&gt; [ &lt;bit_select_index&gt; ] <br>&nbsp;&nbsp;&nbsp;||= &lt;identifier&gt; [ &lt;MSI&gt; : &lt;LSI&gt; ]</nobr></pre>
+<ul>
+    <a name="1032256"></a><li><p><code><em>&lt;identifier&gt;</code></em> is the Verilog name of the saved variable, including any leading backslash (<code>\</code>) characters for escape identifiers.</p>
+
+    <a name="1032258"></a><li><p>Verilog-XL dumps each bit of an expanded vector net individually. That is, each bit has its own <code><em>&lt;identifier_code&gt;</code></em> and is dumped only when it changes, not when other bits in the vector change.</p>
+
+    <a name="1032259"></a><li><p><code><em>&lt;MSI&gt;</code></em> indicates the most significant index;  <code><em>&lt;LSI&gt;</code></em> indicates the least significant index.</p>
+
+    <a name="1032260"></a><li><p><code><em>&lt;bit_select_index&gt;</code></em>, <code><em>&lt;MSI&gt;</code></em>, and <code><em>&lt;LSI&gt;</code></em> are all decimal numbers. </p>
+</ul>
+<h4>  <a name="1032261"> </a><i>Example</i>
+</h4>
+
+
+<pre><a name="1032262"></a><nobr>$var &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>     integer 32 (2 index &nbsp;&nbsp;&nbsp; <br>$end</nobr></pre>
+
+
+
+<h4>
+    <a name="1032264"> </a>$version</h4>
+
+
+<p>
+    <a name="1032265"> </a><code>$version</code> indicates the version of the simulator that was used to produce the VCD file.</p>
+
+
+<h4>  <a name="1032266"> </a><i>Syntax</i>
+</h4>
+
+
+<pre><a name="1032268"></a><nobr>$version<br>&nbsp;&nbsp;&nbsp;&lt;version_text&gt;<br>$end</nobr></pre>
+
+<h4>  <a name="1032269"> </a><i>Example</i>
+</h4>
+
+
+<pre><a name="1032270"></a><nobr>$version <br>&nbsp;&nbsp;&nbsp;VERILOG-XL 1.5a <br>$end</nobr></pre>
+
+<br><br>
+<h3>
+    <a name="1032274"> </a>Syntax of the VCD File</h3>
+
+
+<p>
+    <a name="1032275"> </a>The following example shows the syntax of the output VCD file:</p>
+
+
+<pre><a name="1032276"></a><nobr>&lt;value_change_dump_definitions&gt;<br>&nbsp;&nbsp;&nbsp;:= &lt;declaration_command&gt;*&lt;simulation_command&gt;*<br>&lt;declaration_command&gt;<br>&nbsp;&nbsp;&nbsp;::= &lt;keyword_command&gt;   <br>&nbsp;&nbsp;&nbsp;(NOTE: Keyword_commands are described in the next section.)<br>&lt;simulation_command&gt;<br>&nbsp;&nbsp;&nbsp;::= &lt;keyword_command&gt;<br>&nbsp;&nbsp;&nbsp;||= &lt;simulation_time&gt;<br>&nbsp;&nbsp;&nbsp;||= &lt;value_change&gt;<br>&lt;keyword_command&gt;<br>&nbsp;&nbsp;&nbsp;::= $&lt;keyword&gt; &lt;command_text&gt; $end<br>&lt;simulation_time&gt;<br>&nbsp;&nbsp;&nbsp;::= #&lt;decimal_number&gt;<br>&lt;value_change&gt;<br>&nbsp;&nbsp;&nbsp;::= &lt;scalar_value_change&gt;<br>&nbsp;&nbsp;&nbsp;||= &lt;vector_value_change&gt;<br>&lt;scalar_value_change&gt;<br>&nbsp;&nbsp;&nbsp;::= &lt;value&gt;&lt;identifier_code&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;value&gt; is one of the following: 0 1 x X z Z<br>&lt;vector_value_change&gt;<br>&nbsp;&nbsp;&nbsp;::= b&lt;binary_number&gt; &lt;identifier_code&gt;<br>&nbsp;&nbsp;&nbsp;::= B&lt;binary_number&gt; &lt;identifier_code&gt;  <br>&nbsp;&nbsp;&nbsp;::= r&lt;real_number&gt; &lt;identifier_code&gt;  <br>&nbsp;&nbsp;&nbsp;::= R&lt;real_number&gt; &lt;identifier_code&gt; </nobr></pre>
+<ul>
+    <a name="1032284"></a><li><p><code><em>&lt;binary_number&gt;</code></em> is a number composed of the following characters: 0 1 x X z Z</p>
+
+    <a name="1032285"></a><li><p><code><em>&lt;real_number&gt;</code></em> is a real number will be dumped using a<br><code>%.16g printf()</code> format. This format preserves the precision of the number by outputting all 53 bits in the mantissa of a 64-bit C-code 'double'. Applications programs can read a real number using a <code>%g</code> format to <code>scanf()</code>.</p>
+
+    <a name="1032286"></a><li><p>&lt;identifier_code&gt; is a code from 1 to 4 characters long composed of the printable characters that are in the ASCII character set from <code>!</code> to <code>~</code> (decimal 33 to 126).</p>
+</ul>
+<br><br>
+<h3>
+    <a name="1032290"> </a>Value Change Dump File Format Example</h3>
+
+
+<p>
+    <a name="1032291"> </a>The following example illustrates the format of the value change dump file. A description of the file format follows the example. With the exception of the <code>$comment</code> command, all other keyword commands in this example are generated by the value change dumper.</p>
+
+
+<pre><a name="1032292"></a><nobr>$date<br>&nbsp;&nbsp;&nbsp;June 26, 1998 10:05:41 <br>$end<br>$version<br>&nbsp;&nbsp;&nbsp;VERILOG-XL 2.7 <br>$end</nobr></pre>
+
+<pre><a name="1032293"></a><nobr>$timescale<br>&nbsp;&nbsp;&nbsp;1 ns <br>$end</nobr></pre>
+
+<pre><a name="1032294"></a><nobr>$scope     module      top     $end <br>$scope     module      m1     $end <br>$var trireg 1         *@ net1     $end<br>$var&nbsp;&nbsp;&nbsp; trireg 1         *#  net2     $end<br>$var&nbsp;&nbsp;&nbsp; trireg 1         *$  net3     $end<br>$upscope    $end <br>$scope    task    t1    $end <br>$var&nbsp;&nbsp;&nbsp; reg 32  (k accumulator[31:0]     $end<br>$var&nbsp;&nbsp;&nbsp; integer 32   {2 index&nbsp;&nbsp;&nbsp; $end<br>$upscope &nbsp;&nbsp;&nbsp;$end <br>$upscope &nbsp;&nbsp;&nbsp;$end <br>$enddefinitions &nbsp;&nbsp;&nbsp;$end<br>$comment<br>&nbsp;&nbsp;&nbsp;Note:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$dumpvars was executed at time '#500'. <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All initial values are dumped at this time.<br>$end</nobr></pre>
+
+<pre><a name="1032296"></a><nobr>#500 <br>$dumpvars  x*@  x*#  x*$  bx  (k  bx  {2  $end</nobr></pre>
+
+<pre><a name="1032297"></a><nobr>#505 <br>0*@<br>1*#<br>1*$ <br>b10zx1110x11100      (k b1111000101z01x {2<br>#510 <br>0*$</nobr></pre>
+
+<pre><a name="1032299"></a><nobr>#520 <br>1*$<br>#530 <br>0*$ <br>bz (k<br>#535 <br>$dumpall   0*@   1*#   0*$ <br>bz   (k  b1111000101z01x  {2    &nbsp;&nbsp;&nbsp;$end<br>#540 <br>1*$<br>#1000<br>$dumpoff x*@ x*# x*$ bx (k bx {2 $end<br>#2000<br>$dumpon z*@ 1*# 0*$ b0 (k bx {2 $end<br>#2010<br>1*$</nobr></pre>
+
+<p>
+    <strong>Note:&nbsp;</strong>
+    <a name="1032308"> </a>In general, the VCD does not automatically include comments in the dump file. An exception is when the dump file reaches the limit set by the <code>$dumplimit</code> task. Then, the VCD includes a comment to that effect.
+</p>
+
+<p>
+    <a name="1032309"> </a>The following sections describe the keyword commands, variables, and values that appear in the previous example.</p>
+
+
+
+
+<h4>
+    <a name="1032310"> </a>$date. . .$end   $version. . .$end   $timescale. . .$end</h4>
+
+
+<p>
+    <a name="1032311"> </a>These keyword commands are generated by the VCD to provide information about the dump file and the simulation.</p>
+
+
+
+
+<h4>
+    <a name="1032312"> </a>$scope . . . $end</h4>
+
+
+<p>
+    <a name="1032313"> </a>This keyword command indicates the scope of the defined signals that follow. In this example, the scope includes two modules (<code>top</code> and <code>m1</code>) and one task (<code>t1</code>).</p>
+
+
+
+
+<h4>
+    <a name="1032314"> </a>$var . . . $end</h4>
+
+
+<p>
+    <a name="1032315"> </a>This keyword command defines each variable that is dumped. It specifies the variable's type (<code>trireg</code>, <code>reg</code>, <code>integer</code>), size (1, 32, 32), identifier code<br>(<code>*@, (k, {2</code>), and reference name as specified by the user in the source file (<code>net1</code>, <code>accumulator</code>, <code>index</code>). To make the dump file machine-independent, compact, and capable of being edited, the VCD assigns each variable in the circuit a 1- to 4-character code called an identifier code. These characters are taken from the visible ASCII characters '!' to '~' (decimal 33 to 126).</p>
+
+
+
+
+<h4>
+    <a name="1032316"> </a>$upscope . . . $end</h4>
+
+
+<p>
+    <a name="1032317"> </a>For each <code>$scope</code> there is a matching <code>$upscope</code> to signify the end of that scope.</p>
+
+
+
+
+<h4>
+    <a name="1032318"> </a>$enddefinitions . . . $end</h4>
+
+
+<p>
+    <a name="1032319"> </a>This keyword command indicates the end of the header information and definitions, and marks the start of the value change data.</p>
+
+
+
+
+<h4>
+    <a name="1032320"> </a>#500 <br>$dumpvars   x*@  x*#  x*$   bx   (k   bx   {2    $end</h4>
+
+
+<p>
+    <a name="1032321"> </a>At time 500, <code>$dumpvars</code> is executed to show the initial values of all the variables dumped. Identification codes (such as <code>*@</code>, <code>*#</code>) are used for conciseness and are associated with user reference names in the <code>$var</code> ... <code>$end</code> sections of the VCD file. In this example, all initial values are X (unknown).</p>
+
+
+
+
+<h4>
+    <a name="1032322"> </a>#505<br>0*@<br>1*# <br>1*$<br>b10zx1110x11100   (k       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b1111000101z01x    {2</h4>
+
+
+<p>
+    <a name="1032323"> </a>This display shows the new values of all the variables that changed at time 505: net1 (which has an identifier code of <code>*@</code>) changed to 0, <code>net2</code> (identifier code <code>*#</code>) and <code>net3</code> (identifier code <code>*$</code>) changed to 1, the vector <code>accumulator[31:0]</code> and the integer <code>index</code> changed to the binary values shown.</p>
+
+
+
+
+<h4>
+    <a name="1032324"> </a>#510<br>0*$<br>#520<br>1*$<br>#530 <br>0*$<br>bz (k</h4>
+
+
+<p>
+    <a name="1032325"> </a>At time 510, only <code>net3</code> changed to a 0. All other variables remained unchanged. At time 520, <code>net3</code> changed to a 1, and at time 530 it changed back to a 0. Also at time 530, all bits of the vector <code>accumulator</code> changed to the high-impedance (Z) state.</p>
+
+
+
+
+<h4>
+    <a name="1032326"> </a>#535 <br>$dumpall  0*@  1*#  0*$ <br>bz  (k  b1111000101z01x   {2   $end</h4>
+
+
+<p>
+    <a name="1032327"> </a>The source file calls a <code>$dumpall</code> task at time 535 to dump the latest values of all the specified variables as a checkpoint.</p>
+
+
+
+
+<h4>
+    <a name="1032328"> </a>#540<br>1*$</h4>
+
+
+<p>
+    <a name="1032329"> </a>At time 540, <code>net3</code> changed to a 1.</p>
+
+
+
+
+<h4>
+    <a name="1032330"> </a>#1000<br>$dumpoff  x*@  x*#  x*$  bx  (k  bx  {2  $end</h4>
+
+
+<p>
+    <a name="1032331"> </a>At time 1000, a <code>$dumpoff</code> is executed to dump all the variables as X values and to suspend dumping until the next <code>$dumpon</code>.</p>
+
+
+
+
+<h4>
+    <a name="1032332"> </a>#2000<br>$dumpon  z*@  1*#  0*$  b0  (k  bx  {2  $end</h4>
+
+
+<p>
+    <a name="1032333"> </a>Dumping resumes at time 2000; <code>$dumpon</code> dumps all the variables with their values at that time.</p>
+
+
+
+
+<h4>
+    <a name="1032334"> </a>#2010<br>1*$</h4>
+
+
+<p>
+    <a name="1032337"> </a>At time 2010, the value of <code>net3</code> changes to 1.</p>
+
+
+<br><br>
+<h2>
+    <a name="1032340"> </a>Using the $dumpports System Task</h2>
+
+
+<p>
+    <a name="1032341"> </a>The procedures described in this section are deliberately broad and generic. The requirements for your specific design may dictate procedures slightly different from those described here.</p>
+
+
+<br><br>
+<h3>
+    <a name="1032342"> </a>$dumpports Syntax</h3>
+
+
+<p>
+    <a name="1032343"> </a>The $dumpports system task scans the (<code>arg1</code>) ports of a module instance and monitors the ports for both value and drive level. The $dumpports system task also generates an output file that contains the value, direction, and strength of all the ports of a device. The output file generated by $dumpports is similar to the output file generated by the value change dump (VCD). For information about the VCD file, see <a href="VerilogVCD.html#1031824">"Overview"</a>. The syntax for $dumpports is as follows:</p>
+
+
+<a name="1032367"></a><dl><dt><code>
+    $dumpports(&lt;DUT&gt; &lt;,"filename"&gt; &lt;,ID&gt;);
+</code></dt></dl>
+
+<p>
+    <a name="1033663"> </a>The table given below describes the arguments of <code>$dumpports.</code></p>
+
+
+<p>
+    <a name="1033819"> </a><p>
+    <br>
+<table valign="top" border="1" bordercolorlight="#FFFFFF" bordercolordark="#000000"
+       cellpadding="5" cellspacing="0">
+    <div align="left"></div>
+    <tr bgcolor="#CCCCCC"><div align="center">
+        <th><font face="Verdana, Arial, Helvetica, sans-serif" color="#003366"><div align="left"><p><strong><a name="1032349"> </a>Arguments</strong></p></div></font></th>
+        <th><font face="Verdana, Arial, Helvetica, sans-serif" color="#003366"><div align="left"><p><strong><a name="1032351"> </a>Description</strong></p></div></font></th>
+    </div></tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032353"> </a><code><em>DUT</code></em></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032355"> </a>Device under test (DUT); the name of the module instance to be monitored.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032357"> </a><code><em>filename</code></em></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032359"> </a>String containing the name of the output file. The filename argument is optional. If you do not specify a filename, then a <code>verilog.evcd</code> (the default filename) file will be generated. Consider the following examples:</p>
+            <p>
+                <a name="1034126"> </a>Example 1:</p>
+            <dl><dl>
+                <pre><a name="1034133"></a><nobr>$dumpports(dut, , id);</nobr></pre>
+            </dl>     </dl><p>
+                <a name="1034128"> </a>In this example, the filename argument is not specified. No error will be reported and a <code>verilog.evcd</code> file will be generated.</p>
+            <p>
+                <a name="1034146"> </a>Example 2:</p>
+            <dl><dl>
+                <pre><a name="1034148"></a><nobr><code>$dumpports(dut, "testVec.file", id);</code></nobr></pre>
+            </dl>     </dl><p>
+                <a name="1034153"> </a>In this example, as the filename argument is specified, a <code>testVec.file</code> will be generated.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032361"> </a><code><em>ID</code></em></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032363"> </a>An integer data type that identifies a running <code>$dumpports</code> task with the <code>$dumpports_close</code> system task. For more information, see <a href="VerilogVCD.html#1032613">"$dumpports_close"</a>.</p>
+        </td>
+    </tr>
+</table>
+<br>
+
+
+</p>
+</p>
+
+
+<p>
+    <a name="1032775"> </a>Consider the example given below.</p>
+
+
+<pre><a name="1032776"></a><nobr>....<br>....</nobr></pre>
+
+<pre><a name="1032781"></a><nobr>module top;<br>reg A;<br>integer id;<br>.........<br>.........<br>initial<br>&nbsp;&nbsp;&nbsp;&nbsp;begin<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$dumpports(dut, "testVec.file", id);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#5 $dumpports_close(id);<br>&nbsp;&nbsp;&nbsp;&nbsp;end<br>endmodule</nobr></pre>
+
+<pre><a name="1032782"></a><nobr>....<br>....</nobr></pre>
+
+<br><br>
+<h3>
+    <a name="1032369"> </a>$dumpports Output</h3>
+
+
+<p>
+    <a name="1032370"> </a>The following example shows an output from using <code>$dumpports</code>. </p>
+
+
+<pre><a name="1032371"></a><nobr>#100<br>pDDBF  6566 0066  &lt;1</nobr></pre>
+
+<p>
+    <a name="1033670"> </a>The table given below describes each component of the output.</p>
+
+
+<p>
+    <a name="1033820"> </a><p>
+    <br>
+<table valign="top" border="1" bordercolorlight="#FFFFFF" bordercolordark="#000000"
+       cellpadding="5" cellspacing="0">
+    <div align="left"></div>
+    <tr bgcolor="#CCCCCC"><div align="center">
+        <th><font face="Verdana, Arial, Helvetica, sans-serif" color="#003366"><div align="left"><p><strong><a name="1032374"> </a>Component</strong></p></div></font></th>
+        <th><font face="Verdana, Arial, Helvetica, sans-serif" color="#003366"><div align="left"><p><strong><a name="1032376"> </a>Description</strong></p></div></font></th>
+    </div></tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032378"> </a><code>#100</code></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032380"> </a>Simulation time</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032382"> </a><code>p</code></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032384"> </a>Output type of the driver. <code>p</code> indicates the value, strength, and collision detection for the ports.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032386"> </a><code>DDBF</code></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032391"> </a>Value of the port. See <a href="VerilogVCD.html#1032428">"Port Value Character Identifiers"</a> for more information.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032393"> </a><code>6566</code></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032397"> </a>0's strength component of the value. See <a href="VerilogVCD.html#1032597">"Strength Mapping"</a> for more information.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032400"> </a><code>0066</code></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032404"> </a>1's strength component of the value. See <a href="VerilogVCD.html#1032597">"Strength Mapping"</a> for more information.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032407"> </a><code>&lt;1</code></p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032409"> </a>Signal identifier</p>
+        </td>
+    </tr>
+</table>
+<br>
+
+
+</p>
+</p>
+
+
+
+
+<h4>
+    <a name="1032410"> </a>Port Names</h4>
+
+
+<p>
+    <a name="1032411"> </a>Port names are recorded in the output file as follows:</p>
+
+<ul>
+    <a name="1032412"></a><li><p>A port that is explicitly named is recorded in the output file.</p>
+
+    <a name="1032413"></a><li><p>If a port is not explicitly named, the name of the object used in the port definition is recorded.</p>
+
+    <a name="1032414"></a><li><p>If the name of a port cannot be determined from the object used int he port definition, the port index number is used (the first port being 0).</p>
+</ul>
+
+
+<h4>
+    <a name="1032417"> </a>Drivers</h4>
+
+
+<p>
+    <a name="1032418"> </a>A driver is anything that can drive a value onto a net including the following:</p>
+
+<ul>
+    <a name="1032419"></a><li><p>primitives</p>
+
+    <a name="1032420"></a><li><p>continuous assigns</p>
+
+    <a name="1032421"></a><li><p>forces</p>
+
+    <a name="1032422"></a><li><p>ports with objects of type other then net, such as the following:</p>
+    <dl>
+        <pre><a name="1032423"></a><nobr>module foo(out, ...)<br>&nbsp;&nbsp;output out;<br>&nbsp;&nbsp;reg out;</nobr></pre>
+    </dl></ul>
+<p>
+    <a name="1032424"> </a>If a net is forced, a comment is placed into the output file stating that the net connected to the port is being forced, and the scope of the force is given. Forces are treated differently because the existence of a force is not permanent,even though a force is a driver. </p>
+
+
+<p>
+    <a name="1032425"> </a>While a force is active, driver collisions are ignored and the level part of the output is determined by the scope of the force definition.When the force is released, a note is again placed into the log file.</p>
+
+
+
+
+<h4>
+    <a name="1032428"> </a>Port Value Character Identifiers</h4>
+
+
+<p>
+    <a name="1032429"> </a>The following table shows the characters (middle column) that identify the value of a port in the <code>$dumpports</code> output:</p>
+
+
+<p>
+    <a name="1033821"> </a><p>
+    <br>
+<table valign="top" border="1" bordercolorlight="#FFFFFF" bordercolordark="#000000"
+       cellpadding="5" cellspacing="0">
+    <div align="left"></div>
+    <tr bgcolor="#CCCCCC"><div align="center">
+        <th><font face="Verdana, Arial, Helvetica, sans-serif" color="#003366"><div align="left"><p><strong><a name="1032433"> </a>Level</strong></p></div></font></th>
+        <th><font face="Verdana, Arial, Helvetica, sans-serif" color="#003366"><div align="left"><p><strong><a name="1032435"> </a>Char.</strong></p></div></font></th>
+        <th><font face="Verdana, Arial, Helvetica, sans-serif" color="#003366"><div align="left"><p><strong><a name="1032437"> </a>Value</strong></p></div></font></th>
+    </div></tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032439"> </a>DUT</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032441"> </a>L</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032443"> </a>(0) low</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032445"> </a>DUT</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032447"> </a>l</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032449"> </a>(0) low with more than 2 active drivers</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032451"> </a>DUT</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032453"> </a>H</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032455"> </a>(1) high</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032457"> </a>DUT</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032459"> </a>h</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032461"> </a>(1) high with more than 2 active drivers</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032463"> </a>DUT</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032465"> </a>T</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032467"> </a>(Z) tri-state</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032469"> </a>DUT</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032471"> </a>X</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032473"> </a>(X) unknown</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032475"> </a>DUT</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032477"> </a>x</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032479"> </a>(X) unknown because of a 1-0 collision</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032481"> </a>unknown</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032483"> </a>?</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032485"> </a>(X) unknown state</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032487"> </a>unknown</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032489"> </a>0</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032491"> </a>(0) unknown direction; both the input and the output are active with the same value.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032493"> </a>unknown</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032495"> </a>1</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032497"> </a>(1) unknown direction; both the input and the output are active with the same value. </p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032499"> </a>unknown</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032501"> </a>A</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032503"> </a>(0-1) Input is a 0 and output is a 1.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032505"> </a>unknown</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032507"> </a>a</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032509"> </a>(0-X) Input is a 0 and output is an X</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032511"> </a>unknown</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032513"> </a>B</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032515"> </a>(1-0) Input is a 1 and output is a 0.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032517"> </a>unknown</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032519"> </a>b</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032521"> </a>(1-X) Input is a 1 and output is an X.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032523"> </a>unknown</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032525"> </a>C</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032527"> </a>(X-0) Input is a X and output is a 0.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032529"> </a>unknown</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032531"> </a>c</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032533"> </a>(X-1) Input is a X and output is a 1.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032535"> </a>unknown</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032537"> </a>F</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032539"> </a>(Z) tri stated, nothing is driving the net.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032541"> </a>unknown</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032543"> </a>f</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032545"> </a>(Z) tri stated, both internal and external.</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032547"> </a>test fixture</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032549"> </a>D</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032551"> </a>(0) low</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032553"> </a>test fixture</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032555"> </a>d</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032557"> </a>(0) low with more than 2 active drivers</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032559"> </a>test fixture</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032561"> </a>U</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032563"> </a>(1) high</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032565"> </a>test fixture</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032567"> </a>u</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032569"> </a>(1) high with more than 2 active drivers</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032571"> </a>test fixture</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032573"> </a>N</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032575"> </a>(X) unknown</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032577"> </a>test fixture</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032579"> </a>n</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032581"> </a>(X) unknown because of a 1-0 collision</p>
+        </td>
+    </tr>
+    <tr>
+        <td valign="top"><p>
+            <a name="1032583"> </a>test fixture</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032585"> </a>Z</p>
+        </td>
+        <td valign="top"><p>
+            <a name="1032587"> </a>(Z) tri-state</p>
+        </td>
+    </tr>
+</table>
+<br>
+
+
+</p>
+</p>
+
+
+<p>
+    <a name="1032588"> </a>The level of a driver is determined by the scope of the driver's placement on a net. Port type has no influence on the level of a signal. Any driver whose definition is outside of the scope of the DUT is at the test fixture level. </p>
+
+
+<p>
+    <a name="1032589"> </a>In the following example, because the driver is outside the scope of a DUT, the continuous assignment is at the test fixture level:</p>
+
+
+<pre><a name="1032590"></a><nobr>module top;<br>&nbsp;&nbsp;&nbsp;reg regA;<br>&nbsp;&nbsp;&nbsp;assign dut1.out = regA;<br>&nbsp;&nbsp;&nbsp;dut dut1(out, ....);<br>&nbsp;&nbsp;&nbsp;initial<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$dumpports(dut1, "testVec.file");<br>&nbsp;&nbsp;&nbsp;...<br>endmodule<br>module dut(out, ...<br>&nbsp;&nbsp;&nbsp;output out;<br>&nbsp;&nbsp;&nbsp;wire out;<br>&nbsp;&nbsp;&nbsp;...<br>endmodule</nobr></pre>
+
+
+
+<h4>
+    <a name="1032597"> </a>Strength Mapping</h4>
+
+
+<p>
+    <a name="1032598"> </a>Strength values in the <code>$dumpports</code> output are as follows:</p>
+
+
+<pre><a name="1032599"></a><nobr>0 HiZ<br>1 Sm Cap<br>2 Md Cap<br>3 Weak<br>4 Lg Cap<br>5 Pull<br>6 Strong<br>7 Supply</nobr></pre>
+
+<br><br>
+<h3>
+    <a name="1032601"> </a>$dumpports Restrictions</h3>
+
+
+<p>
+    <a name="1032602"> </a>The following restrictions apply to the <code>$dumpports</code> system task:</p>
+
+<ul>
+    <a name="1032603"></a><li><p>The <code>$dumpports</code> system task does not work with the <code>$save</code> and <code>$restart</code> system tasks.</p>
+
+    <a name="1032604"></a><li><p>Continuous assignments cannot have delays.</p>
+
+    <a name="1032605"></a><li><p>The following wire types are the only ones permitted to be connected to the ports:</p>
+    <dl>
+        <pre><a name="1032606"></a><nobr>wire, tri, tri0, tri1, reg, trireg</nobr></pre>
+    </dl>
+    <a name="1032607"></a><li><p>Directional information can be lost when a port is driven by one or more drivers of the different tran elements (<code>tran</code>, <code>rtran</code>, <code>rtranif0</code>, ...). </p>
+    <dl>
+        <p>
+            <a name="1032608"> </a>In the following example, the direction of the port <code>out</code> cannot be determined because the value that the <code>tran</code> gate is transporting from its other terminal is unknown.</p>
+
+    </dl><dl>
+        <pre><a name="1032609"></a><nobr>bufif1 u1(out, 1'b1, 1'b1);<br>DUT    udut(out);<br>...</nobr></pre>
+
+        <pre><a name="1032610"></a><nobr>module DUT(out)<br>&nbsp;&nbsp;&nbsp;tran t1(out, int);</nobr></pre>
+    </dl></ul>
+<br><br>
+<h3>
+    <a name="1032613"> </a>$dumpports_close</h3>
+
+
+<p>
+    <a name="1032614"> </a>The <code>$dumpports_close</code> system task stops a running <code>$dumpports</code> system task. The syntax is as follows:</p>
+
+
+<a name="1032615"></a><dl><dt><code>$dumpports_close(&lt;ID&gt;);</code></dt></dl>
+
+<p>
+    <a name="1032616"> </a>The optional <code><em>&lt;ID&gt;</code></em> argument is an integer that identifies a particular <code>$dumpports</code> system task. If only one <code>$dumpports</code> system task is running, the <code><em>&lt;ID&gt;</code></em> can be left blank. Valid <code><em>&lt;ID&gt;</code></em> values are specified in the syntax of the <code>$dumpports</code> system task.</p>
+
+
+<p>
+    <a name="1032790"> </a>Consider the example given below.</p>
+
+
+<pre><a name="1032791"></a><nobr>....<br>....</nobr></pre>
+
+<pre><a name="1032792"></a><nobr>module top;<br>reg A;<br>integer id;<br>.........<br>.........<br>initial<br>&nbsp;&nbsp;&nbsp;&nbsp;begin<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$dumpports(dut, "testVec.file", id);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#5 $dumpports_close(id);<br>&nbsp;&nbsp;&nbsp;&nbsp;end<br>endmodule</nobr></pre>
+
+<pre><a name="1032793"></a><nobr>....<br>....</nobr></pre>
+
+
+
+</blockquote>
+
+<br>
+<a href="#pagetop">Return to top of page</a>
+<hr>
+
+<p>
+
+
+
+
+

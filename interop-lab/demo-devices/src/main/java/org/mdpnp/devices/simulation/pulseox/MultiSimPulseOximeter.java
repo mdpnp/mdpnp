@@ -12,6 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation.pulseox;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 
@@ -23,21 +24,23 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
     protected final InstanceHolder<ice.SampleArray> pleth[];
 
-    private class MySimulatedPulseOximeter extends SimulatedPulseOximeter {
+    private class SimulatedPulseOximeterExt extends SimulatedPulseOximeter {
         private final int ordinal;
 
-        public MySimulatedPulseOximeter(final int ordinal) {
+        public SimulatedPulseOximeterExt(final DeviceClock referenceClock, final int ordinal) {
+            super(referenceClock);
             this.ordinal = ordinal;
         }
 
         @Override
-        protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, int frequency) {
-            pleth[ordinal] = sampleArraySample(pleth[ordinal], plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, ordinal, 
-                    rosetta.MDC_DIM_DIMLESS.VALUE, frequency, null);
+        protected void receivePulseOx(DeviceClock.Reading timestamp, int heartRate, int SpO2, Number[] plethValues, int frequency) {
+            pleth[ordinal] = sampleArraySample(pleth[ordinal], plethValues,
+                                               rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", ordinal,
+                                               rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timestamp);
         }
     }
 
-    private final MySimulatedPulseOximeter pulseox[];
+    private final SimulatedPulseOximeter pulseox[];
 
     @Override
     public boolean connect(String str) {
@@ -61,11 +64,13 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
     public MultiSimPulseOximeter(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
-        this.pulseox = new MySimulatedPulseOximeter[N];
+        DeviceClock referenceClock = super.getClockProvider();
+
+        this.pulseox = new SimulatedPulseOximeter[N];
         this.pleth = new InstanceHolder[N];
 
         for (int i = 0; i < pleth.length; i++) {
-            this.pulseox[i] = new MySimulatedPulseOximeter(i);
+            this.pulseox[i] = new SimulatedPulseOximeterExt(referenceClock, i);
         }
 
         deviceIdentity.model = "Pulse Ox (Simulated)";

@@ -89,8 +89,7 @@ public class StateMachine<T> {
             emit(state, oldState, transitionNote);
             return true;
         } else {
-            log.trace("NO " + this.state + " --/--> " + state);
-            Thread.dumpStack();
+            log.trace("NO " + this.state + " --/--> " + state, new Exception().fillInStackTrace());
             return false;
         }
     }

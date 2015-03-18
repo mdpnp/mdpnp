@@ -5,12 +5,12 @@ defaultTasks 'build'
 // builds a gradle wrapper
 // http://www.gradle.org/docs/current/userguide/gradle_wrapper.html
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
+    gradleVersion = '2.3'
 }
 
 ext {
-    JAVA_VERSION_SOURCE = 1.7
-    JAVA_VERSION_CLASSES = 1.7
+    JAVA_VERSION_SOURCE = 1.8
+    JAVA_VERSION_CLASSES = 1.8
     WINDOWS = 1
     MAC = 2
     LINUX = 3
@@ -19,7 +19,7 @@ ext {
     ARM = 3
     ARMHF = 4
     ALL = 5
-    SLF4J_VERSION = '1.7.5'
+    SLF4J_VERSION = '1.7.10'
 }
 
 def fromOsName(name) {
@@ -47,13 +47,13 @@ ext {
     targetOsArch = project.hasProperty('OS_ARCH') ? fromOsArch(OS_ARCH) : localOsArch
 }
 group 'org.mdpnp'
-version '0.4.3'
+version '0.5.1-SNAPSHOT'
 
 subprojects {
     apply plugin: 'maven'
     apply plugin: 'eclipse'
     group 'org.mdpnp'
-    version '0.4.3'
+    version '0.5.1-SNAPSHOT'
     buildscript {
         repositories {
 

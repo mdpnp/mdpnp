@@ -15,6 +15,7 @@ package org.mdpnp.devices;
 import ice.Alert;
 import ice.DeviceIdentity;
 import ice.DeviceIdentityDataWriter;
+import ice.DeviceIdentityTypeCode;
 import ice.DeviceIdentityTypeSupport;
 import ice.LocalAlarmSettingsObjectiveDataWriter;
 import ice.Numeric;
@@ -31,19 +32,16 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import javax.management.JMException;
 import javax.management.ObjectInstance;
@@ -53,12 +51,15 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
+import org.mdpnp.rtiapi.data.TypeCodeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantQos;
+import com.rti.dds.infrastructure.BadKind;
+import com.rti.dds.infrastructure.Bounds;
 import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
@@ -99,11 +100,8 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     protected final Topic sampleArrayTopic;
     protected final SampleArrayDataWriter sampleArrayDataWriter;
-    // Resolution of SampleArray samples will be reduced
-    // dynamically based upon what SampleArrays are registered
-    // at what frequency.
-    protected int sampleArrayResolutionNs = 1000000000;
-    
+
+    private final DeviceClock timestampFactory;
 
     protected final Topic alarmSettingsTopic;
     protected final ice.AlarmSettingsDataWriter alarmSettingsDataWriter;
@@ -149,6 +147,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
     }
 
+
     public DeviceIdentity getDeviceIdentity() {
         return deviceIdentity;
     }
@@ -157,15 +156,15 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return domainParticipant;
     }
 
-    protected InstanceHolder<Numeric> createNumericInstance(String metric_id) {
-        return createNumericInstance(metric_id, 0);
+    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, String vendor_metric_id) {
+        return createNumericInstance(metric_id, vendor_metric_id, 0);
     }
     
-    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, int instance_id) {
-        return createNumericInstance(metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE);
+    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, String vendor_metric_id, int instance_id) {
+        return createNumericInstance(metric_id, vendor_metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE);
     }
 
-    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, int instance_id, String unit_id) {
+    protected InstanceHolder<Numeric> createNumericInstance(String metric_id, String vendor_metric_id, int instance_id, String unit_id) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createNumericInstance");
         }
@@ -174,6 +173,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         holder.data = new Numeric();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
+        holder.data.vendor_metric_id = vendor_metric_id;
         holder.data.instance_id = instance_id;
         holder.data.unit_id = unit_id;
         holder.handle = numericDataWriter.register_instance(holder.data);
@@ -251,8 +251,9 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     protected void unregisterAllSampleArrayInstances() {
+        DeviceClock.Reading now = timestampFactory.instant();
         while (!registeredSampleArrayInstances.isEmpty()) {
-            unregisterSampleArrayInstance(registeredSampleArrayInstances.get(0), null);
+            unregisterSampleArrayInstance(registeredSampleArrayInstances.get(0), now);
         }
     }
 
@@ -263,14 +264,13 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
     }
 
-    protected void unregisterSampleArrayInstance(InstanceHolder<SampleArray> holder, Time_t timestamp) {
-        registeredSampleArrayInstances.remove(holder);
-        
-        if(!sampleArraySpecifySourceTimestamp() || null == timestamp) {
-            timestamp = currentTimeSampleArrayResolution(null);
-        }
+    protected void unregisterSampleArrayInstance(InstanceHolder<SampleArray> holder, DeviceClock.Reading timestamp) {
 
-        sampleArrayDataWriter.unregister_instance_w_timestamp(holder.data, holder.handle, timestamp);
+        registeredSampleArrayInstances.remove(holder);
+
+        sampleArrayDataWriter.unregister_instance_w_timestamp(holder.data,
+                                                              holder.handle,
+                                                              DomainClock.toDDSTime(timestamp.getTime()));
     }
 
     protected void unregisterAlarmSettingsInstance(InstanceHolder<ice.AlarmSettings> holder) {
@@ -292,49 +292,8 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     private final Set<String> oldPatientAlertInstances = new HashSet<String>();
     private final Set<String> oldTechnicalAlertInstances = new HashSet<String>();
 
-    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, String unit_id, int frequency) {
-        return createSampleArrayInstance(metric_id, 0, unit_id, frequency);
-    }
 
-    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id, String unit_id, int frequency) {
-        return createSampleArrayInstance(metric_id, instance_id, unit_id, frequency, null);
-    }
-
-    protected void ensureResolutionForFrequency(int frequency, int size) {
-        int periodNs = 1000000000 / frequency;
-        periodNs *= size;
-        if(periodNs < sampleArrayResolutionNs) {
-            log.info("Increase resolution sampleArrayResolutionNs for " + size + " samples at " + frequency + "Hz from minimum period of " + sampleArrayResolutionNs + "ns to " + periodNs + "ns");
-            sampleArrayResolutionNs = periodNs;
-        }
-    }
-    
-    protected Time_t timeSampleArrayResolution(Time_t t) {
-        if(sampleArrayResolutionNs>=1000000000) {
-            int seconds = sampleArrayResolutionNs / 1000000000;
-            t.sec -= 0 == seconds ? 0 : (t.sec % seconds);
-            int nanoseconds = sampleArrayResolutionNs % 1000000000;
-            if(nanoseconds == 0) {
-                // max res (min sample period) is an even number of seconds
-                t.nanosec = 0;
-            } else {
-                t.nanosec -= 0 == nanoseconds ? 0 : (t.nanosec % nanoseconds);
-            }
-        } else {
-            t.nanosec -= 0 == sampleArrayResolutionNs ? 0 : (t.nanosec % sampleArrayResolutionNs);
-        }
-        return t;
-    }
-    
-    protected Time_t currentTimeSampleArrayResolution(Time_t t) {
-        if(null == t) {
-            t = new Time_t(0,0);
-        }
-        domainParticipant.get_current_time(t);
-        return timeSampleArrayResolution(t);
-    }
-    
-    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
+    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency, DeviceClock.Reading timestamp) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createSampleArrayInstance");
         }
@@ -343,40 +302,39 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         holder.data = new SampleArray();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
+        holder.data.vendor_metric_id = vendor_metric_id;
         holder.data.instance_id = instance_id;
         holder.data.unit_id = unit_id;
         holder.data.frequency = frequency;
-        
-        // Wish we could set samplearray clock resolution here but we don't know the batch size yet.
-        // That may need to change
-        
-        if(!sampleArraySpecifySourceTimestamp() || null == timestamp) {
-            timestamp = currentTimeSampleArrayResolution(null);
-        }
-        holder.handle = sampleArrayDataWriter.register_instance_w_timestamp(holder.data, timestamp);
+
+        holder.handle = sampleArrayDataWriter.register_instance_w_timestamp(holder.data,
+                                                                            DomainClock.toDDSTime(timestamp.getTime()));
 
         if(holder.handle.is_nil()) {
-            log.warn("Unable to register instance " + holder.data + " with timestamp " + new Date(timestamp.sec*1000L+timestamp.nanosec/1000000L));
+            log.warn("Unable to register instance " + holder.data + " with timestamp " + timestamp);
             holder.handle = null;
         } else {
-        registeredSampleArrayInstances.add(holder);
+            registeredSampleArrayInstances.add(holder);
         }
         return holder;
     }
 
-    protected void numericSample(InstanceHolder<Numeric> holder, float newValue, Time_t time) {
-            holder.data.value = newValue;
-            if (null != time) {
-                holder.data.device_time.sec = time.sec;
-                holder.data.device_time.nanosec = time.nanosec;
-            } else {
-                holder.data.device_time.sec = 0;
-                holder.data.device_time.nanosec = 0;
-            }
-            numericDataWriter.write(holder.data, holder.handle);
+    protected void numericSample(InstanceHolder<Numeric> holder, float newValue, DeviceClock.Reading time) {
+        holder.data.value = newValue;
+        if(time.hasDeviceTime()) {
+            Time_t t = DomainClock.toDDSTime(time.getDeviceTime());
+            holder.data.device_time.sec = t.sec;
+            holder.data.device_time.nanosec = t.nanosec;
+        } else {
+            holder.data.device_time.sec = 0;
+            holder.data.device_time.nanosec = 0;
         }
+        numericDataWriter.write(holder.data, holder.handle);
+    }
 
-    protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, float newLower, float newUpper) {
+    protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper) {
+        newLower = null == newLower ? Float.NEGATIVE_INFINITY : newLower;
+        newUpper = null == newUpper ? Float.POSITIVE_INFINITY : newUpper;
         if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
             holder.data.lower = newLower;
             holder.data.upper = newUpper;
@@ -398,24 +356,10 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             unregisterAlarmSettingsInstance(holder);
             holder = null;
         }
-        if (null != newLower && null != newUpper) {
-            if (null == holder) {
-                holder = createAlarmSettingsInstance(metric_id);
-            }
-            alarmSettingsSample(holder, newLower, newUpper);
-        } else {
-            if (null != newLower) {
-                log.warn("Not setting only a lower limit on " + metric_id + " for " + deviceIdentity.unique_device_identifier);
-            }
-            if (null != newUpper) {
-                log.warn("Not setting only an upper limit on " + metric_id + " for " + deviceIdentity.unique_device_identifier);
-            }
-            if (null != holder) {
-                unregisterAlarmSettingsInstance(holder);
-                holder = null;
-            }
-
+        if (null == holder) {
+            holder = createAlarmSettingsInstance(metric_id);
         }
+        alarmSettingsSample(holder, newLower, newUpper);
 
         return holder;
     }
@@ -442,42 +386,39 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return holder;
     }
 
-    // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, Time_t time) {
-        return numericSample(holder, null == newValue ? ((Float) null) : ((Float) (float) (int) newValue), metric_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
-    }    
     
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, String unit_id, Time_t time) {
-        return numericSample(holder, null == newValue ? ((Float) null) : ((Float) (float) (int) newValue), metric_id, unit_id, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, String vendor_metric_id, String unit_id, DeviceClock.Reading time) {
+        return numericSample(holder, null == newValue ? null : newValue.floatValue(), metric_id, vendor_metric_id, unit_id, time);
     }
 
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, int instance_id, Time_t time) {
-        return numericSample(holder, null == newValue ? ((Float) null) : ((Float) (float) (int) newValue), metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, String vendor_metric_id, int instance_id, DeviceClock.Reading time) {
+        return numericSample(holder, null == newValue ? null : newValue.floatValue(), metric_id, vendor_metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
     }
     
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, int instance_id, String unit_id, Time_t time) {
-        return numericSample(holder, null == newValue ? ((Float) null) : ((Float) (float) (int) newValue), metric_id, instance_id, unit_id, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, String vendor_metric_id, int instance_id, String unit_id, DeviceClock.Reading time) {
+        return numericSample(holder, null == newValue ? null : newValue.floatValue(), metric_id, vendor_metric_id, instance_id, unit_id, time);
     }
 
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String unit_id, Time_t time) {
-        return numericSample(holder, newValue, metric_id, 0, unit_id, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String vendor_metric_id, String unit_id, DeviceClock.Reading time) {
+        return numericSample(holder, newValue, metric_id, vendor_metric_id, 0, unit_id, time);
     }
 
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, int instance_id, Time_t time) {
-        return numericSample(holder, newValue, metric_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String vendor_metric_id, int instance_id, DeviceClock.Reading time) {
+        return numericSample(holder, newValue, metric_id, vendor_metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
     }
-    
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, int instance_id, String unit_id, Time_t time) {
-        if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id || !holder.data.unit_id.equals(unit_id))) {
+
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String vendor_metric_id, int instance_id, String unit_id, DeviceClock.Reading time) {
+
+        if (holder != null && (!holder.data.metric_id.equals(metric_id) || !holder.data.vendor_metric_id.equals(vendor_metric_id) || holder.data.instance_id != instance_id || !holder.data.unit_id.equals(unit_id))) {
             unregisterNumericInstance(holder);
             holder = null;
         }
         if (null != newValue) {
             if (null == holder) {
-                holder = createNumericInstance(metric_id, instance_id, unit_id);
+                holder = createNumericInstance(metric_id, vendor_metric_id, instance_id, unit_id);
             }
             numericSample(holder, newValue, time);
         } else {
@@ -487,10 +428,6 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             }
         }
         return holder;
-    }
-    
-    protected boolean sampleArraySpecifySourceTimestamp() {
-        return false;
     }
 
     protected void writeDeviceAlert(String alertState) {
@@ -557,83 +494,52 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     protected void writeTechnicalAlert(String key, String value) {
         writeAlert(oldTechnicalAlertInstances, technicalAlertInstances, technicalAlertWriter, key, value);
     }
-    
-    protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, Collection<Number> newValues, Time_t deviceTimestamp) {
-        holder.data.values.userData.clear();
-        for (Number n : newValues) {
-            holder.data.values.userData.addFloat(n.floatValue());
-        }
-        if (deviceTimestamp != null) {
-            holder.data.device_time.sec = deviceTimestamp.sec;
-            holder.data.device_time.nanosec = deviceTimestamp.nanosec;
-        } else {
-            holder.data.device_time.sec = 0;
-            holder.data.device_time.nanosec = 0;
-        }
-        ensureResolutionForFrequency(holder.data.frequency, newValues.size());
-        
-        Time_t time = deviceTimestamp;
-        
-        if(!sampleArraySpecifySourceTimestamp() || null == deviceTimestamp) {
-            time = currentTimeSampleArrayResolution(null);
-        }
-        sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle==null?InstanceHandle_t.HANDLE_NIL:holder.handle, time);
+
+
+    protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder,
+                                                            Number[] newValues,
+                                                            String metric_id, String vendor_metric_id, String unit_id, int frequency,
+                                                            DeviceClock.Reading timestamp) {
+        return sampleArraySample(holder, newValues, metric_id, vendor_metric_id, 0, unit_id, frequency, timestamp);
     }
 
-    protected void sampleArraySample(InstanceHolder<ice.SampleArray> holder, float[] newValues, int len, Time_t deviceTimestamp) {
-        holder.data.values.userData.clear();
-        
-        for(int i = 0; i < len; i++) {
-            holder.data.values.userData.addFloat(newValues[i]);
-        }
-        if (deviceTimestamp != null) {
-            holder.data.device_time.sec = deviceTimestamp.sec;
-            holder.data.device_time.nanosec = deviceTimestamp.nanosec;
-        } else {
-            holder.data.device_time.sec = 0;
-            holder.data.device_time.nanosec = 0;
-        }
-        ensureResolutionForFrequency(holder.data.frequency, len);
-        
-        Time_t time = deviceTimestamp;
-        
-        if(!sampleArraySpecifySourceTimestamp() || null == deviceTimestamp) {
-            time = currentTimeSampleArrayResolution(null);
-        }
-        sampleArrayDataWriter.write_w_timestamp(holder.data, holder.handle==null?InstanceHandle_t.HANDLE_NIL:holder.handle, time);
+
+    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder,
+                                                                Number[] newValues, int len,
+                                                                String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency,
+                                                                DeviceClock.Reading timestamp) {
+        return sampleArraySample(holder, new ArrayContainer<>(newValues, len), metric_id, vendor_metric_id, instance_id, unit_id, frequency, timestamp);
     }
 
-    protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, Time_t timestamp) {
-        sampleArraySample(holder, Arrays.asList(newValues), timestamp);
+    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder,
+                                                                Number[] newValues,
+                                                                String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency,
+                                                                DeviceClock.Reading timestamp) {
+        return sampleArraySample(holder, new ArrayContainer<>(newValues), metric_id, vendor_metric_id, instance_id, unit_id, frequency, timestamp);
     }
 
-    protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues,
-            String metric_id, String unit_id, int frequency, Time_t timestamp) {
-        return sampleArraySample(holder, newValues, metric_id, 0, unit_id, frequency, timestamp);
+    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder,
+                                                                Collection<Number> newValues,
+                                                                String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency,
+                                                                DeviceClock.Reading timestamp) {
+        return sampleArraySample(holder, new CollectionContainer<>(newValues), metric_id, vendor_metric_id, instance_id, unit_id, frequency, timestamp);
     }
 
-    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, float[] newValues, int len,
-            String metric_id, int instance_id, int frequency) {
-        return sampleArraySample(holder, newValues, len, metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE, frequency);
-    }
-    
-    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, float[] newValues, int len,
-            String metric_id, int instance_id, String unit_id, int frequency) {
-        return sampleArraySample(holder, newValues, len, metric_id, instance_id, unit_id, frequency, null);
-    }
+    private InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder,
+                                                          NullSaveContainer<Number> newValues,
+                                                          String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency,
+                                                          DeviceClock.Reading timestamp) {
 
-    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, float[] newValues, int len, 
-            String metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
-        if (null != holder && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id || holder.data.frequency != frequency || !holder.data.unit_id.equals(unit_id))) {
-            unregisterSampleArrayInstance(holder, timestamp);
-            holder = null;
-        }
-        if (null != newValues) {
-            ensureResolutionForFrequency(frequency, newValues.length);
+        holder = ensureHolderConsistency(holder, metric_id, vendor_metric_id, instance_id, unit_id, frequency, timestamp);
+
+        if (!newValues.isNull()) {
+            // Call this now so that resolution of instance registration timestamp
+            // is reduced
+            timestamp = timestamp.refineResolutionForFrequency(frequency, newValues.size());
             if (null == holder) {
-                holder = createSampleArrayInstance(metric_id, instance_id, unit_id, frequency, timestamp);
+                holder = createSampleArrayInstance(metric_id, vendor_metric_id, instance_id, unit_id, frequency, timestamp);
             }
-            sampleArraySample(holder, newValues, len, timestamp);
+            sampleArraySample(holder, newValues, timestamp);
         } else {
             if (holder != null) {
                 unregisterSampleArrayInstance(holder, timestamp);
@@ -643,32 +549,62 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return holder;
     }
 
-    protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder, Number[] newValues, 
-            String metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
-        return sampleArraySample(holder, Arrays.asList(newValues), metric_id, instance_id, unit_id, frequency, timestamp);
+    protected void sampleArraySample(InstanceHolder<SampleArray> holder, Number[] newValues, DeviceClock.Reading timestamp) {
+        sampleArraySample(holder, new ArrayContainer<>(newValues), timestamp);
     }
 
-    protected InstanceHolder<SampleArray> sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number> newValues,
-            String metric_id, int instance_id, String unit_id, int frequency, Time_t timestamp) {
-        // if the specified holder doesn't match the specified name
-        if (holder != null && (!holder.data.metric_id.equals(metric_id) || holder.data.instance_id != instance_id || holder.data.frequency != frequency || !holder.data.unit_id.equals(unit_id))) {
-            unregisterSampleArrayInstance(holder, timestamp);
-            holder = null;
+    protected void sampleArraySample(InstanceHolder<SampleArray> holder, Collection<Number>  newValues, DeviceClock.Reading timestamp) {
+        sampleArraySample(holder, new CollectionContainer<>(newValues), timestamp);
+    }
+
+    private void sampleArraySample(InstanceHolder<ice.SampleArray> holder, NullSaveContainer<Number> newValues, DeviceClock.Reading deviceTimestamp) {
+        fill(holder, newValues);
+        publish(holder, deviceTimestamp);
+    }
+
+    private void fill(InstanceHolder<SampleArray> holder, NullSaveContainer<Number> newValues) {
+        holder.data.values.userData.clear();
+        if(!newValues.isNull()) {
+            Iterator<Number> iter = newValues.iterator();
+            while (iter.hasNext()) {
+                Number n = iter.next();
+                holder.data.values.userData.addFloat(n.floatValue());
+            }
+        }
+    }
+
+    private void publish(InstanceHolder<ice.SampleArray> holder, DeviceClock.Reading deviceTimestamp) {
+
+        if (deviceTimestamp.hasDeviceTime()) {
+            Time_t t = DomainClock.toDDSTime(deviceTimestamp.getDeviceTime());
+            holder.data.device_time.sec = t.sec;
+            holder.data.device_time.nanosec = t.nanosec;
+        } else {
+
+            holder.data.device_time.sec = 0;
+            holder.data.device_time.nanosec = 0;
         }
 
-        if (null != newValues) {
-            // Call this now so that resolution of instance registration timestamp
-            // is reduced
-            ensureResolutionForFrequency(frequency, newValues.size());
-            if (null == holder) {
-                holder = createSampleArrayInstance(metric_id, instance_id, unit_id, frequency, timestamp);
-            }
-            sampleArraySample(holder, newValues, timestamp);
-        } else {
-            if (holder != null) {
-                unregisterSampleArrayInstance(holder, timestamp);
-                holder = null;
-            }
+        DeviceClock.Reading adjusted = deviceTimestamp.refineResolutionForFrequency(holder.data.frequency,
+                                                                                    holder.data.values.userData.size());
+
+        sampleArrayDataWriter.write_w_timestamp(holder.data,
+                                                holder.handle==null?InstanceHandle_t.HANDLE_NIL:holder.handle,
+                                                DomainClock.toDDSTime(adjusted.getTime()));
+    }
+
+    private InstanceHolder<SampleArray> ensureHolderConsistency(InstanceHolder<SampleArray> holder,
+                                                                String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency,
+                                                                DeviceClock.Reading timestamp) {
+
+        if (null != holder && (!holder.data.metric_id.equals(metric_id) ||
+                               !holder.data.vendor_metric_id.equals(vendor_metric_id) ||
+                                holder.data.instance_id != instance_id ||
+                                holder.data.frequency != frequency ||
+                               !holder.data.unit_id.equals(unit_id))) {
+
+            unregisterSampleArrayInstance(holder, timestamp);
+            holder = null;
         }
         return holder;
     }
@@ -776,7 +712,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         executor.shutdown();
         log.info("AbstractDevice shutdown complete");
     }
-    
+
     public AbstractDevice(int domainId, EventLoop eventLoop) {
         DomainParticipantQos pQos = new DomainParticipantQos();
         DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
@@ -785,6 +721,8 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         domainParticipant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null, StatusKind.STATUS_MASK_NONE);
         publisher = domainParticipant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         subscriber = domainParticipant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+
+        timestampFactory = new DomainClock(domainParticipant);
 
         DeviceIdentityTypeSupport.register_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
         deviceIdentityTopic = domainParticipant.create_topic(ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.get_type_name(),
@@ -797,6 +735,56 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         deviceIdentity = new DeviceIdentity();
         deviceIdentity.icon.content_type = "image/png";
         deviceIdentity.build = BuildInfo.getDescriptor();
+        
+        
+        String osName = System.getProperty("os.name");
+        
+        int maxOperatingSystemLength = 0;
+        try {
+            maxOperatingSystemLength = TypeCodeHelper.fieldLength(DeviceIdentityTypeCode.VALUE, "operating_system");
+        } catch (BadKind | Bounds e) {
+            log.warn("Unable to find length of DeviceIdentity.operating_system", e);
+        }
+        
+        if(maxOperatingSystemLength > 0) {
+            if("Linux".equals(osName)) {
+            
+                final String OS_RELEASE_FILE = "/etc/os-release";
+                Path osRelease = Paths.get(OS_RELEASE_FILE);
+                File f = osRelease.toFile();
+                if(f.exists() && f.canRead()) {
+                    try {
+                        
+                        List<String> definitions = Files.readAllLines(osRelease, Charset.forName("UTF-8"));
+                        for (String line : definitions) {
+                            try {
+                                if (line.startsWith("PRETTY_NAME=")) {
+                                    String value = line.substring(line.indexOf("=") + 1);
+                                    if (value.startsWith("\"")) { // Remove the quotes around the value.
+                                        value = value.substring(1, value.length() - 1);
+                                    }
+                                    osName = value;
+                                    break;
+                                }
+                            } catch (IndexOutOfBoundsException e) {
+                                log.debug(e.getMessage(), e);
+                            }
+                        }
+                    } catch (IOException e1) {
+                        log.info("Unable to read " + OS_RELEASE_FILE + " on this Linux system", e1);
+                    }
+                }
+            }
+            String operatingSystem = osName + " " + System.getProperty("os.arch") + " " + System.getProperty("os.version");
+
+            if (operatingSystem.length() > maxOperatingSystemLength) {
+                operatingSystem = operatingSystem.substring(0, maxOperatingSystemLength);
+            }
+            deviceIdentity.operating_system = operatingSystem;
+        } else {
+            deviceIdentity.operating_system = "";
+        }
+
         try {
             iconFromResource(deviceIdentity, iconResourceName());
         } catch (IOException e1) {
@@ -873,6 +861,18 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                 checkForPartitionFile();
             }
         }, 1000L, 5000L, TimeUnit.MILLISECONDS);
+    }
+
+
+    /**
+     * @return an instance of the device clock that should be used in stamping messages. Fall-back implementation
+     * will supply dds time. If device maintains its own notion of the clock, it could use DeviceClock.ComboClock wrapper
+     * to provide clock reading that would contain multiple values.
+     **/
+
+    protected final DeviceClock getClockProvider()
+    {
+        return timestampFactory;
     }
 
     public void setAlarmSettings(ice.GlobalAlarmSettingsObjective obj) {
@@ -1094,7 +1094,76 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
         writeDeviceIdentity();
     }
-    
-    
-    
+
+    static interface NullSaveContainer<T>
+    {
+        boolean isNull();
+        Iterator<T> iterator();
+        int size();
+    }
+
+    static class CollectionContainer<T> implements NullSaveContainer<T>
+    {
+        CollectionContainer(Collection<T> dt) {
+            this.dt = dt;
+        }
+
+        private final Collection<T> dt;
+
+        public boolean isNull() { return dt == null; }
+        public Iterator<T> iterator() { return dt==null? Collections.<T>emptyIterator() : dt.iterator(); }
+        public int size() { return dt == null ? 0 : dt.size(); }
+    }
+
+    static class ArrayContainer<T> implements NullSaveContainer<T>
+    {
+        ArrayContainer(T[] dt) {
+            this(dt, dt == null ? 0 : dt.length);
+        }
+
+        ArrayContainer(T[] dt, int l) {
+            this.dt = dt;
+            this.l = l;
+        }
+
+        private final T[] dt;
+        private final int l;
+
+        public boolean isNull() { return dt == null; }
+        public Iterator<T> iterator() { return new ArrayIterator<T>(dt, l); }
+        public int size() { return l; }
+    }
+
+    static class ArrayIterator<T> implements Iterator<T>
+    {
+        final T[] data;
+        final int l;
+
+        int currentIdx=0;
+
+        public ArrayIterator(T[] data, int l) {
+            this.data = data;
+            this.l = l;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return currentIdx<l;
+        }
+
+        @Override
+        public T next() {
+            return data[currentIdx++];
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void forEachRemaining(Consumer<? super T> action) {
+            throw new UnsupportedOperationException();
+        }
+    }
 }

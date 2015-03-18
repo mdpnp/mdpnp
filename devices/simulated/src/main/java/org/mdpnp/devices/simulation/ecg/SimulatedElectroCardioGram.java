@@ -16,6 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.math.DCT;
 
 /**
@@ -43,14 +44,12 @@ public class SimulatedElectroCardioGram {
         return countiii;
     }
 
-    private final class MyTask implements Runnable {
-        private final Number[] iValues = new Number[SAMPLES_PER_UPDATE];
-        private final Number[] iiValues = new Number[SAMPLES_PER_UPDATE];
-        private final Number[] iiiValues = new Number[SAMPLES_PER_UPDATE];
-        private long lastTime;
-        
-        public MyTask(long lastTime) {
-            this.lastTime = lastTime;
+    private final class DataPublisher implements Runnable {
+        private final Number[] iValues = new Number[samplesPerUpdate];
+        private final Number[] iiValues = new Number[samplesPerUpdate];
+        private final Number[] iiiValues = new Number[samplesPerUpdate];
+
+        public DataPublisher() {
         }
         
         @Override
@@ -79,21 +78,16 @@ public class SimulatedElectroCardioGram {
                 iiiValues[i] = iii[postIncrCountiii()];
             }
 
-            lastTime+=UPDATE_PERIOD;
-            
-            receiveECG(lastTime, iValues, iiValues, iiiValues, heartRate, respiratoryRate, FREQUENCY);
+            DeviceClock.Reading  t = deviceClock.instant();
+
+            receiveECG(t, iValues, iiValues, iiiValues, heartRate, respiratoryRate, frequency);
         }
-
-    };
-
-    protected void receiveECG(long timestamp, Number[] i, Number[] ii, Number[] iii, double heartRate, double respiratoryRate, int frequency) {
 
     }
 
-    protected static final long UPDATE_PERIOD = 1000L;
-    protected static final double MILLISECONDS_PER_SAMPLE = 5;
-    protected static final int FREQUENCY = (int)(1000.0 / MILLISECONDS_PER_SAMPLE);
-    protected static final int SAMPLES_PER_UPDATE = (int) Math.floor(UPDATE_PERIOD / MILLISECONDS_PER_SAMPLE);
+    protected void receiveECG(DeviceClock.Reading sampleTime, Number[] i, Number[] ii, Number[] iii, double heartRate, double respiratoryRate, int frequency) {
+
+    }
 
     private final double[] iCoeffs = new double[] { 1754.6228740250176, -1.8702723856853978, -17.30350351479403, 0.9639533281850988,
             3.840507863935154, 7.934373158467186, -6.404393385136917, -11.414941750464283, 19.496520796069138, 3.7409186531276273,
@@ -224,7 +218,10 @@ public class SimulatedElectroCardioGram {
             task = null;
         }
         long now = System.currentTimeMillis();
-        task = executor.scheduleAtFixedRate(new MyTask(now-now%UPDATE_PERIOD), UPDATE_PERIOD - now % UPDATE_PERIOD, UPDATE_PERIOD, TimeUnit.MILLISECONDS);
+        task = executor.scheduleAtFixedRate(new DataPublisher(),
+                                            updatePeriod - now % updatePeriod,  // initialDelay
+                                            updatePeriod,                       // period
+                                            TimeUnit.MILLISECONDS);             // time unit
     }
 
     public void disconnect() {
@@ -234,8 +231,95 @@ public class SimulatedElectroCardioGram {
         }
     }
 
-    public SimulatedElectroCardioGram() {
+    public SimulatedElectroCardioGram(DeviceClock referenceClock) {
+        this(referenceClock, UPDATE_PERIOD, MS_PER_SAMPLE);
+    }
+
+    public SimulatedElectroCardioGram(DeviceClock referenceClock, long updatePeriod, int msPerSample) {
+        this(referenceClock, updatePeriod, msPerSample, TS_TYPE, CLOCK_DRIFT_MS);
+    }
+
+    public SimulatedElectroCardioGram(final DeviceClock referenceClock,
+                                      final long updatePeriod, final int msPerSample,
+                                      final TimestampType tsPolicy, final long clockDriftMs) {
+        this.updatePeriod = updatePeriod;
+        this.msPerSample = msPerSample;
+        this.deviceClock = new DeviceClock() {
+            final DeviceClock dev=new FuzzyClock(clockDriftMs, tsPolicy);
+            @Override
+            public Reading instant() {
+                return new CombinedReading(referenceClock.instant(), dev.instant());
+            }
+        };
+
+        this.samplesPerUpdate = (int) Math.floor(updatePeriod / msPerSample);
+        this.frequency = (int)(1000.0 / msPerSample);
+
         initWaves();
     }
 
+    final long updatePeriod;
+    final int msPerSample;
+    final DeviceClock deviceClock;
+
+    final int samplesPerUpdate;
+    final int frequency;
+
+    enum TimestampType {
+        realtime,  // real clock
+        metronome, // normalized aka 0-15-30-45-0
+        drift      // real clock with possible drift
+    }
+
+    // defaults
+    private static final long UPDATE_PERIOD     = Long.getLong("SimulatedElectroCardioGram.UPDATE_PERIOD", 1000L);
+    private static final int MS_PER_SAMPLE      = Integer.getInteger("SimulatedElectroCardioGram.UPDATE_PERIOD", 5);
+    private static final TimestampType TS_TYPE  = TimestampType.valueOf(System.getProperty("SimulatedElectroCardioGram.TS_TYPE", "metronome"));
+    private static final int CLOCK_DRIFT_MS     = Integer.getInteger("SimulatedElectroCardioGram.CLOCK_DRIFT_MS", 0);
+
+    class FuzzyClock extends DeviceClock.WallClock {
+
+        public FuzzyClock(long clockDriftMs, TimestampType timestampType) {
+            this.clockDriftMs = clockDriftMs;
+            this.timestampType = timestampType;
+        }
+
+        final long clockDriftMs;
+        final TimestampType timestampType;
+
+        /**
+         *  @return time stamp for the current data sample. few possible choices depending on the timestamp policy:
+         *  if 'drift' - returns real clock with possible random drift.
+         *  if 'metronome' - normalized aka 0-15-30-45-0 based on the update period
+         *  if 'realtime' - always returns wll time, but if will (optionally if clockDrift is not 0) pause the thread for some random drift value
+         */
+
+        @Override
+        protected long getTimeInMillis() {
+            long now;
+            switch (timestampType) {
+                case drift:
+                    long drift = clockDriftMs==0?0L:(long)((clockDriftMs - 2*clockDriftMs*Math.random()));
+                    now = System.currentTimeMillis();
+                    now = now + drift;
+                    break;
+                case metronome:
+                    now = System.currentTimeMillis();
+                    now = now-now%updatePeriod;
+                    break;
+                case realtime:
+                default:
+                    long sleep = clockDriftMs==0?0L:(long)(clockDriftMs*Math.random());
+                    if(sleep != 0)
+                        try {
+                            Thread.sleep(sleep);
+                        } catch (InterruptedException e) {
+                            // too bad, almost harmless.
+                        }
+                    now = System.currentTimeMillis();
+                    break;
+            }
+            return now;
+        }
+    }
 }

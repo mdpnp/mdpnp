@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import org.mdpnp.apps.testapp.xray.FramePanel?>
+<?import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane?>
+
+<GridPane fx:id="main" prefHeight="-1.0" prefWidth="-1.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.xray.XRayVentPanel">
+   <rowConstraints>
+      <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+      <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+   </rowConstraints>
+   <columnConstraints>
+      <ColumnConstraints hgrow="SOMETIMES" />
+      <ColumnConstraints hgrow="SOMETIMES" />
+   </columnConstraints>
+   <children>
+      <BorderPane>
+         <top>
+            <Label text="Sources" BorderPane.alignment="CENTER" />
+         </top>
+         <center>
+            <ScrollPane fitToHeight="true" fitToWidth="true" BorderPane.alignment="CENTER">
+              <content>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0">
+                     <children>
+                        <ListView fx:id="deviceList" focusTraversable="false" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+              </content>
+            </ScrollPane>
+         </center>
+      </BorderPane>
+      <BorderPane prefHeight="-1.0" prefWidth="-1.0" GridPane.columnIndex="1">
+         <top>
+            <Label text="X-Ray Viewer" BorderPane.alignment="CENTER" />
+         </top>
+         <center>
+         <FramePanel fx:id="cameraPanel" focusTraversable="false"/>
+         </center>
+         <bottom>
+            <ComboBox fx:id="cameraBox" focusTraversable="false" prefWidth="-1.0" BorderPane.alignment="CENTER" maxWidth="1000.0"/>
+         </bottom>
+      </BorderPane>
+      <BorderPane prefHeight="-1.0" prefWidth="-1.0" GridPane.rowIndex="1">
+         <top>
+            <Label text="Flow Inspiration/Expiration" BorderPane.alignment="CENTER" />
+         </top>
+         <center>
+         <JavaFXWaveformPane fx:id="waveformPanel"/>
+         </center>
+      </BorderPane>
+      <VBox GridPane.columnIndex="1" GridPane.rowIndex="1">
+         <children>
+            <Label text="Exposure Time (seconds)" />
+            <Slider fx:id="exposureTime" focusTraversable="false" blockIncrement="0.1" majorTickUnit="0.1" max="1.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" />
+            <GridPane>
+              <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+              </rowConstraints>
+               <children>
+                  <Label text="Synchronization Strategy" />
+                  <Label text="Phase of Ventilation" GridPane.columnIndex="1" />
+                  <RadioButton focusTraversable="false" fx:id="manual" mnemonicParsing="false" text="Manual" GridPane.rowIndex="1">
+                     <toggleGroup>
+                        <ToggleGroup fx:id="strategy" />
+                     </toggleGroup>
+                  </RadioButton>
+                  <RadioButton focusTraversable="false" fx:id="endInspiration" mnemonicParsing="false" selected="true" text="EndInspiration" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                     <toggleGroup>
+                        <ToggleGroup fx:id="targetTime" />
+                     </toggleGroup>
+                  </RadioButton>
+                  <RadioButton fx:id="automatic" focusTraversable="false" mnemonicParsing="false" selected="true" text="Automatic" toggleGroup="$strategy" GridPane.rowIndex="2" />
+                  <RadioButton fx:id="endExpiration" focusTraversable="false" mnemonicParsing="false" text="EndExpiration" toggleGroup="$targetTime" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                  <Button fx:id="imageButton" focusTraversable="false" mnemonicParsing="false" text="IMAGE &lt;space bar&gt;" GridPane.rowIndex="3" />
+                  <Button fx:id="resetButton" focusTraversable="false" mnemonicParsing="false" onAction="#clickReset" text="RESET &lt;escape&gt;" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+               </children>
+            </GridPane>
+         </children>
+      </VBox>
+   </children>
+</GridPane>

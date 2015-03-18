@@ -12,199 +12,266 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.awt.BorderLayout;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import ice.ConnectionType;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.concurrent.CountDownLatch;
 
-import javax.imageio.ImageIO;
-import javax.swing.JFrame;
-import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javafx.application.Platform;
+import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 
-import org.mdpnp.apps.testapp.Configuration.DeviceType;
+import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.AbstractDevice;
-import org.mdpnp.devices.EventLoopHandler;
+import org.mdpnp.devices.DeviceDriverProvider;
+import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
-import org.mdpnp.guis.swing.CompositeDevicePanel;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.support.AbstractApplicationContext;
 
-/**
- * @author Jeff Plourde
- *
- */
-public class DeviceAdapter {
 
-    private JFrame frame;
-    private AbstractDevice device;
-    private EventLoopHandler handler;
-    private String[] initialPartition;
-    
-    public void setInitialPartition(String[] initialPartition) {
-        this.initialPartition = initialPartition;
+public abstract class DeviceAdapter {
+
+    private static final Logger log = LoggerFactory.getLogger(DeviceAdapter.class);
+
+    public static DeviceAdapter newHeadlessAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context) throws Exception {
+        DeviceAdapter da = new HeadlessAdapter(deviceFactory, context, true);
+        return da;
+    }
+
+    public static DeviceAdapter newGUIAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context) throws Exception {
+        DeviceAdapter da = new GUIAdapter(deviceFactory, context);
+        return da;
+    }
+
+    public static class DeviceAdapterCommand implements Configuration.Command {
+        @Override
+        public int execute(final Configuration conf) throws Exception
+        {
+            DeviceDriverProvider ddp = conf.getDeviceFactory();
+            if(null == ddp) {
+                log.error("Unknown device type was specified");
+                throw new Exception("Unknown device type was specified");
+            }
+
+            final AbstractApplicationContext context = conf.createContext("DriverContext.xml");
+
+            DeviceAdapter da;
+            if(conf.isHeadless())
+                da = DeviceAdapter.newHeadlessAdapter(ddp, context);
+            else
+                da = DeviceAdapter.newGUIAdapter(ddp, context);
+
+            da.start(conf.getAddress());
+
+            // this will block until killAdapter stops everything.
+            context.destroy();
+            
+            return 0;
+        }
+    }
+
+    abstract AbstractDevice init() throws Exception;
+
+    protected void update(String msg, int pct) {
+        log.info(pct + "% " + msg);
+    }
+
+    protected AbstractDevice device;
+    protected String[] initialPartition;
+
+    private final CountDownLatch stopOk = new CountDownLatch(1);
+
+    protected final AbstractApplicationContext context;
+    protected final DeviceDriverProvider deviceFactory;
+
+    protected DeviceAdapter(DeviceDriverProvider df, AbstractApplicationContext ctx) {
+        deviceFactory = df;
+        context = ctx;
+    }
+
+    public void setInitialPartition(String[] v) {
+        initialPartition = v;
     }
 
     public AbstractDevice getDevice() {
         return device;
     }
-    
-    public JFrame getFrame() {
-        return frame;
-    }
 
-    long start() {
-        return System.currentTimeMillis();
-    }
+    public void start(String address) throws Exception {
 
-    long stop(String s, long tm) {
-        log.trace(s + " took " + (System.currentTimeMillis() - tm) + "ms");
-        return start();
-    }
+        init();
 
-    private static final void setString(JProgressBar progressBar, String s, int value) {
-        if (progressBar != null) {
-            progressBar.setString(s);
-            progressBar.setValue(value);
+        if (null != device && device instanceof AbstractConnectedDevice) {
+            if (!((AbstractConnectedDevice) device).connect(address)) {
+                stopOk.countDown();
+            }
         }
+
+        // Wait until killAdapter
+        stopOk.await();
     }
 
-    private void killAdapter() {
-        killAdapter(null);
+    public void stop()
+    {
+        stopOk.countDown();
     }
 
-    private synchronized void killAdapter(final JProgressBar progressBar) {
-        try {
-            long tm = start();
+    static class HeadlessAdapter extends DeviceAdapter {
 
-            if (null != device && device instanceof AbstractConnectedDevice) {
-                AbstractConnectedDevice cDevice = (AbstractConnectedDevice) device;
-                setString(progressBar, "Ask the device to disconnect from the ICE", 20);
-                cDevice.disconnect();
-                if (!cDevice.awaitState(ice.ConnectionState.Disconnected, 5000L)) {
-                    log.warn("ConnectedDevice ended in State:" + cDevice.getState());
+        HeadlessAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context, boolean isStandalone) {
+
+            super(deviceFactory, context);
+
+            if(isStandalone) {
+                Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+                    public void run() {
+                        log.info("Calling killAdapter from shutdown hook");
+                        stop();
+                    }
+                }));
+            }
+        }
+
+        AbstractDevice init() throws Exception {
+
+            DeviceType type = deviceFactory.getDeviceType();
+
+            log.trace("Starting DeviceAdapter with type=" + type);
+            if (ConnectionType.Network.equals(type.getConnectionType())) {
+                SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
+                log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
+            }
+
+            device = deviceFactory.create(context);
+
+            if (null != initialPartition) {
+                device.setPartition(initialPartition);
+            }
+
+            return device;
+        }
+
+        private static class Metrics {
+            long start() {
+                return System.currentTimeMillis();
+            }
+
+            long stop(String s, long tm) {
+                log.trace(s + " took " + (System.currentTimeMillis() - tm) + "ms");
+                return start();
+            }
+        }
+
+        public synchronized void stop() {
+
+            Metrics metrics = new Metrics();
+            try {
+                long tm = metrics.start();
+
+                if (null != device && device instanceof AbstractConnectedDevice) {
+                    AbstractConnectedDevice cDevice = (AbstractConnectedDevice) device;
+                    update("Ask the device to disconnect from the ICE", 50);
+                    cDevice.disconnect();
+                    if (!cDevice.awaitState(ice.ConnectionState.Disconnected, 5000L)) {
+                        log.warn("ConnectedDevice ended in State:" + cDevice.getState());
+                    }
+                    metrics.stop("disconnect", tm);
                 }
-                tm = stop("disconnect", tm);
-            }
 
-            tm = start();
-            if (device != null) {
-                setString(progressBar, "Shut down the device", 50);
-                device.shutdown();
-                stop("device.shutdown", tm);
-                device = null;
-            }
-            tm = start();
-            if (handler != null) {
-                try {
-                    setString(progressBar, "Stop event processing", 95);
-                    handler.shutdown();
-                    stop("handler.shutdown", tm);
-                    handler = null;
-                } catch (InterruptedException e) {
-                    log.error("Interrupted in handler.shutdown", e);
+                tm = metrics.start();
+                if (device != null) {
+                    update("Shutting down the device", 75);
+                    device.shutdown();
+                    metrics.stop("device.shutdown", tm);
+                    device = null;
                 }
-            }
-        } finally {
-            synchronized (this) {
-                interrupted = true;
-                this.notifyAll();
+            } finally {
+                super.stop();
             }
         }
+
     }
 
-    private static final Logger log = LoggerFactory.getLogger(DeviceAdapter.class);
 
-    public void start(DeviceType type, int domainId, final String address, boolean gui) throws Exception {
-        start(type, domainId, address, gui, true, null);
-    }
+    static class GUIAdapter extends HeadlessAdapter {
 
-    public void start(DeviceType type, int domainId, final String address, boolean gui, boolean exit, EventLoop eventLoop) throws Exception {
-        log.trace("Starting DeviceAdapter with type=" + type);
-        if (null != address && address.contains(":")) {
-            SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
-            log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
-        }
-        if (null == eventLoop) {
-            eventLoop = new EventLoop();
-            handler = new EventLoopHandler(eventLoop);
-        } else {
-            handler = null;
+        private DeviceDataMonitor    deviceMonitor;
+
+        final ProgressBar      progressBar = new ProgressBar();
+
+        public GUIAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context) {
+            super(deviceFactory, context, false);
         }
 
-        device = DeviceFactory.buildDevice(type, domainId, eventLoop);
-        
-        if(null != initialPartition) {
-            device.setPartition(initialPartition);
+        public void stop() {
+
+            try {
+                update("Shut down local monitoring client", 10);
+//                cdp.stop();
+                deviceMonitor.stop();
+                update("Shut down local user interface", 20);
+//                cdp.reset();
+            }
+            finally {
+
+                super.stop();
+
+                Runnable r = new Runnable() {
+                    public void run() {
+//                        frame.setVisible(false);
+//                        frame.dispose();
+                    }
+                };
+
+                if(Platform.isFxApplicationThread()) {
+                    r.run();
+                } else { 
+                    Platform.runLater(r);
+                }
+
+            }
         }
 
-        if (gui) {
-            
-            final DeviceDataMonitor deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier);
-            
-            final CompositeDevicePanel cdp = new CompositeDevicePanel();
-            
-            cdp.setModel(deviceMonitor);
-            
+
+        AbstractDevice init() throws Exception {
+
+            DeviceType type = deviceFactory.getDeviceType();
+
+            AbstractDevice device = super.init();
+
+            deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier);
+
+            FXMLLoader loader = new FXMLLoader(DeviceView.class.getResource("DeviceView.fxml"));
+            Parent node = loader.load();
+            final DeviceView deviceView = loader.getController();
+            deviceView.set(deviceMonitor);
+
             // Use the device subscriber so that we
             // automatically maintain the same partition as the device
+            EventLoop eventLoop = (EventLoop) context.getBean("eventLoop");
             deviceMonitor.start(device.getSubscriber(), eventLoop);
 
-            frame = new DemoFrame("ICE Device Adapter - " + type);
-            frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
-            frame.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosing(WindowEvent e) {
-                    // On the AWT EventQueue
-                    final JProgressBar progressBar = new JProgressBar();
-                    // progressBar.setMaximumSize(new Dimension(300, 100));
-                    // progressBar.setPreferredSize(new Dimension(300, 100));
-                    progressBar.setMinimum(1);
-                    progressBar.setMaximum(100);
-
-                    progressBar.setStringPainted(true);
-                    setString(progressBar, "Shutting down", 1);
-
-                    frame.getContentPane().removeAll();
-
-                    frame.getContentPane().setLayout(new BorderLayout());
-                    frame.getContentPane().add(progressBar, BorderLayout.NORTH);
-                    frame.validate();
-                    frame.repaint();
-
-                    Runnable r = new Runnable() {
-                        public void run() {
-                            try {
-                                setString(progressBar, "Shut down local monitoring client", 10);
-                                cdp.stop();
-                                deviceMonitor.stop();
-                                setString(progressBar, "Shut down local user interface", 20);
-                                cdp.reset();
-                            } finally {
-                                killAdapter(progressBar);
-                            }
-                        }
-                    };
-                    new Thread(r, "Device shutdown thread").start();
-                    super.windowClosing(e);
-                }
-            });
-            frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-            frame.setSize(640, 480);
-            frame.setLocationRelativeTo(null);
-            frame.getContentPane().setLayout(new BorderLayout());
-            JTextArea descriptionText = new JTextArea();
+            TextArea descriptionText = new TextArea();
             descriptionText.setEditable(false);
-            descriptionText.setLineWrap(true);
-            descriptionText.setWrapStyleWord(true);
+            descriptionText.setWrapText(true);
             InputStream is = ConfigurationDialog.class.getResourceAsStream("device-adapter");
             if (null != is) {
                 try {
@@ -221,57 +288,63 @@ public class DeviceAdapter {
                     log.error("Error getting window text", e);
                 }
             }
-
-            frame.getContentPane().add(new JScrollPane(descriptionText), BorderLayout.NORTH);
-            frame.getContentPane().add(cdp, BorderLayout.CENTER);
-
-            frame.getContentPane().validate();
-            frame.setVisible(true);
-        } else {
-            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            BorderPane root = new BorderPane();
+            root.setTop(new ScrollPane(descriptionText));
+            root.setCenter(node);
+            
+            Runnable r = new Runnable() {
                 public void run() {
-                    log.info("Calling killAdapter from shutdown hook");
-                    killAdapter();
+                    final Stage deviceStage = new Stage(StageStyle.DECORATED);
+        //          frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
+                    deviceStage.setOnHiding(new EventHandler<WindowEvent>() {
+        
+                        @Override
+                        public void handle(WindowEvent event) {
+                            progressBar.setProgress(0.0);
+                            update("Shutting down", 1);
+                            root.getChildren().clear();
+                            root.setTop(progressBar);
+        
+                            Runnable r = new Runnable() {
+                                public void run() {
+                                    stop();
+                                }
+                            };
+                            new Thread(r, "Device shutdown thread").start();
+                        }
+                        
+                    });
+                    deviceStage.setScene(new Scene(root));
+                    deviceStage.setWidth(640);
+                    deviceStage.setHeight(480);
+                    deviceStage.centerOnScreen();
+                  
+                    deviceStage.show();
                 }
-            }));
+            };
+            if(Platform.isFxApplicationThread()) {
+                r.run();
+            } else {
+                Platform.runLater(r);
+            }
+            return device;
         }
 
-        if (null != device && device instanceof AbstractConnectedDevice) {
-            if(!((AbstractConnectedDevice) device).connect(address)) {
-                synchronized(this) {
-                    interrupted = true;
-                    this.notifyAll();
+        protected void update(final String msg, final int pct) {
+            log.info(pct + "% " + msg);
+
+            Runnable r = new Runnable() {
+                public void run() {
+                    progressBar.setProgress(pct / 100.0);
                 }
-            }
-        }
+            };
 
-        // Wait until killAdapter, then report on any threads that didn't come
-        // down successfully
-        synchronized (this) {
-            while (!interrupted) {
-                wait();
-            }
-        }
-
-        if (gui) {
-            frame.setVisible(false);
-            frame.dispose();
-        }
-
-        if (exit) {
-
-            int n = Thread.activeCount() + 10;
-            Thread[] threads = new Thread[n];
-            n = Thread.enumerate(threads);
-            for (int i = 0; i < n; i++) {
-                if (threads[i].isAlive() && !threads[i].isDaemon() && !Thread.currentThread().equals(threads[i])) {
-                    log.warn("Non-Daemon thread would block exit: " + threads[i].getName());
-                }
+            if(Platform.isFxApplicationThread()) {
+                r.run();
+            } else {
+                Platform.runLater(r);
             }
 
-            System.exit(0);
         }
     }
-
-    private boolean interrupted = false;
 }

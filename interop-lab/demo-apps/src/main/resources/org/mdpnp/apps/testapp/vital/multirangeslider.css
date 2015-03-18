@@ -1,0 +1,99 @@
+
+
+.multirange-slider .lowest-thumb, 
+.multirange-slider .lower-thumb, 
+.multirange-slider .higher-thumb, 
+.multirange-slider .highest-thumb {
+    -fx-background-color: 
+        linear-gradient(to bottom, derive(-fx-text-box-border, -20%), derive(-fx-text-box-border, -30%)),
+        -fx-inner-border,
+        -fx-body-color;
+    -fx-background-insets: 0, 1, 2;
+    -fx-background-radius: 1.0em; /* makes sure this remains circular */
+    -fx-padding: 0.583333em;  /* 7 */
+    -fx-effect: dropshadow(two-pass-box , rgba(0, 0, 0, 0.1), 5, 0.0 , 0, 2);
+}
+
+.multirange-slider:focused .lowest-thumb,
+.multirange-slider:focused .lower-thumb,
+.multirange-slider:focused .higher-thumb,
+.multirange-slider:focused .highest-thumb {
+    -fx-background-radius: 1.0em; /* makes sure this remains circular */
+}
+
+.multirange-slider .lowest-thumb:focused, 
+.multirange-slider .lower-thumb:focused, 
+.multirange-slider .higher-thumb:focused, 
+.multirange-slider .highest-thumb:focused {
+    -fx-background-color:
+        -fx-focus-color,
+        derive(-fx-color,-36%),
+        derive(-fx-color,73%),
+        linear-gradient(to bottom, derive(-fx-color,-19%),derive(-fx-color,61%));
+    -fx-background-insets: -1.4, 0, 1, 2;
+    -fx-background-radius: 1.0em; /* makes sure this remains circular */
+}
+
+.multirange-slider .lowest-thumb:hover,
+.multirange-slider .lower-thumb:hover, 
+.multirange-slider .higher-thumb:hover,  
+.multirange-slider .highest-thumb:hover {
+    -fx-color: -fx-hover-base;
+}
+
+.multirange-slider .range-bar-lowest,
+.multirange-slider .range-bar-highest {
+    -fx-background-color: red;
+}
+.multirange-slider .range-bar-lower,
+.multirange-slider .range-bar-higher {
+    -fx-background-color: yellow;
+}
+
+.multirange-slider .range-bar-mid {
+    -fx-background-color: green;
+}
+
+.multirange-slider .lowest-thumb:pressed,
+.multirange-slider .lower-thumb:pressed,
+.multirange-slider .higher-thumb:pressed,
+.multirange-slider .highest-thumb:pressed {
+    -fx-color: -fx-pressed-base;
+}
+
+.multirange-slider .track {
+    -fx-background-color: 
+          -fx-shadow-highlight-color,
+          linear-gradient(to bottom, derive(-fx-text-box-border, -10%), -fx-text-box-border),
+          linear-gradient(to bottom, 
+            derive(-fx-control-inner-background, -9%),
+            derive(-fx-control-inner-background, 0%),
+            derive(-fx-control-inner-background, -5%),
+            derive(-fx-control-inner-background, -12%)
+          );
+    -fx-background-insets: 0 0 -1 0, 0, 1;
+    -fx-background-radius: 0.25em, 0.25em, 0.166667em; /* 3 3 2 */
+    -fx-padding: 0.25em; /* 3 */
+}
+
+.multirange-slider:vertical .track {
+    -fx-background-color: 
+          -fx-shadow-highlight-color,
+          -fx-text-box-border,
+          linear-gradient(to right, 
+            derive(-fx-control-inner-background, -9%),
+            -fx-control-inner-background,
+            derive(-fx-control-inner-background, -9%)
+          );
+}
+
+.multirange-slider .axis {
+    -fx-tick-label-fill: derive(-fx-text-background-color, 30%);
+    -fx-tick-length: 5px;
+    -fx-minor-tick-length: 3px;
+    -fx-border-color: null;
+}
+
+.multirange-slider:disabled {
+    -fx-opacity: -fx-disabled-opacity;
+}

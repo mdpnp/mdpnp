@@ -15,13 +15,28 @@ package org.mdpnp.apps.testapp;
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
 
-import java.lang.ref.SoftReference;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.LongProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleLongProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.concurrent.Task;
+import javafx.scene.image.Image;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
-import com.rti.dds.infrastructure.Duration_t;
+import com.rti.dds.infrastructure.Locator_t;
+import com.rti.dds.infrastructure.Property_t;
 
 /**
  * Convenience class for storing DeviceIdentity and DeviceConnectivity instances
@@ -34,146 +49,274 @@ import com.rti.dds.infrastructure.Duration_t;
  * 
  */
 public class Device {
+    private static Image unknownImage = new Image(Device.class.getResourceAsStream("unknown.png"));
     private String udi;
-    private DeviceIdentity deviceIdentity;
-    private DeviceConnectivity deviceConnectivity;
-    private ParticipantBuiltinTopicData participantData;
-    private final Duration_t clockDifference = new Duration_t(Duration_t.DURATION_INFINITE), roundtripLatency = new Duration_t(Duration_t.DURATION_INFINITE);
-
-    private SoftReference<DeviceIcon> realIcon;
 
     public final static int SHORT_UDI_LENGTH = 20;
 
+    @SuppressWarnings("unused")
     private final static Logger log = LoggerFactory.getLogger(Device.class);
 
-    public Device() {
+    private ObjectProperty<Image> image;
+
+    public ObjectProperty<Image> imageProperty() {
+        if (null == image) {
+            image = new SimpleObjectProperty<Image>(this, "image", unknownImage);
+        }
+        return image;
     }
 
-    public Device(String udi) {
-        this.udi = udi;
+    public Image getImage() {
+        return image.get();
     }
 
-    public DeviceIcon getIcon() {
-        if (null == deviceIdentity) {
-            return null;
-        }
+    public void setImage(Image image) {
+        this.image.set(image);
+    }
 
-        DeviceIcon di = null;
-        if (null != realIcon) {
-            di = realIcon.get();
-        }
+    private StringProperty makeAndModel;
 
-        if (di != null && di.isBlank() && deviceIdentity.icon.image != null) {
-            di = null;
-            log.debug("Constructing a new Icon with new ice.Image data");
+    public StringProperty makeAndModelProperty() {
+        if (null == makeAndModel) {
+            makeAndModel = new SimpleStringProperty(this, "makeAndModel", "Unknown Device");
         }
-
-        if (null == di) {
-            di = new DeviceIcon(deviceIdentity.icon);
-            realIcon = new SoftReference<DeviceIcon>(di);
-        }
-
-        return di;
+        return makeAndModel;
     }
 
     public String getMakeAndModel() {
-        if(null == deviceIdentity) {
-            return null;
+        return makeAndModelProperty().get();
+    }
+
+    public void setMakeAndModel(String makeAndModel) {
+        makeAndModelProperty().set(makeAndModel);
+    }
+
+    private BooleanProperty connected;
+
+    public BooleanProperty connectedProperty() {
+        if (null == connected) {
+            connected = new SimpleBooleanProperty(this, "connected", true);
         }
-        if (null==deviceIdentity.manufacturer||deviceIdentity.manufacturer.equals(deviceIdentity.model)||"".equals(deviceIdentity.manufacturer)) {
-            return deviceIdentity.model;
-        } else {
-            return deviceIdentity.manufacturer + " " + deviceIdentity.model;
+        return connected;
+    }
+
+    public boolean getConnected() {
+        return connectedProperty().get();
+    }
+
+    public void setConnected(boolean connected) {
+        connectedProperty().set(connected);
+    }
+
+    private StringProperty hostname;
+
+    public StringProperty hostnameProperty() {
+        if (null == hostname) {
+            hostname = new SimpleStringProperty(this, "hostname", "");
         }
+        return hostname;
+    }
+
+    public String getHostname() {
+        return hostnameProperty().get();
+    }
+
+    public void setHostname(String hostname) {
+        this.hostnameProperty().set(hostname);
+    }
+
+    private LongProperty clockDifference;
+
+    public LongProperty clockDifferenceProperty() {
+        if (null == clockDifference) {
+            clockDifference = new SimpleLongProperty(this, "clockDifference", 0L);
+        }
+        return clockDifference;
+    }
+
+    public long getClockDifference() {
+        return clockDifferenceProperty().get();
+    }
+
+    public void setClockDifference(long clockDifference) {
+        clockDifferenceProperty().set(clockDifference);
+    }
+
+    private LongProperty roundtripLatency;
+
+    public LongProperty roundtripLatencyProperty() {
+        if (null == roundtripLatency) {
+            roundtripLatency = new SimpleLongProperty(this, "roundtripLatency", 0L);
+        }
+        return roundtripLatency;
+    }
+
+    public long getRoundtripLatency() {
+        return roundtripLatencyProperty().get();
+    }
+
+    public void setRoundtripLatency(long roundtripLatency) {
+        roundtripLatencyProperty().set(roundtripLatency);
+    }
+
+    private StringProperty operating_system = new SimpleStringProperty(this, "operating_system", "");
+    private StringProperty build = new SimpleStringProperty(this, "build", "");
+    private StringProperty serial_number = new SimpleStringProperty(this, "serial_number", "");
+
+    public Device(String udi) {
+        this.udi = udi;
+        makeAndModelProperty().set(udi);
     }
 
     public String getShortUDI() {
         return null == udi ? null : udi.substring(0, SHORT_UDI_LENGTH);
     }
 
-    public DeviceIdentity getDeviceIdentity() {
-        return deviceIdentity;
-    }
-
-    public DeviceConnectivity getDeviceConnectivity() {
-        return deviceConnectivity;
-    }
-
     public String getUDI() {
         return udi;
     }
 
-    public void setDeviceIdentity(DeviceIdentity deviceIdentity, ParticipantBuiltinTopicData participantData) {
-        this.realIcon = null;
-        if (null == deviceIdentity) {
-            this.deviceIdentity = null;
-        } else {
+    public void setDeviceIdentity(final DeviceIdentity deviceIdentity, ParticipantBuiltinTopicData participantData) {
+        if (null != deviceIdentity) {
             changeUdi(deviceIdentity.unique_device_identifier);
-            if (null == this.deviceIdentity) {
-                log.debug("see first deviceIdentity sample for udi="+deviceIdentity.unique_device_identifier);
-                this.deviceIdentity = new DeviceIdentity(deviceIdentity);
+            if (null == deviceIdentity.manufacturer || deviceIdentity.manufacturer.equals(deviceIdentity.model)
+                    || "".equals(deviceIdentity.manufacturer)) {
+                makeAndModelProperty().set(deviceIdentity.model);
             } else {
-                this.deviceIdentity.copy_from(deviceIdentity);
+                makeAndModelProperty().set(deviceIdentity.manufacturer + " " + deviceIdentity.model);
             }
-            if(null == this.participantData) {
-                this.participantData = new ParticipantBuiltinTopicData();
-                this.participantData.copy_from(participantData);
-            } else {
-                this.participantData.copy_from(participantData);
-            }
+            hostnameProperty().set(getHostname(participantData));
+            operating_systemProperty().set(deviceIdentity.operating_system);
+            buildProperty().set(deviceIdentity.build);
+            serial_numberProperty().set(deviceIdentity.build);
+            
+            Task<Image> task = new Task<Image>() {
+                @Override
+                protected Image call() throws Exception {
+                    InputStream is = new ByteArrayInputStream(
+                            deviceIdentity.icon.image.userData.toArrayByte(new byte[deviceIdentity.icon.image.userData.size()]));
+                    final Image image = new Image(is);
+                    return image;
+                }
+            };
+            imageProperty().bind(task.valueProperty());
+            Thread t = new Thread(task, "Load Device Image");
+            t.setDaemon(true);
+            t.start();
         }
     }
-    
+
     private void changeUdi(String udi) {
-        if(null != udi) {
-            if(this.udi == null) {
+        if (null != udi) {
+            if (this.udi == null) {
                 this.udi = udi;
             } else {
-                if(!udi.equals(this.udi)) {
+                if (!udi.equals(this.udi)) {
                     throw new IllegalArgumentException("UDI currently " + this.udi + " not changing to " + udi + " found in user QoS");
                 }
             }
         }
     }
-    
-    public String getHostname() {
-        return null == participantData ? null : ParticipantOnly.getHostname(participantData);
+
+    public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {
+        changeUdi(deviceConnectivity.unique_device_identifier);
+        connectedProperty().set(ice.ConnectionState.Connected.equals(deviceConnectivity.state));
     }
 
-    public void setClockDifference(Duration_t clockDifference) {
-        this.clockDifference.copy_from(clockDifference);
-    }
-    
-    public void setRoundtripLatency(Duration_t roundtripLatency) {
-        this.roundtripLatency.copy_from(roundtripLatency);
-    }
-    
-    public Duration_t getClockDifference() {
-        return clockDifference;
-    }
-    
-    public Duration_t getRoundtripLatency() {
-        return roundtripLatency;
-    }
-    
-    public double getClockDifferenceMs() {
-        return 1000.0 * clockDifference.sec + clockDifference.nanosec / 1000000.0;
-    }
-    
-    public double getRoundtripLatencyMs() {
-        return 1000.0 * roundtripLatency.sec + roundtripLatency.nanosec / 1000000.0;
-    }    
-    
-    public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {
-        if (null == deviceConnectivity) {
-            this.deviceConnectivity = null;
-        } else {
-            changeUdi(deviceConnectivity.unique_device_identifier);
-            if (null == this.deviceConnectivity) {
-                this.deviceConnectivity = new DeviceConnectivity(deviceConnectivity);
-            } else {
-                this.deviceConnectivity.copy_from(deviceConnectivity);
+    public static final String getHostname(ParticipantBuiltinTopicData participantData) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < participantData.property.value.size(); i++) {
+            Property_t prop = (Property_t) participantData.property.value.get(i);
+            if ("dds.sys_info.hostname".equals(prop.name)) {
+                sb.append(prop.value).append(" ");
             }
         }
+
+        for (int i = 0; i < participantData.default_unicast_locators.size(); i++) {
+            Locator_t locator = (Locator_t) participantData.default_unicast_locators.get(i);
+            try {
+                InetAddress addr = null;
+                switch (locator.kind) {
+                case Locator_t.KIND_TCPV4_LAN:
+                case Locator_t.KIND_TCPV4_WAN:
+                case Locator_t.KIND_TLSV4_LAN:
+                case Locator_t.KIND_TLSV4_WAN:
+                case Locator_t.KIND_UDPv4:
+                    addr = InetAddress
+                            .getByAddress(new byte[] { locator.address[12], locator.address[13], locator.address[14], locator.address[15] });
+                    break;
+                case Locator_t.KIND_UDPv6:
+                default:
+                    addr = InetAddress.getByAddress(locator.address);
+                    break;
+                }
+                sb.append(addr.getHostAddress()).append(" ");
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+                // log.error("getting locator address", e);
+            }
+        }
+        return sb.toString();
     }
+
+    @Override
+    public String toString() {
+        Image img = imageProperty().get();
+        if (null != img) {
+            return udi + " " + makeAndModelProperty().get() + " height=" + img.getHeight() + " width=" + img.getWidth();
+        } else {
+            return udi + " " + makeAndModelProperty().get();
+        }
+    }
+
+    public final StringProperty operating_systemProperty() {
+        return this.operating_system;
+    }
+
+    public final java.lang.String getOperating_system() {
+        return this.operating_systemProperty().get();
+    }
+
+    public final void setOperating_system(final java.lang.String operating_system) {
+        this.operating_systemProperty().set(operating_system);
+    }
+
+    public final StringProperty buildProperty() {
+        return this.build;
+    }
+
+    public final java.lang.String getBuild() {
+        return this.buildProperty().get();
+    }
+
+    public final void setBuild(final java.lang.String build) {
+        this.buildProperty().set(build);
+    }
+
+    public final StringProperty serial_numberProperty() {
+        return this.serial_number;
+    }
+
+    public final java.lang.String getSerial_number() {
+        return this.serial_numberProperty().get();
+    }
+
+    public final void setSerial_number(final java.lang.String serial_number) {
+        this.serial_numberProperty().set(serial_number);
+    }
+    
+    @Override
+    public int hashCode() {
+        return udi.hashCode();
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof Device) {
+            return udi.equals(((Device)obj).udi);
+        } else {
+            return false;
+        }
+    }
+
 }

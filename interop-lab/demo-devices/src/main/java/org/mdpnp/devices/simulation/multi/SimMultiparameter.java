@@ -14,6 +14,7 @@ package org.mdpnp.devices.simulation.multi;
 
 import ice.GlobalSimulationObjective;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.devices.simulation.co2.SimulatedCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimulatedElectroCardioGram;
@@ -35,26 +36,32 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
     protected final InstanceHolder<ice.Numeric> pulse, SpO2, respiratoryRate, etCO2, ecgRespiratoryRate, heartRate;
     protected InstanceHolder<ice.SampleArray> pleth, co2, i, ii, iii;
 
-    private class MySimulatedPulseOximeter extends SimulatedPulseOximeter {
-        private final Time_t sampleTime = new Time_t(0, 0);
+    private class SimulatedPulseOximeterExt extends SimulatedPulseOximeter {
+
+        public SimulatedPulseOximeterExt(DeviceClock referenceClock) {
+            super(referenceClock);
+        }
+
         @Override
-        protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, int frequency) {
-            sampleTime.sec = (int) (timestamp / 1000L);
-            sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
+        protected void receivePulseOx(DeviceClock.Reading sampleTime, int heartRate, int SpO2, Number[] plethValues, int frequency) {
+
             numericSample(pulse, heartRate, sampleTime);
             numericSample(SimMultiparameter.this.SpO2, SpO2, sampleTime);
-            pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, 
+            pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
                     rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
         }
     }
     
-    private class MySimulatedCapnometer extends SimulatedCapnometer {
-        private final Time_t sampleTime = new Time_t(0, 0);
+    private class SimulatedCapnometerExt extends SimulatedCapnometer {
+
+        public SimulatedCapnometerExt(DeviceClock referenceClock) {
+            super(referenceClock);
+        }
+
         @Override
-        protected void receiveCO2(long timestamp, Number[] co2Values, int respiratoryRateValue, int etCO2Value, int frequency) {
-            sampleTime.sec = (int) (timestamp / 1000L);
-            sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
-            co2 = sampleArraySample(co2, co2Values, rosetta.MDC_AWAY_CO2.VALUE, 0, 
+        protected void receiveCO2(DeviceClock.Reading sampleTime, Number[] co2Values, int respiratoryRateValue, int etCO2Value, int frequency) {
+
+            co2 = sampleArraySample(co2, co2Values, rosetta.MDC_AWAY_CO2.VALUE, "", 0, 
                     rosetta.MDC_DIM_MMHG.VALUE, frequency, sampleTime);
             numericSample(respiratoryRate, respiratoryRateValue, sampleTime);
             numericSample(etCO2, etCO2Value, sampleTime);
@@ -62,20 +69,23 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
         }
     }
     
-    private class MySimulatedElectroCardioGram extends SimulatedElectroCardioGram {
-        private final Time_t sampleTime = new Time_t(0, 0);
+    private class SimulatedElectroCardioGramExt extends SimulatedElectroCardioGram {
+
+        public SimulatedElectroCardioGramExt(DeviceClock referenceClock) {
+            super(referenceClock);
+        }
+
         @Override
-        protected void receiveECG(long timestamp, Number[] iValues, Number[] iiValues, Number[] iiiValues, double heartRateValue, double respiratoryRateValue,
-                int frequency) {
-            sampleTime.sec = (int) (timestamp / 1000L);
-            sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
+        protected void receiveECG(DeviceClock.Reading sampleTime, Number[] iValues, Number[] iiValues, Number[] iiiValues,
+                                  double heartRateValue, double respiratoryRateValue, int frequency) {
+
             try {
                 // TODO get better numbers in actual millivolts
-                i = sampleArraySample(i, iValues, ice.MDC_ECG_LEAD_I.VALUE, 0, 
+                i = sampleArraySample(i, iValues, ice.MDC_ECG_LEAD_I.VALUE, "", 0, 
                         rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
-                ii = sampleArraySample(ii, iiValues, ice.MDC_ECG_LEAD_II.VALUE, 0, 
+                ii = sampleArraySample(ii, iiValues, ice.MDC_ECG_LEAD_II.VALUE, "", 0, 
                         rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
-                iii = sampleArraySample(iii, iiiValues, ice.MDC_ECG_LEAD_III.VALUE, 0, 
+                iii = sampleArraySample(iii, iiiValues, ice.MDC_ECG_LEAD_III.VALUE, "", 0, 
                         rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
 
                 numericSample(heartRate, (float) heartRateValue, sampleTime);
@@ -86,9 +96,9 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
         }
     }
 
-    private final MySimulatedElectroCardioGram ecg = new MySimulatedElectroCardioGram();
-    private final MySimulatedPulseOximeter pulseox = new MySimulatedPulseOximeter();
-    private final MySimulatedCapnometer capnometer = new MySimulatedCapnometer();
+    private final SimulatedElectroCardioGram ecg;
+    private final SimulatedPulseOximeter pulseox;
+    private final SimulatedCapnometer capnometer;
 
     @Override
     public boolean connect(String str) {
@@ -109,14 +119,20 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
     public SimMultiparameter(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
-        pulse = createNumericInstance(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
-        SpO2 = createNumericInstance(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
-        
-        respiratoryRate = createNumericInstance(rosetta.MDC_CO2_RESP_RATE.VALUE);
-        etCO2 = createNumericInstance(rosetta.MDC_AWAY_CO2_ET.VALUE);
+        DeviceClock referenceClock = getClockProvider();
 
-        ecgRespiratoryRate = createNumericInstance(rosetta.MDC_TTHOR_RESP_RATE.VALUE);
-        heartRate = createNumericInstance(rosetta.MDC_ECG_HEART_RATE.VALUE);
+        ecg = new SimulatedElectroCardioGramExt(referenceClock);
+        pulseox = new SimulatedPulseOximeterExt(referenceClock);
+        capnometer = new SimulatedCapnometerExt(referenceClock);
+
+        pulse = createNumericInstance(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "");
+        SpO2 = createNumericInstance(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, "");
+        
+        respiratoryRate = createNumericInstance(rosetta.MDC_CO2_RESP_RATE.VALUE, "");
+        etCO2 = createNumericInstance(rosetta.MDC_AWAY_CO2_ET.VALUE, "");
+
+        ecgRespiratoryRate = createNumericInstance(rosetta.MDC_TTHOR_RESP_RATE.VALUE, "");
+        heartRate = createNumericInstance(rosetta.MDC_ECG_HEART_RATE.VALUE, "");
 
         deviceIdentity.model = "Multiparameter (Simulated)";
         writeDeviceIdentity();
@@ -147,11 +163,5 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
             }
         }
     }
-    
-    @Override
-    protected boolean sampleArraySpecifySourceTimestamp() {
-        return true;
-    }
-    
 
 }

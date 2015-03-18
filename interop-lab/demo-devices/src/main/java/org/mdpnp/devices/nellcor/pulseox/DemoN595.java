@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.serial.AbstractSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
@@ -25,8 +26,6 @@ import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
-
-import com.rti.dds.infrastructure.Time_t;
 
 /**
  * @author Jeff Plourde
@@ -41,21 +40,29 @@ public class DemoN595 extends AbstractSerialDevice {
             super();
         }
 
-        private final Time_t sampleTime = new Time_t(0, 0);
         private final Set<Status> statusSet = new HashSet<Status>();
         private final StringBuilder builder = new StringBuilder();
 
         @Override
         public void firePulseOximeter() {
-            long tm = getTimestamp().getTime();
-            sampleTime.sec = (int) (tm / 1000L);
-            sampleTime.nanosec = (int) (tm % 1000L * 1000000L);
-            pulse = numericSample(pulse, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 
-                    rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, sampleTime);
-            spo2 = numericSample(spo2, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 
-                    rosetta.MDC_DIM_PERCENT.VALUE, sampleTime);
-            pulseAmplitude = numericSample(pulseAmplitude, getPulseAmplitude(), "NELLCOR_PULSE_AMPLITUDE", 
-                    rosetta.MDC_DIM_DIMLESS.VALUE, sampleTime);
+
+            DeviceClock.Reading sampleTime= super.instant();
+
+            pulse = numericSample(pulse, getHeartRate(),
+                                  rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "",
+                                  rosetta.MDC_DIM_BEAT_PER_MIN.VALUE,
+                                  sampleTime);
+
+            spo2 = numericSample(spo2, getSpO2(),
+                                 rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, "",
+                                 rosetta.MDC_DIM_PERCENT.VALUE,
+                                 sampleTime);
+
+            pulseAmplitude = numericSample(pulseAmplitude, getPulseAmplitude(),
+                                           "NELLCOR_PULSE_AMPLITUDE", "",
+                                           rosetta.MDC_DIM_DIMLESS.VALUE,
+                                           sampleTime);
+
             markOldPatientAlertInstances();
             statusSet.clear();
             for(Status s : getStatus()) {

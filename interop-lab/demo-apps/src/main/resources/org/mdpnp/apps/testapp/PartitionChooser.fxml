@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane fx:id="partitionChooser" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.PartitionChooser">
+  <bottom>
+    <BorderPane prefHeight="-1.0" prefWidth="-1.0">
+      <center>
+        <TextField fx:id="field" onKeyReleased="#releaseTextKey" prefHeight="-1.0" prefWidth="-1.0" />
+      </center>
+      <right>
+        <Button fx:id="ok" mnemonicParsing="false" onAction="#clickOk" text="OK" />
+      </right>
+      <top>
+        <TextArea editable="false" prefHeight="60.0" prefWidth="-1.0" text="Type a partition name and press &lt;enter&gt; to add.&#10;Highlight a partition and press &lt;backspace&gt; to remove.&#10;Press Ok when you're done." wrapText="true" />
+      </top>
+    </BorderPane>
+  </bottom>
+  <center>
+    <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="200.0" prefViewportHeight="0.0" prefViewportWidth="0.0" prefWidth="-1.0">
+      <content>
+        <AnchorPane id="Content" minHeight="-1.0" minWidth="-1.0" onKeyReleased="#releaseListKey" prefHeight="-1.0" prefWidth="-1.0">
+          <children>
+            <ListView fx:id="list" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+          </children>
+        </AnchorPane>
+      </content>
+    </ScrollPane>
+  </center>
+  <top>
+    <Label text="Current Partitions" />
+  </top>
+</BorderPane>

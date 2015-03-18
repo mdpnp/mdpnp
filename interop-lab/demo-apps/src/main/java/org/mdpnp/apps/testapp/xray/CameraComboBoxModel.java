@@ -12,7 +12,9 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.xray;
 
-import javax.swing.DefaultComboBoxModel;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,28 +23,37 @@ import com.github.sarxos.webcam.Webcam;
 import com.github.sarxos.webcam.WebcamDiscoveryEvent;
 import com.github.sarxos.webcam.WebcamDiscoveryListener;
 
-@SuppressWarnings({ "serial", "rawtypes", "unchecked" })
 /**
  * @author Jeff Plourde
  *
  */
-public class CameraComboBoxModel extends DefaultComboBoxModel implements WebcamDiscoveryListener {
+public class CameraComboBoxModel implements WebcamDiscoveryListener {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(CameraComboBoxModel.class);
 
+    private ObservableList<Webcam> items = FXCollections.observableArrayList();
+    
     public CameraComboBoxModel() {
 
     }
 
-    public synchronized void addElement(Webcam webcam) {
-        if (getIndexOf(webcam) < 0) {
-            super.addElement(webcam);
-        }
+    public synchronized void addElement(final Webcam webcam) {
+        Platform.runLater(new Runnable() {
+            public void run() {
+                if(!items.contains(webcam)) {
+                    items.add(webcam);
+                }
+            }
+        });
     }
 
     public synchronized void removeElement(Webcam webcam) {
-        super.removeElement(webcam);
+        Platform.runLater(new Runnable() {
+            public void run() {
+                items.remove(webcam);
+            }
+        });
     }
 
     public void start() {
@@ -64,6 +75,10 @@ public class CameraComboBoxModel extends DefaultComboBoxModel implements WebcamD
     @Override
     public void webcamGone(WebcamDiscoveryEvent event) {
         removeElement(event.getWebcam());
+    }
+    
+    public ObservableList<Webcam> getItems() {
+        return items;
     }
 
 }

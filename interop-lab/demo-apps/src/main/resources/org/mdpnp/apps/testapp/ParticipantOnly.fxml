@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2"
+ fx:controller="org.mdpnp.apps.testapp.ParticipantOnly">
+ <!-- TODO Add Nodes -->
+ <center>
+  <ScrollPane fitToHeight="true" fitToWidth="true"
+   prefHeight="-1.0" prefWidth="-1.0">
+   <content>
+    <AnchorPane id="Content" minHeight="0.0" minWidth="0.0"
+     prefHeight="-1.0" prefWidth="-1.0">
+     <children>
+      <TableView fx:id="participantTable" prefHeight="-1.0"
+       prefWidth="-1.0" AnchorPane.bottomAnchor="0.0"
+       AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+       AnchorPane.topAnchor="0.0">
+       <columns>
+        <TableColumn prefWidth="75.0" text="Key">
+         <cellValueFactory>
+          <PropertyValueFactory property="key" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="75.0" text="Name">
+         <cellValueFactory>
+          <PropertyValueFactory property="name" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="75.0" text="Host Name">
+         <cellValueFactory>
+          <PropertyValueFactory property="hostname" />
+         </cellValueFactory>
+        </TableColumn>
+       </columns>
+      </TableView>
+     </children>
+    </AnchorPane>
+   </content>
+  </ScrollPane>
+ </center>
+</BorderPane>

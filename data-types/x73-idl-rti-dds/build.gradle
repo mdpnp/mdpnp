@@ -46,6 +46,8 @@ dependencies {
   // nddsjava.jar is the java binding library for RTI DDS
   compile group: 'com.rti.dds', name: 'nddsjava', version: '5.1-mdpnp-000006'
 
+  compile group: 'org.springframework', name: 'spring-context', version: '4.1.3.RELEASE'
+
   //compile project(':data-types:x73-idl')
   testCompile group: 'junit', name: 'junit', version: '4.11'
 
@@ -96,17 +98,31 @@ task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) << {
   myArgs.addAll(['-ppOption', '-I'+project(':data-types:x73-idl').projectDir.getPath()+'/src/main/idl'])
   myArgs.add('-replace')
   myArgs.add('-inputIdl')
-
-  for(File f : idlFiles) {
-    println 'Generating from ' + f.name
-    myArgs.add(f.getPath())
-    javaexec {
-      classpath = configurations.rtiddsgen
-      jvmArgs = ['-DNDDS_RESOURCE_DIR=build/rtiddsgen/resource/']
-      main = myMain
-      args = myArgs
-    }
-    myArgs.remove(myArgs.size()-1)
+  
+  new ByteArrayOutputStream().withStream { os ->
+  
+      for(File f : idlFiles) {
+        println 'Generating from ' + f.name
+        myArgs.add(f.getPath())
+        try {
+            javaexec {
+              classpath = configurations.rtiddsgen
+              jvmArgs = ['-DNDDS_RESOURCE_DIR=build/rtiddsgen/resource/']
+              main = myMain
+              args = myArgs
+              standardOutput = os
+            }
+        } finally {
+            // The jcpp preprocessor will not recognize these #pragmas used by the PrismTech code generator
+            // This will capture and hide warnings from the preprocessor that make people think that things have gone
+            // more wrong than they have
+            // This in a finally block to ensure we do print to screen messages related any errors that may have abnormally 
+            // terminated the code generator.
+            print os.toString().replaceAll(/.*warning: Unknown #pragma: keylist\r?\n/, "")
+        }
+        os.reset()
+        myArgs.remove(myArgs.size()-1)
+      }
   }
 }
 

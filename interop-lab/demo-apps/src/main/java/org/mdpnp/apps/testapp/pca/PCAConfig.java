@@ -12,384 +12,302 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.pca;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextArea;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
+import javafx.util.Callback;
 
-import org.mdpnp.apps.testapp.DeviceListCellRenderer;
+import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.MyInfusionStatus;
+import org.mdpnp.apps.testapp.MyInfusionStatusItems;
+import org.mdpnp.apps.testapp.MyInfusionStatusListCell;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
-import org.mdpnp.apps.testapp.vital.VitalModelListener;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rti.dds.infrastructure.InstanceHandle_t;
 
-@SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
  *
  */
-public class PCAConfig extends JComponent implements VitalModelListener, ListDataListener {
+public class PCAConfig implements ListChangeListener<Vital> {
 
-    JCheckBox configureModeBox = new JCheckBox("Configuration Mode");
-    JPanel configurePanel = new JPanel();
+    @FXML protected ListView<MyInfusionStatus> pumpList;
+    @FXML protected TextArea warningStatus;
+    @FXML protected ComboBox<Integer> warningsToAlarm;
+    @FXML protected ComboBox<VitalSign> vitalSigns;
+    @FXML protected VBox vitalsPanel;
     
-    private final ice.InfusionObjectiveDataWriter objectiveWriter;
+    private static final Logger log = LoggerFactory.getLogger(PCAConfig.class);
+    
+//    JCheckBox configureModeBox = new JCheckBox("Configuration Mode");
+//    JPanel configurePanel = new JPanel();
+    
+    private ice.InfusionObjectiveDataWriter objectiveWriter;
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public PCAConfig(ScheduledExecutorService executor, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListCellRenderer deviceCellRenderer) {
-        setLayout(new GridBagLayout());
+    public PCAConfig set(ScheduledExecutorService executor, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListModel deviceListModel) {
         this.objectiveWriter = objectiveWriter;
-        pumpProgress = new JProgressAnimation2(executor);
-        pumpProgress.setForeground(Color.green);
-        // pumpProgress.setBackground(new Color(1f,1f,1f,.5f));
-        // pumpProgress.setFont(Font.decode("fixed-20"));
+        pumpList.setCellFactory(new Callback<ListView<MyInfusionStatus>, ListCell<MyInfusionStatus>>() {
 
-        pumpProgress.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
-                model.resetInfusion();
-                super.mouseClicked(e);
+            public ListCell<MyInfusionStatus> call(ListView<MyInfusionStatus> param) {
+                return new MyInfusionStatusListCell(deviceListModel);
             }
+            
         });
-
-        warningStatus.setEditable(false);
-        warningStatus.setLineWrap(true);
-        warningStatus.setWrapStyleWord(true);
-
-        Font font = Font.decode("verdana-20");
-        warningStatus.setFont(font);
-
         List<Integer> values = new ArrayList<Integer>();
         for (int i = 0; i < VitalSign.values().length; i++) {
             values.add(i + 1);
         }
-        warningsToAlarm.setModel(new DefaultComboBoxModel(values.toArray(new Integer[0])));
-        // warningsToAlarm.setSelectedItem((Integer)model.getCountWarningsBecomeAlarm());
-        configurePanel.add(warningsToAlarm);
-        configurePanel.add(new JLabel("Warnings become an alarm"));
-        warningsToAlarm.addActionListener(new ActionListener() {
+        warningsToAlarm.setItems(FXCollections.observableList(values));
+        vitalSigns.setItems(FXCollections.observableArrayList(VitalSign.values()));
+        
+        pumpList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<MyInfusionStatus>() {
 
             @Override
-            public void actionPerformed(ActionEvent e) {
-                model.setCountWarningsBecomeAlarm((Integer) warningsToAlarm.getSelectedItem());
-            }
-
-        });
-
-        final JComboBox vitalSigns = new JComboBox(VitalSign.values());
-        configurePanel.add(vitalSigns);
-
-        JButton add = new JButton("Add");
-        add.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ((VitalSign) vitalSigns.getSelectedItem()).addToModel(model);
-            }
-        });
-        configurePanel.add(add);
-
-        configureModeBox.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                configurePanel.setVisible(configureModeBox.isSelected());
-                for (Component c : vitalsPanel.getComponents()) {
-                    if (c instanceof JVital) {
-
-                        ((JVital) c).setShowConfiguration(configureModeBox.isSelected());
-                    }
-                }
-            }
-
-        });
-
-        pumpList.addListSelectionListener(new ListSelectionListener() {
-
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
+            public void changed(ObservableValue<? extends MyInfusionStatus> observable, MyInfusionStatus oldValue, MyInfusionStatus newValue) {
                 vitalChanged(model, null);
-                if (null == pumpList.getSelectedValue()) {
-                    pumpProgress.setPopulated(false);
-                } else {
-                    contentsChanged(null);
-                }
+              if (null == newValue) {
+//                  pumpProgress.setPopulated(false);
+              } else {
+//                  contentsChanged(null);
+              }
             }
-
+            
         });
-        pumpList.setCellRenderer(deviceCellRenderer);
-        buildGUI();
+        
+        return this;
+    }
+    
+    @FXML public void warningsToAlarmSet(ActionEvent evt) {
+        model.setCountWarningsBecomeAlarm(warningsToAlarm.getSelectionModel().getSelectedItem());
+    }
+    
+    @FXML public void pumpProgressClicked(MouseEvent evt) {
+        model.resetInfusion();
+    }
+    
+    @FXML public void addVitalSign(ActionEvent evt) {
+        ((VitalSign) vitalSigns.getSelectionModel().getSelectedItem()).addToModel(model);
+    }
+    
+    public PCAConfig() {
+//        configureModeBox.addActionListener(new ActionListener() {
+//
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                configurePanel.setVisible(configureModeBox.isSelected());
+//                for (Component c : vitalsPanel.getComponents()) {
+//                    if (c instanceof JVital) {
+//
+//                        ((JVital) c).setShowConfiguration(configureModeBox.isSelected());
+//                    }
+//                }
+//            }
+//
+//        });
     }
 
-    private void buildGUI() {
-        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
-                0), 0, 0);
 
-        // ARGH
-        // warningStatus.setBackground(Color.white);
-        // pumpStatus.setBackground(Color.white);
-        // warningStatus.setOpaque(true);
-        // pumpStatus.setOpaque(true);
-
-        JPanel pumpPanel = new JPanel(new GridLayout(1, 3));
-        JScrollPane scrollPane;
-
-        JPanel panel = new JPanel(new BorderLayout());
-
-        Font font = Font.decode("verdana-20");
-        JLabel lbl = new JLabel("Select Infusion Pump");
-        lbl.setFont(font);
-        panel.add(lbl, BorderLayout.NORTH);
-        panel.add(scrollPane = new JScrollPane(pumpList), BorderLayout.CENTER);
-        pumpList.setFont(font);
-        scrollPane.setBorder(null);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.setOpaque(false);
-        pumpList.setOpaque(false);
-        pumpPanel.add(panel);
-
-        pumpPanel.add(pumpProgress);
-
-        lbl = new JLabel("Informational Messages");
-        lbl.setFont(font);
-        panel = new JPanel(new BorderLayout());
-        panel.add(lbl, BorderLayout.NORTH);
-        panel.add(scrollPane = new JScrollPane(warningStatus), BorderLayout.CENTER);
-        scrollPane.setBorder(null);
-        warningStatus.setFont(font);
-        pumpPanel.add(panel);
-
-        gbc.weighty = 5.0;
-        add(pumpPanel, gbc);
-
-        gbc.weighty = 1.0;
-        gbc.gridy++;
-
-        gbc.gridwidth = 3;
-        add(configureModeBox, gbc);
-
-        gbc.gridy++;
-        gbc.gridwidth = 4;
-
-        add(vitalsPanel, gbc);
-        // gbcVitalsStart = (GridBagConstraints) gbc.clone();
-
-        gbc.gridy++;
-        configurePanel.setVisible(configureModeBox.isSelected());
-        add(configurePanel, gbc);
-    }
 
     private VitalModel model;
-    private InfusionStatusInstanceModel pumpModel;
+//    private InfusionStatusInstanceModel pumpModel;
+    @FXML Button add;
 
     protected void updateVitals() {
-        if (SwingUtilities.isEventDispatchThread()) {
+        if(Platform.isFxApplicationThread()) {
             _updateVitals();
         } else {
-            SwingUtilities.invokeLater(new Runnable() {
+            Platform.runLater(new Runnable() {
                 public void run() {
                     _updateVitals();
-                    validate();
-                    // repaint();
                 }
             });
         }
     }
 
-    private final JProgressAnimation2 pumpProgress;
-    private final JList<ice.InfusionStatus> pumpList = new JList<ice.InfusionStatus>();
-    private final JTextArea warningStatus = new JTextArea(" ");
-    @SuppressWarnings("rawtypes")
-    private final JComboBox warningsToAlarm = new JComboBox();
-    private final JPanel vitalsPanel = new JPanel();
+//    private final JProgressAnimation2 pumpProgress;
+
 
     protected void _updateVitals() {
-
-        Map<Vital, JVital> existentJVitals = new HashMap<Vital, JVital>();
-
-        for (Component c : vitalsPanel.getComponents()) {
-            if (c instanceof JVital) {
-                vitalsPanel.remove(c);
-                existentJVitals.put(((JVital) c).getVital(), (JVital) c);
-            }
+        Map<Vital, Node> existentJVitals = new HashMap<Vital, Node>();
+        
+        for(Iterator<Node> itr = vitalsPanel.getChildren().iterator(); itr.hasNext();) {
+            Node n = itr.next();
+            existentJVitals.put((Vital)n.getUserData(), n);
+            itr.remove();
         }
-        // remove(configurePanel);
-
-        // GridBagConstraints gbc = (GridBagConstraints) gbcVitalsStart.clone();
 
         final VitalModel model = this.model;
         if (model != null) {
-            vitalsPanel.setLayout(new GridLayout(model.getCount(), 1));
-            for (int i = 0; i < model.getCount(); i++) {
-                final Vital vital = model.getVital(i);
+            for( Iterator<Vital> itr = model.iterator(); itr.hasNext(); ) {
+                final Vital vital = itr.next();
 
-                JVital jVital = existentJVitals.containsKey(vital) ? existentJVitals.remove(vital) : new JVital(vital);
-                jVital.setShowConfiguration(configureModeBox.isSelected());
+                Node jVital = existentJVitals.get(vital);
+                if(null != jVital) {
+                    vitalsPanel.getChildren().add(jVital);
+                } else {
+                    FXMLLoader loader = new FXMLLoader(VitalView.class.getResource("VitalView.fxml"));
+                    try {
+                        jVital = loader.load();
+                    } catch (IOException e) {
+                        log.warn("",e);
+                        continue;
+                    }
+                    VitalView view = loader.getController();
+                    view.set(vital);
+//                    view.name.setText(vital.getLabel());
+                }
+//                jVital.setShowConfiguration(configureModeBox.isSelected());
 
-                vitalsPanel.add(jVital);
-                jVital.setOpaque(true);
-                // gbc.gridy++;
+                vitalsPanel.getChildren().add(jVital);
             }
-            // gbc.weighty = 0.1;
             // configurePanel.setVisible(configureModeBox.isSelected());
-            // add(configurePanel, gbc);
-
         }
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void setModel(VitalModel model, InfusionStatusInstanceModel pumpModel) {
         String selectedUdi = null;
-        ice.InfusionStatus selected = pumpList.getSelectedValue();
+        MyInfusionStatus selected = pumpList.getSelectionModel().getSelectedItem();
         if (null != selected) {
-            selectedUdi = selected.unique_device_identifier;
+            selectedUdi = selected.getUnique_device_identifier();
         }
-        pumpList.setModel(null == pumpModel ? new DefaultListModel() : pumpModel);
-        if (null != selectedUdi && pumpModel != null) {
-            for (int i = 0; i < pumpModel.getSize(); i++) {
-                ice.InfusionStatus status = pumpModel.getElementAt(i);
-                if (selectedUdi.equals(status.unique_device_identifier)) {
-                    pumpList.setSelectedValue(status, true);
+        ObservableList<MyInfusionStatus> items;
+        if(pumpModel == null) {
+            items = FXCollections.observableArrayList();
+        } else {
+            items = new MyInfusionStatusItems().setModel(pumpModel).getItems();
+        }
+        pumpList.setItems(items);
+        if (null != selectedUdi) {
+            for (int i = 0; i < pumpList.getItems().size(); i++) {
+                MyInfusionStatus status = pumpList.getItems().get(i);
+                if (selectedUdi.equals(status.getUnique_device_identifier())) {
+                    pumpList.getSelectionModel().select(status);
                 }
             }
-        }
-        pumpList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        if (this.pumpModel != null) {
-            this.pumpModel.removeListDataListener(this);
-        }
-        this.pumpModel = pumpModel;
-        if (this.pumpModel != null) {
-            this.pumpModel.addListDataListener(this);
         }
 
         if (this.model != null) {
             this.model.removeListener(this);
         }
         this.model = model;
+        
         if (this.model != null) {
             this.model.addListener(this);
         }
         updateVitals();
-        vitalChanged(this.model, null);
+        if(model != null) {
+            warningStatus.textProperty().bind(model.warningTextProperty());
+        } else {
+            vitalsPanel.getChildren().clear();
+            warningStatus.textProperty().unbind();
+        }
+        
+//        vitalChanged(this.model, null);
     }
 
-    @Override
-    public void vitalChanged(VitalModel model, Vital vital) {
+    public void vitalChanged(final VitalModel model, Vital vital) {
         if (model != null) {
-            warningsToAlarm.setSelectedItem((Integer) model.getCountWarningsBecomeAlarm());
-            ice.InfusionStatus p = pumpList.getSelectedValue();
-
-            if (model.isInfusionStopped()) {
-                if (null != p) {
-                    setStop(p, true);
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    warningsToAlarm.getSelectionModel().select(model.getCountWarningsBecomeAlarm());
+                    MyInfusionStatus p = pumpList.getSelectionModel().getSelectedItem();
+        
+                    if (model.isInfusionStopped()) {
+                        if (null != p) {
+                            setStop(p, true);
+                        }
+        //                pumpProgress.setInterlockText(model.getInterlockText());
+                    } else {
+                        if (null != p) {
+                            setStop(p, false);
+                        }
+        //                pumpProgress.setInterlockText(null);
+                    }
+        
+                    switch (model.getState()) {
+                    case Alarm:
+        //                warningStatus.setBackground(new Background(Color.RED));
+                        break;
+                    case Warning:
+        //                warningStatus.setBackground(Color.YELLOW);
+                        break;
+                    case Normal:
+        //                warningStatus.setBackground(getBackground());
+                        break;
+                    }
+//                    warningStatus.setText(model.getWarningText());
+                
+                    if (vital != null) {
+            //            for (Component c : vitalsPanel.getComponents()) {
+            //                if (c instanceof JVital && ((JVital) c).getVital().equals(vital)) {
+            //                    ((JVital) c).updateData();
+            //                    return;
+            //                }
+            //            }
+                        // fell through if the specified vital was not found
+//                        updateVitals();
+                    }
                 }
-                pumpProgress.setInterlockText(model.getInterlockText());
-            } else {
-                if (null != p) {
-                    setStop(p, false);
-                }
-                pumpProgress.setInterlockText(null);
-            }
-
-            switch (model.getState()) {
-            case Alarm:
-                warningStatus.setBackground(Color.red);
-                break;
-            case Warning:
-                warningStatus.setBackground(Color.yellow);
-                break;
-            case Normal:
-                warningStatus.setBackground(getBackground());
-                break;
-            }
-            warningStatus.setText(model.getWarningText());
-            repaint();
-        }
-        if (vital != null) {
-            for (Component c : vitalsPanel.getComponents()) {
-                if (c instanceof JVital && ((JVital) c).getVital().equals(vital)) {
-                    ((JVital) c).updateData();
-                    return;
-                }
-            }
-            // fell through if the specified vital was not found
-            updateVitals();
+            });
         }
 
     }
 
-    @Override
-    public void vitalRemoved(VitalModel model, Vital vital) {
-        updateVitals();
-        vitalChanged(model, null);
-    }
+//
+//    @Override
+//    public void contentsChanged(ListDataEvent e) {
+//        ice.InfusionStatus status = pumpList.getSelectedValue();
+//        if(null != status) {
+//            if (status.infusionActive) {
+//                pumpProgress.start(status.drug_name, status.volume_to_be_infused_ml,
+//                        status.infusion_duration_seconds, status.infusion_fraction_complete);
+//            } else {
+//                pumpProgress.stop();
+//            }
+//        }
+//    }
 
-    @Override
-    public void vitalAdded(VitalModel model, Vital vital) {
-        vitalChanged(model, vital);
-    }
-
-    @Override
-    public void intervalAdded(ListDataEvent e) {
-        vitalChanged(this.model, null);
-    }
-
-    @Override
-    public void intervalRemoved(ListDataEvent e) {
-        vitalChanged(this.model, null);
-    }
-
-    @Override
-    public void contentsChanged(ListDataEvent e) {
-        ice.InfusionStatus status = pumpList.getSelectedValue();
-        if(null != status) {
-            if (status.infusionActive) {
-                pumpProgress.start(status.drug_name, status.volume_to_be_infused_ml,
-                        status.infusion_duration_seconds, status.infusion_fraction_complete);
-            } else {
-                pumpProgress.stop();
-            }
-        }
-    }
-
-    public void setStop(ice.InfusionStatus status, boolean stop) {
+    public void setStop(MyInfusionStatus status, boolean stop) {
         ice.InfusionObjective obj = new ice.InfusionObjective();
         obj.requestor = "ME";
-        obj.unique_device_identifier = status.unique_device_identifier;
+        obj.unique_device_identifier = status.getUnique_device_identifier();
         obj.stopInfusion = stop;
         objectiveWriter.write(obj, InstanceHandle_t.HANDLE_NIL);
+    }
+
+    @Override
+    public void onChanged(javafx.collections.ListChangeListener.Change<? extends Vital> c) {
+        while(c.next()) {
+            if(c.wasAdded() || c.wasRemoved()) {
+                updateVitals();
+            }
+        }
     }
 }

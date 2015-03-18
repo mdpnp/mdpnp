@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane prefHeight="480.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.export.DataCollectorApp">
+ <center>
+  <SplitPane fx:id="masterPanel" dividerPositions="0.29797979797979796" prefHeight="160.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+   <items>
+    <AnchorPane>
+     <children>
+      <ScrollPane fitToHeight="true" fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+       <content>
+        <AnchorPane>
+         <children>
+          <TreeView fx:id="tree" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+         </children>
+        </AnchorPane>
+       </content>
+      </ScrollPane>
+     </children>
+    </AnchorPane>
+    <AnchorPane>
+     <children>
+      <ScrollPane fitToHeight="true" fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+       <content>
+        <AnchorPane>
+         <children>
+          <TableView fx:id="table" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+           <columns>
+            <TableColumn prefWidth="75.0" text="DeviceId">
+             <cellValueFactory>
+              <PropertyValueFactory property="uniqueDeviceIdentifier" />
+             </cellValueFactory>
+            </TableColumn>
+            <TableColumn prefWidth="75.0" text="InstanceId">
+             <cellValueFactory>
+              <PropertyValueFactory property="instanceId" />
+             </cellValueFactory>
+            </TableColumn>
+            <TableColumn prefWidth="75.0" text="MetricId">
+             <cellValueFactory>
+              <PropertyValueFactory property="metricId" />
+             </cellValueFactory>
+            </TableColumn>
+            <TableColumn prefWidth="75.0" text="Time">
+             <cellValueFactory>
+              <PropertyValueFactory property="devTime" />
+             </cellValueFactory>
+            </TableColumn>
+            <TableColumn prefWidth="75.0" text="Value">
+             <cellValueFactory>
+              <PropertyValueFactory property="value" />
+             </cellValueFactory>
+            </TableColumn>
+           </columns>
+          </TableView>
+         </children>
+        </AnchorPane>
+       </content>
+      </ScrollPane>
+     </children>
+    </AnchorPane>
+   </items>
+  </SplitPane>
+ </center>
+ <bottom>
+  <BorderPane fx:id="persisterContainer" BorderPane.alignment="CENTER">
+   <right>
+    <Button fx:id="startControl" mnemonicParsing="false" onAction="#clickStart" text="Start" BorderPane.alignment="CENTER" />
+   </right>
+   <left>
+    <VBox fx:id="btns" BorderPane.alignment="CENTER" />
+   </left>
+   <center>
+    <StackPane BorderPane.alignment="CENTER" />
+   </center>
+  </BorderPane>
+ </bottom>
+</BorderPane>

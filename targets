@@ -9,8 +9,8 @@
 # V500 JSN (ICU Environment)
 #192.168.7.60
 # PB840 JSN (ICU Environment)
-192.168.7.46
+#192.168.7.46
 # MP70 JSN (ICU Environment)
-192.168.7.102
+#192.168.7.102
 
-#10.0.1.200
+10.0.1.200

@@ -14,6 +14,7 @@ package org.mdpnp.devices.simulation.ecg;
 
 import ice.GlobalSimulationObjective;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
@@ -44,13 +45,15 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
 //        return target;
 //    }
 
-    private class MySimulatedElectroCardioGram extends SimulatedElectroCardioGram {
-        
-        private final Time_t sampleTime = new Time_t(0, 0);
-        
+    private class SimulatedElectroCardioGramExt extends SimulatedElectroCardioGram {
+
+        public SimulatedElectroCardioGramExt(DeviceClock referenceClock) {
+            super(referenceClock);
+        }
+
         @Override
-        protected void receiveECG(long timestamp, Number[] iValues, Number[] iiValues, Number[] iiiValues, double heartRateValue, double respiratoryRateValue,
-                int frequency) {
+        protected void receiveECG(DeviceClock.Reading sampleTime, Number[] iValues, Number[] iiValues, Number[] iiiValues,
+                                  double heartRateValue, double respiratoryRateValue, int frequency) {
             // ecgCache[0][ecgCount] = copy(iValues, ecgCache[0][ecgCount]);
             // ecgCache[1][ecgCount] = copy(iiValues, ecgCache[1][ecgCount]);
             // ecgCache[2][ecgCount] = copy(iiiValues, ecgCache[2][ecgCount]);
@@ -68,15 +71,14 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
             // }
             // ecgCount = 0;
             // }
-            sampleTime.sec = (int) (timestamp / 1000L);
-            sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
+
             try {
                 // TODO should get better data that's actually in millivolts
-                SimElectroCardioGram.this.i = sampleArraySample(SimElectroCardioGram.this.i, iValues, ice.MDC_ECG_LEAD_I.VALUE, 0, 
+                SimElectroCardioGram.this.i = sampleArraySample(SimElectroCardioGram.this.i, iValues, ice.MDC_ECG_LEAD_I.VALUE, "", 0,
                         rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
-                SimElectroCardioGram.this.ii = sampleArraySample(SimElectroCardioGram.this.ii, iiValues, ice.MDC_ECG_LEAD_II.VALUE, 0, 
+                SimElectroCardioGram.this.ii = sampleArraySample(SimElectroCardioGram.this.ii, iiValues, ice.MDC_ECG_LEAD_II.VALUE, "", 0, 
                         rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
-                SimElectroCardioGram.this.iii = sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, ice.MDC_ECG_LEAD_III.VALUE, 0, 
+                SimElectroCardioGram.this.iii = sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, ice.MDC_ECG_LEAD_III.VALUE, "", 0, 
                         rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
 
                 numericSample(heartRate, (float) heartRateValue, sampleTime);
@@ -86,13 +88,8 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
             }
         }
     }
-    
-    @Override
-    protected boolean sampleArraySpecifySourceTimestamp() {
-        return true;
-    }
 
-    private final MySimulatedElectroCardioGram ecg = new MySimulatedElectroCardioGram();
+    private final SimulatedElectroCardioGram ecg;
 
     @Override
     public boolean connect(String str) {
@@ -109,8 +106,11 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
     public SimElectroCardioGram(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
-        respiratoryRate = createNumericInstance(rosetta.MDC_TTHOR_RESP_RATE.VALUE);
-        heartRate = createNumericInstance(rosetta.MDC_ECG_HEART_RATE.VALUE);
+        DeviceClock referenceClock = super.getClockProvider();
+        ecg = new SimulatedElectroCardioGramExt(referenceClock);
+
+        respiratoryRate = createNumericInstance(rosetta.MDC_TTHOR_RESP_RATE.VALUE, "");
+        heartRate = createNumericInstance(rosetta.MDC_ECG_HEART_RATE.VALUE, "");
 
         deviceIdentity.model = "ECG (Simulated)";
         writeDeviceIdentity();

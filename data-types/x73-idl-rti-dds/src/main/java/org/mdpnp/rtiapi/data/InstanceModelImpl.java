@@ -198,6 +198,10 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
                 for (int i = 0; i < info_seq.size(); i++) {
                     SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
                     if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
+                        D d = (D) sa_seq.get(i);
+                        if(!sampleInfo.valid_data) {
+                            getKeyValue.invoke(reader, d, sampleInfo.instance_handle);
+                        }
                         fireInstanceNotAlive((D) sa_seq.get(i), sampleInfo);
                         int idx = instances.indexOf(sampleInfo.instance_handle);
                         if(idx>=0) {
@@ -259,6 +263,10 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         }
     }
 
+    @Override
+    public void start(Subscriber subscriber, EventLoop eventLoop) {
+        start(subscriber, eventLoop, null, null, null, null);
+    }
 
     @Override
     public void start(Subscriber subscriber, EventLoop eventLoop, String qosLibrary, String qosProfile) {
@@ -285,9 +293,13 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         subscriber.get_qos(sQos);
         sQos.entity_factory.autoenable_created_entities = false;
         subscriber.set_qos(sQos);
-        
-        reader = (R) subscriber.create_datareader_with_profile(null==filteredTopic?saTopic:filteredTopic, qosLibrary,
-                qosProfile, null, StatusKind.STATUS_MASK_NONE);
+        if(null == qosProfile || null == qosLibrary) {
+            reader = (R) subscriber.create_datareader(null==filteredTopic?saTopic:filteredTopic, Subscriber.DATAREADER_QOS_DEFAULT, 
+                    null, StatusKind.STATUS_MASK_NONE);
+        } else {
+            reader = (R) subscriber.create_datareader_with_profile(null==filteredTopic?saTopic:filteredTopic, qosLibrary,
+                    qosProfile, null, StatusKind.STATUS_MASK_NONE);
+        }
         sQos.entity_factory.autoenable_created_entities = true;
         subscriber.set_qos(sQos);
 

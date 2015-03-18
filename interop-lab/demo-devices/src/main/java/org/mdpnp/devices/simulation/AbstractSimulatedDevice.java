@@ -15,6 +15,7 @@ package org.mdpnp.devices.simulation;
 import ice.DeviceIdentity;
 
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

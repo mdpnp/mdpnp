@@ -1,0 +1,7 @@
+/* JavaFX CSS - Leave this comment until you have at least create one rule which uses -fx-Property */
+
+.overlaid-text {
+    -fx-background-color: white;
+    -fx-opacity: 0.9;
+    -fx-background-radius: 1.2em;
+}

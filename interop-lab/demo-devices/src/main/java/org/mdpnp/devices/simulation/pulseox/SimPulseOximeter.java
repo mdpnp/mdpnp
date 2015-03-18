@@ -14,6 +14,7 @@ package org.mdpnp.devices.simulation.pulseox;
 
 import ice.GlobalSimulationObjective;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 
@@ -25,25 +26,26 @@ import com.rti.dds.infrastructure.Time_t;
  */
 public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
-    protected final InstanceHolder<ice.Numeric> pulse;
-    protected final InstanceHolder<ice.Numeric> SpO2;
-    protected InstanceHolder<ice.SampleArray> pleth;
+    private final InstanceHolder<ice.Numeric> pulse;
+    private final InstanceHolder<ice.Numeric> SpO2;
+    private InstanceHolder<ice.SampleArray> pleth;
+    private final SimulatedPulseOximeter pulseox;
 
-    private final Time_t sampleTime = new Time_t(0, 0);
 
-    private class MySimulatedPulseOximeter extends SimulatedPulseOximeter {
+    private class SimulatedPulseOximeterExt extends SimulatedPulseOximeter {
+
+        public SimulatedPulseOximeterExt(DeviceClock referenceClock) {
+            super(referenceClock);
+        }
+
         @Override
-        protected void receivePulseOx(long timestamp, int heartRate, int SpO2, Number[] plethValues, int frequency) {
-            sampleTime.sec = (int) (timestamp / 1000L);
-            sampleTime.nanosec = (int) (timestamp % 1000L * 1000000L);
+        protected void receivePulseOx(DeviceClock.Reading sampleTime, int heartRate, int SpO2, Number[] plethValues, int frequency) {
             numericSample(pulse, heartRate, sampleTime);
             numericSample(SimPulseOximeter.this.SpO2, SpO2, sampleTime);
-            pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, 0, 
+            pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
                     rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
         }
     }
-
-    private final MySimulatedPulseOximeter pulseox = new MySimulatedPulseOximeter();
 
     @Override
     public boolean connect(String str) {
@@ -60,8 +62,11 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
     public SimPulseOximeter(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
-        pulse = createNumericInstance(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
-        SpO2 = createNumericInstance(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
+        DeviceClock referenceClock = super.getClockProvider();
+        pulseox = new SimulatedPulseOximeterExt(referenceClock);
+
+        pulse = createNumericInstance(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "");
+        SpO2 = createNumericInstance(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, "");
 
         deviceIdentity.model = "Pulse Ox (Simulated)";
         writeDeviceIdentity();
@@ -83,11 +88,5 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
             }
         }
     }
-    
-    @Override
-    protected boolean sampleArraySpecifySourceTimestamp() {
-        return true;
-    }
-    
 
 }

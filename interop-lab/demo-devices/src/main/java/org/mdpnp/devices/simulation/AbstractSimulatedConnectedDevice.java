@@ -12,15 +12,29 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
+import ice.AlarmSettings;
+import ice.GlobalAlarmSettingsObjective;
 import ice.GlobalSimulationObjective;
+import ice.LocalAlarmSettingsObjective;
+import ice.Numeric;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.rti.dds.infrastructure.Time_t;
 
 public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice implements GlobalSimulationObjectiveListener {
     protected Throwable t;
 
     protected final GlobalSimulationObjectiveMonitor monitor;
+    
+    private static final Logger log = LoggerFactory.getLogger(AbstractSimulatedConnectedDevice.class);
 
     public AbstractSimulatedConnectedDevice(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
@@ -67,7 +81,7 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
             }
         }
     }
-
+    
     @Override
     protected ice.ConnectionType getConnectionType() {
         return ice.ConnectionType.Simulated;
@@ -82,4 +96,61 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
         // TODO remove this default implementation to check that inheritors are
         // properly implementing this
     }
+    
+    private Map<String, InstanceHolder<ice.LocalAlarmSettingsObjective>> localAlarmSettings = new HashMap<String, InstanceHolder<ice.LocalAlarmSettingsObjective>>();
+    private Map<String, InstanceHolder<ice.AlarmSettings>> alarmSettings = new HashMap<String, InstanceHolder<ice.AlarmSettings>>();
+    
+    @Override
+    protected void unregisterAlarmSettingsObjectiveInstance(InstanceHolder<LocalAlarmSettingsObjective> holder) {
+        localAlarmSettings.clear();
+        super.unregisterAlarmSettingsObjectiveInstance(holder);
+    }
+    
+    @Override
+    protected void unregisterAlarmSettingsInstance(InstanceHolder<AlarmSettings> holder) {
+        alarmSettings.clear();
+        super.unregisterAlarmSettingsInstance(holder);
+    }
+    
+    @Override
+    public void setAlarmSettings(GlobalAlarmSettingsObjective obj) {
+        super.setAlarmSettings(obj);
+        localAlarmSettings.put(obj.metric_id,
+                alarmSettingsObjectiveSample(localAlarmSettings.get(obj.metric_id), obj.lower, obj.upper, obj.metric_id));
+        alarmSettings.put(obj.metric_id,
+                alarmSettingsSample(alarmSettings.get(obj.metric_id), obj.lower, obj.upper, obj.metric_id));
+        // TODO really should also check alarm violation on threshold change here but it will be tricky to get the right
+        // sample of Numeric
+    }
+
+    @Override
+    protected void numericSample(InstanceHolder<Numeric> holder, float newValue, DeviceClock.Reading time) {
+        super.numericSample(holder, newValue, time);
+        String identifier = holder.data.metric_id + "-" + holder.data.instance_id;
+        InstanceHolder<ice.AlarmSettings> alarmSettings = this.alarmSettings.get(holder.data.metric_id);
+        if(null != alarmSettings) {
+            
+            // There are threshold settings for this numeric value, let's emit an alarm!
+            if(Float.compare(alarmSettings.data.lower, newValue)>0) {
+                log.debug("For " + identifier + " lower bound is exceeded " + newValue + " < " + alarmSettings.data.lower);
+                writePatientAlert(identifier, "LOW");
+            } else if(Float.compare(alarmSettings.data.upper, newValue)<0) {
+                log.debug("For " + identifier + " upper bound is exceeded " + newValue + " > " + alarmSettings.data.upper);
+                writePatientAlert(identifier, "HIGH");
+            } else {
+                log.debug("For " + identifier + " is in range " + newValue + " in [" + alarmSettings.data.lower+"-"+alarmSettings.data.upper);
+                writePatientAlert(identifier, "NORMAL");
+            }
+        } else {
+            log.debug("For " + identifier + " no alarm settings");
+        }
+    }
+    
+    @Override
+    public void unsetAlarmSettings(String metricId) {
+        // TODO Really ought to unreg the local objective and alarm settings when the alarm settings are unset
+        super.unsetAlarmSettings(metricId);
+    }
+    
+    
 }

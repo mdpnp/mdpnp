@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 
+import org.mdpnp.devices.DeviceClock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,10 +29,12 @@ public class AnsarB {
 
     private final InputStream inputStream;
     private final OutputStream outputStream;
+    private final DeviceClock  deviceClock;
 
-    public AnsarB(InputStream in, OutputStream out) {
+    public AnsarB(DeviceClock  deviceClock, InputStream in, OutputStream out) {
         this.inputStream = in;
         this.outputStream = out;
+        this.deviceClock = deviceClock;
     }
 
     private static final Logger log = LoggerFactory.getLogger(AnsarB.class);
@@ -44,7 +47,7 @@ public class AnsarB {
     private final static int ECG_OFFSET = 100, RESP_OFFSET = 0, PLETH_OFFSET = 86, P1_OFFSET = 80, P2_OFFSET = 251;
     private final static int ECG_FREQUENCY = 200, RESP_FREQUENCY = 50, PLETH_FREQUENCY = 50, P1_FREQUENCY = 50, P2_FREQUENCY = 50;
 
-    private float[] wavedata = new float[ECG_PTS];
+    private Float[] wavedata = new Float[ECG_PTS];
     private String ecgLabel;
     private final static Charset ASCII = Charset.forName("ASCII");
     private final static int WAVEFORM_LENGTH = 400;
@@ -112,89 +115,90 @@ public class AnsarB {
         }
     }
 
-    protected void receiveHeartRate(Integer value, String label, String alarm) {
+
+    protected void receiveHeartRate(DeviceClock.Reading timeStamp, Integer value, String label, String alarm) {
 
     }
 
-    protected void receiveRespiratoryRate(Integer value, String label, String alarm) {
+    protected void receiveRespiratoryRate(DeviceClock.Reading timeStamp, Integer value, String label, String alarm) {
 
     }
 
-    protected void receiveEndTidalCO2(Integer value, String label, String alarm) {
+    protected void receiveEndTidalCO2(DeviceClock.Reading timeStamp, Integer value, String label, String alarm) {
 
     }
 
-    protected void receiveSpO2(Integer value, String label, Integer pulseRate, String alarm) {
+    protected void receiveSpO2(DeviceClock.Reading timeStamp, Integer value, String label, Integer pulseRate, String alarm) {
 
     }
 
-    protected void receivePressure1(Integer systolic, Integer diastolic, Integer mean, String label, String alarm) {
+    protected void receivePressure1(DeviceClock.Reading timeStamp, Integer systolic, Integer diastolic, Integer mean, String label, String alarm) {
 
     }
 
-    protected void receiveNIBP(Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label, String alarm) {
+    protected void receiveNIBP(DeviceClock.Reading timeStamp, Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label, String alarm) {
 
     }
 
-    protected void receivePressure2(Integer systolic, Integer diastolic, Integer mean, String label, String alarm) {
+    protected void receivePressure2(DeviceClock.Reading timeStamp, Integer systolic, Integer diastolic, Integer mean, String label, String alarm) {
 
     }
 
-    protected void receiveTemperature1(Float value, String label, String alarm) {
+    protected void receiveTemperature1(DeviceClock.Reading timeStamp, Float value, String label, String alarm) {
 
     }
 
-    protected void receiveTemperature2(Float value, String label, String alarm) {
+    protected void receiveTemperature2(DeviceClock.Reading timeStamp, Float value, String label, String alarm) {
 
     }
 
-    protected void receiveECGWave(float[] data, int count, int frequency, String label) {
+    protected void receiveECGWave(DeviceClock.Reading timeStamp, Float[] data, int count, int frequency, String label) {
 
     }
 
-    protected void receiveRespWave(float[] data, int count, int frequency) {
+    protected void receiveRespWave(DeviceClock.Reading timeStamp, Float[] data, int count, int frequency) {
 
     }
 
-    protected void receivePlethWave(float[] data, int count, int frequency) {
+    protected void receivePlethWave(DeviceClock.Reading timeStamp, Float[] data, int count, int frequency) {
 
     }
 
-    protected void receiveP1Wave(float[] data, int count, int frequency) {
+    protected void receiveP1Wave(DeviceClock.Reading timeStamp, Float[] data, int count, int frequency) {
 
     }
 
-    protected void receiveP2Wave(float[] data, int count, int frequency) {
+    protected void receiveP2Wave(DeviceClock.Reading timeStamp, Float[] data, int count, int frequency) {
 
     }
 
-    protected void receiveLine(String line) {
+    protected void receiveLine(DeviceClock.Reading timeStamp, String line) {
         String[] fields = line.split(";", -1);
         if (fields.length > 0) {
             String[] name = fields[0].split("=");
             if (name.length > 0 && fields.length > 3) {
                 if ("HR".equals(name[0])) {
-                    receiveHeartRate(parseIntOrNull(fields[1]), ecgLabel = fields[2], fields[3]);
+                    receiveHeartRate(timeStamp, parseIntOrNull(fields[1]), ecgLabel = fields[2], fields[3]);
                 } else if ("RR".equals(name[0])) {
-                    receiveRespiratoryRate(parseIntOrNull(fields[1]), fields[2], fields[3]);
+                    receiveRespiratoryRate(timeStamp, parseIntOrNull(fields[1]), fields[2], fields[3]);
                 } else if ("ETCO2".equals(name[0])) {
-                    receiveEndTidalCO2(parseIntOrNull(fields[1]), fields[2], fields[3]);
+                    receiveEndTidalCO2(timeStamp, parseIntOrNull(fields[1]), fields[2], fields[3]);
                 } else if ("SPO2".equals(name[0])) {
                     String[] label = fields[2].split("=");
-                    receiveSpO2(parseIntOrNull(fields[1]), fields[2], label.length > 1 ? parseIntOrNull(label[1]) : null, fields[3]);
+                    receiveSpO2(timeStamp, parseIntOrNull(fields[1]), fields[2], label.length > 1 ? parseIntOrNull(label[1]) : null, fields[3]);
                 } else if ("NIBP".equals(name[0]) && fields.length > 6) {
-                    receiveNIBP(parseIntOrNull(fields[1]), parseIntOrNull(fields[2]), parseIntOrNull(fields[3]), parseIntOrNull(fields[4]),
+                    receiveNIBP(timeStamp, parseIntOrNull(fields[1]), parseIntOrNull(fields[2]), parseIntOrNull(fields[3]), parseIntOrNull(fields[4]),
                             fields[5], fields[6]);
                 } else if ("P1".equals(name[0]) && fields.length > 5) {
-                    receivePressure1(parseIntOrNull(fields[1]), parseIntOrNull(fields[2]), parseIntOrNull(fields[3]),
+                    receivePressure1(timeStamp, parseIntOrNull(fields[1]), parseIntOrNull(fields[2]), parseIntOrNull(fields[3]),
                             fields[4], fields[5]);
                 } else if ("P2".equals(name[0]) && fields.length > 3) {
-                    receivePressure2(parseIntOrNull(fields[1]), parseIntOrNull(fields[2]), parseIntOrNull(fields[3]),
+                    receivePressure2(timeStamp, parseIntOrNull(fields[1]), parseIntOrNull(fields[2]), parseIntOrNull(fields[3]),
                             fields[4], fields[5]);
                 } else if ("T1".equals(name[0]) && fields.length > 1) {
-                    receiveTemperature1(parseFloatOrNull(fields[1]), fields[2], fields[3]);
+                    receiveTemperature1(timeStamp, parseFloatOrNull(fields[1]), fields[2], fields[3]);
                 } else if ("T2".equals(name[0]) && fields.length > 1) {
-                    receiveTemperature2(parseFloatOrNull(fields[1]), fields[2], fields[3]);
+                    receiveTemperature2(timeStamp, parseFloatOrNull(fields[1]), fields[2], fields[3]);
                 } else {
                     log.debug("Nothing to do for line: " + line);
                 }
@@ -234,35 +238,38 @@ public class AnsarB {
         }
     }
 
-    private static final void offset(float[] dest, byte[] source, int source_offset, int data_offset, int length, float scale) {
+    private static final void offset(Float[] dest, byte[] source, int source_offset, int data_offset, int length, float scale) {
         for (int i = 0; i < length; i++) {
             dest[i] = scale * ((0xFF & source[source_offset + i]) - data_offset);
         }
     }
 
     public boolean receiveMessage(byte[] message, int off, int len) throws IOException {
+
+        DeviceClock.Reading timeStamp = deviceClock.instant();
+
         int last = off + FIXED_LENGTH;
         for (int i = off + FIXED_LENGTH; i < (len - 1); i++) {
             if (message[i] == '\r') {
                 // Now there is a line from last to (i - last - 1)
                 // We've put off decoding it long enough
                 String line = new String(message, last, i - last, ASCII).intern();
-                receiveLine(line);
+                receiveLine(timeStamp, line);
                 last = i + 1;
             }
         }
 
         // ECG Wave
         offset(wavedata, message, off + ANSAR_B.length + 1 + ECG_OFF, ECG_OFFSET, ECG_PTS, 0.02f);
-        receiveECGWave(wavedata, ECG_PTS, ECG_FREQUENCY, ecgLabel);
+        receiveECGWave(timeStamp, wavedata, ECG_PTS, ECG_FREQUENCY, ecgLabel);
         offset(wavedata, message, off + ANSAR_B.length + 1 + RESP_OFF, RESP_OFFSET, RESP_PTS, 1f);
-        receiveRespWave(wavedata, RESP_PTS, RESP_FREQUENCY);
+        receiveRespWave(timeStamp, wavedata, RESP_PTS, RESP_FREQUENCY);
         offset(wavedata, message, off + ANSAR_B.length + 1 + PLETH_OFF, PLETH_OFFSET, PLETH_PTS, 1f);
-        receivePlethWave(wavedata, PLETH_PTS, PLETH_FREQUENCY);
+        receivePlethWave(timeStamp, wavedata, PLETH_PTS, PLETH_FREQUENCY);
         offset(wavedata, message, off + ANSAR_B.length + 1 + P1_OFF, P1_OFFSET, P1_PTS, 1f);
-        receiveP1Wave(wavedata, P1_PTS, P1_FREQUENCY);
+        receiveP1Wave(timeStamp, wavedata, P1_PTS, P1_FREQUENCY);
         offset(wavedata, message, off + ANSAR_B.length + 1 + P2_OFF, P2_OFFSET, P2_PTS, 1f);
-        receiveP2Wave(wavedata, P2_PTS, P2_FREQUENCY);
+        receiveP2Wave(timeStamp, wavedata, P2_PTS, P2_FREQUENCY);
 
         return true;
 

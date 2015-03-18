@@ -12,17 +12,18 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.sim;
 
+import java.text.NumberFormat;
+
 import ice.GlobalSimulationObjective;
 import ice.GlobalSimulationObjectiveDataWriter;
-
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
+import javafx.scene.layout.GridPane;
+import javafx.scene.text.TextAlignment;
+import javafx.util.converter.NumberStringConverter;
 
 import org.mdpnp.rtiapi.data.QosProfiles;
 
@@ -32,13 +33,14 @@ import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.topic.Topic;
 
-@SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
  *
  */
-public class SimControl extends JPanel {
+public class SimControl {
 
+    @FXML protected GridPane main;
+    
     private static final class NumericValue {
         public final String name, metricId;
         public final float lowerBound, upperBound, initialValue, increment;
@@ -67,15 +69,14 @@ public class SimControl extends JPanel {
             new NumericValue("NIBP Systolic", rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE, 0, 400, 120, 40),
             new NumericValue("NIBP Diastolic", rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE, 0, 400, 80, 40) };
 
-    private final DomainParticipant participant;
-    private final Publisher publisher;
-    private final Topic topic;
-    private final ice.GlobalSimulationObjectiveDataWriter writer;
+    private DomainParticipant participant;
+    private Publisher publisher;
+    private Topic topic;
+    private ice.GlobalSimulationObjectiveDataWriter writer;
     private final ice.GlobalSimulationObjective[] objectives = new ice.GlobalSimulationObjective[numericValues.length];
     private final InstanceHandle_t[] handles = new InstanceHandle_t[numericValues.length];
-
-    public SimControl(final DomainParticipant participant) {
-        super(new GridBagLayout());
+    
+    public SimControl setup(final DomainParticipant participant) {
         this.participant = participant;
         publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         ice.GlobalSimulationObjectiveTypeSupport.register_type(participant, ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
@@ -84,70 +85,58 @@ public class SimControl extends JPanel {
         writer = (GlobalSimulationObjectiveDataWriter) participant.create_datawriter_with_profile(topic, QosProfiles.ice_library, QosProfiles.state,
                 null, StatusKind.STATUS_MASK_NONE);
 
-        final JSlider[] sliders = new JSlider[numericValues.length];
-        final JLabel[] labels = new JLabel[numericValues.length];
-        final JLabel[] currentValues = new JLabel[numericValues.length];
-        // final JPanel[] panels = new JPanel[numericValues.length];
+        final Slider[] sliders = new Slider[numericValues.length];
+        final Label[] labels = new Label[numericValues.length];
+        final Label[] currentValues = new Label[numericValues.length];
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridy = 0;
-        gbc.ipady = 10;
-
+        final NumberFormat numberFormat = NumberFormat.getNumberInstance();
+        numberFormat.setMaximumFractionDigits(2);
+        numberFormat.setMinimumFractionDigits(2);
+        numberFormat.setMinimumIntegerDigits(1);
+        
         for (int i = 0; i < objectives.length; i++) {
             objectives[i] = (GlobalSimulationObjective) ice.GlobalSimulationObjective.create();
             objectives[i].metric_id = numericValues[i].metricId;
             objectives[i].value = numericValues[i].initialValue;
             handles[i] = writer.register_instance(objectives[i]);
-            sliders[i] = new JSlider((int) numericValues[i].lowerBound, (int) numericValues[i].upperBound);
-            sliders[i].setValue((int) objectives[i].value);
-            sliders[i].setLabelTable(sliders[i].createStandardLabels((int) numericValues[i].increment, (int) numericValues[i].lowerBound));
-            sliders[i].setPaintLabels(true);
-            sliders[i].setPaintTicks(true);
-            labels[i] = new JLabel(numericValues[i].name);
-            currentValues[i] = new JLabel("" + sliders[i].getValue());
-            gbc.gridx = 0;
-            gbc.weightx = 0.1;
-            add(labels[i], gbc);
-            gbc.gridx = 1;
-            gbc.weightx = 1.0;
-            add(sliders[i], gbc);
-            gbc.gridx = 2;
-            gbc.weightx = 0.1;
-            add(currentValues[i], gbc);
-
-            // panels[i] = new JPanel(new BorderLayout());
-            // panels[i].add(labels[i], BorderLayout.WEST);
-            // panels[i].add(sliders[i], BorderLayout.CENTER);
-            // panels[i].add(currentValues[i], BorderLayout.EAST);
-
-            // add(panels[i]);
+            sliders[i] = new Slider(numericValues[i].lowerBound, numericValues[i].upperBound, objectives[i].value);
+            sliders[i].setMajorTickUnit(numericValues[i].increment);
+            sliders[i].setMinorTickCount(0);
+            sliders[i].setShowTickLabels(true);
+            sliders[i].setShowTickMarks(true);
+            sliders[i].setSnapToTicks(true);
+            labels[i] = new Label(numericValues[i].name);
+            labels[i].setTextAlignment(TextAlignment.RIGHT);
+            currentValues[i] = new Label("" + sliders[i].getValue());
+            main.add(labels[i], 0, i);
+            main.add(sliders[i], 1, i);
+            main.add(currentValues[i], 2, i);
 
             writer.write(objectives[i], handles[i]);
 
             final ice.GlobalSimulationObjective obj = objectives[i];
-            final JSlider slider = sliders[i];
+            final Slider slider = sliders[i];
             // final JLabel label = labels[i];
-            final JLabel currentValue = currentValues[i];
+            final Label currentValue = currentValues[i];
             final InstanceHandle_t handle = handles[i];
 
-            sliders[i].addChangeListener(new ChangeListener() {
+            
+            currentValue.textProperty().bindBidirectional(slider.valueProperty(), new NumberStringConverter(numberFormat));
+            sliders[i].valueProperty().addListener(new ChangeListener<Number>() {
 
                 @Override
-                public void stateChanged(ChangeEvent e) {
-                    // For now I would rather publish changes as the slider is
-                    // dragged
-                    // if(! ((JSlider)e.getSource()).getValueIsAdjusting()) {
-                    obj.value = slider.getValue();
-                    currentValue.setText("" + obj.value);
+                public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                    obj.value = newValue.floatValue();
                     writer.write(obj, handle);
-                    // }
                 }
+                
             });
-
-            gbc.gridy++;
         }
-
+        return this;
+    }
+    
+    
+    public SimControl() {
     }
 
     public void tearDown() {

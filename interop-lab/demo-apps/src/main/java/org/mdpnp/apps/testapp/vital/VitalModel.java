@@ -14,45 +14,36 @@ package org.mdpnp.apps.testapp.vital;
 
 import java.awt.Color;
 
-import org.mdpnp.apps.testapp.DeviceIcon;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.collections.ObservableList;
+
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
-public interface VitalModel {
+public interface VitalModel extends ObservableList<Vital> {
     enum State {
         Alarm, Warning, Normal
     };
+    DeviceListModel getDeviceListModel();
 
-    int getCount();
-
-    Vital getVital(int i);
-
-    Vital addVital(String label, String units, String[] names, Float low, Float high, Float criticalLow, Float criticalHigh, float minimum,
-            float maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color);
-
-    boolean removeVital(Vital vital);
-
-    Vital removeVital(int i);
-
-    void addListener(VitalModelListener vitalModelListener);
-
-    boolean removeListener(VitalModelListener vitalModelListener);
-
-    ice.DeviceIdentity getDeviceIdentity(String udi);
-
-    ice.DeviceConnectivity getDeviceConnectivity(String udi);
-
-    DeviceIcon getDeviceIcon(String udi);
+    Vital addVital(String label, String units, String[] names, Double low, Double high, Double criticalLow, Double criticalHigh, double minimum,
+            double maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color);
 
     ice.GlobalAlarmSettingsObjectiveDataWriter getWriter();
 
-    void start(Subscriber subscriber, Publisher publisher, EventLoop eventLoop);
+    void start(Publisher publisher, EventLoop eventLoop);
 
     void stop();
 
+    IntegerProperty countWarningsBecomeAlarmProperty();
     void setCountWarningsBecomeAlarm(int countWarningsBecomeAlarm);
+    
 
     /**
      * This many concurrent warnings will trigger an alarm
@@ -66,6 +57,7 @@ public interface VitalModel {
      * 
      * @return
      */
+    ReadOnlyObjectProperty<State> stateProperty();
     State getState();
 
     /**
@@ -73,6 +65,7 @@ public interface VitalModel {
      * 
      * @return
      */
+    ReadOnlyStringProperty warningTextProperty();
     String getWarningText();
 
     /**
@@ -83,6 +76,7 @@ public interface VitalModel {
     /**
      * Has the infusion been stopped?
      */
+    ReadOnlyBooleanProperty isInfusionStoppedProperty();
     boolean isInfusionStopped();
 
     /**
@@ -90,5 +84,10 @@ public interface VitalModel {
      * 
      * @return
      */
+    ReadOnlyStringProperty interlockTextProperty();
     String getInterlockText();
+
+    void updateNumeric(final String unique_device_identifier, final String metric_id, final int instance_id, final long timestamp, final float value);
+
+    void removeNumeric(final String udi, final String metric_id, final int instance_id);
 }

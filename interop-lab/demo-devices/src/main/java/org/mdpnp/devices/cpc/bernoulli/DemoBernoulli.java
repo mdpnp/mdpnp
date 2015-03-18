@@ -125,7 +125,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
             String realName = waveformNames.get(name);
             if (null != realName) {
                 InstanceHolder<SampleArray> holder = waveforms.get(realName);
-                holder = sampleArraySample(holder, n, realName, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, null);
+                holder = sampleArraySample(holder, n, realName, name, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, getClockProvider().instant());
                 waveforms.put(realName, holder);
 
                 

@@ -16,13 +16,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.serial.AbstractSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
-
-import com.rti.dds.infrastructure.Time_t;
 
 /**
  * @author Jeff Plourde
@@ -41,19 +40,21 @@ public class DemoRadical7 extends AbstractSerialDevice {
             super();
         }
 
-        private final Time_t sampleTime = new Time_t(0, 0);
-
         @Override
         public void firePulseOximeter() {
             super.firePulseOximeter();
             reportConnected("message received");
-            long tm = getTimestamp().getTime();
-            sampleTime.sec = (int) (tm / 1000L);
-            sampleTime.nanosec = (int) (tm % 1000L * 1000000L);
-            pulseUpdate = numericSample(pulseUpdate, getHeartRate(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 
-                    rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, sampleTime);
-            spo2Update = numericSample(spo2Update, getSpO2(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 
-                    rosetta.MDC_DIM_PERCENT.VALUE, sampleTime);
+
+            DeviceClock.Reading sampleTime = super.instant();
+
+            pulseUpdate = numericSample(pulseUpdate, getHeartRate(),
+                                        rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "",
+                                        rosetta.MDC_DIM_BEAT_PER_MIN.VALUE,
+                                        sampleTime);
+            spo2Update = numericSample(spo2Update, getSpO2(),
+                                       rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, "",
+                                       rosetta.MDC_DIM_PERCENT.VALUE,
+                                       sampleTime);
             String guid = getUniqueId();
             if (guid != null && !guid.equals(deviceIdentity.serial_number)) {
                 deviceIdentity.serial_number = guid;

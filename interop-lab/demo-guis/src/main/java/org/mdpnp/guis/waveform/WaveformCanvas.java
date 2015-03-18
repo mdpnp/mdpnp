@@ -14,20 +14,20 @@ package org.mdpnp.guis.waveform;
 
 public interface WaveformCanvas {
     interface Extent {
-        int getMinX();
+        double getMinX();
 
-        int getMaxX();
+        double getMaxX();
 
-        int getMinY();
+        double getMinY();
 
-        int getMaxY();
+        double getMaxY();
     }
 
-    void drawLine(int x0, int y0, int x1, int y1);
+    void drawLine(double x0, double y0, double x1, double y1);
 
-    void clearRect(int x, int y, int width, int height);
+    void clearRect(double x, double y, double width, double height);
     
-    void drawString(String str, int x, int y);
+    void drawString(String str, double x, double y);
 
     Extent getExtent();
 }

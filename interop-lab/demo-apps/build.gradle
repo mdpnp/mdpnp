@@ -13,8 +13,45 @@
 apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'launch4j'
+apply plugin: "me.champeau.jbake"
+apply from: 'javafx.plugin'
 
 defaultTasks 'build'
+
+jfxDeploy {
+    verbose = false
+}
+
+javafx {
+    appID 'org.mdpnp.apps.testapp.Main'
+    appName 'MDPnP Demo Apps'
+    mainClass 'org.mdpnp.apps.testapp.Main'
+    
+
+    profiles {
+        macosx {
+            javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_40.jdk/'
+
+            bundleArguments = [
+                // for mac apps
+                'mac.CFBundleIdentifier' : 'org.mdpnp.devices.clamp.ClampApp',
+                'mac.CFBundleName' : 'Clamp App',
+                'mac.signing-key-user-name' : 'JEFFREY PLOURDE',
+                'mac.signing-key-developer-id-app' : 'Developer ID Application: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
+                'mac.bundle-id-signing-prefix' : 'org.mdpnp.devices.clamp.',
+
+                // for PKG bundles
+                'mac.signing-key-developer-id-installer' : 'Developer ID Installer: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
+
+                // for Mac App Store Ready bundles
+                //'mac.app-store-entitlements' : 'src/deploy/package/NetworkEntitlements.entitlements',
+                //'mac.signing-key-app' : '3rd Party Mac Developer Applicaiton: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
+                //'mac.signing-key-pkg' : '3rd Party Mac Developer Installer: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
+
+            ]
+        }
+    }
+}
 
 launch4j {
     mainClassName = "org.mdpnp.apps.testapp.Main"
@@ -25,23 +62,36 @@ launch4j {
     opt = '-Dsun.java2d.noddraw=true'
 }
 
+jbake {
+    srcDirName = 'src/docs'
+    destDirName = 'docs'
+}
+
 buildscript {
+
+    repositories {
+        maven {
+            url="https://dl.bintray.com/calmdev/gradle-plugins"
+        }
+    }
+
     dependencies {
-        classpath 'edu.sc.seis:gradle-launch4j:1.0.5'
+        classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
+        classpath "me.champeau.gradle:jbake-gradle-plugin:0.2.1"
     }
 }
 
-def launch4jPath = 'http://downloads.sourceforge.net/project/launch4j/launch4j-3/3.1.0-beta1/'
+def launch4jPath = 'http://downloads.sourceforge.net/project/launch4j/launch4j-3/3.6/'
 def launch4jName = ''
 switch(localOsName) {
     case WINDOWS:
-    launch4jName = 'launch4j-3.1.0-beta1-win32.zip'
+    launch4jName = 'launch4j-3.6.1-win32.zip'
     break
     case MAC:
-    launch4jName = 'launch4j-3.1.0-beta1-macosx-x86-10.8.tgz'
+    launch4jName = 'launch4j-3.6-macosx-x86-10.8.tgz'
     break
     case LINUX:
-    launch4jName = 'launch4j-3.1.0-beta1-linux.zip'
+    launch4jName = 'launch4j-3.6-linux.tgz'
     break
 }
 
@@ -89,7 +139,7 @@ task downloadAppBundler(dependsOn: createBuildToolsDir) << {
 
 task createApp(dependsOn: [downloadAppBundler, copyDeps]) << {
     ant.taskdef(name: 'bundleapp', classname: 'com.oracle.appbundler.AppBundlerTask', classpath: file("build-tools/appbundler-1.0.jar"))
-    ant.bundleapp(outputdirectory: "$buildDir/", name: "MDPnP Demo Apps", displayName: "MDPnP Demo Apps", identifier: "org.mdpnp.apps.testapp.Main", mainclassname: "org.mdpnp.apps.testapp.Main", icon: "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns") {
+    ant.bundleapp(outputdirectory: "$buildDir/", name: "MDPnP Demo Apps", displayName: "MDPnP Demo Apps", identifier: "org.mdpnp.apps.testapp.Main", mainclassname: "org.mdpnp.apps.testapp.Main", icon: "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns", shortversion: '1.'+project.version) {
         classpath(dir: "$buildDir/deps")
         // Can optionally bundle a JRE but it adds a LOT of size
         // runtime(dir: "$System.env.JAVA_HOME")
@@ -162,22 +212,40 @@ ext {
     buildTime = new java.text.SimpleDateFormat('hh:mm aa').format(buildTimeAndDate)
 }
 
-manifest.mainAttributes("Main-Class" : "org.mdpnp.apps.testapp.Main")
+manifest { attributes "Main-Class" : mainClassName }
 
-def JOGL_version = '2.0.2'
+def JOGL_version = '2.2.4'
 
 dependencies {
     compile project(':interop-lab:demo-devices')
     compile project(':interop-lab:demo-guis')
-    compile project(':interop-lab:demo-guis-swing')
+//    compile project(':interop-lab:demo-guis-swing')
+    compile project(':interop-lab:demo-guis-javafx')
     runtime project(':interop-lab:demo-purejavacomm')
 
     runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: SLF4J_VERSION
-    runtime group: 'log4j', name: 'log4j', version: '1.2.17'
     runtime group: 'org.mdpnp.apps.testapp.pca', name: 'mdpnp-sounds', version: '0.1.0'
 
+    //
+    compile group: 'log4j', name: 'log4j', version: '1.2.17'
+    compile group: 'commons-cli', name: 'commons-cli', version: '1.2'
+    
     // Default capture device is a trimmed down piece of OpenIMAJ
-    compile group: 'com.github.sarxos', name: 'webcam-capture', version: '0.3.9'
+    compile group: 'com.github.sarxos', name: 'webcam-capture', version: '0.3.10'
+
+    compile group: 'org.springframework', name: 'spring-context', version: '4.1.3.RELEASE'
+    compile group: 'com.google.guava',    name: 'guava',          version: '18.0'
+
+    compile group: 'ca.uhn.hapi', name: 'hapi-base', version: '2.2'
+    compile group: 'ca.uhn.hapi', name: 'hapi-structures-v26', version: '2.2'
+    
+    compile group: 'com.jeffplourde', name: 'Utility', version: '0.0.1'
+    
+    compile group: 'org.controlsfx', name: 'controlsfx', version: '8.20.9' , classifier: 'MDPNP0001'
+    
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    testRuntime group: 'org.hsqldb', name: 'hsqldb', version: '2.3.2'
 }
 
 task createZip(type: Zip) {

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane fx:id="demoPanel" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.DemoPanel">
+  <bottom>
+    <GridPane prefHeight="-1.0" prefWidth="-1.0">
+      <children>
+        <Button fx:id="back" contentDisplay="LEFT" mnemonicParsing="false" text="Exit App" textAlignment="LEFT" visible="false" GridPane.columnIndex="0" GridPane.halignment="LEFT" GridPane.rowIndex="0" />
+        <Button fx:id="changePartition" mnemonicParsing="false" onAction="#clickChangePartition" text="Change Partition..." GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="0" />
+        <Button fx:id="createAdapter" mnemonicParsing="false" onAction="#clickCreateAdapter" text="Create an ICE Device Adapter..." GridPane.columnIndex="2" GridPane.halignment="CENTER" />
+        <Hyperlink fx:id="openiceURL" onAction="#clickURL" text="https://openice.info" GridPane.columnIndex="3" GridPane.halignment="RIGHT" GridPane.rowIndex="0" />
+      </children>
+      <columnConstraints>
+        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="-1.0" />
+        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="-1.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="-1.0" />
+      </columnConstraints>
+      <rowConstraints>
+        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      </rowConstraints>
+    </GridPane>
+  </bottom>
+  <center>
+    <BorderPane fx:id="content" prefHeight="-1.0" prefWidth="-1.0" />
+  </center>
+  <padding>
+    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+  </padding>
+  <top>
+    <GridPane alignment="CENTER" maxHeight="-1.0" maxWidth="-1.0" pickOnBounds="true" prefHeight="-1.0" prefWidth="-1.0" BorderPane.alignment="CENTER">
+      <children>
+        <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="0" GridPane.hgrow="NEVER" GridPane.rowIndex="0">
+          <image>
+            <Image url="@mdpnp-small.png" />
+          </image>
+        </ImageView>
+        <Label id="title" fx:id="bedLabel" text="OpenICE" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="0" />
+        <Label fx:id="clock" text="Time" GridPane.columnIndex="2" GridPane.hgrow="NEVER" GridPane.rowIndex="0" />
+      </children>
+      <columnConstraints>
+        <ColumnConstraints hgrow="ALWAYS" />
+        <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" />
+        <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" />
+      </columnConstraints>
+      <rowConstraints>
+        <RowConstraints />
+      </rowConstraints>
+    </GridPane>
+  </top>
+</BorderPane>

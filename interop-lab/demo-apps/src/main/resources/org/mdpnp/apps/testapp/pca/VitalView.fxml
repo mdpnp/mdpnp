@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import org.mdpnp.apps.testapp.vital.MultiRangeSlider?>
+
+<BorderPane fx:controller="org.mdpnp.apps.testapp.pca.VitalView" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+  <left>
+    <Label fx:id="name" text="Label" />
+    </left>
+    <center>
+    <MultiRangeSlider fx:id="slider" showTickLabels="true" showTickMarks="true" />
+    </center>
+   <bottom>
+      <FlowPane BorderPane.alignment="CENTER">
+         <children>
+            <CheckBox fx:id="ignoreZeroBox" mnemonicParsing="false" onAction="#ignoreZeroAction" text="Ignore Zero" />
+            <CheckBox fx:id="requiredBox" mnemonicParsing="false" onAction="#requiredAction" text="Required" />
+            <Button fx:id="deleteButton" mnemonicParsing="false" onAction="#deleteButtonAction" text="Remove" />
+         </children>
+      </FlowPane>
+   </bottom>
+   <right>
+      <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
+          <content>
+              <HBox fx:id="vitalValues" BorderPane.alignment="CENTER" />
+          </content>
+      </ScrollPane>
+   </right>
+  
+</BorderPane>

@@ -16,6 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.math.DCT;
 
 /**
@@ -31,12 +32,10 @@ public class SimulatedCapnometer {
         return count;
     }
 
-    private final class MyTask implements Runnable {
+    private final class DataPublisher implements Runnable {
         private final Number[] values = new Number[SAMPLES_PER_UPDATE];
-        private long lastTime;
-        
-        public MyTask(long lastTime) {
-            this.lastTime = lastTime;
+
+        public DataPublisher() {
         }
         
         @Override
@@ -59,17 +58,19 @@ public class SimulatedCapnometer {
             for (int i = 0; i < values.length; i++) {
                 values[i] = SimulatedCapnometer.this.co2[postIncrCount()];
             }
-            
-            lastTime += UPDATE_PERIOD;
 
-            receiveCO2(lastTime, values, respiratoryRate, etCO2, FREQUENCY);
+            DeviceClock.Reading  t = deviceClock.instant();
+
+            receiveCO2(t, values, respiratoryRate, etCO2, FREQUENCY);
         }
 
     };
 
-    protected void receiveCO2(long time, Number[] co2, int respiratoryRate, int etCO2, int frequency) {
+    protected void receiveCO2(DeviceClock.Reading time, Number[] co2, int respiratoryRate, int etCO2, int frequency) {
 
     }
+
+    private final DeviceClock deviceClock;
 
     protected static final long UPDATE_PERIOD = 1000L;
     protected static final double MILLISECONDS_PER_SAMPLE = 50;
@@ -111,7 +112,7 @@ public class SimulatedCapnometer {
             task = null;
         }
         long now = System.currentTimeMillis();
-        task = executor.scheduleAtFixedRate(new MyTask(now-now%UPDATE_PERIOD), UPDATE_PERIOD - now % UPDATE_PERIOD, UPDATE_PERIOD, TimeUnit.MILLISECONDS);
+        task = executor.scheduleAtFixedRate(new DataPublisher(), UPDATE_PERIOD - now % UPDATE_PERIOD, UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
 
     public void disconnect() {
@@ -121,7 +122,15 @@ public class SimulatedCapnometer {
         }
     }
 
-    public SimulatedCapnometer() {
+    public SimulatedCapnometer(final DeviceClock referenceClock) {
+        deviceClock = new DeviceClock() {
+            final DeviceClock dev=new DeviceClock.Metronome(UPDATE_PERIOD);
+            @Override
+            public Reading instant() {
+                return new CombinedReading(referenceClock.instant(), dev.instant());
+            }
+
+        };
         initWaves();
     }
 
