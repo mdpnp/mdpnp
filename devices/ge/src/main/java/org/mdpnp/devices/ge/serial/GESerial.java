@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.io.util.HexUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,7 +120,7 @@ public class GESerial {
     }
     
    
-    protected void updateParameter(int partype, int parcode, int index, short value) {
+    protected void updateParameter(DeviceClock.Reading sampleTime, int partype, int parcode, int index, short value) {
         switch(value) {
         case INVALID:
         case MISSING:
@@ -130,15 +131,15 @@ public class GESerial {
         case NO_BP_PULSE:
         case SENSOR_FAIL:
             // For now we're not differentiating
-            receiveNumeric(partype, parcode, index, null);
+            receiveNumeric(sampleTime, partype, parcode, index, null);
             break;
         default:
-            receiveNumeric(partype, parcode, index, value);
+            receiveNumeric(sampleTime, partype, parcode, index, value);
             break;
         }
     }
     
-    protected void receiveNumeric(int partype, int parcode, int index, Short value) {
+    protected void receiveNumeric(DeviceClock.Reading sampleTime, int partype, int parcode, int index, Short value) {
         
     }
     
@@ -147,10 +148,14 @@ public class GESerial {
     private final byte[] oln = new byte[32];
     
     
+    private final DeviceClock deviceClock = new DeviceClock.WallClock();
+    
     @SuppressWarnings("unused")
     private final void consume(ByteBuffer buffer) throws IOException {
         try {
 //            System.err.println(buffer.remaining() + " bytes in " + HexUtil.dump(buffer));
+            
+            DeviceClock.Reading sampleTime = deviceClock.instant();
             
             // In case of error or incomplete message
             buffer.mark();
@@ -259,9 +264,9 @@ public class GESerial {
                     
                     
                     // Process this here.
-                    updateParameter(par_type, parcode, 0, upar_val0);
-                    updateParameter(par_type, parcode, 1, upar_val1);
-                    updateParameter(par_type, parcode, 2, upar_val2);
+                    updateParameter(sampleTime, par_type, parcode, 0, upar_val0);
+                    updateParameter(sampleTime, par_type, parcode, 1, upar_val1);
+                    updateParameter(sampleTime, par_type, parcode, 2, upar_val2);
                     
                 }
                 short crc = buffer.getShort();

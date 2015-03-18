@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.serial.AbstractDelegatingSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
@@ -173,13 +174,13 @@ public class DemoGESerial extends AbstractDelegatingSerialDevice<GESerial> {
         }
         
         @Override
-        protected void receiveNumeric(int partype, int parcode, int index, Short value) {
+        protected void receiveNumeric(DeviceClock.Reading sampleTime, int partype, int parcode, int index, Short value) {
             reportConnected("data received");
             int param = ((partype << 16) & 0x00FF0000) | ((parcode << 8) & 0x0000FF00) | (index & 0x000000FF);
             String metric_id = numericParamLookup(partype, parcode, index);
             if(null != metric_id) {
 //                System.err.println("Updating " + metric_id + " to " + value);
-                numerics.put(param, numericSample(numerics.get(param), null==value?null:(int)value, metric_id, rosetta.MDC_DIM_DIMLESS.VALUE, null));
+                numerics.put(param, numericSample(numerics.get(param), null==value?null:(int)value, metric_id, metric_id, 0, rosetta.MDC_DIM_DIMLESS.VALUE, sampleTime));
             }
         }
     }

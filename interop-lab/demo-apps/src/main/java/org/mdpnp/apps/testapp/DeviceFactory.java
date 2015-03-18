@@ -27,6 +27,7 @@ import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
 import org.mdpnp.devices.draeger.medibus.DemoV500;
 import org.mdpnp.devices.draeger.medibus.DemoV500_38400;
 import org.mdpnp.devices.fluke.prosim68.DemoProsim68;
+import org.mdpnp.devices.ge.serial.DemoGESerial;
 import org.mdpnp.devices.hospira.symbiq.DemoSymbiq;
 import org.mdpnp.devices.ivy._450c.DemoIvy450C;
 import org.mdpnp.devices.masimo.radical.DemoRadical7;
@@ -381,6 +382,19 @@ public class DeviceFactory {
             return new DemoBioPatch(domainId, eventLoop);
 
         }
+    }
+    
+    public static class GESerialProvider implements DeviceDriverProvider {
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Serial, "GE", "Dash", "GESerial");
+        }
+
+        public AbstractDevice create(ApplicationContext context) throws Exception {
+            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
+            int domainId = (Integer)context.getBean("domainId");
+            return new DemoGESerial(domainId, eventLoop);
+
+        }        
     }
 
 }
