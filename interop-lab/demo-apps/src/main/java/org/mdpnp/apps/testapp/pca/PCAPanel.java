@@ -18,7 +18,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ScheduledExecutorService;
 
-import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
@@ -37,7 +38,6 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 
@@ -45,14 +45,14 @@ import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
  * @author Jeff Plourde
  *
  */
-public class PCAPanel {
+public class PCAPanel implements InvalidationListener {
     @FXML BorderPane main;
     
     @FXML protected BorderPane pcaConfig;
     @FXML protected PCAConfig pcaConfigController;
 
-    private static final Border YELLOW_BORDER = new Border(new BorderStroke(Color.YELLOW, BorderStrokeStyle.SOLID, new CornerRadii(3), new BorderWidths(15) ));
-    private static final Border RED_BORDER = new Border(new BorderStroke(Color.RED, BorderStrokeStyle.SOLID, new CornerRadii(3), new BorderWidths(15) ));
+    private static final Border YELLOW_BORDER = new Border(new BorderStroke(Color.YELLOW, BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(3) ));
+    private static final Border RED_BORDER = new Border(new BorderStroke(Color.RED, BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(3) ));
 
     private Clip drugDeliveryAlarm, generalAlarm;
 
@@ -109,75 +109,61 @@ public class PCAPanel {
     private VitalModel model;
 
     public void setModel(VitalModel vitalModel, InfusionStatusInstanceModel pumpModel) {
-//        if (this.model != null) {
-//            this.model.removeListener(this);
-//        }
+        if (this.model != null) {
+            this.model.stateProperty().removeListener(this);
+            this.model.isInfusionStoppedProperty().removeListener(this);
+        }
         this.model = vitalModel;
         pcaConfigController.setModel(vitalModel, pumpModel);
-//        if (this.model != null) {
-//            this.model.addListener(this);
-//        }
-
-//        vitalMonitor.setModel(vitalModel);
+        if(null != vitalModel) {
+            model.stateProperty().addListener(this);
+            model.isInfusionStoppedProperty().addListener(this);
+        }
     }
 
     public VitalModel getVitalModel() {
         return model;
     }
 
-//    @Override
-    public void vitalChanged(VitalModel model, Vital vital) {
-        if (model.isInfusionStopped()) {
-            if (null != drugDeliveryAlarm && !drugDeliveryAlarm.isRunning()) {
-                drugDeliveryAlarm.loop(Clip.LOOP_CONTINUOUSLY);
-            }
-            if (null != generalAlarm) {
-                generalAlarm.stop();
-            }
-        } else {
-            if (null != drugDeliveryAlarm && drugDeliveryAlarm.isRunning()) {
-                drugDeliveryAlarm.stop();
-            }
-            // Put this here so we don't get concurrent alarms
-            switch (model.getState()) {
-            case Alarm:
-                if (null != generalAlarm && !generalAlarm.isRunning()) {
-                    generalAlarm.loop(Clip.LOOP_CONTINUOUSLY);
-                    // PCAMonitor.sendPumpCommand("Stop, \n", null);
+    @Override
+    public void invalidated(Observable observable) {
+        if(null != model) {
+            if (model.isInfusionStopped()) {
+                if (null != drugDeliveryAlarm && !drugDeliveryAlarm.isRunning()) {
+                    drugDeliveryAlarm.loop(Clip.LOOP_CONTINUOUSLY);
                 }
-                break;
-            case Warning:
-            case Normal:
                 if (null != generalAlarm) {
-                    // PCAMonitor.sendPumpCommand("Start, 10\n", null);
                     generalAlarm.stop();
                 }
-            default:
+            } else {
+                if (null != drugDeliveryAlarm && drugDeliveryAlarm.isRunning()) {
+                    drugDeliveryAlarm.stop();
+                }
+                // Put this here so we don't get concurrent alarms
+                switch (model.getState()) {
+                case Alarm:
+                    if (null != generalAlarm && !generalAlarm.isRunning()) {
+                        generalAlarm.loop(Clip.LOOP_CONTINUOUSLY);
+                        // PCAMonitor.sendPumpCommand("Stop, \n", null);
+                    }
+                    break;
+                case Warning:
+                case Normal:
+                    if (null != generalAlarm) {
+                        // PCAMonitor.sendPumpCommand("Start, 10\n", null);
+                        generalAlarm.stop();
+                    }
+                default:
+                }
+            }
+            if (model.isInfusionStopped() || model.getState().equals(VitalModel.State.Alarm)) {
+                main.setBorder(RED_BORDER);
+            } else if (VitalModel.State.Warning.equals(model.getState())) {
+                main.setBorder(YELLOW_BORDER);
+            } else {
+                main.setBorder(Border.EMPTY);
             }
         }
-        Platform.runLater(new Runnable() {
-            public void run() {
-                if (model.isInfusionStopped() || model.getState().equals(VitalModel.State.Alarm)) {
-                    main.setBorder(RED_BORDER);
-                } else if (VitalModel.State.Warning.equals(model.getState())) {
-                    main.setBorder(YELLOW_BORDER);
-                } else {
-                    main.setBorder(Border.EMPTY);
-                }
-                
-            }
-        });
-
     }
-
-//    @Override
-//    public void vitalRemoved(VitalModel model, Vital vital) {
-//        vitalChanged(model, vital);
-//    }
-//
-//    @Override
-//    public void vitalAdded(VitalModel model, Vital vital) {
-//        vitalChanged(model, vital);
-//    }
 
 }
