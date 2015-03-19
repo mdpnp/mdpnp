@@ -1,5 +1,6 @@
 package org.mdpnp.apps.testapp;
 
+import javafx.beans.binding.Bindings;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
@@ -40,7 +41,11 @@ public class MyInfusionStatusListCell extends ListCell<MyInfusionStatus> {
                 textProperty().bind(item.unique_device_identifierProperty());
             } else {
                 root.imageProperty().bind(device.imageProperty());
-                textProperty().bind(device.makeAndModelProperty());
+                textProperty().bind(
+                        Bindings
+                            .concat(device.makeAndModelProperty())
+                            .concat("\nDrug: ")
+                            .concat(item.drug_nameProperty()));
             }
         }
     }
