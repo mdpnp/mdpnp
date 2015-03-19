@@ -54,7 +54,8 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
                 param.atOrBelowLowProperty(),
                 param.atOrAboveValueMsHighProperty(),
                 param.atOrAboveValueMsLowProperty(),
-                param.valueProperty()
+                param.valueProperty(),
+                param.timestampProperty()
             };
         }
         

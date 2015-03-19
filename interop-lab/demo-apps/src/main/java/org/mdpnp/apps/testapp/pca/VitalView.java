@@ -15,6 +15,7 @@ package org.mdpnp.apps.testapp.pca;
 import java.io.IOException;
 import java.util.Iterator;
 
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -24,6 +25,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 
 import org.mdpnp.apps.testapp.vital.ConcreteDoubleProperty;
@@ -66,7 +68,7 @@ public final class VitalView implements ListChangeListener<Value> {
         vital.setNoValueWarning(requiredBox.isSelected());
     }
     
-    public VitalView set(final Vital vital) {
+    public VitalView set(final Vital vital, ReadOnlyBooleanProperty configuration) {
         this.vital = vital;
         String lbl = vital.getLabel();
         if (lbl.contains(" ")) {
@@ -86,6 +88,7 @@ public final class VitalView implements ListChangeListener<Value> {
         ignoreZeroBox.selectedProperty().bindBidirectional(vital.ignoreZeroProperty());
         requiredBox.selectedProperty().bindBidirectional(vital.requiredProperty());
         
+        controls.visibleProperty().bind(configuration);
       
         // Cripes if you think about it the order here is really quite important since values will be clamped
         // down
@@ -200,6 +203,8 @@ public final class VitalView implements ListChangeListener<Value> {
         }
     }
     private static final Logger log = LoggerFactory.getLogger(VitalView.class);
+
+    @FXML FlowPane controls;
     private void add(Value value) {
         try {
             FXMLLoader loader = new FXMLLoader(ValueView.class.getResource("ValueView.fxml"));

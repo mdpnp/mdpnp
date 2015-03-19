@@ -11,10 +11,10 @@
     <Label fx:id="name" text="Label" />
     </left>
     <center>
-    <MultiRangeSlider fx:id="slider" showTickLabels="true" showTickMarks="true" />
+    <MultiRangeSlider BorderPane.alignment="CENTER_LEFT" prefWidth="200.0" maxWidth="200.0" fx:id="slider" showTickLabels="true" showTickMarks="true" />
     </center>
    <bottom>
-      <FlowPane BorderPane.alignment="CENTER">
+      <FlowPane fx:id="controls" BorderPane.alignment="CENTER">
          <children>
             <CheckBox fx:id="ignoreZeroBox" mnemonicParsing="false" onAction="#ignoreZeroAction" text="Ignore Zero" />
             <CheckBox fx:id="requiredBox" mnemonicParsing="false" onAction="#requiredAction" text="Required" />
@@ -23,7 +23,7 @@
       </FlowPane>
    </bottom>
    <right>
-      <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
+      <ScrollPane BorderPane.alignment="CENTER_RIGHT" fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
           <content>
               <HBox fx:id="vitalValues" BorderPane.alignment="CENTER" />
           </content>

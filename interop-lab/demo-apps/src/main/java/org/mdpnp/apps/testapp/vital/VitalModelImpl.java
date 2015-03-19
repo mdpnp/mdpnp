@@ -85,6 +85,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     protected EventLoop eventLoop;
     private ObjectProperty<State> state = new SimpleObjectProperty<State>(this, "state", State.Normal);
 
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(VitalModelImpl.class);
 
     @Override
@@ -101,7 +102,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     }
     
     private void _removeNumeric(final String udi, final String metric_id, final int instance_id) {
-        for (Vital v : vitals) {
+        for (Vital v : this) {
             if (v != null) {
                 for (String x : v.getMetricIds()) {
                     if (x.equals(metric_id)) {
@@ -148,7 +149,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         // TODO linear search? Query Condition should be vital specific
         // or maybe these should be hashed because creating myriad
         // QueryConditions is not advisable
-        for (Vital v : vitals) {
+        for (Vital v : this) {
             if (v != null) {
                 for (String x : v.getMetricIds()) {
                     // Change to this vital from a source
@@ -229,7 +230,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         }
     }
 
-    private static final String DEFAULT_INTERLOCK_TEXT = "Drug: Morphine\r\nRate: 4cc / hour";
+    private static final String DEFAULT_INTERLOCK_TEXT = "";
 
     private static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
     private String[] advisories = new String[0];
@@ -299,7 +300,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
 
         if (countWarnings >= getCountWarningsBecomeAlarm()) {
             state.set(State.Alarm);
-            stopInfusion("Pump Stopped\r\n" + warningText + "\r\nnurse alerted");
+            stopInfusion("Pump Stopped\r\n" + warningText.get() + "\r\nnurse alerted");
         } else {
             for (int i = 0; i < N; i++) {
                 Vital vital = get(i);
