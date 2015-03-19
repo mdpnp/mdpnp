@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp.export;
 
 
 import java.io.File;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -39,6 +40,12 @@ public class CSVPersister extends FileAdapterApplicationFactory.PersisterUIContr
     public void stop() throws Exception {
         appender.rollOver();
     }
+    
+    private static NumberFormat valueFormat = NumberFormat.getNumberInstance();
+    static {
+        valueFormat.setMaximumFractionDigits(2);
+        valueFormat.setMinimumFractionDigits(2);
+    }
 
     static String toCSVLine(Value value) {
         StringBuilder sb = new StringBuilder();
@@ -50,7 +57,7 @@ public class CSVPersister extends FileAdapterApplicationFactory.PersisterUIContr
             .append(value.getMetricId()).append(",")
             .append(value.getInstanceId()).append(",")
             .append(devTime).append(",")
-            .append(value.getValue());
+            .append(valueFormat.format(value.getValue()));
 
         return sb.toString();
     }

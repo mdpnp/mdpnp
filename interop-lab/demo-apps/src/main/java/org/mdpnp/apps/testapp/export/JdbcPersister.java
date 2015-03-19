@@ -10,8 +10,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
-import org.mdpnp.apps.testapp.vital.Value;
-
 public class JdbcPersister extends FileAdapterApplicationFactory.PersisterUIController implements DataCollector.DataSampleEventListener  {
 
     private Connection conn = null;
@@ -26,7 +24,7 @@ public class JdbcPersister extends FileAdapterApplicationFactory.PersisterUICont
             ps.setString   (1, value.getUniqueDeviceIdentifier());
             ps.setString   (2, value.getMetricId());
             ps.setInt      (3, value.getInstanceId());
-            ps.setTimestamp(4, new Timestamp(value.getTimestamp()));
+            ps.setTimestamp(4, new java.sql.Timestamp(value.getDevTime()));
             ps.setDouble   (5, value.getValue());
 
             ps.execute();
