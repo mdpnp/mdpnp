@@ -141,19 +141,15 @@ public class MyNumeric {
         update(v, s);
     }
     
-    private Date _source_timestamp = new Date();
-    private Date _device_time = new Date();
     public void update(ice.Numeric v, SampleInfo s) {
-        _source_timestamp.setTime(s.source_timestamp.sec * 1000L + s.source_timestamp.nanosec / 1000000L);
-        setSource_timestamp(_source_timestamp);
+        setSource_timestamp(new Date(s.source_timestamp.sec * 1000L + s.source_timestamp.nanosec / 1000000L));
         setUnique_device_identifier(v.unique_device_identifier);
         setMetric_id(v.metric_id);
         setVendor_metric_id(v.vendor_metric_id);
         setInstance_id(v.instance_id);
         setUnit_id(v.unit_id);
         setValue(v.value);
-        _device_time.setTime(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L);
-        setDevice_time(_device_time);
+        setDevice_time(new Date(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L));
     }
     
     @Override
