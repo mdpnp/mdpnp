@@ -227,23 +227,45 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         @Override
         public void receiveStartResponse(String responseType) {
             reportConnected("Received "+responseType);
-            try {
-                // On 16-March 2015 Jeff Plourde is not a huge fan of chaining
-                // requests to responses but this seems like the best way to get
-                // the maximum data rate without causing any data corruption
-                // in the remote device buffers.  A break in the chain will
-                // be detected by the max quiet time setting at which point 
-                // bootstrapping SNDF will occur via doInitCommands(...)
-                sendF();
-            } catch (IOException e) {
-                log.error("Unable to issue SNDF", e);
+            // TODO If this response is not a full MISCF don't expect updates to alert conditions
+            if("MISCF".equals(responseType)) {
+                markOldPatientAlertInstances();
+                markOldTechnicalAlertInstances();
             }
-            markOldPatientAlertInstances();
-            markOldTechnicalAlertInstances();
         }
+        private int outstandingRequests = 0;
+        private long lastRequest = 0L;
         
         @Override
         public void receiveEndResponse() {
+            
+            long now = System.nanoTime();
+            // TODO this is not threadsafe; assuming serial traffic always
+            // delivered on the same thread
+            
+            // decrement because of response 
+            outstandingRequests--;
+            
+            // TODO Refine this and externalize constant to keep in sync with max quiet time
+            if(outstandingRequests > 0 && (now - lastRequest) > 2000000000L) {
+                log.warn("Resetting request count after 2 seconds with no response");
+                outstandingRequests = 0;
+            }
+            
+            // There is a request with no response
+            if(outstandingRequests<1) {
+                try {
+                    sendF();
+                    lastRequest = now;
+                    if(outstandingRequests < 0) {
+                        log.warn("Received extraneous responses");
+                        outstandingRequests = 0;
+                    }
+                    outstandingRequests++;
+                } catch (IOException e) {
+                    log.error("Unable to issue SNDF", e);
+                }
+            }
             clearOldPatientAlertInstances();
             clearOldTechnicalAlertInstances();
         }
@@ -254,8 +276,6 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         super.doInitCommands(idx);
         switch (idx) {
         case 0:
-            ((PB840Parameters) getDelegate(idx)).sendReset();
-            log.trace("Issued a RSET for doInitCommands");
             ((PB840Parameters) getDelegate(idx)).sendF();
             log.trace("Issued a SNDF for doInitCommands");
             break;
@@ -291,7 +311,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         SerialProvider serialProvider = super.getSerialProvider(idx).duplicate();
         switch (idx) {
         case 0:
-            serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
+            serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One, FlowControl.Hardware);
             break;
         case 1:
             serialProvider.setDefaultSerialSettings(38400, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
@@ -305,7 +325,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     protected long getMaximumQuietTime(int idx) {
         switch (idx) {
         case 0:
-            return 5000L;
+            return 3000L;
         case 1:
             // There is no protocol negotiation for waveform data
             // so there is no utility in interrupting the main parameter
