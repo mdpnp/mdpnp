@@ -64,6 +64,8 @@ public class RS232Adapter implements NetworkConnection {
     private static final int BOF = 0xC0;
     private static final int EOF = 0xC1;
 
+    private static final int BUFFER_SIZE = 8192;
+    
     private final byte[] header = new byte[4];
 
     private final List<ByteBuffer> writeToChannel = new ArrayList<ByteBuffer>();
@@ -74,12 +76,12 @@ public class RS232Adapter implements NetworkConnection {
         synchronized (recycleBin) {
             if (recycleBin.isEmpty()) {
                 log.trace("ALLOCATING A NEW ByteBuffer");
-                return ByteBuffer.allocate(2048);
+                return ByteBuffer.allocate(BUFFER_SIZE);
             } else {
                 ByteBuffer bb = recycleBin.remove(0);
                 if (null == bb) {
                     log.trace("ALLOCATING A NEW ByteBuffer");
-                    return ByteBuffer.allocate(2048);
+                    return ByteBuffer.allocate(BUFFER_SIZE);
                 } else {
                     bb.clear();
                     return bb;

@@ -60,84 +60,92 @@ public class PB840Parameters extends PB840 {
             }
             
             log.trace("READ A PARAMETER LINE:"+line);
+            
             Matcher dataFieldMatch = dataField.matcher(line);
+            
             fieldValues.clear();
             fieldValues.add("ZERO");
             if(dataFieldMatch.find()) {
                 final String responseType = dataFieldMatch.group(1).trim();
-                if(!this.fields.containsKey(responseType)) {
-                    log.warn(line);
-                    log.warn("Unknown response type: "+responseType);
-                    continue;
-                }
-                fieldValues.add(responseType);
-                if(dataFieldMatch.find()) {
-                    fieldValues.add(dataFieldMatch.group(1).trim());
-                    @SuppressWarnings("unused")
-                    int bytes = 0;
-                    try {
-                        bytes = Integer.parseInt(dataFieldMatch.group(1).trim());
-                    } catch(NumberFormatException nfe) {
-                        log.warn(line);
-                        log.warn("Received an invalid byte count ", nfe);
-                        continue;
-                    }
-                    //#bytes between <STX> and <CR>
+                try {
+                    // I want to generate the receiveStartResponse/receiveEndResponse sequence on EVERY LINE
+                    // In this way consumers of this class can safely chain new requests to prior responses
+                    // even where the response is not understood
+                    receiveStartResponse(responseType);
+                    fieldValues.add(responseType);
                     if(dataFieldMatch.find()) {
-                        String s = dataFieldMatch.group(1).trim();
-                        fieldValues.add(s);
-                        int fieldCount = 0; 
+                        fieldValues.add(dataFieldMatch.group(1).trim());
+                        @SuppressWarnings("unused")
+                        int bytes = 0;
                         try {
-                            fieldCount = Integer.parseInt(s);//#fields between <STX> and <CR>
+                            bytes = Integer.parseInt(dataFieldMatch.group(1).trim());
                         } catch(NumberFormatException nfe) {
                             log.warn(line);
-                            log.warn("Received an invalid field count ", nfe);
+                            log.warn("Received an invalid byte count ", nfe);
                             continue;
                         }
-                        fieldValues.add("<STX"); // This will keep field numbers consistent
-                        Field field = null;
-                        try {
-                            receiveStartResponse(responseType);
-                            for(int i = 0; i < fieldCount; i++) {
-                                if(dataFieldMatch.find()) {
-                                    fieldValues.add(dataFieldMatch.group(1).trim());
-                                } else {
-                                    log.warn(line);
-                                    log.warn("Missing expected field " + (i+1) +", aborting this line...");
-                                    continue;
-                                }
-                            }
-                            if(fieldValues.size() < (fieldCount + 5)) {
+                        //#bytes between <STX> and <CR>
+                        if(dataFieldMatch.find()) {
+                            String s = dataFieldMatch.group(1).trim();
+                            fieldValues.add(s);
+                            int fieldCount = 0; 
+                            try {
+                                fieldCount = Integer.parseInt(s);//#fields between <STX> and <CR>
+                            } catch(NumberFormatException nfe) {
                                 log.warn(line);
-                                log.warn("Received " + fieldValues.size() + " fields where " + (fieldCount+5) + " expected");
+                                log.warn("Received an invalid field count ", nfe);
                                 continue;
                             }
-                            fieldValues.add("<ETX>"); // for consistency
-                            fieldValues.add("<CR>");
-                            final Field[] fields = this.fields.get(responseType);
-                            if(fields != null) {
-                                for (int i = 0; i < fields.length; i++) {
-                                    field = fields[i];
-                                    field.handle(fieldValues);
+                            fieldValues.add("<STX"); // This will keep field numbers consistent
+                            Field field = null;
+                            try {
+                                for(int i = 0; i < fieldCount; i++) {
+                                    if(dataFieldMatch.find()) {
+                                        fieldValues.add(dataFieldMatch.group(1).trim());
+                                    } else {
+                                        log.warn(line);
+                                        log.warn("Missing expected field " + (i+1) +", aborting this line...");
+                                        continue;
+                                    }
                                 }
-                            } else {
-                                log.warn(line);
-                                log.warn("Unknown response type " + responseType);
+                                if(fieldValues.size() < (fieldCount + 5)) {
+                                    log.warn(line);
+                                    log.warn("Received " + fieldValues.size() + " fields where " + (fieldCount+5) + " expected");
+                                    continue;
+                                }
+                                fieldValues.add("<ETX>"); // for consistency
+                                fieldValues.add("<CR>");
+                                final Field[] fields = this.fields.get(responseType);
+                                if(fields != null) {
+                                    for (int i = 0; i < fields.length; i++) {
+                                        field = fields[i];
+                                        field.handle(fieldValues);
+                                    }
+                                } else {
+                                    log.warn(line);
+                                    log.warn("Unknown response type " + responseType);
+                                }
+                            } catch(NumberFormatException nfe) {
+                                log.error("Error in field " + field);
                             }
-                        } catch(NumberFormatException nfe) {
-                            log.error("Error in field " + field);
-                        } finally {
-                            receiveEndResponse();
+                        } else {
+                            log.warn(line);
+                            log.warn("Not a valid response, no field count:"+line);
                         }
                     } else {
                         log.warn(line);
-                        log.warn("Not a valid response, no field count:"+line);
+                        log.warn("Not a valid response, no bytes:"+line);
                     }
-                } else {
-                    log.warn(line);
-                    log.warn("Not a valid response, no bytes:"+line);
+                } finally {
+                    receiveEndResponse();
                 }
             } else {
+                try {
+                    // Generate this sequence for every CR terminated line!
+                    receiveStartResponse("");
+                } finally {
+                    receiveEndResponse();
+                }
                 log.warn(line);
                 log.warn("Not a valid response:"+line);
             }

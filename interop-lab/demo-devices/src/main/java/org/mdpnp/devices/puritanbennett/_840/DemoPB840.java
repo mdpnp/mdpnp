@@ -7,9 +7,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.puritanbennett._840.PB840.Units;
@@ -226,32 +227,47 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         @Override
         public void receiveStartResponse(String responseType) {
             reportConnected("Received "+responseType);
-            markOldPatientAlertInstances();
-            markOldTechnicalAlertInstances();
+            // TODO If this response is not a full MISCF don't expect updates to alert conditions
+            if("MISCF".equals(responseType)) {
+                markOldPatientAlertInstances();
+                markOldTechnicalAlertInstances();
+            }
         }
+        private int outstandingRequests = 0;
+        private long lastRequest = 0L;
         
         @Override
         public void receiveEndResponse() {
+            
+            long now = System.nanoTime();
+            // TODO this is not threadsafe; assuming serial traffic always
+            // delivered on the same thread
+            
+            // decrement because of response 
+            outstandingRequests--;
+            
+            // TODO Refine this and externalize constant to keep in sync with max quiet time
+            if(outstandingRequests > 0 && (now - lastRequest) > 2000000000L) {
+                log.warn("Resetting request count after 2 seconds with no response");
+                outstandingRequests = 0;
+            }
+            
+            // There is a request with no response
+            if(outstandingRequests<1) {
+                try {
+                    sendF();
+                    lastRequest = now;
+                    if(outstandingRequests < 0) {
+                        log.warn("Received extraneous responses");
+                        outstandingRequests = 0;
+                    }
+                    outstandingRequests++;
+                } catch (IOException e) {
+                    log.error("Unable to issue SNDF", e);
+                }
+            }
             clearOldPatientAlertInstances();
             clearOldTechnicalAlertInstances();
-        }
-    }
-
-    private class RequestSlowData implements Runnable {
-        public void run() {
-            log.trace("RequestSlowData called");
-            if (ice.ConnectionState.Connected.equals(getState())) {
-                try {
-                    PB840Parameters params = (PB840Parameters) getDelegate(0);
-                    params.sendF();
-                    log.trace("Issued SENDF");
-                } catch (Throwable t) {
-                    log.error(t.getMessage(), t);
-                }
-            } else {
-                log.trace("Not issuing SENDF where state=" + getState());
-            }
-
         }
     }
 
@@ -260,8 +276,6 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         super.doInitCommands(idx);
         switch (idx) {
         case 0:
-            ((PB840Parameters) getDelegate(idx)).sendReset();
-            log.trace("Issued a RSET for doInitCommands");
             ((PB840Parameters) getDelegate(idx)).sendF();
             log.trace("Issued a SNDF for doInitCommands");
             break;
@@ -270,37 +284,9 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         }
     }
 
-    private ScheduledFuture<?> requestSlowData;
-
     @Override
     protected void stateChanged(ConnectionState newState, ConnectionState oldState, String transitionNote) {
-
-        if (ice.ConnectionState.Connected.equals(newState) && !ice.ConnectionState.Connected.equals(oldState)) {
-            startRequestSlowData();
-        }
-        if (!ice.ConnectionState.Connected.equals(newState) && ice.ConnectionState.Connected.equals(oldState)) {
-            stopRequestSlowData();
-        }
         super.stateChanged(newState, oldState, transitionNote);
-    }
-
-    private synchronized void startRequestSlowData() {
-        if (null == requestSlowData) {
-            requestSlowData = executor.scheduleWithFixedDelay(new RequestSlowData(), 1000L, 2000L, TimeUnit.MILLISECONDS);
-            log.trace("Scheduled slow data request task");
-        } else {
-            log.trace("Slow data request already scheduled");
-        }
-    }
-
-    private synchronized void stopRequestSlowData() {
-        if (null != requestSlowData) {
-            requestSlowData.cancel(false);
-            requestSlowData = null;
-            log.trace("Canceled slow data request task");
-        } else {
-            log.trace("Slow data request already canceled");
-        }
     }
 
     @Override
@@ -325,7 +311,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         SerialProvider serialProvider = super.getSerialProvider(idx).duplicate();
         switch (idx) {
         case 0:
-            serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
+            serialProvider.setDefaultSerialSettings(9600, DataBits.Eight, Parity.None, StopBits.One, FlowControl.Hardware);
             break;
         case 1:
             serialProvider.setDefaultSerialSettings(38400, DataBits.Eight, Parity.None, StopBits.One, FlowControl.None);
@@ -339,7 +325,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     protected long getMaximumQuietTime(int idx) {
         switch (idx) {
         case 0:
-            return 5000L;
+            return 3000L;
         case 1:
             // There is no protocol negotiation for waveform data
             // so there is no utility in interrupting the main parameter
@@ -359,7 +345,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     class PB840Clock implements DeviceClock {
 
         private final Calendar currentDeviceTime = Calendar.getInstance();
-
+        
         public PB840Clock() {
             currentDeviceTime.set(Calendar.SECOND, 0);
             currentDeviceTime.set(Calendar.MILLISECOND, 0);
@@ -378,7 +364,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
 
         @Override
         public Reading instant() {
-            return new ReadingImpl(currentDeviceTime.getTimeInMillis());
+            // TODO I don't want to deal with this right now .. rest of the system shouldn't be messing with source_timestamp
+            return new ReadingImpl(System.currentTimeMillis());
         }
 
     }
