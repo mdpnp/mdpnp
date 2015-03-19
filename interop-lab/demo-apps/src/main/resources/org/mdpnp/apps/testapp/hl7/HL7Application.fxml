@@ -5,10 +5,10 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane prefHeight="259.0" prefWidth="316.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.mdpnp.apps.testapp.hl7.HL7Application">
+<BorderPane prefHeight="259.0" prefWidth="316.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.hl7.HL7Application">
   <!-- TODO Add Nodes -->
   <bottom>
-    <HBox prefHeight="100.0" prefWidth="200.0">
+    <HBox>
       <children>
         <Label text="Host:" />
         <TextField fx:id="host" prefWidth="-1.0" />

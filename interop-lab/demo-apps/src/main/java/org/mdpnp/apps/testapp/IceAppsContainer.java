@@ -106,7 +106,6 @@ public class IceAppsContainer extends IceApplication {
                 }
             }
         };
-        panelController.bedLabel.setText(appName);
         panelController.back.setVisible(true);
         panelController.content.setCenter(app.getUI());
         panelController.getBack().setOnAction(new GoBackAction(goBackAction));
@@ -135,7 +134,6 @@ public class IceAppsContainer extends IceApplication {
             }
             panelController.content.setCenter(mainMenuRoot);
             // TODO make this more elegant
-            panelController.getBedLabel().setText("OpenICE");
             ((Button)event.getSource()).setVisible(false);
             ((Button)event.getSource()).setOnAction(null);
         }
@@ -196,11 +194,13 @@ public class IceAppsContainer extends IceApplication {
 
         @Override
         public void stop() {
-            DeviceDataMonitor deviceMonitor = devicePanel.getModel();
-            if (null != deviceMonitor) {
-                deviceMonitor.stop();
+            if(devicePanel != null) {
+                DeviceDataMonitor deviceMonitor = devicePanel.getModel();
+                if (null != deviceMonitor) {
+                    deviceMonitor.stop();
+                }
+                devicePanel.set((DeviceDataMonitor)null);
             }
-            devicePanel.set((DeviceDataMonitor)null);
         }
 
         @Override
@@ -209,7 +209,7 @@ public class IceAppsContainer extends IceApplication {
 
 //        static final ThreadGroup threadGroup = new ThreadGroup("DeviceApp");
     }
-
+    
     @Override
     public void start(Stage primaryStage) throws Exception {
         primaryStage.setTitle("OpenICE");

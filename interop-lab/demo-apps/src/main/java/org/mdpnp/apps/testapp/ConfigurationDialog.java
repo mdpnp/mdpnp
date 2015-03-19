@@ -316,7 +316,7 @@ public class ConfigurationDialog {
         FXMLLoader loader = new FXMLLoader(ConfigurationDialog.class.getResource("ConfigurationDialog.fxml"));
         Parent ui = loader.load();
         ConfigurationDialog d = loader.getController();
-        d.currentStage = new Stage(StageStyle.DECORATED);
+        d.currentStage = new Stage(StageStyle.UNDECORATED);
         d.set(configuration, d.currentStage);
 
         

@@ -57,7 +57,7 @@ public class DemoPanel implements Runnable {
     private final static Logger log = LoggerFactory.getLogger(DemoPanel.class);
     
     @FXML
-    protected Label bedLabel, clock;
+    protected Label clock;
     
     @FXML
     protected Button back, changePartition, createAdapter;
@@ -65,8 +65,6 @@ public class DemoPanel implements Runnable {
     @FXML
     protected BorderPane content;
     
-    @FXML
-    protected Hyperlink openiceURL;
 
     private PartitionChooserModel partitionChooserModel;
     
@@ -75,10 +73,6 @@ public class DemoPanel implements Runnable {
 
     public BorderPane getContent() {
         return content;
-    }
-
-    public Label getBedLabel() {
-        return bedLabel;
     }
 
     public Button getBack() {
@@ -102,7 +96,7 @@ public class DemoPanel implements Runnable {
     private String versionText = "";
     
     private void setTooltip() {
-        openiceURL.setTooltip(new Tooltip(udiText+"\n"+versionText));
+        clock.setTooltip(new Tooltip(udiText+"\n"+versionText));
     }
     
     public DemoPanel setUdi(String udi) {
