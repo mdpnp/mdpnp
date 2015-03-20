@@ -7,3 +7,4 @@ org.mdpnp.apps.testapp.export.FileAdapterApplicationFactory
 org.mdpnp.apps.testapp.hl7.HL7ApplicationFactory
 org.mdpnp.apps.testapp.diag.DiagnosticApplicationFactory
 org.mdpnp.apps.testapp.alarm.AlarmApplicationFactory
+org.mdpnp.apps.testapp.patient.PatientApplicationFactory
