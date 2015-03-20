@@ -216,7 +216,7 @@ public class DataCollector {
 
                                 // If the updated sample status contains fresh data that we can evaluate
                                 if (si.valid_data) {
-                                    Time_t t = si.source_timestamp;
+                                    ice.Time_t t = data.presentation_time;
                                     long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
 
                                     final int sz = data.values.userData.size();
@@ -273,7 +273,7 @@ public class DataCollector {
                                 // If the updated sample status contains fresh data that we can evaluate
                                 if (si.valid_data) {
 
-                                    Time_t t = si.source_timestamp;
+                                    ice.Time_t t = data.presentation_time;
                                     long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
 
                                     if (log.isDebugEnabled())
