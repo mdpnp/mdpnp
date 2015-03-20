@@ -188,7 +188,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
         public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
             if(sampleInfo.valid_data && ECG_WAVEFORMS_SET.contains(data.metric_id)) {
-                date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+                date.setTime(data.presentation_time.sec * 1000L + data.presentation_time.nanosec / 1000000L);
                 time.setText(dateFormat.format(date));
             }
         } 

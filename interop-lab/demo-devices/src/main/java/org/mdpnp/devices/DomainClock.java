@@ -12,11 +12,31 @@ public class DomainClock implements DeviceClock  {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractDevice.class);
 
+    public static void toDDSTime(long timestamp, Time_t t) {
+        t.sec = (int) (timestamp / 1000L);
+        t.nanosec = (int) (timestamp % 1000L * 1000000L);
+    }
+    
+    public static void toDDSTime(long timestamp, ice.Time_t t) {
+        t.sec = (int) (timestamp / 1000L);
+        t.nanosec = (int) (timestamp % 1000L * 1000000L);
+    }    
+    
     public static Time_t toDDSTime(long timestamp) {
         Time_t t = new Time_t( (int) (timestamp / 1000L), (int) (timestamp % 1000L * 1000000L));
         return t;
     }
 
+    public static void toDDSTime(Instant timestamp, Time_t t) {
+        t.sec = (int)timestamp.getEpochSecond();
+        t.nanosec = timestamp.getNano();
+    }
+    
+    public static void toDDSTime(Instant timestamp, ice.Time_t t) {
+        t.sec = (int)timestamp.getEpochSecond();
+        t.nanosec = timestamp.getNano();
+    }    
+    
     public static Time_t toDDSTime(Instant timestamp) {
         Time_t t = new Time_t((int)timestamp.getEpochSecond(), timestamp.getNano());
         return t;

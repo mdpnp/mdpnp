@@ -183,7 +183,7 @@ public class PulseOximeterPanel extends DevicePanel {
                     pulseWave = new NumericWaveformSource(model.getReader(), data);
                     pulsePanel.setSource(pulseWave);
                 }
-                date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
+                date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
                 time.setText(dateFormat.format(date));
             }
         }
@@ -197,7 +197,7 @@ public class PulseOximeterPanel extends DevicePanel {
         public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
             setInt(data, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
             setInt(data, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
-            date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
+            date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
             time.setText(dateFormat.format(date));
         }
         
@@ -214,7 +214,7 @@ public class PulseOximeterPanel extends DevicePanel {
                     plethWave = new SampleArrayWaveformSource(deviceMonitor.getSampleArrayModel().getReader(), data);
                     plethPanel.setSource(plethWave);
                 }
-                date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
+                date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
                 time.setText(dateFormat.format(date));
             }
         }

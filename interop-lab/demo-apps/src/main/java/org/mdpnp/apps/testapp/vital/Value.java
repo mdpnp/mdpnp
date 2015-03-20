@@ -25,8 +25,6 @@ public interface Value {
 
     Numeric getNumeric();
 
-    SampleInfo getSampleInfo();
-
     Vital getParent();
 
     boolean isAtOrAboveHigh();

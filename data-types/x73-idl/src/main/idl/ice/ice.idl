@@ -290,6 +290,7 @@ module ice {
     UnitIdentifier unit_id; //@key
     float value;
     Time_t device_time;
+    Time_t presentation_time;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist Numeric unique_device_identifier metric_id vendor_metric_id instance_id unit_id
   const string NumericTopic = "Numeric";
@@ -318,6 +319,7 @@ module ice {
     long frequency; //@key
     Values values;
     Time_t device_time;
+    Time_t presentation_time;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist SampleArray unique_device_identifier metric_id instance_id unit_id frequency
   const string SampleArrayTopic = "SampleArray";

@@ -283,7 +283,6 @@ public class DeviceListModel extends AbstractListModel<Device> implements TimeMa
                             } catch(Exception e) {
                                 log.warn("Unable to get participant information for DeviceIdentity publication");
                             }
-//                            log.debug("DeviceIdentity at " + si.source_timestamp + " " + di);
                             update(di, data);
                         }
                         

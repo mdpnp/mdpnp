@@ -47,10 +47,11 @@ public class SampleArrayWaveformSource extends AbstractDdsWaveformSource<ice.Sam
                 reader.read_instance(sample_array_seq, sample_info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, instanceHandle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
                 for(int i = 0; i < sample_info_seq.size(); i++) {
                     SampleInfo si = (SampleInfo) sample_info_seq.get(i);
-                    Time_t t = si.source_timestamp;
-                    long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
+                    
                     ice.SampleArray sampleArray = (SampleArray) sample_array_seq.get(i);
-    
+                    ice.Time_t t = sampleArray.presentation_time;
+                    long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
+                    
                     final int sz = sampleArray.values.userData.size();
 //                    log.debug(sz + " samples " + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
                     if(si.valid_data) {

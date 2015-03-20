@@ -26,7 +26,6 @@ public class ValueImpl implements Value {
     private final String metric_id;
     private final int instance_id;
     private final Numeric numeric = (Numeric) Numeric.create();
-    private final SampleInfo sampleInfo = new SampleInfo();
     private final Vital parent;
 
     private long valueMsBelowLow;
@@ -59,18 +58,13 @@ public class ValueImpl implements Value {
     }
 
     @Override
-    public SampleInfo getSampleInfo() {
-        return sampleInfo;
-    }
-
-    @Override
     public Vital getParent() {
         return parent;
     }
 
     @Override
     public String toString() {
-        return "[udi=" + uniqueDeviceIdentifier + ",numeric=" + numeric + ",sampleInfo=" + sampleInfo + "]";
+        return "[udi=" + uniqueDeviceIdentifier + ",numeric=" + numeric + "]";
     }
 
     @Override
@@ -114,7 +108,7 @@ public class ValueImpl implements Value {
 
     @Override
     public long getAgeInMilliseconds() {
-        return System.currentTimeMillis() - (sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+        return System.currentTimeMillis() - (numeric.presentation_time.sec * 1000L + numeric.presentation_time.nanosec / 1000000L);
     }
 
     @Override
@@ -152,17 +146,16 @@ public class ValueImpl implements Value {
         boolean wasBelow = isAtOrBelowLow();
         boolean wasAbove = isAtOrAboveHigh();
         float wasValue = this.numeric.value;
-        long wasTime = this.sampleInfo.source_timestamp.sec * 1000L + this.sampleInfo.source_timestamp.nanosec / 1000000L;
+        long wasTime = this.numeric.presentation_time.sec * 1000L + this.numeric.presentation_time.nanosec / 1000000L;
 
         // update the sample info
         this.numeric.copy_from(numeric);
-        this.sampleInfo.copy_from(sampleInfo);
 
         // characterize the new sample
         boolean isAbove = isAtOrAboveHigh();
         boolean isBelow = isAtOrBelowLow();
         float isValue = this.numeric.value;
-        long isTime = this.sampleInfo.source_timestamp.sec * 1000L + this.sampleInfo.source_timestamp.nanosec / 1000000L;
+        long isTime = this.numeric.presentation_time.sec * 1000L + this.numeric.presentation_time.nanosec / 1000000L;
 
         // store for history
         historyTime[historyCount] = isTime;

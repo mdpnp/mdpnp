@@ -272,7 +272,7 @@ public class BloodPressurePanel extends DevicePanel {
                 pulse.setText("");
                 break;
             }
-            date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
+            date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
             time.setText(dateFormat.format(date));
 
         }

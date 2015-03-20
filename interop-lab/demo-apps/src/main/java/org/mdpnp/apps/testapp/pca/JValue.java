@@ -29,8 +29,6 @@ import javax.swing.JLabel;
 import org.mdpnp.apps.testapp.vital.JValueChart;
 import org.mdpnp.apps.testapp.vital.Value;
 
-import com.rti.dds.subscription.SampleInfo;
-
 @SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
@@ -97,7 +95,7 @@ public class JValue extends JComponent {
     private final Date date = new Date();
     private final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
-    public void update(Value value, Icon icon, String deviceName, ice.Numeric numeric, SampleInfo si, long valueMsBelowLow, long valueMsAboveHigh) {
+    public void update(Value value, Icon icon, String deviceName, ice.Numeric numeric, long valueMsBelowLow, long valueMsAboveHigh) {
         // if(value.isAtOrOutsideOfBounds()) {
         // setBackground(Color.yellow);
         // } else if(value.isAtOrOutsideOfCriticalBounds()) {
@@ -108,8 +106,8 @@ public class JValue extends JComponent {
         this.icon.setIcon(icon);
 
         this.deviceName.setText(deviceName);
-        if (si != null && numeric != null) {
-            date.setTime(1000L * si.source_timestamp.sec + si.source_timestamp.nanosec / 1000000L);
+        if (numeric != null) {
+            date.setTime(1000L * numeric.presentation_time.sec + numeric.presentation_time.nanosec / 1000000L);
             String s = Integer.toString(Math.round(numeric.value));
             while (s.length() < 3) {
                 s = " " + s;
