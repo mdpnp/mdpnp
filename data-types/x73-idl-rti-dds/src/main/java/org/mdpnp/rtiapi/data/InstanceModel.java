@@ -11,6 +11,7 @@ public interface InstanceModel<D extends Copyable, R extends DataReaderImpl> ext
 
     void addListener(InstanceModelListener<D,R> listener);
     void iterateAndAddListener(InstanceModelListener<D, R> listener);
+    void iterate(InstanceModelListener<D,R> listener);
     void iterateAndAddListener(InstanceModelListener<D,R> listener, int maxSamples);
     void removeListener(InstanceModelListener<D,R> listener);
     
