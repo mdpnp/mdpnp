@@ -10,32 +10,37 @@
  * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package org.mdpnp.guis.swing;
+package org.mdpnp.guis.javafx;
 
 import ice.Numeric;
 import ice.NumericDataReader;
 import ice.SampleArray;
 import ice.SampleArrayDataReader;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
 
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.border.EmptyBorder;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
+import javafx.stage.Stage;
 
 import org.mdpnp.guis.waveform.NumericWaveformSource;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
+import org.mdpnp.guis.waveform.TestWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
+import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.InstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
@@ -43,8 +48,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.subscription.SampleInfo;
+import com.sun.javafx.tk.FontMetrics;
+import com.sun.javafx.tk.Toolkit;
 
-@SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
  *
@@ -52,88 +58,105 @@ import com.rti.dds.subscription.SampleInfo;
 public class PulseOximeterPanel extends DevicePanel {
 
     @SuppressWarnings("unused")
-    private JLabel spo2, heartrate, spo2Label, heartrateLabel;
-    private JLabel spo2Low, spo2Up, heartrateLow, heartrateUp;
-    private JPanel spo2Bounds, heartrateBounds;
-    private JPanel spo2Panel, heartratePanel;
+    private Label spo2, heartrate, spo2Label, heartrateLabel;
+    private Label spo2Low, spo2Up, heartrateLow, heartrateUp;
+    private GridPane spo2Bounds, heartrateBounds;
+    private BorderPane spo2Panel, heartratePanel;
     private WaveformPanel pulsePanel, plethPanel;
-    private JLabel time;
+    private Label time;
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     protected void buildComponents() {
-        spo2Bounds = new JPanel();
-        spo2Bounds.setOpaque(false);
-        spo2Bounds.setLayout(new GridLayout(3, 1));
-        spo2Bounds.add(spo2Up = new JLabel("--"));
-        spo2Bounds.add(spo2Low = new JLabel("--"));
-        spo2Bounds.add(spo2Label = new JLabel("%"));
+        spo2Bounds = new GridPane();
+//        spo2Bounds.setOpaque(false);
+//        spo2Bounds.setLayout(new GridLayout(3, 1));
+        spo2Bounds.add(spo2Up = new Label("--"), 0, 0);
+        spo2Bounds.add(spo2Low = new Label("--"), 0, 1);
+        spo2Bounds.add(spo2Label = new Label("%"), 0, 2);
         spo2Up.setVisible(false);
         spo2Low.setVisible(false);
 
-        spo2Panel = new JPanel();
-        spo2Panel.setOpaque(false);
-        spo2Panel.setLayout(new BorderLayout());
-        spo2Panel.add(new JLabel("SpO\u2082"), BorderLayout.NORTH);
-        spo2Panel.add(spo2 = new JLabel("----"), BorderLayout.CENTER);
-        spo2.setHorizontalAlignment(JLabel.RIGHT);
-        spo2.setHorizontalTextPosition(SwingConstants.RIGHT);
+        spo2Panel = new BorderPane();
+//        spo2Panel.setOpaque(false);
+//        spo2Panel.setLayout(new BorderLayout());
+        spo2Panel.setTop(new Label("SpO\u2082"));
+        spo2Panel.setCenter(spo2 = new Label("----"));
+        spo2.setAlignment(Pos.CENTER_RIGHT);
+//        spo2.setHorizontalAlignment(JLabel.RIGHT);
+//        spo2.setHorizontalTextPosition(SwingConstants.RIGHT);
 
-        spo2.setBorder(new EmptyBorder(5, 5, 5, 5));
-        spo2Panel.add(spo2Bounds, BorderLayout.EAST);
+//        spo2.setBorder(new EmptyBorder(5, 5, 5, 5));
+        spo2Panel.setRight(spo2Bounds);
 
-        heartrateBounds = new JPanel();
-        heartrateBounds.setOpaque(false);
-        heartrateBounds.setLayout(new GridLayout(3, 1));
-        heartrateBounds.add(heartrateUp = new JLabel("--"));
-        heartrateBounds.add(heartrateLow = new JLabel("--"));
-        heartrateBounds.add(heartrateLabel = new JLabel("BPM"));
+        heartrateBounds = new GridPane();
+//        heartrateBounds.setOpaque(false);
+//        heartrateBounds.setLayout(new GridLayout(3, 1));
+        heartrateBounds.add(heartrateUp = new Label("--"), 0, 0);
+        heartrateBounds.add(heartrateLow = new Label("--"), 0, 1);
+        heartrateBounds.add(heartrateLabel = new Label("BPM"), 0, 2);
         heartrateUp.setVisible(false);
         heartrateLow.setVisible(false);
 
-        heartratePanel = new JPanel();
-        heartratePanel.setOpaque(false);
-        heartratePanel.setLayout(new BorderLayout());
-        JLabel lbl;
-        heartratePanel.add(lbl = new JLabel("Pulse Rate"), BorderLayout.NORTH);
-        int w = lbl.getFontMetrics(lbl.getFont()).stringWidth("RespiratoryRate");
-        lbl.setMinimumSize(new Dimension(w, lbl.getMinimumSize().height));
-        lbl.setPreferredSize(lbl.getMinimumSize());
-        heartratePanel.add(heartrate = new JLabel("----"), BorderLayout.CENTER);
-        heartrate.setHorizontalTextPosition(SwingConstants.RIGHT);
-        heartrate.setBorder(new EmptyBorder(5, 5, 5, 5));
-        heartrate.setHorizontalAlignment(JLabel.RIGHT);
-        heartratePanel.add(heartrateBounds, BorderLayout.EAST);
+        heartratePanel = new BorderPane();
+//        heartratePanel.setOpaque(false);
+//        heartratePanel.setLayout(new BorderLayout());
+        Label lbl;
+        heartratePanel.setTop(lbl = new Label("Pulse Rate"));
+        FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(lbl.getFont());
+        float w = fm.computeStringWidth("RespiratoryRate");
+        lbl.setMinWidth(w);
+        lbl.setPrefWidth(w);
+        heartratePanel.setCenter(heartrate = new Label("----"));
+        heartrate.setTextAlignment(TextAlignment.RIGHT);
+//        heartrate.setHorizontalTextPosition(SwingConstants.RIGHT);
+//        heartrate.setBorder(new EmptyBorder(5, 5, 5, 5));
+//        heartrate.setHorizontalAlignment(JLabel.RIGHT);
+        heartrate.setAlignment(Pos.CENTER_RIGHT);
+        heartratePanel.setRight(heartrateBounds);
 
-        SpaceFillLabel.attachResizeFontToFill(this, spo2, heartrate);
+//        SpaceFillLabel.attachResizeFontToFill(this, spo2, heartrate);
 
         WaveformPanelFactory fact = new WaveformPanelFactory();
 
         plethPanel = fact.createWaveformPanel();
         pulsePanel = fact.createWaveformPanel();
+       
 
-        JPanel upper = new JPanel(new GridLayout(2, 1));
-        upper.setOpaque(false);
-        upper.add(label("Plethysmogram", (Component) plethPanel));
-        upper.add(label("Pulse Rate", (Component) pulsePanel));
+        GridPane upper = new GridPane();
+//        upper.setOpaque(false);
+        BorderPane x = label("Plethysmogram", (Node) plethPanel);
+        GridPane.setVgrow(x, Priority.ALWAYS);
+        GridPane.setHgrow(x, Priority.ALWAYS);
+        upper.add(x, 0, 0);
+        x = label("Pulse Rate", (Node) pulsePanel);
+        GridPane.setVgrow(x, Priority.ALWAYS);
+        GridPane.setHgrow(x, Priority.ALWAYS);
+        upper.add(x, 0, 1);
 
-        JPanel east = new JPanel(new GridLayout(2, 1));
-        east.add(spo2Panel);
-        east.add(heartratePanel);
+        GridPane east = new GridPane();
+        east.add(spo2Panel, 0, 0);
+        east.add(heartratePanel, 0, 1);
 
-        setLayout(new BorderLayout());
-        add(upper, BorderLayout.CENTER);
-        add(east, BorderLayout.EAST);
+        setCenter(upper);
+        setRight(east);
 
-        add(label("Last Sample: ", time = new JLabel("TIME"), BorderLayout.WEST), BorderLayout.SOUTH);
+        setBottom(labelLeft("Last Sample: ", time = new Label("TIME")));
 
-        setForeground(Color.cyan);
-        setBackground(Color.black);
-        setOpaque(true);
+        ((JavaFXWaveformPane)plethPanel).getCanvas().getGraphicsContext2D().setStroke(Color.CYAN);
+        ((JavaFXWaveformPane)pulsePanel).getCanvas().getGraphicsContext2D().setStroke(Color.CYAN);
+//      setStyle("-fx-background-color: black;");
+//        setForeground(Color.cyan);
+//        setBackground(Color.black);
+//        setOpaque(true);
     }
 
     public PulseOximeterPanel() {
-        setBackground(Color.black);
-        setOpaque(true);
+        getStyleClass().add("pulse-oximeter-panel");
+        
+
+
+//        setBackground(Color.black);
+//        setOpaque(true);
         buildComponents();
         plethPanel.setSource(plethWave);
         pulsePanel.setSource(pulseWave);
@@ -196,10 +219,14 @@ public class PulseOximeterPanel extends DevicePanel {
 
         @Override
         public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
-            setInt(data, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
-            setInt(data, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
-            date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
-            time.setText(dateFormat.format(date));
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    setInt(data, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
+                    setInt(data, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
+                    date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
+                    time.setText(dateFormat.format(date));
+                }
+            });
         }
         
     };
@@ -234,5 +261,19 @@ public class PulseOximeterPanel extends DevicePanel {
         
     };
     
+    public static class MainApp extends Application {
 
+        @Override
+        public void start(Stage primaryStage) throws Exception {
+            PulseOximeterPanel p = new PulseOximeterPanel();
+            p.plethPanel.setSource(new TestWaveformSource());
+            primaryStage.setScene(new Scene(p));
+            primaryStage.show();
+        }
+        
+    }
+    
+    public static void main(String[] args) {
+        Application.launch(MainApp.class, args);
+    }
 }

@@ -10,18 +10,13 @@
  * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package org.mdpnp.guis.swing;
+package org.mdpnp.guis.javafx;
 
 import ice.Numeric;
 import ice.NumericDataReader;
 import ice.SampleArray;
 import ice.SampleArrayDataReader;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -29,19 +24,22 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.paint.Color;
 
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
+import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.InstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 
 import com.rti.dds.subscription.SampleInfo;
 
-@SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
  *
@@ -50,7 +48,7 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
 
     private final WaveformPanel[] panels;
     private final Date date = new Date();
-    private final JLabel time = new JLabel(" "); // , heartRate = new
+    private final Label time = new Label(" "); // , heartRate = new
                                                  // JLabel(" "), respiratoryRate
                                                  // = new JLabel(" ");
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -62,29 +60,34 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
     private final Map<String, WaveformPanel> panelMap = new HashMap<String, WaveformPanel>();
 
     public InvasiveBloodPressurePanel() {
-        super(new BorderLayout());
-        add(label("Last Sample: ", time, BorderLayout.WEST), BorderLayout.SOUTH);
+        getStyleClass().add("invasive-blood-pressure-panel");
+        setBottom(labelLeft("Last Sample: ", time));
 
-        JPanel waves = new JPanel(new GridLayout(WAVEFORMS.length, 1));
+        GridPane waves = new GridPane();
         WaveformPanelFactory fact = new WaveformPanelFactory();
         panels = new WaveformPanel[WAVEFORMS.length];
         for (int i = 0; i < panels.length; i++) {
             WaveformPanel panel = fact.createWaveformPanel();
-            waves.add(label(LABELS[i], (Component) (panels[i] = panel)));
+            ((JavaFXWaveformPane)panel).getCanvas().getGraphicsContext2D().setStroke(Color.RED);
+            Node x = label(LABELS[i], (Node) (panels[i] = panel));
+            GridPane.setVgrow(x, Priority.ALWAYS);
+            GridPane.setHgrow(x, Priority.ALWAYS);
+            waves.add(x, 0, i);
 
             panelMap.put(WAVEFORMS[i], panel);
             panels[i].start();
         }
-        add(waves, BorderLayout.CENTER);
+        setCenter(waves);
         
-        JPanel panel = new JPanel();
-        int w = panel.getFontMetrics(panel.getFont()).stringWidth("RespiratoryRate");
-        panel.setMinimumSize(new Dimension(w, panel.getMinimumSize().height));
-        panel.setPreferredSize(panel.getMinimumSize());
-        add(panel, BorderLayout.EAST);
-        setForeground(Color.red);
-        setBackground(Color.black);
-        setOpaque(true);
+//        Pane panel = new Pane();
+//        FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(panel.get
+//        int w = panel.getFontMetrics(panel.getFont()).stringWidth("RespiratoryRate");
+//        panel.setMinimumSize(new Dimension(w, panel.getMinimumSize().height));
+//        panel.setPreferredSize(panel.getMinimumSize());
+//        add(panel, BorderLayout.EAST);
+//        setForeground(Color.red);
+//        setBackground(Color.black);
+//        setOpaque(true);
     }
 
     @Override

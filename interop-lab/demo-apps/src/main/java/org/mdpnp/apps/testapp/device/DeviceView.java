@@ -6,6 +6,7 @@ import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
 
 public class DeviceView {
 
@@ -13,6 +14,8 @@ public class DeviceView {
     
     private Device device;
     private DeviceDataMonitor dataMonitor;
+
+    @FXML BorderPane main;
 
     public void set(final String udi) {
         Platform.runLater( () -> {
@@ -30,5 +33,8 @@ public class DeviceView {
     }
     public DeviceDataMonitor getModel() {
         return dataMonitor;
+    }
+    public BorderPane getMain() {
+        return main;
     }
 }

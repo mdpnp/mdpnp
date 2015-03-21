@@ -37,6 +37,7 @@ import javafx.stage.WindowEvent;
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.BuildInfo;
+import org.mdpnp.guis.javafx.CompositeDevicePanel;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
@@ -172,7 +173,8 @@ public class IceAppsContainer extends IceApplication {
             FXMLLoader loader = new FXMLLoader(DeviceView.class.getResource("DeviceView.fxml"));
             ui = loader.load();
             devicePanel = loader.getController();
-            
+            CompositeDevicePanel cdp = new CompositeDevicePanel();
+            devicePanel.getMain().setCenter(cdp);
             // TODO threading model needs to be revisited but here this
             // will ultimately deadlock on this AWT EventQueue thread
 //            Thread t = new Thread(threadGroup, new Runnable() {
@@ -185,7 +187,9 @@ public class IceAppsContainer extends IceApplication {
                     System.err.println("Monitor device " + device.getUDI());
                     devicePanel.set(device);
                     devicePanel.set(deviceMonitor);
+                    cdp.setModel(deviceMonitor);
                     deviceMonitor.start(subscriber, eventLoop);
+                    
 //                }
 //            }, device.getMakeAndModel());
 
@@ -201,6 +205,8 @@ public class IceAppsContainer extends IceApplication {
                     deviceMonitor.stop();
                 }
                 devicePanel.set((DeviceDataMonitor)null);
+                CompositeDevicePanel cdp = (CompositeDevicePanel) devicePanel.getMain().getCenter();
+                cdp.stop();
             }
         }
 
@@ -271,7 +277,7 @@ public class IceAppsContainer extends IceApplication {
         
         final DeviceListModelImpl nc = (DeviceListModelImpl) context.getBean("deviceListModel");
         final EventLoop eventLoop = (EventLoop) context.getBean("eventLoop");
-
+        
 //        setIconImage(ImageIO.read(getClass().getResource("icon.png")));
         partitionChooserModel = new PartitionChooserModel(subscriber, publisher);
         

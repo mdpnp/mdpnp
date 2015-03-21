@@ -10,28 +10,30 @@
  * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package org.mdpnp.guis.swing;
+package org.mdpnp.guis.javafx;
 
 import ice.Numeric;
 import ice.NumericDataReader;
 import ice.SampleArray;
 import ice.SampleArrayDataReader;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
 
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javafx.application.Platform;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.paint.Color;
 
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
+import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.InstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
@@ -41,14 +43,13 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
 
-@SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
  *
  */
 public class VentilatorPanel extends DevicePanel {
     private WaveformPanel flowPanel, pressurePanel, co2Panel;
-    private final JLabel time = new JLabel(" "), respiratoryRate = new JLabel(" "), endTidalCO2 = new JLabel(" ");
+    private final Label time = new Label(" "), respiratoryRate = new Label(" "), endTidalCO2 = new Label(" ");
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
@@ -71,42 +72,55 @@ public class VentilatorPanel extends DevicePanel {
         pressurePanel = fact.createWaveformPanel();
         co2Panel = fact.createWaveformPanel();
 
-        JPanel waves = new JPanel(new GridLayout(3, 1));
-        waves.setOpaque(false);
+        ((JavaFXWaveformPane)flowPanel).getCanvas().getGraphicsContext2D().setStroke(Color.WHITE);
+        ((JavaFXWaveformPane)pressurePanel).getCanvas().getGraphicsContext2D().setStroke(Color.WHITE);
+        ((JavaFXWaveformPane)co2Panel).getCanvas().getGraphicsContext2D().setStroke(Color.WHITE);
+        
+        
+        GridPane waves = new GridPane();
+//        waves.setOpaque(false);
+        Node x = label("Flow", (Node) flowPanel);
+        GridPane.setVgrow(x, Priority.ALWAYS);
+        GridPane.setHgrow(x, Priority.ALWAYS);
+        waves.add(x, 0, 0);
+        
+        x = label("Pressure", (Node) pressurePanel);
+        GridPane.setVgrow(x, Priority.ALWAYS);
+        GridPane.setHgrow(x, Priority.ALWAYS);
+        waves.add(x, 0, 1);
+        
+        x = label("CO\u2082", (Node) co2Panel);
+        GridPane.setVgrow(x, Priority.ALWAYS);
+        GridPane.setHgrow(x, Priority.ALWAYS);
+        waves.add(x, 0, 2);
 
-        waves.add(label("Flow", (Component) flowPanel));
-        waves.add(label("Pressure", (Component) pressurePanel));
-        waves.add(label("CO\u2082", (Component) co2Panel));
+        setCenter(waves);
 
-        add(waves, BorderLayout.CENTER);
+        setBottom(labelLeft("Last Sample: ", time));
 
-        add(label("Last Sample: ", time, BorderLayout.WEST), BorderLayout.SOUTH);
+//        SpaceFillLabel.attachResizeFontToFill(this, endTidalCO2, respiratoryRate);
 
-        SpaceFillLabel.attachResizeFontToFill(this, endTidalCO2, respiratoryRate);
-
-        JPanel numerics = new JPanel(new GridLayout(2, 1));
-        SpaceFillLabel.attachResizeFontToFill(this, endTidalCO2, respiratoryRate);
-        JPanel t;
-        numerics.add(t = label("etCO\u2082", endTidalCO2));
-        t.add(new JLabel(" "), BorderLayout.EAST);
-        numerics.add(t = label("RespiratoryRate", respiratoryRate));
-        t.add(new JLabel("BPM"), BorderLayout.EAST);
-        add(numerics, BorderLayout.EAST);
-
-        add(numerics, BorderLayout.EAST);
+        GridPane numerics = new GridPane();
+//        SpaceFillLabel.attachResizeFontToFill(this, endTidalCO2, respiratoryRate);
+        BorderPane t;
+        numerics.add(t = label("etCO\u2082", endTidalCO2), 0, 0);
+        t.setRight(new Label(" "));
+        numerics.add(t = label("RespiratoryRate", respiratoryRate), 0, 1);
+        t.setRight(new Label("BPM"));
+        setRight(numerics);
 
         flowPanel.start();
         pressurePanel.start();
         co2Panel.start();
 
-        setForeground(Color.white);
-        setBackground(Color.black);
-        setOpaque(true);
+//        setForeground(Color.white);
+//        setBackground(Color.black);
+//        setOpaque(true);
 
     }
 
     public VentilatorPanel() {
-        super(new BorderLayout());
+        getStyleClass().add("ventilator-panel");
         buildComponents();
 
     }
@@ -176,7 +190,11 @@ public class VentilatorPanel extends DevicePanel {
         public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
             date.setTime(data.presentation_time.sec * 1000L + data.presentation_time.nanosec / 1000000L);
-            time.setText(dateFormat.format(date));
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    time.setText(dateFormat.format(date));
+                }
+            });
         }
         
     };

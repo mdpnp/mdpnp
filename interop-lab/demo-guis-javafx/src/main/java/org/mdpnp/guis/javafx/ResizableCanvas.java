@@ -1,4 +1,4 @@
-package org.mdpnp.apps.testapp.pca;
+package org.mdpnp.guis.javafx;
 
 import javafx.scene.canvas.Canvas;
 

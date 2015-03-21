@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.BorderPane?>
 
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="org.mdpnp.apps.testapp.device.DeviceView">
+<BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="org.mdpnp.apps.testapp.device.DeviceView">
    <top>
       <Label fx:id="udi" text="Label" BorderPane.alignment="CENTER" />
    </top>

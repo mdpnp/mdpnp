@@ -10,17 +10,13 @@
  * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package org.mdpnp.guis.swing;
+package org.mdpnp.guis.javafx;
 
 import ice.Numeric;
 import ice.NumericDataReader;
 import ice.SampleArray;
 import ice.SampleArrayDataReader;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -30,19 +26,23 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
+import javafx.application.Platform;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.paint.Color;
 
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
+import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.InstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 
 import com.rti.dds.subscription.SampleInfo;
 
-@SuppressWarnings("serial")
 /**
  * @author Jeff Plourde
  *
@@ -51,7 +51,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
 
 //    private final WaveformPanel[] panel;
     private final Date date = new Date();
-    private final JLabel time = new JLabel(" "), heartRate = new JLabel(" "), respiratoryRate = new JLabel(" ");
+    private final Label time = new Label(" "), heartRate = new Label(" "), respiratoryRate = new Label(" ");
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private final static String[] ECG_WAVEFORMS = new String[] { ice.MDC_ECG_LEAD_I.VALUE, ice.MDC_ECG_LEAD_II.VALUE,
@@ -67,40 +67,26 @@ public class ElectroCardioGramPanel extends DevicePanel {
     }
     
     private final Map<String, WaveformPanel> panelMap = new HashMap<String, WaveformPanel>();
-    private final GridLayout waveLayout = new GridLayout(1,1);
-    private final JPanel waves = new JPanel(waveLayout);
+    private final GridPane waves = new GridPane();
     
     public ElectroCardioGramPanel() {
-        super(new BorderLayout());
-        add(label("Last Sample: ", time, BorderLayout.WEST), BorderLayout.SOUTH);
+        getStyleClass().add("electro-cardiogram-panel");
+        
+        setBottom(labelLeft("Last Sample: ", time));
+        setCenter(waves);
 
-//        JPanel waves = new JPanel(new GridLayout(ECG_WAVEFORMS.length, 1));
-//        WaveformPanelFactory fact = new WaveformPanelFactory();
-//        panel = new WaveformPanel[ECG_WAVEFORMS.length];
-//        for (int i = 0; i < panel.length; i++) {
-//            waves.add(label(ECG_LABELS[i], (panel[i] = fact.createWaveformPanel()).asComponent())/*
-//                                                                                                  * ,
-//                                                                                                  * gbc
-//                                                                                                  */);
-//            SampleArrayWaveformSource wuws = new SampleArrayWaveformSource(sampleArrayReader, );
-//            panel[i].setSource(wuws);
-//            panelMap.put(ECG_WAVEFORMS[i], panel[i]);
-//            panel[i].start();
-//        }
-        add(waves, BorderLayout.CENTER);
-
-        JPanel numerics = new JPanel(new GridLayout(2, 1));
-        SpaceFillLabel.attachResizeFontToFill(this, heartRate, respiratoryRate);
-        JPanel t;
-        numerics.add(t = label("Heart Rate", heartRate));
-        t.add(new JLabel("BPM"), BorderLayout.EAST);
-        numerics.add(t = label("RespiratoryRate", respiratoryRate));
-        t.add(new JLabel("BPM"), BorderLayout.EAST);
-        add(numerics, BorderLayout.EAST);
-
-        setForeground(Color.green);
-        setBackground(Color.black);
-        setOpaque(true);
+        GridPane numerics = new GridPane();
+//        SpaceFillLabel.attachResizeFontToFill(this, heartRate, respiratoryRate);
+        BorderPane t;
+        numerics.add(t = label("Heart Rate", heartRate), 0, 0);
+        t.setRight(new Label("BPM"));
+        numerics.add(t = label("RespiratoryRate", respiratoryRate), 0, 1);
+        t.setRight(new Label("BPM"));
+        setRight(numerics);
+        
+//        setForeground(Color.green);
+//        setBackground(Color.black);
+//        setOpaque(true);
     }
 
     @Override
@@ -164,12 +150,17 @@ public class ElectroCardioGramPanel extends DevicePanel {
                     wuws = new WaveformPanelFactory().createWaveformPanel();
                     wuws.setSource(saws);
                     final WaveformPanel _wuws = wuws;
+                    final int idx = panelMap.size();
                     panelMap.put(data.metric_id, wuws);
-                    waveLayout.setRows(panelMap.size());
-                    SwingUtilities.invokeLater(new Runnable() {
+//                    waveLayout.setRows(panelMap.size());
+                    ((JavaFXWaveformPane)_wuws).getCanvas().getGraphicsContext2D().setStroke(Color.GREEN);
+                    Platform.runLater(new Runnable() {
                         public void run() {
-                            waves.add((Component) _wuws);
-                            waves.getParent().invalidate();
+                            Node x = (Node) _wuws;
+                            GridPane.setVgrow(x, Priority.ALWAYS);
+                            GridPane.setHgrow(x, Priority.ALWAYS);
+                            waves.add(x, 0, idx);
+//                            waves.getParent().invalidate();
                         }
                     });
                     wuws.start();
@@ -190,7 +181,11 @@ public class ElectroCardioGramPanel extends DevicePanel {
                 SampleInfo sampleInfo) {
             if(sampleInfo.valid_data && ECG_WAVEFORMS_SET.contains(data.metric_id)) {
                 date.setTime(data.presentation_time.sec * 1000L + data.presentation_time.nanosec / 1000000L);
-                time.setText(dateFormat.format(date));
+                Platform.runLater(new Runnable() {
+                    public void run() {
+                        time.setText(dateFormat.format(date));
+                    }
+                });
             }
         } 
     };    

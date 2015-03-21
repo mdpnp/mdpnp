@@ -1,18 +1,46 @@
 package org.mdpnp.guis.waveform.javafx;
 
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
+import javafx.util.Duration;
 
-public class JavaFXWaveformPane extends Pane {
-    private static final double SPACING_X = 25;
-    private static final double SPACING_Y = 20;
-    private static final double RADIUS = 1.5;
-    protected Canvas canvas = new Canvas();
+import org.mdpnp.guis.javafx.ResizableCanvas;
+import org.mdpnp.guis.waveform.WaveformPanel;
+import org.mdpnp.guis.waveform.WaveformRenderer;
+import org.mdpnp.guis.waveform.WaveformSource;
+
+public class JavaFXWaveformPane extends BorderPane implements WaveformPanel {
+//    private static final double SPACING_X = 25;
+//    private static final double SPACING_Y = 20;
+//    private static final double RADIUS = 1.5;
+    protected final ResizableCanvas canvas;
+    private final WaveformRenderer renderer = new WaveformRenderer();
+    private WaveformSource source; 
+    private final JavaFXWaveformCanvas waveformCanvas;
+    private Timeline waveformRender;
  
+    public ResizableCanvas getCanvas() {
+        return canvas;
+    }
+    
     public JavaFXWaveformPane() {
-        getChildren().add(canvas);
+        super(new ResizableCanvas());
+        canvas = (ResizableCanvas) getCenter();
+        waveformCanvas = new JavaFXWaveformCanvas(this);
+
+        setOnMouseClicked(new EventHandler<MouseEvent>() {
+
+            @Override
+            public void handle(MouseEvent event) {
+                System.err.println("RESCALE");
+                renderer.rescaleValue();
+            }
+            
+        });
     }
  
     @Override protected void layoutChildren() {
@@ -38,5 +66,44 @@ public class JavaFXWaveformPane extends Pane {
 //                }
 //            }
         }
+    }
+
+    @Override
+    public void setSource(WaveformSource source) {
+        this.source = source;
+    }
+
+    @Override
+    public WaveformSource getSource() {
+        return source;
+    }
+
+    @Override
+    public void setOutOfTrack(boolean outOfTrack) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void start() {
+        waveformRender = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {
+
+            @Override
+            public void handle(ActionEvent event) {
+                long tm = System.currentTimeMillis();
+                if(null != source) {
+//                System.err.println("RENDER "+waveformCanvas.getExtent());
+                    renderer.render(source, waveformCanvas, tm-12000L, tm-2000L);
+                }
+            }
+            
+        }));
+        waveformRender.setCycleCount(Timeline.INDEFINITE);
+        waveformRender.play();
+    }
+
+    @Override
+    public void stop() {
+        waveformRender.stop();
     }
 }

@@ -12,14 +12,23 @@
  ******************************************************************************/
 package org.mdpnp.guis.waveform;
 
-public interface WaveformPanel {
-    void setSource(WaveformSource source);
-    
-    WaveformSource getSource();
+import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    void setOutOfTrack(boolean outOfTrack);
+/**
+ * @author Jeff Plourde
+ *
+ */
+public class WaveformPanelFactory {
+    @SuppressWarnings("unused")
+    private final Logger log = LoggerFactory.getLogger(WaveformPanelFactory.class);
 
-    void start();
+    public WaveformPanelFactory() {
+    }
 
-    void stop();
+    public WaveformPanel createWaveformPanel() {
+        return new JavaFXWaveformPane();
+    }
+
 }

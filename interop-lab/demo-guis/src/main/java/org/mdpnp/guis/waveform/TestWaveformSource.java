@@ -19,6 +19,18 @@ package org.mdpnp.guis.waveform;
  */
 public class TestWaveformSource implements WaveformSource, Runnable {
 
+    
+    private static final float[] values = new float[] {
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+    };
+    
     public TestWaveformSource() {
         Thread t = new Thread(this);
         t.setDaemon(true);
@@ -30,7 +42,6 @@ public class TestWaveformSource implements WaveformSource, Runnable {
         return false;
     }
 
-    private int offset = 0;
     private int MAX = 800;
     private double MAX_X = 8.0 * Math.PI;
     private long TIME = 5000L;
@@ -53,14 +64,20 @@ public class TestWaveformSource implements WaveformSource, Runnable {
 
     @Override
     public void iterate(WaveformIterator itr) {
+        long now = System.currentTimeMillis();
+        itr.begin();
+        for(int i = 0; i < values.length; i++) {
+//            int x = (offset + i) % values.length;
+            itr.sample(now-(values.length-i)*200L, values[i]);
+        }
         
+        itr.end();
         // TODO Auto-generated method stub
         
     }
-
+//    private int offset = 0;
     @Override
     public void run() {
-        // TODO Auto-generated method stub
-        
+//        offset = ++offset == values.length ? 0 : offset;
     }
 }
