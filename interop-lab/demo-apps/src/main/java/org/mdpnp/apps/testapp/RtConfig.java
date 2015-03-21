@@ -14,6 +14,8 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.PublicationBuiltinTopicDataInstanceModel;
+import org.mdpnp.rtiapi.data.PublicationBuiltinTopicDataInstanceModelImpl;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +30,8 @@ import com.rti.dds.domain.DomainParticipantFactoryQos;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.publication.PublisherQos;
+import com.rti.dds.publication.builtin.PublicationBuiltinTopicDataDataReader;
+import com.rti.dds.publication.builtin.PublicationBuiltinTopicDataTypeSupport;
 import com.rti.dds.subscription.Subscriber;
 
 //
@@ -68,6 +72,9 @@ public class RtConfig {
         DomainParticipantFactory.get_instance().set_qos(qos);
         final DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(domainId, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null,
                 StatusKind.STATUS_MASK_NONE);
+        
+        // Initialize this builtin reader
+        participant.get_builtin_subscriber().lookup_datareader(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME);
 
         /**
          * This is a workaround.  Publisher.set_qos (potentially called later to
@@ -83,7 +90,7 @@ public class RtConfig {
 
         final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         final Publisher publisher = participant.create_publisher(pubQos, null, StatusKind.STATUS_MASK_NONE);
-
+        
         final CountDownLatch startSignal = new CountDownLatch(1);
 
         Runnable enable = new Runnable() {

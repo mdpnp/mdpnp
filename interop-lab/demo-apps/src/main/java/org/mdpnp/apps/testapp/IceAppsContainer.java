@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 
+import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
@@ -266,9 +267,10 @@ public class IceAppsContainer extends IceApplication {
         final Subscriber        subscriber  = rtConfig.getSubscriber();
         final String            udi         = (String) context.getBean("supervisorUdi");
 
-        
+        final DomainParticipant participant = (DomainParticipant) context.getBean("domainParticipant");
         
         final DeviceListModelImpl nc = (DeviceListModelImpl) context.getBean("deviceListModel");
+        final EventLoop eventLoop = (EventLoop) context.getBean("eventLoop");
 
 //        setIconImage(ImageIO.read(getClass().getResource("icon.png")));
         partitionChooserModel = new PartitionChooserModel(subscriber, publisher);
@@ -279,6 +281,7 @@ public class IceAppsContainer extends IceApplication {
             .setModel(partitionChooserModel)
             .setUdi(udi)
             .setVersion(BuildInfo.getDescriptor())
+            .setModel(participant, eventLoop)
             .set(context);
         panelRoot.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 //

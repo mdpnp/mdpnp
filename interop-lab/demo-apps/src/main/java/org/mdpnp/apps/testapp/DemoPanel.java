@@ -26,15 +26,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.support.AbstractApplicationContext;
-
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantQos;
-import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.SubscriberQos;
-
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -42,12 +33,24 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.support.AbstractApplicationContext;
+
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.domain.DomainParticipantQos;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriberQos;
 
 /**
  * @author Jeff Plourde
@@ -64,6 +67,7 @@ public class DemoPanel implements Runnable {
     
     @FXML
     protected BorderPane content;
+   
     
 
     private PartitionChooserModel partitionChooserModel;
@@ -87,6 +91,14 @@ public class DemoPanel implements Runnable {
         return createAdapter;
     }
 
+    private MyPublicationBuiltinTopicDataItems items;
+    public DemoPanel setModel(DomainParticipant participant, EventLoop eventLoop) {
+        items = new MyPublicationBuiltinTopicDataItems();
+        this.partitions.setItems(items.getPartitions());
+        items.setModel(participant, eventLoop);
+        return this;
+    }
+    
     public DemoPanel setModel(PartitionChooserModel partitionChooserModel) {
         this.partitionChooserModel = partitionChooserModel;
         return this;
@@ -147,6 +159,10 @@ public class DemoPanel implements Runnable {
     public void stop() {
         timeFuture.cancel(true);
         executor.shutdownNow();
+        if(null != items) {
+            items.stop();
+            items = null;
+        }
     }
     
     private ScheduledFuture<?> timeFuture;
@@ -185,6 +201,8 @@ public class DemoPanel implements Runnable {
     private AbstractApplicationContext context;
 
     @FXML BorderPane demoPanel;
+
+    @FXML ComboBox<String> partitions;
     
     @FXML public void clickCreateAdapter(ActionEvent evt) {
         try {
@@ -227,6 +245,12 @@ public class DemoPanel implements Runnable {
             log.error("",e);
         }
 
+    }
+
+    @FXML public void changePartition(ActionEvent event) {
+        final List<String> partitions = new ArrayList<String>(1);
+        partitions.add(this.partitions.getSelectionModel().getSelectedItem());
+        partitionChooserModel.set(partitions);
     }
 
 }
