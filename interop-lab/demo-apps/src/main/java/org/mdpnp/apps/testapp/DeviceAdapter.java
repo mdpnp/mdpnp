@@ -309,7 +309,8 @@ public abstract class DeviceAdapter {
                             update("Shutting down", 1);
                             root.getChildren().clear();
                             root.setTop(progressBar);
-        
+                            // Required to trigger destruction of animated DevicePanels
+                            deviceView.set(null);
                             Runnable r = new Runnable() {
                                 public void run() {
                                     stop();

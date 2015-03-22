@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane fx:controller="org.mdpnp.apps.testapp.CreateAdapter" fx:id="main" prefHeight="337.0000999999975" prefWidth="647.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" >
+<BorderPane fx:controller="org.mdpnp.apps.testapp.CreateAdapter" fx:id="main" prefHeight="-1" prefWidth="-1" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" >
   <bottom>
     <BorderPane prefHeight="-1.0" prefWidth="-1.0">
       <left>
@@ -25,34 +25,14 @@
     </BorderPane>
   </bottom>
   <center>
-    <GridPane id="deviceTypeRow" alignment="CENTER" BorderPane.alignment="TOP_CENTER" BorderPane.margin="$x1">
-      <children>
-        <Label fx:id="deviceTypeLabel" text="Device Type:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-        <ComboBox fx:id="deviceType" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="0">
-        </ComboBox>
-        <Label fx:id="serialPortsLabel" text="Serial Port:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-        <ComboBox fx:id="serialPorts" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="1">
-        </ComboBox>
-        <Label fx:id="addressLabel" text="IP Address:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-        <TextField fx:id="address" prefWidth="-1.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="2" />
-      </children>
-      <columnConstraints>
-        <ColumnConstraints halignment="RIGHT" hgrow="NEVER" minWidth="10.0" prefWidth="100.0" />
-        <ColumnConstraints halignment="LEFT" hgrow="NEVER" minWidth="10.0" prefWidth="100.0" />
-      </columnConstraints>
-      <rowConstraints>
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
-        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
-      </rowConstraints>
-    </GridPane>
+    <fx:include source="Settings.fxml" fx:id="settings" BorderPane.alignment="TOP_CENTER" />
   </center>
   <top>
     <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
       <content>
-        <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0">
+        <AnchorPane id="Content" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0">
           <children>
-            <TextArea editable="false" prefColumnCount="50" prefHeight="-1.0" prefRowCount="8" prefWidth="-1.0" text="Typically ICE Device Adapters do not run directly within the ICE Supervisor.  This option is provided for convenient testing.  A window will be created for the device adapter.  To terminate the adapter close that window.  To exit this application you must close the supervisory window." wrapText="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+            <TextArea editable="false" prefColumnCount="1" prefHeight="-1.0" prefRowCount="4" prefWidth="-1.0" text="Typically ICE Device Adapters do not run directly within the ICE Supervisor.  This option is provided for convenient testing.  A window will be created for the device adapter.  To terminate the adapter close that window.  To exit this application you must close the supervisory window." wrapText="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
           </children>
         </AnchorPane>
       </content>
