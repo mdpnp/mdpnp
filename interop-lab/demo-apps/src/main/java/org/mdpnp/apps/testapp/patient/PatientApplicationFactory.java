@@ -1,6 +1,7 @@
 package org.mdpnp.apps.testapp.patient;
 
 import javafx.scene.Parent;
+
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
@@ -98,6 +99,7 @@ public class PatientApplicationFactory implements IceApplicationProvider {
 
     }
 
+    @SuppressWarnings("serial")
     static class EmbeddedDB extends JDBCDataSource {
         private String schemaDef;
 

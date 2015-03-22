@@ -46,28 +46,18 @@ public class MultiPulseOximeterPanel extends DevicePanel {
     protected void buildComponents() {
          WaveformPanelFactory fact = new WaveformPanelFactory();
         this.plethPanel = new WaveformPanel[N];
-//        setLayout(new GridLayout(N, 1));
         setCenter(gridPane);
         for (int i = 0; i < N; i++) {
              plethPanel[i] = fact.createWaveformPanel();
              ((JavaFXWaveformPane)plethPanel[i]).getCanvas().getGraphicsContext2D().setStroke(Color.CYAN);
-//            plethPanel[i] = new SwingWaveformPanel();
         }
-
-//        setForeground(Color.green);
-//        setBackground(Color.black);
-//        setOpaque(true);
     }
 
     public MultiPulseOximeterPanel() {
         getStyleClass().add("multi-pulse-oximeter-panel");
-//        setBackground(Color.black);
-//        setOpaque(true);
         buildComponents();
         plethWave = new SampleArrayWaveformSource[N];
         for (int i = 0; i < N; i++) {
-//            plethWave[i] = new SampleArrayWaveformSource();
-//            plethPanel[i].setSource(plethWave[i]);
             plethPanel[i].start();
         }
     }

@@ -78,7 +78,6 @@ public class VentilatorPanel extends DevicePanel {
         
         
         GridPane waves = new GridPane();
-//        waves.setOpaque(false);
         Node x = label("Flow", (Node) flowPanel);
         GridPane.setVgrow(x, Priority.ALWAYS);
         GridPane.setHgrow(x, Priority.ALWAYS);
@@ -98,10 +97,7 @@ public class VentilatorPanel extends DevicePanel {
 
         setBottom(labelLeft("Last Sample: ", time));
 
-//        SpaceFillLabel.attachResizeFontToFill(this, endTidalCO2, respiratoryRate);
-
         GridPane numerics = new GridPane();
-//        SpaceFillLabel.attachResizeFontToFill(this, endTidalCO2, respiratoryRate);
         BorderPane t;
         numerics.add(t = label("etCO\u2082", endTidalCO2), 0, 0);
         t.setRight(new Label(" "));
@@ -112,10 +108,6 @@ public class VentilatorPanel extends DevicePanel {
         flowPanel.start();
         pressurePanel.start();
         co2Panel.start();
-
-//        setForeground(Color.white);
-//        setBackground(Color.black);
-//        setOpaque(true);
 
     }
 

@@ -68,8 +68,6 @@ public class PulseOximeterPanel extends DevicePanel {
 
     protected void buildComponents() {
         spo2Bounds = new GridPane();
-//        spo2Bounds.setOpaque(false);
-//        spo2Bounds.setLayout(new GridLayout(3, 1));
         spo2Bounds.add(spo2Up = new Label("--"), 0, 0);
         spo2Bounds.add(spo2Low = new Label("--"), 0, 1);
         spo2Bounds.add(spo2Label = new Label("%"), 0, 2);
@@ -77,20 +75,12 @@ public class PulseOximeterPanel extends DevicePanel {
         spo2Low.setVisible(false);
 
         spo2Panel = new BorderPane();
-//        spo2Panel.setOpaque(false);
-//        spo2Panel.setLayout(new BorderLayout());
         spo2Panel.setTop(new Label("SpO\u2082"));
         spo2Panel.setCenter(spo2 = new Label("----"));
         spo2.setAlignment(Pos.CENTER_RIGHT);
-//        spo2.setHorizontalAlignment(JLabel.RIGHT);
-//        spo2.setHorizontalTextPosition(SwingConstants.RIGHT);
-
-//        spo2.setBorder(new EmptyBorder(5, 5, 5, 5));
         spo2Panel.setRight(spo2Bounds);
 
         heartrateBounds = new GridPane();
-//        heartrateBounds.setOpaque(false);
-//        heartrateBounds.setLayout(new GridLayout(3, 1));
         heartrateBounds.add(heartrateUp = new Label("--"), 0, 0);
         heartrateBounds.add(heartrateLow = new Label("--"), 0, 1);
         heartrateBounds.add(heartrateLabel = new Label("BPM"), 0, 2);
@@ -98,8 +88,6 @@ public class PulseOximeterPanel extends DevicePanel {
         heartrateLow.setVisible(false);
 
         heartratePanel = new BorderPane();
-//        heartratePanel.setOpaque(false);
-//        heartratePanel.setLayout(new BorderLayout());
         Label lbl;
         heartratePanel.setTop(lbl = new Label("Pulse Rate"));
         FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(lbl.getFont());
@@ -108,22 +96,15 @@ public class PulseOximeterPanel extends DevicePanel {
         lbl.setPrefWidth(w);
         heartratePanel.setCenter(heartrate = new Label("----"));
         heartrate.setTextAlignment(TextAlignment.RIGHT);
-//        heartrate.setHorizontalTextPosition(SwingConstants.RIGHT);
-//        heartrate.setBorder(new EmptyBorder(5, 5, 5, 5));
-//        heartrate.setHorizontalAlignment(JLabel.RIGHT);
         heartrate.setAlignment(Pos.CENTER_RIGHT);
         heartratePanel.setRight(heartrateBounds);
-
-//        SpaceFillLabel.attachResizeFontToFill(this, spo2, heartrate);
 
         WaveformPanelFactory fact = new WaveformPanelFactory();
 
         plethPanel = fact.createWaveformPanel();
         pulsePanel = fact.createWaveformPanel();
-       
 
         GridPane upper = new GridPane();
-//        upper.setOpaque(false);
         BorderPane x = label("Plethysmogram", (Node) plethPanel);
         GridPane.setVgrow(x, Priority.ALWAYS);
         GridPane.setHgrow(x, Priority.ALWAYS);
@@ -144,19 +125,10 @@ public class PulseOximeterPanel extends DevicePanel {
 
         ((JavaFXWaveformPane)plethPanel).getCanvas().getGraphicsContext2D().setStroke(Color.CYAN);
         ((JavaFXWaveformPane)pulsePanel).getCanvas().getGraphicsContext2D().setStroke(Color.CYAN);
-//      setStyle("-fx-background-color: black;");
-//        setForeground(Color.cyan);
-//        setBackground(Color.black);
-//        setOpaque(true);
     }
 
     public PulseOximeterPanel() {
         getStyleClass().add("pulse-oximeter-panel");
-        
-
-
-//        setBackground(Color.black);
-//        setOpaque(true);
         buildComponents();
         plethPanel.setSource(plethWave);
         pulsePanel.setSource(pulseWave);
@@ -184,7 +156,6 @@ public class PulseOximeterPanel extends DevicePanel {
 
     public static boolean supported(Set<String> names) {
         return names.contains(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE) && names.contains(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);// &&
-        // names.contains(ice.Physio._MDC_PULS_OXIM_PLETH);
     }
 
     @Override
@@ -236,7 +207,6 @@ public class PulseOximeterPanel extends DevicePanel {
         @Override
         public void instanceAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
-//            System.err.println(this+" I see you SampleArray:"+data.unique_device_identifier+" "+data.metric_id+" "+data.instance_id);
             if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(data.metric_id)) {
                 if(null == plethWave) {
                     plethWave = new SampleArrayWaveformSource(deviceMonitor.getSampleArrayModel().getReader(), data);

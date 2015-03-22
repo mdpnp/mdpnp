@@ -57,7 +57,6 @@ public class SettingsController {
     private final ObjectProperty<DeviceDriverProvider> selectedDevice = new SimpleObjectProperty<>(this, "selectedDevice", null);
     private final StringProperty address = new SimpleStringProperty(this, "address", "");
     private final StringProperty domain = new SimpleStringProperty(this, "domain", "");
-    private final BooleanProperty serial = new SimpleBooleanProperty(this, "serial", false);
     
     public boolean isReady() {
         return ready.get();
@@ -95,9 +94,7 @@ public class SettingsController {
         switch (app) {
         case ICE_Device_Interface:
             if(!gridPane.getChildren().contains(deviceType)) { gridPane.getChildren().add(deviceType); }
-//            deviceType.setVisible(true);
             if(!gridPane.getChildren().contains(deviceTypeLabel)) { gridPane.getChildren().add(deviceTypeLabel); }
-//            deviceTypeLabel.setVisible(true);
 
             ice.ConnectionType selected = null;
             if (dt != null) {
@@ -110,58 +107,36 @@ public class SettingsController {
             if (ice.ConnectionType.Serial.equals(selected)) {
                 if (SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
                     if(!gridPane.getChildren().contains(addressLabel)) { gridPane.getChildren().add(addressLabel); }
-//                    addressLabel.setVisible(true);
                     if(!gridPane.getChildren().contains(addressField)) { gridPane.getChildren().add(addressField); }
-//                    address.setVisible(true);
                     gridPane.getChildren().remove(serialPortsLabel);
-//                    serialPortsLabel.setVisible(false);
                     gridPane.getChildren().remove(serialPorts);
-//                    serialPorts.setVisible(false);
                 } else {
                     gridPane.getChildren().remove(addressLabel);
-//                    addressLabel.setVisible(false);
                     gridPane.getChildren().remove(addressField);
-//                    address.setVisible(false);
                     if(!gridPane.getChildren().contains(serialPortsLabel)) { gridPane.getChildren().add(serialPortsLabel); }
-//                    serialPortsLabel.setVisible(true);
                     if(!gridPane.getChildren().contains(serialPorts)) { gridPane.getChildren().add(serialPorts); }
-//                    serialPorts.setVisible(true);
                 }
 
             } else if (ice.ConnectionType.Network.equals(selected)) {
                 if(!gridPane.getChildren().contains(addressLabel)) { gridPane.getChildren().add(addressLabel); }
-//                addressLabel.setVisible(true);
                 if(!gridPane.getChildren().contains(addressField)) { gridPane.getChildren().add(addressField); }
-//                address.setVisible(true);
                 gridPane.getChildren().remove(serialPortsLabel);
-//                serialPortsLabel.setVisible(false);
                 gridPane.getChildren().remove(serialPorts);
-//                serialPorts.setVisible(false);
             } else {
                 gridPane.getChildren().remove(addressLabel);
-//                addressLabel.setVisible(false);
                 gridPane.getChildren().remove(addressField);
-//                address.setVisible(false);
                 gridPane.getChildren().remove(serialPortsLabel);
-//                serialPortsLabel.setVisible(false);
                 gridPane.getChildren().remove(serialPorts);
-//                serialPorts.setVisible(false);
             }
             break;
         case ICE_Supervisor:
         case ICE_ParticipantOnly:
             gridPane.getChildren().remove(deviceType);
-//            deviceType.setVisible(false);
             gridPane.getChildren().remove(deviceTypeLabel);
-//            deviceTypeLabel.setVisible(false);
             gridPane.getChildren().remove(addressLabel);
-//            addressLabel.setVisible(false);
             gridPane.getChildren().remove(addressField);
-//            address.setVisible(false);
             gridPane.getChildren().remove(serialPortsLabel);
-//            serialPortsLabel.setVisible(false);
             gridPane.getChildren().remove(serialPorts);
-//            serialPorts.setVisible(false);
             ready.set(true);
             start.set("Start " + app);
             break;
@@ -186,7 +161,6 @@ public class SettingsController {
         deviceType.setItems(FXCollections.observableArrayList(DeviceFactory.getAvailableDevices()));
         applications.setItems(FXCollections.observableArrayList(Application.values()));
         serialPorts.setItems(FXCollections.observableList(SerialProviderFactory.getDefaultProvider().getPortNames()));
-//        main.layout();
 
         if (null != conf) {
             if (null != conf.getApplication()) {

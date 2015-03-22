@@ -8,6 +8,9 @@
 <?import org.mdpnp.guis.javafx.ResizableCanvas?>
 
 <BorderPane fx:id="container" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pca.VitalMonitoring">
+   <top>
+      <Label text="Data Visualization" BorderPane.alignment="CENTER"/>
+   </top>
    <center>
       <ResizableCanvas fx:id="canvas" />
    </center>

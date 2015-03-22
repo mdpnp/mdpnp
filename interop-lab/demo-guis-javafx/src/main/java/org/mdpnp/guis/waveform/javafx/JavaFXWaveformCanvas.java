@@ -1,7 +1,6 @@
 package org.mdpnp.guis.waveform.javafx;
 
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 import org.mdpnp.guis.waveform.WaveformCanvas;

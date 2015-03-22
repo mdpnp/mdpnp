@@ -22,32 +22,7 @@ public abstract class DevicePanel extends BorderPane  {
 
     public DevicePanel() {
         getStylesheets().add(getClass().getResource("demo-guis-javafx.css").toExternalForm());
-//        super();
-//        setOpaque(false);
     }
-
-//    public DevicePanel(LayoutManager layout) {
-//        super(layout);
-//        setOpaque(false);
-//    }
-
-//    public static void setBackground(Container c, Color bg) {
-//        for (Component comp : c.getComponents()) {
-//            comp.setBackground(bg);
-//            if (comp instanceof Container) {
-//                setBackground((Container) comp, bg);
-//            }
-//        }
-//    }
-//
-//    public static void setForeground(Container c, Color fg) {
-//        for (Component comp : c.getComponents()) {
-//            comp.setForeground(fg);
-//            if (comp instanceof Container) {
-//                setForeground((Container) comp, fg);
-//            }
-//        }
-//    }
 
     protected void setInt(Integer i, Label label, String alt) {
         label.setText(null == i ? alt : Integer.toString(i));
@@ -66,18 +41,6 @@ public abstract class DevicePanel extends BorderPane  {
         }
     }
 
-//    @Override
-//    public void setForeground(Color fg) {
-//        super.setForeground(fg);
-//        setForeground(this, fg);
-//    }
-//
-//    @Override
-//    public void setBackground(Color bg) {
-//        super.setBackground(bg);
-//        setBackground(this, bg);
-//    }
-
     public void destroy() {
     }
     
@@ -85,7 +48,6 @@ public abstract class DevicePanel extends BorderPane  {
     
     public void set(DeviceDataMonitor deviceMonitor) {
         this.deviceMonitor = deviceMonitor;
-//        flowWave = new SampleArrayWaveformSource(sampleArrayReader, new ice.Sample)
     }
 
     protected static final BorderPane label(String label, Node c) {

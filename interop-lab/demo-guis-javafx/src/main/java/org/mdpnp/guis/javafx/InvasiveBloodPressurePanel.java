@@ -48,9 +48,7 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
 
     private final WaveformPanel[] panels;
     private final Date date = new Date();
-    private final Label time = new Label(" "); // , heartRate = new
-                                                 // JLabel(" "), respiratoryRate
-                                                 // = new JLabel(" ");
+    private final Label time = new Label(" ");
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private final static String[] WAVEFORMS = new String[] { rosetta.MDC_PRESS_BLD.VALUE, rosetta.MDC_PRESS_BLD_ART.VALUE, rosetta.MDC_PRESS_BLD_ART_ABP.VALUE, };
@@ -78,16 +76,7 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
             panels[i].start();
         }
         setCenter(waves);
-        
-//        Pane panel = new Pane();
-//        FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(panel.get
-//        int w = panel.getFontMetrics(panel.getFont()).stringWidth("RespiratoryRate");
-//        panel.setMinimumSize(new Dimension(w, panel.getMinimumSize().height));
-//        panel.setPreferredSize(panel.getMinimumSize());
-//        add(panel, BorderLayout.EAST);
-//        setForeground(Color.red);
-//        setBackground(Color.black);
-//        setOpaque(true);
+
     }
 
     @Override
@@ -162,9 +151,5 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
                 time.setText(dateFormat.format(date));
             }
         }
-        
     };
-
-
-
 }

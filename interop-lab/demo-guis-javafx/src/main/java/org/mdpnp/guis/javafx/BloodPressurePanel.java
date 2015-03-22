@@ -50,72 +50,41 @@ public class BloodPressurePanel extends DevicePanel {
     private Label nextInflation;
     private final Date date = new Date();
 
-    // private JButton inflate = new JButton("Inflate");
-
     protected void buildComponents() {
         systolicLabel = new Label("mmHg");
 
         systolicPanel = new BorderPane();
         systolicPanel.setCenter(systolic = new Label("---"));
         systolic.setAlignment(Pos.CENTER_LEFT);
-//        systolic.setBorder(new EmptyBorder(5, 5, 5, 5));
         systolicPanel.setRight(systolicLabel);
 
         diastolicLabel = new Label("mmHg");
 
         diastolicPanel = new BorderPane();
-//        diastolicPanel.setOpaque(false);
-//        diastolicPanel.setLayout(new BorderLayout());
         diastolicPanel.setCenter(diastolic = new Label("---"));
-//        diastolic.setBorder(new EmptyBorder(5, 5, 5, 5));
-//        diastolic.setHorizontalAlignment(JLabel.RIGHT);
         diastolic.setAlignment(Pos.CENTER_RIGHT);
         diastolicPanel.setRight(diastolicLabel);
 
         pulseLabel = new Label("BPM");
 
         pulsePanel = new BorderPane();
-//        pulsePanel.setOpaque(false);
-//        pulsePanel.setLayout(new BorderLayout());
         pulsePanel.setCenter(pulse = new Label("---"));
-//        pulse.setBorder(new EmptyBorder(5, 5, 5, 5));
-//        pulse.setHorizontalAlignment(JLabel.RIGHT);
         pulse.setAlignment(Pos.CENTER_RIGHT);
         pulsePanel.setRight(pulseLabel);
 
         nextInflation = new Label("...");
-//        nextInflation.setHorizontalAlignment(JLabel.CENTER);
         nextInflation.setAlignment(Pos.CENTER);
 
         GridPane upper = new GridPane();
-//        upper.setOpaque(false);
-//        upper.setLayout(new GridLayout(4, 1));
 
         upper.add(systolicPanel, 0, 0);
         upper.add(diastolicPanel, 0, 1);
         upper.add(pulsePanel, 0, 2);
         upper.add(nextInflation, 0, 3);
-//        setLayout(new BorderLayout());
         setCenter(upper);
 
         setBottom(time = new Label(""));
-//        time.setHorizontalAlignment(JLabel.RIGHT);
         time.setAlignment(Pos.CENTER_RIGHT);
-
-        // inflate.addActionListener(new ActionListener() {
-        // @Override
-        // public void actionPerformed(ActionEvent e) {
-        // MutableTextUpdate mtu = new
-        // MutableTextUpdateImpl(NoninvasiveBloodPressure.REQUEST_NIBP, guid);
-        // mtu.setSource("*");
-        // mtu.setTarget(BloodPressurePanel.this.source);
-        //
-        // gateway.update(BloodPressurePanel.this, mtu);
-        // }
-        // });
-//        setForeground(Color.magenta);
-//        setBackground(Color.black);
-//        setOpaque(true);
     }
 
     protected static float maxFontSize(Label label) {
@@ -137,30 +106,9 @@ public class BloodPressurePanel extends DevicePanel {
         return (float) (labelFont.getSize() * smallerRatio);
     }
 
-//    protected static void resizeFontToFill(Label... label) {
-//        float fontSize = Float.MAX_VALUE;
-//
-//        for (Label l : label) {
-//            fontSize = Math.min(fontSize, maxFontSize(l));
-//        }
-//
-//        for (Label l : label) {
-//            l.setFont(l.getFont().deriveFont(fontSize));
-//        }
-//    }
-
-//    @Override
-//    protected void processComponentEvent(ComponentEvent e) {
-//        if (e.getID() == ComponentEvent.COMPONENT_RESIZED) {
-//            resizeFontToFill(systolic, diastolic, pulse);
-//        }
-//        super.processComponentEvent(e);
-//    }
-
     public BloodPressurePanel() {
         getStyleClass().add("blood-pressure-panel");
         buildComponents();
-//        enableEvents(ComponentEvent.COMPONENT_RESIZED);
     }
 
     public static boolean supported(Set<String> names) {
@@ -244,7 +192,6 @@ public class BloodPressurePanel extends DevicePanel {
             } else if (ice.MDC_PRESS_CUFF_INFLATION.VALUE.equals(data.metric_id)) {
                 inflationN.copy_from(data);
             }
-            // log.debug("State:"+state);
 
             switch (BloodPressurePanel.this.state) {
             case Inflating:
@@ -276,10 +223,6 @@ public class BloodPressurePanel extends DevicePanel {
             }
             date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
             time.setText(dateFormat.format(date));
-
         }
-        
     };
-
-
 }

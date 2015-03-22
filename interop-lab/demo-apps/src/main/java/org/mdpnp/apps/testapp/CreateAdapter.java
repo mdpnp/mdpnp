@@ -11,7 +11,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 import org.mdpnp.apps.testapp.Configuration.Application;
 import org.mdpnp.devices.DeviceDriverProvider;
@@ -74,5 +73,3 @@ public class CreateAdapter {
 
     }
 }
-
-

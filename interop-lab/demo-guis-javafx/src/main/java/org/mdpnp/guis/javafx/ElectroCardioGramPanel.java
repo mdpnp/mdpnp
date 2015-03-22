@@ -49,7 +49,6 @@ import com.rti.dds.subscription.SampleInfo;
  */
 public class ElectroCardioGramPanel extends DevicePanel {
 
-//    private final WaveformPanel[] panel;
     private final Date date = new Date();
     private final Label time = new Label(" "), heartRate = new Label(" "), respiratoryRate = new Label(" ");
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -76,17 +75,12 @@ public class ElectroCardioGramPanel extends DevicePanel {
         setCenter(waves);
 
         GridPane numerics = new GridPane();
-//        SpaceFillLabel.attachResizeFontToFill(this, heartRate, respiratoryRate);
         BorderPane t;
         numerics.add(t = label("Heart Rate", heartRate), 0, 0);
         t.setRight(new Label("BPM"));
         numerics.add(t = label("RespiratoryRate", respiratoryRate), 0, 1);
         t.setRight(new Label("BPM"));
         setRight(numerics);
-        
-//        setForeground(Color.green);
-//        setBackground(Color.black);
-//        setOpaque(true);
     }
 
     @Override
@@ -155,7 +149,6 @@ public class ElectroCardioGramPanel extends DevicePanel {
                     final WaveformPanel _wuws = wuws;
                     final int idx = panelMap.size();
                     panelMap.put(data.metric_id, wuws);
-//                    waveLayout.setRows(panelMap.size());
                     ((JavaFXWaveformPane)_wuws).getCanvas().getGraphicsContext2D().setStroke(Color.GREEN);
                     Platform.runLater(new Runnable() {
                         public void run() {
@@ -163,7 +156,6 @@ public class ElectroCardioGramPanel extends DevicePanel {
                             GridPane.setVgrow(x, Priority.ALWAYS);
                             GridPane.setHgrow(x, Priority.ALWAYS);
                             waves.add(x, 0, idx);
-//                            waves.getParent().invalidate();
                         }
                     });
                     wuws.start();
@@ -175,8 +167,6 @@ public class ElectroCardioGramPanel extends DevicePanel {
         @Override
         public void instanceNotAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
                 SampleInfo sampleInfo) {
-            // TODO Auto-generated method stub
-            
         }
 
         @Override

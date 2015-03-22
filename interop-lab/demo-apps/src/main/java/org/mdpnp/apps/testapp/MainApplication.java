@@ -39,8 +39,6 @@ public class MainApplication extends javafx.application.Application {
         runConf = Configuration.searchAndLoadSettings(searchPath);
         
         ConfigurationDialog d = ConfigurationDialog.showDialog(runConf);
-//        d.setIconImage(ImageIO.read(Main.class.getResource("icon.png")));
-//        runConf = d.showDialog();
 
         // It's nice to be able to change settings even without running
         // Even if the user presses 'quit' save the state so that it can be used

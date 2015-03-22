@@ -12,6 +12,7 @@ import com.rti.dds.publication.builtin.PublicationBuiltinTopicDataTypeSupport;
 
 public class PublicationBuiltinTopicDataInstanceModelFactory implements FactoryBean<PublicationBuiltinTopicDataInstanceModel>{
 
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(PublicationBuiltinTopicDataInstanceModelFactory.class);
 
     private PublicationBuiltinTopicDataInstanceModel instance;

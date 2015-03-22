@@ -12,7 +12,6 @@ import org.mdpnp.rtiapi.data.AlertInstanceModel;
 import org.mdpnp.rtiapi.data.AlertInstanceModelImpl;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.NumericInstanceModel;
-import org.mdpnp.rtiapi.data.NumericInstanceModelImpl;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl;

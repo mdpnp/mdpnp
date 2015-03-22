@@ -225,10 +225,8 @@ public abstract class DeviceAdapter {
 
             try {
                 update("Shut down local monitoring client", 10);
-//                cdp.stop();
                 deviceMonitor.stop();
                 update("Shut down local user interface", 20);
-//                cdp.reset();
             }
             finally {
 

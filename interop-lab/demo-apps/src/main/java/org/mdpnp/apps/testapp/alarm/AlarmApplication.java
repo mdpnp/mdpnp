@@ -1,5 +1,6 @@
 package org.mdpnp.apps.testapp.alarm;
 
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
@@ -17,7 +18,11 @@ public class AlarmApplication {
     }
     
     public void setModel(ObservableList<HistoricAlarm> model) {
-        table.setItems(model);
+        if(null == model) {
+            table.setItems(FXCollections.emptyObservableList());
+        } else {
+            table.setItems(model);
+        }
     }
 
     public void stop() {

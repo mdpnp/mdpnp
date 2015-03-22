@@ -115,17 +115,6 @@ public class CompositeDevicePanel extends BorderPane {
                     serial_number.setText(data.serial_number);
                     unique_device_identifier.setText(data.unique_device_identifier);
                     icon.setText("");
-        //            BufferedImage img;
-        //            try {
-        //                img = IconUtil.image(data.icon);
-        //            } catch (IOException e) {
-        //                log.error("Error loading device image", e);
-        //                img = null;
-        //            }
-        //
-        //            if (null != img) {
-        //                icon.setIcon(new ImageIcon(img));
-        //            }
                 }
             });
         }
@@ -266,8 +255,6 @@ public class CompositeDevicePanel extends BorderPane {
                         GridPane.setHgrow(d, Priority.ALWAYS);
                         gridPane.add(d, 0, i++);
                     }
-//                    CompositeDevicePanel.this.validate();
-//                    CompositeDevicePanel.this.repaint();
                 }
             }
         };
@@ -284,15 +271,6 @@ public class CompositeDevicePanel extends BorderPane {
         knownPumps.clear();
         replaceDataPanels();
     }
-
-    // Shouldn't be a need for this... call setModel(null) instead
-//    public void stop() {
-//        Iterator<DevicePanel> itr = dataComponents.iterator();
-//        while(itr.hasNext()) {
-//            itr.next().destroy();
-//        }
-//        dataComponents.clear();
-//    }
     
     private DeviceDataMonitor deviceMonitor;
 
@@ -318,5 +296,4 @@ public class CompositeDevicePanel extends BorderPane {
     public DeviceDataMonitor getModel() {
         return deviceMonitor;
     }
-
 }
