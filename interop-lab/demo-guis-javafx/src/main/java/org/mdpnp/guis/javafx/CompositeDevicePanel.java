@@ -27,7 +27,6 @@ import ice.SampleArrayDataReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import javafx.application.Platform;
@@ -243,6 +242,7 @@ public class CompositeDevicePanel extends BorderPane {
     private void replaceDataPanels() {
         DevicePanel[] _dataComponents;
         synchronized (dataComponents) {
+            // Destroys unused panels
             DevicePanelFactory.resolvePanels(knownIdentifiers, dataComponents, knownPumps);
             _dataComponents = dataComponents.toArray(new DevicePanel[0]);
         }
@@ -285,13 +285,14 @@ public class CompositeDevicePanel extends BorderPane {
         replaceDataPanels();
     }
 
-    public void stop() {
-        Iterator<DevicePanel> itr = dataComponents.iterator();
-        while(itr.hasNext()) {
-            itr.next().destroy();
-        }
-        dataComponents.clear();
-    }
+    // Shouldn't be a need for this... call setModel(null) instead
+//    public void stop() {
+//        Iterator<DevicePanel> itr = dataComponents.iterator();
+//        while(itr.hasNext()) {
+//            itr.next().destroy();
+//        }
+//        dataComponents.clear();
+//    }
     
     private DeviceDataMonitor deviceMonitor;
 

@@ -37,7 +37,6 @@ import javafx.stage.WindowEvent;
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.BuildInfo;
-import org.mdpnp.guis.javafx.CompositeDevicePanel;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
@@ -173,28 +172,14 @@ public class IceAppsContainer extends IceApplication {
             FXMLLoader loader = new FXMLLoader(DeviceView.class.getResource("DeviceView.fxml"));
             ui = loader.load();
             devicePanel = loader.getController();
-            CompositeDevicePanel cdp = new CompositeDevicePanel();
-            devicePanel.getMain().setCenter(cdp);
-            // TODO threading model needs to be revisited but here this
-            // will ultimately deadlock on this AWT EventQueue thread
-//            Thread t = new Thread(threadGroup, new Runnable() {
-//                public void run() {
-                    DeviceDataMonitor deviceMonitor = devicePanel.getModel();
-                    if (null != deviceMonitor) {
-                        deviceMonitor.stop();
-                    }
-                    deviceMonitor = new DeviceDataMonitor(device.getUDI());
-                    System.err.println("Monitor device " + device.getUDI());
-                    devicePanel.set(device);
-                    devicePanel.set(deviceMonitor);
-                    cdp.setModel(deviceMonitor);
-                    deviceMonitor.start(subscriber, eventLoop);
-                    
-//                }
-//            }, device.getMakeAndModel());
 
-//            t.setDaemon(true);
-//            t.start();
+            DeviceDataMonitor deviceMonitor = devicePanel.getModel();
+            if (null != deviceMonitor) {
+                deviceMonitor.stop();
+            }
+            deviceMonitor = new DeviceDataMonitor(device.getUDI());
+            devicePanel.set(deviceMonitor);
+            deviceMonitor.start(subscriber, eventLoop);
         }
 
         @Override
@@ -205,16 +190,12 @@ public class IceAppsContainer extends IceApplication {
                     deviceMonitor.stop();
                 }
                 devicePanel.set((DeviceDataMonitor)null);
-                CompositeDevicePanel cdp = (CompositeDevicePanel) devicePanel.getMain().getCenter();
-                cdp.stop();
             }
         }
 
         @Override
         public void destroy() {
         }
-
-//        static final ThreadGroup threadGroup = new ThreadGroup("DeviceApp");
     }
     
     @Override

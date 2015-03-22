@@ -289,7 +289,12 @@ public abstract class DeviceAdapter {
                 }
             }
             BorderPane root = new BorderPane();
-            root.setTop(new ScrollPane(descriptionText));
+            descriptionText.setPrefColumnCount(1);
+            descriptionText.setPrefRowCount(1);
+            ScrollPane scrollPane = new ScrollPane(descriptionText);
+            scrollPane.setFitToHeight(true);
+            scrollPane.setFitToWidth(true);
+            root.setTop(scrollPane);
             root.setCenter(node);
             
             Runnable r = new Runnable() {
