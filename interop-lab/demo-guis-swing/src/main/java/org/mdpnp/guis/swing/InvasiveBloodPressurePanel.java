@@ -19,6 +19,7 @@ import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.text.DateFormat;
@@ -69,7 +70,7 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
         panels = new WaveformPanel[WAVEFORMS.length];
         for (int i = 0; i < panels.length; i++) {
             WaveformPanel panel = fact.createWaveformPanel();
-            waves.add(label(LABELS[i], (panels[i] = panel).asComponent()));
+            waves.add(label(LABELS[i], (Component) (panels[i] = panel)));
 
             panelMap.put(WAVEFORMS[i], panel);
             panels[i].start();
@@ -139,7 +140,7 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
                     wuws.setSource(new SampleArrayWaveformSource(reader, data));
                 }
 
-                date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+                date.setTime(data.presentation_time.sec * 1000L + data.presentation_time.nanosec / 1000000L);
                 time.setText(dateFormat.format(date));
           }
         }
@@ -154,7 +155,7 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
         public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
             if(sampleInfo.valid_data && panelMap.containsKey(data.metric_id)) {
-                date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+                date.setTime(data.presentation_time.sec * 1000L + data.presentation_time.nanosec / 1000000L);
                 time.setText(dateFormat.format(date));
             }
         }

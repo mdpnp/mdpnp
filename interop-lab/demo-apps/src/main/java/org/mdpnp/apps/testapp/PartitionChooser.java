@@ -68,7 +68,6 @@ public class PartitionChooser {
         if(null != hide) {
             hide.run();
         }
-        // TODO HIDE THE DIALOG
     }
     
     public PartitionChooser() {

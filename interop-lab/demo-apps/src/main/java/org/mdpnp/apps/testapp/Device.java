@@ -54,7 +54,6 @@ public class Device {
 
     public final static int SHORT_UDI_LENGTH = 20;
 
-    @SuppressWarnings("unused")
     private final static Logger log = LoggerFactory.getLogger(Device.class);
 
     private ObjectProperty<Image> image;
@@ -252,8 +251,7 @@ public class Device {
                 }
                 sb.append(addr.getHostAddress()).append(" ");
             } catch (UnknownHostException e) {
-                e.printStackTrace();
-                // log.error("getting locator address", e);
+                 log.error("getting locator address", e);
             }
         }
         return sb.toString();

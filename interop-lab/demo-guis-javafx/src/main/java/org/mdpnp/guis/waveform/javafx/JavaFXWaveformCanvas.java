@@ -1,11 +1,9 @@
 package org.mdpnp.guis.waveform.javafx;
 
-import org.mdpnp.guis.waveform.WaveformCanvas;
-
-import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+
+import org.mdpnp.guis.waveform.WaveformCanvas;
 
 public class JavaFXWaveformCanvas implements WaveformCanvas {
     protected GraphicsContext currentContext;
@@ -16,7 +14,6 @@ public class JavaFXWaveformCanvas implements WaveformCanvas {
     public JavaFXWaveformCanvas(JavaFXWaveformPane pane) {
         this.pane = pane;
         this.currentContext = pane.canvas.getGraphicsContext2D();
-        currentContext.setStroke(Color.BLACK);
     }
     
     protected static class ExtentImpl extends Rectangle implements Extent {
@@ -52,7 +49,14 @@ public class JavaFXWaveformCanvas implements WaveformCanvas {
     @Override
     public void clearRect(double x, double y, double width, double height) {
         // TODO Reorient?
+//        currentContext = pane.canvas.getGraphicsContext2D();
+//        currentContext.setFill(Color.RED);
+//        currentContext.fillRect(x, y, width, height);
+//        System.err.println("FILL RECT " + x + " " + y + " " + width + " " + height);
         currentContext.clearRect(x, y, width, height);
+//        currentContext.setFill(Color.RED);
+//        currentContext.clearRect(x, y, width, height);
+//        currentContext.fillRect(x, y, width, height);
     }
 
     @Override

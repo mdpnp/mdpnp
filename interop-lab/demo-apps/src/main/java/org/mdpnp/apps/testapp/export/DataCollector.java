@@ -21,7 +21,6 @@ import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.infrastructure.Time_t;
 import com.rti.dds.infrastructure.WaitSet;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
@@ -216,7 +215,7 @@ public class DataCollector {
 
                                 // If the updated sample status contains fresh data that we can evaluate
                                 if (si.valid_data) {
-                                    Time_t t = si.source_timestamp;
+                                    ice.Time_t t = data.presentation_time;
                                     long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
 
                                     final int sz = data.values.userData.size();
@@ -273,7 +272,7 @@ public class DataCollector {
                                 // If the updated sample status contains fresh data that we can evaluate
                                 if (si.valid_data) {
 
-                                    Time_t t = si.source_timestamp;
+                                    ice.Time_t t = data.presentation_time;
                                     long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
 
                                     if (log.isDebugEnabled())

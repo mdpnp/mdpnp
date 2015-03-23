@@ -75,6 +75,7 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         // It is important that the highest thumb is "below" the higher thumb in the Z-order
         // Otherwise when both are at the max the mouse cannot be used to drag down the higher
         // trapping the highest at the max extent
+        // TODO when all sliders are dragged to the lowest extent they cannot be recovered
         initFourthThumb();
         initThirdThumb();
         

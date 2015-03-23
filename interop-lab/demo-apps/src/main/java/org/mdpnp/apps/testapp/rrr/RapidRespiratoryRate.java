@@ -39,6 +39,7 @@ import org.mdpnp.apps.testapp.MySampleArray;
 import org.mdpnp.apps.testapp.MySampleArrayItems;
 import org.mdpnp.apps.testapp.MySampleArrayListCell;
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformCanvas;
@@ -85,13 +86,14 @@ public class RapidRespiratoryRate implements Runnable {
         private InstanceHolder<ice.Numeric> rate;
 
         void updateRate(float rate) {
+            DeviceClock.Reading sampleTime = clock.instant();
             // TODO clearly a synchronization issue here.
             // enforce a singular calling thread or synchronize accesses
             this.rate = numericSample(this.rate, (int) Math.round(rate), rosetta.MDC_CO2_RESP_RATE.VALUE, 
-                    "", rosetta.MDC_DIM_DIMLESS.VALUE, null);
+                    rosetta.MDC_CO2_RESP_RATE.VALUE, 0, rosetta.MDC_DIM_DIMLESS.VALUE, sampleTime);
         }
     }
-
+    protected final DeviceClock clock = new DeviceClock.WallClock();
     private RespiratoryRateDevice rrDevice;
     
     public RapidRespiratoryRate set(final int domainId, final EventLoop eventLoop, final Subscriber subscriber, final DeviceListModel deviceListModel) {

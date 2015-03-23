@@ -19,6 +19,7 @@ import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -167,7 +168,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
                     waveLayout.setRows(panelMap.size());
                     SwingUtilities.invokeLater(new Runnable() {
                         public void run() {
-                            waves.add(_wuws.asComponent());
+                            waves.add((Component) _wuws);
                             waves.getParent().invalidate();
                         }
                     });
@@ -188,7 +189,7 @@ public class ElectroCardioGramPanel extends DevicePanel {
         public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
             if(sampleInfo.valid_data && ECG_WAVEFORMS_SET.contains(data.metric_id)) {
-                date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+                date.setTime(data.presentation_time.sec * 1000L + data.presentation_time.nanosec / 1000000L);
                 time.setText(dateFormat.format(date));
             }
         } 

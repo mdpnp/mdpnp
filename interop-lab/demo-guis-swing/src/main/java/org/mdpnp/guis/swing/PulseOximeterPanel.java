@@ -19,6 +19,7 @@ import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.text.DateFormat;
@@ -112,8 +113,8 @@ public class PulseOximeterPanel extends DevicePanel {
 
         JPanel upper = new JPanel(new GridLayout(2, 1));
         upper.setOpaque(false);
-        upper.add(label("Plethysmogram", plethPanel.asComponent()));
-        upper.add(label("Pulse Rate", pulsePanel.asComponent()));
+        upper.add(label("Plethysmogram", (Component) plethPanel));
+        upper.add(label("Pulse Rate", (Component) pulsePanel));
 
         JPanel east = new JPanel(new GridLayout(2, 1));
         east.add(spo2Panel);
@@ -183,7 +184,7 @@ public class PulseOximeterPanel extends DevicePanel {
                     pulseWave = new NumericWaveformSource(model.getReader(), data);
                     pulsePanel.setSource(pulseWave);
                 }
-                date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
+                date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
                 time.setText(dateFormat.format(date));
             }
         }
@@ -197,7 +198,7 @@ public class PulseOximeterPanel extends DevicePanel {
         public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
             setInt(data, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
             setInt(data, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
-            date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
+            date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
             time.setText(dateFormat.format(date));
         }
         
@@ -214,7 +215,7 @@ public class PulseOximeterPanel extends DevicePanel {
                     plethWave = new SampleArrayWaveformSource(deviceMonitor.getSampleArrayModel().getReader(), data);
                     plethPanel.setSource(plethWave);
                 }
-                date.setTime(1000L * sampleInfo.source_timestamp.sec + sampleInfo.source_timestamp.nanosec / 1000000L);
+                date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
                 time.setText(dateFormat.format(date));
             }
         }

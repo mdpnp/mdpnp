@@ -36,17 +36,17 @@
               <PropertyValueFactory property="uniqueDeviceIdentifier" />
              </cellValueFactory>
             </TableColumn>
+            <TableColumn prefWidth="150.0" text="MetricId">
+             <cellValueFactory>
+              <PropertyValueFactory property="metricId" />
+             </cellValueFactory>
+            </TableColumn>            
             <TableColumn prefWidth="75.0" text="InstanceId">
              <cellValueFactory>
               <PropertyValueFactory property="instanceId" />
              </cellValueFactory>
             </TableColumn>
-            <TableColumn prefWidth="75.0" text="MetricId">
-             <cellValueFactory>
-              <PropertyValueFactory property="metricId" />
-             </cellValueFactory>
-            </TableColumn>
-            <TableColumn prefWidth="75.0" text="Time">
+            <TableColumn prefWidth="200.0" text="Time">
              <cellValueFactory>
               <PropertyValueFactory property="devTime" />
              </cellValueFactory>
@@ -80,4 +80,7 @@
    </center>
   </BorderPane>
  </bottom>
+   <top>
+      <Label text="Data Collector" BorderPane.alignment="CENTER" />
+   </top>
 </BorderPane>

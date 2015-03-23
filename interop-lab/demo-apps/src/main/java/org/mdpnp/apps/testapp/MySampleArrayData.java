@@ -20,15 +20,10 @@ import com.rti.dds.subscription.SampleInfo;
 
 public class MySampleArrayData implements InstanceModelListener<SampleArray, SampleArrayDataReader> {
     
-    private final SampleArrayInstanceModel model;
     private final ObservableList<Series<Number, Number>> data = FXCollections.observableArrayList();
     private final Map<InstanceHandle_t, Series<Number, Number>> byHandle = new HashMap<InstanceHandle_t, Series<Number,Number>>(); 
     
-    private final int maxData;
-    
-    public MySampleArrayData(final SampleArrayInstanceModel model, final int maxData) {
-        this.model = model;
-        this.maxData = maxData;
+    public MySampleArrayData(final SampleArrayInstanceModel model) {
         model.iterateAndAddListener(this);
     }
     

@@ -19,6 +19,7 @@ import ice.SampleArrayDataReader;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -73,9 +74,9 @@ public class VentilatorPanel extends DevicePanel {
         JPanel waves = new JPanel(new GridLayout(3, 1));
         waves.setOpaque(false);
 
-        waves.add(label("Flow", flowPanel.asComponent()));
-        waves.add(label("Pressure", pressurePanel.asComponent()));
-        waves.add(label("CO\u2082", co2Panel.asComponent()));
+        waves.add(label("Flow", (Component) flowPanel));
+        waves.add(label("Pressure", (Component) pressurePanel));
+        waves.add(label("CO\u2082", (Component) co2Panel));
 
         add(waves, BorderLayout.CENTER);
 
@@ -174,7 +175,7 @@ public class VentilatorPanel extends DevicePanel {
         @Override
         public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
-            date.setTime(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L);
+            date.setTime(data.presentation_time.sec * 1000L + data.presentation_time.nanosec / 1000000L);
             time.setText(dateFormat.format(date));
         }
         

@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import java.lang.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
+
 <?import org.mdpnp.apps.testapp.vital.MultiRangeSlider?>
 
-<BorderPane fx:controller="org.mdpnp.apps.testapp.pca.VitalView" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
-  <left>
-    <Label fx:id="name" text="Label" />
-    </left>
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pca.VitalView">
     <center>
-    <MultiRangeSlider fx:id="slider" showTickLabels="true" showTickMarks="true" />
+      <VBox>
+         <children>
+          <Label fx:id="name" text="Label" />
+          <MultiRangeSlider fx:id="slider" maxWidth="200.0" prefWidth="200.0" showTickLabels="true" showTickMarks="true" BorderPane.alignment="CENTER_LEFT" />
+         </children>
+      </VBox>
     </center>
    <bottom>
-      <FlowPane BorderPane.alignment="CENTER">
+      <FlowPane fx:id="controls" BorderPane.alignment="CENTER">
          <children>
             <CheckBox fx:id="ignoreZeroBox" mnemonicParsing="false" onAction="#ignoreZeroAction" text="Ignore Zero" />
             <CheckBox fx:id="requiredBox" mnemonicParsing="false" onAction="#requiredAction" text="Required" />
@@ -23,11 +27,14 @@
       </FlowPane>
    </bottom>
    <right>
-      <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
+      <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0" BorderPane.alignment="CENTER_RIGHT">
           <content>
-              <HBox fx:id="vitalValues" BorderPane.alignment="CENTER" />
+              <HBox fx:id="vitalValues" spacing="10.0" BorderPane.alignment="CENTER" />
           </content>
       </ScrollPane>
    </right>
+   <padding>
+      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+   </padding>
   
 </BorderPane>

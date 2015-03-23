@@ -1,0 +1,39 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+                           http://www.springframework.org/schema/util
+                           http://www.springframework.org/schema/util/spring-util-4.1.xsd">
+
+
+    <bean id="jdbcDB"
+          class="org.mdpnp.apps.testapp.patient.PatientApplicationFactory.EmbeddedDB"
+          init-method="init"
+          destroy-method="shutdown">
+        <property name="schemaDef" value="DbSchema.sql"/>
+    </bean>
+
+    <bean id="fxDecorator" class="org.mdpnp.apps.testapp.FxmlLoaderFactory">
+        <property name="screenDefinitions">
+            <map>
+                <entry key="PatientDeviceAssn.fxml"  value="uiController" />
+            </map>
+        </property>
+    </bean>
+
+    <bean id="uiController"
+          class="org.mdpnp.apps.testapp.patient.PatientInfoController"
+          init-method="start"
+          destroy-method="stop"
+          depends-on="fxDecorator">
+
+        <property name="jdbcDB"              ref="jdbcDB"/>
+        <property name="deviceListDataModel" ref="deviceListModel"/>
+    </bean>
+
+    <bean id="mainUI" class="javafx.scene.Parent" factory-bean="fxDecorator" factory-method="getScreen">
+        <constructor-arg value="PatientDeviceAssn.fxml"/>
+    </bean>
+
+</beans>

@@ -4,10 +4,13 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
+<?import org.mdpnp.guis.javafx.CompositeDevicePanel?>
 
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="org.mdpnp.apps.testapp.device.DeviceView">
-   <top>
-      <Label fx:id="udi" text="Label" BorderPane.alignment="CENTER" />
-   </top>
+<BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="org.mdpnp.apps.testapp.device.DeviceView">
+   <center>
+      <ScrollPane fitToHeight="true" fitToWidth="true">
+            <CompositeDevicePanel fx:id="cdp"/>
+      </ScrollPane>
+   </center>
 </BorderPane>

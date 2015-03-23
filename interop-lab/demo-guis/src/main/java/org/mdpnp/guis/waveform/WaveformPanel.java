@@ -17,8 +17,6 @@ public interface WaveformPanel {
     
     WaveformSource getSource();
 
-    java.awt.Component asComponent();
-
     void setOutOfTrack(boolean outOfTrack);
 
     void start();

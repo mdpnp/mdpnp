@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.AbstractListModel;
@@ -12,6 +13,7 @@ import org.mdpnp.rtiapi.data.ListenerList.Dispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.domain.builtin.ParticipantBuiltinTopicDataTypeSupport;
 import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.Copyable;
 import com.rti.dds.infrastructure.InstanceHandle_t;
@@ -20,6 +22,7 @@ import com.rti.dds.infrastructure.RETCODE_PRECONDITION_NOT_MET;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
+import com.rti.dds.publication.builtin.PublicationBuiltinTopicDataTypeSupport;
 import com.rti.dds.subscription.DataReaderImpl;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.ReadCondition;
@@ -29,16 +32,19 @@ import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 import com.rti.dds.subscription.ViewStateKind;
+import com.rti.dds.subscription.builtin.SubscriptionBuiltinTopicDataTypeSupport;
 import com.rti.dds.topic.ContentFilteredTopic;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicDescription;
-import com.rti.dds.topic.TypeSupportImpl;
-import com.rti.dds.util.LoanableSequence;
+import com.rti.dds.topic.TypeSupport;
+import com.rti.dds.topic.builtin.TopicBuiltinTopicDataTypeSupport;
+import com.rti.dds.util.Sequence;
 
 @SuppressWarnings("serial")
 public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> extends AbstractListModel<D> implements InstanceModel<D,R> {
     private final ListenerList<InstanceModelListener<D, R>> listeners = new ListenerList<InstanceModelListener<D,R>>(InstanceModelListener.class);
-    private final List<InstanceHandle_t> instances = Collections.synchronizedList(new ArrayList<InstanceHandle_t>());
+    private final List<InstanceHandle_t> instances = new java.util.concurrent.CopyOnWriteArrayList<InstanceHandle_t>();
+//            .synchronizedList(new ArrayList<InstanceHandle_t>());
     
     @Override
     public void addListener(InstanceModelListener<D, R> listener) {
@@ -52,11 +58,25 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
     
     @Override
     public void iterateAndAddListener(InstanceModelListener<D, R> listener, int maxSamples) {
+        iterate(listener, maxSamples, true);
+    }
+    
+    @Override
+    public void iterate(InstanceModelListener<D, R> listener) {
+        iterate(listener, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, false);
+    }
+    
+    
+    private void iterate(InstanceModelListener<D, R> listener, int maxSamples, boolean addListener) {
         // TODO ordering issues if an instance becomes unalive while I'm catching up this listener
-        addListener(listener);
-        LoanableSequence sa_seq = InstanceModelImpl.this.sa_seq.get();
+        if(addListener) {
+            addListener(listener);
+        }
+        Sequence sa_seq = InstanceModelImpl.this.sa_seq.get();
         SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq.get();
-        for(InstanceHandle_t handle : instances) {
+        Iterator<InstanceHandle_t> itr = instances.iterator(); 
+        while(itr.hasNext()) {
+            InstanceHandle_t handle = itr.next();
             try {
                 readInstance.invoke(reader, sa_seq, info_seq, maxSamples, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
                 boolean reportedAlive = false;
@@ -124,6 +144,7 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
     private final InstanceNotAliveDispatcher instanceNotAlive = new InstanceNotAliveDispatcher();
     private final InstanceSampleDispatcher instanceSample = new InstanceSampleDispatcher();
     
+    
     private R reader;
     private ReadCondition condition;
 
@@ -141,8 +162,8 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         return reader;
     }
     
-    protected final ThreadLocal<LoanableSequence> sa_seq = new ThreadLocal<LoanableSequence>() {
-        protected LoanableSequence initialValue() {
+    protected final ThreadLocal<Sequence> sa_seq = new ThreadLocal<Sequence>() {
+        protected Sequence initialValue() {
             try {
                 return sequenceClass.newInstance();
             } catch (Exception e) {
@@ -150,8 +171,8 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
             }
         };
     };
-    protected final ThreadLocal<LoanableSequence> sa_seq1 = new ThreadLocal<LoanableSequence>() {
-        protected LoanableSequence initialValue() {
+    protected final ThreadLocal<Sequence> sa_seq1 = new ThreadLocal<Sequence>() {
+        protected Sequence initialValue() {
             try {
                 return sequenceClass.newInstance();
             } catch (Exception e) {
@@ -188,21 +209,23 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         @SuppressWarnings("unchecked")
         @Override
         public void conditionChanged(Condition condition) {
-            LoanableSequence sa_seq = InstanceModelImpl.this.sa_seq.get();
+            Sequence sa_seq = InstanceModelImpl.this.sa_seq.get();
             SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq.get();
             R reader = InstanceModelImpl.this.reader;
             try {
                 readWCondition.invoke(reader, sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, (ReadCondition) condition);
                 InstanceHandle_t lastHandle = InstanceHandle_t.HANDLE_NIL;
                 
-                for (int i = 0; i < info_seq.size(); i++) {
+                final int sz = info_seq.size();
+                
+                for (int i = 0; i < sz; i++) {
                     SampleInfo sampleInfo = (SampleInfo) info_seq.get(i);
+                    D d = (D) sa_seq.get(i);
                     if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
-                        D d = (D) sa_seq.get(i);
                         if(!sampleInfo.valid_data) {
                             getKeyValue.invoke(reader, d, sampleInfo.instance_handle);
                         }
-                        fireInstanceNotAlive((D) sa_seq.get(i), sampleInfo);
+                        fireInstanceNotAlive(d, sampleInfo);
                         int idx = instances.indexOf(sampleInfo.instance_handle);
                         if(idx>=0) {
                             instances.remove(idx);
@@ -212,9 +235,9 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
                         }
                     } else {
                         if(!lastHandle.equals(sampleInfo.instance_handle) && 0 != (sampleInfo.view_state & ViewStateKind.NEW_VIEW_STATE)) {
-                            fireInstanceAlive((D) sa_seq.get(i), sampleInfo);
+                            fireInstanceAlive(d, sampleInfo);
                         }
-                        fireInstanceSample((D) sa_seq.get(i), sampleInfo);
+                        fireInstanceSample(d, sampleInfo);
                         int idx = instances.indexOf(sampleInfo.instance_handle);
                         if(idx>=0) {
                             fireContentsChanged(InstanceModelImpl.this, idx, idx);
@@ -243,12 +266,12 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
 
     protected final String topic;
     protected final Class<D> dataClass;
-    protected final Class<? extends TypeSupportImpl> typeSupportClass;
-    protected final Class<? extends LoanableSequence> sequenceClass;
+    protected final Class<? extends TypeSupport> typeSupportClass;
+    protected final Class<? extends Sequence> sequenceClass;
     
     protected final Method getKeyValue, returnLoan, readWCondition, readInstance;
     
-    public InstanceModelImpl(final String topic, Class<D> dataClass, Class<R> readerClass, Class<? extends TypeSupportImpl> typeSupportClass, Class<? extends LoanableSequence> sequenceClass) {
+    public InstanceModelImpl(final String topic, Class<D> dataClass, Class<R> readerClass, Class<? extends TypeSupport> typeSupportClass, Class<? extends Sequence> sequenceClass) {
         this.topic = topic;
         this.dataClass = dataClass;
         this.typeSupportClass = typeSupportClass;
@@ -279,37 +302,62 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
 
-        TopicDescription saTopic = TopicUtil.lookupOrCreateTopic(subscriber.get_participant(), topic,
-                typeSupportClass);
-        if(null != expression) {
-            log.info(getClass()+" Filtered Expression:"+expression+" Filter values:"+params);
-            // TODO time since epoch is a klugey way to get some likelihood of uniqueness
-            filteredTopic = subscriber.get_participant().create_contentfilteredtopic("Filtered"+topic+System.currentTimeMillis(), (Topic) saTopic, expression, params);
-            if(null == filteredTopic) {
-                log.debug("Unable to create filtered topic " + getClass());
-            }
-        }
-        SubscriberQos sQos = new SubscriberQos();
-        subscriber.get_qos(sQos);
-        sQos.entity_factory.autoenable_created_entities = false;
-        subscriber.set_qos(sQos);
-        if(null == qosProfile || null == qosLibrary) {
-            reader = (R) subscriber.create_datareader(null==filteredTopic?saTopic:filteredTopic, Subscriber.DATAREADER_QOS_DEFAULT, 
-                    null, StatusKind.STATUS_MASK_NONE);
+        if(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME.equals(topic)) {
+            reader = (R) subscriber.lookup_datareader(topic);
+            condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                    InstanceStateKind.ANY_INSTANCE_STATE);
+            eventLoop.addHandler(condition, handler);
+        } else if(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME.equals(topic)) {
+            reader = (R) subscriber.lookup_datareader(topic);
+            condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                    InstanceStateKind.ANY_INSTANCE_STATE);
+            eventLoop.addHandler(condition, handler);
+        } else if(SubscriptionBuiltinTopicDataTypeSupport.SUBSCRIPTION_TOPIC_NAME.equals(topic)) {
+            reader = (R) subscriber.lookup_datareader(topic);
+            condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                    InstanceStateKind.ANY_INSTANCE_STATE);
+            eventLoop.addHandler(condition, handler);            
+        } else if(TopicBuiltinTopicDataTypeSupport.TOPIC_TOPIC_NAME.equals(topic)) {
+            reader = (R) subscriber.lookup_datareader(topic);
+            condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                    InstanceStateKind.ANY_INSTANCE_STATE);
+            eventLoop.addHandler(condition, handler);
         } else {
-            reader = (R) subscriber.create_datareader_with_profile(null==filteredTopic?saTopic:filteredTopic, qosLibrary,
-                    qosProfile, null, StatusKind.STATUS_MASK_NONE);
-        }
-        sQos.entity_factory.autoenable_created_entities = true;
-        subscriber.set_qos(sQos);
-
-        condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
-                InstanceStateKind.ANY_INSTANCE_STATE);
-
-        eventLoop.addHandler(condition, handler);
         
-        reader.enable();
-
+            TopicDescription saTopic = TopicUtil.lookupOrCreateTopic(subscriber.get_participant(), topic,
+                    typeSupportClass);
+            if(null != expression) {
+                log.info(getClass()+" Filtered Expression:"+expression+" Filter values:"+params);
+                // TODO time since epoch is a klugey way to get some likelihood of uniqueness
+                filteredTopic = subscriber.get_participant().create_contentfilteredtopic("Filtered"+topic+System.currentTimeMillis(), (Topic) saTopic, expression, params);
+                if(null == filteredTopic) {
+                    log.debug("Unable to create filtered topic " + getClass());
+                }
+            }
+            SubscriberQos sQos = new SubscriberQos();
+            subscriber.get_qos(sQos);
+            sQos.entity_factory.autoenable_created_entities = false;
+            subscriber.set_qos(sQos);
+            
+    
+            
+            if(null == qosProfile || null == qosLibrary) {
+                reader = (R) subscriber.create_datareader(null==filteredTopic?saTopic:filteredTopic, Subscriber.DATAREADER_QOS_DEFAULT, 
+                        null, StatusKind.STATUS_MASK_NONE);
+            } else {
+                reader = (R) subscriber.create_datareader_with_profile(null==filteredTopic?saTopic:filteredTopic, qosLibrary,
+                        qosProfile, null, StatusKind.STATUS_MASK_NONE);
+            }
+            sQos.entity_factory.autoenable_created_entities = true;
+            subscriber.set_qos(sQos);
+    
+            condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
+                    InstanceStateKind.ANY_INSTANCE_STATE);
+    
+            eventLoop.addHandler(condition, handler);
+            
+            reader.enable();
+        }
     }
 
     @Override
@@ -358,7 +406,7 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
             }
         }
         
-        LoanableSequence sa_seq = InstanceModelImpl.this.sa_seq1.get();
+        Sequence sa_seq = InstanceModelImpl.this.sa_seq1.get();
         SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq1.get();
         R reader = this.reader;
         try {

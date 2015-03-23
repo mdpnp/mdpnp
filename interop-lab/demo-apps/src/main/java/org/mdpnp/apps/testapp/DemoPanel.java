@@ -26,15 +26,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.support.AbstractApplicationContext;
-
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantQos;
-import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.SubscriberQos;
-
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -42,6 +33,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
@@ -49,88 +41,100 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.support.AbstractApplicationContext;
+
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.domain.DomainParticipantQos;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriberQos;
+
 /**
  * @author Jeff Plourde
  *
  */
 public class DemoPanel implements Runnable {
     private final static Logger log = LoggerFactory.getLogger(DemoPanel.class);
-    
+
     @FXML
-    protected Label bedLabel, clock;
-    
+    protected Label clock;
+
     @FXML
     protected Button back, changePartition, createAdapter;
-    
+
     @FXML
     protected BorderPane content;
-    
-    @FXML
-    protected Hyperlink openiceURL;
 
     private PartitionChooserModel partitionChooserModel;
-    
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     public BorderPane getContent() {
         return content;
     }
 
-    public Label getBedLabel() {
-        return bedLabel;
-    }
-
     public Button getBack() {
         return back;
     }
-    
+
     public Button getChangePartition() {
         return changePartition;
     }
-    
+
     public Button getCreateAdapter() {
         return createAdapter;
+    }
+
+    private MyPublicationBuiltinTopicDataItems items;
+
+    public DemoPanel setModel(DomainParticipant participant, EventLoop eventLoop) {
+        items = new MyPublicationBuiltinTopicDataItems();
+        this.partitions.setItems(items.getPartitions());
+        items.setModel(participant, eventLoop);
+        return this;
     }
 
     public DemoPanel setModel(PartitionChooserModel partitionChooserModel) {
         this.partitionChooserModel = partitionChooserModel;
         return this;
     }
-    
+
     private String udiText = "";
     private String versionText = "";
-    
+
     private void setTooltip() {
-        openiceURL.setTooltip(new Tooltip(udiText+"\n"+versionText));
+        clock.setTooltip(new Tooltip(udiText + "\n" + versionText));
     }
-    
+
     public DemoPanel setUdi(String udi) {
         udiText = udi;
         setTooltip();
         return this;
     }
-    
+
     public DemoPanel setVersion(String version) {
         versionText = version;
         setTooltip();
         return this;
     }
-    
+
     public DemoPanel() throws IOException {
         this.timeFuture = executor.scheduleAtFixedRate(this, 1000L - (System.currentTimeMillis() % 1000L) + 10L, 1000L, TimeUnit.MILLISECONDS);
     }
-    
+
     public DemoPanel set(AbstractApplicationContext context) {
         this.context = context;
         return this;
     }
-    
-    @FXML public void clickChangePartition(ActionEvent evt) throws IOException {
+
+    @FXML
+    public void clickChangePartition(ActionEvent evt) throws IOException {
         final Stage dialog = new Stage(StageStyle.UTILITY);
         dialog.setAlwaysOnTop(true);
-        
-        
+
         FXMLLoader loader = new FXMLLoader(PartitionChooser.class.getResource("PartitionChooser.fxml"));
         BorderPane root = loader.load();
         PartitionChooser partitionChooser = loader.getController();
@@ -145,35 +149,37 @@ public class DemoPanel implements Runnable {
         dialog.sizeToScene();
 
         dialog.showAndWait();
-////    partitionChooser.refresh();
-////    partitionChooser.setLocationRelativeTo(panel);
-////    partitionChooser.setVisible(true);
     }
 
     public void stop() {
         timeFuture.cancel(true);
         executor.shutdownNow();
+        if (null != items) {
+            items.stop();
+            items = null;
+        }
     }
-    
+
     private ScheduledFuture<?> timeFuture;
     private final Date date = new Date();
     private final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
-    
+
     private Runnable updateTimeUI = new Runnable() {
         public void run() {
             date.setTime(System.currentTimeMillis());
-            if(clock != null) {
+            if (clock != null) {
                 clock.setText(timeFormat.format(date));
             }
         }
     };
-    
+
     @Override
     public void run() {
         Platform.runLater(updateTimeUI);
     }
-    
-    @FXML public void clickURL(ActionEvent evt) {
+
+    @FXML
+    public void clickURL(ActionEvent evt) {
         String url = ((Hyperlink) evt.getSource()).getText();
         if (Desktop.isDesktopSupported()) {
             Desktop desktop = Desktop.getDesktop();
@@ -187,52 +193,70 @@ public class DemoPanel implements Runnable {
             }
         }
     }
-    
+
     private AbstractApplicationContext context;
 
-    @FXML BorderPane demoPanel;
-    
-    @FXML public void clickCreateAdapter(ActionEvent evt) {
+    @FXML
+    BorderPane demoPanel;
+
+    @FXML
+    ComboBox<String> partitions;
+
+    @FXML
+    public void clickCreateAdapter(ActionEvent evt) {
         try {
             final Subscriber subscriber = partitionChooserModel.getSubscriber();
             Configuration c = CreateAdapter.showDialog(subscriber.get_participant().get_domain_id());
-          if (null != c) {
-          Thread t = new Thread(new Runnable() {
-              public void run() {
-                  try {
-                      
-                      DomainParticipantQos pQos = new DomainParticipantQos();
-                      DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-                      pQos.discovery.initial_peers.clear();
-//                      for (int i = 0; i < discoveryPeers.peers.getSize(); i++) {
-//                          pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
-//                          System.err.println("PEER:" + discoveryPeers.peers.getElementAt(i));
-//                      }
-                      DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
-                      SubscriberQos qos = new SubscriberQos();
-                      subscriber.get_qos(qos);
-                      List<String> partition = new ArrayList<String>();
-                      for (int i = 0; i < qos.partition.name.size(); i++) {
-                          partition.add((String) qos.partition.name.get(i));
-                      }
-                      DeviceAdapter da = DeviceAdapter.newGUIAdapter(c.getDeviceFactory(), context);
-                      da.setInitialPartition(partition.toArray(new String[0]));
-                      da.start(c.getAddress());
+            if (null != c) {
+                Thread t = new Thread(new Runnable() {
+                    public void run() {
+                        try {
 
-                      log.info("DeviceAdapter ended");
-                  } catch (Exception e) {
-                      log.error("Error in spawned DeviceAdapter", e);
-                  }
-              }
-          });
-          t.setDaemon(true);
-          t.start();
-      }
+                            DomainParticipantQos pQos = new DomainParticipantQos();
+                            DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
+                            pQos.discovery.initial_peers.clear();
+                            // for (int i = 0; i <
+                            // discoveryPeers.peers.getSize(); i++) {
+                            // pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
+                            // System.err.println("PEER:" +
+                            // discoveryPeers.peers.getElementAt(i));
+                            // }
+                            DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
+                            SubscriberQos qos = new SubscriberQos();
+                            subscriber.get_qos(qos);
+                            List<String> partition = new ArrayList<String>();
+                            for (int i = 0; i < qos.partition.name.size(); i++) {
+                                partition.add((String) qos.partition.name.get(i));
+                            }
+                            DeviceAdapter da = DeviceAdapter.newGUIAdapter(c.getDeviceFactory(), context);
+                            da.setInitialPartition(partition.toArray(new String[0]));
+                            da.start(c.getAddress());
+
+                            log.info("DeviceAdapter ended");
+                        } catch (Exception e) {
+                            log.error("Error in spawned DeviceAdapter", e);
+                        }
+                    }
+                });
+                t.setDaemon(true);
+                t.start();
+            }
 
         } catch (IOException e) {
-            log.error("",e);
+            log.error("", e);
         }
 
+    }
+
+    @FXML
+    public void changePartition(ActionEvent event) {
+        String p = this.partitions.getSelectionModel().getSelectedItem();
+        if(null != p) {
+            final List<String> partitions = new ArrayList<String>(1);
+            partitions.add(p);
+            partitionChooserModel.set(partitions);
+        }
+        
     }
 
 }

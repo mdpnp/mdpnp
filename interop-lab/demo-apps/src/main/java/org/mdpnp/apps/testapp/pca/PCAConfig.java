@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -31,12 +32,17 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.util.Callback;
 
 import org.mdpnp.apps.testapp.DeviceListModel;
@@ -45,6 +51,7 @@ import org.mdpnp.apps.testapp.MyInfusionStatusItems;
 import org.mdpnp.apps.testapp.MyInfusionStatusListCell;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
+import org.mdpnp.apps.testapp.vital.VitalModel.State;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,19 +65,19 @@ import com.rti.dds.infrastructure.InstanceHandle_t;
 public class PCAConfig implements ListChangeListener<Vital> {
 
     @FXML protected ListView<MyInfusionStatus> pumpList;
-    @FXML protected TextArea warningStatus;
+    @FXML protected TextArea warningStatus, infusionStatus;
     @FXML protected ComboBox<Integer> warningsToAlarm;
     @FXML protected ComboBox<VitalSign> vitalSigns;
     @FXML protected VBox vitalsPanel;
-    
     private static final Logger log = LoggerFactory.getLogger(PCAConfig.class);
-    
-//    JCheckBox configureModeBox = new JCheckBox("Configuration Mode");
-//    JPanel configurePanel = new JPanel();
+
     
     private ice.InfusionObjectiveDataWriter objectiveWriter;
 
+    
+    
     public PCAConfig set(ScheduledExecutorService executor, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListModel deviceListModel) {
+        controls.visibleProperty().bind(configure.selectedProperty());
         this.objectiveWriter = objectiveWriter;
         pumpList.setCellFactory(new Callback<ListView<MyInfusionStatus>, ListCell<MyInfusionStatus>>() {
 
@@ -91,12 +98,12 @@ public class PCAConfig implements ListChangeListener<Vital> {
 
             @Override
             public void changed(ObservableValue<? extends MyInfusionStatus> observable, MyInfusionStatus oldValue, MyInfusionStatus newValue) {
-                vitalChanged(model, null);
-              if (null == newValue) {
-//                  pumpProgress.setPopulated(false);
-              } else {
-//                  contentsChanged(null);
-              }
+                infusionStatus.textProperty().unbind();
+                if(null != newValue) {
+                    infusionStatus.textProperty().bind(Bindings.when(newValue.infusionActiveProperty()).then("ACTIVE").otherwise("INACTIVE"));
+                } else {
+                    infusionStatus.textProperty().set("Select an infusion");
+                }
             }
             
         });
@@ -105,39 +112,27 @@ public class PCAConfig implements ListChangeListener<Vital> {
     }
     
     @FXML public void warningsToAlarmSet(ActionEvent evt) {
-        model.setCountWarningsBecomeAlarm(warningsToAlarm.getSelectionModel().getSelectedItem());
+        if(model != null) {
+            model.setCountWarningsBecomeAlarm(warningsToAlarm.getSelectionModel().getSelectedItem());
+        }
     }
     
-    @FXML public void pumpProgressClicked(MouseEvent evt) {
-        model.resetInfusion();
-    }
-    
+   
     @FXML public void addVitalSign(ActionEvent evt) {
         ((VitalSign) vitalSigns.getSelectionModel().getSelectedItem()).addToModel(model);
     }
     
     public PCAConfig() {
-//        configureModeBox.addActionListener(new ActionListener() {
-//
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                configurePanel.setVisible(configureModeBox.isSelected());
-//                for (Component c : vitalsPanel.getComponents()) {
-//                    if (c instanceof JVital) {
-//
-//                        ((JVital) c).setShowConfiguration(configureModeBox.isSelected());
-//                    }
-//                }
-//            }
-//
-//        });
     }
 
 
 
     private VitalModel model;
-//    private InfusionStatusInstanceModel pumpModel;
+    private InfusionStatusInstanceModel pumpModel;
     @FXML Button add;
+    @FXML FlowPane controls;
+    @FXML CheckBox configure;
+    @FXML TextArea interlockStatus;
 
     protected void updateVitals() {
         if(Platform.isFxApplicationThread()) {
@@ -150,8 +145,6 @@ public class PCAConfig implements ListChangeListener<Vital> {
             });
         }
     }
-
-//    private final JProgressAnimation2 pumpProgress;
 
 
     protected void _updateVitals() {
@@ -180,18 +173,15 @@ public class PCAConfig implements ListChangeListener<Vital> {
                         continue;
                     }
                     VitalView view = loader.getController();
-                    view.set(vital);
-//                    view.name.setText(vital.getLabel());
+                    view.set(vital, configure.selectedProperty());
                 }
-//                jVital.setShowConfiguration(configureModeBox.isSelected());
-
                 vitalsPanel.getChildren().add(jVital);
             }
-            // configurePanel.setVisible(configureModeBox.isSelected());
         }
     }
 
     public void setModel(VitalModel model, InfusionStatusInstanceModel pumpModel) {
+        this.pumpModel = pumpModel;
         String selectedUdi = null;
         MyInfusionStatus selected = pumpList.getSelectionModel().getSelectedItem();
         if (null != selected) {
@@ -223,76 +213,50 @@ public class PCAConfig implements ListChangeListener<Vital> {
         }
         updateVitals();
         if(model != null) {
+            warningsToAlarm.getSelectionModel().select(model.getCountWarningsBecomeAlarm());
             warningStatus.textProperty().bind(model.warningTextProperty());
+            interlockStatus.textProperty().bind(model.interlockTextProperty());
+            // TODO Bind up the warnings to alarms dropdown 
+            model.isInfusionStoppedProperty().addListener(new ChangeListener<Boolean>() {
+
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                    MyInfusionStatus p = pumpList.getSelectionModel().getSelectedItem();
+                    if(null != p) {
+                        setStop(p, newValue);
+                    }
+                }
+                
+            });
+            
+            model.stateProperty().addListener(new ChangeListener<VitalModel.State>() {
+
+                @Override
+                public void changed(ObservableValue<? extends State> observable, State oldValue, State newValue) {
+                    switch(newValue) {
+                    case Alarm:
+                        warningStatus.setBackground(new Background(new BackgroundFill(Color.RED, null, null)));
+                        break;
+                    case Warning:
+                        warningStatus.setBackground(new Background(new BackgroundFill(Color.YELLOW, null, null)));
+                        break;
+                    case Normal:
+                        warningStatus.setBackground(new Background(new BackgroundFill(null, null, null)));
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                
+            });
         } else {
             vitalsPanel.getChildren().clear();
             warningStatus.textProperty().unbind();
+            interlockStatus.textProperty().unbind();
         }
         
-//        vitalChanged(this.model, null);
-    }
-
-    public void vitalChanged(final VitalModel model, Vital vital) {
-        if (model != null) {
-            Platform.runLater(new Runnable() {
-                public void run() {
-                    warningsToAlarm.getSelectionModel().select(model.getCountWarningsBecomeAlarm());
-                    MyInfusionStatus p = pumpList.getSelectionModel().getSelectedItem();
         
-                    if (model.isInfusionStopped()) {
-                        if (null != p) {
-                            setStop(p, true);
-                        }
-        //                pumpProgress.setInterlockText(model.getInterlockText());
-                    } else {
-                        if (null != p) {
-                            setStop(p, false);
-                        }
-        //                pumpProgress.setInterlockText(null);
-                    }
-        
-                    switch (model.getState()) {
-                    case Alarm:
-        //                warningStatus.setBackground(new Background(Color.RED));
-                        break;
-                    case Warning:
-        //                warningStatus.setBackground(Color.YELLOW);
-                        break;
-                    case Normal:
-        //                warningStatus.setBackground(getBackground());
-                        break;
-                    }
-//                    warningStatus.setText(model.getWarningText());
-                
-                    if (vital != null) {
-            //            for (Component c : vitalsPanel.getComponents()) {
-            //                if (c instanceof JVital && ((JVital) c).getVital().equals(vital)) {
-            //                    ((JVital) c).updateData();
-            //                    return;
-            //                }
-            //            }
-                        // fell through if the specified vital was not found
-//                        updateVitals();
-                    }
-                }
-            });
-        }
-
     }
-
-//
-//    @Override
-//    public void contentsChanged(ListDataEvent e) {
-//        ice.InfusionStatus status = pumpList.getSelectedValue();
-//        if(null != status) {
-//            if (status.infusionActive) {
-//                pumpProgress.start(status.drug_name, status.volume_to_be_infused_ml,
-//                        status.infusion_duration_seconds, status.infusion_fraction_complete);
-//            } else {
-//                pumpProgress.stop();
-//            }
-//        }
-//    }
 
     public void setStop(MyInfusionStatus status, boolean stop) {
         ice.InfusionObjective obj = new ice.InfusionObjective();
@@ -308,6 +272,12 @@ public class PCAConfig implements ListChangeListener<Vital> {
             if(c.wasAdded() || c.wasRemoved()) {
                 updateVitals();
             }
+        }
+    }
+
+    @FXML public void interlockStatusClicked(MouseEvent event) {
+        if(model != null) {
+            model.resetInfusion();
         }
     }
 }

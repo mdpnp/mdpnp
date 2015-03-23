@@ -66,6 +66,7 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
     
     @Override
     public void sample(long time, float value) {
+        
         if(time>=t1&&time<t2) {
             minY = Math.min(value, minY);
             maxY = Math.max(value, maxY);
@@ -105,11 +106,13 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
         double y_prop = 1.0 * (value - minY) / (maxY-minY);
         
         double x = extent.getMinX() + x_prop * (extent.getMaxX()-extent.getMinX());
-        double y = extent.getMinY() + y_prop * (extent.getMaxY()-extent.getMinY()) + 1.0;
+        double y = extent.getMinY() + y_prop * (extent.getMaxY()-extent.getMinY());
         
         if(x_prop>=0.0&&x_prop<1.0&&y_prop>=0.0&&y_prop<1.0) {
             if(last_x>=0.0||last_y>=0.0&&x>last_x) {
+                count++;
                 canvas.drawLine(last_x, last_y, x, y);
+//                System.err.println(last_x+","+last_y+" "+x+","+y);
             }
             last_x = x;
             last_y = y;
@@ -117,7 +120,7 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
         } else {
 //            System.err.println("out of " + x_prop + ", " + y_prop);
         }
-
+        
     }
     
     public void render(WaveformSource source, WaveformCanvas canvas, long t1, long t2) {
@@ -156,15 +159,17 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
         
         source.iterate(this);
     }
-
+    private int count = 0;
     @Override
     public void begin() {
+        count = 0;
         aged_segment = true;
         
     }
 
     @Override
     public void end() {
+//        System.err.println(count + " points");
 //        System.err.println(count + " points rendered most recent " + new Date(mostRecent));
     }
 }

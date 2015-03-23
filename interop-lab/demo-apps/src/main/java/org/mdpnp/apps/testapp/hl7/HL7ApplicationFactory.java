@@ -57,16 +57,11 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void activate(ApplicationContext context) {
-//                emitter.start();
             }
 
             @Override
             public void stop() {
-//                try {
-                    emitter.stop();
-//                } catch (Exception ex) {
-//                    throw new IllegalStateException("Failed to stop data collector", ex);
-//                }
+                emitter.stop();
             }
 
             @Override

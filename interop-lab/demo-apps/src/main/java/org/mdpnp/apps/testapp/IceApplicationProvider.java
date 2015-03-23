@@ -25,7 +25,6 @@ public interface IceApplicationProvider {
         /**
          * @return java.awt.Component (either JFrame or Panel) or null for headless application.
          */
-        // TODO this will be needed
         Parent getUI();
 
         /**
@@ -109,33 +108,5 @@ public interface IceApplicationProvider {
             return s;
         }
         private static int instanceCount=0;
-
-//        private static BufferedImage read(URL url) {
-//            try {
-//                return url==null?null: ImageIO.read(url);
-//            } catch (IOException e) {
-//                log.error("Failed to load image url:" + url.toExternalForm(), e);
-//                return null;
-//            }
-//        }
-
-//        private static BufferedImage scale(BufferedImage before, double scale) {
-//            if (null == before) {
-//                return null;
-//            }
-//            if (0 == Double.compare(scale, 0.0)) {
-//                return before;
-//            }
-//            int width = before.getWidth();
-//            int height = before.getHeight();
-//
-//            BufferedImage after = new BufferedImage((int) (scale * width), (int) (scale * height), BufferedImage.TYPE_INT_ARGB);
-//            java.awt.geom.AffineTransform at = new java.awt.geom.AffineTransform();
-//            at.scale(scale, scale);
-//
-//            AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
-//            after = scaleOp.filter(before, after);
-//            return after;
-//        }
     }
 }

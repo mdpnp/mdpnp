@@ -62,11 +62,6 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
             @Override
             public void stop() {
                 diagnostic.stop();
-//                try {
-////                    emitter.stop();
-//                } catch (Exception ex) {
-//                    throw new IllegalStateException("Failed to stop data collector", ex);
-//                }
             }
 
             @Override

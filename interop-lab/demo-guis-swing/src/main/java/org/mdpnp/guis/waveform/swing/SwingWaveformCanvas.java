@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.Component;
 
 import org.mdpnp.guis.waveform.WaveformCanvas;
 import org.mdpnp.guis.waveform.WaveformPanel;
@@ -47,7 +48,7 @@ public abstract class SwingWaveformCanvas implements WaveformCanvas {
 
     @Override
     public void clearRect(double x, double y, double width, double height) {
-        currentGraphics.setColor(component.asComponent().getBackground());
+        currentGraphics.setColor(((Component)component).getBackground());
         // TODO Reorient?
         currentGraphics.fillRect((int)x, (int)y, (int)width, (int)height);
     }
@@ -68,10 +69,10 @@ public abstract class SwingWaveformCanvas implements WaveformCanvas {
             }
     
             long now = System.currentTimeMillis();
-            component.asComponent().getSize(extent);
-            currentGraphics.setColor(component.asComponent().getBackground());
+            ((Component)component).getSize(extent);
+            currentGraphics.setColor(((Component)component).getBackground());
             currentGraphics.fillRect((int)extent.getMinX(), (int)extent.getMinY(), (int)extent.getMaxX(), (int)extent.getMaxY());
-            currentGraphics.setColor(component.asComponent().getForeground());
+            currentGraphics.setColor(((Component)component).getForeground());
             renderer.render(component.getSource(), this, now - 2000L - timeDomain, now - 2000L);
             currentGraphics.dispose();
             currentGraphics = null;

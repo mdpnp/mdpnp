@@ -225,10 +225,8 @@ public abstract class DeviceAdapter {
 
             try {
                 update("Shut down local monitoring client", 10);
-//                cdp.stop();
                 deviceMonitor.stop();
                 update("Shut down local user interface", 20);
-//                cdp.reset();
             }
             finally {
 
@@ -289,7 +287,12 @@ public abstract class DeviceAdapter {
                 }
             }
             BorderPane root = new BorderPane();
-            root.setTop(new ScrollPane(descriptionText));
+            descriptionText.setPrefColumnCount(1);
+            descriptionText.setPrefRowCount(1);
+            ScrollPane scrollPane = new ScrollPane(descriptionText);
+            scrollPane.setFitToHeight(true);
+            scrollPane.setFitToWidth(true);
+            root.setTop(scrollPane);
             root.setCenter(node);
             
             Runnable r = new Runnable() {
@@ -304,7 +307,8 @@ public abstract class DeviceAdapter {
                             update("Shutting down", 1);
                             root.getChildren().clear();
                             root.setTop(progressBar);
-        
+                            // Required to trigger destruction of animated DevicePanels
+                            deviceView.set(null);
                             Runnable r = new Runnable() {
                                 public void run() {
                                     stop();

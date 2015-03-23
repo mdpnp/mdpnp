@@ -109,7 +109,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
                 ecgWave = sampleArraySample(ecgWave, data, count, ecg, label, 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
             } else {
                 if (ecgWave != null) {
-                    unregisterSampleArrayInstance(ecgWave, timeStamp);
+                    unregisterSampleArrayInstance(ecgWave);
                     ecgWave = null;
                 }
             }

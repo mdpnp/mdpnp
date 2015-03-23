@@ -251,9 +251,8 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     protected void unregisterAllSampleArrayInstances() {
-        DeviceClock.Reading now = timestampFactory.instant();
         while (!registeredSampleArrayInstances.isEmpty()) {
-            unregisterSampleArrayInstance(registeredSampleArrayInstances.get(0), now);
+            unregisterSampleArrayInstance(registeredSampleArrayInstances.get(0));
         }
     }
 
@@ -264,13 +263,11 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
     }
 
-    protected void unregisterSampleArrayInstance(InstanceHolder<SampleArray> holder, DeviceClock.Reading timestamp) {
+    protected void unregisterSampleArrayInstance(InstanceHolder<SampleArray> holder) {
 
         registeredSampleArrayInstances.remove(holder);
 
-        sampleArrayDataWriter.unregister_instance_w_timestamp(holder.data,
-                                                              holder.handle,
-                                                              DomainClock.toDDSTime(timestamp.getTime()));
+        sampleArrayDataWriter.unregister_instance(holder.data, holder.handle);
     }
 
     protected void unregisterAlarmSettingsInstance(InstanceHolder<ice.AlarmSettings> holder) {
@@ -293,7 +290,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     private final Set<String> oldTechnicalAlertInstances = new HashSet<String>();
 
 
-    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency, DeviceClock.Reading timestamp) {
+    protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createSampleArrayInstance");
         }
@@ -307,11 +304,10 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         holder.data.unit_id = unit_id;
         holder.data.frequency = frequency;
 
-        holder.handle = sampleArrayDataWriter.register_instance_w_timestamp(holder.data,
-                                                                            DomainClock.toDDSTime(timestamp.getTime()));
+        holder.handle = sampleArrayDataWriter.register_instance(holder.data);
 
         if(holder.handle.is_nil()) {
-            log.warn("Unable to register instance " + holder.data + " with timestamp " + timestamp);
+            log.warn("Unable to register instance " + holder.data);
             holder.handle = null;
         } else {
             registeredSampleArrayInstances.add(holder);
@@ -329,6 +325,11 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             holder.data.device_time.sec = 0;
             holder.data.device_time.nanosec = 0;
         }
+        
+        Time_t t = DomainClock.toDDSTime(time.getTime());
+        holder.data.presentation_time.sec = t.sec;
+        holder.data.presentation_time.nanosec = t.nanosec;
+        
         numericDataWriter.write(holder.data, holder.handle);
     }
 
@@ -530,19 +531,19 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                                                           String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency,
                                                           DeviceClock.Reading timestamp) {
 
-        holder = ensureHolderConsistency(holder, metric_id, vendor_metric_id, instance_id, unit_id, frequency, timestamp);
+        holder = ensureHolderConsistency(holder, metric_id, vendor_metric_id, instance_id, unit_id, frequency);
 
         if (!newValues.isNull()) {
             // Call this now so that resolution of instance registration timestamp
             // is reduced
             timestamp = timestamp.refineResolutionForFrequency(frequency, newValues.size());
             if (null == holder) {
-                holder = createSampleArrayInstance(metric_id, vendor_metric_id, instance_id, unit_id, frequency, timestamp);
+                holder = createSampleArrayInstance(metric_id, vendor_metric_id, instance_id, unit_id, frequency);
             }
             sampleArraySample(holder, newValues, timestamp);
         } else {
             if (holder != null) {
-                unregisterSampleArrayInstance(holder, timestamp);
+                unregisterSampleArrayInstance(holder);
                 holder = null;
             }
         }
@@ -587,15 +588,16 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
         DeviceClock.Reading adjusted = deviceTimestamp.refineResolutionForFrequency(holder.data.frequency,
                                                                                     holder.data.values.userData.size());
+        
+        DomainClock.toDDSTime(adjusted.getTime(), holder.data.presentation_time);
 
-        sampleArrayDataWriter.write_w_timestamp(holder.data,
-                                                holder.handle==null?InstanceHandle_t.HANDLE_NIL:holder.handle,
-                                                DomainClock.toDDSTime(adjusted.getTime()));
+        sampleArrayDataWriter.write(holder.data,
+                                                holder.handle==null?InstanceHandle_t.HANDLE_NIL:holder.handle);
     }
 
     private InstanceHolder<SampleArray> ensureHolderConsistency(InstanceHolder<SampleArray> holder,
-                                                                String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency,
-                                                                DeviceClock.Reading timestamp) {
+                                                                String metric_id, String vendor_metric_id, int instance_id, 
+                                                                String unit_id, int frequency) {
 
         if (null != holder && (!holder.data.metric_id.equals(metric_id) ||
                                !holder.data.vendor_metric_id.equals(vendor_metric_id) ||
@@ -603,7 +605,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                                 holder.data.frequency != frequency ||
                                !holder.data.unit_id.equals(unit_id))) {
 
-            unregisterSampleArrayInstance(holder, timestamp);
+            unregisterSampleArrayInstance(holder);
             holder = null;
         }
         return holder;
