@@ -22,6 +22,22 @@ public class RtConfigTest {
     private static final Logger log = LoggerFactory.getLogger(RtConfigTest.class);
 
     @Test
+    public void testLifecycleReload() throws Exception
+    {
+        for(int i=0; i<5; i++) {
+            try {
+                RtConfig.loadAndSetIceQos();
+                RtConfig r = RtConfig.setupDDS(0);
+                r.stop();
+            }
+            catch(Exception ex) {
+                log.error("Failed to loadAndSetIceQos", ex);
+                Assert.fail("Failed to loadAndSetIceQos on iteration #" + i);
+            }
+        }
+    }
+
+    @Test
     public void testVerifyQosLibraries() throws Exception
     {
         DomainParticipantFactory dpf = DomainParticipantFactory.get_instance();
@@ -30,6 +46,10 @@ public class RtConfigTest {
         RtConfig.loadIceQosLibrary(qos);
         dpf.set_qos(qos);
         boolean ok = verifyQosLibraries();
+
+        dpf.unload_profiles();
+        DomainParticipantFactory.finalize_instance();
+
         Assert.assertTrue("RtConfig.verifyQosLibraries failed", ok);
     }
 

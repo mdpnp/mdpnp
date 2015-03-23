@@ -51,7 +51,9 @@ public class RtConfig {
         subscriber.delete_contained_entities();
         participant.delete_subscriber(subscriber);
         participant.delete_contained_entities();
-        DomainParticipantFactory.get_instance().delete_participant(participant);
+        DomainParticipantFactory factory = DomainParticipantFactory.get_instance();
+        factory.delete_participant(participant);
+        factory.unload_profiles();
         DomainParticipantFactory.finalize_instance();
     }
     

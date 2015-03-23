@@ -14,6 +14,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.mdpnp.apps.testapp.SimpleDeviceListModel;
 import org.mdpnp.apps.testapp.pca.VitalSign;
 
@@ -21,25 +22,11 @@ public class TestVitalModel {
 
     private VitalModel model;
     private Vital heartRateVital;
-    protected static CountDownLatch latch = new CountDownLatch(1);
-    
-    public static class AsNonApp extends Application {
 
-        @Override
-        public void start(Stage primaryStage) throws Exception {
-            latch.countDown();
-        }
-        
-    }
-    
     @BeforeClass
     public static void setUpClass() throws Exception {
-        new Thread(new Runnable() {
-            public void run() {
-                Application.launch(AsNonApp.class);
-            }
-        }).start();
-        latch.await();
+
+        FxRuntimeSupport.initialize();
     }
     
     @Before
@@ -52,11 +39,6 @@ public class TestVitalModel {
     public void tearDown() throws Exception {
         model = null;
         
-    }
-    
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        Platform.exit();
     }
 
     protected Error t;
