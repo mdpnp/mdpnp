@@ -392,10 +392,14 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     }
 
-    DraegerVentClock deviceClock = new DraegerVentClock();
+    DraegerVentClock deviceClock = new DraegerVentClock(getClockProvider());
 
     static class DraegerVentClock implements DeviceClock  {
-
+        final DeviceClock referenceClock;
+        public DraegerVentClock(final DeviceClock referenceClock) {
+            this.referenceClock = referenceClock;
+        }
+        
         private final ThreadLocal<Long> currentTime = new ThreadLocal<Long>() {
             protected Long initialValue() {
                 return 0L;
@@ -416,7 +420,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
         @Override
         public Reading instant() {
-            return new DeviceClock.ReadingImpl(currentTimeAdjusted());
+            return new DeviceClock.CombinedReading(
+                    referenceClock.instant(),
+                    new DeviceClock.ReadingImpl(currentTimeAdjusted()));
         }
 
         protected long currentTimeAdjusted() {
