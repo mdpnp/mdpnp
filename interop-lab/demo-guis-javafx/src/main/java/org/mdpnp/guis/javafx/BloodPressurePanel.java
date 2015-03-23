@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
 
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
@@ -192,37 +193,41 @@ public class BloodPressurePanel extends DevicePanel {
             } else if (ice.MDC_PRESS_CUFF_INFLATION.VALUE.equals(data.metric_id)) {
                 inflationN.copy_from(data);
             }
-
-            switch (BloodPressurePanel.this.state) {
-            case Inflating:
-                nextInflation.setText("Inflating...");
-                systolic.setText(Integer.toString((int) inflationN.value));
-                diastolic.setText("");
-                pulse.setText("");
-                break;
-            case Deflating:
-                nextInflation.setText("Deflating...");
-                systolic.setText(Integer.toString((int) inflationN.value));
-                diastolic.setText("");
-                pulse.setText("");
-                break;
-            case Waiting:
-                long seconds = ((long) nextInflationN.value % 60000L / 1000L);
-                BloodPressurePanel.this.nextInflation.setText((int) Math.floor(1.0 * nextInflationN.value / 60000.0) + ":" + (seconds < 10 ? "0" : "") + seconds
-                        + " MIN");
-                systolic.setText(Integer.toString((int) systolicN.value));
-                diastolic.setText(Integer.toString((int) diastolicN.value));
-                pulse.setText(Integer.toString((int) pulseN.value));
-                break;
-            case Uninited:
-                nextInflation.setText("");
-                systolic.setText("");
-                diastolic.setText("");
-                pulse.setText("");
-                break;
-            }
+            
             date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
-            time.setText(dateFormat.format(date));
+            final String dt = dateFormat.format(date);
+
+            Platform.runLater( () -> {
+                switch (BloodPressurePanel.this.state) {
+                case Inflating:
+                    nextInflation.setText("Inflating...");
+                    systolic.setText(Integer.toString((int) inflationN.value));
+                    diastolic.setText("");
+                    pulse.setText("");
+                    break;
+                case Deflating:
+                    nextInflation.setText("Deflating...");
+                    systolic.setText(Integer.toString((int) inflationN.value));
+                    diastolic.setText("");
+                    pulse.setText("");
+                    break;
+                case Waiting:
+                    long seconds = ((long) nextInflationN.value % 60000L / 1000L);
+                    BloodPressurePanel.this.nextInflation.setText((int) Math.floor(1.0 * nextInflationN.value / 60000.0) + ":" + (seconds < 10 ? "0" : "") + seconds
+                            + " MIN");
+                    systolic.setText(Integer.toString((int) systolicN.value));
+                    diastolic.setText(Integer.toString((int) diastolicN.value));
+                    pulse.setText(Integer.toString((int) pulseN.value));
+                    break;
+                case Uninited:
+                    nextInflation.setText("");
+                    systolic.setText("");
+                    diastolic.setText("");
+                    pulse.setText("");
+                    break;
+                }
+                time.setText(dt);
+            });
         }
     };
 }

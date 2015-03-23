@@ -1,3 +1,7 @@
+.label {
+  /* -fx-font-size: 20pt; */
+}
+
 .pulse-oximeter-panel {
   -fx-background-color: black;
 }
@@ -27,12 +31,12 @@
 .ventilator-panel .label {
   -fx-text-fill:white;
 }
-.multi-pulse-oximeter-panel {
+.multi-pulse-oximeter-panel .label {
   -fx-text-fill: cyan;
 }
-.invasive-blood-pressure-panel {
+.invasive-blood-pressure-panel .label {
   -fx-text-fill: red;
 }
-.blood-pressure-panel {
+.blood-pressure-panel .label {
   -fx-text-fill: magenta;
 }

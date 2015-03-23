@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
@@ -148,7 +149,8 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
                 SampleInfo sampleInfo) {
             if(sampleInfo.valid_data && panelMap.containsKey(data.metric_id)) {
                 date.setTime(data.presentation_time.sec * 1000L + data.presentation_time.nanosec / 1000000L);
-                time.setText(dateFormat.format(date));
+                final String str = dateFormat.format(date);
+                Platform.runLater( () -> { time.setText(str); } );
             }
         }
     };

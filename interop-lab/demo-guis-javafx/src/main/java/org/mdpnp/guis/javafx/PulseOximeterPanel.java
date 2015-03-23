@@ -213,7 +213,8 @@ public class PulseOximeterPanel extends DevicePanel {
                     plethPanel.setSource(plethWave);
                 }
                 date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
-                time.setText(dateFormat.format(date));
+                final String dt = dateFormat.format(date);
+                Platform.runLater( () -> { time.setText(dt); } );
             }
         }
 

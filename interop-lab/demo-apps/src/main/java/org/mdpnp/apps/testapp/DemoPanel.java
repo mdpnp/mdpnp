@@ -250,9 +250,13 @@ public class DemoPanel implements Runnable {
 
     @FXML
     public void changePartition(ActionEvent event) {
-        final List<String> partitions = new ArrayList<String>(1);
-        partitions.add(this.partitions.getSelectionModel().getSelectedItem());
-        partitionChooserModel.set(partitions);
+        String p = this.partitions.getSelectionModel().getSelectedItem();
+        if(null != p) {
+            final List<String> partitions = new ArrayList<String>(1);
+            partitions.add(p);
+            partitionChooserModel.set(partitions);
+        }
+        
     }
 
 }

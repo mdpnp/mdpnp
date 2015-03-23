@@ -138,11 +138,11 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
                 log.debug("For " + identifier + " upper bound is exceeded " + newValue + " > " + alarmSettings.data.upper);
                 writePatientAlert(identifier, "HIGH");
             } else {
-                log.debug("For " + identifier + " is in range " + newValue + " in [" + alarmSettings.data.lower+"-"+alarmSettings.data.upper);
+                log.trace("For " + identifier + " is in range " + newValue + " in [" + alarmSettings.data.lower+"-"+alarmSettings.data.upper);
                 writePatientAlert(identifier, "NORMAL");
             }
         } else {
-            log.debug("For " + identifier + " no alarm settings");
+            log.trace("For " + identifier + " no alarm settings");
         }
     }
     

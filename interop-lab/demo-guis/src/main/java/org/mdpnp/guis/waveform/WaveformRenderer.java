@@ -106,7 +106,7 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
         double y_prop = 1.0 * (value - minY) / (maxY-minY);
         
         double x = extent.getMinX() + x_prop * (extent.getMaxX()-extent.getMinX());
-        double y = extent.getMinY() + y_prop * (extent.getMaxY()-extent.getMinY()) + 1.0;
+        double y = extent.getMinY() + y_prop * (extent.getMaxY()-extent.getMinY());
         
         if(x_prop>=0.0&&x_prop<1.0&&y_prop>=0.0&&y_prop<1.0) {
             if(last_x>=0.0||last_y>=0.0&&x>last_x) {

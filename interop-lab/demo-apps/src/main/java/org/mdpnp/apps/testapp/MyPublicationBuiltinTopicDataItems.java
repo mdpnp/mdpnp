@@ -1,6 +1,7 @@
 package org.mdpnp.apps.testapp;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import javafx.application.Platform;
@@ -53,7 +54,7 @@ public class MyPublicationBuiltinTopicDataItems {
                 PublicationBuiltinTopicDataSeq sa_seq = new PublicationBuiltinTopicDataSeq();
                 SampleInfoSeq info_seq = new SampleInfoSeq();
                 InstanceHandle_t handle = InstanceHandle_t.HANDLE_NIL;
-                partitionsSet.clear();
+                final Set<String> partitionsSet = new HashSet<>();
                 try {
                     for(;;) {
                         try {
@@ -77,10 +78,17 @@ public class MyPublicationBuiltinTopicDataItems {
                 } catch (RETCODE_NO_DATA noData) {
                     
                 }
-                final String[] partitionsArray = partitionsSet.toArray(new String[0]);
                 Platform.runLater(() -> {
-                    partitions.clear();
-                    partitions.addAll(partitionsArray);
+                    Iterator<String> itr = partitions.iterator();
+                    while(itr.hasNext()) {
+                        String s = itr.next();
+                        if(!partitionsSet.contains(s)) {
+                            itr.remove();
+                        } else {
+                            partitionsSet.remove(s);
+                        }
+                    }
+                    partitions.addAll(partitionsSet);
                 });
             }
         });
@@ -91,7 +99,4 @@ public class MyPublicationBuiltinTopicDataItems {
     public ObservableList<String> getPartitions() {
         return partitions;
     }
-    
-    private final Set<String> partitionsSet = new HashSet<String>();
-
 }
