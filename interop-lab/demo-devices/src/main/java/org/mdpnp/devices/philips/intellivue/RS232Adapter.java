@@ -242,6 +242,7 @@ public class RS232Adapter implements NetworkConnection {
 
         if (length <= 0) {
             log.warn("Invalid frame length:" + length);
+            deleteBuffer(body);
             return count;
         }
 
@@ -264,26 +265,32 @@ public class RS232Adapter implements NetworkConnection {
         int calculatedFCS = is.currentFCS();
 
         if ((r = is.read()) < 0) {
+            deleteBuffer(body);
             return r;
         }
         int receivedFCS = 0xFF & r;
         if ((r = is.read()) < 0) {
+            deleteBuffer(body);
             return r;
         }
         receivedFCS |= 0xFF00 & (r << 8);
 
         if (0x11 != protocolId) {
             log.warn("Unknown Protocol Id:" + Integer.toHexString(0xFF & protocolId));
+            deleteBuffer(body);
             return count;
         }
         if (0x01 != msgType) {
             log.warn("Unknown message type:" + Integer.toHexString(0xFF & msgType));
+            deleteBuffer(body);
             return count;
         }
         body.flip();
 
         if ((0xFFFF ^ receivedFCS) != calculatedFCS) {
             log.warn("Invalid CRC Received:" + Integer.toHexString((0xFFFF ^ receivedFCS)) + " but calculated: " + Integer.toHexString(calculatedFCS));
+            deleteBuffer(body);
+            return count;
         }
 
         if (log.isTraceEnabled()) {
