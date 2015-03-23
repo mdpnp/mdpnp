@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import org.mdpnp.apps.testapp.chart.DateAxis?>
+
+<BorderPane fx:controller="org.mdpnp.apps.testapp.chart.ChartApplication" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8">
+   <center>
+      <LineChart animated="false" createSymbols="false" fx:id="chart" title="Vital Sign Info" BorderPane.alignment="CENTER">
+        <xAxis>
+          <DateAxis side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+          <NumberAxis side="LEFT" />
+        </yAxis>
+      </LineChart>
+   </center>
+</BorderPane>

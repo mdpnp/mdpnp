@@ -219,7 +219,6 @@ def JOGL_version = '2.2.4'
 dependencies {
     compile project(':interop-lab:demo-devices')
     compile project(':interop-lab:demo-guis')
-//    compile project(':interop-lab:demo-guis-swing')
     compile project(':interop-lab:demo-guis-javafx')
     runtime project(':interop-lab:demo-purejavacomm')
 
