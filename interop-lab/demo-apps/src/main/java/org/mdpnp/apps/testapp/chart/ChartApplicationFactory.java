@@ -29,7 +29,7 @@ public class ChartApplicationFactory implements IceApplicationProvider {
 
         final VitalModel model = (VitalModel) parentContext.getBean("vitalModel");
 
-        FXMLLoader loader = new FXMLLoader(ChartApplication.class.getResource("Chart.fxml"));
+        FXMLLoader loader = new FXMLLoader(ChartApplication.class.getResource("ChartApplication.fxml"));
 
         final Parent ui = loader.load();
 

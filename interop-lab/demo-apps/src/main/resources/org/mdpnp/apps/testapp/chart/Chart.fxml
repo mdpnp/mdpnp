@@ -1,20 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.chart.*?>
-<?import java.lang.*?>
-<?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
 <?import org.mdpnp.apps.testapp.chart.DateAxis?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.control.Tooltip?>
 
-<BorderPane fx:controller="org.mdpnp.apps.testapp.chart.ChartApplication" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8">
-   <center>
-      <LineChart animated="false" createSymbols="false" fx:id="chart" title="Vital Sign Info" BorderPane.alignment="CENTER">
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.chart.Chart">
+<center>
+      <LineChart minHeight="200.0" animated="false" createSymbols="false" fx:id="lineChart" title="" BorderPane.alignment="CENTER">
         <xAxis>
-          <DateAxis side="BOTTOM" />
+          <DateAxis side="BOTTOM" animated = "false"/>
         </xAxis>
         <yAxis>
-          <NumberAxis side="LEFT" />
+          <NumberAxis side="LEFT" animated="false" />
         </yAxis>
       </LineChart>
-   </center>
+</center>
+<right>
+    <Button prefWidth="30.0" BorderPane.alignment="CENTER" fx:id="removeButton">
+    <graphic>
+    <ImageView fitHeight="0.0" fitWidth="25.0" preserveRatio="true">
+    <Image url="@/org/mdpnp/apps/testapp/patient/stop.png"/>
+    </ImageView>
+    </graphic>
+    <tooltip>
+    <Tooltip text="Remove this vital sign"/>
+    </tooltip>
+    </Button>
+</right>
 </BorderPane>
+
