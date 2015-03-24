@@ -134,6 +134,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             lastMessageSentTime = 0L;
             lastKeepAlive = 0L;
             stopEmitFastData();
+        } else if(ice.ConnectionState.Connected.equals(newState) && !ice.ConnectionState.Connected.equals(oldState)) {
+            startEmitFastData();
         }
     }
 
@@ -158,27 +160,20 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     private long lastKeepAlive = 0L;
     private long lastMessageSentTime = 0L;
     
-    private final Map<Integer, ScheduledFuture<?>> emitFastDataByFrequency = new HashMap<Integer, ScheduledFuture<?>>();
-    private static final int BUFFER_SAMPLES = 125;
+    private static final long PERIOD = 2000L;
+    private ScheduledFuture<?> emitFastData;
 
-    private synchronized void startEmitFastData(long msInterval) {
-        int frequency = (int)(1000 / msInterval);
-        // for the 62.5Hz case; 
-        // TODO client will see an overlapping sample where 62.5Hz is truncated to 62Hz
-        long interval = msInterval * BUFFER_SAMPLES;
-        if (!emitFastDataByFrequency.containsKey(frequency)) {
-            log.info("Start emit fast data at frequency " + frequency);
-            emitFastDataByFrequency.put(frequency, executor.scheduleAtFixedRate(new EmitFastData(frequency), 2* interval - System.currentTimeMillis()
-                    % interval, interval, TimeUnit.MILLISECONDS));
-        }
+    private synchronized void startEmitFastData() {
+        // for the 62.5Hz case we use two seconds (125 samples)
+        log.info("Start emit fast data for period " + PERIOD + "ms");
+        emitFastData = executor.scheduleAtFixedRate(new EmitFastData(), 
+                    2* PERIOD - System.currentTimeMillis() % PERIOD, PERIOD, TimeUnit.MILLISECONDS);
     }
     
     private synchronized void stopEmitFastData() {
-        for (Integer frequency : emitFastDataByFrequency.keySet()) {
-            log.info("stop emit fast data at frequency " + frequency);
-            emitFastDataByFrequency.get(frequency).cancel(false);
-        }
-        emitFastDataByFrequency.clear();
+        emitFastData.cancel(false);
+        emitFastData = null;
+        log.info("stop emit fast data");
     }
 
     protected void watchdog() {
@@ -714,7 +709,6 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             }
                             
                             sampleCache.addNewSamples(w.getNumbers());
-                            startEmitFastData(rt.toMilliseconds());
                         }
                     }
                 }
@@ -754,10 +748,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     }
     private class EmitFastData implements Runnable {
 
-        private final int frequency;
-
-        public EmitFastData(final int frequency) {
-            this.frequency = frequency;
+        public EmitFastData() {
         }
 
         private ObservedValue[] observedValues = new ObservedValue[10];
@@ -767,6 +758,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         public void run() {
             try {
                 observedValues = sampleArrayCache.keySet().toArray(observedValues);
+                DeviceClock.Reading fakeSampleTime = getClockProvider().instant();
+                
                 for(ObservedValue ov : observedValues) {
                     if(null == ov) {
                         break;
@@ -784,31 +777,27 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             log.warn("No RelativeTime for handle=" + handle + " rt=" + rt + " sampleCache=" + sampleCache + " unitCode="+unitCode);
                             continue;
                         }
-                        int frequency = (int)(1000 / rt.toMilliseconds());
+                        int samples = (int) (PERIOD / rt.toMilliseconds());
 
-                        DeviceClock.Reading fakeSampleTime = getClockProvider().instant();
-
-                        if(this.frequency == frequency) {
-                            if(null != sa) {
-                                synchronized(sampleCache) {
-                                    Collection<Number> c = sampleCache.emitSamples(BUFFER_SAMPLES, sa.data.metric_id+" "+sa.data.instance_id);
-                                    if(null == c) {
-                                        putSampleArrayUpdate(ov, handle, null);
-                                    } else {
-                                        sampleArraySample(sa, c, fakeSampleTime);
-                                    }
+                        if(null != sa) {
+                            synchronized(sampleCache) {
+                                Collection<Number> c = sampleCache.emitSamples(samples, sa.data.metric_id+" "+sa.data.instance_id);
+                                if(null == c) {
+                                    putSampleArrayUpdate(ov, handle, null);
+                                } else {
+                                    sampleArraySample(sa, c, fakeSampleTime);
                                 }
-                            } else {
-                                String metric_id = sampleArrayMetricIds.get(ov);
-                                UnitCode unitCode = handleToUnitCode.get(handle);
-                                synchronized(sampleCache) {
-                                    putSampleArrayUpdate(
-                                            ov, handle,
-                                            sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.emitSamples(BUFFER_SAMPLES, metric_id+" "+handle),
-                                            metric_id, ov.toString(), handle, 
-                                            RosettaUnits.units(unitCode),
-                                            frequency, fakeSampleTime));
-                                }
+                            }
+                        } else {
+                            String metric_id = sampleArrayMetricIds.get(ov);
+                            UnitCode unitCode = handleToUnitCode.get(handle);
+                            synchronized(sampleCache) {
+                                putSampleArrayUpdate(
+                                        ov, handle,
+                                        sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.emitSamples(samples, metric_id+" "+handle),
+                                        metric_id, ov.toString(), handle, 
+                                        RosettaUnits.units(unitCode),
+                                        (int)(1000L / rt.toMilliseconds()), fakeSampleTime));
                             }
                         }
                     }

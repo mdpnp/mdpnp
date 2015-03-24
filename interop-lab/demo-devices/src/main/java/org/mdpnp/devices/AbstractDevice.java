@@ -925,13 +925,13 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                                     ice.GlobalAlarmSettingsObjective obj = (ice.GlobalAlarmSettingsObjective) data_seq.get(i);
 
                                     if (0 != (si.view_state & ViewStateKind.NEW_VIEW_STATE) && si.valid_data) {
-                                        log.warn("Handle for metric_id=" + obj.metric_id + " is " + si.instance_handle);
+                                        log.debug("Handle for metric_id=" + obj.metric_id + " is " + si.instance_handle);
                                         instanceMetrics.put(new InstanceHandle_t(si.instance_handle), obj.metric_id);
                                     }
 
                                     if (0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
                                         if (si.valid_data) {
-                                            log.warn("Setting " + obj.metric_id + " to [ " + obj.lower + " , " + obj.upper + "]");
+                                            log.debug("Setting " + obj.metric_id + " to [ " + obj.lower + " , " + obj.upper + "]");
                                             setAlarmSettings(obj);
                                         }
                                     } else {
@@ -945,7 +945,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                                         // alarmSettingsObjectiveReader.get_key_value(obj,
                                         // si.instance_handle);
                                         String metricId = instanceMetrics.get(si.instance_handle);
-                                        log.warn("Unsetting " + metricId);
+                                        log.debug("Unsetting " + metricId);
                                         if (null != metricId) {
                                             unsetAlarmSettings(metricId);
                                         }

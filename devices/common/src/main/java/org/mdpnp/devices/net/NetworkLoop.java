@@ -17,6 +17,8 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -158,6 +160,78 @@ public class NetworkLoop implements Runnable {
         }
     }
 
+    private static final class ExceptionRate {
+        private final long[] exceptionTimes = new long[20];
+        private final double maxExceptionsPerSecond;
+        private int nextLocation = 0;
+        private boolean wrapped;
+        
+        public ExceptionRate(double maxExceptionsPerSecond) {
+            this.maxExceptionsPerSecond = maxExceptionsPerSecond;
+        }
+        
+        private void update(long now) {
+            if(nextLocation<exceptionTimes.length) {
+                exceptionTimes[nextLocation++] = now;
+            } else {
+                wrapped = true;
+                nextLocation = 0;
+                exceptionTimes[nextLocation++]= now;
+            }
+        }
+        
+        private double averageExceptionsPerSecond(long now) {
+            if(!wrapped) {
+                if(nextLocation < 1) {
+                    // Needs at least one point
+                    return 0.0;
+                } else {
+                    double seconds = (now - exceptionTimes[0]) / 1000000000.0;
+                    return nextLocation / seconds;
+                }
+            } else {
+                double seconds = (now - exceptionTimes[nextLocation]) / 1000000000.0;
+                return exceptionTimes.length / seconds;
+            }
+        }
+        
+        public boolean shouldThrow() {
+            long now = System.nanoTime();
+            double avg = averageExceptionsPerSecond(now);
+            update(now);
+            return Double.compare(avg, maxExceptionsPerSecond) > 0;
+        }
+        
+        
+    }
+    
+//    public static final void main(String[] args) throws InterruptedException {
+//        ExceptionRate rate = new ExceptionRate(2.0);
+//        for(int i = 0; i < 40; i++) {
+//            System.out.println(rate.shouldThrow());
+//            Thread.sleep(500L);
+//        }
+//    }
+    
+    private final Map<NetworkConnection, ExceptionRate> writeErrorRate = new HashMap<NetworkConnection, ExceptionRate>(), readErrorRate = new HashMap<NetworkConnection, ExceptionRate>();
+
+    private static final boolean shouldThrow(Map<NetworkConnection,ExceptionRate> errorRate, NetworkConnection conn) {
+        ExceptionRate rate = errorRate.get(conn);
+        if(null == rate) {
+            rate = new ExceptionRate(10.0);
+            errorRate.put(conn, rate);
+        }
+        return rate.shouldThrow();
+    }
+    
+    private final boolean shouldThrowWrite(NetworkConnection conn) {
+        return shouldThrow(writeErrorRate, conn);
+    }
+    
+    private final boolean shouldThrowRead(NetworkConnection conn) {
+        return shouldThrow(readErrorRate, conn);
+    }
+    
     public void runLoop() {
         synchronized (this) {
             if (!LoopState.New.equals(loopState)) {
@@ -215,12 +289,20 @@ public class NetworkLoop implements Runnable {
                         try {
                             nc.read(sk);
                         } catch (IOException e) {
-                            log.error("in NetworkConnection.read, canceling the SelectionKey", e);
-                            sk.cancel();
+                            if(shouldThrowRead(nc)) {
+                                log.error("in NetworkConnection.read, canceling the SelectionKey", e);
+                                sk.cancel();
+                            } else {
+                                log.error("in NetworkConnection.read, max error rate not exceeded", e);
+                            }
                             continue;
                         } catch (Throwable t) {
-                            log.error("in NetworkConnection.read, canceling the SelectionKey", t);
-                            sk.cancel();
+                            if(shouldThrowRead(nc)) {
+                                log.error("in NetworkConnection.read, canceling the SelectionKey", t);
+                                sk.cancel();
+                            } else {
+                                log.error("in NetworkConnection.read, max error rate not exceeded", t);
+                            }
                             continue;
                         }
                     }
@@ -230,12 +312,21 @@ public class NetworkLoop implements Runnable {
                         try {
                             nc.write(sk);
                         } catch (IOException e) {
-                            log.error("NetworkConnection.write, canceling SelectionKey", e);
-                            sk.cancel();
+                            if(shouldThrowWrite(nc)) {
+                                log.error("in NetworkConnection.write, canceling the SelectionKey", e);
+                                sk.cancel();
+                            } else {
+                                log.error("in NetworkConnection.write, max error rate not exceeded", e);
+                            }
                             continue;
                         } catch(Throwable t) {
-                            log.error("in NetworkConnection.write, canceling the SelectionKey", t);
-                            sk.cancel();
+                            if(shouldThrowWrite(nc)) {
+                                log.error("in NetworkConnection.write, canceling the SelectionKey", t);
+                                sk.cancel();
+                            } else {
+                                log.error("in NetworkConnection.write, max error rate not exceeded", t);
+                            }
+
                             continue;
                         }
                     }
