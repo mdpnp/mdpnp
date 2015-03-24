@@ -178,8 +178,8 @@ public class PulseOximeterPanel extends DevicePanel {
                     pulseWave = new NumericWaveformSource(model.getReader(), data);
                     pulsePanel.setSource(pulseWave);
                 }
-                date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
-                time.setText(dateFormat.format(date));
+//                date.setTime(1000L * data.presentation_time.sec + data.presentation_time.nanosec / 1000000L);
+//                time.setText(dateFormat.format(date));
             }
         }
 
