@@ -213,24 +213,35 @@ module ice {
     ConnectionType type;
     LongString info;
     ValidTargets valid_targets;
-  }; //@Extensibility MUTABLE_EXTENSIBILITY
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist DeviceConnectivity unique_device_identifier
   const string DeviceConnectivityTopic = "DeviceConnectivity";
 
   /**
-   * This topic allows a participant to instruct a further connected device adapter 
-   * to establish the further connection to the specified target.
+   * MDSConnectivity 
    * 
-   * Stability: 0 - Deprecated
+   * Stability: 2 - Unstable
    */
-  struct DeviceConnectivityObjective {
+  struct MDSConnectivity {
     UniqueDeviceIdentifier unique_device_identifier; //@key
-    boolean connected;
-    LongString target;
+    LongString partition;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist DeviceConnectivityObjective unique_device_identifier
-  const string DeviceConnectivityObjectiveTopic = "DeviceConnectivityObjective";
+  #pragma keylist MDSConnectivity unique_device_identifier
+  const string MDSConnectivityTopic = "MDSConnectivity";
 
+  /**
+   * This topic allows a participant to instruct a connected device adapter 
+   * to configure itself.
+   * 
+   * Stability: 2 - Unstable
+   */
+  struct MSDConnectivityObjective {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    LongString partition;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist MSDConnectivityObjective unique_device_identifier
+  const string MDSConnectivityObjectiveTopic = "MSDConnectivityObjective";
+  
   /**
    * A number of speculative nomenclature codes not (yet) included in the
    * harmonized rosetta.
