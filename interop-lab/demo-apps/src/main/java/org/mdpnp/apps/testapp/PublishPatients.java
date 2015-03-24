@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 import org.mdpnp.rtiapi.data.QosProfiles;
 
@@ -57,23 +58,44 @@ public class PublishPatients {
             participant.get_default_publisher_qos(pQos);
             pQos.partition.name.add("*");
             Publisher publisher = participant.create_publisher(pQos, null, StatusKind.STATUS_MASK_NONE);
-            
+
             PatientDataWriter writer = (PatientDataWriter) publisher.create_datawriter_with_profile(patientTopic, QosProfiles.ice_library, QosProfiles.device_identity, null, StatusKind.STATUS_MASK_NONE);
             
             for(ice.Patient p : patients) {
                 System.out.println(p);
                 writer.write(p, InstanceHandle_t.HANDLE_NIL);
             }
-            System.out.println("Type quit to exit");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            String line;
-            while(null != (line=reader.readLine())) {
-                if("quit".equals(line)) {
-                    break;
-                } else {
-                    System.err.println("Unknown command " + line);
+            
+            final CountDownLatch latch = new CountDownLatch(1);
+            new Thread(new Runnable() {
+                public void run() {
+                    System.out.println("Type quit to exit");
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+                    String line;
+                    try {
+                        while(null != (line=reader.readLine())) {
+                            if("quit".equals(line)) {
+                                break;
+                            } else {
+                                System.err.println("Unknown command " + line);
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        
+                    } finally {
+                        latch.countDown();
+                    }
                 }
-            }
+            }).start();
+            
+            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+                public void run() {
+                    latch.countDown();
+                }
+            }));
+            
+            latch.await();
             
             publisher.delete_datawriter(writer);
             participant.delete_publisher(publisher);
@@ -81,6 +103,7 @@ public class PublishPatients {
             DomainParticipantFactory.get_instance().delete_participant(participant);
             DomainParticipantFactory.finalize_instance();
             System.out.println("ALL DONE");
+            System.exit(0);
         } else {
             System.err.println("Usage: PublishPatients [domain id] [patient file]");
         }
