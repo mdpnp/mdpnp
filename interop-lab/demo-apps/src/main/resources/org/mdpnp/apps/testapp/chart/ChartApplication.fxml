@@ -23,9 +23,13 @@
    </right>
    <bottom>
     <HBox>
-    <Label text="Add a vital sign:"/>
-         <ComboBox fx:id="vitalSigns" />
-      <Button mnemonicParsing="false" onAction="#addVitalSign" text="Add" />
+       <children>
+       <Label text="Add a vital sign:" />
+            <ComboBox fx:id="vitalSigns" />
+         <Button mnemonicParsing="false" onAction="#addVitalSign" text="Add" />
+         <Label text="Time Interval" />
+         <ComboBox fx:id="timeInterval" onAction="#onTimeInterval" />
+       </children>
       </HBox>
       </bottom>
 </BorderPane>

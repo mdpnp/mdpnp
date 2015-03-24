@@ -8,16 +8,9 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.control.Tooltip?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.chart.Chart">
+<BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.chart.Chart">
 <center>
-      <LineChart minHeight="200.0" animated="false" createSymbols="false" fx:id="lineChart" title="" BorderPane.alignment="CENTER">
-        <xAxis>
-          <DateAxis side="BOTTOM" animated = "false"/>
-        </xAxis>
-        <yAxis>
-          <NumberAxis side="LEFT" animated="false" />
-        </yAxis>
-      </LineChart>
+      
 </center>
 <right>
     <Button prefWidth="30.0" BorderPane.alignment="CENTER" fx:id="removeButton">

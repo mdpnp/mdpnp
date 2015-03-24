@@ -12,7 +12,7 @@ import org.springframework.context.ApplicationContext;
 
 public class ChartApplicationFactory implements IceApplicationProvider {
     private final IceApplicationProvider.AppType ChartApplication = new IceApplicationProvider.AppType("Chart", "NOCHART",
-            (URL) null /*ChartApplicationFactory.class.getResource("chart.png")*/, 0.75);
+            ChartApplicationFactory.class.getResource("chart.png"), 0.75);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {
@@ -20,6 +20,8 @@ public class ChartApplicationFactory implements IceApplicationProvider {
 
     }
 
+
+    
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 

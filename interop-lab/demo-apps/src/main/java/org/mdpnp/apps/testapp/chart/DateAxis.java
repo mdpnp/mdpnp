@@ -274,6 +274,10 @@ public final class DateAxis extends Axis<Date> {
         } else {
             currentLowerBound.set(getLowerBound().getTime());
             currentUpperBound.set(getUpperBound().getTime());
+            if( (currentUpperBound.get()-currentLowerBound.get()) < 100000L) {
+                Thread.dumpStack();
+            }
+            System.out.println("Lower to Upper " + new Date(currentLowerBound.get()) + " " + new Date(currentUpperBound.get()) + " " +(currentUpperBound.get()-currentLowerBound.get()));
         }
     }
 

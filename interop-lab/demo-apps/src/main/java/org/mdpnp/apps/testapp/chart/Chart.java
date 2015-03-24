@@ -14,16 +14,19 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
+import javafx.scene.layout.BorderPane;
 
 public class Chart implements ListChangeListener<Value> {
-    @FXML LineChart<Date, Number> lineChart;
+    @FXML protected LineChart<Date, Number> lineChart;
     final ObservableList<XYChart.Series<Date, Number>> series = FXCollections.observableArrayList();
     private final List<ValueSeriesListener> values = new ArrayList<ValueSeriesListener>();
     @FXML Button removeButton;
+    @FXML BorderPane main;
     
     private Vital vital;
     
@@ -35,8 +38,8 @@ public class Chart implements ListChangeListener<Value> {
     }
     
     public void setModel(Vital v, final DateAxis dateAxis) {
+        
         if(null != this.vital) {
-            lineChart.titleProperty().unbind();
             this.vital.removeListener(this);
             Iterator <ValueSeriesListener> vslitr = values.iterator();
             while(vslitr.hasNext()) {
@@ -45,15 +48,26 @@ public class Chart implements ListChangeListener<Value> {
                 series.remove(vsl.s);
                 vslitr.remove();
             }
+            main.setCenter(null);
+            lineChart.titleProperty().unbind();
+            lineChart = null;
         }
         this.vital = v;
         if(null != v) {
+            NumberAxis yAxis = new NumberAxis();
+            lineChart = new LineChart<>(dateAxis, yAxis);
+            lineChart.setMinHeight(200.0);
+            lineChart.setAnimated(false);
+            lineChart.setCreateSymbols(false);
+            
             lineChart.titleProperty().bind(v.labelProperty());
             lineChart.setData(series);
+            main.setCenter(lineChart);
+            BorderPane.setAlignment(lineChart, Pos.CENTER);
             v.addListener(this);
-            ((NumberAxis)lineChart.getYAxis()).setAutoRanging(false);
-            ((NumberAxis)lineChart.getYAxis()).setUpperBound(v.getMaximum());
-            ((NumberAxis)lineChart.getYAxis()).setLowerBound(v.getMinimum());
+            yAxis.setAutoRanging(false);
+            yAxis.setUpperBound(v.getMaximum());
+            yAxis.setLowerBound(v.getMinimum());
         }
     }
 

@@ -13,11 +13,10 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.ComboBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 import org.mdpnp.apps.testapp.pca.VitalSign;
@@ -26,8 +25,6 @@ import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javafx.scene.control.ComboBox;
-
 public class ChartApplication implements ListChangeListener<Vital>, EventHandler<ActionEvent> {    
     protected static final Logger log = LoggerFactory.getLogger(ChartApplication.class);
     final DateAxis dateAxis = new DateAxis();
@@ -35,12 +32,48 @@ public class ChartApplication implements ListChangeListener<Vital>, EventHandler
     VitalModel vitalModel; 
     private Timeline timeline;
     @FXML ComboBox<VitalSign> vitalSigns;
+    private long interval = 2 * 60 * 60 * 1000L;
+    @FXML ComboBox<TimeInterval> timeInterval;
     
+    public enum TimeInterval {
+        _10SECONDS("10 Seconds", 10000L),
+        _1MINUTE("1 Minute", 60000L),
+        _5MINUTES("5 Minutes", 5 * 60000L),
+        _15MINUTES("15 Minutes", 15 * 60000L),
+        _1HOUR("1 Hour", 60 * 60000L),
+        _2HOURS("2 Hours", 2 * 60 * 60000L),
+        _3HOURS("3 Hours", 3 * 60 * 60000L),
+        _4HOURS("4 Hours", 4 * 60 * 60000L),
+        _5HOURS("5 Hours", 5 * 60 * 60000L),
+        _6HOURS("6 Hours", 6 * 60 * 60000L);
+        
+        
+        private String label;
+        private long interval;
+        
+        public long getInterval() {
+            return interval;
+        }
+        public String getLabel() {
+            return label;
+        }
+        
+        private TimeInterval(String label, long interval) {
+            this.label = label;
+            this.interval = interval;
+        }
+        
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
     
     public ChartApplication() {
     }
     
     public void setModel(VitalModel vitalModel) {
+        timeInterval.setItems(FXCollections.observableArrayList(TimeInterval.values()));
         vitalSigns.setItems(FXCollections.observableArrayList(VitalSign.values()));
         dateAxis.setAutoRanging(false);
         dateAxis.setAnimated(false);
@@ -87,7 +120,6 @@ public class ChartApplication implements ListChangeListener<Vital>, EventHandler
                 try {
                     Parent node = loader.load();
                     Chart chart = loader.getController();
-                    chart.lineChart.titleProperty().bind(vi.labelProperty());
                     chart.setModel(vi, dateAxis);
                     node.setUserData(chart);
                     chart.getRemoveButton().setOnAction(new EventHandler<ActionEvent>() {
@@ -110,15 +142,23 @@ public class ChartApplication implements ListChangeListener<Vital>, EventHandler
 
     @Override
     public void handle(ActionEvent event) {
-        long now = System.currentTimeMillis() % 1000L;
-        dateAxis.setAutoRanging(false);
-        dateAxis.setRange(new Object[] {new Date(now - 18000000L), new Date(now)}, false);
+        long now = System.currentTimeMillis();
+        now -= now % 1000;
+        dateAxis.setLowerBound(new Date(now - interval));
+        dateAxis.setUpperBound(new Date(now));
     }
 
     @FXML public void addVitalSign() {
         VitalSign vs = vitalSigns.getSelectionModel().getSelectedItem();
         if(null != vs) {
             vs.addToModel(vitalModel);
+        }
+    }
+
+    @FXML public void onTimeInterval(ActionEvent event) {
+        TimeInterval ti = timeInterval.getSelectionModel().getSelectedItem();
+        if(null != ti) {
+            interval = ti.getInterval();
         }
     }
 }
