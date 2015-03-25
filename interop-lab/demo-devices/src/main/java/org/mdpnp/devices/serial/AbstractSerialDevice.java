@@ -270,7 +270,9 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
     
             // Staying in the Connecting state while awaiting another time interval
             while (now < (previousAttempt[idx] + getConnectInterval(idx))) {
-                setConnectionInfo("Waiting to reconnect... " + ((previousAttempt[idx] + getConnectInterval(idx)) - now) + "ms");
+                if(idx == 0) {
+                    setConnectionInfo("Waiting to reconnect... " + ((previousAttempt[idx] + getConnectInterval(idx)) - now) + "ms");
+                }
                 try {
                     Thread.sleep(100L);
                 } catch (InterruptedException e) {
@@ -278,7 +280,9 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
                 }
                 now = System.currentTimeMillis();
             }
-            setConnectionInfo("");
+            if(idx == 0) {
+                setConnectionInfo("");
+            }
             previousAttempt[idx] = now;
             try {
                 log.trace("Invoking SerialProvider("+idx+").connect(" + portIdentifier[idx] + ")");
