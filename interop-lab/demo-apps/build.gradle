@@ -263,3 +263,9 @@ jar {
 
     }
 }
+
+task publishPatients(type:JavaExec) {
+    main = "org.mdpnp.apps.testapp.PublishPatients"
+    args = ['15','patients.txt']
+    classpath = sourceSets.main.runtimeClasspath
+ }
