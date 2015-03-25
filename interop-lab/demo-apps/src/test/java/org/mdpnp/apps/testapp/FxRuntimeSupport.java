@@ -6,6 +6,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,38 +57,50 @@ public class FxRuntimeSupport {
     }
 
     public Stage show(final IceApplication appNode) {
-        try {
-            return run((new Callable<Stage>() {
-                @Override
-                public Stage call() throws Exception {
-                    return showInFxThread(appNode);
-                }
-            }));
-        } catch (Exception e) {
-            throw new RuntimeException("Can't create stage", e);
-        }
+        return run((new Callable<Stage>() {
+            @Override
+            public Stage call() throws Exception {
+                return showInFxThread(appNode);
+            }
+        }));
     }
 
     public Stage show(final Parent appNode) {
-        try {
-            return run((new Callable<Stage>() {
-                @Override
-                public Stage call() throws Exception {
-                    return showInFxThread(appNode);
-                }
-            }));
-        } catch (Exception e) {
-            throw new RuntimeException("Can't create stage", e);
-        }
+        return run((new Callable<Stage>() {
+            @Override
+            public Stage call() throws Exception {
+                return showInFxThread(appNode);
+            }
+        }));
     }
 
-    private <T> T run(Callable<T> callable) throws Exception {
-        if(Platform.isFxApplicationThread()) {
-            return callable.call();
-        } else {
-            FutureTask<T> future = new FutureTask<>(callable);
-            Platform.runLater(future);
-            return future.get();
+    public void close(final Stage appNode) {
+        run((new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                if(lastStage != appNode)
+                    throw new RuntimeException("FxRuntimeSupport should only deal with one stage at a time");
+
+                lastStage.close();
+                lastStage=null;
+                return true;
+            }
+        }));
+    }
+
+    public <T> T run(Callable<T> callable) {
+        try {
+            if(Platform.isFxApplicationThread()) {
+                return callable.call();
+            } else {
+                FutureTask<T> future = new FutureTask<>(callable);
+                Platform.runLater(future);
+                return future.get();
+            }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Can't execute callable", e);
         }
     }
 
@@ -106,6 +119,7 @@ public class FxRuntimeSupport {
 
         if(lastStage != null) {
             lastStage.close();
+            lastStage = null;
         }
 
         lastStage = new Stage(StageStyle.DECORATED);
@@ -123,6 +137,7 @@ public class FxRuntimeSupport {
 
         if(lastStage != null) {
             lastStage.close();
+            lastStage = null;
         }
 
         lastStage = new Stage(StageStyle.DECORATED);

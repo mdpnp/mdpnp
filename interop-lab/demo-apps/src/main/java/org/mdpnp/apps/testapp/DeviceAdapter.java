@@ -18,7 +18,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Observable;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.FutureTask;
 
 import javafx.application.Platform;
 import javafx.event.EventHandler;
@@ -33,6 +36,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 
+import javafx.util.Callback;
 import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
@@ -47,7 +51,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
 
 
-public abstract class DeviceAdapter {
+public abstract class DeviceAdapter extends Observable {
+
+    enum AdapterState { init, connected, running, stopped };
 
     private static final Logger log = LoggerFactory.getLogger(DeviceAdapter.class);
 
@@ -88,7 +94,7 @@ public abstract class DeviceAdapter {
         }
     }
 
-    abstract AbstractDevice init() throws Exception;
+    abstract AbstractDevice initializeDevice() throws Exception;
 
     protected void update(String msg, int pct) {
         log.info(pct + "% " + msg);
@@ -115,15 +121,30 @@ public abstract class DeviceAdapter {
         return device;
     }
 
+    /**
+     * blocking call to start adapter's listening loop. It is expected that stop API will be called on another thread
+     * @param address
+     * @throws Exception
+     */
     public void start(String address) throws Exception {
 
-        init();
+        initializeDevice();
+
+        run(address);
+    }
+
+    protected void run(String address) throws Exception {
 
         if (null != device && device instanceof AbstractConnectedDevice) {
-            if (!((AbstractConnectedDevice) device).connect(address)) {
+            if (!((AbstractConnectedDevice)device).connect(address)) {
                 stopOk.countDown();
             }
+            setChanged();
+            notifyObservers(AdapterState.connected);
         }
+
+        setChanged();
+        notifyObservers(AdapterState.running);
 
         // Wait until killAdapter
         stopOk.await();
@@ -132,6 +153,8 @@ public abstract class DeviceAdapter {
     public void stop()
     {
         stopOk.countDown();
+        setChanged();
+        notifyObservers(AdapterState.stopped);
     }
 
     static class HeadlessAdapter extends DeviceAdapter {
@@ -150,7 +173,7 @@ public abstract class DeviceAdapter {
             }
         }
 
-        AbstractDevice init() throws Exception {
+        AbstractDevice initializeDevice() throws Exception {
 
             DeviceType type = deviceFactory.getDeviceType();
 
@@ -165,6 +188,9 @@ public abstract class DeviceAdapter {
             if (null != initialPartition) {
                 device.setPartition(initialPartition);
             }
+
+            setChanged();
+            notifyObservers(AdapterState.init);
 
             return device;
         }
@@ -203,7 +229,13 @@ public abstract class DeviceAdapter {
                     metrics.stop("device.shutdown", tm);
                     device = null;
                 }
-            } finally {
+            }
+            catch(Exception ex) {
+                log.error("Failed to stop", ex);
+                throw ex;
+            }
+            finally {
+                device = null;
                 super.stop();
             }
         }
@@ -216,6 +248,8 @@ public abstract class DeviceAdapter {
         private DeviceDataMonitor    deviceMonitor;
 
         final ProgressBar      progressBar = new ProgressBar();
+        final DeviceView       deviceViewController = new DeviceView();
+        private Stage          deviceFxStage;
 
         public GUIAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context) {
             super(deviceFactory, context, false);
@@ -223,44 +257,47 @@ public abstract class DeviceAdapter {
 
         public void stop() {
 
-            try {
-                update("Shut down local monitoring client", 10);
-                deviceMonitor.stop();
-                update("Shut down local user interface", 20);
-            }
-            finally {
-
-                super.stop();
-
-                Runnable r = new Runnable() {
-                    public void run() {
-//                        frame.setVisible(false);
-//                        frame.dispose();
-                    }
-                };
-
-                if(Platform.isFxApplicationThread()) {
-                    r.run();
-                } else { 
-                    Platform.runLater(r);
+            Callable<Boolean> uiStop = new Callable<Boolean>() {
+                public Boolean call() throws Exception {
+                    deviceFxStage.close();
+                    return true;
                 }
+            };
 
-            }
+            runOnFxThread(uiStop);
+
+            stopHeadlessComponents();
+        }
+
+        private synchronized void stopHeadlessComponents() {
+
+            update("Shut down local monitoring client", 10);
+            deviceMonitor.stop();
+            update("Shut down local user interface", 20);
+
+            super.stop();
         }
 
 
-        AbstractDevice init() throws Exception {
+        AbstractDevice initializeDevice() throws Exception {
 
             DeviceType type = deviceFactory.getDeviceType();
 
-            AbstractDevice device = super.init();
+            AbstractDevice device = super.initializeDevice();
 
             deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier);
 
+            Callback<Class<?>, Object> factory = new Callback<Class<?>, Object>()
+            {
+                public Object call(Class<?> type) {
+                    return deviceViewController;
+                }
+            };
+
             FXMLLoader loader = new FXMLLoader(DeviceView.class.getResource("DeviceView.fxml"));
+            loader.setControllerFactory(factory);
             Parent node = loader.load();
-            final DeviceView deviceView = loader.getController();
-            deviceView.set(deviceMonitor);
+            deviceViewController.set(deviceMonitor);
 
             // Use the device subscriber so that we
             // automatically maintain the same partition as the device
@@ -294,12 +331,11 @@ public abstract class DeviceAdapter {
             scrollPane.setFitToWidth(true);
             root.setTop(scrollPane);
             root.setCenter(node);
-            
-            Runnable r = new Runnable() {
-                public void run() {
-                    final Stage deviceStage = new Stage(StageStyle.DECORATED);
-        //          frame.setIconImage(ImageIO.read(DeviceAdapter.class.getResource("icon.png")));
-                    deviceStage.setOnHiding(new EventHandler<WindowEvent>() {
+
+            Callable<Stage>  uiStart = new Callable<Stage>() {
+                public Stage call() throws Exception {
+                    Stage stage = new Stage(StageStyle.DECORATED);
+                    stage.setOnHiding(new EventHandler<WindowEvent>() {
         
                         @Override
                         public void handle(WindowEvent event) {
@@ -308,29 +344,31 @@ public abstract class DeviceAdapter {
                             root.getChildren().clear();
                             root.setTop(progressBar);
                             // Required to trigger destruction of animated DevicePanels
-                            deviceView.set(null);
+                            deviceViewController.set(null);
                             Runnable r = new Runnable() {
                                 public void run() {
-                                    stop();
+                                    stopHeadlessComponents();
                                 }
                             };
                             new Thread(r, "Device shutdown thread").start();
                         }
                         
                     });
-                    deviceStage.setScene(new Scene(root));
-                    deviceStage.setWidth(640);
-                    deviceStage.setHeight(480);
-                    deviceStage.centerOnScreen();
-                  
-                    deviceStage.show();
+                    stage.setScene(new Scene(root));
+                    stage.setWidth(640);
+                    stage.setHeight(480);
+                    stage.centerOnScreen();
+
+                    stage.show();
+                    return stage;
                 }
             };
-            if(Platform.isFxApplicationThread()) {
-                r.run();
-            } else {
-                Platform.runLater(r);
-            }
+            deviceFxStage = runOnFxThread(uiStart);
+            if(deviceFxStage == null)
+                throw new IllegalStateException("Failed to create a stage");
+
+            setChanged();
+            notifyObservers(AdapterState.init);
             return device;
         }
 
@@ -349,6 +387,22 @@ public abstract class DeviceAdapter {
                 Platform.runLater(r);
             }
 
+        }
+
+        public <T> T runOnFxThread(Callable<T> callable) {
+            try {
+                if(Platform.isFxApplicationThread()) {
+                    return callable.call();
+                } else {
+                    FutureTask<T> future = new FutureTask<>(callable);
+                    Platform.runLater(future);
+                    return future.get();
+                }
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException("Can't execute callable", e);
+            }
         }
     }
 }
