@@ -26,8 +26,12 @@ public class PartitionAssignmentController {
 
     public void checkForPartitionFile() {
         File f = new File("device.partition");
+        checkForPartitionFile(f);
+    }
 
-        if(!f.exists()) {
+    void checkForPartitionFile(File f) {
+
+        if(f==null || !f.exists()) {
             // File once existed
             if(lastPartitionFileTime!=0L) {
                 setPartition(new String[0]);
@@ -42,7 +46,8 @@ public class PartitionAssignmentController {
                 BufferedReader br = new BufferedReader(fr);
                 String line = null;
                 while(null != (line = br.readLine())) {
-                    partition.add(line);
+                    if(!line.startsWith("#"))
+                        partition.add(line.trim());
                 }
                 br.close();
                 setPartition(partition.toArray(new String[0]));
