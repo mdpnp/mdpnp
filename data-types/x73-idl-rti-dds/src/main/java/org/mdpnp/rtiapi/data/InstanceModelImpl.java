@@ -362,7 +362,7 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
 
     @Override
     public void stop() {
-        if(null != eventLoop) {
+        if(null != eventLoop && condition != null) {
             eventLoop.removeHandler(condition);
             eventLoop = null;
         }
