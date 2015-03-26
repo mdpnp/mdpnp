@@ -60,7 +60,7 @@ public class SimMultiparameterTest {
 
         Thread.sleep(2000);
 
-        int nDev = capnoModel.getSize();
+        int nDev = capnoModel.size();
 
         device.disconnect();
         capnoModel.stop();

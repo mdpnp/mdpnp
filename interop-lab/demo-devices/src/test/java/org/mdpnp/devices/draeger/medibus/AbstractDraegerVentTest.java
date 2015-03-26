@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mdpnp.devices.DeviceClock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +59,7 @@ public class AbstractDraegerVentTest {
         cal.set(Calendar.MILLISECOND, 0);
 
 
-        AbstractDraegerVent.DraegerVentClock deviceClock = new AbstractDraegerVent.DraegerVentClock() {
+        AbstractDraegerVent.DraegerVentClock deviceClock = new AbstractDraegerVent.DraegerVentClock(new DeviceClock.WallClock()) {
             @Override
             long systemCurrentTimeMillis() {
                 return cal.getTimeInMillis();
