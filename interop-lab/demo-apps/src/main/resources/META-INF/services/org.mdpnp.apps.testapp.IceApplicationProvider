@@ -9,3 +9,4 @@ org.mdpnp.apps.testapp.diag.DiagnosticApplicationFactory
 org.mdpnp.apps.testapp.alarm.AlarmApplicationFactory
 org.mdpnp.apps.testapp.patient.PatientApplicationFactory
 org.mdpnp.apps.testapp.chart.ChartApplicationFactory
+org.mdpnp.apps.testapp.validate.ValidateApplicationFactory
