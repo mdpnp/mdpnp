@@ -1,4 +1,4 @@
-package org.mdpnp.apps.testapp;
+package org.mdpnp.devices;
 
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;

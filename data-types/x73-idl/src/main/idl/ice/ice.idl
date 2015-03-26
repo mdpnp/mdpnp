@@ -235,12 +235,12 @@ module ice {
    * 
    * Stability: 2 - Unstable
    */
-  struct MSDConnectivityObjective {
+  struct MDSConnectivityObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     LongString partition;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist MSDConnectivityObjective unique_device_identifier
-  const string MDSConnectivityObjectiveTopic = "MSDConnectivityObjective";
+  #pragma keylist MDSConnectivityObjective unique_device_identifier
+  const string MDSConnectivityObjectiveTopic = "MDSConnectivityObjective";
   
   /**
    * A number of speculative nomenclature codes not (yet) included in the

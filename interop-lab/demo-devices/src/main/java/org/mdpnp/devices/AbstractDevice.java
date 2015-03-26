@@ -687,7 +687,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
         timestampFactory = new DomainClock(domainParticipant);
 
-        partitionAssignmentController = new PartitionAssignmentController(publisher, subscriber);
+        partitionAssignmentController = new PartitionAssignmentController(eventLoop, publisher, subscriber);
         partitionAssignmentController.start();
 
         DeviceIdentityTypeSupport.register_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());

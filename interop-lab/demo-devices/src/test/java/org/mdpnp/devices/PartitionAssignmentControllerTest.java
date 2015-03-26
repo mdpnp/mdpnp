@@ -1,7 +1,5 @@
 package org.mdpnp.devices;
 
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.Subscriber;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -13,7 +11,7 @@ public class PartitionAssignmentControllerTest {
     @Test
     public void testCheckForNoPartitionFile() {
 
-        PartitionAssignmentController controller = new PartitionAssignmentController(null, null) {
+        PartitionAssignmentController controller = new PartitionAssignmentController() {
             public void setPartition(String[] partition) {
                 Assert.assertEquals(0, partition.length);
             }
@@ -28,7 +26,7 @@ public class PartitionAssignmentControllerTest {
         URL u = getClass().getResource("device.partition.0.txt");
         String f = u.getFile();
 
-        PartitionAssignmentController controller = new PartitionAssignmentController(null, null) {
+        PartitionAssignmentController controller = new PartitionAssignmentController() {
             public void setPartition(String[] partition) {
                 Assert.assertEquals(2, partition.length);
                 Assert.assertEquals("foo", partition[0]);

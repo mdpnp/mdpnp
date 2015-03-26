@@ -1,15 +1,8 @@
 package org.mdpnp.apps.testapp.rrr;
 
-import org.junit.Assert;
 import org.junit.Test;
-import org.mdpnp.apps.testapp.IceApplicationProvider;
-import org.mdpnp.apps.testapp.RtConfig;
-import org.mdpnp.devices.simulation.multi.SimMultiparameter;
-import org.mdpnp.rtiapi.data.InstanceModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.support.AbstractApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  *

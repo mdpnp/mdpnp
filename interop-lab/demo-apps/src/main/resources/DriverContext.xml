@@ -20,10 +20,10 @@
         <constructor-arg value="${mdpnp.domain}" />
     </bean>
 
-    <bean id="iceQoS" class="org.mdpnp.apps.testapp.RtConfig" factory-method="loadAndSetIceQos">
+    <bean id="iceQoS" class="org.mdpnp.devices.RtConfig" factory-method="loadAndSetIceQos">
     </bean>
 
-    <bean id="rtConfig" class="org.mdpnp.apps.testapp.RtConfig" factory-method="setupDDS" destroy-method="stop">
+    <bean id="rtConfig" class="org.mdpnp.devices.RtConfig" factory-method="setupDDS" destroy-method="stop">
         <constructor-arg ref="domainId" />
     </bean>
 

@@ -37,6 +37,7 @@ import javafx.stage.WindowEvent;
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.BuildInfo;
+import org.mdpnp.devices.RtConfig;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package org.mdpnp.apps.testapp.patient;
+package org.mdpnp.devices;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.*;
@@ -6,15 +6,12 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.*;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicDescription;
-import ice.MDSConnectivity;
-import org.mdpnp.apps.testapp.export.Value;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.event.EventListenerList;
-import java.util.Date;
 import java.util.EventListener;
 import java.util.EventObject;
 import java.util.concurrent.CountDownLatch;
@@ -46,13 +43,13 @@ public class MDSConnectivityAdapter {
 
         DomainParticipant participant = publisher.get_participant();
 
-        ice.MDSConnectivityTypeSupport.register_type(participant, ice.MDSConnectivityTypeSupport.get_type_name());
+        ice.MDSConnectivityObjectiveTypeSupport.register_type(participant, ice.MDSConnectivityObjectiveTypeSupport.get_type_name());
 
         Topic msdConnectivityTopic = (Topic)TopicUtil.lookupOrCreateTopic(participant,
-                                                                              ice.MDSConnectivityTopic.VALUE,
-                                                                              ice.MDSConnectivityTypeSupport.class);
+                                                                              ice.MDSConnectivityObjectiveTopic.VALUE,
+                                                                              ice.MDSConnectivityObjectiveTypeSupport.class);
         mdsWriter =
-                (ice.MDSConnectivityDataWriter) publisher.create_datawriter_with_profile(msdConnectivityTopic,
+                (ice.MDSConnectivityObjectiveDataWriter) publisher.create_datawriter_with_profile(msdConnectivityTopic,
                                                                                          QosProfiles.ice_library,
                                                                                          QosProfiles.state,
                                                                                          null,
@@ -60,7 +57,7 @@ public class MDSConnectivityAdapter {
     }
 
     ice.MDSConnectivityDataReader mdsReader;
-    ice.MDSConnectivityDataWriter mdsWriter;
+    ice.MDSConnectivityObjectiveDataWriter mdsWriter;
 
     private DataHandler worker = null;
 
@@ -76,7 +73,7 @@ public class MDSConnectivityAdapter {
         }
     }
 
-    public void publish(MDSConnectivity  val) {
+    public void publish(ice.MDSConnectivityObjective val) {
         mdsWriter.write_w_params(val, new WriteParams_t());
     }
 

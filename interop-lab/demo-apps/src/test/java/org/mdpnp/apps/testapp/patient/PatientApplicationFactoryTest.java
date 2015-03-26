@@ -3,23 +3,17 @@ package org.mdpnp.apps.testapp.patient;
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.mdpnp.apps.testapp.IceApplication;
-import org.mdpnp.apps.testapp.RtConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import javax.sql.DataSource;
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -91,9 +85,9 @@ public class PatientApplicationFactoryTest {
         // if <0, keep the ui up forever - used to debugging.
         if(UI_UP_MS>0) {
             boolean isOk = stopOk.await(2 * UI_UP_MS, TimeUnit.MILLISECONDS);
+            app.stop();
             if (!isOk)
                 Assert.fail("Failed to close the dialog");
-            app.stop();
         }
     }
 

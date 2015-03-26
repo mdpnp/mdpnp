@@ -1,4 +1,4 @@
-package org.mdpnp.apps.testapp;
+package org.mdpnp.devices;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +12,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.mdpnp.devices.EventLoopHandler;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
