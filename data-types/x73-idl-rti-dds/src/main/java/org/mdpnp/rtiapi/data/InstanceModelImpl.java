@@ -2,12 +2,8 @@ package org.mdpnp.rtiapi.data;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.swing.AbstractListModel;
 
 import org.mdpnp.rtiapi.data.ListenerList.Dispatcher;
 import org.slf4j.Logger;
@@ -23,14 +19,22 @@ import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.publication.builtin.PublicationBuiltinTopicDataTypeSupport;
+import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.DataReaderImpl;
+import com.rti.dds.subscription.DataReaderListener;
 import com.rti.dds.subscription.InstanceStateKind;
+import com.rti.dds.subscription.LivelinessChangedStatus;
 import com.rti.dds.subscription.ReadCondition;
+import com.rti.dds.subscription.RequestedDeadlineMissedStatus;
+import com.rti.dds.subscription.RequestedIncompatibleQosStatus;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleLostStatus;
+import com.rti.dds.subscription.SampleRejectedStatus;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
+import com.rti.dds.subscription.SubscriptionMatchedStatus;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.subscription.builtin.SubscriptionBuiltinTopicDataTypeSupport;
 import com.rti.dds.topic.ContentFilteredTopic;
@@ -41,7 +45,7 @@ import com.rti.dds.topic.builtin.TopicBuiltinTopicDataTypeSupport;
 import com.rti.dds.util.Sequence;
 
 @SuppressWarnings("serial")
-public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> extends AbstractListModel<D> implements InstanceModel<D,R> {
+public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> implements InstanceModel<D,R>, DataReaderListener {
     private final ListenerList<InstanceModelListener<D, R>> listeners = new ListenerList<InstanceModelListener<D,R>>(InstanceModelListener.class);
     private final List<InstanceHandle_t> instances = new java.util.concurrent.CopyOnWriteArrayList<InstanceHandle_t>();
 //            .synchronizedList(new ArrayList<InstanceHandle_t>());
@@ -229,7 +233,7 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
                         int idx = instances.indexOf(sampleInfo.instance_handle);
                         if(idx>=0) {
                             instances.remove(idx);
-                            fireIntervalRemoved(InstanceModelImpl.this, idx, idx);
+                            // TODO Fire removal of element at idx
                         } else {
                             log.warn("Unable to find instance for removal:"+sampleInfo.instance_handle);
                         }
@@ -240,10 +244,10 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
                         fireInstanceSample(d, sampleInfo);
                         int idx = instances.indexOf(sampleInfo.instance_handle);
                         if(idx>=0) {
-                            fireContentsChanged(InstanceModelImpl.this, idx, idx);
+                            // TODO fire element update of element at idx
                         } else {
                             instances.add(new InstanceHandle_t(sampleInfo.instance_handle));
-                            fireIntervalAdded(InstanceModelImpl.this, instances.size()-1, instances.size()-1);
+                            // TODO fire element inserted at instances.size()-1
                         }
                     }
                     lastHandle = sampleInfo.instance_handle;
@@ -348,6 +352,7 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
                 reader = (R) subscriber.create_datareader_with_profile(null==filteredTopic?saTopic:filteredTopic, qosLibrary,
                         qosProfile, null, StatusKind.STATUS_MASK_NONE);
             }
+            reader.set_listener(this, StatusKind.STATUS_MASK_ALL ^ StatusKind.DATA_AVAILABLE_STATUS);
             sQos.entity_factory.autoenable_created_entities = true;
             subscriber.set_qos(sQos);
     
@@ -389,42 +394,89 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         }
     }
 
-    @Override
-    public int getSize() {
+    // TODO eventually this should @Override from a collection API
+    public int size() {
         return instances.size();
     }
 
+    // TODO provide 'get' as part of a collection API
+//    public D getElementAt(int index) {
+//        InstanceHandle_t handle;
+//        // Doesn't seem likely but I've seen it happen
+//        synchronized(instances) {
+//            if(index < instances.size()) {
+//                handle = instances.get(index);
+//            } else {
+//                return null;
+//            }
+//        }
+//        
+//        Sequence sa_seq = InstanceModelImpl.this.sa_seq1.get();
+//        SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq1.get();
+//        R reader = this.reader;
+//        try {
+//            readInstance.invoke(reader, sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+//            D d = dataClass.newInstance();
+//            d.copy_from(sa_seq.get(sa_seq.size()-1));
+//            return d;
+//        } catch (Exception e) {
+//            if(!(e.getCause() instanceof RETCODE_NO_DATA)) {
+//                log.error("read_instance", e);
+//            }
+//        } finally {
+//            try {
+//                returnLoan.invoke(reader, sa_seq, info_seq);
+//            } catch (Exception e) {
+//                log.error("return_loan", e);
+//            }
+//        }
+//        return null;
+//    }
+
     @Override
-    public D getElementAt(int index) {
-        InstanceHandle_t handle;
-        // Doesn't seem likely but I've seen it happen
-        synchronized(instances) {
-            if(index < instances.size()) {
-                handle = instances.get(index);
-            } else {
-                return null;
-            }
-        }
+    public void on_data_available(DataReader arg0) {
         
-        Sequence sa_seq = InstanceModelImpl.this.sa_seq1.get();
-        SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq1.get();
-        R reader = this.reader;
-        try {
-            readInstance.invoke(reader, sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
-            D d = dataClass.newInstance();
-            d.copy_from(sa_seq.get(sa_seq.size()-1));
-            return d;
-        } catch (Exception e) {
-            if(!(e.getCause() instanceof RETCODE_NO_DATA)) {
-                log.error("read_instance", e);
-            }
-        } finally {
-            try {
-                returnLoan.invoke(reader, sa_seq, info_seq);
-            } catch (Exception e) {
-                log.error("return_loan", e);
-            }
+    }
+
+    @Override
+    public void on_liveliness_changed(DataReader arg0, LivelinessChangedStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} liveliness_changed: {}", topic, arg1);
         }
-        return null;
+    }
+
+    @Override
+    public void on_requested_deadline_missed(DataReader arg0, RequestedDeadlineMissedStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} requested_deadline_missed: {}", topic, arg1);
+        }
+    }
+
+    @Override
+    public void on_requested_incompatible_qos(DataReader arg0, RequestedIncompatibleQosStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} requested_incompatible_qos: {}", topic, arg1);
+        }
+    }
+
+    @Override
+    public void on_sample_lost(DataReader arg0, SampleLostStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} sample_lost: {}", topic, arg1);
+        }
+    }
+
+    @Override
+    public void on_sample_rejected(DataReader arg0, SampleRejectedStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} sample_rejected: {}", topic, arg1);
+        }
+    }
+
+    @Override
+    public void on_subscription_matched(DataReader arg0, SubscriptionMatchedStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} subscription_matched: {}", topic, arg1);
+        }
     }
 }
