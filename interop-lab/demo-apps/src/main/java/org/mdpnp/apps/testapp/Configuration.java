@@ -20,6 +20,7 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Properties;
 
+import javafx.stage.Stage;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -65,7 +66,7 @@ public class Configuration {
 
     enum Application {
         ICE_Supervisor(IceAppsContainer.class),
-        ICE_Device_Interface(DeviceAdapter.DeviceAdapterCommand.class),
+        ICE_Device_Interface(DeviceAdapterImpl.DeviceAdapterCommand.class),
         ICE_ParticipantOnly(ParticipantOnly.class);
 
         Application(Class<?> c) {
@@ -78,9 +79,13 @@ public class Configuration {
         }
     }
     
-    interface Command {
+    interface HeadlessCommand {
         int execute(Configuration config) throws Exception;
-    }    
+    }
+
+    interface GUICommand {
+        IceApplication create(Configuration config) throws Exception;
+    }
 
     private final boolean              headless;
     private final Application          application;
@@ -108,10 +113,10 @@ public class Configuration {
         return cmdLineEnv;
     }
 
-    public Command getCommand() {
+    public HeadlessCommand getCommand() {
 
         try {
-            Command command = (Command) application.clazz.newInstance();
+            HeadlessCommand command = (HeadlessCommand) application.clazz.newInstance();
             return command;
         }
         catch(Exception ex)

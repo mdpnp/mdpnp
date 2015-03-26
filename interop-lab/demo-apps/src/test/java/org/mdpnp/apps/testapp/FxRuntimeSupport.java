@@ -125,7 +125,6 @@ public class FxRuntimeSupport {
         lastStage = new Stage(StageStyle.DECORATED);
         lastStage.setAlwaysOnTop(false);
 
-        iceApp.init();
         iceApp.start(lastStage);
 
         lastStage.sizeToScene();

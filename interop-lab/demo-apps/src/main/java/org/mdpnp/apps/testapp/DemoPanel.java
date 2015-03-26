@@ -208,38 +208,39 @@ public class DemoPanel implements Runnable {
             final Subscriber subscriber = partitionChooserModel.getSubscriber();
             Configuration c = CreateAdapter.showDialog(subscriber.get_participant().get_domain_id());
             if (null != c) {
-                Thread t = new Thread(new Runnable() {
-                    public void run() {
-                        try {
 
-                            DomainParticipantQos pQos = new DomainParticipantQos();
-                            DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-                            pQos.discovery.initial_peers.clear();
-                            // for (int i = 0; i <
-                            // discoveryPeers.peers.getSize(); i++) {
-                            // pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
-                            // System.err.println("PEER:" +
-                            // discoveryPeers.peers.getElementAt(i));
-                            // }
-                            DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
-                            SubscriberQos qos = new SubscriberQos();
-                            subscriber.get_qos(qos);
-                            List<String> partition = new ArrayList<String>();
-                            for (int i = 0; i < qos.partition.name.size(); i++) {
-                                partition.add((String) qos.partition.name.get(i));
-                            }
-                            DeviceAdapter da = DeviceAdapter.newGUIAdapter(c.getDeviceFactory(), context);
-                            da.setInitialPartition(partition.toArray(new String[0]));
-                            da.start(c.getAddress());
+                DomainParticipantQos pQos = new DomainParticipantQos();
+                DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
+                pQos.discovery.initial_peers.clear();
+                // for (int i = 0; i <
+                // discoveryPeers.peers.getSize(); i++) {
+                // pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
+                // System.err.println("PEER:" +
+                // discoveryPeers.peers.getElementAt(i));
+                // }
+                DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
+                SubscriberQos qos = new SubscriberQos();
+                subscriber.get_qos(qos);
+                List<String> partition = new ArrayList<String>();
+                for (int i = 0; i < qos.partition.name.size(); i++) {
+                    partition.add((String) qos.partition.name.get(i));
+                }
 
+                try {
+                    DeviceAdapterImpl.GUIAdapter da = new DeviceAdapterImpl.GUIAdapter(c.getDeviceFactory(), context);
+                    da.setInitialPartition(partition.toArray(new String[0]));
+                    da.init();
+                    da.start(null); // MIKEFIX should we somehow get a reference to current stage?
+                    Thread t = da.getDevice().newThread(new Runnable() {
+                        public void run() {
+                            da.run(c.getAddress());
                             log.info("DeviceAdapter ended");
-                        } catch (Exception e) {
-                            log.error("Error in spawned DeviceAdapter", e);
                         }
-                    }
-                });
-                t.setDaemon(true);
-                t.start();
+                    });
+                    t.start();
+                } catch (Exception e) {
+                    log.error("Error in spawned DeviceAdapter", e);
+                }
             }
 
         } catch (IOException e) {

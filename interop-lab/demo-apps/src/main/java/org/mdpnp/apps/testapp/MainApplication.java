@@ -52,13 +52,19 @@ public class MainApplication extends javafx.application.Application {
         } else {
             runConf = d.getLastConfiguration();
             Object o = runConf.getApplication().getAppClass().newInstance();
+
+            if(o instanceof Configuration.GUICommand) {
+                o = ((Configuration.GUICommand)o).create(runConf);
+            }
+
             if(o instanceof IceApplication) {
                 app = (IceApplication) o;
                 app.setConfiguration(runConf);
                 app.init();
                 app.start(primaryStage);
-            } else if(o instanceof Configuration.Command) {
-                ((Configuration.Command)o).execute(runConf);
+            }
+            else {
+                throw new IllegalStateException("Invalid FX application request " + o);
             }
         }
     }

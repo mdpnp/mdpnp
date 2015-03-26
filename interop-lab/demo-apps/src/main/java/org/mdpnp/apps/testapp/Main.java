@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 
+import javafx.application.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,13 +46,16 @@ public class Main {
             } else {
                 Configuration.searchAndSaveSettings(runConf, searchPath);
             }
-            Configuration.Command cmd = runConf.getCommand();
+            Configuration.HeadlessCommand cmd = runConf.getCommand();
             int retCode = cmd.execute(runConf);
             log.info("This is the end, exit code=" + retCode);
             System.exit(retCode);
             
         } else {
             javafx.application.Application.launch(MainApplication.class, args);
+            Platform.exit();
+            log.info("This is the end, exit code=" + 0);
+            System.exit(0);
         }
     }
 
