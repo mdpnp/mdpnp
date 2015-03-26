@@ -1,15 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import java.lang.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
 <BorderPane prefHeight="259.0" prefWidth="316.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.hl7.HL7Application">
-  <!-- TODO Add Nodes -->
   <bottom>
     <HBox alignment="CENTER">
       <children>
+        <RadioButton fx:id="hl7FhirDstu2" mnemonicParsing="false" selected="true" text="FHIR DSTU2">
+          <toggleGroup>
+     <ToggleGroup fx:id="hl7version" />
+  </toggleGroup>
+               <padding>
+                  <Insets right="10.0" />
+               </padding>
+  </RadioButton>
+        <RadioButton fx:id="hl7V26" mnemonicParsing="false" text="v2.6" toggleGroup="$hl7version">
+               <padding>
+                  <Insets right="10.0" />
+               </padding></RadioButton>
         <Label alignment="CENTER" text="Host:" />
         <TextField fx:id="host" prefWidth="-1.0" />
         <Label alignment="CENTER" text="Port:" />

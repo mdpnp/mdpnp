@@ -10,6 +10,8 @@ import javafx.scene.control.TextField;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.RadioButton;
 
 public class HL7Application implements LineEmitterListener, StartStopListener {
     @FXML protected TextArea text;
@@ -53,9 +55,20 @@ public class HL7Application implements LineEmitterListener, StartStopListener {
             @Override
             public void handle(ActionEvent event) {
                 if("Start".equals(startStop.getText())) {
+                    HL7Emitter.Type type;
+                    if(hl7version.getSelectedToggle().equals(hl7FhirDstu2)) {
+                        type = HL7Emitter.Type.FHIR_DSTU2;
+                    } else if(hl7version.getSelectedToggle().equals(hl7V26)) {
+                        type = HL7Emitter.Type.V26;
+                    } else {
+                        return;
+                    }
+                    
                     startStop.setDisable(true);
-                    int portNumber = port.getText().isEmpty() ? 0 : Integer.parseInt(port.getText()); 
-                    model.start(host.getText(), portNumber);
+                    int portNumber = port.getText().isEmpty() ? 0 : Integer.parseInt(port.getText());
+
+                    
+                    model.start(host.getText(), portNumber, type);
                     
                 } else {
                     startStop.setDisable(true);
@@ -88,6 +101,9 @@ public class HL7Application implements LineEmitterListener, StartStopListener {
         });
     }
     private static final int MAX_CHARS = 8000;
+    @FXML ToggleGroup hl7version;
+    @FXML RadioButton hl7FhirDstu2;
+    @FXML RadioButton hl7V26;
 
     @Override
     public void started() {

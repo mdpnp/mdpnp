@@ -238,6 +238,9 @@ dependencies {
     compile group: 'ca.uhn.hapi', name: 'hapi-base', version: '2.2'
     compile group: 'ca.uhn.hapi', name: 'hapi-structures-v26', version: '2.2'
     
+    compile group: 'ca.uhn.hapi.fhir', name: 'hapi-fhir-base', version: '0.9'
+    compile group: 'ca.uhn.hapi.fhir', name: 'hapi-fhir-structures-dstu2', version: '0.9'
+    
     compile group: 'com.jeffplourde', name: 'Utility', version: '0.0.1'
     
     compile group: 'org.controlsfx', name: 'controlsfx', version: '8.20.9' , classifier: 'MDPNP0001'

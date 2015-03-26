@@ -25,6 +25,8 @@ import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.hl7v2.DefaultHapiContext;
 import ca.uhn.hl7v2.HL7Exception;
 import ca.uhn.hl7v2.HapiContext;
@@ -47,7 +49,16 @@ import ca.uhn.hl7v2.parser.Parser;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 
+import static ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL;
+import static ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum.MALE;
+import static ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum.FEMALE;
+
 public class HL7Emitter {
+    public enum Type {
+        FHIR_DSTU2,
+        V26,
+    }
+    
     
     protected static final Logger log = LoggerFactory.getLogger(HL7Emitter.class);
     
@@ -77,8 +88,10 @@ public class HL7Emitter {
     private final NumericInstanceModel numericInstanceModel;
     private final AlertInstanceModel patientAlertInstanceModel, technicalAlertInstanceModel;
     private final AlarmSettingsInstanceModel alarmSettingsInstanceModel;
+    private Type type;
     
-    public void start(String host, int port) {
+    public void start(String host, int port, Type type) {
+        this.type = type;
         numericInstanceModel.iterateAndAddListener(numericListener);
         patientAlertInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
         technicalAlertInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
@@ -180,186 +193,7 @@ public class HL7Emitter {
 
         @Override
         public void instanceSample(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
-            try {
-                
-                
-                ORU_R01 r01 = new ORU_R01();
-                // ORU is an observation
-                // Event R01 is an unsolicited observation message
-                // "T" for Test, "P" for Production, etc.
-                r01.initQuickstart("ORU", "R01", "T");
-        
-                // Populate the MSH Segment
-                MSH mshSegment = r01.getMSH();
-                mshSegment.getSendingApplication().getNamespaceID().setValue("ICE");
-                mshSegment.getSequenceNumber().setValue("123");
-        
-                // Populate the PID Segment
-                ORU_R01_PATIENT patient = r01.getPATIENT_RESULT().getPATIENT();
-                PID pid = patient.getPID();
-                pid.getPatientName(0).getFamilyName().getSurname().setValue("Doe");
-                pid.getPatientName(0).getGivenName().setValue("John");
-                pid.getPatientIdentifierList(0).getIDNumber().setValue("123456");
-        
-                ORU_R01_ORDER_OBSERVATION orderObservation = r01.getPATIENT_RESULT().getORDER_OBSERVATION();
-        
-                orderObservation.getOBR().getObr7_ObservationDateTime().setValueToSecond(new Date());
-                
-                ORU_R01_OBSERVATION observation = orderObservation.getOBSERVATION(0);
-                
-                
-                // Populate the first OBX
-                OBX obx = observation.getOBX();
-                //obx.getSetIDOBX().setValue("1");
-                obx.getObservationIdentifier().getIdentifier().setValue(data.identifier);
-                obx.getObservationIdentifier().getText().setValue("");
-                obx.getObservationIdentifier().getCwe3_NameOfCodingSystem().setValue("Unknown");
-                obx.getObservationSubID().setValue("0");
-//                obx.getUnits().getIdentifier().setValue("0004-0aa0");
-//                obx.getUnits().getText().setValue("bpm");
-//                obx.getUnits().getCwe3_NameOfCodingSystem().setValue("MDIL");
-                obx.getObservationResultStatus().setValue("F");
-        
-                // The first OBX has a value type of CE. So first, we populate OBX-2 with "CE"...
-                obx.getValueType().setValue("TX");
-        
-                // "TX" is ?
-                TX tx = new TX(r01);
-                tx.setValue(data.text);
-        
-                obx.getObservationValue(0).setData(tx);
-        
-                Parser parser = context.getPipeParser();
-
-                String encodedMessage = parser.encode(r01);
-                listeners.fire(new DispatchLine(encodedMessage));
-                
-                
-                // Now, let's encode the message and look at the output
-                Connection hapiConnection = HL7Emitter.this.hapiConnection;
-                if(null != hapiConnection) {
-
-        
-                    Initiator initiator = hapiConnection.getInitiator();
-                    Message response = initiator.sendAndReceive(r01);
-                    String responseString = parser.encode(response);
-                    log.debug("Received Response:"+responseString);
-                    
-                }
-            } catch (DataTypeException e) {
-                log.error("", e);
-            } catch (HL7Exception e) {
-                log.error("", e);
-            } catch (IOException e) {
-                log.error("", e);
-            } catch (LLPException e) {
-                log.error("", e);
-            } finally {
-                
-            }
-
-        }
-        
-    };
-    
-    final AlertInstanceModelListener technicalAlertListener = new AlertInstanceModelListener() {
-
-        @Override
-        public void instanceAlive(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
-        }
-
-        @Override
-        public void instanceNotAlive(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert keyHolder, SampleInfo sampleInfo) {
-        }
-
-        @Override
-        public void instanceSample(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
-            try {
-                
-                
-                ORU_R01 r01 = new ORU_R01();
-                // ORU is an observation
-                // Event R01 is an unsolicited observation message
-                // "T" for Test, "P" for Production, etc.
-                r01.initQuickstart("ORU", "R01", "T");
-        
-                // Populate the MSH Segment
-                MSH mshSegment = r01.getMSH();
-                mshSegment.getSendingApplication().getNamespaceID().setValue("ICE");
-                mshSegment.getSequenceNumber().setValue("123");
-        
-                // Populate the PID Segment
-                ORU_R01_PATIENT patient = r01.getPATIENT_RESULT().getPATIENT();
-                PID pid = patient.getPID();
-                pid.getPatientName(0).getFamilyName().getSurname().setValue("Doe");
-                pid.getPatientName(0).getGivenName().setValue("John");
-                pid.getPatientIdentifierList(0).getIDNumber().setValue("123456");
-        
-                ORU_R01_ORDER_OBSERVATION orderObservation = r01.getPATIENT_RESULT().getORDER_OBSERVATION();
-        
-                orderObservation.getOBR().getObr7_ObservationDateTime().setValueToSecond(new Date());
-                
-                ORU_R01_OBSERVATION observation = orderObservation.getOBSERVATION(0);
-                
-                
-                // Populate the first OBX
-                OBX obx = observation.getOBX();
-                //obx.getSetIDOBX().setValue("1");
-                obx.getObservationIdentifier().getIdentifier().setValue(data.identifier);
-                obx.getObservationIdentifier().getText().setValue("");
-                obx.getObservationIdentifier().getCwe3_NameOfCodingSystem().setValue("Unknown");
-                obx.getObservationSubID().setValue("0");
-//                obx.getUnits().getIdentifier().setValue("0004-0aa0");
-//                obx.getUnits().getText().setValue("bpm");
-//                obx.getUnits().getCwe3_NameOfCodingSystem().setValue("MDIL");
-                obx.getObservationResultStatus().setValue("F");
-        
-                // The first OBX has a value type of CE. So first, we populate OBX-2 with "CE"...
-                obx.getValueType().setValue("TX");
-        
-                // "TX" is ?
-                TX tx = new TX(r01);
-                tx.setValue(data.text);
-        
-                obx.getObservationValue(0).setData(tx);
-        
-                Parser parser = context.getPipeParser();
-
-                String encodedMessage = parser.encode(r01);
-                listeners.fire(new DispatchLine(encodedMessage));
-                
-                
-                // Now, let's encode the message and look at the output
-                Connection hapiConnection = HL7Emitter.this.hapiConnection;
-                if(null != hapiConnection) {
-
-        
-                    Initiator initiator = hapiConnection.getInitiator();
-                    Message response = initiator.sendAndReceive(r01);
-                    String responseString = parser.encode(response);
-                    log.debug("Received Response:"+responseString);
-                    
-                }
-            } catch (DataTypeException e) {
-                log.error("", e);
-            } catch (HL7Exception e) {
-                log.error("", e);
-            } catch (IOException e) {
-                log.error("", e);
-            } catch (LLPException e) {
-                log.error("", e);
-            } finally {
-                
-            }
-        }
-        
-    };
-    
-    final NumericInstanceModelListener numericListener = new NumericInstanceModelListener() {
-        
-        @Override
-        public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
-            if(rosetta.MDC_ECG_HEART_RATE.VALUE.equals(data.metric_id)) {
+            if(Type.V26.equals(type)) {
                 try {
                     
                     
@@ -391,26 +225,26 @@ public class HL7Emitter {
                     // Populate the first OBX
                     OBX obx = observation.getOBX();
                     //obx.getSetIDOBX().setValue("1");
-                    obx.getObservationIdentifier().getIdentifier().setValue("0002-4182");
-                    obx.getObservationIdentifier().getText().setValue("HR");
-                    obx.getObservationIdentifier().getCwe3_NameOfCodingSystem().setValue("MDIL");
+                    obx.getObservationIdentifier().getIdentifier().setValue(data.identifier);
+                    obx.getObservationIdentifier().getText().setValue("");
+                    obx.getObservationIdentifier().getCwe3_NameOfCodingSystem().setValue("Unknown");
                     obx.getObservationSubID().setValue("0");
-                    obx.getUnits().getIdentifier().setValue("0004-0aa0");
-                    obx.getUnits().getText().setValue("bpm");
-                    obx.getUnits().getCwe3_NameOfCodingSystem().setValue("MDIL");
+    //                obx.getUnits().getIdentifier().setValue("0004-0aa0");
+    //                obx.getUnits().getText().setValue("bpm");
+    //                obx.getUnits().getCwe3_NameOfCodingSystem().setValue("MDIL");
                     obx.getObservationResultStatus().setValue("F");
             
                     // The first OBX has a value type of CE. So first, we populate OBX-2 with "CE"...
-                    obx.getValueType().setValue("NM");
+                    obx.getValueType().setValue("TX");
             
-                    // "NM" is Numeric
-                    NM nm = new NM(r01);
-                    nm.setValue(Float.toString(data.value));
+                    // "TX" is ?
+                    TX tx = new TX(r01);
+                    tx.setValue(data.text);
             
-                    obx.getObservationValue(0).setData(nm);
+                    obx.getObservationValue(0).setData(tx);
             
                     Parser parser = context.getPipeParser();
-
+    
                     String encodedMessage = parser.encode(r01);
                     listeners.fire(new DispatchLine(encodedMessage));
                     
@@ -418,7 +252,7 @@ public class HL7Emitter {
                     // Now, let's encode the message and look at the output
                     Connection hapiConnection = HL7Emitter.this.hapiConnection;
                     if(null != hapiConnection) {
-
+    
             
                         Initiator initiator = hapiConnection.getInitiator();
                         Message response = initiator.sendAndReceive(r01);
@@ -438,8 +272,199 @@ public class HL7Emitter {
                     
                 }
             }
-
         }
+        
+    };
+    
+    final AlertInstanceModelListener technicalAlertListener = new AlertInstanceModelListener() {
+
+        @Override
+        public void instanceAlive(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
+        }
+
+        @Override
+        public void instanceNotAlive(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert keyHolder, SampleInfo sampleInfo) {
+        }
+
+        @Override
+        public void instanceSample(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
+            if(Type.V26.equals(type)) {
+                try {
+                    
+                    
+                    ORU_R01 r01 = new ORU_R01();
+                    // ORU is an observation
+                    // Event R01 is an unsolicited observation message
+                    // "T" for Test, "P" for Production, etc.
+                    r01.initQuickstart("ORU", "R01", "T");
+            
+                    // Populate the MSH Segment
+                    MSH mshSegment = r01.getMSH();
+                    mshSegment.getSendingApplication().getNamespaceID().setValue("ICE");
+                    mshSegment.getSequenceNumber().setValue("123");
+            
+                    // Populate the PID Segment
+                    ORU_R01_PATIENT patient = r01.getPATIENT_RESULT().getPATIENT();
+                    PID pid = patient.getPID();
+                    pid.getPatientName(0).getFamilyName().getSurname().setValue("Doe");
+                    pid.getPatientName(0).getGivenName().setValue("John");
+                    pid.getPatientIdentifierList(0).getIDNumber().setValue("123456");
+            
+                    ORU_R01_ORDER_OBSERVATION orderObservation = r01.getPATIENT_RESULT().getORDER_OBSERVATION();
+            
+                    orderObservation.getOBR().getObr7_ObservationDateTime().setValueToSecond(new Date());
+                    
+                    ORU_R01_OBSERVATION observation = orderObservation.getOBSERVATION(0);
+                    
+                    
+                    // Populate the first OBX
+                    OBX obx = observation.getOBX();
+                    //obx.getSetIDOBX().setValue("1");
+                    obx.getObservationIdentifier().getIdentifier().setValue(data.identifier);
+                    obx.getObservationIdentifier().getText().setValue("");
+                    obx.getObservationIdentifier().getCwe3_NameOfCodingSystem().setValue("Unknown");
+                    obx.getObservationSubID().setValue("0");
+    //                obx.getUnits().getIdentifier().setValue("0004-0aa0");
+    //                obx.getUnits().getText().setValue("bpm");
+    //                obx.getUnits().getCwe3_NameOfCodingSystem().setValue("MDIL");
+                    obx.getObservationResultStatus().setValue("F");
+            
+                    // The first OBX has a value type of CE. So first, we populate OBX-2 with "CE"...
+                    obx.getValueType().setValue("TX");
+            
+                    // "TX" is ?
+                    TX tx = new TX(r01);
+                    tx.setValue(data.text);
+            
+                    obx.getObservationValue(0).setData(tx);
+            
+                    Parser parser = context.getPipeParser();
+    
+                    String encodedMessage = parser.encode(r01);
+                    listeners.fire(new DispatchLine(encodedMessage));
+                    
+                    
+                    // Now, let's encode the message and look at the output
+                    Connection hapiConnection = HL7Emitter.this.hapiConnection;
+                    if(null != hapiConnection) {
+    
+            
+                        Initiator initiator = hapiConnection.getInitiator();
+                        Message response = initiator.sendAndReceive(r01);
+                        String responseString = parser.encode(response);
+                        log.debug("Received Response:"+responseString);
+                        
+                    }
+                } catch (DataTypeException e) {
+                    log.error("", e);
+                } catch (HL7Exception e) {
+                    log.error("", e);
+                } catch (IOException e) {
+                    log.error("", e);
+                } catch (LLPException e) {
+                    log.error("", e);
+                } finally {
+                    
+                }
+            }
+        }        
+    };
+    
+    final NumericInstanceModelListener numericListener = new NumericInstanceModelListener() {
+        
+        @Override
+        public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+            if(rosetta.MDC_ECG_HEART_RATE.VALUE.equals(data.metric_id)) {
+                if(Type.V26.equals(type)) {
+                    try {
+                        
+                        
+                        ORU_R01 r01 = new ORU_R01();
+                        // ORU is an observation
+                        // Event R01 is an unsolicited observation message
+                        // "T" for Test, "P" for Production, etc.
+                        r01.initQuickstart("ORU", "R01", "T");
+                
+                        // Populate the MSH Segment
+                        MSH mshSegment = r01.getMSH();
+                        mshSegment.getSendingApplication().getNamespaceID().setValue("ICE");
+                        mshSegment.getSequenceNumber().setValue("123");
+                
+                        // Populate the PID Segment
+                        ORU_R01_PATIENT patient = r01.getPATIENT_RESULT().getPATIENT();
+                        PID pid = patient.getPID();
+                        pid.getPatientName(0).getFamilyName().getSurname().setValue("Doe");
+                        pid.getPatientName(0).getGivenName().setValue("John");
+                        pid.getPatientIdentifierList(0).getIDNumber().setValue("123456");
+                
+                        ORU_R01_ORDER_OBSERVATION orderObservation = r01.getPATIENT_RESULT().getORDER_OBSERVATION();
+                
+                        orderObservation.getOBR().getObr7_ObservationDateTime().setValueToSecond(new Date());
+                        
+                        ORU_R01_OBSERVATION observation = orderObservation.getOBSERVATION(0);
+                        
+                        
+                        // Populate the first OBX
+                        OBX obx = observation.getOBX();
+                        //obx.getSetIDOBX().setValue("1");
+                        obx.getObservationIdentifier().getIdentifier().setValue("0002-4182");
+                        obx.getObservationIdentifier().getText().setValue("HR");
+                        obx.getObservationIdentifier().getCwe3_NameOfCodingSystem().setValue("MDIL");
+                        obx.getObservationSubID().setValue("0");
+                        obx.getUnits().getIdentifier().setValue("0004-0aa0");
+                        obx.getUnits().getText().setValue("bpm");
+                        obx.getUnits().getCwe3_NameOfCodingSystem().setValue("MDIL");
+                        obx.getObservationResultStatus().setValue("F");
+                
+                        // The first OBX has a value type of CE. So first, we populate OBX-2 with "CE"...
+                        obx.getValueType().setValue("NM");
+                
+                        // "NM" is Numeric
+                        NM nm = new NM(r01);
+                        nm.setValue(Float.toString(data.value));
+                
+                        obx.getObservationValue(0).setData(nm);
+                
+                        Parser parser = context.getPipeParser();
+    
+                        String encodedMessage = parser.encode(r01);
+                        listeners.fire(new DispatchLine(encodedMessage));
+                        
+                        
+                        // Now, let's encode the message and look at the output
+                        Connection hapiConnection = HL7Emitter.this.hapiConnection;
+                        if(null != hapiConnection) {
+    
+                
+                            Initiator initiator = hapiConnection.getInitiator();
+                            Message response = initiator.sendAndReceive(r01);
+                            String responseString = parser.encode(response);
+                            log.debug("Received Response:"+responseString);
+                            
+                        }
+                    } catch (DataTypeException e) {
+                        log.error("", e);
+                    } catch (HL7Exception e) {
+                        log.error("", e);
+                    } catch (IOException e) {
+                        log.error("", e);
+                    } catch (LLPException e) {
+                        log.error("", e);
+                    } finally {
+                        
+                    }
+                } else if(Type.FHIR_DSTU2.equals(type)) {
+                    Patient patient = new Patient();
+                    patient.addIdentifier().setUse(OFFICIAL).setSystem("urn:fake:mrns").setValue("12345");
+                    patient.addName().addFamily("Smith").addGiven("John").addGiven("Q");
+                    patient.setGender(MALE);
+                    FhirContext ctx = new FhirContext();
+//                    String xmlEncoded = ctx.newXmlParser().encodeResourceToString(patient);
+                    String jsonEncoded = ctx.newJsonParser().encodeResourceToString(patient);
+                    listeners.fire(new DispatchLine(jsonEncoded+"\n"));
+                }
+            } 
+        } 
         
         @Override
         public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder, SampleInfo sampleInfo) {
