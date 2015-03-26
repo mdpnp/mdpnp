@@ -228,14 +228,14 @@ public class DataCollector {
                                             if (log.isDebugEnabled())
                                                 log.debug(dateFormats.get().format(new Date(tm)) + " " + data.metric_id + "=" + value);
 
-                                            Value v = toValue(si, data.unique_device_identifier, data.metric_id, data.instance_id, tm, value);
+                                            Value v = toValue(si, data.ice_id, data.metric_id, data.instance_id, tm, value);
                                             DataSampleEvent ev = new DataSampleEvent(v);
                                             fireDataSampleEvent(ev);
 
                                         }
                                     } else {
                                         log.warn("Invalid frequency " + data.frequency +
-                                                " for " + data.unique_device_identifier + " " +
+                                                " for " + data.ice_id + " " +
                                                 data.metric_id + " " + data.instance_id);
                                     }
                                 }
@@ -278,7 +278,7 @@ public class DataCollector {
                                     if (log.isDebugEnabled())
                                         log.debug(dateFormats.get().format(new Date(baseTime)) + " " + data.metric_id + "=" + data.value);
 
-                                    Value v = toValue(si, data.unique_device_identifier, data.metric_id, data.instance_id, baseTime, data.value);
+                                    Value v = toValue(si, data.ice_id, data.metric_id, data.instance_id, baseTime, data.value);
                                     DataSampleEvent ev = new DataSampleEvent(v);
                                     fireDataSampleEvent(ev);
                                 }

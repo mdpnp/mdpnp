@@ -79,7 +79,7 @@ public class RapidRespiratoryRate implements Runnable {
             deviceIdentity.manufacturer = "";
             deviceIdentity.model = "Respiratory Rate Calc";
             deviceIdentity.serial_number = "1234";
-            AbstractSimulatedDevice.randomUDI(deviceIdentity);
+            AbstractSimulatedDevice.randomIceId(deviceIdentity);
             writeDeviceIdentity();
         }
 
@@ -203,7 +203,7 @@ public class RapidRespiratoryRate implements Runnable {
         String selectedUdi = null;
         MySampleArray selected = capnoSources.getSelectionModel().getSelectedItem();
         if (null != selected) {
-            selectedUdi = selected.getUnique_device_identifier();
+            selectedUdi = selected.getIce_id();
         }
 
         MySampleArrayItems items = new MySampleArrayItems();
@@ -213,7 +213,7 @@ public class RapidRespiratoryRate implements Runnable {
         
         if (null != selectedUdi && model != null) {
             for(MySampleArray sa : items.getItems()) {
-                if(selectedUdi.equals(sa.getUnique_device_identifier())) {
+                if(selectedUdi.equals(sa.getIce_id())) {
                     capnoSources.getSelectionModel().select(sa);
                 }
             }

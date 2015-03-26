@@ -152,7 +152,7 @@ public class PatientInfoController implements ListChangeListener<Device> {
         FilteredList<DevicePatientAssociation> l = tblModel.filtered(new Predicate<DevicePatientAssociation>() {
             @Override
             public boolean test(DevicePatientAssociation devicePatientAssociation) {
-                return devicePatientAssociation.device.getUDI().equals(d.getUDI());
+                return devicePatientAssociation.device.getIceIdentifier().equals(d.getIceIdentifier());
             }
         });
         return l.size()!=0;

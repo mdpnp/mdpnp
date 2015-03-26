@@ -951,7 +951,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
         deviceIdentity.manufacturer = "Philips";
         deviceIdentity.model = "Intellivue Device";
-        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        AbstractSimulatedDevice.randomIceId(deviceIdentity);
         writeDeviceIdentity();
 
         if (null == loop) {

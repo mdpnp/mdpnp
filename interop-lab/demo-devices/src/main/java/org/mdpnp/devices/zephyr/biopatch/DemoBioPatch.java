@@ -46,7 +46,7 @@ public class DemoBioPatch extends AbstractDelegatingSerialDevice<BioPatch> {
 
     public DemoBioPatch(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop, BioPatch.class);
-        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        AbstractSimulatedDevice.randomIceId(deviceIdentity);
         deviceIdentity.manufacturer = "Zephyr";
         deviceIdentity.model = "BioPatch";
         writeDeviceIdentity();

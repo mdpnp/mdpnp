@@ -153,13 +153,13 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     protected InstanceHolder<Numeric> createNumericInstance(String metric_id, String vendor_metric_id, int instance_id, String unit_id) {
-        if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
-            throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createNumericInstance");
+        if (deviceIdentity == null || deviceIdentity.ice_id == null || "".equals(deviceIdentity.ice_id)) {
+            throw new IllegalStateException("Please populate deviceIdentity.ice_id before calling createNumericInstance");
         }
 
         InstanceHolder<Numeric> holder = new InstanceHolder<Numeric>();
         holder.data = new Numeric();
-        holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
+        holder.data.ice_id = deviceIdentity.ice_id;
         holder.data.metric_id = metric_id;
         holder.data.vendor_metric_id = vendor_metric_id;
         holder.data.instance_id = instance_id;
@@ -171,13 +171,13 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     protected InstanceHolder<ice.AlarmSettings> createAlarmSettingsInstance(String metric_id) {
-        if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
-            throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createAlarmInstance");
+        if (deviceIdentity == null || deviceIdentity.ice_id == null || "".equals(deviceIdentity.ice_id)) {
+            throw new IllegalStateException("Please populate deviceIdentity.ice_id before calling createAlarmInstance");
         }
 
         InstanceHolder<ice.AlarmSettings> holder = new InstanceHolder<ice.AlarmSettings>();
         holder.data = new ice.AlarmSettings();
-        holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
+        holder.data.ice_id = deviceIdentity.ice_id;
         holder.data.metric_id = metric_id;
         holder.handle = alarmSettingsDataWriter.register_instance(holder.data);
         registeredAlarmSettingsInstances.add(holder);
@@ -185,13 +185,13 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     protected InstanceHolder<ice.LocalAlarmSettingsObjective> createAlarmSettingsObjectiveInstance(String metric_id) {
-        if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
-            throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createAlarmInstance");
+        if (deviceIdentity == null || deviceIdentity.ice_id == null || "".equals(deviceIdentity.ice_id)) {
+            throw new IllegalStateException("Please populate deviceIdentity.ice_id before calling createAlarmInstance");
         }
 
         InstanceHolder<ice.LocalAlarmSettingsObjective> holder = new InstanceHolder<ice.LocalAlarmSettingsObjective>();
         holder.data = new ice.LocalAlarmSettingsObjective();
-        holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
+        holder.data.ice_id = deviceIdentity.ice_id;
         holder.data.metric_id = metric_id;
         holder.handle = alarmSettingsObjectiveWriter.register_instance(holder.data);
         registeredAlarmSettingsObjectiveInstances.add(holder);
@@ -279,13 +279,13 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
 
     protected InstanceHolder<SampleArray> createSampleArrayInstance(String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency) {
-        if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
-            throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createSampleArrayInstance");
+        if (deviceIdentity == null || deviceIdentity.ice_id == null || "".equals(deviceIdentity.ice_id)) {
+            throw new IllegalStateException("Please populate deviceIdentity.ice_id before calling createSampleArrayInstance");
         }
 
         InstanceHolder<SampleArray> holder = new InstanceHolder<SampleArray>();
         holder.data = new SampleArray();
-        holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
+        holder.data.ice_id = deviceIdentity.ice_id;
         holder.data.metric_id = metric_id;
         holder.data.vendor_metric_id = vendor_metric_id;
         holder.data.instance_id = instance_id;
@@ -442,7 +442,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             if (null == alert) {
                 alert = new InstanceHolder<ice.Alert>();
                 alert.data = (Alert) ice.Alert.create();
-                alert.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
+                alert.data.ice_id = deviceIdentity.ice_id;
                 alert.data.identifier = key;
                 alert.handle = writer.register_instance(alert.data);
                 map.put(key, alert);
@@ -823,13 +823,13 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     private Map<InstanceHandle_t, String> instanceMetrics = new HashMap<InstanceHandle_t, String>();
 
     protected void writeDeviceIdentity() {
-        if (null == deviceIdentity.unique_device_identifier || "".equals(deviceIdentity.unique_device_identifier)) {
-            throw new IllegalStateException("cannot write deviceIdentity without a UDI");
+        if (null == deviceIdentity.ice_id || "".equals(deviceIdentity.ice_id)) {
+            throw new IllegalStateException("cannot write deviceIdentity without an ice_id");
         }
         registerForManagement();
         
         if(null == timeManager) {
-            timeManager = new TimeManager(publisher, subscriber, deviceIdentity.unique_device_identifier, "Device");
+            timeManager = new TimeManager(publisher, subscriber, deviceIdentity.ice_id, "Device");
             timeManager.start();
         }
 
@@ -839,7 +839,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         deviceIdentityWriter.write(deviceIdentity, deviceIdentityHandle);
         
         ice.DeviceAlertCondition alertCondition = (ice.DeviceAlertCondition) ice.DeviceAlertCondition.create();
-        alertCondition.unique_device_identifier = deviceIdentity.unique_device_identifier;
+        alertCondition.ice_id = deviceIdentity.ice_id;
         alertCondition.alert_state = "";
         InstanceHandle_t deviceAlertHandle = deviceAlertConditionWriter.register_instance(alertCondition);
         deviceAlertConditionInstance = new InstanceHolder<ice.DeviceAlertCondition>(alertCondition, deviceAlertHandle);
@@ -909,7 +909,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     @Override
     public String getUniqueDeviceIdentifier() {
-        return null == deviceIdentity ? null : deviceIdentity.unique_device_identifier;
+        return null == deviceIdentity ? null : deviceIdentity.ice_id;
     }
 
     private ObjectInstance objInstance;

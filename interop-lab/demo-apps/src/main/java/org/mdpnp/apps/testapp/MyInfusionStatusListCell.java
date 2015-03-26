@@ -33,12 +33,12 @@ public class MyInfusionStatusListCell extends ListCell<MyInfusionStatus> {
             setText("");
             
         } else {
-            getTooltip().textProperty().bind(item.unique_device_identifierProperty());
-            Device device = deviceListModel.getByUniqueDeviceIdentifier(item.getUnique_device_identifier());
+            getTooltip().textProperty().bind(item.ice_idProperty());
+            Device device = deviceListModel.getByIceIdentifier(item.getIce_id());
             if(null == device) {
                 root.imageProperty().unbind();
                 root.setImage(null);
-                textProperty().bind(item.unique_device_identifierProperty());
+                textProperty().bind(item.ice_idProperty());
             } else {
                 root.imageProperty().bind(device.imageProperty());
                 textProperty().bind(

@@ -65,7 +65,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
         failAll();
 
-        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        AbstractSimulatedDevice.randomIceId(deviceIdentity);
         deviceIdentity.manufacturer = "Nonin";
         writeDeviceIdentity();
 

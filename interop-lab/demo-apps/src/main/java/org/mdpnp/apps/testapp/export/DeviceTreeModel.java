@@ -69,7 +69,7 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
             while (iter.hasNext()) {
                 TreeItem<Object> dn = (TreeItem<Object>) iter.next();
                 Device d = (Device) dn.getValue();
-                if (d.getUDI().equals(value.getUniqueDeviceIdentifier())) {
+                if (d.getIceIdentifier().equals(value.getUniqueDeviceIdentifier())) {
                     final TreeItem<Object> mn = ensureMetricNode(dn, value);
                     final TreeItem<Object> in = ensureInstanceNode(mn, value);
 

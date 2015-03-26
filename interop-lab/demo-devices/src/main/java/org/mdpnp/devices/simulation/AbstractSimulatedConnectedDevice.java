@@ -38,7 +38,7 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
 
     public AbstractSimulatedConnectedDevice(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
-        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        AbstractSimulatedDevice.randomIceId(deviceIdentity);
         writeDeviceIdentity();
 
         monitor = new GlobalSimulationObjectiveMonitor(this);

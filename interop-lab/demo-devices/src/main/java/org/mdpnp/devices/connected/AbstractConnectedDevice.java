@@ -238,9 +238,9 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
     }
 
     protected void writeDeviceConnectivity() {
-        deviceConnectivity.unique_device_identifier = deviceIdentity.unique_device_identifier;
-        if (null == deviceConnectivity.unique_device_identifier || "".equals(deviceConnectivity.unique_device_identifier)) {
-            throw new IllegalStateException("No UDI");
+        deviceConnectivity.ice_id = deviceIdentity.ice_id;
+        if (null == deviceConnectivity.ice_id || "".equals(deviceConnectivity.ice_id)) {
+            throw new IllegalStateException("No ice_id");
         }
         if (null == deviceConnectivityHandle) {
             deviceConnectivityHandle = deviceConnectivityWriter.register_instance(deviceConnectivity);

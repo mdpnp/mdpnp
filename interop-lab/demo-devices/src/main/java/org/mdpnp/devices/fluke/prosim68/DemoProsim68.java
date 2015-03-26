@@ -61,7 +61,7 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
 
     public DemoProsim68(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop, FlukeProSim8.class);
-        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        AbstractSimulatedDevice.randomIceId(deviceIdentity);
         deviceIdentity.manufacturer = "Fluke";
         deviceIdentity.model = "Prosim 6 / 8";
         writeDeviceIdentity();

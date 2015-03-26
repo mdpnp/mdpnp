@@ -61,7 +61,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         super(domainId, eventLoop, 2, PB840.class);
         loadUnits(unitsMap);
         loadTerms(terms);
-        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        AbstractSimulatedDevice.randomIceId(deviceIdentity);
         deviceIdentity.manufacturer = "Puritan Bennett";
         deviceIdentity.model = "";
         writeDeviceIdentity();

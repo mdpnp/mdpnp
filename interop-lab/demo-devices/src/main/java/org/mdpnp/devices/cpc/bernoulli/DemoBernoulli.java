@@ -212,12 +212,12 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
     public DemoBernoulli(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
 
-        // Random UDI is for the device module
+        // Random ICE ID is for the device module
         // this allows the module to exist within the ICE in a disconnected
         // state
         // and allows other components to request a connection to the attached
         // device
-        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        AbstractSimulatedDevice.randomIceId(deviceIdentity);
         writeDeviceIdentity();
 
         try {

@@ -111,8 +111,6 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
             // Hard to imagine this varying by provider but just in case...
             serialPorts.addAll(getSerialProvider(idx).getPortNames());
         }
-        
-        deviceConnectivity.valid_targets.userData.addAll(serialPorts);
 
         executor.scheduleAtFixedRate(new Watchdog(), 0L, 100L, TimeUnit.MILLISECONDS);
 

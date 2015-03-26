@@ -102,15 +102,15 @@ public class DemoPanel implements Runnable {
         return this;
     }
 
-    private String udiText = "";
+    private String iceIdText = "";
     private String versionText = "";
 
     private void setTooltip() {
-        clock.setTooltip(new Tooltip(udiText + "\n" + versionText));
+        clock.setTooltip(new Tooltip(iceIdText + "\n" + versionText));
     }
 
-    public DemoPanel setUdi(String udi) {
-        udiText = udi;
+    public DemoPanel setIceId(String ice_id) {
+        iceIdText = ice_id;
         setTooltip();
         return this;
     }

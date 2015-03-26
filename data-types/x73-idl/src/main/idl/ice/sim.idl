@@ -9,10 +9,10 @@ module ice {
   const string GlobalSimulationObjectiveTopic = "GlobalSimulationObjective";
 
   struct LocalSimulationObjective {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_identifier; //@key
     MetricIdentifier metric_id; //@key
     float value;
   };
-  #pragma keylist LocalSimulationObjective unique_device_identifier metric_id
+  #pragma keylist LocalSimulationObjective ice_identifier metric_id
   const string LocalSimulationObjectiveTopic = "LocalSimulationObjective";
 };

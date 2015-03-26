@@ -279,7 +279,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     private void init() {
         deviceIdentity.manufacturer = "Oridion";
         deviceIdentity.model = "Capnostream20";
-        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        AbstractSimulatedDevice.randomIceId(deviceIdentity);
         writeDeviceIdentity();
 
         linkIsActive = executor.scheduleAtFixedRate(new Runnable() {

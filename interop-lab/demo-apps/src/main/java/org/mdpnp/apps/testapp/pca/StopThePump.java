@@ -120,7 +120,7 @@ public class StopThePump {
                                     if (data.infusionActive) {
                                         System.err.println("Stopping active infusion:" + data);
                                         ice.InfusionObjective obj = new ice.InfusionObjective();
-                                        obj.unique_device_identifier = data.unique_device_identifier;
+                                        obj.ice_id = data.ice_id;
                                         obj.requestor = "ME";
                                         obj.stopInfusion = true;
                                         writer.write(obj, InstanceHandle_t.HANDLE_NIL);

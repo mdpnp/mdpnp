@@ -24,18 +24,18 @@ public class MyAlert {
         return source_timestamp;
     }    
     
-    private StringProperty unique_device_identifier;
-    public String getUnique_device_identifier() {
-        return unique_device_identifierProperty().get();
+    private StringProperty ice_id;
+    public String getIce_id() {
+        return ice_idProperty().get();
     }
-    public void setUnique_device_identifier(String unique_device_identifier) {
-        unique_device_identifierProperty().set(unique_device_identifier);
+    public void setIce_id(String ice_id) {
+        ice_idProperty().set(ice_id);
     }
-    public StringProperty unique_device_identifierProperty() {
-        if(null == unique_device_identifier) {
-            unique_device_identifier = new SimpleStringProperty(this, "unique_device_identifier");
+    public StringProperty ice_idProperty() {
+        if(null == ice_id) {
+            ice_id = new SimpleStringProperty(this, "ice_id");
         }
-        return unique_device_identifier;
+        return ice_id;
     }
     
     private StringProperty identifier;
@@ -73,7 +73,7 @@ public class MyAlert {
     }
     
     public static final String key(ice.Alert a) {
-        return (a.unique_device_identifier+a.identifier).intern();
+        return (a.ice_id+a.identifier).intern();
     }
     
     public MyAlert(ice.Alert a, SampleInfo s) {
@@ -85,7 +85,7 @@ public class MyAlert {
     public void update(ice.Alert a, SampleInfo s) {
         _source_timestamp.setTime(s.source_timestamp.sec * 1000L + s.source_timestamp.nanosec / 1000000L);
         setSource_timestamp(_source_timestamp);
-        setUnique_device_identifier(a.unique_device_identifier);
+        setIce_id(a.ice_id);
         setIdentifier(a.identifier);
         setText(a.text);
     }

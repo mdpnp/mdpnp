@@ -182,7 +182,7 @@ public class IceAppsContainer extends IceApplication {
             if (null != deviceMonitor) {
                 deviceMonitor.stop();
             }
-            deviceMonitor = new DeviceDataMonitor(device.getUDI());
+            deviceMonitor = new DeviceDataMonitor(device.getIceIdentifier());
             devicePanel.set(deviceMonitor);
             deviceMonitor.start(subscriber, eventLoop);
         }
@@ -256,7 +256,7 @@ public class IceAppsContainer extends IceApplication {
         RtConfig rtConfig = (RtConfig) context.getBean("rtConfig");
         final Publisher publisher = rtConfig.getPublisher();
         final Subscriber subscriber = rtConfig.getSubscriber();
-        final String udi = (String) context.getBean("supervisorUdi");
+        final String ice_id = (String) context.getBean("supervisorIceId");
 
         final DomainParticipant participant = (DomainParticipant) context.getBean("domainParticipant");
 
@@ -268,7 +268,7 @@ public class IceAppsContainer extends IceApplication {
 
         FXMLLoader loader = new FXMLLoader(DemoPanel.class.getResource("DemoPanel.fxml"));
         panelRoot = loader.load();
-        panelController = ((DemoPanel) loader.getController()).setModel(partitionChooserModel).setUdi(udi).setVersion(BuildInfo.getDescriptor())
+        panelController = ((DemoPanel) loader.getController()).setModel(partitionChooserModel).setIceId(ice_id).setVersion(BuildInfo.getDescriptor())
                 .setModel(participant, eventLoop).set(context);
         panelRoot.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 

@@ -61,34 +61,34 @@ public class DeviceListModelImpl
     implements TimeManagerListener, DeviceListModel {
     
     @Override
-    public Device getByUniqueDeviceIdentifier(String udi) {
-        return getByUniqueDeviceIdentifier(udi, false);
+    public Device getByIceIdentifier(String ice_id) {
+        return getByIceIdentifier(ice_id, false);
     }
     
-    private Device getByUniqueDeviceIdentifier(String udi, boolean create) {
+    private Device getByIceIdentifier(String ice_id, boolean create) {
         if(!Platform.isFxApplicationThread()) {
             throw new IllegalThreadStateException("call getDevice only from the FX App Thread");
         }
         
-        if(null == udi) {
+        if(null == ice_id) {
             return null;
         }
         for(Device d : contents) {
-            if(udi.equals(d.getUDI())) {
+            if(ice_id.equals(d.getIceIdentifier())) {
                 return d;
             }
         }
         for(Device d : recycledContents) {
-            if(udi.equals(d.getUDI())) {
+            if(ice_id.equals(d.getIceIdentifier())) {
                 if(create) {
-                    log.debug("Resurrected " + udi);
+                    log.debug("Resurrected " + ice_id);
                     contents.add(0, d);
                 }
                 return d;
             }
         }
         // Add an inactive placeholder
-        Device d = new Device(udi);
+        Device d = new Device(ice_id);
         if(create) {
             contents.add(d);
         } else {
@@ -102,15 +102,15 @@ public class DeviceListModelImpl
         return contents;
     }
     
-    private final Device getDevice(final String udi, final boolean create) {
+    private final Device getDevice(final String ice_id, final boolean create) {
         if(!Platform.isFxApplicationThread()) {
             throw new IllegalThreadStateException("call getDevice only from the FX App Thread");
         }
-        if(null == udi) {
-            log.warn("Cannot create device with null udi");
+        if(null == ice_id) {
+            log.warn("Cannot create device with null ice_id");
             return null;
         }
-        return getByUniqueDeviceIdentifier(udi, create);
+        return getByIceIdentifier(ice_id, create);
     }
     
     protected void notADevice(ice.HeartBeat heartbeat, boolean alive) {
@@ -120,10 +120,10 @@ public class DeviceListModelImpl
     @Override
     public void aliveHeartbeat(SampleInfo sampleInfo, HeartBeat heartbeat) {
         if("Device".equals(heartbeat.type)) {
-            final String udi = heartbeat.unique_device_identifier;
+            final String ice_id = heartbeat.ice_id;
             Platform.runLater(new Runnable() {
                 public void run() {
-                      getDevice(udi, true);
+                      getDevice(ice_id, true);
                 }
             });
       } else {
@@ -135,11 +135,11 @@ public class DeviceListModelImpl
     @Override
     public void notAliveHeartbeat(SampleInfo sampleInfo, HeartBeat heartbeat) {
         if("Device".equals(heartbeat.type)) {
-            log.debug(heartbeat.unique_device_identifier + " IS NO LONGER ALIVE");
-            String udi = heartbeat.unique_device_identifier;
+            log.debug(heartbeat.ice_id + " IS NO LONGER ALIVE");
+            String ice_id = heartbeat.ice_id;
             Platform.runLater(new Runnable() {
                 public void run() {
-                    remove(getDevice(udi, false));
+                    remove(getDevice(ice_id, false));
                 }
             });
             
@@ -173,7 +173,7 @@ public class DeviceListModelImpl
         final ice.DeviceConnectivity dc1 = new ice.DeviceConnectivity(dc);
         Platform.runLater(new Runnable() {
             public void run() {
-                Device device = getDevice(dc1.unique_device_identifier, true);
+                Device device = getDevice(dc1.ice_id, true);
                 device.setDeviceConnectivity(dc1);
             }
         });
@@ -190,7 +190,7 @@ public class DeviceListModelImpl
         
         Platform.runLater(new Runnable() {
             public void run() {
-                Device device = getDevice(di1.unique_device_identifier, true); 
+                Device device = getDevice(di1.ice_id, true); 
                 device.setDeviceIdentity(di1, data1);
             }
         });

@@ -209,7 +209,7 @@ public class PulseOximeterPanel extends DevicePanel {
         @Override
         public void instanceAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
-//            System.err.println(this+" I see you SampleArray:"+data.unique_device_identifier+" "+data.metric_id+" "+data.instance_id);
+//            System.err.println(this+" I see you SampleArray:"+data.ice_id+" "+data.metric_id+" "+data.instance_id);
             if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(data.metric_id)) {
                 if(null == plethWave) {
                     plethWave = new SampleArrayWaveformSource(deviceMonitor.getSampleArrayModel().getReader(), data);

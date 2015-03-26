@@ -604,7 +604,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     private void init() {
-        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        AbstractSimulatedDevice.randomIceId(deviceIdentity);
         deviceIdentity.manufacturer = "Dr\u00E4ger";
         deviceIdentity.model = "???";
         writeDeviceIdentity();

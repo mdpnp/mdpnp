@@ -160,7 +160,7 @@ public class MDSConnectivityAdapter {
                                 if (si.valid_data) {
 
                                     if (log.isDebugEnabled())
-                                        log.debug(data.unique_device_identifier + " " + data.partition);
+                                        log.debug(data.ice_id + " " + data.partition);
                                     MDSConnectivityEvent ev = new MDSConnectivityEvent(data);
                                     fireMDSConnectivityEvent(ev);
                                 }

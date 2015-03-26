@@ -185,7 +185,7 @@ public class PCAConfig implements ListChangeListener<Vital> {
         String selectedUdi = null;
         MyInfusionStatus selected = pumpList.getSelectionModel().getSelectedItem();
         if (null != selected) {
-            selectedUdi = selected.getUnique_device_identifier();
+            selectedUdi = selected.getIce_id();
         }
         ObservableList<MyInfusionStatus> items;
         if(pumpModel == null) {
@@ -197,7 +197,7 @@ public class PCAConfig implements ListChangeListener<Vital> {
         if (null != selectedUdi) {
             for (int i = 0; i < pumpList.getItems().size(); i++) {
                 MyInfusionStatus status = pumpList.getItems().get(i);
-                if (selectedUdi.equals(status.getUnique_device_identifier())) {
+                if (selectedUdi.equals(status.getIce_id())) {
                     pumpList.getSelectionModel().select(status);
                 }
             }
@@ -261,7 +261,7 @@ public class PCAConfig implements ListChangeListener<Vital> {
     public void setStop(MyInfusionStatus status, boolean stop) {
         ice.InfusionObjective obj = new ice.InfusionObjective();
         obj.requestor = "ME";
-        obj.unique_device_identifier = status.getUnique_device_identifier();
+        obj.ice_id = status.getIce_id();
         obj.stopInfusion = stop;
         objectiveWriter.write(obj, InstanceHandle_t.HANDLE_NIL);
     }

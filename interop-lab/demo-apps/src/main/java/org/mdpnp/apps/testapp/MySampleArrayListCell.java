@@ -31,13 +31,13 @@ public class MySampleArrayListCell extends ListCell<MySampleArray> {
             getTooltip().setText("");
             setText("");
         } else {
-            Device device = deviceListModel.getByUniqueDeviceIdentifier(item.getUnique_device_identifier());
+            Device device = deviceListModel.getByIceIdentifier(item.getIce_id());
             if(null == device) {
                 root.imageProperty().unbind();
                 root.setImage(null);
-                textProperty().bind(item.unique_device_identifierProperty());
+                textProperty().bind(item.ice_idProperty());
             } else {
-                getTooltip().textProperty().bind(item.unique_device_identifierProperty());
+                getTooltip().textProperty().bind(item.ice_idProperty());
                 root.imageProperty().bind(device.imageProperty());
                 textProperty().bind(device.makeAndModelProperty());
             }

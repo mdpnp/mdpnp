@@ -30,7 +30,6 @@ public class DemoSerialIntellivue extends AbstractDemoIntellivue {
 
     public DemoSerialIntellivue(int domainId, EventLoop eventLoop) throws IOException {
         super(domainId, eventLoop);
-        deviceConnectivity.valid_targets.userData.addAll(SerialProviderFactory.getDefaultProvider().getPortNames());
     }
 
     @Override

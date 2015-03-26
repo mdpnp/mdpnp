@@ -8,13 +8,13 @@ public class SimpleDeviceListModel implements DeviceListModel {
     private ObservableList<Device> contents = FXCollections.observableArrayList();
     
     @Override
-    public Device getByUniqueDeviceIdentifier(String udi) {
+    public Device getByIceIdentifier(String ice_id) {
         for(Device d : contents) {
-            if(udi.equals(d.getUDI())) {
+            if(ice_id.equals(d.getIceIdentifier())) {
                 return d;
             }
         }
-        Device d = new Device(udi);
+        Device d = new Device(ice_id);
         contents.add(d);
         return d;
     }

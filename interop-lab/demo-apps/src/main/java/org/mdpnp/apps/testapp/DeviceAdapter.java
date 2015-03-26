@@ -285,7 +285,7 @@ public abstract class DeviceAdapter extends Observable {
 
             AbstractDevice device = super.initializeDevice();
 
-            deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier);
+            deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().ice_id);
 
             Callback<Class<?>, Object> factory = new Callback<Class<?>, Object>()
             {

@@ -45,7 +45,7 @@ import com.rti.dds.topic.Topic;
 public class TimeManager implements Runnable {
     private final Subscriber subscriber;
     private final Publisher publisher;
-    protected final String uniqueDeviceIdentifier, type;
+    protected final String ice_id, type;
     
     private ice.HeartBeatDataWriter hbWriter;
     private ice.HeartBeatDataReader hbReader;
@@ -93,13 +93,13 @@ public class TimeManager implements Runnable {
                 uniqueDeviceIdentifier, type);
     }
     
-    public TimeManager(Publisher publisher, Subscriber subscriber, String uniqueDeviceIdentifier, String type) {
+    public TimeManager(Publisher publisher, Subscriber subscriber, String ice_id, String type) {
         if(!publisher.get_participant().equals(subscriber.get_participant())) {
             throw new RuntimeException("publisher and subscriber must be from the same participant");
         }
         this.subscriber = subscriber;
         this.publisher = publisher;
-        this.uniqueDeviceIdentifier = uniqueDeviceIdentifier;
+        this.ice_id = ice_id;
         this.type = type;
     }
     
@@ -119,14 +119,14 @@ public class TimeManager implements Runnable {
             tsTopic = participant.create_topic(ice.TimeSyncTopic.VALUE, ice.TimeSyncTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         }
         StringSeq params = new StringSeq();
-        params.add("'"+uniqueDeviceIdentifier+"'");
-        cfHbTopic = participant.create_contentfilteredtopic("CF"+ice.HeartBeatTopic.VALUE, hbTopic, "unique_device_identifier <> %0", params);
+        params.add("'"+ice_id+"'");
+        cfHbTopic = participant.create_contentfilteredtopic("CF"+ice.HeartBeatTopic.VALUE, hbTopic, "ice_id <> %0", params);
         cfTsTopic = participant.create_contentfilteredtopic("CF"+ice.TimeSyncTopic.VALUE, tsTopic, "heartbeat_source = %0", params);
 
         hbReader = (HeartBeatDataReader) subscriber.create_datareader_with_profile(cfHbTopic, QosProfiles.ice_library, QosProfiles.heartbeat, null, StatusKind.STATUS_MASK_NONE);
         hbWriter = (HeartBeatDataWriter) publisher.create_datawriter_with_profile(hbTopic, QosProfiles.ice_library, QosProfiles.heartbeat, null, StatusKind.STATUS_MASK_NONE);
 
-        hbData.unique_device_identifier = uniqueDeviceIdentifier;
+        hbData.ice_id = ice_id;
         hbData.type = type;
         hbHandle = hbWriter.register_instance(hbData);
         
@@ -324,7 +324,7 @@ public class TimeManager implements Runnable {
                                     }
 
                                     
-                                    TimeSyncHolder holder = sync.get(heartbeat.unique_device_identifier);
+                                    TimeSyncHolder holder = sync.get(heartbeat.ice_id);
                                     if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
                                         processNotAliveHeartbeat(sampleInfo, heartbeat);
                                         if(null != holder) {
@@ -336,10 +336,10 @@ public class TimeManager implements Runnable {
                                         if(sampleInfo.valid_data) {
                                             if(holder == null) {
                                                 TimeSync ts = new TimeSync();
-                                                ts.heartbeat_source = heartbeat.unique_device_identifier;
-                                                ts.heartbeat_recipient = this.uniqueDeviceIdentifier;
+                                                ts.heartbeat_source = heartbeat.ice_id;
+                                                ts.heartbeat_recipient = this.ice_id;
                                                 holder = new TimeSyncHolder(ts, tsWriter.register_instance(ts));
-                                                sync.put(heartbeat.unique_device_identifier, holder);
+                                                sync.put(heartbeat.ice_id, holder);
                                             }
                                             holder.timeSync.source_source_timestamp.sec = sampleInfo.source_timestamp.sec;
                                             holder.timeSync.source_source_timestamp.nanosec = sampleInfo.source_timestamp.nanosec;

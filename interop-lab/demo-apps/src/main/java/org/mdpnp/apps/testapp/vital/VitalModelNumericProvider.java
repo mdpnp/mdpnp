@@ -22,12 +22,12 @@ public class VitalModelNumericProvider implements NumericInstanceModelListener {
 
     @Override
     public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder, SampleInfo sampleInfo) {
-        this.model.removeNumeric(keyHolder.unique_device_identifier, keyHolder.metric_id, keyHolder.instance_id);
+        this.model.removeNumeric(keyHolder.ice_id, keyHolder.metric_id, keyHolder.instance_id);
     }
 
     @Override
     public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
-        this.model.updateNumeric(data.unique_device_identifier, data.metric_id, data.instance_id, 
+        this.model.updateNumeric(data.ice_id, data.metric_id, data.instance_id, 
                 sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L, data.value);
     }
     

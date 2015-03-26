@@ -28,7 +28,7 @@ public interface Value {
     long getTimestamp();
     
     Device getDevice();
-    String getUniqueDeviceIdentifier();
+    String getIceIdentifier();
 
     ReadOnlyStringProperty metricIdProperty();
     String getMetricId();

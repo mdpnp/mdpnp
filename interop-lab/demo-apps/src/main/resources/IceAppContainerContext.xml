@@ -15,8 +15,8 @@
           destroy-method="shutdownNow">
     </bean>
 
-    <bean id="supervisorUdi" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-        <property name="staticMethod" value="org.mdpnp.devices.simulation.AbstractSimulatedDevice.randomUDI"/>
+    <bean id="supervisorIceId" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="staticMethod" value="org.mdpnp.devices.simulation.AbstractSimulatedDevice.randomIceId"/>
     </bean>
     
     <!-- This is only needed when PCA apps are installed -->
@@ -29,7 +29,7 @@
       <constructor-arg ref="eventLoop"/>
       <constructor-arg ref="publisher" />
       <constructor-arg ref="subscriber" />
-      <constructor-arg ref="supervisorUdi" />
+      <constructor-arg ref="supervisorIceId" />
       <constructor-arg>
         <value type="java.lang.String">Supervisor</value>
       </constructor-arg>

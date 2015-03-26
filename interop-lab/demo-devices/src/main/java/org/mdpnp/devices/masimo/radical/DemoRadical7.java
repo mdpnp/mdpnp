@@ -94,7 +94,7 @@ public class DemoRadical7 extends AbstractSerialDevice {
 
     public DemoRadical7(int domainId, EventLoop eventLoop) throws NoSuchFieldException, SecurityException, IOException {
         super(domainId, eventLoop);
-        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        AbstractSimulatedDevice.randomIceId(deviceIdentity);
         deviceIdentity.manufacturer = MANUFACTURER_NAME;
         deviceIdentity.model = MODEL_NAME;
         writeDeviceIdentity();

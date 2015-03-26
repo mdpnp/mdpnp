@@ -99,7 +99,7 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
         infusionStatusWriter = (InfusionStatusDataWriter) publisher.create_datawriter_with_profile(infusionStatusTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
-        infusionStatus.unique_device_identifier = deviceIdentity.unique_device_identifier;
+        infusionStatus.ice_id = deviceIdentity.ice_id;
         infusionStatusHandle = infusionStatusWriter.register_instance(infusionStatus);
 
         infusionStatus.drug_name = "Morphine";
@@ -119,9 +119,9 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
                 QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         StringSeq params = new StringSeq();
-        params.add("'" + deviceIdentity.unique_device_identifier + "'");
+        params.add("'" + deviceIdentity.ice_id + "'");
         infusionObjectiveQueryCondition = infusionObjectiveReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
-                ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0", params);
+                ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "ice_id = %0", params);
         eventLoop.addHandler(infusionObjectiveQueryCondition, new ConditionHandler() {
             private ice.InfusionObjectiveSeq data_seq = new ice.InfusionObjectiveSeq();
             private SampleInfoSeq info_seq = new SampleInfoSeq();

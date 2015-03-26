@@ -19,7 +19,7 @@ public class MDSConnectivityTest {
 
         final MDSConnectivity sample = new MDSConnectivity();
         sample.partition="p1";
-        sample.unique_device_identifier=Long.toBinaryString(System.currentTimeMillis());
+        sample.ice_id=Long.toBinaryString(System.currentTimeMillis()).substring(0,16);
 
         try {
             final CountDownLatch stopOk = new CountDownLatch(1);
@@ -34,7 +34,7 @@ public class MDSConnectivityTest {
                 @Override
                 public void handleDataSampleEvent(MDSConnectivityAdapter.MDSConnectivityEvent evt) throws Exception {
                     MDSConnectivity v = (MDSConnectivity)evt.getSource();
-                    if(sample.unique_device_identifier.equals(v.unique_device_identifier))
+                    if(sample.ice_id.equals(v.ice_id))
                         stopOk.countDown();
                 }
             });

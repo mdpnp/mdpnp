@@ -31,18 +31,18 @@ public class MyInfusionStatus {
         return source_timestamp;
     }    
     
-    private StringProperty unique_device_identifier;
-    public StringProperty unique_device_identifierProperty() {
-        if(null == unique_device_identifier) {
-            unique_device_identifier = new SimpleStringProperty(this, "unique_device_identifier", "");
+    private StringProperty ice_id;
+    public StringProperty ice_idProperty() {
+        if(null == ice_id) {
+            ice_id = new SimpleStringProperty(this, "ice_id", "");
         }
-        return unique_device_identifier;
+        return ice_id;
     }
-    public String getUnique_device_identifier() {
-        return unique_device_identifierProperty().get();
+    public String getIce_id() {
+        return ice_idProperty().get();
     }
-    public void setUnique_device_identifier(String unique_device_identifier) {
-        unique_device_identifierProperty().set(unique_device_identifier);
+    public void setIce_id(String ice_id) {
+        ice_idProperty().set(ice_id);
     }
     
     private BooleanProperty infusionActive = new SimpleBooleanProperty(this, "infusionActive", false);
@@ -129,7 +129,7 @@ public class MyInfusionStatus {
     public void update(ice.InfusionStatus v, SampleInfo s) {
         _source_timestamp.setTime(s.source_timestamp.sec * 1000L + s.source_timestamp.nanosec / 1000000L);
         setSource_timestamp(_source_timestamp);
-        setUnique_device_identifier(v.unique_device_identifier);
+        setIce_id(v.ice_id);
         setInfusionActive(v.infusionActive);
         setDrug_name(v.drug_name);
         setDrug_mass_mcg(v.drug_mass_mcg);

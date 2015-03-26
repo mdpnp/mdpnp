@@ -58,7 +58,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         super(domainId, eventLoop, AnsarB.class);
         deviceIdentity.manufacturer = "Ivy";
         deviceIdentity.model = "450C";
-        AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        AbstractSimulatedDevice.randomIceId(deviceIdentity);
         writeDeviceIdentity();
     }
 

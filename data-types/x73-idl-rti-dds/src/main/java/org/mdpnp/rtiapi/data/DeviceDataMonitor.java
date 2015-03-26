@@ -33,10 +33,10 @@ public class DeviceDataMonitor {
     private final InfusionStatusInstanceModel isModel;
 
     private static final Logger log = LoggerFactory.getLogger(DeviceDataMonitor.class);
-    private final String udi; 
+    private final String ice_id; 
 
-    public String getUniqueDeviceIdentifier() {
-        return udi;
+    public String getIceIdentifier() {
+        return ice_id;
     }
 
     public void startAndWait(InstanceModel<?, ?> instanceModel, Subscriber subscriber, EventLoop eventLoop, String identity_exp, StringSeq identity, Duration_t waitTime, String profile) {
@@ -50,8 +50,8 @@ public class DeviceDataMonitor {
     
     public void start(Subscriber subscriber, EventLoop eventLoop) {
         final StringSeq identity = new StringSeq();
-        identity.add("'" + udi + "'");
-        final String identity_exp = "unique_device_identifier = %0";
+        identity.add("'" + ice_id + "'");
+        final String identity_exp = "ice_id = %0";
         
         Duration_t waitTime = new Duration_t(2,0);
         startAndWait(idModel, subscriber, eventLoop, identity_exp, identity, waitTime, QosProfiles.device_identity);
@@ -62,8 +62,8 @@ public class DeviceDataMonitor {
     }
     
     
-    public DeviceDataMonitor(final String udi) {
-        this.udi = udi;
+    public DeviceDataMonitor(final String ice_id) {
+        this.ice_id = ice_id;
         this.idModel = new DeviceIdentityInstanceModelImpl(ice.DeviceIdentityTopic.VALUE);
         this.connModel = new DeviceConnectivityInstanceModelImpl(ice.DeviceConnectivityTopic.VALUE);
         this.numModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);

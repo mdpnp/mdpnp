@@ -50,9 +50,7 @@ import com.rti.dds.infrastructure.Property_t;
  */
 public class Device {
     private static Image unknownImage = new Image(Device.class.getResourceAsStream("unknown.png"));
-    private String udi;
-
-    public final static int SHORT_UDI_LENGTH = 20;
+    private String ice_id;
 
     private final static Logger log = LoggerFactory.getLogger(Device.class);
 
@@ -162,22 +160,18 @@ public class Device {
     private StringProperty build = new SimpleStringProperty(this, "build", "");
     private StringProperty serial_number = new SimpleStringProperty(this, "serial_number", "");
 
-    public Device(String udi) {
-        this.udi = udi;
-        makeAndModelProperty().set(udi);
+    public Device(String ice_id) {
+        this.ice_id = ice_id;
+        makeAndModelProperty().set(ice_id);
     }
 
-    public String getShortUDI() {
-        return null == udi ? null : udi.substring(0, SHORT_UDI_LENGTH);
-    }
-
-    public String getUDI() {
-        return udi;
+    public String getIceIdentifier() {
+        return ice_id;
     }
 
     public void setDeviceIdentity(final DeviceIdentity deviceIdentity, ParticipantBuiltinTopicData participantData) {
         if (null != deviceIdentity) {
-            changeUdi(deviceIdentity.unique_device_identifier);
+            changeId(deviceIdentity.ice_id);
             if (null == deviceIdentity.manufacturer || deviceIdentity.manufacturer.equals(deviceIdentity.model)
                     || "".equals(deviceIdentity.manufacturer)) {
                 makeAndModelProperty().set(deviceIdentity.model);
@@ -205,20 +199,20 @@ public class Device {
         }
     }
 
-    private void changeUdi(String udi) {
-        if (null != udi) {
-            if (this.udi == null) {
-                this.udi = udi;
+    private void changeId(String ice_id) {
+        if (null != ice_id) {
+            if (this.ice_id == null) {
+                this.ice_id = ice_id;
             } else {
-                if (!udi.equals(this.udi)) {
-                    throw new IllegalArgumentException("UDI currently " + this.udi + " not changing to " + udi + " found in user QoS");
+                if (!ice_id.equals(this.ice_id)) {
+                    throw new IllegalArgumentException("ICE ID currently " + this.ice_id + " not changing to " + ice_id + " found in user QoS");
                 }
             }
         }
     }
 
     public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {
-        changeUdi(deviceConnectivity.unique_device_identifier);
+        changeId(deviceConnectivity.ice_id);
         connectedProperty().set(ice.ConnectionState.Connected.equals(deviceConnectivity.state));
     }
 
@@ -261,9 +255,9 @@ public class Device {
     public String toString() {
         Image img = imageProperty().get();
         if (null != img) {
-            return udi + " " + makeAndModelProperty().get() + " height=" + img.getHeight() + " width=" + img.getWidth();
+            return ice_id + " " + makeAndModelProperty().get() + " height=" + img.getHeight() + " width=" + img.getWidth();
         } else {
-            return udi + " " + makeAndModelProperty().get();
+            return ice_id + " " + makeAndModelProperty().get();
         }
     }
 
@@ -305,13 +299,13 @@ public class Device {
     
     @Override
     public int hashCode() {
-        return udi.hashCode();
+        return ice_id.hashCode();
     }
     
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof Device) {
-            return udi.equals(((Device)obj).udi);
+            return ice_id.equals(((Device)obj).ice_id);
         } else {
             return false;
         }

@@ -20,9 +20,9 @@
           <PropertyValueFactory property="type" />
          </cellValueFactory>
         </TableColumn>
-        <TableColumn prefWidth="75.0" text="UDI">
+        <TableColumn prefWidth="75.0" text="ICE ID">
          <cellValueFactory>
-          <PropertyValueFactory property="unique_device_identifier" />
+          <PropertyValueFactory property="ice_id" />
          </cellValueFactory>
         </TableColumn>
         <TableColumn prefWidth="200.0" text="Time">

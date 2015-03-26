@@ -38,7 +38,7 @@ import org.mdpnp.apps.testapp.DeviceListModel;
 public class ValueImpl implements Value {
     private final FloatProperty value = new SimpleFloatProperty(this, "value", 0f);
     private final Device device;
-    private final StringProperty uniqueDeviceIdentifier = new SimpleStringProperty(this, "uniqueDeviceIdentifier", "");
+    private final StringProperty iceIdentifier = new SimpleStringProperty(this, "iceIdentifier", "");
     private final StringProperty metricId = new SimpleStringProperty(this, "metricId", "");
     private final IntegerProperty instanceId = new SimpleIntegerProperty(this, "instanceId", 0);
     private final LongProperty timestamp = new SimpleLongProperty(this, "timestamp", 0L);
@@ -57,8 +57,8 @@ public class ValueImpl implements Value {
     private final BooleanProperty atOrAboveValueMsLow = new SimpleBooleanProperty(this, "atOrAboveValueMsLow", false);
     private final BooleanProperty atOrAboveValueMsHigh = new SimpleBooleanProperty(this, "atOrAboveValueMsHigh", false);
 
-    public ValueImpl(final String udi, String metricId, int instanceId, Vital parent) {
-        this.uniqueDeviceIdentifier.set(udi);
+    public ValueImpl(final String ice_id, String metricId, int instanceId, Vital parent) {
+        this.iceIdentifier.set(ice_id);
         this.metricId.set(metricId);
         this.instanceId.set(instanceId);
         this.parent = parent;
@@ -66,7 +66,7 @@ public class ValueImpl implements Value {
             VitalModel model = parent.getParent();
             if(null != model) {
                 DeviceListModel deviceListModel = model.getDeviceListModel();
-                this.device = deviceListModel.getByUniqueDeviceIdentifier(udi);
+                this.device = deviceListModel.getByIceIdentifier(ice_id);
             } else {
                 this.device = null;
             }
@@ -90,8 +90,8 @@ public class ValueImpl implements Value {
     }
 
     @Override
-    public String getUniqueDeviceIdentifier() {
-        return this.uniqueDeviceIdentifier.get();
+    public String getIceIdentifier() {
+        return this.iceIdentifier.get();
     }
 
     @Override
@@ -101,7 +101,7 @@ public class ValueImpl implements Value {
 
     @Override
     public String toString() {
-        return "[udi=" + getUniqueDeviceIdentifier() + ",value=" + getValue() + "]";
+        return "[ice_id=" + getIceIdentifier() + ",value=" + getValue() + "]";
     }
 
     @Override

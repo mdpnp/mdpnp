@@ -89,19 +89,19 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     private static final Logger log = LoggerFactory.getLogger(VitalModelImpl.class);
 
     @Override
-    public void removeNumeric(final String udi, final String metric_id, final int instance_id) {
+    public void removeNumeric(final String ice_id, final String metric_id, final int instance_id) {
         if(Platform.isFxApplicationThread()) {
-            _removeNumeric(udi, metric_id, instance_id);
+            _removeNumeric(ice_id, metric_id, instance_id);
         } else {
             Platform.runLater(new Runnable() {
                 public void run() {
-                    _removeNumeric(udi, metric_id, instance_id);
+                    _removeNumeric(ice_id, metric_id, instance_id);
                 }
             });
         }
     }
     
-    private void _removeNumeric(final String udi, final String metric_id, final int instance_id) {
+    private void _removeNumeric(final String ice_id, final String metric_id, final int instance_id) {
         for (Vital v : this) {
             if (v != null) {
                 for (String x : v.getMetricIds()) {
@@ -109,7 +109,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
                         ListIterator<Value> li = v.listIterator();
                         while (li.hasNext()) {
                             Value va = li.next();
-                            if (va.getUniqueDeviceIdentifier().equals(udi) && va.getInstanceId() == instance_id) {
+                            if (va.getIceIdentifier().equals(ice_id) && va.getInstanceId() == instance_id) {
                                 li.remove();
                             }
                         }
@@ -131,20 +131,20 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     }
 
     @Override
-    public void updateNumeric(final String unique_device_identifier, final String metric_id,
+    public void updateNumeric(final String ice_id, final String metric_id,
             final int instance_id, final long timestamp, final float value) {
         if(Platform.isFxApplicationThread()) {
-            _updateNumeric(unique_device_identifier, metric_id, instance_id, timestamp, value);
+            _updateNumeric(ice_id, metric_id, instance_id, timestamp, value);
         } else {
             Platform.runLater(new Runnable() {
                 public void run() {
-                    _updateNumeric(unique_device_identifier, metric_id, instance_id, timestamp, value);
+                    _updateNumeric(ice_id, metric_id, instance_id, timestamp, value);
                 }
             });
         }
     }
     
-    private void _updateNumeric(final String unique_device_identifier, final String metric_id,
+    private void _updateNumeric(final String ice_id, final String metric_id,
             final int instance_id, final long timestamp, final float value) {
         // TODO linear search? Query Condition should be vital specific
         // or maybe these should be hashed because creating myriad
@@ -157,14 +157,14 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
                         boolean updated = false;
                         for (Value va : v) {
                             if (va.getInstanceId() == instance_id && va.getMetricId().equals(metric_id)
-                                    && va.getUniqueDeviceIdentifier().equals(unique_device_identifier)) {
+                                    && va.getIceIdentifier().equals(ice_id)) {
                                 va.updateFrom(timestamp, value);
                                 updated = true;
                                 break;
                             }
                         }
                         if (!updated) {
-                            final Value va = new ValueImpl(unique_device_identifier, metric_id, instance_id, v);
+                            final Value va = new ValueImpl(ice_id, metric_id, instance_id, v);
                             va.updateFrom(timestamp, value);
                             v.add(va);
                             
@@ -184,12 +184,12 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         return v;
     }
 
-    public Device getDevice(String udi) {
-        if (null == udi) {
+    public Device getDevice(String ice_id) {
+        if (null == ice_id) {
             return null;
         }
         DeviceListModel deviceListModel = this.deviceListModel;
-        return null == deviceListModel ? null : deviceListModel.getByUniqueDeviceIdentifier(udi);
+        return null == deviceListModel ? null : deviceListModel.getByIceIdentifier(ice_id);
     }
 
     @Override

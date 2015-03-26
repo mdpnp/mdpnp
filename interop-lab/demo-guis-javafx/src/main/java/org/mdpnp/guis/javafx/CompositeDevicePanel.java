@@ -54,7 +54,7 @@ public class CompositeDevicePanel extends BorderPane {
     protected final Label serial_number = new Label(" ");
 
     protected final Label connectionState = new Label(" ");
-    protected final Label unique_device_identifier = new Label(" ");
+    protected final Label ice_id = new Label(" ");
     protected final Label icon = new Label(" ");
 
     private static final Logger log = LoggerFactory.getLogger(CompositeDevicePanel.class);
@@ -79,8 +79,8 @@ public class CompositeDevicePanel extends BorderPane {
         header.add(new Label("Serial Number"), 0, 2);
         header.add(serial_number, 1, 2);
 
-        header.add(new Label("Unique Device Identifier"), 0, 3);
-        header.add(unique_device_identifier, 1, 3);
+        header.add(new Label("ICE Identifier"), 0, 3);
+        header.add(ice_id, 1, 3);
 
         header.add(new Label("Connection State"), 0, 4);
         header.add(connectionState, 1, 4);
@@ -113,7 +113,7 @@ public class CompositeDevicePanel extends BorderPane {
                     CompositeDevicePanel.this.manufacturer.setText(data.manufacturer);
                     CompositeDevicePanel.this.model.setText(data.model);
                     serial_number.setText(data.serial_number);
-                    unique_device_identifier.setText(data.unique_device_identifier);
+                    ice_id.setText(data.ice_id);
                     icon.setText("");
                 }
             });
@@ -207,8 +207,8 @@ public class CompositeDevicePanel extends BorderPane {
                 InfusionStatus data, SampleInfo sampleInfo) {
             // log.info("Pump Status:"+infusionStatus);
             // TODO Jeff, what are you doing?
-            if (!knownPumps.contains(data.unique_device_identifier)) {
-                knownPumps.add(data.unique_device_identifier);
+            if (!knownPumps.contains(data.ice_id)) {
+                knownPumps.add(data.ice_id);
                 replaceDataPanels();
             }
         }

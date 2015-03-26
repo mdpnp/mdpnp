@@ -22,11 +22,11 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractSimulatedDevice extends AbstractDevice {
     private static final Logger log = LoggerFactory.getLogger(AbstractSimulatedDevice.class);
-    private static final int UDI_LENGTH = 36;
+    private static final int UDI_LENGTH = 16;
     private static final char[] UDI_CHARS = new char[26 * 2 + 10];
 
     public static void main(String[] args) {
-        System.out.println(randomUDI());
+        System.out.println(randomIceId());
     }
 
     static {
@@ -42,10 +42,10 @@ public abstract class AbstractSimulatedDevice extends AbstractDevice {
         }
     }
 
-    public static String randomUDI() {
-        String udi = System.getProperty("randomUDI");
-        if (null != udi && !"".equals(udi)) {
-            return udi;
+    public static String randomIceId() {
+        String ice_id = System.getProperty("randomIceId"); 
+        if (null != ice_id && !"".equals(ice_id)) {
+            return ice_id;
         } else {
             StringBuilder sb = new StringBuilder();
             java.util.Random random = new java.util.Random(System.currentTimeMillis());
@@ -56,14 +56,14 @@ public abstract class AbstractSimulatedDevice extends AbstractDevice {
         }
     }
 
-    public static void randomUDI(DeviceIdentity di) {
-        di.unique_device_identifier = randomUDI();
-        log.debug("Created Random UDI:" + di.unique_device_identifier);
+    public static void randomIceId(DeviceIdentity di) {
+        di.ice_id = randomIceId();
+        log.debug("Created Random IceId:" + di.ice_id);
     }
 
     public AbstractSimulatedDevice(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop);
-        randomUDI(deviceIdentity);
+        randomIceId(deviceIdentity);
         writeDeviceIdentity();
     }
 }

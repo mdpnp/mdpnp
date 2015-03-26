@@ -20,7 +20,7 @@ public class SampleArrayWaveformSource extends AbstractDdsWaveformSource<ice.Sam
 
     public SampleArrayWaveformSource(final ice.SampleArrayDataReader reader, ice.SampleArray keyHolder) {
         super(reader, keyHolder, ice.SampleArray.class, ice.SampleArraySeq.class);
-        log.debug("Created a SampleArrayWaveformSource for " + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
+        log.debug("Created a SampleArrayWaveformSource for " + keyHolder.ice_id + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
     }
     
 
@@ -52,7 +52,7 @@ public class SampleArrayWaveformSource extends AbstractDdsWaveformSource<ice.Sam
                     long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
                     
                     final int sz = sampleArray.values.userData.size();
-//                    log.debug(sz + " samples " + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
+//                    log.debug(sz + " samples " + keyHolder.ice_id + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
                     if(si.valid_data) {
                         if(0 < sampleArray.frequency) {
                             int msPerSample = 1000 / sampleArray.frequency;
@@ -62,7 +62,7 @@ public class SampleArrayWaveformSource extends AbstractDdsWaveformSource<ice.Sam
                                 itr.sample(tm, value);
                             }
                         } else {
-                            log.warn("Invalid frequency " + sampleArray.frequency + " for " + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
+                            log.warn("Invalid frequency " + sampleArray.frequency + " for " + keyHolder.ice_id + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
                         }
                     } else {
                         // instance lifecycle event with no attached data.
@@ -80,6 +80,6 @@ public class SampleArrayWaveformSource extends AbstractDdsWaveformSource<ice.Sam
 
     @Override
     public String getIdentifier() {
-        return keyHolder.instance_id + "-"+keyHolder.metric_id+"-"+keyHolder.unique_device_identifier;
+        return keyHolder.instance_id + "-"+keyHolder.metric_id+"-"+keyHolder.ice_id;
     }
 }

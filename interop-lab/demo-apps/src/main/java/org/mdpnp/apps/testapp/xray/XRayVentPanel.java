@@ -179,7 +179,7 @@ public class XRayVentPanel {
         params = new StringSeq();
         params.add("'" + source + "'");
         deviceNumericModel.addListener(numericListener);
-        deviceNumericModel.start(subscriber, eventLoop, "unique_device_identifier = %0", params, QosProfiles.ice_library, QosProfiles.numeric_data);
+        deviceNumericModel.start(subscriber, eventLoop, "ice_id = %0", params, QosProfiles.ice_library, QosProfiles.numeric_data);
         log.trace("new source is " + source);
     }
 
@@ -242,7 +242,7 @@ public class XRayVentPanel {
 
             @Override
             public void changed(ObservableValue<? extends MyNumeric> observable, MyNumeric oldValue, MyNumeric newValue) {
-                changeSource(newValue.getUnique_device_identifier(), subscriber, eventLoop);
+                changeSource(newValue.getIce_id(), subscriber, eventLoop);
             }
         });
         Timeline waveformRender = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {

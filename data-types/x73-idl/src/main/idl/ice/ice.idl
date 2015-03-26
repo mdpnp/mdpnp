@@ -29,9 +29,17 @@
  */
 module ice {
   /**
+   * A unique device identifier for use within an ICE system.  Must be unique within
+   * a specified assigning authority scope such as a provider system.  16 bytes are 
+   * reserved to allow for the possible future use of IPv6 addresses for this purpose.
+   */
+  typedef string<16> IceIdentifier;
+
+  /**
    * A placeholder type for evolving FDA work on UDI.  Thus far 64 ISO-8859-1 characters
    * is sufficient for holding FDA mandated unique device identifiers but we should
-   * monitor for changes.
+   * monitor for changes.  This identifier type must be unique within the scope of a 
+   * regulatory authority.
    *
    * http://www.fda.gov/MedicalDevices/DeviceRegulationandGuidance/UniqueDeviceIdentification/
    */
@@ -72,12 +80,6 @@ module ice {
   typedef wstring<128> LongString;
   
   /**
-   * For a connected device these are the valid targets the device adapter might connect
-   * to.  These are often the names of serial (RS-232) ports available on the adapter.
-   */
-  typedef sequence<LongString, 128> ValidTargets;
-  
-  /**
    * Contains image data with the type specified externally.
    */
   typedef sequence<octet, 65530> ImageData;
@@ -109,10 +111,10 @@ module ice {
    *            change.
    */
   struct HeartBeat {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
     string<32> type;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist HeartBeat unique_device_identifier
+  #pragma keylist HeartBeat ice_id
   const string HeartBeatTopic = "HeartBeat";
   
   /**
@@ -128,8 +130,8 @@ module ice {
    *            of detecting a lack of clock synchronization.
    */
   struct TimeSync {
-    UniqueDeviceIdentifier heartbeat_source; //@key
-    UniqueDeviceIdentifier heartbeat_recipient; //@key
+    IceIdentifier heartbeat_source; //@key
+    IceIdentifier heartbeat_recipient; //@key
     Time_t source_source_timestamp;
     Time_t recipient_receipt_timestamp;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
@@ -153,7 +155,8 @@ module ice {
    * Stability: 2 - Unstable
    */
   struct DeviceIdentity {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
+    UniqueDeviceIdentifier unique_device_id; 
     LongString manufacturer;
     LongString model;
     LongString serial_number;
@@ -161,7 +164,7 @@ module ice {
     string<128> build;
     string<128> operating_system;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist DeviceIdentity unique_device_identifier
+  #pragma keylist DeviceIdentity ice_id
   const string DeviceIdentityTopic = "DeviceIdentity";
 
   /**
@@ -208,13 +211,12 @@ module ice {
    * Stability: 2 - Unstable
    */
   struct DeviceConnectivity {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
     ConnectionState state;
     ConnectionType type;
     LongString info;
-    ValidTargets valid_targets;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist DeviceConnectivity unique_device_identifier
+  #pragma keylist DeviceConnectivity ice_id
   const string DeviceConnectivityTopic = "DeviceConnectivity";
 
   /**
@@ -223,10 +225,10 @@ module ice {
    * Stability: 2 - Unstable
    */
   struct MDSConnectivity {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
     LongString partition;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist MDSConnectivity unique_device_identifier
+  #pragma keylist MDSConnectivity ice_id
   const string MDSConnectivityTopic = "MDSConnectivity";
 
   /**
@@ -236,10 +238,10 @@ module ice {
    * Stability: 2 - Unstable
    */
   struct MSDConnectivityObjective {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
     LongString partition;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist MSDConnectivityObjective unique_device_identifier
+  #pragma keylist MSDConnectivityObjective ice_id
   const string MDSConnectivityObjectiveTopic = "MSDConnectivityObjective";
   
   /**
@@ -294,7 +296,7 @@ module ice {
    * Stability: 2 - Unstable
    */
   struct Numeric {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
     MetricIdentifier metric_id; //@key
     VendorMetricIdentifier vendor_metric_id; //@key
     InstanceIdentifier instance_id; //@key
@@ -303,7 +305,7 @@ module ice {
     Time_t device_time;
     Time_t presentation_time;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist Numeric unique_device_identifier metric_id vendor_metric_id instance_id unit_id
+  #pragma keylist Numeric ice_id metric_id vendor_metric_id instance_id unit_id
   const string NumericTopic = "Numeric";
 
   /**
@@ -322,7 +324,7 @@ module ice {
    * Stability: 2 - Unstable
    */
   struct SampleArray {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
     MetricIdentifier metric_id; //@key
     VendorMetricIdentifier vendor_metric_id; //@key    
     InstanceIdentifier instance_id; //@key
@@ -332,7 +334,7 @@ module ice {
     Time_t device_time;
     Time_t presentation_time;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist SampleArray unique_device_identifier metric_id instance_id unit_id frequency
+  #pragma keylist SampleArray ice_id metric_id instance_id unit_id frequency
   const string SampleArrayTopic = "SampleArray";
 
   /**
@@ -346,11 +348,11 @@ module ice {
    * Stability: 1 - Experimental
    */
   struct InfusionObjective {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
     LongString requestor;
     boolean stopInfusion;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist InfusionObjective unique_device_identifier
+  #pragma keylist InfusionObjective ice_id
   const string InfusionObjectiveTopic = "InfusionObjective";
   
   /**
@@ -363,7 +365,7 @@ module ice {
    * Stability: 0 - Deprecated
    */
   struct InfusionStatus {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
     // is the pump actively infusing?
     boolean infusionActive;
 
@@ -386,7 +388,7 @@ module ice {
     // what is the progress through the program?
     float infusion_fraction_complete;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist InfusionStatus unique_device_identifier
+  #pragma keylist InfusionStatus ice_id
   const string InfusionStatusTopic = "InfusionStatus";
 
   /**
@@ -395,12 +397,12 @@ module ice {
    * Stability: 1 - Experimental
    */
   struct AlarmSettings {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
     MetricIdentifier metric_id; //@key
     float lower;
     float upper;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist AlarmSettings unique_device_identifier metric_id
+  #pragma keylist AlarmSettings ice_id metric_id
   const string AlarmSettingsTopic = "AlarmSettings";
 
   /**
@@ -428,12 +430,12 @@ module ice {
    * Stability: 1 - Experimental
    */
   struct LocalAlarmSettingsObjective {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
     MetricIdentifier metric_id; //@key
     float lower;
     float upper;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist LocalAlarmSettingsObjective unique_device_identifier metric_id
+  #pragma keylist LocalAlarmSettingsObjective ice_id metric_id
   const string LocalAlarmSettingsObjectiveTopic = "LocalAlarmSettingsObjective";
 
   /**
@@ -444,10 +446,10 @@ module ice {
    * Stability: 1 - Experimental
    */
   struct DeviceAlertCondition {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
     string<256> alert_state;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist DeviceAlertCondition unique_device_identifier
+  #pragma keylist DeviceAlertCondition ice_id
   const string DeviceAlertConditionTopic = "DeviceAlertCondition";
   
   /**
@@ -455,12 +457,12 @@ module ice {
    * 
    */
   struct Alert {
-    UniqueDeviceIdentifier unique_device_identifier; //@key
+    IceIdentifier ice_id; //@key
     // This is a placeholder for something more harmonized
     string<256> identifier; //@key
     string<256> text;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist Alert unique_device_identifier identifier
+  #pragma keylist Alert ice_id identifier
   
   /**
    * PatientAlert is an alert message related to patient state. In the current iteration 

@@ -62,7 +62,7 @@ public class NumericWaveformSource extends AbstractDdsWaveformSource<ice.Numeric
 
     @Override
     public String getIdentifier() {
-        return keyHolder.instance_id + "-"+keyHolder.metric_id+"-"+keyHolder.unique_device_identifier;
+        return keyHolder.instance_id + "-"+keyHolder.metric_id+"-"+keyHolder.ice_id;
     }
 
 }

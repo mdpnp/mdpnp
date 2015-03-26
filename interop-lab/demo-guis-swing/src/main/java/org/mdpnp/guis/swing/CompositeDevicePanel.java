@@ -63,7 +63,7 @@ public class CompositeDevicePanel extends JPanel {
     protected final JLabel serial_number = new JLabel(" ");
 
     protected final JLabel connectionState = new JLabel(" ");
-    protected final JLabel unique_device_identifier = new JLabel(" ");
+    protected final JLabel ice_id = new JLabel(" ");
     protected final JLabel icon = new JLabel(" ");
 
     private static final Logger log = LoggerFactory.getLogger(CompositeDevicePanel.class);
@@ -102,9 +102,9 @@ public class CompositeDevicePanel extends JPanel {
 
         gbc.gridy++;
         gbc.gridx--;
-        header.add(new JLabel("Unique Device Identifier"), gbc);
+        header.add(new JLabel("ICE Identifier"), gbc);
         gbc.gridx++;
-        header.add(unique_device_identifier, gbc);
+        header.add(ice_id, gbc);
 
         gbc.gridy++;
         gbc.gridx--;
@@ -142,7 +142,7 @@ public class CompositeDevicePanel extends JPanel {
             CompositeDevicePanel.this.manufacturer.setText(data.manufacturer);
             CompositeDevicePanel.this.model.setText(data.model);
             serial_number.setText(data.serial_number);
-            unique_device_identifier.setText(data.unique_device_identifier);
+            ice_id.setText(data.ice_id);
             icon.setText("");
             BufferedImage img;
             try {
@@ -241,8 +241,8 @@ public class CompositeDevicePanel extends JPanel {
                 InfusionStatus data, SampleInfo sampleInfo) {
             // log.info("Pump Status:"+infusionStatus);
             // TODO Jeff, what are you doing?
-            if (!knownPumps.contains(data.unique_device_identifier)) {
-                knownPumps.add(data.unique_device_identifier);
+            if (!knownPumps.contains(data.ice_id)) {
+                knownPumps.add(data.ice_id);
                 replaceDataPanels();
             }
         }
