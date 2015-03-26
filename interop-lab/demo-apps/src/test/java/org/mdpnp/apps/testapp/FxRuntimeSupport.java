@@ -126,8 +126,6 @@ public class FxRuntimeSupport {
         lastStage.setAlwaysOnTop(false);
 
         iceApp.start(lastStage);
-
-        lastStage.sizeToScene();
         lastStage.show();
         return lastStage;
     }
@@ -144,8 +142,6 @@ public class FxRuntimeSupport {
 
         Scene scene = new Scene(appNode);
         lastStage.setScene(scene);
-
-        lastStage.sizeToScene();
         lastStage.show();
         return lastStage;
 

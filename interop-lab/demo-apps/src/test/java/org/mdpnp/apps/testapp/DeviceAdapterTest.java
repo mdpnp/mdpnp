@@ -106,7 +106,7 @@ public class DeviceAdapterTest {
                 public void run() {
                     // start will block until stopped.
                     try {
-                        da.run(null);
+                        da.run();
                         runCompleted.countDown();
                         log.info("Adapter run loop complete");
                     }

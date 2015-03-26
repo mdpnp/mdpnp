@@ -73,10 +73,11 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             DeviceAdapter da = new DeviceAdapterImpl.HeadlessAdapter(ddp, context, true);
 
             da.init();
+            da.setAddress(config.getAddress());
 
             // this will block until stops kills everything from another thread or a
             // VM's shutdown hook
-            da.run(config.getAddress());
+            da.run();
 
             // will only get here once the controller loop is stopped
             context.destroy();
@@ -109,7 +110,8 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
     }
 
     protected AbstractDevice device;
-    protected String[] initialPartition;
+    protected String[]       initialPartition;
+    private   String         address=null;
 
     private final CountDownLatch stopOk = new CountDownLatch(1);
 
@@ -124,6 +126,11 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
     @Override
     public void setInitialPartition(String[] v) {
         initialPartition = v;
+    }
+
+    @Override
+    public void setAddress(String v) {
+        address = v;
     }
 
     @Override
@@ -142,13 +149,12 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
 
     /**
      * blocking call to start adapter's listening loop. It is expected that stop API will be called on another thread
-     * @param address
-     * @throws Exception
      */
     @Override
-    public void run(String address) {
+    public void run() {
 
         if (null != device && device instanceof AbstractConnectedDevice) {
+            log.info("Connecting to " + address);
             if (!((AbstractConnectedDevice)device).connect(address)) {
                 stopOk.countDown();
             }
@@ -264,10 +270,9 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
 
     public static class GUIAdapter extends IceApplication implements DeviceAdapter {
 
-        private DeviceDataMonitor    deviceMonitor;
-
-        final ProgressBar      progressBar = new ProgressBar();
-        final DeviceView       deviceViewController = new DeviceView();
+        private DeviceDataMonitor      deviceMonitor;
+        private final ProgressBar      progressBar = new ProgressBar();
+        private final DeviceView       deviceViewController = new DeviceView();
 
         private final DeviceAdapterImpl controller;
 
@@ -343,7 +348,8 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             root.setTop(scrollPane);
             root.setCenter(node);
 
-            Stage stage = new Stage(StageStyle.DECORATED);
+            Stage stage = primaryStage == null ? new Stage(StageStyle.DECORATED) : primaryStage;
+
             stage.setOnHiding(new EventHandler<WindowEvent>() {
 
                 @Override
@@ -364,17 +370,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             controller.setChanged();
             controller.notifyObservers(AdapterState.init);
 
-            Runnable runIt = new Runnable() {
-                @Override
-                public void run() {
-
-                    // MIKEFIX where to we get an address to connect?
-                    // this will block until killAdapter stops everything.
-                    controller.run(null);
-
-                }
-            };
-            Thread deviceRunner = device.newThread(runIt);
+            Thread deviceRunner = device.newThread(this);
             deviceRunner.start();
 
             stage.show();
@@ -422,8 +418,13 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
         }
 
         @Override
-        public void run(String address) {
-            controller.run(address);
+        public void run() {
+            controller.run();
+        }
+
+        @Override
+        public void setAddress(String address) {
+            controller.setAddress(address);
         }
 
         protected void update(final String msg, final int pct) {

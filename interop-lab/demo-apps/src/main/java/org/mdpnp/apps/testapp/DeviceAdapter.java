@@ -17,7 +17,7 @@ import java.util.Observer;
 import org.mdpnp.devices.AbstractDevice;
 
 
-public interface DeviceAdapter {
+public interface DeviceAdapter extends Runnable {
 
     enum AdapterState { init, connected, running, stopped };
 
@@ -31,13 +31,15 @@ public interface DeviceAdapter {
 
     /**
      * blocking call to start adapter's listening loop. It is expected that stop API will be called on another thread
-     * @param address
      */
-    void run(String address);
+    @Override
+    void run();
 
     void stop() throws Exception;
 
     void setInitialPartition(String[] v);
+
+    void setAddress(String address);
 
     void addObserver(Observer v);
 

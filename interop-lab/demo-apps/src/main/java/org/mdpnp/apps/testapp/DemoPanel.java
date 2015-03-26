@@ -229,11 +229,12 @@ public class DemoPanel implements Runnable {
                 try {
                     DeviceAdapterImpl.GUIAdapter da = new DeviceAdapterImpl.GUIAdapter(c.getDeviceFactory(), context);
                     da.setInitialPartition(partition.toArray(new String[0]));
+                    da.setAddress(c.getAddress());
                     da.init();
-                    da.start(null); // MIKEFIX should we somehow get a reference to current stage?
+                    da.start(null); // Passing null will force the adapter to start a new dialog
                     Thread t = da.getDevice().newThread(new Runnable() {
                         public void run() {
-                            da.run(c.getAddress());
+                            da.run();
                             log.info("DeviceAdapter ended");
                         }
                     });
