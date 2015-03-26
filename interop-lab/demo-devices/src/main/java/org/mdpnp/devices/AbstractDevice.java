@@ -603,36 +603,6 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return null;
     }
 
-    // MIKEFIX
-    protected boolean iconFromResource(DeviceIdentity di, String iconResourceName) throws IOException {
-        if (null == iconResourceName) {
-            di.icon.content_type = "";
-            di.icon.image.clear();
-            return true;
-        }
-
-        InputStream is = getClass().getResourceAsStream(iconResourceName);
-        if (null != is) {
-            try {
-                {
-                    byte[] xfer = new byte[1024];
-                    int len = is.read(xfer);
-
-                    di.icon.image.userData.clear();
-
-                    while (len >= 0) {
-                        di.icon.image.userData.addAllByte(xfer, 0, len);
-                        len = is.read(xfer);
-                    }
-                    is.close();
-                }
-                return true;
-            } catch (Exception e) {
-                log.error("error in iconUpdateFromResource", e);
-            }
-        }
-        return false;
-    }
 
     private int threadOrdinal = 0;
 
@@ -653,7 +623,9 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         if(timeManager!=null) {
             timeManager.stop();
         }
-        
+
+        partitionAssignmentController.shutdown();
+
         if (null != alarmSettingsObjectiveCondition) {
             eventLoop.removeHandler(alarmSettingsObjectiveCondition);
             alarmSettingsObjectiveReader.delete_readcondition(alarmSettingsObjectiveCondition);
@@ -716,6 +688,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         timestampFactory = new DomainClock(domainParticipant);
 
         partitionAssignmentController = new PartitionAssignmentController(publisher, subscriber);
+        partitionAssignmentController.start();
 
         DeviceIdentityTypeSupport.register_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
         deviceIdentityTopic = domainParticipant.create_topic(ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.get_type_name(),

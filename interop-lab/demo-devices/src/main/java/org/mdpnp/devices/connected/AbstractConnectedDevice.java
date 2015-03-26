@@ -12,49 +12,27 @@
  ******************************************************************************/
 package org.mdpnp.devices.connected;
 
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.topic.Topic;
 import ice.DeviceConnectivity;
 import ice.DeviceConnectivityDataWriter;
-import ice.DeviceConnectivityObjective;
-import ice.DeviceConnectivityObjectiveDataReader;
-import ice.DeviceConnectivityObjectiveSeq;
-import ice.DeviceConnectivityObjectiveTopic;
-import ice.DeviceConnectivityObjectiveTypeSupport;
 import ice.DeviceConnectivityTopic;
 import ice.DeviceConnectivityTypeSupport;
-
 import org.mdpnp.devices.AbstractDevice;
-import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.io.util.StateMachine;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.infrastructure.Condition;
-import com.rti.dds.infrastructure.InstanceHandle_t;
-import com.rti.dds.infrastructure.RETCODE_NO_DATA;
-import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
-import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.subscription.InstanceStateKind;
-import com.rti.dds.subscription.ReadCondition;
-import com.rti.dds.subscription.SampleInfo;
-import com.rti.dds.subscription.SampleInfoSeq;
-import com.rti.dds.subscription.SampleStateKind;
-import com.rti.dds.subscription.ViewStateKind;
-import com.rti.dds.topic.Topic;
-
 public abstract class AbstractConnectedDevice extends AbstractDevice {
     protected final DeviceConnectivity deviceConnectivity;
-    protected final Topic deviceConnectivityTopic;
+    private final Topic deviceConnectivityTopic;
     private InstanceHandle_t deviceConnectivityHandle;
     private final DeviceConnectivityDataWriter deviceConnectivityWriter;
 
-    protected final DeviceConnectivityObjective deviceConnectivityObjective;
-    protected final DeviceConnectivityObjectiveDataReader deviceConnectivityObjectiveReader;
-    // protected final InstanceHandle_t deviceConnectivityObjectiveHandle;
-    protected final Topic deviceConnectivityObjectiveTopic;
-    private final ReadCondition rc;
 
     protected final StateMachine<ice.ConnectionState> stateMachine = new StateMachine<ice.ConnectionState>(legalTransitions,
             ice.ConnectionState.Disconnected, "initial state") {
@@ -90,11 +68,6 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 
     @Override
     public void shutdown() {
-        eventLoop.removeHandler(rc);
-        deviceConnectivityObjectiveReader.delete_readcondition(rc);
-        subscriber.delete_datareader(deviceConnectivityObjectiveReader);
-        domainParticipant.delete_topic(deviceConnectivityObjectiveTopic);
-        DeviceConnectivityObjectiveTypeSupport.unregister_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
 
         if (null != deviceConnectivityHandle) {
             InstanceHandle_t handle = deviceConnectivityHandle;
@@ -124,51 +97,6 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         deviceConnectivity.type = getConnectionType();
         deviceConnectivity.state = ice.ConnectionState.Disconnected;
 
-        deviceConnectivityObjective = (DeviceConnectivityObjective) DeviceConnectivityObjective.create();
-        DeviceConnectivityObjectiveTypeSupport.register_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
-        deviceConnectivityObjectiveTopic = domainParticipant.create_topic(DeviceConnectivityObjectiveTopic.VALUE,
-                DeviceConnectivityObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        deviceConnectivityObjectiveReader = (DeviceConnectivityObjectiveDataReader) subscriber.create_datareader_with_profile(
-                deviceConnectivityObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-
-        rc = deviceConnectivityObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
-                InstanceStateKind.ANY_INSTANCE_STATE);
-
-        final DeviceConnectivityObjectiveSeq data_seq = new DeviceConnectivityObjectiveSeq();
-        final SampleInfoSeq info_seq = new SampleInfoSeq();
-
-        eventLoop.addHandler(rc, new EventLoop.ConditionHandler() {
-
-            @Override
-            public void conditionChanged(Condition condition) {
-                try {
-                    deviceConnectivityObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, rc);
-                    for (int i = 0; i < info_seq.size(); i++) {
-                        SampleInfo si = (SampleInfo) info_seq.get(i);
-                        if (si.valid_data) {
-                            DeviceConnectivityObjective dco = (DeviceConnectivityObjective) data_seq.get(i);
-                            if (deviceIdentity.unique_device_identifier.equals(dco.unique_device_identifier)) {
-
-                                if (dco.connected) {
-                                    log.info("Issuing connect for " + deviceIdentity.unique_device_identifier + " to " + dco.target);
-                                    connect(dco.target);
-
-                                } else {
-                                    log.info("Issuing disconnect for " + deviceIdentity.unique_device_identifier);
-                                    disconnect();
-                                }
-                            }
-                        }
-                    }
-
-                } catch (RETCODE_NO_DATA noData) {
-
-                } finally {
-                    deviceConnectivityObjectiveReader.return_loan(data_seq, info_seq);
-                }
-            }
-
-        });
     }
 
     public abstract boolean connect(String str);
