@@ -59,8 +59,12 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
         @Override
         public int execute(final Configuration config) throws Exception
         {
-            if(Platform.isFxApplicationThread())
-                throw new IllegalStateException("Trying to start headless blocking device adapter on UI thread");
+            // TODO revisit check for headless and check for FX Application Thread
+            // This attempts to initialize the default Toolkit which will fail in truly headless
+            // environments.  Is there another precheck for a graphical display that can be called before this?
+            // or is it possible to substitute a different Toolkit?
+//            if(Platform.isFxApplicationThread())
+//                throw new IllegalStateException("Trying to start headless blocking device adapter on UI thread");
 
             DeviceDriverProvider ddp = config.getDeviceFactory();
             if(null == ddp) {
