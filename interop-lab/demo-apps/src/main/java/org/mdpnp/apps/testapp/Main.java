@@ -76,15 +76,6 @@ public class Main {
 
         @Override
         public void start(Stage primaryStage) throws Exception {
-            try {
-                Class<?> cls = Class.forName("com.apple.eawt.Application");
-                Method m1 = cls.getMethod("getApplication");
-                Method m2 = cls.getMethod("setDockIconImage", Image.class);
-                m2.invoke(m1.invoke(null), ImageIO.read(Main.class.getResource("icon.png")));
-            } catch (Throwable t) {
-                log.debug("Not able to set Mac OS X dock icon");
-            }
-
             runConf = Configuration.searchAndLoadSettings(searchPath);
 
             ConfigurationDialog d = ConfigurationDialog.showDialog(runConf);

@@ -20,7 +20,6 @@ local.properties
 gwt-unitCache/
 appengine-generated/
 lib/
-deploy/
 classes/
 clinical_scenarios/
 *.pro.user*
