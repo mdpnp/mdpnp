@@ -350,6 +350,8 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
 
             Stage stage = primaryStage == null ? new Stage(StageStyle.DECORATED) : primaryStage;
 
+            stage.setTitle("ICE Device Interface - "+deviceType.toString());
+            
             stage.setOnHiding(new EventHandler<WindowEvent>() {
 
                 @Override
