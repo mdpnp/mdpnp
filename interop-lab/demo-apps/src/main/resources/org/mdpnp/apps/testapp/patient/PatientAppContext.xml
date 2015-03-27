@@ -21,6 +21,7 @@
           init-method="init"
           destroy-method="shutdown">
         <property name="schemaDef" value="DbSchema.sql"/>
+        <property name="dataDef"   value="DataBootstrap.sql"/>
     </bean>
 
     <!--

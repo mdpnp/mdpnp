@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
+import java.util.List;
 import java.util.function.Predicate;
 
 public class PatientInfoController implements ListChangeListener<Device> {
@@ -302,11 +303,8 @@ public class PatientInfoController implements ListChangeListener<Device> {
             }
         });
 
-        patientListModel.add(new PatientInfo("Homer"));
-        patientListModel.add(new PatientInfo("Marge"));
-        patientListModel.add(new PatientInfo("Bart"));
-        patientListModel.add(new PatientInfo("Lisa"));
-        patientListModel.add(new PatientInfo("Margaret Evelyn"));
+        List<PatientInfo> p =  PatientInfo.queryAll(jdbcDB);
+        patientListModel.addAll(p);
     }
 
 

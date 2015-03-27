@@ -102,6 +102,7 @@ public class PatientApplicationFactory implements IceApplicationProvider {
     @SuppressWarnings("serial")
     static class EmbeddedDB extends JDBCDataSource {
         private String schemaDef;
+        private String dataDef;
 
         public EmbeddedDB() {
             super.setUrl("jdbc:hsqldb:mem:test");
@@ -112,15 +113,27 @@ public class PatientApplicationFactory implements IceApplicationProvider {
         public String getSchemaDef() {
             return schemaDef;
         }
-
         public void setSchemaDef(String schemaDef) {
             this.schemaDef = schemaDef;
         }
 
+        public String getDataDef() {
+            return dataDef;
+        }
+        public void setDataDef(String dataDef) {
+            this.dataDef = dataDef;
+        }
+
         public void init() throws Exception
         {
-            if(schemaDef != null) {
-                InputStream is = getClass().getResourceAsStream(schemaDef);
+            load(schemaDef);
+            load(dataDef);
+
+        }
+        void load(String file) throws Exception
+        {
+            if(file != null) {
+                InputStream is = getClass().getResourceAsStream(file);
                 Connection conn = getConnection();
                 try {
                     applySchemaFile(conn, is);
