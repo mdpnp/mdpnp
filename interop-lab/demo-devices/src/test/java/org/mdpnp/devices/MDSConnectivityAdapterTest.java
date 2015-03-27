@@ -25,14 +25,14 @@ public class MDSConnectivityAdapterTest {
             final CountDownLatch stopOk = new CountDownLatch(1);
 
 
-            MDSConnectivityAdapter c = new MDSConnectivityAdapter();
-            c.createReader(master.getSubscriber());
-            c.createWriter(master.getPublisher());
+            MDSConnectivityAdapter c = new MDSConnectivityAdapter(master.getEventLoop(),
+                                                                  master.getPublisher(),
+                                                                  master.getSubscriber());
             c.start();
 
             c.addConnectivityListener(new MDSConnectivityAdapter.MDSConnectivityListener() {
                 @Override
-                public void handleDataSampleEvent(MDSConnectivityAdapter.MDSConnectivityEvent evt) throws Exception {
+                public void handleDataSampleEvent(MDSConnectivityAdapter.MDSConnectivityEvent evt) {
                     MDSConnectivity v = (MDSConnectivity)evt.getSource();
                     if(sample.unique_device_identifier.equals(v.unique_device_identifier))
                         stopOk.countDown();
@@ -42,7 +42,7 @@ public class MDSConnectivityAdapterTest {
             c.publish(sample);
 
             boolean isOk = stopOk.await(5000, TimeUnit.MILLISECONDS);
-            c.stop();
+            c.shutdown();
             if (!isOk)
                 Assert.fail("Did not get publication method");
 

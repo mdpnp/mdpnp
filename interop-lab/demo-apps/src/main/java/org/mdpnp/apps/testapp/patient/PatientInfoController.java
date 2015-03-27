@@ -17,6 +17,7 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Callback;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.devices.MDSConnectivityAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +28,9 @@ public class PatientInfoController implements ListChangeListener<Device> {
 
     private static final Logger log = LoggerFactory.getLogger(PatientInfoController.class);
 
-    private DeviceListModel deviceListDataModel;
-    private DataSource      jdbcDB;
+    private DeviceListModel        deviceListDataModel;
+    private DataSource             jdbcDB;
+    private MDSConnectivityAdapter mdsConnectivity;
 
     @FXML ComboBox<Device> deviceList;
     @FXML ComboBox<PatientInfo> patientList;
@@ -55,6 +57,14 @@ public class PatientInfoController implements ListChangeListener<Device> {
 
     public void setJdbcDB(DataSource db) {
         jdbcDB = db;
+    }
+
+    public MDSConnectivityAdapter getMdsConnectivity() {
+        return mdsConnectivity;
+    }
+
+    public void setMdsConnectivity(MDSConnectivityAdapter mdsConnectivity) {
+        this.mdsConnectivity = mdsConnectivity;
     }
 
     protected static class DevicePatientAssociation {
@@ -112,6 +122,7 @@ public class PatientInfoController implements ListChangeListener<Device> {
     }
 
     // TDB
+    // MIKEFIX consolidate DevicePatientAssociation and MDSConnectivityObjective?
     private DevicePatientAssociation persist(Device d, PatientInfo p)  {
     /*
     /*
@@ -133,6 +144,11 @@ public class PatientInfoController implements ListChangeListener<Device> {
             conn.commit();
         }
         */
+
+        ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
+        mds.unique_device_identifier = d.getUDI();
+        mds.partition = p.getPatientName();
+        mdsConnectivity.publish(mds);
 
         return new DevicePatientAssociation(d, p);
     }
@@ -190,8 +206,8 @@ public class PatientInfoController implements ListChangeListener<Device> {
 
             try {
                 ImageView img = new ImageView(new javafx.scene.image.Image(getClass().getResourceAsStream("stop.png")));
-                img.setFitHeight(20.0);
-                img.setFitWidth(20.0);
+                img.setFitHeight(15.0);
+                img.setFitWidth(15.0);
                 button.setGraphic(img);
             } catch (Exception noImg) {
                 log.error("Failed to load image for disconnect button", noImg);

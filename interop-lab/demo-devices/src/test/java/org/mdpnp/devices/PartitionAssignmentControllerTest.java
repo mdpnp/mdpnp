@@ -8,10 +8,12 @@ import java.net.URL;
 
 public class PartitionAssignmentControllerTest {
 
+    ice.DeviceIdentity deviceIdentity = new ice.DeviceIdentity();
+
     @Test
     public void testCheckForNoPartitionFile() {
 
-        PartitionAssignmentController controller = new PartitionAssignmentController() {
+        PartitionAssignmentController controller = new PartitionAssignmentController(deviceIdentity) {
             public void setPartition(String[] partition) {
                 Assert.assertEquals(0, partition.length);
             }
@@ -26,7 +28,7 @@ public class PartitionAssignmentControllerTest {
         URL u = getClass().getResource("device.partition.0.txt");
         String f = u.getFile();
 
-        PartitionAssignmentController controller = new PartitionAssignmentController() {
+        PartitionAssignmentController controller = new PartitionAssignmentController(deviceIdentity) {
             public void setPartition(String[] partition) {
                 Assert.assertEquals(2, partition.length);
                 Assert.assertEquals("foo", partition[0]);

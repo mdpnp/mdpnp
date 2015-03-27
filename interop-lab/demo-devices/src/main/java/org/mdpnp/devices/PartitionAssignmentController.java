@@ -1,19 +1,12 @@
 package org.mdpnp.devices;
 
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.infrastructure.Condition;
-import com.rti.dds.infrastructure.RETCODE_NO_DATA;
-import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
-import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.publication.PublisherQos;
-import com.rti.dds.subscription.*;
-import com.rti.dds.topic.Topic;
-import ice.*;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriberQos;
+import ice.DeviceIdentity;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.QosProfiles;
-import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class PartitionAssignmentController {
+public class PartitionAssignmentController implements MDSConnectivityAdapter.MDSConnectivityListener {
 
     private static final Logger log = LoggerFactory.getLogger(PartitionAssignmentController.class);
 
@@ -122,157 +115,47 @@ public class PartitionAssignmentController {
         }
     }
 
+    private final MDSConnectivityAdapter connectivityAdapter;
+    private final DeviceIdentity deviceIdentity;
     private final Publisher publisher;
     private final Subscriber subscriber;
-    private final EventLoop eventLoop;
-    private final ReadCondition readCondition;
-    private final Topic msdConnectivityTopic;
-    private final ice.MDSConnectivityObjectiveDataReader mdsReader;
 
 
     public void start() {
-
-        final MDSConnectivityObjectiveSeq data_seq = new MDSConnectivityObjectiveSeq();
-        final SampleInfoSeq info_seq = new SampleInfoSeq();
-
-        eventLoop.addHandler(readCondition, new EventLoop.ConditionHandler() {
-
-            @Override
-            public void conditionChanged(Condition condition) {
-                try {
-                    mdsReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, readCondition);
-                    for (int i = 0; i < info_seq.size(); i++) {
-                        SampleInfo si = (SampleInfo) info_seq.get(i);
-                        if (si.valid_data) {
-                            MDSConnectivityObjective dco = (MDSConnectivityObjective) data_seq.get(i);
-                            log.info("got " + dco);
-                        }
-                    }
-
-                } catch (RETCODE_NO_DATA noData) {
-
-                } finally {
-                    mdsReader.return_loan(data_seq, info_seq);
-                }
-            }
-        });
+        connectivityAdapter.start();
+        connectivityAdapter.addConnectivityListener(this);
     }
 
     public void shutdown() {
-
-        eventLoop.removeHandler(readCondition);
-
-        DomainParticipant participant = subscriber.get_participant();
-
-        mdsReader.delete_readcondition(readCondition);
-        subscriber.delete_datareader(mdsReader);
-        participant.delete_topic(msdConnectivityTopic);
-        MDSConnectivityObjectiveTypeSupport.unregister_type(participant,MDSConnectivityObjectiveTypeSupport.get_type_name());
+        connectivityAdapter.removeConnectivityListener(this);
+        connectivityAdapter.shutdown();
     }
 
 
-    public PartitionAssignmentController(EventLoop eventLoop, Publisher publisher, Subscriber subscriber) {
-        this.publisher = publisher;
-        this.subscriber = subscriber;
-        this.eventLoop = eventLoop;
+    public PartitionAssignmentController(DeviceIdentity d, EventLoop e, Publisher p, Subscriber s) {
+        deviceIdentity = d;
+        publisher = p;
+        subscriber = s;
+        connectivityAdapter = new MDSConnectivityAdapter(e, publisher, subscriber);
 
-        DomainParticipant participant = subscriber.get_participant();
-
-        ice.MDSConnectivityObjectiveTypeSupport.register_type(participant, ice.MDSConnectivityObjectiveTypeSupport.get_type_name());
-
-        msdConnectivityTopic = (Topic) TopicUtil.lookupOrCreateTopic(participant,
-                                                                      ice.MDSConnectivityObjectiveTopic.VALUE,
-                                                                      ice.MDSConnectivityObjectiveTypeSupport.class);
-
-        mdsReader =
-                (ice.MDSConnectivityObjectiveDataReader) subscriber.create_datareader_with_profile(msdConnectivityTopic,
-                                                                                          QosProfiles.ice_library,
-                                                                                          QosProfiles.device_identity,
-                                                                                          null,
-                                                                                          StatusKind.STATUS_MASK_NONE);
-
-        readCondition = mdsReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
-                                                       ViewStateKind.ANY_VIEW_STATE,
-                                                       InstanceStateKind.ANY_INSTANCE_STATE);
     }
 
     /**
      * default ctor only useful to tests of disconnected functionality
      */
-    PartitionAssignmentController() {
+    PartitionAssignmentController(DeviceIdentity d) {
+        deviceIdentity = d;
         publisher = null;
         subscriber = null;
-        eventLoop = null;
-        readCondition = null;
-        msdConnectivityTopic = null;
-        mdsReader = null;
+        connectivityAdapter = null;
     }
-    /*
-        private final ReadCondition rc;
 
-
-        deviceConnectivity = new DeviceConnectivity();
-        deviceConnectivity.type = getConnectionType();
-        deviceConnectivity.state = ice.ConnectionState.Disconnected;
-
-        deviceConnectivityObjective = (DeviceConnectivityObjective) DeviceConnectivityObjective.create();
-        DeviceConnectivityObjectiveTypeSupport.register_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
-        deviceConnectivityObjectiveTopic = domainParticipant.create_topic(DeviceConnectivityObjectiveTopic.VALUE,
-                DeviceConnectivityObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        deviceConnectivityObjectiveReader = (DeviceConnectivityObjectiveDataReader) subscriber.create_datareader_with_profile(
-                deviceConnectivityObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-
-        rc = deviceConnectivityObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
-                InstanceStateKind.ANY_INSTANCE_STATE);
-
-        final DeviceConnectivityObjectiveSeq data_seq = new DeviceConnectivityObjectiveSeq();
-        final SampleInfoSeq info_seq = new SampleInfoSeq();
-
-        eventLoop.addHandler(rc, new EventLoop.ConditionHandler() {
-
-            @Override
-            public void conditionChanged(Condition condition) {
-                try {
-                    deviceConnectivityObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, rc);
-                    for (int i = 0; i < info_seq.size(); i++) {
-                        SampleInfo si = (SampleInfo) info_seq.get(i);
-                        if (si.valid_data) {
-                            DeviceConnectivityObjective dco = (DeviceConnectivityObjective) data_seq.get(i);
-                            if (deviceIdentity.unique_device_identifier.equals(dco.unique_device_identifier)) {
-
-                                if (dco.connected) {
-                                    log.info("Issuing connect for " + deviceIdentity.unique_device_identifier + " to " + dco.target);
-                                    connect(dco.target);
-
-                                } else {
-                                    log.info("Issuing disconnect for " + deviceIdentity.unique_device_identifier);
-                                    disconnect();
-                                }
-                            }
-                        }
-                    }
-
-                } catch (RETCODE_NO_DATA noData) {
-
-                } finally {
-                    deviceConnectivityObjectiveReader.return_loan(data_seq, info_seq);
-                }
-            }
-
-        });
-
-     */
-
-    /* stop
-
-        eventLoop.removeHandler(rc);
-
-        deviceConnectivityObjectiveReader.delete_readcondition(rc);
-        subscriber.delete_datareader(deviceConnectivityObjectiveReader);
-        domainParticipant.delete_topic(deviceConnectivityObjectiveTopic);
-        DeviceConnectivityObjectiveTypeSupport.unregister_type(domainParticipant, DeviceConnectivityObjectiveTypeSupport.get_type_name());
-
-
-
-     */
+    @Override
+    public void handleDataSampleEvent(MDSConnectivityAdapter.MDSConnectivityEvent evt) {
+        ice.MDSConnectivityObjective  o = (ice.MDSConnectivityObjective )evt.getSource();
+        if(deviceIdentity.unique_device_identifier.equals(o.unique_device_identifier)) {
+            String p[] = {o.partition};
+            setPartition(p);
+        }
+    }
 }

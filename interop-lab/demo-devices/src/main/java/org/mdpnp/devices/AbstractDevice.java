@@ -677,6 +677,9 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     }
 
     public AbstractDevice(int domainId, EventLoop eventLoop) {
+
+        deviceIdentity  = (new DeviceIdentityBuilder()).osName().softwareRev().withIcon(this, iconResourceName()).build();
+
         DomainParticipantQos pQos = new DomainParticipantQos();
         DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
         pQos.participant_name.name = "Device";
@@ -687,7 +690,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
         timestampFactory = new DomainClock(domainParticipant);
 
-        partitionAssignmentController = new PartitionAssignmentController(eventLoop, publisher, subscriber);
+        partitionAssignmentController = new PartitionAssignmentController(deviceIdentity, eventLoop, publisher, subscriber);
         partitionAssignmentController.start();
 
         DeviceIdentityTypeSupport.register_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
@@ -698,8 +701,6 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         if (null == deviceIdentityWriter) {
             throw new RuntimeException("deviceIdentityWriter not created");
         }
-
-        deviceIdentity  = (new DeviceIdentityBuilder()).osName().softwareRev().withIcon(this, iconResourceName()).build();
 
         NumericTypeSupport.register_type(domainParticipant, NumericTypeSupport.get_type_name());
         numericTopic = domainParticipant.create_topic(ice.NumericTopic.VALUE, NumericTypeSupport.get_type_name(),
