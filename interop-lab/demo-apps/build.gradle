@@ -12,7 +12,6 @@
  ******************************************************************************/
 apply plugin: 'java'
 apply plugin: 'application'
-apply plugin: 'launch4j'
 apply plugin: "me.champeau.jbake"
 apply from: 'javafx.plugin'
 
@@ -53,15 +52,6 @@ javafx {
     }
 }
 
-launch4j {
-    mainClassName = "org.mdpnp.apps.testapp.Main"
-    icon = "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.ico"
-    launch4jCmd = "$buildDir/launch4j-install/launch4j/launch4j"
-    customProcName = true
-    maxHeapSize = 128
-    opt = '-Dsun.java2d.noddraw=true'
-}
-
 jbake {
     srcDirName = 'src/docs'
     destDirName = 'docs'
@@ -76,128 +66,9 @@ buildscript {
     }
 
     dependencies {
-        classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
         classpath "me.champeau.gradle:jbake-gradle-plugin:0.2.1"
     }
 }
-
-def launch4jPath = 'http://downloads.sourceforge.net/project/launch4j/launch4j-3/3.6/'
-def launch4jName = ''
-switch(localOsName) {
-    case WINDOWS:
-    launch4jName = 'launch4j-3.6.1-win32.zip'
-    break
-    case MAC:
-    launch4jName = 'launch4j-3.6-macosx-x86-10.8.tgz'
-    break
-    case LINUX:
-    launch4jName = 'launch4j-3.6-linux.tgz'
-    break
-}
-
-// Create a directory for launch4j and appbundler to be stored semi-permanently
-// so we don't re-download after every clean
-task createBuildToolsDir << {
-    file("build-tools/").mkdir()
-}
-
-// Brings together dependencies for the benefit of the appbuilder
-task copyDeps(type: Copy, dependsOn: build) {
-    from configurations.runtime
-    from jar.archivePath
-    into "${buildDir}/deps"
-}
-
-// http://stackoverflow.com/questions/14474973/how-to-download-a-file-groovy
-def redirectFollowingDownload( String url, File f ) {
-    while( url ) {
-      new URL( url ).openConnection().with { conn ->
-        conn.instanceFollowRedirects = false
-        url = conn.getHeaderField( "Location" )
-        if( !url ) {
-          f.withOutputStream { out ->
-            conn.inputStream.with { inp ->
-              out << inp
-              inp.close()
-            }
-          }
-        }
-      }
-    }
-  }
-
-
-
-task downloadAppBundler(dependsOn: createBuildToolsDir) << {
-    File f = file("build-tools/appbundler-1.0.jar");
-    if(!f.exists() || f.length() == 0) {
-        println 'Downloading appbundler-1.0.jar'
-        redirectFollowingDownload('http://java.net/downloads/appbundler/appbundler-1.0.jar', f)
-    }
-    buildscript.dependencies.create(files('build-tools/appbundler-1.0.jar'))
-}
-
-task createApp(dependsOn: [downloadAppBundler, copyDeps]) << {
-    ant.taskdef(name: 'bundleapp', classname: 'com.oracle.appbundler.AppBundlerTask', classpath: file("build-tools/appbundler-1.0.jar"))
-    ant.bundleapp(outputdirectory: "$buildDir/", name: "MDPnP Demo Apps", displayName: "MDPnP Demo Apps", identifier: "org.mdpnp.apps.testapp.Main", mainclassname: "org.mdpnp.apps.testapp.Main", icon: "$projectDir/src/main/resources/org/mdpnp/apps/testapp/icon.icns", shortversion: '1.'+project.version) {
-        classpath(dir: "$buildDir/deps")
-        // Can optionally bundle a JRE but it adds a LOT of size
-        // runtime(dir: "$System.env.JAVA_HOME")
-    }
-    
-    // appbundler does not enable retina displays even though newer Oracle JVMs can support it
-    // so this adds the NSHighResolutionCapable key to the plist 
-    def plist = file("$buildDir/MDPnP Demo Apps.app/Contents/Info.plist")
-    def plist_hr = file("$buildDir/MDPnP Demo Apps.app/Contents/Info.plist.hr")
-    plist_hr.withWriter { out ->
-        plist.eachLine {
-            // Continue if it is not the version line
-            if (it.contains('</dict>')) {
-                out.writeLine('<key>NSHighResolutionCapable</key>')
-                out.writeLine('<true/>')
-            }
-            out.writeLine(it)
-        }
-    }
-    plist.delete()
-    plist_hr.renameTo(plist)
-}
-//createApp.outputs.dir("$buildDir/MDPnP Demo Apps.app")
-
-if(localOsName == MAC) {
-    task createSignedApp(type:Exec, dependsOn: createApp) {
-        workingDir "$buildDir/"
-        commandLine 'codesign', '--deep', '-f', '-s', 'Mac Developer: JEFFREY PLOURDE', 'MDPnP Demo Apps.app/'
-    }
-    task createSignedPkg(type:Exec, dependsOn: createSignedApp) {
-        workingDir "$buildDir/"
-        commandLine 'productbuild', '--component', 'MDPnP Demo Apps.app', '/Applications', '--sign', 'Developer ID Installer: JEFFREY PLOURDE', '--identifier', 'org.mdpnp.apps.testapp.Main', '--version', project.version, 'demo-apps-'+project.version+'.pkg'
-    }
-
-    task verifySignedApp(type:Exec, dependsOn: createSignedApp) {
-        workingDir "$buildDir/"
-        commandLine 'codesign', '-v', '-v', 'MDPnP Demo Apps.app'
-    }
-
-    task verifySignedPkg(type:Exec, dependsOn: createSignedPkg) {
-        workingDir "$buildDir/"
-        commandLine 'spctl', '--verbose', '--assess', '--type', 'install', 'demo-apps-'+project.version+'.pkg'
-    }
-}
-task downloadLaunch4j(dependsOn: createBuildToolsDir) << {
-    def f = file("build-tools/"+launch4jName)
-    if(!f.exists()) {
-        println 'Downloading ' + launch4jPath + launch4jName
-        new URL(launch4jPath+launch4jName).withInputStream{ i -> f.withOutputStream{ it << i }}
-    }
-}
-
-task explodeLaunch4j(dependsOn: downloadLaunch4j, type: Copy) {
-    from launch4jName.endsWith("tgz") ? tarTree("build-tools/"+launch4jName) : zipTree("build-tools/"+launch4jName)
-    into "$buildDir/launch4j-install/"
-}
-
-createExe.dependsOn(explodeLaunch4j)
 
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
@@ -213,8 +84,6 @@ ext {
 }
 
 manifest { attributes "Main-Class" : mainClassName }
-
-def JOGL_version = '2.2.4'
 
 dependencies {
     compile project(':interop-lab:demo-devices')
@@ -248,14 +117,7 @@ dependencies {
     compile group: 'org.hsqldb', name: 'hsqldb', version: '2.3.2'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
-
 }
-
-task createZip(type: Zip) {
-    classifier = distZip.classifier
-    from project.buildDir.getAbsolutePath()+File.separator+launch4j.outputDir
-}
-createZip.dependsOn(createExe)
 
 jar {
     manifest {
@@ -263,12 +125,5 @@ jar {
         "Implementation-Title": project.name, "Implementation-Version": project.version, "Build-Date": buildDate, "Build-Time": buildTime,
         "Specification-Title": project.name, "Specification-Version": project.version, "Implementation-Vendor": project.group,
         "Specification-Vendor": project.group, "Build-Number": BUILD_NUMBER)
-
     }
 }
-
-task publishPatients(type:JavaExec) {
-    main = "org.mdpnp.apps.testapp.PublishPatients"
-    args = ['15','patients.txt']
-    classpath = sourceSets.main.runtimeClasspath
- }
