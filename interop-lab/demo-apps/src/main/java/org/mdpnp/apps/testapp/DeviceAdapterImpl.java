@@ -105,6 +105,9 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             final AbstractApplicationContext context = config.createContext("DriverContext.xml");
 
             GUIAdapter da =  new GUIAdapter(ddp, context);
+            
+            da.setAddress(config.getAddress());
+            
             return da;
         }
     }
