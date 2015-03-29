@@ -72,7 +72,7 @@ public class DemoSerialIntellivue extends AbstractDemoIntellivue {
             connect(serialSide, networkSide);
             return true;
         } catch (IOException e) {
-            state(ConnectionState.Disconnected, "error initializing RS-232 to UDP " + e.getMessage());
+            state(ConnectionState.Terminal, "error initializing RS-232 to UDP " + e.getMessage());
             log.error("error initializing RS-232 to UDP", e);
             return false;
         }

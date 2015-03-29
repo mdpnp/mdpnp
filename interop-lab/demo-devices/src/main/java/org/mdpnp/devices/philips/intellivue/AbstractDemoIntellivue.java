@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
+import org.mdpnp.devices.io.util.StateMachine;
 import org.mdpnp.devices.net.NetworkLoop;
 import org.mdpnp.devices.net.TaskQueue;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataResult;
@@ -160,6 +161,18 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     private long lastKeepAlive = 0L;
     private long lastMessageSentTime = 0L;
     
+    
+    private enum DisconnectState {
+        Initial,
+        Disconnecting,
+        Disconnected
+    };
+    
+    private final StateMachine<DisconnectState> disconnectState = new StateMachine<DisconnectState>(
+            new DisconnectState[][] { {DisconnectState.Initial, DisconnectState.Disconnecting},
+                                      {DisconnectState.Disconnecting, DisconnectState.Disconnected} }, 
+            DisconnectState.Initial, "");
+    
     private static final long PERIOD = 2000L;
     private ScheduledFuture<?> emitFastData;
 
@@ -191,15 +204,17 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             }
             break;
 
-        case ice.ConnectionState._Disconnecting:
+        case ice.ConnectionState._Terminal:
             // In the disconnecting state we are emitting association finish
             // requests
-            if (now - lastFinishRequest >= FINISH_REQUEST_INTERVAL) {
-                try {
-                    myIntellivue.send(new AssociationFinishImpl());
-                    lastFinishRequest = now;
-                } catch (IOException e1) {
-                    log.error("sending association finish", e1);
+            if(DisconnectState.Disconnecting.equals(disconnectState.getState())) {
+                if (now - lastFinishRequest >= FINISH_REQUEST_INTERVAL) {
+                    try {
+                        myIntellivue.send(new AssociationFinishImpl());
+                        lastFinishRequest = now;
+                    } catch (IOException e1) {
+                        log.error("sending association finish", e1);
+                    }
                 }
             }
             break;
@@ -348,8 +363,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             case ice.ConnectionState._Connected:
                 state(ice.ConnectionState.Negotiating, "reconnecting after active association is later refused");
                 break;
-            case ice.ConnectionState._Disconnecting:
-                state(ice.ConnectionState.Disconnected, "association refused!");
+            case ice.ConnectionState._Terminal:
+                if(DisconnectState.Disconnecting.equals(disconnectState.getState())) {
+                    disconnectState.transitionIfLegal(DisconnectState.Disconnected, "associating refused when disconnecting");
+                }
                 break;
             case ice.ConnectionState._Negotiating:
                 setConnectionInfo("association refused, retrying...");
@@ -365,8 +382,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             case ice.ConnectionState._Connected:
                 state(ice.ConnectionState.Negotiating, "reconnecting after active association is later aborted");
                 break;
-            case ice.ConnectionState._Disconnecting:
-                state(ice.ConnectionState.Disconnected, "association aborted!");
+            case ice.ConnectionState._Terminal:
+                if(DisconnectState.Disconnecting.equals(disconnectState.getState())) {
+                    disconnectState.transitionIfLegal(DisconnectState.Disconnected, "association aborted!");
+                }
                 break;
             }
             super.handle(sockaddr, message);
@@ -378,8 +397,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             case ice.ConnectionState._Connected:
                 state(ice.ConnectionState.Negotiating, "unexpected disconnect message");
                 break;
-            case ice.ConnectionState._Disconnecting:
-                state(ice.ConnectionState.Disconnected, "association disconnected");
+            case ice.ConnectionState._Terminal:
+                if(DisconnectState.Disconnecting.equals(disconnectState.getState())) {
+                    disconnectState.transitionIfLegal(DisconnectState.Disconnected, "association disconnected");
+                }
                 break;
             }
             super.handle(sockaddr, message);
@@ -392,8 +413,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             case ice.ConnectionState._Connected:
                 state(ice.ConnectionState.Negotiating, "unexpected disconnect message");
                 break;
-            case ice.ConnectionState._Disconnecting:
-                state(ice.ConnectionState.Disconnected, "association disconnected");
+            case ice.ConnectionState._Terminal:
+                if(DisconnectState.Disconnecting.equals(disconnectState.getState())) {
+                    disconnectState.transitionIfLegal(DisconnectState.Disconnected, "association disconnected unexpectedly");
+                }
                 break;
             }
         }
@@ -1231,7 +1254,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
     public void connect(InetSocketAddress remote, InetSocketAddress local) throws IOException {
         switch (stateMachine.getState().ordinal()) {
-        case ice.ConnectionState._Disconnected:
+        case ice.ConnectionState._Initial:
             state(ice.ConnectionState.Connecting, "trying " + remote.getAddress().getHostAddress() + ":" + remote.getPort());
             break;
         case ice.ConnectionState._Connecting:
@@ -1257,17 +1280,19 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     @Override
     public void disconnect() {
         synchronized (stateMachine) {
-            if (ice.ConnectionState.Disconnected.equals(stateMachine.getState())) {
+            if (ice.ConnectionState.Terminal.equals(stateMachine.getState())) {
                 return;
             }
-            if (!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
-                state(ice.ConnectionState.Disconnected, "");
-                return;
-            } else {
-                state(ice.ConnectionState.Disconnecting, "disassociating");
-            }
+            stateMachine.transitionIfLegal(ice.ConnectionState.Terminal, "disconnect()");
         }
-        if (!stateMachine.wait(ice.ConnectionState.Disconnected, 5000L)) {
+        if (!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
+            disconnectState.transitionIfLegal(DisconnectState.Disconnecting, "");
+            disconnectState.transitionIfLegal(DisconnectState.Disconnected, "");
+            return;
+        } else {
+            disconnectState.transitionIfLegal(DisconnectState.Disconnecting, "");
+        }
+        if (!disconnectState.wait(DisconnectState.Disconnected, 5000L)) {
             log.trace("No disconnect received in response to finish");
         }
 

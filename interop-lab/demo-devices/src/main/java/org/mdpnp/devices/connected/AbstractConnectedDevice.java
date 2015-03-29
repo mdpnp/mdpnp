@@ -35,7 +35,7 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 
 
     protected final StateMachine<ice.ConnectionState> stateMachine = new StateMachine<ice.ConnectionState>(legalTransitions,
-            ice.ConnectionState.Disconnected, "initial state") {
+            ice.ConnectionState.Initial, "initial state") {
         @Override
         public void emit(ice.ConnectionState newState, ice.ConnectionState oldState, String transitionNote) {
             stateChanging(newState, oldState, transitionNote);
@@ -95,7 +95,7 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 
         deviceConnectivity = new DeviceConnectivity();
         deviceConnectivity.type = getConnectionType();
-        deviceConnectivity.state = ice.ConnectionState.Disconnected;
+        deviceConnectivity.state = getState();
 
     }
 
@@ -111,14 +111,9 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
 
     private static final ice.ConnectionState[][] legalTransitions = new ice.ConnectionState[][] {
             // Normal "flow"
-            // A "connect" was requested
-            { ice.ConnectionState.Disconnected, ice.ConnectionState.Connecting },
-            // A "disconnect" was requested from the Connected state
-            { ice.ConnectionState.Connected, ice.ConnectionState.Disconnecting },
-            // A "disconnect" was requested from the Connecting state
-            { ice.ConnectionState.Connecting, ice.ConnectionState.Disconnecting },
-            // A "disconnect" was requested from the Negotiating state
-            { ice.ConnectionState.Negotiating, ice.ConnectionState.Disconnecting },
+            // A "connect" was requested, from this transition on the device adapter will
+            // attempt to maintain / re-establish connectivity
+            { ice.ConnectionState.Initial, ice.ConnectionState.Connecting },
             // Connection was established
             { ice.ConnectionState.Connecting, ice.ConnectionState.Negotiating },
             // Connection still open but no active session (silence on the
@@ -126,15 +121,15 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
             { ice.ConnectionState.Connected, ice.ConnectionState.Negotiating },
             // Negotiation was successful
             { ice.ConnectionState.Negotiating, ice.ConnectionState.Connected },
-            // Disconnection was successful
-            { ice.ConnectionState.Disconnecting, ice.ConnectionState.Disconnected },
-            // Exception pathways
+            // A lack of an open connection while trying to attempt to negotiate
+            { ice.ConnectionState.Negotiating, ice.ConnectionState.Connecting },
+            // Explicit disconnect has been invoked, the Terminal state is Terminal
             // A fatal error occurred in the Negotiating state
-            { ice.ConnectionState.Negotiating, ice.ConnectionState.Disconnected },
+            { ice.ConnectionState.Negotiating, ice.ConnectionState.Terminal },
             // A fatal error occurred in the Connecting state
-            { ice.ConnectionState.Connecting, ice.ConnectionState.Disconnected },
+            { ice.ConnectionState.Connecting, ice.ConnectionState.Terminal },
             // A fatal error occurred in the Connected state
-            { ice.ConnectionState.Connected, ice.ConnectionState.Disconnected },
+            { ice.ConnectionState.Connected, ice.ConnectionState.Terminal },
 
     };
 

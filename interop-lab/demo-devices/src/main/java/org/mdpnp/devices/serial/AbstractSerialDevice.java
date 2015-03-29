@@ -154,15 +154,15 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
         log.trace("disconnect requested");
         synchronized (stateMachine) {
             ice.ConnectionState state = getState();
-            if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
+            if (ice.ConnectionState.Terminal.equals(state)) {
                 log.trace("nothing to do getState()=" + state);
             } else if (ice.ConnectionState.Connecting.equals(state)) {
-                log.trace("getState()=" + state + " entering Disconnecting");
-                stateMachine.transitionIfLegal(ice.ConnectionState.Disconnecting, "disconnect requested from Connecting state");
+                log.trace("getState()=" + state + " entering Terminal");
+                stateMachine.transitionIfLegal(ice.ConnectionState.Terminal, "disconnect requested from Connecting state");
                 shouldCancel = true;
             } else if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Negotiating.equals(state)) {
-                log.trace("getState()=" + state + " entering Disconnecting");
-                stateMachine.transitionIfLegal(ice.ConnectionState.Disconnecting, "disconnect requested from Connected or Negotiating states");
+                log.trace("getState()=" + state + " entering Terminal");
+                stateMachine.transitionIfLegal(ice.ConnectionState.Terminal, "disconnect requested from Connected or Negotiating states");
                 shouldClose = true;
             }
         }
@@ -213,11 +213,15 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
         };
     };
 
+    
+    /**
+     * Connect to the specified address.  If the connection is lost attempts will be made
+     * to re-establish it until disconnect() is called.
+     */
     @Override
-    public boolean connect(String str) {
-        String[] commaSeparated = str.split(",");
+    public boolean connect(String address) {
+        String[] commaSeparated = address.split(",");
         int countSerialPorts = Math.min(commaSeparated.length, serialProvider.length);
-        boolean ok = true;
         synchronized(this) {
             ice.ConnectionState state = getState();
             for(int idx = 0; idx < countSerialPorts; idx++) {
@@ -226,25 +230,22 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
                 
                 // TODO Unroll this case; i'm in a hurry at the moment
                 if(idx == 0) {
-                    if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Negotiating.equals(state)
-                            || ice.ConnectionState.Connecting.equals(state)) {
-                        log.warn("will not connect("+idx+") where Connected, Connecting, or Negotiating already");
-                    } else if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
+                    if(ice.ConnectionState.Terminal.equals(state)) {
+                        log.warn("connect("+address+") called in Terminal state");
+                        return false;
+                    }
+                    if(ice.ConnectionState.Initial.equals(state)) {
+                        stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting, "connect requested from Disconnected or Disconnecting states");
                         connect(idx);
+                    } else {
+                        log.warn("will not connect("+address+") where state="+state);
                     }
                 } else {
                     connect(idx);
                 }
-
-            }
-            if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Negotiating.equals(state)
-                    || ice.ConnectionState.Connecting.equals(state)) {
-            } else if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
-                stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting, "connect requested from Disconnected or Disconnecting states");
-            }
-            
+            }            
         }
-        return ok;
+        return true;
     }
     
     protected void connect(int idx) {
@@ -286,7 +287,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
             previousAttempt[idx] = now;
             try {
                 log.trace("Invoking SerialProvider("+idx+").connect(" + portIdentifier[idx] + ")");
-                socket = getSerialProvider(idx).connect(portIdentifier[idx], 2000L);
+                socket = getSerialProvider(idx).connect(portIdentifier[idx], 1000L);
     
                 if (null == socket) {
                     log.trace("socket is null after connect");
@@ -324,12 +325,9 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
                 AbstractSerialDevice.this.timeAwareInputStream[idx] = null;
     
                 if(idx == 0) {
-                    stateMachine.transitionIfLegal(ice.ConnectionState.Disconnected, "serial port reached EOF");
-                    if (ice.ConnectionState.Connecting.equals(priorState) || ice.ConnectionState.Connected.equals(priorState)
-                            || ice.ConnectionState.Negotiating.equals(priorState)) {
-                        log.trace("process thread died unexpectedly, trying to reconnect");
-                        AbstractSerialDevice.this.connect(idx);
-                    }
+                    stateMachine.transitionIfLegal(ice.ConnectionState.Connecting, "serial port reached EOF, reconnecting...");
+                    log.trace("process thread died unexpectedly, trying to reconnect");
+                    AbstractSerialDevice.this.connect(idx);
                 } else {
                     AbstractSerialDevice.this.connect(idx);
                 }

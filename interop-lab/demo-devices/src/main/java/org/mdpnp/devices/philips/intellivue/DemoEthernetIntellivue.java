@@ -49,7 +49,8 @@ public class DemoEthernetIntellivue extends AbstractDemoIntellivue {
                 String[] hosts = listenForConnectIndication();
 
                 if (null == hosts) {
-                    state(ice.ConnectionState.Disconnected, "no broadcast addresses");
+                    log.error("No address was specified and no broadcast addresses can be found, this adapter cannot function");
+                    state(ice.ConnectionState.Terminal, "no broadcast addresses");
                 } else {
                     state(ice.ConnectionState.Connecting, "listening  on " + Arrays.toString(hosts));
                 }

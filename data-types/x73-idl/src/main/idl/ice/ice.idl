@@ -169,6 +169,8 @@ module ice {
    * states of the further connection to a device.
    */
   enum ConnectionState {
+    /** Connection is not yet initialized **/
+    Initial,
     /** Connection is initialized and data is flowing normally */
     Connected,
     /** Connection has been physically made (perhaps an open socket or serial port) but 
@@ -177,10 +179,8 @@ module ice {
     /** Information exchange has commenced to establish the connection.  Some devices may
         skip this state. */
     Negotiating,
-    /** Disconnection has been requested and is being processed. */
-    Disconnecting,
-    /** The connection is not active. */
-    Disconnected
+    /** Connection has been shut down in anticipation of the termination of the device adapter */
+    Terminal
   };
 
   /**

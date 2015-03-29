@@ -248,7 +248,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
                     AbstractConnectedDevice cDevice = (AbstractConnectedDevice) device;
                     update("Ask the device to disconnect from the ICE", 50);
                     cDevice.disconnect();
-                    if (!cDevice.awaitState(ice.ConnectionState.Disconnected, 5000L)) {
+                    if (!cDevice.awaitState(ice.ConnectionState.Terminal, 5000L)) {
                         log.warn("ConnectedDevice ended in State:" + cDevice.getState());
                     }
                     metrics.stop("disconnect", tm);

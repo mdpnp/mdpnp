@@ -27,8 +27,6 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.infrastructure.Time_t;
-
 public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice implements GlobalSimulationObjectiveListener {
     protected Throwable t;
 
@@ -70,14 +68,9 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
 
     @Override
     public void disconnect() {
-        ice.ConnectionState state = getState();
-        if (ice.ConnectionState.Disconnected.equals(state) || ice.ConnectionState.Disconnecting.equals(state)) {
-        } else {
-            if (!stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnecting, 1000L, "disconnect requested")) {
-                throw new RuntimeException("Unable to enter Disconnecting State");
-            }
-            if (!stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnected, 1000L, "disconnect requested")) {
-                throw new RuntimeException("Unable to enter Disconnected State");
+        if(!ice.ConnectionState.Terminal.equals(getState())) {
+            if (!stateMachine.transitionWhenLegal(ice.ConnectionState.Terminal, 2000L, "disconnect requested")) {
+                throw new RuntimeException("Unable to enter Terminal State");
             }
         }
     }
