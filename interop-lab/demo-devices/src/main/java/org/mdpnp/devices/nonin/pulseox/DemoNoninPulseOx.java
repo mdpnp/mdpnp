@@ -70,7 +70,10 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         writeDeviceIdentity();
 
     }
-
+    
+    protected Integer[] plethBuffer = new Integer[NoninPulseOx.FREQUENCY];
+    protected int plethBufferCount = 0;
+    
     protected static final byte[][] WRISTOX = new byte[][] { {0x18, 0x05, 0x09} };
     protected static final byte[][] ONYX = new byte[][] {{ (byte) 0x9E, 0x09 }, {(byte)0x93, 0x06} };
 
@@ -90,13 +93,14 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
     protected void stateChanged(ConnectionState newState, ConnectionState oldState, String transitionNote) {
         super.stateChanged(newState, oldState, transitionNote);
         if (ConnectionState.Connected.equals(oldState) && !ConnectionState.Connected.equals(newState)) {
+            plethBufferCount = 0;
             failAll();
         }
     }
 
     private class MyNoninPulseOx extends NoninPulseOx {
 
-        private final DeviceClock deviceClock;
+        private final DemoNoninPulseOxClock deviceClock;
 
         public MyNoninPulseOx(InputStream in, OutputStream out) {
             super(in, out);
@@ -121,14 +125,12 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             case (byte) 0xF3:
                 for(byte[] WO : WRISTOX) {
                     if (!found && DemoNoninPulseOx.equals(source, off, len, WO, 0, WO.length)) {
-                        System.err.println("THIS IS A WRIST OX?");
                         found = true;
                         iconOrBlank("WristOx2", "3150.png");
                     }
                 }
                 for(byte[] ON : ONYX) {
                     if(!found && DemoNoninPulseOx.equals(source, off, len, ON, 0, ON.length)) {
-                        System.err.println("THIS IS An ONYX?");
                         found = true;
                         iconOrBlank("Onyx II", "9650.png");
                     }
@@ -152,19 +154,13 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             super.recvAcknowledged(success);
             received(null, success);
         }
-
+        
         @Override
         protected synchronized void receiveDateTime(Date date) {
-            super.receiveDateTime(date);
+            deviceClock.setCurrent(date);
             received(Phase.GetTime, true);
         }
 
-        private Integer[] plethBuffer = new Integer[Packet.FRAMES];
-        
-        private long lastUpdate3 = 0L;
-
-        private static final long MS_PER_PACKET3 = (long)( Packet.FRAMES * NoninPulseOx.MILLISECONDS_PER_SAMPLE );
-        
         @Override
         public void receivePacket(Packet currentPacket) {
             // Changed because data will begin flowing even when negotiation is
@@ -173,15 +169,21 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             // reportConnected();
 
             for (int i = 0; i < Packet.FRAMES; i++) {
-                plethBuffer[i] = currentPacket.getPleth(i);
+                plethBuffer[plethBufferCount] = currentPacket.getPleth(i);
+                plethBufferCount = ++plethBufferCount%FREQUENCY;
             }
 
             DeviceClock.Reading timeStamp = deviceClock.instant();
-
-            pleth = sampleArraySample(pleth, plethBuffer,
-                    rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
-                    rosetta.MDC_DIM_DIMLESS.VALUE,
-                    NoninPulseOx.FREQUENCY, timeStamp);
+            
+            if(plethBufferCount == 0) {
+                // Packets emit at 3Hz which are difficult to align to wall clock times
+                // By emitting 3 packets (75 frames) per second we can create more consistent timestamps
+                
+                pleth = sampleArraySample(pleth, plethBuffer,
+                        rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
+                        rosetta.MDC_DIM_DIMLESS.VALUE,
+                        NoninPulseOx.FREQUENCY, timeStamp);
+            }
 
             Status status = getCurrentPacket().getCurrentStatus();
             Perfusion perfusion = perfusion(status);
@@ -429,11 +431,9 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
     static class DemoNoninPulseOxClock implements DeviceClock {
 
-        private static final long MS_PER_PACKET = (long)( Packet.FRAMES * NoninPulseOx.MILLISECONDS_PER_SAMPLE );
-
-        private long lastUpdate = 0L;
-
         private final DeviceClock systemClock;
+        private long deviceClockTimeMsSinceEpoch = 0L;
+        private long localNanoTimeAtDeviceClockTime = 0L;
 
         public DemoNoninPulseOxClock(DeviceClock ref) {
             systemClock = ref;
@@ -441,26 +441,16 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
 
         @Override
         public Reading instant() {
+            long nanoTime = System.nanoTime();
+            long nanoTimeElapsed = nanoTime - localNanoTimeAtDeviceClockTime;
+            long deviceTime = deviceClockTimeMsSinceEpoch + nanoTimeElapsed / 1000000L;
 
-            // Complex way of finding the nearest millisecond on an even second
-            // or 333ms or 666ms into the second
-            long now = System.currentTimeMillis();
-            long nearest_second = 1000L * (now / 1000L);
-            long mod = (now-nearest_second) / MS_PER_PACKET;
-            now = nearest_second + mod * MS_PER_PACKET;
-            if((now%1000L)==999L) {
-                now+=1L;
-            }
-
-            if(now <= lastUpdate) {
-                now = lastUpdate + MS_PER_PACKET;
-                if((now%1000L)==999L) {
-                    now+=1L;
-                }
-            }
-            lastUpdate = now;
-
-            return new CombinedReading(systemClock.instant(), new DeviceClock.ReadingImpl(lastUpdate));
+            return new CombinedReading(systemClock.instant(), new DeviceClock.ReadingImpl(deviceTime));
+        }
+        
+        public void setCurrent(Date date) {
+            localNanoTimeAtDeviceClockTime = System.nanoTime();
+            deviceClockTimeMsSinceEpoch = date.getTime();
         }
     }
 
