@@ -28,6 +28,9 @@ public class Chart implements ListChangeListener<Value> {
     @FXML Button removeButton;
     @FXML BorderPane main;
     
+    // TODO externalize this setting
+    private static final int MAX_POINTS = 25000;
+    
     private Vital vital;
     
     public Vital getVital() {
@@ -101,13 +104,17 @@ public class Chart implements ListChangeListener<Value> {
                 values.add(vsl);
                 
                 final ObservableList<XYChart.Data<Date, Number>> data = FXCollections.observableArrayList();
-                vsl.s = new XYChart.Series<>(vsl.v.getDevice().getMakeAndModel(), data);
+                vsl.s = new XYChart.Series<>(data);
+                vsl.s.nameProperty().bind(vsl.v.getDevice().makeAndModelProperty());
                 series.add(vsl.s);
                 vsl.v.timestampProperty().addListener(vsl.l = new ChangeListener<Number>() {
 
                     @Override
                     public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                         if(newValue != null) {
+                            if(data.size()>MAX_POINTS) {
+                                data.remove(0);
+                            }
                             data.add(new XYChart.Data<>(new Date(newValue.longValue()), vsl.v.getValue()));
                         }
                     }
