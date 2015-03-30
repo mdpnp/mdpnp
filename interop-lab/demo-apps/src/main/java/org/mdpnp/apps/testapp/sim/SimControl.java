@@ -41,7 +41,7 @@ public class SimControl {
 
     @FXML protected GridPane main;
     
-    private static final class NumericValue {
+    static final class NumericValue {
         public final String name, metricId;
         public final float lowerBound, upperBound, initialValue, increment;
 
