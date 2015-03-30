@@ -388,12 +388,47 @@ module ice {
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist InfusionStatus unique_device_identifier
   const string InfusionStatusTopic = "InfusionStatus";
+  
+  /**
+   * Type of alarm limit for the settings of Alarms 
+   */
+  enum LimitType {
+    low_limit, 
+  	high_limit
+  };
+  
+  /**
+  * Priority of an alarm 
+  */
+  enum AlarmPriority{
+  	low,
+  	medium,
+  	high
+  }; 
+  
+  
+  /**
+  * An alarm limit for a particular metric on a device
+  *
+  * Stability: 1 - Experimental
+  */
+  struct AlarmLimit {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    MetricIdentifier metric_id; //@key
+    LimitType limit_type; //@key
+    //AlarmPriority alarm_priority; //
+    UnitIdentifier unit_identifier;
+    float value;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist AlarmLimit unique_device_identifier metric_id alarm_limit_type
+  const string AlarmLimitTopic = "AlarmLimit";
 
   /**
    * The current alarm thresholds for a particular metric on a particular device.
    *
    * Stability: 1 - Experimental
    */
+  /** AlarmSettings is no longer used
   struct AlarmSettings {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
@@ -401,14 +436,25 @@ module ice {
     float upper;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist AlarmSettings unique_device_identifier metric_id
-  const string AlarmSettingsTopic = "AlarmSettings";
+  const string AlarmSettingsTopic = "AlarmSettings"; 
+  */
 
-  /**
+/**
    * This objective is published by a Supervisory participant to request that all 
-   * participants use the specified thresholds for alarms on a particular metric.
+   * participants use the specified thresholds (Limits) for alarms on a particular metric.
    * 
    * Stability: 1 - Experimental
    */
+  struct GlobalAlarmLimitObjective {
+    MetricIdentifier metric_id; //@key
+    LimitType limit_type; //@key
+    UnitIdentifier unit_identifier;
+    float value;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist GlobalAlarmLimitObjective metric_id alarm_limit_threshold
+  const string GlobalAlarmLimitObjectiveTopic = "GlobalAlarmLimitObjective";
+  
+  /** AlarmSettings is no longer used
   struct GlobalAlarmSettingsObjective {
     MetricIdentifier metric_id; //@key
     float lower;
@@ -416,17 +462,29 @@ module ice {
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist GlobalAlarmSettingsObjective metric_id
   const string GlobalAlarmSettingsObjectiveTopic = "GlobalAlarmSettingsObjective";
+  */
 
-  /**
+ /**
    * This objective is published by a device to acknowledge that it has received the 
-   * global alarm settings objective for a metric. Eventually its AlarmSettings should 
-   * indicate that the change has been made. So the three AlarmSettingsXXX topics form 
+   * global alarm limit objective for a metric. Eventually its AlarmLimit should 
+   * indicate that the change has been made. So the are three AlarmLimitXXX topics form 
    * an objective-state form of command and control. At any time any participant can see
    * the current state of request, acknowledgment of the request, and implementation of 
    * the requested change.
    * 
    * Stability: 1 - Experimental
    */
+  struct LocalAlarmLimitObjective {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    MetricIdentifier metric_id; //@key
+    LimitType limit_type; //@key
+    UnitIdentifier unit_identifier;
+    float value;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist LocalAlarmLimitObjective unique_device_identifier metric_id alarm_limit_type
+  const string LocalAlarmLimitObjectiveTopic = "LocalAlarmLimitObjective";
+  
+  /** AlarmSettings is no longer used
   struct LocalAlarmSettingsObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
@@ -435,6 +493,7 @@ module ice {
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist LocalAlarmSettingsObjective unique_device_identifier metric_id
   const string LocalAlarmSettingsObjectiveTopic = "LocalAlarmSettingsObjective";
+*/
 
   /**
    * In the current iteration this is status text associated with the device globally. 

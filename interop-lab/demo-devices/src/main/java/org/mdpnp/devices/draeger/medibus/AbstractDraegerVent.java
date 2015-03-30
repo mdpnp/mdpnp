@@ -55,7 +55,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected Map<Object, InstanceHolder<ice.Numeric>> settingUpdates = new HashMap<Object, InstanceHolder<ice.Numeric>>();
     protected Map<Object, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Object, InstanceHolder<ice.Numeric>>();
     protected Map<Object, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Object, InstanceHolder<ice.SampleArray>>();
-    protected Map<Object, InstanceHolder<ice.AlarmSettings>> alarmSettingsUpdates = new HashMap<Object, InstanceHolder<ice.AlarmSettings>>();
+    protected Map<Object, InstanceHolder<ice.AlarmLimit>> alarmLimitUpdates = new HashMap<Object, InstanceHolder<ice.AlarmLimit>>();
 
     protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate, startExpiratoryCycleUpdate;
 
@@ -174,9 +174,9 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     @Override
-    protected void unregisterAllAlarmSettingsInstances() {
-        super.unregisterAllAlarmSettingsInstances();
-        alarmSettingsUpdates.clear();
+    protected void unregisterAllAlarmLimitInstances() {
+        super.unregisterAllAlarmLimitInstances();
+        alarmLimitUpdates.clear();
     }
 
     protected void processCorrupt() {
@@ -339,10 +339,11 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     } catch (NumberFormatException nfe) {
                         log.error("Bad number format for low alarm " + d.code + " " + nfe.getMessage());
                     }
-                    InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
+                    InstanceHolder<ice.AlarmLimit> a = alarmLimitUpdates.get(d.code);//XXX is d.code enough to ID the alarm limit?
                     String metric = numerics.get(d.code);
                     metric = metricOrCode(metric, d.code, "ALARM_LIMIT_CP"+codepage);
-                    alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, f, null == a ? Float.MAX_VALUE : a.data.upper, metric));
+                    //XXX is d.code enough to uniquely ID an alarm limit or should I use d.code+"_"+ice.limit_type.low_limit
+                    alarmLimitUpdates.put(d.code, alarmLimitSample(a, a.data.unit_identifier, f, metric, a.data.limit_type.low_limit));
                 }
             }
         }
@@ -357,10 +358,11 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     } catch (NumberFormatException nfe) {
                         log.error("Bad number format for high alarm " + d.code + " " + nfe.getMessage());
                     }
-                    InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
+                    InstanceHolder<ice.AlarmLimit> a = alarmLimitUpdates.get(d.code);//XXX is d.code enough to ID the alarm limit?
                     String metric = numerics.get(d.code);
                     metric = metricOrCode(metric, d.code, "ALARM_LIMIT_CP"+codepage);
-                    alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, null == a ? Float.NEGATIVE_INFINITY : a.data.lower, f, metric));
+                    //XXX is d.code enough to uniquely ID an alarm limit or should I use d.code+"_"+ice.limit_type.high_limit
+                    alarmLimitUpdates.put(d.code, alarmLimitSample(a, a.data.unit_identifier, f, metric, a.data.limit_type.high_limit));
                 }
             }
         }

@@ -69,12 +69,13 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
 
 
     protected Map<String, InstanceHolder<ice.Numeric>> numericInstances = new HashMap<String, InstanceHolder<ice.Numeric>>();
-    protected Map<String, InstanceHolder<ice.AlarmSettings>> alarmSettingsInstances = new HashMap<String, InstanceHolder<ice.AlarmSettings>>();
+//    protected Map<String, InstanceHolder<ice.AlarmSettings>> alarmSettingsInstances = new HashMap<String, InstanceHolder<ice.AlarmSettings>>();
+    protected Map<String, InstanceHolder<ice.AlarmLimit>> alarmLimitInstances = new HashMap<String, InstanceHolder<ice.AlarmLimit>>();
 
     @Override
-    protected void unregisterAllAlarmSettingsInstances() {
-        alarmSettingsInstances.clear();
-        super.unregisterAllAlarmSettingsInstances();
+    protected void unregisterAllAlarmLimitInstances() {
+        alarmLimitInstances.clear();
+        super.unregisterAllAlarmLimitInstances();
     }
 
     @Override
@@ -175,21 +176,22 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
             }
         }
         
-        @Override
-        public void receiveAlarmSetting(String name, String lower, String upper) {
+        @Override 
+        public void receiveAlarmLimit(String metricName, PB840.Units unitID, String value, String limitType) {
             try {
                 // TODO using FLOAT_MIN, FLOAT_MAX as reserved values because
-                // otherwise cannot publish AlarmSettings
+                // otherwise cannot publish AlarmSettings (now limits)
                 // with only one boundary condition
-                alarmSettingsInstances.put(
-                        name,
-                        alarmSettingsSample(alarmSettingsInstances.get(name),
-                                parseFloat(lower, null),
-                                parseFloat(upper, null),
-                                name));
+            	ice.LimitType limit = limitType.equals(ice.LimitType.low_limit.toString())? ice.LimitType.low_limit:ice.LimitType.high_limit;
+                alarmLimitInstances.put(
+                		metricName,//metric_id
+                        alarmLimitSample(alarmLimitInstances.get(metricName), unitID.toString(),
+                                parseFloat(value, null),
+                                metricName,
+                                limit));
             } catch (NumberFormatException nfe) {
-                log.warn("Poorly formatted alarm setting " + name + " " + lower + " "
-                        + upper);
+                log.warn("Poorly formatted alarm setting " + metricName + " value " + value 
+                		+ " limit " + limitType);
                 throw nfe;
             }
         }

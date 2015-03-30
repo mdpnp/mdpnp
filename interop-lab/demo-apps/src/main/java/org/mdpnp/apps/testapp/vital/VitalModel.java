@@ -35,7 +35,7 @@ public interface VitalModel extends ObservableList<Vital> {
     Vital addVital(String label, String units, String[] names, Double low, Double high, Double criticalLow, Double criticalHigh, double minimum,
             double maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color);
 
-    ice.GlobalAlarmSettingsObjectiveDataWriter getWriter();
+    ice.GlobalAlarmLimitObjectiveDataWriter getWriter();
 
     void start(Publisher publisher, EventLoop eventLoop);
 

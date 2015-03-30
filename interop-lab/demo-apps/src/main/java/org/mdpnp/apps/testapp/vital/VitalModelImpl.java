@@ -119,10 +119,11 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         }
     }
 
-    private ice.GlobalAlarmSettingsObjectiveDataWriter writer;
-    private Topic globalAlarmSettingsTopic;
+    private ice.GlobalAlarmLimitObjectiveDataWriter writer;
+    private Topic globalAlarmLimitTopic;
 
-    public ice.GlobalAlarmSettingsObjectiveDataWriter getWriter() {
+
+    public ice.GlobalAlarmLimitObjectiveDataWriter getWriter() {
         return writer;
     }
 
@@ -200,12 +201,12 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
             VitalModelImpl.this.publisher = publisher;
             DomainParticipant participant = publisher.get_participant();
 
-            ice.GlobalAlarmSettingsObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name());
+            ice.GlobalAlarmLimitObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmLimitObjectiveTypeSupport.get_type_name());
 
-            globalAlarmSettingsTopic = participant.create_topic(ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
-                    ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
+            globalAlarmLimitTopic = participant.create_topic(ice.GlobalAlarmLimitObjectiveTopic.VALUE,
+                    ice.GlobalAlarmLimitObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
                     StatusKind.STATUS_MASK_NONE);
-            writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(globalAlarmSettingsTopic, QosProfiles.ice_library,
+            writer = (ice.GlobalAlarmLimitObjectiveDataWriter) publisher.create_datawriter_with_profile(globalAlarmLimitTopic, QosProfiles.ice_library,
                     QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
             latch.countDown();
         });

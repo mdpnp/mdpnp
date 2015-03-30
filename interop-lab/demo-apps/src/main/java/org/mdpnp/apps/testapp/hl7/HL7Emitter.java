@@ -1,7 +1,7 @@
 package org.mdpnp.apps.testapp.hl7;
 
-import ice.AlarmSettings;
-import ice.AlarmSettingsDataReader;
+import ice.AlarmLimit;
+import ice.AlarmLimitDataReader;
 import ice.Alert;
 import ice.AlertDataReader;
 import ice.Numeric;
@@ -10,9 +10,9 @@ import ice.NumericDataReader;
 import java.io.IOException;
 import java.util.Date;
 
-import org.mdpnp.rtiapi.data.AlarmSettingsInstanceModel;
-import org.mdpnp.rtiapi.data.AlarmSettingsInstanceModelImpl;
-import org.mdpnp.rtiapi.data.AlarmSettingsInstanceModelListener;
+import org.mdpnp.rtiapi.data.AlarmLimitInstanceModel;
+import org.mdpnp.rtiapi.data.AlarmLimitInstanceModelImpl;
+import org.mdpnp.rtiapi.data.AlarmLimitInstanceModelListener;
 import org.mdpnp.rtiapi.data.AlertInstanceModel;
 import org.mdpnp.rtiapi.data.AlertInstanceModelImpl;
 import org.mdpnp.rtiapi.data.AlertInstanceModelListener;
@@ -78,16 +78,16 @@ public class HL7Emitter {
         this.numericInstanceModel = numericInstanceModel;
         patientAlertInstanceModel = new AlertInstanceModelImpl(ice.PatientAlertTopic.VALUE);
         technicalAlertInstanceModel = new AlertInstanceModelImpl(ice.TechnicalAlertTopic.VALUE);
-        alarmSettingsInstanceModel = new AlarmSettingsInstanceModelImpl(ice.AlarmSettingsTopic.VALUE);
+        alarmLimitInstanceModel = new AlarmLimitInstanceModelImpl(ice.AlarmLimitTopic.VALUE);
         
         patientAlertInstanceModel.addListener(patientAlertListener);
         technicalAlertInstanceModel.addListener(technicalAlertListener);
-        alarmSettingsInstanceModel.addListener(alarmSettingsListener);
+        alarmLimitInstanceModel.addListener(alarmLimitListener);
     }
     
     private final NumericInstanceModel numericInstanceModel;
     private final AlertInstanceModel patientAlertInstanceModel, technicalAlertInstanceModel;
-    private final AlarmSettingsInstanceModel alarmSettingsInstanceModel;
+    private final AlarmLimitInstanceModel alarmLimitInstanceModel;
     private Type type;
     
     public void start(String host, int port, Type type) {
@@ -95,7 +95,7 @@ public class HL7Emitter {
         numericInstanceModel.iterateAndAddListener(numericListener);
         patientAlertInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
         technicalAlertInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
-        alarmSettingsInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
+        alarmLimitInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
         
         log.debug("Started NumericInstanceModel");
         if(host != null && !host.isEmpty()) {
@@ -122,7 +122,7 @@ public class HL7Emitter {
         numericInstanceModel.removeListener(numericListener);
         patientAlertInstanceModel.stop();
         technicalAlertInstanceModel.stop();
-        alarmSettingsInstanceModel.stop();
+        alarmLimitInstanceModel.stop();
         ssListeners.fire(stopped);
         if(hapiConnection != null) {
             hapiConnection.close();
@@ -478,24 +478,24 @@ public class HL7Emitter {
             
         }
     };
-    final AlarmSettingsInstanceModelListener alarmSettingsListener = new AlarmSettingsInstanceModelListener() {
+    final AlarmLimitInstanceModelListener alarmLimitListener = new AlarmLimitInstanceModelListener() {
         
         @Override
-        public void instanceSample(InstanceModel<AlarmSettings, AlarmSettingsDataReader> model, AlarmSettingsDataReader reader, AlarmSettings data,
+        public void instanceSample(InstanceModel<AlarmLimit, AlarmLimitDataReader> model, AlarmLimitDataReader reader, AlarmLimit data,
                 SampleInfo sampleInfo) {
             // TODO Auto-generated method stub
             
         }
         
         @Override
-        public void instanceNotAlive(InstanceModel<AlarmSettings, AlarmSettingsDataReader> model, AlarmSettingsDataReader reader,
-                AlarmSettings keyHolder, SampleInfo sampleInfo) {
+        public void instanceNotAlive(InstanceModel<AlarmLimit, AlarmLimitDataReader> model, AlarmLimitDataReader reader,
+                AlarmLimit keyHolder, SampleInfo sampleInfo) {
             // TODO Auto-generated method stub
             
         }
         
         @Override
-        public void instanceAlive(InstanceModel<AlarmSettings, AlarmSettingsDataReader> model, AlarmSettingsDataReader reader, AlarmSettings data,
+        public void instanceAlive(InstanceModel<AlarmLimit, AlarmLimitDataReader> model, AlarmLimitDataReader reader, AlarmLimit data,
                 SampleInfo sampleInfo) {
             // TODO Auto-generated method stub
             
