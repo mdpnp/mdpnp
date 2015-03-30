@@ -232,13 +232,6 @@ public class DemoPanel implements Runnable {
                     da.setAddress(c.getAddress());
                     da.init();
                     da.start(null); // Passing null will force the adapter to start a new dialog
-                    Thread t = da.getDevice().newThread(new Runnable() {
-                        public void run() {
-                            da.run();
-                            log.info("DeviceAdapter ended");
-                        }
-                    });
-                    t.start();
                 } catch (Exception e) {
                     log.error("Error in spawned DeviceAdapter", e);
                 }

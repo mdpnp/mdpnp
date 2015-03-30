@@ -232,6 +232,7 @@ public class IceAppsContainer extends IceApplication {
                     }
                 }
 
+                log.info("All apps closed, stop OK");
                 stopOk.countDown();
             }
 
@@ -364,8 +365,8 @@ public class IceAppsContainer extends IceApplication {
         // this will block until the frame is killed
         stopOk.await();
         panelController.stop();
+        // kill the spring context that is owned by this component.
         context.destroy();
-        Platform.exit();
         super.stop();
     }
 }

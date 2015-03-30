@@ -52,7 +52,7 @@ import org.springframework.context.support.AbstractApplicationContext;
 
 public abstract class DeviceAdapterImpl extends Observable implements DeviceAdapter {
 
-    private static final Logger log = LoggerFactory.getLogger(DeviceAdapter.class);
+    private static final Logger log = LoggerFactory.getLogger(DeviceAdapterImpl.class);
 
     public static class DeviceAdapterCommand implements Configuration.HeadlessCommand, Configuration.GUICommand {
 
@@ -104,7 +104,16 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
 
             final AbstractApplicationContext context = config.createContext("DriverContext.xml");
 
-            GUIAdapter da =  new GUIAdapter(ddp, context);
+            GUIAdapter da = new GUIAdapter(ddp, context) {
+                @Override
+                public void stop() throws Exception {
+                    super.stop();
+                    // at the very end; kill the context that was created here.
+                    log.info("Shut down spring context");
+                    context.destroy();
+                }
+            };
+
             
             da.setAddress(config.getAddress());
             
@@ -161,7 +170,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
     public void run() {
 
         if (null != device && device instanceof AbstractConnectedDevice) {
-            log.info("Connecting to " + address);
+            log.info("Connecting to >" + address + "<");
             if (!((AbstractConnectedDevice)device).connect(address)) {
                 stopOk.countDown();
             }
@@ -302,9 +311,6 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
 
             controller.stop();
 
-            AbstractApplicationContext context = controller.getContext();
-            context.destroy();
-
             super.stop();
         }
 
@@ -315,7 +321,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
         }
 
         @Override
-        public void start(Stage primaryStage) throws Exception {
+        public void start(final Stage primaryStage) throws Exception {
 
             if(!Platform.isFxApplicationThread())
                 throw new IllegalStateException("Sneaky developer! Trying to start ui outside of FX thread");
@@ -367,7 +373,18 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
                     update("Shutting down", 1);
                     root.getChildren().clear();
                     root.setTop(progressBar);
-                    // The rest will happen in the 'stop' logic
+
+                    // this is a dialog - the application's 'close' event
+                    // wont happen
+                    if(primaryStage == null) {
+                        try {
+                            GUIAdapter.this.stop();
+                        } catch (Exception e) {
+                            log.error("Failed to stop device adapter");
+                        }
+                    }
+                    // In case of this being a 'real' application,  stop will be called
+                    // by the fx framework
                 }
 
             });

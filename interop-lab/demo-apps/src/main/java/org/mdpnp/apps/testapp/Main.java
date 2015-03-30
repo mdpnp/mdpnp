@@ -88,7 +88,6 @@ public class Main {
                 Configuration c = d.getLastConfiguration();
                 Configuration.searchAndSaveSettings(c, searchPath);
                 runConf = null;
-                Platform.exit();
             } else {
                 runConf = d.getLastConfiguration();
                 Object o = runConf.getApplication().getAppClass().newInstance();

@@ -608,7 +608,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     @Override
     public Thread newThread(Runnable r) {
-        Thread t = new Thread(threadGroup, r, "AbstractDevice-" + (++threadOrdinal));
+        Thread t = new Thread(threadGroup, r, "Worker-" + (++threadOrdinal));
         t.setDaemon(true);
         return t;
     }
@@ -756,7 +756,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         
         
         
-        threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "AbstractDevice") {
+        threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), deviceIdentity.toString()) {
             @Override
             public void uncaughtException(Thread t, Throwable e) {
                 log.error("Thrown by " + t.toString(), e);
