@@ -58,6 +58,63 @@ public class SimControl implements InitializingBean
         }
     }
 
+    private static class UIControl {
+        final Slider slider;
+        final Label label;
+        final Label currentValue;
+        final ice.GlobalSimulationObjective objective;
+        final InstanceHandle_t handle;
+        final ice.GlobalSimulationObjectiveDataWriter writer;
+
+        public UIControl(final NumericValue numericValue, final ice.GlobalSimulationObjectiveDataWriter writer) {
+
+            this.writer = writer;
+
+            final NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            numberFormat.setMaximumFractionDigits(2);
+            numberFormat.setMinimumFractionDigits(2);
+            numberFormat.setMinimumIntegerDigits(1);
+
+            objective = (GlobalSimulationObjective) ice.GlobalSimulationObjective.create();
+            objective.metric_id = numericValue.metricId;
+            objective.value = numericValue.initialValue;
+            handle = writer.register_instance(objective);
+            slider = new Slider(numericValue.lowerBound, numericValue.upperBound, objective.value);
+            slider.setMajorTickUnit(numericValue.increment);
+            slider.setMinorTickCount(0);
+            slider.setShowTickLabels(true);
+            slider.setShowTickMarks(true);
+            slider.setSnapToTicks(true);
+            label = new Label(numericValue.name);
+            label.setTextAlignment(TextAlignment.RIGHT);
+            currentValue = new Label("" + slider.getValue());
+
+            writer.write(objective, handle);
+
+            currentValue.textProperty().bindBidirectional(slider.valueProperty(), new NumberStringConverter(numberFormat));
+            slider.valueProperty().addListener(new ChangeListener<Number>() {
+
+                @Override
+                public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                    objective.value = newValue.floatValue();
+                    writer.write(objective, handle);
+                }
+
+            });
+        }
+
+        void close() {
+            writer.unregister_instance(objective, handle);
+        }
+
+        void addTo(GridPane main, int i)
+        {
+            main.add(label, 0, i);
+            main.add(slider, 1, i);
+            main.add(currentValue, 2, i);
+        }
+    }
+
     private static final NumericValue[] numericValues = new NumericValue[] {
             new NumericValue("SpO2", rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 0, 100, 98, 10),
             new NumericValue("Pulse Rate (SpO2)", rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 10, 360, 60, 50),
@@ -76,8 +133,8 @@ public class SimControl implements InitializingBean
     private Publisher publisher;
     private Topic topic;
     private ice.GlobalSimulationObjectiveDataWriter writer;
-    private final ice.GlobalSimulationObjective[] objectives = new ice.GlobalSimulationObjective[numericValues.length];
-    private final InstanceHandle_t[] handles = new InstanceHandle_t[numericValues.length];
+
+    private final UIControl[] controls = new UIControl[numericValues.length];
 
     public SimControl(DomainParticipant participant) {
         this.participant = participant;
@@ -91,66 +148,36 @@ public class SimControl implements InitializingBean
     @Override
     public void afterPropertiesSet() throws Exception {
 
-        publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        ice.GlobalSimulationObjectiveTypeSupport.register_type(participant, ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
-        topic = participant.create_topic(ice.GlobalSimulationObjectiveTopic.VALUE, ice.GlobalSimulationObjectiveTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        writer = (GlobalSimulationObjectiveDataWriter) participant.create_datawriter_with_profile(topic, QosProfiles.ice_library, QosProfiles.state,
-                null, StatusKind.STATUS_MASK_NONE);
+        publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT,
+                                                 null,
+                                                 StatusKind.STATUS_MASK_NONE);
 
-        final Slider[] sliders = new Slider[numericValues.length];
-        final Label[] labels = new Label[numericValues.length];
-        final Label[] currentValues = new Label[numericValues.length];
+        ice.GlobalSimulationObjectiveTypeSupport.register_type(participant,
+                                                               ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
 
-        final NumberFormat numberFormat = NumberFormat.getNumberInstance();
-        numberFormat.setMaximumFractionDigits(2);
-        numberFormat.setMinimumFractionDigits(2);
-        numberFormat.setMinimumIntegerDigits(1);
-        
-        for (int i = 0; i < objectives.length; i++) {
-            objectives[i] = (GlobalSimulationObjective) ice.GlobalSimulationObjective.create();
-            objectives[i].metric_id = numericValues[i].metricId;
-            objectives[i].value = numericValues[i].initialValue;
-            handles[i] = writer.register_instance(objectives[i]);
-            sliders[i] = new Slider(numericValues[i].lowerBound, numericValues[i].upperBound, objectives[i].value);
-            sliders[i].setMajorTickUnit(numericValues[i].increment);
-            sliders[i].setMinorTickCount(0);
-            sliders[i].setShowTickLabels(true);
-            sliders[i].setShowTickMarks(true);
-            sliders[i].setSnapToTicks(true);
-            labels[i] = new Label(numericValues[i].name);
-            labels[i].setTextAlignment(TextAlignment.RIGHT);
-            currentValues[i] = new Label("" + sliders[i].getValue());
-            main.add(labels[i], 0, i);
-            main.add(sliders[i], 1, i);
-            main.add(currentValues[i], 2, i);
+        topic = participant.create_topic(ice.GlobalSimulationObjectiveTopic.VALUE,
+                                         ice.GlobalSimulationObjectiveTypeSupport.get_type_name(),
+                                         DomainParticipant.TOPIC_QOS_DEFAULT,
+                                         null,
+                                         StatusKind.STATUS_MASK_NONE);
 
-            writer.write(objectives[i], handles[i]);
+        writer = (GlobalSimulationObjectiveDataWriter) participant.create_datawriter_with_profile(topic,
+                                                                                                  QosProfiles.ice_library,
+                                                                                                  QosProfiles.state,
+                                                                                                  null,
+                                                                                                  StatusKind.STATUS_MASK_NONE);
 
-            final ice.GlobalSimulationObjective obj = objectives[i];
-            final Slider slider = sliders[i];
-            // final JLabel label = labels[i];
-            final Label currentValue = currentValues[i];
-            final InstanceHandle_t handle = handles[i];
 
-            
-            currentValue.textProperty().bindBidirectional(slider.valueProperty(), new NumberStringConverter(numberFormat));
-            sliders[i].valueProperty().addListener(new ChangeListener<Number>() {
-
-                @Override
-                public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                    obj.value = newValue.floatValue();
-                    writer.write(obj, handle);
-                }
-                
-            });
+        for (int i = 0; i < numericValues.length; i++) {
+            controls[i] = new UIControl(numericValues[i], writer);
+            controls[i].addTo(main, i);
         }
     }
     
 
     public void shutDown() {
-        for (int i = 0; i < numericValues.length; i++) {
-            writer.unregister_instance(objectives[i], handles[i]);
+        for (int i = 0; i < controls.length; i++) {
+            controls[i].close();
         }
 
         participant.delete_datawriter(writer);
@@ -158,5 +185,4 @@ public class SimControl implements InitializingBean
         participant.delete_publisher(publisher);
         ice.GlobalSimulationObjectiveTypeSupport.unregister_type(participant, ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
     }
-
 }
