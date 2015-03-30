@@ -23,7 +23,7 @@ public interface IceApplicationProvider {
         AppType getDescriptor();
 
         /**
-         * @return java.awt.Component (either JFrame or Panel) or null for headless application.
+         * @return javafx.scene.Parent or null for headless application.
          */
         Parent getUI();
 

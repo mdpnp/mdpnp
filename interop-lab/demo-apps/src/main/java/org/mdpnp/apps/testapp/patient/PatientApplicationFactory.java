@@ -58,7 +58,7 @@ public class PatientApplicationFactory implements IceApplicationProvider {
                 public void onApplicationEvent(ContextClosedEvent contextClosedEvent) {
                     // only care to trap parent close events to kill the child context
                     if(parentContext == contextClosedEvent.getApplicationContext()) {
-                        log.info("PatientApplication handle context shutdown event ");
+                        log.info("Handle parent context shutdown event");
                         ctx.close();
                     }
                 }
