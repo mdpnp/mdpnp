@@ -32,12 +32,14 @@ import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.topic.Topic;
+import org.springframework.beans.factory.InitializingBean;
 
 /**
  * @author Jeff Plourde
  *
  */
-public class SimControl {
+public class SimControl implements InitializingBean
+{
 
     @FXML protected GridPane main;
     
@@ -69,15 +71,26 @@ public class SimControl {
             new NumericValue("NIBP Systolic", rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE, 0, 400, 120, 40),
             new NumericValue("NIBP Diastolic", rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE, 0, 400, 80, 40) };
 
-    private DomainParticipant participant;
+
+    private final DomainParticipant participant;
     private Publisher publisher;
     private Topic topic;
     private ice.GlobalSimulationObjectiveDataWriter writer;
     private final ice.GlobalSimulationObjective[] objectives = new ice.GlobalSimulationObjective[numericValues.length];
     private final InstanceHandle_t[] handles = new InstanceHandle_t[numericValues.length];
-    
-    public SimControl setup(final DomainParticipant participant) {
+
+    public SimControl(DomainParticipant participant) {
         this.participant = participant;
+    }
+
+    /**
+     * initialize the UI. we do not wrap it in the generic init()-like API, but use the spring's interface to
+     * emphasize that this is a creation-time call that should be invoked on the same thread as the constructor
+     * @throws Exception
+     */
+    @Override
+    public void afterPropertiesSet() throws Exception {
+
         publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         ice.GlobalSimulationObjectiveTypeSupport.register_type(participant, ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
         topic = participant.create_topic(ice.GlobalSimulationObjectiveTopic.VALUE, ice.GlobalSimulationObjectiveTypeSupport.get_type_name(),
@@ -132,14 +145,10 @@ public class SimControl {
                 
             });
         }
-        return this;
     }
     
-    
-    public SimControl() {
-    }
 
-    public void tearDown() {
+    public void shutDown() {
         for (int i = 0; i < numericValues.length; i++) {
             writer.unregister_instance(objectives[i], handles[i]);
         }
@@ -150,11 +159,4 @@ public class SimControl {
         ice.GlobalSimulationObjectiveTypeSupport.unregister_type(participant, ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
     }
 
-    public void start() {
-
-    }
-
-    public void stop() {
-
-    }
 }

@@ -9,14 +9,22 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import com.rti.dds.domain.DomainParticipant;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  *
  */
 public class SimControlFactory implements IceApplicationProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(SimControlFactory.class);
 
     private final IceApplicationProvider.AppType SimControl =
             new IceApplicationProvider.AppType("Simulation Control", "NOSIM", IceApplicationProvider.class.getResource("sim.png"), 0.75);
@@ -28,54 +36,74 @@ public class SimControlFactory implements IceApplicationProvider {
     }
 
     @Override
-    public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
+    public IceApp create(ApplicationContext parentContext) throws IOException {
+        return new SimControlApplication((AbstractApplicationContext)parentContext);
+    }
 
-        final DomainParticipant participant = (DomainParticipant) parentContext.getBean("domainParticipant");
+    class SimControlApplication implements IceApp
+    {
+        final Stage dialog;
+        final Parent ui;
+        final ClassPathXmlApplicationContext ctx;
+        final SimControl controller;
 
-        FXMLLoader loader = new FXMLLoader(SimControl.class.getResource("SimControl.fxml"));
-        
-        final Parent ui = loader.load();
-        
-        final SimControl controller = ((SimControl)loader.getController());
-        controller.setup(participant);
-      final Stage dialog = new Stage(StageStyle.DECORATED);
-      dialog.setTitle("Simulator Control");
-      dialog.setAlwaysOnTop(true);
-      Scene scene = new Scene(ui);
-      dialog.setScene(scene);
-      dialog.sizeToScene();
+        SimControlApplication(final AbstractApplicationContext parentContext) throws IOException {
 
-        
-        return new IceApplicationProvider.IceApp() {
+            String contextPath = "classpath*:/org/mdpnp/apps/testapp/sim/SimControlAppContext.xml";
 
-            @Override
-            public IceApplicationProvider.AppType getDescriptor() {
-                return SimControl;
-            }
+            ctx = new ClassPathXmlApplicationContext(new String[] { contextPath }, parentContext);
+            parentContext.addApplicationListener(new ApplicationListener<ContextClosedEvent>()
+            {
+                @Override
+                public void onApplicationEvent(ContextClosedEvent contextClosedEvent) {
+                    // only care to trap parent close events to kill the child context
+                    if(parentContext == contextClosedEvent.getApplicationContext()) {
+                        log.info("Handle parent context shutdown event");
+                        ctx.close();
+                    }
+                }
+            });
 
-            @Override
-            public Parent getUI() {
-                return null;
-            }
+            ui = ctx.getBean(Parent.class);
+            controller =  ctx.getBean(SimControl.class);
 
-            @Override
-            public void activate(ApplicationContext context) {
-                
-                dialog.show();
+            dialog = new Stage(StageStyle.DECORATED);
+            dialog.setTitle("Simulator Control");
+            dialog.setAlwaysOnTop(true);
+            Scene scene = new Scene(ui);
+            dialog.setScene(scene);
+            dialog.sizeToScene();
 
-                controller.start();
-            }
+        }
 
-            @Override
-            public void stop() {
-//                dialog.hide();
-                controller.stop();
-            }
+        @Override
+        public AppType getDescriptor() {
+            return SimControl;
+        }
 
-            @Override
-            public void destroy() {
-                controller.tearDown();
-            }
-        };
+        /**
+         * @return null to indicate that this is a self-managed dialog that does not want to me managed by the app container.
+         */
+        @Override
+        public Parent getUI() {
+            return null;
+        }
+
+        @Override
+        public void activate(ApplicationContext context) {
+            dialog.show();
+        }
+
+        @Override
+        public void stop() {
+            dialog.hide();
+
+        }
+
+        @Override
+        public void destroy() throws Exception {
+            ctx.destroy();
+        }
+
     }
 }
