@@ -13,16 +13,19 @@
 package org.mdpnp.apps.testapp.sim;
 
 import java.text.NumberFormat;
+import java.util.Arrays;
 
 import ice.GlobalSimulationObjective;
 import ice.GlobalSimulationObjectiveDataWriter;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.TextAlignment;
+import javafx.util.Callback;
 import javafx.util.converter.NumberStringConverter;
 
 import org.mdpnp.rtiapi.data.QosProfiles;
@@ -59,12 +62,26 @@ public class SimControl implements InitializingBean
     }
 
     private static class UIControl {
-        final Slider slider;
-        final Label label;
-        final Label currentValue;
+        final Slider valueSlider;
+        final Label  stepSize;
+        final Label  maxJitter;
+        final Label  label;
+        final Label  currentValue;
+        final Label  enableJitter;
+
         final ice.GlobalSimulationObjective objective;
         final InstanceHandle_t handle;
         final ice.GlobalSimulationObjectiveDataWriter writer;
+
+
+        static class IntegerListCell extends ListCell<Integer> {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                super.setText((item==null? "":item.toString() + "%"));
+            }
+        };
+
 
         public UIControl(final NumericValue numericValue, final ice.GlobalSimulationObjectiveDataWriter writer) {
 
@@ -79,28 +96,75 @@ public class SimControl implements InitializingBean
             objective.metric_id = numericValue.metricId;
             objective.value = numericValue.initialValue;
             handle = writer.register_instance(objective);
-            slider = new Slider(numericValue.lowerBound, numericValue.upperBound, objective.value);
-            slider.setMajorTickUnit(numericValue.increment);
-            slider.setMinorTickCount(0);
-            slider.setShowTickLabels(true);
-            slider.setShowTickMarks(true);
-            slider.setSnapToTicks(true);
+
+            valueSlider = new Slider(numericValue.lowerBound, numericValue.upperBound, objective.value);
+            valueSlider.setMajorTickUnit(numericValue.increment);
+            valueSlider.setMinorTickCount(0);
+            valueSlider.setShowTickLabels(true);
+            valueSlider.setShowTickMarks(true);
+            valueSlider.setSnapToTicks(true);
+
             label = new Label(numericValue.name);
             label.setTextAlignment(TextAlignment.RIGHT);
-            currentValue = new Label("" + slider.getValue());
+            currentValue = new Label("" + valueSlider.getValue());
 
-            writer.write(objective, handle);
+            boolean jitterOn = false;
 
-            currentValue.textProperty().bindBidirectional(slider.valueProperty(), new NumberStringConverter(numberFormat));
-            slider.valueProperty().addListener(new ChangeListener<Number>() {
+            CheckBox cb  = new CheckBox();
+            cb.setSelected(false);
+            cb.setSelected(jitterOn);
+            enableJitter = new Label("Jitter:");
+            enableJitter.setGraphic(cb);
+            enableJitter.setContentDisplay(ContentDisplay.RIGHT);
 
+
+            stepSize = makeIntCombo("Step (%):",
+                                    new Integer[] {1, 2, 3, 4},
+                                    new ChangeListener<Integer>() {
+                                         @Override
+                                         public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
+                                             objective.jitterStepPct = newValue.floatValue();
+                                             writer.write(objective, handle);
+                                         }
+                                    },
+                                    !jitterOn);
+
+            maxJitter = makeIntCombo("Max (%):",
+                                    new Integer[] {5, 10, 15, 20},
+                                    new ChangeListener<Integer>() {
+                                        @Override
+                                        public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
+                                            objective.jitterMaxPct = newValue.floatValue();
+                                            writer.write(objective, handle);
+                                        }
+                                    },
+                                    !jitterOn);
+
+
+
+            currentValue.textProperty().bindBidirectional(valueSlider.valueProperty(), new NumberStringConverter(numberFormat));
+            valueSlider.valueProperty().addListener(new ChangeListener<Number>() {
                 @Override
                 public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                     objective.value = newValue.floatValue();
                     writer.write(objective, handle);
                 }
-
             });
+
+            cb.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                public void changed(ObservableValue<? extends Boolean> ov,
+                                    Boolean oldVal, Boolean newVal) {
+
+                    stepSize.setDisable(!newVal);
+                    maxJitter.setDisable(!newVal);
+                    objective.enableJitter = newVal;
+                    writer.write(objective, handle);
+                }
+            });
+
+            // publish the current state out.
+            //
+            writer.write(objective, handle);
         }
 
         void close() {
@@ -109,9 +173,40 @@ public class SimControl implements InitializingBean
 
         void addTo(GridPane main, int i)
         {
-            main.add(label, 0, i);
-            main.add(slider, 1, i);
-            main.add(currentValue, 2, i);
+            main.add(label,                  0, i);
+            main.add(valueSlider,            1, i);
+            main.add(currentValue,           2, i);
+            main.add(enableJitter,           3, i);
+            main.add(stepSize,               4, i);
+            main.add(maxJitter,              5, i);
+        }
+
+
+        Label makeIntCombo(String lbl, Integer[] values, ChangeListener<Integer> callback, boolean initState) {
+
+            Callback<ListView<Integer>,ListCell<Integer>> fac = new Callback<ListView<Integer>,ListCell<Integer>>() {
+                @Override
+                public ListCell<Integer> call(ListView<Integer> param) {
+                    return new IntegerListCell();
+                }
+            };
+
+            ObservableList<Integer> v = FXCollections.observableArrayList();
+            v.addAll(Arrays.asList(values));
+            ComboBox<Integer> comboBox  = new ComboBox<>();
+            comboBox.setItems(v);
+            comboBox.setButtonCell(new IntegerListCell());
+            comboBox.setCellFactory(fac);
+            comboBox.getSelectionModel().select(1);
+            //comboBox.setPromptText("Max");
+
+            comboBox.valueProperty().addListener(callback);
+
+            Label label = new Label(lbl);
+            label.setDisable(initState);
+            label.setGraphic(comboBox);
+            label.setContentDisplay(ContentDisplay.RIGHT);
+            return label;
         }
     }
 
@@ -126,7 +221,8 @@ public class SimControl implements InitializingBean
             new NumericValue("ABP Systolic", rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 0, 300, 120, 40),
             new NumericValue("ABP Diastolic", rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 0, 300, 80, 40),
             new NumericValue("NIBP Systolic", rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE, 0, 400, 120, 40),
-            new NumericValue("NIBP Diastolic", rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE, 0, 400, 80, 40) };
+            new NumericValue("NIBP Diastolic", rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE, 0, 400, 80, 40)
+    };
 
 
     private final DomainParticipant participant;
