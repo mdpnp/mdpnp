@@ -29,7 +29,7 @@ public class PatientApplicationFactory implements IceApplicationProvider {
     private static final Logger log = LoggerFactory.getLogger(PatientApplicationFactory.class);
 
     private final AppType appType =
-            new AppType("Patient ID", "NODOA",  PatientApplicationFactory.class.getResource("patient.jpg"), 0.75);
+            new AppType("Patient ID", "NODOA",  PatientApplicationFactory.class.getResource("patient.png"), 0.75);
 
     @Override
     public AppType getAppType() {

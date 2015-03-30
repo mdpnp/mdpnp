@@ -6,6 +6,7 @@ import java.net.URL;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.NumericInstanceModel;
@@ -32,7 +33,9 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
 
         final NumericInstanceModel numericInstanceModel = (NumericInstanceModel) parentContext.getBean("numericInstanceModel");
         
-        final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, numericInstanceModel);
+        final DeviceListModel deviceListModel = (DeviceListModel) parentContext.getBean("deviceListModel");
+        
+        final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, numericInstanceModel, deviceListModel);
 
         FXMLLoader loader = new FXMLLoader(HL7Application.class.getResource("HL7Application.fxml"));
         
