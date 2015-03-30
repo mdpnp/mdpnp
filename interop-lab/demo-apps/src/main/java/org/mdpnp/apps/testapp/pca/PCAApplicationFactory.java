@@ -18,7 +18,7 @@ import org.springframework.context.ApplicationContext;
 public class PCAApplicationFactory implements IceApplicationProvider {
 
     private final IceApplicationProvider.AppType PCA =
-            new  IceApplicationProvider.AppType("Infusion Safety", "NOPCA", IceApplicationProvider.class.getResource("infusion-safety.png"), 0.75);
+            new  IceApplicationProvider.AppType("Infusion Safety", "NOPCA", PCAConfig.class.getResource("infusion-safety.png"), 0.75);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {

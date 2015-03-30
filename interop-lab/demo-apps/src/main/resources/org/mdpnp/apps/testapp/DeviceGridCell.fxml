@@ -15,8 +15,7 @@
    BorderPane.alignment="CENTER" />
  </bottom>
  <center>
-  <StackPane minHeight="120.0" minWidth="150.0" prefWidth="100.0">
-   <!-- TODO Add Nodes -->
+  <StackPane prefHeight="120.0" prefWidth="100.0">
    <children>
     <ImageView fx:id="icon" fitHeight="0.0" fitWidth="100.0"
      pickOnBounds="true" preserveRatio="true" />

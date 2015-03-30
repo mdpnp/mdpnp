@@ -1,5 +1,7 @@
 package org.mdpnp.apps.testapp.hl7;
 
+import static ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum.MALE;
+import static ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL;
 import ice.AlarmSettings;
 import ice.AlarmSettingsDataReader;
 import ice.Alert;
@@ -9,7 +11,10 @@ import ice.NumericDataReader;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.TimeZone;
+import java.util.UUID;
 
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.rtiapi.data.AlarmSettingsInstanceModel;
 import org.mdpnp.rtiapi.data.AlarmSettingsInstanceModelImpl;
 import org.mdpnp.rtiapi.data.AlarmSettingsInstanceModelListener;
@@ -26,7 +31,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
+import ca.uhn.fhir.model.dstu2.composite.QuantityDt;
+import ca.uhn.fhir.model.dstu2.composite.ResourceReferenceDt;
+import ca.uhn.fhir.model.dstu2.resource.Device;
+import ca.uhn.fhir.model.dstu2.resource.DeviceMetric;
+import ca.uhn.fhir.model.dstu2.resource.Observation;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
+import ca.uhn.fhir.model.primitive.DateTimeDt;
+import ca.uhn.fhir.model.primitive.IdDt;
+import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.client.IGenericClient;
 import ca.uhn.hl7v2.DefaultHapiContext;
 import ca.uhn.hl7v2.HL7Exception;
 import ca.uhn.hl7v2.HapiContext;
@@ -46,12 +61,9 @@ import ca.uhn.hl7v2.model.v26.segment.OBX;
 import ca.uhn.hl7v2.model.v26.segment.PID;
 import ca.uhn.hl7v2.parser.Parser;
 
+import com.rti.dds.infrastructure.SequenceNumber_t;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
-
-import static ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL;
-import static ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum.MALE;
-import static ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum.FEMALE;
 
 public class HL7Emitter {
     public enum Type {
@@ -64,17 +76,22 @@ public class HL7Emitter {
     
     private final EventLoop eventLoop;
     private final Subscriber subscriber;
-    private final HapiContext context;
+    private final DeviceListModel deviceListModel;
+    private final HapiContext hl7Context;
+    protected final FhirContext fhirContext;
     
-    protected Connection hapiConnection;
+    protected Connection hl7Connection;
+    protected IGenericClient fhirClient;
     
     private final ListenerList<LineEmitterListener> listeners = new ListenerList<LineEmitterListener>(LineEmitterListener.class);
     private final ListenerList<StartStopListener> ssListeners = new ListenerList<StartStopListener>(StartStopListener.class);
     
-    public HL7Emitter(final Subscriber subscriber, final EventLoop eventLoop, final NumericInstanceModel numericInstanceModel) {
+    public HL7Emitter(final Subscriber subscriber, final EventLoop eventLoop, final NumericInstanceModel numericInstanceModel, final DeviceListModel deviceListModel) {
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
-        context = new DefaultHapiContext();
+        this.deviceListModel = deviceListModel;
+        hl7Context = new DefaultHapiContext();
+        fhirContext = FhirContext.forDstu2();
         this.numericInstanceModel = numericInstanceModel;
         patientAlertInstanceModel = new AlertInstanceModelImpl(ice.PatientAlertTopic.VALUE);
         technicalAlertInstanceModel = new AlertInstanceModelImpl(ice.TechnicalAlertTopic.VALUE);
@@ -90,7 +107,7 @@ public class HL7Emitter {
     private final AlarmSettingsInstanceModel alarmSettingsInstanceModel;
     private Type type;
     
-    public void start(String host, int port, Type type) {
+    public void start(final String host, final int port, final Type type) {
         this.type = type;
         numericInstanceModel.iterateAndAddListener(numericListener);
         patientAlertInstanceModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
@@ -99,18 +116,22 @@ public class HL7Emitter {
         
         log.debug("Started NumericInstanceModel");
         if(host != null && !host.isEmpty()) {
-            
-            try {
-                
-                hapiConnection = context.newClient(host, port, false);
+            if(Type.V26.equals(type)) {
+                try {
+                    
+                    hl7Connection = hl7Context.newClient(host, port, false);
+                    ssListeners.fire(started);
+                    
+                } catch (HL7Exception e) {
+                    log.error("", e);
+                    stop();
+                } catch(RuntimeException re) {
+                    log.error("", re);
+                    stop();
+                }
+            } else if(Type.FHIR_DSTU2.equals(type)) {
+                fhirClient = fhirContext.newRestfulGenericClient(host);
                 ssListeners.fire(started);
-                
-            } catch (HL7Exception e) {
-                log.error("", e);
-                stop();
-            } catch(RuntimeException re) {
-                log.error("", re);
-                stop();
             }
         } else {
             // We'll make it ok to start with no external connection
@@ -124,9 +145,13 @@ public class HL7Emitter {
         technicalAlertInstanceModel.stop();
         alarmSettingsInstanceModel.stop();
         ssListeners.fire(stopped);
-        if(hapiConnection != null) {
-            hapiConnection.close();
-            hapiConnection = null;
+        if(hl7Connection != null) {
+            hl7Connection.close();
+            hl7Connection = null;
+        }
+        if(fhirClient != null) {
+            // TODO is there an active connection to disconnect?
+            fhirClient = null;
         }
         
     }
@@ -243,14 +268,14 @@ public class HL7Emitter {
             
                     obx.getObservationValue(0).setData(tx);
             
-                    Parser parser = context.getPipeParser();
+                    Parser parser = hl7Context.getPipeParser();
     
                     String encodedMessage = parser.encode(r01);
                     listeners.fire(new DispatchLine(encodedMessage));
                     
                     
                     // Now, let's encode the message and look at the output
-                    Connection hapiConnection = HL7Emitter.this.hapiConnection;
+                    Connection hapiConnection = HL7Emitter.this.hl7Connection;
                     if(null != hapiConnection) {
     
             
@@ -338,14 +363,14 @@ public class HL7Emitter {
             
                     obx.getObservationValue(0).setData(tx);
             
-                    Parser parser = context.getPipeParser();
+                    Parser parser = hl7Context.getPipeParser();
     
                     String encodedMessage = parser.encode(r01);
                     listeners.fire(new DispatchLine(encodedMessage));
                     
                     
                     // Now, let's encode the message and look at the output
-                    Connection hapiConnection = HL7Emitter.this.hapiConnection;
+                    Connection hapiConnection = HL7Emitter.this.hl7Connection;
                     if(null != hapiConnection) {
     
             
@@ -425,14 +450,14 @@ public class HL7Emitter {
                 
                         obx.getObservationValue(0).setData(nm);
                 
-                        Parser parser = context.getPipeParser();
+                        Parser parser = hl7Context.getPipeParser();
     
                         String encodedMessage = parser.encode(r01);
                         listeners.fire(new DispatchLine(encodedMessage));
                         
                         
                         // Now, let's encode the message and look at the output
-                        Connection hapiConnection = HL7Emitter.this.hapiConnection;
+                        Connection hapiConnection = HL7Emitter.this.hl7Connection;
                         if(null != hapiConnection) {
     
                 
@@ -454,13 +479,46 @@ public class HL7Emitter {
                         
                     }
                 } else if(Type.FHIR_DSTU2.equals(type)) {
+//                    Device device = new Device();
+                    
                     Patient patient = new Patient();
                     patient.addIdentifier().setUse(OFFICIAL).setSystem("urn:fake:mrns").setValue("12345");
                     patient.addName().addFamily("Smith").addGiven("John").addGiven("Q");
                     patient.setGender(MALE);
-                    FhirContext ctx = new FhirContext();
+
+                    
+                    // TODO Needs to exist and be referred to
+//                    Device device = new Device();
+                    // TODO Probably needs to exist and be referred to
+//                    DeviceMetric deviceMetric = new DeviceMetric();
+                    Observation obs = new Observation();
+                    obs.setValue(new QuantityDt(data.value).setUnits(data.unit_id).setCode(data.metric_id).setSystem("OpenICE"));
+                    obs.addIdentifier().setSystem("urn:info.openice").setValue(uuidFromSequence(sampleInfo.publication_sequence_number).toString());
+                    Date presentation = new Date(data.presentation_time.sec*1000L+data.presentation_time.nanosec/1000000L);
+                    obs.setApplies(new DateTimeDt(presentation, TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
+                    obs.setSubject(new ResourceReferenceDt(patient));
+                    
+                    
+                    
+                    IGenericClient client = fhirClient;
+                    if(null != client) {
+                        MethodOutcome outcome = client.update()
+                        .resource(patient)
+                        .conditional()
+                        .where(Patient.IDENTIFIER.exactly().systemAndIdentifier("urn:fake:mrns", "12345"))
+                        .execute();
+                        
+                        System.out.println(outcome);
+                        outcome = client.create()
+                        .resource(obs)
+                        .execute();
+                        System.out.println(outcome);
+                    }
+                    
+                    
 //                    String xmlEncoded = ctx.newXmlParser().encodeResourceToString(patient);
-                    String jsonEncoded = ctx.newJsonParser().encodeResourceToString(patient);
+                    String jsonEncoded = fhirContext.newJsonParser().encodeResourceToString(obs);
+                    
                     listeners.fire(new DispatchLine(jsonEncoded+"\n"));
                 }
             } 
@@ -500,5 +558,15 @@ public class HL7Emitter {
             // TODO Auto-generated method stub
             
         }
+        
+
     };
+    
+    protected static UUID uuidFromSequence(SequenceNumber_t seq) {
+        return new UUID(seq.high, seq.low);
+    }
+    
+    public static void main(String[] args) {
+        System.out.println(uuidFromSequence(new SequenceNumber_t(1, 1L)));
+    }
 }
