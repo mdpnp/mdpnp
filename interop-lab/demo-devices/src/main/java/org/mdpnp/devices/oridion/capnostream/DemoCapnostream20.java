@@ -334,47 +334,47 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             //Shall we use rosetta.XXX.VALUE for UNITS as well as metric_ID???
             //spo2Alarm rosetta.MDC_PULS_OXIM_SAT_O2
             if(0xFF == spo2AlarmLow)
-            	DemoCapnostream20.this.spo2AlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.spo2AlarmLimitLow, Capnostream.NumericItem.SpO2.toString(), null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.low_limit);
+            	DemoCapnostream20.this.spo2AlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.spo2AlarmLimitLow, rosetta.MDC_DIM_PERCENT.VALUE, null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.low_limit);
             else 
-            	DemoCapnostream20.this.spo2AlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.spo2AlarmLimitLow, Capnostream.NumericItem.SpO2.toString(), (float) spo2AlarmLow, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.low_limit);
+            	DemoCapnostream20.this.spo2AlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.spo2AlarmLimitLow, rosetta.MDC_DIM_PERCENT.VALUE, (float) spo2AlarmLow, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.low_limit);
             
             if(0xFF == spo2AlarmHigh)
-              	DemoCapnostream20.this.spo2AlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.spo2AlarmLimitHigh, Capnostream.NumericItem.SpO2.toString(), null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.high_limit);
+              	DemoCapnostream20.this.spo2AlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.spo2AlarmLimitHigh, rosetta.MDC_DIM_PERCENT.VALUE, null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.high_limit);
             else 
-            	DemoCapnostream20.this.spo2AlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.spo2AlarmLimitHigh, Capnostream.NumericItem.SpO2.toString(), (float) spo2AlarmHigh, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.high_limit);
+            	DemoCapnostream20.this.spo2AlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.spo2AlarmLimitHigh, rosetta.MDC_DIM_PERCENT.VALUE, (float) spo2AlarmHigh, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.high_limit);
             
             //etco2Alarm rosetta.MDC_AWAY_CO2_ET
             if(0xFF == etCo2AlarmLow)
-            	DemoCapnostream20.this.etco2AlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.etco2AlarmLimitLow, Capnostream.NumericItem.EtCO2.toString(), null, rosetta.MDC_AWAY_CO2_ET.VALUE, ice.LimitType.low_limit);
+            	DemoCapnostream20.this.etco2AlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.etco2AlarmLimitLow, units(units), null, rosetta.MDC_AWAY_CO2_ET.VALUE, ice.LimitType.low_limit);
             else
-            	DemoCapnostream20.this.etco2AlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.etco2AlarmLimitLow, Capnostream.NumericItem.EtCO2.toString(), (float) etCo2AlarmLow, rosetta.MDC_AWAY_CO2_ET.VALUE, ice.LimitType.low_limit);
+            	DemoCapnostream20.this.etco2AlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.etco2AlarmLimitLow, units(units), (float) etCo2AlarmLow, rosetta.MDC_AWAY_CO2_ET.VALUE, ice.LimitType.low_limit);
             
             if(0xFF == etCo2AlarmHigh)
-            	DemoCapnostream20.this.etco2AlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.etco2AlarmLimitHigh, Capnostream.NumericItem.EtCO2.toString(), null, rosetta.MDC_AWAY_CO2_ET.VALUE, ice.LimitType.high_limit);
+            	DemoCapnostream20.this.etco2AlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.etco2AlarmLimitHigh, units(units), null, rosetta.MDC_AWAY_CO2_ET.VALUE, ice.LimitType.high_limit);
             else
-            	DemoCapnostream20.this.etco2AlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.etco2AlarmLimitHigh, Capnostream.NumericItem.EtCO2.toString(), (float) etCo2AlarmHigh, rosetta.MDC_AWAY_CO2_ET.VALUE, ice.LimitType.high_limit);
+            	DemoCapnostream20.this.etco2AlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.etco2AlarmLimitHigh, units(units), (float) etCo2AlarmHigh, rosetta.MDC_AWAY_CO2_ET.VALUE, ice.LimitType.high_limit);
             
             //pulserateAlarms rosetta.MDC_PULS_OXIM_PULS_RATE
             if(0xFF == pulseAlarmLow)
-            	DemoCapnostream20.this.pulserateAlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.pulserateAlarmLimitLow, Capnostream.NumericItem.Pulse.toString(), null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.low_limit);
+            	DemoCapnostream20.this.pulserateAlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.pulserateAlarmLimitLow, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.low_limit);
             else
-            	DemoCapnostream20.this.pulserateAlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.pulserateAlarmLimitLow, Capnostream.NumericItem.Pulse.toString(), (float) pulseAlarmLow, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.low_limit);
+            	DemoCapnostream20.this.pulserateAlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.pulserateAlarmLimitLow, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, (float) pulseAlarmLow, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.low_limit);
             
             if(0xFF == pulseAlarmHigh)
-            	DemoCapnostream20.this.pulserateAlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.pulserateAlarmLimitHigh, Capnostream.NumericItem.Pulse.toString(), null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.high_limit);
+            	DemoCapnostream20.this.pulserateAlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.pulserateAlarmLimitHigh, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.high_limit);
             else
-            	DemoCapnostream20.this.pulserateAlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.pulserateAlarmLimitHigh, Capnostream.NumericItem.Pulse.toString(), (float) pulseAlarmHigh, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.high_limit);
+            	DemoCapnostream20.this.pulserateAlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.pulserateAlarmLimitHigh, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, (float) pulseAlarmHigh, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.high_limit);
             
             //rosetta.MDC_RESP_RATE
             if(0xFF == rrAlarmLow)
-            	DemoCapnostream20.this.rrAlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.rrAlarmLimitLow, Capnostream.NumericItem.RespirationRate.toString(), null, rosetta.MDC_RESP_RATE.VALUE, ice.LimitType.low_limit);
+            	DemoCapnostream20.this.rrAlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.rrAlarmLimitLow, rosetta.MDC_DIM_RESP_PER_MIN.VALUE, null, rosetta.MDC_RESP_RATE.VALUE, ice.LimitType.low_limit);
             else
-            	DemoCapnostream20.this.rrAlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.rrAlarmLimitLow, Capnostream.NumericItem.RespirationRate.toString(), (float) rrAlarmLow, rosetta.MDC_RESP_RATE.VALUE, ice.LimitType.low_limit);
+            	DemoCapnostream20.this.rrAlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.rrAlarmLimitLow, rosetta.MDC_DIM_RESP_PER_MIN.VALUE, (float) rrAlarmLow, rosetta.MDC_RESP_RATE.VALUE, ice.LimitType.low_limit);
             
             if(0xFF == rrAlarmHigh)
-            	DemoCapnostream20.this.rrAlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.rrAlarmLimitHigh, Capnostream.NumericItem.RespirationRate.toString(), null, rosetta.MDC_RESP_RATE.VALUE, ice.LimitType.high_limit);
+            	DemoCapnostream20.this.rrAlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.rrAlarmLimitHigh, rosetta.MDC_DIM_RESP_PER_MIN.VALUE, null, rosetta.MDC_RESP_RATE.VALUE, ice.LimitType.high_limit);
             else
-            	DemoCapnostream20.this.rrAlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.rrAlarmLimitHigh, Capnostream.NumericItem.RespirationRate.toString(), (float) rrAlarmHigh, rosetta.MDC_RESP_RATE.VALUE, ice.LimitType.high_limit);
+            	DemoCapnostream20.this.rrAlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.rrAlarmLimitHigh, rosetta.MDC_DIM_RESP_PER_MIN.VALUE, (float) rrAlarmHigh, rosetta.MDC_RESP_RATE.VALUE, ice.LimitType.high_limit);
             
             
             return true;
