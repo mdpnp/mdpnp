@@ -73,37 +73,37 @@
      <!-- Following SEDP controls added with defaults for future experimentation -->
      <publication_writer>
       <heartbeat_period>
-       <sec>1</sec>
+       <sec>3</sec>
        <nanosec>0</nanosec>
       </heartbeat_period>
       <fast_heartbeat_period>
-       <sec>1</sec>
-       <nanosec>0</nanosec>
+       <sec>0</sec>
+       <nanosec>500000000</nanosec>
       </fast_heartbeat_period>
       <late_joiner_heartbeat_period>
-       <sec>1</sec>
-       <nanosec>0</nanosec>
+       <sec>0</sec>
+       <nanosec>500000000</nanosec>
       </late_joiner_heartbeat_period>
      </publication_writer>
 
      <subscription_writer>
       <heartbeat_period>
-       <sec>1</sec>
+       <sec>3</sec>
        <nanosec>0</nanosec>
       </heartbeat_period>
       <fast_heartbeat_period>
-       <sec>1</sec>
-       <nanosec>0</nanosec>
+       <sec>0</sec>
+       <nanosec>500000000</nanosec>
       </fast_heartbeat_period>
       <late_joiner_heartbeat_period>
-       <sec>1</sec>
-       <nanosec>0</nanosec>
+       <sec>0</sec>
+       <nanosec>500000000</nanosec>
       </late_joiner_heartbeat_period>
      </subscription_writer>
 
      <participant_message_writer>
       <heartbeat_period>
-       <sec>1</sec>
+       <sec>3</sec>
        <nanosec>0</nanosec>
       </heartbeat_period>
       <fast_heartbeat_period>
