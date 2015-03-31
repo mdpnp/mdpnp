@@ -21,15 +21,20 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import org.mdpnp.apps.testapp.DeviceController;
 import org.mdpnp.apps.testapp.vital.Value;
 
 import com.rti.dds.subscription.SampleInfo;
+import com.sun.xml.internal.bind.v2.schemagen.episode.Bindings;
 
 /**
  * @author Jeff Plourde
@@ -37,58 +42,11 @@ import com.rti.dds.subscription.SampleInfo;
  */
 public class ValueView {
     @FXML protected ImageView icon, crossout;
-    @FXML protected Label deviceName, time, value;
-
-//    private final JLabel valueMsAbove = new JLabel();
-//    private final JLabel valueMsBelow = new JLabel();
-//    private final JValueChart valueChart = new JValueChart(null);
-
-//    private final JLabel value = new JLabel();
+    @FXML protected Label time, metric_id, instance_id;
+    @FXML protected Text value;
+    @FXML protected DeviceController deviceController;
 
     public ValueView() {
-
-//        icon.setOpaque(false);
-//        deviceName.setOpaque(false);
-//        value.setOpaque(false);
-//        valueMsAbove.setOpaque(false);
-//        valueMsBelow.setOpaque(false);
-//        time.setOpaque(false);
-//        value.setFont(Font.decode("verdana-60"));
-//        value.setForeground(Color.blue);
-//        deviceName.setFont(value.getFont().deriveFont(16f));
-//        setLayout(new GridBagLayout());
-//        GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
-//                0), 0, 0);
-//
-//        gbc.gridheight = 3;
-//        add(icon, gbc);
-//
-//        gbc.gridx++;
-//        gbc.gridheight = 1;
-//
-//        add(deviceName, gbc);
-//        gbc.gridy++;
-//
-//        valueChart.setMinimumSize(new Dimension(150, 20));
-//        valueChart.setPreferredSize(new Dimension(150, 20));
-//        gbc.insets = new Insets(1, 1, 1, 1);
-//        add(valueChart, gbc);
-//
-//        gbc.gridy++;
-//        add(time, gbc);
-//
-//        gbc.gridy = 1;
-//        gbc.gridx++;
-//
-//        add(valueMsAbove, gbc);
-//
-//        gbc.gridy++;
-//        add(valueMsBelow, gbc);
-//
-//        gbc.gridx++;
-//        gbc.gridy = 0;
-//        gbc.gridheight = 3;
-//        add(value, gbc);
 
     }
     
@@ -118,30 +76,27 @@ public class ValueView {
 
 
     
-    protected static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
-    
+    protected static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
 
     
-    public void set(Value value) {
-        this.value.textProperty().bind(value.valueProperty().asString("%.0f"));
-        this.deviceName.textProperty().bind(value.getDevice().makeAndModelProperty());
-        this.crossout.visibleProperty().bind(value.getDevice().connectedProperty().not());
-        this.icon.imageProperty().bind(value.getDevice().imageProperty());
-        this.time.textProperty().bind(new TimestampProperty(value.timestampProperty()));
-        
+    public void set(final Value value) {
+        if(null != value) {
+            this.value.textProperty().bind(value.valueProperty().asString("%.0f"));
+            this.metric_id.textProperty().bind(value.metricIdProperty());
+            this.instance_id.textProperty().bind(value.instanceIdProperty().asString());
+            this.time.textProperty().bind(new TimestampProperty(value.timestampProperty()));
+        } else {
+            this.value.textProperty().unbind();
+            this.metric_id.textProperty().unbind();
+            this.instance_id.textProperty().unbind();
+            this.time.textProperty().unbind();
+        }
+        deviceController.bind(value.getDevice());
     }
     
     public void update(Value value, Image icon, String deviceName, ice.Numeric numeric, SampleInfo si, long valueMsBelowLow, long valueMsAboveHigh) {
-        // if(value.isAtOrOutsideOfBounds()) {
-        // setBackground(Color.yellow);
-        // } else if(value.isAtOrOutsideOfCriticalBounds()) {
-        // setBackground(Color.red);
-        // } else {
-        // setBackground(getParent().getBackground());
-        // }
         this.icon.setImage(icon);
 
-        this.deviceName.setText(deviceName);
         if (si != null && numeric != null) {
 //            date.setTime(1000L * si.source_timestamp.sec + si.source_timestamp.nanosec / 1000000L);
             String s = Integer.toString(Math.round(numeric.value));
@@ -155,9 +110,6 @@ public class ValueView {
             this.value.setText("   ");
             this.time.setText("");
         }
-//        this.valueMsAbove.setText(0L == valueMsAboveHigh ? "" : Long.toString(valueMsAboveHigh / 1000L));
-//        this.valueMsBelow.setText(0L == valueMsBelowLow ? "" : Long.toString(valueMsBelowLow / 1000L));
-//        this.valueChart.setValue(value);
 
     }
     

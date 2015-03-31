@@ -1,46 +1,56 @@
 package org.mdpnp.apps.testapp;
 
+import java.io.IOException;
+
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 
 public class MySampleArrayListCell extends ListCell<MySampleArray> {
     private final DeviceListModel deviceListModel;
+    private DeviceController deviceController;
     
     public MySampleArrayListCell(final DeviceListModel deviceListModel) {
         this.deviceListModel = deviceListModel;
     }
     
-    ImageView root;
+    private Parent root;
     
     @Override
     protected void updateItem(MySampleArray item, boolean empty) {
         super.updateItem(item, empty);
         if(null == root) {
-            root = new ImageView();
-            root.setPreserveRatio(true);
-            root.setFitWidth(100);
+            FXMLLoader loader = new FXMLLoader(DeviceController.class.getResource("Device.fxml"));
+            try {
+                root = loader.load();
+                deviceController = loader.getController();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             setTooltip(new Tooltip(""));
             setGraphic(root);
         }
+        
         if(null == item) {
-            root.imageProperty().unbind();
-            root.setImage(null);
+            deviceController.bind(null);
             textProperty().unbind();
             getTooltip().textProperty().unbind();
             getTooltip().setText("");
             setText("");
+            setGraphic(null);
         } else {
+            getTooltip().textProperty().bind(item.unique_device_identifierProperty());
             Device device = deviceListModel.getByUniqueDeviceIdentifier(item.getUnique_device_identifier());
             if(null == device) {
-                root.imageProperty().unbind();
-                root.setImage(null);
+                deviceController.bind(null);
                 textProperty().bind(item.unique_device_identifierProperty());
             } else {
-                getTooltip().textProperty().bind(item.unique_device_identifierProperty());
-                root.imageProperty().bind(device.imageProperty());
+                deviceController.bind(device);
                 textProperty().bind(device.makeAndModelProperty());
             }
+            setGraphic(root);
         }
     }
 }

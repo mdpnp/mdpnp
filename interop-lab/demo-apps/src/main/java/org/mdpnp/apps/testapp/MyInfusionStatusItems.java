@@ -60,18 +60,25 @@ public class MyInfusionStatusItems implements InfusionStatusInstanceModelListene
 
     @Override
     public void instanceSample(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader, InfusionStatus data, SampleInfo sampleInfo) {
-        final ice.InfusionStatus d = new ice.InfusionStatus(data);
-        SampleInfo s = new SampleInfo();
-        InstanceHandle_t handle = new InstanceHandle_t(sampleInfo.instance_handle);
-        s.copy_from(sampleInfo);
-        Platform.runLater(new Runnable() {
-            public void run() {
-                MyInfusionStatus n = byHandle.get(handle);
-                if(n != null) {
-                    n.update(d, s);
+        if(sampleInfo.valid_data) {
+            final ice.InfusionStatus d = new ice.InfusionStatus(data);
+            SampleInfo s = new SampleInfo();
+            InstanceHandle_t handle = new InstanceHandle_t(sampleInfo.instance_handle);
+            s.copy_from(sampleInfo);
+            
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    MyInfusionStatus n = byHandle.get(handle);
+                    if(null == n) {
+                        n = new MyInfusionStatus(d, s);
+                        byHandle.put(n.getHandle(), n);
+                        items.add(n);
+                    } else {
+                        n.update(d, s);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
     
     @Override
@@ -89,12 +96,5 @@ public class MyInfusionStatusItems implements InfusionStatusInstanceModelListene
     
     @Override
     public void instanceAlive(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader, InfusionStatus data, SampleInfo sampleInfo) {
-        final MyInfusionStatus n = new MyInfusionStatus(data, sampleInfo);
-        Platform.runLater(new Runnable() {
-            public void run() {
-                byHandle.put(n.getHandle(), n);
-                items.add(n);
-            }
-        });
     }
 }

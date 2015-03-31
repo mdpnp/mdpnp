@@ -1,7 +1,44 @@
 /* JavaFX CSS - Leave this comment until you have at least create one rule which uses -fx-Property */
 
 .overlaid-text {
-    -fx-background-color: white;
-    -fx-opacity: 0.9;
-    -fx-background-radius: 1.2em;
+    -fx-fill: black;
+    -fx-font: 75 fixed;
+}
+
+.vital-view {
+    -fx-border-color:black;
+    -fx-border-radius:2;
+    -fx-border-width:1;
+}
+
+.value-view {
+    -fx-border-color:black;
+    -fx-border-radius:2;
+    -fx-border-width:1;
+    -fx-padding:5px;
+}
+
+.pca-config {
+    -fx-spacing: 5px;
+}
+.vitals-panel {
+    -fx-spacing: 5px;
+}
+.instance-text {
+    -fx-font: 10 fixed;
+}
+
+.metric-text {
+    -fx-font: 10 fixed;
+}
+
+.vital-name {
+    -fx-font: 35 fixed;
+}
+.value-list {
+    -fx-fit-to-width:true;
+    -fx-fit-to-height:true;
+    -fx-hbar-policy:as-needed;
+    -fx-vbar-policy:never;
+    -fx-border-width:0;
 }

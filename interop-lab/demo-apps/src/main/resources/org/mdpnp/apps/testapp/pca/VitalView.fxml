@@ -8,33 +8,41 @@
 
 <?import org.mdpnp.apps.testapp.vital.MultiRangeSlider?>
 
-<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pca.VitalView">
-    <center>
-      <VBox>
-         <children>
-          <Label fx:id="name" text="Label" />
-          <MultiRangeSlider fx:id="slider" maxWidth="200.0" prefWidth="200.0" showTickLabels="true" showTickMarks="true" BorderPane.alignment="CENTER_LEFT" />
-         </children>
-      </VBox>
-    </center>
-   <bottom>
-      <FlowPane fx:id="controls" BorderPane.alignment="CENTER">
-         <children>
-            <CheckBox fx:id="ignoreZeroBox" mnemonicParsing="false" onAction="#ignoreZeroAction" text="Ignore Zero" />
-            <CheckBox fx:id="requiredBox" mnemonicParsing="false" onAction="#requiredAction" text="Required" />
-            <Button fx:id="deleteButton" mnemonicParsing="false" onAction="#deleteButtonAction" text="Remove" />
-         </children>
-      </FlowPane>
-   </bottom>
-   <right>
-      <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0" BorderPane.alignment="CENTER_RIGHT">
-          <content>
-              <HBox fx:id="vitalValues" spacing="10.0" BorderPane.alignment="CENTER" />
-          </content>
-      </ScrollPane>
-   </right>
-   <padding>
-      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-   </padding>
-  
+<BorderPane styleClass="vital-view" xmlns="http://javafx.com/javafx/8"
+ xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pca.VitalView">
+ <center>
+  <VBox BorderPane.alignment="CENTER">
+   <children>
+    <Label styleClass="vital-name" fx:id="name" text="Label" />
+    <MultiRangeSlider fx:id="slider" maxWidth="250.0"
+     prefWidth="250.0" minWidth="250.0" showTickLabels="true"
+     showTickMarks="true" BorderPane.alignment="CENTER_LEFT" />
+    <FlowPane fx:id="controls" BorderPane.alignment="CENTER"
+     hgap="5.0">
+     <children>
+      <CheckBox fx:id="ignoreZeroBox" mnemonicParsing="false"
+       onAction="#ignoreZeroAction" text="Ignore Zero" />
+      <CheckBox fx:id="requiredBox" mnemonicParsing="false"
+       onAction="#requiredAction" text="Required" />
+      <Button fx:id="deleteButton" mnemonicParsing="false"
+       onAction="#deleteButtonAction" text="Remove" />
+     </children>
+    </FlowPane>
+   </children>
+  </VBox>
+ </center>
+ <bottom>
+
+ </bottom>
+ <right>
+  <ScrollPane styleClass="value-list" fitToHeight="true" fitToWidth="false">
+   <content>
+    <HBox fx:id="vitalValues" spacing="10.0" />
+   </content>
+  </ScrollPane>
+ </right>
+ <padding>
+  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+ </padding>
+
 </BorderPane>
