@@ -117,9 +117,12 @@ public class SimControl implements InitializingBean
             enableJitter.setGraphic(cb);
             enableJitter.setContentDisplay(ContentDisplay.RIGHT);
 
+            objective.enableJitter = jitterOn;
+            objective.jitterMaxPct = 10;
+            objective.jitterStepPct= 2;
 
             stepSize = makeIntCombo("Step (%):",
-                                    new Integer[] {1, 2, 5, 10, 20},
+                                    new Integer[] {1, 2, 5, 10, 20}, (int)objective.jitterStepPct,
                                     new ChangeListener<Integer>() {
                                          @Override
                                          public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
@@ -130,7 +133,7 @@ public class SimControl implements InitializingBean
                                     !jitterOn);
 
             maxJitter = makeIntCombo("Max (%):",
-                                    new Integer[] {5, 10, 15, 20, 50},
+                                    new Integer[] {5, 10, 15, 20, 50}, (int)objective.jitterMaxPct,
                                     new ChangeListener<Integer>() {
                                         @Override
                                         public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
@@ -182,7 +185,7 @@ public class SimControl implements InitializingBean
         }
 
 
-        Label makeIntCombo(String lbl, Integer[] values, ChangeListener<Integer> callback, boolean initState) {
+        Label makeIntCombo(String lbl, Integer[] values, int sel, ChangeListener<Integer> callback, boolean initState) {
 
             Callback<ListView<Integer>,ListCell<Integer>> fac = new Callback<ListView<Integer>,ListCell<Integer>>() {
                 @Override
@@ -197,7 +200,8 @@ public class SimControl implements InitializingBean
             comboBox.setItems(v);
             comboBox.setButtonCell(new IntegerListCell());
             comboBox.setCellFactory(fac);
-            comboBox.getSelectionModel().select(1);
+            comboBox.setValue(sel);
+
             //comboBox.setPromptText("Max");
 
             comboBox.valueProperty().addListener(callback);

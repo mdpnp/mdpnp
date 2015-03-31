@@ -18,12 +18,19 @@ import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.math.DCT;
+import org.mdpnp.devices.simulation.NumberWithGradient;
+import org.mdpnp.devices.simulation.NumberWithJitter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Jeff Plourde
  *
  */
 public class SimulatedElectroCardioGram {
+
+    private static final Logger log = LoggerFactory.getLogger(SimulatedElectroCardioGram.class);
+
     private int counti = 0, countii = 0, countiii = 0;
 
     protected int postIncrCounti() {
@@ -54,20 +61,7 @@ public class SimulatedElectroCardioGram {
         
         @Override
         public void run() {
-            if (null != targetHeartRate) {
-                double delta = targetHeartRate - heartRate;
-                delta = Math.min(5, delta);
-                delta = Math.max(-5, delta);
-                heartRate += delta;
-            }
-            
-            if (null != targetRespiratoryRate) {
-                double delta = targetRespiratoryRate - respiratoryRate;
-                delta = Math.min(2, delta);
-                delta = Math.max(-2, delta);
-                respiratoryRate += delta;
-            }
-            
+
             for (int i = 0; i < iValues.length; i++) {
                 iValues[i] = SimulatedElectroCardioGram.this.i[postIncrCounti()];
             }
@@ -80,7 +74,10 @@ public class SimulatedElectroCardioGram {
 
             DeviceClock.Reading  t = deviceClock.instant();
 
-            receiveECG(t, iValues, iiValues, iiiValues, heartRate, respiratoryRate, frequency);
+            double hr = heartRate.doubleValue();
+            double rr = respiratoryRate.doubleValue();
+
+            receiveECG(t, iValues, iiValues, iiiValues, hr, rr, frequency);
         }
 
     }
@@ -192,16 +189,17 @@ public class SimulatedElectroCardioGram {
     private final double[] ii = new double[iiCoeffs.length];
     private final double[] iii = new double[iiiCoeffs.length];
 
-    private double heartRate = 60, respiratoryRate = 12;
-    
-    private Double targetHeartRate, targetRespiratoryRate;
-    
-    public void setTargetHeartRate(Double targetHeartRate) {
-        this.targetHeartRate = targetHeartRate;
+    private Number heartRate       = new NumberWithJitter(60, 1, 5);
+    private Number respiratoryRate = new NumberWithJitter(12, 1, 2);
+
+    public void setTargetHeartRate(Number targetHeartRate) {
+        this.heartRate = new NumberWithGradient(heartRate, targetHeartRate, 5);
+        log.debug("Set heartRate to " + this.heartRate);
     }
 
-    public void setTargetRespiratoryRate(Double targetRespiratoryRate) {
-        this.targetRespiratoryRate = targetRespiratoryRate;
+    public void setTargetRespiratoryRate(Number targetRespiratoryRate) {
+        this.respiratoryRate = new NumberWithGradient(respiratoryRate, targetRespiratoryRate, 2);
+        log.debug("Set respiratoryRate to " + this.respiratoryRate);
     }
 
     private void initWaves() {

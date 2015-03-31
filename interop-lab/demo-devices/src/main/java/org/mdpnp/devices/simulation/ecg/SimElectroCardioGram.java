@@ -16,6 +16,7 @@ import ice.GlobalSimulationObjective;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,9 +125,11 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
         if (rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(obj.metric_id)) {
-            ecg.setTargetRespiratoryRate((double)obj.value);
+            Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
+            ecg.setTargetRespiratoryRate(value);
         } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(obj.metric_id)) {
-            ecg.setTargetHeartRate((double)obj.value);
+            Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
+            ecg.setTargetHeartRate(value);
         }
     }
 }

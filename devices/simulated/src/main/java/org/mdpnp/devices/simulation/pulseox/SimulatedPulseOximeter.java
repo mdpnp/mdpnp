@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.math.DCT;
+import org.mdpnp.devices.simulation.NumberWithGradient;
 import org.mdpnp.devices.simulation.NumberWithJitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,10 +128,12 @@ public class SimulatedPulseOximeter {
     }
 
     public void setTargetHeartRate(Number targetHeartRate) {
-        this.heartRate = targetHeartRate;
+        this.heartRate = new NumberWithGradient(heartRate, targetHeartRate, 5);
+        log.debug("Set heartRate to " + this.heartRate);
     }
 
     public void setTargetSpO2(Number targetSpO2) {
-        this.spO2 = targetSpO2;
+        this.spO2 = new NumberWithGradient(spO2, targetSpO2, 2);
+        log.debug("Set spO2 to " + this.spO2);
     }
 }

@@ -159,12 +159,13 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
             } else if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(obj.metric_id)) {
                 Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
                 capnometer.setRespirationRate(value);
-                ecg.setTargetRespiratoryRate((double) obj.value); // MIKEFIX
+                ecg.setTargetRespiratoryRate(value);
             } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(obj.metric_id)) {
                 Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
                 capnometer.setEndTidalCO2(value);
             } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(obj.metric_id)) {
-                ecg.setTargetHeartRate((double) obj.value); // MIKEFIX
+                Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
+                ecg.setTargetHeartRate(value);
             }
         }
     }
