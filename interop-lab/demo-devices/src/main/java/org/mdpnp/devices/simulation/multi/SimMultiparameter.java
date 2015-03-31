@@ -16,6 +16,7 @@ import ice.GlobalSimulationObjective;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
 import org.mdpnp.devices.simulation.co2.SimulatedCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimulatedElectroCardioGram;
 import org.mdpnp.devices.simulation.pulseox.SimulatedPulseOximeter;
@@ -150,16 +151,20 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
         // Currently the super ctor registers for this callback; so pulseox might not yet be initialized
         if (obj != null && pulseox != null) {
             if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(obj.metric_id)) {
-                pulseox.setTargetHeartRate((double) obj.value);
+                Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
+                pulseox.setTargetHeartRate(value);
             } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(obj.metric_id)) {
-                pulseox.setTargetSpO2((double) obj.value);
+                Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
+                pulseox.setTargetSpO2(value);
             } else if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(obj.metric_id)) {
-                capnometer.setRespirationRate((int) obj.value);
-                ecg.setTargetRespiratoryRate((double) obj.value);
+                Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
+                capnometer.setRespirationRate(value);
+                ecg.setTargetRespiratoryRate((double) obj.value); // MIKEFIX
             } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(obj.metric_id)) {
-                capnometer.setEndTidalCO2((int) obj.value);
+                Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
+                capnometer.setEndTidalCO2(value);
             } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(obj.metric_id)) {
-                ecg.setTargetHeartRate((double) obj.value);
+                ecg.setTargetHeartRate((double) obj.value); // MIKEFIX
             }
         }
     }

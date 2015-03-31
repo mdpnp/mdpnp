@@ -2,11 +2,17 @@ package org.mdpnp.devices.simulation;
 
 /**
  * @author mfeinberg
+ *
+ * A mutable number with value that fluctuates within a range with steps in small
+ * random increments. It is intended to be used tio simulate a source of physical
+ * signal that would change in small deltas, but could drift over a broad spectrum
+ * over time.
  */
 public class NumberWithJitter<T> extends Number {
 
     private final Number increment;
-    private final Number maxDelta;
+    private final Number floor;
+    private final Number ceil;
     private final Number initialValue;
     private Number currentValue;
 
@@ -33,7 +39,7 @@ public class NumberWithJitter<T> extends Number {
     synchronized Number next() {
         double diff = (increment.doubleValue() - (2 * increment.doubleValue() * Math.random()));
         double nextValue = currentValue.doubleValue() + diff;
-        if (Math.abs(initialValue.doubleValue() - nextValue) > maxDelta.doubleValue()) {
+        if (nextValue < floor.doubleValue() || nextValue > ceil.doubleValue()) {
             nextValue = currentValue.doubleValue() - diff;
         }
         Number toRet = currentValue;
@@ -45,7 +51,8 @@ public class NumberWithJitter<T> extends Number {
     public String toString() {
         return "NumberWithJitter{" +
                 "increment=" + increment +
-                ", maxDelta=" + maxDelta +
+                ", floor=" + floor +
+                ", ceil=" + ceil +
                 ", initialValue=" + initialValue +
                 ", currentValue=" + currentValue +
                 '}';
@@ -54,9 +61,15 @@ public class NumberWithJitter<T> extends Number {
     public T getIncrement() {
         return (T)increment;
     }
-    public T getDelta() {
-        return (T)maxDelta;
+
+    public T getFloor() {
+        return (T)floor;
     }
+
+    public T getCeil() {
+        return (T)ceil;
+    }
+
     public T getAverageValue() {
         return (T)initialValue;
     }
@@ -68,15 +81,18 @@ public class NumberWithJitter<T> extends Number {
      * @param maxDelta
      */
     public NumberWithJitter(Number initialValue, Number increment, Number maxDelta) {
-        this.increment = increment;
-        this.maxDelta = maxDelta;
+        this(initialValue,
+             increment,
+             initialValue.doubleValue()-maxDelta.doubleValue(),
+             initialValue.doubleValue()+maxDelta.doubleValue());
+    }
+
+    public NumberWithJitter(Number initialValue, Number increment, Number floor, Number ceil) {
+        this.increment    = increment;
+        this.ceil         = ceil;
+        this.floor        = floor;
         this.initialValue = initialValue;
         this.currentValue = initialValue;
-        if(increment.doubleValue()>maxDelta.doubleValue())
-            throw new IllegalArgumentException("Increment step value "
-                                                       + increment.doubleValue()
-                                                       + " must be less than total max delta "
-                                                       + maxDelta.doubleValue());
     }
 
     /**

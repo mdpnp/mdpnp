@@ -1,4 +1,4 @@
-package org.mdpnp.devices.simulation;
+package org.mdpnp.devices.simulation.multi;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
@@ -70,7 +70,7 @@ public class SimMultiparameterTest {
     }
 
 
-    public void loadIceQosLibrary() throws Exception {
+    private void loadIceQosLibrary() throws Exception {
 
         DomainParticipantFactory factory = DomainParticipantFactory.get_instance();
         DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();

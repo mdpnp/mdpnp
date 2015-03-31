@@ -5,8 +5,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author mfeinberg
+ *
+ * A mutable number that given a 'start' and 'end' values gradually settles and
+ * the 'end' value advancing towards it with every call to intValue()/longValue/etc APIs
+ *
  */
-public abstract class NumberWithGradient extends Number {
+public class NumberWithGradient extends Number {
 
     private static final Logger log = LoggerFactory.getLogger(NumberWithGradient.class);
 
@@ -16,7 +20,7 @@ public abstract class NumberWithGradient extends Number {
     final Number startValue;
     Number currentValue=null;
 
-    protected NumberWithGradient(Number startValue, Number targetValue, Number gradient) {
+    public NumberWithGradient(Number startValue, Number targetValue, Number gradient) {
 
         if(startValue instanceof NumberWithGradient) {
             NumberWithGradient other = (NumberWithGradient) startValue;
@@ -76,58 +80,22 @@ public abstract class NumberWithGradient extends Number {
         return makeNext();
     }
 
-    protected abstract Number makeNext();
-    protected abstract Number makeTarget(Number target);
-
-    public static class Integer extends NumberWithGradient {
-
-        public Integer(Number currentValue, Number target, Number gradient) {
-            super(currentValue, target, gradient);
-        }
-
-        protected Number makeTarget(Number target) {
-            return target.intValue();
-        }
-
-
-        protected Number makeNext() {
-            int toRet = currentValue.intValue();
-            int delta = targetValue.intValue() - toRet;
-            // we are at the target level ?
-            if (Math.abs(delta) < gradient.intValue()) {
-                currentValue = delegate.intValue();
-            } else {
-                delta = Math.min(gradient.intValue(), delta);
-                delta = Math.max(-gradient.intValue(), delta);
-                currentValue = toRet + delta;
-            }
-            return currentValue;
-        }
+    protected Number makeTarget(Number target) {
+        return target.doubleValue();
     }
 
-    public static class Double extends NumberWithGradient {
-
-        public Double(Double currentValue, Number target, Double gradient) {
-            super(currentValue, target, gradient);
+    protected Number makeNext() {
+        double toRet = currentValue.doubleValue();
+        double delta = targetValue.doubleValue() - toRet;
+        // we are at the target level ?
+        if (Math.abs(delta) < gradient.doubleValue()) {
+            currentValue = delegate.doubleValue();
+        } else {
+            delta = Math.min(gradient.doubleValue(), delta);
+            delta = Math.max(-gradient.doubleValue(), delta);
+            currentValue = toRet + delta;
         }
-
-        protected Number makeTarget(Number target) {
-            return target.doubleValue();
-        }
-
-        protected Number makeNext() {
-            double toRet = currentValue.doubleValue();
-            double delta = targetValue.doubleValue() - toRet;
-            // we are at the target level ?
-            if (Math.abs(delta) <= gradient.doubleValue()) {
-                currentValue = delegate.doubleValue();
-            } else {
-                delta = Math.min(gradient.doubleValue(), delta);
-                delta = Math.max(-gradient.doubleValue(), delta);
-                currentValue = toRet + delta;
-            }
-            return currentValue;
-        }
+        return currentValue;
     }
 }
 

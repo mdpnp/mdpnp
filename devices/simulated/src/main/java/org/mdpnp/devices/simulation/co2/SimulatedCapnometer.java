@@ -129,17 +129,12 @@ public class SimulatedCapnometer {
     }
 
     public void setEndTidalCO2(Number targetEndTidalCO2) {
-        this.etCO2 = new NumberWithGradient.Integer(etCO2.intValue(),
-                                                    targetEndTidalCO2,
-                                                    5);
+        this.etCO2 = new NumberWithGradient(etCO2, targetEndTidalCO2, 5);
         log.debug("Set etCO2 to " + this.etCO2);
-
     }
 
     public void setRespirationRate(Number targetRespirationRate) {
-        this.respiratoryRate = new NumberWithGradient.Integer(respiratoryRate.intValue(),
-                                                              targetRespirationRate,
-                                                              1);
+        this.respiratoryRate = new NumberWithGradient(respiratoryRate, targetRespirationRate, 1);
         log.debug("Set respiratoryRate to " + this.respiratoryRate);
     }
 

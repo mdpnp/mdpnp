@@ -16,10 +16,8 @@ import ice.GlobalSimulationObjective;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
-import org.mdpnp.devices.simulation.NumberWithJitter;
+import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
 import org.mdpnp.rtiapi.data.EventLoop;
-
-import com.rti.dds.infrastructure.Time_t;
 
 /**
  * @author Jeff Plourde
@@ -81,22 +79,11 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
         if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(obj.metric_id)) {
-            Number value = toNumber(obj);
+            Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
             capnometer.setRespirationRate(value);
         } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(obj.metric_id)) {
-            Number value = toNumber(obj);
+            Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
             capnometer.setEndTidalCO2(value);
         }
     }
-
-    private Number toNumber(GlobalSimulationObjective obj) {
-        if(!obj.enableJitter)
-            return (int)obj.value;
-
-        int step = (int)(obj.jitterStepPct*obj.value)/100;
-        int max  = (int)(obj.jitterMaxPct*obj.value)/100;
-
-        return new NumberWithJitter<Integer>((int)obj.value, step==0?1:step, max==0?1:max);
-    }
-
 }

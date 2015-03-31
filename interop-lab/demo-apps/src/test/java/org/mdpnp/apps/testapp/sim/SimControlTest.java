@@ -1,10 +1,8 @@
 package org.mdpnp.apps.testapp.sim;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.mdpnp.apps.testapp.ConfigurationTest;
 import org.mdpnp.devices.simulation.NumberWithJitter;
-import org.mdpnp.devices.simulation.NumberWithGradient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,60 +31,6 @@ public class SimControlTest {
         testAveDataGeneration(new SimControl.NumericValue("SpO2", rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 0, 100, 50, 2), 10, 200);
     }
 
-    @Test
-    public void testAutoLevel1() throws Exception {
-
-        Number n = new NumberWithGradient.Integer(3, 10, 2);
-        int expected[] = { 3, 5, 7, 9, 10, 10, 10, 10};
-        for(int idx=0; idx<expected.length; idx++) {
-            int i = n.intValue();
-            log.info("iteration " + idx + " value="+i);
-            Assert.assertEquals("Invalid value at iteration " + idx, expected[idx], i);
-        }
-    }
-
-    @Test
-    public void testAutoLevel2() throws Exception {
-
-        Number n = new NumberWithGradient.Integer(3, -7, 2);
-        int expected[] = { 3, 1, -1, -3, -5, -7, -7, -7};
-        for(int idx=0; idx<expected.length; idx++) {
-            int i = n.intValue();
-            Assert.assertEquals("Invalid value at iteration " + idx, expected[idx], i);
-        }
-    }
-
-    @Test
-    public void testAutoLevelToJitter() throws Exception {
-
-        Number val = new NumberWithJitter<Integer>(15, 1, 2);
-        Number n = new NumberWithGradient.Integer(3, val, 2);
-        int expected[] = { 3, 5, 7, 9, 11, 13 };
-        for(int idx=0; idx<expected.length; idx++) {
-            int i = n.intValue();
-            Assert.assertEquals("Step 1: Invalid value at iteration " + idx, expected[idx], i);
-        }
-        for(int idx=0; idx<10; idx++) {
-            int i = n.intValue();
-            Assert.assertTrue("Step 2: Invalid value at iteration " + idx, Math.abs(i - 15) <= 2);
-        }
-    }
-
-    @Test
-    public void testApplyValue() throws Exception {
-
-        Number initial = new Integer(15);
-
-        for (int idx = 1; idx < 10; idx++) {
-            Number target = new Integer(15 + idx);
-            initial = new NumberWithGradient.Integer(initial,
-                                                     target,
-                                                     1);
-            log.info("change initial value to " + initial);
-        }
-
-        Assert.assertEquals("failed to preserve original start value", 15, initial.intValue());
-    }
 
 
     private void testAveDataGeneration(SimControl.NumericValue nv, double delta, int nSamples) {
@@ -185,7 +129,8 @@ public class SimControlTest {
         void printLine(SimControl.NumericValue nv, double currentValue) {
             stats.put(currentValue);
 
-            arr[(int)(currentValue-nv.lowerBound)] = 'X';
+            int idx = (int)(currentValue-nv.lowerBound);
+            arr[idx] = 'X';
 
             out.format("%s ave=%3.3f sigma=%2.3f%n",
                        new String(arr),
@@ -194,7 +139,7 @@ public class SimControlTest {
 
             out.flush();
 
-            arr[(int)(currentValue-nv.lowerBound)]    = '.';
+            arr[idx]    = '.';
             arr[(int)(nv.initialValue-nv.lowerBound)] = '|';
         }
     }
