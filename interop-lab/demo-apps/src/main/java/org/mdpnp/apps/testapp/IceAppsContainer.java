@@ -292,7 +292,7 @@ public class IceAppsContainer extends IceApplication {
             try {
                 IceApplicationProvider.IceApp a = ap.create(context);
                 activeApps.put(ap.getAppType(), a);
-            } catch (Exception ex) {
+            } catch (Throwable ex) {
                 // continue as there is nothing mich that can be done,
                 // but print the error out to the log.
                 log.error("Failed to create " + ap.getAppType(), ex);
