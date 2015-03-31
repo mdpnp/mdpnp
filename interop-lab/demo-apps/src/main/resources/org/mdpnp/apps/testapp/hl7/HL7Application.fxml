@@ -23,7 +23,7 @@
                   <Insets right="10.0" />
                </padding></RadioButton>
         <Label alignment="CENTER" text="Host:" />
-        <TextField fx:id="host" prefColumnCount="15" prefWidth="-1.0" text="https://fhir.openice.info/fhir" />
+        <TextField fx:id="host" prefColumnCount="15" prefWidth="-1.0" text="" />
         <Label alignment="CENTER" text="Port:" />
         <TextField fx:id="port" prefColumnCount="5" prefWidth="-1.0" />
         <Button fx:id="startStop" mnemonicParsing="false" text="Start" />
