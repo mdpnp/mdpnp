@@ -48,6 +48,8 @@ import org.springframework.context.support.AbstractApplicationContext;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
+import com.sun.glass.ui.Screen;
+import com.sun.javafx.tk.Toolkit;
 
 /**
  * Container responsible for discovery and hosting of ICE applications. Its main
@@ -207,8 +209,12 @@ public class IceAppsContainer extends IceApplication {
     @Override
     public void start(Stage primaryStage) throws Exception {
         primaryStage.setTitle("OpenICE");
-        primaryStage.setWidth(800);
-        primaryStage.setHeight(600);
+        
+        int visibleWidth  = Screen.getMainScreen().getVisibleWidth();
+        int visibleHeight = Screen.getMainScreen().getVisibleHeight();
+        
+        int width = (int) (0.85 * visibleWidth);
+        int height = (int) (0.85 * visibleHeight);
 
         Scene panelScene = new Scene(panelRoot);
         primaryStage.setOnHiding(new EventHandler<WindowEvent>() {
@@ -239,8 +245,8 @@ public class IceAppsContainer extends IceApplication {
         });
 
         primaryStage.setScene(panelScene);
-        primaryStage.setWidth(800);
-        primaryStage.setHeight(600);
+        primaryStage.setWidth(width);
+        primaryStage.setHeight(height);
         primaryStage.centerOnScreen();
         primaryStage.show();
     }
