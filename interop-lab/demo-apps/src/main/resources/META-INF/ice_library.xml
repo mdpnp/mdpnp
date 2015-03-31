@@ -200,8 +200,6 @@
       <nanosec>2147483647</nanosec>
      </lease_duration>
     </liveliness>
-    <!-- Don't request this in all cases <destination_order> <kind>DDS_BY_SOURCE_TIMESTAMP_DESTINATIONORDER_QOS</kind> 
-     </destination_order> -->
     <durability>
      <!-- Writer is responsible for maintaining transient copies of samples 
       ... see history -->
@@ -277,10 +275,19 @@
      </lease_duration>
     </liveliness>
 
-    <!-- It is important to offer this QoS even if every Reader does not 
-     request it -->
+    <!--
+      Ordered by reception time for now since we are not using shared ownership.
+      SOURCE_TIMESTAMP ordering would be required to achieve eventual consistency
+      if multiple writers were writing to the same instances.
+      
+      Offering SOURCE_TIMESTAMP destination order makes DDS sensitive to realtime 
+      clock changes so if we, in the future, enable SOURCE_TIMESTAMP we should consider
+      usage of a monotonic clock. 
+      
+      https://community.rti.com/rti-doc/510/ndds.5.1.0/doc/html/api_java/classcom_1_1rti_1_1dds_1_1infrastructure_1_1DestinationOrderQosPolicy.html
+     -->
     <destination_order>
-     <kind>DDS_BY_SOURCE_TIMESTAMP_DESTINATIONORDER_QOS</kind>
+     <kind>DDS_BY_RECEPTION_TIMESTAMP_DESTINATIONORDER_QOS</kind>
     </destination_order>
     <durability>
      <!-- Writer is responsible for maintaining transient copies of samples 
@@ -411,10 +418,12 @@
       <nanosec>0</nanosec>
      </lease_duration>
     </liveliness>
-    <!-- After a state transition we would like eventual consistency If samples 
-     are not delivered in order this is impossible -->
+    <!--  See the offering (DataWriter) policy for more information.  Requesting
+          SOURCE_TIMESTAMP ordering might be useful if we employ, in the future, 
+          shared instances.  Until then it makes the system more brittle to clock
+          changes. -->
     <destination_order>
-     <kind>DDS_BY_SOURCE_TIMESTAMP_DESTINATIONORDER_QOS</kind>
+     <kind>DDS_BY_RECEPTION_TIMESTAMP_DESTINATIONORDER_QOS</kind>
     </destination_order>
     <durability>
      <!-- Writer is responsible for maintaining transient copies of samples 
@@ -466,10 +475,8 @@
   <qos_profile name="observed_data" base_name="default_profile"
    is_default_qos="false">
    <datareader_qos>
-    <!-- Ask DDS to sort samples for ease-of-programming. Depending on the 
-     reader is might want to deal with time ordering itself and disable this feature -->
     <destination_order>
-     <kind>DDS_BY_SOURCE_TIMESTAMP_DESTINATIONORDER_QOS</kind>
+     <kind>DDS_BY_RECEPTION_TIMESTAMP_DESTINATIONORDER_QOS</kind>
     </destination_order>
     <reliability>
      <kind>DDS_RELIABLE_RELIABILITY_QOS</kind>
