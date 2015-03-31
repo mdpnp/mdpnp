@@ -50,7 +50,8 @@ public class PCAPanel implements InvalidationListener {
     
     @FXML protected BorderPane pcaConfig;
     @FXML protected PCAConfig pcaConfigController;
-
+    
+    private static final Border NO_BORDER = new Border(new BorderStroke(Color.TRANSPARENT, BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(3) ));
     private static final Border YELLOW_BORDER = new Border(new BorderStroke(Color.YELLOW, BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(3) ));
     private static final Border RED_BORDER = new Border(new BorderStroke(Color.RED, BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(3) ));
 
@@ -161,7 +162,7 @@ public class PCAPanel implements InvalidationListener {
             } else if (VitalModel.State.Warning.equals(model.getState())) {
                 main.setBorder(YELLOW_BORDER);
             } else {
-                main.setBorder(Border.EMPTY);
+                main.setBorder(NO_BORDER);
             }
         }
     }
