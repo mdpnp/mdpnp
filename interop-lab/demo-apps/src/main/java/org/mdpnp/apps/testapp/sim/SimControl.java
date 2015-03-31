@@ -119,7 +119,7 @@ public class SimControl implements InitializingBean
 
 
             stepSize = makeIntCombo("Step (%):",
-                                    new Integer[] {1, 2, 3, 4},
+                                    new Integer[] {1, 2, 5, 10, 20},
                                     new ChangeListener<Integer>() {
                                          @Override
                                          public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
@@ -130,7 +130,7 @@ public class SimControl implements InitializingBean
                                     !jitterOn);
 
             maxJitter = makeIntCombo("Max (%):",
-                                    new Integer[] {5, 10, 15, 20},
+                                    new Integer[] {5, 10, 15, 20, 50},
                                     new ChangeListener<Integer>() {
                                         @Override
                                         public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
