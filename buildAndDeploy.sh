@@ -1,4 +1,4 @@
-PARCEL=demo-apps-0.5.1-SNAPSHOT
+PARCEL=demo-apps-0.6.0
 TARGETS=`cat targets | sed '/^\s*#/d'`
 # Add --offline to the following line if no internet access
 ./gradlew :interop-lab:demo-apps:distZip

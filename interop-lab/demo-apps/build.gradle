@@ -23,7 +23,7 @@ jfxDeploy {
 
 javafx {
     appID 'org.mdpnp.apps.testapp.Main'
-    appName 'MDPnP Demo Apps'
+    appName 'OpenICE'
     mainClass 'org.mdpnp.apps.testapp.Main'
     
 
@@ -33,14 +33,12 @@ javafx {
 
             bundleArguments = [
                 // for mac apps
-                'mac.CFBundleIdentifier' : 'org.mdpnp.devices.clamp.ClampApp',
-                'mac.CFBundleName' : 'Clamp App',
+                'mac.CFBundleIdentifier' : 'org.mdpnp.apps.testapp.Main',
+                'mac.CFBundleName' : 'OpenICE',
                 'mac.signing-key-user-name' : 'JEFFREY PLOURDE',
-                'mac.signing-key-developer-id-app' : 'Developer ID Application: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
-                'mac.bundle-id-signing-prefix' : 'org.mdpnp.devices.clamp.',
-
+                //'mac.signing-key-developer-id-app' : 'Developer ID Application: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
                 // for PKG bundles
-                'mac.signing-key-developer-id-installer' : 'Developer ID Installer: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
+                //'mac.signing-key-developer-id-installer' : 'Developer ID Installer: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
 
                 // for Mac App Store Ready bundles
                 //'mac.app-store-entitlements' : 'src/deploy/package/NetworkEntitlements.entitlements',
