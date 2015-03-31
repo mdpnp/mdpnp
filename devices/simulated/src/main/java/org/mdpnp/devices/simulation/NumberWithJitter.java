@@ -58,27 +58,28 @@ public class NumberWithJitter<T> extends Number {
                 '}';
     }
 
-    public T getIncrement() {
+    T getIncrement() {
         return (T)increment;
     }
 
-    public T getFloor() {
+    T getFloor() {
         return (T)floor;
     }
 
-    public T getCeil() {
+    T getCeil() {
         return (T)ceil;
     }
 
-    public T getAverageValue() {
+    T getInitialValue() {
         return (T)initialValue;
     }
 
+    T getCurrentValue() {
+        return (T)currentValue;
+    }
+
     /**
-     *
-     * @param initialValue
-     * @param increment
-     * @param maxDelta
+     * Create a number with initialValue being in the middle between upper/lower bounds
      */
     public NumberWithJitter(Number initialValue, Number increment, Number maxDelta) {
         this(initialValue,
@@ -93,24 +94,5 @@ public class NumberWithJitter<T> extends Number {
         this.floor        = floor;
         this.initialValue = initialValue;
         this.currentValue = initialValue;
-    }
-
-    /**
-     * default drift to 10% with 2% delta on each step
-    */
-    public static NumberWithJitter<Double> makeDouble(double v) {
-        double increment = 0.02*v;
-        double delta     = 0.1*v;
-        return new NumberWithJitter<Double>(v, increment, delta);
-    }
-
-    public static NumberWithJitter<Double> makeDouble(double v, double increment, double delta) {
-        return new NumberWithJitter<Double>(v, increment, delta);
-    }
-
-    public static NumberWithJitter<Integer> makeInteger(int v) {
-        int increment = (int)(0.02*v); if(increment==0) increment= 1;
-        int delta     = (int)(0.1*v);  if(delta==0) delta=2;
-        return new NumberWithJitter<Integer>(v, increment, delta);
     }
 }

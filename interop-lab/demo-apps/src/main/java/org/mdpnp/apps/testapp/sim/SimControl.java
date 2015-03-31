@@ -35,6 +35,8 @@ import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.topic.Topic;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
@@ -43,6 +45,7 @@ import org.springframework.beans.factory.InitializingBean;
  */
 public class SimControl implements InitializingBean
 {
+    private static final Logger log = LoggerFactory.getLogger(SimControl.class);
 
     @FXML protected GridPane main;
     
@@ -95,6 +98,10 @@ public class SimControl implements InitializingBean
             objective = (GlobalSimulationObjective) ice.GlobalSimulationObjective.create();
             objective.metric_id = numericValue.metricId;
             objective.value = numericValue.initialValue;
+            objective.jitterStep = 0;
+            objective.ceil = numericValue.upperBound;
+            objective.floor = numericValue.lowerBound;
+
             handle = writer.register_instance(objective);
 
             valueSlider = new Slider(numericValue.lowerBound, numericValue.upperBound, objective.value);
@@ -108,37 +115,37 @@ public class SimControl implements InitializingBean
             label.setTextAlignment(TextAlignment.RIGHT);
             currentValue = new Label("" + valueSlider.getValue());
 
-            boolean jitterOn = false;
+            boolean jitterOn = objective.jitterStep!=0;
 
-            CheckBox cb  = new CheckBox();
+            final CheckBox cb  = new CheckBox();
             cb.setSelected(false);
             cb.setSelected(jitterOn);
             enableJitter = new Label("Jitter:");
             enableJitter.setGraphic(cb);
             enableJitter.setContentDisplay(ContentDisplay.RIGHT);
 
-            objective.enableJitter = jitterOn;
-            objective.jitterMaxPct = 10;
-            objective.jitterStepPct= 2;
-
             stepSize = makeIntCombo("Step (%):",
-                                    new Integer[] {1, 2, 5, 10, 20}, (int)objective.jitterStepPct,
+                                    new Integer[] {1, 2, 5, 10, 20}, 2,
                                     new ChangeListener<Integer>() {
                                          @Override
                                          public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
-                                             objective.jitterStepPct = newValue.floatValue();
-                                             writer.write(objective, handle);
+                                             float jitterStepPct = newValue.floatValue();
+                                             Number jitterMaxPct = (Number)((ComboBox) maxJitter.getGraphic()).getValue();
+                                             recalculate(numericValue, jitterMaxPct.floatValue(), jitterStepPct);
+                                             publishObjective();
                                          }
                                     },
                                     !jitterOn);
 
             maxJitter = makeIntCombo("Max (%):",
-                                    new Integer[] {5, 10, 15, 20, 50}, (int)objective.jitterMaxPct,
+                                    new Integer[] {5, 10, 15, 20, 50}, 10,
                                     new ChangeListener<Integer>() {
                                         @Override
                                         public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
-                                            objective.jitterMaxPct = newValue.floatValue();
-                                            writer.write(objective, handle);
+                                            float jitterMaxPct = newValue.floatValue();
+                                            Number jitterStepPct = (Number)((ComboBox) stepSize.getGraphic()).getValue();
+                                            recalculate(numericValue, jitterMaxPct, jitterStepPct.floatValue());
+                                            publishObjective();
                                         }
                                     },
                                     !jitterOn);
@@ -150,7 +157,9 @@ public class SimControl implements InitializingBean
                 @Override
                 public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                     objective.value = newValue.floatValue();
-                    writer.write(objective, handle);
+                    boolean jitterOn = cb.isSelected();
+                    recalculate(numericValue, jitterOn);
+                    publishObjective();
                 }
             });
 
@@ -160,14 +169,58 @@ public class SimControl implements InitializingBean
 
                     stepSize.setDisable(!newVal);
                     maxJitter.setDisable(!newVal);
-                    objective.enableJitter = newVal;
-                    writer.write(objective, handle);
+
+                    recalculate(numericValue, newVal);
+                    publishObjective();
                 }
             });
 
             // publish the current state out.
             //
+
+            if(jitterOn) {
+                Number jitterStepPct = (Number) ((ComboBox) stepSize.getGraphic()).getValue();
+                Number jitterMaxPct  = (Number) ((ComboBox) maxJitter.getGraphic()).getValue();
+                recalculate(numericValue, jitterMaxPct.floatValue(), jitterStepPct.floatValue());
+            }
+
+            publishObjective();
+        }
+
+        private void publishObjective() {
+            log.info("Publish objective changes:" + objective);
             writer.write(objective, handle);
+        }
+
+        private boolean recalculate(final NumericValue numericValue, boolean jitterOn) {
+            if(!jitterOn) {
+                objective.jitterStep = 0;
+                objective.ceil = numericValue.upperBound;
+                objective.floor = numericValue.lowerBound;
+                return true;
+            }
+            else {
+                Number jitterStepPct = (Number)((ComboBox) stepSize.getGraphic()).getValue();
+                Number jitterMaxPct  = (Number)((ComboBox) maxJitter.getGraphic()).getValue();
+                return recalculate(numericValue, jitterMaxPct.floatValue(), jitterStepPct.floatValue());
+            }
+        }
+
+        private boolean recalculate(final NumericValue numericValue, float jitterMaxPct, float jitterStepPct) {
+
+            if(jitterMaxPct<=jitterStepPct)
+                return false;
+
+            double floor = objective.value - (objective.value*jitterMaxPct)/100.0;
+            floor = floor<numericValue.lowerBound ? numericValue.lowerBound : floor;
+            double ceil = objective.value + (objective.value*jitterMaxPct)/100.0;
+            ceil = ceil>numericValue.upperBound ? numericValue.upperBound : ceil;
+
+            objective.ceil=(float)ceil;
+            objective.floor=(float)floor;
+            objective.jitterStep = (float)((objective.value*jitterStepPct)/100.0);
+
+            return true;
         }
 
         void close() {

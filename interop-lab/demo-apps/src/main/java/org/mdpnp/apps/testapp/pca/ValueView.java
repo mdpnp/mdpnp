@@ -34,7 +34,6 @@ import org.mdpnp.apps.testapp.DeviceController;
 import org.mdpnp.apps.testapp.vital.Value;
 
 import com.rti.dds.subscription.SampleInfo;
-import com.sun.xml.internal.bind.v2.schemagen.episode.Bindings;
 
 /**
  * @author Jeff Plourde

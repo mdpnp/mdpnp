@@ -91,8 +91,8 @@ public class SimulatedCapnometer {
             -0.33315287258643744, 0.04515924646026637, -0.561927692186718, 0.7799330968687627, -0.33990498476784836, 0.32590698371138915 };
     private final double[] co2 = new double[co2Coeffs.length];
 
-    private Number respiratoryRate = NumberWithJitter.makeInteger(13);
-    private Number etCO2 = NumberWithJitter.makeInteger(29);
+    private Number respiratoryRate = new NumberWithJitter(13, 1, 5);
+    private Number etCO2 = new NumberWithJitter(29, 1, 5);
 
     private void initWaves() {
         DCT.idct(co2Coeffs, co2);

@@ -69,4 +69,36 @@ public class NumberWithGradientTest {
         Assert.assertEquals("failed to preserve original start value", 15, initial.intValue());
     }
 
+    @Test
+    public void testNestedUpdates() throws Exception {
+
+        //
+        // acid test to mock the update sequence all the way from the update loop
+        // The loop simulates the logic in the typical
+        // GlobalSimulationObjectiveListener::simulatedNumeric implementation
+        //
+
+        class Simulator {
+            Number param = new NumberWithJitter<Integer>(10, 1, 5);
+            public Number getParam() {
+                return param;
+            }
+            public void setParam(Number targetValue) {
+                param = new NumberWithGradient(param, targetValue, 2);
+            }
+        }
+
+        Simulator sim = new Simulator();
+
+        for (int idx = 1; idx < 5; idx++) {
+            Number newValue = new NumberWithJitter<Integer>(10+idx, 1, 5);
+            sim.setParam(newValue);
+        }
+
+        NumberWithGradient nwg = (NumberWithGradient)sim.getParam();
+
+        Assert.assertTrue("Make sure there is no memory leak due to chaining",
+                          nwg.startValue instanceof NumberWithJitter);
+    }
+
 }

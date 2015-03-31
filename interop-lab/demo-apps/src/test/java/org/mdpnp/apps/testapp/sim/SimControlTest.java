@@ -41,7 +41,7 @@ public class SimControlTest {
 
         p.printLine("\n\ntestAveDataGeneration\n");
 
-        Number d = NumberWithJitter.makeDouble(nv.initialValue, nv.increment, delta);
+        Number d = new NumberWithJitter<Double>(nv.initialValue, nv.increment, delta);
 
         p.printLine(nv, nv.initialValue);
 

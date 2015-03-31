@@ -20,18 +20,14 @@ public interface GlobalSimulationObjectiveListener {
     //
 
     public static Number toIntegerNumber(ice.GlobalSimulationObjective obj) {
-        if(!obj.enableJitter)
+        if(obj.jitterStep == 0)
             return (int)obj.value;
-        int step = (int)(obj.value*obj.jitterStepPct/100);
-        int max  = (int)(obj.value*obj.jitterMaxPct/100);
-        return new NumberWithJitter<Integer>((int)obj.value, step==0?1:step, max==0?1:max);
+        return new NumberWithJitter<Integer>(obj.value, obj.jitterStep, obj.floor, obj.ceil);
     }
 
     public static Number toDoubleNumber(ice.GlobalSimulationObjective obj) {
-        if(!obj.enableJitter)
+        if(obj.jitterStep == 0)
             return (double)obj.value;
-        double step = obj.value*(obj.jitterStepPct/100.0);
-        double max  = obj.value*(obj.jitterMaxPct/100.0);
-        return new NumberWithJitter<Double>(obj.value, step, max);
+        return new NumberWithJitter<Double>(obj.value, obj.jitterStep, obj.floor, obj.ceil);
     }
 }
