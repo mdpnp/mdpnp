@@ -92,7 +92,7 @@ public class DemoPanel implements Runnable {
 
     public DemoPanel setModel(DomainParticipant participant, EventLoop eventLoop) {
         items = new MyPublicationBuiltinTopicDataItems();
-        this.partitions.setItems(items.getPartitions());
+        this.partitions.setItems(items.getPartitions().sorted());
         items.setModel(participant, eventLoop);
         return this;
     }
