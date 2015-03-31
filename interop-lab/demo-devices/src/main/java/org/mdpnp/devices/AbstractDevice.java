@@ -179,6 +179,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         holder.data = new ice.AlarmLimit();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
+        holder.data.limit_type = limit_type;
         holder.handle = alarmLimitDataWriter.register_instance(holder.data);
         registeredAlarmLimitInstances.add(holder);
         return holder;
