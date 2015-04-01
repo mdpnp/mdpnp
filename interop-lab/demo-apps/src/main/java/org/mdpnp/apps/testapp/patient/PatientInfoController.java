@@ -146,7 +146,7 @@ public class PatientInfoController implements ListChangeListener<Device> {
         }
         */
 
-        ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
+        ice.MDSConnectivity mds=new ice.MDSConnectivity();
         mds.unique_device_identifier = d.getUDI();
         mds.partition = p.getPatientName();
         mdsConnectivity.publish(mds);

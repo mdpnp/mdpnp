@@ -228,5 +228,7 @@ public class RtConfig {
                 }
             }
         }
+        else
+            log.warn("Could not locate '/META-INF/ice_library.xml' on classpath");
     }
 }

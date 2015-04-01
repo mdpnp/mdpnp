@@ -16,27 +16,26 @@ import java.util.EventListener;
 import java.util.EventObject;
 
 
-public class MDSConnectivityAdapter {
+public class MDSConnectivityObjectiveAdapter {
 
-    private static final Logger log = LoggerFactory.getLogger(MDSConnectivityAdapter.class);
-
+    private static final Logger log = LoggerFactory.getLogger(MDSConnectivityObjectiveAdapter.class);
 
     private final Publisher  publisher;
     private final Subscriber subscriber;
     private final EventLoop  eventLoop;
 
-    private final Topic                         msdoConnectivityTopic;
-    private final ReadCondition                 mdsoReadCondition;
-    private final ice.MDSConnectivityDataReader mdsoReader;
-    private final ice.MDSConnectivityDataWriter mdsoWriter;
+    private final Topic                                  msdoConnectivityTopic;
+    private final ReadCondition                          mdsoReadCondition;
+    private final ice.MDSConnectivityObjectiveDataReader mdsoReader;
+    private final ice.MDSConnectivityObjectiveDataWriter mdsoWriter;
 
-    public void publish(ice.MDSConnectivity val) {
+    public void publish(ice.MDSConnectivityObjective val) {
         mdsoWriter.write_w_params(val, new WriteParams_t());
     }
 
     public void start() {
 
-        final ice.MDSConnectivitySeq data_seq = new ice.MDSConnectivitySeq();
+        final ice.MDSConnectivityObjectiveSeq data_seq = new ice.MDSConnectivityObjectiveSeq();
         final SampleInfoSeq info_seq = new SampleInfoSeq();
 
         eventLoop.addHandler(mdsoReadCondition, new EventLoop.ConditionHandler() {
@@ -48,11 +47,11 @@ public class MDSConnectivityAdapter {
                     for (int i = 0; i < info_seq.size(); i++) {
                         SampleInfo si = (SampleInfo) info_seq.get(i);
                         if (si.valid_data) {
-                            ice.MDSConnectivity dco = (ice.MDSConnectivity) data_seq.get(i);
+                            ice.MDSConnectivityObjective dco = (ice.MDSConnectivityObjective) data_seq.get(i);
                             log.info("got " + dco);
-                            MDSConnectivityEvent ev = new MDSConnectivityEvent(dco);
+                            MDSConnectivityObjectiveEvent ev = new MDSConnectivityObjectiveEvent(dco);
                             try {
-                                fireMDSConnectivityEvent(ev);
+                                fireMDSConnectivityObjectiveEvent(ev);
                             }
                             catch (Exception ex) {
                                 log.error("Failed to propagate MDSConnectivityEvent", ex);
@@ -80,25 +79,25 @@ public class MDSConnectivityAdapter {
         publisher.delete_datawriter(mdsoWriter);
 
         participant.delete_topic(msdoConnectivityTopic);
-        ice.MDSConnectivityTypeSupport.unregister_type(participant, ice.MDSConnectivityTypeSupport.get_type_name());
+        ice.MDSConnectivityObjectiveTypeSupport.unregister_type(participant, ice.MDSConnectivityObjectiveTypeSupport.get_type_name());
     }
 
 
-    public MDSConnectivityAdapter(EventLoop eventLoop, Publisher publisher, Subscriber subscriber) {
+    public MDSConnectivityObjectiveAdapter(EventLoop eventLoop, Publisher publisher, Subscriber subscriber) {
         this.publisher = publisher;
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
 
         DomainParticipant participant = subscriber.get_participant();
 
-        ice.MDSConnectivityTypeSupport.register_type(participant, ice.MDSConnectivityTypeSupport.get_type_name());
+        ice.MDSConnectivityObjectiveTypeSupport.register_type(participant, ice.MDSConnectivityObjectiveTypeSupport.get_type_name());
 
         msdoConnectivityTopic = (Topic) TopicUtil.lookupOrCreateTopic(participant,
-                                                                     ice.MDSConnectivityTopic.VALUE,
-                                                                     ice.MDSConnectivityTypeSupport.class);
+                                                                     ice.MDSConnectivityObjectiveTopic.VALUE,
+                                                                     ice.MDSConnectivityObjectiveTypeSupport.class);
 
         mdsoReader =
-                (ice.MDSConnectivityDataReader) subscriber.create_datareader_with_profile(msdoConnectivityTopic,
+                (ice.MDSConnectivityObjectiveDataReader) subscriber.create_datareader_with_profile(msdoConnectivityTopic,
                                                                                                    QosProfiles.ice_library,
                                                                                                    QosProfiles.device_identity,
                                                                                                    null,
@@ -110,7 +109,7 @@ public class MDSConnectivityAdapter {
 
 
         mdsoWriter =
-                (ice.MDSConnectivityDataWriter) publisher.create_datawriter_with_profile(msdoConnectivityTopic,
+                (ice.MDSConnectivityObjectiveDataWriter) publisher.create_datawriter_with_profile(msdoConnectivityTopic,
                                                                                                   QosProfiles.ice_library,
                                                                                                   QosProfiles.state,
                                                                                                   null,
@@ -119,29 +118,29 @@ public class MDSConnectivityAdapter {
     }
 
     @SuppressWarnings("serial")
-    public static class MDSConnectivityEvent extends EventObject {
-        public MDSConnectivityEvent(Object source) {
+    public static class MDSConnectivityObjectiveEvent extends EventObject {
+        public MDSConnectivityObjectiveEvent(Object source) {
             super(source);
         }
     }
 
-    public interface MDSConnectivityListener extends EventListener {
-        public void handleDataSampleEvent(MDSConnectivityEvent evt) ;
+    public interface MDSConnectivityObjectiveListener extends EventListener {
+        public void handleDataSampleEvent(MDSConnectivityObjectiveEvent evt) ;
     }
 
     EventListenerList listenerList = new EventListenerList();
 
-    public void addConnectivityListener(MDSConnectivityListener l) {
-        listenerList.add(MDSConnectivityListener.class, l);
+    public void addConnectivityListener(MDSConnectivityObjectiveListener l) {
+        listenerList.add(MDSConnectivityObjectiveListener.class, l);
     }
 
-    public void removeConnectivityListener(MDSConnectivityListener l) {
-        listenerList.remove(MDSConnectivityListener.class, l);
+    public void removeConnectivityListener(MDSConnectivityObjectiveListener l) {
+        listenerList.remove(MDSConnectivityObjectiveListener.class, l);
     }
 
-    void fireMDSConnectivityEvent(MDSConnectivityEvent data) {
-        MDSConnectivityListener listeners[] = listenerList.getListeners(MDSConnectivityListener.class);
-        for(MDSConnectivityListener l : listeners) {
+    void fireMDSConnectivityObjectiveEvent(MDSConnectivityObjectiveEvent data) {
+        MDSConnectivityObjectiveListener listeners[] = listenerList.getListeners(MDSConnectivityObjectiveListener.class);
+        for(MDSConnectivityObjectiveListener l : listeners) {
             l.handleDataSampleEvent(data);
         }
     }

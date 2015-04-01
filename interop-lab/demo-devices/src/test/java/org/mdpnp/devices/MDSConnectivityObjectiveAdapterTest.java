@@ -8,7 +8,7 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class MDSConnectivityAdapterTest {
+public class MDSConnectivityObjectiveAdapterTest {
 
     @Test
     public void testReadWrite() throws Exception
@@ -17,7 +17,7 @@ public class MDSConnectivityAdapterTest {
 
         RtConfig master = RtConfig.setupDDS(0);
 
-        final MDSConnectivity sample = new MDSConnectivity();
+        final MDSConnectivityObjective sample = new MDSConnectivityObjective();
         sample.partition="p1";
         sample.unique_device_identifier=Long.toBinaryString(System.currentTimeMillis());
 
@@ -25,16 +25,16 @@ public class MDSConnectivityAdapterTest {
             final CountDownLatch stopOk = new CountDownLatch(1);
 
 
-            MDSConnectivityAdapter c = new MDSConnectivityAdapter(master.getEventLoop(),
-                                                                  master.getPublisher(),
-                                                                  master.getSubscriber());
+            MDSConnectivityObjectiveAdapter c = new MDSConnectivityObjectiveAdapter(master.getEventLoop(),
+                                                                                    master.getPublisher(),
+                                                                                    master.getSubscriber());
             c.start();
 
-            c.addConnectivityListener(new MDSConnectivityAdapter.MDSConnectivityListener() {
+            c.addConnectivityListener(new MDSConnectivityObjectiveAdapter.MDSConnectivityObjectiveListener() {
                 @Override
-                public void handleDataSampleEvent(MDSConnectivityAdapter.MDSConnectivityEvent evt) {
-                    MDSConnectivity v = (MDSConnectivity)evt.getSource();
-                    if(sample.unique_device_identifier.equals(v.unique_device_identifier))
+                public void handleDataSampleEvent(MDSConnectivityObjectiveAdapter.MDSConnectivityObjectiveEvent evt) {
+                    MDSConnectivityObjective v = (MDSConnectivityObjective) evt.getSource();
+                    if (sample.unique_device_identifier.equals(v.unique_device_identifier))
                         stopOk.countDown();
                 }
             });
