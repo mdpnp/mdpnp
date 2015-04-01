@@ -6,6 +6,7 @@ import com.rti.dds.publication.PublisherQos;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 import ice.DeviceIdentity;
+import ice.MDSConnectivity;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,16 +104,44 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
         }
 
         if (!same) {
-            log.info("Changing partition to " + Arrays.toString(partition));
+            String       asString = toString(partition);
+            List<String> asList   = Arrays.asList(partition);
+
+            log.info("Changing partition to >" + asString + "<");
             pQos.partition.name.clear();
             sQos.partition.name.clear();
-            pQos.partition.name.addAll(Arrays.asList(partition));
-            sQos.partition.name.addAll(Arrays.asList(partition));
+            pQos.partition.name.addAll(asList);
+            sQos.partition.name.addAll(asList);
             publisher.set_qos(pQos);
             subscriber.set_qos(sQos);
+
+            final MDSConnectivity state = new MDSConnectivity();
+            state.partition = asString;
+            state.unique_device_identifier=deviceIdentity.unique_device_identifier;
+
+            connectivityAdapter.publish(state);
+
         } else {
             log.info("Not changing to same partition " + Arrays.toString(partition));
         }
+    }
+
+    /**
+     * @param partition
+     * @return comma-separated list of partitions.
+     */
+    static String toString(String [] partition) {
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < partition.length; i++) {
+            if(b.length()!=0)
+                b.append(",");
+            b.append(partition[i]);
+        }
+        return b.toString();
+    }
+
+    MDSHandler getConnectivityAdapter() {
+        return connectivityAdapter;
     }
 
     private final MDSHandler connectivityAdapter;
@@ -147,7 +176,7 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
         deviceIdentity = d;
         publisher = null;
         subscriber = null;
-        connectivityAdapter = null;
+        connectivityAdapter = new MDSHandler.NoOp();
     }
 
     @Override

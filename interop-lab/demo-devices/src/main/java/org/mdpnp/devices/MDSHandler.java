@@ -5,6 +5,7 @@ import com.rti.dds.infrastructure.*;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.*;
 import com.rti.dds.topic.Topic;
+import ice.MDSConnectivity;
 import ice.MDSConnectivityObjective;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
@@ -23,8 +24,14 @@ import java.util.EventObject;
  */
 public class MDSHandler {
 
-    MDSHandler.Connectivity mdsConnectivityAdapter;
-    MDSHandler.Objective mdsConnectivityObjectiveAdapter;
+    final MDSHandler.Connectivity mdsConnectivityAdapter;
+    final MDSHandler.Objective mdsConnectivityObjectiveAdapter;
+
+    protected MDSHandler()
+    {
+        mdsConnectivityAdapter = null;
+        mdsConnectivityObjectiveAdapter = null;
+    }
 
     public MDSHandler(EventLoop eventLoop, Publisher publisher, Subscriber subscriber) {
         mdsConnectivityAdapter = new MDSHandler.Connectivity(eventLoop, publisher, subscriber);
@@ -330,4 +337,54 @@ public class MDSHandler {
             }
         }
     }
+
+    //
+    // for disconnected functionality - mostly for tests
+    //
+    public static class NoOp extends MDSHandler {
+        public NoOp() {
+            super();
+        }
+
+        @Override
+        public void start() {
+            // do nothing
+        }
+
+        @Override
+        public void shutdown() {
+            // do nothing
+        }
+
+        @Override
+        public void addConnectivityListener(Connectivity.MDSListener l) {
+            // do nothing
+        }
+
+        @Override
+        public void removeConnectivityListener(Connectivity.MDSListener l) {
+            // do nothing
+        }
+
+        @Override
+        public void publish(MDSConnectivity val) {
+            // do nothing
+        }
+
+        @Override
+        public void publish(MDSConnectivityObjective val) {
+            // do nothing
+        }
+
+        @Override
+        public void removeConnectivityListener(Objective.MDSListener l) {
+            // do nothing
+        }
+
+        @Override
+        public void addConnectivityListener(Objective.MDSListener l) {
+            // do nothing
+        }
+    }
+
 }
