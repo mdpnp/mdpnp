@@ -17,7 +17,7 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Callback;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.devices.MDSConnectivityAdapter;
+import org.mdpnp.devices.MDSHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,9 +29,9 @@ public class PatientInfoController implements ListChangeListener<Device> {
 
     private static final Logger log = LoggerFactory.getLogger(PatientInfoController.class);
 
-    private DeviceListModel        deviceListDataModel;
-    private DataSource             jdbcDB;
-    private MDSConnectivityAdapter mdsConnectivity;
+    private DeviceListModel deviceListDataModel;
+    private DataSource      jdbcDB;
+    private MDSHandler      mdsConnectivity;
 
     @FXML ComboBox<Device> deviceList;
     @FXML ComboBox<PatientInfo> patientList;
@@ -60,11 +60,11 @@ public class PatientInfoController implements ListChangeListener<Device> {
         jdbcDB = db;
     }
 
-    public MDSConnectivityAdapter getMdsConnectivity() {
+    public MDSHandler getMdsConnectivity() {
         return mdsConnectivity;
     }
 
-    public void setMdsConnectivity(MDSConnectivityAdapter mdsConnectivity) {
+    public void setMdsConnectivity(MDSHandler mdsConnectivity) {
         this.mdsConnectivity = mdsConnectivity;
     }
 
@@ -146,7 +146,7 @@ public class PatientInfoController implements ListChangeListener<Device> {
         }
         */
 
-        ice.MDSConnectivity mds=new ice.MDSConnectivity();
+        ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
         mds.unique_device_identifier = d.getUDI();
         mds.partition = p.getPatientName();
         mdsConnectivity.publish(mds);

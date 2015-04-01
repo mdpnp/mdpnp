@@ -1,0 +1,333 @@
+package org.mdpnp.devices;
+
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.infrastructure.*;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.*;
+import com.rti.dds.topic.Topic;
+import ice.MDSConnectivityObjective;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.event.EventListenerList;
+import java.util.EventListener;
+import java.util.EventObject;
+
+/**
+ * @author mfeinberg
+ *
+ * Container for both sides. Each side can be instaciated separately if needs to
+ */
+public class MDSHandler {
+
+    MDSHandler.Connectivity mdsConnectivityAdapter;
+    MDSHandler.Objective mdsConnectivityObjectiveAdapter;
+
+    public MDSHandler(EventLoop eventLoop, Publisher publisher, Subscriber subscriber) {
+        mdsConnectivityAdapter = new MDSHandler.Connectivity(eventLoop, publisher, subscriber);
+        mdsConnectivityObjectiveAdapter = new MDSHandler.Objective(eventLoop, publisher, subscriber);
+    }
+
+    public void start() {
+        mdsConnectivityAdapter.start();
+        mdsConnectivityObjectiveAdapter.start();
+    }
+
+    public void shutdown() {
+        mdsConnectivityAdapter.shutdown();
+        mdsConnectivityObjectiveAdapter.shutdown();
+    }
+
+    public void addConnectivityListener(MDSHandler.Connectivity.MDSListener l) {
+        mdsConnectivityAdapter.addConnectivityListener(l);
+    }
+
+    public void removeConnectivityListener(MDSHandler.Connectivity.MDSListener l) {
+        mdsConnectivityAdapter.removeConnectivityListener(l);
+    }
+
+    public void publish(ice.MDSConnectivity val) {
+        mdsConnectivityAdapter.publish(val);
+    }
+
+    public void publish(MDSConnectivityObjective val) {
+        mdsConnectivityObjectiveAdapter.publish(val);
+    }
+
+    public void removeConnectivityListener(Objective.MDSListener l) {
+        mdsConnectivityObjectiveAdapter.removeConnectivityListener(l);
+    }
+
+    public void addConnectivityListener(Objective.MDSListener l) {
+        mdsConnectivityObjectiveAdapter.addConnectivityListener(l);
+    }
+
+    /**
+     * Decorator for MDSConnectivity messages
+     */
+    public static class Connectivity {
+
+        private static final Logger log = LoggerFactory.getLogger(Connectivity.class);
+
+        private final Publisher publisher;
+        private final Subscriber subscriber;
+        private final EventLoop eventLoop;
+
+        private final Topic msdoConnectivityTopic;
+        private final ReadCondition mdsoReadCondition;
+        private final ice.MDSConnectivityDataReader mdsoReader;
+        private final ice.MDSConnectivityDataWriter mdsoWriter;
+
+        public void publish(ice.MDSConnectivity val) {
+            mdsoWriter.write_w_params(val, new WriteParams_t());
+        }
+
+        public void start() {
+
+            final ice.MDSConnectivitySeq data_seq = new ice.MDSConnectivitySeq();
+            final SampleInfoSeq info_seq = new SampleInfoSeq();
+
+            eventLoop.addHandler(mdsoReadCondition, new EventLoop.ConditionHandler() {
+
+                @Override
+                public void conditionChanged(Condition condition) {
+                    try {
+                        mdsoReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, mdsoReadCondition);
+                        for (int i = 0; i < info_seq.size(); i++) {
+                            SampleInfo si = (SampleInfo) info_seq.get(i);
+                            if (si.valid_data) {
+                                ice.MDSConnectivity dco = (ice.MDSConnectivity) data_seq.get(i);
+                                log.info("got " + dco);
+                                MDSEvent ev = new MDSEvent(dco);
+                                try {
+                                    fireMDSConnectivityEvent(ev);
+                                }
+                                catch (Exception ex) {
+                                    log.error("Failed to propagate MDSConnectivityEvent", ex);
+                                }
+                            }
+                        }
+
+                    } catch (RETCODE_NO_DATA noData) {
+
+                    } finally {
+                        mdsoReader.return_loan(data_seq, info_seq);
+                    }
+                }
+            });
+        }
+
+        public void shutdown() {
+
+            eventLoop.removeHandler(mdsoReadCondition);
+
+            DomainParticipant participant = subscriber.get_participant();
+
+            mdsoReader.delete_readcondition(mdsoReadCondition);
+            subscriber.delete_datareader(mdsoReader);
+            publisher.delete_datawriter(mdsoWriter);
+
+            participant.delete_topic(msdoConnectivityTopic);
+            ice.MDSConnectivityTypeSupport.unregister_type(participant, ice.MDSConnectivityTypeSupport.get_type_name());
+        }
+
+
+        public Connectivity(EventLoop eventLoop, Publisher publisher, Subscriber subscriber) {
+            this.publisher = publisher;
+            this.subscriber = subscriber;
+            this.eventLoop = eventLoop;
+
+            DomainParticipant participant = subscriber.get_participant();
+
+            ice.MDSConnectivityTypeSupport.register_type(participant, ice.MDSConnectivityTypeSupport.get_type_name());
+
+            msdoConnectivityTopic = (Topic) TopicUtil.lookupOrCreateTopic(participant,
+                                                                          ice.MDSConnectivityTopic.VALUE,
+                                                                          ice.MDSConnectivityTypeSupport.class);
+
+            mdsoReader =
+                    (ice.MDSConnectivityDataReader) subscriber.create_datareader_with_profile(msdoConnectivityTopic,
+                                                                                                       QosProfiles.ice_library,
+                                                                                                       QosProfiles.device_identity,
+                                                                                                       null,
+                                                                                                       StatusKind.STATUS_MASK_NONE);
+
+            mdsoReadCondition = mdsoReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
+                                                           ViewStateKind.ANY_VIEW_STATE,
+                                                           InstanceStateKind.ANY_INSTANCE_STATE);
+
+
+            mdsoWriter =
+                    (ice.MDSConnectivityDataWriter) publisher.create_datawriter_with_profile(msdoConnectivityTopic,
+                                                                                                      QosProfiles.ice_library,
+                                                                                                      QosProfiles.state,
+                                                                                                      null,
+                                                                                                      StatusKind.STATUS_MASK_NONE);
+
+        }
+
+        @SuppressWarnings("serial")
+        public static class MDSEvent extends EventObject {
+            public MDSEvent(Object source) {
+                super(source);
+            }
+        }
+
+        public interface MDSListener extends EventListener {
+            public void handleDataSampleEvent(MDSEvent evt) ;
+        }
+
+        EventListenerList listenerList = new EventListenerList();
+
+        public void addConnectivityListener(MDSListener l) {
+            listenerList.add(MDSListener.class, l);
+        }
+
+        public void removeConnectivityListener(MDSListener l) {
+            listenerList.remove(MDSListener.class, l);
+        }
+
+        void fireMDSConnectivityEvent(MDSEvent data) {
+            MDSListener listeners[] = listenerList.getListeners(MDSListener.class);
+            for(MDSListener l : listeners) {
+                l.handleDataSampleEvent(data);
+            }
+        }
+    }
+
+    /**
+     * Decorator for MDSConnectivityObjective messages
+     */
+    public static class Objective {
+
+        private static final Logger log = LoggerFactory.getLogger(Objective.class);
+
+        private final Publisher  publisher;
+        private final Subscriber subscriber;
+        private final EventLoop  eventLoop;
+
+        private final Topic                                  msdoConnectivityTopic;
+        private final ReadCondition                          mdsoReadCondition;
+        private final ice.MDSConnectivityObjectiveDataReader mdsoReader;
+        private final ice.MDSConnectivityObjectiveDataWriter mdsoWriter;
+
+        public void publish(ice.MDSConnectivityObjective val) {
+            mdsoWriter.write_w_params(val, new WriteParams_t());
+        }
+
+        public void start() {
+
+            final ice.MDSConnectivityObjectiveSeq data_seq = new ice.MDSConnectivityObjectiveSeq();
+            final SampleInfoSeq info_seq = new SampleInfoSeq();
+
+            eventLoop.addHandler(mdsoReadCondition, new EventLoop.ConditionHandler() {
+
+                @Override
+                public void conditionChanged(Condition condition) {
+                    try {
+                        mdsoReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, mdsoReadCondition);
+                        for (int i = 0; i < info_seq.size(); i++) {
+                            SampleInfo si = (SampleInfo) info_seq.get(i);
+                            if (si.valid_data) {
+                                ice.MDSConnectivityObjective dco = (ice.MDSConnectivityObjective) data_seq.get(i);
+                                log.info("got " + dco);
+                                MDSEvent ev = new MDSEvent(dco);
+                                try {
+                                    fireMDSConnectivityObjectiveEvent(ev);
+                                }
+                                catch (Exception ex) {
+                                    log.error("Failed to propagate MDSConnectivityEvent", ex);
+                                }
+                            }
+                        }
+
+                    } catch (RETCODE_NO_DATA noData) {
+
+                    } finally {
+                        mdsoReader.return_loan(data_seq, info_seq);
+                    }
+                }
+            });
+        }
+
+        public void shutdown() {
+
+            eventLoop.removeHandler(mdsoReadCondition);
+
+            DomainParticipant participant = subscriber.get_participant();
+
+            mdsoReader.delete_readcondition(mdsoReadCondition);
+            subscriber.delete_datareader(mdsoReader);
+            publisher.delete_datawriter(mdsoWriter);
+
+            participant.delete_topic(msdoConnectivityTopic);
+            ice.MDSConnectivityObjectiveTypeSupport.unregister_type(participant, ice.MDSConnectivityObjectiveTypeSupport.get_type_name());
+        }
+
+
+        public Objective(EventLoop eventLoop, Publisher publisher, Subscriber subscriber) {
+            this.publisher = publisher;
+            this.subscriber = subscriber;
+            this.eventLoop = eventLoop;
+
+            DomainParticipant participant = subscriber.get_participant();
+
+            ice.MDSConnectivityObjectiveTypeSupport.register_type(participant, ice.MDSConnectivityObjectiveTypeSupport.get_type_name());
+
+            msdoConnectivityTopic = (Topic) TopicUtil.lookupOrCreateTopic(participant,
+                                                                         ice.MDSConnectivityObjectiveTopic.VALUE,
+                                                                         ice.MDSConnectivityObjectiveTypeSupport.class);
+
+            mdsoReader =
+                    (ice.MDSConnectivityObjectiveDataReader) subscriber.create_datareader_with_profile(msdoConnectivityTopic,
+                                                                                                       QosProfiles.ice_library,
+                                                                                                       QosProfiles.device_identity,
+                                                                                                       null,
+                                                                                                       StatusKind.STATUS_MASK_NONE);
+
+            mdsoReadCondition = mdsoReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
+                                                           ViewStateKind.ANY_VIEW_STATE,
+                                                           InstanceStateKind.ANY_INSTANCE_STATE);
+
+
+            mdsoWriter =
+                    (ice.MDSConnectivityObjectiveDataWriter) publisher.create_datawriter_with_profile(msdoConnectivityTopic,
+                                                                                                      QosProfiles.ice_library,
+                                                                                                      QosProfiles.state,
+                                                                                                      null,
+                                                                                                      StatusKind.STATUS_MASK_NONE);
+
+        }
+
+        @SuppressWarnings("serial")
+        public static class MDSEvent extends EventObject {
+            public MDSEvent(Object source) {
+                super(source);
+            }
+        }
+
+        public interface MDSListener extends EventListener {
+            public void handleDataSampleEvent(MDSEvent evt) ;
+        }
+
+        EventListenerList listenerList = new EventListenerList();
+
+        public void addConnectivityListener(MDSListener l) {
+            listenerList.add(MDSListener.class, l);
+        }
+
+        public void removeConnectivityListener(MDSListener l) {
+            listenerList.remove(MDSListener.class, l);
+        }
+
+        void fireMDSConnectivityObjectiveEvent(MDSEvent data) {
+            MDSListener listeners[] = listenerList.getListeners(MDSListener.class);
+            for(MDSListener l : listeners) {
+                l.handleDataSampleEvent(data);
+            }
+        }
+    }
+}

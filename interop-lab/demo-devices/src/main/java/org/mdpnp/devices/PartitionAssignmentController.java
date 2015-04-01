@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class PartitionAssignmentController implements MDSConnectivityAdapter.MDSConnectivityListener {
+public class PartitionAssignmentController implements MDSHandler.Objective.MDSListener {
 
     private static final Logger log = LoggerFactory.getLogger(PartitionAssignmentController.class);
 
@@ -115,7 +115,7 @@ public class PartitionAssignmentController implements MDSConnectivityAdapter.MDS
         }
     }
 
-    private final MDSConnectivityAdapter connectivityAdapter;
+    private final MDSHandler connectivityAdapter;
     private final DeviceIdentity deviceIdentity;
     private final Publisher publisher;
     private final Subscriber subscriber;
@@ -136,7 +136,7 @@ public class PartitionAssignmentController implements MDSConnectivityAdapter.MDS
         deviceIdentity = d;
         publisher = p;
         subscriber = s;
-        connectivityAdapter = new MDSConnectivityAdapter(e, publisher, subscriber);
+        connectivityAdapter = new MDSHandler(e, publisher, subscriber);
 
     }
 
@@ -151,7 +151,7 @@ public class PartitionAssignmentController implements MDSConnectivityAdapter.MDS
     }
 
     @Override
-    public void handleDataSampleEvent(MDSConnectivityAdapter.MDSConnectivityEvent evt) {
+    public void handleDataSampleEvent(MDSHandler.Objective.MDSEvent evt) {
         ice.MDSConnectivityObjective  o = (ice.MDSConnectivityObjective )evt.getSource();
         if(deviceIdentity.unique_device_identifier.equals(o.unique_device_identifier)) {
             String p[] = {o.partition};

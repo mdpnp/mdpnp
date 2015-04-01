@@ -8,7 +8,7 @@
 
 
     <bean id="mdsConnectivity"
-          class="org.mdpnp.devices.MDSConnectivityAdapter"
+          class="org.mdpnp.devices.MDSHandler"
           init-method="start"
           destroy-method="shutdown">
         <constructor-arg ref="eventLoop"/>
