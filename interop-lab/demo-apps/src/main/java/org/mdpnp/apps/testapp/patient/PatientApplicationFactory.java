@@ -20,6 +20,8 @@ import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
+
 
 /**
  *
@@ -98,6 +100,15 @@ public class PatientApplicationFactory implements IceApplicationProvider {
         }
 
     }
+
+    public interface EMRFacade {
+        List<PatientInfo> getPatients();
+        boolean createPatient(PatientInfo p);
+
+        void deleteDevicePatientAssociation(DevicePatientAssociation assoc);
+        DevicePatientAssociation updateDevicePatientAssociation(DevicePatientAssociation assoc);
+    }
+
 
     @SuppressWarnings("serial")
     static class EmbeddedDB extends JDBCDataSource {

@@ -37,10 +37,10 @@ public class DevicePatientAssociation {
         return device.makeAndModelProperty().getValue();
     }
     public Property<String> patientIdentifierProperty() {
-        return patient.patientNameProperty();
+        return patient.lastNameProperty();
     }
     public String getPatientIdentifier() {
-        return patient.getPatientName();
+        return patient.getId();
     }
     public Property<String> deviceIdentifierProperty() {
         return device.serial_numberProperty();

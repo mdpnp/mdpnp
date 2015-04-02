@@ -12,29 +12,51 @@ import java.util.List;
 
 public class PatientInfo {
 
-    private final StringProperty patientName = new SimpleStringProperty();
+    enum Gender { male, female };
 
-    public PatientInfo(String n) {
-        patientName.setValue(n);
+    private final StringProperty lastName = new SimpleStringProperty();
+    private final StringProperty firstName = new SimpleStringProperty();
+    private final StringProperty id = new SimpleStringProperty();
+
+    public PatientInfo(String id, String fn, String ln) {
+        this.id.setValue(id);
+        this.firstName.setValue(fn);
+        this.lastName.setValue(ln);
     }
 
-    public String getPatientName() {
-        return patientName.get();
+    public String getLastName() {
+        return lastName.get();
     }
 
-    public StringProperty patientNameProperty() {
-        return patientName;
+    public StringProperty lastNameProperty() {
+        return lastName;
+    }
+
+    public String getFirstName() {
+        return firstName.get();
+    }
+
+    public StringProperty firstNameProperty() {
+        return firstName;
+    }
+
+    public String getId() {
+        return id.get();
+    }
+
+    public StringProperty idProperty() {
+        return id;
     }
 
     @Override
     public String toString() {
-        return patientName.getValue();
+        return firstName.getValue() + " " + lastName.getValue();
 
     }
 
     static class PatientInfoRowMapper implements RowMapper<PatientInfo> {
         public PatientInfo mapRow(ResultSet rs, int rowNum) throws SQLException {
-            PatientInfo p = new PatientInfo(rs.getString("PATIENT_ID"));
+            PatientInfo p = new PatientInfo(rs.getString("PATIENT_ID"), "", "");
             return p;
         }
     }

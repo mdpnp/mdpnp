@@ -110,7 +110,7 @@ public class PatientApplicationFactoryTest {
                 Thread.sleep(1000);
                 wait += 1000;
 
-                final PatientInfo p = new PatientInfo("PATIENT-" + i);
+                final PatientInfo p = new PatientInfo(Integer.toHexString(i), "FirstName" + i, "LastName" + i);
                 final Device d = new Device("ID-" + i);
                 Platform.runLater(new Runnable() {
                     @Override

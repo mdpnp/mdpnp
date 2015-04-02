@@ -10,6 +10,30 @@
 <BorderPane prefHeight="480.0" prefWidth="800.0"
             xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2"
             fx:controller="org.mdpnp.apps.testapp.patient.PatientInfoController">
+<top>
+    <GridPane>
+        <children>
+            <Label text="MRN" textAlignment="RIGHT"                             GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            <TextField fx:id="newPatientMRN" prefColumnCount="8" text=""        GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+            <Label text="First Name" textAlignment="RIGHT"                      GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+            <TextField fx:id="newPatientFirstName" prefColumnCount="15" text="" GridPane.columnIndex="4" GridPane.rowIndex="1"/>
+            <Label text="Last Name" textAlignment="RIGHT"                       GridPane.columnIndex="5" GridPane.rowIndex="1"/>
+            <TextField fx:id="newPatientLastName" prefColumnCount="15" text=""  GridPane.columnIndex="6" GridPane.rowIndex="1"/>
+            <Button fx:id="createNewPatient" GridPane.columnIndex="2" GridPane.rowIndex="2" text="Create New"/>
+        </children>
+        <columnConstraints>
+            <ColumnConstraints />
+            <ColumnConstraints fillWidth="false" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" />
+        </rowConstraints>
+    </GridPane>
+</top>
+
 <bottom>
     <GridPane>
       <children>

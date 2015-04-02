@@ -1,8 +1,6 @@
 package org.mdpnp.apps.testapp.patient;
 
 import ice.MDSConnectivity;
-import ice.MDSConnectivityObjective;
-import javafx.beans.property.Property;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -23,7 +21,6 @@ import org.mdpnp.devices.MDSHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -31,13 +28,18 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
     private static final Logger log = LoggerFactory.getLogger(PatientInfoController.class);
 
-    private DeviceListModel deviceListDataModel;
-    private DataSource      jdbcDB;
-    private MDSHandler      mdsConnectivity;
+    private DeviceListModel                     deviceListDataModel;
+    private PatientApplicationFactory.EMRFacade emr;
+    private MDSHandler                          mdsConnectivity;
 
     @FXML ComboBox<Device> deviceList;
     @FXML ComboBox<PatientInfo> patientList;
     @FXML Button connectBtn;
+
+    @FXML Button createNewPatient;
+    @FXML TextField newPatientMRN;
+    @FXML TextField newPatientFirstName;
+    @FXML TextField newPatientLastName;
 
     @FXML TableView<DevicePatientAssociation> tableView;
     @FXML TableColumn<DevicePatientAssociation, String> tableViewActionColumn;
@@ -54,12 +56,12 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         deviceListDataModel = dlm;
     }
 
-    public DataSource getJdbcDB() {
-        return jdbcDB;
+    public PatientApplicationFactory.EMRFacade getEmr() {
+        return emr;
     }
 
-    public void setJdbcDB(DataSource db) {
-        jdbcDB = db;
+    public void setEmr(PatientApplicationFactory.EMRFacade db) {
+        emr = db;
     }
 
     public MDSHandler getMdsConnectivity() {
@@ -80,19 +82,19 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         /*
         if(oldValue != null) {
             uniqueDeviceIdentifier.textProperty().unbindBidirectional(oldValue.deviceIdentifierProperty());
-            patientIdentifier.textProperty().unbindBidirectional(oldValue.patientNameProperty());
+            patientIdentifier.textProperty().unbindBidirectional(oldValue.lastNameProperty());
             patientName.textProperty().unbindBidirectional(oldValue.patientIdentifierProperty());
         }
         
         uniqueDeviceIdentifier.textProperty().bindBidirectional(newValue.deviceIdentifierProperty());
-        patientIdentifier.textProperty().bindBidirectional(newValue.patientNameProperty());
+        patientIdentifier.textProperty().bindBidirectional(newValue.lastNameProperty());
         patientName.textProperty().bindBidirectional(newValue.patientIdentifierProperty());
         */
     }
 
 
     public void removeDeviceAssociation(DevicePatientAssociation assoc)  {
-        DevicePatientAssociation.delete(jdbcDB, assoc);
+        emr.deleteDevicePatientAssociation(assoc);
         tblModel.remove(assoc);
         deviceListModel.add(assoc.getDevice());
     }
@@ -105,11 +107,11 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
     private DevicePatientAssociation associate(Device d, PatientInfo p)  {
 
-        DevicePatientAssociation dpa = DevicePatientAssociation.update(jdbcDB, new DevicePatientAssociation(d, p));
+        DevicePatientAssociation dpa = emr.updateDevicePatientAssociation(new DevicePatientAssociation(d, p));
 
         ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
         mds.unique_device_identifier = d.getUDI();
-        mds.partition = p.getPatientName();
+        mds.partition = p.getLastName();
         mdsConnectivity.publish(mds);
 
         return dpa;
@@ -264,7 +266,23 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
             }
         });
 
-        List<PatientInfo> p =  PatientInfo.queryAll(jdbcDB);
+        createNewPatient.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                String mrn   = newPatientMRN.getText();
+                String lName = newPatientLastName.getText();
+                String fName = newPatientFirstName.getText();
+                if(fName.trim().length() != 0 && lName.trim().length() != 0 && mrn.trim().length() != 0) {
+                    PatientInfo pi = new PatientInfo(mrn, fName, lName);
+                    if(addPatient(pi)) {
+                        newPatientMRN.setText("");
+                        newPatientLastName.setText("");
+                        newPatientFirstName.setText("");
+                    }
+                }
+            }
+        });
+        List<PatientInfo> p =  emr.getPatients();
         patientListModel.addAll(p);
 
         mdsConnectivity.addConnectivityListener(this);
@@ -273,8 +291,16 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     public void proposeDeviceAssociation(Device d, PatientInfo p) {
         ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
         mds.unique_device_identifier = d.getUDI();
-        mds.partition = p.getPatientName();
+        mds.partition = p.getLastName();
         mdsConnectivity.publish(mds);
+    }
+
+    private boolean addPatient(PatientInfo pi) {
+        if(emr.createPatient(pi)) {
+            patientList.getItems().add(pi);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -306,7 +332,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
     private static PatientInfo findPatient(String partition, ObservableList<PatientInfo> items) {
         for (PatientInfo item : items) {
-            if(item.getPatientName().equals(partition))
+            if(item.getLastName().equals(partition))
                 return item;
         }
         return null;
@@ -337,5 +363,5 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     }
 
     private static final Device NO_DEVICE = new Device("");
-    private static final PatientInfo NO_PATIENT = new PatientInfo("");
+    private static final PatientInfo NO_PATIENT = new PatientInfo("", "", "");
 }
