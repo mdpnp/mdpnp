@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -113,9 +114,14 @@ public class FxRuntimeSupport {
             this.primaryStage = primaryStage;
             latch.countDown();
         }
+
+        @Override
+        public void stop() throws Exception {
+            super.stop();
+        }
     }
 
-    private Stage showInFxThread(IceApplication iceApp) throws Exception{
+    private Stage showInFxThread(final IceApplication iceApp) throws Exception{
 
         if(lastStage != null) {
             lastStage.close();
@@ -124,7 +130,20 @@ public class FxRuntimeSupport {
 
         lastStage = new Stage(StageStyle.DECORATED);
         lastStage.setAlwaysOnTop(false);
-
+        lastStage.addEventHandler(WindowEvent.WINDOW_HIDING, new EventHandler<WindowEvent>()
+        {
+            @Override
+            public void handle(WindowEvent window)
+            {
+                // this is a dialog - the application's 'close' event
+                // wont happen
+                try {
+                    iceApp.stop();
+                } catch (Exception e) {
+                    log.error("Failed to stop device adapter");
+                }
+            }
+        });
         iceApp.start(lastStage);
         lastStage.show();
         return lastStage;
