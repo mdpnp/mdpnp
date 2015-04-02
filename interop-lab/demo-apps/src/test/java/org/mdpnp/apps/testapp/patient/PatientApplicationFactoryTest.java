@@ -50,7 +50,13 @@ public class PatientApplicationFactoryTest {
 
         final CountDownLatch stopOk = new CountDownLatch(1);
 
-        final ApplicationExt app = new ApplicationExt();
+        final ApplicationExt app = new ApplicationExt() {
+            @Override
+            public void stop() throws Exception {
+                super.stop();
+                stopOk.countDown();
+            }
+        };
 
         Stage ui = FxRuntimeSupport.initialize().show(app);
         Assert.assertNotNull(ui);
@@ -66,15 +72,14 @@ public class PatientApplicationFactoryTest {
                         Thread.sleep(upTime);
                     else
                         Assert.fail("Bad test configuration; uptime < data population");
-                }
 
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        ui.close();
-                        stopOk.countDown();
-                    }
-                });
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            ui.close();
+                        }
+                    });
+                }
             } catch (Exception ex) {
                 log.error("failed to run data pump", ex);
             }
@@ -82,12 +87,18 @@ public class PatientApplicationFactoryTest {
         });
         guillotine.start();
 
-        // if <0, keep the ui up forever - used to debugging.
-        if(UI_UP_MS>0) {
-            boolean isOk = stopOk.await(2 * UI_UP_MS, TimeUnit.MILLISECONDS);
+        try {
+            // if <0, keep the ui up forever - used to debugging.
+            if (UI_UP_MS > 0) {
+                boolean isOk = stopOk.await(2 * UI_UP_MS, TimeUnit.MILLISECONDS);
+                if (!isOk)
+                    Assert.fail("Failed to close the dialog");
+            } else {
+                stopOk.await();
+            }
+        }
+        finally {
             app.stop();
-            if (!isOk)
-                Assert.fail("Failed to close the dialog");
         }
     }
 
@@ -144,7 +155,7 @@ public class PatientApplicationFactoryTest {
         }
     };
 
-    private static final int N_DATA_POINTS = 10;
+    private static final int N_DATA_POINTS = 5;
     private static final int UI_UP_MS = Integer.getInteger("PatientApplicationFactoryTest.UpTimeMS", N_DATA_POINTS*1000+2000);
 
 }
