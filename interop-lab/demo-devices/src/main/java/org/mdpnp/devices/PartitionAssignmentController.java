@@ -1,6 +1,7 @@
 package org.mdpnp.devices;
 
 
+import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.publication.PublisherQos;
 import com.rti.dds.subscription.Subscriber;
@@ -154,7 +155,6 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
     private final Publisher publisher;
     private final Subscriber subscriber;
 
-
     public void start() {
         connectivityAdapter.start();
         connectivityAdapter.addConnectivityListener(this);
@@ -166,11 +166,11 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
     }
 
 
-    public PartitionAssignmentController(DeviceIdentity d, EventLoop e, Publisher p, Subscriber s) {
+    public PartitionAssignmentController(DeviceIdentity d, DomainParticipant dp, EventLoop e, Publisher p, Subscriber s) {
         deviceIdentity = d;
         publisher = p;
         subscriber = s;
-        connectivityAdapter = new MDSHandler(e, publisher, subscriber);
+        connectivityAdapter = new MDSHandler(e, dp);
 
     }
 

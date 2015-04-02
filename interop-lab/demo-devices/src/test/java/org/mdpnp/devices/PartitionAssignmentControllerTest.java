@@ -33,6 +33,7 @@ public class PartitionAssignmentControllerTest {
 
             PartitionAssignmentController controller =
                     new PartitionAssignmentController(deviceIdentity,
+                                                      master.getParticipant(),
                                                       master.getEventLoop(),
                                                       master.getPublisher(),
                                                       master.getSubscriber());

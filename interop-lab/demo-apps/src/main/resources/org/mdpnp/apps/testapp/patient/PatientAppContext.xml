@@ -12,8 +12,7 @@
           init-method="start"
           destroy-method="shutdown">
         <constructor-arg ref="eventLoop"/>
-        <constructor-arg ref="publisher" />
-        <constructor-arg ref="subscriber" />
+        <constructor-arg ref="domainParticipant" />
     </bean>
 
     <bean id="jdbcDB"

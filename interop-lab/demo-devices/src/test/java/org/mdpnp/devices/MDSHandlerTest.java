@@ -11,6 +11,49 @@ import java.util.concurrent.TimeUnit;
 public class MDSHandlerTest {
 
     @Test
+    public void testMDSLifecycle() throws Exception
+    {
+        RtConfig.loadAndSetIceQos();
+
+        RtConfig master = RtConfig.setupDDS(0);
+
+        MDSHandler handler = new MDSHandler(master.getEventLoop(), master.getParticipant());
+
+        final MDSConnectivity sample = new MDSConnectivity();
+        sample.partition="p1";
+        sample.unique_device_identifier=Long.toBinaryString(System.currentTimeMillis());
+
+        try {
+            final CountDownLatch stopOk = new CountDownLatch(1);
+
+            handler.start();
+
+            handler.addConnectivityListener(new MDSHandler.Connectivity.MDSListener() {
+                @Override
+                public void handleDataSampleEvent(MDSHandler.Connectivity.MDSEvent evt) {
+                    MDSConnectivity v = (MDSConnectivity)evt.getSource();
+                    if(sample.unique_device_identifier.equals(v.unique_device_identifier))
+                        stopOk.countDown();
+                }
+            });
+
+            handler.publish(sample);
+
+            boolean isOk = stopOk.await(5000, TimeUnit.MILLISECONDS);
+            handler.shutdown();
+            if (!isOk)
+                Assert.fail("Did not get publication method");
+
+        }
+        catch (Exception ex) {
+            throw ex;
+        }
+        finally {
+            master.stop();
+        }
+    }
+
+    @Test
     public void testMDSConnectivity() throws Exception
     {
         RtConfig.loadAndSetIceQos();
@@ -26,8 +69,8 @@ public class MDSHandlerTest {
 
 
             MDSHandler.Connectivity c = new MDSHandler.Connectivity(master.getEventLoop(),
-                                                                  master.getPublisher(),
-                                                                  master.getSubscriber());
+                                                                    master.getPublisher(),
+                                                                    master.getSubscriber());
             c.start();
 
             c.addConnectivityListener(new MDSHandler.Connectivity.MDSListener() {

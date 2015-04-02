@@ -3,6 +3,7 @@ package org.mdpnp.devices;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.*;
 import com.rti.dds.publication.Publisher;
+import com.rti.dds.publication.PublisherQos;
 import com.rti.dds.subscription.*;
 import com.rti.dds.topic.Topic;
 import ice.MDSConnectivity;
@@ -14,8 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.event.EventListenerList;
-import java.util.EventListener;
-import java.util.EventObject;
+import java.util.*;
 
 /**
  * @author mfeinberg
@@ -24,18 +24,33 @@ import java.util.EventObject;
  */
 public class MDSHandler {
 
+    private static final String QOS_PARTITION = "MDSHandler";
+
     final MDSHandler.Connectivity mdsConnectivityAdapter;
     final MDSHandler.Objective mdsConnectivityObjectiveAdapter;
 
+    final DomainParticipant domainParticipant;
+    final Publisher mdsPublisher;
+    final Subscriber mdsSubscriber;
+
     protected MDSHandler()
     {
+        domainParticipant = null;
+        mdsPublisher = null;
+        mdsSubscriber = null;
         mdsConnectivityAdapter = null;
         mdsConnectivityObjectiveAdapter = null;
     }
 
-    public MDSHandler(EventLoop eventLoop, Publisher publisher, Subscriber subscriber) {
-        mdsConnectivityAdapter = new MDSHandler.Connectivity(eventLoop, publisher, subscriber);
-        mdsConnectivityObjectiveAdapter = new MDSHandler.Objective(eventLoop, publisher, subscriber);
+
+    public MDSHandler(EventLoop eventLoop, DomainParticipant dp) {
+        domainParticipant = dp;
+        mdsPublisher  = dp.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        mdsSubscriber = dp.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        setCommunicationChannel(mdsPublisher, mdsSubscriber);
+
+        mdsConnectivityAdapter = new MDSHandler.Connectivity(eventLoop, mdsPublisher, mdsSubscriber);
+        mdsConnectivityObjectiveAdapter = new MDSHandler.Objective(eventLoop, mdsPublisher, mdsSubscriber);
     }
 
     public void start() {
@@ -46,6 +61,9 @@ public class MDSHandler {
     public void shutdown() {
         mdsConnectivityAdapter.shutdown();
         mdsConnectivityObjectiveAdapter.shutdown();
+
+        domainParticipant.delete_publisher(mdsPublisher);
+        domainParticipant.delete_subscriber(mdsSubscriber);
     }
 
     public void addConnectivityListener(Connectivity.MDSListener l) {
@@ -70,6 +88,24 @@ public class MDSHandler {
 
     public void addConnectivityListener(Objective.MDSListener l) {
         mdsConnectivityObjectiveAdapter.addConnectivityListener(l);
+    }
+
+    void setCommunicationChannel(final Publisher publisher, final Subscriber subscriber) {
+
+        PublisherQos pQos = new PublisherQos();
+        SubscriberQos sQos = new SubscriberQos();
+        publisher.get_qos(pQos);
+        subscriber.get_qos(sQos);
+
+        List<String> asList   = new ArrayList<>();
+        asList.add(QOS_PARTITION);
+
+        pQos.partition.name.clear();
+        sQos.partition.name.clear();
+        pQos.partition.name.addAll(asList);
+        sQos.partition.name.addAll(asList);
+        publisher.set_qos(pQos);
+        subscriber.set_qos(sQos);
     }
 
     /**
