@@ -1,5 +1,7 @@
 package org.mdpnp.apps.testapp.patient;
 
+import ice.MDSConnectivity;
+import ice.MDSConnectivityObjective;
 import javafx.beans.property.Property;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -25,7 +27,7 @@ import javax.sql.DataSource;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class PatientInfoController implements ListChangeListener<Device> {
+public class PatientInfoController implements ListChangeListener<Device>, MDSHandler.Connectivity.MDSListener {
 
     private static final Logger log = LoggerFactory.getLogger(PatientInfoController.class);
 
@@ -68,32 +70,11 @@ public class PatientInfoController implements ListChangeListener<Device> {
         this.mdsConnectivity = mdsConnectivity;
     }
 
-    protected static class DevicePatientAssociation {
-        private final Device device;
-        private final PatientInfo  patient;
-
-        public DevicePatientAssociation(final Device d, PatientInfo p) {
-            device = d;
-            patient = p;
-        }
-
-        public Property<String> deviceNameProperty() {
-            return device.makeAndModelProperty();
-        }
-        public String getDeviceName() {
-            return device.makeAndModelProperty().getValue();
-        }
-        public Property<String> patientIdentifierProperty() {
-            return patient.patientNameProperty();
-        }
-        public String getPatientIdentifier() {
-            return patient.getPatientName();
-        }
-        public Property<String> deviceIdentifierProperty() {
-            return device.serial_numberProperty();
-        }
-    }
-
+    /**
+     * UI callback from the table when row is selected.
+     * @param oldValue
+     * @param newValue
+     */
     void onAssociationSelected(DevicePatientAssociation oldValue, DevicePatientAssociation newValue)
     {
         /*
@@ -111,47 +92,27 @@ public class PatientInfoController implements ListChangeListener<Device> {
 
 
     public void removeDeviceAssociation(DevicePatientAssociation assoc)  {
-        // TDB
+        DevicePatientAssociation.delete(jdbcDB, assoc);
         tblModel.remove(assoc);
-        deviceListModel.add(assoc.device);
+        deviceListModel.add(assoc.getDevice());
     }
 
-    public void addDeviceAssociation(Device d, PatientInfo p) {
-        DevicePatientAssociation assoc = persist(d, p);
+    void addDeviceAssociation(Device d, PatientInfo p) {
+        DevicePatientAssociation assoc = associate(d, p);
         tblModel.add(assoc);
         deviceListModel.remove(d);
     }
 
-    // TDB
-    // MIKEFIX consolidate DevicePatientAssociation and MDSConnectivityObjective?
-    private DevicePatientAssociation persist(Device d, PatientInfo p)  {
-    /*
-    /*
-        conn = createConnection();
-        if(conn != null)
-            ps = conn.prepareStatement("INSERT INTO VITAL_VALUES (DEVICE_ID, METRIC_ID, INSTANCE_ID, TIME_TICK, VITAL_VALUE) VALUES(?,?,?,?,?)");
-        return conn != null;
+    private DevicePatientAssociation associate(Device d, PatientInfo p)  {
 
-
-        if(ps != null) {
-            ps.setString   (1, value.getUniqueDeviceIdentifier());
-            ps.setString   (2, value.getMetricId());
-            ps.setInt      (3, value.getInstanceId());
-            ps.setTimestamp(4, new Timestamp(value.getTimestamp()));
-            ps.setDouble   (5, value.getValue());
-
-            ps.execute();
-
-            conn.commit();
-        }
-        */
+        DevicePatientAssociation dpa = DevicePatientAssociation.update(jdbcDB, new DevicePatientAssociation(d, p));
 
         ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
         mds.unique_device_identifier = d.getUDI();
         mds.partition = p.getPatientName();
         mdsConnectivity.publish(mds);
 
-        return new DevicePatientAssociation(d, p);
+        return dpa;
     }
 
     public void handleDeviceLifecycleEvent(Device d, boolean added)  {
@@ -165,11 +126,11 @@ public class PatientInfoController implements ListChangeListener<Device> {
     /**
      * @return true if device already associated with the patient.
      */
-    private boolean inUse(Device d) {
+    private boolean inUse(final Device d) {
         FilteredList<DevicePatientAssociation> l = tblModel.filtered(new Predicate<DevicePatientAssociation>() {
             @Override
             public boolean test(DevicePatientAssociation devicePatientAssociation) {
-                return devicePatientAssociation.device.getUDI().equals(d.getUDI());
+                return devicePatientAssociation.isForDevice(d);
             }
         });
         return l.size()!=0;
@@ -298,24 +259,58 @@ public class PatientInfoController implements ListChangeListener<Device> {
                 Device d = deviceList.getSelectionModel().getSelectedItem();
                 PatientInfo p = patientList.getSelectionModel().getSelectedItem();
                 if (d != NO_DEVICE && p != NO_PATIENT) {
-                    addDeviceAssociation(d, p);
+                    proposeDeviceAssociation(d, p);
                 }
             }
         });
 
         List<PatientInfo> p =  PatientInfo.queryAll(jdbcDB);
         patientListModel.addAll(p);
+
+        mdsConnectivity.addConnectivityListener(this);
     }
 
+    public void proposeDeviceAssociation(Device d, PatientInfo p) {
+        ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
+        mds.unique_device_identifier = d.getUDI();
+        mds.partition = p.getPatientName();
+        mdsConnectivity.publish(mds);
+    }
 
     /**
      * called by the IOC framework when the component is about to be shut down.
      * @throws Exception when things go wrong
      */
     public void stop() throws Exception {
+        mdsConnectivity.removeConnectivityListener(this);
         deviceListDataModel.getContents().removeListener(this);
     }
 
+    @Override
+    public void handleDataSampleEvent(MDSHandler.Connectivity.MDSEvent evt) {
+
+        MDSConnectivity state = (MDSConnectivity)evt.getSource();
+        Device d = findDevice(state.unique_device_identifier, deviceList.getItems());
+        PatientInfo p = findPatient(state.partition, patientList.getItems());
+        if(d != null && p != null)
+            addDeviceAssociation(d, p);
+    }
+
+    private static Device findDevice(String uid, ObservableList<Device> items) {
+        for (Device item : items) {
+            if(item.getUDI().equals(uid))
+                return item;
+        }
+        return null;
+    }
+
+    private static PatientInfo findPatient(String partition, ObservableList<PatientInfo> items) {
+        for (PatientInfo item : items) {
+            if(item.getPatientName().equals(partition))
+                return item;
+        }
+        return null;
+    }
 
     @Override
     public void onChanged(Change<? extends Device> c) {

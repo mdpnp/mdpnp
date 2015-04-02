@@ -39,15 +39,7 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
             }
         } else if (f.canRead() && f.lastModified() > lastPartitionFileTime) {
             try {
-                List<String> partition = new ArrayList<String>();
-                FileReader fr = new FileReader(f);
-                BufferedReader br = new BufferedReader(fr);
-                String line = null;
-                while (null != (line = br.readLine())) {
-                    if (!line.startsWith("#"))
-                        partition.add(line.trim());
-                }
-                br.close();
+                List<String> partition = readPartitionFile(f);
                 setPartition(partition.toArray(new String[0]));
             } catch (FileNotFoundException e) {
                 log.error("Reading partition info", e);
@@ -57,6 +49,19 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
 
             lastPartitionFileTime = f.lastModified();
         }
+    }
+
+    private List<String> readPartitionFile(File f) throws IOException {
+        List<String> partition = new ArrayList<>();
+        FileReader fr = new FileReader(f);
+        BufferedReader br = new BufferedReader(fr);
+        String line = null;
+        while (null != (line = br.readLine())) {
+            if (!line.startsWith("#"))
+                partition.add(line.trim());
+        }
+        br.close();
+        return partition;
     }
 
 

@@ -78,7 +78,7 @@ public class PatientApplicationFactory implements IceApplicationProvider {
             return ui;
         }
 
-        public void addDeviceAssociation(Device d , PatientInfo p)  {
+        void addDeviceAssociation(Device d , PatientInfo p)  {
             controller.addDeviceAssociation(d, p);
         }
 

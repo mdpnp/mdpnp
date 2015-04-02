@@ -48,11 +48,11 @@ public class MDSHandler {
         mdsConnectivityObjectiveAdapter.shutdown();
     }
 
-    public void addConnectivityListener(MDSHandler.Connectivity.MDSListener l) {
+    public void addConnectivityListener(Connectivity.MDSListener l) {
         mdsConnectivityAdapter.addConnectivityListener(l);
     }
 
-    public void removeConnectivityListener(MDSHandler.Connectivity.MDSListener l) {
+    public void removeConnectivityListener(Connectivity.MDSListener l) {
         mdsConnectivityAdapter.removeConnectivityListener(l);
     }
 
@@ -178,7 +178,7 @@ public class MDSHandler {
 
         @SuppressWarnings("serial")
         public static class MDSEvent extends EventObject {
-            public MDSEvent(Object source) {
+            public MDSEvent(MDSConnectivity source) {
                 super(source);
             }
         }
@@ -311,7 +311,7 @@ public class MDSHandler {
 
         @SuppressWarnings("serial")
         public static class MDSEvent extends EventObject {
-            public MDSEvent(Object source) {
+            public MDSEvent(MDSConnectivityObjective source) {
                 super(source);
             }
         }
