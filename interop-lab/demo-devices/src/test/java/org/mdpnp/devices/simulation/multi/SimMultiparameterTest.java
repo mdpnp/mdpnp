@@ -9,7 +9,7 @@ import com.rti.dds.subscription.Subscriber;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.devices.simulation.multi.SimMultiparameter;
+import org.mdpnp.devices.RtConfig;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
@@ -29,7 +29,7 @@ public class SimMultiparameterTest {
     @Test
     public void testDeviceSetup() throws Exception {
 
-        loadIceQosLibrary();
+        RtConfig.loadAndSetIceQos();
 
         EventLoop eventLoop = new EventLoop();
         EventLoopHandler handler = new EventLoopHandler(eventLoop);
@@ -69,28 +69,4 @@ public class SimMultiparameterTest {
         Assert.assertEquals("CapnoModel did not locate the device", 1, nDev);
     }
 
-
-    private void loadIceQosLibrary() throws Exception {
-
-        DomainParticipantFactory factory = DomainParticipantFactory.get_instance();
-        DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
-        factory.get_qos(qos);
-
-        InputStream is = getClass().getResourceAsStream("/ice_library.xml");
-        if (is == null)
-            throw new IOException("Cannot load '/ice_library.xml' from classpath");
-
-        java.util.Scanner scanner = new java.util.Scanner(is);
-        try {
-            qos.profile.url_profile.clear();
-            qos.profile.string_profile.clear();
-            qos.profile.string_profile.add(scanner.useDelimiter("\\A").next());
-        } finally {
-            scanner.close();
-            is.close();
-        }
-
-        qos.resource_limits.max_objects_per_thread = 8192;
-        factory.set_qos(qos);
-    }
 }

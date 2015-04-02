@@ -1,11 +1,13 @@
 package org.mdpnp.devices;
 
 
+import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.publication.PublisherQos;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 import ice.DeviceIdentity;
+import ice.MDSConnectivity;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class PartitionAssignmentController implements MDSConnectivityAdapter.MDSConnectivityListener {
+public class PartitionAssignmentController implements MDSHandler.Objective.MDSListener {
 
     private static final Logger log = LoggerFactory.getLogger(PartitionAssignmentController.class);
 
@@ -38,15 +40,7 @@ public class PartitionAssignmentController implements MDSConnectivityAdapter.MDS
             }
         } else if (f.canRead() && f.lastModified() > lastPartitionFileTime) {
             try {
-                List<String> partition = new ArrayList<String>();
-                FileReader fr = new FileReader(f);
-                BufferedReader br = new BufferedReader(fr);
-                String line = null;
-                while (null != (line = br.readLine())) {
-                    if (!line.startsWith("#"))
-                        partition.add(line.trim());
-                }
-                br.close();
+                List<String> partition = readPartitionFile(f);
                 setPartition(partition.toArray(new String[0]));
             } catch (FileNotFoundException e) {
                 log.error("Reading partition info", e);
@@ -56,6 +50,19 @@ public class PartitionAssignmentController implements MDSConnectivityAdapter.MDS
 
             lastPartitionFileTime = f.lastModified();
         }
+    }
+
+    private List<String> readPartitionFile(File f) throws IOException {
+        List<String> partition = new ArrayList<>();
+        FileReader fr = new FileReader(f);
+        BufferedReader br = new BufferedReader(fr);
+        String line = null;
+        while (null != (line = br.readLine())) {
+            if (!line.startsWith("#"))
+                partition.add(line.trim());
+        }
+        br.close();
+        return partition;
     }
 
 
@@ -103,23 +110,50 @@ public class PartitionAssignmentController implements MDSConnectivityAdapter.MDS
         }
 
         if (!same) {
-            log.info("Changing partition to " + Arrays.toString(partition));
+            String       asString = toString(partition);
+            List<String> asList   = Arrays.asList(partition);
+
+            log.info("Changing partition to >" + asString + "<");
             pQos.partition.name.clear();
             sQos.partition.name.clear();
-            pQos.partition.name.addAll(Arrays.asList(partition));
-            sQos.partition.name.addAll(Arrays.asList(partition));
+            pQos.partition.name.addAll(asList);
+            sQos.partition.name.addAll(asList);
             publisher.set_qos(pQos);
             subscriber.set_qos(sQos);
+
+            final MDSConnectivity state = new MDSConnectivity();
+            state.partition = asString;
+            state.unique_device_identifier=deviceIdentity.unique_device_identifier;
+
+            connectivityAdapter.publish(state);
+
         } else {
             log.info("Not changing to same partition " + Arrays.toString(partition));
         }
     }
 
-    private final MDSConnectivityAdapter connectivityAdapter;
+    /**
+     * @param partition
+     * @return comma-separated list of partitions.
+     */
+    static String toString(String [] partition) {
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < partition.length; i++) {
+            if(b.length()!=0)
+                b.append(",");
+            b.append(partition[i]);
+        }
+        return b.toString();
+    }
+
+    MDSHandler getConnectivityAdapter() {
+        return connectivityAdapter;
+    }
+
+    private final MDSHandler connectivityAdapter;
     private final DeviceIdentity deviceIdentity;
     private final Publisher publisher;
     private final Subscriber subscriber;
-
 
     public void start() {
         connectivityAdapter.start();
@@ -132,11 +166,11 @@ public class PartitionAssignmentController implements MDSConnectivityAdapter.MDS
     }
 
 
-    public PartitionAssignmentController(DeviceIdentity d, EventLoop e, Publisher p, Subscriber s) {
+    public PartitionAssignmentController(DeviceIdentity d, DomainParticipant dp, EventLoop e, Publisher p, Subscriber s) {
         deviceIdentity = d;
         publisher = p;
         subscriber = s;
-        connectivityAdapter = new MDSConnectivityAdapter(e, publisher, subscriber);
+        connectivityAdapter = new MDSHandler(e, dp);
 
     }
 
@@ -147,11 +181,11 @@ public class PartitionAssignmentController implements MDSConnectivityAdapter.MDS
         deviceIdentity = d;
         publisher = null;
         subscriber = null;
-        connectivityAdapter = null;
+        connectivityAdapter = new MDSHandler.NoOp();
     }
 
     @Override
-    public void handleDataSampleEvent(MDSConnectivityAdapter.MDSConnectivityEvent evt) {
+    public void handleDataSampleEvent(MDSHandler.Objective.MDSEvent evt) {
         ice.MDSConnectivityObjective  o = (ice.MDSConnectivityObjective )evt.getSource();
         if(deviceIdentity.unique_device_identifier.equals(o.unique_device_identifier)) {
             String p[] = {o.partition};
