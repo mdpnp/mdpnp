@@ -21,6 +21,8 @@ import static ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL;
  */
 class FhirEMRImpl implements EMRFacade {
 
+    private static final String HL7_ICE_OID = "urn:fake:mrns";
+
     private String      fhirURL;
     private JdbcEMRImpl jdbcEMR = new JdbcEMRImpl();
 
@@ -63,7 +65,7 @@ class FhirEMRImpl implements EMRFacade {
         String official = ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL.getCode();
         for(Patient p : patients) {
             IdentifierDt id = p.getIdentifierFirstRep();
-            if(!"urn:mrn".equals(id.getSystem()))
+            if(!HL7_ICE_OID.equals(id.getSystem()))
                 continue;
             String mrn = p.getIdentifierFirstRep().getValue();
             // now find the official name used on the record.
@@ -88,7 +90,7 @@ class FhirEMRImpl implements EMRFacade {
         String mrnId = p.getMrn();
 
         Patient patient = new Patient();
-        patient.addIdentifier().setUse(OFFICIAL).setSystem("urn:fake:mrns").setValue(mrnId);
+        patient.addIdentifier().setUse(OFFICIAL).setSystem(HL7_ICE_OID).setValue(mrnId);
         HumanNameDt name = patient.addName();
         name.addFamily(p.getLastName());
         name.addGiven(p.getFirstName());
@@ -99,7 +101,7 @@ class FhirEMRImpl implements EMRFacade {
         MethodOutcome outcome = fhirClient.update()
                 .resource(patient)
                 .conditional()
-                .where(Patient.IDENTIFIER.exactly().systemAndIdentifier("urn:fake:mrns", mrnId))
+                .where(Patient.IDENTIFIER.exactly().systemAndIdentifier(HL7_ICE_OID, mrnId))
                 .execute();
 
         return outcome.getCreated();
