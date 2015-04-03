@@ -154,6 +154,8 @@ public class EventLoop {
         conditionHandlers.put(mutate, mutateHandler);
         conditionHandlers.put(runnable, runnableHandler);
     }
+    
+    private static final long WARNING_ELAPSED_TIME_NANOSECONDS = 100000000L;
 
     public boolean waitAndHandle(ConditionSeq condSeq, Duration_t dur) {
         // Only one thread at a time can currently service the event loop
@@ -186,7 +188,12 @@ public class EventLoop {
                 Condition c = (Condition) condSeq.get(i);
                 ConditionHandler ch = conditionHandlers.get(c);
                 if (null != ch) {
+                    long s = System.nanoTime();
                     ch.conditionChanged(c);
+                    long elapsed = System.nanoTime() - s;
+                    if(elapsed >= WARNING_ELAPSED_TIME_NANOSECONDS) {
+                        log.warn(elapsed + "ns to service " + ch);
+                    }
                 } else {
                     log.warn("No ConditionHandler for Condition " + c);
                 }
