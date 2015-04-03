@@ -100,7 +100,7 @@ public class HL7Application implements LineEmitterListener, StartStopListener {
             }
         });
     }
-    private static final int MAX_CHARS = 8000;
+    private static final int MAX_CHARS = 64000;
     @FXML ToggleGroup hl7version;
     @FXML RadioButton hl7FhirDstu2;
     @FXML RadioButton hl7V26;
