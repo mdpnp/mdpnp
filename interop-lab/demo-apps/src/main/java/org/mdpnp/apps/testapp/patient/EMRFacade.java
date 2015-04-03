@@ -16,7 +16,7 @@ public interface EMRFacade {
     void deleteDevicePatientAssociation(DevicePatientAssociation assoc);
     DevicePatientAssociation updateDevicePatientAssociation(DevicePatientAssociation assoc);
 
-    public static class EMRFacadeFacory implements FactoryBean<EMRFacade> {
+    public static class EMRFacadeFactory implements FactoryBean<EMRFacade> {
 
         private DataSource jdbcDB;
         private String     fhirEMRUrl;
@@ -45,7 +45,7 @@ public interface EMRFacade {
                     ((JdbcEMRImpl)instance).setDataSource(jdbcDB);
                 }
                 else {
-                    instance = new JdbcEMRImpl();
+                    instance = new FhirEMRImpl();
                     ((FhirEMRImpl)instance).setDataSource(jdbcDB);
                     ((FhirEMRImpl)instance).setUrl(fhirEMRUrl);
                 }

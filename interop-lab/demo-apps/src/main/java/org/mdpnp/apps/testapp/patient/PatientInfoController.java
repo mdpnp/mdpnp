@@ -22,6 +22,9 @@ import org.mdpnp.devices.MDSHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -41,7 +44,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     @FXML TextField newPatientMRN;
     @FXML TextField newPatientFirstName;
     @FXML TextField newPatientLastName;
-    @FXML ComboBox<String> newPatientGender;
+    @FXML ComboBox<PatientInfo.Gender> newPatientGender;
     @FXML DatePicker newPatientDOB;
 
     @FXML TableView<DevicePatientAssociation> associationTableView;
@@ -50,10 +53,10 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     protected ObservableList<DevicePatientAssociation> associationModel = FXCollections.observableArrayList();
     protected ObservableList<Device> deviceListModel = FXCollections.observableArrayList();
     protected ObservableList<PatientInfo> patientListModel = FXCollections.observableArrayList();
-    protected ObservableList<String> genderListModel = FXCollections.observableArrayList();
+    protected ObservableList<PatientInfo.Gender> genderListModel = FXCollections.observableArrayList();
     {
-        genderListModel.add("M");
-        genderListModel.add("F");
+        genderListModel.add(PatientInfo.Gender.male);
+        genderListModel.add(PatientInfo.Gender.female);
     }
     public DeviceListModel getDeviceListDataModel() {
         return deviceListDataModel;
@@ -218,6 +221,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         associationTableView.setItems(associationModel);
         deviceView.setItems(deviceListModel);
         newPatientGender.setItems(genderListModel);
+        newPatientGender.setValue(PatientInfo.Gender.male);
         patientView.setItems(patientListModel);
 
         associationTableView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<DevicePatientAssociation>() {
@@ -243,13 +247,23 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         createNewPatient.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                String mrn   = newPatientMRN.getText();
+                String mrn   = Long.toHexString(System.currentTimeMillis());
                 String lName = newPatientLastName.getText();
                 String fName = newPatientFirstName.getText();
-                if(fName.trim().length() != 0 && lName.trim().length() != 0 && mrn.trim().length() != 0) {
+                LocalDate localDate = newPatientDOB.getValue();
+
+                if(fName.trim().length() != 0 &&
+                   lName.trim().length() != 0 &&
+                   mrn.trim().length() != 0 &&
+                   localDate != null) {
+
+                    Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
                     PatientInfo pi = new PatientInfo(mrn, fName, lName);
+                    pi.setDob(date);
+                    pi.setGender(newPatientGender.getValue());
+
                     if(addPatient(pi)) {
-                        newPatientMRN.setText("");
                         newPatientLastName.setText("");
                         newPatientFirstName.setText("");
                     }

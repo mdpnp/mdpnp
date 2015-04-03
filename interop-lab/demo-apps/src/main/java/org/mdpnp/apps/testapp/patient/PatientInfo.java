@@ -21,7 +21,7 @@ public class PatientInfo {
     private final StringProperty firstName = new SimpleStringProperty();
     private final StringProperty mrn = new SimpleStringProperty();
     private final ObjectProperty<Date> dob = new SimpleObjectProperty<>();
-    private final StringProperty gender = new SimpleStringProperty();
+    private final ObjectProperty<Gender> gender = new SimpleObjectProperty<>();
 
     public PatientInfo(String mrn, String fn, String ln) {
         this.mrn.setValue(mrn);
@@ -65,15 +65,15 @@ public class PatientInfo {
         this.dob.set(dob);
     }
 
-    public String getGender() {
+    public Gender getGender() {
         return gender.get();
     }
 
-    public StringProperty genderProperty() {
+    public ObjectProperty<Gender> genderProperty() {
         return gender;
     }
 
-    public void setGender(String gender) {
+    public void setGender(Gender gender) {
         this.gender.set(gender);
     }
 

@@ -15,7 +15,7 @@
     <GridPane>
       <children>
         <Label text="MRN" textAlignment="RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-        <TextField fx:id="newPatientMRN" prefColumnCount="8" text="" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+        <TextField fx:id="newPatientMRN" prefColumnCount="8" text="auto-generated" Editable="false" GridPane.columnIndex="1" GridPane.rowIndex="2" />
         <Label text="First Name" textAlignment="RIGHT" GridPane.columnIndex="2" GridPane.rowIndex="1" />
         <TextField fx:id="newPatientFirstName" prefColumnCount="15" text="" GridPane.columnIndex="2" GridPane.rowIndex="2" />
         <Label text="Last Name" textAlignment="RIGHT" GridPane.columnIndex="3" GridPane.rowIndex="1" />
@@ -126,7 +126,7 @@
             <PropertyValueFactory property="lastName" />
           </cellValueFactory>
         </TableColumn>
-        <TableColumn maxWidth="150.0" minWidth="10.0" prefWidth="50.0" sortable="false" text="Disconnect" fx:id="associationTableActionColumn">
+        <TableColumn maxWidth="150.0" minWidth="10.0" prefWidth="100.0" sortable="false" text="Disconnect" fx:id="associationTableActionColumn">
           <cellValueFactory>
             <PropertyValueFactory property="deviceIdentifier" />
           </cellValueFactory>
