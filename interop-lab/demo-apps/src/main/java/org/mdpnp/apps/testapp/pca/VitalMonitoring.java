@@ -53,10 +53,6 @@ public class VitalMonitoring implements VitalModelContainer {
     }
 
     public void setup() {
-        canvas.widthProperty().bind(
-                container.widthProperty());
-        canvas.heightProperty().bind(
-                container.heightProperty());
     }
     
     private VitalModel model;
