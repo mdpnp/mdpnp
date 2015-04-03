@@ -74,14 +74,14 @@ public class ValueImpl implements Value {
             this.device = null;
         }
         ignore.bind(parent.ignoreZeroProperty().and(value.isEqualTo(0.0, 0.00001).or(value.isEqualTo(Double.NaN, 0.0))));
-        atOrAboveHigh.bind(ignore.not().and(parent.warningHighProperty().isNotNull()).and(value.greaterThanOrEqualTo(new ConcreteDoubleProperty(parent.warningHighProperty(), Double.POSITIVE_INFINITY))));
-        atOrBelowLow.bind(ignore.not().and(parent.warningLowProperty().isNotNull()).and(value.lessThanOrEqualTo(new ConcreteDoubleProperty(parent.warningLowProperty(), Double.NEGATIVE_INFINITY))));
+        atOrAboveHigh.bind(ignore.not().and(parent.warningHighProperty().isNotNull()).and(value.greaterThan(new ConcreteDoubleProperty(parent.warningHighProperty(), Double.POSITIVE_INFINITY))));
+        atOrBelowLow.bind(ignore.not().and(parent.warningLowProperty().isNotNull()).and(value.lessThan(new ConcreteDoubleProperty(parent.warningLowProperty(), Double.NEGATIVE_INFINITY))));
         atOrOutsideBounds.bind(atOrBelowLow.or(atOrAboveHigh));
-        atOrAboveCriticalHigh.bind(ignore.not().and(parent.criticalHighProperty().isNotNull()).and(value.greaterThanOrEqualTo(new ConcreteDoubleProperty(parent.criticalHighProperty(), Double.POSITIVE_INFINITY))));
-        atOrBelowCriticalLow.bind(ignore.not().and(parent.criticalLowProperty().isNotNull()).and(value.lessThanOrEqualTo(new ConcreteDoubleProperty(parent.criticalLowProperty(), Double.NEGATIVE_INFINITY))));
+        atOrAboveCriticalHigh.bind(ignore.not().and(parent.criticalHighProperty().isNotNull()).and(value.greaterThan(new ConcreteDoubleProperty(parent.criticalHighProperty(), Double.POSITIVE_INFINITY))));
+        atOrBelowCriticalLow.bind(ignore.not().and(parent.criticalLowProperty().isNotNull()).and(value.lessThan(new ConcreteDoubleProperty(parent.criticalLowProperty(), Double.NEGATIVE_INFINITY))));
         atOrOutsideBounds.bind(atOrBelowCriticalLow.or(atOrAboveCriticalHigh));
-        atOrAboveValueMsHigh.bind(ignore.not().and(parent.valueMsWarningHighProperty().isNotNull()).and(valueMsAboveHigh.greaterThanOrEqualTo(new ConcreteLongProperty(parent.valueMsWarningHighProperty(), Long.MAX_VALUE))));
-        atOrAboveValueMsLow.bind(ignore.not().and(parent.valueMsWarningLowProperty().isNotNull()).and(valueMsBelowLow.greaterThanOrEqualTo(new ConcreteLongProperty(parent.valueMsWarningLowProperty(), Long.MIN_VALUE))));
+        atOrAboveValueMsHigh.bind(ignore.not().and(parent.valueMsWarningHighProperty().isNotNull()).and(valueMsAboveHigh.greaterThan(new ConcreteLongProperty(parent.valueMsWarningHighProperty(), Long.MAX_VALUE))));
+        atOrAboveValueMsLow.bind(ignore.not().and(parent.valueMsWarningLowProperty().isNotNull()).and(valueMsBelowLow.greaterThan(new ConcreteLongProperty(parent.valueMsWarningLowProperty(), Long.MIN_VALUE))));
     }
     
     @Override
