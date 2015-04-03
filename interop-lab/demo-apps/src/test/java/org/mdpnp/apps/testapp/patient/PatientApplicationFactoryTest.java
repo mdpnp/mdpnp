@@ -1,6 +1,8 @@
 package org.mdpnp.apps.testapp.patient;
 
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.junit.Assert;
@@ -110,12 +112,14 @@ public class PatientApplicationFactoryTest {
                 Thread.sleep(1000);
                 wait += 1000;
 
-                final PatientInfo p = new PatientInfo(Integer.toHexString(i), "FirstName" + i, "LastName" + i);
-                final Device d = new Device("ID-" + i);
+                final Device d = new Device(Integer.toHexString(i));
+                d.setHostname("192.168.1." + i);
+                d.setMakeAndModel(devNames[i%devNames.length]);
+
                 Platform.runLater(new Runnable() {
                     @Override
                     public void run() {
-                        app.addDeviceAssociation(d, p);
+                        app.handleDeviceLifecycleEvent(d);
                     }
                 });
             }
@@ -141,10 +145,22 @@ public class PatientApplicationFactoryTest {
             primaryStage.setScene(scene);
 
             app.activate(context);
+
+            EventHandler<ActionEvent> ae = new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent actionEvent) {
+                    Device d = app.getSelectedDevice();
+                    PatientInfo p = app.getSelectedPatient();
+                    if (d != null && p != null) {
+                        app.addDeviceAssociation(d, p);
+                    }
+                }
+            };
+            app.setConnectHandler(ae);
         }
 
-        public void addDeviceAssociation(Device d, PatientInfo p) {
-            app.addDeviceAssociation(d, p);
+        void handleDeviceLifecycleEvent(Device d) {
+            app.handleDeviceLifecycleEvent(d, true);
         }
 
         @Override
@@ -158,4 +174,16 @@ public class PatientApplicationFactoryTest {
     private static final int N_DATA_POINTS = 5;
     private static final int UI_UP_MS = Integer.getInteger("PatientApplicationFactoryTest.UpTimeMS", N_DATA_POINTS*1000+2000);
 
+    private static final String [] devNames = {
+            "Pulse Oximeter",
+            "ElectroCardioGram",
+            "Capnometer",
+            "Prosim 6/8",
+            "Intellivue (MIB/RS232)",
+            "N-595",
+            "Dräger Apollo",
+            "Dräger EvitaXL",
+            "Dräger V500",
+            "Zephyr BioPatch"
+    };
 }

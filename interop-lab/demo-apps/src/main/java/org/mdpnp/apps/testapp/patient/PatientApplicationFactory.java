@@ -1,5 +1,7 @@
 package org.mdpnp.apps.testapp.patient;
 
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Parent;
 
 import org.hsqldb.jdbc.JDBCDataSource;
@@ -82,6 +84,22 @@ public class PatientApplicationFactory implements IceApplicationProvider {
 
         void addDeviceAssociation(Device d , PatientInfo p)  {
             controller.addDeviceAssociation(d, p);
+        }
+
+        void handleDeviceLifecycleEvent(Device d, boolean p) {
+            controller.handleDeviceLifecycleEvent(d, p);
+        }
+
+        void setConnectHandler(EventHandler<ActionEvent> a) {
+            controller.setConnectHandler(a);
+        }
+
+        PatientInfo getSelectedPatient() {
+            return controller.getSelectedPatient();
+        }
+
+        Device getSelectedDevice() {
+            return controller.getSelectedDevice();
         }
 
         @Override

@@ -16,10 +16,10 @@ public class PatientInfo {
 
     private final StringProperty lastName = new SimpleStringProperty();
     private final StringProperty firstName = new SimpleStringProperty();
-    private final StringProperty id = new SimpleStringProperty();
+    private final StringProperty mrn = new SimpleStringProperty();
 
-    public PatientInfo(String id, String fn, String ln) {
-        this.id.setValue(id);
+    public PatientInfo(String mrn, String fn, String ln) {
+        this.mrn.setValue(mrn);
         this.firstName.setValue(fn);
         this.lastName.setValue(ln);
     }
@@ -40,12 +40,12 @@ public class PatientInfo {
         return firstName;
     }
 
-    public String getId() {
-        return id.get();
+    public String getMrn() {
+        return mrn.get();
     }
 
-    public StringProperty idProperty() {
-        return id;
+    public StringProperty mrnProperty() {
+        return mrn;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.mdpnp.apps.testapp.patient;
 
 import javafx.beans.property.Property;
+import javafx.beans.property.StringProperty;
 import org.mdpnp.apps.testapp.Device;
 
 import javax.sql.DataSource;
@@ -36,14 +37,23 @@ public class DevicePatientAssociation {
     public String getDeviceName() {
         return device.makeAndModelProperty().getValue();
     }
-    public Property<String> patientIdentifierProperty() {
+    public String getLastName() {
+        return patient.getLastName();
+    }
+    public StringProperty lastNameProperty() {
         return patient.lastNameProperty();
     }
-    public String getPatientIdentifier() {
-        return patient.getId();
+    public String getFirstName() {
+        return patient.getFirstName();
     }
-    public Property<String> deviceIdentifierProperty() {
-        return device.serial_numberProperty();
+    public StringProperty firstNameProperty() {
+        return patient.firstNameProperty();
+    }
+    public String getMrn() {
+        return patient.getMrn();
+    }
+    public StringProperty mrnProperty() {
+        return patient.mrnProperty();
     }
 
     //
