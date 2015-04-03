@@ -18,8 +18,10 @@ apply from: 'javafx.plugin'
 defaultTasks 'build'
 
 jfxDeploy {
-    verbose = false
+    verbose = true
 }
+
+applicationName = 'OpenICE'
 
 javafx {
     appID 'org.mdpnp.apps.testapp.Main'
@@ -33,7 +35,7 @@ javafx {
 
             bundleArguments = [
                 // for mac apps
-                'mac.CFBundleIdentifier' : 'org.mdpnp.apps.testapp.Main',
+                'mac.CFBundleIdentifier' : 'org.mdpnp.apps.testapp.OpenICE',
                 'mac.CFBundleName' : 'OpenICE',
                 'mac.signing-key-user-name' : 'JEFFREY PLOURDE',
                 //'mac.signing-key-developer-id-app' : 'Developer ID Application: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
@@ -46,6 +48,12 @@ javafx {
                 //'mac.signing-key-pkg' : '3rd Party Mac Developer Installer: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
 
             ]
+        }
+        windows {
+            
+        }
+        linux {
+            
         }
     }
 }

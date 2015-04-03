@@ -1,4 +1,4 @@
-PARCEL=demo-apps-0.6.0
+PARCEL=OpenICE-0.6.1-SNAPSHOT
 TARGETS=`cat targets | sed '/^\s*#/d'`
 # Add --offline to the following line if no internet access
 ./gradlew :interop-lab:demo-apps:distZip
@@ -27,7 +27,7 @@ do
   echo Copying more files to $TARGET
   scp log4j.properties ubuntu@$TARGET:
   scp device-adapter.conf ubuntu@$TARGET:/etc/init/device-adapter.conf
-  ssh ubuntu@$TARGET chmod 777 $PARCEL/bin/demo-apps
+  ssh ubuntu@$TARGET chmod 777 $PARCEL/bin/OpenICE
   rm $TARGET.scp.out
   rm $TARGET.unzip.out
   echo Restarting device-adapter on $TARGET
