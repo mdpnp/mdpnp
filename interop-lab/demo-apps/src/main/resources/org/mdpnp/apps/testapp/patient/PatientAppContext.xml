@@ -34,9 +34,16 @@
         <property name="dataDef"   value="DataBootstrap.sql"/>
     </bean>
 
+    <!--
+        Create a handle to EMR system. Passing fhir url will make it talk to a
+        real server; if not specified, will create a in-memory SQL-based
+        implementation.
+    -->
     <bean id="emr"
-          class="org.mdpnp.apps.testapp.patient.EMRImpl">
+          class="org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFacory">
+        <!--
         <property name="url"      value="${mdpnp.fhir.url}"/>
+        -->
         <property name="jdbcDB"   ref="jdbcDB"/>
     </bean>
 

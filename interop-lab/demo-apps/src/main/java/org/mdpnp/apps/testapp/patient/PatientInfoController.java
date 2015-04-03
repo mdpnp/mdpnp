@@ -29,9 +29,9 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
     private static final Logger log = LoggerFactory.getLogger(PatientInfoController.class);
 
-    private DeviceListModel                     deviceListDataModel;
-    private PatientApplicationFactory.EMRFacade emr;
-    private MDSHandler                          mdsConnectivity;
+    private DeviceListModel deviceListDataModel;
+    private EMRFacade       emr;
+    private MDSHandler      mdsConnectivity;
 
     @FXML Button connectBtn;
     @FXML TableView<PatientInfo> patientView;
@@ -41,6 +41,8 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     @FXML TextField newPatientMRN;
     @FXML TextField newPatientFirstName;
     @FXML TextField newPatientLastName;
+    @FXML ComboBox<String> newPatientGender;
+    @FXML DatePicker newPatientDOB;
 
     @FXML TableView<DevicePatientAssociation> associationTableView;
     @FXML TableColumn<DevicePatientAssociation, String> associationTableActionColumn;
@@ -48,7 +50,11 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     protected ObservableList<DevicePatientAssociation> associationModel = FXCollections.observableArrayList();
     protected ObservableList<Device> deviceListModel = FXCollections.observableArrayList();
     protected ObservableList<PatientInfo> patientListModel = FXCollections.observableArrayList();
-
+    protected ObservableList<String> genderListModel = FXCollections.observableArrayList();
+    {
+        genderListModel.add("M");
+        genderListModel.add("F");
+    }
     public DeviceListModel getDeviceListDataModel() {
         return deviceListDataModel;
     }
@@ -57,11 +63,11 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         deviceListDataModel = dlm;
     }
 
-    public PatientApplicationFactory.EMRFacade getEmr() {
+    public EMRFacade getEmr() {
         return emr;
     }
 
-    public void setEmr(PatientApplicationFactory.EMRFacade db) {
+    public void setEmr(EMRFacade db) {
         emr = db;
     }
 
@@ -139,25 +145,6 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         return l.size()!=0;
     }
 
-    private static class DeviceListCell extends ListCell<Device> {
-        @Override
-        protected void updateItem(Device item, boolean empty) {
-            super.updateItem(item, empty);
-            super.setText(getDisplayTextFor(item));
-        }
-    };
-
-    static String getDisplayTextFor(Device d) {
-        if(d == null) {
-            return "";
-        }
-        else {
-            String mm = d.getMakeAndModel(); if(mm==null)mm="???";
-            String sn = d.getHostname();if(sn==null)sn="???";
-            String s=mm+"/"+sn;
-            return s;
-        }
-    }
     /**
      * A table cell containing a button deleting the row.
      **/
@@ -170,7 +157,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         DeleteAssociationCell() {
 
             try {
-                ImageView img = new ImageView(new javafx.scene.image.Image(getClass().getResourceAsStream("stop.png")));
+                ImageView img = new ImageView(new javafx.scene.image.Image(getClass().getResourceAsStream("disconnect.png")));
                 img.setFitHeight(15.0);
                 img.setFitWidth(15.0);
                 button.setGraphic(img);
@@ -230,14 +217,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
         associationTableView.setItems(associationModel);
         deviceView.setItems(deviceListModel);
-
-        Callback<ListView<Device>,ListCell<Device>> fac = new Callback<ListView<Device>,ListCell<Device>>() {
-            @Override
-            public ListCell<Device> call(ListView<Device> param) {
-                return new DeviceListCell();
-            }
-        };
-
+        newPatientGender.setItems(genderListModel);
         patientView.setItems(patientListModel);
 
         associationTableView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<DevicePatientAssociation>() {

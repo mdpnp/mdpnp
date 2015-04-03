@@ -8,39 +8,48 @@ import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.IGenericClient;
 
+import javax.sql.DataSource;
+
 import static ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum.MALE;
 import static ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL;
 
 /**
  * @author mfeinberg
  */
-class FhirEMRImpl implements PatientApplicationFactory.EMRFacade {
+class FhirEMRImpl implements EMRFacade {
 
-    String url;
+    private String      fhirURL;
+    private JdbcEMRImpl jdbcEMR = new JdbcEMRImpl();
 
     public String getUrl() {
-        return url;
+        return fhirURL;
+    }
+    public void setUrl(String url) {
+        fhirURL = url;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public DataSource getDataSource() {
+        return jdbcEMR.getDataSource();
+    }
+    public void setDataSource(DataSource ds) {
+        jdbcEMR.setDataSource(ds);
     }
 
     @Override
     public void deleteDevicePatientAssociation(DevicePatientAssociation assoc) {
-        throw new UnsupportedOperationException();
+        jdbcEMR.deleteDevicePatientAssociation(assoc);
     }
 
     @Override
     public DevicePatientAssociation updateDevicePatientAssociation(DevicePatientAssociation assoc) {
-        throw new UnsupportedOperationException();
+        return jdbcEMR.updateDevicePatientAssociation(assoc);
     }
 
     @Override
     public List<PatientInfo> getPatients() {
 
         FhirContext fhirContext = FhirContext.forDstu2();
-        IGenericClient fhirClient = fhirContext.newRestfulGenericClient(url);
+        IGenericClient fhirClient = fhirContext.newRestfulGenericClient(fhirURL);
         ca.uhn.fhir.model.api.Bundle bundle = fhirClient
                 .search()
                 .forResource(Patient.class)
@@ -66,7 +75,7 @@ class FhirEMRImpl implements PatientApplicationFactory.EMRFacade {
     public boolean createPatient(PatientInfo p) {
 
         FhirContext fhirContext = FhirContext.forDstu2();
-        IGenericClient fhirClient = fhirContext.newRestfulGenericClient(url);
+        IGenericClient fhirClient = fhirContext.newRestfulGenericClient(fhirURL);
 
         String id = Long.toHexString(System.currentTimeMillis());
 
