@@ -58,14 +58,14 @@ public class Diagnostic {
     }
     
     public void start() {
-        patientAlertModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
-        technicalAlertModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
-        sampleArrayModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.waveform_data);
+        patientAlertModel.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
+        technicalAlertModel.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
+        sampleArrayModel.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.waveform_data);
     }
     
     public void stop() {
-        patientAlertModel.stop();
-        technicalAlertModel.stop();
-        sampleArrayModel.stop();
+        patientAlertModel.stopReader();
+        technicalAlertModel.stopReader();
+        sampleArrayModel.stopReader();
     }
 }

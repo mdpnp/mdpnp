@@ -7,9 +7,12 @@ import ice.TimeSync;
 import ice.TimeSyncDataReader;
 import ice.TimeSyncDataWriter;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
@@ -17,11 +20,14 @@ import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
 import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.ConditionSeq;
 import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.infrastructure.GuardCondition;
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.Locator_t;
+import com.rti.dds.infrastructure.Property_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
@@ -57,6 +63,7 @@ public class TimeManager implements Runnable {
     private ReadCondition hbReadCond;
     private ReadCondition tsReadCond;
     private final GuardCondition guardCondition = new  GuardCondition();
+    private Map<InstanceHandle_t, String> hostnameByPublicationHandle = new WeakHashMap<>(); 
     
     private InstanceHandle_t hbHandle;
     private final ice.HeartBeat hbData = (HeartBeat) ice.HeartBeat.create();
@@ -252,9 +259,9 @@ public class TimeManager implements Runnable {
     
     private static final Duration_t HEARTBEAT_INTERVAL = new Duration_t(2,0);
     
-    protected void processAliveHeartbeat(SampleInfo sampleInfo, ice.HeartBeat heartbeat) {
+    protected void processAliveHeartbeat(SampleInfo sampleInfo, ice.HeartBeat heartbeat, String host_name) {
         for(TimeManagerListener listener : listeners) {
-            listener.aliveHeartbeat(sampleInfo, heartbeat);
+            listener.aliveHeartbeat(sampleInfo, heartbeat, host_name);
         }
     }
     
@@ -332,7 +339,20 @@ public class TimeManager implements Runnable {
                                         }
                                     }
                                     if(0!=(InstanceStateKind.ALIVE_INSTANCE_STATE&sampleInfo.instance_state)) {
-                                        processAliveHeartbeat(sampleInfo, heartbeat);
+                                        String host_name = hostnameByPublicationHandle.get(sampleInfo.publication_handle);
+                                        if(null == host_name) {
+                                            ParticipantBuiltinTopicData data = null;
+                                            
+                                            try {
+                                                data = new ParticipantBuiltinTopicData();
+                                                hbReader.get_matched_publication_participant_data(data, sampleInfo.publication_handle);
+                                                host_name = getHostname(data);
+                                                hostnameByPublicationHandle.put(new InstanceHandle_t(sampleInfo.publication_handle), host_name);
+                                            } catch(Exception e) {
+                                                log.warn("Unable to get participant information for HeartBeat publication");
+                                            }
+                                        }
+                                        processAliveHeartbeat(sampleInfo, heartbeat, host_name);
                                         if(sampleInfo.valid_data) {
                                             if(holder == null) {
                                                 TimeSync ts = new TimeSync();
@@ -400,7 +420,40 @@ public class TimeManager implements Runnable {
             }
         } while(!stop);
     }
-    
+    public static final String getHostname(ParticipantBuiltinTopicData participantData) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < participantData.property.value.size(); i++) {
+            Property_t prop = (Property_t) participantData.property.value.get(i);
+            if ("dds.sys_info.hostname".equals(prop.name)) {
+                sb.append(prop.value).append(" ");
+            }
+        }
+
+        for (int i = 0; i < participantData.default_unicast_locators.size(); i++) {
+            Locator_t locator = (Locator_t) participantData.default_unicast_locators.get(i);
+            try {
+                InetAddress addr = null;
+                switch (locator.kind) {
+                case Locator_t.KIND_TCPV4_LAN:
+                case Locator_t.KIND_TCPV4_WAN:
+                case Locator_t.KIND_TLSV4_LAN:
+                case Locator_t.KIND_TLSV4_WAN:
+                case Locator_t.KIND_UDPv4:
+                    addr = InetAddress
+                            .getByAddress(new byte[] { locator.address[12], locator.address[13], locator.address[14], locator.address[15] });
+                    break;
+                case Locator_t.KIND_UDPv6:
+                default:
+                    addr = InetAddress.getByAddress(locator.address);
+                    break;
+                }
+                sb.append(addr.getHostAddress()).append(" ");
+            } catch (UnknownHostException e) {
+                 log.error("getting locator address", e);
+            }
+        }
+        return sb.toString();
+    }    
     public static void main(String[] args) throws InterruptedException {
         DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(15, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         TimeManager t1 = new TimeManager(participant, "A", "");

@@ -58,7 +58,7 @@
         <constructor-arg ref="numericInstanceModel"/>
     </bean>
 
-    <bean id="capnoModel" class="org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl" destroy-method="stop">
+    <bean id="capnoModel" class="org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl" destroy-method="stopReader">
         <constructor-arg>
             <util:constant static-field="ice.SampleArrayTopic.VALUE"/>
         </constructor-arg>

@@ -10,7 +10,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.mdpnp.rtiapi.data.NumericInstanceModel;
 
@@ -58,7 +58,7 @@ public class MyNumericItems implements InstanceModelListener<Numeric, NumericDat
     }
 
     @Override
-    public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+    public void instanceSample(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
         final ice.Numeric d = new ice.Numeric(data);
         SampleInfo s = new SampleInfo();
         s.copy_from(sampleInfo);
@@ -73,7 +73,7 @@ public class MyNumericItems implements InstanceModelListener<Numeric, NumericDat
     }
     
     @Override
-    public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder, SampleInfo sampleInfo) {
+    public void instanceNotAlive(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder, SampleInfo sampleInfo) {
         final ice.Numeric key = new ice.Numeric(keyHolder);
         Platform.runLater(new Runnable() {
             public void run() {
@@ -86,7 +86,7 @@ public class MyNumericItems implements InstanceModelListener<Numeric, NumericDat
     }
     
     @Override
-    public void instanceAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+    public void instanceAlive(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
         final MyNumeric n = new MyNumeric(data, sampleInfo);
         Platform.runLater(new Runnable() {
             public void run() {

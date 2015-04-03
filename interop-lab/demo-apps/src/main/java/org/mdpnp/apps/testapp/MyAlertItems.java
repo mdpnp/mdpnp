@@ -11,7 +11,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import org.mdpnp.rtiapi.data.AlertInstanceModel;
-import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 
 import com.rti.dds.subscription.SampleInfo;
@@ -58,7 +58,7 @@ public class MyAlertItems implements InstanceModelListener<Alert, AlertDataReade
     }
 
     @Override
-    public void instanceSample(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
+    public void instanceSample(ReaderInstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
         final ice.Alert d = new ice.Alert(data);
         SampleInfo s = new SampleInfo();
         s.copy_from(sampleInfo);
@@ -73,7 +73,7 @@ public class MyAlertItems implements InstanceModelListener<Alert, AlertDataReade
     }
     
     @Override
-    public void instanceNotAlive(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert keyHolder, SampleInfo sampleInfo) {
+    public void instanceNotAlive(ReaderInstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert keyHolder, SampleInfo sampleInfo) {
         final ice.Alert key = new ice.Alert(keyHolder);
         Platform.runLater(new Runnable() {
             public void run() {
@@ -86,7 +86,7 @@ public class MyAlertItems implements InstanceModelListener<Alert, AlertDataReade
     }
     
     @Override
-    public void instanceAlive(InstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
+    public void instanceAlive(ReaderInstanceModel<Alert, AlertDataReader> model, AlertDataReader reader, Alert data, SampleInfo sampleInfo) {
         final MyAlert n = new MyAlert(data, sampleInfo);
         Platform.runLater(new Runnable() {
             public void run() {

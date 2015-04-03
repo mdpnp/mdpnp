@@ -26,7 +26,7 @@ public class NumericInstanceModelFactory implements FactoryBean<NumericInstanceM
     public NumericInstanceModel getObject() throws Exception {
         if(instance == null) {
             instance = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
-            instance.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.numeric_data);
+            instance.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.numeric_data);
         }
         return instance;
     }
@@ -49,7 +49,7 @@ public class NumericInstanceModelFactory implements FactoryBean<NumericInstanceM
     public void stop() {
         if(instance != null) {
             log.info("Shutting down the model");
-            instance.stop();
+            instance.stopReader();
         }
     }
 }

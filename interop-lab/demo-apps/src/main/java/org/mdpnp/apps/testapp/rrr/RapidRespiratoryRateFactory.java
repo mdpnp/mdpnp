@@ -38,7 +38,7 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
         StringSeq params = new StringSeq();
         params.add("'"+rosetta.MDC_AWAY_CO2.VALUE+"'");
         params.add("'"+rosetta.MDC_IMPED_TTHOR.VALUE+"'");
-        capnoModel.start(subscriber, eventLoop, "metric_id = %0 or metric_id = %1 ", params, QosProfiles.ice_library, QosProfiles.waveform_data);
+        capnoModel.startReader(subscriber, eventLoop, "metric_id = %0 or metric_id = %1 ", params, QosProfiles.ice_library, QosProfiles.waveform_data);
 
         FXMLLoader loader = new FXMLLoader(RapidRespiratoryRate.class.getResource("RapidRespiratoryRate.fxml"));
         

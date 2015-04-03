@@ -17,8 +17,6 @@ import ice.DeviceIdentity;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.LongProperty;
@@ -31,12 +29,11 @@ import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 
+import org.mdpnp.devices.TimeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
-import com.rti.dds.infrastructure.Locator_t;
-import com.rti.dds.infrastructure.Property_t;
 
 /**
  * Convenience class for storing DeviceIdentity and DeviceConnectivity instances
@@ -184,7 +181,7 @@ public class Device {
             } else {
                 makeAndModelProperty().set(deviceIdentity.manufacturer + " " + deviceIdentity.model);
             }
-            hostnameProperty().set(getHostname(participantData));
+            hostnameProperty().set(TimeManager.getHostname(participantData));
             operating_systemProperty().set(deviceIdentity.operating_system);
             buildProperty().set(deviceIdentity.build);
             serial_numberProperty().set(deviceIdentity.build);
@@ -220,41 +217,6 @@ public class Device {
     public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {
         changeUdi(deviceConnectivity.unique_device_identifier);
         connectedProperty().set(ice.ConnectionState.Connected.equals(deviceConnectivity.state));
-    }
-
-    public static final String getHostname(ParticipantBuiltinTopicData participantData) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < participantData.property.value.size(); i++) {
-            Property_t prop = (Property_t) participantData.property.value.get(i);
-            if ("dds.sys_info.hostname".equals(prop.name)) {
-                sb.append(prop.value).append(" ");
-            }
-        }
-
-        for (int i = 0; i < participantData.default_unicast_locators.size(); i++) {
-            Locator_t locator = (Locator_t) participantData.default_unicast_locators.get(i);
-            try {
-                InetAddress addr = null;
-                switch (locator.kind) {
-                case Locator_t.KIND_TCPV4_LAN:
-                case Locator_t.KIND_TCPV4_WAN:
-                case Locator_t.KIND_TLSV4_LAN:
-                case Locator_t.KIND_TLSV4_WAN:
-                case Locator_t.KIND_UDPv4:
-                    addr = InetAddress
-                            .getByAddress(new byte[] { locator.address[12], locator.address[13], locator.address[14], locator.address[15] });
-                    break;
-                case Locator_t.KIND_UDPv6:
-                default:
-                    addr = InetAddress.getByAddress(locator.address);
-                    break;
-                }
-                sb.append(addr.getHostAddress()).append(" ");
-            } catch (UnknownHostException e) {
-                 log.error("getting locator address", e);
-            }
-        }
-        return sb.toString();
     }
 
     @Override

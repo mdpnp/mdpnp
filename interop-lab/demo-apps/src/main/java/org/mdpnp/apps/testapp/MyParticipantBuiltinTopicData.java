@@ -1,5 +1,7 @@
 package org.mdpnp.apps.testapp;
 
+import org.mdpnp.devices.TimeManager;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
@@ -55,7 +57,7 @@ public class MyParticipantBuiltinTopicData {
     public void update(ParticipantBuiltinTopicData data) {
         keyProperty().set(data.key.toString());
         nameProperty().set(data.participant_name.name);
-        hostnameProperty().set(Device.getHostname(data));
+        hostnameProperty().set(TimeManager.getHostname(data));
     }
     
     @Override

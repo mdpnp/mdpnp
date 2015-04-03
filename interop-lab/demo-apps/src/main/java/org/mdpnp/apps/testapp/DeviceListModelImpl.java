@@ -36,7 +36,7 @@ import org.mdpnp.rtiapi.data.DeviceIdentityInstanceModel;
 import org.mdpnp.rtiapi.data.DeviceIdentityInstanceModelImpl;
 import org.mdpnp.rtiapi.data.DeviceIdentityInstanceModelListener;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,12 +118,12 @@ public class DeviceListModelImpl
     }
     
     @Override
-    public void aliveHeartbeat(SampleInfo sampleInfo, HeartBeat heartbeat) {
+    public void aliveHeartbeat(SampleInfo sampleInfo, HeartBeat heartbeat, final String host_name) {
         if("Device".equals(heartbeat.type)) {
             final String udi = heartbeat.unique_device_identifier;
             Platform.runLater(new Runnable() {
                 public void run() {
-                      getDevice(udi, true);
+                      getDevice(udi, true).setHostname(host_name);
                 }
             });
       } else {
@@ -231,8 +231,8 @@ public class DeviceListModelImpl
     protected final TimeManager timeManager;
 
     public void start() {
-        idModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.device_identity);
-        connModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
+        idModel.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.device_identity);
+        connModel.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
     }
     
     public DeviceListModelImpl(final Subscriber subscriber, final EventLoop eventLoop, final TimeManager timeManager) {
@@ -249,14 +249,14 @@ public class DeviceListModelImpl
 
 
     public void tearDown() {
-        idModel.stop();
-        connModel.stop();
+        idModel.stopReader();
+        connModel.stopReader();
     }
     
     private DeviceIdentityInstanceModelListener idListener = new DeviceIdentityInstanceModelListener() {
         
         @Override
-        public void instanceSample(InstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader, DeviceIdentity di,
+        public void instanceSample(ReaderInstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader, DeviceIdentity di,
                 SampleInfo sampleInfo) {
             if (sampleInfo.valid_data) {
                 ParticipantBuiltinTopicData data = null;
@@ -272,12 +272,12 @@ public class DeviceListModelImpl
         }
         
         @Override
-        public void instanceNotAlive(InstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader,
+        public void instanceNotAlive(ReaderInstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader,
                 DeviceIdentity keyHolder, SampleInfo sampleInfo) {
         }
         
         @Override
-        public void instanceAlive(InstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader, DeviceIdentity data,
+        public void instanceAlive(ReaderInstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader, DeviceIdentity data,
                 SampleInfo sampleInfo) {
         }
     };
@@ -285,7 +285,7 @@ public class DeviceListModelImpl
     private DeviceConnectivityInstanceModelListener connListener = new DeviceConnectivityInstanceModelListener() {
         
         @Override
-        public void instanceSample(InstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
+        public void instanceSample(ReaderInstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
                 DeviceConnectivity data, SampleInfo sampleInfo) {
             if (sampleInfo.valid_data) {
                 update(data);
@@ -293,13 +293,13 @@ public class DeviceListModelImpl
         }
         
         @Override
-        public void instanceNotAlive(InstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
+        public void instanceNotAlive(ReaderInstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
                 DeviceConnectivity keyHolder, SampleInfo sampleInfo) {
             
         }
         
         @Override
-        public void instanceAlive(InstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
+        public void instanceAlive(ReaderInstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
                 DeviceConnectivity data, SampleInfo sampleInfo) {
             
         }

@@ -22,7 +22,7 @@ public class InfusionStatusInstanceModelFactory implements FactoryBean<InfusionS
     public InfusionStatusInstanceModel getObject() throws Exception {
         if(instance == null) {
             instance = new InfusionStatusInstanceModelImpl(ice.InfusionStatusTopic.VALUE);
-            instance.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
+            instance.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
         }
         return instance;
     }
@@ -45,7 +45,7 @@ public class InfusionStatusInstanceModelFactory implements FactoryBean<InfusionS
     public void stop() {
         if(instance != null) {
             log.info("Shutting down the model");
-            instance.stop();
+            instance.stopReader();
         }
     }
 }

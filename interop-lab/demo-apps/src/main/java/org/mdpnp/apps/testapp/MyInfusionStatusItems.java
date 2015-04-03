@@ -12,7 +12,7 @@ import javafx.collections.ObservableList;
 
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModelListener;
-import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.SampleInfo;
@@ -59,7 +59,7 @@ public class MyInfusionStatusItems implements InfusionStatusInstanceModelListene
     }
 
     @Override
-    public void instanceSample(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader, InfusionStatus data, SampleInfo sampleInfo) {
+    public void instanceSample(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader, InfusionStatus data, SampleInfo sampleInfo) {
         if(sampleInfo.valid_data) {
             final ice.InfusionStatus d = new ice.InfusionStatus(data);
             SampleInfo s = new SampleInfo();
@@ -82,7 +82,7 @@ public class MyInfusionStatusItems implements InfusionStatusInstanceModelListene
     }
     
     @Override
-    public void instanceNotAlive(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader, InfusionStatus keyHolder, SampleInfo sampleInfo) {
+    public void instanceNotAlive(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader, InfusionStatus keyHolder, SampleInfo sampleInfo) {
         final InstanceHandle_t instance = new InstanceHandle_t(sampleInfo.instance_handle);
         Platform.runLater(new Runnable() {
             public void run() {
@@ -95,6 +95,6 @@ public class MyInfusionStatusItems implements InfusionStatusInstanceModelListene
     }
     
     @Override
-    public void instanceAlive(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader, InfusionStatus data, SampleInfo sampleInfo) {
+    public void instanceAlive(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader, InfusionStatus data, SampleInfo sampleInfo) {
     }
 }

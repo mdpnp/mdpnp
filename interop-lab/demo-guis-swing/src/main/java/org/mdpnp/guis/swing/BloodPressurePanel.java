@@ -30,7 +30,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
-import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -209,16 +209,16 @@ public class BloodPressurePanel extends DevicePanel {
     private final InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
 
         @Override
-        public void instanceAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+        public void instanceAlive(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
         }
 
         @Override
-        public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
+        public void instanceNotAlive(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
                 SampleInfo sampleInfo) {
         }
 
         @Override
-        public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+        public void instanceSample(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
             if (rosetta.MDC_PRESS_CUFF.VALUE.equals(data.metric_id)) {
                 switch ((int) data.value) {
                 case ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE:

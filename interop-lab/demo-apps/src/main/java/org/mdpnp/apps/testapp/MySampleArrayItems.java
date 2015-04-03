@@ -10,7 +10,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 
@@ -59,7 +59,7 @@ public class MySampleArrayItems implements InstanceModelListener<SampleArray, Sa
     }
 
     @Override
-    public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data, SampleInfo sampleInfo) {
+    public void instanceSample(ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data, SampleInfo sampleInfo) {
         final ice.SampleArray d = new ice.SampleArray(data);
         SampleInfo s = new SampleInfo();
         InstanceHandle_t handle = new InstanceHandle_t(sampleInfo.instance_handle);
@@ -75,7 +75,7 @@ public class MySampleArrayItems implements InstanceModelListener<SampleArray, Sa
     }
     
     @Override
-    public void instanceNotAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder, SampleInfo sampleInfo) {
+    public void instanceNotAlive(ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder, SampleInfo sampleInfo) {
         final InstanceHandle_t instance = new InstanceHandle_t(sampleInfo.instance_handle);
         Platform.runLater(new Runnable() {
             public void run() {
@@ -88,7 +88,7 @@ public class MySampleArrayItems implements InstanceModelListener<SampleArray, Sa
     }
     
     @Override
-    public void instanceAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data, SampleInfo sampleInfo) {
+    public void instanceAlive(ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data, SampleInfo sampleInfo) {
         final MySampleArray n = new MySampleArray(data, sampleInfo);
         Platform.runLater(new Runnable() {
             public void run() {

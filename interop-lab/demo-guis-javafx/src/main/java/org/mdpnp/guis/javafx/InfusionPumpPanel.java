@@ -21,7 +21,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
-import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 
 import com.rti.dds.subscription.SampleInfo;
@@ -75,19 +75,19 @@ public class InfusionPumpPanel extends DevicePanel {
     private final InstanceModelListener<ice.InfusionStatus, ice.InfusionStatusDataReader> infusionStatusListener = new InstanceModelListener<ice.InfusionStatus, ice.InfusionStatusDataReader>() {
 
         @Override
-        public void instanceAlive(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
+        public void instanceAlive(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
                 InfusionStatus data, SampleInfo sampleInfo) {
             
         }
 
         @Override
-        public void instanceNotAlive(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
+        public void instanceNotAlive(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
                 InfusionStatus keyHolder, SampleInfo sampleInfo) {
             
         }
 
         @Override
-        public void instanceSample(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
+        public void instanceSample(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
                 InfusionStatus data, SampleInfo sampleInfo) {
             active.setText(Boolean.toString(data.infusionActive));
             drugMass.setText(Integer.toString(data.drug_mass_mcg) + " mcg");

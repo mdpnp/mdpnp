@@ -28,7 +28,7 @@ public class PublicationBuiltinTopicDataInstanceModelFactory implements FactoryB
     @Override
     public PublicationBuiltinTopicDataInstanceModel getObject() throws Exception {
         instance = new PublicationBuiltinTopicDataInstanceModelImpl(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME);
-        instance.start(participant.get_builtin_subscriber(), eventLoop);
+        instance.startReader(participant.get_builtin_subscriber(), eventLoop);
         return instance;
     }
 
@@ -44,7 +44,7 @@ public class PublicationBuiltinTopicDataInstanceModelFactory implements FactoryB
     
     public void stop() {
         if(null != instance) {
-            instance.stop();
+            instance.stopReader();
             instance = null;
         }
     }

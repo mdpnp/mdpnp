@@ -1,5 +1,5 @@
 package org.mdpnp.rtiapi.data;
 
-public interface AlarmSettingsInstanceModel extends InstanceModel<ice.AlarmSettings, ice.AlarmSettingsDataReader> {
+public interface AlarmSettingsInstanceModel extends ReaderInstanceModel<ice.AlarmSettings, ice.AlarmSettingsDataReader> {
 
 }

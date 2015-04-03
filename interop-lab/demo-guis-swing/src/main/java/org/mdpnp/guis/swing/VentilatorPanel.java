@@ -33,7 +33,7 @@ import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformPanelFactory;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
-import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,17 +128,17 @@ public class VentilatorPanel extends DevicePanel {
     private final InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
 
         @Override
-        public void instanceAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+        public void instanceAlive(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
 
         }
 
         @Override
-        public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
+        public void instanceNotAlive(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
                 SampleInfo sampleInfo) {
         }
 
         @Override
-        public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+        public void instanceSample(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
             if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(data.metric_id) || rosetta.MDC_AWAY_RESP_RATE.VALUE.equals(data.metric_id)) {
                 respiratoryRate.setText(Integer.toString((int) data.value));
             } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(data.metric_id)) {
@@ -151,7 +151,7 @@ public class VentilatorPanel extends DevicePanel {
     private final InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader> sampleArrayListener = new InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader>() {
 
         @Override
-        public void instanceAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+        public void instanceAlive(ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
             if (rosetta.MDC_FLOW_AWAY.VALUE.equals(data.metric_id)&&sampleInfo.valid_data&&0!=(InstanceStateKind.ALIVE_INSTANCE_STATE&sampleInfo.instance_state)) {
                 flowPanel.setSource(new SampleArrayWaveformSource(reader, data));
@@ -167,13 +167,13 @@ public class VentilatorPanel extends DevicePanel {
         private final Date date = new Date();
         
         @Override
-        public void instanceNotAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
+        public void instanceNotAlive(ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
                 SampleInfo sampleInfo) {
             
         }
 
         @Override
-        public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+        public void instanceSample(ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
             date.setTime(data.presentation_time.sec * 1000L + data.presentation_time.nanosec / 1000000L);
             time.setText(dateFormat.format(date));

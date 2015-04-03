@@ -1,5 +1,5 @@
 package org.mdpnp.rtiapi.data;
 
-public interface InfusionStatusInstanceModel extends InstanceModel<ice.InfusionStatus, ice.InfusionStatusDataReader> {
+public interface InfusionStatusInstanceModel extends ReaderInstanceModel<ice.InfusionStatus, ice.InfusionStatusDataReader> {
 
 }

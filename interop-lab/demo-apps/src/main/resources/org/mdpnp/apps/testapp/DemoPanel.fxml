@@ -15,7 +15,7 @@
         <Button fx:id="changePartition" mnemonicParsing="false" onAction="#clickChangePartition" text="Change Partition..." GridPane.columnIndex="2" GridPane.halignment="CENTER" />
         <Button fx:id="createAdapter" mnemonicParsing="false" onAction="#clickCreateAdapter" text="Create an ICE Device Adapter..." GridPane.columnIndex="3" GridPane.halignment="CENTER" />
         <Label fx:id="clock" text="Time" GridPane.columnIndex="4" GridPane.halignment="RIGHT" />
-            <ComboBox fx:id="partitions" onAction="#changePartition" prefWidth="150.0" GridPane.columnIndex="1" />
+        <ComboBox fx:id="partitions" onAction="#changePartition" prefWidth="150.0" GridPane.columnIndex="1"/>
       </children>
       <columnConstraints>
         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />

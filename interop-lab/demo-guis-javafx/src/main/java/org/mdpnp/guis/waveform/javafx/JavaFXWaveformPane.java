@@ -86,24 +86,26 @@ public class JavaFXWaveformPane extends BorderPane implements WaveformPanel {
 
     @Override
     public void start() {
-        waveformRender = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {
-
-            @Override
-            public void handle(ActionEvent event) {
-                long tm = System.currentTimeMillis();
-                if(null != source) {
-//                System.err.println("RENDER "+waveformCanvas.getExtent());
-                    renderer.render(source, waveformCanvas, tm-12000L, tm-2000L);
+        if(waveformRender==null) {
+            waveformRender = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    long tm = System.currentTimeMillis();
+                    if(null != source) {
+                        renderer.render(source, waveformCanvas, tm-12000L, tm-2000L);
+                    }
                 }
-            }
-            
-        }));
-        waveformRender.setCycleCount(Timeline.INDEFINITE);
-        waveformRender.play();
+            }));
+            waveformRender.setCycleCount(Timeline.INDEFINITE);
+            waveformRender.play();
+        }
     }
 
     @Override
     public void stop() {
-        waveformRender.stop();
+        if(null != waveformRender) {
+            waveformRender.stop();
+            waveformRender = null;
+        }
     }
 }

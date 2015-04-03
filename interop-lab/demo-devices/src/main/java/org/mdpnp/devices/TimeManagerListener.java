@@ -4,7 +4,7 @@ import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.subscription.SampleInfo;
 
 public interface TimeManagerListener {
-    void aliveHeartbeat(SampleInfo sampleInfo, ice.HeartBeat heartbeat);
+    void aliveHeartbeat(SampleInfo sampleInfo, ice.HeartBeat heartbeat, String host_name);
     
     void notAliveHeartbeat(SampleInfo sampleInfo, ice.HeartBeat heartbeat);
     

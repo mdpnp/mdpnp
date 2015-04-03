@@ -11,13 +11,26 @@ import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicDataTypeSupport;
 import com.rti.dds.infrastructure.Condition;
+import com.rti.dds.infrastructure.Cookie_t;
 import com.rti.dds.infrastructure.Copyable;
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.Locator_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.RETCODE_PRECONDITION_NOT_MET;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
+import com.rti.dds.publication.AcknowledgmentInfo;
+import com.rti.dds.publication.DataWriter;
+import com.rti.dds.publication.DataWriterImpl;
+import com.rti.dds.publication.DataWriterListener;
+import com.rti.dds.publication.LivelinessLostStatus;
+import com.rti.dds.publication.OfferedDeadlineMissedStatus;
+import com.rti.dds.publication.OfferedIncompatibleQosStatus;
+import com.rti.dds.publication.PublicationMatchedStatus;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.publication.ReliableReaderActivityChangedStatus;
+import com.rti.dds.publication.ReliableWriterCacheChangedStatus;
 import com.rti.dds.publication.builtin.PublicationBuiltinTopicDataTypeSupport;
 import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.DataReaderImpl;
@@ -44,11 +57,11 @@ import com.rti.dds.topic.TypeSupport;
 import com.rti.dds.topic.builtin.TopicBuiltinTopicDataTypeSupport;
 import com.rti.dds.util.Sequence;
 
-@SuppressWarnings("serial")
-public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> implements InstanceModel<D,R>, DataReaderListener {
+public class InstanceModelImpl<D extends Copyable, R extends DataReader, W extends DataWriter> 
+    implements ReaderInstanceModel<D,R>, DataReaderListener,
+               WriterInstanceModel<D,W>, DataWriterListener {
     private final ListenerList<InstanceModelListener<D, R>> listeners = new ListenerList<InstanceModelListener<D,R>>(InstanceModelListener.class);
     private final List<InstanceHandle_t> instances = new java.util.concurrent.CopyOnWriteArrayList<InstanceHandle_t>();
-//            .synchronizedList(new ArrayList<InstanceHandle_t>());
     
     @Override
     public void addListener(InstanceModelListener<D, R> listener) {
@@ -150,9 +163,11 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> imp
     
     
     private R reader;
+    private W writer;
     private ReadCondition condition;
 
     private Subscriber subscriber;
+    private Publisher publisher;
     private EventLoop eventLoop;
     private ContentFilteredTopic filteredTopic;
     
@@ -164,6 +179,11 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> imp
     @Override
     public R getReader() {
         return reader;
+    }
+    
+    @Override
+    public W getWriter() {
+        return writer;
     }
     
     protected final ThreadLocal<Sequence> sa_seq = new ThreadLocal<Sequence>() {
@@ -268,15 +288,16 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> imp
         }
     };
 
-    protected final String topic;
+    protected final String topicName;
+    protected Topic readerTopic, writerTopic;
     protected final Class<D> dataClass;
     protected final Class<? extends TypeSupport> typeSupportClass;
     protected final Class<? extends Sequence> sequenceClass;
     
-    protected final Method getKeyValue, returnLoan, readWCondition, readInstance;
+    protected final Method getKeyValue, returnLoan, readWCondition, readInstance, write;
     
-    public InstanceModelImpl(final String topic, Class<D> dataClass, Class<R> readerClass, Class<? extends TypeSupport> typeSupportClass, Class<? extends Sequence> sequenceClass) {
-        this.topic = topic;
+    public InstanceModelImpl(final String topicName, Class<D> dataClass, Class<R> readerClass, Class<W> writerClass, Class<? extends TypeSupport> typeSupportClass, Class<? extends Sequence> sequenceClass) {
+        this.topicName = topicName;
         this.dataClass = dataClass;
         this.typeSupportClass = typeSupportClass;
         this.sequenceClass = sequenceClass;
@@ -285,71 +306,70 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> imp
             returnLoan = readerClass.getMethod("return_loan", sequenceClass, SampleInfoSeq.class);
             readWCondition = readerClass.getMethod("read_w_condition", sequenceClass, SampleInfoSeq.class, int.class, ReadCondition.class);
             readInstance = readerClass.getMethod("read_instance", sequenceClass, SampleInfoSeq.class, int.class, InstanceHandle_t.class, int.class, int.class, int.class);
+            write = writerClass.getMethod("write", dataClass, InstanceHandle_t.class);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void start(Subscriber subscriber, EventLoop eventLoop) {
-        start(subscriber, eventLoop, null, null, null, null);
+    public void startReader(Subscriber subscriber, EventLoop eventLoop) {
+        startReader(subscriber, eventLoop, null, null, null, null);
     }
 
     @Override
-    public void start(Subscriber subscriber, EventLoop eventLoop, String qosLibrary, String qosProfile) {
-        start(subscriber, eventLoop, null, null, qosLibrary, qosProfile);
+    public void startReader(Subscriber subscriber, EventLoop eventLoop, String qosLibrary, String qosProfile) {
+        startReader(subscriber, eventLoop, null, null, qosLibrary, qosProfile);
     }
     
     @SuppressWarnings("unchecked")
     @Override
-    public void start(Subscriber subscriber, EventLoop eventLoop, String expression, StringSeq params, String qosLibrary, String qosProfile) {
+    public void startReader(Subscriber subscriber, EventLoop eventLoop, String expression, StringSeq params, String qosLibrary, String qosProfile) {
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
 
-        if(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME.equals(topic)) {
-            reader = (R) subscriber.lookup_datareader(topic);
+        if(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME.equals(topicName)) {
+            reader = (R) subscriber.lookup_datareader(topicName);
             condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
                     InstanceStateKind.ANY_INSTANCE_STATE);
             eventLoop.addHandler(condition, handler);
-        } else if(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME.equals(topic)) {
-            reader = (R) subscriber.lookup_datareader(topic);
+        } else if(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME.equals(topicName)) {
+            reader = (R) subscriber.lookup_datareader(topicName);
             condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
                     InstanceStateKind.ANY_INSTANCE_STATE);
             eventLoop.addHandler(condition, handler);
-        } else if(SubscriptionBuiltinTopicDataTypeSupport.SUBSCRIPTION_TOPIC_NAME.equals(topic)) {
-            reader = (R) subscriber.lookup_datareader(topic);
+        } else if(SubscriptionBuiltinTopicDataTypeSupport.SUBSCRIPTION_TOPIC_NAME.equals(topicName)) {
+            reader = (R) subscriber.lookup_datareader(topicName);
             condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
                     InstanceStateKind.ANY_INSTANCE_STATE);
             eventLoop.addHandler(condition, handler);            
-        } else if(TopicBuiltinTopicDataTypeSupport.TOPIC_TOPIC_NAME.equals(topic)) {
-            reader = (R) subscriber.lookup_datareader(topic);
+        } else if(TopicBuiltinTopicDataTypeSupport.TOPIC_TOPIC_NAME.equals(topicName)) {
+            reader = (R) subscriber.lookup_datareader(topicName);
             condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
                     InstanceStateKind.ANY_INSTANCE_STATE);
             eventLoop.addHandler(condition, handler);
         } else {
-        
-            TopicDescription saTopic = TopicUtil.lookupOrCreateTopic(subscriber.get_participant(), topic,
-                    typeSupportClass);
-            if(null != expression) {
-                log.info(getClass()+" Filtered Expression:"+expression+" Filter values:"+params);
-                // TODO time since epoch is a klugey way to get some likelihood of uniqueness
-                filteredTopic = subscriber.get_participant().create_contentfilteredtopic("Filtered"+topic+System.currentTimeMillis(), (Topic) saTopic, expression, params);
-                if(null == filteredTopic) {
-                    log.debug("Unable to create filtered topic " + getClass());
+            if(null == this.readerTopic) {
+                this.readerTopic = TopicUtil.findOrCreateTopic(subscriber.get_participant(), topicName, typeSupportClass);
+                if(null != expression) {
+                    log.info(getClass()+" Filtered Expression:"+expression+" Filter values:"+params);
+                    // TODO time since epoch is a klugey way to get some likelihood of uniqueness
+                    filteredTopic = subscriber.get_participant().create_contentfilteredtopic("Filtered"+topicName+System.currentTimeMillis(), readerTopic, expression, params);
+                    if(null == filteredTopic) {
+                        log.debug("Unable to create filtered topic " + getClass());
+                    }
                 }
             }
             SubscriberQos sQos = new SubscriberQos();
             subscriber.get_qos(sQos);
             sQos.entity_factory.autoenable_created_entities = false;
             subscriber.set_qos(sQos);
-            
-    
-            
+
             if(null == qosProfile || null == qosLibrary) {
-                reader = (R) subscriber.create_datareader(null==filteredTopic?saTopic:filteredTopic, Subscriber.DATAREADER_QOS_DEFAULT, 
+                reader = (R) subscriber.create_datareader(null==filteredTopic?readerTopic:filteredTopic, Subscriber.DATAREADER_QOS_DEFAULT, 
                         null, StatusKind.STATUS_MASK_NONE);
             } else {
-                reader = (R) subscriber.create_datareader_with_profile(null==filteredTopic?saTopic:filteredTopic, qosLibrary,
+                reader = (R) subscriber.create_datareader_with_profile(null==filteredTopic?readerTopic:filteredTopic, qosLibrary,
                         qosProfile, null, StatusKind.STATUS_MASK_NONE);
             }
             reader.set_listener(this, StatusKind.STATUS_MASK_ALL ^ StatusKind.DATA_AVAILABLE_STATUS);
@@ -366,7 +386,7 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> imp
     }
 
     @Override
-    public void stop() {
+    public void stopReader() {
         if(null != eventLoop && condition != null) {
             eventLoop.removeHandler(condition);
             eventLoop = null;
@@ -377,18 +397,16 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> imp
         }
         if(subscriber != null) {
             if(reader != null) {
-                reader.delete_contained_entities();
-                try {
-                    subscriber.delete_datareader(reader);
-                } catch (RETCODE_PRECONDITION_NOT_MET preCondition) {
-                    // TODO nail this down an awful lot tighter
-                    log.warn("Ignoring an error in delete_datareader", preCondition);
-                }
+                subscriber.delete_datareader(reader);
                 reader = null;
             }
             if(null != filteredTopic) {
                 subscriber.get_participant().delete_contentfilteredtopic(filteredTopic);
                 filteredTopic = null;
+            }
+            if(null != readerTopic) {
+                subscriber.get_participant().delete_topic(readerTopic);
+                readerTopic = null;
             }
             subscriber = null;
         }
@@ -441,42 +459,169 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> imp
     @Override
     public void on_liveliness_changed(DataReader arg0, LivelinessChangedStatus arg1) {
         if(log.isDebugEnabled()) {
-            log.debug("{} liveliness_changed: {}", topic, arg1);
+            log.debug("{} liveliness_changed: {}", topicName, arg1);
         }
     }
 
     @Override
     public void on_requested_deadline_missed(DataReader arg0, RequestedDeadlineMissedStatus arg1) {
         if(log.isDebugEnabled()) {
-            log.debug("{} requested_deadline_missed: {}", topic, arg1);
+            log.debug("{} requested_deadline_missed: {}", topicName, arg1);
         }
     }
 
     @Override
     public void on_requested_incompatible_qos(DataReader arg0, RequestedIncompatibleQosStatus arg1) {
         if(log.isDebugEnabled()) {
-            log.debug("{} requested_incompatible_qos: {}", topic, arg1);
+            log.debug("{} requested_incompatible_qos: {}", topicName, arg1);
         }
     }
 
     @Override
     public void on_sample_lost(DataReader arg0, SampleLostStatus arg1) {
         if(log.isDebugEnabled()) {
-            log.debug("{} sample_lost: {}", topic, arg1);
+            log.debug("{} sample_lost: {}", topicName, arg1);
         }
     }
 
     @Override
     public void on_sample_rejected(DataReader arg0, SampleRejectedStatus arg1) {
         if(log.isDebugEnabled()) {
-            log.debug("{} sample_rejected: {}", topic, arg1);
+            log.debug("{} sample_rejected: {}", topicName, arg1);
         }
     }
 
     @Override
     public void on_subscription_matched(DataReader arg0, SubscriptionMatchedStatus arg1) {
         if(log.isDebugEnabled()) {
-            log.debug("{} subscription_matched: {}", topic, arg1);
+            log.debug("{} subscription_matched: {}", topicName, arg1);
+        }
+    }
+
+    @Override
+    public void on_application_acknowledgment(DataWriter arg0, AcknowledgmentInfo arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} application_acknowledgment: {}", topicName, arg1);
+        }
+    }
+
+    @Override
+    public Object on_data_request(DataWriter arg0, Cookie_t arg1) {
+        // Not currently using RTI extensions for request/response
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void on_data_return(DataWriter arg0, Object arg1, Cookie_t arg2) {
+     // Not currently using RTI extensions for request/response
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void on_destination_unreachable(DataWriter arg0, InstanceHandle_t arg1, Locator_t arg2) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} destination_unreachable: {} {}", topicName, arg1, arg2);
+        }
+    }
+
+    @Override
+    public void on_instance_replaced(DataWriter arg0, InstanceHandle_t arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} instance_replaced: {}", topicName, arg1);
+        }
+    }
+
+    @Override
+    public void on_liveliness_lost(DataWriter arg0, LivelinessLostStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} liveliness_lost: {}", topicName, arg1);
+        }
+    }
+
+    @Override
+    public void on_offered_deadline_missed(DataWriter arg0, OfferedDeadlineMissedStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} offered_deadline_missed: {}", topicName, arg1);
+        }
+    }
+
+    @Override
+    public void on_offered_incompatible_qos(DataWriter arg0, OfferedIncompatibleQosStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} offered_incompatible_qos: {}", topicName, arg1);
+        }
+    }
+
+    @Override
+    public void on_publication_matched(DataWriter arg0, PublicationMatchedStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} publication_matched: {}", topicName, arg1);
+        }
+    }
+
+    @Override
+    public void on_reliable_reader_activity_changed(DataWriter arg0, ReliableReaderActivityChangedStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} reliable_reader_activity_changed: {}", topicName, arg1);
+        }
+    }
+
+    @Override
+    public void on_reliable_writer_cache_changed(DataWriter arg0, ReliableWriterCacheChangedStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} reliable_writer_cache_changed: {}", topicName, arg1);
+        }
+    }
+
+    @Override
+    public void on_sample_removed(DataWriter arg0, Cookie_t arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} sample_removed: {}", topicName, arg1);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void startWriter(Publisher publisher, String qosLibrary, String qosProfile) {
+        this.publisher = publisher;
+        
+        if(null == writerTopic) {
+            writerTopic = TopicUtil.findOrCreateTopic(publisher.get_participant(), this.topicName, typeSupportClass);
+        }
+        
+        if(null == qosProfile || null == qosLibrary) {
+            writer = (W) publisher.create_datawriter(writerTopic, Publisher.DATAWRITER_QOS_DEFAULT, 
+                    null, StatusKind.STATUS_MASK_NONE);
+        } else {
+            writer = (W) publisher.create_datawriter_with_profile(writerTopic, qosLibrary,
+                    qosProfile, null, StatusKind.STATUS_MASK_NONE);
+        }
+        writer.set_listener(this, StatusKind.STATUS_MASK_ALL);
+    }
+
+    @Override
+    public void startWriter(Publisher publisher) {
+        startWriter(publisher, null, null);
+    }
+
+    @Override
+    public void stopWriter() {
+        if(null != writer) {
+            publisher.delete_datawriter(writer);
+            writer = null;
+        }
+        if(null != writerTopic) {
+            publisher.get_participant().delete_topic(writerTopic);
+            writerTopic = null;
+        }
+    }
+
+    @Override
+    public void write(D data) {
+        try {
+            write.invoke(writer, data, InstanceHandle_t.HANDLE_NIL);
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            log.error("write error", e);
         }
     }
 }

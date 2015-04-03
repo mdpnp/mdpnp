@@ -11,7 +11,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.chart.XYChart.Data;
 import javafx.scene.chart.XYChart.Series;
 
-import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 
@@ -36,7 +36,7 @@ public class MySampleArrayData implements InstanceModelListener<SampleArray, Sam
     }
 
     @Override
-    public void instanceAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+    public void instanceAlive(ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
             SampleInfo sampleInfo) {
         if(!byHandle.containsKey(sampleInfo.instance_handle)) {
             Series<Number,Number> series = new Series<Number,Number>();
@@ -47,7 +47,7 @@ public class MySampleArrayData implements InstanceModelListener<SampleArray, Sam
     }
 
     @Override
-    public void instanceNotAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
+    public void instanceNotAlive(ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
             SampleInfo sampleInfo) {
         Series<Number,Number> series = byHandle.remove(sampleInfo.instance_handle);
         if(null != series) {
@@ -57,7 +57,7 @@ public class MySampleArrayData implements InstanceModelListener<SampleArray, Sam
     }
 
     @Override
-    public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+    public void instanceSample(ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
             SampleInfo sampleInfo) {
         Series<Number,Number> series = byHandle.get(sampleInfo.instance_handle);
         if(null == series) {
