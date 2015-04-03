@@ -23,7 +23,7 @@
           class="org.mdpnp.apps.testapp.sim.SimControl"
           destroy-method="shutDown"
           depends-on="fxDecorator">
-        <constructor-arg ref="domainParticipant"/>
+        <constructor-arg ref="publisher"/>
     </bean>
 
     <!--

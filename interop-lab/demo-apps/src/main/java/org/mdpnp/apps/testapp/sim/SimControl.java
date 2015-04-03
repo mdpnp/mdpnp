@@ -282,15 +282,14 @@ public class SimControl implements InitializingBean
     };
 
 
-    private final DomainParticipant participant;
-    private Publisher publisher;
+    private final Publisher publisher;
     private Topic topic;
     private ice.GlobalSimulationObjectiveDataWriter writer;
 
     private final UIControl[] controls = new UIControl[numericValues.length];
 
-    public SimControl(DomainParticipant participant) {
-        this.participant = participant;
+    public SimControl(Publisher publisher) {
+        this.publisher = publisher;
     }
 
     /**
@@ -301,20 +300,16 @@ public class SimControl implements InitializingBean
     @Override
     public void afterPropertiesSet() throws Exception {
 
-        publisher = participant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT,
-                                                 null,
-                                                 StatusKind.STATUS_MASK_NONE);
-
-        ice.GlobalSimulationObjectiveTypeSupport.register_type(participant,
+        ice.GlobalSimulationObjectiveTypeSupport.register_type(publisher.get_participant(),
                                                                ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
 
-        topic = participant.create_topic(ice.GlobalSimulationObjectiveTopic.VALUE,
+        topic = publisher.get_participant().create_topic(ice.GlobalSimulationObjectiveTopic.VALUE,
                                          ice.GlobalSimulationObjectiveTypeSupport.get_type_name(),
                                          DomainParticipant.TOPIC_QOS_DEFAULT,
                                          null,
                                          StatusKind.STATUS_MASK_NONE);
 
-        writer = (GlobalSimulationObjectiveDataWriter) participant.create_datawriter_with_profile(topic,
+        writer = (GlobalSimulationObjectiveDataWriter) publisher.create_datawriter_with_profile(topic,
                                                                                                   QosProfiles.ice_library,
                                                                                                   QosProfiles.state,
                                                                                                   null,
@@ -333,9 +328,9 @@ public class SimControl implements InitializingBean
             controls[i].close();
         }
 
-        participant.delete_datawriter(writer);
-        participant.delete_topic(topic);
-        participant.delete_publisher(publisher);
-        ice.GlobalSimulationObjectiveTypeSupport.unregister_type(participant, ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
+        publisher.delete_datawriter(writer);
+        publisher.get_participant().delete_topic(topic);
+
+        ice.GlobalSimulationObjectiveTypeSupport.unregister_type(publisher.get_participant(), ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
     }
 }
