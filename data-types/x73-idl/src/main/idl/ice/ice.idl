@@ -224,7 +224,7 @@ module ice {
    */
   struct MDSConnectivity {
     UniqueDeviceIdentifier unique_device_identifier; //@key
-    LongString partition;
+    string<128> partition;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist MDSConnectivity unique_device_identifier
   const string MDSConnectivityTopic = "MDSConnectivity";
@@ -237,7 +237,7 @@ module ice {
    */
   struct MDSConnectivityObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
-    LongString partition;
+    string<128> partition;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist MDSConnectivityObjective unique_device_identifier
   const string MDSConnectivityObjectiveTopic = "MDSConnectivityObjective";
