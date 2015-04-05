@@ -17,15 +17,17 @@ public class DomainParticipantFactory implements FactoryBean<DomainParticipant>,
     
     public DomainParticipantFactory(int domain) {
         this.domain = domain;
-        final DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
-        com.rti.dds.domain.DomainParticipantFactory.get_instance().get_qos(qos);
-        qos.entity_factory.autoenable_created_entities = false;
-        com.rti.dds.domain.DomainParticipantFactory.get_instance().set_qos(qos);
     }
     
     @Override
     public DomainParticipant getObject() throws Exception {
         if(null == instance) {
+            final DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
+            com.rti.dds.domain.DomainParticipantFactory.get_instance().get_qos(qos);
+            boolean autoenable = qos.entity_factory.autoenable_created_entities;
+            qos.entity_factory.autoenable_created_entities = false;
+            com.rti.dds.domain.DomainParticipantFactory.get_instance().set_qos(qos);
+            
             instance = com.rti.dds.domain.DomainParticipantFactory.get_instance().create_participant(domain, com.rti.dds.domain.DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null,
                     StatusKind.STATUS_MASK_NONE);
             
@@ -36,6 +38,9 @@ public class DomainParticipantFactory implements FactoryBean<DomainParticipant>,
             instance.get_builtin_subscriber().lookup_datareader(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME);
 
             instance.enable();
+            
+            qos.entity_factory.autoenable_created_entities = autoenable;
+            com.rti.dds.domain.DomainParticipantFactory.get_instance().set_qos(qos);
             
         }
         return instance;
