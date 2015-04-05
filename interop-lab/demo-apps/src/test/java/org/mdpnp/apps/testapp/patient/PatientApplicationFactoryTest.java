@@ -109,8 +109,8 @@ public class PatientApplicationFactoryTest {
         long wait = 0;
         try {
             for (int i = 0; i < N_DATA_POINTS; i++) {
-                Thread.sleep(1000);
-                wait += 1000;
+                Thread.sleep(500);
+                wait += 500;
 
                 final Device d = new Device(Integer.toHexString(i));
                 d.setHostname("192.168.1." + i);
@@ -172,7 +172,7 @@ public class PatientApplicationFactoryTest {
     };
 
     private static final int N_DATA_POINTS = 5;
-    private static final int UI_UP_MS = Integer.getInteger("PatientApplicationFactoryTest.UpTimeMS", N_DATA_POINTS*1000+2000);
+    private static final int UI_UP_MS = Integer.getInteger("PatientApplicationFactoryTest.UpTimeMS", N_DATA_POINTS*500+1000);
 
     private static final String [] devNames = {
             "Pulse Oximeter",

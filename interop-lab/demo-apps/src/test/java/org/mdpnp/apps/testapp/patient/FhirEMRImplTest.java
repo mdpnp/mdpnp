@@ -6,13 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
 /**
  * @author mfeinberg
  */
-public class EMRImplTest {
+public class FhirEMRImplTest {
 
     private static final Logger log = LoggerFactory.getLogger(PatientApplicationFactoryTest.class);
 
@@ -53,7 +54,7 @@ public class EMRImplTest {
         String fn = "First" + id;
         String ln = "Last" + id;
 
-        PatientInfo pi = new PatientInfo(id, fn, ln);
+        PatientInfo pi = new PatientInfo(id, fn, ln, PatientInfo.Gender.M, new Date(0));
 
         boolean created = emr.createPatient(pi);
         Assert.assertTrue("Failed to create patients", created);

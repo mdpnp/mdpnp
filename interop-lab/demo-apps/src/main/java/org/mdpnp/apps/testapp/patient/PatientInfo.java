@@ -15,7 +15,7 @@ import java.util.List;
 
 public class PatientInfo {
 
-    enum Gender { male, female };
+    enum Gender { M, F };
 
     private final StringProperty lastName = new SimpleStringProperty();
     private final StringProperty firstName = new SimpleStringProperty();
@@ -23,10 +23,16 @@ public class PatientInfo {
     private final ObjectProperty<Date> dob = new SimpleObjectProperty<>();
     private final ObjectProperty<Gender> gender = new SimpleObjectProperty<>();
 
-    public PatientInfo(String mrn, String fn, String ln) {
+    public PatientInfo(String mrn, String fn, String ln, Gender g, Date d) {
+
+        if(mrn == null || fn == null || ln == null || g == null || d == null)
+            throw new IllegalArgumentException("Patient specification is invalid");
+
         this.mrn.setValue(mrn);
         this.firstName.setValue(fn);
         this.lastName.setValue(ln);
+        this.gender.setValue(g);
+        this.dob.setValue(d);
     }
 
     public String getLastName() {
@@ -61,20 +67,12 @@ public class PatientInfo {
         return dob;
     }
 
-    public void setDob(Date dob) {
-        this.dob.set(dob);
-    }
-
     public Gender getGender() {
         return gender.get();
     }
 
     public ObjectProperty<Gender> genderProperty() {
         return gender;
-    }
-
-    public void setGender(Gender gender) {
-        this.gender.set(gender);
     }
 
     @Override
@@ -88,7 +86,9 @@ public class PatientInfo {
             PatientInfo p = new PatientInfo(
                     rs.getString("MRN"),
                     rs.getString("FIRST_NAME"),
-                    rs.getString("LAST_NAME"));
+                    rs.getString("LAST_NAME"),
+                    PatientInfo.Gender.valueOf(rs.getString("GENDER")),
+                    rs.getDate("DOB"));
             return p;
         }
     }
@@ -97,7 +97,7 @@ public class PatientInfo {
     // DAO APIs
     //
     private static final String CREATE_SQL=
-            "INSERT INTO PATIENT_INFO (MRN,LAST_NAME,FIRST_NAME,DOB,GENDER) VALUES  (?,?,?,?,?)";
+            "INSERT INTO PATIENT_INFO (MRN,FIRST_NAME,LAST_NAME,DOB,GENDER) VALUES  (?,?,?,?,?)";
 
     static boolean createPatient(DataSource dataSource, PatientInfo p) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
@@ -107,7 +107,7 @@ public class PatientInfo {
                                     p.getFirstName(),
                                     p.getLastName(),
                                     p.getDob(),
-                                    p.getGender()
+                                    p.getGender().name()
                             });
 
         return true;
