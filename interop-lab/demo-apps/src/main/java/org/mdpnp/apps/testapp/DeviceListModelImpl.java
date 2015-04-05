@@ -230,6 +230,7 @@ public class DeviceListModelImpl
     protected DeviceConnectivityInstanceModel connModel;
     protected final TimeManager timeManager;
 
+    @Override
     public void start() {
         idModel.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.device_identity);
         connModel.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
@@ -247,7 +248,7 @@ public class DeviceListModelImpl
         connModel.addListener(connListener);
     }
 
-
+    @Override
     public void tearDown() {
         idModel.stopReader();
         connModel.stopReader();
