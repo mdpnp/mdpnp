@@ -1,24 +1,30 @@
 package org.mdpnp.apps.testapp.hl7;
 
-import static ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum.MALE;
-import static ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL;
+import ice.MDSConnectivity;
 import ice.Numeric;
 import ice.NumericDataReader;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 
 import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.devices.MDSHandler;
+import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
+import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.mdpnp.rtiapi.data.ListenerList;
 import org.mdpnp.rtiapi.data.NumericInstanceModel;
 import org.mdpnp.rtiapi.data.NumericInstanceModelListener;
+import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +32,12 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
 import ca.uhn.fhir.model.dstu2.composite.QuantityDt;
 import ca.uhn.fhir.model.dstu2.composite.ResourceReferenceDt;
+import ca.uhn.fhir.model.dstu2.resource.Device;
+import ca.uhn.fhir.model.dstu2.resource.DeviceMetric;
 import ca.uhn.fhir.model.dstu2.resource.Observation;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.model.primitive.DateTimeDt;
+import ca.uhn.fhir.model.primitive.IdDt;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.IGenericClient;
 import ca.uhn.hl7v2.DefaultHapiContext;
@@ -53,7 +62,7 @@ import com.rti.dds.infrastructure.SequenceNumber_t;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 
-public class HL7Emitter {
+public class HL7Emitter implements MDSListener {
     public enum Type {
         FHIR_DSTU2, V26,
     }
@@ -81,9 +90,13 @@ public class HL7Emitter {
     private final DeviceListModel deviceListModel;
     private final HapiContext hl7Context;
     protected final FhirContext fhirContext;
+    protected final MDSHandler mdsHandler;
 
     protected Connection hl7Connection;
     protected IGenericClient fhirClient;
+    
+    private final Map<String, String> deviceUdiToPatientMRN = Collections.synchronizedMap(new HashMap<String, String>());
+    private final Map<String, IdDt> patientMRNtoResourceId = new HashMap<String, IdDt>();
 
     private final ListenerList<LineEmitterListener> listeners = new ListenerList<LineEmitterListener>(LineEmitterListener.class);
     private final ListenerList<StartStopListener> ssListeners = new ListenerList<StartStopListener>(StartStopListener.class);
@@ -96,6 +109,8 @@ public class HL7Emitter {
         hl7Context = new DefaultHapiContext();
         fhirContext = FhirContext.forDstu2();
         this.numericInstanceModel = numericInstanceModel;
+        this.mdsHandler = new MDSHandler(eventLoop, subscriber.get_participant());
+        mdsHandler.addConnectivityListener(this);
 
     }
 
@@ -105,7 +120,7 @@ public class HL7Emitter {
     public void start(final String host, final int port, final Type type) {
         this.type = type;
         numericInstanceModel.iterateAndAddListener(numericListener);
-
+        mdsHandler.start();
         log.debug("Started NumericInstanceModel");
         if (host != null && !host.isEmpty()) {
             if (Type.V26.equals(type)) {
@@ -133,6 +148,7 @@ public class HL7Emitter {
     }
 
     public void stop() {
+        mdsHandler.shutdown();
         numericInstanceModel.removeListener(numericListener);
         ssListeners.fire(stopped);
         if (hl7Connection != null) {
@@ -277,39 +293,53 @@ public class HL7Emitter {
 
         }
     }
-
+    private static final String PTID_SYSTEM = "urn:oid:2.16.840.1.113883.3.1974";
     public void sendFHIR(Numeric data, SampleInfo sampleInfo) {
         // Device device = new Device();
 
-        Patient patient = new Patient();
-        patient.addIdentifier().setUse(OFFICIAL).setSystem("urn:fake:mrns").setValue("12345");
-        patient.addName().addFamily("Jones").addGiven("Randall").addGiven("M");
-        patient.setGender(MALE);
+        final String mrn = deviceUdiToPatientMRN.get(data.unique_device_identifier);
+        if(null == mrn) {
+            log.debug("No known mrn for udi="+data.unique_device_identifier);
+            return;
+        }
+        IdDt resourceId = patientMRNtoResourceId.get(mrn);
+        if(null == resourceId) {
+            ca.uhn.fhir.model.api.Bundle bundle = fhirClient
+                    .search()
+                    .forResource(Patient.class)
+                    .where(Patient.IDENTIFIER.exactly().systemAndIdentifier(PTID_SYSTEM, mrn))
+                    .execute();
+            List<Patient> patients = bundle.getResources(Patient.class);
+            if(patients.isEmpty()) {
+                log.warn("No patient in remote system with MRN="+mrn);
+                return;
+            } else {
+                if(patients.size()>1) {
+                    log.warn("Duplicate resource ids for mrn="+mrn+" using first");
+                }
+                resourceId = patients.get(0).getId();
+                patientMRNtoResourceId.put(mrn, resourceId);
+            }
+            
+        }
+        
 
         // TODO Needs to exist and be referred to
-        // Device device = new Device();
+         Device device = new Device();
+         
         // TODO Probably needs to exist and be referred to
-        // DeviceMetric deviceMetric = new DeviceMetric();
+         DeviceMetric deviceMetric = new DeviceMetric();
+         
         Observation obs = new Observation();
         obs.setValue(new QuantityDt(data.value).setUnits(data.unit_id).setCode(data.metric_id).setSystem("OpenICE"));
         obs.addIdentifier().setSystem("urn:info.openice").setValue(uuidFromSequence(sampleInfo.publication_sequence_number).toString());
         Date presentation = new Date(data.presentation_time.sec * 1000L + data.presentation_time.nanosec / 1000000L);
         obs.setApplies(new DateTimeDt(presentation, TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
-        obs.setSubject(new ResourceReferenceDt(patient.getId()));
+        obs.setSubject(new ResourceReferenceDt(resourceId));
 
         IGenericClient client = fhirClient;
         if (null != client) {
-            MethodOutcome outcome = client
-                    .update()
-                    .resource(patient)
-                    .conditional()
-                    .where(Patient.IDENTIFIER.exactly().systemAndIdentifier(patient.getIdentifier().get(0).getSystem(),
-                            patient.getIdentifier().get(0).getValue())).execute();
-
-            obs.setSubject(new ResourceReferenceDt(outcome.getId()));
-
-            outcome = client.create().resource(obs).execute();
-            // System.out.println(outcome);
+            MethodOutcome outcome = client.create().resource(obs).execute();
         }
 
         // String xmlEncoded =
@@ -350,5 +380,16 @@ public class HL7Emitter {
 
     public static void main(String[] args) {
         System.out.println(uuidFromSequence(new SequenceNumber_t(1, 1L)));
+    }
+
+    
+    
+    @Override
+    public void handleDataSampleEvent(MDSEvent evt) {
+        ice.MDSConnectivity c = (MDSConnectivity) evt.getSource();
+        log.info("udi " + c.unique_device_identifier + " is " + c.partition);
+        if(c.partition.startsWith("MRN=")) {
+            deviceUdiToPatientMRN.put(c.unique_device_identifier, c.partition.substring(4, c.partition.length()));
+        }
     }
 }
