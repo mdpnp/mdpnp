@@ -12,21 +12,15 @@
     <GridPane prefHeight="-1.0" prefWidth="-1.0">
       <children>
         <Button fx:id="back" contentDisplay="LEFT" mnemonicParsing="false" text="Exit App" textAlignment="LEFT" visible="false" GridPane.columnIndex="0" GridPane.halignment="LEFT" GridPane.rowIndex="0" />
-            
-<!--        <Button fx:id="changePartition" mnemonicParsing="false" onAction="#clickChangePartition" text="Change Partition..." GridPane.columnIndex="2" GridPane.halignment="CENTER" /> -->
+        <FlowPane GridPane.columnIndex="1"><Label text="Select a patient:"/><ComboBox fx:id="patients" onAction="#changePatient" prefWidth="150.0"/></FlowPane>
         <Button fx:id="createAdapter" mnemonicParsing="false" onAction="#clickCreateAdapter" text="Create an ICE Device Adapter..." GridPane.columnIndex="2" GridPane.halignment="CENTER" />
         <Label fx:id="clock" text="Time" GridPane.columnIndex="3" GridPane.halignment="RIGHT" />
-        
-        <FlowPane GridPane.columnIndex="1"><Label text="Select a patient:"/><ComboBox fx:id="patients" onAction="#changePatient" prefWidth="150.0"/></FlowPane>
-        
       </children>
       <columnConstraints>
         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
-            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"/>
         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
-            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
       </columnConstraints>
       <rowConstraints>
         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />

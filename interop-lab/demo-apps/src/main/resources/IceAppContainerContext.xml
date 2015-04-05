@@ -77,6 +77,10 @@
         </constructor-arg>
     </bean>
     
+    <bean id="fhirContext" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="staticMethod" value="ca.uhn.fhir.context.FhirContext.forDstu2"/>
+    </bean>
+    
     <bean id="jdbcDB"
           class="org.mdpnp.apps.testapp.patient.PatientApplicationFactory.EmbeddedDB"
           init-method="init"
@@ -92,8 +96,9 @@
     -->
     <bean id="emr"
           class="org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory">
-        <property name="url"      value="${mdpnp.fhir.url}"/>
-        <property name="jdbcDB"   ref="jdbcDB"/>
+        <property name="url"         value="${mdpnp.fhir.url}"/>
+        <property name="jdbcDB"      ref="jdbcDB"/>
+        <property name="fhirContext" ref="fhirContext"/>
     </bean>        
 
 </beans>

@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp.patient;
 
 import org.springframework.beans.factory.FactoryBean;
 
+import ca.uhn.fhir.context.FhirContext;
 import javafx.collections.ObservableList;
 
 import javax.sql.DataSource;
@@ -21,14 +22,22 @@ public interface EMRFacade {
 
     public static class EMRFacadeFactory implements FactoryBean<EMRFacade> {
 
-        private DataSource jdbcDB;
-        private String     fhirEMRUrl;
+        private DataSource  jdbcDB;
+        private String      fhirEMRUrl;
+        private FhirContext fhirContext;
 
         public String getUrl() {
             return fhirEMRUrl;
         }
         public void setUrl(String url) {
             fhirEMRUrl = url;
+        }
+        
+        public FhirContext getFhirContext() {
+            return fhirContext;
+        }
+        public void setFhirContext(FhirContext fhirContext) {
+            this.fhirContext = fhirContext;
         }
 
         public DataSource getJdbcDB() {
@@ -51,6 +60,7 @@ public interface EMRFacade {
                     instance = new FhirEMRImpl();
                     ((FhirEMRImpl)instance).setDataSource(jdbcDB);
                     ((FhirEMRImpl)instance).setUrl(fhirEMRUrl);
+                    ((FhirEMRImpl)instance).setFhirContext(fhirContext);
                 }
             }
             return instance;

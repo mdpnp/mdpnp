@@ -12,6 +12,8 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.NumericInstanceModel;
 import org.springframework.context.ApplicationContext;
 
+import ca.uhn.fhir.context.FhirContext;
+
 import com.rti.dds.subscription.Subscriber;
 
 public class HL7ApplicationFactory implements IceApplicationProvider {
@@ -27,15 +29,15 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
-        final Subscriber subscriber = (Subscriber)parentContext.getBean("subscriber");
+        final Subscriber subscriber = parentContext.getBean("subscriber", Subscriber.class);
 
-        final EventLoop eventLoop = (EventLoop)parentContext.getBean("eventLoop");
+        final EventLoop eventLoop = parentContext.getBean("eventLoop", EventLoop.class);
 
-        final NumericInstanceModel numericInstanceModel = (NumericInstanceModel) parentContext.getBean("numericInstanceModel");
+        final NumericInstanceModel numericInstanceModel = parentContext.getBean("numericInstanceModel", NumericInstanceModel.class);
         
-        final DeviceListModel deviceListModel = (DeviceListModel) parentContext.getBean("deviceListModel");
+        final FhirContext fhirContext = parentContext.getBean("fhirContext", FhirContext.class);
         
-        final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, numericInstanceModel, deviceListModel);
+        final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, numericInstanceModel, fhirContext);
 
         FXMLLoader loader = new FXMLLoader(HL7Application.class.getResource("HL7Application.fxml"));
         

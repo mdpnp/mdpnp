@@ -17,10 +17,10 @@
     </bean>
     
     <bean id="wildcardTimeManager" class="org.mdpnp.devices.TimeManagerFactory">
-      <constructor-arg ref="eventLoop"/>
-      <constructor-arg ref="wildcardPublisher" />
-      <constructor-arg ref="wildcardSubscriber" />
-      <constructor-arg ref="supervisorUdi" />
+      <constructor-arg ref="eventLoop" type="org.mdpnp.rtiapi.data.EventLoop"/>
+      <constructor-arg ref="wildcardPublisher" type="com.rti.dds.publication.Publisher"/>
+      <constructor-arg ref="wildcardSubscriber" type="com.rti.dds.subscription.Subscriber"/>
+      <constructor-arg ref="supervisorUdi" type="java.lang.String" />
       <!-- Omitting the type means this TimeManager will only passively monitor heartbeats -->
     </bean>
     

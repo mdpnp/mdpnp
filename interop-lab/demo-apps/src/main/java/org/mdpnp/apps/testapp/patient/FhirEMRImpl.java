@@ -29,7 +29,7 @@ import static ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL;
 class FhirEMRImpl implements EMRFacade {
 
     private static final String HL7_ICE_URN_OID = "urn:oid:2.16.840.1.113883.3.1974";
-
+    private FhirContext fhirContext;
     private String      fhirURL;
     private JdbcEMRImpl jdbcEMR = new JdbcEMRImpl();
     private final ObservableList<PatientInfo> patients = FXCollections.observableArrayList();
@@ -39,6 +39,12 @@ class FhirEMRImpl implements EMRFacade {
     }
     public void setUrl(String url) {
         fhirURL = url;
+    }
+    public FhirContext getFhirContext() {
+        return fhirContext;
+    }
+    public void setFhirContext(FhirContext fhirContext) {
+        this.fhirContext = fhirContext;
     }
 
     public DataSource getDataSource() {
@@ -65,8 +71,6 @@ class FhirEMRImpl implements EMRFacade {
     
     @Override
     public void refresh() {
-
-        FhirContext fhirContext = FhirContext.forDstu2();
         IGenericClient fhirClient = fhirContext.newRestfulGenericClient(fhirURL);
         ca.uhn.fhir.model.api.Bundle bundle = fhirClient
                 .search()
@@ -114,7 +118,6 @@ class FhirEMRImpl implements EMRFacade {
             patients.add(p);
         });
         
-        FhirContext fhirContext = FhirContext.forDstu2();
         IGenericClient fhirClient = fhirContext.newRestfulGenericClient(fhirURL);
 
         String mrnId = p.getMrn();

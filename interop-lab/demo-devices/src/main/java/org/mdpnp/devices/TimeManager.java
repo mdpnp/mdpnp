@@ -119,7 +119,7 @@ public class TimeManager implements Runnable {
 
         ice.HeartBeatTypeSupport.register_type(participant, ice.HeartBeatTypeSupport.get_type_name());
         
-        hbTopic = TopicUtil.createTopic(participant, ice.HeartBeatTopic.VALUE, ice.HeartBeatTypeSupport.class);
+        hbTopic = TopicUtil.findOrCreateTopic(participant, ice.HeartBeatTopic.VALUE, ice.HeartBeatTypeSupport.class);
         StringSeq params = new StringSeq();
         params.add("'"+uniqueDeviceIdentifier+"'");
         // TODO Using content filters when multiple TimeManagers are attached to the DomainParticipant causes bad behaviour

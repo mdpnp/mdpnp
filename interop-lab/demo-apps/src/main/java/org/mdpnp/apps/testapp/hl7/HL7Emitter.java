@@ -84,10 +84,7 @@ public class HL7Emitter implements MDSListener {
     private static final Set<String> metricIdsForExport = new HashSet<String>(Arrays.asList(metricIdsForExportArray));
     
     protected static final Logger log = LoggerFactory.getLogger(HL7Emitter.class);
-
-    private final EventLoop eventLoop;
-    private final Subscriber subscriber;
-    private final DeviceListModel deviceListModel;
+    
     private final HapiContext hl7Context;
     protected final FhirContext fhirContext;
     protected final MDSHandler mdsHandler;
@@ -102,12 +99,9 @@ public class HL7Emitter implements MDSListener {
     private final ListenerList<StartStopListener> ssListeners = new ListenerList<StartStopListener>(StartStopListener.class);
 
     public HL7Emitter(final Subscriber subscriber, final EventLoop eventLoop, final NumericInstanceModel numericInstanceModel,
-            final DeviceListModel deviceListModel) {
-        this.subscriber = subscriber;
-        this.eventLoop = eventLoop;
-        this.deviceListModel = deviceListModel;
+            final FhirContext fhirContext) {
         hl7Context = new DefaultHapiContext();
-        fhirContext = FhirContext.forDstu2();
+        this.fhirContext = fhirContext;
         this.numericInstanceModel = numericInstanceModel;
         this.mdsHandler = new MDSHandler(eventLoop, subscriber.get_participant());
         mdsHandler.addConnectivityListener(this);
