@@ -44,6 +44,7 @@ import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -202,9 +203,8 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
 
             ice.GlobalAlarmSettingsObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name());
 
-            globalAlarmSettingsTopic = participant.create_topic(ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
-                    ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
-                    StatusKind.STATUS_MASK_NONE);
+            globalAlarmSettingsTopic = TopicUtil.findOrCreateTopic(participant, ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
+                    ice.GlobalAlarmSettingsObjectiveTypeSupport.class); 
             writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(globalAlarmSettingsTopic, QosProfiles.ice_library,
                     QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
             latch.countDown();
@@ -222,7 +222,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
             eventLoop.doLater(new Runnable() {
                 public void run() {
                     publisher.delete_datawriter(writer);
-    
+                    publisher.get_participant().delete_topic(globalAlarmSettingsTopic);
                     VitalModelImpl.this.eventLoop = null;
                 }
             });

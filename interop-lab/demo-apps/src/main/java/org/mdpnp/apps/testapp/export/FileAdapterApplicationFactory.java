@@ -68,6 +68,7 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
             @Override
             public void destroy() throws Exception {
                 controller.stop();
+                dataCollector.destroy();
             }
         };
     }

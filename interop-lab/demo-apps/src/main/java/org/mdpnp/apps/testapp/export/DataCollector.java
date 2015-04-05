@@ -28,7 +28,7 @@ import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
-import com.rti.dds.topic.TopicDescription;
+import com.rti.dds.topic.Topic;
 
 public class DataCollector {
 
@@ -67,14 +67,17 @@ public class DataCollector {
             l.handleDataSampleEvent(data);
         }
     }
-
+    private final Topic sampleArrayTopic, numericTopic;
     private final ice.SampleArrayDataReader saReader;
     private final ice.NumericDataReader     nReader;
 
     private DataHandler worker = null;
 
+    private final Subscriber subscriber;
+    
     public DataCollector(Subscriber subscriber) {
-
+        this.subscriber = subscriber;
+        
         DomainParticipant participant = subscriber.get_participant();
         
         // Inform the participant about the sample array data type we would like to use in our endpoints
@@ -84,26 +87,14 @@ public class DataCollector {
         ice.NumericTypeSupport.register_type(participant, ice.NumericTypeSupport.get_type_name());
 
         // A topic the mechanism by which reader and writer endpoints are matched.
-        TopicDescription sampleArrayTopic = TopicUtil.lookupOrCreateTopic(participant,
+        sampleArrayTopic = TopicUtil.findOrCreateTopic(participant,
                                                                           ice.SampleArrayTopic.VALUE,
                                                                           ice.SampleArrayTypeSupport.class);
-        /*
-        Topic sampleArrayTopic = participant.create_topic(ice.SampleArrayTopic.VALUE,
-                                                            ice.SampleArrayTypeSupport.get_type_name(),
-                                                            DomainParticipant.TOPIC_QOS_DEFAULT, null,
-                                                            StatusKind.STATUS_MASK_NONE);
-        */
 
         // A second topic if for Numeric data
-        TopicDescription numericTopic = TopicUtil.lookupOrCreateTopic(participant,
+        numericTopic = TopicUtil.findOrCreateTopic(participant,
                                                                       ice.NumericTopic.VALUE,
                                                                       ice.NumericTypeSupport.class);
-        /*
-        Topic numericTopic = participant.create_topic(ice.NumericTopic.VALUE,
-                ice.NumericTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null,
-                StatusKind.STATUS_MASK_NONE);
-        */
 
         // Create a reader endpoint for waveform data
         saReader =
@@ -119,6 +110,18 @@ public class DataCollector {
 
         nReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
 
+    }
+    
+    public void destroy() {
+        try {
+            stop();
+        } catch (Exception e) {
+            log.error("Unable to stop", e);
+        }
+        subscriber.delete_datareader(nReader);
+        subscriber.delete_datareader(saReader);
+        subscriber.get_participant().delete_topic(numericTopic);
+        subscriber.get_participant().delete_topic(sampleArrayTopic);
     }
 
     public synchronized void start() {
