@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +59,6 @@ public class TimeManager implements Runnable {
     private ice.TimeSyncDataWriter tsWriter;
     private ice.TimeSyncDataReader tsReader;
     private Topic hbTopic, tsTopic;
-    private boolean ownHbTopic, ownTsTopic;
     private ContentFilteredTopic cfHbTopic, cfTsTopic;
     private ReadCondition hbReadCond;
     private ReadCondition tsReadCond;
@@ -101,6 +101,7 @@ public class TimeManager implements Runnable {
     }
     
     public TimeManager(Publisher publisher, Subscriber subscriber, String uniqueDeviceIdentifier, String type) {
+        instanceNumber = instanceCounter++;
         if(!publisher.get_participant().equals(subscriber.get_participant())) {
             throw new RuntimeException("publisher and subscriber must be from the same participant");
         }
@@ -110,25 +111,22 @@ public class TimeManager implements Runnable {
         this.type = type;
     }
     
+    private static int instanceCounter = 0;
+    private int instanceNumber;
+    
     public void start() {
         DomainParticipant participant = publisher.get_participant();
 
-        hbTopic = (Topic) participant.lookup_topicdescription(ice.HeartBeatTopic.VALUE);
-        if(null == hbTopic) {
-            ownHbTopic = true;
-            ice.HeartBeatTypeSupport.register_type(participant, ice.HeartBeatTypeSupport.get_type_name());
-            hbTopic = participant.create_topic(ice.HeartBeatTopic.VALUE, ice.HeartBeatTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        }
-        tsTopic = (Topic) participant.lookup_topicdescription(ice.TimeSyncTopic.VALUE);
-        if(null == tsTopic) {
-            ownTsTopic = true;
-            ice.TimeSyncTypeSupport.register_type(participant, ice.TimeSyncTypeSupport.get_type_name());
-            tsTopic = participant.create_topic(ice.TimeSyncTopic.VALUE, ice.TimeSyncTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        }
+        ice.HeartBeatTypeSupport.register_type(participant, ice.HeartBeatTypeSupport.get_type_name());
+        hbTopic = TopicUtil.findOrCreateTopic(participant, ice.HeartBeatTopic.VALUE, ice.HeartBeatTypeSupport.class);
+
+        ice.TimeSyncTypeSupport.register_type(participant, ice.TimeSyncTypeSupport.get_type_name());
+        tsTopic = TopicUtil.findOrCreateTopic(participant, ice.TimeSyncTopic.VALUE, ice.TimeSyncTypeSupport.class);
+
         StringSeq params = new StringSeq();
         params.add("'"+uniqueDeviceIdentifier+"'");
-        cfHbTopic = participant.create_contentfilteredtopic("CF"+ice.HeartBeatTopic.VALUE, hbTopic, "unique_device_identifier <> %0", params);
-        cfTsTopic = participant.create_contentfilteredtopic("CF"+ice.TimeSyncTopic.VALUE, tsTopic, "heartbeat_source = %0", params);
+        cfHbTopic = participant.create_contentfilteredtopic("CF"+ice.HeartBeatTopic.VALUE+instanceNumber, hbTopic, "unique_device_identifier <> %0", params);
+        cfTsTopic = participant.create_contentfilteredtopic("CF"+ice.TimeSyncTopic.VALUE+instanceNumber, tsTopic, "heartbeat_source = %0", params);
 
         hbReader = (HeartBeatDataReader) subscriber.create_datareader_with_profile(cfHbTopic, QosProfiles.ice_library, QosProfiles.heartbeat, null, StatusKind.STATUS_MASK_NONE);
         hbWriter = (HeartBeatDataWriter) publisher.create_datawriter_with_profile(hbTopic, QosProfiles.ice_library, QosProfiles.heartbeat, null, StatusKind.STATUS_MASK_NONE);
@@ -181,16 +179,8 @@ public class TimeManager implements Runnable {
         participant.delete_contentfilteredtopic(cfHbTopic);
         participant.delete_contentfilteredtopic(cfTsTopic);
         
-        if(ownHbTopic) {
-            participant.delete_topic(hbTopic);
-            ice.HeartBeatTypeSupport.unregister_type(participant, ice.HeartBeatTypeSupport.get_type_name());
-        }
-        if(ownTsTopic) {
-            participant.delete_topic(tsTopic);
-            ice.TimeSyncTypeSupport.unregister_type(participant, ice.TimeSyncTypeSupport.get_type_name());
-        }
-        
-        
+        participant.delete_topic(hbTopic);
+        participant.delete_topic(tsTopic);
     }
     
     private static final void elapsedTime(Time_t t1, Time_t t2, Duration_t elapsed) {
