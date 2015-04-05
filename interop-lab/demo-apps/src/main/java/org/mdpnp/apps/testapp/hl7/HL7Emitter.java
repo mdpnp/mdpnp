@@ -111,6 +111,7 @@ public class HL7Emitter implements MDSListener {
         this.numericInstanceModel = numericInstanceModel;
         this.mdsHandler = new MDSHandler(eventLoop, subscriber.get_participant());
         mdsHandler.addConnectivityListener(this);
+        mdsHandler.start();
 
     }
 
@@ -120,7 +121,7 @@ public class HL7Emitter implements MDSListener {
     public void start(final String host, final int port, final Type type) {
         this.type = type;
         numericInstanceModel.iterateAndAddListener(numericListener);
-        mdsHandler.start();
+        
         log.debug("Started NumericInstanceModel");
         if (host != null && !host.isEmpty()) {
             if (Type.V26.equals(type)) {
@@ -148,7 +149,7 @@ public class HL7Emitter implements MDSListener {
     }
 
     public void stop() {
-        mdsHandler.shutdown();
+        
         numericInstanceModel.removeListener(numericListener);
         ssListeners.fire(stopped);
         if (hl7Connection != null) {
@@ -159,7 +160,10 @@ public class HL7Emitter implements MDSListener {
             // TODO is there an active connection to disconnect?
             fhirClient = null;
         }
-
+    }
+    
+    public void shutdown() {
+        mdsHandler.shutdown();
     }
 
     static class DispatchStartStop implements ListenerList.Dispatcher<StartStopListener> {

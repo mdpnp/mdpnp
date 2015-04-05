@@ -22,6 +22,7 @@ public class DeviceListModelFactory implements FactoryBean<DeviceListModel>, Dis
     public DeviceListModel getObject() throws Exception {
         if(instance == null) {
             instance = new DeviceListModelImpl(subscriber, eventLoop, timeManager);
+            // TODO Figure out why it is so important that this be scheduled on the EventLoop
             eventLoop.doLater(() -> {
                 instance.start();
             });

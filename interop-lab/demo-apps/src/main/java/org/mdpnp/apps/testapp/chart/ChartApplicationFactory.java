@@ -61,7 +61,7 @@ public class ChartApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void destroy() throws Exception {
-                model.stop();
+
             }
         };
     }

@@ -80,11 +80,13 @@ public class HL7Application implements LineEmitterListener, StartStopListener {
         });
     }
     
-    public void stop() {
+    public void shutdown() {
         if(model != null) {
             model.stop();
+            model.shutdown();
             model = null;
         }
+        
         text.clear();
     }
 

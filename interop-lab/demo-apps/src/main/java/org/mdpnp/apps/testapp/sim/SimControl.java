@@ -331,6 +331,6 @@ public class SimControl implements InitializingBean
         publisher.delete_datawriter(writer);
         publisher.get_participant().delete_topic(topic);
 
-        ice.GlobalSimulationObjectiveTypeSupport.unregister_type(publisher.get_participant(), ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
+//        ice.GlobalSimulationObjectiveTypeSupport.unregister_type(publisher.get_participant(), ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
     }
 }

@@ -25,7 +25,7 @@
         <constructor-arg ref="domainParticipant" />
     </bean>
     
-    <bean id="timeManager" class="org.mdpnp.devices.TimeManagerFactory" lazy-init="true" destroy-method="stop">
+    <bean id="timeManager" class="org.mdpnp.devices.TimeManagerFactory" lazy-init="true">
       <constructor-arg ref="eventLoop"/>
       <constructor-arg ref="publisher" />
       <constructor-arg ref="subscriber" />
@@ -40,7 +40,7 @@
         <constructor-arg ref="subscriber" />
     </bean>
     
-    <bean id="deviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory" lazy-init="true" destroy-method="stop">
+    <bean id="deviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory" lazy-init="true">
         <constructor-arg ref="eventLoop" />
         <constructor-arg ref="subscriber" />
         <constructor-arg ref="timeManager" />
@@ -51,7 +51,7 @@
         <constructor-arg ref="eventLoop" />
     </bean>
 
-    <bean id="vitalModel" class="org.mdpnp.apps.testapp.vital.VitalModelFactory" lazy-init="true" destroy-method="stop">
+    <bean id="vitalModel" class="org.mdpnp.apps.testapp.vital.VitalModelFactory" lazy-init="true">
         <constructor-arg ref="deviceListModel" />
         <constructor-arg ref="publisher" />
         <constructor-arg ref="eventLoop" />

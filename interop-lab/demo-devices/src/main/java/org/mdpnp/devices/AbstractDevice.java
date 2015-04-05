@@ -24,10 +24,16 @@ import ice.SampleArray;
 import ice.SampleArrayDataWriter;
 import ice.SampleArrayTypeSupport;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.management.ManagementFactory;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -63,7 +69,6 @@ import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
-import com.rti.dds.topic.TopicDescription;
 
 public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBean {
     protected final ThreadGroup threadGroup;
@@ -94,7 +99,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     protected final Topic alarmSettingsTopic;
     protected final ice.AlarmSettingsDataWriter alarmSettingsDataWriter;
 
-    protected final Topic alarmSettingsObjectiveTopic;
+    protected final Topic localAlarmSettingsObjectiveTopic;
     protected final ice.LocalAlarmSettingsObjectiveDataWriter alarmSettingsObjectiveWriter;
     
     protected Topic deviceAlertConditionTopic;
@@ -105,7 +110,8 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     
     protected Topic technicalAlertTopic;
     protected ice.AlertDataWriter technicalAlertWriter;
-
+    
+    protected Topic globalAlarmSettingsObjectiveTopic;
     protected ice.GlobalAlarmSettingsObjectiveDataReader alarmSettingsObjectiveReader;
     protected ReadCondition alarmSettingsObjectiveCondition;
     
@@ -633,9 +639,10 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
 
         subscriber.delete_datareader(alarmSettingsObjectiveReader);
+        domainParticipant.delete_topic(globalAlarmSettingsObjectiveTopic);
 
         publisher.delete_datawriter(alarmSettingsObjectiveWriter);
-        domainParticipant.delete_topic(alarmSettingsObjectiveTopic);
+        domainParticipant.delete_topic(localAlarmSettingsObjectiveTopic);
         ice.LocalAlarmSettingsObjectiveTypeSupport.unregister_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
 
         publisher.delete_datawriter(alarmSettingsDataWriter);
@@ -727,15 +734,15 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         ice.LocalAlarmSettingsObjectiveTypeSupport.register_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
-        alarmSettingsObjectiveTopic = domainParticipant.create_topic(ice.LocalAlarmSettingsObjectiveTopic.VALUE,
+        localAlarmSettingsObjectiveTopic = domainParticipant.create_topic(ice.LocalAlarmSettingsObjectiveTopic.VALUE,
                 ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        alarmSettingsObjectiveWriter = (LocalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(alarmSettingsObjectiveTopic,
+        alarmSettingsObjectiveWriter = (LocalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(localAlarmSettingsObjectiveTopic,
                 QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
-        TopicDescription alarmSettingsObjectiveTopic = TopicUtil.lookupOrCreateTopic(domainParticipant, ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
+        globalAlarmSettingsObjectiveTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
                 ice.GlobalAlarmSettingsObjectiveTypeSupport.class);
         alarmSettingsObjectiveReader = (ice.GlobalAlarmSettingsObjectiveDataReader) subscriber.create_datareader_with_profile(
-                alarmSettingsObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+                globalAlarmSettingsObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         ice.DeviceAlertConditionTypeSupport.register_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
         deviceAlertConditionTopic = domainParticipant.create_topic(ice.DeviceAlertConditionTopic.VALUE,

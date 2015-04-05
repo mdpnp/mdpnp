@@ -196,38 +196,21 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     @Override
     public void start(final Publisher publisher, final EventLoop eventLoop) {
         this.eventLoop = eventLoop;
-        final CountDownLatch latch = new CountDownLatch(1);
-        eventLoop.doLater(() -> {
-            VitalModelImpl.this.publisher = publisher;
-            DomainParticipant participant = publisher.get_participant();
+        VitalModelImpl.this.publisher = publisher;
+        DomainParticipant participant = publisher.get_participant();
 
-            ice.GlobalAlarmSettingsObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name());
+        ice.GlobalAlarmSettingsObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name());
 
-            globalAlarmSettingsTopic = TopicUtil.findOrCreateTopic(participant, ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
-                    ice.GlobalAlarmSettingsObjectiveTypeSupport.class); 
-            writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(globalAlarmSettingsTopic, QosProfiles.ice_library,
-                    QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-            latch.countDown();
-        });
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        globalAlarmSettingsTopic = TopicUtil.findOrCreateTopic(participant, ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
+                ice.GlobalAlarmSettingsObjectiveTypeSupport.class); 
+        writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(globalAlarmSettingsTopic, QosProfiles.ice_library,
+                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
     }
 
     @Override
     public void stop() {
-        if(eventLoop != null) {
-            eventLoop.doLater(new Runnable() {
-                public void run() {
-                    publisher.delete_datawriter(writer);
-                    publisher.get_participant().delete_topic(globalAlarmSettingsTopic);
-                    VitalModelImpl.this.eventLoop = null;
-                }
-            });
-
-        }
+        publisher.delete_datawriter(writer);
+        publisher.get_participant().delete_topic(globalAlarmSettingsTopic);
     }
 
     private static final String DEFAULT_INTERLOCK_TEXT = "";

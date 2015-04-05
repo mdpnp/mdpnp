@@ -61,7 +61,6 @@ public class ValidateApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void destroy() throws Exception {
-                model.stop();
             }
         };
     }

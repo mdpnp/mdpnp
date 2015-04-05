@@ -8,6 +8,7 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.NumericInstanceModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 
 import com.rti.dds.publication.Publisher;
@@ -15,7 +16,7 @@ import com.rti.dds.publication.Publisher;
 /**
  *
  */
-public class VitalModelFactory implements FactoryBean<VitalModel> {
+public class VitalModelFactory implements FactoryBean<VitalModel>, DisposableBean {
 
     private static final Logger log = LoggerFactory.getLogger(VitalModelFactory.class);
 
@@ -62,11 +63,13 @@ public class VitalModelFactory implements FactoryBean<VitalModel> {
         this.numericInstanceModel = numericInstanceModel;
     }
 
-    public void stop() {
+    @Override
+    public void destroy() throws Exception {
         if(instance != null) {
             log.info("Shutting down the model");
             numericInstanceModel.removeListener(provider);
             instance.stop();
-        }
+            instance = null;
+        }        
     }
 }

@@ -17,8 +17,9 @@ import java.lang.reflect.Method;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.StringSeq;
+import com.rti.dds.topic.ContentFilteredTopic;
 import com.rti.dds.topic.Topic;
-import com.rti.dds.topic.TopicDescription;
 import com.rti.dds.topic.TypeSupport;
 
 /**
@@ -43,15 +44,13 @@ public class TopicUtil {
             topic = createTopic(participant, topicName, clazz);
         }
         return topic;
-
     }
     
-    public synchronized static TopicDescription lookupOrCreateTopic(DomainParticipant participant, String topicName, Class<? extends TypeSupport> clazz) {
-        
-        TopicDescription topic = participant.lookup_topicdescription(topicName);
-        if (null == topic) {
-            topic = createTopic(participant, topicName, clazz);
+    public static synchronized ContentFilteredTopic findOrCreateFilteredTopic(DomainParticipant participant, String topicName, Topic topic, String exp, StringSeq params) {
+        ContentFilteredTopic cfTopic = (ContentFilteredTopic) participant.find_topic(topicName, Duration_t.DURATION_ZERO);
+        if (null == cfTopic) {
+            cfTopic = participant.create_contentfilteredtopic(topicName, topic, exp, params);
         }
-        return topic;
+        return cfTopic;
     }
 }

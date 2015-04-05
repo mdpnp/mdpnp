@@ -192,7 +192,7 @@ public class MDSHandler {
             publisher.delete_datawriter(mdsoWriter);
 
             participant.delete_topic(msdoConnectivityTopic);
-            ice.MDSConnectivityTypeSupport.unregister_type(participant, ice.MDSConnectivityTypeSupport.get_type_name());
+//            ice.MDSConnectivityTypeSupport.unregister_type(participant, ice.MDSConnectivityTypeSupport.get_type_name());
         }
 
 
@@ -205,7 +205,7 @@ public class MDSHandler {
 
             ice.MDSConnectivityTypeSupport.register_type(participant, ice.MDSConnectivityTypeSupport.get_type_name());
 
-            msdoConnectivityTopic = (Topic) TopicUtil.lookupOrCreateTopic(participant,
+            msdoConnectivityTopic = TopicUtil.findOrCreateTopic(participant,
                                                                           ice.MDSConnectivityTopic.VALUE,
                                                                           ice.MDSConnectivityTypeSupport.class);
             
@@ -325,7 +325,7 @@ public class MDSHandler {
             publisher.delete_datawriter(mdsoWriter);
 
             participant.delete_topic(msdoConnectivityTopic);
-            ice.MDSConnectivityObjectiveTypeSupport.unregister_type(participant, ice.MDSConnectivityObjectiveTypeSupport.get_type_name());
+//            ice.MDSConnectivityObjectiveTypeSupport.unregister_type(participant, ice.MDSConnectivityObjectiveTypeSupport.get_type_name());
         }
 
 
@@ -338,7 +338,7 @@ public class MDSHandler {
 
             ice.MDSConnectivityObjectiveTypeSupport.register_type(participant, ice.MDSConnectivityObjectiveTypeSupport.get_type_name());
 
-            msdoConnectivityTopic = (Topic) TopicUtil.lookupOrCreateTopic(participant,
+            msdoConnectivityTopic = (Topic) TopicUtil.findOrCreateTopic(participant,
                                                                          ice.MDSConnectivityObjectiveTopic.VALUE,
                                                                          ice.MDSConnectivityObjectiveTypeSupport.class);
 

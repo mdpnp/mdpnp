@@ -3,12 +3,13 @@ package org.mdpnp.devices;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
-public class TimeManagerFactory implements FactoryBean<TimeManager> {
+public class TimeManagerFactory implements FactoryBean<TimeManager>, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(TimeManagerFactory.class);
 
     private TimeManager instance;
@@ -44,6 +45,11 @@ public class TimeManagerFactory implements FactoryBean<TimeManager> {
     }
 
     public TimeManagerFactory(final EventLoop eventLoop, final Publisher publisher, 
+            final Subscriber subscriber, final String uniqueDeviceIdentifier) {
+        this(eventLoop, publisher, subscriber, uniqueDeviceIdentifier, null);
+    }
+    
+    public TimeManagerFactory(final EventLoop eventLoop, final Publisher publisher, 
             final Subscriber subscriber, final String uniqueDeviceIdentifier, 
             final String type) {
         this.eventLoop = eventLoop;
@@ -53,7 +59,8 @@ public class TimeManagerFactory implements FactoryBean<TimeManager> {
         this.type = type;
     }
 
-    public void stop() {
+    @Override
+    public void destroy() throws Exception {
         if(instance != null) {
             log.info("Shutting down the TimeManager");
             instance.stop();

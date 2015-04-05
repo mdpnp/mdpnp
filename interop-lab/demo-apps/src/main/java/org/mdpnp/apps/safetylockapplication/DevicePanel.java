@@ -101,14 +101,14 @@ public class DevicePanel extends JPanel implements PatientEventListener, ActionL
 	        public void run() {
 	        	subscriber.delete_datareader(reader);
 	            participant.delete_topic(topic);
-	            ice.NumericTypeSupport.unregister_type(participant, ice.NumericTypeSupport.get_type_name());
+//	            ice.NumericTypeSupport.unregister_type(participant, ice.NumericTypeSupport.get_type_name());
 	            participant.delete_subscriber(subscriber);
 	            DomainParticipantFactory.get_instance().delete_participant(participant);
 	            DomainParticipantFactory.finalize_instance();
 	            
 	            subscriber2.delete_datareader(reader2);
 	            participant2.delete_topic(topic2);
-	            ice.NumericTypeSupport.unregister_type(participant2, ice.NumericTypeSupport.get_type_name());
+//	            ice.NumericTypeSupport.unregister_type(participant2, ice.NumericTypeSupport.get_type_name());
 	            participant.delete_subscriber(subscriber2);
 	            DomainParticipantFactory.get_instance().delete_participant(participant2);
 	            DomainParticipantFactory.finalize_instance();
