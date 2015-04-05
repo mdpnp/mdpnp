@@ -121,7 +121,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
         ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
         mds.unique_device_identifier = d.getUDI();
-        mds.partition = p.getLastName();
+        mds.partition = "MRN="+p.getMrn();
         mdsConnectivity.publish(mds);
 
         return dpa;
@@ -291,7 +291,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     public void proposeDeviceAssociation(Device d, PatientInfo p) {
         ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
         mds.unique_device_identifier = d.getUDI();
-        mds.partition = p.getLastName();
+        mds.partition = "MRN="+p.getMrn();
         mdsConnectivity.publish(mds);
     }
 
@@ -320,6 +320,10 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         PatientInfo p = findPatient(state.partition, patientView.getItems());
         if(d != null && p != null)
             addDeviceAssociation(d, p);
+        else if (d == null) 
+            log.warn("No device found for " + state.unique_device_identifier);
+        else if (p == null)
+            log.warn("No patient found for " + state.partition);
     }
 
     private static Device findDevice(String uid, ObservableList<Device> items) {
@@ -332,7 +336,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
     private static PatientInfo findPatient(String partition, ObservableList<PatientInfo> items) {
         for (PatientInfo item : items) {
-            if(item.getLastName().equals(partition))
+            if(("MRN="+item.getMrn()).equals(partition))
                 return item;
         }
         return null;
