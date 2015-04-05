@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import org.mdpnp.devices.RtConfig;
+import org.mdpnp.devices.IceQos;
 import org.mdpnp.rtiapi.data.QosProfiles;
 
 import com.rti.dds.domain.DomainParticipant;
@@ -48,7 +48,7 @@ public class PublishPatients {
                 }
                 reader.close();
             }
-            RtConfig.loadAndSetIceQos();
+            IceQos.loadAndSetIceQos();
             
             
             

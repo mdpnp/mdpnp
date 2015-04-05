@@ -2,22 +2,48 @@ package org.mdpnp.devices;
 
 import ice.MDSConnectivity;
 import ice.MDSConnectivityObjective;
-import org.junit.Assert;
-import org.junit.Test;
 
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 public class MDSHandlerTest {
 
+    private static ConfigurableApplicationContext createContext() {
+        ClassPathXmlApplicationContext ctx =
+                new ClassPathXmlApplicationContext(new String[] { "RtConfig.xml" }, false);
+        PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();
+        Properties props = new Properties();
+        props.setProperty("mdpnp.domain", "0");
+        ppc.setProperties(props);
+        ppc.setOrder(0);
+
+        ctx.addBeanFactoryPostProcessor(ppc);
+        ctx.refresh();
+        return ctx;
+    }
+    
     @Test
     public void testMDSLifecycle() throws Exception
     {
-        RtConfig.loadAndSetIceQos();
+        ConfigurableApplicationContext ctx = createContext();
+        
+        DomainParticipant participant = ctx.getBean("domainParticipant", DomainParticipant.class);
+        EventLoop eventLoop   = ctx.getBean("eventLoop", EventLoop.class);
 
-        RtConfig master = RtConfig.setupDDS(0);
-
-        MDSHandler handler = new MDSHandler(master.getEventLoop(), master.getParticipant());
+        MDSHandler handler = new MDSHandler(eventLoop, participant);
 
         final MDSConnectivity sample = new MDSConnectivity();
         sample.partition="p1";
@@ -49,17 +75,19 @@ public class MDSHandlerTest {
             throw ex;
         }
         finally {
-            master.stop();
+            ctx.close();
         }
     }
 
     @Test
     public void testMDSConnectivity() throws Exception
     {
-        RtConfig.loadAndSetIceQos();
-
-        RtConfig master = RtConfig.setupDDS(0);
-
+        ConfigurableApplicationContext ctx = createContext();
+        
+        Subscriber subscriber = ctx.getBean("subscriber", Subscriber.class);
+        Publisher  publisher  = ctx.getBean("publisher", Publisher.class);
+        EventLoop eventLoop   = ctx.getBean("eventLoop", EventLoop.class);
+        
         final MDSConnectivity sample = new MDSConnectivity();
         sample.partition="p1";
         sample.unique_device_identifier=Long.toBinaryString(System.currentTimeMillis());
@@ -68,9 +96,9 @@ public class MDSHandlerTest {
             final CountDownLatch stopOk = new CountDownLatch(1);
 
 
-            MDSHandler.Connectivity c = new MDSHandler.Connectivity(master.getEventLoop(),
-                                                                    master.getPublisher(),
-                                                                    master.getSubscriber());
+            MDSHandler.Connectivity c = new MDSHandler.Connectivity(eventLoop,
+                                                                    publisher,
+                                                                    subscriber);
             c.start();
 
             c.addConnectivityListener(new MDSHandler.Connectivity.MDSListener() {
@@ -94,16 +122,18 @@ public class MDSHandlerTest {
             throw ex;
         }
         finally {
-            master.stop();
+            ctx.close();
         }
     }
 
     @Test
     public void testMDSConnectivityObjective() throws Exception
     {
-        RtConfig.loadAndSetIceQos();
-
-        RtConfig master = RtConfig.setupDDS(0);
+        ConfigurableApplicationContext ctx = createContext();
+        
+        Subscriber subscriber = ctx.getBean("subscriber", Subscriber.class);
+        Publisher  publisher  = ctx.getBean("publisher", Publisher.class);
+        EventLoop eventLoop   = ctx.getBean("eventLoop", EventLoop.class);
 
         final MDSConnectivityObjective sample = new MDSConnectivityObjective();
         sample.partition="p1";
@@ -113,9 +143,9 @@ public class MDSHandlerTest {
             final CountDownLatch stopOk = new CountDownLatch(1);
 
 
-            MDSHandler.Objective c = new MDSHandler.Objective(master.getEventLoop(),
-                                                                                                          master.getPublisher(),
-                                                                                                          master.getSubscriber());
+            MDSHandler.Objective c = new MDSHandler.Objective(eventLoop,
+                                                                                                          publisher,
+                                                                                                          subscriber);
             c.start();
 
             c.addConnectivityListener(new MDSHandler.Objective.MDSListener() {
@@ -139,7 +169,7 @@ public class MDSHandlerTest {
             throw ex;
         }
         finally {
-            master.stop();
+            ctx.close();
         }
     }
 }

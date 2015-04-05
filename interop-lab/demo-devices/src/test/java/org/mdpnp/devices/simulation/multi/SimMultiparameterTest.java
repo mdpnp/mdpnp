@@ -9,7 +9,7 @@ import com.rti.dds.subscription.Subscriber;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.devices.RtConfig;
+import org.mdpnp.devices.IceQos;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
@@ -29,7 +29,7 @@ public class SimMultiparameterTest {
     @Test
     public void testDeviceSetup() throws Exception {
 
-        RtConfig.loadAndSetIceQos();
+        IceQos.loadAndSetIceQos();
 
         EventLoop eventLoop = new EventLoop();
         EventLoopHandler handler = new EventLoopHandler(eventLoop);

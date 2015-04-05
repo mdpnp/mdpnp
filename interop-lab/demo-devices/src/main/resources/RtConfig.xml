@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="order"                    value="1"/>
+        <property name="ignoreResourceNotFound"   value="true"/>
+        <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
+        <property name="locations">
+            <list>
+                <value>classpath:/ice.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="domainId" class="java.lang.Integer">
+        <constructor-arg value="${mdpnp.domain}" />
+    </bean>
+
+    <bean id="domainParticipantFactory" class="org.mdpnp.devices.DomainParticipantFactoryFactory">
+        
+    </bean>
+    
+    <bean id="iceQoS" class="org.mdpnp.devices.IceQos" factory-method="loadAndSetIceQos">
+    </bean>
+
+    
+    
+    <bean id="domainParticipant" class="org.mdpnp.devices.DomainParticipantFactory">
+        <constructor-arg ref="domainId" />
+    </bean>
+
+    <bean id="eventLoop" class="org.mdpnp.rtiapi.data.EventLoop">
+    </bean>
+
+    <bean id="eventLoopHandler" class="org.mdpnp.devices.EventLoopHandler" destroy-method="shutdown">
+        <constructor-arg ref="eventLoop"></constructor-arg>
+    </bean>
+
+    <bean id="subscriber" class="org.mdpnp.devices.SubscriberFactory">
+        <constructor-arg ref="domainParticipant"></constructor-arg>
+    </bean>
+
+    <bean id="publisher" class="org.mdpnp.devices.PublisherFactory">
+        <constructor-arg ref="domainParticipant"></constructor-arg>
+    </bean>
+    
+</beans>

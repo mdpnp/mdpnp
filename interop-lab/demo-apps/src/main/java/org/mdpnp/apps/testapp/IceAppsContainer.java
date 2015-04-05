@@ -37,7 +37,6 @@ import javafx.stage.WindowEvent;
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.BuildInfo;
-import org.mdpnp.devices.RtConfig;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
@@ -49,7 +48,6 @@ import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.sun.glass.ui.Screen;
-import com.sun.javafx.tk.Toolkit;
 
 /**
  * Container responsible for discovery and hosting of ICE applications. Its main
@@ -174,8 +172,8 @@ public class IceAppsContainer extends IceApplication {
 
         public void start(ApplicationContext context, final Device device) throws IOException {
 
-            final EventLoop eventLoop = (EventLoop) context.getBean("eventLoop");
-            final Subscriber subscriber = (Subscriber) context.getBean("subscriber");
+            final EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            final Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
 
             FXMLLoader loader = new FXMLLoader(DeviceView.class.getResource("DeviceView.fxml"));
             ui = loader.load();
@@ -221,7 +219,7 @@ public class IceAppsContainer extends IceApplication {
 
             @Override
             public void handle(WindowEvent event) {
-                final ExecutorService refreshScheduler = (ExecutorService) context.getBean("refreshScheduler");
+                final ExecutorService refreshScheduler = context.getBean("refreshScheduler", ExecutorService.class);
                 refreshScheduler.shutdownNow();
 
                 for (IceApplicationProvider.IceApp a : activeApps.values()) {
@@ -261,15 +259,14 @@ public class IceAppsContainer extends IceApplication {
         context = getConfiguration().createContext("IceAppContainerContext.xml");
         context.registerShutdownHook();
 
-        RtConfig rtConfig = (RtConfig) context.getBean("rtConfig");
-        final Publisher publisher = rtConfig.getPublisher();
-        final Subscriber subscriber = rtConfig.getSubscriber();
-        final String udi = (String) context.getBean("supervisorUdi");
+        final Publisher publisher = context.getBean("publisher", Publisher.class);
+        final Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+        final String udi = context.getBean("supervisorUdi", String.class);
 
-        final DomainParticipant participant = (DomainParticipant) context.getBean("domainParticipant");
+        final DomainParticipant participant = context.getBean("domainParticipant", DomainParticipant.class);
 
-        final DeviceListModelImpl nc = (DeviceListModelImpl) context.getBean("deviceListModel");
-        final EventLoop eventLoop = (EventLoop) context.getBean("eventLoop");
+        final DeviceListModel nc = context.getBean("deviceListModel", DeviceListModel.class);
+        final EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
 
         // setIconImage(ImageIO.read(getClass().getResource("icon.png")));
         partitionChooserModel = new PartitionChooserModel(subscriber, publisher);

@@ -1,5 +1,7 @@
 package org.mdpnp.devices;
 
+import java.util.Properties;
+
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
 import com.rti.dds.domain.DomainParticipantQos;
@@ -9,10 +11,14 @@ import com.rti.dds.publication.PublisherQos;
 import com.rti.dds.subscription.DataReaderQos;
 import com.rti.dds.subscription.SubscriberQos;
 import com.rti.dds.topic.TopicQos;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  *
@@ -21,14 +27,27 @@ public class RtConfigTest {
 
     private static final Logger log = LoggerFactory.getLogger(RtConfigTest.class);
 
+    private static ConfigurableApplicationContext createContext() {
+        ClassPathXmlApplicationContext ctx =
+                new ClassPathXmlApplicationContext(new String[] { "RtConfig.xml" }, false);
+        PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();
+        Properties props = new Properties();
+        props.setProperty("mdpnp.domain", "0");
+        ppc.setProperties(props);
+        ppc.setOrder(0);
+
+        ctx.addBeanFactoryPostProcessor(ppc);
+        ctx.refresh();
+        return ctx;
+    }
+    
     @Test
     public void testLifecycleReload() throws Exception
     {
         for(int i=0; i<5; i++) {
             try {
-                RtConfig.loadAndSetIceQos();
-                RtConfig r = RtConfig.setupDDS(0);
-                r.stop();
+                ConfigurableApplicationContext ctx = createContext();
+                ctx.close();
             }
             catch(Exception ex) {
                 log.error("Failed to loadAndSetIceQos", ex);
@@ -43,7 +62,7 @@ public class RtConfigTest {
         DomainParticipantFactory dpf = DomainParticipantFactory.get_instance();
         DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
         dpf.get_qos(qos);
-        RtConfig.loadIceQosLibrary(qos);
+        IceQos.loadIceQosLibrary(qos);
         dpf.set_qos(qos);
         boolean ok = verifyQosLibraries();
 

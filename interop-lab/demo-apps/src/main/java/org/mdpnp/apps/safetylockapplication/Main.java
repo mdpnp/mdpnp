@@ -1,6 +1,6 @@
 package org.mdpnp.apps.safetylockapplication;
 
-import org.mdpnp.devices.RtConfig;
+import org.mdpnp.devices.IceQos;
 
 import javax.swing.SwingUtilities;
 
@@ -9,7 +9,7 @@ public class Main {
 	
 	public static void main(String[] args) throws Exception{
 
-        RtConfig.loadAndSetIceQos();
+        IceQos.loadAndSetIceQos();
 
         SwingUtilities.invokeLater(new Runnable() {
 			@Override

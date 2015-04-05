@@ -1,18 +1,42 @@
 package org.mdpnp.devices;
 
 import ice.MDSConnectivity;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 public class PartitionAssignmentControllerTest {
 
     ice.DeviceIdentity deviceIdentity = new ice.DeviceIdentity();
 
+    private static ConfigurableApplicationContext createContext() {
+        ClassPathXmlApplicationContext ctx =
+                new ClassPathXmlApplicationContext(new String[] { "RtConfig.xml" }, false);
+        PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();
+        Properties props = new Properties();
+        props.setProperty("mdpnp.domain", "0");
+        ppc.setProperties(props);
+        ppc.setOrder(0);
+
+        ctx.addBeanFactoryPostProcessor(ppc);
+        ctx.refresh();
+        return ctx;
+    }
+    
     @Test
     public void testPartitionNames() {
 
@@ -23,20 +47,22 @@ public class PartitionAssignmentControllerTest {
 
     @Test
     public void testSetPartition() throws Exception{
-
-        RtConfig.loadAndSetIceQos();
-
-        RtConfig master = RtConfig.setupDDS(0);
-
+        ConfigurableApplicationContext ctx = createContext();
+        
+        final DomainParticipant participant = ctx.getBean("domainParticipant", DomainParticipant.class);
+        final Subscriber subscriber = ctx.getBean("subscriber", Subscriber.class);
+        final Publisher  publisher  = ctx.getBean("publisher", Publisher.class);
+        final EventLoop eventLoop   = ctx.getBean("eventLoop", EventLoop.class);
+        
         try {
             final CountDownLatch stopOk = new CountDownLatch(1);
 
             PartitionAssignmentController controller =
                     new PartitionAssignmentController(deviceIdentity,
-                                                      master.getParticipant(),
-                                                      master.getEventLoop(),
-                                                      master.getPublisher(),
-                                                      master.getSubscriber());
+                                                      participant,
+                                                      eventLoop,
+                                                      publisher,
+                                                      subscriber);
 
             MDSHandler mdsHandler = controller.getConnectivityAdapter();
             mdsHandler.addConnectivityListener(new MDSHandler.Connectivity.MDSListener() {
@@ -61,7 +87,7 @@ public class PartitionAssignmentControllerTest {
             throw ex;
         }
         finally {
-            master.stop();
+            ctx.close();
         }
     }
 
