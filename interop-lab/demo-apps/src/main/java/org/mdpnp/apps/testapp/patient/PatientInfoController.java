@@ -55,8 +55,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     protected ObservableList<PatientInfo> patientListModel = FXCollections.observableArrayList();
     protected ObservableList<PatientInfo.Gender> genderListModel = FXCollections.observableArrayList();
     {
-        genderListModel.add(PatientInfo.Gender.male);
-        genderListModel.add(PatientInfo.Gender.female);
+        genderListModel.addAll(PatientInfo.Gender.values());
     }
     public DeviceListModel getDeviceListDataModel() {
         return deviceListDataModel;
@@ -221,7 +220,6 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         associationTableView.setItems(associationModel);
         deviceView.setItems(deviceListModel);
         newPatientGender.setItems(genderListModel);
-        newPatientGender.setValue(PatientInfo.Gender.male);
         patientView.setItems(patientListModel);
 
         associationTableView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<DevicePatientAssociation>() {
@@ -251,17 +249,13 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
                 String lName = newPatientLastName.getText();
                 String fName = newPatientFirstName.getText();
                 LocalDate localDate = newPatientDOB.getValue();
+                PatientInfo.Gender g = newPatientGender.getValue();
 
-                if(fName.trim().length() != 0 &&
-                   lName.trim().length() != 0 &&
-                   mrn.trim().length() != 0 &&
-                   localDate != null) {
+                if(!isEmpty(fName) && !isEmpty(lName) && !isEmpty(mrn) && localDate != null && g != null) {
 
                     Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-                    PatientInfo pi = new PatientInfo(mrn, fName, lName);
-                    pi.setDob(date);
-                    pi.setGender(newPatientGender.getValue());
+                    PatientInfo pi = new PatientInfo(mrn.trim(),fName.trim(),lName.trim(),g,date);
 
                     if(addPatient(pi)) {
                         newPatientLastName.setText("");

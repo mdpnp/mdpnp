@@ -163,6 +163,8 @@ public class PatientApplicationFactory implements IceApplicationProvider {
         {
             if(file != null) {
                 InputStream is = getClass().getResourceAsStream(file);
+                if(is == null)
+                    throw new IllegalArgumentException("Cannot locate on classpath: " + file);
                 Connection conn = getConnection();
                 try {
                     applySchemaFile(conn, is);
