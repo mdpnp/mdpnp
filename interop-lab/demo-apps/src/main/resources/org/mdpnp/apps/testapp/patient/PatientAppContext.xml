@@ -17,6 +17,32 @@
             </list>
         </property>
     </bean>
+    
+    <bean id="wildcardSubscriber" class="org.mdpnp.devices.SubscriberFactory">
+        <constructor-arg ref="domainParticipant"></constructor-arg>
+        <constructor-arg><value>*</value></constructor-arg>
+    </bean>
+    
+    <bean id="wildcardPublisher" class="org.mdpnp.devices.PublisherFactory">
+        <constructor-arg ref="domainParticipant"></constructor-arg>
+        <constructor-arg><value>*</value></constructor-arg>
+    </bean>
+    
+    <bean id="wildcardTimeManager" class="org.mdpnp.devices.TimeManagerFactory" lazy-init="true" destroy-method="stop">
+      <constructor-arg ref="eventLoop"/>
+      <constructor-arg ref="wildcardPublisher" />
+      <constructor-arg ref="wildcardSubscriber" />
+      <constructor-arg ref="supervisorUdi" />
+      <constructor-arg>
+        <value type="java.lang.String">Supervisor</value>
+      </constructor-arg>
+    </bean>
+    
+    <bean id="wildcardDeviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory" lazy-init="true" destroy-method="stop">
+        <constructor-arg ref="eventLoop" />
+        <constructor-arg ref="wildcardSubscriber" />
+        <constructor-arg ref="wildcardTimeManager" />
+    </bean>    
 
     <bean id="mdsConnectivity"
           class="org.mdpnp.devices.MDSHandler"
@@ -64,7 +90,7 @@
           depends-on="fxDecorator">
 
         <property name="emr"                 ref="emr"/>
-        <property name="deviceListDataModel" ref="deviceListModel"/>
+        <property name="deviceListDataModel" ref="wildcardDeviceListModel"/>
         <property name="mdsConnectivity"     ref="mdsConnectivity"/>
     </bean>
 
