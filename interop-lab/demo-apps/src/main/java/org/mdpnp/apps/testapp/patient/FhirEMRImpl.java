@@ -1,7 +1,9 @@
 package org.mdpnp.apps.testapp.patient;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.dstu2.composite.HumanNameDt;
 import ca.uhn.fhir.model.dstu2.composite.IdentifierDt;
@@ -9,6 +11,9 @@ import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.model.primitive.DateDt;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.IGenericClient;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import javax.sql.DataSource;
 
@@ -25,6 +30,7 @@ class FhirEMRImpl implements EMRFacade {
 
     private String      fhirURL;
     private JdbcEMRImpl jdbcEMR = new JdbcEMRImpl();
+    private final ObservableList<PatientInfo> patients = FXCollections.observableArrayList();
 
     public String getUrl() {
         return fhirURL;
@@ -51,7 +57,12 @@ class FhirEMRImpl implements EMRFacade {
     }
 
     @Override
-    public List<PatientInfo> getPatients() {
+    public ObservableList<PatientInfo> getPatients() {
+        return patients;
+    }
+    
+    @Override
+    public void refresh() {
 
         FhirContext fhirContext = FhirContext.forDstu2();
         IGenericClient fhirClient = fhirContext.newRestfulGenericClient(fhirURL);
@@ -60,7 +71,7 @@ class FhirEMRImpl implements EMRFacade {
                 .forResource(Patient.class)
                 .execute();
 
-        List<PatientInfo> toRet = new ArrayList<>();
+        final List<PatientInfo> toRet = new ArrayList<>();
         List<Patient> patients = bundle.getResources(Patient.class);
         String official = ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL.getCode();
         for(Patient p : patients) {
@@ -72,18 +83,30 @@ class FhirEMRImpl implements EMRFacade {
             for(HumanNameDt n : p.getName()) {
                 if(official.equals(n.getUse()) || null == n.getUse()) {
                     PatientInfo pi = new PatientInfo(mrn,
-                                                     n.getFamilyAsSingleString(),
-                                                     n.getGivenAsSingleString());
+                                                     n.getGivenAsSingleString(),
+                                                     n.getFamilyAsSingleString());
                     toRet.add(pi);
                     break;
                 }
             }
         }
-        return toRet;
+        Platform.runLater(() -> {
+            patients.retainAll(toRet);
+            Iterator<PatientInfo> itr = toRet.iterator();
+            while(itr.hasNext()) {
+                PatientInfo pi = itr.next();
+                if(!patients.contains(pi)) {
+                    this.patients.add(pi);
+                }
+            }
+        });
     }
 
-    public boolean createPatient(PatientInfo p) {
-
+    public boolean createPatient(final PatientInfo p) {
+        Platform.runLater( () -> {
+            patients.add(p);
+        });
+        
         FhirContext fhirContext = FhirContext.forDstu2();
         IGenericClient fhirClient = fhirContext.newRestfulGenericClient(fhirURL);
 

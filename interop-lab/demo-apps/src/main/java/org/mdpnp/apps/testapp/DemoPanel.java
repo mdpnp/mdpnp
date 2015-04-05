@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -41,6 +42,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import org.mdpnp.apps.testapp.patient.PatientInfo;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,12 +90,8 @@ public class DemoPanel implements Runnable {
         return createAdapter;
     }
 
-    private MyPublicationBuiltinTopicDataItems items;
-
-    public DemoPanel setModel(DomainParticipant participant, EventLoop eventLoop) {
-        items = new MyPublicationBuiltinTopicDataItems();
-        this.partitions.setItems(items.getPartitions().sorted());
-        items.setModel(participant, eventLoop);
+    public DemoPanel setModel(ObservableList<PatientInfo> patients) {
+        this.patients.setItems(patients);
         return this;
     }
 
@@ -130,34 +128,9 @@ public class DemoPanel implements Runnable {
         return this;
     }
 
-    @FXML
-    public void clickChangePartition(ActionEvent evt) throws IOException {
-        final Stage dialog = new Stage(StageStyle.UTILITY);
-        dialog.setAlwaysOnTop(true);
-
-        FXMLLoader loader = new FXMLLoader(PartitionChooser.class.getResource("PartitionChooser.fxml"));
-        BorderPane root = loader.load();
-        PartitionChooser partitionChooser = loader.getController();
-        partitionChooser.setItems(FXCollections.observableArrayList()).setModel(partitionChooserModel);
-        partitionChooser.setHide(new Runnable() {
-            public void run() {
-                dialog.hide();
-            }
-        });
-        Scene scene = new Scene(root);
-        dialog.setScene(scene);
-        dialog.sizeToScene();
-
-        dialog.showAndWait();
-    }
-
     public void stop() {
         timeFuture.cancel(true);
         executor.shutdownNow();
-        if (null != items) {
-            items.stop();
-            items = null;
-        }
     }
 
     private ScheduledFuture<?> timeFuture;
@@ -200,7 +173,7 @@ public class DemoPanel implements Runnable {
     BorderPane demoPanel;
 
     @FXML
-    ComboBox<String> partitions;
+    ComboBox<PatientInfo> patients;
 
     @FXML
     public void clickCreateAdapter(ActionEvent evt) {
@@ -244,11 +217,11 @@ public class DemoPanel implements Runnable {
     }
 
     @FXML
-    public void changePartition(ActionEvent event) {
-        String p = this.partitions.getSelectionModel().getSelectedItem();
-        if(null != p) {
+    public void changePatient(ActionEvent event) {
+        PatientInfo pi = this.patients.getSelectionModel().getSelectedItem();
+        if(null != pi) {
             final List<String> partitions = new ArrayList<String>(1);
-            partitions.add(p);
+            partitions.add("MRN="+pi.getMrn());
             partitionChooserModel.set(partitions);
         }
         

@@ -6,18 +6,6 @@
                            http://www.springframework.org/schema/util
                            http://www.springframework.org/schema/util/spring-util-4.1.xsd">
 
-
-    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="order"                    value="1"/>
-        <property name="ignoreResourceNotFound"   value="true"/>
-        <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
-        <property name="locations">
-            <list>
-                <value>classpath:/ice.properties</value>
-            </list>
-        </property>
-    </bean>
-
     <bean id="wildcardSubscriber" class="org.mdpnp.devices.SubscriberFactory">
         <constructor-arg ref="domainParticipant"></constructor-arg>
         <constructor-arg><value>*</value></constructor-arg>
@@ -33,6 +21,7 @@
       <constructor-arg ref="wildcardPublisher" />
       <constructor-arg ref="wildcardSubscriber" />
       <constructor-arg ref="supervisorUdi" />
+      <!-- Omitting the type means this TimeManager will only passively monitor heartbeats -->
     </bean>
     
     <bean id="wildcardDeviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory">
@@ -49,24 +38,7 @@
         <constructor-arg ref="domainParticipant" />
     </bean>
 
-    <bean id="jdbcDB"
-          class="org.mdpnp.apps.testapp.patient.PatientApplicationFactory.EmbeddedDB"
-          init-method="init"
-          destroy-method="shutdown">
-        <property name="schemaDef" value="DbSchema.sql"/>
-        <property name="dataDef"   value="DataBootstrap.sql"/>
-    </bean>
 
-    <!--
-        Create a handle to EMR system. Passing fhir url will make it talk to a
-        real server; if not specified, will create a in-memory SQL-based
-        implementation.
-    -->
-    <bean id="emr"
-          class="org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory">
-        <property name="url"      value="${mdpnp.fhir.url}"/>
-        <property name="jdbcDB"   ref="jdbcDB"/>
-    </bean>
 
     <!--
     Controller that would know which beans from the contest to lookup when
@@ -97,5 +69,4 @@
     <bean id="mainUI" class="javafx.scene.Parent" factory-bean="fxDecorator" factory-method="getScreen">
         <constructor-arg value="PatientDeviceAssn.fxml"/>
     </bean>
-
 </beans>

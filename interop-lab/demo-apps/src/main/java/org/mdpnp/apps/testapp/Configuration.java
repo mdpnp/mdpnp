@@ -20,7 +20,6 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Properties;
 
-import javafx.stage.Stage;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -156,6 +155,7 @@ public class Configuration {
         Properties props = getCmdLineEnv();
 
         PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();
+        ppc.setIgnoreUnresolvablePlaceholders(true);
         ppc.setProperties(props);
         ppc.setOrder(0);
 

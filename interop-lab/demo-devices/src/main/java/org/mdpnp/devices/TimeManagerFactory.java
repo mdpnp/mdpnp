@@ -24,7 +24,7 @@ public class TimeManagerFactory implements FactoryBean<TimeManager>, DisposableB
     public TimeManager getObject() throws Exception {
         if(instance == null) {
             instance = new TimeManager(publisher, subscriber, uniqueDeviceIdentifier, type);
-            eventLoop.doLater(new Runnable() {
+            eventLoop.doNow(new Runnable() {
                 @Override
                 public void run() {
                     instance.start();

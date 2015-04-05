@@ -4,10 +4,12 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
 import javax.sql.DataSource;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
@@ -117,6 +119,19 @@ public class PatientInfo {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         List<PatientInfo> l = jdbcTemplate.query("select * from PATIENT_INFO", new PatientInfoRowMapper());
         return l;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof PatientInfo) {
+            return mrn.equals(((PatientInfo)obj).mrn);
+        } else {
+            return false;
+        }
+    }
+    @Override
+    public int hashCode() {
+        return mrn.hashCode();
     }
 
 }

@@ -59,7 +59,7 @@ public class TimeManager implements Runnable {
     private ice.TimeSyncDataWriter tsWriter;
     private ice.TimeSyncDataReader tsReader;
     private Topic hbTopic, tsTopic;
-    private ContentFilteredTopic cfHbTopic, cfTsTopic;
+    private ContentFilteredTopic cfTsTopic;
     private ReadCondition hbReadCond;
     private ReadCondition tsReadCond;
     private final GuardCondition guardCondition = new  GuardCondition();
@@ -118,11 +118,14 @@ public class TimeManager implements Runnable {
         DomainParticipant participant = publisher.get_participant();
 
         ice.HeartBeatTypeSupport.register_type(participant, ice.HeartBeatTypeSupport.get_type_name());
-        hbTopic = TopicUtil.findOrCreateTopic(participant, ice.HeartBeatTopic.VALUE, ice.HeartBeatTypeSupport.class);
+        
+        hbTopic = TopicUtil.createTopic(participant, ice.HeartBeatTopic.VALUE, ice.HeartBeatTypeSupport.class);
         StringSeq params = new StringSeq();
         params.add("'"+uniqueDeviceIdentifier+"'");
-        cfHbTopic = TopicUtil.findOrCreateFilteredTopic(participant, "CF"+ice.HeartBeatTopic.VALUE+uniqueDeviceIdentifier, hbTopic, "unique_device_identifier <> %0", params);
-        hbReader = (HeartBeatDataReader) subscriber.create_datareader_with_profile(cfHbTopic, QosProfiles.ice_library, QosProfiles.heartbeat, null, StatusKind.STATUS_MASK_NONE);
+        // TODO Using content filters when multiple TimeManagers are attached to the DomainParticipant causes bad behaviour
+//        cfHbTopic = TopicUtil.findOrCreateFilteredTopic(participant, "CF"+ice.HeartBeatTopic.VALUE+uniqueDeviceIdentifier, hbTopic, "unique_device_identifier <> %0", params);
+//        cfHbTopic = participant.create_contentfilteredtopic("CF"+ice.HeartBeatTopic.VALUE+instanceNumber, hbTopic, "unique_device_identifier <> %0", params);
+        hbReader = (HeartBeatDataReader) subscriber.create_datareader_with_profile(hbTopic, QosProfiles.ice_library, QosProfiles.heartbeat, null, StatusKind.STATUS_MASK_NONE);
         hbReadCond = hbReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
         
         if(null != type) {
@@ -200,10 +203,10 @@ public class TimeManager implements Runnable {
         
         DomainParticipant participant = publisher.get_participant();
         
-        if(null != cfHbTopic) {
-            participant.delete_contentfilteredtopic(cfHbTopic);
-            cfHbTopic = null;
-        }
+//        if(null != cfHbTopic) {
+//            participant.delete_contentfilteredtopic(cfHbTopic);
+//            cfHbTopic = null;
+//        }
         if(null != cfTsTopic) {
             participant.delete_contentfilteredtopic(cfTsTopic);
             cfTsTopic = null;
@@ -349,6 +352,10 @@ public class TimeManager implements Runnable {
                                     SampleInfo sampleInfo = (SampleInfo) sa_seq.get(j);
                                     ice.HeartBeat sampleHeartbeat = (HeartBeat) hb_seq.get(j);
 
+                                    if(uniqueDeviceIdentifier.equals(sampleHeartbeat.unique_device_identifier)) {
+                                        continue;
+                                    }
+                                    
                                     ice.HeartBeat heartbeat = heartbeats.get(sampleInfo.instance_handle);
                                     if(null == heartbeat) {
                                         heartbeat = new ice.HeartBeat();

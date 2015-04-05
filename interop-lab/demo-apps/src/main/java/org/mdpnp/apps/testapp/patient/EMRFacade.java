@@ -2,15 +2,18 @@ package org.mdpnp.apps.testapp.patient;
 
 import org.springframework.beans.factory.FactoryBean;
 
+import javafx.collections.ObservableList;
+
 import javax.sql.DataSource;
+
 import java.util.List;
 
 /**
  * @author mfeinberg
  */
 public interface EMRFacade {
-
-    List<PatientInfo> getPatients();
+    void refresh();
+    ObservableList<PatientInfo> getPatients();
     boolean createPatient(PatientInfo p);
 
     void deleteDevicePatientAssociation(DevicePatientAssociation assoc);

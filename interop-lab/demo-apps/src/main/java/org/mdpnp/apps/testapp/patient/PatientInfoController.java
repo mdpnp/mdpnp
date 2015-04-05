@@ -52,7 +52,6 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
     protected ObservableList<DevicePatientAssociation> associationModel = FXCollections.observableArrayList();
     protected ObservableList<Device> deviceListModel = FXCollections.observableArrayList();
-    protected ObservableList<PatientInfo> patientListModel = FXCollections.observableArrayList();
     protected ObservableList<PatientInfo.Gender> genderListModel = FXCollections.observableArrayList();
     {
         genderListModel.add(PatientInfo.Gender.male);
@@ -222,7 +221,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         deviceView.setItems(deviceListModel);
         newPatientGender.setItems(genderListModel);
         newPatientGender.setValue(PatientInfo.Gender.male);
-        patientView.setItems(patientListModel);
+        patientView.setItems(emr.getPatients());
 
         associationTableView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<DevicePatientAssociation>() {
             @Override
@@ -270,8 +269,6 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
                 }
             }
         });
-        List<PatientInfo> p =  emr.getPatients();
-        patientListModel.addAll(p);
 
         mdsConnectivity.addConnectivityListener(this);
     }
@@ -297,7 +294,6 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
     private boolean addPatient(PatientInfo pi) {
         if(emr.createPatient(pi)) {
-            patientView.getItems().add(pi);
             return true;
         }
         return false;

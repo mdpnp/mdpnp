@@ -36,6 +36,7 @@ import javafx.stage.WindowEvent;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.mdpnp.apps.testapp.device.DeviceView;
+import org.mdpnp.apps.testapp.patient.EMRFacade;
 import org.mdpnp.devices.BuildInfo;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -263,18 +264,18 @@ public class IceAppsContainer extends IceApplication {
         final Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
         final String udi = context.getBean("supervisorUdi", String.class);
 
-        final DomainParticipant participant = context.getBean("domainParticipant", DomainParticipant.class);
-
         final DeviceListModel nc = context.getBean("deviceListModel", DeviceListModel.class);
-        final EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+        final EMRFacade emr = context.getBean("emr", EMRFacade.class);
 
+        new Thread( () -> emr.refresh()).start();
+        
         // setIconImage(ImageIO.read(getClass().getResource("icon.png")));
         partitionChooserModel = new PartitionChooserModel(subscriber, publisher);
 
         FXMLLoader loader = new FXMLLoader(DemoPanel.class.getResource("DemoPanel.fxml"));
         panelRoot = loader.load();
         panelController = ((DemoPanel) loader.getController()).setModel(partitionChooserModel).setUdi(udi).setVersion(BuildInfo.getDescriptor())
-                .setModel(participant, eventLoop).set(context);
+                .setModel(emr.getPatients()).set(context);
         panelRoot.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 
         // discoveryPeers = new DiscoveryPeers(this);

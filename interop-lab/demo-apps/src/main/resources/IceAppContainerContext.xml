@@ -8,8 +8,21 @@
                            http://www.springframework.org/schema/util
                            http://www.springframework.org/schema/util/spring-util-4.1.xsd">
 
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="order"                    value="1"/>
+        <property name="ignoreResourceNotFound"   value="true"/>
+        <property name="ignoreUnresolvablePlaceholders" value="true"/>
+        <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
+        <property name="locations">
+            <list>
+                <value>classpath:/ice.properties</value>
+            </list>
+        </property>
+    </bean>    
+
+    <!-- ice.properties specified via import -->
     <import resource="classpath:DriverContext.xml"/>
-    
+        
     <bean id="refreshScheduler" class="java.util.concurrent.Executors"
           factory-method="newSingleThreadScheduledExecutor"
           destroy-method="shutdownNow">
@@ -63,5 +76,24 @@
             <util:constant static-field="ice.SampleArrayTopic.VALUE"/>
         </constructor-arg>
     </bean>
+    
+    <bean id="jdbcDB"
+          class="org.mdpnp.apps.testapp.patient.PatientApplicationFactory.EmbeddedDB"
+          init-method="init"
+          destroy-method="shutdown">
+        <property name="schemaDef" value="DbSchema.sql"/>
+        <property name="dataDef"   value="DataBootstrap.sql"/>
+    </bean>
+
+    <!--
+        Create a handle to EMR system. Passing fhir url will make it talk to a
+        real server; if not specified, will create a in-memory SQL-based
+        implementation.
+    -->
+    <bean id="emr"
+          class="org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory">
+        <property name="url"      value="${mdpnp.fhir.url}"/>
+        <property name="jdbcDB"   ref="jdbcDB"/>
+    </bean>        
 
 </beans>
