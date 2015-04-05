@@ -1,4 +1,4 @@
-package org.mdpnp.apps.testapp;
+package org.mdpnp.apps.fxbeans;
 
 import java.util.Date;
 
@@ -13,20 +13,7 @@ import javafx.beans.property.StringProperty;
 
 import com.rti.dds.subscription.SampleInfo;
 
-public class MyNumeric {
-    private ObjectProperty<Date> source_timestamp;
-    public Date getSource_timestamp() {
-        return source_timestampProperty().get();
-    }
-    public void setSource_timestamp(Date source_timestamp) {
-        source_timestampProperty().set(source_timestamp);
-    }
-    public ObjectProperty<Date> source_timestampProperty() {
-        if(null == source_timestamp) {
-            source_timestamp = new SimpleObjectProperty<>(this, "source_timestamp");
-        }
-        return source_timestamp;
-    }
+public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.Numeric> {
     
     private StringProperty unique_device_identifier;
     public String getUnique_device_identifier() {
@@ -126,23 +113,12 @@ public class MyNumeric {
         return device_time;
     }
     
-    private final String key;
-    
-    public final String key() {
-        return this.key;
+    public NumericFx() {
     }
-    
-    public static final String key(ice.Numeric v) {
-        return (v.unique_device_identifier+v.metric_id+v.vendor_metric_id+v.instance_id+v.unit_id).intern();
-    }
-    
-    public MyNumeric(ice.Numeric v, SampleInfo s) {
-        key = key(v);
-        update(v, s);
-    }
-    
+        
+    @Override
     public void update(ice.Numeric v, SampleInfo s) {
-        setSource_timestamp(new Date(s.source_timestamp.sec * 1000L + s.source_timestamp.nanosec / 1000000L));
+        super.update(v, s);
         setUnique_device_identifier(v.unique_device_identifier);
         setMetric_id(v.metric_id);
         setVendor_metric_id(v.vendor_metric_id);
@@ -154,13 +130,13 @@ public class MyNumeric {
     
     @Override
     public int hashCode() {
-        return key.hashCode();
+        return getHandle().hashCode();
     }
     
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof MyNumeric) {
-            return key.equals(((MyNumeric)obj).key);
+        if(obj instanceof NumericFx) {
+            return getHandle().equals(((NumericFx)obj).getHandle());
         } else {
             return false;
         }

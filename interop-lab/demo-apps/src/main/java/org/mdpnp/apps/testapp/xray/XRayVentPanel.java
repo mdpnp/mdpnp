@@ -22,8 +22,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -42,18 +40,12 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.util.Callback;
-import javafx.util.Duration;
 
+import org.mdpnp.apps.fxbeans.NumericFx;
+import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.MyNumeric;
-import org.mdpnp.apps.testapp.MyNumericItems;
-import org.mdpnp.apps.testapp.MyNumericListCell;
-import org.mdpnp.apps.testapp.MySampleArray;
-import org.mdpnp.apps.testapp.MySampleArrayListCell;
+import org.mdpnp.apps.testapp.NumericFxListCell;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
-import org.mdpnp.guis.waveform.WaveformCanvas;
-import org.mdpnp.guis.waveform.WaveformRenderer;
-import org.mdpnp.guis.waveform.javafx.JavaFXWaveformCanvas;
 import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
@@ -83,7 +75,7 @@ public class XRayVentPanel {
 
     @FXML protected JavaFXWaveformPane waveformPanel;
 
-    @FXML protected ListView<MyNumeric> deviceList;
+    @FXML protected ListView<NumericFx> deviceList;
 
     public enum Strategy {
         Manual, Automatic
@@ -100,8 +92,9 @@ public class XRayVentPanel {
     @FXML protected ImageView camImage;
 
     private static final Logger log = LoggerFactory.getLogger(XRayVentPanel.class);
-
-    private NumericInstanceModel startOfBreathModel, deviceNumericModel;
+    
+    private final NumericFxList startOfBreathModel;
+    private NumericInstanceModel deviceNumericModel;
     private SampleArrayInstanceModel sampleArrayModel;
     private SampleArrayWaveformSource source;
 
@@ -197,20 +190,20 @@ public class XRayVentPanel {
         cameraModel = new CameraComboBoxModel();
         cameraBox.setItems(cameraModel.getItems());
         
-        startOfBreathModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
+        
         sampleArrayModel = new SampleArrayInstanceModelImpl(ice.SampleArrayTopic.VALUE);
         deviceNumericModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
 
-        deviceList.setCellFactory(new Callback<ListView<MyNumeric>,ListCell<MyNumeric>>() {
+        deviceList.setCellFactory(new Callback<ListView<NumericFx>,ListCell<NumericFx>>() {
 
             @Override
-            public ListCell<MyNumeric> call(ListView<MyNumeric> param) {
-                return new MyNumericListCell(deviceListModel);
+            public ListCell<NumericFx> call(ListView<NumericFx> param) {
+                return new NumericFxListCell(deviceListModel);
             }
             
         });
         
-        deviceList.setItems(new MyNumericItems().setModel(startOfBreathModel).getItems());
+        deviceList.setItems(startOfBreathModel);
         
         cameraBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Webcam>() {
 
@@ -237,10 +230,10 @@ public class XRayVentPanel {
             }
             
         });
-        deviceList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<MyNumeric>() {
+        deviceList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<NumericFx>() {
 
             @Override
-            public void changed(ObservableValue<? extends MyNumeric> observable, MyNumeric oldValue, MyNumeric newValue) {
+            public void changed(ObservableValue<? extends NumericFx> observable, NumericFx oldValue, NumericFx newValue) {
                 if(newValue != null) {
                     changeSource(newValue.getUnique_device_identifier(), subscriber, eventLoop);
                 }
@@ -250,7 +243,7 @@ public class XRayVentPanel {
     }
 
     public XRayVentPanel() {
-
+        startOfBreathModel = new NumericFxList(ice.NumericTopic.VALUE);
     }
 
     @FXML public void clickReset(ActionEvent evt) {
@@ -272,7 +265,7 @@ public class XRayVentPanel {
             }
         }, 0L, TimeUnit.MILLISECONDS);
         
-        startOfBreathModel.stopReader();
+        startOfBreathModel.stop();
         sampleArrayModel.stopReader();
         deviceNumericModel.stopReader();
         
@@ -293,7 +286,7 @@ public class XRayVentPanel {
         StringSeq params = new StringSeq();
         params.add("'" + ice.MDC_START_INSPIRATORY_CYCLE.VALUE + "'");
 //        params.add("'" + rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE + "'");
-        startOfBreathModel.startReader(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.numeric_data);
+        startOfBreathModel.start(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.numeric_data);
 
         executorNonCritical.schedule(new Runnable() {
             public void run() {

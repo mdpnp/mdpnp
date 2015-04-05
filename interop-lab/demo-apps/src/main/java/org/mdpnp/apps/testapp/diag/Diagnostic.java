@@ -2,10 +2,10 @@ package org.mdpnp.apps.testapp.diag;
 
 import javafx.collections.ObservableList;
 
+import org.mdpnp.apps.fxbeans.IceDataList;
+import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.testapp.MyAlert;
 import org.mdpnp.apps.testapp.MyAlertItems;
-import org.mdpnp.apps.testapp.MyNumeric;
-import org.mdpnp.apps.testapp.MyNumericItems;
 import org.mdpnp.apps.testapp.MySampleArray;
 import org.mdpnp.apps.testapp.MySampleArrayItems;
 import org.mdpnp.rtiapi.data.AlertInstanceModel;
@@ -21,8 +21,7 @@ import com.rti.dds.subscription.Subscriber;
 public class Diagnostic {
     private final Subscriber subscriber;
     private final EventLoop eventLoop;
-    private final NumericInstanceModel numericModel;
-    private final MyNumericItems numericItems;
+    private final IceDataList<ice.Numeric, ice.NumericDataReader, NumericFx> numerics;
     private final AlertInstanceModel patientAlertModel, technicalAlertModel;
     private final MyAlertItems patientAlertItems, technicalAlertItems;
     private final SampleArrayInstanceModel sampleArrayModel;
@@ -31,8 +30,7 @@ public class Diagnostic {
     public Diagnostic(Subscriber subscriber, EventLoop eventLoop, NumericInstanceModel model) {
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
-        numericModel = model;
-        numericItems = new MyNumericItems().setModel(numericModel);
+        numerics = new IceDataList<>(ice.NumericTopic.VALUE, ice.Numeric.class, ice.NumericDataReader.class, ice.NumericTypeSupport.class, ice.NumericSeq.class, NumericFx.class);
         patientAlertModel = new AlertInstanceModelImpl(ice.PatientAlertTopic.VALUE);
         patientAlertItems = new MyAlertItems().setModel(patientAlertModel);
         technicalAlertModel = new AlertInstanceModelImpl(ice.TechnicalAlertTopic.VALUE);
@@ -41,8 +39,8 @@ public class Diagnostic {
         sampleArrayItems = new MySampleArrayItems().setModel(sampleArrayModel);
     }
     
-    public ObservableList<MyNumeric> getNumericModel() {
-        return numericItems.getItems();
+    public ObservableList<NumericFx> getNumericModel() {
+        return numerics;
     }
     
     public ObservableList<MyAlert> getPatientAlertModel() {
@@ -61,11 +59,13 @@ public class Diagnostic {
         patientAlertModel.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
         technicalAlertModel.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
         sampleArrayModel.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.waveform_data);
+        numerics.start(subscriber, eventLoop, null, null, QosProfiles.ice_library, QosProfiles.numeric_data);
     }
     
     public void stop() {
         patientAlertModel.stopReader();
         technicalAlertModel.stopReader();
         sampleArrayModel.stopReader();
+        numerics.stop();
     }
 }

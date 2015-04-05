@@ -1,20 +1,22 @@
 package org.mdpnp.apps.testapp;
 
+import org.mdpnp.apps.fxbeans.NumericFx;
+
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 
-public class MyNumericListCell extends ListCell<MyNumeric> {
+public class NumericFxListCell extends ListCell<NumericFx> {
     private final DeviceListModel deviceListModel;
     
-    public MyNumericListCell(final DeviceListModel deviceListModel) {
+    public NumericFxListCell(final DeviceListModel deviceListModel) {
         this.deviceListModel = deviceListModel;
     }
     
     ImageView root;
     
     @Override
-    protected void updateItem(MyNumeric item, boolean empty) {
+    protected void updateItem(NumericFx item, boolean empty) {
         super.updateItem(item, empty);
         if(null == root) {
             root = new ImageView();
