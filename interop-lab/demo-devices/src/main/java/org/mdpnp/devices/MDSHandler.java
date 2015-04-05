@@ -1,21 +1,39 @@
 package org.mdpnp.devices;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.infrastructure.*;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.publication.PublisherQos;
-import com.rti.dds.subscription.*;
-import com.rti.dds.topic.Topic;
 import ice.MDSConnectivity;
 import ice.MDSConnectivityObjective;
+
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.EventObject;
+import java.util.List;
+
+import javax.swing.event.EventListenerList;
+
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.LogEntityStatus;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.event.EventListenerList;
-import java.util.*;
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.infrastructure.Condition;
+import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.WriteParams_t;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.publication.PublisherQos;
+import com.rti.dds.subscription.InstanceStateKind;
+import com.rti.dds.subscription.ReadCondition;
+import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleStateKind;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriberQos;
+import com.rti.dds.subscription.ViewStateKind;
+import com.rti.dds.topic.Topic;
 
 /**
  * @author mfeinberg
@@ -190,11 +208,11 @@ public class MDSHandler {
             msdoConnectivityTopic = (Topic) TopicUtil.lookupOrCreateTopic(participant,
                                                                           ice.MDSConnectivityTopic.VALUE,
                                                                           ice.MDSConnectivityTypeSupport.class);
-
+            
             mdsoReader =
                     (ice.MDSConnectivityDataReader) subscriber.create_datareader_with_profile(msdoConnectivityTopic,
                                                                                                        QosProfiles.ice_library,
-                                                                                                       QosProfiles.device_identity,
+                                                                                                       QosProfiles.state,
                                                                                                        null,
                                                                                                        StatusKind.STATUS_MASK_NONE);
 
@@ -327,7 +345,7 @@ public class MDSHandler {
             mdsoReader =
                     (ice.MDSConnectivityObjectiveDataReader) subscriber.create_datareader_with_profile(msdoConnectivityTopic,
                                                                                                        QosProfiles.ice_library,
-                                                                                                       QosProfiles.device_identity,
+                                                                                                       QosProfiles.state,
                                                                                                        null,
                                                                                                        StatusKind.STATUS_MASK_NONE);
 
@@ -340,8 +358,8 @@ public class MDSHandler {
                     (ice.MDSConnectivityObjectiveDataWriter) publisher.create_datawriter_with_profile(msdoConnectivityTopic,
                                                                                                       QosProfiles.ice_library,
                                                                                                       QosProfiles.state,
-                                                                                                      null,
-                                                                                                      StatusKind.STATUS_MASK_NONE);
+                                                                                                      new LogEntityStatus(log, "MDSConnectivity"),
+                                                                                                      StatusKind.STATUS_MASK_ALL);
 
         }
 
