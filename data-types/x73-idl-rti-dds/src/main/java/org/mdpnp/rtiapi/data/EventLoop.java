@@ -252,12 +252,16 @@ public class EventLoop {
     }
     
     public void doNow(Runnable r) {
-        NestedRunnable nr = new NestedRunnable(r);
-        synchronized (queuedRunnables) {
-            queuedRunnables.add(nr);
-            runnable.set_trigger_value(true);
+        if(isCurrentServiceThread()) {
+            r.run();
+        } else {
+            NestedRunnable nr = new NestedRunnable(r);
+            synchronized (queuedRunnables) {
+                queuedRunnables.add(nr);
+                runnable.set_trigger_value(true);
+            }
+            nr.waitTillDone();
         }
-        nr.waitTillDone();
     }
 
     private static class NestedRunnable implements Runnable {
