@@ -267,8 +267,6 @@ public class IceAppsContainer extends IceApplication {
         final DeviceListModel nc = context.getBean("deviceListModel", DeviceListModel.class);
         final EMRFacade emr = context.getBean("emr", EMRFacade.class);
 
-        new Thread( () -> emr.refresh()).start();
-        
         // setIconImage(ImageIO.read(getClass().getResource("icon.png")));
         partitionChooserModel = new PartitionChooserModel(subscriber, publisher);
 

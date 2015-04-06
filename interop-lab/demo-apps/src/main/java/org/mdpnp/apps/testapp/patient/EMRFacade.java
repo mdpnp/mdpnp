@@ -63,6 +63,8 @@ public interface EMRFacade {
                     ((FhirEMRImpl)instance).setFhirContext(fhirContext);
                 }
             }
+            new Thread( () -> instance.refresh()).start();
+
             return instance;
         }
 
