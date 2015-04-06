@@ -39,6 +39,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.ModifiableObservableListBase;
 import javafx.util.Callback;
 
+import org.mdpnp.apps.fxbeans.ElementObserver;
 import org.mdpnp.devices.AbstractDevice.InstanceHolder;
 
 class VitalImpl extends ModifiableObservableListBase<Value> implements Vital { 

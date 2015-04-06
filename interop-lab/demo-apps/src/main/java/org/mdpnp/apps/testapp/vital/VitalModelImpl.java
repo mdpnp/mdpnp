@@ -39,6 +39,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ModifiableObservableListBase;
 import javafx.util.Callback;
 
+import org.mdpnp.apps.fxbeans.ElementObserver;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;

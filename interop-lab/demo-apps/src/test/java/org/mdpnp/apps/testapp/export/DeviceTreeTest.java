@@ -30,7 +30,8 @@ public class DeviceTreeTest {
 
         final DeviceListModel nc = (DeviceListModel)context.getBean("deviceListModel");
         final Subscriber subscriber = (Subscriber)context.getBean("subscriber");
-        final DataCollector dc = new DataCollector(subscriber);
+        // TODO fix this
+        final DataCollector dc = new DataCollector(subscriber, null);
 
         final DeviceTreeModel tm = new DeviceTreeModel();
         // TODO fix this

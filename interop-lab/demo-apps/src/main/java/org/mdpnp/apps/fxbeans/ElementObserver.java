@@ -1,4 +1,4 @@
-package org.mdpnp.apps.testapp.vital;
+package org.mdpnp.apps.fxbeans;
 
 import javafx.collections.ObservableListBase;
 
@@ -39,14 +39,14 @@ public final class ElementObserver<E> {
     private IdentityHashMap<E, ElementObserver.ElementsMapElement> elementsMap =
             new IdentityHashMap<E, ElementObserver.ElementsMapElement>();
 
-    ElementObserver(Callback<E, Observable[]> extractor, Callback<E, InvalidationListener> listenerGenerator, ObservableListBase<E> list) {
+    public ElementObserver(Callback<E, Observable[]> extractor, Callback<E, InvalidationListener> listenerGenerator, ObservableListBase<E> list) {
         this.extractor = extractor;
         this.listenerGenerator = listenerGenerator;
         this.list = list;
     }
 
 
-    void attachListener(final E e) {
+    public void attachListener(final E e) {
         if (elementsMap != null && e != null) {
             if (elementsMap.containsKey(e)) {
                 elementsMap.get(e).increment();
@@ -60,7 +60,7 @@ public final class ElementObserver<E> {
         }
     }
 
-    void detachListener(E e) {
+    public void detachListener(E e) {
         if (elementsMap != null && e != null) {
             ElementObserver.ElementsMapElement el = elementsMap.get(e);
             for (Observable o : extractor.call(e)) {

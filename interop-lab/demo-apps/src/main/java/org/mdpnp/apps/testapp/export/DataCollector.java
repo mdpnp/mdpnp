@@ -7,8 +7,12 @@ import java.util.EventObject;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import javafx.collections.ListChangeListener;
+
 import javax.swing.event.EventListenerList;
 
+import org.mdpnp.apps.fxbeans.NumericFx;
+import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
@@ -74,9 +78,37 @@ public class DataCollector {
     private DataHandler worker = null;
 
     private final Subscriber subscriber;
+    private final NumericFxList numericList;
     
-    public DataCollector(Subscriber subscriber) {
+    public void addOrUpdate(NumericFx fx) {
+        try {
+            if (log.isDebugEnabled())
+                log.debug(dateFormats.get().format(fx.getPresentation_time()) + " " + fx.getMetric_id() + "=" + fx.getValue());
+            Value v = toValue(fx);
+            DataSampleEvent ev = new DataSampleEvent(v);
+            fireDataSampleEvent(ev);
+        } catch (Exception e) {
+            log.error("firing data sample event", e);
+        }
+    }
+    
+    public DataCollector(Subscriber subscriber, NumericFxList numericList) {
         this.subscriber = subscriber;
+        this.numericList = numericList;
+        
+        this.numericList.addListener(new ListChangeListener<NumericFx>() {
+
+            @Override
+            public void onChanged(javafx.collections.ListChangeListener.Change<? extends NumericFx> c) {
+                while(c.next()) {
+                    if(c.wasAdded()) c.getAddedSubList().forEach((fx) -> addOrUpdate(fx));
+                    if(c.wasUpdated()) {
+                        c.getList().subList(c.getFrom(), c.getTo()).forEach((fx) -> addOrUpdate(fx));
+                    }
+                }
+            }
+            
+        });
         
         DomainParticipant participant = subscriber.get_participant();
         
@@ -311,6 +343,12 @@ public class DataCollector {
         return ms;
     }
 
+    static Value toValue(NumericFx fx) {
+        Value v = new Value(fx.getUnique_device_identifier(), fx.getMetric_id(), fx.getInstance_id());
+        v.updateFrom(fx.getPresentation_time().getTime(), fx.getValue());
+        return v;
+    }
+    
     static Value toValue(SampleInfo si, String dev, String metric, int instance_id, long tMs, double val)
     {
         Value v = new Value(dev, metric, instance_id);

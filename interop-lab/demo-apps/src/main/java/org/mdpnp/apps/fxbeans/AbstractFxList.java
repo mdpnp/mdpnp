@@ -7,8 +7,11 @@ import java.util.Iterator;
 import java.util.List;
 
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.collections.ModifiableObservableListBase;
 import javafx.collections.ObservableList;
+import javafx.util.Callback;
 
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.LogEntityStatus;
@@ -49,6 +52,11 @@ public class AbstractFxList<D extends Copyable, R extends DataReader, F extends 
         return reader;
     }
     
+    protected Callback<F, Observable[]> buildExtractor() {
+        return null;
+    }
+    protected final Callback<F, Observable[]> extractor;
+    protected final ElementObserver<F> elementObserver;
     protected final Class<? extends F> fxClass;
     protected final Class<D> dataClass;
     protected final Class<R> readerClass;
@@ -69,7 +77,34 @@ public class AbstractFxList<D extends Copyable, R extends DataReader, F extends 
         this.typeSupportClass = typeSupportClass;
         this.sequenceClass = sequenceClass;
         this.fxClass = fxClass;
-
+        this.extractor = buildExtractor();
+        if(null != this.extractor) {
+        
+            this.elementObserver = new ElementObserver<F>(extractor, new Callback<F, InvalidationListener>() {
+    
+                @Override
+                public InvalidationListener call(final F e) {
+                    return new InvalidationListener() {
+    
+                        @Override
+                        public void invalidated(Observable observable) {
+                            beginChange();
+                            int i = 0;
+                            final int size = size();
+                            for (; i < size; ++i) {
+                                if (get(i) == e) {
+                                    nextUpdate(i);
+                                }
+                            }
+                            endChange();
+                        }
+                    };
+                }
+            }, this);
+        } else {
+            this.elementObserver = null;
+        }
+        
         this.logEntityStatus = new LogEntityStatus(log, topicName);
         try {
             this.dataSequence = sequenceClass.newInstance();
@@ -254,16 +289,24 @@ public class AbstractFxList<D extends Copyable, R extends DataReader, F extends 
 
     @Override
     protected void doAdd(int index, F element) {
+        if(null != elementObserver) elementObserver.attachListener(element);
         data.add(index, element);
     }
 
     @Override
     protected F doSet(int index, F element) {
-        return data.set(index, element);
+        F f = data.set(index, element);
+        if(null != elementObserver) {
+            elementObserver.detachListener(f);
+            elementObserver.attachListener(element);
+        }
+        return f;
     }
 
     @Override
     protected F doRemove(int index) {
-        return data.remove(index);
+        F f = data.remove(index);
+        if(null != elementObserver) elementObserver.detachListener(f);
+        return f;
     }
 }
