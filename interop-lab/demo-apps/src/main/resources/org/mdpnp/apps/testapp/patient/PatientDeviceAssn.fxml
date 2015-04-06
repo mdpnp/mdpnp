@@ -10,35 +10,10 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.GridPane?>
 
-<BorderPane prefHeight="480.0" prefWidth="800.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.mdpnp.apps.testapp.patient.PatientInfoController">
-  <bottom>
-    <GridPane>
-      <children>
-        <Label text="MRN" textAlignment="RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-        <TextField fx:id="newPatientMRN" prefColumnCount="8" text="auto-generated" Editable="false" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-        <Label text="First Name" textAlignment="RIGHT" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-        <TextField fx:id="newPatientFirstName" prefColumnCount="15" text="" GridPane.columnIndex="2" GridPane.rowIndex="2" />
-        <Label text="Last Name" textAlignment="RIGHT" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-        <TextField fx:id="newPatientLastName" prefColumnCount="15" text="" GridPane.columnIndex="3" GridPane.rowIndex="2" />
-        <Label text="Gender" textAlignment="RIGHT" GridPane.columnIndex="4" GridPane.rowIndex="1" />
-        <ComboBox fx:id="newPatientGender" GridPane.columnIndex="4" GridPane.rowIndex="2" />
-        <Label text="DOB" textAlignment="RIGHT" GridPane.columnIndex="5" GridPane.rowIndex="1" />
-        <DatePicker fx:id="newPatientDOB" GridPane.columnIndex="5" GridPane.rowIndex="2" />
-        <Button fx:id="createNewPatient" GridPane.columnIndex="6" GridPane.rowIndex="2">
-          <graphic>
-            <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" visible="true">
-              <image>
-                <Image url="@/org/mdpnp/apps/testapp/patient/add.png" />
-              </image>
-            </ImageView>
-          </graphic>
-          <tooltip>
-            <Tooltip text="Create new MRN entry" />
-          </tooltip>
-        </Button>
-      </children>
-    </GridPane>
-  </bottom>
+<BorderPane prefHeight="480.0" prefWidth="800.0"
+            xmlns:fx="http://javafx.com/fxml/1"
+            xmlns="http://javafx.com/javafx/2.2"
+            fx:controller="org.mdpnp.apps.testapp.patient.PatientInfoController">
   <center>
     <GridPane prefHeight="190.0" BorderPane.alignment="CENTER">
       <children>
@@ -54,7 +29,7 @@
                 <PropertyValueFactory property="firstName" />
               </cellValueFactory>
             </TableColumn>
-            <TableColumn maxWidth="150.0" minWidth="10.0" prefWidth="150.0" text="Last Name">
+            <TableColumn maxWidth="5000.0" minWidth="10.0" prefWidth="150.0" text="Last Name">
               <cellValueFactory>
                 <PropertyValueFactory property="lastName" />
               </cellValueFactory>
@@ -63,12 +38,12 @@
         </TableView>
         <TableView fx:id="deviceView" GridPane.columnIndex="3" GridPane.rowIndex="1" GridPane.rowSpan="3">
           <columns>
-            <TableColumn maxWidth="500.0" minWidth="40.0" prefWidth="150.0" text="Device">
+            <TableColumn maxWidth="5000.0" minWidth="40.0" prefWidth="150.0" text="Device">
               <cellValueFactory>
                 <PropertyValueFactory property="makeAndModel" />
               </cellValueFactory>
             </TableColumn>
-            <TableColumn maxWidth="500.0" minWidth="40.0" prefWidth="150.0" text="HostName">
+            <TableColumn maxWidth="5000.0" minWidth="40.0" prefWidth="150.0" text="HostName">
               <cellValueFactory>
                 <PropertyValueFactory property="hostname" />
               </cellValueFactory>
@@ -87,12 +62,16 @@
             <Tooltip text="Assign device to patient" />
           </tooltip>
         </Button>
+        <Button fx:id="createNewPatient"
+                GridPane.columnIndex="1"
+                GridPane.rowIndex="4" text="Create new MRN entry">
+          </Button>
       </children>
       <columnConstraints>
         <ColumnConstraints maxWidth="0.0" prefWidth="0.0" />
-        <ColumnConstraints maxWidth="451.0" prefWidth="428.0" />
-        <ColumnConstraints hgrow="SOMETIMES" maxWidth="125.0" minWidth="10.0" prefWidth="73.0" halignment="CENTER"/>
-        <ColumnConstraints maxWidth="299.0" prefWidth="299.0" />
+        <ColumnConstraints hgrow="ALWAYS" prefWidth="428.0" />
+        <ColumnConstraints hgrow="SOMETIMES" maxWidth="125.0" minWidth="10.0" prefWidth="75.0" halignment="CENTER"/>
+        <ColumnConstraints hgrow="ALWAYS" prefWidth="299.0" />
         <ColumnConstraints maxWidth="0.0" prefWidth="0.0" />
       </columnConstraints>
       <rowConstraints>

@@ -10,11 +10,18 @@ import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
@@ -22,9 +29,6 @@ import org.mdpnp.devices.MDSHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -41,11 +45,6 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     @FXML TableView<Device> deviceView;
 
     @FXML Button createNewPatient;
-    @FXML TextField newPatientMRN;
-    @FXML TextField newPatientFirstName;
-    @FXML TextField newPatientLastName;
-    @FXML ComboBox<PatientInfo.Gender> newPatientGender;
-    @FXML DatePicker newPatientDOB;
 
     @FXML TableView<DevicePatientAssociation> associationTableView;
     @FXML TableColumn<DevicePatientAssociation, String> associationTableActionColumn;
@@ -53,10 +52,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     protected ObservableList<DevicePatientAssociation> associationModel = FXCollections.observableArrayList();
     protected ObservableList<Device> deviceListModel = FXCollections.observableArrayList();
     protected ObservableList<PatientInfo> patientListModel = FXCollections.observableArrayList();
-    protected ObservableList<PatientInfo.Gender> genderListModel = FXCollections.observableArrayList();
-    {
-        genderListModel.addAll(PatientInfo.Gender.values());
-    }
+
     public DeviceListModel getDeviceListDataModel() {
         return deviceListDataModel;
     }
@@ -219,7 +215,6 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
         associationTableView.setItems(associationModel);
         deviceView.setItems(deviceListModel);
-        newPatientGender.setItems(genderListModel);
         patientView.setItems(patientListModel);
 
         associationTableView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<DevicePatientAssociation>() {
@@ -245,22 +240,34 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         createNewPatient.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                String mrn   = Long.toHexString(System.currentTimeMillis());
-                String lName = newPatientLastName.getText();
-                String fName = newPatientFirstName.getText();
-                LocalDate localDate = newPatientDOB.getValue();
-                PatientInfo.Gender g = newPatientGender.getValue();
 
-                if(!isEmpty(fName) && !isEmpty(lName) && !isEmpty(mrn) && localDate != null && g != null) {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("AddNewPatient.fxml"));
+                    Parent ui = loader.load();
+                    Stage dialog = new Stage(StageStyle.DECORATED);
+                    dialog.setTitle("Add New Patient");
+                    dialog.setAlwaysOnTop(true);
+                    Scene scene = new Scene(ui);
+                    dialog.setScene(scene);
+                    dialog.sizeToScene();
+                    dialog.initModality(Modality.WINDOW_MODAL);
+                    dialog.initOwner(
+                            ((Node)actionEvent.getSource()).getScene().getWindow() );
 
-                    Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                    // Set the person into the controller
+                    AddNewPatientController controller = loader.getController();
+                    controller.setDialogStage(dialog);
 
-                    PatientInfo pi = new PatientInfo(mrn.trim(),fName.trim(),lName.trim(),g,date);
+                    // Show the dialog and wait until the user closes it
+                    dialog.showAndWait();
 
-                    if(addPatient(pi)) {
-                        newPatientLastName.setText("");
-                        newPatientFirstName.setText("");
+                    PatientInfo pi = controller.getPatientInfo();
+                    if(pi != null) {
+                        addPatient(pi);
                     }
+                }
+                catch(Exception ex) {
+                    throw new RuntimeException(ex);
                 }
             }
         });
@@ -346,10 +353,6 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
                 }
             }
         }
-    }
-
-    private static boolean isEmpty(String s) {
-        return s == null || s.trim().length() == 0;
     }
 
     public PatientInfoController() {
