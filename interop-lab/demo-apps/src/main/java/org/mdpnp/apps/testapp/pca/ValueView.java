@@ -19,10 +19,8 @@ import java.util.Date;
 import javafx.application.Application;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.ReadOnlyLongProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -50,13 +48,12 @@ public class ValueView {
     }
     
     private static class TimestampProperty extends SimpleStringProperty implements InvalidationListener {
-        private final ReadOnlyLongProperty source;
-        private final Date date = new Date();
+        private final ReadOnlyObjectProperty<Date> source;
 
-        public TimestampProperty(ReadOnlyLongProperty readOnlyLongProperty) {
-            this.source = readOnlyLongProperty;
+        public TimestampProperty(ReadOnlyObjectProperty<Date> readOnlyDateProperty) {
+            this.source = readOnlyDateProperty;
             // TODO register listener weakly
-            readOnlyLongProperty.addListener(this);
+            readOnlyDateProperty.addListener(this);
         }
         @Override
         public void set(String newValue) {
@@ -64,8 +61,7 @@ public class ValueView {
         }
         @Override
         public String get() {
-            date.setTime(source.get());
-            return timeFormat.format(date);
+            return timeFormat.format(source.get());
         }
         @Override
         public void invalidated(Observable observable) {

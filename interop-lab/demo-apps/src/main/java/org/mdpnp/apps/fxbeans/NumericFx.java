@@ -113,6 +113,20 @@ public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.
         return device_time;
     }
     
+    private ObjectProperty<Date> presentation_time;
+    public final ObjectProperty<Date> presentation_timeProperty() {
+        if(null == presentation_time) {
+            presentation_time = new SimpleObjectProperty<>(this, "presentation_time");
+        }
+        return this.presentation_time;
+    }
+    public final java.util.Date getPresentation_time() {
+        return this.presentation_timeProperty().get();
+    }
+    public final void setPresentation_time(final java.util.Date presentation_time) {
+        this.presentation_timeProperty().set(presentation_time);
+    }
+    
     public NumericFx() {
     }
         
@@ -126,5 +140,7 @@ public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.
         setUnit_id(v.unit_id);
         setValue(v.value);
         setDevice_time(new Date(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L));
+        setPresentation_time(new Date(v.presentation_time.sec * 1000L + v.presentation_time.nanosec / 1000000L));
     }
+
 }

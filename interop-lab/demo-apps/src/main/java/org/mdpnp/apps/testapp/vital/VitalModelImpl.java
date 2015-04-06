@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.concurrent.CountDownLatch;
 
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -40,6 +39,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ModifiableObservableListBase;
 import javafx.util.Callback;
 
+import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -90,27 +90,15 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     private static final Logger log = LoggerFactory.getLogger(VitalModelImpl.class);
 
     @Override
-    public void removeNumeric(final String udi, final String metric_id, final int instance_id) {
-        if(Platform.isFxApplicationThread()) {
-            _removeNumeric(udi, metric_id, instance_id);
-        } else {
-            Platform.runLater(new Runnable() {
-                public void run() {
-                    _removeNumeric(udi, metric_id, instance_id);
-                }
-            });
-        }
-    }
-    
-    private void _removeNumeric(final String udi, final String metric_id, final int instance_id) {
+    public void removeNumeric(NumericFx numeric) {
+        final String metric_id = numeric.getMetric_id();
         for (Vital v : this) {
             if (v != null) {
                 for (String x : v.getMetricIds()) {
                     if (x.equals(metric_id)) {
                         ListIterator<Value> li = v.listIterator();
                         while (li.hasNext()) {
-                            Value va = li.next();
-                            if (va.getUniqueDeviceIdentifier().equals(udi) && va.getInstanceId() == instance_id) {
+                            if(numeric.equals(li.next().getNumeric())) {
                                 li.remove();
                             }
                         }
@@ -132,50 +120,35 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     }
 
     @Override
-    public void updateNumeric(final String unique_device_identifier, final String metric_id,
-            final int instance_id, final long timestamp, final float value) {
-        if(Platform.isFxApplicationThread()) {
-            _updateNumeric(unique_device_identifier, metric_id, instance_id, timestamp, value);
-        } else {
-            Platform.runLater(new Runnable() {
-                public void run() {
-                    _updateNumeric(unique_device_identifier, metric_id, instance_id, timestamp, value);
-                }
-            });
-        }
-    }
-    
-    private void _updateNumeric(final String unique_device_identifier, final String metric_id,
-            final int instance_id, final long timestamp, final float value) {
-        // TODO linear search? Query Condition should be vital specific
-        // or maybe these should be hashed because creating myriad
-        // QueryConditions is not advisable
+    public void addNumeric(final NumericFx numeric) {
+        final String metric_id = numeric.getMetric_id();
+        final String udi = numeric.getUnique_device_identifier();
+        final String unit_id = numeric.getUnit_id();
+        final int instance_id = numeric.getInstance_id();
         for (Vital v : this) {
             if (v != null) {
                 for (String x : v.getMetricIds()) {
                     // Change to this vital from a source
                     if (x.equals(metric_id)) {
-                        boolean updated = false;
                         for (Value va : v) {
                             if (va.getInstanceId() == instance_id && va.getMetricId().equals(metric_id)
-                                    && va.getUniqueDeviceIdentifier().equals(unique_device_identifier)) {
-                                va.updateFrom(timestamp, value);
-                                updated = true;
-                                break;
+                                    && va.getUniqueDeviceIdentifier().equals(udi)) {
+                                if(!numeric.equals(va.getNumeric())) {
+                                    log.warn("duplicate numeric added {} {}", va.getNumeric(), numeric);
+                                    
+                                }
+                                return;
                             }
                         }
-                        if (!updated) {
-                            final Value va = new ValueImpl(unique_device_identifier, metric_id, instance_id, v);
-                            va.updateFrom(timestamp, value);
-                            v.add(va);
-                            
-                        }
+                        final Value va = new ValueImpl(numeric, v);
+                        v.add(va);
                     }
                 }
             }
         }
-    }
 
+    }
+    
     @Override
     public Vital addVital(String label, String units, String[] names, Double low, Double high, Double criticalLow, Double criticalHigh, double minimum,
             double maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
@@ -374,6 +347,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     
     public VitalModelImpl(DeviceListModel deviceListModel) {
         this.deviceListModel = deviceListModel;
+
         this.elementObserver = new ElementObserver<Vital>(extractor, new Callback<Vital, InvalidationListener>() {
 
             @Override
@@ -467,5 +441,6 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     @Override
     public void onChanged(javafx.collections.ListChangeListener.Change<? extends Value> c) {
         updateState();
-    }    
+    }
+
 }

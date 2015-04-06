@@ -37,9 +37,9 @@ import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TypeSupport;
 import com.rti.dds.util.Sequence;
 
-public class IceDataList<D extends Copyable, R extends DataReader, F extends Updatable<D>> extends ModifiableObservableListBase<F> implements
+public class AbstractFxList<D extends Copyable, R extends DataReader, F extends Updatable<D>> extends ModifiableObservableListBase<F> implements
         ObservableList<F> {
-    private static final Logger log = LoggerFactory.getLogger(IceDataList.class);
+    private static final Logger log = LoggerFactory.getLogger(AbstractFxList.class);
 
     private final List<F> data = new ArrayList<>();
 
@@ -61,7 +61,7 @@ public class IceDataList<D extends Copyable, R extends DataReader, F extends Upd
 
     private final LogEntityStatus logEntityStatus;
 
-    public IceDataList(final String topicName, final Class<D> dataClass, final Class<R> readerClass,
+    public AbstractFxList(final String topicName, final Class<D> dataClass, final Class<R> readerClass,
             final Class<? extends TypeSupport> typeSupportClass, final Class<? extends Sequence> sequenceClass, final Class<F> fxClass) {
         this.topicName = topicName;
         this.dataClass = dataClass;

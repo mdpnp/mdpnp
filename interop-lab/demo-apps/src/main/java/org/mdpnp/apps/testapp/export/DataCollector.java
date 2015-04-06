@@ -67,9 +67,9 @@ public class DataCollector {
             l.handleDataSampleEvent(data);
         }
     }
-    private final Topic sampleArrayTopic, numericTopic;
+    private final Topic sampleArrayTopic; //, numericTopic;
     private final ice.SampleArrayDataReader saReader;
-    private final ice.NumericDataReader     nReader;
+//    private final ice.NumericDataReader     nReader;
 
     private DataHandler worker = null;
 
@@ -84,7 +84,7 @@ public class DataCollector {
         ice.SampleArrayTypeSupport.register_type(participant, ice.SampleArrayTypeSupport.get_type_name());
 
         // Inform the participant about the numeric data type we would like to use in our endpoints
-        ice.NumericTypeSupport.register_type(participant, ice.NumericTypeSupport.get_type_name());
+//        ice.NumericTypeSupport.register_type(participant, ice.NumericTypeSupport.get_type_name());
 
         // A topic the mechanism by which reader and writer endpoints are matched.
         sampleArrayTopic = TopicUtil.findOrCreateTopic(participant,
@@ -92,23 +92,23 @@ public class DataCollector {
                                                                           ice.SampleArrayTypeSupport.class);
 
         // A second topic if for Numeric data
-        numericTopic = TopicUtil.findOrCreateTopic(participant,
-                                                                      ice.NumericTopic.VALUE,
-                                                                      ice.NumericTypeSupport.class);
+//        numericTopic = TopicUtil.findOrCreateTopic(participant,
+//                                                                      ice.NumericTopic.VALUE,
+//                                                                      ice.NumericTypeSupport.class);
 
         // Create a reader endpoint for waveform data
         saReader =
                 (ice.SampleArrayDataReader) subscriber.create_datareader_with_profile(sampleArrayTopic,
                         QosProfiles.ice_library, QosProfiles.waveform_data, null, StatusKind.STATUS_MASK_NONE);
 
-        nReader =
-                (ice.NumericDataReader) subscriber.create_datareader_with_profile(numericTopic,
-                        QosProfiles.ice_library, QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
+//        nReader =
+//                (ice.NumericDataReader) subscriber.create_datareader_with_profile(numericTopic,
+//                        QosProfiles.ice_library, QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
 
         // Here we configure the status condition to trigger when new data becomes available to the reader
         saReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
 
-        nReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
+//        nReader.get_statuscondition().set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
 
     }
     
@@ -118,9 +118,9 @@ public class DataCollector {
         } catch (Exception e) {
             log.error("Unable to stop", e);
         }
-        subscriber.delete_datareader(nReader);
+//        subscriber.delete_datareader(nReader);
         subscriber.delete_datareader(saReader);
-        subscriber.get_participant().delete_topic(numericTopic);
+//        subscriber.get_participant().delete_topic(numericTopic);
         subscriber.get_participant().delete_topic(sampleArrayTopic);
     }
 
@@ -172,7 +172,7 @@ public class DataCollector {
             // And register that status condition with the waitset so we can monitor its triggering
             ws.attach_condition(saReader.get_statuscondition());
 
-            ws.attach_condition(nReader.get_statuscondition());
+//            ws.attach_condition(nReader.get_statuscondition());
 
             // will contain triggered conditions
             ConditionSeq cond_seq = new ConditionSeq();
@@ -183,7 +183,7 @@ public class DataCollector {
             // Will contain the SampleInfo information about those data
             SampleInfoSeq info_seq = new SampleInfoSeq();
 
-            ice.NumericSeq n_data_seq = new ice.NumericSeq();
+//            ice.NumericSeq n_data_seq = new ice.NumericSeq();
 
             // This loop will repeat until the process is terminated
             while (keepRunning && !Thread.currentThread().isInterrupted()) {
@@ -253,48 +253,48 @@ public class DataCollector {
                     }
                 }
 
-                if (cond_seq.contains(nReader.get_statuscondition())) {
-                    // read the actual status changes
-                    int status_changes = nReader.get_status_changes();
-                    // Ensure that DATA_AVAILABLE is one of the statuses that changed in the DataReader.
-                    // Since this is the only enabled status (see above) this is here mainly for completeness
-                    if (0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
-                        try {
-                            // Read samples from the reader
-                            nReader.read(n_data_seq, info_seq,
-                                    ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
-                                    SampleStateKind.NOT_READ_SAMPLE_STATE,
-                                    ViewStateKind.ANY_VIEW_STATE,
-                                    InstanceStateKind.ALIVE_INSTANCE_STATE);
-
-                            // Iterator over the samples
-                            for (int i = 0; i < info_seq.size(); i++) {
-                                SampleInfo si = (SampleInfo) info_seq.get(i);
-                                ice.Numeric data = (ice.Numeric) n_data_seq.get(i);
-
-                                // If the updated sample status contains fresh data that we can evaluate
-                                if (si.valid_data) {
-
-                                    ice.Time_t t = data.presentation_time;
-                                    long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
-
-                                    if (log.isDebugEnabled())
-                                        log.debug(dateFormats.get().format(new Date(baseTime)) + " " + data.metric_id + "=" + data.value);
-
-                                    Value v = toValue(si, data.unique_device_identifier, data.metric_id, data.instance_id, baseTime, data.value);
-                                    DataSampleEvent ev = new DataSampleEvent(v);
-                                    fireDataSampleEvent(ev);
-                                }
-                            }
-                        } catch (RETCODE_NO_DATA noData) {
-                            // No Data was available to the read call
-                        } finally {
-                            // the objects provided by "read" are owned by the reader and we must return them
-                            // so the reader can control their lifecycle
-                            nReader.return_loan(n_data_seq, info_seq);
-                        }
-                    }
-                }
+//                if (cond_seq.contains(nReader.get_statuscondition())) {
+//                    // read the actual status changes
+//                    int status_changes = nReader.get_status_changes();
+//                    // Ensure that DATA_AVAILABLE is one of the statuses that changed in the DataReader.
+//                    // Since this is the only enabled status (see above) this is here mainly for completeness
+//                    if (0 != (status_changes & StatusKind.DATA_AVAILABLE_STATUS)) {
+//                        try {
+//                            // Read samples from the reader
+//                            nReader.read(n_data_seq, info_seq,
+//                                    ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+//                                    SampleStateKind.NOT_READ_SAMPLE_STATE,
+//                                    ViewStateKind.ANY_VIEW_STATE,
+//                                    InstanceStateKind.ALIVE_INSTANCE_STATE);
+//
+//                            // Iterator over the samples
+//                            for (int i = 0; i < info_seq.size(); i++) {
+//                                SampleInfo si = (SampleInfo) info_seq.get(i);
+//                                ice.Numeric data = (ice.Numeric) n_data_seq.get(i);
+//
+//                                // If the updated sample status contains fresh data that we can evaluate
+//                                if (si.valid_data) {
+//
+//                                    ice.Time_t t = data.presentation_time;
+//                                    long baseTime = t.sec * 1000L + t.nanosec / 1000000L;
+//
+//                                    if (log.isDebugEnabled())
+//                                        log.debug(dateFormats.get().format(new Date(baseTime)) + " " + data.metric_id + "=" + data.value);
+//
+//                                    Value v = toValue(si, data.unique_device_identifier, data.metric_id, data.instance_id, baseTime, data.value);
+//                                    DataSampleEvent ev = new DataSampleEvent(v);
+//                                    fireDataSampleEvent(ev);
+//                                }
+//                            }
+//                        } catch (RETCODE_NO_DATA noData) {
+//                            // No Data was available to the read call
+//                        } finally {
+//                            // the objects provided by "read" are owned by the reader and we must return them
+//                            // so the reader can control their lifecycle
+//                            nReader.return_loan(n_data_seq, info_seq);
+//                        }
+//                    }
+//                }
             }
         }
     }

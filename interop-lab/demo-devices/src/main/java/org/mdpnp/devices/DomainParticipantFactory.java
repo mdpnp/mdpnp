@@ -59,12 +59,9 @@ public class DomainParticipantFactory implements FactoryBean<DomainParticipant>,
     @Override
     public void destroy() throws Exception {
         if(null != instance) {
-            instance.delete_contained_entities();
             com.rti.dds.domain.DomainParticipantFactory.get_instance().delete_participant(instance);
             instance = null;
         }
-        // TODO this factory can only be used once
-        com.rti.dds.domain.DomainParticipantFactory.finalize_instance();
     }
 
 }

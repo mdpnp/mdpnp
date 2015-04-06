@@ -38,6 +38,7 @@ import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.apps.testapp.patient.EMRFacade;
 import org.mdpnp.devices.BuildInfo;
+import org.mdpnp.devices.TimeManager;
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
@@ -259,7 +260,7 @@ public class IceAppsContainer extends IceApplication {
         stopOk = new CountDownLatch(1);
         context = getConfiguration().createContext("IceAppContainerContext.xml");
         context.registerShutdownHook();
-
+        final TimeManager timeManager = context.getBean("timeManager", TimeManager.class);
         final Publisher publisher = context.getBean("publisher", Publisher.class);
         final Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
         final String udi = context.getBean("supervisorUdi", String.class);
@@ -267,6 +268,8 @@ public class IceAppsContainer extends IceApplication {
         final DeviceListModel nc = context.getBean("deviceListModel", DeviceListModel.class);
         final EMRFacade emr = context.getBean("emr", EMRFacade.class);
 
+        timeManager.start();
+        
         // setIconImage(ImageIO.read(getClass().getResource("icon.png")));
         partitionChooserModel = new PartitionChooserModel(subscriber, publisher);
 

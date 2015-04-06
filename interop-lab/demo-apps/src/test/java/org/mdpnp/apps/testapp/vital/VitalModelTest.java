@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.vital;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 
 import javafx.application.Application;
@@ -14,11 +15,12 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.mdpnp.apps.testapp.SimpleDeviceListModel;
 import org.mdpnp.apps.testapp.pca.VitalSign;
 
-public class TestVitalModel {
+public class VitalModelTest {
 
     private VitalModel model;
     private Vital heartRateVital;
@@ -76,7 +78,15 @@ public class TestVitalModel {
         testOnFxThread(() -> {
             heartRateVital = VitalSign.HeartRate.addToModel(model);
             heartRateVital.setWarningLow(50.0);
-            model.updateNumeric("ABC", "METRIC", 0, System.currentTimeMillis(), 60f);
+            NumericFx numeric = new NumericFx();
+            numeric.setUnique_device_identifier("ABC");
+            numeric.setMetric_id("METRIC");
+            numeric.setInstance_id(0);
+            numeric.setPresentation_time(new Date());
+            numeric.setSource_timestamp(new Date());
+            numeric.setDevice_time(new Date());
+            numeric.setValue(60f);
+            model.addNumeric(numeric);
             assertEquals("", model.getWarningText());
         });
     }
@@ -86,7 +96,15 @@ public class TestVitalModel {
         testOnFxThread(() -> {
             heartRateVital = VitalSign.HeartRate.addToModel(model);
             heartRateVital.setWarningLow(50.0);
-            model.updateNumeric("ABC", rosetta.MDC_ECG_HEART_RATE.VALUE, 0, System.currentTimeMillis(), 40f);
+            NumericFx numeric = new NumericFx();
+            numeric.setUnique_device_identifier("ABC");
+            numeric.setMetric_id(rosetta.MDC_ECG_HEART_RATE.VALUE);
+            numeric.setInstance_id(0);
+            numeric.setPresentation_time(new Date());
+            numeric.setSource_timestamp(new Date());
+            numeric.setDevice_time(new Date());
+            numeric.setValue(40f);
+            model.addNumeric(numeric);
             assertNotEquals("", model.getWarningText());
         });
     }    

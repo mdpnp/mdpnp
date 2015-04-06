@@ -6,6 +6,7 @@ import java.net.URL;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
+import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.NumericInstanceModel;
@@ -30,7 +31,9 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
 
         final EventLoop eventLoop = (EventLoop)parentContext.getBean("eventLoop");
         
-        final Diagnostic diagnostic = new Diagnostic(subscriber, eventLoop);
+        final NumericFxList numericList = parentContext.getBean("numericList", NumericFxList.class);
+        
+        final Diagnostic diagnostic = new Diagnostic(subscriber, eventLoop, numericList);
 
         FXMLLoader loader = new FXMLLoader(DiagnosticApplication.class.getResource("DiagnosticApplication.fxml"));
         

@@ -77,7 +77,7 @@ public class Chart implements ListChangeListener<Value> {
     private static class ValueSeriesListener { 
         public XYChart.Series<Date, Number> s;
         public Value v;
-        public ChangeListener<Number> l;
+        public ChangeListener<Date> l;
     }
     
     @Override
@@ -107,15 +107,15 @@ public class Chart implements ListChangeListener<Value> {
                 vsl.s = new XYChart.Series<>(data);
                 vsl.s.nameProperty().bind(vsl.v.getDevice().makeAndModelProperty());
                 series.add(vsl.s);
-                vsl.v.timestampProperty().addListener(vsl.l = new ChangeListener<Number>() {
+                vsl.v.timestampProperty().addListener(vsl.l = new ChangeListener<Date>() {
 
                     @Override
-                    public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                    public void changed(ObservableValue<? extends Date> observable, Date oldValue, Date newValue) {
                         if(newValue != null) {
                             if(data.size()>MAX_POINTS) {
                                 data.remove(0);
                             }
-                            data.add(new XYChart.Data<>(new Date(newValue.longValue()), vsl.v.getValue()));
+                            data.add(new XYChart.Data<>(newValue, vsl.v.getValue()));
                         }
                     }
                     

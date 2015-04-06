@@ -1,35 +1,31 @@
 package org.mdpnp.apps.testapp.vital;
 
-import ice.Numeric;
-import ice.NumericDataReader;
+import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
 
-import org.mdpnp.rtiapi.data.ReaderInstanceModel;
-import org.mdpnp.rtiapi.data.NumericInstanceModelListener;
+import org.mdpnp.apps.fxbeans.NumericFx;
+import org.mdpnp.apps.fxbeans.NumericFxList;
 
-import com.rti.dds.subscription.SampleInfo;
+public class VitalModelNumericProvider implements ListChangeListener<NumericFx> {
 
-public class VitalModelNumericProvider implements NumericInstanceModelListener {
     private final VitalModel model;
-
-    public VitalModelNumericProvider(final VitalModel model) {
+    private final NumericFxList numericList;
+    
+    public VitalModelNumericProvider(final VitalModel model, final NumericFxList numericList) {
         this.model = model;
-    }
-    
-    @Override
-    public void instanceAlive(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+        this.numericList = numericList;
         
+        Platform.runLater( () -> {
+            numericList.addListener(VitalModelNumericProvider.this);
+            numericList.forEach((fx) -> model.addNumeric(fx));
+        });
     }
 
     @Override
-    public void instanceNotAlive(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder, SampleInfo sampleInfo) {
-        this.model.removeNumeric(keyHolder.unique_device_identifier, keyHolder.metric_id, keyHolder.instance_id);
+    public void onChanged(javafx.collections.ListChangeListener.Change<? extends NumericFx> c) {
+        while(c.next()) {
+            c.getRemoved().forEach( (fx) -> model.removeNumeric(fx));
+            c.getAddedSubList().forEach((fx) -> model.addNumeric(fx));
+        }
     }
-
-    @Override
-    public void instanceSample(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
-        this.model.updateNumeric(data.unique_device_identifier, data.metric_id, data.instance_id, 
-                sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L, data.value);
-    }
-    
-    
 }

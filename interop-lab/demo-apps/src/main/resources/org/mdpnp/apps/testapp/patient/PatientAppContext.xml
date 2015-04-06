@@ -5,22 +5,27 @@
                            http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
                            http://www.springframework.org/schema/util
                            http://www.springframework.org/schema/util/spring-util-4.1.xsd">
-
+ 
+    <bean id="wildcardDomainParticipant" class="org.mdpnp.devices.DomainParticipantFactory">
+        <constructor-arg ref="domainId" />
+    </bean>
+    
     <bean id="wildcardSubscriber" class="org.mdpnp.devices.SubscriberFactory">
-        <constructor-arg ref="domainParticipant"></constructor-arg>
+        <constructor-arg ref="wildcardDomainParticipant"></constructor-arg>
         <constructor-arg><value>*</value></constructor-arg>
     </bean>
     
     <bean id="wildcardPublisher" class="org.mdpnp.devices.PublisherFactory">
-        <constructor-arg ref="domainParticipant"></constructor-arg>
+        <constructor-arg ref="wildcardDomainParticipant"></constructor-arg>
         <constructor-arg><value>*</value></constructor-arg>
     </bean>
     
     <bean id="wildcardTimeManager" class="org.mdpnp.devices.TimeManagerFactory">
-      <constructor-arg ref="eventLoop" type="org.mdpnp.rtiapi.data.EventLoop"/>
-      <constructor-arg ref="wildcardPublisher" type="com.rti.dds.publication.Publisher"/>
-      <constructor-arg ref="wildcardSubscriber" type="com.rti.dds.subscription.Subscriber"/>
-      <constructor-arg ref="supervisorUdi" type="java.lang.String" />
+      <property name="executor" ref="refreshScheduler"/>
+      <property name="eventLoop" ref="eventLoop"/>
+      <property name="publisher" ref="wildcardPublisher"/>
+      <property name="subscriber" ref="wildcardSubscriber"/>
+      <property name="uniqueDeviceIdentifier" ref="supervisorUdi" />
       <!-- Omitting the type means this TimeManager will only passively monitor heartbeats -->
     </bean>
     
@@ -35,7 +40,7 @@
           init-method="start"
           destroy-method="shutdown">
         <constructor-arg ref="eventLoop"/>
-        <constructor-arg ref="domainParticipant" />
+        <constructor-arg ref="wildcardDomainParticipant" />
     </bean>
 
 

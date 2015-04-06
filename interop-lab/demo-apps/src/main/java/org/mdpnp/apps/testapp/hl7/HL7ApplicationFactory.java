@@ -6,6 +6,7 @@ import java.net.URL;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
+import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -33,7 +34,7 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
 
         final EventLoop eventLoop = parentContext.getBean("eventLoop", EventLoop.class);
 
-        final NumericInstanceModel numericInstanceModel = parentContext.getBean("numericInstanceModel", NumericInstanceModel.class);
+        final NumericFxList numericInstanceModel = parentContext.getBean("numericList", NumericFxList.class);
         
         final FhirContext fhirContext = parentContext.getBean("fhirContext", FhirContext.class);
         

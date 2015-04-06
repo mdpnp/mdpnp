@@ -113,38 +113,36 @@ public class DeviceListModelImpl
         return getByUniqueDeviceIdentifier(udi, create);
     }
     
-    protected void notADevice(ice.HeartBeat heartbeat, boolean alive) {
+    protected void notADevice(String unique_device_identifier, boolean alive) {
         
     }
     
     @Override
-    public void aliveHeartbeat(SampleInfo sampleInfo, HeartBeat heartbeat, final String host_name) {
-        if("Device".equals(heartbeat.type)) {
-            final String udi = heartbeat.unique_device_identifier;
+    public void aliveHeartbeat(final String unique_device_identifier, final String type, final String host_name) {
+        if("Device".equals(type)) {
             Platform.runLater(new Runnable() {
                 public void run() {
-                      getDevice(udi, true).setHostname(host_name);
+                      getDevice(unique_device_identifier, true).setHostname(host_name);
                 }
             });
       } else {
-          notADevice(heartbeat, true);
+          notADevice(unique_device_identifier, true);
       }
 
     }
     
     @Override
-    public void notAliveHeartbeat(SampleInfo sampleInfo, HeartBeat heartbeat) {
-        if("Device".equals(heartbeat.type)) {
-            log.debug(heartbeat.unique_device_identifier + " IS NO LONGER ALIVE");
-            String udi = heartbeat.unique_device_identifier;
+    public void notAliveHeartbeat(final String unique_device_identifier, final String type) {
+        if("Device".equals(type)) {
+            log.debug(unique_device_identifier + " IS NO LONGER ALIVE");
             Platform.runLater(new Runnable() {
                 public void run() {
-                    remove(getDevice(udi, false));
+                    remove(getDevice(unique_device_identifier, false));
                 }
             });
             
         } else {
-            notADevice(heartbeat, false);
+            notADevice(unique_device_identifier, false);
         }
 
     }

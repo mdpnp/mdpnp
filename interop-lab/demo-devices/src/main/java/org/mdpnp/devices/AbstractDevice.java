@@ -810,7 +810,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         registerForManagement();
         
         if(null == timeManager) {
-            timeManager = new TimeManager(publisher, subscriber, deviceIdentity.unique_device_identifier, "Device");
+            timeManager = new TimeManager(executor, eventLoop, publisher, subscriber, deviceIdentity.unique_device_identifier, "Device");
             timeManager.start();
         }
 

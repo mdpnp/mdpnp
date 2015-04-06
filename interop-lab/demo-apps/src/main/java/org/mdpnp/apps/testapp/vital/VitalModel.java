@@ -20,11 +20,11 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.collections.ObservableList;
 
+import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.Subscriber;
 
 public interface VitalModel extends ObservableList<Vital> {
     enum State {
@@ -87,7 +87,7 @@ public interface VitalModel extends ObservableList<Vital> {
     ReadOnlyStringProperty interlockTextProperty();
     String getInterlockText();
 
-    void updateNumeric(final String unique_device_identifier, final String metric_id, final int instance_id, final long timestamp, final float value);
+    void addNumeric(NumericFx numeric);
 
-    void removeNumeric(final String udi, final String metric_id, final int instance_id);
+    void removeNumeric(NumericFx numeric);
 }

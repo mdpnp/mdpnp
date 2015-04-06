@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 
+import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
@@ -36,6 +37,7 @@ import ca.uhn.fhir.model.dstu2.resource.Device;
 import ca.uhn.fhir.model.dstu2.resource.DeviceMetric;
 import ca.uhn.fhir.model.dstu2.resource.Observation;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
+import ca.uhn.fhir.model.dstu2.valueset.ObservationStatusEnum;
 import ca.uhn.fhir.model.primitive.DateTimeDt;
 import ca.uhn.fhir.model.primitive.IdDt;
 import ca.uhn.fhir.rest.api.MethodOutcome;
@@ -98,23 +100,24 @@ public class HL7Emitter implements MDSListener {
     private final ListenerList<LineEmitterListener> listeners = new ListenerList<LineEmitterListener>(LineEmitterListener.class);
     private final ListenerList<StartStopListener> ssListeners = new ListenerList<StartStopListener>(StartStopListener.class);
 
-    public HL7Emitter(final Subscriber subscriber, final EventLoop eventLoop, final NumericInstanceModel numericInstanceModel,
+    public HL7Emitter(final Subscriber subscriber, final EventLoop eventLoop, final NumericFxList numericList,
             final FhirContext fhirContext) {
         hl7Context = new DefaultHapiContext();
         this.fhirContext = fhirContext;
-        this.numericInstanceModel = numericInstanceModel;
+        this.numericList = numericList;
         this.mdsHandler = new MDSHandler(eventLoop, subscriber.get_participant());
         mdsHandler.addConnectivityListener(this);
         mdsHandler.start();
 
     }
 
-    private final NumericInstanceModel numericInstanceModel;
+    private final NumericFxList numericList;
     private Type type;
 
     public void start(final String host, final int port, final Type type) {
         this.type = type;
-        numericInstanceModel.iterateAndAddListener(numericListener);
+        // TODO this again
+//        numericInstanceModel.iterateAndAddListener(numericListener);
         
         log.debug("Started NumericInstanceModel");
         if (host != null && !host.isEmpty()) {
@@ -143,8 +146,8 @@ public class HL7Emitter implements MDSListener {
     }
 
     public void stop() {
-        
-        numericInstanceModel.removeListener(numericListener);
+        // TODO this again
+//        numericInstanceModel.removeListener(numericListener);
         ssListeners.fire(stopped);
         if (hl7Connection != null) {
             hl7Connection.close();
@@ -195,8 +198,8 @@ public class HL7Emitter implements MDSListener {
 
     }
 
-    public NumericInstanceModel getNumericInstanceModel() {
-        return numericInstanceModel;
+    public NumericFxList getNumericList() {
+        return numericList;
     }
 
     public void addLineEmitterListener(LineEmitterListener listener) {
@@ -334,6 +337,7 @@ public class HL7Emitter implements MDSListener {
         Date presentation = new Date(data.presentation_time.sec * 1000L + data.presentation_time.nanosec / 1000000L);
         obs.setApplies(new DateTimeDt(presentation, TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
         obs.setSubject(new ResourceReferenceDt(resourceId));
+        obs.setStatus(ObservationStatusEnum.PRELIMINARY);
 
         IGenericClient client = fhirClient;
         if (null != client) {

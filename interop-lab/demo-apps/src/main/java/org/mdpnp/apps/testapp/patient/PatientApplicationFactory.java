@@ -6,7 +6,9 @@ import javafx.scene.Parent;
 
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.mdpnp.apps.testapp.Device;
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
+import org.mdpnp.devices.TimeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -70,6 +72,8 @@ public class PatientApplicationFactory implements IceApplicationProvider {
 
             ui = ctx.getBean(Parent.class);
             controller =  ctx.getBean(PatientInfoController.class);
+            ctx.getBean("wildcardDeviceListModel", DeviceListModel.class);
+            ctx.getBean("wildcardTimeManager", TimeManager.class).start();
         }
 
         @Override

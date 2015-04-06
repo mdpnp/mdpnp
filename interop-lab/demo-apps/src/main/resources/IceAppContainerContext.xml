@@ -39,19 +39,23 @@
     </bean>
     
     <bean id="timeManager" class="org.mdpnp.devices.TimeManagerFactory" lazy-init="true">
-      <constructor-arg ref="eventLoop"/>
-      <constructor-arg ref="publisher" />
-      <constructor-arg ref="subscriber" />
-      <constructor-arg ref="supervisorUdi" />
-      <constructor-arg>
+      <property name="executor" ref="refreshScheduler"/>
+      <property name="eventLoop" ref="eventLoop"/>
+      <property name="publisher" ref="publisher" />
+      <property name="subscriber" ref="subscriber" />
+      <property name="uniqueDeviceIdentifier" ref="supervisorUdi" />
+      <property name="type">
         <value type="java.lang.String">Supervisor</value>
-      </constructor-arg>
+      </property>
     </bean>
     
-    <bean id="numericInstanceModel" class="org.mdpnp.apps.testapp.NumericInstanceModelFactory" lazy-init="true" destroy-method="stop">
-        <constructor-arg ref="eventLoop" />
-        <constructor-arg ref="subscriber" />
-    </bean>
+    <bean id="numericList" class="org.mdpnp.apps.fxbeans.NumericFxListFactory" lazy-init="false">
+        <property name="topicName"><util:constant static-field="ice.NumericTopic.VALUE"/></property>
+        <property name="subscriber" ref="subscriber"/>
+        <property name="eventLoop" ref="eventLoop"/>
+        <property name="qosLibrary"><value>ice_library</value></property>
+        <property name="qosProfile"><value>numeric_data</value></property>
+    </bean> 
     
     <bean id="deviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory" lazy-init="true">
         <constructor-arg ref="eventLoop" />
@@ -63,7 +67,7 @@
         <constructor-arg ref="deviceListModel" />
         <constructor-arg ref="publisher" />
         <constructor-arg ref="eventLoop" />
-        <constructor-arg ref="numericInstanceModel"/>
+        <constructor-arg ref="numericList"/>
     </bean>
     
     <bean id="fhirContext" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">

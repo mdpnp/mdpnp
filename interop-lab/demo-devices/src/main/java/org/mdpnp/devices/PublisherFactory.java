@@ -54,7 +54,6 @@ public class PublisherFactory implements FactoryBean<Publisher>, DisposableBean 
     @Override
     public void destroy() throws Exception {
         if(null != instance) {
-            instance.delete_contained_entities();
             participant.delete_publisher(instance);
         }
     }

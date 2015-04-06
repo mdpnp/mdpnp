@@ -1,5 +1,6 @@
 package org.mdpnp.apps.testapp.validate;
 
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -13,7 +14,7 @@ import javafx.scene.chart.XYChart.Data;
 
 import org.mdpnp.apps.testapp.vital.Value;
 
-public class ValueValidator implements ChangeListener<Number> {
+public class ValueValidator implements ChangeListener<Date> {
     private static class DataPoint {
         
         private long tm;
@@ -116,10 +117,10 @@ public class ValueValidator implements ChangeListener<Number> {
     }
 
     @Override
-    public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+    public void changed(ObservableValue<? extends Date> observable, Date oldValue, Date newValue) {
         int value = (int) this.value.getValue();
-        long tm = this.value.getTimestamp();
-        Integer displacedValue = recentValues.add(tm, value);
+        Date tm = this.value.getTimestamp();
+        Integer displacedValue = recentValues.add(tm.getTime(), value);
         if(null != displacedValue) {
             addToBins(displacedValue, -1);
         }                            

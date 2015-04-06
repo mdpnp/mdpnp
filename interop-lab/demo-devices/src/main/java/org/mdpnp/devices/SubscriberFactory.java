@@ -55,7 +55,6 @@ public class SubscriberFactory implements FactoryBean<Subscriber>, DisposableBea
     @Override
     public void destroy() throws Exception {
         if(null != instance) {
-            instance.delete_contained_entities();
             participant.delete_subscriber(instance);
         }
     }

@@ -20,10 +20,10 @@ public class Diagnostic {
     private final AlertFxList patientAlerts, technicalAlerts;
     private final SampleArrayFxList sampleArrays;
     
-    public Diagnostic(Subscriber subscriber, EventLoop eventLoop) {
+    public Diagnostic(Subscriber subscriber, EventLoop eventLoop, NumericFxList numerics) {
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
-        numerics = new NumericFxList(ice.NumericTopic.VALUE);
+        this.numerics = numerics;
         patientAlerts = new AlertFxList(ice.PatientAlertTopic.VALUE);
         technicalAlerts = new AlertFxList(ice.TechnicalAlertTopic.VALUE);
         sampleArrays = new SampleArrayFxList(ice.SampleArrayTopic.VALUE);
@@ -49,13 +49,11 @@ public class Diagnostic {
         patientAlerts.start(subscriber, eventLoop, null, null, QosProfiles.ice_library, QosProfiles.state);
         technicalAlerts.start(subscriber, eventLoop, null, null, QosProfiles.ice_library, QosProfiles.state);
         sampleArrays.start(subscriber, eventLoop, null, null, QosProfiles.ice_library, QosProfiles.waveform_data);
-        numerics.start(subscriber, eventLoop, null, null, QosProfiles.ice_library, QosProfiles.numeric_data);
     }
     
     public void stop() {
         patientAlerts.stop();
         technicalAlerts.stop();
         sampleArrays.stop();
-        numerics.stop();
     }
 }

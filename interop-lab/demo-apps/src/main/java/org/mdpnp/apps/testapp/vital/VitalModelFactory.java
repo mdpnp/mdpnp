@@ -2,10 +2,10 @@ package org.mdpnp.apps.testapp.vital;
 
 import javafx.application.Platform;
 
+import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.pca.VitalSign;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.NumericInstanceModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -24,7 +24,7 @@ public class VitalModelFactory implements FactoryBean<VitalModel>, DisposableBea
 
     private final DeviceListModel deviceListModel;
     private final EventLoop eventLoop;
-    private final NumericInstanceModel numericInstanceModel;
+    private final NumericFxList numericList;
     private final Publisher publisher;
     private VitalModelNumericProvider provider;
 
@@ -32,8 +32,7 @@ public class VitalModelFactory implements FactoryBean<VitalModel>, DisposableBea
     public VitalModel getObject() throws Exception {
         if(instance == null) {
             instance = new VitalModelImpl(deviceListModel);
-            provider = new VitalModelNumericProvider(instance);
-            numericInstanceModel.iterateAndAddListener(provider);
+            provider = new VitalModelNumericProvider(instance, numericList);
             
             instance.start(publisher, eventLoop);
             
@@ -56,18 +55,18 @@ public class VitalModelFactory implements FactoryBean<VitalModel>, DisposableBea
         return true;
     }
 
-    public VitalModelFactory(EventLoop eventLoop, Publisher publisher, DeviceListModel deviceListModel, NumericInstanceModel numericInstanceModel) {
+    public VitalModelFactory(EventLoop eventLoop, Publisher publisher, DeviceListModel deviceListModel, NumericFxList numericList) {
         this.eventLoop = eventLoop;
         this.publisher = publisher;
         this.deviceListModel = deviceListModel;
-        this.numericInstanceModel = numericInstanceModel;
+        this.numericList = numericList;
     }
 
     @Override
     public void destroy() throws Exception {
         if(instance != null) {
             log.info("Shutting down the model");
-            numericInstanceModel.removeListener(provider);
+            numericList.removeListener(provider);
             instance.stop();
             instance = null;
         }        
