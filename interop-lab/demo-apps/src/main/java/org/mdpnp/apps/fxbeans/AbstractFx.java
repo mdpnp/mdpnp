@@ -41,4 +41,17 @@ public abstract class AbstractFx<D extends Copyable> implements Updatable<D> {
         }
         return source_timestamp;
     }
+    public boolean equals(Object obj) {
+        if(obj instanceof AbstractFx) {
+            return handle.equals(((AbstractFx<?>)obj).handle);
+        } else {
+            return false;
+        }
+    }
+    
+    @Override
+    public int hashCode() {
+        return handle.hashCode();
+    }
+
 }

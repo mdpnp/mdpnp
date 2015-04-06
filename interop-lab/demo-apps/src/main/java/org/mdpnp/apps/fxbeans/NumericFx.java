@@ -127,21 +127,4 @@ public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.
         setValue(v.value);
         setDevice_time(new Date(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L));
     }
-    
-    @Override
-    public int hashCode() {
-        return getHandle().hashCode();
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-        if(obj instanceof NumericFx) {
-            return getHandle().equals(((NumericFx)obj).getHandle());
-        } else {
-            return false;
-        }
-    }
-    
-
-    
 }

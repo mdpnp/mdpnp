@@ -2,25 +2,28 @@ package org.mdpnp.apps.testapp;
 
 import java.io.IOException;
 
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.ImageView;
 
-public class MySampleArrayListCell extends ListCell<MySampleArray> {
+import org.mdpnp.apps.fxbeans.InfusionStatusFx;
+
+public class InfusionStatusFxListCell extends ListCell<InfusionStatusFx> {
     private final DeviceListModel deviceListModel;
     private DeviceController deviceController;
     
-    public MySampleArrayListCell(final DeviceListModel deviceListModel) {
+    public InfusionStatusFxListCell(final DeviceListModel deviceListModel) {
         this.deviceListModel = deviceListModel;
     }
     
     private Parent root;
     
     @Override
-    protected void updateItem(MySampleArray item, boolean empty) {
+    protected void updateItem(InfusionStatusFx item, boolean empty) {
         super.updateItem(item, empty);
+        
         if(null == root) {
             FXMLLoader loader = new FXMLLoader(DeviceController.class.getResource("Device.fxml"));
             try {
@@ -48,7 +51,10 @@ public class MySampleArrayListCell extends ListCell<MySampleArray> {
                 textProperty().bind(item.unique_device_identifierProperty());
             } else {
                 deviceController.bind(device);
-                textProperty().bind(device.makeAndModelProperty());
+                textProperty().bind(
+                        Bindings
+                            .concat("\nDrug: ")
+                            .concat(item.drug_nameProperty()));
             }
             setGraphic(root);
         }

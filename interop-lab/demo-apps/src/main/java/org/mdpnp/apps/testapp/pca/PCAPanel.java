@@ -39,7 +39,10 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.vital.VitalModel;
+import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
+
+import com.rti.dds.subscription.Subscriber;
 
 /**
  * @author Jeff Plourde
@@ -109,13 +112,21 @@ public class PCAPanel implements InvalidationListener {
 
     private VitalModel model;
 
-    public void setModel(VitalModel vitalModel, InfusionStatusInstanceModel pumpModel) {
+    public void start(Subscriber subscriber, EventLoop eventLoop) {
+        pcaConfigController.start(subscriber, eventLoop);
+    }
+    
+    public void stop() {
+        pcaConfigController.stop();
+    }
+    
+    public void setModel(VitalModel vitalModel) {
         if (this.model != null) {
             this.model.stateProperty().removeListener(this);
             this.model.isInfusionStoppedProperty().removeListener(this);
         }
         this.model = vitalModel;
-        pcaConfigController.setModel(vitalModel, pumpModel);
+        pcaConfigController.setModel(vitalModel);
         if(null != vitalModel) {
             model.stateProperty().addListener(this);
             model.isInfusionStoppedProperty().addListener(this);

@@ -1,35 +1,17 @@
 package org.mdpnp.apps.fxbeans;
 
-import java.util.Date;
-
-import com.rti.dds.infrastructure.InstanceHandle_t;
-import com.rti.dds.subscription.SampleInfo;
-
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.FloatProperty;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-public class InfusionStatusFx implements Updatable<ice.InfusionStatus> {
-    private ObjectProperty<Date> source_timestamp;
-    public Date getSource_timestamp() {
-        return source_timestampProperty().get();
-    }
-    public void setSource_timestamp(Date source_timestamp) {
-        source_timestampProperty().set(source_timestamp);
-    }
-    public ObjectProperty<Date> source_timestampProperty() {
-        if(null == source_timestamp) {
-            source_timestamp = new SimpleObjectProperty<>(this, "source_timestamp");
-        }
-        return source_timestamp;
-    }    
+import com.rti.dds.subscription.SampleInfo;
+
+public class InfusionStatusFx extends AbstractFx<ice.InfusionStatus> implements Updatable<ice.InfusionStatus> {
     
     private StringProperty unique_device_identifier;
     public StringProperty unique_device_identifierProperty() {
@@ -116,19 +98,13 @@ public class InfusionStatusFx implements Updatable<ice.InfusionStatus> {
         this.infusion_fraction_completeProperty().set(infusion_fraction_complete);
     }
     
-    private InstanceHandle_t key; 
-    public InfusionStatusFx(ice.InfusionStatus v, SampleInfo s) {
-        this.key = new InstanceHandle_t(s.instance_handle);
-        update(v, s);
+
+    public InfusionStatusFx() {
     }
     
     
-    private Date _source_timestamp = new Date();
-    
-    
     public void update(ice.InfusionStatus v, SampleInfo s) {
-        _source_timestamp.setTime(s.source_timestamp.sec * 1000L + s.source_timestamp.nanosec / 1000000L);
-        setSource_timestamp(_source_timestamp);
+        super.update(v, s);
         setUnique_device_identifier(v.unique_device_identifier);
         setInfusionActive(v.infusionActive);
         setDrug_name(v.drug_name);
@@ -138,23 +114,4 @@ public class InfusionStatusFx implements Updatable<ice.InfusionStatus> {
         setInfusion_duration_seconds(v.infusion_duration_seconds);
         setInfusion_fraction_complete(v.infusion_fraction_complete);
     }
-    
-    public InstanceHandle_t getHandle() {
-        return key;
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-        if(obj instanceof InfusionStatusFx) {
-            return key.equals(((InfusionStatusFx)obj).key);
-        } else {
-            return false;
-        }
-    }
-    
-    @Override
-    public int hashCode() {
-        return key.hashCode();
-    }
-    
 }

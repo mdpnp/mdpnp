@@ -33,13 +33,6 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
         final int        domainId  = (Integer)parentContext.getBean("domainId");
         final DeviceListModel deviceListModel = (DeviceListModel) parentContext.getBean("deviceListModel");
         
-        SampleArrayInstanceModel capnoModel =  (SampleArrayInstanceModel)  parentContext.getBean("capnoModel");
-        // TODO this should be externalized
-        StringSeq params = new StringSeq();
-        params.add("'"+rosetta.MDC_AWAY_CO2.VALUE+"'");
-        params.add("'"+rosetta.MDC_IMPED_TTHOR.VALUE+"'");
-        capnoModel.startReader(subscriber, eventLoop, "metric_id = %0 or metric_id = %1 ", params, QosProfiles.ice_library, QosProfiles.waveform_data);
-
         FXMLLoader loader = new FXMLLoader(RapidRespiratoryRate.class.getResource("RapidRespiratoryRate.fxml"));
         
         final Parent ui = loader.load();
@@ -47,6 +40,7 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
         final RapidRespiratoryRate controller = ((RapidRespiratoryRate)loader.getController());
 
         controller.set(domainId, eventLoop, subscriber, deviceListModel);
+        controller.start(subscriber, eventLoop);
 
         return new IceApplicationProvider.IceApp() {
 
@@ -62,13 +56,10 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
 
             @Override
             public void activate(ApplicationContext context) {
-                SampleArrayInstanceModel capnoModel =  (SampleArrayInstanceModel)  context.getBean("capnoModel");
-                controller.setModel(capnoModel);
             }
 
             @Override
             public void stop() {
-                controller.setModel(null);
             }
 
             @Override

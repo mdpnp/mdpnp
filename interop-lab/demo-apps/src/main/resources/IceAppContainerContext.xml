@@ -59,22 +59,11 @@
         <constructor-arg ref="timeManager" />
     </bean>    
 
-    <bean id="pumpModel" class="org.mdpnp.rtiapi.data.InfusionStatusInstanceModelFactory" lazy-init="true" destroy-method="stop">
-        <constructor-arg ref="subscriber" />
-        <constructor-arg ref="eventLoop" />
-    </bean>
-
     <bean id="vitalModel" class="org.mdpnp.apps.testapp.vital.VitalModelFactory" lazy-init="true">
         <constructor-arg ref="deviceListModel" />
         <constructor-arg ref="publisher" />
         <constructor-arg ref="eventLoop" />
         <constructor-arg ref="numericInstanceModel"/>
-    </bean>
-
-    <bean id="capnoModel" class="org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl" destroy-method="stopReader">
-        <constructor-arg>
-            <util:constant static-field="ice.SampleArrayTopic.VALUE"/>
-        </constructor-arg>
     </bean>
     
     <bean id="fhirContext" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">

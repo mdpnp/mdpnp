@@ -49,19 +49,7 @@ public class AlertFx extends AbstractFx<ice.Alert> implements Updatable<ice.Aler
         return text;
     }
     
-    private final String key;
-    
-    public final String key() {
-        return this.key;
-    }
-    
-    public static final String key(ice.Alert a) {
-        return (a.unique_device_identifier+a.identifier).intern();
-    }
-    
-    public AlertFx(ice.Alert a, SampleInfo s) {
-        key = key(a);
-        update(a, s);
+    public AlertFx() {
     }
 
     @Override
@@ -71,18 +59,5 @@ public class AlertFx extends AbstractFx<ice.Alert> implements Updatable<ice.Aler
         setIdentifier(a.identifier);
         setText(a.text);
     }
-    
-    @Override
-    public int hashCode() {
-        return key.hashCode();
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-        if(obj instanceof AlertFx) {
-            return key.equals(((AlertFx)obj).key);
-        } else {
-            return false;
-        }
-    }    
+
 }

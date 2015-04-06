@@ -34,10 +34,10 @@ import javafx.scene.control.Slider;
 import javafx.util.Callback;
 import javafx.util.Duration;
 
+import org.mdpnp.apps.fxbeans.SampleArrayFx;
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.MySampleArray;
-import org.mdpnp.apps.testapp.MySampleArrayItems;
-import org.mdpnp.apps.testapp.MySampleArrayListCell;
+import org.mdpnp.apps.testapp.SampleArrayFxListCell;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
@@ -48,8 +48,9 @@ import org.mdpnp.guis.waveform.WaveformSource.WaveformIterator;
 import org.mdpnp.guis.waveform.javafx.JavaFXWaveformCanvas;
 import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
+import org.mdpnp.rtiapi.data.QosProfiles;
 
+import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 
@@ -59,7 +60,7 @@ import com.rti.dds.subscription.SubscriberQos;
  */
 public class RapidRespiratoryRate implements Runnable {
 
-    @FXML protected ListView<MySampleArray> capnoSources;
+    @FXML protected ListView<SampleArrayFx> capnoSources;
     @FXML protected Slider thresholdSlider;
     @FXML protected CheckBox device;
     @FXML protected JavaFXWaveformPane wavePanel;
@@ -101,11 +102,11 @@ public class RapidRespiratoryRate implements Runnable {
 //        ((NumberAxis)wavePanel.getYAxis()).forceZeroInRangeProperty().set(false);
 //        ((NumberAxis)wavePanel.getYAxis()).autoRangingProperty().set(true);
 //        ((NumberAxis)wavePanel.getXAxis()).autoRangingProperty().set(true);
-        capnoSources.setCellFactory(new Callback<ListView<MySampleArray>,ListCell<MySampleArray>>() {
+        capnoSources.setCellFactory(new Callback<ListView<SampleArrayFx>,ListCell<SampleArrayFx>>() {
 
             @Override
-            public ListCell<MySampleArray> call(ListView<MySampleArray> param) {
-                return new MySampleArrayListCell(deviceListModel);
+            public ListCell<SampleArrayFx> call(ListView<SampleArrayFx> param) {
+                return new SampleArrayFxListCell(deviceListModel);
             }
             
         });
@@ -155,12 +156,12 @@ public class RapidRespiratoryRate implements Runnable {
             }
             
         });
-        capnoSources.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<MySampleArray>() {
+        capnoSources.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<SampleArrayFx>() {
 
             @Override
-            public void changed(ObservableValue<? extends MySampleArray> observable, MySampleArray oldValue, MySampleArray newValue) {
+            public void changed(ObservableValue<? extends SampleArrayFx> observable, SampleArrayFx oldValue, SampleArrayFx newValue) {
                 
-                SampleArrayInstanceModel model = RapidRespiratoryRate.this.model;
+                SampleArrayFxList model = RapidRespiratoryRate.this.model;
                 if(model != null && newValue != null) {
                     ice.SampleArray keyHolder = new ice.SampleArray();
                     model.getReader().get_key_value(keyHolder, newValue.getHandle());
@@ -178,6 +179,7 @@ public class RapidRespiratoryRate implements Runnable {
     }
 
     public RapidRespiratoryRate() {
+        model = new SampleArrayFxList(ice.SampleArrayTopic.VALUE);
 
 
 //
@@ -189,36 +191,21 @@ public class RapidRespiratoryRate implements Runnable {
             }
         }, 1000L, 200L, TimeUnit.MILLISECONDS);
     }
-    private SampleArrayInstanceModel model;
-//    private MySampleArrayData data;
+    private final SampleArrayFxList model;
     private SampleArrayWaveformSource source;
     private final WaveformRenderer renderer = new WaveformRenderer();
     private WaveformCanvas canvas;
     private Timeline waveformRender;
     
-    public void setModel(SampleArrayInstanceModel model) {
-        this.model = model;
-//        this.data = new MySampleArrayData(model, 100);
-        
-        String selectedUdi = null;
-        MySampleArray selected = capnoSources.getSelectionModel().getSelectedItem();
-        if (null != selected) {
-            selectedUdi = selected.getUnique_device_identifier();
-        }
-
-        MySampleArrayItems items = new MySampleArrayItems();
-        items.setModel(model);
-        capnoSources.setItems(items.getItems());
-        
-        
-        if (null != selectedUdi && model != null) {
-            for(MySampleArray sa : items.getItems()) {
-                if(selectedUdi.equals(sa.getUnique_device_identifier())) {
-                    capnoSources.getSelectionModel().select(sa);
-                }
-            }
-        }
+    public void start(Subscriber subscriber, EventLoop eventLoop) {
+        capnoSources.setItems(model);
+        // TODO this should be externalized
+        StringSeq params = new StringSeq();
+        params.add("'"+rosetta.MDC_AWAY_CO2.VALUE+"'");
+        params.add("'"+rosetta.MDC_IMPED_TTHOR.VALUE+"'");
+        model.start(subscriber, eventLoop, "metric_id = %0 or metric_id = %1 ", params, QosProfiles.ice_library, QosProfiles.waveform_data);
     }
+    
 
 
     private double rr;
@@ -304,6 +291,7 @@ public class RapidRespiratoryRate implements Runnable {
         }
     };
     public void stop() {
+        model.stop();
         waveformRender.stop();
         executor.shutdownNow();
     }

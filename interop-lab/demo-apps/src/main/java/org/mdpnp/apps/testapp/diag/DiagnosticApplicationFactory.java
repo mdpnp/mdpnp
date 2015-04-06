@@ -30,9 +30,7 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
 
         final EventLoop eventLoop = (EventLoop)parentContext.getBean("eventLoop");
         
-        final NumericInstanceModel numericInstanceModel = (NumericInstanceModel) parentContext.getBean("numericInstanceModel");
-
-        final Diagnostic diagnostic = new Diagnostic(subscriber, eventLoop, numericInstanceModel);
+        final Diagnostic diagnostic = new Diagnostic(subscriber, eventLoop);
 
         FXMLLoader loader = new FXMLLoader(DiagnosticApplication.class.getResource("DiagnosticApplication.fxml"));
         

@@ -29,17 +29,13 @@ public class AlarmApplicationFactory implements IceApplicationProvider {
 
         final EventLoop eventLoop = (EventLoop) parentContext.getBean("eventLoop");
 
-        final AlarmHistoryModel model = new AlarmHistoryModel(ice.PatientAlertTopic.VALUE, ice.TechnicalAlertTopic.VALUE);
-
         FXMLLoader loader = new FXMLLoader(AlarmApplication.class.getResource("AlarmApplication.fxml"));
 
         final Parent ui = loader.load();
 
         final AlarmApplication controller = ((AlarmApplication) loader.getController());
 
-        controller.setModel(model.getContents());
-
-        model.start(subscriber, eventLoop);
+        controller.start(eventLoop, subscriber);
 
         return new IceApplicationProvider.IceApp() {
 
@@ -63,7 +59,6 @@ public class AlarmApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void destroy() throws Exception {
-                model.stop();
                 controller.stop();
             }
         };

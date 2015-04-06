@@ -7,19 +7,13 @@
 <?import javafx.scene.layout.BorderPane?>
 
 <BorderPane prefHeight="-1" prefWidth="-1" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.alarm.AlarmApplication">
- <!-- TODO Add Nodes -->
- <center>
+ <left>
   <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
    <content>
-    <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
+    <AnchorPane id="Content" prefHeight="-1.0" prefWidth="-1.0">
      <children>
-      <TableView fx:id="table" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <TableView fx:id="patientTable" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
        <columns>
-        <TableColumn prefWidth="75.0" text="Type">
-         <cellValueFactory>
-          <PropertyValueFactory property="type" />
-         </cellValueFactory>
-        </TableColumn>
         <TableColumn prefWidth="75.0" text="UDI">
          <cellValueFactory>
           <PropertyValueFactory property="unique_device_identifier" />
@@ -46,7 +40,41 @@
     </AnchorPane>
    </content>
   </ScrollPane>
- </center>
+ </left>
+  <right>
+  <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
+   <content>
+    <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0">
+     <children>
+      <TableView fx:id="technicalTable" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+       <columns>
+        <TableColumn prefWidth="75.0" text="UDI">
+         <cellValueFactory>
+          <PropertyValueFactory property="unique_device_identifier" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="200.0" text="Time">
+         <cellValueFactory>
+          <PropertyValueFactory property="source_timestamp" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn minWidth="0.0" prefWidth="200.0" text="Identifier">
+         <cellValueFactory>
+          <PropertyValueFactory property="identifier" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="200.0" text="Text">
+         <cellValueFactory>
+          <PropertyValueFactory property="text" />
+         </cellValueFactory>
+        </TableColumn>
+       </columns>
+      </TableView>
+     </children>
+    </AnchorPane>
+   </content>
+  </ScrollPane>
+ </right>
    <top>
       <Label text="Alarm History" BorderPane.alignment="CENTER" />
    </top>

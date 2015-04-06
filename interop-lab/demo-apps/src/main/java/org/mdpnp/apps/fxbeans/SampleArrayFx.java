@@ -1,4 +1,4 @@
-package org.mdpnp.apps.testapp;
+package org.mdpnp.apps.fxbeans;
 
 import java.util.Date;
 
@@ -14,23 +14,9 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 
-import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.SampleInfo;
 
-public class MySampleArray {
-    private ObjectProperty<Date> source_timestamp;
-    public Date getSource_timestamp() {
-        return source_timestampProperty().get();
-    }
-    public void setSource_timestamp(Date source_timestamp) {
-        source_timestampProperty().set(source_timestamp);
-    }
-    public ObjectProperty<Date> source_timestampProperty() {
-        if(null == source_timestamp) {
-            source_timestamp = new SimpleObjectProperty<>(this, "source_timestamp");
-        }
-        return source_timestamp;
-    }
+public class SampleArrayFx extends AbstractFx<ice.SampleArray> {
     
     private StringProperty unique_device_identifier;
     public String getUnique_device_identifier() {
@@ -141,23 +127,14 @@ public class MySampleArray {
         }
         return device_time;
     }
+
     
-    private final InstanceHandle_t handle;
-    
-    public InstanceHandle_t getHandle() {
-        return handle;
+    public SampleArrayFx() {
     }
     
-    public MySampleArray(ice.SampleArray v, SampleInfo s) {
-        this.handle = new InstanceHandle_t(s.instance_handle);
-        update(v, s);
-    }
-    
-    private Date _source_timestamp = new Date();
     private Date _device_time = new Date();
     public void update(ice.SampleArray v, SampleInfo s) {
-        _source_timestamp.setTime(s.source_timestamp.sec * 1000L + s.source_timestamp.nanosec / 1000000L);
-        setSource_timestamp(_source_timestamp);
+        super.update(v, s);
         setUnique_device_identifier(v.unique_device_identifier);
         setMetric_id(v.metric_id);
         setVendor_metric_id(v.vendor_metric_id);
@@ -168,19 +145,5 @@ public class MySampleArray {
 //        valuesProperty().addAll(v.values.userData);
         _device_time.setTime(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L);
         setDevice_time(_device_time);
-    }
-    
-    @Override
-    public int hashCode() {
-        return handle.hashCode();
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-        if(obj instanceof MySampleArray) {
-            return handle.equals(((MySampleArray)obj).handle);
-        } else {
-            return false;
-        }
     }
 }
