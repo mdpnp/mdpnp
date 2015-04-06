@@ -100,6 +100,10 @@ public class TimeManager implements Runnable {
                 uniqueDeviceIdentifier, type);
     }
     
+    public TimeManager(Publisher publisher, Subscriber subscriber, String uniqueDeviceIdentifier) {
+        this(publisher, subscriber, uniqueDeviceIdentifier, null);
+    }
+    
     public TimeManager(Publisher publisher, Subscriber subscriber, String uniqueDeviceIdentifier, String type) {
         if(!publisher.get_participant().equals(subscriber.get_participant())) {
             throw new RuntimeException("publisher and subscriber must be from the same participant");
