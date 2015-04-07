@@ -184,7 +184,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
                 // with only one boundary condition
             	ice.LimitType limit = limitType.equals(ice.LimitType.low_limit.toString())? ice.LimitType.low_limit:ice.LimitType.high_limit;
             	//XXX possible values of Alarm settings PB_LIMIT_TOTAL_RESPIRATORY_RATE & PB_LIMIT_INSPIRED_TIDAL_VOLUME: numeric or OFF
-            	Float f = value.equals("OFF")?new Float(-1):parseFloat(value, null);
+            	Float f = value.equals("OFF")?null:parseFloat(value, null);
             	alarmLimitInstances.put(
                 		metricName+ "_" + limitType,//metric_id
                         alarmLimitSample(alarmLimitInstances.get(metricName+ "_" + limitType), unitID.toString(),
