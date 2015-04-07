@@ -6,13 +6,11 @@ import java.net.URL;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
+import org.mdpnp.apps.fxbeans.AlertFxList;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
-import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
-
-import com.rti.dds.subscription.Subscriber;
 
 public class DiagnosticApplicationFactory implements IceApplicationProvider {
     private final IceApplicationProvider.AppType DiagnosticApplication =
@@ -26,16 +24,16 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
 
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
-
-        final Subscriber subscriber = (Subscriber)parentContext.getBean("subscriber");
-
-        final EventLoop eventLoop = (EventLoop)parentContext.getBean("eventLoop");
         
         final NumericFxList numericList = parentContext.getBean("numericList", NumericFxList.class);
         
         final SampleArrayFxList sampleArrayList = parentContext.getBean("sampleArrayList", SampleArrayFxList.class);
         
-        final Diagnostic diagnostic = new Diagnostic(subscriber, eventLoop, numericList, sampleArrayList);
+        final AlertFxList patientAlertList = parentContext.getBean("patientAlertList", AlertFxList.class);
+        
+        final AlertFxList technicalAlertList = parentContext.getBean("technicalAlertList", AlertFxList.class);
+        
+        final Diagnostic diagnostic = new Diagnostic(patientAlertList, technicalAlertList, numericList, sampleArrayList);
 
         FXMLLoader loader = new FXMLLoader(DiagnosticApplication.class.getResource("DiagnosticApplication.fxml"));
         
@@ -59,12 +57,10 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void activate(ApplicationContext context) {
-                diagnostic.start();
             }
 
             @Override
             public void stop() {
-                diagnostic.stop();
             }
 
             @Override

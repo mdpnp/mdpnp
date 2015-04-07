@@ -11,9 +11,9 @@ import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
 
-import ca.uhn.fhir.context.FhirContext;
-
 import com.rti.dds.subscription.Subscriber;
+
+import ca.uhn.fhir.context.FhirContext;
 
 public class HL7ApplicationFactory implements IceApplicationProvider {
     private final IceApplicationProvider.AppType HL7Application =

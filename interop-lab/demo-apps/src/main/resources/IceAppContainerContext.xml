@@ -48,6 +48,22 @@
         <value type="java.lang.String">Supervisor</value>
       </property>
     </bean>
+
+    <bean id="patientAlertList" class="org.mdpnp.apps.fxbeans.AlertFxListFactory" lazy-init="false">
+        <property name="topicName"><util:constant static-field="ice.PatientAlertTopic.VALUE"/></property>
+        <property name="subscriber" ref="subscriber"/>
+        <property name="eventLoop" ref="eventLoop"/>
+        <property name="qosLibrary"><value>ice_library</value></property>
+        <property name="qosProfile"><value>state</value></property>
+    </bean>
+    
+    <bean id="technicalAlertList" class="org.mdpnp.apps.fxbeans.AlertFxListFactory" lazy-init="false">
+        <property name="topicName"><util:constant static-field="ice.TechnicalAlertTopic.VALUE"/></property>
+        <property name="subscriber" ref="subscriber"/>
+        <property name="eventLoop" ref="eventLoop"/>
+        <property name="qosLibrary"><value>ice_library</value></property>
+        <property name="qosProfile"><value>state</value></property>
+    </bean>        
     
     <bean id="numericList" class="org.mdpnp.apps.fxbeans.NumericFxListFactory" lazy-init="false">
         <property name="topicName"><util:constant static-field="ice.NumericTopic.VALUE"/></property>

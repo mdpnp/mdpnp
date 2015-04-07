@@ -8,25 +8,17 @@ import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
-import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.QosProfiles;
-
-import com.rti.dds.subscription.Subscriber;
 
 public class Diagnostic {
-    private final Subscriber subscriber;
-    private final EventLoop eventLoop;
     private final NumericFxList numerics;
     private final AlertFxList patientAlerts, technicalAlerts;
     private final SampleArrayFxList sampleArrays;
     
-    public Diagnostic(Subscriber subscriber, EventLoop eventLoop, NumericFxList numerics, SampleArrayFxList sampleArrayList) {
-        this.subscriber = subscriber;
-        this.eventLoop = eventLoop;
+    public Diagnostic(AlertFxList patientAlerts, AlertFxList technicalAlerts, NumericFxList numerics, SampleArrayFxList sampleArrayList) {
         this.numerics = numerics;
         this.sampleArrays = sampleArrayList;
-        patientAlerts = new AlertFxList(ice.PatientAlertTopic.VALUE);
-        technicalAlerts = new AlertFxList(ice.TechnicalAlertTopic.VALUE);
+        this.patientAlerts = patientAlerts;
+        this.technicalAlerts = technicalAlerts;
     }
     
     public ObservableList<NumericFx> getNumericModel() {
@@ -45,13 +37,4 @@ public class Diagnostic {
         return sampleArrays;
     }
     
-    public void start() {
-        patientAlerts.start(subscriber, eventLoop, null, null, QosProfiles.ice_library, QosProfiles.state);
-        technicalAlerts.start(subscriber, eventLoop, null, null, QosProfiles.ice_library, QosProfiles.state);
-    }
-    
-    public void stop() {
-        patientAlerts.stop();
-        technicalAlerts.stop();
-    }
 }

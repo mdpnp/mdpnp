@@ -28,8 +28,6 @@ import javafx.scene.layout.Priority;
 import org.mdpnp.apps.fxbeans.InfusionStatusFx;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
-import org.mdpnp.rtiapi.data.ReaderInstanceModel;
-import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

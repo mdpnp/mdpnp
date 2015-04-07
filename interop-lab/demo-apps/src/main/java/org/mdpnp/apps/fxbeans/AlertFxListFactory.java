@@ -3,12 +3,8 @@ package org.mdpnp.apps.fxbeans;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 
-public class InfusionStatusFxListFactory extends AbstractFxListFactory implements FactoryBean<InfusionStatusFxList>, DisposableBean {
-
-    private InfusionStatusFxList instance;
-    
-    public InfusionStatusFxListFactory() {
-    }
+public class AlertFxListFactory extends AbstractFxListFactory implements FactoryBean<AlertFxList>, DisposableBean {
+    private AlertFxList instance;
     
     @Override
     public void destroy() throws Exception {
@@ -18,9 +14,9 @@ public class InfusionStatusFxListFactory extends AbstractFxListFactory implement
     }
 
     @Override
-    public InfusionStatusFxList getObject() throws Exception {
+    public AlertFxList getObject() throws Exception {
         if(null == instance) {
-            instance = new InfusionStatusFxList(topicName);
+            instance = new AlertFxList(topicName);
             instance.start(subscriber, eventLoop, expression, params, qosLibrary, qosProfile);
         }
         return instance;
@@ -28,12 +24,11 @@ public class InfusionStatusFxListFactory extends AbstractFxListFactory implement
 
     @Override
     public Class<?> getObjectType() {
-        return InfusionStatusFxList.class;
+        return AlertFxList.class;
     }
 
     @Override
     public boolean isSingleton() {
         return true;
     }
-
 }
