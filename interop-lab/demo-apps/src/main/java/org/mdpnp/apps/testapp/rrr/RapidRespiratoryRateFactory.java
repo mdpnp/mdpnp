@@ -8,11 +8,8 @@ import javafx.scene.Parent;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.QosProfiles;
-import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 import org.springframework.context.ApplicationContext;
 
-import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.Subscriber;
 
 /**

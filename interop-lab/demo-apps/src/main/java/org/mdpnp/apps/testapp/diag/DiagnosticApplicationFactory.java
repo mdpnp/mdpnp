@@ -9,7 +9,6 @@ import javafx.scene.Parent;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.NumericInstanceModel;
 import org.springframework.context.ApplicationContext;
 
 import com.rti.dds.subscription.Subscriber;

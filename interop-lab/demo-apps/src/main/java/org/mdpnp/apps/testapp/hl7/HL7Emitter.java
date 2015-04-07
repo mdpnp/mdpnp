@@ -30,14 +30,11 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
 import ca.uhn.fhir.model.dstu2.composite.QuantityDt;
 import ca.uhn.fhir.model.dstu2.composite.ResourceReferenceDt;
-import ca.uhn.fhir.model.dstu2.resource.Device;
-import ca.uhn.fhir.model.dstu2.resource.DeviceMetric;
 import ca.uhn.fhir.model.dstu2.resource.Observation;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.model.dstu2.valueset.ObservationStatusEnum;
 import ca.uhn.fhir.model.primitive.DateTimeDt;
 import ca.uhn.fhir.model.primitive.IdDt;
-import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.IGenericClient;
 import ca.uhn.hl7v2.DefaultHapiContext;
 import ca.uhn.hl7v2.HL7Exception;
@@ -109,24 +106,25 @@ public class HL7Emitter implements MDSListener {
 
     private final NumericFxList numericList;
     private Type type;
+    
+    private final ListChangeListener<NumericFx> listener = new ListChangeListener<NumericFx>() {
+
+        @Override
+        public void onChanged(javafx.collections.ListChangeListener.Change<? extends NumericFx> c) {
+            while(c.next()) {
+                if(c.wasAdded()) c.getAddedSubList().forEach((fx) -> numeric(fx));
+                if(c.wasUpdated()) {
+                    c.getList().subList(c.getFrom(), c.getTo()).forEach((fx) -> numeric(fx));
+                }
+            }
+        }
+        
+    };
 
     public void start(final String host, final int port, final Type type) {
         this.type = type;
-        this.numericList.addListener(new ListChangeListener<NumericFx>() {
-
-            @Override
-            public void onChanged(javafx.collections.ListChangeListener.Change<? extends NumericFx> c) {
-                while(c.next()) {
-                    if(c.wasAdded()) c.getAddedSubList().forEach((fx) -> numeric(fx));
-                    if(c.wasUpdated()) {
-                        c.getList().subList(c.getFrom(), c.getTo()).forEach((fx) -> numeric(fx));
-                    }
-                }
-            }
-            
-        });
+        this.numericList.addListener(listener);
         
-        log.debug("Started NumericInstanceModel");
         if (host != null && !host.isEmpty()) {
             if (Type.V26.equals(type)) {
                 try {
@@ -153,8 +151,7 @@ public class HL7Emitter implements MDSListener {
     }
 
     public void stop() {
-        // TODO this again
-//        numericInstanceModel.removeListener(numericListener);
+        numericList.removeListener(listener);
         ssListeners.fire(stopped);
         if (hl7Connection != null) {
             hl7Connection.close();
@@ -333,10 +330,10 @@ public class HL7Emitter implements MDSListener {
         
 
         // TODO Needs to exist and be referred to
-         Device device = new Device();
+//         Device device = new Device();
          
         // TODO Probably needs to exist and be referred to
-         DeviceMetric deviceMetric = new DeviceMetric();
+//         DeviceMetric deviceMetric = new DeviceMetric();
          
         Observation obs = new Observation();
         obs.setValue(new QuantityDt(data.getValue()).setUnits(data.getUnit_id()).setCode(data.getMetric_id()).setSystem("OpenICE"));
@@ -347,7 +344,7 @@ public class HL7Emitter implements MDSListener {
 
         IGenericClient client = fhirClient;
         if (null != client) {
-            MethodOutcome outcome = client.create().resource(obs).execute();
+            client.create().resource(obs).execute();
         }
 
         // String xmlEncoded =

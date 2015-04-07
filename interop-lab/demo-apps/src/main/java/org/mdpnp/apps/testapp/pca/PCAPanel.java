@@ -40,7 +40,6 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 
 import com.rti.dds.subscription.Subscriber;
 
