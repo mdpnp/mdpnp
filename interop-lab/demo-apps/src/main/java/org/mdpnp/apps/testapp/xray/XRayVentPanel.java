@@ -12,9 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.xray;
 
-import ice.SampleArray;
-import ice.SampleArrayDataReader;
-
+import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -52,16 +50,10 @@ import org.mdpnp.apps.testapp.NumericFxListCell;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.InstanceModelListener;
-import org.mdpnp.rtiapi.data.QosProfiles;
-import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
-import org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.sarxos.webcam.Webcam;
-import com.rti.dds.infrastructure.StringSeq;
-import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 
 /**
@@ -101,29 +93,48 @@ public class XRayVentPanel {
     private ObservableList<SampleArrayFx> deviceFlowModel;
     
     private SampleArrayWaveformSource source;
-
-    private ListChangeListener<NumericFx> numericListener = new ListChangeListener<NumericFx>() {
+    
+    protected void add(SampleArrayFx data) {
+        XRayVentPanel.this.source = new SampleArrayWaveformSource(sampleArrayList.getReader(), data.getHandle());
+        waveformPanel.setSource(source);
+        waveformPanel.start();
+    }
+    
+    protected void remove(SampleArrayFx data) {
+        XRayVentPanel.this.source = new SampleArrayWaveformSource(sampleArrayList.getReader(), data.getHandle());
+        waveformPanel.setSource(null);
+        waveformPanel.stop();
+    }
+    
+    private ListChangeListener<SampleArrayFx> sampleArrayListener = new ListChangeListener<SampleArrayFx>() {
         @Override
-        public void onChanged(javafx.collections.ListChangeListener.Change<? extends NumericFx> c) {
+        public void onChanged(javafx.collections.ListChangeListener.Change<? extends SampleArrayFx> c) {
             while(c.next()) {
-                if(c.wasAdded()) c.getAddedSubList().forEach((fx) -> numeric(fx));
-                if(c.wasUpdated()) {
-                    c.getList().subList(c.getFrom(), c.getTo()).forEach((fx) -> numeric(fx));
-                }
+                if(c.wasAdded()) c.getAddedSubList().forEach( (fx) -> add(fx));
+                if(c.wasRemoved()) c.getRemoved().forEach( (fx) -> remove(fx));
             }
-        };
+        }
     };
+    
+    private final ChangeListener<Number> inspiratoryTimeListener = new ChangeListener<Number>() {
+        @Override
+        public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+            inspiratoryTime = (long) (1000.0 * newValue.doubleValue());
+        }
+    };
+    
+    private final ChangeListener<Number> periodListener = new ChangeListener<Number>() {
+        @Override
+        public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+            period = (long) (60000.0 / newValue.doubleValue());
+            log.debug("FrequencyIPPV=" + newValue + " period=" + period);
+        }
+    };
+    
+    private final ChangeListener<Date> startOfBreathListener = new ChangeListener<Date>() {
 
-    protected void numeric(NumericFx data) {
-        long previousPeriod = period;
-        if (ice.MDC_TIME_PD_INSPIRATORY.VALUE.equals(data.getMetric_id())) {
-            inspiratoryTime = (long) (1000.0 * data.getValue());
-        } else if (ice.MDC_VENT_TIME_PD_PPV.VALUE.equals(data.getMetric_id())) {
-            period = (long) (60000.0 / data.getValue());
-            if (period != previousPeriod) {
-                log.debug("FrequencyIPPV=" + data.getValue() + " period=" + period);
-            }
-        } else if (ice.MDC_START_INSPIRATORY_CYCLE.VALUE.equals(data.getMetric_id())) {
+        @Override
+        public void changed(ObservableValue<? extends Date> observable, Date oldValue, Date newValue) {
             log.trace("START_INSPIRATORY_CYCLE");
             Strategy strategy = (Strategy) XRayVentPanel.this.strategy.getSelectedToggle().getUserData();
             TargetTime targetTime = (TargetTime) XRayVentPanel.this.targetTime.getSelectedToggle().getUserData();
@@ -136,25 +147,39 @@ public class XRayVentPanel {
                 break;
             }
         }
-    }
-    
-    protected void sampleArray(SampleArrayFx data) {
-        XRayVentPanel.this.source = new SampleArrayWaveformSource(sampleArrayList.getReader(), data.getHandle());
-        waveformPanel.setSource(source);
-        waveformPanel.start();
-    }
-    
-    private ListChangeListener<SampleArrayFx> sampleArrayListener = new ListChangeListener<SampleArrayFx>() {
-        @Override
-        public void onChanged(javafx.collections.ListChangeListener.Change<? extends SampleArrayFx> c) {
-            while(c.next()) {
-                if(c.wasAdded()) {
-                    c.getAddedSubList().forEach( (fx) -> sampleArray(fx));
-                }
-            }
-        }
+        
     };
-
+    
+    private void add(NumericFx fx) {
+        if(ice.MDC_TIME_PD_INSPIRATORY.VALUE.equals(fx.getMetric_id())) {
+            fx.valueProperty().addListener(inspiratoryTimeListener);
+        } else if(ice.MDC_VENT_TIME_PD_PPV.VALUE.equals(fx.getMetric_id())) {
+            fx.valueProperty().addListener(periodListener);
+        } else if(ice.MDC_START_INSPIRATORY_CYCLE.VALUE.equals(fx.getMetric_id())) {
+            fx.source_timestampProperty().addListener(startOfBreathListener);
+        }
+    }
+    
+    private void remove(NumericFx fx) {
+        if(ice.MDC_TIME_PD_INSPIRATORY.VALUE.equals(fx.getMetric_id())) {
+            fx.valueProperty().removeListener(inspiratoryTimeListener);
+        } else if(ice.MDC_VENT_TIME_PD_PPV.VALUE.equals(fx.getMetric_id())) {
+            fx.valueProperty().removeListener(periodListener);
+        } else if(ice.MDC_START_INSPIRATORY_CYCLE.VALUE.equals(fx.getMetric_id())) {
+            fx.source_timestampProperty().removeListener(startOfBreathListener);
+        }
+    }
+    
+    private ListChangeListener<NumericFx> numericListener = new ListChangeListener<NumericFx>() {
+        @Override
+        public void onChanged(javafx.collections.ListChangeListener.Change<? extends NumericFx> c) {
+            while(c.next()) {
+                if(c.wasAdded()) c.getAddedSubList().forEach((fx) -> add(fx));
+                if(c.wasRemoved()) c.getRemoved().forEach((fx) -> remove(fx));
+            }
+        };
+    };
+    
     public void changeSource(final String source) {
         this.source = null;
         
@@ -167,30 +192,23 @@ public class XRayVentPanel {
                 return source.equals(t.getUnique_device_identifier());
             }
         });
-        
+        deviceNumericModel.addListener(numericListener);
+        deviceNumericModel.forEach((fx)->add(fx));
+
         if(null != deviceFlowModel) {
             deviceFlowModel.removeListener(sampleArrayListener);
         }
 
         deviceFlowModel = new FilteredList<>(sampleArrayList, new Predicate<SampleArrayFx>() {
-
             @Override
             public boolean test(SampleArrayFx t) {
                 return rosetta.MDC_FLOW_AWAY.VALUE.equals(t.getMetric_id()) && source.equals(t.getUnique_device_identifier());
             }
-            
         });
 
         
-        
-        
-        deviceNumericModel.addListener(numericListener);
-        // Initial state
-        deviceNumericModel.forEach( (fx) -> numeric(fx));
-        
         deviceFlowModel.addListener(sampleArrayListener);
-        
-        deviceFlowModel.forEach( (fx) -> sampleArray(fx));
+        deviceFlowModel.forEach( (fx) -> add(fx));
         
 
         log.trace("new source is " + source);
