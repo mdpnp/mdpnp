@@ -21,7 +21,22 @@ public abstract class PB840 {
         CMH2O_PER_L,
         ML_PER_CMH2O,
         JOULES_PER_LITER,
-        UNKNOWN,
+        UNKNOWN;
+        
+        
+        //XXX Can't override valueOf, so this is a workaround in case that we need to "parse"
+        // something worse type hasn't been checked
+        public static Units getValue(String value) {
+        	if(null== value || value.trim().equals(""))
+        		return UNKNOWN;
+        try{
+        	return valueOf(value);
+        }catch(IllegalArgumentException iae){
+        	return UNKNOWN; //TODO throw new IllegalArgumentException()
+        }catch(Exception e){
+        	return UNKNOWN; //TODO throw new Exception()
+        }
+      }
     }
     
     protected final BufferedReader in;

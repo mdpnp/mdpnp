@@ -276,7 +276,9 @@ public class PB840Parameters extends PB840 {
 		
 	     @Override
 	        void handle(List<String> fieldValues) {
-	            receiveAlarmLimit(name, units, fieldValues.get(value), limitType);
+	    	 if (value > -1)//inexistent limits are fields -1 in the PB840.fields
+	    		 receiveAlarmLimit(name, units, fieldValues.get(value), limitType);
+//	    		 receiveAlarmLimit(name, units, value < 0 ? null:fieldValues.get(value), limitType);
 //	                    lowFieldNumber < 0 ? null : fieldValues.get(lowFieldNumber), 
 //	                    highFieldNumber < 0 ? null : fieldValues.get(highFieldNumber));
 	        }
@@ -441,9 +443,8 @@ public class PB840Parameters extends PB840 {
                         } else if("N".equals(type)) {
                             currentFields.add(new Numeric(name, description, Units.valueOf(units), Integer.parseInt(field1)));
                         } else if("AS".equals(type)) {
-//                            currentFields.add(new AlarmSetting(name, description, Integer.parseInt(field1), Integer.parseInt(field2)));
-                        	currentFields.add(new AlarmLimit(name, description, Units.valueOf(units), Integer.parseInt(field1), "Lower_limit"));
-                        	currentFields.add(new AlarmLimit(name, description, Units.valueOf(units), Integer.parseInt(field2), "Upper_Limit"));
+                        	currentFields.add(new AlarmLimit(name, description, Units.getValue(units), Integer.parseInt(field1), "low_limit"));
+                        	currentFields.add(new AlarmLimit(name, description, Units.getValue(units), Integer.parseInt(field2), "high_limit"));
                         } else if("PA".equals(type)) {
                             currentFields.add(new PatientAlert(name, description, Integer.parseInt(field1)));
                         } else if("TA".equals(type)) {

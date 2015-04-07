@@ -325,7 +325,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     protected void alarmLimitSample(InstanceHolder<ice.AlarmLimit> holder, String unit_id, Float newValue) {
     	//XXX Should we avoid the comparison w/ the unitID for now?...
-        if(0 != Float.compare(newValue, holder.data.value)  ||  !unit_id.equals(holder.data.unit_identifier) ) {
+        if(0 != Float.compare(newValue, holder.data.value)  /*||  !unit_id.equals(holder.data.unit_identifier) */) {
             holder.data.value = newValue;
             holder.data.unit_identifier = unit_id;
             alarmLimitDataWriter.write(holder.data, holder.handle);
