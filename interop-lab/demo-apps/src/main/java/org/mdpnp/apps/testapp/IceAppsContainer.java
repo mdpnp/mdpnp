@@ -34,19 +34,20 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+import org.mdpnp.apps.device.DeviceDataMonitor;
+import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
+import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.apps.testapp.patient.EMRFacade;
 import org.mdpnp.devices.BuildInfo;
 import org.mdpnp.devices.TimeManager;
-import org.mdpnp.rtiapi.data.DeviceDataMonitor;
-import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 
-import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.sun.glass.ui.Screen;
@@ -174,9 +175,11 @@ public class IceAppsContainer extends IceApplication {
 
         public void start(ApplicationContext context, final Device device) throws IOException {
 
-            final EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
-            final Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
-
+            final NumericFxList numericList = context.getBean("numericList", NumericFxList.class);
+            final SampleArrayFxList sampleArrayList = context.getBean("sampleArrayList", SampleArrayFxList.class);
+            final InfusionStatusFxList infusionStatusList = context.getBean("infusionStatusList", InfusionStatusFxList.class);
+            final DeviceListModel deviceListModel = context.getBean("deviceListModel", DeviceListModel.class);
+            
             FXMLLoader loader = new FXMLLoader(DeviceView.class.getResource("DeviceView.fxml"));
             ui = loader.load();
             devicePanel = loader.getController();
@@ -185,9 +188,8 @@ public class IceAppsContainer extends IceApplication {
             if (null != deviceMonitor) {
                 deviceMonitor.stop();
             }
-            deviceMonitor = new DeviceDataMonitor(device.getUDI());
+            deviceMonitor = new DeviceDataMonitor(device.getUDI(), deviceListModel, numericList, sampleArrayList, infusionStatusList);
             devicePanel.set(deviceMonitor);
-            deviceMonitor.start(subscriber, eventLoop);
         }
 
         @Override

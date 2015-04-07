@@ -6,11 +6,10 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
 import org.mdpnp.apps.fxbeans.NumericFxList;
-import org.mdpnp.apps.testapp.DeviceListModelImpl;
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.springframework.context.ApplicationContext;
-
-import com.rti.dds.subscription.Subscriber;
 
 /**
  *
@@ -29,10 +28,10 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
-        final Subscriber subscriber = (Subscriber)parentContext.getBean("subscriber");
+        final SampleArrayFxList sampleArrayList = parentContext.getBean("sampleArrayList", SampleArrayFxList.class);
         final NumericFxList numericList = parentContext.getBean("numericList", NumericFxList.class);
-        final DeviceListModelImpl deviceListModel = (DeviceListModelImpl) parentContext.getBean("deviceListModel");
-        final DataCollector dataCollector = new DataCollector(subscriber, numericList);
+        final DeviceListModel deviceListModel = parentContext.getBean("deviceListModel", DeviceListModel.class);
+        final DataCollector dataCollector = new DataCollector(sampleArrayList, numericList);
         
         FXMLLoader loader = new FXMLLoader(DataCollectorApp.class.getResource("DataCollectorApp.fxml"));
         final Parent ui = loader.load();
@@ -55,16 +54,10 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void activate(ApplicationContext context) {
-                dataCollector.start();
             }
 
             @Override
             public void stop() {
-                try {
-                    dataCollector.stop();
-                } catch (Exception ex) {
-                    throw new IllegalStateException("Failed to stop data collector", ex);
-                }
             }
 
             @Override

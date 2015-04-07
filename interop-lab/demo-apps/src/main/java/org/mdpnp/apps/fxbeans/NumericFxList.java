@@ -17,6 +17,5 @@ public class NumericFxList extends AbstractFxList<ice.Numeric, ice.NumericDataRe
                 return new Observable[] { param.source_timestampProperty() };
             }
         };
-
     }
 }

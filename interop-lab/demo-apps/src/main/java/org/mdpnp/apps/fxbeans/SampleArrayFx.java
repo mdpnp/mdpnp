@@ -3,16 +3,13 @@ package org.mdpnp.apps.fxbeans;
 import java.util.Date;
 
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ListProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.collections.ObservableList;
 
 import com.rti.dds.subscription.SampleInfo;
 
@@ -127,14 +124,26 @@ public class SampleArrayFx extends AbstractFx<ice.SampleArray> {
         }
         return device_time;
     }
-
+    
+    private ObjectProperty<Date> presentation_time;
+    public ObjectProperty<Date> presentation_timeProperty() {
+        if(null == presentation_time) {
+            presentation_time = new SimpleObjectProperty<>(this, "presentation_time");
+        }
+        return presentation_time;
+    }
+    public java.util.Date getPresentation_time() {
+        return this.presentation_timeProperty().get();
+    }
+    public void setPresentation_time(final java.util.Date presentation_time) {
+        this.presentation_timeProperty().set(presentation_time);
+    }
     
     public SampleArrayFx() {
     }
     
-    private Date _device_time = new Date();
     public void update(ice.SampleArray v, SampleInfo s) {
-        super.update(v, s);
+        
         setUnique_device_identifier(v.unique_device_identifier);
         setMetric_id(v.metric_id);
         setVendor_metric_id(v.vendor_metric_id);
@@ -146,7 +155,9 @@ public class SampleArrayFx extends AbstractFx<ice.SampleArray> {
             values[i] = v.values.userData.getFloat(i);
         }
         valuesProperty().set(values);
-        _device_time.setTime(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L);
-        setDevice_time(_device_time);
+        setDevice_time(new Date(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L));
+        setPresentation_time(new Date(v.presentation_time.sec * 1000L + v.presentation_time.nanosec / 1000000L));
+        super.update(v, s);
     }
+
 }

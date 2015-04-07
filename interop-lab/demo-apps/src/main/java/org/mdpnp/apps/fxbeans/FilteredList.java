@@ -1,8 +1,5 @@
 package org.mdpnp.apps.fxbeans;
 
-import com.sun.javafx.collections.NonIterableChange.GenericAddRemoveChange;
-import com.sun.javafx.collections.SortHelper;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -16,6 +13,9 @@ import javafx.beans.property.ObjectPropertyBase;
 import javafx.collections.ListChangeListener.Change;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.TransformationList;
+
+import com.sun.javafx.collections.NonIterableChange.GenericAddRemoveChange;
+import com.sun.javafx.collections.SortHelper;
 
 /**
  * Wraps an ObservableList and filters it's content using the provided Predicate.

@@ -1,22 +1,20 @@
 package org.mdpnp.apps.testapp.export;
 
 
-import com.rti.dds.subscription.Subscriber;
+import java.awt.BorderLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 
-import org.mdpnp.apps.testapp.DeviceListModel;
+import javax.swing.AbstractListModel;
+import javax.swing.JFrame;
+
 import org.mdpnp.apps.testapp.Device;
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.ArrayList;
 
 public class DeviceTreeTest {
 
@@ -29,9 +27,8 @@ public class DeviceTreeTest {
         context.registerShutdownHook();
 
         final DeviceListModel nc = (DeviceListModel)context.getBean("deviceListModel");
-        final Subscriber subscriber = (Subscriber)context.getBean("subscriber");
         // TODO fix this
-        final DataCollector dc = new DataCollector(subscriber, null);
+        final DataCollector dc = new DataCollector(null, null);
 
         final DeviceTreeModel tm = new DeviceTreeModel();
         // TODO fix this
@@ -71,11 +68,7 @@ public class DeviceTreeTest {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                try {
-                    dc.stop();
-                } catch (Exception ex) {
-                    log.error("Failed to stop the data collector", ex);
-                }
+                dc.destroy();
                 super.windowClosing(e);
             }
         });

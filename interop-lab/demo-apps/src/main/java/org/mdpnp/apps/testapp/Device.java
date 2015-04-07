@@ -70,6 +70,44 @@ public class Device {
         this.image.set(image);
     }
 
+    
+    private StringProperty manufacturer;
+    
+    public StringProperty manufacturerProperty() {
+        if(null == manufacturer) {
+            manufacturer = new SimpleStringProperty(this, "manufacturer", "");
+        }
+        return this.manufacturer;
+    }
+
+    public java.lang.String getManufacturer() {
+        return this.manufacturerProperty().get();
+    }
+
+    public void setManufacturer(final java.lang.String manufacturer) {
+        this.manufacturerProperty().set(manufacturer);
+    }
+    
+    private StringProperty model;
+
+    public StringProperty modelProperty() {
+        if(null == model) {
+            model = new SimpleStringProperty(this, "model", "");
+        }
+        return this.model;
+    }
+
+    public java.lang.String getModel() {
+        return this.modelProperty().get();
+    }
+
+    public void setModel(final java.lang.String model) {
+        this.modelProperty().set(model);
+    }
+
+    
+    
+    
     private StringProperty makeAndModel;
 
     public StringProperty makeAndModelProperty() {
@@ -175,6 +213,8 @@ public class Device {
     public void setDeviceIdentity(final DeviceIdentity deviceIdentity, ParticipantBuiltinTopicData participantData) {
         if (null != deviceIdentity) {
             changeUdi(deviceIdentity.unique_device_identifier);
+            manufacturerProperty().set(deviceIdentity.manufacturer);
+            modelProperty().set(deviceIdentity.model);
             if (null == deviceIdentity.manufacturer || deviceIdentity.manufacturer.equals(deviceIdentity.model)
                     || "".equals(deviceIdentity.manufacturer)) {
                 makeAndModelProperty().set(deviceIdentity.model);
@@ -216,6 +256,8 @@ public class Device {
 
     public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {
         changeUdi(deviceConnectivity.unique_device_identifier);
+        connectivityStateProperty().set(deviceConnectivity.state);
+        connectivityInfoProperty().set(deviceConnectivity.info);
         connectedProperty().set(ice.ConnectionState.Connected.equals(deviceConnectivity.state));
     }
 
@@ -279,4 +321,36 @@ public class Device {
         }
     }
 
+    private ObjectProperty<ice.ConnectionState> connectivityState;
+    private StringProperty connectivityInfo;
+
+    public ObjectProperty<ice.ConnectionState> connectivityStateProperty() {
+        if(null == connectivityState) {
+            connectivityState = new SimpleObjectProperty<ice.ConnectionState>(this, "connectivityState");
+        }
+        return this.connectivityState;
+    }
+
+    public ice.ConnectionState getConnectivityState() {
+        return this.connectivityStateProperty().get();
+    }
+
+    public void setConnectivityState(final ice.ConnectionState connectivityState) {
+        this.connectivityStateProperty().set(connectivityState);
+    }
+
+    public StringProperty connectivityInfoProperty() {
+        if(null == connectivityInfo) {
+            connectivityInfo = new SimpleStringProperty(this, "connectivityInfo", "");
+        }
+        return this.connectivityInfo;
+    }
+
+    public java.lang.String getConnectivityInfo() {
+        return this.connectivityInfoProperty().get();
+    }
+
+    public void setConnectivityInfo(final java.lang.String connectivityInfo) {
+        this.connectivityInfoProperty().set(connectivityInfo);
+    }
 }

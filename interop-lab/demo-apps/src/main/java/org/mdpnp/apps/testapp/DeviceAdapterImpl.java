@@ -34,8 +34,12 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
-
 import javafx.util.Callback;
+
+import org.mdpnp.apps.device.DeviceDataMonitor;
+import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
+import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
@@ -43,7 +47,6 @@ import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
-import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -329,7 +332,12 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             AbstractDevice device = controller.getDevice();
             DeviceType deviceType = controller.getDeviceType();
 
-            deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier);
+            final NumericFxList numericList = controller.getContext().getBean("numericList", NumericFxList.class);
+            final SampleArrayFxList sampleArrayList = controller.getContext().getBean("sampleArrayList", SampleArrayFxList.class);
+            final InfusionStatusFxList infusionStatusList = controller.getContext().getBean("infusionStatusList", InfusionStatusFxList.class);
+            final DeviceListModel deviceListModel = controller.getContext().getBean("deviceListModel", DeviceListModel.class);
+            
+            deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier, deviceListModel, numericList, sampleArrayList, infusionStatusList);
 
             Callback<Class<?>, Object> factory = new Callback<Class<?>, Object>()
             {
@@ -346,7 +354,6 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             // Use the device subscriber so that we
             // automatically maintain the same partition as the device
             EventLoop eventLoop = (EventLoop) controller.getContext().getBean("eventLoop");
-            deviceMonitor.start(device.getSubscriber(), eventLoop);
 
             TextArea descriptionText = new TextArea();
             descriptionText.setEditable(false);
