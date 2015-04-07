@@ -186,12 +186,12 @@ public class AbstractFxList<D extends Copyable, R extends DataReader, F extends 
                     log.error("reading", ite);
                 }
             } catch (Exception e) {
-                log.error("reading ", e);
+                log.error("reading for " + topicName, e);
             } finally {
                 try {
                     returnLoan.invoke(reader, dataSequence, sampleInfoSequence);
                 } catch (Exception e) {
-                    log.error("return_loan", e);
+                    log.error("return_loan for " + topicName, e);
                 }
             }
         }

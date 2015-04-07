@@ -38,8 +38,11 @@ import javafx.util.Callback;
 
 import org.mdpnp.apps.device.DeviceDataMonitor;
 import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
+import org.mdpnp.apps.fxbeans.InfusionStatusFxListFactory;
 import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.NumericFxListFactory;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
+import org.mdpnp.apps.fxbeans.SampleArrayFxListFactory;
 import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
@@ -48,9 +51,12 @@ import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
+
+import com.rti.dds.subscription.Subscriber;
 
 
 public abstract class DeviceAdapterImpl extends Observable implements DeviceAdapter {
@@ -312,6 +318,15 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             deviceMonitor.stop();
             update("Shut down local user interface", 20);
 
+            try {
+                deFact.destroy();
+                isFact.destroy();
+                saFact.destroy();
+                nFact.destroy();
+            } catch (Exception e1) {
+                log.error("Failed to stop entity factories", e1);
+            }            
+            
             controller.stop();
 
             super.stop();
@@ -323,6 +338,12 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             controller.init();
         }
 
+        NumericFxListFactory nFact;
+        SampleArrayFxListFactory saFact;
+        InfusionStatusFxListFactory isFact;
+        DeviceListModelFactory deFact;
+        
+        
         @Override
         public void start(final Stage primaryStage) throws Exception {
 
@@ -332,10 +353,39 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             AbstractDevice device = controller.getDevice();
             DeviceType deviceType = controller.getDeviceType();
 
-            final NumericFxList numericList = controller.getContext().getBean("numericList", NumericFxList.class);
-            final SampleArrayFxList sampleArrayList = controller.getContext().getBean("sampleArrayList", SampleArrayFxList.class);
-            final InfusionStatusFxList infusionStatusList = controller.getContext().getBean("infusionStatusList", InfusionStatusFxList.class);
-            final DeviceListModel deviceListModel = controller.getContext().getBean("deviceListModel", DeviceListModel.class);
+            // Use the device subscriber so that we
+            // automatically maintain the same partition as the device
+            final EventLoop eventLoop = controller.getContext().getBean("eventLoop", EventLoop.class);
+            final Subscriber subscriber = controller.getContext().getBean("subscriber", Subscriber.class);
+            
+            // TODO These beans are required only for the standalone adapter with GUI, perhaps they should get their own spring config though?
+            // TODO contentfilter these on the one device?
+            nFact = new NumericFxListFactory();
+            nFact.setEventLoop(eventLoop);
+            nFact.setSubscriber(subscriber);
+            nFact.setQosLibrary(QosProfiles.ice_library);
+            nFact.setQosProfile(QosProfiles.numeric_data);
+            nFact.setTopicName(ice.NumericTopic.VALUE);
+            final NumericFxList numericList = nFact.getObject();
+            
+            saFact = new SampleArrayFxListFactory();
+            saFact.setEventLoop(eventLoop);
+            saFact.setSubscriber(subscriber);
+            saFact.setQosLibrary(QosProfiles.ice_library);
+            saFact.setQosProfile(QosProfiles.waveform_data);
+            saFact.setTopicName(ice.SampleArrayTopic.VALUE);
+            final SampleArrayFxList sampleArrayList = saFact.getObject();
+            
+            isFact = new InfusionStatusFxListFactory();
+            isFact.setEventLoop(eventLoop);
+            isFact.setSubscriber(subscriber);
+            isFact.setQosLibrary(QosProfiles.ice_library);
+            isFact.setQosProfile(QosProfiles.waveform_data);
+            isFact.setTopicName(ice.InfusionStatusTopic.VALUE);
+            final InfusionStatusFxList infusionStatusList = isFact.getObject();
+
+            deFact = new DeviceListModelFactory(eventLoop, subscriber, device.getTimeManager());
+            final DeviceListModel deviceListModel = deFact.getObject();
             
             deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier, deviceListModel, numericList, sampleArrayList, infusionStatusList);
 
@@ -351,9 +401,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             Parent node = loader.load();
             deviceViewController.set(deviceMonitor);
 
-            // Use the device subscriber so that we
-            // automatically maintain the same partition as the device
-            EventLoop eventLoop = (EventLoop) controller.getContext().getBean("eventLoop");
+
 
             TextArea descriptionText = new TextArea();
             descriptionText.setEditable(false);
@@ -376,6 +424,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
 
                 @Override
                 public void handle(WindowEvent event) {
+
                     progressBar.setProgress(0.0);
                     update("Shutting down", 1);
                     root.getChildren().clear();

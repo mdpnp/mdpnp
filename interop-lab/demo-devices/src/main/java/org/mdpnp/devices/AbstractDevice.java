@@ -1004,4 +1004,8 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             throw new UnsupportedOperationException();
         }
     }
+    
+    public TimeManager getTimeManager() {
+        return timeManager;
+    }
 }
