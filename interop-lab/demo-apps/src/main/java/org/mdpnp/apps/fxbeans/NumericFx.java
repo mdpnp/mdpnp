@@ -132,7 +132,7 @@ public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.
         
     @Override
     public void update(ice.Numeric v, SampleInfo s) {
-        super.update(v, s);
+        // Key values should be no-ops
         setUnique_device_identifier(v.unique_device_identifier);
         setMetric_id(v.metric_id);
         setVendor_metric_id(v.vendor_metric_id);
@@ -141,6 +141,8 @@ public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.
         setValue(v.value);
         setDevice_time(new Date(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L));
         setPresentation_time(new Date(v.presentation_time.sec * 1000L + v.presentation_time.nanosec / 1000000L));
+        // The source_timestamp is convenient to key collection updates from so we fire it last
+        super.update(v, s);
     }
 
 }

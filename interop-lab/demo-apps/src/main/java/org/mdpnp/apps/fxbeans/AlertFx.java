@@ -54,10 +54,11 @@ public class AlertFx extends AbstractFx<ice.Alert> implements Updatable<ice.Aler
 
     @Override
     public void update(ice.Alert a, SampleInfo s) {
-        super.update(a, s);
         setUnique_device_identifier(a.unique_device_identifier);
         setIdentifier(a.identifier);
         setText(a.text);
+        // The source_timestamp is convenient to key collection updates from so we fire it last
+        super.update(a, s);
     }
 
 }

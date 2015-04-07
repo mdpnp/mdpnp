@@ -104,7 +104,6 @@ public class InfusionStatusFx extends AbstractFx<ice.InfusionStatus> implements 
     
     
     public void update(ice.InfusionStatus v, SampleInfo s) {
-        super.update(v, s);
         setUnique_device_identifier(v.unique_device_identifier);
         setInfusionActive(v.infusionActive);
         setDrug_name(v.drug_name);
@@ -113,5 +112,6 @@ public class InfusionStatusFx extends AbstractFx<ice.InfusionStatus> implements 
         setVolume_to_be_infused_ml(v.volume_to_be_infused_ml);
         setInfusion_duration_seconds(v.infusion_duration_seconds);
         setInfusion_fraction_complete(v.infusion_fraction_complete);
+        super.update(v, s);
     }
 }
