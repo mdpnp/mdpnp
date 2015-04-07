@@ -146,6 +146,13 @@ public class Configuration {
 
     private final static Logger log = LoggerFactory.getLogger(Configuration.class);
 
+    /**
+     * @param path
+     * @return spring's application context. The point of this API is to insert a higher priority
+     * property resolver into the context so that command line arguments could be used in property
+     * resolution. Out of the box our spring xml configs wire property resolvers with 'order=1'
+     * which functions just fine, but also allows for a 'order=0' to take over as a primary.
+     */
     public AbstractApplicationContext createContext(String path)
     {
         ClassPathXmlApplicationContext ctx =

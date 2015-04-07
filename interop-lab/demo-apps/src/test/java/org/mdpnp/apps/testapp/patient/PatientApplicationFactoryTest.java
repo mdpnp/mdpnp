@@ -24,6 +24,9 @@ public class PatientApplicationFactoryTest {
 
     private static final Logger log = LoggerFactory.getLogger(PatientApplicationFactoryTest.class);
 
+    /**
+     * test jdbc back end for the app.
+     */
     @Test
     public void testDbCreate() throws Exception {
 
@@ -47,6 +50,13 @@ public class PatientApplicationFactoryTest {
     }
 
 
+    /**
+     * Over all test for the patient assignment app. As a part of automated test
+     * suite will bring the app up, populate it with mock data and then bring the
+     * ui down. if 'PatientApplicationFactoryTest.UpTimeMS' environment variable
+     * set to -1, this test wil not exit automatically and ui will stay up forever.
+     * It is suitable to be used a boot-strap entry point for app development.
+     */
     @Test
     public void testAppSetupViaSpring() throws Exception {
 
@@ -92,7 +102,7 @@ public class PatientApplicationFactoryTest {
         try {
             // if <0, keep the ui up forever - used to debugging.
             if (UI_UP_MS > 0) {
-                boolean isOk = stopOk.await(2 * UI_UP_MS, TimeUnit.MILLISECONDS);
+                boolean isOk = stopOk.await(5 * UI_UP_MS, TimeUnit.MILLISECONDS);
                 if (!isOk)
                     Assert.fail("Failed to close the dialog");
             } else {
