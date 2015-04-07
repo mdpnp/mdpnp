@@ -65,8 +65,7 @@ public class Configuration {
 
     enum Application {
         ICE_Supervisor(IceAppsContainer.class),
-        ICE_Device_Interface(DeviceAdapterImpl.DeviceAdapterCommand.class),
-        ICE_ParticipantOnly(ParticipantOnly.class);
+        ICE_Device_Interface(DeviceAdapterImpl.DeviceAdapterCommand.class);
 
         Application(Class<?> c) {
             clazz = c;

@@ -1,8 +1,6 @@
 package org.mdpnp.apps.testapp.hl7;
 
 import ice.MDSConnectivity;
-import ice.Numeric;
-import ice.NumericDataReader;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -16,16 +14,15 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 
+import javafx.collections.ListChangeListener;
+
+import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
-import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.ListenerList;
-import org.mdpnp.rtiapi.data.NumericInstanceModel;
-import org.mdpnp.rtiapi.data.NumericInstanceModelListener;
-import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +58,6 @@ import ca.uhn.hl7v2.model.v26.segment.PID;
 import ca.uhn.hl7v2.parser.Parser;
 
 import com.rti.dds.infrastructure.SequenceNumber_t;
-import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 
 public class HL7Emitter implements MDSListener {
@@ -116,8 +112,19 @@ public class HL7Emitter implements MDSListener {
 
     public void start(final String host, final int port, final Type type) {
         this.type = type;
-        // TODO this again
-//        numericInstanceModel.iterateAndAddListener(numericListener);
+        this.numericList.addListener(new ListChangeListener<NumericFx>() {
+
+            @Override
+            public void onChanged(javafx.collections.ListChangeListener.Change<? extends NumericFx> c) {
+                while(c.next()) {
+                    if(c.wasAdded()) c.getAddedSubList().forEach((fx) -> numeric(fx));
+                    if(c.wasUpdated()) {
+                        c.getList().subList(c.getFrom(), c.getTo()).forEach((fx) -> numeric(fx));
+                    }
+                }
+            }
+            
+        });
         
         log.debug("Started NumericInstanceModel");
         if (host != null && !host.isEmpty()) {
@@ -218,7 +225,7 @@ public class HL7Emitter implements MDSListener {
         ssListeners.removeListener(listener);
     }
 
-    protected void sendHL7v26(Numeric data, SampleInfo sampleInfo) {
+    protected void sendHL7v26(NumericFx data) {
         try {
 
             ORU_R01 r01 = new ORU_R01();
@@ -263,7 +270,7 @@ public class HL7Emitter implements MDSListener {
 
             // "NM" is Numeric
             NM nm = new NM(r01);
-            nm.setValue(Float.toString(data.value));
+            nm.setValue(Float.toString(data.getValue()));
 
             obx.getObservationValue(0).setData(nm);
 
@@ -295,16 +302,16 @@ public class HL7Emitter implements MDSListener {
         }
     }
     private static final String PTID_SYSTEM = "urn:oid:2.16.840.1.113883.3.1974";
-    public void sendFHIR(Numeric data, SampleInfo sampleInfo) {
+    public void sendFHIR(NumericFx data) {
         // Device device = new Device();
 
-        final String mrn = deviceUdiToPatientMRN.get(data.unique_device_identifier);
+        final String mrn = deviceUdiToPatientMRN.get(data.getUnique_device_identifier());
         if(null == mrn) {
-            log.debug("No known mrn for udi="+data.unique_device_identifier);
+            log.debug("No known mrn for udi="+data.getUnique_device_identifier());
             return;
         }
         IdDt resourceId = patientMRNtoResourceId.get(mrn);
-        if(null == resourceId) {
+        if(null == resourceId && fhirClient != null) {
             ca.uhn.fhir.model.api.Bundle bundle = fhirClient
                     .search()
                     .forResource(Patient.class)
@@ -332,10 +339,9 @@ public class HL7Emitter implements MDSListener {
          DeviceMetric deviceMetric = new DeviceMetric();
          
         Observation obs = new Observation();
-        obs.setValue(new QuantityDt(data.value).setUnits(data.unit_id).setCode(data.metric_id).setSystem("OpenICE"));
-        obs.addIdentifier().setSystem("urn:info.openice").setValue(uuidFromSequence(sampleInfo.publication_sequence_number).toString());
-        Date presentation = new Date(data.presentation_time.sec * 1000L + data.presentation_time.nanosec / 1000000L);
-        obs.setApplies(new DateTimeDt(presentation, TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
+        obs.setValue(new QuantityDt(data.getValue()).setUnits(data.getUnit_id()).setCode(data.getMetric_id()).setSystem("OpenICE"));
+//        obs.addIdentifier().setSystem("urn:info.openice").setValue(uuidFromSequence(sampleInfo.publication_sequence_number).toString());
+        obs.setApplies(new DateTimeDt(data.getPresentation_time(), TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
         obs.setSubject(new ResourceReferenceDt(resourceId));
         obs.setStatus(ObservationStatusEnum.PRELIMINARY);
 
@@ -352,28 +358,16 @@ public class HL7Emitter implements MDSListener {
 
     }
 
-    final NumericInstanceModelListener numericListener = new NumericInstanceModelListener() {
-
-        @Override
-        public void instanceSample(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
-            if(metricIdsForExport.contains(data.metric_id)) {
-                if (Type.V26.equals(type)) {
-                    sendHL7v26(data, sampleInfo);
-                } else if (Type.FHIR_DSTU2.equals(type)) {
-                    sendFHIR(data, sampleInfo);
-                }
+    protected void numeric(NumericFx fx) {
+        if(metricIdsForExport.contains(fx.getMetric_id())) {
+            if (Type.V26.equals(type)) {
+                sendHL7v26(fx);
+            } else if (Type.FHIR_DSTU2.equals(type)) {
+                sendFHIR(fx);
             }
         }
+    }
 
-        @Override
-        public void instanceNotAlive(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
-                SampleInfo sampleInfo) {
-        }
-
-        @Override
-        public void instanceAlive(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
-        }
-    };
 
 
     protected static UUID uuidFromSequence(SequenceNumber_t seq) {

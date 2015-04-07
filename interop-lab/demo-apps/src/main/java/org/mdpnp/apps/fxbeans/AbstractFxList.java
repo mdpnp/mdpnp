@@ -309,4 +309,23 @@ public class AbstractFxList<D extends Copyable, R extends DataReader, F extends 
         if(null != elementObserver) elementObserver.detachListener(f);
         return f;
     }
+    @Override
+    public void clear() {
+        if (elementObserver != null) {
+            final int sz = size();
+            for (int i = 0; i < sz; ++i) {
+                elementObserver.detachListener(get(i));
+                
+            }
+        }
+        if (hasListeners()) {
+            beginChange();
+            nextRemove(0, this);
+        }
+        data.clear();
+        ++modCount;
+        if (hasListeners()) {
+            endChange();
+        }
+    }
 }

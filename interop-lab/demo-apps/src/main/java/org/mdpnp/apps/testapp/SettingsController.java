@@ -130,7 +130,6 @@ public class SettingsController {
             }
             break;
         case ICE_Supervisor:
-        case ICE_ParticipantOnly:
             gridPane.getChildren().remove(deviceType);
             gridPane.getChildren().remove(deviceTypeLabel);
             gridPane.getChildren().remove(addressLabel);
