@@ -12,8 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.apps.device;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +37,7 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
 
     private final WaveformPanel[] panels;
     private final Label time = new Label(" ");
-    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private final static String[] WAVEFORMS = new String[] { rosetta.MDC_PRESS_BLD.VALUE, rosetta.MDC_PRESS_BLD_ART.VALUE, rosetta.MDC_PRESS_BLD_ART_ABP.VALUE, };
 
@@ -73,7 +71,7 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
     public void set(DeviceDataMonitor deviceMonitor) {
         super.set(deviceMonitor);
         deviceMonitor.getSampleArrayModel().addListener(sampleArrayListener);
-        deviceMonitor.getSampleArrayModel().forEach((t)->sampleArrayAdd(t));
+        deviceMonitor.getSampleArrayModel().forEach((t)->add(t));
         deviceMonitor.getNumericModel().addListener(numericListener);
     }
     
@@ -97,20 +95,29 @@ public class InvasiveBloodPressurePanel extends DevicePanel {
     }
     private final OnListChange<NumericFx> numericListener = new OnListChange<NumericFx>(null, null, null);
 
-    protected void sampleArrayAdd(SampleArrayFx data) {
+    protected void add(SampleArrayFx data) {
         WaveformPanel wuws = panelMap.get(data.getMetric_id());
+        if(!time.textProperty().isBound()) {
+            time.textProperty().bind(data.presentation_timeProperty().asString());
+        }
         if(null != wuws) {
             if(null == wuws.getSource()) {
                 wuws.setSource(new SampleArrayWaveformSource(deviceMonitor.getSampleArrayList().getReader(), data.getHandle()));
             }
-            time.setText(dateFormat.format(data.getPresentation_time()));
-      }        
+        }        
     }
-    protected void sampleArrayUpdate(SampleArrayFx data) {
-        if(panelMap.containsKey(data.getMetric_id())) {
-            time.setText(dateFormat.format(data.getPresentation_time()));
-        }
+    
+    
+    protected void remove(SampleArrayFx data) {
+        WaveformPanel wuws = panelMap.get(data.getMetric_id());
+        time.textProperty().unbind();
+        if(null != wuws) {
+            if(null != wuws.getSource()) {
+                wuws.setSource(null);
+            }
+        }      
     }
+
     private final OnListChange<SampleArrayFx> sampleArrayListener = new OnListChange<SampleArrayFx>(
-            (t)->sampleArrayAdd(t), (t)->sampleArrayUpdate(t), null);
+            (t)->add(t), null, (t)->remove(t));
 }

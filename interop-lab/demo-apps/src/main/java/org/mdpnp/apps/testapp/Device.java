@@ -51,6 +51,7 @@ public class Device {
 
     public final static int SHORT_UDI_LENGTH = 20;
 
+    @SuppressWarnings("unused")
     private final static Logger log = LoggerFactory.getLogger(Device.class);
 
     private ObjectProperty<Image> image;
@@ -224,7 +225,7 @@ public class Device {
             hostnameProperty().set(TimeManager.getHostname(participantData));
             operating_systemProperty().set(deviceIdentity.operating_system);
             buildProperty().set(deviceIdentity.build);
-            serial_numberProperty().set(deviceIdentity.build);
+            serial_numberProperty().set(deviceIdentity.serial_number);
             
             Task<Image> task = new Task<Image>() {
                 @Override

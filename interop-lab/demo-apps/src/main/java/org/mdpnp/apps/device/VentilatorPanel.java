@@ -12,11 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.apps.device;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Set;
 
-import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
@@ -40,7 +37,7 @@ import org.slf4j.LoggerFactory;
 public class VentilatorPanel extends DevicePanel {
     private WaveformPanel flowPanel, pressurePanel, co2Panel;
     private final Label time = new Label(" "), respiratoryRate = new Label(" "), endTidalCO2 = new Label(" ");
-    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public void destroy() {
@@ -118,22 +115,32 @@ public class VentilatorPanel extends DevicePanel {
     public void set(DeviceDataMonitor deviceMonitor) {
         super.set(deviceMonitor);
         deviceMonitor.getNumericModel().addListener(numericListener);
+        deviceMonitor.getNumericModel().forEach((t)->add(t));
         
         deviceMonitor.getSampleArrayModel().addListener(sampleArrayListener);
-        deviceMonitor.getSampleArrayModel().forEach((t)->sampleArray(t));
+        deviceMonitor.getSampleArrayModel().forEach((t)->add(t));
     }
     
-    protected void numeric(NumericFx data) {
-        final String str = Integer.toString((int) data.getValue());
-        
+    protected void add(NumericFx data) {
         if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(data.getMetric_id()) || rosetta.MDC_AWAY_RESP_RATE.VALUE.equals(data.getMetric_id())) {
-            Platform.runLater( () -> { respiratoryRate.setText(str); }); 
+            respiratoryRate.textProperty().bind(data.valueProperty().asString("%.0f"));
         } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(data.getMetric_id())) {
-            Platform.runLater( () -> { endTidalCO2.setText(str); });
+            endTidalCO2.textProperty().bind(data.valueProperty().asString("%.0f"));
         }
     }
     
-    protected void sampleArray(SampleArrayFx data) {
+    protected void remove(NumericFx data) {
+        if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(data.getMetric_id()) || rosetta.MDC_AWAY_RESP_RATE.VALUE.equals(data.getMetric_id())) {
+            respiratoryRate.textProperty().unbind();
+        } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(data.getMetric_id())) {
+            endTidalCO2.textProperty().unbind();
+        }
+    }
+    
+    protected void add(SampleArrayFx data) {
+        if(!time.textProperty().isBound()) {
+            time.textProperty().bind(data.presentation_timeProperty().asString());
+        }
         if (rosetta.MDC_FLOW_AWAY.VALUE.equals(data.getMetric_id())) {
             flowPanel.setSource(new SampleArrayWaveformSource(deviceMonitor.getSampleArrayList().getReader(), data.getHandle()));
         } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(data.getMetric_id())) {
@@ -143,14 +150,21 @@ public class VentilatorPanel extends DevicePanel {
         }
     }
     
-    protected void sampleArrayUpdate(SampleArrayFx data) {
-        time.setText(dateFormat.format(data.getPresentation_time()));
+    protected void remove(SampleArrayFx data) {
+        time.textProperty().unbind();
+        if (rosetta.MDC_FLOW_AWAY.VALUE.equals(data.getMetric_id())) {
+            flowPanel.setSource(null);
+        } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(data.getMetric_id())) {
+            pressurePanel.setSource(null);   
+        } else if (rosetta.MDC_AWAY_CO2.VALUE.equals(data.getMetric_id())) {
+            co2Panel.setSource(null);
+        }
     }
     
     private final OnListChange<NumericFx> numericListener = new OnListChange<NumericFx>(
-            (t)->numeric(t), (t)->numeric(t), null);
+            (t)->add(t), null, (t)->remove(t));
     
     private final OnListChange<SampleArrayFx> sampleArrayListener = new OnListChange<SampleArrayFx>(
-            (t)->sampleArray(t), (t)->sampleArrayUpdate(t), null);
+            (t)->add(t), null, (t)->remove(t));
     
     }

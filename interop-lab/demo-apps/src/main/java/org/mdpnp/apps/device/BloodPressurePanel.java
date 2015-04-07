@@ -12,11 +12,13 @@
  ******************************************************************************/
 package org.mdpnp.apps.device;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Set;
 
-import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.FloatProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleFloatProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
@@ -40,7 +42,7 @@ public class BloodPressurePanel extends DevicePanel {
     private Label systolic, diastolic, pulse;
     private BorderPane systolicPanel, diastolicPanel, pulsePanel;
     private Label time;
-    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private Label nextInflation;
 
     protected void buildComponents() {
@@ -78,6 +80,16 @@ public class BloodPressurePanel extends DevicePanel {
 
         setBottom(time = new Label(""));
         time.setAlignment(Pos.CENTER_RIGHT);
+        
+        nextInflation.textProperty().bind(
+                Bindings.when(state.isEqualTo(State.Inflating)).then("Inflating...").otherwise(
+                Bindings.when(state.isEqualTo(State.Deflating)).then("Deflating...").otherwise(
+                Bindings.when(state.isEqualTo(State.Waiting)).then(nextInflationN.divide(1000.0).asString("%.0f").concat(" Seconds")).otherwise(""))));
+                        
+        systolic.textProperty().bind(Bindings.when(state.isEqualTo(State.Inflating).or(state.isEqualTo(State.Deflating))).then(inflationN.asString("%.0f")).otherwise(systolicN.asString("%.0f")));
+        diastolic.textProperty().bind(Bindings.when(state.isEqualTo(State.Inflating).or(state.isEqualTo(State.Deflating))).then("").otherwise(diastolicN.asString("%.0f")));
+        pulse.textProperty().bind(Bindings.when(state.isEqualTo(State.Inflating).or(state.isEqualTo(State.Deflating))).then("").otherwise(pulseN.asString("%.0f")));
+        
     }
 
     protected static float maxFontSize(Label label) {
@@ -136,79 +148,53 @@ public class BloodPressurePanel extends DevicePanel {
     public void set(DeviceDataMonitor deviceMonitor) {
         super.set(deviceMonitor);
         deviceMonitor.getNumericModel().addListener(numericListener);
+        deviceMonitor.getNumericModel().forEach((t)->add(t));
     }
     
-    protected State state = State.Uninited;
+    protected ObjectProperty<State> state = new SimpleObjectProperty<>(this, "state", State.Uninited);
 
-    private float systolicN;
-    private float diastolicN;
-    private float pulseN;
-    private float inflationN;
-    private float nextInflationN;
+    private FloatProperty systolicN = new SimpleFloatProperty(this, "systolicN", 0f);
+    private FloatProperty diastolicN = new SimpleFloatProperty(this, "diastolicN", 0f);
+    private FloatProperty pulseN = new SimpleFloatProperty(this, "pulseN", 0f);
+    private FloatProperty inflationN = new SimpleFloatProperty(this, "inflationN", 0f);
+    private FloatProperty nextInflationN = new SimpleFloatProperty(this, "nextInflationN", 0f);
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(BloodPressurePanel.class);
     
-    protected void numeric(NumericFx data) {
+    protected void remove(NumericFx data) {
+        time.textProperty().unbind();
         if (rosetta.MDC_PRESS_CUFF.VALUE.equals(data.getMetric_id())) {
-            switch ((int) data.getValue()) {
-            case ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE:
-                BloodPressurePanel.this.state = State.Deflating;
-                break;
-            case ice.MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS.VALUE:
-                BloodPressurePanel.this.state = State.Inflating;
-                break;
-            case ice.MDC_EVT_STAT_OFF.VALUE:
-                BloodPressurePanel.this.state = State.Waiting;
-                break;
-            }
+            state.unbind();
         } else if (rosetta.MDC_PRESS_CUFF_SYS.VALUE.equals(data.getMetric_id())) {
-            systolicN = data.getValue();
+            systolicN.unbind();
         } else if (rosetta.MDC_PRESS_CUFF_DIA.VALUE.equals(data.getMetric_id())) {
-            diastolicN = data.getValue();
+            diastolicN.unbind();
         } else if (rosetta.MDC_PULS_RATE_NON_INV.VALUE.equals(data.getMetric_id())) {
-            pulseN = data.getValue();
+            pulseN.unbind();
         } else if (ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE.equals(data.getMetric_id())) {
-            nextInflationN = data.getValue();
+            nextInflationN.unbind();
         } else if (ice.MDC_PRESS_CUFF_INFLATION.VALUE.equals(data.getMetric_id())) {
-            inflationN = data.getValue();
+            inflationN.unbind();
         }
-        
-        final String dt = dateFormat.format(data.getPresentation_time());
-
-        Platform.runLater( () -> {
-            switch (BloodPressurePanel.this.state) {
-            case Inflating:
-                nextInflation.setText("Inflating...");
-                systolic.setText(Integer.toString((int) inflationN));
-                diastolic.setText("");
-                pulse.setText("");
-                break;
-            case Deflating:
-                nextInflation.setText("Deflating...");
-                systolic.setText(Integer.toString((int) inflationN));
-                diastolic.setText("");
-                pulse.setText("");
-                break;
-            case Waiting:
-                long seconds = ((long) nextInflationN % 60000L / 1000L);
-                BloodPressurePanel.this.nextInflation.setText((int) Math.floor(1.0 * nextInflationN / 60000.0) + ":" + (seconds < 10 ? "0" : "") + seconds
-                        + " MIN");
-                systolic.setText(Integer.toString((int) systolicN));
-                diastolic.setText(Integer.toString((int) diastolicN));
-                pulse.setText(Integer.toString((int) pulseN));
-                break;
-            case Uninited:
-                nextInflation.setText("");
-                systolic.setText("");
-                diastolic.setText("");
-                pulse.setText("");
-                break;
-            }
-            time.setText(dt);
-        });
-
     }
     
-    private final OnListChange<NumericFx> numericListener = new OnListChange<NumericFx>(null, (t)->numeric(t), null);
+    protected void add(NumericFx data) {
+        time.textProperty().bind(data.presentation_timeProperty().asString());
+        if (rosetta.MDC_PRESS_CUFF.VALUE.equals(data.getMetric_id())) {
+            state.bind(Bindings.when(data.valueProperty().isEqualTo(ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE, 0.1f)).then(State.Deflating).otherwise(Bindings.when(data.valueProperty().isEqualTo(ice.MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS.VALUE)).then(State.Inflating).otherwise(Bindings.when(data.valueProperty().isEqualTo(ice.MDC_EVT_STAT_OFF.VALUE)).then(State.Waiting).otherwise(State.Uninited))));
+        } else if (rosetta.MDC_PRESS_CUFF_SYS.VALUE.equals(data.getMetric_id())) {
+            systolicN.bind(data.valueProperty());
+        } else if (rosetta.MDC_PRESS_CUFF_DIA.VALUE.equals(data.getMetric_id())) {
+            diastolicN.bind(data.valueProperty());
+        } else if (rosetta.MDC_PULS_RATE_NON_INV.VALUE.equals(data.getMetric_id())) {
+            pulseN.bind(data.valueProperty());
+        } else if (ice.MDC_PRESS_CUFF_NEXT_INFLATION.VALUE.equals(data.getMetric_id())) {
+            nextInflationN.bind(data.valueProperty());
+        } else if (ice.MDC_PRESS_CUFF_INFLATION.VALUE.equals(data.getMetric_id())) {
+            inflationN.bind(data.valueProperty());
+        }
+    }
+    
+    private final OnListChange<NumericFx> numericListener = new OnListChange<NumericFx>((t)->add(t), null, (t)->remove(t));
 }
