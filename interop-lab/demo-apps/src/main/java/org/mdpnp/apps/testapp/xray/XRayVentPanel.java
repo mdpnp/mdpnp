@@ -45,6 +45,8 @@ import javafx.util.Callback;
 import org.mdpnp.apps.fxbeans.FilteredList;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.SampleArrayFx;
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.NumericFxListCell;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
@@ -94,8 +96,10 @@ public class XRayVentPanel {
     private static final Logger log = LoggerFactory.getLogger(XRayVentPanel.class);
     
     private NumericFxList numericList;
+    private SampleArrayFxList sampleArrayList;
     private ObservableList<NumericFx> startOfBreathModel, deviceNumericModel;
-    private SampleArrayInstanceModel sampleArrayModel;
+    private ObservableList<SampleArrayFx> deviceFlowModel;
+    
     private SampleArrayWaveformSource source;
 
     private ListChangeListener<NumericFx> numericListener = new ListChangeListener<NumericFx>() {
@@ -132,33 +136,26 @@ public class XRayVentPanel {
                 break;
             }
         }
-        
     }
     
-    private InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader> sampleArrayListener = new InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader>() {
-        public void instanceAlive(org.mdpnp.rtiapi.data.ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader,
-                SampleArray data, SampleInfo sampleInfo) {
-            if (sampleInfo.valid_data) {
-                if (rosetta.MDC_FLOW_AWAY.VALUE.equals(data.metric_id)) {
-                    XRayVentPanel.this.source = new SampleArrayWaveformSource(reader, data);
-                    waveformPanel.setSource(source);
-                    waveformPanel.start();
+    protected void sampleArray(SampleArrayFx data) {
+        XRayVentPanel.this.source = new SampleArrayWaveformSource(sampleArrayList.getReader(), data.getHandle());
+        waveformPanel.setSource(source);
+        waveformPanel.start();
+    }
+    
+    private ListChangeListener<SampleArrayFx> sampleArrayListener = new ListChangeListener<SampleArrayFx>() {
+        @Override
+        public void onChanged(javafx.collections.ListChangeListener.Change<? extends SampleArrayFx> c) {
+            while(c.next()) {
+                if(c.wasAdded()) {
+                    c.getAddedSubList().forEach( (fx) -> sampleArray(fx));
                 }
             }
-        };
-
-        public void instanceNotAlive(org.mdpnp.rtiapi.data.ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader,
-                SampleArray keyHolder, SampleInfo sampleInfo) {
-
-        };
-
-        public void instanceSample(org.mdpnp.rtiapi.data.ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader,
-                SampleArray data, SampleInfo sampleInfo) {
-
-        };
+        }
     };
 
-    public void changeSource(final String source, Subscriber subscriber, EventLoop eventLoop) {
+    public void changeSource(final String source) {
         this.source = null;
         
         if(null != deviceNumericModel) {
@@ -170,17 +167,31 @@ public class XRayVentPanel {
                 return source.equals(t.getUnique_device_identifier());
             }
         });
-        sampleArrayModel.stopReader();
+        
+        if(null != deviceFlowModel) {
+            deviceFlowModel.removeListener(sampleArrayListener);
+        }
 
-        StringSeq params = new StringSeq();
-        params.add("'" + rosetta.MDC_FLOW_AWAY.VALUE + "'");
-        sampleArrayModel.addListener(sampleArrayListener);
-        sampleArrayModel.startReader(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.waveform_data);
-        params = new StringSeq();
-        params.add("'" + source + "'");
+        deviceFlowModel = new FilteredList<>(sampleArrayList, new Predicate<SampleArrayFx>() {
+
+            @Override
+            public boolean test(SampleArrayFx t) {
+                return rosetta.MDC_FLOW_AWAY.VALUE.equals(t.getMetric_id()) && source.equals(t.getUnique_device_identifier());
+            }
+            
+        });
+
+        
         
         
         deviceNumericModel.addListener(numericListener);
+        // Initial state
+        deviceNumericModel.forEach( (fx) -> numeric(fx));
+        
+        deviceFlowModel.addListener(sampleArrayListener);
+        
+        deviceFlowModel.forEach( (fx) -> sampleArray(fx));
+        
 
         log.trace("new source is " + source);
         
@@ -188,7 +199,7 @@ public class XRayVentPanel {
 
     private boolean imageButtonDown = false;
 
-    public XRayVentPanel set(final Subscriber subscriber, final EventLoop eventLoop, final DeviceListModel deviceListModel, final NumericFxList numericList) {
+    public XRayVentPanel set(final DeviceListModel deviceListModel, final NumericFxList numericList, final SampleArrayFxList sampleArrayList) {
         this.numericList = numericList;
         startOfBreathModel = new FilteredList<>(numericList, new Predicate<NumericFx>() {
             @Override
@@ -207,7 +218,7 @@ public class XRayVentPanel {
         cameraBox.setItems(cameraModel.getItems());
         
         
-        sampleArrayModel = new SampleArrayInstanceModelImpl(ice.SampleArrayTopic.VALUE);
+        this.sampleArrayList = sampleArrayList;
 
         deviceList.setCellFactory(new Callback<ListView<NumericFx>,ListCell<NumericFx>>() {
 
@@ -250,7 +261,7 @@ public class XRayVentPanel {
             @Override
             public void changed(ObservableValue<? extends NumericFx> observable, NumericFx oldValue, NumericFx newValue) {
                 if(newValue != null) {
-                    changeSource(newValue.getUnique_device_identifier(), subscriber, eventLoop);
+                    changeSource(newValue.getUnique_device_identifier());
                 }
             }
         });
@@ -280,7 +291,6 @@ public class XRayVentPanel {
             }
         }, 0L, TimeUnit.MILLISECONDS);
         
-        sampleArrayModel.stopReader();
     }
     
     public void destroy() {

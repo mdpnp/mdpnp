@@ -5,6 +5,7 @@ import java.io.IOException;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -29,6 +30,7 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
         final Subscriber subscriber= (Subscriber)parentContext.getBean("subscriber");
         final int        domainId  = (Integer)parentContext.getBean("domainId");
         final DeviceListModel deviceListModel = (DeviceListModel) parentContext.getBean("deviceListModel");
+        final SampleArrayFxList sampleArrayList = parentContext.getBean("sampleArrayList", SampleArrayFxList.class);
         
         FXMLLoader loader = new FXMLLoader(RapidRespiratoryRate.class.getResource("RapidRespiratoryRate.fxml"));
         
@@ -37,7 +39,7 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
         final RapidRespiratoryRate controller = ((RapidRespiratoryRate)loader.getController());
 
         controller.set(domainId, eventLoop, subscriber, deviceListModel);
-        controller.start(subscriber, eventLoop);
+        controller.start(sampleArrayList);
 
         return new IceApplicationProvider.IceApp() {
 

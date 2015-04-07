@@ -7,6 +7,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
 import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
@@ -32,7 +33,9 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
         
         final NumericFxList numericList = parentContext.getBean("numericList", NumericFxList.class);
         
-        final Diagnostic diagnostic = new Diagnostic(subscriber, eventLoop, numericList);
+        final SampleArrayFxList sampleArrayList = parentContext.getBean("sampleArrayList", SampleArrayFxList.class);
+        
+        final Diagnostic diagnostic = new Diagnostic(subscriber, eventLoop, numericList, sampleArrayList);
 
         FXMLLoader loader = new FXMLLoader(DiagnosticApplication.class.getResource("DiagnosticApplication.fxml"));
         

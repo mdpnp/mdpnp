@@ -103,14 +103,14 @@ public class SampleArrayFx extends AbstractFx<ice.SampleArray> {
     }
     
     
-    private ListProperty<Float> values;
-    public ListProperty<Float> valuesProperty() {
+    private ObjectProperty<Number[]> values;
+    public ObjectProperty<Number[]> valuesProperty() {
         if(null == values) {
-            values = new SimpleListProperty<Float>(this, "values");
+            values = new SimpleObjectProperty<Number[]>(this, "values", new Number[0]);
         }
         return values;
     }
-    public ObservableList<Float> getValues() {
+    public Number[] getValues() {
         return valuesProperty().get();
     }
     
@@ -141,8 +141,11 @@ public class SampleArrayFx extends AbstractFx<ice.SampleArray> {
         setInstance_id(v.instance_id);
         setUnit_id(v.unit_id);
         setFrequency(v.frequency);
-//        valuesProperty().clear();
-//        valuesProperty().addAll(v.values.userData);
+        Number[] values = new Number[v.values.userData.size()];
+        for(int i = 0; i < values.length; i++) {
+            values[i] = v.values.userData.getFloat(i);
+        }
+        valuesProperty().set(values);
         _device_time.setTime(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L);
         setDevice_time(_device_time);
     }

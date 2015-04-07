@@ -17,12 +17,14 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -34,6 +36,7 @@ import javafx.scene.control.Slider;
 import javafx.util.Callback;
 import javafx.util.Duration;
 
+import org.mdpnp.apps.fxbeans.FilteredList;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
@@ -48,9 +51,7 @@ import org.mdpnp.guis.waveform.WaveformSource.WaveformIterator;
 import org.mdpnp.guis.waveform.javafx.JavaFXWaveformCanvas;
 import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.QosProfiles;
 
-import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 
@@ -179,10 +180,6 @@ public class RapidRespiratoryRate implements Runnable {
     }
 
     public RapidRespiratoryRate() {
-        model = new SampleArrayFxList(ice.SampleArrayTopic.VALUE);
-
-
-//
 //        wavePanel.start();
         executor.scheduleAtFixedRate(new Runnable() {
             public void run() {
@@ -191,19 +188,24 @@ public class RapidRespiratoryRate implements Runnable {
             }
         }, 1000L, 200L, TimeUnit.MILLISECONDS);
     }
-    private final SampleArrayFxList model;
+    private SampleArrayFxList model;
+    private ObservableList<SampleArrayFx> filteredModel;
+    
     private SampleArrayWaveformSource source;
     private final WaveformRenderer renderer = new WaveformRenderer();
     private WaveformCanvas canvas;
     private Timeline waveformRender;
     
-    public void start(Subscriber subscriber, EventLoop eventLoop) {
-        capnoSources.setItems(model);
-        // TODO this should be externalized
-        StringSeq params = new StringSeq();
-        params.add("'"+rosetta.MDC_AWAY_CO2.VALUE+"'");
-        params.add("'"+rosetta.MDC_IMPED_TTHOR.VALUE+"'");
-        model.start(subscriber, eventLoop, "metric_id = %0 or metric_id = %1 ", params, QosProfiles.ice_library, QosProfiles.waveform_data);
+    public void start(SampleArrayFxList sampleArrayList) {
+        this.model = sampleArrayList;
+        filteredModel = new FilteredList<>(sampleArrayList, new Predicate<SampleArrayFx>() {
+            @Override
+            public boolean test(SampleArrayFx t) {
+                return rosetta.MDC_AWAY_CO2.VALUE.equals(t.getMetric_id()) || rosetta.MDC_IMPED_TTHOR.VALUE.equals(t.getMetric_id());
+            }
+            
+        });
+        capnoSources.setItems(filteredModel);
     }
     
 

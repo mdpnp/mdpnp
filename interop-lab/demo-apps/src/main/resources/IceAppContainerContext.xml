@@ -55,7 +55,15 @@
         <property name="eventLoop" ref="eventLoop"/>
         <property name="qosLibrary"><value>ice_library</value></property>
         <property name="qosProfile"><value>numeric_data</value></property>
-    </bean> 
+    </bean>
+    
+    <bean id="sampleArrayList" class="org.mdpnp.apps.fxbeans.SampleArrayFxListFactory" lazy-init="false">
+        <property name="topicName"><util:constant static-field="ice.SampleArrayTopic.VALUE"/></property>
+        <property name="subscriber" ref="subscriber"/>
+        <property name="eventLoop" ref="eventLoop"/>
+        <property name="qosLibrary"><value>ice_library</value></property>
+        <property name="qosProfile"><value>waveform_data</value></property>
+    </bean>    
     
     <bean id="deviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory" lazy-init="true">
         <constructor-arg ref="eventLoop" />

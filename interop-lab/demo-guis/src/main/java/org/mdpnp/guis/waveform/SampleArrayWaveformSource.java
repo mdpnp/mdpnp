@@ -18,6 +18,10 @@ import com.rti.dds.subscription.ViewStateKind;
 public class SampleArrayWaveformSource extends AbstractDdsWaveformSource<ice.SampleArrayDataReader, ice.SampleArray, ice.SampleArraySeq> implements WaveformSource {
     private static final Logger log = LoggerFactory.getLogger(SampleArrayWaveformSource.class);
 
+    public SampleArrayWaveformSource(final ice.SampleArrayDataReader reader, InstanceHandle_t instanceHandle) {
+        super(reader, instanceHandle, ice.SampleArray.class, ice.SampleArraySeq.class);
+    }
+    
     public SampleArrayWaveformSource(final ice.SampleArrayDataReader reader, ice.SampleArray keyHolder) {
         super(reader, keyHolder, ice.SampleArray.class, ice.SampleArraySeq.class);
         log.debug("Created a SampleArrayWaveformSource for " + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
@@ -28,13 +32,7 @@ public class SampleArrayWaveformSource extends AbstractDdsWaveformSource<ice.Sam
     public void iterate(final WaveformIterator itr) {
         try {
             itr.begin();
-            InstanceHandle_t instanceHandle = null;
-            try {
-                instanceHandle = reader.lookup_instance(keyHolder);
-            } catch(RETCODE_ALREADY_DELETED alreadyDeleted) {
-                log.warn("Tried to iterate a deleted instance ");
-                return;
-            }
+
             if(null == instanceHandle || instanceHandle.is_nil()) {
                 log.warn("Tried to iterate a null or nil instance ");
                 return;
@@ -62,7 +60,7 @@ public class SampleArrayWaveformSource extends AbstractDdsWaveformSource<ice.Sam
                                 itr.sample(tm, value);
                             }
                         } else {
-                            log.warn("Invalid frequency " + sampleArray.frequency + " for " + keyHolder.unique_device_identifier + " " + keyHolder.metric_id + " " + keyHolder.instance_id);
+                            log.warn("Invalid frequency " + sampleArray.frequency + " for " + sampleArray.unique_device_identifier + " " + sampleArray.metric_id + " " + sampleArray.instance_id);
                         }
                     } else {
                         // instance lifecycle event with no attached data.
