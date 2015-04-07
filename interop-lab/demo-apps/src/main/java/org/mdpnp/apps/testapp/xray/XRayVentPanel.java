@@ -42,6 +42,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.util.Callback;
 
+import org.mdpnp.apps.fxbeans.FilteredList;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
@@ -163,7 +164,7 @@ public class XRayVentPanel {
         if(null != deviceNumericModel) {
             deviceNumericModel.removeListener(numericListener);
         }
-        deviceNumericModel = numericList.filtered(new Predicate<NumericFx>() {
+        deviceNumericModel = new FilteredList<>(numericList, new Predicate<NumericFx>() {
             @Override
             public boolean test(NumericFx t) {
                 return source.equals(t.getUnique_device_identifier());
@@ -189,13 +190,11 @@ public class XRayVentPanel {
 
     public XRayVentPanel set(final Subscriber subscriber, final EventLoop eventLoop, final DeviceListModel deviceListModel, final NumericFxList numericList) {
         this.numericList = numericList;
-        startOfBreathModel = numericList.filtered(new Predicate<NumericFx>() {
-
+        startOfBreathModel = new FilteredList<>(numericList, new Predicate<NumericFx>() {
             @Override
             public boolean test(NumericFx t) {
                 return ice.MDC_START_INSPIRATORY_CYCLE.VALUE.equals(t.getMetric_id());
             }
-            
         });
         cameraPanel.set(executorNonCritical);
         manual.setUserData(Strategy.Manual);
