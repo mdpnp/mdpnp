@@ -1,6 +1,5 @@
 package org.mdpnp.apps.testapp.patient;
 
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -8,6 +7,7 @@ import javax.sql.DataSource;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * @author mfeinberg
@@ -16,7 +16,11 @@ class JdbcEMRImpl implements EMRFacade {
 
     private DataSource dataSource;
     private ObservableList<PatientInfo> patients = FXCollections.observableArrayList();
+    private final Executor collectionUpdateHandler;
 
+    public JdbcEMRImpl(Executor executor) {
+        this.collectionUpdateHandler = executor;
+    }
     public DataSource getDataSource() {
         return dataSource;
     }
@@ -34,7 +38,7 @@ class JdbcEMRImpl implements EMRFacade {
     }
 
     public boolean createPatient(PatientInfo p) {
-        Platform.runLater( () -> {
+        collectionUpdateHandler.execute(() -> {
             patients.add(p);
         });
         return PatientInfo.createPatient(dataSource, p);
@@ -48,12 +52,12 @@ class JdbcEMRImpl implements EMRFacade {
     @Override
     public void refresh() {
         final List<PatientInfo> currentPatients = PatientInfo.queryAll(dataSource);
-        Platform.runLater( () -> {
+        collectionUpdateHandler.execute(() -> {
             patients.retainAll(currentPatients);
             Iterator<PatientInfo> itr = currentPatients.iterator();
-            while(itr.hasNext()) {
+            while (itr.hasNext()) {
                 PatientInfo pi = itr.next();
-                if(!patients.contains(pi)) {
+                if (!patients.contains(pi)) {
                     patients.add(pi);
                 }
             }

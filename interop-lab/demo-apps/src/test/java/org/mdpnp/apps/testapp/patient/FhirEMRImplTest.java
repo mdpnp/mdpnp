@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp.patient;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +27,11 @@ public class FhirEMRImplTest {
 
         String url = p.getProperty("mdpnp.fhir.url");
 
-        FhirEMRImpl emr = new FhirEMRImpl();
+        FhirEMRImpl emr = new FhirEMRImpl(new FxRuntimeSupport.CurrentThreadExecutor());
         emr.setUrl(url);
+        emr.setFhirContext(ca.uhn.fhir.context.FhirContext.forDstu2());
 
+        emr.refresh();
         List<PatientInfo> l = emr.getPatients();
         Assert.assertTrue("Failed to load patients", l.size() != 0);
         for (PatientInfo pi : l) {
@@ -47,8 +50,9 @@ public class FhirEMRImplTest {
 
         String url = p.getProperty("mdpnp.fhir.url");
 
-        FhirEMRImpl emr = new FhirEMRImpl();
+        FhirEMRImpl emr = new FhirEMRImpl(new FxRuntimeSupport.CurrentThreadExecutor());
         emr.setUrl(url);
+        emr.setFhirContext(ca.uhn.fhir.context.FhirContext.forDstu2());
 
         String id = Long.toHexString(System.currentTimeMillis());
         String fn = "First" + id;

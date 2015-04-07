@@ -1,13 +1,13 @@
 package org.mdpnp.apps.testapp.patient;
 
+import javafx.application.Platform;
 import org.springframework.beans.factory.FactoryBean;
 
 import ca.uhn.fhir.context.FhirContext;
 import javafx.collections.ObservableList;
 
 import javax.sql.DataSource;
-
-import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * @author mfeinberg
@@ -53,17 +53,17 @@ public interface EMRFacade {
         public EMRFacade getObject() throws Exception {
             if(instance == null) {
                 if(fhirEMRUrl == null) {
-                    instance = new JdbcEMRImpl();
+                    instance = new JdbcEMRImpl(new ExecutorFx());
                     ((JdbcEMRImpl)instance).setDataSource(jdbcDB);
                 }
                 else {
-                    instance = new FhirEMRImpl();
+                    instance = new FhirEMRImpl(new ExecutorFx());
                     ((FhirEMRImpl)instance).setDataSource(jdbcDB);
                     ((FhirEMRImpl)instance).setUrl(fhirEMRUrl);
                     ((FhirEMRImpl)instance).setFhirContext(fhirContext);
                 }
             }
-            new Thread( () -> instance.refresh()).start();
+            new Thread( () -> instance.refresh(), "EMRFacade refresh").start();
 
             return instance;
         }
@@ -76,6 +76,14 @@ public interface EMRFacade {
         @Override
         public boolean isSingleton() {
             return true;
+        }
+    }
+
+    public static class ExecutorFx implements Executor {
+
+        @Override
+        public void execute(Runnable command) {
+            Platform.runLater(command);
         }
     }
 }

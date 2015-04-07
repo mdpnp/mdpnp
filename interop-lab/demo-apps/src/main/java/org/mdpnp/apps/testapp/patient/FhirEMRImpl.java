@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.dstu2.composite.HumanNameDt;
@@ -13,7 +14,6 @@ import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
 import ca.uhn.fhir.model.primitive.DateDt;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.IGenericClient;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -29,10 +29,17 @@ import static ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL;
 class FhirEMRImpl implements EMRFacade {
 
     private static final String HL7_ICE_URN_OID = "urn:oid:2.16.840.1.113883.3.1974";
-    private FhirContext fhirContext;
-    private String      fhirURL;
-    private JdbcEMRImpl jdbcEMR = new JdbcEMRImpl();
+    private FhirContext       fhirContext;
+    private String            fhirURL;
+    private final JdbcEMRImpl jdbcEMR;
+    private final Executor collectionUpdateHandler;
+
     private final ObservableList<PatientInfo> patients = FXCollections.observableArrayList();
+
+    public FhirEMRImpl(Executor executor) {
+        this.collectionUpdateHandler = executor;
+        this.jdbcEMR = new JdbcEMRImpl(executor);
+    }
 
     public String getUrl() {
         return fhirURL;
@@ -68,7 +75,7 @@ class FhirEMRImpl implements EMRFacade {
     public ObservableList<PatientInfo> getPatients() {
         return patients;
     }
-    
+
     @Override
     public void refresh() {
         IGenericClient fhirClient = fhirContext.newRestfulGenericClient(fhirURL);
@@ -101,12 +108,12 @@ class FhirEMRImpl implements EMRFacade {
                 }
             }
         }
-        Platform.runLater(() -> {
+        collectionUpdateHandler.execute(() -> {
             patients.retainAll(toRet);
             Iterator<PatientInfo> itr = toRet.iterator();
-            while(itr.hasNext()) {
+            while (itr.hasNext()) {
                 PatientInfo pi = itr.next();
-                if(!patients.contains(pi)) {
+                if (!patients.contains(pi)) {
                     this.patients.add(pi);
                 }
             }
@@ -114,7 +121,7 @@ class FhirEMRImpl implements EMRFacade {
     }
 
     public boolean createPatient(final PatientInfo p) {
-        Platform.runLater( () -> {
+        collectionUpdateHandler.execute(() -> {
             patients.add(p);
         });
         

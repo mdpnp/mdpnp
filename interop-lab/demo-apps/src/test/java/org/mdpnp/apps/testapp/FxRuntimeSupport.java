@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.FutureTask;
 
 /**
@@ -167,4 +168,16 @@ public class FxRuntimeSupport {
     }
 
     Stage lastStage;
+
+
+    /**
+     * to be used in test cases that do not need full-blown fx platform to be initiated to run
+     */
+    public static class CurrentThreadExecutor implements Executor {
+
+        @Override
+        public void execute(Runnable command) {
+            command.run();
+        }
+    }
 }

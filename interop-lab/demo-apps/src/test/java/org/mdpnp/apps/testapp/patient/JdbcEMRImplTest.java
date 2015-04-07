@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp.patient;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,9 +28,10 @@ public class JdbcEMRImplTest {
         ds.init();
 
         try {
-            JdbcEMRImpl emr = new JdbcEMRImpl();
+            JdbcEMRImpl emr = new JdbcEMRImpl(new FxRuntimeSupport.CurrentThreadExecutor());
             emr.setDataSource(ds);
 
+            emr.refresh();
             List<PatientInfo> l = emr.getPatients();
             Assert.assertEquals("Failed to load patients", 5, l.size());
             for (PatientInfo pi : l) {
@@ -52,7 +54,7 @@ public class JdbcEMRImplTest {
         ds.init();
 
         try {
-            JdbcEMRImpl emr = new JdbcEMRImpl();
+            JdbcEMRImpl emr = new JdbcEMRImpl(new FxRuntimeSupport.CurrentThreadExecutor());
             emr.setDataSource(ds);
 
             String id = Long.toHexString(System.currentTimeMillis());
