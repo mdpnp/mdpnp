@@ -142,6 +142,7 @@ public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.
         setDevice_time(new Date(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L));
         setPresentation_time(new Date(v.presentation_time.sec * 1000L + v.presentation_time.nanosec / 1000000L));
         // The source_timestamp is convenient to key collection updates from so we fire it last
+        
         super.update(v, s);
     }
 

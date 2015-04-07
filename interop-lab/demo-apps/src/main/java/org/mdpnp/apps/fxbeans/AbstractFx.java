@@ -10,11 +10,11 @@ import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.SampleInfo;
 
 public abstract class AbstractFx<D extends Copyable> implements Updatable<D> {
-    private InstanceHandle_t handle;
+    private InstanceHandle_t handle = InstanceHandle_t.HANDLE_NIL;
     
     @Override
     public void update(D data, SampleInfo sampleInfo) {
-        if(handle == null) {
+        if(handle.is_nil()) {
             handle = new InstanceHandle_t(sampleInfo.instance_handle);
         } else if(!handle.equals(sampleInfo.instance_handle)) {
             // TODO this is weird
