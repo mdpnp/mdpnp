@@ -12,224 +12,73 @@
  ******************************************************************************/
 package org.mdpnp.apps.device;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Set;
 
-import javafx.application.Application;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
 import javafx.scene.paint.Color;
-import javafx.scene.text.TextAlignment;
-import javafx.stage.Stage;
-
-import org.mdpnp.apps.fxbeans.NumericFx;
-import org.mdpnp.apps.fxbeans.SampleArrayFx;
-import org.mdpnp.guis.waveform.NumericWaveformSource;
-import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
-import org.mdpnp.guis.waveform.TestWaveformSource;
-import org.mdpnp.guis.waveform.WaveformPanel;
-import org.mdpnp.guis.waveform.WaveformPanelFactory;
-import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.sun.javafx.tk.FontMetrics;
-import com.sun.javafx.tk.Toolkit;
+import javafx.scene.paint.Paint;
 
 /**
  * @author Jeff Plourde
  *
  */
-public class PulseOximeterPanel extends DevicePanel {
+public class PulseOximeterPanel extends AbstractWaveAndParamsPanel {
+    private final static String[] PLETH_WAVEFORMS = new String[] { rosetta.MDC_PULS_OXIM_PLETH.VALUE };
 
-    @SuppressWarnings("unused")
-    private Label spo2, heartrate, spo2Label, heartrateLabel;
-    private Label spo2Low, spo2Up, heartrateLow, heartrateUp;
-    private GridPane spo2Bounds, heartrateBounds;
-    private BorderPane spo2Panel, heartratePanel;
-    private WaveformPanel pulsePanel, plethPanel;
-    private Label time;
-//    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private final static String[][] PARAMS = new String[][] { { rosetta.MDC_PULS_OXIM_SAT_O2.VALUE }, { rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE } };
 
-    protected void buildComponents() {
-        spo2Bounds = new GridPane();
-        spo2Bounds.add(spo2Up = new Label("--"), 0, 0);
-        spo2Bounds.add(spo2Low = new Label("--"), 0, 1);
-        spo2Bounds.add(spo2Label = new Label("%"), 0, 2);
-        spo2Up.setVisible(false);
-        spo2Low.setVisible(false);
+    private final static String[] PARAM_LABELS = new String[] { "Pulse", "SpO\u2082" };
 
-        spo2Panel = new BorderPane();
-        spo2Panel.setTop(new Label("SpO\u2082"));
-        spo2Panel.setCenter(spo2 = new Label("----"));
-        spo2.setAlignment(Pos.CENTER_RIGHT);
-        spo2Panel.setRight(spo2Bounds);
+    private final static String[] PARAM_UNITS = new String[] { "BPM", "%" };
 
-        heartrateBounds = new GridPane();
-        heartrateBounds.add(heartrateUp = new Label("--"), 0, 0);
-        heartrateBounds.add(heartrateLow = new Label("--"), 0, 1);
-        heartrateBounds.add(heartrateLabel = new Label("BPM"), 0, 2);
-        heartrateUp.setVisible(false);
-        heartrateLow.setVisible(false);
-
-        heartratePanel = new BorderPane();
-        Label lbl;
-        heartratePanel.setTop(lbl = new Label("Pulse Rate"));
-        FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(lbl.getFont());
-        float w = fm.computeStringWidth("RespiratoryRate");
-        lbl.setMinWidth(w);
-        lbl.setPrefWidth(w);
-        heartratePanel.setCenter(heartrate = new Label("----"));
-        heartrate.setTextAlignment(TextAlignment.RIGHT);
-        heartrate.setAlignment(Pos.CENTER_RIGHT);
-        heartratePanel.setRight(heartrateBounds);
-
-        WaveformPanelFactory fact = new WaveformPanelFactory();
-
-        plethPanel = fact.createWaveformPanel();
-        pulsePanel = fact.createWaveformPanel();
-
-        GridPane upper = new GridPane();
-        BorderPane x = label("Plethysmogram", (Node) plethPanel);
-        GridPane.setVgrow(x, Priority.ALWAYS);
-        GridPane.setHgrow(x, Priority.ALWAYS);
-        upper.add(x, 0, 0);
-        x = label("Pulse Rate", (Node) pulsePanel);
-        GridPane.setVgrow(x, Priority.ALWAYS);
-        GridPane.setHgrow(x, Priority.ALWAYS);
-        upper.add(x, 0, 1);
-
-        GridPane east = new GridPane();
-        east.add(spo2Panel, 0, 0);
-        east.add(heartratePanel, 0, 1);
-
-        setCenter(upper);
-        setRight(east);
-
-        setBottom(labelLeft("Last Sample: ", time = new Label("TIME")));
-
-        ((JavaFXWaveformPane)plethPanel).getCanvas().getGraphicsContext2D().setStroke(Color.CYAN);
-        ((JavaFXWaveformPane)pulsePanel).getCanvas().getGraphicsContext2D().setStroke(Color.CYAN);
-    }
-
-    public PulseOximeterPanel() {
-        getStyleClass().add("pulse-oximeter-panel");
-        buildComponents();
-        plethPanel.setSource(plethWave);
-        pulsePanel.setSource(pulseWave);
-        
-        plethPanel.start();
-        pulsePanel.start();
-    }
-
-    private SampleArrayWaveformSource plethWave;
-    private NumericWaveformSource pulseWave;
+    private final static String[] PLETH_LABELS = new String[] { "Plethysmogram" };
 
     @Override
-    public void destroy() {
-        plethPanel.setSource(null);
-        pulsePanel.setSource(null);
-        plethPanel.stop();
-        pulsePanel.stop();
-        
-        if(deviceMonitor != null) {
-            deviceMonitor.getNumericModel().removeListener(numericListener);
-            deviceMonitor.getSampleArrayModel().removeListener(sampleArrayListener);
-        }
-        super.destroy();
-    }
-
-    public static boolean supported(Set<String> names) {
-        return names.contains(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE) && names.contains(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);// &&
+    public String getStyleClassName() {
+        return "pulse-oximeter-panel";
     }
 
     @Override
-    public void set(DeviceDataMonitor deviceMonitor) {
-        super.set(deviceMonitor);
-        deviceMonitor.getNumericModel().addListener(numericListener);
-        deviceMonitor.getNumericModel().forEach((t)->add(t));
-        
-        deviceMonitor.getSampleArrayModel().addListener(sampleArrayListener);
-        deviceMonitor.getSampleArrayModel().forEach((t)->add(t));
-    }
-    
-    @SuppressWarnings("unused")
-    private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
-    
-    protected void add(NumericFx data) {
-        if(!time.textProperty().isBound()) {
-            time.textProperty().bind(data.presentation_timeProperty().asString());
-        }
-        
-        if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(data.getMetric_id())) {
-            heartrate.textProperty().bind(data.valueProperty().asString("%.0f"));
-            if(null == pulseWave) {
-                pulseWave = new NumericWaveformSource(deviceMonitor.getNumericList().getReader(), data.getHandle());
-                pulsePanel.setSource(pulseWave);
-            }
-        } else if(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(data.getMetric_id())) {
-            spo2.textProperty().bind(data.valueProperty().asString("%.0f"));
-        }
-    }
-    
-    protected void remove(NumericFx data) {
-        // TODO this is flaky
-        time.textProperty().unbind();
-        if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(data.getMetric_id())) {
-            heartrate.textProperty().unbind();
-            if(null != pulseWave) {
-                pulsePanel.setSource(null);
-                pulseWave = null;
-            }
-        } else if(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(data.getMetric_id())) {
-            spo2.textProperty().unbind();
-        }
+    public int getParameterCount() {
+        return 2;
     }
 
-    private final OnListChange<NumericFx> numericListener = new OnListChange<NumericFx>(
-            (t)->add(t), null, (t)->remove(t));
-    
-    protected void add(SampleArrayFx data) {
-        if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(data.getMetric_id())) {
-            if(null == plethWave) {
-                plethWave = new SampleArrayWaveformSource(deviceMonitor.getSampleArrayList().getReader(), data.getHandle());
-                plethPanel.setSource(plethWave);
+    @Override
+    public String getParameterLabel(int i) {
+        return PARAM_LABELS[i];
+    }
+
+    @Override
+    public String[] getParameterMetricIds(int i) {
+        return PARAMS[i];
+    }
+
+    @Override
+    public String getParameterUnits(int i) {
+        return PARAM_UNITS[i];
+    }
+
+    @Override
+    public String[] getWaveformLabels() {
+        return PLETH_LABELS;
+    }
+
+    @Override
+    public String[] getWaveformMetricIds() {
+        return PLETH_WAVEFORMS;
+    }
+
+    @Override
+    public Paint getWaveformPaint() {
+        return Color.CYAN;
+    }
+
+    public static boolean supported(Set<String> identifiers) {
+        for (String w : PLETH_WAVEFORMS) {
+            if (identifiers.contains(w)) {
+                return true;
             }
         }
-    }
-    protected void remove(SampleArrayFx data) {
-        if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(data.getMetric_id())) {
-            if(null != plethWave) {
-                plethPanel.setSource(null);
-                plethWave = null;
-            }
-        }
+        return false;
     }
 
-    
-    private final OnListChange<SampleArrayFx> sampleArrayListener = new OnListChange<SampleArrayFx>(
-            (t)->add(t), null, (t)->remove(t));
-
-    
-    public static class MainApp extends Application {
-
-        @Override
-        public void start(Stage primaryStage) throws Exception {
-            PulseOximeterPanel p = new PulseOximeterPanel();
-            p.plethPanel.setSource(new TestWaveformSource());
-            primaryStage.setScene(new Scene(p));
-            primaryStage.show();
-        }
-        
-    }
-    
-    public static void main(String[] args) {
-        Application.launch(MainApp.class, args);
-    }
 }

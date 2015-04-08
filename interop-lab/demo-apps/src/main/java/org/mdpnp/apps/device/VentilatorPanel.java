@@ -14,157 +14,70 @@ package org.mdpnp.apps.device;
 
 import java.util.Set;
 
-import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
 import javafx.scene.paint.Color;
-
-import org.mdpnp.apps.fxbeans.NumericFx;
-import org.mdpnp.apps.fxbeans.SampleArrayFx;
-import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
-import org.mdpnp.guis.waveform.WaveformPanel;
-import org.mdpnp.guis.waveform.WaveformPanelFactory;
-import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javafx.scene.paint.Paint;
 
 /**
  * @author Jeff Plourde
  *
  */
-public class VentilatorPanel extends DevicePanel {
-    private WaveformPanel flowPanel, pressurePanel, co2Panel;
-    private final Label time = new Label(" "), respiratoryRate = new Label(" "), endTidalCO2 = new Label(" ");
-//    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+public class VentilatorPanel extends AbstractWaveAndParamsPanel {
+    private final static String[] RR_WAVEFORMS = new String[] { rosetta.MDC_FLOW_AWAY.VALUE, rosetta.MDC_PRESS_AWAY.VALUE,
+            rosetta.MDC_AWAY_CO2.VALUE, rosetta.MDC_IMPED_TTHOR.VALUE };
+
+    private final static String[][] PARAMS = new String[][] {
+            { rosetta.MDC_RESP_RATE.VALUE, rosetta.MDC_CO2_RESP_RATE.VALUE, rosetta.MDC_TTHOR_RESP_RATE.VALUE }, { rosetta.MDC_AWAY_CO2_ET.VALUE } };
+    private final static String[] PARAM_LABELS = new String[] { "Resp Rate", "etCO2" };
+    private final static String[] PARAM_UNITS = new String[] { "BPM", "mmHg" };
+
+    private final static String[] RR_LABELS = new String[] { "Flow", "Pressure", "CO2", "Impedance" };
 
     @Override
-    public void destroy() {
-        flowPanel.stop();
-        pressurePanel.stop();
-        co2Panel.stop();
-        flowPanel.setSource(null);
-        pressurePanel.setSource(null);
-        co2Panel.setSource(null);
-        deviceMonitor.getNumericModel().removeListener(numericListener);
-        deviceMonitor.getSampleArrayModel().removeListener(sampleArrayListener);
-
-        super.destroy();
+    public String getStyleClassName() {
+        return "ventilator-panel";
     }
 
-    protected void buildComponents() {
-        WaveformPanelFactory fact = new WaveformPanelFactory();
-        flowPanel = fact.createWaveformPanel();
-        pressurePanel = fact.createWaveformPanel();
-        co2Panel = fact.createWaveformPanel();
-
-        ((JavaFXWaveformPane)flowPanel).getCanvas().getGraphicsContext2D().setStroke(Color.WHITE);
-        ((JavaFXWaveformPane)pressurePanel).getCanvas().getGraphicsContext2D().setStroke(Color.WHITE);
-        ((JavaFXWaveformPane)co2Panel).getCanvas().getGraphicsContext2D().setStroke(Color.WHITE);
-        
-        
-        GridPane waves = new GridPane();
-        Node x = label("Flow", (Node) flowPanel);
-        GridPane.setVgrow(x, Priority.ALWAYS);
-        GridPane.setHgrow(x, Priority.ALWAYS);
-        waves.add(x, 0, 0);
-        
-        x = label("Pressure", (Node) pressurePanel);
-        GridPane.setVgrow(x, Priority.ALWAYS);
-        GridPane.setHgrow(x, Priority.ALWAYS);
-        waves.add(x, 0, 1);
-        
-        x = label("CO\u2082", (Node) co2Panel);
-        GridPane.setVgrow(x, Priority.ALWAYS);
-        GridPane.setHgrow(x, Priority.ALWAYS);
-        waves.add(x, 0, 2);
-
-        setCenter(waves);
-
-        setBottom(labelLeft("Last Sample: ", time));
-
-        GridPane numerics = new GridPane();
-        BorderPane t;
-        numerics.add(t = label("etCO\u2082", endTidalCO2), 0, 0);
-        t.setRight(new Label(" "));
-        numerics.add(t = label("RespiratoryRate", respiratoryRate), 0, 1);
-        t.setRight(new Label("BPM"));
-        setRight(numerics);
-
-        flowPanel.start();
-        pressurePanel.start();
-        co2Panel.start();
-
+    @Override
+    public int getParameterCount() {
+        return 2;
     }
 
-    public VentilatorPanel() {
-        getStyleClass().add("ventilator-panel");
-        buildComponents();
-
+    @Override
+    public String getParameterLabel(int i) {
+        return PARAM_LABELS[i];
     }
 
-    @SuppressWarnings("unused")
-    private static final Logger log = LoggerFactory.getLogger(VentilatorPanel.class);
+    @Override
+    public String[] getParameterMetricIds(int i) {
+        return PARAMS[i];
+    }
+
+    @Override
+    public String getParameterUnits(int i) {
+        return PARAM_UNITS[i];
+    }
+
+    @Override
+    public String[] getWaveformLabels() {
+        return RR_LABELS;
+    }
+
+    @Override
+    public String[] getWaveformMetricIds() {
+        return RR_WAVEFORMS;
+    }
+
+    @Override
+    public Paint getWaveformPaint() {
+        return Color.WHITE;
+    }
 
     public static boolean supported(Set<String> identifiers) {
-        return identifiers.contains(rosetta.MDC_PRESS_AWAY.VALUE) || identifiers.contains(rosetta.MDC_AWAY_CO2.VALUE);
-    }
-
-    @Override
-    public void set(DeviceDataMonitor deviceMonitor) {
-        super.set(deviceMonitor);
-        deviceMonitor.getNumericModel().addListener(numericListener);
-        deviceMonitor.getNumericModel().forEach((t)->add(t));
-        
-        deviceMonitor.getSampleArrayModel().addListener(sampleArrayListener);
-        deviceMonitor.getSampleArrayModel().forEach((t)->add(t));
-    }
-    
-    protected void add(NumericFx data) {
-        if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(data.getMetric_id()) || rosetta.MDC_AWAY_RESP_RATE.VALUE.equals(data.getMetric_id())) {
-            respiratoryRate.textProperty().bind(data.valueProperty().asString("%.0f"));
-        } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(data.getMetric_id())) {
-            endTidalCO2.textProperty().bind(data.valueProperty().asString("%.0f"));
+        for (String w : RR_WAVEFORMS) {
+            if (identifiers.contains(w)) {
+                return true;
+            }
         }
+        return false;
     }
-    
-    protected void remove(NumericFx data) {
-        if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(data.getMetric_id()) || rosetta.MDC_AWAY_RESP_RATE.VALUE.equals(data.getMetric_id())) {
-            respiratoryRate.textProperty().unbind();
-        } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(data.getMetric_id())) {
-            endTidalCO2.textProperty().unbind();
-        }
-    }
-    
-    protected void add(SampleArrayFx data) {
-        if(!time.textProperty().isBound()) {
-            time.textProperty().bind(data.presentation_timeProperty().asString());
-        }
-        if (rosetta.MDC_FLOW_AWAY.VALUE.equals(data.getMetric_id())) {
-            flowPanel.setSource(new SampleArrayWaveformSource(deviceMonitor.getSampleArrayList().getReader(), data.getHandle()));
-        } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(data.getMetric_id())) {
-            pressurePanel.setSource(new SampleArrayWaveformSource(deviceMonitor.getSampleArrayList().getReader(), data.getHandle()));   
-        } else if (rosetta.MDC_AWAY_CO2.VALUE.equals(data.getMetric_id())) {
-            co2Panel.setSource(new SampleArrayWaveformSource(deviceMonitor.getSampleArrayList().getReader(), data.getHandle()));
-        }
-    }
-    
-    protected void remove(SampleArrayFx data) {
-        time.textProperty().unbind();
-        if (rosetta.MDC_FLOW_AWAY.VALUE.equals(data.getMetric_id())) {
-            flowPanel.setSource(null);
-        } else if (rosetta.MDC_PRESS_AWAY.VALUE.equals(data.getMetric_id())) {
-            pressurePanel.setSource(null);   
-        } else if (rosetta.MDC_AWAY_CO2.VALUE.equals(data.getMetric_id())) {
-            co2Panel.setSource(null);
-        }
-    }
-    
-    private final OnListChange<NumericFx> numericListener = new OnListChange<NumericFx>(
-            (t)->add(t), null, (t)->remove(t));
-    
-    private final OnListChange<SampleArrayFx> sampleArrayListener = new OnListChange<SampleArrayFx>(
-            (t)->add(t), null, (t)->remove(t));
-    
-    }
+}

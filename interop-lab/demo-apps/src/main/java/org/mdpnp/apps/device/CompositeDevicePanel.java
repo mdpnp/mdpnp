@@ -58,7 +58,11 @@ public class CompositeDevicePanel extends BorderPane {
 
 
     public CompositeDevicePanel()  {
+        getStylesheets().add(getClass().getResource("demo-guis-javafx.css").toExternalForm());
+        getStyleClass().add("composite");
+        
         GridPane header = new GridPane();
+        header.setHgap(10.0);
 
         header.add(new Label("Manufacturer"), 0, 0);
         header.add(manufacturer, 1, 0);
