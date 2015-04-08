@@ -18,8 +18,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Observable;
-import java.util.Observer;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 import javafx.application.Platform;
@@ -54,15 +53,98 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.rti.dds.subscription.Subscriber;
+import org.springframework.jmx.export.naming.ObjectNamingStrategy;
+
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 
 public abstract class DeviceAdapterImpl extends Observable implements DeviceAdapter {
 
     private static final Logger log = LoggerFactory.getLogger(DeviceAdapterImpl.class);
 
+    public static class AbstractDeviceFactory implements FactoryBean<AbstractDevice>, ApplicationContextAware {
+        @Override
+        public AbstractDevice getObject() throws Exception {
+            if(instance == null) {
+                DeviceType type = deviceFactory.getDeviceType();
+
+                log.trace("Create DeviceAdapter with type=" + type);
+                if (ConnectionType.Network.equals(type.getConnectionType())) {
+                    SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
+                    log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
+                }
+
+                instance = deviceFactory.create(context);
+            }
+            return instance;
+        }
+
+        @Override
+        public Class<?> getObjectType() {
+            return AbstractDevice.class;
+        }
+
+        @Override
+        public boolean isSingleton() {
+            return true;
+        }
+
+        @Override
+        public void setApplicationContext(ApplicationContext ac) throws BeansException {
+            context = ac;
+        }
+
+        public void shutdown() {
+            if(instance != null)
+                instance.shutdown();
+        }
+
+        public void setDeviceFactory(DeviceDriverProvider deviceFactory) {
+            this.deviceFactory = deviceFactory;
+        }
+
+        private AbstractDevice instance;
+        protected ApplicationContext context;
+        protected DeviceDriverProvider deviceFactory;
+    }
+
+    public static class DeviceFactoryNamingStrategy implements ObjectNamingStrategy,ApplicationContextAware {
+
+        @Override
+        public ObjectName getObjectName(Object o, String s) throws MalformedObjectNameException {
+
+            Hashtable<String, String> m = new Hashtable<>();
+            m.put("service", s);
+            ObjectName on = new ObjectName("mdpnp.driver." + context.getId(), m);
+            return on;
+        }
+
+        @Override
+        public void setApplicationContext(ApplicationContext ac) throws BeansException {
+            context = ac;
+        }
+        protected ApplicationContext context;
+    }
+
+    /**
+     * single vm batch command. assumes none of the run-time support available yet - no
+     * top-level spring context exists yet.
+     */
     public static class DeviceAdapterCommand implements Configuration.HeadlessCommand, Configuration.GUICommand {
 
         @Override
@@ -81,7 +163,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
                 throw new Exception("Unknown device type was specified");
             }
 
-            final AbstractApplicationContext context = config.createContext("DriverContext.xml");
+            final AbstractApplicationContext context = config.createContext("DeviceAdapterContext.xml");
 
             DeviceAdapter da = new DeviceAdapterImpl.HeadlessAdapter(ddp, context, true);
 
@@ -111,7 +193,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
                 throw new Exception("Unknown device type was specified");
             }
 
-            final AbstractApplicationContext context = config.createContext("DriverContext.xml");
+            final AbstractApplicationContext context = config.createContext("DeviceAdapterContext.xml");
 
             GUIAdapter da = new GUIAdapter(ddp, context) {
                 @Override
@@ -143,9 +225,52 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
     protected final AbstractApplicationContext context;
     protected final DeviceDriverProvider deviceFactory;
 
-    protected DeviceAdapterImpl(DeviceDriverProvider df, AbstractApplicationContext ctx) {
+    protected DeviceAdapterImpl(DeviceDriverProvider df, AbstractApplicationContext parentContext) {
         deviceFactory = df;
-        context = ctx;
+
+        String contextPath = "classpath*:/DriverContext.xml";
+
+        context = new ClassPathXmlApplicationContext(new String[] { contextPath }, false, parentContext);
+        context.setDisplayName(df.getDeviceType().toString());
+        context.setId(df.getDeviceType().getAlias() + hashCode());
+
+        BeanPostProcessor bpp = new BeanPostProcessor() {
+            @Override
+            public Object postProcessBeforeInitialization(Object o, String s) throws BeansException {
+                if(o instanceof AbstractDeviceFactory) {
+                    ((AbstractDeviceFactory)o).setDeviceFactory(df);
+                }
+                return o;
+            }
+
+            @Override
+            public Object postProcessAfterInitialization(Object o, String s) throws BeansException {
+                return o;
+            }
+        };
+
+        context.addBeanFactoryPostProcessor(new BeanFactoryPostProcessor()
+        {
+            @Override
+            public void postProcessBeanFactory(ConfigurableListableBeanFactory configurableListableBeanFactory) throws BeansException {
+                configurableListableBeanFactory.registerSingleton("driverFactoryProcessor", bpp);
+            }
+        });
+
+        context.refresh();
+
+        parentContext.addApplicationListener(new ApplicationListener<ContextClosedEvent>()
+        {
+            @Override
+            public void onApplicationEvent(ContextClosedEvent contextClosedEvent) {
+                // only care to trap parent close events to kill the child context
+                if(parentContext == contextClosedEvent.getApplicationContext()) {
+                    log.info("Handle parent context shutdown event");
+                    context.close();
+                }
+            }
+        });
+
     }
 
     @Override
@@ -202,6 +327,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
     @Override
     public void stop()
     {
+        context.close();
         stopOk.countDown();
         setChanged();
         notifyObservers(AdapterState.stopped);
@@ -226,6 +352,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
         @Override
         public void init() throws Exception {
 
+            /* //MIKEFIX
             DeviceType type = deviceFactory.getDeviceType();
 
             log.trace("Starting DeviceAdapter with type=" + type);
@@ -233,8 +360,9 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
                 SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
                 log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
             }
+            */
 
-            device = deviceFactory.create(context);
+            device = context.getBean(AbstractDevice.class); //deviceFactory.create(context);
 
             if (null != initialPartition) {
                 device.setPartition(initialPartition);

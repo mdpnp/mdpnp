@@ -69,8 +69,11 @@ import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
+import org.springframework.jmx.export.annotation.ManagedAttribute;
+import org.springframework.jmx.export.annotation.ManagedResource;
 
-public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBean {
+@ManagedResource(description="MDPNP Device Driver")
+public abstract class AbstractDevice implements ThreadFactory {
     protected final ThreadGroup threadGroup;
     protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(this);
     protected final EventLoop eventLoop;
@@ -773,7 +776,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
         threadGroup.setDaemon(true);
         this.eventLoop = eventLoop;
-        
+
         executor.scheduleWithFixedDelay(new Runnable() {
             public void run() {
                 partitionAssignmentController.checkForPartitionFile();
@@ -807,7 +810,7 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         if (null == deviceIdentity.unique_device_identifier || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("cannot write deviceIdentity without a UDI");
         }
-        registerForManagement();
+        //MIKEFIX registerForManagement();
         
         if(null == timeManager) {
             timeManager = new TimeManager(executor, eventLoop, publisher, subscriber, deviceIdentity.unique_device_identifier, "Device");
@@ -877,25 +880,26 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                     });
         }
     }
-    
-    @Override
+
+    @ManagedAttribute(description="Device Manufacturer.")
     public String getManufacturer() {
         return null == deviceIdentity ? null : deviceIdentity.manufacturer;
     }
 
-    @Override
+    @ManagedAttribute(description="Device Model.")
     public String getModel() {
         return null == deviceIdentity ? null : deviceIdentity.model;
     }
 
-    @Override
+    @ManagedAttribute(description="Unique Device Identifier.")
     public String getUniqueDeviceIdentifier() {
         return null == deviceIdentity ? null : deviceIdentity.unique_device_identifier;
     }
 
     private ObjectInstance objInstance;
 
-    private void registerForManagement() {
+    /*
+    private void registerForManagement() { // MIKEFIX
         if (null == objInstance) {
             try {
                 objInstance = ManagementFactory.getPlatformMBeanServer().registerMBean(
@@ -907,23 +911,26 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             }
         }
     }
+    */
 
-    @Override
+    PartitionAssignmentController getPartitionAssignmentController() {
+        return partitionAssignmentController;
+    }
+
+    @ManagedAttribute(description="DDS partitions for this device")
     public String[] getPartition() {
         return partitionAssignmentController.getPartition();
     }
 
-    @Override
     public void addPartition(String partition) {
         partitionAssignmentController.addPartition(partition);
     }
 
-    @Override
     public void removePartition(String partition) {
         partitionAssignmentController.removePartition(partition);
     }
 
-    @Override
+    @ManagedAttribute(description="DDS partitions for this device")
     public void setPartition(String[] partition) {
         partitionAssignmentController.setPartition(partition);
     }

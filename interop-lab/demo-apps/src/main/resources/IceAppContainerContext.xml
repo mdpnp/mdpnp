@@ -9,10 +9,10 @@
                            http://www.springframework.org/schema/util/spring-util-4.1.xsd">
 
     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="order"                    value="1"/>
-        <property name="ignoreResourceNotFound"   value="true"/>
+        <property name="order"                         value="1"/>
+        <property name="ignoreResourceNotFound"         value="true"/>
         <property name="ignoreUnresolvablePlaceholders" value="true"/>
-        <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
+        <property name="systemPropertiesModeName"       value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
         <property name="locations">
             <list>
                 <value>classpath:/ice.properties</value>
@@ -21,7 +21,7 @@
     </bean>    
 
     <!-- ice.properties specified via import -->
-    <import resource="classpath:DriverContext.xml"/>
+    <import resource="classpath:RtConfig.xml"/>
         
     <bean id="refreshScheduler" class="java.util.concurrent.Executors"
           factory-method="newSingleThreadScheduledExecutor"

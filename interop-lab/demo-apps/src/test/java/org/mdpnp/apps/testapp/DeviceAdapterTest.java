@@ -54,7 +54,8 @@ public class DeviceAdapterTest {
 
     private void testGUIAdapter(DeviceDriverProvider ddp) throws Exception {
 
-        final AbstractApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"DriverContext.xml"});
+        final AbstractApplicationContext context =
+                new ClassPathXmlApplicationContext(new String[]{"DeviceAdapterContext.xml"});
 
         try {
             FxRuntimeSupport fxRt = FxRuntimeSupport.initialize();
@@ -92,7 +93,7 @@ public class DeviceAdapterTest {
 
     private void testHeadlessAdapter(DeviceDriverProvider ddp) throws Exception {
 
-        final AbstractApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"DriverContext.xml"});
+        final AbstractApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"DeviceAdapterContext.xml"});
 
         try {
             DeviceAdapter da = new DeviceAdapterImpl.HeadlessAdapter(ddp, context, false);
