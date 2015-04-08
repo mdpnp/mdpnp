@@ -37,8 +37,10 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ModifiableObservableListBase;
+import javafx.collections.ObservableList;
 import javafx.util.Callback;
 
+import org.mdpnp.apps.device.OnListChange;
 import org.mdpnp.apps.fxbeans.ElementObserver;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.testapp.Device;
@@ -344,10 +346,15 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     }
 
     final DeviceListModel deviceListModel;
+    final ObservableList<NumericFx> numericList;
     private final ElementObserver<Vital> elementObserver;
     
-    public VitalModelImpl(DeviceListModel deviceListModel) {
+    public VitalModelImpl(DeviceListModel deviceListModel, ObservableList<NumericFx> numericList) {
         this.deviceListModel = deviceListModel;
+        this.numericList = numericList;
+        
+        numericList.addListener(new OnListChange<>((fx)->addNumeric(fx), null, (fx)->removeNumeric(fx)));
+        numericList.forEach((fx)->addNumeric(fx));
 
         this.elementObserver = new ElementObserver<Vital>(extractor, new Callback<Vital, InvalidationListener>() {
 
@@ -396,6 +403,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         element.addListener(this);
         elementObserver.attachListener(element);
         vitals.add(index, element);
+        numericList.forEach((fx)->addNumeric(fx));
     }
 
     @Override
@@ -405,6 +413,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         elementObserver.detachListener(removed);
         elementObserver.attachListener(element);
         removed.addListener(this);
+        numericList.forEach((fx)->addNumeric(fx));
         return removed;
     }
 

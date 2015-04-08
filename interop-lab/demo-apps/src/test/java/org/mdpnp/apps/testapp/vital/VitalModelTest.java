@@ -6,16 +6,14 @@ import static org.junit.Assert.assertNotEquals;
 import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 
-import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.stage.Stage;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mdpnp.apps.fxbeans.NumericFx;
+import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.mdpnp.apps.testapp.SimpleDeviceListModel;
 import org.mdpnp.apps.testapp.pca.VitalSign;
@@ -33,7 +31,7 @@ public class VitalModelTest {
     
     @Before
     public void setUp() throws Exception {
-        model = new VitalModelImpl(new SimpleDeviceListModel());
+        model = new VitalModelImpl(new SimpleDeviceListModel(), new NumericFxList(ice.NumericTopic.VALUE));
         
     }
 
