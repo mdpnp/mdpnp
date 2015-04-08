@@ -2,6 +2,11 @@
   /* -fx-font-size: 20pt; */
 }
 
+.composite {
+    /*-fx-background-color: black;*/
+    /*-fx-text-fill:#EEEEEE;*/
+}
+
 .parameter {
     -fx-font-size: 20pt;
 }

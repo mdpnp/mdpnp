@@ -25,26 +25,13 @@ public class ElectroCardioGramPanel extends AbstractWaveAndParamsPanel {
     private final static String[] ECG_WAVEFORMS = new String[] { ice.MDC_ECG_LEAD_I.VALUE, ice.MDC_ECG_LEAD_II.VALUE, ice.MDC_ECG_LEAD_III.VALUE,
             ice.MDC_ECG_LEAD_V1.VALUE };
 
-    private final static String[][] PARAMS = new String[][] {
-            { rosetta.MDC_PRESS_BLD_SYS.VALUE, rosetta.MDC_PRESS_BLD_ART_SYS.VALUE, rosetta.MDC_PRESS_INTRA_CRAN_SYS.VALUE,
-                    rosetta.MDC_PRESS_BLD_AORT_SYS.VALUE, rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, rosetta.MDC_PRESS_BLD_ART_FEMORAL_SYS.VALUE,
-                    rosetta.MDC_PRESS_BLD_ART_PULM_SYS.VALUE, rosetta.MDC_PRESS_BLD_ART_UMB_SYS.VALUE, rosetta.MDC_PRESS_BLD_ATR_LEFT_SYS.VALUE,
-                    rosetta.MDC_PRESS_BLD_ATR_RIGHT_SYS.VALUE },
-            { rosetta.MDC_PRESS_BLD_DIA.VALUE, rosetta.MDC_PRESS_BLD_ART_DIA.VALUE, rosetta.MDC_PRESS_INTRA_CRAN_DIA.VALUE,
-                    rosetta.MDC_PRESS_BLD_AORT_DIA.VALUE, rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, rosetta.MDC_PRESS_BLD_ART_FEMORAL_DIA.VALUE,
-                    rosetta.MDC_PRESS_BLD_ART_PULM_DIA.VALUE, rosetta.MDC_PRESS_BLD_ART_UMB_DIA.VALUE, rosetta.MDC_PRESS_BLD_ATR_LEFT_DIA.VALUE,
-                    rosetta.MDC_PRESS_BLD_ATR_RIGHT_DIA.VALUE },
-            { rosetta.MDC_PRESS_BLD_MEAN.VALUE, rosetta.MDC_PRESS_BLD_ART_MEAN.VALUE, rosetta.MDC_PRESS_INTRA_CRAN_MEAN.VALUE,
-                    rosetta.MDC_PRESS_BLD_AORT_MEAN.VALUE, rosetta.MDC_PRESS_BLD_ART_ABP_MEAN.VALUE, rosetta.MDC_PRESS_BLD_ART_FEMORAL_MEAN.VALUE,
-                    rosetta.MDC_PRESS_BLD_ART_PULM_MEAN.VALUE, rosetta.MDC_PRESS_BLD_ART_UMB_MEAN.VALUE, rosetta.MDC_PRESS_BLD_ATR_LEFT_MEAN.VALUE,
-                    rosetta.MDC_PRESS_BLD_ATR_RIGHT_MEAN.VALUE } };
+    private final static String[][] PARAMS = new String[][] { { rosetta.MDC_ECG_HEART_RATE.VALUE }, { rosetta.MDC_TTHOR_RESP_RATE.VALUE }, };
 
     private final static String[] PARAM_LABELS = new String[] { "Heart Rate", "RespiratoryRate" };
 
     private final static String[] PARAM_UNITS = new String[] { "BPM", "BPM" };
 
-    private final static String[] ECG_LABELS = new String[] { "ECG LEAD I", "ECG LEAD II", "ECG LEAD III", "ECG LEAD V1", "ECG LEAD AVL",
-            "ECG LEAD AVR" };
+    private final static String[] ECG_LABELS = new String[] { "Lead I", "Lead II", "Lead III", "Lead V1" };
 
     @Override
     public String getStyleClassName() {

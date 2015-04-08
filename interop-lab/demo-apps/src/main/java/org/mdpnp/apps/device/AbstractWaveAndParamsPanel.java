@@ -41,8 +41,10 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
     private final Set<String>[] parameterMetrics;
   
   
-  private final Map<String, WaveformPanel> panelMap = new HashMap<String, WaveformPanel>();
+  private final Map<String, BorderPane> panelMap = new HashMap<String, BorderPane>();
   private final GridPane waves = new GridPane();
+  
+  private static final double LEFT_RIGHT_PANEL_WIDTH = 100.0;
   
   public AbstractWaveAndParamsPanel() {
       getStyleClass().add(getStyleClassName());
@@ -54,15 +56,12 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
           parameterMetrics[i].addAll(Arrays.asList(getParameterMetricIds(i)));
       }
 
-      setBottom(labelLeft("Last Sample: ", time));
+      setBottom(labelLeft("", time));
       setCenter(waves);
 
       GridPane numerics = new GridPane();
-      FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(time.getFont());
-      // TODO This is a layout hack
-      float w = fm.computeStringWidth("RespiratoryRate");
-      numerics.setMinWidth(w);
-      numerics.setPrefWidth(w);
+      numerics.setMinWidth(LEFT_RIGHT_PANEL_WIDTH);
+      numerics.setPrefWidth(LEFT_RIGHT_PANEL_WIDTH);
       
       params = new Label[getParameterCount()];
       for(int i = 0; i < params.length; i++) {
@@ -81,8 +80,8 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
 
   @Override
   public void destroy() {
-      for (WaveformPanel wp : panelMap.values()) {
-          wp.stop();
+      for (BorderPane wp : panelMap.values()) {
+          ((WaveformPanel)wp.getCenter()).stop();
       }
       deviceMonitor.getNumericModel().removeListener(numericListener);
       deviceMonitor.getSampleArrayModel().removeListener(sampleArrayListener);
@@ -120,19 +119,32 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
           time.textProperty().bind(data.presentation_timeProperty().asString());
       }
       if(waveformMetrics.contains(data.getMetric_id())) {
-          WaveformPanel wuws = panelMap.get(data.getMetric_id());
-          if (null == wuws) {
+          BorderPane bp = panelMap.get(data.getMetric_id());
+          if (null == bp) {
               SampleArrayWaveformSource saws = new SampleArrayWaveformSource(deviceMonitor.getSampleArrayList().getReader(), data.getHandle());
-              wuws = new WaveformPanelFactory().createWaveformPanel();
+              WaveformPanel wuws = new WaveformPanelFactory().createWaveformPanel();
               wuws.setSource(saws);
-              final WaveformPanel _wuws = wuws;
               final int idx = panelMap.size();
-              panelMap.put(data.getMetric_id(), wuws);
-              ((JavaFXWaveformPane)_wuws).getCanvas().getGraphicsContext2D().setStroke(getWaveformPaint());
-              Node x = (Node) _wuws;
-              GridPane.setVgrow(x, Priority.ALWAYS);
-              GridPane.setHgrow(x, Priority.ALWAYS);
-              waves.add(x, 0, idx);
+              
+              ((JavaFXWaveformPane)wuws).getCanvas().getGraphicsContext2D().setStroke(getWaveformPaint());
+              Node x = (Node) wuws;
+              bp = new BorderPane(x);
+              GridPane.setVgrow(bp, Priority.ALWAYS);
+              GridPane.setHgrow(bp, Priority.ALWAYS);
+              
+              for(int i = 0; i < getWaveformMetricIds().length; i++) {
+                  if(getWaveformMetricIds()[i].equals(data.getMetric_id())) {
+                      Label l = new Label(getWaveformLabels()[i]);
+                      l.setMinWidth(LEFT_RIGHT_PANEL_WIDTH);
+                      l.setPrefWidth(LEFT_RIGHT_PANEL_WIDTH);
+                      l.setWrapText(true);
+                      bp.setLeft(l);
+                      break;
+                  }
+              }
+              panelMap.put(data.getMetric_id(), bp);
+              waves.add(bp, 0, idx);
+
               wuws.start();
           }
           
@@ -142,11 +154,12 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
   
   protected void remove(SampleArrayFx data) {
       time.textProperty().unbind();
-      WaveformPanel wuws = panelMap.remove(data.getMetric_id());
-      if(null != wuws) {
+      BorderPane bp = panelMap.remove(data.getMetric_id());
+      if(null != bp) {
+          WaveformPanel wuws = (WaveformPanel) bp.getCenter();
           wuws.stop();
           wuws.setSource(null);
-          waves.getChildren().remove(wuws);
+          waves.getChildren().remove(bp);
       }
   }
   

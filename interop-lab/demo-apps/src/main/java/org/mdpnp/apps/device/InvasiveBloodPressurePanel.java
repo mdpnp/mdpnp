@@ -45,8 +45,9 @@ public class InvasiveBloodPressurePanel extends AbstractWaveAndParamsPanel {
 
     private final static String[] PARAM_UNITS = new String[] { "mmHg", "mmHg", "mmHg" };
 
-    private final static String[] IBP_LABELS = new String[] { "IBP", "ART", "ICP", "Aortic", "ABP", "Femoral Arterial", "Pulmonary Arterial",
-            "Umbilical Arterial", "Left Atrial", "Right Atrial" };
+    private final static String[] IBP_LABELS = new String[] { "Invasive Pressure", 
+        "Arterial Pressure", "Intra-Cranial Pressure", "Aortic Pressure", "Arterial Blood Pressure", "Femoral Arterial Pressure", "Pulmonary Arterial Pressure",
+            "Umbilical Arterial Pressure", "Left Atrial Pressure", "Right Atrial Pressure" };
 
     @Override
     public String getStyleClassName() {

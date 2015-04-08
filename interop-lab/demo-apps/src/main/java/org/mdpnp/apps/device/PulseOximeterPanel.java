@@ -30,7 +30,7 @@ public class PulseOximeterPanel extends AbstractWaveAndParamsPanel {
 
     private final static String[] PARAM_UNITS = new String[] { "BPM", "%" };
 
-    private final static String[] PLETH_LABELS = new String[] { "Pleth" };
+    private final static String[] PLETH_LABELS = new String[] { "Plethysmogram" };
 
     @Override
     public String getStyleClassName() {
