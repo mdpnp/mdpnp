@@ -54,11 +54,12 @@ public class FhirEMRImplTest {
         emr.setUrl(url);
         emr.setFhirContext(ca.uhn.fhir.context.FhirContext.forDstu2());
 
-        String id = Long.toHexString(System.currentTimeMillis());
-        String fn = "First" + id;
+        long now = System.currentTimeMillis();
+        String id = Long.toHexString(now);
+        String fn = "FhirEMRImplTest";
         String ln = "Last" + id;
 
-        PatientInfo pi = new PatientInfo(id, fn, ln, PatientInfo.Gender.M, new Date(0));
+        PatientInfo pi = new PatientInfo(id, fn, ln, PatientInfo.Gender.M, new Date(now));
 
         boolean created = emr.createPatient(pi);
         Assert.assertTrue("Failed to create patients", created);
