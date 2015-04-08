@@ -14,7 +14,6 @@ package org.mdpnp.apps.device;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Set;
 
 import javafx.application.Application;
@@ -56,7 +55,7 @@ public class PulseOximeterPanel extends DevicePanel {
     private BorderPane spo2Panel, heartratePanel;
     private WaveformPanel pulsePanel, plethPanel;
     private Label time;
-    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     protected void buildComponents() {
         spo2Bounds = new GridPane();
@@ -154,46 +153,68 @@ public class PulseOximeterPanel extends DevicePanel {
     public void set(DeviceDataMonitor deviceMonitor) {
         super.set(deviceMonitor);
         deviceMonitor.getNumericModel().addListener(numericListener);
-        deviceMonitor.getNumericModel().forEach((t)->numericAdd(t));
+        deviceMonitor.getNumericModel().forEach((t)->add(t));
+        
         deviceMonitor.getSampleArrayModel().addListener(sampleArrayListener);
-        deviceMonitor.getSampleArrayModel().forEach((t)->sampleArrayAdd(t));
+        deviceMonitor.getSampleArrayModel().forEach((t)->add(t));
     }
     
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(PulseOximeterPanel.class);
-    private final Date date = new Date();
     
-    protected void numericAdd(NumericFx data) {
+    protected void add(NumericFx data) {
+        if(!time.textProperty().isBound()) {
+            time.textProperty().bind(data.presentation_timeProperty().asString());
+        }
+        
         if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(data.getMetric_id())) {
+            heartrate.textProperty().bind(data.valueProperty().asString("%.0f"));
             if(null == pulseWave) {
                 pulseWave = new NumericWaveformSource(deviceMonitor.getNumericList().getReader(), data.getHandle());
                 pulsePanel.setSource(pulseWave);
             }
+        } else if(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(data.getMetric_id())) {
+            spo2.textProperty().bind(data.valueProperty().asString("%.0f"));
         }
     }
     
-    protected void numericUpdate(NumericFx data) {
-        setInt(data, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, spo2, null);
-        setInt(data, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, heartrate, null);
-        time.setText(dateFormat.format(data.getPresentation_time()));
+    protected void remove(NumericFx data) {
+        // TODO this is flaky
+        time.textProperty().unbind();
+        if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(data.getMetric_id())) {
+            heartrate.textProperty().unbind();
+            if(null != pulseWave) {
+                pulsePanel.setSource(null);
+                pulseWave = null;
+            }
+        } else if(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(data.getMetric_id())) {
+            spo2.textProperty().unbind();
+        }
     }
-    
+
     private final OnListChange<NumericFx> numericListener = new OnListChange<NumericFx>(
-            (t)->numericAdd(t), (t)->numericUpdate(t), null);
+            (t)->add(t), null, (t)->remove(t));
     
-    protected void sampleArrayAdd(SampleArrayFx data) {
+    protected void add(SampleArrayFx data) {
         if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(data.getMetric_id())) {
             if(null == plethWave) {
                 plethWave = new SampleArrayWaveformSource(deviceMonitor.getSampleArrayList().getReader(), data.getHandle());
                 plethPanel.setSource(plethWave);
             }
-            time.setText(dateFormat.format(data.getPresentation_time()));
+        }
+    }
+    protected void remove(SampleArrayFx data) {
+        if (rosetta.MDC_PULS_OXIM_PLETH.VALUE.equals(data.getMetric_id())) {
+            if(null != plethWave) {
+                plethPanel.setSource(null);
+                plethWave = null;
+            }
         }
     }
 
     
     private final OnListChange<SampleArrayFx> sampleArrayListener = new OnListChange<SampleArrayFx>(
-            (t)->sampleArrayAdd(t), null, null);
+            (t)->add(t), null, (t)->remove(t));
 
     
     public static class MainApp extends Application {

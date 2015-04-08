@@ -10,13 +10,46 @@ import javafx.scene.control.TextField;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.Slider;
+import javafx.util.StringConverter;
 
 public class HL7Application implements LineEmitterListener, StartStopListener {
     @FXML protected TextArea text;
     @FXML protected TextField host, port;
     @FXML protected Button startStop;
+    
+    enum Settings {
+        _5SECONDS("5s", 5000L),
+        _15SECONDS("15s", 15000L),
+        _30SECONDS("30s", 30000L),
+        _1MINUTE("1m", 60000L),
+        _5MINUTE("5m", 5 * 60000L),
+        _10MINUTES("10m", 10 * 60000L),
+        _15MINUTES("15m", 15 * 60000L),
+        _20MINUTES("20m", 20 * 60000L),
+        _30MINUTES("30m", 30 * 60000L),
+        _1HOUR("1h", 60 * 60000L);
+
+        private final String label;
+        private final long tm;
+        private Settings(final String label, final long tm) {
+            this.label = label;
+            this.tm = tm;
+        }
+        public String getLabel() {
+            return label;
+        }
+        public long getTime() {
+            return tm;
+        }
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
     
     protected static final Logger log = LoggerFactory.getLogger(HL7Application.class);
     
@@ -27,6 +60,24 @@ public class HL7Application implements LineEmitterListener, StartStopListener {
     }
     
     public void setModel(HL7Emitter model) {
+        slider.setLabelFormatter(new StringConverter<Double>() {
+
+            @Override
+            public String toString(Double object) {
+                return Settings.values()[object.intValue()].toString();
+            }
+
+            @Override
+            public Double fromString(String string) {
+                return (double) Settings.valueOf(string).ordinal();
+            }
+        });
+        slider.setMin(0);
+        slider.setMax(Settings.values().length-1);
+        slider.setMajorTickUnit(1.0);
+        slider.setMinorTickCount(0);
+        slider.setSnapToTicks(true);
+        
         if(null == model) {
             if(null != this.model) {
                 this.model.removeLineEmitterListener(this);
@@ -68,7 +119,7 @@ public class HL7Application implements LineEmitterListener, StartStopListener {
                     int portNumber = port.getText().isEmpty() ? 0 : Integer.parseInt(port.getText());
 
                     
-                    model.start(host.getText(), portNumber, type);
+                    model.start(host.getText(), portNumber, type, Settings.values()[(int)slider.getValue()].getTime());
                     
                 } else {
                     startStop.setDisable(true);
@@ -106,6 +157,7 @@ public class HL7Application implements LineEmitterListener, StartStopListener {
     @FXML ToggleGroup hl7version;
     @FXML RadioButton hl7FhirDstu2;
     @FXML RadioButton hl7V26;
+    @FXML Slider slider;
 
     @Override
     public void started() {

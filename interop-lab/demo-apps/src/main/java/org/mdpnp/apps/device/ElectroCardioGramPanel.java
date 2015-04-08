@@ -12,10 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.apps.device;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -40,10 +37,8 @@ import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
  *
  */
 public class ElectroCardioGramPanel extends DevicePanel {
-
-    private final Date date = new Date();
     private final Label time = new Label(" "), heartRate = new Label(" "), respiratoryRate = new Label(" ");
-    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private final static String[] ECG_WAVEFORMS = new String[] { ice.MDC_ECG_LEAD_I.VALUE, ice.MDC_ECG_LEAD_II.VALUE,
             ice.MDC_ECG_LEAD_III.VALUE };
@@ -94,28 +89,37 @@ public class ElectroCardioGramPanel extends DevicePanel {
         return false;
     }
     
-    protected void numericSample(NumericFx data) {
-        final String str = Integer.toString((int)data.getValue());
-        
-
+    protected void add(NumericFx data) {
         if (rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(data.getMetric_id())) {
-            respiratoryRate.setText(str);
+            respiratoryRate.textProperty().bind(data.valueProperty().asString("%.0f"));
         } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(data.getMetric_id())) {
-            heartRate.setText(str);
+            heartRate.textProperty().bind(data.valueProperty().asString("%.0f"));
+        }
+    }
+    
+    protected void remove(NumericFx data) {
+        if (rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(data.getMetric_id())) {
+            respiratoryRate.textProperty().unbind();
+        } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(data.getMetric_id())) {
+            heartRate.textProperty().unbind();
         }
     }
     
     private final OnListChange<NumericFx> numericListener = new OnListChange<NumericFx>(
-            null, (t)->numericSample(t), null);
+            (t)->add(t), null, (t)->remove(t));
     
     public void set(DeviceDataMonitor deviceMonitor) {
         super.set(deviceMonitor);
         deviceMonitor.getNumericModel().addListener(numericListener);
+        deviceMonitor.getNumericModel().forEach((t)->add(t));
         deviceMonitor.getSampleArrayModel().addListener(sampleArrayListener);
-        deviceMonitor.getSampleArrayModel().forEach((t)->sampleArrayAdd(t));
+        deviceMonitor.getSampleArrayModel().forEach((t)->add(t));
     };
     
-    protected void sampleArrayAdd(SampleArrayFx data) {
+    protected void add(SampleArrayFx data) {
+        if(!time.textProperty().isBound()) {
+            time.textProperty().bind(data.presentation_timeProperty().asString());
+        }
         if(ECG_WAVEFORMS_SET.contains(data.getMetric_id())) {
             WaveformPanel wuws = panelMap.get(data.getMetric_id());
             if (null == wuws) {
@@ -137,12 +141,16 @@ public class ElectroCardioGramPanel extends DevicePanel {
 
     }
     
-    protected void sampleArrayUpdate(SampleArrayFx data) {
-        if(ECG_WAVEFORMS_SET.contains(data.getMetric_id())) {
-            time.setText(dateFormat.format(data.getPresentation_time()));
+    protected void remove(SampleArrayFx data) {
+        time.textProperty().unbind();
+        WaveformPanel wuws = panelMap.remove(data.getMetric_id());
+        if(null != wuws) {
+            wuws.stop();
+            wuws.setSource(null);
+            waves.getChildren().remove(wuws);
         }
     }
     
     private final OnListChange<SampleArrayFx> sampleArrayListener = new OnListChange<SampleArrayFx>(
-            (t)->sampleArrayAdd(t), (t)->sampleArrayUpdate(t), null);
+            (t)->add(t), null, (t)->remove(t));
 }

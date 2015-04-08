@@ -26,13 +26,11 @@ public class VitalModelFactory implements FactoryBean<VitalModel>, DisposableBea
     private final EventLoop eventLoop;
     private final NumericFxList numericList;
     private final Publisher publisher;
-    private VitalModelNumericProvider provider;
 
     @Override
     public VitalModel getObject() throws Exception {
         if(instance == null) {
-            instance = new VitalModelImpl(deviceListModel);
-            provider = new VitalModelNumericProvider(instance, numericList);
+            instance = new VitalModelImpl(deviceListModel, numericList);
             
             instance.start(publisher, eventLoop);
             
@@ -66,7 +64,6 @@ public class VitalModelFactory implements FactoryBean<VitalModel>, DisposableBea
     public void destroy() throws Exception {
         if(instance != null) {
             log.info("Shutting down the model");
-            numericList.removeListener(provider);
             instance.stop();
             instance = null;
         }        

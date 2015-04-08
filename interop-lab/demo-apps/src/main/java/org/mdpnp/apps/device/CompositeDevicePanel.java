@@ -39,6 +39,9 @@ public class CompositeDevicePanel extends BorderPane {
     protected final Label manufacturer = new Label(" ");
     protected final Label model = new Label(" ");
     protected final Label serial_number = new Label(" ");
+    protected final Label build = new Label(" ");
+    protected final Label operating_system = new Label(" ");
+    protected final Label host_name = new Label(" ");
 
     protected final Label connectionState = new Label(" ");
     protected final Label unique_device_identifier = new Label(" ");
@@ -71,8 +74,17 @@ public class CompositeDevicePanel extends BorderPane {
 
         header.add(new Label("Connection State"), 0, 4);
         header.add(connectionState, 1, 4);
+        
+        header.add(new Label("Version"), 0, 5);
+        header.add(build, 1, 5);
+        
+        header.add(new Label("Operating System"), 0, 6);
+        header.add(operating_system, 1, 6);
+        
+        header.add(new Label("Host Name"), 0, 7);
+        header.add(host_name, 1, 7);        
 
-        header.add(icon, 2, 0, 1, 5);
+        header.add(icon, 2, 0, 1, 8);
         setTop(header);
         data.setCenter(WAITING);
         setCenter(data);
@@ -201,6 +213,9 @@ public class CompositeDevicePanel extends BorderPane {
             serial_number.textProperty().unbind();
             unique_device_identifier.textProperty().set("");
             connectionState.textProperty().unbind();
+            operating_system.textProperty().unbind();
+            build.textProperty().unbind();
+            host_name.textProperty().unbind();
             
             this.deviceMonitor.getNumericModel().removeListener(numericListener);
             this.deviceMonitor.getSampleArrayModel().removeListener(sampleArrayListener);
@@ -214,7 +229,9 @@ public class CompositeDevicePanel extends BorderPane {
             serial_number.textProperty().bind(deviceMonitor.getDevice().serial_numberProperty());
             unique_device_identifier.textProperty().set(deviceMonitor.getDevice().getUDI());
             connectionState.textProperty().bind(Bindings.concat(deviceMonitor.getDevice().connectivityStateProperty()).concat(" (").concat(deviceMonitor.getDevice().connectivityInfoProperty()).concat(")"));
-            
+            operating_system.textProperty().bind(deviceMonitor.getDevice().operating_systemProperty());
+            build.textProperty().bind(deviceMonitor.getDevice().buildProperty());
+            host_name.textProperty().bind(deviceMonitor.getDevice().hostnameProperty());
 
             deviceMonitor.getNumericModel().addListener(numericListener);
             deviceMonitor.getNumericModel().forEach((fx)->numeric(fx));

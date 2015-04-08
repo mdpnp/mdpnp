@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.hl7;
 import ice.MDSConnectivity;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -12,9 +13,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
-import javafx.collections.ListChangeListener;
+import javafx.application.Platform;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
@@ -27,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.model.api.IResource;
 import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
 import ca.uhn.fhir.model.dstu2.composite.QuantityDt;
 import ca.uhn.fhir.model.dstu2.composite.ResourceReferenceDt;
@@ -41,8 +47,6 @@ import ca.uhn.hl7v2.HL7Exception;
 import ca.uhn.hl7v2.HapiContext;
 import ca.uhn.hl7v2.app.Connection;
 import ca.uhn.hl7v2.app.Initiator;
-import ca.uhn.hl7v2.llp.LLPException;
-import ca.uhn.hl7v2.model.DataTypeException;
 import ca.uhn.hl7v2.model.Message;
 import ca.uhn.hl7v2.model.v26.datatype.NM;
 import ca.uhn.hl7v2.model.v26.group.ORU_R01_OBSERVATION;
@@ -54,10 +58,9 @@ import ca.uhn.hl7v2.model.v26.segment.OBX;
 import ca.uhn.hl7v2.model.v26.segment.PID;
 import ca.uhn.hl7v2.parser.Parser;
 
-import com.rti.dds.infrastructure.SequenceNumber_t;
 import com.rti.dds.subscription.Subscriber;
 
-public class HL7Emitter implements MDSListener {
+public class HL7Emitter implements MDSListener, Runnable {
     public enum Type {
         FHIR_DSTU2, V26,
     }
@@ -76,16 +79,28 @@ public class HL7Emitter implements MDSListener {
         rosetta.MDC_CO2_RESP_RATE.VALUE,
         rosetta.MDC_RESP_RATE.VALUE
     };
+    
+    private static final Map<String, Number> numericCodes = new HashMap<String, Number>();
+    static {
+        numericCodes.put(rosetta.MDC_AWAY_CO2_EXP.VALUE, himss.MDC_AWAY_CO2_EXP.VALUE);
+        numericCodes.put(rosetta.MDC_ECG_HEART_RATE.VALUE, himss.MDC_ECG_HEART_RATE.VALUE);
+        numericCodes.put(rosetta.MDC_PRESS_BLD_ART_DIA.VALUE, himss.MDC_PRESS_BLD_ART_DIA.VALUE);
+        numericCodes.put(rosetta.MDC_PRESS_BLD_ART_SYS.VALUE, himss.MDC_PRESS_BLD_ART_SYS.VALUE);
+        numericCodes.put(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, himss.MDC_PULS_OXIM_SAT_O2.VALUE);
+        numericCodes.put(rosetta.MDC_RESP_RATE.VALUE, himss.MDC_RESP_RATE.VALUE);
+    }
+    
     private static final Set<String> metricIdsForExport = new HashSet<String>(Arrays.asList(metricIdsForExportArray));
     
     protected static final Logger log = LoggerFactory.getLogger(HL7Emitter.class);
-    
+
     private final HapiContext hl7Context;
     protected final FhirContext fhirContext;
     protected final MDSHandler mdsHandler;
 
     protected Connection hl7Connection;
     protected IGenericClient fhirClient;
+    protected final ScheduledExecutorService executor;
     
     private final Map<String, String> deviceUdiToPatientMRN = Collections.synchronizedMap(new HashMap<String, String>());
     private final Map<String, IdDt> patientMRNtoResourceId = new HashMap<String, IdDt>();
@@ -95,6 +110,7 @@ public class HL7Emitter implements MDSListener {
 
     public HL7Emitter(final Subscriber subscriber, final EventLoop eventLoop, final NumericFxList numericList,
             final FhirContext fhirContext) {
+        executor = Executors.newSingleThreadScheduledExecutor();
         hl7Context = new DefaultHapiContext();
         this.fhirContext = fhirContext;
         this.numericList = numericList;
@@ -106,24 +122,10 @@ public class HL7Emitter implements MDSListener {
 
     private final NumericFxList numericList;
     private Type type;
-    
-    private final ListChangeListener<NumericFx> listener = new ListChangeListener<NumericFx>() {
-
-        @Override
-        public void onChanged(javafx.collections.ListChangeListener.Change<? extends NumericFx> c) {
-            while(c.next()) {
-                if(c.wasAdded()) c.getAddedSubList().forEach((fx) -> numeric(fx));
-                if(c.wasUpdated()) {
-                    c.getList().subList(c.getFrom(), c.getTo()).forEach((fx) -> numeric(fx));
-                }
-            }
-        }
-        
-    };
-
-    public void start(final String host, final int port, final Type type) {
+    private ScheduledFuture<?> emit;
+   
+    public void start(final String host, final int port, final Type type, final long interval) {
         this.type = type;
-        this.numericList.addListener(listener);
         
         if (host != null && !host.isEmpty()) {
             if (Type.V26.equals(type)) {
@@ -148,10 +150,16 @@ public class HL7Emitter implements MDSListener {
             // just to demo the ability to compose HL7 messages
             ssListeners.fire(started);
         }
+        if(null == emit) {
+            emit = executor.scheduleAtFixedRate(this, 0L, interval, TimeUnit.MILLISECONDS);
+        }
     }
 
     public void stop() {
-        numericList.removeListener(listener);
+        if(null != emit) {
+            emit.cancel(true);
+            emit = null;
+        }
         ssListeners.fire(stopped);
         if (hl7Connection != null) {
             hl7Connection.close();
@@ -164,6 +172,7 @@ public class HL7Emitter implements MDSListener {
     }
     
     public void shutdown() {
+        executor.shutdownNow();
         mdsHandler.shutdown();
     }
 
@@ -222,91 +231,52 @@ public class HL7Emitter implements MDSListener {
         ssListeners.removeListener(listener);
     }
 
-    protected void sendHL7v26(NumericFx data) {
-        try {
+    protected void sendHL7v26() throws InterruptedException {
+        List<ORU_R01> bundle = new ArrayList<ORU_R01>();
+        CountDownLatch latch = new CountDownLatch(1);
+        Platform.runLater(()-> {
+            try {
+                numericList.forEach((fx)-> {
+                    if(metricIdsForExport.contains(fx.getMetric_id())) {
+                        ORU_R01 obs;
+                        try {
+                            obs = hl7Observation(fx);
+                            if(null != obs) {
+                                bundle.add(obs);
+                            }
+                        } catch (Exception e) {
+                            log.error("unable to create HL7 observation", e);
+                        }
 
-            ORU_R01 r01 = new ORU_R01();
-            // ORU is an observation
-            // Event R01 is an unsolicited observation message
-            // "T" for Test, "P" for Production, etc.
-            r01.initQuickstart("ORU", "R01", "T");
-
-            // Populate the MSH Segment
-            MSH mshSegment = r01.getMSH();
-            mshSegment.getSendingApplication().getNamespaceID().setValue("ICE");
-            mshSegment.getSequenceNumber().setValue("123");
-
-            // Populate the PID Segment
-            ORU_R01_PATIENT patient = r01.getPATIENT_RESULT().getPATIENT();
-            PID pid = patient.getPID();
-            pid.getPatientName(0).getFamilyName().getSurname().setValue("Doe");
-            pid.getPatientName(0).getGivenName().setValue("John");
-            pid.getPatientIdentifierList(0).getIDNumber().setValue("123456");
-
-            ORU_R01_ORDER_OBSERVATION orderObservation = r01.getPATIENT_RESULT().getORDER_OBSERVATION();
-
-            orderObservation.getOBR().getObr7_ObservationDateTime().setValueToSecond(new Date());
-
-            ORU_R01_OBSERVATION observation = orderObservation.getOBSERVATION(0);
-
-            // Populate the first OBX
-            OBX obx = observation.getOBX();
-            // obx.getSetIDOBX().setValue("1");
-            obx.getObservationIdentifier().getIdentifier().setValue("0002-4182");
-            obx.getObservationIdentifier().getText().setValue("HR");
-            obx.getObservationIdentifier().getCwe3_NameOfCodingSystem().setValue("MDIL");
-            obx.getObservationSubID().setValue("0");
-            obx.getUnits().getIdentifier().setValue("0004-0aa0");
-            obx.getUnits().getText().setValue("bpm");
-            obx.getUnits().getCwe3_NameOfCodingSystem().setValue("MDIL");
-            obx.getObservationResultStatus().setValue("F");
-
-            // The first OBX has a value type of CE. So first, we populate OBX-2
-            // with "CE"...
-            obx.getValueType().setValue("NM");
-
-            // "NM" is Numeric
-            NM nm = new NM(r01);
-            nm.setValue(Float.toString(data.getValue()));
-
-            obx.getObservationValue(0).setData(nm);
-
-            Parser parser = hl7Context.getPipeParser();
-
-            String encodedMessage = parser.encode(r01);
-            listeners.fire(new DispatchLine(encodedMessage));
-
-            // Now, let's encode the message and look at the output
-            Connection hapiConnection = HL7Emitter.this.hl7Connection;
-            if (null != hapiConnection) {
-
-                Initiator initiator = hapiConnection.getInitiator();
-                Message response = initiator.sendAndReceive(r01);
-                String responseString = parser.encode(response);
-                log.debug("Received Response:" + responseString);
-
+                    }
+                });
+            } finally {
+                latch.countDown();
             }
-        } catch (DataTypeException e) {
-            log.error("", e);
-        } catch (HL7Exception e) {
-            log.error("", e);
-        } catch (IOException e) {
-            log.error("", e);
-        } catch (LLPException e) {
-            log.error("", e);
-        } finally {
+        });
+        latch.await();
 
-        }
+        Parser parser = hl7Context.getPipeParser();
+     // Now, let's encode the message and look at the output
+        Connection hapiConnection = HL7Emitter.this.hl7Connection;
+        
+        bundle.forEach((x)->{
+            try {
+                String encodedMessage = parser.encode(x);
+                listeners.fire(new DispatchLine(encodedMessage));
+                if (null != hapiConnection) {
+                    Initiator initiator = hapiConnection.getInitiator();
+                    Message response = initiator.sendAndReceive(x);
+                    String responseString = parser.encode(response);
+                    log.debug("Received Response:" + responseString);
+                }
+            } catch(Exception e) {
+                log.error("unable to send HL7 message", e);
+            }
+        });
     }
-    private static final String PTID_SYSTEM = "urn:oid:2.16.840.1.113883.3.1974";
-    public void sendFHIR(NumericFx data) {
-        // Device device = new Device();
-
-        final String mrn = deviceUdiToPatientMRN.get(data.getUnique_device_identifier());
-        if(null == mrn) {
-            log.debug("No known mrn for udi="+data.getUnique_device_identifier());
-            return;
-        }
+    
+    public IdDt getPatientResource(String mrn) {
         IdDt resourceId = patientMRNtoResourceId.get(mrn);
         if(null == resourceId && fhirClient != null) {
             ca.uhn.fhir.model.api.Bundle bundle = fhirClient
@@ -317,7 +287,7 @@ public class HL7Emitter implements MDSListener {
             List<Patient> patients = bundle.getResources(Patient.class);
             if(patients.isEmpty()) {
                 log.warn("No patient in remote system with MRN="+mrn);
-                return;
+                return null;
             } else {
                 if(patients.size()>1) {
                     log.warn("Duplicate resource ids for mrn="+mrn+" using first");
@@ -327,56 +297,117 @@ public class HL7Emitter implements MDSListener {
             }
             
         }
-        
+        return resourceId;
+    }
+    
+    public ORU_R01 hl7Observation(NumericFx data) throws HL7Exception, IOException {
+        ORU_R01 r01 = new ORU_R01();
+        // ORU is an observation
+        // Event R01 is an unsolicited observation message
+        // "T" for Test, "P" for Production, etc.
+        r01.initQuickstart("ORU", "R01", "T");
 
-        // TODO Needs to exist and be referred to
-//         Device device = new Device();
-         
-        // TODO Probably needs to exist and be referred to
-//         DeviceMetric deviceMetric = new DeviceMetric();
-         
+        // Populate the MSH Segment
+        MSH mshSegment = r01.getMSH();
+        mshSegment.getSendingApplication().getNamespaceID().setValue("ICE");
+        mshSegment.getSequenceNumber().setValue("123");
+
+        // Populate the PID Segment
+        ORU_R01_PATIENT patient = r01.getPATIENT_RESULT().getPATIENT();
+        PID pid = patient.getPID();
+        pid.getPatientName(0).getFamilyName().getSurname().setValue("Doe");
+        pid.getPatientName(0).getGivenName().setValue("John");
+        pid.getPatientIdentifierList(0).getIDNumber().setValue("123456");
+
+        ORU_R01_ORDER_OBSERVATION orderObservation = r01.getPATIENT_RESULT().getORDER_OBSERVATION();
+
+        orderObservation.getOBR().getObr7_ObservationDateTime().setValueToSecond(new Date());
+
+        ORU_R01_OBSERVATION observation = orderObservation.getOBSERVATION(0);
+
+        // Populate the first OBX
+        OBX obx = observation.getOBX();
+        // obx.getSetIDOBX().setValue("1");
+        obx.getObservationIdentifier().getIdentifier().setValue("0002-4182");
+        obx.getObservationIdentifier().getText().setValue("HR");
+        obx.getObservationIdentifier().getCwe3_NameOfCodingSystem().setValue("MDIL");
+        obx.getObservationSubID().setValue("0");
+        obx.getUnits().getIdentifier().setValue("0004-0aa0");
+        obx.getUnits().getText().setValue("bpm");
+        obx.getUnits().getCwe3_NameOfCodingSystem().setValue("MDIL");
+        obx.getObservationResultStatus().setValue("F");
+
+        // The first OBX has a value type of CE. So first, we populate OBX-2
+        // with "CE"...
+        obx.getValueType().setValue("NM");
+
+        // "NM" is Numeric
+        NM nm = new NM(r01);
+        nm.setValue(Float.toString(data.getValue()));
+
+        obx.getObservationValue(0).setData(nm);
+        return r01;
+    }
+    
+    public Observation fhirObservation(NumericFx data) {
+        final String mrn = deviceUdiToPatientMRN.get(data.getUnique_device_identifier());
+        if(null == mrn) {
+            log.debug("No known mrn for udi="+data.getUnique_device_identifier());
+            return null;
+        }
+        IdDt resourceId = getPatientResource(mrn);
+        
         Observation obs = new Observation();
         obs.setValue(new QuantityDt(data.getValue()).setUnits(data.getUnit_id()).setCode(data.getMetric_id()).setSystem("OpenICE"));
 //        obs.addIdentifier().setSystem("urn:info.openice").setValue(uuidFromSequence(sampleInfo.publication_sequence_number).toString());
         obs.setApplies(new DateTimeDt(data.getPresentation_time(), TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
-        obs.setSubject(new ResourceReferenceDt(resourceId));
+        if(null != resourceId) obs.setSubject(new ResourceReferenceDt(resourceId));
         obs.setStatus(ObservationStatusEnum.PRELIMINARY);
-
-        IGenericClient client = fhirClient;
-        if (null != client) {
-            client.create().resource(obs).execute();
-        }
-
-        // String xmlEncoded =
-        // ctx.newXmlParser().encodeResourceToString(patient);
-        String jsonEncoded = fhirContext.newJsonParser().encodeResourceToString(obs);
-
-        listeners.fire(new DispatchLine(jsonEncoded + "\n"));
-
+        
+        
+        return obs;
     }
-
-    protected void numeric(NumericFx fx) {
-        if(metricIdsForExport.contains(fx.getMetric_id())) {
-            if (Type.V26.equals(type)) {
-                sendHL7v26(fx);
-            } else if (Type.FHIR_DSTU2.equals(type)) {
-                sendFHIR(fx);
+    
+    private static final String PTID_SYSTEM = "urn:oid:2.16.840.1.113883.3.1974";
+    public void sendFHIR() throws InterruptedException {
+        List<IResource> bundle = new ArrayList<IResource>();
+        CountDownLatch latch = new CountDownLatch(1);
+        Platform.runLater(()-> {
+            try {
+                numericList.forEach((fx)-> {
+                    if(metricIdsForExport.contains(fx.getMetric_id())) {
+                        Observation obs = fhirObservation(fx);
+                        if(null != obs) {
+                            bundle.add(obs);
+                        }
+                    }
+                });
+            } finally {
+                latch.countDown();
             }
+        });
+        latch.await();
+        
+        bundle.forEach((x)-> {
+            String jsonEncoded = fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(x);
+            listeners.fire(new DispatchLine(jsonEncoded + "\n"));
+        });
+        
+        IGenericClient client = fhirClient;
+        
+        if (null != client) {
+            client.transaction().withResources(bundle).encodedJson().execute();
         }
     }
 
-
-
-    protected static UUID uuidFromSequence(SequenceNumber_t seq) {
-        return new UUID(seq.high, seq.low);
+    public void send() throws InterruptedException {
+        if (Type.V26.equals(type)) {
+            sendHL7v26();
+        } else if (Type.FHIR_DSTU2.equals(type)) {
+            sendFHIR();
+        }
     }
 
-    public static void main(String[] args) {
-        System.out.println(uuidFromSequence(new SequenceNumber_t(1, 1L)));
-    }
-
-    
-    
     @Override
     public void handleDataSampleEvent(MDSEvent evt) {
         ice.MDSConnectivity c = (MDSConnectivity) evt.getSource();
@@ -384,5 +415,15 @@ public class HL7Emitter implements MDSListener {
         if(c.partition.startsWith("MRN=")) {
             deviceUdiToPatientMRN.put(c.unique_device_identifier, c.partition.substring(4, c.partition.length()));
         }
+    }
+
+    @Override
+    public void run() {
+        try {
+            send();
+        } catch (InterruptedException e) {
+            log.error("Sending", e);
+        }
+        
     }
 }

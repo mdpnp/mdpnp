@@ -132,26 +132,20 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
     @Override
     public void onChanged(javafx.collections.ListChangeListener.Change<? extends Device> c) {
         while(c.next()) {
-            if(c.wasPermutated()) {
-                // what does this mean? indices changed?
-            } else if(c.wasUpdated()) {
-                // heartbeat message that we do not cared about
-            } else {
-                for(Device d : c.getRemoved()) {
-                    log.info("Device Removed", d.toString());
+            for(Device d : c.getRemoved()) {
+                log.info("Device Removed", d.toString());
 
-                    Iterator<TreeItem<Object>> itr = getChildren().iterator();
-                    while(itr.hasNext()) {
-                        if(d.equals(itr.next().getValue())) {
-                            itr.remove();
-                        }
+                Iterator<TreeItem<Object>> itr = getChildren().iterator();
+                while(itr.hasNext()) {
+                    if(d.equals(itr.next().getValue())) {
+                        itr.remove();
                     }
                 }
-                for(Device d : c.getAddedSubList()) {
-                    log.info("Device Added", d.toString());
-                    // TODO preserve the sort order of the underlying list
-                    getChildren().add(makeNewNodeFactory(this, d));
-                }
+            }
+            for(Device d : c.getAddedSubList()) {
+                log.info("Device Added", d.toString());
+                // TODO preserve the sort order of the underlying list
+                getChildren().add(makeNewNodeFactory(this, d));
             }
         }
         

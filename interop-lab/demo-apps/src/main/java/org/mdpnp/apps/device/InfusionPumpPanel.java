@@ -57,6 +57,7 @@ public class InfusionPumpPanel extends DevicePanel {
     public void set(DeviceDataMonitor deviceMonitor) {
         super.set(deviceMonitor);
         deviceMonitor.getInfusionStatusModel().addListener(infusionStatusListener);
+        deviceMonitor.getInfusionStatusModel().forEach((t)->add(t));
     }
     
     @Override
@@ -65,18 +66,28 @@ public class InfusionPumpPanel extends DevicePanel {
         deviceMonitor.getInfusionStatusModel().removeListener(infusionStatusListener);
     }
     
-    protected void infusionStatusUpdate(InfusionStatusFx data) {
-        active.setText(Boolean.toString(data.isInfusionActive()));
-        drugMass.setText(Integer.toString(data.getDrug_mass_mcg()) + " mcg");
-        drugName.setText(data.getDrug_name());
-        durationSec.setText(Integer.toString(data.getInfusion_duration_seconds()) + " seconds");
-        fracComplete.setText(Integer.toString((int) (100f * data.getInfusion_fraction_complete())) + "%");
-        solutionVolume.setText(Integer.toString(data.getSolution_volume_ml()) + " mL");
-        vtbiMl.setText(Integer.toString(data.getVolume_to_be_infused_ml()) + " mL");
+    protected void add(InfusionStatusFx data) {
+        active.textProperty().bind(data.infusionActiveProperty().asString());
+        drugMass.textProperty().bind(data.drug_mass_mcgProperty().asString().concat(" mcg"));
+        drugName.textProperty().bind(data.drug_nameProperty());
+        durationSec.textProperty().bind(data.infusion_duration_secondsProperty().asString().concat(" seconds"));
+        fracComplete.textProperty().bind(data.infusion_fraction_completeProperty().multiply(100f).asString("%.0f").concat("%"));
+        solutionVolume.textProperty().bind(data.solution_volume_mlProperty().asString().concat(" mL"));
+        vtbiMl.textProperty().bind(data.volume_to_be_infused_mlProperty().asString().concat(" mL"));
+    }
+    
+    protected void remove(InfusionStatusFx data) {
+        active.textProperty().unbind();
+        drugMass.textProperty().unbind();
+        drugName.textProperty().unbind();
+        durationSec.textProperty().unbind();
+        fracComplete.textProperty().unbind();
+        solutionVolume.textProperty().unbind();
+        vtbiMl.textProperty().unbind();
     }
     
     private final OnListChange<InfusionStatusFx> infusionStatusListener = new OnListChange<InfusionStatusFx>(
-            null, (t)->infusionStatusUpdate(t), null);
+            (t)->add(t), null, (t)->remove(t));
 
 
 }
