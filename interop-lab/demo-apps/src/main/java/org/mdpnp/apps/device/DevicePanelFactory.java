@@ -35,10 +35,9 @@ public class DevicePanelFactory {
         PulseOximeterPanel.class,
         ElectroCardioGramPanel.class,
         BloodPressurePanel.class, 
-         VentilatorPanel.class, 
+        VentilatorPanel.class, 
         InfusionPumpPanel.class, 
         InvasiveBloodPressurePanel.class,
-//     MultiPulseOximeterPanel.class,
     };
     private final static Logger log = LoggerFactory.getLogger(DevicePanelFactory.class);
     public static final Method[] PANEL_SUPPORTED = new Method[PANELS.length];

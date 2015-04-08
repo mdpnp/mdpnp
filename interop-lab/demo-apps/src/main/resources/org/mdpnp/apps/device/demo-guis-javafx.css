@@ -2,6 +2,10 @@
   /* -fx-font-size: 20pt; */
 }
 
+.parameter {
+    -fx-font-size: 20pt;
+}
+
 .pulse-oximeter-panel {
   -fx-background-color: black;
 }
