@@ -12,20 +12,11 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.ServiceLoader;
-import java.util.TreeSet;
-
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
+import org.mdpnp.devices.DeviceDriverProvider.SpringLoaderDriver;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
-import org.mdpnp.devices.draeger.medibus.DemoApollo;
-import org.mdpnp.devices.draeger.medibus.DemoEvita4;
-import org.mdpnp.devices.draeger.medibus.DemoEvitaXL;
-import org.mdpnp.devices.draeger.medibus.DemoV500;
-import org.mdpnp.devices.draeger.medibus.DemoV500_38400;
+import org.mdpnp.devices.draeger.medibus.*;
 import org.mdpnp.devices.fluke.prosim68.DemoProsim68;
 import org.mdpnp.devices.hospira.symbiq.DemoSymbiq;
 import org.mdpnp.devices.ivy._450c.DemoIvy450C;
@@ -43,8 +34,11 @@ import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
 import org.mdpnp.devices.zephyr.biopatch.DemoBioPatch;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.springframework.context.ApplicationContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.support.AbstractApplicationContext;
 
+import java.util.*;
 
 public class DeviceFactory {
 
@@ -78,169 +72,196 @@ public class DeviceFactory {
         throw new IllegalArgumentException("Cannot resolve '" + alias + " to a known device");
     }
 
-    public static class PO_SimulatorProvider implements DeviceDriverProvider {
 
+    public static class PO_SimulatorProvider extends SpringLoaderDriver {
+
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Pulse Oximeter", "PO_Simulator");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new SimPulseOximeter(domainId, eventLoop);
         }
     }
 
-    public static class NIBP_SimulatorProvider implements DeviceDriverProvider {
+    public static class NIBP_SimulatorProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Noninvasive Blood Pressure", "NIBP_Simulator");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoSimulatedBloodPressure(domainId, eventLoop);
         }
     }
 
-    public static class ECG_SimulatorProvider implements DeviceDriverProvider {
+    public static class ECG_SimulatorProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "ElectroCardioGram", "ECG_Simulator");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new SimElectroCardioGram(domainId, eventLoop);
         }
     }
 
-    public static class CO2_SimulatorProvider implements DeviceDriverProvider {
+    public static class CO2_SimulatorProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Capnometer", "CO2_Simulator");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new SimCapnometer(domainId, eventLoop);
         }
     }
 
-    public static class Temp_SimulatorProvider implements DeviceDriverProvider {
+    public static class Temp_SimulatorProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Temperature Probe", "Temp_Simulator");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new SimThermometer(domainId, eventLoop);
         }
     }
 
-    public static class Pump_SimulatorProvider implements DeviceDriverProvider {
+    public static class Pump_SimulatorProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Infusion Pump", "Pump_Simulator");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new SimInfusionPump(domainId, eventLoop);
         }
     }
 
-    public static class FlukeProsim68Provider implements DeviceDriverProvider {
+    public static class FlukeProsim68Provider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Fluke", "Prosim 6/8" , "FlukeProsim68");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoProsim68(domainId, eventLoop);
         }
     }
 
-    public static class BernoulliProvider implements DeviceDriverProvider {
+    public static class BernoulliProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Network, "CardioPulmonaryCorp", "Bernoulli", "Bernoulli");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoBernoulli(domainId, eventLoop);
         }
     }
 
-    public static class Ivy450CProvider implements DeviceDriverProvider {
+    public static class Ivy450CProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Ivy", "450C Monitor", "Ivy450C");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoIvy450C(domainId, eventLoop);
         }
     }
 
-    public static class NoninProvider implements DeviceDriverProvider {
+    public static class NoninProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Nonin", "Bluetooth Pulse Oximeter", "Nonin");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoNoninPulseOx(domainId, eventLoop);
         }
     }
 
-    public static class IntellivueEthernetProvider implements DeviceDriverProvider {
+    public static class IntellivueEthernetProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Network, "Philips", "Intellivue (LAN)", "IntellivueEthernet");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoSerialIntellivue(domainId, eventLoop);
         }
     }
 
-    public static class IntellivueSerialProvider implements DeviceDriverProvider {
+    public static class IntellivueSerialProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Philips", "Intellivue (MIB/RS232)", "IntellivueSerial");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoSerialIntellivue(domainId, eventLoop);
         }
     }
 
-    public static class Capnostream20Provider implements DeviceDriverProvider {
+    public static class Capnostream20Provider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Oridion", "Capnostream20", "Capnostream20");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoCapnostream20(domainId, eventLoop);
@@ -248,78 +269,90 @@ public class DeviceFactory {
     }
 
 
-    public static class NellcorN595Provider implements DeviceDriverProvider {
+    public static class NellcorN595Provider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Nellcor", "N-595", "NellcorN595");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoN595(domainId, eventLoop);
         }
     }
 
-    public static class MasimoRadical7Provider implements DeviceDriverProvider {
+    public static class MasimoRadical7Provider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Masimo", "Radical-7", "MasimoRadical7");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoRadical7(domainId, eventLoop);
         }
     }
 
-    public static class SymbiqProvider implements DeviceDriverProvider {
+    public static class SymbiqProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Simulated, "Hospira", "Symbiq", "Symbiq");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoSymbiq(domainId, eventLoop);
         }
     }
 
-    public static class MultiparameterProvider implements DeviceDriverProvider {
+    public static class MultiparameterProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Multiparameter Monitor", "Multiparameter");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new SimMultiparameter(domainId, eventLoop);
         }
     }
 
-    public static class DraegerApolloProvider implements DeviceDriverProvider {
+    public static class DraegerApolloProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo", new String[] {"DraegerApollo", "Dr\u00E4gerApollo" });
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoApollo(domainId, eventLoop);
         }
     }
 
-    public static class DraegerEvitaXLProvider implements DeviceDriverProvider {
+    public static class DraegerEvitaXLProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL", new String[] { "DraegerEvitaXL", "Dr\u00E4gerEvitaXL" });
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoEvitaXL(domainId, eventLoop);
@@ -327,13 +360,15 @@ public class DeviceFactory {
         }
     }
 
-    public static class DraegerV500Provider implements DeviceDriverProvider {
+    public static class DraegerV500Provider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500", new String[] { "DraegerV500", "Dr\u00E4gerV500" });
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoV500(domainId, eventLoop);
@@ -341,13 +376,15 @@ public class DeviceFactory {
         }
     }
 
-    public static class DraegerV500_38400Provider implements DeviceDriverProvider {
+    public static class DraegerV500_38400Provider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500", new String[] { "DraegerV500_38400", "Dr\u00E4gerV500_38400" });
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoV500_38400(domainId, eventLoop);
@@ -355,13 +392,15 @@ public class DeviceFactory {
         }
     }
 
-    public static class DraegerEvita4Provider implements DeviceDriverProvider {
+    public static class DraegerEvita4Provider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4", new String[] { "DraegerEvita4", "Dr\u00E4gerEvita4" });
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoEvita4(domainId, eventLoop);
@@ -369,13 +408,15 @@ public class DeviceFactory {
         }
     }
 
-    public static class BioPatchProvider implements DeviceDriverProvider {
+    public static class BioPatchProvider extends SpringLoaderDriver {
 
+        @Override
         public DeviceType getDeviceType(){
             return new DeviceType(ice.ConnectionType.Serial, "Zephyr", "BioPatch", "BioPatch");
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
             int domainId = (Integer)context.getBean("domainId");
             return new DemoBioPatch(domainId, eventLoop);

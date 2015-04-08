@@ -39,11 +39,12 @@ import javafx.util.Duration;
 import org.mdpnp.apps.fxbeans.FilteredList;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
-import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.SampleArrayFxListCell;
+import org.mdpnp.apps.testapp.*;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceClock;
+import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
+import org.mdpnp.devices.simulation.temp.SimThermometer;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformCanvas;
 import org.mdpnp.guis.waveform.WaveformRenderer;
@@ -54,6 +55,8 @@ import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.AbstractApplicationContext;
 
 /**
  * @author Jeff Plourde
@@ -96,9 +99,9 @@ public class RapidRespiratoryRate implements Runnable {
         }
     }
     protected final DeviceClock clock = new DeviceClock.WallClock();
-    private RespiratoryRateDevice rrDevice;
-    
-    public RapidRespiratoryRate set(final int domainId, final EventLoop eventLoop, final Subscriber subscriber, final DeviceListModel deviceListModel) {
+    private DeviceDriverProvider.Handle rrDevice;
+
+    public RapidRespiratoryRate set(final ApplicationContext parentContext, final int domainId, final EventLoop eventLoop, final Subscriber subscriber, final DeviceListModel deviceListModel) {
 //        ((NumberAxis)wavePanel.getXAxis()).forceZeroInRangeProperty().set(false);
 //        ((NumberAxis)wavePanel.getYAxis()).forceZeroInRangeProperty().set(false);
 //        ((NumberAxis)wavePanel.getYAxis()).autoRangingProperty().set(true);
@@ -136,16 +139,39 @@ public class RapidRespiratoryRate implements Runnable {
             public void handle(ActionEvent event) {
                 if (device.isSelected()) {
                     if (rrDevice == null) {
-                        rrDevice = new RespiratoryRateDevice(domainId, eventLoop);
-                        // TODO Make this more elegant
-                        List<String> strings = new ArrayList<String>();
-                        SubscriberQos qos = new SubscriberQos();
-                        subscriber.get_qos(qos);
-                        
-                        for(int i = 0; i < qos.partition.name.size(); i++) {
-                            strings.add((String)qos.partition.name.get(i));
+
+                        DeviceDriverProvider.SpringLoaderDriver df = new DeviceDriverProvider.SpringLoaderDriver() {
+                            @Override
+                            public DeviceType getDeviceType() {
+                                return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "RespiratoryRate", "RespiratoryRate");
+                            }
+
+                            @Override
+                            public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+                                EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
+                                int domainId = (Integer)context.getBean("domainId");
+                                return new RespiratoryRateDevice(domainId, eventLoop);
+                            }
+                        };
+
+                        try {
+                            rrDevice = df.create((AbstractApplicationContext) parentContext);
+
+                            // TODO Make this more elegant
+                            List<String> strings = new ArrayList<String>();
+                            SubscriberQos qos = new SubscriberQos();
+                            subscriber.get_qos(qos);
+
+                            for (int i = 0; i < qos.partition.name.size(); i++) {
+                                strings.add((String) qos.partition.name.get(i));
+                            }
+
+                            rrDevice.setPartition(strings.toArray(new String[0]));
                         }
-                        rrDevice.setPartition(strings.toArray(new String[0]));
+                        catch(Exception ex) {
+                            throw new RuntimeException("Failed to create a driver", ex);
+                        }
+
                     }
                 } else {
                     if (rrDevice != null) {
@@ -161,9 +187,9 @@ public class RapidRespiratoryRate implements Runnable {
 
             @Override
             public void changed(ObservableValue<? extends SampleArrayFx> observable, SampleArrayFx oldValue, SampleArrayFx newValue) {
-                
+
                 SampleArrayFxList model = RapidRespiratoryRate.this.model;
-                if(model != null && newValue != null) {
+                if (model != null && newValue != null) {
                     ice.SampleArray keyHolder = new ice.SampleArray();
                     model.getReader().get_key_value(keyHolder, newValue.getHandle());
                     source = new SampleArrayWaveformSource(model.getReader(), keyHolder);
@@ -171,9 +197,9 @@ public class RapidRespiratoryRate implements Runnable {
 //                wavePanel.getData().clear();
 //                Series<Number,Number> series = data.getSeries(newValue.getHandle());
 //                wavePanel.getData().add(series);
-                
+
             }
-            
+
         });
    
         return this;
@@ -284,7 +310,8 @@ public class RapidRespiratoryRate implements Runnable {
         Platform.runLater(updateLabel);
         //.rrLabel.setText(""+Math.round(rr));
         if (rrDevice != null) {
-            rrDevice.updateRate((float) Math.round(rr));
+            RespiratoryRateDevice impl = (RespiratoryRateDevice)rrDevice.getImpl();
+            impl.updateRate((float) Math.round(rr));
         }
     }
     protected Runnable updateLabel = new Runnable() {

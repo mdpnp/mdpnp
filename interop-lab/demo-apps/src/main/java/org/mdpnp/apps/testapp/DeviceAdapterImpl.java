@@ -12,16 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import ice.ConnectionType;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ScheduledExecutorService;
-
+import com.rti.dds.subscription.Subscriber;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -35,131 +26,32 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import javafx.util.Callback;
-
 import org.mdpnp.apps.device.DeviceDataMonitor;
-import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
-import org.mdpnp.apps.fxbeans.InfusionStatusFxListFactory;
-import org.mdpnp.apps.fxbeans.NumericFxList;
-import org.mdpnp.apps.fxbeans.NumericFxListFactory;
-import org.mdpnp.apps.fxbeans.SampleArrayFxList;
-import org.mdpnp.apps.fxbeans.SampleArrayFxListFactory;
+import org.mdpnp.apps.fxbeans.*;
 import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
 import org.mdpnp.devices.PartitionAssignmentController;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
-import org.mdpnp.devices.serial.SerialProviderFactory;
-import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
-import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.support.AbstractApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import com.rti.dds.subscription.Subscriber;
-import org.springframework.jmx.export.naming.ObjectNamingStrategy;
-
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.concurrent.CountDownLatch;
 
 
 public abstract class DeviceAdapterImpl extends Observable implements DeviceAdapter {
 
-    private static ThreadGroup threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "DeviceAdapter") {
-        @Override
-        public void uncaughtException(Thread t, Throwable e) {
-            log.error("Thrown by " + t.toString(), e);
-            super.uncaughtException(t, e);
-        }
-    };
-    static
-    {
-        threadGroup.setDaemon(true);
-    }
-
     private static final Logger log = LoggerFactory.getLogger(DeviceAdapterImpl.class);
-
-    public static class AbstractDeviceFactory implements FactoryBean<AbstractDevice>, ApplicationContextAware {
-        @Override
-        public AbstractDevice getObject() throws Exception {
-            if(instance == null) {
-                DeviceType type = deviceFactory.getDeviceType();
-
-                log.trace("Create DeviceAdapter with type=" + type);
-                if (ConnectionType.Network.equals(type.getConnectionType())) {
-                    SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
-                    log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
-                }
-
-                instance = deviceFactory.create(context);
-                instance.setExecutor(executor);
-            }
-            return instance;
-        }
-
-        @Override
-        public Class<?> getObjectType() {
-            return AbstractDevice.class;
-        }
-
-        @Override
-        public boolean isSingleton() {
-            return true;
-        }
-
-        @Override
-        public void setApplicationContext(ApplicationContext ac) throws BeansException {
-            context = ac;
-        }
-
-        public void shutdown() {
-            if(instance != null)
-                instance.shutdown();
-        }
-
-        public void setDeviceFactory(DeviceDriverProvider deviceFactory) {
-            this.deviceFactory = deviceFactory;
-        }
-
-        public void setExecutor(ScheduledExecutorService executor) {
-            this.executor = executor;
-        }
-
-        private AbstractDevice instance;
-        private ApplicationContext context;
-        private DeviceDriverProvider deviceFactory;
-        private ScheduledExecutorService executor;
-    }
-
-    public static class DeviceFactoryNamingStrategy implements ObjectNamingStrategy,ApplicationContextAware {
-
-        @Override
-        public ObjectName getObjectName(Object o, String s) throws MalformedObjectNameException {
-
-            Hashtable<String, String> m = new Hashtable<>();
-            m.put("service", s);
-            ObjectName on = new ObjectName("mdpnp.driver." + context.getId(), m);
-            return on;
-        }
-
-        @Override
-        public void setApplicationContext(ApplicationContext ac) throws BeansException {
-            context = ac;
-        }
-        protected ApplicationContext context;
-    }
 
     /**
      * single vm batch command. assumes none of the run-time support available yet - no
@@ -242,54 +134,12 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
 
     private final CountDownLatch stopOk = new CountDownLatch(1);
 
-    protected final AbstractApplicationContext context;
     protected final DeviceDriverProvider deviceFactory;
+    protected final DeviceDriverProvider.Handle deviceHandle;
 
-    protected DeviceAdapterImpl(DeviceDriverProvider df, AbstractApplicationContext parentContext) {
+    protected DeviceAdapterImpl(DeviceDriverProvider df, AbstractApplicationContext parentContext) throws Exception {
         deviceFactory = df;
-
-        String contextPath = "classpath*:/DriverContext.xml";
-
-        context = new ClassPathXmlApplicationContext(new String[] { contextPath }, false, parentContext);
-        context.setDisplayName(df.getDeviceType().toString());
-        context.setId(df.getDeviceType().getAlias() + hashCode());
-
-        BeanPostProcessor bpp = new BeanPostProcessor() {
-            @Override
-            public Object postProcessBeforeInitialization(Object o, String s) throws BeansException {
-                if(o instanceof AbstractDeviceFactory) {
-                    ((AbstractDeviceFactory)o).setDeviceFactory(df);
-                }
-                return o;
-            }
-
-            @Override
-            public Object postProcessAfterInitialization(Object o, String s) throws BeansException {
-                return o;
-            }
-        };
-
-        context.addBeanFactoryPostProcessor(new BeanFactoryPostProcessor()
-        {
-            @Override
-            public void postProcessBeanFactory(ConfigurableListableBeanFactory configurableListableBeanFactory) throws BeansException {
-                configurableListableBeanFactory.registerSingleton("driverFactoryProcessor", bpp);
-            }
-        });
-
-        context.refresh();
-
-        parentContext.addApplicationListener(new ApplicationListener<ContextClosedEvent>()
-        {
-            @Override
-            public void onApplicationEvent(ContextClosedEvent contextClosedEvent) {
-                // only care to trap parent close events to kill the child context
-                if(parentContext == contextClosedEvent.getApplicationContext()) {
-                    log.info("Handle parent context shutdown event");
-                    context.close();
-                }
-            }
-        });
+        deviceHandle = df.create(parentContext);
 
     }
 
@@ -308,14 +158,17 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
         return device;
     }
 
-    protected AbstractApplicationContext getContext() {
-        return context;
-    }
-
     protected DeviceType getDeviceType() {
         return deviceFactory.getDeviceType();
     }
 
+    public <T> T getComponent(String name, Class<T> requiredType) throws Exception {
+        return deviceHandle.getComponent(name, requiredType);
+    }
+
+    public <T> T getComponent(Class<T> requiredType) throws Exception {
+        return deviceHandle.getComponent(requiredType);
+    }
 
     /**
      * blocking call to start adapter's listening loop. It is expected that stop API will be called on another thread
@@ -347,7 +200,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
     @Override
     public void stop()
     {
-        context.close();
+        deviceHandle.shutdown();
         stopOk.countDown();
         setChanged();
         notifyObservers(AdapterState.stopped);
@@ -355,7 +208,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
 
     static class HeadlessAdapter extends DeviceAdapterImpl  {
 
-        HeadlessAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context, boolean isStandalone) {
+        HeadlessAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context, boolean isStandalone) throws Exception{
 
             super(deviceFactory, context);
 
@@ -372,11 +225,10 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
         @Override
         public void init() throws Exception {
 
-            device = context.getBean(AbstractDevice.class);
-            PartitionAssignmentController pac = context.getBean(PartitionAssignmentController.class);
+            device = deviceHandle.getImpl();
 
             if (null != initialPartition) {
-                pac.setPartition(initialPartition);
+                deviceHandle.setPartition(initialPartition);
             }
 
             setChanged();
@@ -440,7 +292,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
 
         private final DeviceAdapterImpl controller;
 
-        public GUIAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context) {
+        public GUIAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context) throws Exception {
             controller = new HeadlessAdapter(deviceFactory, context, false);
         }
 
@@ -494,8 +346,8 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
 
             // Use the device subscriber so that we
             // automatically maintain the same partition as the device
-            final EventLoop eventLoop = controller.getContext().getBean("eventLoop", EventLoop.class);
-            final Subscriber subscriber = controller.getContext().getBean("subscriber", Subscriber.class);
+            final EventLoop eventLoop = controller.getComponent("eventLoop", EventLoop.class);
+            final Subscriber subscriber = controller.getComponent("subscriber", Subscriber.class);
             
             // TODO These beans are required only for the standalone adapter with GUI, perhaps they should get their own spring config though?
             // TODO contentfilter these on the one device?
@@ -523,7 +375,8 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             isFact.setTopicName(ice.InfusionStatusTopic.VALUE);
             final InfusionStatusFxList infusionStatusList = isFact.getObject();
 
-            deFact = new DeviceListModelFactory(eventLoop, subscriber, device.getTimeManager());
+            org.mdpnp.devices.TimeManager tm=controller.getComponent(org.mdpnp.devices.TimeManager.class);
+            deFact = new DeviceListModelFactory(eventLoop, subscriber, tm);
             final DeviceListModel deviceListModel = deFact.getObject();
             
             deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier, deviceListModel, numericList, sampleArrayList, infusionStatusList);
@@ -591,7 +444,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             controller.setChanged();
             controller.notifyObservers(AdapterState.init);
 
-            Thread deviceRunner = new Thread(threadGroup, this);
+            Thread deviceRunner = new Thread(AbstractDevice.threadGroup, this);
             deviceRunner.start();
 
             stage.show();

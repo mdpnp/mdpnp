@@ -12,36 +12,36 @@
                            http://www.springframework.org/schema/context/spring-context.xsd">
 
 
-    <context:annotation-config />
+  <context:annotation-config />
 
-    <bean id="taskExecutor"
-          class="org.springframework.scheduling.concurrent.ScheduledExecutorFactoryBean">
-      <property name="poolSize" value="1" />
-      <property name="WaitForTasksToCompleteOnShutdown" value="false" />
-      <property name="threadGroupName" value="driverTaskExecutor"/>
-    </bean>
+  <bean id="taskExecutor"
+        class="org.springframework.scheduling.concurrent.ScheduledExecutorFactoryBean">
+    <property name="poolSize" value="1" />
+    <property name="WaitForTasksToCompleteOnShutdown" value="false" />
+    <property name="threadGroupName" value="driverTaskExecutor"/>
+  </bean>
 
-    <bean id="driver"
-          class="org.mdpnp.apps.testapp.DeviceAdapterImpl.AbstractDeviceFactory"
-          destroy-method="shutdown">
-      <property name="executor" ref="taskExecutor"/>
-    </bean>
+  <bean id="driver"
+        class="org.mdpnp.devices.DeviceDriverProvider.AbstractDeviceFactory"
+        destroy-method="shutdown">
+    <property name="executor" ref="taskExecutor"/>
+  </bean>
 
-    <bean id="deviceIdentity" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-      <property name="targetObject" ref="driver"/>
-      <property name="targetMethod" value="getDeviceIdentity"/>
-    </bean>
+  <bean id="deviceIdentity" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="targetObject" ref="driver"/>
+    <property name="targetMethod" value="getDeviceIdentity"/>
+  </bean>
 
 
-    <bean id="partition" class="org.mdpnp.devices.PartitionAssignmentController"
-          init-method="start"
-          destroy-method="shutdown">
-      <constructor-arg ref="deviceIdentity"></constructor-arg>
-      <constructor-arg ref="domainParticipant"></constructor-arg>
-      <constructor-arg ref="eventLoop"></constructor-arg>
-      <constructor-arg ref="publisher"></constructor-arg>
-      <constructor-arg ref="subscriber"></constructor-arg>
-    </bean>
+  <bean id="partition" class="org.mdpnp.devices.PartitionAssignmentController"
+        init-method="start"
+        destroy-method="shutdown">
+    <constructor-arg ref="deviceIdentity"></constructor-arg>
+    <constructor-arg ref="domainParticipant"></constructor-arg>
+    <constructor-arg ref="eventLoop"></constructor-arg>
+    <constructor-arg ref="publisher"></constructor-arg>
+    <constructor-arg ref="subscriber"></constructor-arg>
+  </bean>
 
   <bean id="timeManager" class="org.mdpnp.devices.TimeManager"
         init-method="start"
@@ -76,29 +76,30 @@
     </property>
   </bean>
 
-    <!-- utility section -->
 
-    <bean id="jmxServer" class="org.springframework.jmx.support.MBeanServerFactoryBean">
-      <property name="locateExistingServerIfPossible" value="true"/>
-    </bean>
+  <!-- ================================================================================================- -->
 
-    <bean id="attributeSource"
-          class="org.springframework.jmx.export.annotation.AnnotationJmxAttributeSource"/>
+  <bean id="jmxServer" class="org.springframework.jmx.support.MBeanServerFactoryBean">
+    <property name="locateExistingServerIfPossible" value="true"/>
+  </bean>
 
-    <bean id="assembler" class="org.springframework.jmx.export.assembler.MetadataMBeanInfoAssembler">
-      <property name="attributeSource" ref="attributeSource"/>
-    </bean>
+  <bean id="jmx.attributeSource"
+        class="org.springframework.jmx.export.annotation.AnnotationJmxAttributeSource"/>
 
-    <bean id="namingStrategy" class="org.mdpnp.apps.testapp.DeviceAdapterImpl.DeviceFactoryNamingStrategy">
-    </bean>
+  <bean id="jmx.assembler" class="org.springframework.jmx.export.assembler.MetadataMBeanInfoAssembler">
+    <property name="attributeSource" ref="jmx.attributeSource"/>
+  </bean>
 
-    <!--
-        List of managed beans that specify managed attributes via annotations.
-    -->
-    <bean id="annotations.exporter" class="org.springframework.jmx.export.MBeanExporter" lazy-init="false">
-      <property name="assembler" ref="assembler"/>
-      <property name="autodetect" value="true"/>
-      <property name="namingStrategy" ref="namingStrategy"/>
-    </bean>
+  <bean id="jmx.namingStrategy" class="org.mdpnp.devices.DeviceDriverProvider.DeviceFactoryNamingStrategy">
+  </bean>
+
+  <!--
+      List of managed beans that specify managed attributes via annotations.
+  -->
+  <bean id="annotations.exporter" class="org.springframework.jmx.export.MBeanExporter" lazy-init="false">
+    <property name="assembler" ref="jmx.assembler"/>
+    <property name="autodetect" value="true"/>
+    <property name="namingStrategy" ref="jmx.namingStrategy"/>
+  </bean>
 
 </beans>

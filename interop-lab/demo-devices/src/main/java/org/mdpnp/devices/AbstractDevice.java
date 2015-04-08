@@ -37,6 +37,18 @@ import java.util.function.Consumer;
 @ManagedResource(description="MDPNP Device Driver")
 public abstract class AbstractDevice {
 
+    public static ThreadGroup threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "DeviceAdapter") {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+            log.error("Thrown by " + t.toString(), e);
+            super.uncaughtException(t, e);
+        }
+    };
+    static
+    {
+        threadGroup.setDaemon(true);
+    }
+
     protected final EventLoop eventLoop;
     protected ScheduledExecutorService executor;
 
@@ -45,7 +57,6 @@ public abstract class AbstractDevice {
     protected final DomainParticipant domainParticipant;
     protected final Publisher publisher;
     protected final Subscriber subscriber;
-    protected TimeManager timeManager;
     protected final Topic deviceIdentityTopic;
     private final DeviceIdentityDataWriter deviceIdentityWriter;
     protected final DeviceIdentity deviceIdentity;
@@ -579,10 +590,6 @@ public abstract class AbstractDevice {
         // inheritor may have registered... perhaps they should be responsible
         // in their override of shutdown?
 
-        if(timeManager!=null) {
-            timeManager.stop();
-        }
-
         if (null != alarmSettingsObjectiveCondition) {
             eventLoop.removeHandler(alarmSettingsObjectiveCondition);
             alarmSettingsObjectiveReader.delete_readcondition(alarmSettingsObjectiveCondition);
@@ -901,8 +908,5 @@ public abstract class AbstractDevice {
             throw new UnsupportedOperationException();
         }
     }
-    
-    public TimeManager getTimeManager() {
-        return timeManager;
-    }
+
 }

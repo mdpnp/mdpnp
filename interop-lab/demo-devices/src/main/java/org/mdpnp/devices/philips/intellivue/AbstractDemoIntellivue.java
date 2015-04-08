@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.io.util.StateMachine;
@@ -979,7 +980,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
         if (null == loop) {
             networkLoop = new NetworkLoop();
-            networkLoopThread = new Thread(threadGroup, new Runnable() {
+            networkLoopThread = new Thread(AbstractDevice.threadGroup, new Runnable() {
                 @Override
                 public void run() {
                     try {

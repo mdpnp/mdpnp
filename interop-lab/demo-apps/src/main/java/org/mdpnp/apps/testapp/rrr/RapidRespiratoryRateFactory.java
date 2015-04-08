@@ -38,7 +38,7 @@ public class RapidRespiratoryRateFactory implements IceApplicationProvider {
         
         final RapidRespiratoryRate controller = ((RapidRespiratoryRate)loader.getController());
 
-        controller.set(domainId, eventLoop, subscriber, deviceListModel);
+        controller.set(parentContext, domainId, eventLoop, subscriber, deviceListModel);
         controller.start(sampleArrayList);
 
         return new IceApplicationProvider.IceApp() {
