@@ -1,11 +1,6 @@
 package org.mdpnp.devices;
 
-import ice.HeartBeat;
-import ice.HeartBeatDataReader;
-import ice.HeartBeatDataWriter;
-import ice.TimeSync;
-import ice.TimeSyncDataReader;
-import ice.TimeSyncDataWriter;
+import ice.*;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -49,7 +44,9 @@ import com.rti.dds.subscription.SubscriberQos;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.ContentFilteredTopic;
 import com.rti.dds.topic.Topic;
+import org.springframework.jmx.export.annotation.ManagedResource;
 
+@ManagedResource(description="TimeManager Controller")
 public class TimeManager {
     private final ScheduledExecutorService executor;
     private ScheduledFuture<?> heartbeatTask;
@@ -94,16 +91,15 @@ public class TimeManager {
     
     private final Map<String,TimeSyncHolder> sync = new HashMap<String, TimeSyncHolder>();
     
-    public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, DomainParticipant participant, String uniqueDeviceIdentifier, String type) {
-        this(executor, eventLoop, participant.get_implicit_publisher(), participant.get_implicit_subscriber(),
-                uniqueDeviceIdentifier, type);
+    public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, DeviceIdentity deviceIdentifier) {
+        this(executor, eventLoop, publisher, subscriber, deviceIdentifier.unique_device_identifier, null);
     }
-    
-    public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, String uniqueDeviceIdentifier) {
-        this(executor, eventLoop, publisher, subscriber, uniqueDeviceIdentifier, null);
+
+    public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, String deviceIdentifier) {
+        this(executor, eventLoop, publisher, subscriber, deviceIdentifier, null);
     }
-    
-    public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, String uniqueDeviceIdentifier, String type) {
+
+    public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, String deviceIdentifier, String type) {
         if(!publisher.get_participant().equals(subscriber.get_participant())) {
             throw new RuntimeException("publisher and subscriber must be from the same participant");
         }
@@ -111,7 +107,7 @@ public class TimeManager {
         this.eventLoop = eventLoop;
         this.subscriber = subscriber;
         this.publisher = publisher;
-        this.uniqueDeviceIdentifier = uniqueDeviceIdentifier;
+        this.uniqueDeviceIdentifier = deviceIdentifier;
         this.type = type;
     }
     

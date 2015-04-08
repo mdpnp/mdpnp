@@ -11,18 +11,28 @@ import ice.MDSConnectivity;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jmx.export.annotation.ManagedAttribute;
+import org.springframework.jmx.export.annotation.ManagedOperation;
+import org.springframework.jmx.export.annotation.ManagedResource;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@ManagedResource(description="Partition Assignment Controller")
 public class PartitionAssignmentController implements MDSHandler.Objective.MDSListener {
 
     private static final Logger log = LoggerFactory.getLogger(PartitionAssignmentController.class);
 
     private long lastPartitionFileTime = 0L;
 
+    @ManagedAttribute(description="Last time partition file was checked.")
+    public long getLastPartitionFileTime() {
+        return lastPartitionFileTime;
+    }
+
+    @ManagedOperation(description="Check for partition file.")
     public void checkForPartitionFile() {
         File f = new File("device.partition");
         checkForPartitionFile(f);
@@ -65,7 +75,7 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
         return partition;
     }
 
-
+    @ManagedAttribute(description="DDS partitions for this device")
     public String[] getPartition() {
         PublisherQos pQos = new PublisherQos();
         publisher.get_qos(pQos);
@@ -76,6 +86,7 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
         return partition;
     }
 
+    @ManagedAttribute(description="DDS partitions for this device")
     public void addPartition(String partition) {
         List<String> currentPartition = new ArrayList<String>(Arrays.asList(getPartition()));
         currentPartition.add(partition);
@@ -88,6 +99,7 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
         setPartition(currentPartition.toArray(new String[0]));
     }
 
+    @ManagedAttribute(description="DDS partitions for this device")
     public void setPartition(String[] partition) {
         PublisherQos pQos = new PublisherQos();
         SubscriberQos sQos = new SubscriberQos();

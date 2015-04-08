@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ScheduledExecutorService;
 
 import javafx.application.Platform;
 import javafx.event.EventHandler;
@@ -46,6 +47,7 @@ import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
+import org.mdpnp.devices.PartitionAssignmentController;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
@@ -75,6 +77,18 @@ import javax.management.ObjectName;
 
 public abstract class DeviceAdapterImpl extends Observable implements DeviceAdapter {
 
+    private static ThreadGroup threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "DeviceAdapter") {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+            log.error("Thrown by " + t.toString(), e);
+            super.uncaughtException(t, e);
+        }
+    };
+    static
+    {
+        threadGroup.setDaemon(true);
+    }
+
     private static final Logger log = LoggerFactory.getLogger(DeviceAdapterImpl.class);
 
     public static class AbstractDeviceFactory implements FactoryBean<AbstractDevice>, ApplicationContextAware {
@@ -90,6 +104,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
                 }
 
                 instance = deviceFactory.create(context);
+                instance.setExecutor(executor);
             }
             return instance;
         }
@@ -118,9 +133,14 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             this.deviceFactory = deviceFactory;
         }
 
+        public void setExecutor(ScheduledExecutorService executor) {
+            this.executor = executor;
+        }
+
         private AbstractDevice instance;
-        protected ApplicationContext context;
-        protected DeviceDriverProvider deviceFactory;
+        private ApplicationContext context;
+        private DeviceDriverProvider deviceFactory;
+        private ScheduledExecutorService executor;
     }
 
     public static class DeviceFactoryNamingStrategy implements ObjectNamingStrategy,ApplicationContextAware {
@@ -352,20 +372,11 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
         @Override
         public void init() throws Exception {
 
-            /* //MIKEFIX
-            DeviceType type = deviceFactory.getDeviceType();
-
-            log.trace("Starting DeviceAdapter with type=" + type);
-            if (ConnectionType.Network.equals(type.getConnectionType())) {
-                SerialProviderFactory.setDefaultProvider(new TCPSerialProvider());
-                log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
-            }
-            */
-
-            device = context.getBean(AbstractDevice.class); //deviceFactory.create(context);
+            device = context.getBean(AbstractDevice.class);
+            PartitionAssignmentController pac = context.getBean(PartitionAssignmentController.class);
 
             if (null != initialPartition) {
-                device.setPartition(initialPartition);
+                pac.setPartition(initialPartition);
             }
 
             setChanged();
@@ -580,7 +591,7 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             controller.setChanged();
             controller.notifyObservers(AdapterState.init);
 
-            Thread deviceRunner = device.newThread(this);
+            Thread deviceRunner = new Thread(threadGroup, this);
             deviceRunner.start();
 
             stage.show();

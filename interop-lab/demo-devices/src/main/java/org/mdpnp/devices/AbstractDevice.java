@@ -12,71 +12,33 @@
  ******************************************************************************/
 package org.mdpnp.devices;
 
-import ice.Alert;
-import ice.DeviceIdentity;
-import ice.DeviceIdentityDataWriter;
-import ice.DeviceIdentityTypeSupport;
-import ice.LocalAlarmSettingsObjectiveDataWriter;
-import ice.Numeric;
-import ice.NumericDataWriter;
-import ice.NumericTypeSupport;
-import ice.SampleArray;
-import ice.SampleArrayDataWriter;
-import ice.SampleArrayTypeSupport;
-
-import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
-import javax.management.JMException;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.domain.DomainParticipantQos;
+import com.rti.dds.infrastructure.*;
+import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.*;
+import com.rti.dds.topic.Topic;
+import ice.*;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantQos;
-import com.rti.dds.infrastructure.Condition;
-import com.rti.dds.infrastructure.InstanceHandle_t;
-import com.rti.dds.infrastructure.RETCODE_NO_DATA;
-import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
-import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.infrastructure.Time_t;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.InstanceStateKind;
-import com.rti.dds.subscription.ReadCondition;
-import com.rti.dds.subscription.SampleInfo;
-import com.rti.dds.subscription.SampleInfoSeq;
-import com.rti.dds.subscription.SampleStateKind;
-import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.ViewStateKind;
-import com.rti.dds.topic.Topic;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
+import java.util.*;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Consumer;
+
 @ManagedResource(description="MDPNP Device Driver")
-public abstract class AbstractDevice implements ThreadFactory {
-    protected final ThreadGroup threadGroup;
-    protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(this);
+public abstract class AbstractDevice {
+
     protected final EventLoop eventLoop;
+    protected ScheduledExecutorService executor;
 
     private static final Logger log = LoggerFactory.getLogger(AbstractDevice.class);
 
@@ -88,8 +50,6 @@ public abstract class AbstractDevice implements ThreadFactory {
     private final DeviceIdentityDataWriter deviceIdentityWriter;
     protected final DeviceIdentity deviceIdentity;
     private InstanceHandle_t deviceIdentityHandle;
-
-    private PartitionAssignmentController partitionAssignmentController;
 
     protected final Topic numericTopic;
     protected final NumericDataWriter numericDataWriter;
@@ -612,16 +572,6 @@ public abstract class AbstractDevice implements ThreadFactory {
         return null;
     }
 
-
-    private int threadOrdinal = 0;
-
-    @Override
-    public Thread newThread(Runnable r) {
-        Thread t = new Thread(threadGroup, r, "Worker-" + (++threadOrdinal));
-        t.setDaemon(true);
-        return t;
-    }
-
     public void shutdown() {
         // TODO there is nothing preventing inheritors from interacting with
         // these objects as (and after) they are destroyed.
@@ -632,8 +582,6 @@ public abstract class AbstractDevice implements ThreadFactory {
         if(timeManager!=null) {
             timeManager.stop();
         }
-
-        partitionAssignmentController.shutdown();
 
         if (null != alarmSettingsObjectiveCondition) {
             eventLoop.removeHandler(alarmSettingsObjectiveCondition);
@@ -682,7 +630,6 @@ public abstract class AbstractDevice implements ThreadFactory {
 
         DomainParticipantFactory.get_instance().delete_participant(domainParticipant);
 
-        executor.shutdown();
         log.info("AbstractDevice shutdown complete");
     }
 
@@ -699,9 +646,6 @@ public abstract class AbstractDevice implements ThreadFactory {
         subscriber = domainParticipant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
         timestampFactory = new DomainClock(domainParticipant);
-
-        partitionAssignmentController = new PartitionAssignmentController(deviceIdentity, domainParticipant, eventLoop, publisher, subscriber);
-        partitionAssignmentController.start();
 
         DeviceIdentityTypeSupport.register_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
         deviceIdentityTopic = domainParticipant.create_topic(ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.get_type_name(),
@@ -763,25 +707,8 @@ public abstract class AbstractDevice implements ThreadFactory {
                 DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
         technicalAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(technicalAlertTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-        
-        
-        
-        threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), deviceIdentity.toString()) {
-            @Override
-            public void uncaughtException(Thread t, Throwable e) {
-                log.error("Thrown by " + t.toString(), e);
-                super.uncaughtException(t, e);
-            }
-        };
 
-        threadGroup.setDaemon(true);
         this.eventLoop = eventLoop;
-
-        executor.scheduleWithFixedDelay(new Runnable() {
-            public void run() {
-                partitionAssignmentController.checkForPartitionFile();
-            }
-        }, 1000L, 5000L, TimeUnit.MILLISECONDS);
     }
 
 
@@ -809,12 +736,6 @@ public abstract class AbstractDevice implements ThreadFactory {
     protected void writeDeviceIdentity() {
         if (null == deviceIdentity.unique_device_identifier || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("cannot write deviceIdentity without a UDI");
-        }
-        //MIKEFIX registerForManagement();
-        
-        if(null == timeManager) {
-            timeManager = new TimeManager(executor, eventLoop, publisher, subscriber, deviceIdentity.unique_device_identifier, "Device");
-            timeManager.start();
         }
 
         if (null == deviceIdentityHandle) {
@@ -896,43 +817,12 @@ public abstract class AbstractDevice implements ThreadFactory {
         return null == deviceIdentity ? null : deviceIdentity.unique_device_identifier;
     }
 
-    private ObjectInstance objInstance;
-
-    /*
-    private void registerForManagement() { // MIKEFIX
-        if (null == objInstance) {
-            try {
-                objInstance = ManagementFactory.getPlatformMBeanServer().registerMBean(
-                        this,
-                        new ObjectName(AbstractDevice.class.getPackage().getName() + ":type=" + AbstractDevice.class.getSimpleName() + ",name="
-                                + getUniqueDeviceIdentifier()));
-            } catch (JMException e) {
-                log.warn("Unable to register with JMX", e);
-            }
-        }
-    }
-    */
-
-    PartitionAssignmentController getPartitionAssignmentController() {
-        return partitionAssignmentController;
+    public ScheduledExecutorService getExecutor() {
+        return executor;
     }
 
-    @ManagedAttribute(description="DDS partitions for this device")
-    public String[] getPartition() {
-        return partitionAssignmentController.getPartition();
-    }
-
-    public void addPartition(String partition) {
-        partitionAssignmentController.addPartition(partition);
-    }
-
-    public void removePartition(String partition) {
-        partitionAssignmentController.removePartition(partition);
-    }
-
-    @ManagedAttribute(description="DDS partitions for this device")
-    public void setPartition(String[] partition) {
-        partitionAssignmentController.setPartition(partition);
+    public void setExecutor(ScheduledExecutorService executor) {
+        this.executor = executor;
     }
 
     protected void iconOrBlank(String model, String icon) {

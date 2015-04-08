@@ -14,17 +14,69 @@
 
     <context:annotation-config />
 
+    <bean id="taskExecutor"
+          class="org.springframework.scheduling.concurrent.ScheduledExecutorFactoryBean">
+      <property name="poolSize" value="1" />
+      <property name="WaitForTasksToCompleteOnShutdown" value="false" />
+      <property name="threadGroupName" value="driverTaskExecutor"/>
+    </bean>
+
     <bean id="driver"
           class="org.mdpnp.apps.testapp.DeviceAdapterImpl.AbstractDeviceFactory"
           destroy-method="shutdown">
+      <property name="executor" ref="taskExecutor"/>
     </bean>
 
-    <bean id="partition" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <bean id="deviceIdentity" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
       <property name="targetObject" ref="driver"/>
-      <property name="targetMethod" value="getPartitionAssignmentController"/>
+      <property name="targetMethod" value="getDeviceIdentity"/>
     </bean>
 
 
+    <bean id="partition" class="org.mdpnp.devices.PartitionAssignmentController"
+          init-method="start"
+          destroy-method="shutdown">
+      <constructor-arg ref="deviceIdentity"></constructor-arg>
+      <constructor-arg ref="domainParticipant"></constructor-arg>
+      <constructor-arg ref="eventLoop"></constructor-arg>
+      <constructor-arg ref="publisher"></constructor-arg>
+      <constructor-arg ref="subscriber"></constructor-arg>
+    </bean>
+
+  <bean id="timeManager" class="org.mdpnp.devices.TimeManager"
+        init-method="start"
+        destroy-method="stop">
+    <constructor-arg ref="taskExecutor"></constructor-arg>
+    <constructor-arg ref="eventLoop"></constructor-arg>
+    <constructor-arg ref="publisher"></constructor-arg>
+    <constructor-arg ref="subscriber"></constructor-arg>
+    <constructor-arg ref="deviceIdentity"></constructor-arg>
+  </bean>
+
+  <!-- ================================================================================================- -->
+
+  <bean id="checkForPartitionFileInvoker" class="org.springframework.scheduling.support.MethodInvokingRunnable">
+    <property name="targetObject" ref="partition" />
+    <property name="targetMethod" value="checkForPartitionFile" />
+  </bean>
+
+  <bean id="checkForPartitionFileSchedule" class="org.springframework.scheduling.concurrent.ScheduledExecutorTask">
+    <property name="runnable" ref="checkForPartitionFileInvoker" />
+    <property name="period"   value="60000" />
+    <property name="delay"    value="60000" />
+  </bean>
+
+  <!-- ================================================================================================- -->
+
+  <bean id="timerFactory" class="org.springframework.scheduling.concurrent.ScheduledExecutorFactoryBean">
+    <property name="scheduledExecutorTasks">
+      <list>
+        <ref bean="checkForPartitionFileSchedule" />
+      </list>
+    </property>
+  </bean>
+
+    <!-- utility section -->
 
     <bean id="jmxServer" class="org.springframework.jmx.support.MBeanServerFactoryBean">
       <property name="locateExistingServerIfPossible" value="true"/>
