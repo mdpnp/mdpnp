@@ -77,9 +77,9 @@ public class SimControl implements InitializingBean
         final ice.GlobalSimulationObjectiveDataWriter writer;
 
 
-        static class IntegerListCell extends ListCell<Integer> {
+        static class NumberListCell extends ListCell<Number> {
             @Override
-            protected void updateItem(Integer item, boolean empty) {
+            protected void updateItem(Number item, boolean empty) {
                 super.updateItem(item, empty);
                 super.setText((item==null? "":item.toString() + "%"));
             }
@@ -124,31 +124,31 @@ public class SimControl implements InitializingBean
             enableJitter.setGraphic(cb);
             enableJitter.setContentDisplay(ContentDisplay.RIGHT);
 
-            stepSize = makeIntCombo("Step (%):",
-                                    new Integer[] {1, 2, 5, 10, 20}, 2,
-                                    new ChangeListener<Integer>() {
-                                         @Override
-                                         public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
-                                             float jitterStepPct = newValue.floatValue();
-                                             Number jitterMaxPct = (Number)((ComboBox) maxJitter.getGraphic()).getValue();
-                                             recalculate(numericValue, jitterMaxPct.floatValue(), jitterStepPct);
-                                             publishObjective();
-                                         }
-                                    },
-                                    !jitterOn);
+            stepSize = makeNumberCombo("Step (%):",
+                                       new Double[]{0.1, 0.2, 0.5, 0.75, 1.0, 2.0, 5.0, 10.0, 20.0}, 2,
+                                       new ChangeListener<Number>() {
+                                           @Override
+                                           public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                                               float jitterStepPct = newValue.floatValue();
+                                               Number jitterMaxPct = (Number) ((ComboBox) maxJitter.getGraphic()).getValue();
+                                               recalculate(numericValue, jitterMaxPct.floatValue(), jitterStepPct);
+                                               publishObjective();
+                                           }
+                                       },
+                                       !jitterOn);
 
-            maxJitter = makeIntCombo("Max (%):",
-                                    new Integer[] {5, 10, 15, 20, 50}, 10,
-                                    new ChangeListener<Integer>() {
-                                        @Override
-                                        public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
-                                            float jitterMaxPct = newValue.floatValue();
-                                            Number jitterStepPct = (Number)((ComboBox) stepSize.getGraphic()).getValue();
-                                            recalculate(numericValue, jitterMaxPct, jitterStepPct.floatValue());
-                                            publishObjective();
-                                        }
-                                    },
-                                    !jitterOn);
+            maxJitter = makeNumberCombo("Max (%):",
+                                        new Integer[]{1, 3, 5, 10, 15, 20, 50}, 10,
+                                        new ChangeListener<Number>() {
+                                            @Override
+                                            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                                                float jitterMaxPct = newValue.floatValue();
+                                                Number jitterStepPct = (Number) ((ComboBox) stepSize.getGraphic()).getValue();
+                                                recalculate(numericValue, jitterMaxPct, jitterStepPct.floatValue());
+                                                publishObjective();
+                                            }
+                                        },
+                                        !jitterOn);
 
 
 
@@ -238,20 +238,20 @@ public class SimControl implements InitializingBean
         }
 
 
-        Label makeIntCombo(String lbl, Integer[] values, int sel, ChangeListener<Integer> callback, boolean initState) {
+        Label makeNumberCombo(String lbl, Number[] values, int sel, ChangeListener<Number> callback, boolean initState) {
 
-            Callback<ListView<Integer>,ListCell<Integer>> fac = new Callback<ListView<Integer>,ListCell<Integer>>() {
+            Callback<ListView<Number>,ListCell<Number>> fac = new Callback<ListView<Number>,ListCell<Number>>() {
                 @Override
-                public ListCell<Integer> call(ListView<Integer> param) {
-                    return new IntegerListCell();
+                public ListCell<Number> call(ListView<Number> param) {
+                    return new NumberListCell();
                 }
             };
 
-            ObservableList<Integer> v = FXCollections.observableArrayList();
+            ObservableList<Number> v = FXCollections.observableArrayList();
             v.addAll(Arrays.asList(values));
-            ComboBox<Integer> comboBox  = new ComboBox<>();
+            ComboBox<Number> comboBox  = new ComboBox<>();
             comboBox.setItems(v);
-            comboBox.setButtonCell(new IntegerListCell());
+            comboBox.setButtonCell(new NumberListCell());
             comboBox.setCellFactory(fac);
             comboBox.setValue(sel);
 
