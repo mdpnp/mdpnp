@@ -44,7 +44,9 @@ public class Chart {
             barChart = new StackedBarChart<>(new CategoryAxis(), new NumberAxis());
             this.vitalValidator = new VitalValidator(maxDataPoints, v, barChart.getData());
             barChart.setMinHeight(250.0);
+            barChart.setVerticalGridLinesVisible(false);
             barChart.setAnimated(false);
+            barChart.setCategoryGap(0.0);
 //            validator.setData(barChart.getData());
 //            barChart.getData().add(validator.getSeries());
             barChart.titleProperty().bind(v.labelProperty());

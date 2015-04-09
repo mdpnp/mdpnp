@@ -31,9 +31,11 @@ public class ValueValidator implements ChangeListener<Date> {
     public ValueValidator(final IntegerProperty maxDataPoints, final Value value) {
         this.maxDataPoints = maxDataPoints;
         this.value = value;
-//        for(int i = (int) value.getParent().getMinimum(); i <= (int)value.getParent().getMaximum(); i++) {
-//            data.add(new Data<String,Number>(""+i, 0));
-//        }
+        int low = (int) (value.getParent().getCriticalLow()==null?value.getParent().getMinimum():value.getParent().getCriticalLow());
+        int high = (int) (value.getParent().getCriticalHigh()==null?value.getParent().getMaximum():value.getParent().getCriticalHigh());
+        for(int i = low; i <= high; i++) {
+            data.add(new Data<String,Number>(""+i, 0));
+        }
         series = new XYChart.Series<String,Number>(data);
         series.nameProperty().bind(value.getDevice().makeAndModelProperty());
         value.timestampProperty().addListener(this);
