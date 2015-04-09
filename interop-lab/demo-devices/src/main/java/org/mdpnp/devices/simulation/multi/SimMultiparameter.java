@@ -150,23 +150,32 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
         // Currently the super ctor registers for this callback; so pulseox might not yet be initialized
-        if (obj != null && pulseox != null) {
-            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(obj.metric_id)) {
-                Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
+        if (obj != null && pulseox != null && capnometer != null && ecg != null) {
+            Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
+            if(rosetta.MDC_PULS_RATE.VALUE.equals(obj.metric_id)) {
+                ecg.setTargetHeartRate(value);
+                pulseox.setTargetHeartRate(value);
+            } else if(rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id)) {
+                ecg.setTargetRespiratoryRate(value);
+                capnometer.setRespirationRate(value);
+            } else if(rosetta.MDC_PRESS_BLD_SYS.VALUE.equals(obj.metric_id)) {
+                // for the future
+            } else if(rosetta.MDC_PRESS_BLD_DIA.VALUE.equals(obj.metric_id)) {
+                // for the future
+            } else if(rosetta.MDC_PRESS_BLD_MEAN.VALUE.equals(obj.metric_id)) {
+                // for the future
+            } else if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(obj.metric_id)) {
                 pulseox.setTargetHeartRate(value);
             } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(obj.metric_id)) {
-                Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
                 pulseox.setTargetSpO2(value);
             } else if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(obj.metric_id)) {
-                Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
                 capnometer.setRespirationRate(value);
-                ecg.setTargetRespiratoryRate(value);
             } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(obj.metric_id)) {
-                Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
                 capnometer.setEndTidalCO2(value);
             } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(obj.metric_id)) {
-                Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
                 ecg.setTargetHeartRate(value);
+            } else if (rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(obj.metric_id)) {
+                ecg.setTargetRespiratoryRate(value);
             }
         }
     }

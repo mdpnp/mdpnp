@@ -83,11 +83,11 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
     public void simulatedNumeric(GlobalSimulationObjective obj) {
         // Currently the super ctor registers for this callback; so pulseox might not yet be initialized
         if (obj != null && pulseox != null) {
-            if (rosetta.MDC_PULS_RATE.VALUE.equals(obj.metric_id)) {
-                Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
+            Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
+            if (rosetta.MDC_PULS_RATE.VALUE.equals(obj.metric_id) ||
+                rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(obj.metric_id)) {
                 pulseox.setTargetHeartRate(value);
             } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(obj.metric_id)) {
-                Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
                 pulseox.setTargetSpO2(value);
             }
         }

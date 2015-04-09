@@ -125,11 +125,12 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
     
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
-        if (rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(obj.metric_id)) {
-            Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
+        Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
+        if (rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(obj.metric_id) ||
+            rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id)) {
             ecg.setTargetRespiratoryRate(value);
-        } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(obj.metric_id)) {
-            Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
+        } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(obj.metric_id) ||
+                   rosetta.MDC_PULS_RATE.VALUE.equals(obj.metric_id)) {
             ecg.setTargetHeartRate(value);
         }
     }

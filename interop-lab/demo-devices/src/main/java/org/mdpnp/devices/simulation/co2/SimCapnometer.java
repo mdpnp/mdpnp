@@ -81,11 +81,11 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
 
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
-        if (rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id)) {
-            Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
+        Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
+        if (rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id) ||
+                rosetta.MDC_CO2_RESP_RATE.VALUE.equals(obj.metric_id)) {
             capnometer.setRespirationRate(value);
         } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(obj.metric_id)) {
-            Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
             capnometer.setEndTidalCO2(value);
         }
     }
