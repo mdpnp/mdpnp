@@ -56,6 +56,7 @@ public class GlobalSimulationObjectiveMonitor {
         globalSimulationObjectiveReader = null;
         domainParticipant.delete_topic(globalSimulationObjectiveTopic);
         globalSimulationObjectiveTopic = null;
+        // TODO Where a participant is shared it is not safe to unregister types
 //        ice.GlobalSimulationObjectiveTypeSupport.unregister_type(domainParticipant, ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
         domainParticipant = null;
 

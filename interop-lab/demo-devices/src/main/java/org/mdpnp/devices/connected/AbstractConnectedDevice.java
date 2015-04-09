@@ -81,7 +81,8 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         }
         publisher.delete_datawriter(deviceConnectivityWriter);
         domainParticipant.delete_topic(deviceConnectivityTopic);
-        DeviceConnectivityTypeSupport.unregister_type(domainParticipant, DeviceConnectivityTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        DeviceConnectivityTypeSupport.unregister_type(domainParticipant, DeviceConnectivityTypeSupport.get_type_name());
         super.shutdown();
     }
 

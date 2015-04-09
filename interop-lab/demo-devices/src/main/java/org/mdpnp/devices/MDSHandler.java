@@ -192,6 +192,7 @@ public class MDSHandler {
             publisher.delete_datawriter(mdsoWriter);
 
             participant.delete_topic(msdoConnectivityTopic);
+            // TODO Where a participant is shared it is not safe to unregister types
 //            ice.MDSConnectivityTypeSupport.unregister_type(participant, ice.MDSConnectivityTypeSupport.get_type_name());
         }
 
@@ -325,6 +326,7 @@ public class MDSHandler {
             publisher.delete_datawriter(mdsoWriter);
 
             participant.delete_topic(msdoConnectivityTopic);
+            // TODO Where a participant is shared it is not safe to unregister types
 //            ice.MDSConnectivityObjectiveTypeSupport.unregister_type(participant, ice.MDSConnectivityObjectiveTypeSupport.get_type_name());
         }
 

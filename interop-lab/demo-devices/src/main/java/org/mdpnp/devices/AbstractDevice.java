@@ -629,34 +629,41 @@ public abstract class AbstractDevice {
 
         publisher.delete_datawriter(alarmSettingsObjectiveWriter);
         domainParticipant.delete_topic(localAlarmSettingsObjectiveTopic);
-        ice.LocalAlarmSettingsObjectiveTypeSupport.unregister_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        ice.LocalAlarmSettingsObjectiveTypeSupport.unregister_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
 
         publisher.delete_datawriter(alarmSettingsDataWriter);
         domainParticipant.delete_topic(alarmSettingsTopic);
-        ice.AlarmSettingsTypeSupport.unregister_type(domainParticipant, ice.AlarmSettingsTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        ice.AlarmSettingsTypeSupport.unregister_type(domainParticipant, ice.AlarmSettingsTypeSupport.get_type_name());
 
         publisher.delete_datawriter(sampleArrayDataWriter);
         domainParticipant.delete_topic(sampleArrayTopic);
-        SampleArrayTypeSupport.unregister_type(domainParticipant, SampleArrayTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        SampleArrayTypeSupport.unregister_type(domainParticipant, SampleArrayTypeSupport.get_type_name());
 
         publisher.delete_datawriter(numericDataWriter);
         domainParticipant.delete_topic(numericTopic);
-        NumericTypeSupport.unregister_type(domainParticipant, NumericTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        NumericTypeSupport.unregister_type(domainParticipant, NumericTypeSupport.get_type_name());
 
         publisher.delete_datawriter(deviceIdentityWriter);
         domainParticipant.delete_topic(deviceIdentityTopic);
-        DeviceIdentityTypeSupport.unregister_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        DeviceIdentityTypeSupport.unregister_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
         
         publisher.delete_datawriter(deviceAlertConditionWriter);
         domainParticipant.delete_topic(deviceAlertConditionTopic);
-        ice.DeviceAlertConditionTypeSupport.unregister_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        ice.DeviceAlertConditionTypeSupport.unregister_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
 
         publisher.delete_datawriter(patientAlertWriter);
         domainParticipant.delete_topic(patientAlertTopic);
         
         publisher.delete_datawriter(technicalAlertWriter);
         domainParticipant.delete_topic(technicalAlertTopic);
-        ice.AlertTypeSupport.unregister_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        ice.AlertTypeSupport.unregister_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
 
         log.info("AbstractDevice shutdown complete");
     }
