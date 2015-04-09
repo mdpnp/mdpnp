@@ -287,12 +287,14 @@ public class TimeManager {
     private static final long HEARTBEAT_INTERVAL = 2000L;
     
     protected void processAliveHeartbeat(final String unique_device_identifier, final String type, String host_name) {
+        log.trace("ALIVE:{}",unique_device_identifier);
         for(TimeManagerListener listener : listeners) {
             listener.aliveHeartbeat(unique_device_identifier, type, host_name);
         }
     }
     
     protected void processNotAliveHeartbeat(final String unique_device_identifier, final String type) {
+        log.trace("NOT ALIVE:{}",unique_device_identifier);
         for(TimeManagerListener listener : listeners) {
             listener.notAliveHeartbeat(unique_device_identifier, type);
         }

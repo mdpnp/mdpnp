@@ -63,8 +63,8 @@ public class DataCollector {
     
     public void add(NumericFx fx) {
         try {
-            if (log.isDebugEnabled())
-                log.debug(dateFormats.get().format(fx.getPresentation_time()) + " " + fx.getMetric_id() + "=" + fx.getValue());
+            if (log.isTraceEnabled())
+                log.trace(dateFormats.get().format(fx.getPresentation_time()) + " " + fx.getMetric_id() + "=" + fx.getValue());
             Value v = toValue(fx);
             DataSampleEvent ev = new DataSampleEvent(v);
             fireDataSampleEvent(ev);
@@ -87,8 +87,8 @@ public class DataCollector {
                 long tm = baseTime - (sz - j) * msPerSample;
                 float value = values[j].floatValue();
 
-                if (log.isDebugEnabled())
-                    log.debug(dateFormats.get().format(new Date(tm)) + " " + fx.getMetric_id() + "=" + value);
+                if (log.isTraceEnabled())
+                    log.trace(dateFormats.get().format(new Date(tm)) + " " + fx.getMetric_id() + "=" + value);
 
                 Value v = toValue(fx.getUnique_device_identifier(), fx.getMetric_id(), fx.getInstance_id(), tm, value);
                 DataSampleEvent ev = new DataSampleEvent(v);
