@@ -43,7 +43,7 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
         writeDeviceIdentity();
 
         monitor = new GlobalSimulationObjectiveMonitor(this);
-        monitor.register(domainParticipant, eventLoop);
+        
     }
 
     public Throwable getLastError() {
@@ -52,6 +52,7 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
 
     @Override
     public boolean connect(String str) {
+        monitor.register(subscriber, eventLoop);
         ice.ConnectionState state = getState();
         if (ice.ConnectionState.Connected.equals(state) || ice.ConnectionState.Connecting.equals(state)
                 || ice.ConnectionState.Negotiating.equals(state)) {
@@ -71,6 +72,7 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
 
     @Override
     public void disconnect() {
+        monitor.unregister();
         if(!ice.ConnectionState.Terminal.equals(getState())) {
             if (!stateMachine.transitionWhenLegal(ice.ConnectionState.Terminal, 2000L, "disconnect requested")) {
                 throw new RuntimeException("Unable to enter Terminal State");
