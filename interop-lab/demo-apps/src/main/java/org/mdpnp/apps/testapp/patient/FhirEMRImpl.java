@@ -78,7 +78,9 @@ class FhirEMRImpl implements EMRFacade {
 
     @Override
     public void refresh() {
-        IGenericClient fhirClient = fhirContext.newRestfulGenericClient(fhirURL);
+
+        IGenericClient fhirClient = getFhirClient();
+
         ca.uhn.fhir.model.api.Bundle bundle = fhirClient
                 .search()
                 .forResource(Patient.class)
@@ -121,11 +123,16 @@ class FhirEMRImpl implements EMRFacade {
     }
 
     public boolean createPatient(final PatientInfo p) {
+        MethodOutcome mo = createPatientImpl(p);
+        return mo.getCreated();
+    }
+
+    MethodOutcome createPatientImpl(final PatientInfo p) {
         collectionUpdateHandler.execute(() -> {
             patients.add(p);
         });
-        
-        IGenericClient fhirClient = fhirContext.newRestfulGenericClient(fhirURL);
+
+        IGenericClient fhirClient = getFhirClient();
 
         String mrnId = p.getMrn();
 
@@ -144,7 +151,11 @@ class FhirEMRImpl implements EMRFacade {
                 .where(Patient.IDENTIFIER.exactly().systemAndIdentifier(HL7_ICE_URN_OID, mrnId))
                 .execute();
 
-        return outcome.getCreated();
+        return outcome;
+    }
+
+    IGenericClient getFhirClient() {
+        return fhirContext.newRestfulGenericClient(fhirURL);
     }
 
     static AdministrativeGenderEnum toFhire(PatientInfo.Gender g) {

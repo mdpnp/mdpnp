@@ -1,5 +1,13 @@
 package org.mdpnp.apps.testapp.patient;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.model.base.resource.BaseOperationOutcome;
+import ca.uhn.fhir.model.dstu2.composite.HumanNameDt;
+import ca.uhn.fhir.model.dstu2.resource.Patient;
+import ca.uhn.fhir.model.primitive.DateDt;
+import ca.uhn.fhir.model.primitive.IdDt;
+import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.client.IGenericClient;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mdpnp.apps.testapp.FxRuntimeSupport;
@@ -10,6 +18,8 @@ import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+
+import static ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL;
 
 /**
  * @author mfeinberg
@@ -61,7 +71,16 @@ public class FhirEMRImplTest {
 
         PatientInfo pi = new PatientInfo(id, fn, ln, PatientInfo.Gender.M, new Date(now));
 
-        boolean created = emr.createPatient(pi);
-        Assert.assertTrue("Failed to create patients", created);
+        MethodOutcome created = emr.createPatientImpl(pi);
+        Assert.assertTrue("Failed to create patients", created.getCreated());
+
+        deleteFhirRecord(emr, created.getId());
+    }
+
+    private void deleteFhirRecord(FhirEMRImpl emr, IdDt id)
+    {
+        IGenericClient fhirClient = emr.getFhirClient();
+        fhirClient.delete().resourceById(id).execute();
+        log.info("deleted " + id.getValueAsString());
     }
 }
