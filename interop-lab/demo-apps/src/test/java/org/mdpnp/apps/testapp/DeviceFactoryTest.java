@@ -36,22 +36,25 @@ public class DeviceFactoryTest {
         AbstractApplicationContext parentContext =
                 new ClassPathXmlApplicationContext(new String[] { "DeviceAdapterContext.xml" });
 
-        DeviceDriverProvider[] all =  DeviceFactory.getAvailableDevices();
-        for (DeviceDriverProvider ddp : all) {
-            DeviceDriverProvider.DeviceType dt=ddp.getDeviceType();
+        try {
+            DeviceDriverProvider[] all = DeviceFactory.getAvailableDevices();
+            for (DeviceDriverProvider ddp : all) {
+                DeviceDriverProvider.DeviceType dt = ddp.getDeviceType();
 
-            try {
-                AbstractDevice ad = ddp.newInstance(parentContext);
-                Assert.assertNotNull("Device provider failed to create instance of type " + dt, ad);
-
-                log.info("Device provider " + dt + " verified");
-            }
-            catch(Exception ex) {
-                log.error("Device provider failed to create instance of type " + dt, ex);
-                Assert.fail("Device provider failed to create instance of type " + dt);
+                try {
+                    AbstractDevice ad = ddp.newInstance(parentContext);
+                    Assert.assertNotNull(ddp.getClass().getSimpleName() + " failed to create instance of type " + dt, ad);
+                    log.info("Device provider " + dt + " verified");
+                } catch (Exception ex) {
+                    String mdg = ddp.getClass().getSimpleName() + " failed to create instance of type " + dt;
+                    log.error(mdg, ex);
+                    Assert.fail(mdg);
+                }
             }
         }
-
+        finally {
+            parentContext.destroy();
+        }
     }
 
 }
