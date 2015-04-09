@@ -24,7 +24,7 @@ import javafx.scene.paint.Paint;
 public class PulseOximeterPanel extends AbstractWaveAndParamsPanel {
     private final static String[] PLETH_WAVEFORMS = new String[] { rosetta.MDC_PULS_OXIM_PLETH.VALUE };
 
-    private final static String[][] PARAMS = new String[][] { { rosetta.MDC_PULS_OXIM_SAT_O2.VALUE }, { rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE } };
+    private final static String[][] PARAMS = new String[][] { { rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE }, { rosetta.MDC_PULS_OXIM_SAT_O2.VALUE } };
 
     private final static String[] PARAM_LABELS = new String[] { "Pulse", "SpO\u2082" };
 
