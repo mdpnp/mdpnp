@@ -1,10 +1,11 @@
-// HIMSS2015.idl
-//
-// DDS data objects and topics to be shared by MDPnP and
-// Docbox for HIMSS 2015.
-//
-// Wayne Saari, 2 APR 2015
-// 
+/**
+ * @file himss2015.idl
+ * DDS data objects and topics to be shared by MDPnP and
+ * DocBox for HIMSS 2015.
+ *
+ * @author Wayne Saari
+ * 2 APR 2015
+ */ 
 
 module himss
 {
@@ -19,21 +20,20 @@ const long MAX_ICE_UDI_LENGTH = 16;
 
 const long MAX_ASSESSMENT_ENTRIES = 50;
 
-//
-// Identifiers for Dash measurements of interest to DICES and OpenICE
-//
-const long MDC_ECG_HEART_RATE = 16770;    // "HR BPM"
-const long MDC_RESP_RATE = 20490;         // "RR BPM"
-const long MDC_PRESS_BLD_ART_DIA = 18962; // "ABP mmHg"
-const long MDC_PRESS_BLD_ART_SYS = 18961; // "ABP mmHg"
-const long MDC_PULS_OXIM_SAT_O2 = 19384;  // “SpO2 %"
+/**
+ * Identifiers for Dash measurements of interest to DICES and OpenICE
+ */
+const long MDC_ECG_HEART_RATE = 16770;  // "HR BPM"
+const long MDC_TTHOR_RESP_RATE = 20506; // "RR BPM"
+const long MDC_PRESS_BLD_ART_ABP_DIA = 18966;   // "ABP mmHg"
+const long MDC_PRESS_BLD_ART_ABP_SYS = 18965;   // "ABP mmHg"
+const long MDC_PRESS_BLD_ART_ABP_MEAN = 18967;  // "ABP Mean mmHg"
+const long MDC_PULS_OXIM_SAT_O2 = 19384;        // "SpO2 %"
+const long MDC_PULS_OXIM_PULS_RATE = 18458;     // "PR BPM"
 
-// and maybe
-const long MDC_AWAY_CO2_EXP = 20660; // "Exp CO2 mmHg"
-
-//
-// Date, time
-//
+/**
+ * Date, time
+ */
 typedef long TIME_T;
 
 struct Timespec
@@ -46,9 +46,9 @@ struct Timespec
 // 1970-01-01 00:00:00 UTC.
 typedef Timespec AbsoluteTime;
 
-//
-// The Date data type specifies a certain calendar date. (NOT BCD-encoded.)
-//
+/**
+ * The Date data type specifies a certain calendar date. (NOT BCD-encoded.)
+ */
 struct Date
 {
   octet century;  // Ex: for year 2012, century = 20, ...
@@ -57,14 +57,14 @@ struct Date
   octet day;
 }; //@top-level false
 
-//
-// ICE Unique Device Identification (UDI)
-//
+/**
+ * ICE Unique Device Identification (UDI)
+ */
 typedef string<MAX_ICE_UDI_LENGTH> ICE_UDI;
 
-//
-// For multiple instances of the same sensor. Use this type to disambiguate.
-//
+/**
+ * For multiple instances of the same sensor. Use this type to disambiguate.
+ */
 typedef long InstanceIdentifier;
 
 // Assessment list 
@@ -75,12 +75,12 @@ struct AssessmentEntry
 }; //top-level false
 typedef sequence<AssessmentEntry, MAX_ASSESSMENT_ENTRIES> AssessmentList;
 
-//
-// MetricDataQuality object
-//
-// The MetricDataQuality object indicates the status for a specified
-// measurement. It includes a validated data indicator.
-//
+/**
+ * MetricDataQuality object
+ *
+ * The MetricDataQuality object indicates the status for a specified
+ * measurement. It includes a validated data indicator.
+ */
 struct MetricDataQuality
 {
   ICE_UDI udi; //@key
@@ -91,25 +91,18 @@ struct MetricDataQuality
 #pragma keylist MetricDataQuality udi metric_id instance_id
 const string MetricDataQualityTopic = "MetricDataQuality";
 
-//
-// PatientAssessment object
-//
-// The PatientAssessment object defines patient assessment attributes.
-//
+/**
+ * PatientAssessment object
+ *
+ * The PatientAssessment object defines patient assessment attributes.
+ */
 struct PatientAssessment
 {
-  // Patient ID
-  // >>>NOTE<<< If only one, pre-configured patient, may not need these
-  string<SHORTSHORT_STRING_LEN> mrn; //@key
-  string<LONG_STRING_LEN> given_name;
-  string<LONG_STRING_LEN> family_name;
-  Date dob;
-
-  string<LONG_STRING_LEN> operator_id;
+  string<LONG_STRING_LEN> operator_id; //@key
   AbsoluteTime date_and_time; // UTC
   AssessmentList assessments;
 }; //@top-level true
-#pragma keylist PatientAssessment mrn
+#pragma keylist PatientAssessment operator_id
 const string PatientAssessmentTopic = "PatientAssessment";
 
 };
