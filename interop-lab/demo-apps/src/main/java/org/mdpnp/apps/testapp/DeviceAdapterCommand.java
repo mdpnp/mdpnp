@@ -410,6 +410,7 @@ public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Conf
             // MIKEFIX controller.notifyObservers(AdapterState.init);
 
             Thread deviceRunner = new Thread(AbstractDevice.threadGroup, this);
+            deviceRunner.setDaemon(true);
             deviceRunner.start();
 
             stage.show();

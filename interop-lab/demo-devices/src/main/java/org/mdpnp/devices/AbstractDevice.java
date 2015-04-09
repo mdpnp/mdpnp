@@ -72,10 +72,11 @@ public abstract class AbstractDevice {
             super.uncaughtException(t, e);
         }
     };
-    static
-    {
-        threadGroup.setDaemon(true);
-    }
+    // TODO this is a good idea but the threadgroup gets destroyed when the last thread finishes
+//    static
+//    {
+//        threadGroup.setDaemon(true);
+//    }
 
     protected final EventLoop eventLoop;
     protected ScheduledExecutorService executor;
