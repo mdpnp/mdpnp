@@ -35,9 +35,9 @@ public class VitalModelFactory implements FactoryBean<VitalModel>, DisposableBea
             instance.start(publisher, eventLoop);
             
             Platform.runLater( () -> {
-                VitalSign.SpO2.addToModel(instance);
                 VitalSign.RespiratoryRate.addToModel(instance);
-                VitalSign.EndTidalCO2.addToModel(instance);
+                VitalSign.HeartRate.addToModel(instance);
+                VitalSign.SpO2.addToModel(instance);
             });
         }
         return instance;
