@@ -327,6 +327,23 @@
     </resource_limits>
    </datawriter_qos>
   </qos_profile>
+  
+  
+  <qos_profile name="himss" base_name="default_profile"
+   is_default_qos="false">
+   <datareader_qos>
+       <reliability><kind>DDS_RELIABLE_RELIABILITY_QOS</kind></reliability>
+       <ownership><kind>DDS_SHARED_OWNERSHIP_QOS</kind></ownership>
+       <durability><kind>DDS_TRANSIENT_LOCAL_DURABILITY_QOS</kind></durability>
+        <history><kind>DDS_KEEP_LAST_HISTORY_QOS</kind><depth>5</depth></history>       
+   </datareader_qos>
+   <datawriter_qos>
+       <ownership><kind>DDS_SHARED_OWNERSHIP_QOS</kind></ownership>
+   </datawriter_qos>
+
+  </qos_profile>
+  
+  
 
   <qos_profile name="heartbeat" base_name="default_profile"
    is_default_qos="false">

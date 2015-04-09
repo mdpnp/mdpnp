@@ -125,5 +125,26 @@
         <property name="jdbcDB"      ref="jdbcDB"/>
         <property name="fhirContext" ref="fhirContext"/>
     </bean>        
+    
+    <bean id="himssDomainParticipant" class="org.mdpnp.devices.DomainParticipantFactory">
+        <constructor-arg value="${himss.domain}"/>
+    </bean>
+    
+    <bean id="himssSubscriber" class="org.mdpnp.devices.SubscriberFactory">
+        <constructor-arg ref="himssDomainParticipant"></constructor-arg>
+    </bean>
+
+    <bean id="himssPublisher" class="org.mdpnp.devices.PublisherFactory">
+        <constructor-arg ref="himssDomainParticipant"></constructor-arg>
+    </bean>    
+    
+    <bean id="himssEmitter" class="org.mdpnp.apps.testapp.HimssEmitter" init-method="start" destroy-method="stop">
+        <property name="numericList" ref="numericList"/>
+        <property name="publisher" ref="himssPublisher"/>
+    </bean>
+    
+    <bean id="himssIntaker" class="org.mdpnp.apps.testapp.HimssIntaker" init-method="start" destroy-method="stop">
+        <property name="subscriber" ref="himssSubscriber"/>
+    </bean>
 
 </beans>

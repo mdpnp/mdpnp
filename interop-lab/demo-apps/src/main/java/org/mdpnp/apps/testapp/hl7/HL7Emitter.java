@@ -62,23 +62,7 @@ public class HL7Emitter implements MDSListener, Runnable {
         FHIR_DSTU2, V26,
     }
     
-    private static final Map<String, Integer> numericCodes = new HashMap<String, Integer>();
-    private static Integer numericCode(String name) {
-        Integer code = numericCodes.get(name);
-        if(null == code) {
-            try {
-                Class<?> cls = Class.forName("himss."+name);
-                code = (Integer) cls.getField("VALUE").get(null);
-            } catch (Exception e) {
-                // Sentinel value so we don't try again
-                code = -1;
-                
-            }
-            
-            numericCodes.put(name, code);
-        }
-        return null == code || code < 0 ? null: code;
-    }
+
     
     protected static final Logger log = LoggerFactory.getLogger(HL7Emitter.class);
 
