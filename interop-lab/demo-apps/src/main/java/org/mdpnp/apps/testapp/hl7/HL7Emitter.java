@@ -4,14 +4,11 @@ import ice.MDSConnectivity;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -64,33 +61,24 @@ public class HL7Emitter implements MDSListener, Runnable {
     public enum Type {
         FHIR_DSTU2, V26,
     }
-
-    // TODO externalize or add UI
-    private static final String[] metricIdsForExportArray = new String[] {
-        rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE,
-        rosetta.MDC_ECG_HEART_RATE.VALUE,
-        rosetta.MDC_PULS_OXIM_SAT_O2.VALUE,
-        rosetta.MDC_PRESS_BLD_SYS.VALUE,
-        rosetta.MDC_PRESS_BLD_DIA.VALUE,
-        rosetta.MDC_PRESS_BLD_MEAN.VALUE,
-        rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE,
-        rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE,
-        rosetta.MDC_PRESS_BLD_NONINV_MEAN.VALUE,
-        rosetta.MDC_CO2_RESP_RATE.VALUE,
-        rosetta.MDC_RESP_RATE.VALUE
-    };
     
-    private static final Map<String, Number> numericCodes = new HashMap<String, Number>();
-    static {
-        numericCodes.put(rosetta.MDC_AWAY_CO2_EXP.VALUE, himss.MDC_AWAY_CO2_EXP.VALUE);
-        numericCodes.put(rosetta.MDC_ECG_HEART_RATE.VALUE, himss.MDC_ECG_HEART_RATE.VALUE);
-        numericCodes.put(rosetta.MDC_PRESS_BLD_ART_DIA.VALUE, himss.MDC_PRESS_BLD_ART_DIA.VALUE);
-        numericCodes.put(rosetta.MDC_PRESS_BLD_ART_SYS.VALUE, himss.MDC_PRESS_BLD_ART_SYS.VALUE);
-        numericCodes.put(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, himss.MDC_PULS_OXIM_SAT_O2.VALUE);
-        numericCodes.put(rosetta.MDC_RESP_RATE.VALUE, himss.MDC_RESP_RATE.VALUE);
+    private static final Map<String, Integer> numericCodes = new HashMap<String, Integer>();
+    private static Integer numericCode(String name) {
+        Integer code = numericCodes.get(name);
+        if(null == code) {
+            try {
+                Class<?> cls = Class.forName("himss."+name);
+                code = (Integer) cls.getField("VALUE").get(null);
+            } catch (Exception e) {
+                // Sentinel value so we don't try again
+                code = -1;
+                
+            }
+            
+            numericCodes.put(name, code);
+        }
+        return null == code || code < 0 ? null: code;
     }
-    
-    private static final Set<String> metricIdsForExport = new HashSet<String>(Arrays.asList(metricIdsForExportArray));
     
     protected static final Logger log = LoggerFactory.getLogger(HL7Emitter.class);
 
@@ -237,7 +225,7 @@ public class HL7Emitter implements MDSListener, Runnable {
         Platform.runLater(()-> {
             try {
                 numericList.forEach((fx)-> {
-                    if(metricIdsForExport.contains(fx.getMetric_id())) {
+                    if(fx.getMetric_id().startsWith("MDC_")) {
                         ORU_R01 obs;
                         try {
                             obs = hl7Observation(fx);
@@ -364,10 +352,9 @@ public class HL7Emitter implements MDSListener, Runnable {
         if(null != resourceId) obs.setSubject(new ResourceReferenceDt(resourceId));
         obs.setStatus(ObservationStatusEnum.PRELIMINARY);
         
-        
         return obs;
     }
-    
+    private static final String METRIC_PREFIX = "MDC_";
     private static final String PTID_SYSTEM = "urn:oid:2.16.840.1.113883.3.1974";
     public void sendFHIR() throws InterruptedException {
         List<IResource> bundle = new ArrayList<IResource>();
@@ -375,7 +362,7 @@ public class HL7Emitter implements MDSListener, Runnable {
         Platform.runLater(()-> {
             try {
                 numericList.forEach((fx)-> {
-                    if(metricIdsForExport.contains(fx.getMetric_id())) {
+                    if(fx.getMetric_id().startsWith(METRIC_PREFIX)) {
                         Observation obs = fhirObservation(fx);
                         if(null != obs) {
                             bundle.add(obs);
