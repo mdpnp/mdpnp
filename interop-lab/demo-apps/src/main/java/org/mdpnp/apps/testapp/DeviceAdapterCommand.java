@@ -75,8 +75,9 @@ public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Conf
 
         HeadlessAdapter da = new HeadlessAdapter(ddp, context, true);
 
-        da.init();
         da.setAddress(config.getAddress());
+
+        da.init();
 
         // this will block until stops kills everything from another thread or a
         // VM's shutdown hook
