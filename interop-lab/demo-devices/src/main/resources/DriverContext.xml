@@ -43,6 +43,7 @@
     <constructor-arg ref="subscriber"></constructor-arg>
   </bean>
 
+  <!--  TODO this could use the TimeManagerFactory bean -->
   <bean id="timeManager" class="org.mdpnp.devices.TimeManager"
         init-method="start"
         destroy-method="stop">
@@ -51,6 +52,8 @@
     <constructor-arg ref="publisher"></constructor-arg>
     <constructor-arg ref="subscriber"></constructor-arg>
     <constructor-arg ref="deviceIdentity"></constructor-arg>
+    <!--  The last argument here puts the TimeManager into emitting mode; otherwise it is passive -->
+    <constructor-arg type="java.lang.String"><value>Device</value></constructor-arg>
   </bean>
 
   <!-- ================================================================================================- -->

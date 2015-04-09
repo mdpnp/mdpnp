@@ -92,7 +92,11 @@ public class TimeManager {
     private final Map<String,TimeSyncHolder> sync = new HashMap<String, TimeSyncHolder>();
     
     public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, DeviceIdentity deviceIdentifier) {
-        this(executor, eventLoop, publisher, subscriber, deviceIdentifier.unique_device_identifier, null);
+        this(executor, eventLoop, publisher, subscriber, deviceIdentifier, null);
+    }
+    
+    public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, DeviceIdentity deviceIdentifier, String type) {
+        this(executor, eventLoop, publisher, subscriber, deviceIdentifier.unique_device_identifier, type);
     }
 
     public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, String deviceIdentifier) {
