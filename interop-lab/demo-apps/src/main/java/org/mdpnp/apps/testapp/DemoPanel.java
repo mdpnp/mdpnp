@@ -27,28 +27,21 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 import org.mdpnp.apps.testapp.patient.PatientInfo;
-import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
 
-import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.subscription.Subscriber;
@@ -200,8 +193,8 @@ public class DemoPanel implements Runnable {
                 }
 
                 try {
-                    DeviceAdapterImpl.GUIAdapter da = new DeviceAdapterImpl.GUIAdapter(c.getDeviceFactory(), context);
-                    da.setInitialPartition(partition.toArray(new String[0]));
+                    DeviceAdapterCommand.GUIAdapter da = new DeviceAdapterCommand.GUIAdapter(c.getDeviceFactory(), context);
+                    da.setPartition(partition.toArray(new String[0]));
                     da.setAddress(c.getAddress());
                     da.init();
                     da.start(null); // Passing null will force the adapter to start a new dialog

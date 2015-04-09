@@ -14,7 +14,7 @@ package org.mdpnp.apps.testapp;
 
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
-import org.mdpnp.devices.DeviceDriverProvider.SpringLoaderDriver;
+import org.mdpnp.devices.DeviceDriverProvider.SpringLoadedDriver;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.draeger.medibus.*;
 import org.mdpnp.devices.fluke.prosim68.DemoProsim68;
@@ -34,8 +34,6 @@ import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
 import org.mdpnp.devices.zephyr.biopatch.DemoBioPatch;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
 
 import java.util.*;
@@ -73,7 +71,7 @@ public class DeviceFactory {
     }
 
 
-    public static class PO_SimulatorProvider extends SpringLoaderDriver {
+    public static class PO_SimulatorProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -88,7 +86,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class NIBP_SimulatorProvider extends SpringLoaderDriver {
+    public static class NIBP_SimulatorProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -103,7 +101,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class ECG_SimulatorProvider extends SpringLoaderDriver {
+    public static class ECG_SimulatorProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -118,7 +116,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class CO2_SimulatorProvider extends SpringLoaderDriver {
+    public static class CO2_SimulatorProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -133,7 +131,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class Temp_SimulatorProvider extends SpringLoaderDriver {
+    public static class Temp_SimulatorProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -148,7 +146,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class Pump_SimulatorProvider extends SpringLoaderDriver {
+    public static class Pump_SimulatorProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -163,7 +161,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class FlukeProsim68Provider extends SpringLoaderDriver {
+    public static class FlukeProsim68Provider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -178,7 +176,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class BernoulliProvider extends SpringLoaderDriver {
+    public static class BernoulliProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -193,7 +191,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class Ivy450CProvider extends SpringLoaderDriver {
+    public static class Ivy450CProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -208,7 +206,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class NoninProvider extends SpringLoaderDriver {
+    public static class NoninProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -223,7 +221,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class IntellivueEthernetProvider extends SpringLoaderDriver {
+    public static class IntellivueEthernetProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -238,7 +236,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class IntellivueSerialProvider extends SpringLoaderDriver {
+    public static class IntellivueSerialProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -253,7 +251,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class Capnostream20Provider extends SpringLoaderDriver {
+    public static class Capnostream20Provider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -269,7 +267,7 @@ public class DeviceFactory {
     }
 
 
-    public static class NellcorN595Provider extends SpringLoaderDriver {
+    public static class NellcorN595Provider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -284,7 +282,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class MasimoRadical7Provider extends SpringLoaderDriver {
+    public static class MasimoRadical7Provider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -299,7 +297,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class SymbiqProvider extends SpringLoaderDriver {
+    public static class SymbiqProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -314,7 +312,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class MultiparameterProvider extends SpringLoaderDriver {
+    public static class MultiparameterProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -329,7 +327,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class DraegerApolloProvider extends SpringLoaderDriver {
+    public static class DraegerApolloProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -344,7 +342,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class DraegerEvitaXLProvider extends SpringLoaderDriver {
+    public static class DraegerEvitaXLProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -360,7 +358,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class DraegerV500Provider extends SpringLoaderDriver {
+    public static class DraegerV500Provider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -376,7 +374,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class DraegerV500_38400Provider extends SpringLoaderDriver {
+    public static class DraegerV500_38400Provider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -392,7 +390,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class DraegerEvita4Provider extends SpringLoaderDriver {
+    public static class DraegerEvita4Provider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
@@ -408,7 +406,7 @@ public class DeviceFactory {
         }
     }
 
-    public static class BioPatchProvider extends SpringLoaderDriver {
+    public static class BioPatchProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){

@@ -32,8 +32,6 @@ import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
-import org.mdpnp.devices.PartitionAssignmentController;
-import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
@@ -48,169 +46,85 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * single vm batch command. assumes none of the run-time support available yet - no
+ * top-level spring context exists yet.
+ */
 
-public abstract class DeviceAdapterImpl extends Observable implements DeviceAdapter {
+public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Configuration.GUICommand {
 
-    private static final Logger log = LoggerFactory.getLogger(DeviceAdapterImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(org.mdpnp.apps.testapp.DeviceAdapterCommand.class);
 
-    /**
-     * single vm batch command. assumes none of the run-time support available yet - no
-     * top-level spring context exists yet.
-     */
-    public static class DeviceAdapterCommand implements Configuration.HeadlessCommand, Configuration.GUICommand {
-
-        @Override
-        public int execute(final Configuration config) throws Exception
-        {
-            // TODO revisit check for headless and check for FX Application Thread
-            // This attempts to initialize the default Toolkit which will fail in truly headless
-            // environments.  Is there another precheck for a graphical display that can be called before this?
-            // or is it possible to substitute a different Toolkit?
+    @Override
+    public int execute(final Configuration config) throws Exception
+    {
+        // TODO revisit check for headless and check for FX Application Thread
+        // This attempts to initialize the default Toolkit which will fail in truly headless
+        // environments.  Is there another precheck for a graphical display that can be called before this?
+        // or is it possible to substitute a different Toolkit?
 //            if(Platform.isFxApplicationThread())
 //                throw new IllegalStateException("Trying to start headless blocking device adapter on UI thread");
 
-            DeviceDriverProvider ddp = config.getDeviceFactory();
-            if(null == ddp) {
-                log.error("Unknown device type was specified");
-                throw new Exception("Unknown device type was specified");
+        DeviceDriverProvider ddp = config.getDeviceFactory();
+        if(null == ddp) {
+            log.error("Unknown device type was specified");
+            throw new Exception("Unknown device type was specified");
+        }
+
+        final AbstractApplicationContext context = config.createContext("DeviceAdapterContext.xml");
+
+        HeadlessAdapter da = new HeadlessAdapter(ddp, context, true);
+
+        da.init();
+        da.setAddress(config.getAddress());
+
+        // this will block until stops kills everything from another thread or a
+        // VM's shutdown hook
+        da.run();
+
+        // will only get here once the controller loop is stopped
+        context.destroy();
+
+        return 0;
+    }
+
+
+    @Override
+    public IceApplication create(Configuration config) throws Exception {
+
+        if(Platform.isFxApplicationThread() && config.isHeadless())
+            throw new IllegalStateException("Attempting to start headless app on the UI thread");
+
+        DeviceDriverProvider ddp = config.getDeviceFactory();
+        if(null == ddp) {
+            log.error("Unknown device type was specified");
+            throw new Exception("Unknown device type was specified");
+        }
+
+        final AbstractApplicationContext context = config.createContext("DeviceAdapterContext.xml");
+
+        GUIAdapter da = new GUIAdapter(ddp, context) {
+            @Override
+            public void stop()  {
+                super.stop();
+                // at the very end; kill the context that was created here.
+                log.info("Shut down spring context");
+                context.destroy();
             }
-
-            final AbstractApplicationContext context = config.createContext("DeviceAdapterContext.xml");
-
-            DeviceAdapter da = new DeviceAdapterImpl.HeadlessAdapter(ddp, context, true);
-
-            da.init();
-            da.setAddress(config.getAddress());
-
-            // this will block until stops kills everything from another thread or a
-            // VM's shutdown hook
-            da.run();
-
-            // will only get here once the controller loop is stopped
-            context.destroy();
-
-            return 0;
-        }
+        };
 
 
-        @Override
-        public IceApplication create(Configuration config) throws Exception {
+        da.setAddress(config.getAddress());
 
-            if(Platform.isFxApplicationThread() && config.isHeadless())
-                throw new IllegalStateException("Attempting to start headless app on the UI thread");
-
-            DeviceDriverProvider ddp = config.getDeviceFactory();
-            if(null == ddp) {
-                log.error("Unknown device type was specified");
-                throw new Exception("Unknown device type was specified");
-            }
-
-            final AbstractApplicationContext context = config.createContext("DeviceAdapterContext.xml");
-
-            GUIAdapter da = new GUIAdapter(ddp, context) {
-                @Override
-                public void stop() throws Exception {
-                    super.stop();
-                    // at the very end; kill the context that was created here.
-                    log.info("Shut down spring context");
-                    context.destroy();
-                }
-            };
-
-            
-            da.setAddress(config.getAddress());
-            
-            return da;
-        }
+        return da;
     }
 
-    protected void update(String msg, int pct) {
-        log.info(pct + "% " + msg);
-    }
+    static class HeadlessAdapter extends Observable implements DeviceDriverProvider.DeviceAdapter, Runnable {
 
-    protected AbstractDevice device;
-    protected String[]       initialPartition;
-    private   String         address=null;
+        HeadlessAdapter(DeviceDriverProvider df, AbstractApplicationContext parentContext, boolean isStandalone) throws Exception{
 
-    private final CountDownLatch stopOk = new CountDownLatch(1);
-
-    protected final DeviceDriverProvider deviceFactory;
-    protected final DeviceDriverProvider.Handle deviceHandle;
-
-    protected DeviceAdapterImpl(DeviceDriverProvider df, AbstractApplicationContext parentContext) throws Exception {
-        deviceFactory = df;
-        deviceHandle = df.create(parentContext);
-
-    }
-
-    @Override
-    public void setInitialPartition(String[] v) {
-        initialPartition = v;
-    }
-
-    @Override
-    public void setAddress(String v) {
-        address = v;
-    }
-
-    @Override
-    public AbstractDevice getDevice() {
-        return device;
-    }
-
-    protected DeviceType getDeviceType() {
-        return deviceFactory.getDeviceType();
-    }
-
-    public <T> T getComponent(String name, Class<T> requiredType) throws Exception {
-        return deviceHandle.getComponent(name, requiredType);
-    }
-
-    public <T> T getComponent(Class<T> requiredType) throws Exception {
-        return deviceHandle.getComponent(requiredType);
-    }
-
-    /**
-     * blocking call to start adapter's listening loop. It is expected that stop API will be called on another thread
-     */
-    @Override
-    public void run() {
-
-        if (null != device && device instanceof AbstractConnectedDevice) {
-            log.info("Connecting to >" + address + "<");
-            if (!((AbstractConnectedDevice)device).connect(address)) {
-                stopOk.countDown();
-            }
-            setChanged();
-            notifyObservers(AdapterState.connected);
-        }
-
-        setChanged();
-        notifyObservers(AdapterState.running);
-
-        // Wait until killAdapter
-        try {
-            stopOk.await();
-        } catch (InterruptedException ex) {
-            log.error("Device adapter run failed to block on start/stop latch", ex);
-            throw new RuntimeException("Device adapter run failed to block on start/stop latch", ex);
-        }
-    }
-
-    @Override
-    public void stop()
-    {
-        deviceHandle.shutdown();
-        stopOk.countDown();
-        setChanged();
-        notifyObservers(AdapterState.stopped);
-    }
-
-    static class HeadlessAdapter extends DeviceAdapterImpl  {
-
-        HeadlessAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context, boolean isStandalone) throws Exception{
-
-            super(deviceFactory, context);
+            deviceType    = df.getDeviceType();
+            deviceHandle  = df.create(parentContext);
 
             if(isStandalone) {
                 Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -222,27 +136,43 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             }
         }
 
+        protected void update(String msg, int pct) {
+            log.info(pct + "% " + msg);
+        }
+
         @Override
         public void init() throws Exception {
-
-            device = deviceHandle.getImpl();
 
             if (null != initialPartition) {
                 deviceHandle.setPartition(initialPartition);
             }
+            if(null != address)
+                deviceHandle.setAddress(address);
 
-            setChanged();
-            notifyObservers(AdapterState.init);
+            deviceHandle.init();
         }
 
-        private static class Metrics {
-            long start() {
-                return System.currentTimeMillis();
+        @Override
+        public synchronized void setChanged() {
+            super.setChanged();
+        }
+
+        /**
+         * blocking call to start adapter's listening loop. It is expected that stop API will be called on another thread
+         */
+        @Override
+        public void run() {
+
+            if(!deviceHandle.connect()) {
+                stopOk.countDown();
             }
 
-            long stop(String s, long tm) {
-                log.trace(s + " took " + (System.currentTimeMillis() - tm) + "ms");
-                return start();
+            // Wait until killAdapter
+            try {
+                stopOk.await();
+            } catch (InterruptedException ex) {
+                log.error("Device adapter run failed to block on start/stop latch", ex);
+                throw new RuntimeException("Device adapter run failed to block on start/stop latch", ex);
             }
         }
 
@@ -251,53 +181,89 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
 
             Metrics metrics = new Metrics();
             try {
+                update("Ask the device to disconnect from the ICE", 50);
                 long tm = metrics.start();
+                deviceHandle.disconnect();
+                metrics.stop("disconnect", tm);
 
-                if (null != device && device instanceof AbstractConnectedDevice) {
-                    AbstractConnectedDevice cDevice = (AbstractConnectedDevice) device;
-                    update("Ask the device to disconnect from the ICE", 50);
-                    cDevice.disconnect();
-                    if (!cDevice.awaitState(ice.ConnectionState.Terminal, 5000L)) {
-                        log.warn("ConnectedDevice ended in State:" + cDevice.getState());
-                    }
-                    metrics.stop("disconnect", tm);
-                }
-
+                update("Shutting down the device", 75);
                 tm = metrics.start();
-                if (device != null) {
-                    update("Shutting down the device", 75);
-                    device.shutdown();
-                    metrics.stop("device.shutdown", tm);
-                    device = null;
-                }
+                deviceHandle.stop();
+                metrics.stop("device.shutdown", tm);
             }
             catch(Exception ex) {
                 log.error("Failed to stop", ex);
                 throw ex;
             }
             finally {
-                device = null;
-                super.stop();
+                stopOk.countDown();
             }
         }
+        protected String[]       initialPartition;
+        private   String         address=null;
 
+        private final CountDownLatch stopOk = new CountDownLatch(1);
+
+        private final DeviceDriverProvider.DeviceAdapter deviceHandle;
+        private final DeviceType deviceType;
+
+        protected DeviceType getDeviceType() {
+            return deviceType;
+        }
+
+        @Override
+        public void setAddress(String v) {
+            address = v;
+        }
+
+        @Override
+        public AbstractDevice getDevice() {
+            return deviceHandle.getDevice();
+        }
+
+        public <T> T getComponent(String name, Class<T> requiredType) throws Exception {
+            return deviceHandle.getComponent(name, requiredType);
+        }
+
+        public <T> T getComponent(Class<T> requiredType) throws Exception {
+            return deviceHandle.getComponent(requiredType);
+        }
+
+        @Override
+        public void setPartition(String[] v) {
+            initialPartition = v;
+        }
+
+        @Override
+        public boolean connect() {
+            return deviceHandle.connect();
+        }
+
+        @Override
+        public void disconnect() {
+            deviceHandle.disconnect();
+        }
     }
 
 
-    public static class GUIAdapter extends IceApplication implements DeviceAdapter {
+    public static class GUIAdapter extends IceApplication  implements DeviceDriverProvider.DeviceAdapter, Runnable {
 
         private DeviceDataMonitor      deviceMonitor;
         private final ProgressBar      progressBar = new ProgressBar();
         private final DeviceView       deviceViewController = new DeviceView();
 
-        private final DeviceAdapterImpl controller;
+        private final HeadlessAdapter controller;
 
         public GUIAdapter(DeviceDriverProvider deviceFactory, AbstractApplicationContext context) throws Exception {
-            controller = new HeadlessAdapter(deviceFactory, context, false);
+            controller = new HeadlessAdapter(deviceFactory, context, false) {
+                protected void update(final String msg, final int pct) {
+                    GUIAdapter.this.update(msg, pct);
+                }
+            };
         }
 
         @Override
-        public void stop() throws Exception {
+        public void stop()  {
 
             if(!Platform.isFxApplicationThread())
                 throw new IllegalStateException("Sneaky developer! Trying to stop ui outside of FX thread");
@@ -319,8 +285,6 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             }            
             
             controller.stop();
-
-            super.stop();
         }
 
         @Override
@@ -441,8 +405,8 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             stage.setHeight(480);
             stage.centerOnScreen();
 
-            controller.setChanged();
-            controller.notifyObservers(AdapterState.init);
+            // controller.setChanged();
+            // MIKEFIX controller.notifyObservers(AdapterState.init);
 
             Thread deviceRunner = new Thread(AbstractDevice.threadGroup, this);
             deviceRunner.start();
@@ -472,8 +436,8 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
         }
 
         @Override
-        public void setInitialPartition(String[] v) {
-            controller.setInitialPartition(v);
+        public void setPartition(String[] v) {
+            controller.setPartition(v);
         }
 
         @Override
@@ -517,5 +481,37 @@ public abstract class DeviceAdapterImpl extends Observable implements DeviceAdap
             }
 
         }
+
+        @Override
+        public <T> T getComponent(String name, Class<T> requiredType) throws Exception {
+            return controller.getComponent(name, requiredType);
+        }
+
+        @Override
+        public <T> T getComponent(Class<T> requiredType) throws Exception {
+            return controller.getComponent(requiredType);
+        }
+
+        @Override
+        public boolean connect() {
+            return controller.connect();
+        }
+
+        @Override
+        public void disconnect() {
+            controller.disconnect();
+        }
     }
+
+    private static class Metrics {
+        long start() {
+            return System.currentTimeMillis();
+        }
+
+        long stop(String s, long tm) {
+            log.trace(s + " took " + (System.currentTimeMillis() - tm) + "ms");
+            return start();
+        }
+    }
+
 }

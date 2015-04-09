@@ -141,7 +141,6 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
     public DemoCapnostream20(int domainId, EventLoop eventLoop) {
         super(domainId, eventLoop, Capnostream.class);
-        init();
     }
 
     public static SetupItem lowerAlarm(String metric_id) {
@@ -276,7 +275,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
                 alarmSettingsObjectiveSample(localAlarmSettings.get(obj.metric_id), obj.lower, obj.upper, obj.metric_id));
     }
 
-    private void init() {
+    public void init() {
         deviceIdentity.manufacturer = "Oridion";
         deviceIdentity.model = "Capnostream20";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);

@@ -8,7 +8,7 @@ import org.springframework.context.support.AbstractApplicationContext;
 /**
  *
  */
-public class PB840Provider extends DeviceDriverProvider.SpringLoaderDriver {
+public class PB840Provider extends DeviceDriverProvider.SpringLoadedDriver {
 
     @Override
     public DeviceType getDeviceType(){

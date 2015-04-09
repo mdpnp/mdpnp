@@ -60,7 +60,7 @@ public class DeviceAdapterTest {
         try {
             FxRuntimeSupport fxRt = FxRuntimeSupport.initialize();
 
-            IceApplication app = new DeviceAdapterImpl.GUIAdapter(ddp, context);
+            IceApplication app = new DeviceAdapterCommand.GUIAdapter(ddp, context);
             app.init();
 
             final Stage ui = fxRt.show(app);
@@ -96,7 +96,7 @@ public class DeviceAdapterTest {
         final AbstractApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"DeviceAdapterContext.xml"});
 
         try {
-            DeviceAdapter da = new DeviceAdapterImpl.HeadlessAdapter(ddp, context, false);
+            DeviceAdapterCommand.HeadlessAdapter da = new DeviceAdapterCommand.HeadlessAdapter(ddp, context, false);
 
             final CountDownLatch runCompleted = new CountDownLatch(1);
 
