@@ -78,12 +78,6 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
         monitor = new GlobalSimulationObjectiveInstanceModelImpl(ice.GlobalSimulationObjectiveTopic.VALUE);
         monitor.addListener(this);
         monitor.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
-
-        linkIsActive = executor.scheduleAtFixedRate(new Runnable() {
-            public void run() {
-                pollTime();
-            }
-        }, 4000L, 4000L, TimeUnit.MILLISECONDS);
     }
 
     private ScheduledFuture<?> linkIsActive;
@@ -194,6 +188,19 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
             }
         }
         super.disconnect();
+    }
+
+    @Override
+    public boolean connect(String address) {
+        boolean b = super.connect(address);
+        if(b) {
+            linkIsActive = executor.scheduleAtFixedRate(new Runnable() {
+                public void run() {
+                    pollTime();
+                }
+            }, 4000L, 4000L, TimeUnit.MILLISECONDS);
+        }
+        return b;
     }
 
     @Override

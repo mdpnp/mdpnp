@@ -1,6 +1,7 @@
 package org.mdpnp.devices;
 
 import ice.ConnectionType;
+import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.slf4j.Logger;
@@ -21,6 +22,8 @@ import org.springframework.jmx.export.naming.ObjectNamingStrategy;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.util.Hashtable;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -28,17 +31,45 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public interface DeviceDriverProvider {
 
+    static final Logger log = LoggerFactory.getLogger(SpringLoadedDriver.class);
+
     DeviceType     getDeviceType();
     AbstractDevice newInstance(AbstractApplicationContext context) throws Exception;
-    Handle create(AbstractApplicationContext context) throws Exception;
+    DeviceAdapter  create(AbstractApplicationContext context) throws Exception;
 
-    // MIKEFIX merge this into device adapter somehow maybe?
-    public interface Handle {
-        AbstractDevice getImpl();
-        void shutdown();
-        void setPartition(String[] partition);
+    /**
+     * An interface for the device driver that is presented to the rest of the system. The base AbstractDevice object
+     * became too overloaded with being a responsible for both device interactions and assembly of infrastructure that
+     * a higher-level entity evolved. Though we moved all drivers to be assembled via spring ioc container, any
+     * alternative implementation will be supported as long as the interface is implemented.
+     *
+     * @see SpringDecorator
+     */
+    public interface DeviceAdapter  {
+
+        enum AdapterState { init, connected, stopped };
+
         <T> T getComponent(String name, Class<T> requiredType) throws Exception;
         <T> T getComponent(Class<T> requiredType) throws Exception;
+
+        AbstractDevice getDevice();
+
+        /**
+         * post-constructor phase to initialise things if needed
+         * @throws Exception
+         */
+        void init() throws Exception;
+
+        void stop();
+
+        void setPartition(String[] v);
+        void setAddress(String address);
+
+        boolean connect();
+        void disconnect();
+
+        void addObserver(Observer v);
+        void deleteObserver(Observer v);
     }
 
     public static class DeviceType {
@@ -106,30 +137,42 @@ public interface DeviceDriverProvider {
     }
 
 
-    public abstract static class SpringLoaderDriver implements DeviceDriverProvider {
-
-        private static final Logger log = LoggerFactory.getLogger(SpringLoaderDriver.class);
+    /**
+     * An implementation of DeviceDriverProvider that is using spring container for
+     * the assembly of the component. String configuration could be very different
+     * depending on sophistication of the driver, but for a some of them beans provided
+     * in the basic DriverContext.xml should be sufficient. The purpose of this wrapper is
+     * to initialize the context in such a way that driverFactoryProcessor bean produces a
+     * driver of a desired type.
+     */
+    public abstract static class SpringLoadedDriver implements DeviceDriverProvider {
 
         protected String getContextPath() {
             return "classpath*:/DriverContext.xml";
         }
 
         @Override
-        public DeviceDriverProvider.Handle create(AbstractApplicationContext parentContext) throws Exception {
+        public DeviceAdapter create(AbstractApplicationContext parentContext) throws Exception {
 
             String contextPath = getContextPath();
 
             AbstractApplicationContext context =
                     new ClassPathXmlApplicationContext(new String[] { contextPath }, false, parentContext);
 
+            // set the context name to something readable and unique. this name will be used
+            // to create jmx names for the beans that are to be exposed for management.
+            //
             context.setDisplayName(getDeviceType().toString());
             context.setId(getDeviceType().getAlias() + hashCode());
 
+            // create a post processor to inject a device factory with the appropriate device
+            // implementation.
+            //
             BeanPostProcessor bpp = new BeanPostProcessor() {
                 @Override
                 public Object postProcessBeforeInitialization(Object o, String s) throws BeansException {
                     if(o instanceof AbstractDeviceFactory) {
-                        ((AbstractDeviceFactory)o).setDeviceFactory(SpringLoaderDriver.this);
+                        ((AbstractDeviceFactory)o).setDriverProvider(SpringLoadedDriver.this);
                     }
                     return o;
                 }
@@ -148,6 +191,7 @@ public interface DeviceDriverProvider {
                 }
             });
 
+            // now create them all.
             context.refresh();
 
             parentContext.addApplicationListener(new ApplicationListener<ContextClosedEvent>()
@@ -162,18 +206,20 @@ public interface DeviceDriverProvider {
                 }
             });
 
-            return new SpringHandle(context);
+            return new SpringDecorator(context);
         }
     }
 
+    /**
+     * factory to create an instance of the device adapter for a particular device driver. It is used
+     * in the generic DriverContext.xml spring configuration file.
+     */
     public static class AbstractDeviceFactory implements FactoryBean<AbstractDevice>, ApplicationContextAware {
-
-        private static final Logger log = LoggerFactory.getLogger(AbstractDeviceFactory.class);
 
         @Override
         public AbstractDevice getObject() throws Exception {
             if(instance == null) {
-                DeviceDriverProvider.DeviceType type = deviceFactory.getDeviceType();
+                DeviceDriverProvider.DeviceType type = driverProvider.getDeviceType();
 
                 log.trace("Create DeviceAdapter with type=" + type);
                 if (ConnectionType.Network.equals(type.getConnectionType())) {
@@ -181,7 +227,7 @@ public interface DeviceDriverProvider {
                     log.info("Using the TCPSerialProvider, be sure you provided a host:port target");
                 }
 
-                instance = deviceFactory.newInstance((AbstractApplicationContext)context);
+                instance = driverProvider.newInstance((AbstractApplicationContext)context);
                 instance.setExecutor(executor);
             }
             return instance;
@@ -207,8 +253,8 @@ public interface DeviceDriverProvider {
                 instance.shutdown();
         }
 
-        public void setDeviceFactory(DeviceDriverProvider deviceFactory) {
-            this.deviceFactory = deviceFactory;
+        public void setDriverProvider(DeviceDriverProvider driverProvider) {
+            this.driverProvider = driverProvider;
         }
 
         public void setExecutor(ScheduledExecutorService executor) {
@@ -217,10 +263,14 @@ public interface DeviceDriverProvider {
 
         private AbstractDevice instance;
         private ApplicationContext context;
-        private DeviceDriverProvider deviceFactory;
+        private DeviceDriverProvider driverProvider;
         private ScheduledExecutorService executor;
     }
 
+    /**
+     * utility to pick unique names for jmx beans - jmx namespace is flat so we need to suffix all
+     * managed beans with the id of the context they came from.
+     */
     public static class DeviceFactoryNamingStrategy implements ObjectNamingStrategy,ApplicationContextAware {
 
         @Override
@@ -239,63 +289,94 @@ public interface DeviceDriverProvider {
         protected ApplicationContext context;
     }
 
-    public static class SpringHandle implements DeviceDriverProvider.Handle {
+    static class SpringDecorator extends Observable implements DeviceAdapter {
 
-        final AbstractApplicationContext context;
-
-        public SpringHandle(AbstractApplicationContext context) {
+        private final AbstractApplicationContext context;
+        private  String address=null;
+        public SpringDecorator(AbstractApplicationContext context) {
             this.context = context;
         }
 
+        @Override
         public void setPartition(String[] partition) {
             PartitionAssignmentController pac = context.getBean(PartitionAssignmentController.class);
             pac.setPartition(partition);
         }
 
-        public AbstractDevice getImpl() {
+        @Override
+        public AbstractDevice getDevice() {
             AbstractDevice device = context.getBean(org.mdpnp.devices.AbstractDevice.class);
             return device;
         }
 
+        @Override
         public <T> T getComponent(String name, Class<T> requiredType) throws Exception {
             return context.getBean(name, requiredType);
         }
 
+        @Override
         public <T> T getComponent(Class<T> requiredType) throws Exception {
             return context.getBean(requiredType);
         }
 
-        public void shutdown() {
+        @Override
+        public void stop() {
             context.destroy();
-        }
-    }
 
-    public static class NativeHandle implements DeviceDriverProvider.Handle {
-
-        final AbstractDevice device;
-
-        public NativeHandle(AbstractDevice device) {
-            this.device = device;
+            setChanged();
+            notifyObservers(AdapterState.stopped);
         }
 
-        public AbstractDevice getImpl() {
-            return device;
+        @Override
+        public void init() throws Exception {
+            setChanged();
+            notifyObservers(AdapterState.init);
         }
 
-        public void setPartition(String[] partition) {
-            throw new UnsupportedOperationException("Define what 'setPartition' means on 'AbstractDevice'");
+        @Override
+        public void setAddress(String v) {
+            address = v;
         }
 
-        public <T> T getComponent(String name, Class<T> requiredType) throws Exception {
-            throw new UnsupportedOperationException("Define what 'getComponent' means on 'AbstractDevice'");
+        @Override
+        public void addObserver(Observer v) {
+            super.addObserver(v);
         }
 
-        public <T> T getComponent(Class<T> requiredType) throws Exception {
-            throw new UnsupportedOperationException("Define what 'getComponent' means on 'AbstractDevice'");
+        @Override
+        public void deleteObserver(Observer v) {
+            super.deleteObserver(v);
         }
 
-        public void shutdown() {
-            device.shutdown();
+        @Override
+        public boolean connect() {
+            AbstractDevice device = getDevice();
+            if(device == null)
+                throw new IllegalStateException("Cannot connect - null device");
+            if (device instanceof AbstractConnectedDevice) {
+                log.info("Connecting to >" + address + "<");
+                boolean b = ((AbstractConnectedDevice) device).connect(address);
+                if(b) {
+                    setChanged();
+                    notifyObservers(AdapterState.connected);
+                }
+                return b;
+            }
+            else
+                return true;
+        }
+
+        @Override
+        public void disconnect()
+        {
+            AbstractDevice device = getDevice();
+            if (null != device && device instanceof AbstractConnectedDevice) {
+                AbstractConnectedDevice cDevice = (AbstractConnectedDevice) device;
+                cDevice.disconnect();
+                if (!cDevice.awaitState(ice.ConnectionState.Terminal, 5000L)) {
+                    log.warn("ConnectedDevice ended in State:" + cDevice.getState());
+                }
+            }
         }
     }
 }

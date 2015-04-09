@@ -44,7 +44,6 @@ import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
-import org.mdpnp.devices.simulation.temp.SimThermometer;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformCanvas;
 import org.mdpnp.guis.waveform.WaveformRenderer;
@@ -99,7 +98,7 @@ public class RapidRespiratoryRate implements Runnable {
         }
     }
     protected final DeviceClock clock = new DeviceClock.WallClock();
-    private DeviceDriverProvider.Handle rrDevice;
+    private DeviceDriverProvider.DeviceAdapter rrDevice;
 
     public RapidRespiratoryRate set(final ApplicationContext parentContext, final int domainId, final EventLoop eventLoop, final Subscriber subscriber, final DeviceListModel deviceListModel) {
 //        ((NumberAxis)wavePanel.getXAxis()).forceZeroInRangeProperty().set(false);
@@ -140,7 +139,7 @@ public class RapidRespiratoryRate implements Runnable {
                 if (device.isSelected()) {
                     if (rrDevice == null) {
 
-                        DeviceDriverProvider.SpringLoaderDriver df = new DeviceDriverProvider.SpringLoaderDriver() {
+                        DeviceDriverProvider.SpringLoadedDriver df = new DeviceDriverProvider.SpringLoadedDriver() {
                             @Override
                             public DeviceType getDeviceType() {
                                 return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "RespiratoryRate", "RespiratoryRate");
@@ -175,7 +174,7 @@ public class RapidRespiratoryRate implements Runnable {
                     }
                 } else {
                     if (rrDevice != null) {
-                        rrDevice.shutdown();
+                        rrDevice.stop();
                         rrDevice = null;
                     }
                 }
@@ -310,7 +309,7 @@ public class RapidRespiratoryRate implements Runnable {
         Platform.runLater(updateLabel);
         //.rrLabel.setText(""+Math.round(rr));
         if (rrDevice != null) {
-            RespiratoryRateDevice impl = (RespiratoryRateDevice)rrDevice.getImpl();
+            RespiratoryRateDevice impl = (RespiratoryRateDevice)rrDevice.getDevice();
             impl.updateRate((float) Math.round(rr));
         }
     }

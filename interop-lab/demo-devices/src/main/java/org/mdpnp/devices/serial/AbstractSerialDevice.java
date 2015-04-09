@@ -113,9 +113,6 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
         }
         
         deviceConnectivity.valid_targets.userData.addAll(serialPorts);
-
-        executor.scheduleAtFixedRate(new Watchdog(), 0L, 100L, TimeUnit.MILLISECONDS);
-
     }
 
     public void setSerialProvider(int idx, SerialProvider serialProvider) {
@@ -245,6 +242,8 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
                 }
             }            
         }
+        executor.scheduleAtFixedRate(new Watchdog(), 0L, 100L, TimeUnit.MILLISECONDS);
+
         return true;
     }
     
