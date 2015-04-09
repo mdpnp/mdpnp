@@ -23,6 +23,9 @@ import org.mdpnp.devices.serial.SerialSocket;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
@@ -92,8 +95,8 @@ public class DemoRadical7 extends AbstractSerialDevice {
         return serialProvider;
     }
 
-    public DemoRadical7(int domainId, EventLoop eventLoop) throws NoSuchFieldException, SecurityException, IOException {
-        super(domainId, eventLoop);
+    public DemoRadical7(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) throws NoSuchFieldException, SecurityException, IOException {
+        super(subscriber, publisher, eventLoop);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = MANUFACTURER_NAME;
         deviceIdentity.model = MODEL_NAME;

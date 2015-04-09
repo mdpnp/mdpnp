@@ -25,14 +25,17 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
  */
 public class DemoEthernetIntellivue extends AbstractDemoIntellivue {
 
-    public DemoEthernetIntellivue(int domainId, EventLoop eventLoop) throws IOException {
-        super(domainId, eventLoop);
+    public DemoEthernetIntellivue(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) throws IOException {
+        super(subscriber, publisher, eventLoop);
     }
 
     @Override

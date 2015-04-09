@@ -5,6 +5,9 @@ import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.support.AbstractApplicationContext;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  *
  */
@@ -17,8 +20,9 @@ public class PB840Provider extends DeviceDriverProvider.SpringLoadedDriver {
 
     @Override
     public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-        EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-        int domainId = (Integer)context.getBean("domainId");
-        return new DemoPB840(domainId, eventLoop);
+        EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+        Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+        Publisher publisher = context.getBean("publisher", Publisher.class);
+        return new DemoPB840(subscriber, publisher, eventLoop);
     }
 }

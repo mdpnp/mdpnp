@@ -25,6 +25,9 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
     protected abstract void doInitCommands(int idx) throws IOException;
 
@@ -82,12 +85,12 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
 
     }
 
-    public AbstractSerialDevice(final int domainId, final EventLoop eventLoop) {
-        this(domainId, eventLoop, 1);
+    public AbstractSerialDevice(final Subscriber subscriber, final Publisher publisher, final EventLoop eventLoop) {
+        this(subscriber, publisher, eventLoop, 1);
     }
     
-    public AbstractSerialDevice(final int domainId, final EventLoop eventLoop, final int countSerialPorts) {
-        super(domainId, eventLoop);
+    public AbstractSerialDevice(final Subscriber subscriber, final Publisher publisher, final EventLoop eventLoop, final int countSerialPorts) {
+        super(subscriber, publisher, eventLoop);
         
         this.serialProvider = new SerialProvider[countSerialPorts];
         this.lastError = new Throwable[countSerialPorts];

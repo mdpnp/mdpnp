@@ -36,6 +36,9 @@ import org.mdpnp.devices.zephyr.biopatch.DemoBioPatch;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.support.AbstractApplicationContext;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 import java.util.*;
 
 public class DeviceFactory {
@@ -80,9 +83,11 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new SimPulseOximeter(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+
+            return new SimPulseOximeter(subscriber, publisher, eventLoop);
         }
     }
 
@@ -95,9 +100,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoSimulatedBloodPressure(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoSimulatedBloodPressure(subscriber, publisher, eventLoop);
         }
     }
 
@@ -110,9 +116,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new SimElectroCardioGram(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new SimElectroCardioGram(subscriber, publisher, eventLoop);
         }
     }
 
@@ -125,9 +132,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new SimCapnometer(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new SimCapnometer(subscriber, publisher, eventLoop);
         }
     }
 
@@ -140,9 +148,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new SimThermometer(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new SimThermometer(subscriber, publisher, eventLoop);
         }
     }
 
@@ -155,9 +164,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new SimInfusionPump(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new SimInfusionPump(subscriber, publisher, eventLoop);
         }
     }
 
@@ -170,9 +180,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoProsim68(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoProsim68(subscriber, publisher, eventLoop);
         }
     }
 
@@ -185,9 +196,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoBernoulli(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoBernoulli(subscriber, publisher, eventLoop);
         }
     }
 
@@ -200,9 +212,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoIvy450C(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoIvy450C(subscriber, publisher, eventLoop);
         }
     }
 
@@ -215,9 +228,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoNoninPulseOx(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoNoninPulseOx(subscriber, publisher, eventLoop);
         }
     }
 
@@ -230,9 +244,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoSerialIntellivue(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoSerialIntellivue(subscriber, publisher, eventLoop);
         }
     }
 
@@ -245,9 +260,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoSerialIntellivue(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoSerialIntellivue(subscriber, publisher, eventLoop);
         }
     }
 
@@ -260,9 +276,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoCapnostream20(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoCapnostream20(subscriber, publisher, eventLoop);
         }
     }
 
@@ -276,9 +293,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoN595(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoN595(subscriber, publisher, eventLoop);
         }
     }
 
@@ -291,9 +309,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoRadical7(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoRadical7(subscriber, publisher, eventLoop);
         }
     }
 
@@ -306,9 +325,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoSymbiq(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoSymbiq(subscriber, publisher, eventLoop);
         }
     }
 
@@ -321,9 +341,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new SimMultiparameter(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new SimMultiparameter(subscriber, publisher, eventLoop);
         }
     }
 
@@ -336,9 +357,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoApollo(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoApollo(subscriber, publisher, eventLoop);
         }
     }
 
@@ -351,9 +373,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoEvitaXL(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoEvitaXL(subscriber, publisher, eventLoop);
 
         }
     }
@@ -367,9 +390,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoV500(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoV500(subscriber, publisher, eventLoop);
 
         }
     }
@@ -383,9 +407,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoV500_38400(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoV500_38400(subscriber, publisher, eventLoop);
 
         }
     }
@@ -399,9 +424,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoEvita4(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoEvita4(subscriber, publisher, eventLoop);
 
         }
     }
@@ -415,9 +441,10 @@ public class DeviceFactory {
 
         @Override
         public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-            EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoBioPatch(domainId, eventLoop);
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoBioPatch(subscriber, publisher, eventLoop);
 
         }
     }

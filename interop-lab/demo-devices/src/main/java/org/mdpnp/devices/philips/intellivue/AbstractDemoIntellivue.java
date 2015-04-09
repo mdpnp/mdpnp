@@ -102,6 +102,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
@@ -965,12 +967,12 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     private final Thread networkLoopThread;
     private final TaskQueue.Task<?> watchdogTask; // ,    serviceSampleArrays;
 
-    public AbstractDemoIntellivue(int domainId, EventLoop eventLoop) throws IOException {
-        this(domainId, eventLoop, null);
+    public AbstractDemoIntellivue(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) throws IOException {
+        this(subscriber, publisher, eventLoop, null);
     }
 
-    public AbstractDemoIntellivue(int domainId, EventLoop eventLoop, NetworkLoop loop) throws IOException {
-        super(domainId, eventLoop);
+    public AbstractDemoIntellivue(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop, NetworkLoop loop) throws IOException {
+        super(subscriber, publisher, eventLoop);
         loadMap(numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
 
         deviceIdentity.manufacturer = "Philips";

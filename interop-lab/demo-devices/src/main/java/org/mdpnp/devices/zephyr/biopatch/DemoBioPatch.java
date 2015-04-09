@@ -17,7 +17,6 @@ import ice.ConnectionState;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Date;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -29,12 +28,12 @@ import org.mdpnp.devices.serial.SerialSocket.FlowControl;
 import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
-import org.mdpnp.devices.zephyr.biopatch.BioPatch;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  * @author Jeff Plourde
@@ -44,8 +43,8 @@ public class DemoBioPatch extends AbstractDelegatingSerialDevice<BioPatch> {
 
     private static final Logger log = LoggerFactory.getLogger(DemoBioPatch.class);
 
-    public DemoBioPatch(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop, BioPatch.class);
+    public DemoBioPatch(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop, BioPatch.class);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Zephyr";
         deviceIdentity.model = "BioPatch";

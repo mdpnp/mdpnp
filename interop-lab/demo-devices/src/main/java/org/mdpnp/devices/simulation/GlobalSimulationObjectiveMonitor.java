@@ -16,6 +16,7 @@ import ice.GlobalSimulationObjective;
 
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.Condition;
@@ -68,8 +69,8 @@ public class GlobalSimulationObjectiveMonitor {
         this.eventLoop = eventLoop;
         globalSimulationObjective = (ice.GlobalSimulationObjective) ice.GlobalSimulationObjective.create();
         ice.GlobalSimulationObjectiveTypeSupport.register_type(domainParticipant, ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
-        globalSimulationObjectiveTopic = domainParticipant.create_topic(ice.GlobalSimulationObjectiveTopic.VALUE,
-                ice.GlobalSimulationObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        globalSimulationObjectiveTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.GlobalSimulationObjectiveTopic.VALUE,
+                ice.GlobalSimulationObjectiveTypeSupport.class);
         globalSimulationObjectiveReader = (ice.GlobalSimulationObjectiveDataReader) domainParticipant.create_datareader_with_profile(
                 globalSimulationObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 

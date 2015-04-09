@@ -36,6 +36,9 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
@@ -60,8 +63,8 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
         }
     }
 
-    public DemoNoninPulseOx(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop, NoninPulseOx.class);
+    public DemoNoninPulseOx(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop, NoninPulseOx.class);
 
         failAll();
 

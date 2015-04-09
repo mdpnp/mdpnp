@@ -15,6 +15,9 @@ package org.mdpnp.devices.simulation.temp;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
@@ -53,8 +56,8 @@ public class SimThermometer extends AbstractSimulatedConnectedDevice {
         super.disconnect();
     }
 
-    public SimThermometer(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public SimThermometer(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
         deviceIdentity.model = "Thermometer (Simulated)";
         writeDeviceIdentity();
     }

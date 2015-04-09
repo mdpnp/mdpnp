@@ -19,20 +19,22 @@ import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
 import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 
-import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.QueryCondition;
 import com.rti.dds.subscription.ReadCondition;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
+import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 
@@ -88,14 +90,13 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
         pump.setInterlockStop(stopThePump);
     }
 
-    public SimInfusionPump(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public SimInfusionPump(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
 
         writeIdentity();
 
         ice.InfusionStatusTypeSupport.register_type(getParticipant(), ice.InfusionStatusTypeSupport.get_type_name());
-        infusionStatusTopic = getParticipant().create_topic(ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        infusionStatusTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.InfusionStatusTopic.VALUE, ice.InfusionStatusTypeSupport.class);
         infusionStatusWriter = (InfusionStatusDataWriter) publisher.create_datawriter_with_profile(infusionStatusTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
@@ -113,8 +114,8 @@ public class SimInfusionPump extends AbstractSimulatedConnectedDevice {
         infusionStatusWriter.write(infusionStatus, infusionStatusHandle);
 
         ice.InfusionObjectiveTypeSupport.register_type(getParticipant(), ice.InfusionObjectiveTypeSupport.get_type_name());
-        infusionObjectiveTopic = getParticipant().create_topic(ice.InfusionObjectiveTopic.VALUE, ice.InfusionObjectiveTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        infusionObjectiveTopic = TopicUtil.findOrCreateTopic(getParticipant(), ice.InfusionObjectiveTopic.VALUE, ice.InfusionObjectiveTypeSupport.class);
+
         infusionObjectiveReader = (ice.InfusionObjectiveDataReader) subscriber.create_datareader_with_profile(infusionObjectiveTopic,
                 QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 

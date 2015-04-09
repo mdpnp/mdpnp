@@ -27,6 +27,9 @@ import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
@@ -153,8 +156,8 @@ public class DemoN595 extends AbstractSerialDevice {
         }
     }
 
-    public DemoN595(int domainId, EventLoop eventLoop) throws NoSuchFieldException, SecurityException, IOException {
-        super(domainId, eventLoop);
+    public DemoN595(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) throws NoSuchFieldException, SecurityException, IOException {
+        super(subscriber, publisher, eventLoop);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = NellcorN595.MANUFACTURER_NAME;
         deviceIdentity.model = NellcorN595.MODEL_NAME;

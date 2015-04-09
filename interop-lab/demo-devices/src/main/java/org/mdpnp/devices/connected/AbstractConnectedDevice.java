@@ -12,20 +12,24 @@
  ******************************************************************************/
 package org.mdpnp.devices.connected;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.infrastructure.InstanceHandle_t;
-import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.topic.Topic;
 import ice.DeviceConnectivity;
 import ice.DeviceConnectivityDataWriter;
 import ice.DeviceConnectivityTopic;
 import ice.DeviceConnectivityTypeSupport;
+
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.io.util.StateMachine;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.topic.Topic;
 
 public abstract class AbstractConnectedDevice extends AbstractDevice {
     protected final DeviceConnectivity deviceConnectivity;
@@ -81,11 +85,10 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
         super.shutdown();
     }
 
-    public AbstractConnectedDevice(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public AbstractConnectedDevice(final Subscriber subscriber, final Publisher publisher, final EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
         DeviceConnectivityTypeSupport.register_type(domainParticipant, DeviceConnectivityTypeSupport.get_type_name());
-        deviceConnectivityTopic = domainParticipant.create_topic(DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceConnectivityTopic = TopicUtil.findOrCreateTopic(domainParticipant, DeviceConnectivityTopic.VALUE, DeviceConnectivityTypeSupport.class);
         deviceConnectivityWriter = (DeviceConnectivityDataWriter) publisher.create_datawriter_with_profile(deviceConnectivityTopic,
                 QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 

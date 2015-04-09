@@ -12,15 +12,30 @@
  ******************************************************************************/
 package org.mdpnp.devices;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantQos;
-import com.rti.dds.infrastructure.*;
-import com.rti.dds.infrastructure.Time_t;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.*;
-import com.rti.dds.topic.Topic;
-import ice.*;
+import ice.Alert;
+import ice.DeviceIdentity;
+import ice.DeviceIdentityDataWriter;
+import ice.DeviceIdentityTypeSupport;
+import ice.LocalAlarmSettingsObjectiveDataWriter;
+import ice.Numeric;
+import ice.NumericDataWriter;
+import ice.NumericTypeSupport;
+import ice.SampleArray;
+import ice.SampleArrayDataWriter;
+import ice.SampleArrayTypeSupport;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Consumer;
+
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
 import org.mdpnp.rtiapi.data.QosProfiles;
@@ -30,9 +45,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
-import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Consumer;
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.infrastructure.Condition;
+import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.InstanceStateKind;
+import com.rti.dds.subscription.ReadCondition;
+import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleStateKind;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.ViewStateKind;
+import com.rti.dds.topic.Topic;
 
 @ManagedResource(description="MDPNP Device Driver")
 public abstract class AbstractDevice {
@@ -630,33 +658,21 @@ public abstract class AbstractDevice {
         domainParticipant.delete_topic(technicalAlertTopic);
         ice.AlertTypeSupport.unregister_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
 
-        domainParticipant.delete_publisher(publisher);
-        domainParticipant.delete_subscriber(subscriber);
-
-        domainParticipant.delete_contained_entities();
-
-        DomainParticipantFactory.get_instance().delete_participant(domainParticipant);
-
         log.info("AbstractDevice shutdown complete");
     }
 
-    public AbstractDevice(int domainId, EventLoop eventLoop) {
+    public AbstractDevice(final Subscriber subscriber, final Publisher publisher, final EventLoop eventLoop) {
 
         deviceIdentity  = (new DeviceIdentityBuilder()).osName().softwareRev().withIcon(this, iconResourceName()).build();
-
-        DomainParticipantQos pQos = new DomainParticipantQos();
-        DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-        pQos.participant_name.name = "Device";
         
-        domainParticipant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null, StatusKind.STATUS_MASK_NONE);
-        publisher = domainParticipant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        subscriber = domainParticipant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        this.domainParticipant = subscriber.get_participant();
+        this.subscriber = subscriber;
+        this.publisher = publisher;
 
         timestampFactory = new DomainClock(domainParticipant);
 
         DeviceIdentityTypeSupport.register_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
-        deviceIdentityTopic = domainParticipant.create_topic(ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceIdentityTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.DeviceIdentityTopic.VALUE, ice.DeviceIdentityTypeSupport.class);
         deviceIdentityWriter = (DeviceIdentityDataWriter) publisher.create_datawriter_with_profile(deviceIdentityTopic, QosProfiles.ice_library,
                 QosProfiles.device_identity, null, StatusKind.STATUS_MASK_NONE);
         if (null == deviceIdentityWriter) {
@@ -664,8 +680,7 @@ public abstract class AbstractDevice {
         }
 
         NumericTypeSupport.register_type(domainParticipant, NumericTypeSupport.get_type_name());
-        numericTopic = domainParticipant.create_topic(ice.NumericTopic.VALUE, NumericTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        numericTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.NumericTopic.VALUE, NumericTypeSupport.class);
         numericDataWriter = (NumericDataWriter) publisher.create_datawriter_with_profile(numericTopic, QosProfiles.ice_library,
                 QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
         if (null == numericDataWriter) {
@@ -673,8 +688,7 @@ public abstract class AbstractDevice {
         }
 
         SampleArrayTypeSupport.register_type(domainParticipant, SampleArrayTypeSupport.get_type_name());
-        sampleArrayTopic = domainParticipant.create_topic(ice.SampleArrayTopic.VALUE, SampleArrayTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        sampleArrayTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.SampleArrayTopic.VALUE, SampleArrayTypeSupport.class);
         sampleArrayDataWriter = (SampleArrayDataWriter) publisher.create_datawriter_with_profile(sampleArrayTopic, QosProfiles.ice_library,
                 QosProfiles.waveform_data, null, StatusKind.STATUS_MASK_NONE);
         if (null == sampleArrayDataWriter) {
@@ -682,14 +696,12 @@ public abstract class AbstractDevice {
         }
 
         ice.AlarmSettingsTypeSupport.register_type(domainParticipant, ice.AlarmSettingsTypeSupport.get_type_name());
-        alarmSettingsTopic = domainParticipant.create_topic(ice.AlarmSettingsTopic.VALUE, ice.AlarmSettingsTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        alarmSettingsTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.AlarmSettingsTopic.VALUE, ice.AlarmSettingsTypeSupport.class);
         alarmSettingsDataWriter = (ice.AlarmSettingsDataWriter) publisher.create_datawriter_with_profile(alarmSettingsTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         ice.LocalAlarmSettingsObjectiveTypeSupport.register_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
-        localAlarmSettingsObjectiveTopic = domainParticipant.create_topic(ice.LocalAlarmSettingsObjectiveTopic.VALUE,
-                ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        localAlarmSettingsObjectiveTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.LocalAlarmSettingsObjectiveTopic.VALUE, ice.LocalAlarmSettingsObjectiveTypeSupport.class);
         alarmSettingsObjectiveWriter = (LocalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(localAlarmSettingsObjectiveTopic,
                 QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
@@ -699,19 +711,17 @@ public abstract class AbstractDevice {
                 globalAlarmSettingsObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         ice.DeviceAlertConditionTypeSupport.register_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
-        deviceAlertConditionTopic = domainParticipant.create_topic(ice.DeviceAlertConditionTopic.VALUE,
-                ice.DeviceAlertConditionTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceAlertConditionTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.DeviceAlertConditionTopic.VALUE,
+                ice.DeviceAlertConditionTypeSupport.class);
         deviceAlertConditionWriter = (ice.DeviceAlertConditionDataWriter) publisher.create_datawriter_with_profile(deviceAlertConditionTopic,
                 QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         ice.AlertTypeSupport.register_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
-        patientAlertTopic = domainParticipant.create_topic(ice.PatientAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        patientAlertTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.PatientAlertTopic.VALUE, ice.AlertTypeSupport.class);
         patientAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(patientAlertTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
         
-        technicalAlertTopic = domainParticipant.create_topic(ice.TechnicalAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        technicalAlertTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.TechnicalAlertTopic.VALUE, ice.AlertTypeSupport.class);
         technicalAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(technicalAlertTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 

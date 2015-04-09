@@ -23,14 +23,17 @@ import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
  */
 public class DemoSerialIntellivue extends AbstractDemoIntellivue {
 
-    public DemoSerialIntellivue(int domainId, EventLoop eventLoop) throws IOException {
-        super(domainId, eventLoop);
+    public DemoSerialIntellivue(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) throws IOException {
+        super(subscriber, publisher, eventLoop);
         deviceConnectivity.valid_targets.userData.addAll(SerialProviderFactory.getDefaultProvider().getPortNames());
     }
 

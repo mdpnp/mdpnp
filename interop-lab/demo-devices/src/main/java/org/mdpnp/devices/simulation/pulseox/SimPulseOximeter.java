@@ -19,7 +19,8 @@ import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
 import org.mdpnp.rtiapi.data.EventLoop;
 
-import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  * @author Jeff Plourde
@@ -60,8 +61,8 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
         super.disconnect();
     }
 
-    public SimPulseOximeter(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public SimPulseOximeter(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
 
         DeviceClock referenceClock = super.getClockProvider();
         pulseox = new SimulatedPulseOximeterExt(referenceClock);
@@ -82,7 +83,7 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
     public void simulatedNumeric(GlobalSimulationObjective obj) {
         // Currently the super ctor registers for this callback; so pulseox might not yet be initialized
         if (obj != null && pulseox != null) {
-            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(obj.metric_id)) {
+            if (rosetta.MDC_PULS_RATE.VALUE.equals(obj.metric_id)) {
                 Number value = GlobalSimulationObjectiveListener.toDoubleNumber(obj);
                 pulseox.setTargetHeartRate(value);
             } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(obj.metric_id)) {

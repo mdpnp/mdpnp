@@ -25,6 +25,9 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     private static final Logger log = LoggerFactory.getLogger(DemoPB840.class);
     private InstanceHolder<ice.SampleArray> flowSampleArray, pressureSampleArray;
@@ -57,8 +60,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         }
     }
 
-    public DemoPB840(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop, 2, PB840.class);
+    public DemoPB840(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop, 2, PB840.class);
         loadUnits(unitsMap);
         loadTerms(terms);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);

@@ -45,6 +45,9 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice<RTMedibus> {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractDraegerVent.class);
@@ -740,8 +743,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     }
 
-    public AbstractDraegerVent(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop, RTMedibus.class);
+    public AbstractDraegerVent(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop, RTMedibus.class);
         for (int i = 0; i < realtimeBuffer.length; i++) {
             realtimeBuffer[i] = Collections.synchronizedList(new ArrayList<Number>());
         }

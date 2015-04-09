@@ -24,7 +24,8 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  * @author Jeff Plourde
@@ -117,8 +118,8 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
         super.disconnect();
     }
 
-    public SimMultiparameter(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public SimMultiparameter(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
 
         DeviceClock referenceClock = getClockProvider();
 

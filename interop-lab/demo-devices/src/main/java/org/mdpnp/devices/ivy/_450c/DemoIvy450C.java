@@ -28,6 +28,9 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
@@ -54,8 +57,8 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
 
     private static final Logger log = LoggerFactory.getLogger(DemoIvy450C.class);
 
-    public DemoIvy450C(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop, AnsarB.class);
+    public DemoIvy450C(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop, AnsarB.class);
         deviceIdentity.manufacturer = "Ivy";
         deviceIdentity.model = "450C";
         AbstractSimulatedDevice.randomUDI(deviceIdentity);

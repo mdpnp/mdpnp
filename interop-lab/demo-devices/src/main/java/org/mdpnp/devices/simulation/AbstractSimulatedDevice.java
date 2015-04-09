@@ -15,10 +15,12 @@ package org.mdpnp.devices.simulation;
 import ice.DeviceIdentity;
 
 import org.mdpnp.devices.AbstractDevice;
-import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 public abstract class AbstractSimulatedDevice extends AbstractDevice {
     private static final Logger log = LoggerFactory.getLogger(AbstractSimulatedDevice.class);
@@ -61,8 +63,8 @@ public abstract class AbstractSimulatedDevice extends AbstractDevice {
         log.debug("Created Random UDI:" + di.unique_device_identifier);
     }
 
-    public AbstractSimulatedDevice(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public AbstractSimulatedDevice(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
         randomUDI(deviceIdentity);
         writeDeviceIdentity();
     }

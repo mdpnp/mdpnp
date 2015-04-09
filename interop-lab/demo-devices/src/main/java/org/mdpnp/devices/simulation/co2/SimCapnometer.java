@@ -19,6 +19,9 @@ import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
@@ -58,8 +61,8 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
         super.disconnect();
     }
 
-    public SimCapnometer(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public SimCapnometer(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
 
         DeviceClock referenceClock = super.getClockProvider();
         capnometer = new SimulatedCapnometerExt(referenceClock);
@@ -78,7 +81,7 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
 
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
-        if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(obj.metric_id)) {
+        if (rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id)) {
             Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
             capnometer.setRespirationRate(value);
         } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(obj.metric_id)) {

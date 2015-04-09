@@ -1,22 +1,22 @@
 package org.mdpnp.devices.simulation.multi;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.mdpnp.devices.EventLoopHandler;
+import org.mdpnp.devices.IceQos;
+import org.mdpnp.devices.PublisherFactory;
+import org.mdpnp.devices.SubscriberFactory;
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
+import org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl;
+
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.Subscriber;
-import org.junit.Assert;
-import org.junit.Test;
-import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.devices.IceQos;
-import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.QosProfiles;
-import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
-import org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  *
@@ -33,8 +33,10 @@ public class SimMultiparameterTest {
 
         EventLoop eventLoop = new EventLoop();
         EventLoopHandler handler = new EventLoopHandler(eventLoop);
-
-        SimMultiparameter device = new SimMultiparameter(domainId, eventLoop);
+        org.mdpnp.devices.DomainParticipantFactory dpf = new org.mdpnp.devices.DomainParticipantFactory(domainId);
+        SubscriberFactory sf = new SubscriberFactory(dpf.getObject());
+        PublisherFactory pf = new PublisherFactory(dpf.getObject());
+        SimMultiparameter device = new SimMultiparameter(sf.getObject(), pf.getObject(), eventLoop);
         device.connect(null);
 
         final SampleArrayInstanceModel capnoModel =
@@ -66,6 +68,10 @@ public class SimMultiparameterTest {
         capnoModel.stopReader();
         handler.shutdown();
 
+        sf.destroy();
+        pf.destroy();
+        dpf.destroy();
+        
         Assert.assertEquals("CapnoModel did not locate the device", 1, nDev);
     }
 

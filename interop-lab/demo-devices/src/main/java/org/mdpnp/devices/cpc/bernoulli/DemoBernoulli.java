@@ -34,6 +34,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
@@ -209,8 +212,8 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
         }
     }
 
-    public DemoBernoulli(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public DemoBernoulli(Subscriber subscriber, Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
 
         // Random UDI is for the device module
         // this allows the module to exist within the ICE in a disconnected

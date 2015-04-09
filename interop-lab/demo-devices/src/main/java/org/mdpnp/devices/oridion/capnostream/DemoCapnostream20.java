@@ -39,6 +39,9 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
@@ -139,8 +142,8 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         return super.alarmSettingsSample(holder, newLower, newUpper, metric_id);
     }
 
-    public DemoCapnostream20(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop, Capnostream.class);
+    public DemoCapnostream20(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop, Capnostream.class);
     }
 
     public static SetupItem lowerAlarm(String metric_id) {

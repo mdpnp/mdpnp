@@ -52,8 +52,10 @@ import org.mdpnp.guis.waveform.javafx.JavaFXWaveformCanvas;
 import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 
@@ -78,8 +80,8 @@ public class RapidRespiratoryRate implements Runnable {
             return "rrr.png";
         }
 
-        public RespiratoryRateDevice(int domainId, EventLoop eventLoop) {
-            super(domainId, eventLoop);
+        public RespiratoryRateDevice(Subscriber subscriber, Publisher publisher, EventLoop eventLoop) {
+            super(subscriber, publisher, eventLoop);
             deviceIdentity.manufacturer = "";
             deviceIdentity.model = "Respiratory Rate Calc";
             deviceIdentity.serial_number = "1234";
@@ -147,9 +149,10 @@ public class RapidRespiratoryRate implements Runnable {
 
                             @Override
                             public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
-                                EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-                                int domainId = (Integer)context.getBean("domainId");
-                                return new RespiratoryRateDevice(domainId, eventLoop);
+                                EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+                                Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+                                Publisher publisher = context.getBean("publisher", Publisher.class);
+                                return new RespiratoryRateDevice(subscriber, publisher, eventLoop);
                             }
                         };
 

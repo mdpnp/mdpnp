@@ -18,13 +18,16 @@ import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
  */
 public class DemoV500_38400 extends AbstractDraegerVent {
-    public DemoV500_38400(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public DemoV500_38400(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
     }
 
     @Override

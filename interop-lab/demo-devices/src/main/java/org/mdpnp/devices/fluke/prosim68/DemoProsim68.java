@@ -44,7 +44,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.infrastructure.QosPolicy;
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  * @author Jeff Plourde
@@ -68,8 +70,8 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
 
     protected final GlobalSimulationObjectiveInstanceModel monitor;
 
-    public DemoProsim68(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop, FlukeProSim8.class);
+    public DemoProsim68(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop, FlukeProSim8.class);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Fluke";
         deviceIdentity.model = "Prosim 6 / 8";

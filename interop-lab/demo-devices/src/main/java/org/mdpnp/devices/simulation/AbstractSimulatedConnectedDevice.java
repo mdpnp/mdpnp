@@ -27,6 +27,9 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice implements GlobalSimulationObjectiveListener {
     protected Throwable t;
 
@@ -34,8 +37,8 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
     
     private static final Logger log = LoggerFactory.getLogger(AbstractSimulatedConnectedDevice.class);
 
-    public AbstractSimulatedConnectedDevice(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public AbstractSimulatedConnectedDevice(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         writeDeviceIdentity();
 
