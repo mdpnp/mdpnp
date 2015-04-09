@@ -1,5 +1,6 @@
 package org.mdpnp.apps.testapp.validate;
 
+import javafx.beans.property.IntegerProperty;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.chart.CategoryAxis;
@@ -18,6 +19,11 @@ public class Chart {
     
     private Vital vital;
     private VitalValidator vitalValidator;
+    private IntegerProperty maxDataPoints;
+    
+    public Chart() {
+        
+    }
     
     public Vital getVital() {
         return vital;
@@ -26,8 +32,8 @@ public class Chart {
         return removeButton;
     }
     
-    public void setModel(Vital v) {
-       
+    public void setModel(final IntegerProperty maxDataPoints, Vital v) {
+        this.maxDataPoints = maxDataPoints;
         if(null != this.vital) {
             main.setCenter(null);
             barChart.titleProperty().unbind();
@@ -36,8 +42,8 @@ public class Chart {
         this.vital = v;
         if(null != v) {
             barChart = new StackedBarChart<>(new CategoryAxis(), new NumberAxis());
-            this.vitalValidator = new VitalValidator(v, barChart.getData());
-            barChart.setMinHeight(200.0);
+            this.vitalValidator = new VitalValidator(maxDataPoints, v, barChart.getData());
+            barChart.setMinHeight(250.0);
             barChart.setAnimated(false);
 //            validator.setData(barChart.getData());
 //            barChart.getData().add(validator.getSeries());

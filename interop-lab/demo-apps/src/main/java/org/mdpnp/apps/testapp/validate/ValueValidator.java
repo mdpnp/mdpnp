@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -15,50 +16,7 @@ import javafx.scene.chart.XYChart.Data;
 import org.mdpnp.apps.testapp.vital.Value;
 
 public class ValueValidator implements ChangeListener<Date> {
-    private static class DataPoint {
-        
-        private long tm;
-        private int value;
-        
-        public DataPoint(long tm, int value) {
-            set(tm, value);
-        }
-        public DataPoint set(long tm, int value) {
-            this.tm = tm;
-            this.value = value;
-            return this;
-        }
-        public long getTime() {
-            return tm;
-        }
-        public int getValue() {
-            return value;
-        }
-    }
-    
-    private static class DataPointBuffer {
-        private final List<DataPoint> dataPoints = new LinkedList<DataPoint>();
-        
-        public Integer add(long tm, int value) {
-            if(dataPoints.size() < MAX_POINTS) {
-                dataPoints.add(new DataPoint(tm, value));
-                return null;
-            } else {
-                DataPoint pt = dataPoints.remove(0);
-                int oldValue = pt.getValue();
-                dataPoints.add(pt.set(tm, value));
-                return oldValue;
-            }
-
-        }
-        public DataPoint remove() {
-            if(dataPoints.isEmpty()) {
-                return null;
-            } else {
-                return dataPoints.remove(0);
-            }
-        }
-    }
+    private final List<Integer> dataPoints = new LinkedList<Integer>();
     
     public XYChart.Series<String, Number> getSeries() {
         return series;
@@ -66,23 +24,20 @@ public class ValueValidator implements ChangeListener<Date> {
     
     
     private final Value value;
-    private final DataPointBuffer recentValues = new DataPointBuffer();
     private final ObservableList<Data<String,Number>> data = FXCollections.observableArrayList();
     private final XYChart.Series<String, Number> series;
-    private static final int MAX_POINTS = 20;
+    private final IntegerProperty maxDataPoints;
     
-    public ValueValidator(final Value value) {
+    public ValueValidator(final IntegerProperty maxDataPoints, final Value value) {
+        this.maxDataPoints = maxDataPoints;
         this.value = value;
-        for(int i = (int) value.getParent().getMinimum(); i <= (int)value.getParent().getMaximum(); i++) {
-            data.add(new Data<String,Number>(""+i, 0));
-        }
+//        for(int i = (int) value.getParent().getMinimum(); i <= (int)value.getParent().getMaximum(); i++) {
+//            data.add(new Data<String,Number>(""+i, 0));
+//        }
         series = new XYChart.Series<String,Number>(data);
         series.nameProperty().bind(value.getDevice().makeAndModelProperty());
         value.timestampProperty().addListener(this);
-    }
-    
-    private void addToBins(DataPoint dataPoint, int count) {
-        addToBins(dataPoint.getValue(), count);
+        newTimestamp(value.getTimestamp());
     }
     
     private void addToBins(int value, int count) {
@@ -92,38 +47,42 @@ public class ValueValidator implements ChangeListener<Date> {
             if(d.getXValue().equals(""+value)) {
                 Number y = d.getYValue();
                 count += y.intValue();
-                if(count == 0) {
-                    itr.remove();
-                } else {
-                    d.setYValue(count);
-                }
+                d.setYValue(count);
                 return;
             }
         }
         if(data.isEmpty() || 
            value > Integer.parseInt(data.get(data.size()-1).getXValue())) {
+            // Add after
             data.add(new Data<String,Number>(""+value, count));
         } else if(value < Integer.parseInt(data.get(0).getXValue())) {
+            // Add before
             data.add(0, new Data<String,Number>(""+value, count));
         } else {
             int i;
             for(i = 0; i < data.size(); i++) {
-                if(value > Integer.parseInt(data.get(i).getXValue())) {
-                    data.add(i+1, new Data<String,Number>(""+value, count));
+                if(value < Integer.parseInt(data.get(i).getXValue())) {
+                    data.add(i, new Data<String,Number>(""+value, count));
                     break;
                 }
             }
         }
     }
 
+    public void newTimestamp(Date newValue) {
+        int value = (int) this.value.getValue();
+        dataPoints.add(value);
+        final int max = maxDataPoints.get();
+        while(dataPoints.size()>max) {
+            Integer x = dataPoints.remove((int)0);
+            addToBins(x, -1);
+        }        
+        addToBins(value, 1);        
+
+    }
+    
     @Override
     public void changed(ObservableValue<? extends Date> observable, Date oldValue, Date newValue) {
-        int value = (int) this.value.getValue();
-        Date tm = this.value.getTimestamp();
-        Integer displacedValue = recentValues.add(tm.getTime(), value);
-        if(null != displacedValue) {
-            addToBins(displacedValue, -1);
-        }                            
-        addToBins(value, 1);        
+        newTimestamp(newValue);
     }
 }

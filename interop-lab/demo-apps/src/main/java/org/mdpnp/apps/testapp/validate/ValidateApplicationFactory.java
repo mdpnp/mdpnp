@@ -1,7 +1,6 @@
 package org.mdpnp.apps.testapp.validate;
 
 import java.io.IOException;
-import java.net.URL;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -24,10 +23,6 @@ public class ValidateApplicationFactory implements IceApplicationProvider {
     
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
-
-//        final Subscriber subscriber = (Subscriber) parentContext.getBean("subscriber");
-
-//        final EventLoop eventLoop = (EventLoop) parentContext.getBean("eventLoop");
 
         final VitalModel model = (VitalModel) parentContext.getBean("vitalModel");
 
