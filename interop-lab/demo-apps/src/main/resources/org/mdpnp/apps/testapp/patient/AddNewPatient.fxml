@@ -21,7 +21,7 @@
                        GridPane.rowIndex="1"/>
                 <TextField fx:id="newPatientMRN"
                            prefColumnCount="8"
-                           Editable="false"
+                           Editable="true"
                            GridPane.columnIndex="2"
                            GridPane.rowIndex="1"/>
                 <Label text="First Name"
