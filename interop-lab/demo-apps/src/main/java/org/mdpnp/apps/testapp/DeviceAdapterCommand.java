@@ -141,7 +141,6 @@ public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Conf
             log.info(pct + "% " + msg);
         }
 
-        @Override
         public void init() throws Exception {
 
             if (null != initialPartition) {
@@ -149,13 +148,6 @@ public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Conf
             }
             if(null != address)
                 deviceHandle.setAddress(address);
-
-            deviceHandle.init();
-        }
-
-        @Override
-        public synchronized void setChanged() {
-            super.setChanged();
         }
 
         /**

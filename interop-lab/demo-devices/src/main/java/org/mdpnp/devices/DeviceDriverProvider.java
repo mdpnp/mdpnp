@@ -54,12 +54,6 @@ public interface DeviceDriverProvider {
 
         AbstractDevice getDevice();
 
-        /**
-         * post-constructor phase to initialise things if needed
-         * @throws Exception
-         */
-        void init() throws Exception;
-
         void stop();
 
         void setPartition(String[] v);
@@ -328,12 +322,6 @@ public interface DeviceDriverProvider {
 
             setChanged();
             notifyObservers(AdapterState.stopped);
-        }
-
-        @Override
-        public void init() throws Exception {
-            setChanged();
-            notifyObservers(AdapterState.init);
         }
 
         @Override
