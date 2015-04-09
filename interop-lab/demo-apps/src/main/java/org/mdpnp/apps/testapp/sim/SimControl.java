@@ -268,17 +268,20 @@ public class SimControl implements InitializingBean
     }
 
     private static final NumericValue[] numericValues = new NumericValue[] {
-            new NumericValue("SpO2", rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 0, 100, 98, 10),
-            new NumericValue("Pulse Rate (SpO2)", rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 10, 360, 60, 50),
-            new NumericValue("Heart Rate (ECG)", rosetta.MDC_ECG_HEART_RATE.VALUE, 10, 360, 60, 50),
-            new NumericValue("etCO2", rosetta.MDC_AWAY_CO2_ET.VALUE, 0, 140, 30, 20),
+            new NumericValue("SpO\u2082", rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 0, 100, 98, 10),
+            new NumericValue("Any Pulse", rosetta.MDC_PULS_RATE.VALUE, 10, 360, 60, 50),
+//            new NumericValue("Pulse Rate (SpO\u2082)", rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 10, 360, 60, 50),
+//            new NumericValue("Heart Rate (ECG)", rosetta.MDC_ECG_HEART_RATE.VALUE, 10, 360, 60, 50),
+            new NumericValue("etCO\u2082", rosetta.MDC_AWAY_CO2_ET.VALUE, 0, 140, 30, 20),
             // The Fluke ProSim does not support respiratory rates less than 10
             // but we'll allow settings down to zero for other simulators
-            new NumericValue("RespRate", rosetta.MDC_CO2_RESP_RATE.VALUE, 0, 60, 15, 10),
-            new NumericValue("ABP Systolic", rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 0, 300, 120, 40),
-            new NumericValue("ABP Diastolic", rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 0, 300, 80, 40),
-            new NumericValue("NIBP Systolic", rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE, 0, 400, 120, 40),
-            new NumericValue("NIBP Diastolic", rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE, 0, 400, 80, 40)
+            new NumericValue("Any RespRate", rosetta.MDC_RESP_RATE.VALUE, 0, 60, 15, 10),
+//            new NumericValue("CO2 RespRate", rosetta.MDC_CO2_RESP_RATE.VALUE, 0, 60, 15, 10),
+//            new NumericValue("T.Thor RespRate", rosetta.MDC_TTHOR_RESP_RATE.VALUE, 0, 60, 15, 10),
+            new NumericValue("Any Systolic", rosetta.MDC_PRESS_BLD_SYS.VALUE, 0, 300, 120, 40),
+            new NumericValue("Any Diastolic", rosetta.MDC_PRESS_BLD_DIA.VALUE, 0, 300, 80, 40),
+            new NumericValue("Cuff Systolic", rosetta.MDC_PRESS_CUFF_SYS.VALUE, 0, 400, 120, 40),
+            new NumericValue("Cuff Diastolic", rosetta.MDC_PRESS_CUFF_DIA.VALUE, 0, 400, 80, 40)
     };
 
 

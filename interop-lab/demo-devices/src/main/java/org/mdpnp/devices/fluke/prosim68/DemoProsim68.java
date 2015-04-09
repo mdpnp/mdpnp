@@ -291,23 +291,20 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
     public void instanceSample(ReaderInstanceModel<GlobalSimulationObjective, GlobalSimulationObjectiveDataReader> model,
             GlobalSimulationObjectiveDataReader reader, GlobalSimulationObjective data, SampleInfo sampleInfo) {
         if(sampleInfo.valid_data) {
-            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(data.metric_id) ||
-                rosetta.MDC_ECG_HEART_RATE.VALUE.equals(data.metric_id)) {
+            
+            if (rosetta.MDC_PULS_RATE.VALUE.equals(data.metric_id)) {
                 pulseRate = GlobalSimulationObjectiveListener.toDoubleNumber(data);
-                log.info("New PulseRate " + pulseRate);
             } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(data.metric_id)) {
                 saturation = GlobalSimulationObjectiveListener.toDoubleNumber(data);
-            } else if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(data.metric_id) ||
-                       rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(data.metric_id) ||
-                       rosetta.MDC_RESP_RATE.VALUE.equals(data.metric_id)) {
+            } else if (rosetta.MDC_RESP_RATE.VALUE.equals(data.metric_id)) {
                 respRate = GlobalSimulationObjectiveListener.toDoubleNumber(data);
             } else if (rosetta.MDC_PRESS_BLD_SYS.VALUE.equals(data.metric_id)) {
                 invasiveSystolic = GlobalSimulationObjectiveListener.toDoubleNumber(data);
             } else if (rosetta.MDC_PRESS_BLD_DIA.VALUE.equals(data.metric_id)) {
                 invasiveDiastolic = GlobalSimulationObjectiveListener.toDoubleNumber(data);
-            } else if (rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE.equals(data.metric_id)) {
+            } else if (rosetta.MDC_PRESS_CUFF_DIA.VALUE.equals(data.metric_id)) {
                 noninvasiveDiastolic = GlobalSimulationObjectiveListener.toDoubleNumber(data);
-            } else if (rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE.equals(data.metric_id)) {
+            } else if (rosetta.MDC_PRESS_CUFF_SYS.VALUE.equals(data.metric_id)) {
                 noninvasiveSystolic = GlobalSimulationObjectiveListener.toDoubleNumber(data);
             }
         }
