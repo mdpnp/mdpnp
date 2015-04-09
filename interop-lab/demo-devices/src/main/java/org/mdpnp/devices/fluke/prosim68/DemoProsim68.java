@@ -34,6 +34,7 @@ import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
+import org.mdpnp.devices.simulation.NumberWithJitter;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.GlobalSimulationObjectiveInstanceModel;
 import org.mdpnp.rtiapi.data.GlobalSimulationObjectiveInstanceModelImpl;
@@ -43,7 +44,6 @@ import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.infrastructure.QosPolicy;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
@@ -216,7 +216,16 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
         return "prosim8.png";
     }
     
-    private Number pulseRate, saturation, respRate, invasiveSystolic, invasiveDiastolic, noninvasiveSystolic, noninvasiveDiastolic;
+    private static final Number DEFAULT_INCREMENT = 0.01, DEFAULT_MAX_DELTA = 0.01; 
+    
+    private Number 
+        pulseRate = new NumberWithJitter<Double>(60.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA),
+        saturation = new NumberWithJitter<Double>(98.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA),
+        respRate = new NumberWithJitter<Double>(12.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA),
+        invasiveSystolic = new NumberWithJitter<Double>(120.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA),
+        invasiveDiastolic = new NumberWithJitter<Double>(80.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA),
+        noninvasiveSystolic = new NumberWithJitter<Double>(120.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA),
+        noninvasiveDiastolic = new NumberWithJitter<Double>(80.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA);
     
     private class EmitData implements Runnable {
 
