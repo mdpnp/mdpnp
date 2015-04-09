@@ -225,6 +225,12 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void init() {
+
+        super.init();
+
         if (MAX_QUIET_TIME > 0L) {
             executor.scheduleAtFixedRate(new Runnable() {
                 public void run() {
@@ -232,7 +238,6 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
                 }
             }, 0L, MAX_QUIET_TIME, TimeUnit.MILLISECONDS);
         }
-
     }
 
     private final MyBernoulli myBernoulli = new MyBernoulli();

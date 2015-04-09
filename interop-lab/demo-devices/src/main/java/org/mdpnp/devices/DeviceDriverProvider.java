@@ -212,7 +212,9 @@ public interface DeviceDriverProvider {
 
     /**
      * factory to create an instance of the device adapter for a particular device driver. It is used
-     * in the generic DriverContext.xml spring configuration file.
+     * in the generic DriverContext.xml spring configuration file. Not an ideal thing as we do a few
+     * autowiring things here that the container should be doing for us, but the alternative is for
+     * force each driver to have its own spring configuration. Dunno.
      */
     public static class AbstractDeviceFactory implements FactoryBean<AbstractDevice>, ApplicationContextAware {
 
@@ -229,6 +231,7 @@ public interface DeviceDriverProvider {
 
                 instance = driverProvider.newInstance((AbstractApplicationContext)context);
                 instance.setExecutor(executor);
+                instance.init();
             }
             return instance;
         }

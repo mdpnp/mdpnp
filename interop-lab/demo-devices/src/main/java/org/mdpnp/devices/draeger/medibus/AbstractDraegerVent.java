@@ -603,7 +603,10 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         super.disconnect();
     }
 
-    private void init() {
+    public void init() {
+
+        super.init();
+
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Dr\u00E4ger";
         deviceIdentity.model = "???";
@@ -742,7 +745,6 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         for (int i = 0; i < realtimeBuffer.length; i++) {
             realtimeBuffer[i] = Collections.synchronizedList(new ArrayList<Number>());
         }
-        init();
         loadMap(numerics, waveforms);
     }
 

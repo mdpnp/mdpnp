@@ -718,6 +718,16 @@ public abstract class AbstractDevice {
         this.eventLoop = eventLoop;
     }
 
+    /**
+     * post-construction initialization method to allow implementations to
+     * initialize/start whatever sub-components they manage. Ideally, for
+     * more sophisticated devices everything complex should be moved out and
+     * assembled via 'spring' ioc composition, but there are plenty of cases
+     * in the middle where this is appropriate. This would be spring's
+     * InitializingBean::afterPropertiesSet lifecycle pointcut.
+     */
+    public void init() {
+    }
 
     /**
      * @return an instance of the device clock that should be used in stamping messages. Fall-back implementation
