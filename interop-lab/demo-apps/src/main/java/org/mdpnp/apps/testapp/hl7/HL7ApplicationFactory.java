@@ -65,11 +65,12 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void stop() {
-                emitter.stop();
+                
             }
 
             @Override
             public void destroy() throws Exception {
+                emitter.stop();
                 controller.shutdown();
             }
         };
