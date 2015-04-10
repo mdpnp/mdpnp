@@ -278,7 +278,7 @@ public class IceAppsContainer extends IceApplication {
         FXMLLoader loader = new FXMLLoader(DemoPanel.class.getResource("DemoPanel.fxml"));
         panelRoot = loader.load();
         panelController = ((DemoPanel) loader.getController()).setModel(partitionChooserModel).setUdi(udi).setVersion(BuildInfo.getDescriptor())
-                .setModel(emr.getPatients()).set(context);
+                .setModel(emr.getPatients());
         panelRoot.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 
         // discoveryPeers = new DiscoveryPeers(this);

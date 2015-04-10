@@ -114,11 +114,6 @@ public class DemoPanel implements Runnable {
         this.timeFuture = executor.scheduleAtFixedRate(this, 1000L - (System.currentTimeMillis() % 1000L) + 10L, 1000L, TimeUnit.MILLISECONDS);
     }
 
-    public DemoPanel set(AbstractApplicationContext context) {
-        this.context = context;
-        return this;
-    }
-
     public void stop() {
         timeFuture.cancel(true);
         executor.shutdownNow();
@@ -158,8 +153,6 @@ public class DemoPanel implements Runnable {
         }
     }
 
-    private AbstractApplicationContext context;
-
     @FXML
     BorderPane demoPanel;
 
@@ -180,7 +173,15 @@ public class DemoPanel implements Runnable {
                 }
 
                 try {
-                    DeviceAdapterCommand.GUIAdapter da = new DeviceAdapterCommand.GUIAdapter(c.getDeviceFactory(), context);
+                    // TODO this must not use the same context as the app as it messes up DDS
+                    final AbstractApplicationContext context = c.createContext("DeviceAdapterContext.xml");
+                    DeviceAdapterCommand.GUIAdapter da = new DeviceAdapterCommand.GUIAdapter(c.getDeviceFactory(), context) {
+                        // intercept stop to destroy the context specific to this device
+                        public void stop() {
+                            super.stop();
+                            context.destroy();
+                        };
+                    };
                     // Use the current partition of the app container
                     da.setPartition(partition.toArray(new String[0]));
                     da.setAddress(c.getAddress());
