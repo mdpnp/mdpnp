@@ -50,6 +50,11 @@
           <PropertyValueFactory property="device_time" />
          </cellValueFactory>
         </TableColumn>
+        <TableColumn prefWidth="200.0" text="Presentation Time">
+         <cellValueFactory>
+          <PropertyValueFactory property="presentation_time" />
+         </cellValueFactory>
+        </TableColumn>
         <TableColumn prefWidth="150.0" text="Vendor Metric">
          <cellValueFactory>
           <PropertyValueFactory property="vendor_metric_id" />
@@ -102,6 +107,11 @@
           <PropertyValueFactory property="device_time" />
          </cellValueFactory>
         </TableColumn>
+        <TableColumn prefWidth="200.0" text="Presentation Time">
+         <cellValueFactory>
+          <PropertyValueFactory property="presentation_time" />
+         </cellValueFactory>
+        </TableColumn>        
         <TableColumn prefWidth="150" text="Vendor Metric">
          <cellValueFactory>
           <PropertyValueFactory property="vendor_metric_id" />
