@@ -91,7 +91,7 @@ public class HL7Emitter implements MDSListener, Runnable {
     private final Map<String, IdDt> deviceUDItoResourceId = Collections.synchronizedMap(new HashMap<String, IdDt>());
     private final Map<InstanceHandle_t, Boolean> metricHandleToValidity = Collections.synchronizedMap(new HashMap<InstanceHandle_t, Boolean>());
     
-    private final Set<NumericFx> recentUpdates = Collections.synchronizedSet(new HashSet<>());
+    private final Set recentUpdates = Collections.synchronizedSet(new HashSet<>());
 
     private final ListenerList<LineEmitterListener> listeners = new ListenerList<LineEmitterListener>(LineEmitterListener.class);
     private final ListenerList<StartStopListener> ssListeners = new ListenerList<StartStopListener>(StartStopListener.class);
@@ -103,21 +103,31 @@ public class HL7Emitter implements MDSListener, Runnable {
         this.fhirContext = fhirContext;
         this.numericList = numericList;
 
+        numericObserver =  attachNumericObserver(numericList);
+        numericList.forEach((t)->add(t));
+
+        this.mdsHandler = new MDSHandler(eventLoop, subscriber.get_participant());
+        mdsHandler.addConnectivityListener(this);
+        mdsHandler.start();
+
+    }
+
+    ElementObserver<NumericFx>  attachNumericObserver(NumericFxList numericList) {
         // Observes changes to source_timestamp and queues the NumericFx for emission
-        numericObserver = new ElementObserver<NumericFx>(new Callback<NumericFx, Observable[]>() {
+        ElementObserver<NumericFx> observer = new ElementObserver<NumericFx>(new Callback<NumericFx, Observable[]>() {
 
             @Override
             public Observable[] call(NumericFx param) {
                 return new Observable[] {param.presentation_timeProperty()};
             }
-            
+
         }, new Callback<NumericFx, InvalidationListener>() {
 
             @Override
             public InvalidationListener call(final NumericFx param) {
                 return new InvalidationListener() {
                     private Date lastPresentationTime = null;
-                    
+
                     @Override
                     public void invalidated(Observable observable) {
                         Date dt = param.getPresentation_time();
@@ -130,16 +140,12 @@ public class HL7Emitter implements MDSListener, Runnable {
                     }
                 };
             }
-            
-        }, this.numericList); 
-        
-        numericList.addListener(new OnListChange<>((t)->add(t), null, (t)->remove(t)));
-        numericList.forEach((t)->add(t));
-        
-        this.mdsHandler = new MDSHandler(eventLoop, subscriber.get_participant());
-        mdsHandler.addConnectivityListener(this);
-        mdsHandler.start();
 
+        }, numericList);
+
+        numericList.addListener(new OnListChange<>((t) -> add(t), null, (t) -> remove(t)));
+
+        return observer;
     }
 
     private final NumericFxList numericList;
@@ -432,8 +438,9 @@ public class HL7Emitter implements MDSListener, Runnable {
         
         return obs;
     }
-    private static final String METRIC_PREFIX = "MDC_";
-    private static final String PTID_SYSTEM = "urn:oid:2.16.840.1.113883.3.1974";
+
+    static final String METRIC_PREFIX = "MDC_";
+    static final String PTID_SYSTEM = "urn:oid:2.16.840.1.113883.3.1974";
     
     
     public void sendFHIR() throws InterruptedException {
@@ -442,10 +449,17 @@ public class HL7Emitter implements MDSListener, Runnable {
         
         synchronized(recentUpdates) {
             recentUpdates.forEach((x) -> {
-                Observation obs = fhirObservation(x);
-                bundle.add(obs);
-                String jsonEncoded = fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(obs);
-                jsonStrings.add(jsonEncoded+"\n");
+
+                if(x instanceof NumericFx) {
+                    NumericFx numeric = (NumericFx)x;
+                    Observation obs = fhirObservation(numeric);
+                    bundle.add(obs);
+                    String jsonEncoded = fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(obs);
+                    jsonStrings.add(jsonEncoded + "\n");
+                }
+                else {
+
+                }
                 
             });
             log.debug("flushing {} FHIR observations", recentUpdates.size());
@@ -460,6 +474,10 @@ public class HL7Emitter implements MDSListener, Runnable {
         if (null != client) {
             client.transaction().withResources(bundle).encodedJson().execute();
         }
+    }
+
+    Set<NumericFx> getRecentUpdates() {
+        return recentUpdates;
     }
 
     public void send() throws InterruptedException {
