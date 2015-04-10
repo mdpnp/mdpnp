@@ -108,7 +108,20 @@ public class HL7Emitter implements MDSListener, Runnable {
 
             @Override
             public InvalidationListener call(final NumericFx param) {
-                return (t)->recentUpdates.add(param);
+                return new InvalidationListener() {
+                    private Date lastPresentationTime = null;
+                    
+                    @Override
+                    public void invalidated(Observable observable) {
+                        Date dt = param.getPresentation_time();
+                        if(null == lastPresentationTime || !lastPresentationTime.equals(dt)) {
+                            recentUpdates.add(param);
+                            lastPresentationTime = dt;
+                        } else {
+                            log.trace("Ignoring a redundant " + param.getMetric_id());
+                        }
+                    }
+                };
             }
             
         }, this.numericList); 
@@ -420,14 +433,14 @@ public class HL7Emitter implements MDSListener, Runnable {
     private void add(NumericFx numeric) {
         if(numeric.getMetric_id().startsWith(METRIC_PREFIX)) {
             numericObserver.attachListener(numeric);
-            recentUpdates.add(numeric);
+//            recentUpdates.add(numeric);
         }
     }
     private void remove(NumericFx numeric) {
         // Must not detach what we did not attach
         if(numeric.getMetric_id().startsWith(METRIC_PREFIX)) {
             numericObserver.detachListener(numeric);
-            recentUpdates.add(numeric);
+//            recentUpdates.add(numeric);
         }
     }
 
