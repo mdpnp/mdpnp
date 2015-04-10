@@ -498,7 +498,7 @@ public class HL7Emitter implements MDSListener, Runnable {
             Map.Entry<String, String> next = iterator.next();
 
             Observation obs = new Observation();
-            obs.setId(next.getKey());
+            obs.getIdentifier().add(new IdentifierDt(PTID_SYSTEM, next.getKey()));
             obs.setValue(new StringDt(next.getValue()));
             obs.setApplies(new DateTimeDt(data.getDate_and_time(), TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
             obs.setSubject(new ResourceReferenceDt(resourceId));
@@ -593,6 +593,9 @@ public class HL7Emitter implements MDSListener, Runnable {
 
     private void add(PatientAssessmentFx assessment) {
         patientAssessmentObserver.attachListener(assessment);
+        // Send the initial value here (these are less frequent)
+        recentUpdates.add(assessment);
+        
     }
     private void remove(PatientAssessmentFx assessment) {
         // Must not detach what we did not attach
