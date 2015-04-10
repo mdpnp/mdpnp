@@ -12,6 +12,8 @@ import org.mdpnp.guis.javafx.ResizableCanvas;
 import org.mdpnp.guis.waveform.WaveformPanel;
 import org.mdpnp.guis.waveform.WaveformRenderer;
 import org.mdpnp.guis.waveform.WaveformSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JavaFXWaveformPane extends BorderPane implements WaveformPanel {
 //    private static final double SPACING_X = 25;
@@ -100,11 +102,17 @@ public class JavaFXWaveformPane extends BorderPane implements WaveformPanel {
             waveformRender.play();
         }
     }
-
+    private static final Logger log = LoggerFactory.getLogger(JavaFXWaveformPane.class);
     @Override
     public void stop() {
+        setSource(null);
         if(null != waveformRender) {
             waveformRender.stop();
+            try {
+                renderer.awaitLastRender(2000L);
+            } catch (InterruptedException e) {
+                log.error("Interrupted waiting for render to end", e);
+            }
             waveformRender = null;
         }
     }

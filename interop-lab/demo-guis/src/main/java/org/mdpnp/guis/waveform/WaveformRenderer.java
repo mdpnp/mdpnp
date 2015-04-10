@@ -34,6 +34,7 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
     private boolean overwrite = true;
     private double gapSize = 0.02;
     boolean aged_segment = true;
+    boolean rendering = false;
 
     public void setOverwrite(boolean overwrite) {
         this.overwrite = overwrite;
@@ -124,41 +125,62 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
     }
     
     public void render(WaveformSource source, WaveformCanvas canvas, long t1, long t2) {
-        this.canvas = canvas;
-
-        if (null == canvas || null == source) {
-            return;
+        synchronized(this) {
+            this.rendering = true;
         }
-        
-        if(source.loadingHistoricalData()) {
-            canvas.drawString("Receiving Recent Data...", 0, 0);
-            return;
+        try {
+            this.canvas = canvas;
+    
+            if (null == canvas || null == source) {
+                return;
+            }
+            
+            if(source.loadingHistoricalData()) {
+                canvas.drawString("Receiving Recent Data...", 0, 0);
+                return;
+            }
+    
+            extent = canvas.getExtent();
+            
+            canvas.clearRect(extent.getMinX(), extent.getMinY(), extent.getMaxX(), extent.getMaxY());
+    
+            
+            if (continuousRescale) {
+                minY = Double.MAX_VALUE;
+                maxY = Double.MIN_VALUE;
+            }
+            
+            if(overwrite) {
+                long domain = t2 - t1;
+                // what is the nearest start increment for a domain of this size?
+                this.t0 = t2 - t2 % domain;
+            }
+            
+            this.t1 = t1;
+            this.t2 = t2;
+    
+            this.last_x = -1;
+            this.last_y = -1;
+            
+            source.iterate(this);
+        } finally {
+            synchronized(this) {
+                rendering = false;
+                this.notifyAll();
+            }
         }
-
-        extent = canvas.getExtent();
-        
-        canvas.clearRect(extent.getMinX(), extent.getMinY(), extent.getMaxX(), extent.getMaxY());
-
-        
-        if (continuousRescale) {
-            minY = Double.MAX_VALUE;
-            maxY = Double.MIN_VALUE;
-        }
-        
-        if(overwrite) {
-            long domain = t2 - t1;
-            // what is the nearest start increment for a domain of this size?
-            this.t0 = t2 - t2 % domain;
-        }
-        
-        this.t1 = t1;
-        this.t2 = t2;
-
-        this.last_x = -1;
-        this.last_y = -1;
-        
-        source.iterate(this);
     }
+    
+    public synchronized void awaitLastRender(long timeout) throws InterruptedException {
+        long nowNs = System.nanoTime();
+        long giveUpNs = nowNs + timeout * 1000000L;
+        while(rendering) {
+            long remainingNs = giveUpNs - nowNs;
+            this.wait(remainingNs/1000000L, (int)(remainingNs%1000000L));
+            nowNs = System.nanoTime();
+        }
+    }
+    
     private int count = 0;
     @Override
     public void begin() {
