@@ -42,8 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
 
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 
@@ -174,17 +172,6 @@ public class DemoPanel implements Runnable {
             final Subscriber subscriber = partitionChooserModel.getSubscriber();
             Configuration c = CreateAdapter.showDialog(subscriber.get_participant().get_domain_id());
             if (null != c) {
-
-                DomainParticipantQos pQos = new DomainParticipantQos();
-                DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-                pQos.discovery.initial_peers.clear();
-                // for (int i = 0; i <
-                // discoveryPeers.peers.getSize(); i++) {
-                // pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
-                // System.err.println("PEER:" +
-                // discoveryPeers.peers.getElementAt(i));
-                // }
-                DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
                 SubscriberQos qos = new SubscriberQos();
                 subscriber.get_qos(qos);
                 List<String> partition = new ArrayList<String>();
@@ -194,6 +181,7 @@ public class DemoPanel implements Runnable {
 
                 try {
                     DeviceAdapterCommand.GUIAdapter da = new DeviceAdapterCommand.GUIAdapter(c.getDeviceFactory(), context);
+                    // Use the current partition of the app container
                     da.setPartition(partition.toArray(new String[0]));
                     da.setAddress(c.getAddress());
                     da.init();
