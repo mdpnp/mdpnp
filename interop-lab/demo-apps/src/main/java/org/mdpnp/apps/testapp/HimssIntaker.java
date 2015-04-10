@@ -64,7 +64,7 @@ public class HimssIntaker {
         reader.enable();
     }
     public void stop() {
-        subscriber.get_participant().delete_topic(topic);
         subscriber.delete_datareader(reader);
+        subscriber.get_participant().delete_topic(topic);        
     }
 }

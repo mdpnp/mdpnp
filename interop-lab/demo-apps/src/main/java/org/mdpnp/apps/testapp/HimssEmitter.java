@@ -1,13 +1,13 @@
 package org.mdpnp.apps.testapp;
 
+import himss.MetricDataQualityDataWriter;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import himss.MetricDataQuality;
-import himss.MetricDataQualityDataWriter;
 
 import org.mdpnp.apps.device.OnListChange;
 import org.mdpnp.apps.fxbeans.NumericFx;
