@@ -101,7 +101,7 @@ public class HL7Emitter implements MDSListener, Runnable {
 
             @Override
             public Observable[] call(NumericFx param) {
-                return new Observable[] {param.source_timestampProperty()};
+                return new Observable[] {param.presentation_timeProperty()};
             }
             
         }, new Callback<NumericFx, InvalidationListener>() {
