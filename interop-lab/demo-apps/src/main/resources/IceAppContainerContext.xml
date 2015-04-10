@@ -136,8 +136,17 @@
 
     <bean id="himssPublisher" class="org.mdpnp.devices.PublisherFactory">
         <constructor-arg ref="himssDomainParticipant"></constructor-arg>
-    </bean>    
-    
+    </bean>
+
+
+    <bean id="assessmentList" class="org.mdpnp.apps.fxbeans.PatientAssessmentFxListFactory" lazy-init="false">
+      <property name="topicName"><util:constant static-field="himss.PatientAssessmentTopic.VALUE"/></property>
+      <property name="subscriber" ref="himssSubscriber"/>
+      <property name="eventLoop" ref="eventLoop"/>
+      <property name="qosLibrary"><value>ice_library</value></property>
+      <property name="qosProfile"><value>himss</value></property>
+    </bean>
+
     <bean id="himssEmitter" class="org.mdpnp.apps.testapp.HimssEmitter" init-method="start" destroy-method="stop">
         <property name="numericList" ref="numericList"/>
         <property name="publisher" ref="himssPublisher"/>

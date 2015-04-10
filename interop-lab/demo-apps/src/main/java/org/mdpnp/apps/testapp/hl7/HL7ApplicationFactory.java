@@ -7,6 +7,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
 import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.PatientAssessmentFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
@@ -33,10 +34,12 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
         final EventLoop eventLoop = parentContext.getBean("eventLoop", EventLoop.class);
 
         final NumericFxList numericList = parentContext.getBean("numericList", NumericFxList.class);
-        
+
+        final PatientAssessmentFxList assessmentList=parentContext.getBean("assessmentList", PatientAssessmentFxList.class);;
+
         final FhirContext fhirContext = parentContext.getBean("fhirContext", FhirContext.class);
         
-        final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, numericList, fhirContext);
+        final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, numericList, assessmentList, fhirContext);
 
         FXMLLoader loader = new FXMLLoader(HL7Application.class.getResource("HL7Application.fxml"));
         

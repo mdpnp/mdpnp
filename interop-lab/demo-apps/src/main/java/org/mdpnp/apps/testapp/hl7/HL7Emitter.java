@@ -3,16 +3,7 @@ package org.mdpnp.apps.testapp.hl7;
 import ice.MDSConnectivity;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,9 +16,7 @@ import javafx.beans.Observable;
 import javafx.util.Callback;
 
 import org.mdpnp.apps.device.OnListChange;
-import org.mdpnp.apps.fxbeans.ElementObserver;
-import org.mdpnp.apps.fxbeans.NumericFx;
-import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.*;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;
@@ -96,15 +85,26 @@ public class HL7Emitter implements MDSListener, Runnable {
     private final ListenerList<LineEmitterListener> listeners = new ListenerList<LineEmitterListener>(LineEmitterListener.class);
     private final ListenerList<StartStopListener> ssListeners = new ListenerList<StartStopListener>(StartStopListener.class);
 
-    public HL7Emitter(final Subscriber subscriber, final EventLoop eventLoop, final NumericFxList numericList,
-            final FhirContext fhirContext) {
+    public HL7Emitter(final Subscriber subscriber, final EventLoop eventLoop,
+                      final NumericFxList numericList,
+                      final PatientAssessmentFxList patientAssessmentList,
+                      final FhirContext fhirContext)
+    {
+
         executor = Executors.newSingleThreadScheduledExecutor();
         hl7Context = new DefaultHapiContext();
         this.fhirContext = fhirContext;
         this.numericList = numericList;
 
-        numericObserver =  attachNumericObserver(numericList);
-        numericList.forEach((t)->add(t));
+        if(numericList != null) {
+            numericObserver = attachNumericObserver(numericList);
+            numericList.forEach((t) -> add(t));
+        }
+
+        if(patientAssessmentList != null) {
+            patientAssessmentObserver = attachPatientAssessmentObserver(patientAssessmentList);
+            patientAssessmentList.forEach((t) -> add(t));
+        }
 
         this.mdsHandler = new MDSHandler(eventLoop, subscriber.get_participant());
         mdsHandler.addConnectivityListener(this);
@@ -144,6 +144,44 @@ public class HL7Emitter implements MDSListener, Runnable {
         }, numericList);
 
         numericList.addListener(new OnListChange<>((t) -> add(t), null, (t) -> remove(t)));
+
+        return observer;
+    }
+
+    ElementObserver<PatientAssessmentFx>  attachPatientAssessmentObserver(PatientAssessmentFxList paList) {
+        // Observes changes to source_timestamp and queues the NumericFx for emission
+        ElementObserver<PatientAssessmentFx> observer =
+                new ElementObserver<PatientAssessmentFx>(new Callback<PatientAssessmentFx, Observable[]>() {
+
+            @Override
+            public Observable[] call(PatientAssessmentFx param) {
+                return new Observable[] {param.date_and_timeProperty()};
+            }
+
+        }, new Callback<PatientAssessmentFx, InvalidationListener>() {
+
+            @Override
+            public InvalidationListener call(final PatientAssessmentFx param) {
+
+                return new InvalidationListener() {
+                    private Date lastPresentationTime = null;
+
+                    @Override
+                    public void invalidated(Observable observable) {
+                        Date dt = param.getDate_and_time();
+                        if(null == lastPresentationTime || !lastPresentationTime.equals(dt)) {
+                            recentUpdates.add(param);
+                            lastPresentationTime = dt;
+                        } else {
+                            log.trace("Ignoring a redundant " + param.getOperator_id());
+                        }
+                    }
+                };
+            }
+
+        }, paList);
+
+        paList.addListener(new OnListChange<>((t) -> add(t), null, (t) -> remove(t)));
 
         return observer;
     }
@@ -409,7 +447,7 @@ public class HL7Emitter implements MDSListener, Runnable {
         return valid;
     }
     
-    public Observation fhirObservation(NumericFx data) {
+    Observation fhirObservation(NumericFx data) {
         final String mrn = deviceUdiToPatientMRN.get(data.getUnique_device_identifier());
         if(null == mrn) {
             log.debug("No known mrn for udi="+data.getUnique_device_identifier());
@@ -439,6 +477,37 @@ public class HL7Emitter implements MDSListener, Runnable {
         return obs;
     }
 
+    Set<Observation> fhirObservation(PatientAssessmentFx data) {
+        final String mrn = "10101"; //deviceUdiToPatientMRN.get(data.getUnique_device_identifier());
+        //if(null == mrn) {
+        //    log.debug("No known mrn for udi="+data.getUnique_device_identifier());
+        //    return null;
+        //}
+
+        IdDt resourceId = getPatientResource(mrn);
+        if(null == resourceId) {
+            log.debug("No known patient resource id for mrn="+mrn);
+            return null;
+        }
+
+
+        Set<Observation> obss = new HashSet<>();
+
+        List<Map.Entry<String, String>> assessments = data.getAssessments();
+        for (Iterator<Map.Entry<String, String>> iterator = assessments.iterator(); iterator.hasNext(); ) {
+            Map.Entry<String, String> next = iterator.next();
+
+            Observation obs = new Observation();
+            obs.setId(next.getKey());
+            obs.setValue(new StringDt(next.getValue()));
+            obs.setApplies(new DateTimeDt(data.getDate_and_time(), TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
+            obs.setSubject(new ResourceReferenceDt(resourceId));
+            obss.add(obs);
+        }
+        return obss;
+    }
+
+
     static final String METRIC_PREFIX = "MDC_";
     static final String PTID_SYSTEM = "urn:oid:2.16.840.1.113883.3.1974";
     
@@ -457,10 +526,19 @@ public class HL7Emitter implements MDSListener, Runnable {
                     String jsonEncoded = fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(obs);
                     jsonStrings.add(jsonEncoded + "\n");
                 }
-                else {
-
+                else if(x instanceof PatientAssessmentFx) {
+                    PatientAssessmentFx assessment = (PatientAssessmentFx)x;
+                    Set<Observation> obss = fhirObservation(assessment);
+                    for (Observation obs : obss) {
+                        bundle.add(obs);
+                        String jsonEncoded = fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(obs);
+                        jsonStrings.add(jsonEncoded + "\n");
+                    }
                 }
-                
+                else {
+                    log.error("Do not know how to sendFHIR for " + x);
+                }
+
             });
             log.debug("flushing {} FHIR observations", recentUpdates.size());
             recentUpdates.clear();
@@ -499,19 +577,26 @@ public class HL7Emitter implements MDSListener, Runnable {
     }
     
     private ElementObserver<NumericFx> numericObserver;
-    
+    private ElementObserver<PatientAssessmentFx> patientAssessmentObserver;
+
     private void add(NumericFx numeric) {
         if(numeric.getMetric_id().startsWith(METRIC_PREFIX)) {
             numericObserver.attachListener(numeric);
-//            recentUpdates.add(numeric);
         }
     }
     private void remove(NumericFx numeric) {
         // Must not detach what we did not attach
         if(numeric.getMetric_id().startsWith(METRIC_PREFIX)) {
             numericObserver.detachListener(numeric);
-//            recentUpdates.add(numeric);
         }
+    }
+
+    private void add(PatientAssessmentFx assessment) {
+        patientAssessmentObserver.attachListener(assessment);
+    }
+    private void remove(PatientAssessmentFx assessment) {
+        // Must not detach what we did not attach
+        patientAssessmentObserver.detachListener(assessment);
     }
 
     @Override
