@@ -4,6 +4,7 @@ import ice.MDSConnectivity;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -38,13 +39,17 @@ import org.slf4j.LoggerFactory;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.IResource;
 import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
+import ca.uhn.fhir.model.dstu2.composite.IdentifierDt;
 import ca.uhn.fhir.model.dstu2.composite.QuantityDt;
 import ca.uhn.fhir.model.dstu2.composite.ResourceReferenceDt;
+import ca.uhn.fhir.model.dstu2.resource.Device;
 import ca.uhn.fhir.model.dstu2.resource.Observation;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.model.dstu2.valueset.ObservationStatusEnum;
 import ca.uhn.fhir.model.primitive.DateTimeDt;
 import ca.uhn.fhir.model.primitive.IdDt;
+import ca.uhn.fhir.model.primitive.StringDt;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.IGenericClient;
 import ca.uhn.hl7v2.DefaultHapiContext;
 import ca.uhn.hl7v2.HL7Exception;
@@ -62,6 +67,7 @@ import ca.uhn.hl7v2.model.v26.segment.OBX;
 import ca.uhn.hl7v2.model.v26.segment.PID;
 import ca.uhn.hl7v2.parser.Parser;
 
+import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.Subscriber;
 
 public class HL7Emitter implements MDSListener, Runnable {
@@ -70,7 +76,6 @@ public class HL7Emitter implements MDSListener, Runnable {
     }
     
 
-    
     protected static final Logger log = LoggerFactory.getLogger(HL7Emitter.class);
 
     private final HapiContext hl7Context;
@@ -82,7 +87,9 @@ public class HL7Emitter implements MDSListener, Runnable {
     protected final ScheduledExecutorService executor;
     
     private final Map<String, String> deviceUdiToPatientMRN = Collections.synchronizedMap(new HashMap<String, String>());
-    private final Map<String, IdDt> patientMRNtoResourceId = new HashMap<String, IdDt>();
+    private final Map<String, IdDt> patientMRNtoResourceId = Collections.synchronizedMap(new HashMap<String, IdDt>());
+    private final Map<String, IdDt> deviceUDItoResourceId = Collections.synchronizedMap(new HashMap<String, IdDt>());
+    private final Map<InstanceHandle_t, Boolean> metricHandleToValidity = Collections.synchronizedMap(new HashMap<InstanceHandle_t, Boolean>());
     
     private final Set<NumericFx> recentUpdates = Collections.synchronizedSet(new HashSet<>());
 
@@ -291,6 +298,24 @@ public class HL7Emitter implements MDSListener, Runnable {
         });
     }
     
+    public IdDt getDeviceResource(String udi) {
+        IdDt resourceId = deviceUDItoResourceId.get(udi);
+        if(null == resourceId) {
+            Device device = new Device();
+            device.setIdentifier(Arrays.asList(new IdentifierDt[] {new IdentifierDt(PTID_SYSTEM, udi)}));
+            MethodOutcome outcome = fhirClient.update()
+            .resource(device)
+            .conditional()
+            .where(Device.IDENTIFIER.exactly().systemAndIdentifier(PTID_SYSTEM, udi))
+            .execute();
+            resourceId = outcome.getId();
+            log.info("udi " + udi + " is " + resourceId);
+            deviceUDItoResourceId.put(udi, resourceId);
+        }
+        return resourceId;
+        
+    }
+    
     public IdDt getPatientResource(String mrn) {
         IdDt resourceId = patientMRNtoResourceId.get(mrn);
         if(null == resourceId && fhirClient != null) {
@@ -364,20 +389,46 @@ public class HL7Emitter implements MDSListener, Runnable {
         return r01;
     }
     
+    private boolean isValid(InstanceHandle_t handle) {
+        Boolean valid = metricHandleToValidity.get(handle);
+        if(null == valid) {
+            valid = true;
+            metricHandleToValidity.put(handle, valid);
+        } else {
+            if(Math.random()<=0.02) {
+                valid = !valid;
+                metricHandleToValidity.put(handle, valid);
+            }
+        }
+        return valid;
+    }
+    
     public Observation fhirObservation(NumericFx data) {
         final String mrn = deviceUdiToPatientMRN.get(data.getUnique_device_identifier());
         if(null == mrn) {
             log.debug("No known mrn for udi="+data.getUnique_device_identifier());
             return null;
         }
+        
         IdDt resourceId = getPatientResource(mrn);
+        if(null == resourceId) {
+            log.debug("No known patient resource id for mrn="+mrn);
+            return null;
+        }
+        
+        IdDt deviceResourceId = getDeviceResource(data.getUnique_device_identifier());
+        if(null == deviceResourceId) {
+            log.debug("No known device resource id for udi="+data.getUnique_device_identifier());
+            return null;
+        }
         
         Observation obs = new Observation();
         obs.setValue(new QuantityDt(data.getValue()).setUnits(data.getUnit_id()).setCode(data.getMetric_id()).setSystem("OpenICE"));
 //        obs.addIdentifier().setSystem("urn:info.openice").setValue(uuidFromSequence(sampleInfo.publication_sequence_number).toString());
         obs.setApplies(new DateTimeDt(data.getPresentation_time(), TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
-        if(null != resourceId) obs.setSubject(new ResourceReferenceDt(resourceId));
-        obs.setStatus(ObservationStatusEnum.PRELIMINARY);
+        obs.setSubject(new ResourceReferenceDt(resourceId));
+        obs.setStatus(isValid(data.getHandle())?ObservationStatusEnum.FINAL:ObservationStatusEnum.PRELIMINARY);
+        obs.setDevice(new ResourceReferenceDt(deviceResourceId));
         
         return obs;
     }
@@ -422,8 +473,9 @@ public class HL7Emitter implements MDSListener, Runnable {
     @Override
     public void handleDataSampleEvent(MDSEvent evt) {
         ice.MDSConnectivity c = (MDSConnectivity) evt.getSource();
-        log.info("udi " + c.unique_device_identifier + " is " + c.partition);
+        
         if(c.partition.startsWith("MRN=")) {
+            log.info("udi " + c.unique_device_identifier + " is " + c.partition.substring(4, c.partition.length()));
             deviceUdiToPatientMRN.put(c.unique_device_identifier, c.partition.substring(4, c.partition.length()));
         }
     }
