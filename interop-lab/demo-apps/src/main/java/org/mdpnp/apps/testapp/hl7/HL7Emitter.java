@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -17,7 +19,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.util.Callback;
 
+import org.mdpnp.apps.device.OnListChange;
+import org.mdpnp.apps.fxbeans.ElementObserver;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.devices.MDSHandler;
@@ -76,6 +83,8 @@ public class HL7Emitter implements MDSListener, Runnable {
     
     private final Map<String, String> deviceUdiToPatientMRN = Collections.synchronizedMap(new HashMap<String, String>());
     private final Map<String, IdDt> patientMRNtoResourceId = new HashMap<String, IdDt>();
+    
+    private final Set<NumericFx> recentUpdates = Collections.synchronizedSet(new HashSet<>());
 
     private final ListenerList<LineEmitterListener> listeners = new ListenerList<LineEmitterListener>(LineEmitterListener.class);
     private final ListenerList<StartStopListener> ssListeners = new ListenerList<StartStopListener>(StartStopListener.class);
@@ -86,6 +95,27 @@ public class HL7Emitter implements MDSListener, Runnable {
         hl7Context = new DefaultHapiContext();
         this.fhirContext = fhirContext;
         this.numericList = numericList;
+
+        // Observes changes to source_timestamp and queues the NumericFx for emission
+        numericObserver = new ElementObserver<NumericFx>(new Callback<NumericFx, Observable[]>() {
+
+            @Override
+            public Observable[] call(NumericFx param) {
+                return new Observable[] {param.source_timestampProperty()};
+            }
+            
+        }, new Callback<NumericFx, InvalidationListener>() {
+
+            @Override
+            public InvalidationListener call(final NumericFx param) {
+                return (t)->recentUpdates.add(param);
+            }
+            
+        }, this.numericList); 
+        
+        numericList.addListener(new OnListChange<>((t)->add(t), null, (t)->remove(t)));
+        numericList.forEach((t)->add(t));
+        
         this.mdsHandler = new MDSHandler(eventLoop, subscriber.get_participant());
         mdsHandler.addConnectivityListener(this);
         mdsHandler.start();
@@ -340,29 +370,26 @@ public class HL7Emitter implements MDSListener, Runnable {
     }
     private static final String METRIC_PREFIX = "MDC_";
     private static final String PTID_SYSTEM = "urn:oid:2.16.840.1.113883.3.1974";
+    
+    
     public void sendFHIR() throws InterruptedException {
         List<IResource> bundle = new ArrayList<IResource>();
-        CountDownLatch latch = new CountDownLatch(1);
-        Platform.runLater(()-> {
-            try {
-                numericList.forEach((fx)-> {
-                    if(fx.getMetric_id().startsWith(METRIC_PREFIX)) {
-                        Observation obs = fhirObservation(fx);
-                        if(null != obs) {
-                            bundle.add(obs);
-                        }
-                    }
-                });
-            } finally {
-                latch.countDown();
-            }
-        });
-        latch.await();
+        List<String> jsonStrings = new ArrayList<String>();
         
-        bundle.forEach((x)-> {
-            String jsonEncoded = fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(x);
-            listeners.fire(new DispatchLine(jsonEncoded + "\n"));
-        });
+        synchronized(recentUpdates) {
+            recentUpdates.forEach((x) -> {
+                Observation obs = fhirObservation(x);
+                bundle.add(obs);
+                String jsonEncoded = fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(obs);
+                jsonStrings.add(jsonEncoded+"\n");
+                
+            });
+            log.debug("flushing {} FHIR observations", recentUpdates.size());
+            recentUpdates.clear();
+        }
+        
+        Platform.runLater(() ->
+        jsonStrings.forEach((t)->listeners.fire(new DispatchLine(t))));
         
         IGenericClient client = fhirClient;
         
@@ -385,6 +412,22 @@ public class HL7Emitter implements MDSListener, Runnable {
         log.info("udi " + c.unique_device_identifier + " is " + c.partition);
         if(c.partition.startsWith("MRN=")) {
             deviceUdiToPatientMRN.put(c.unique_device_identifier, c.partition.substring(4, c.partition.length()));
+        }
+    }
+    
+    private ElementObserver<NumericFx> numericObserver;
+    
+    private void add(NumericFx numeric) {
+        if(numeric.getMetric_id().startsWith(METRIC_PREFIX)) {
+            numericObserver.attachListener(numeric);
+            recentUpdates.add(numeric);
+        }
+    }
+    private void remove(NumericFx numeric) {
+        // Must not detach what we did not attach
+        if(numeric.getMetric_id().startsWith(METRIC_PREFIX)) {
+            numericObserver.detachListener(numeric);
+            recentUpdates.add(numeric);
         }
     }
 
