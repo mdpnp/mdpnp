@@ -4,6 +4,7 @@ org.mdpnp.apps.testapp.DeviceFactory$NellcorN595Provider
 org.mdpnp.apps.testapp.DeviceFactory$MasimoRadical7Provider
 org.mdpnp.apps.testapp.DeviceFactory$PO_SimulatorProvider
 org.mdpnp.apps.testapp.DeviceFactory$NIBP_SimulatorProvider
+org.mdpnp.apps.testapp.DeviceFactory$IBP_SimulatorProvider
 org.mdpnp.apps.testapp.DeviceFactory$IntellivueEthernetProvider
 org.mdpnp.apps.testapp.DeviceFactory$IntellivueSerialProvider
 org.mdpnp.apps.testapp.DeviceFactory$DraegerApolloProvider

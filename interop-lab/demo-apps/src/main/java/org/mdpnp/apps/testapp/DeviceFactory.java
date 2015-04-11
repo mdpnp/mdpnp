@@ -27,6 +27,7 @@ import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
 import org.mdpnp.devices.philips.intellivue.DemoSerialIntellivue;
 import org.mdpnp.devices.simulation.co2.SimCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
+import org.mdpnp.devices.simulation.ibp.SimInvasivePressure;
 import org.mdpnp.devices.simulation.multi.SimMultiparameter;
 import org.mdpnp.devices.simulation.nibp.DemoSimulatedBloodPressure;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
@@ -106,6 +107,22 @@ public class DeviceFactory {
             return new DemoSimulatedBloodPressure(subscriber, publisher, eventLoop);
         }
     }
+    
+    public static class IBP_SimulatorProvider extends SpringLoadedDriver {
+
+        @Override
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Invasive Blood Pressure", "IBP_Simulator");
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new SimInvasivePressure(subscriber, publisher, eventLoop);
+        }
+    }    
 
     public static class ECG_SimulatorProvider extends SpringLoadedDriver {
 
