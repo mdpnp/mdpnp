@@ -269,17 +269,5 @@ public class AbstractFxList<D extends Copyable, R extends DataReader, F extends 
         F f = data.remove(index);
         return f;
     }
-    @Override
-    public void clear() {
 
-        if (hasListeners()) {
-            beginChange();
-            nextRemove(0, this);
-        }
-        data.clear();
-        ++modCount;
-        if (hasListeners()) {
-            endChange();
-        }
-    }
 }
