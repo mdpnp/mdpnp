@@ -73,6 +73,11 @@
         <property name="qosProfile"><value>numeric_data</value></property>
     </bean>
     
+    <!-- This wrapper adds a validation flag to each numeric by containment -->
+    <bean id="validationOracle" class="org.mdpnp.apps.testapp.validate.ValidationOracleFactory" lazy-init="false">
+        <property name="numericList" ref="numericList"/>
+    </bean>
+    
     <bean id="sampleArrayList" class="org.mdpnp.apps.fxbeans.SampleArrayFxListFactory" lazy-init="false">
         <property name="topicName"><util:constant static-field="ice.SampleArrayTopic.VALUE"/></property>
         <property name="subscriber" ref="subscriber"/>
@@ -148,7 +153,7 @@
     </bean>
 
     <bean id="himssEmitter" class="org.mdpnp.apps.testapp.HimssEmitter" init-method="start" destroy-method="stop">
-        <property name="numericList" ref="numericList"/>
+        <property name="validationOracle" ref="validationOracle"/>
         <property name="publisher" ref="himssPublisher"/>
     </bean>
     

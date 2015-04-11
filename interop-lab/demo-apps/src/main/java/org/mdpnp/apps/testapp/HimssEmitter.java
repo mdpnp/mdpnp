@@ -10,8 +10,8 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 
 import org.mdpnp.apps.device.OnListChange;
-import org.mdpnp.apps.fxbeans.NumericFx;
-import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.testapp.validate.Validation;
+import org.mdpnp.apps.testapp.validate.ValidationOracle;
 import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ import com.rti.dds.topic.Topic;
 
 public class HimssEmitter {
     private Publisher publisher;
-    private NumericFxList numericList;
+    private ValidationOracle validationOracle;
     private Topic topic;
     private himss.MetricDataQualityDataWriter writer;
     
@@ -32,7 +32,7 @@ public class HimssEmitter {
     private static final class Holder implements ChangeListener<Date> {
         private himss.MetricDataQuality quality = new himss.MetricDataQuality();
         private InstanceHandle_t instanceHandle;
-        private NumericFx data;
+        private Validation data;
         private final himss.MetricDataQualityDataWriter writer;
         
         public Holder(final himss.MetricDataQualityDataWriter writer) {
@@ -52,25 +52,23 @@ public class HimssEmitter {
             return quality;
         }
         
-        public void setData(final NumericFx data) {
+        public void setData(final Validation data) {
             if(null != this.data) {
-                this.data.source_timestampProperty().removeListener(this);
+                this.data.getNumeric().source_timestampProperty().removeListener(this);
             }
             this.data = data;
             if(null != data) {
-                data.source_timestampProperty().addListener(this);
+                data.getNumeric().source_timestampProperty().addListener(this);
                 writer.write(quality, instanceHandle);
             }
         }
-        public NumericFx getData() {
+        public Validation getData() {
             return data;
         }
 
         @Override
         public void changed(ObservableValue<? extends Date> observable, Date oldValue, Date newValue) {
-            if(Math.random()<0.05) {
-                quality.validated_data = !quality.validated_data;
-            }
+            quality.validated_data = data.isValidated();
             writer.write(quality, instanceHandle);
         }
 
@@ -101,53 +99,53 @@ public class HimssEmitter {
         this.publisher = publisher;
     }
     
-    public void setNumericList(NumericFxList numericList) {
-        this.numericList = numericList;
+    public void setValidationOracle(ValidationOracle validationOracle) {
+        this.validationOracle = validationOracle;
     }
     
-    private void add(final NumericFx data) {
-        Holder h = instances.get(data.getHandle());
+    private void add(final Validation data) {
+        Holder h = instances.get(data.getNumeric().getHandle());
         if(null == h) {
-            Integer code = numericCode(data.getMetric_id());
+            Integer code = numericCode(data.getNumeric().getMetric_id());
             if(null == code) {
                 // log
                 return;
                 
             }
             
-            log.info("registered " + data.getMetric_id() + " with " + code);
+            log.info("registered " + data.getNumeric().getMetric_id() + " with " + code);
             h = new Holder(writer);
             himss.MetricDataQuality q = new himss.MetricDataQuality();
-            q.udi = data.getUnique_device_identifier().substring(0, Math.min(16, data.getUnique_device_identifier().length()));
-            q.instance_id = data.getInstance_id();
+            q.udi = data.getNumeric().getUnique_device_identifier().substring(0, Math.min(16, data.getNumeric().getUnique_device_identifier().length()));
+            q.instance_id = data.getNumeric().getInstance_id();
             q.metric_id = code;
-            q.validated_data = false;
+            q.validated_data = data.validatedProperty().get();
             h.setQuality(q);
             h.setInstanceHandle(writer.register_instance(q));
-            instances.put(new InstanceHandle_t(data.getHandle()), h);
+            instances.put(new InstanceHandle_t(data.getNumeric().getHandle()), h);
             h.setData(data);
         }
     }
     
-    private void remove(final NumericFx data) {
-        Holder h = instances.remove(data.getHandle());
+    private void remove(final Validation data) {
+        Holder h = instances.remove(data.getNumeric().getHandle());
         if(null != h) {
             h.setData(null);
             writer.unregister_instance(h.getQuality(), h.getInstanceHandle());
         }
     }
     
-    private final OnListChange<NumericFx> listener = new OnListChange<>((t)->add(t), null, (t)->remove(t)); 
+    private final OnListChange<Validation> listener = new OnListChange<>((t)->add(t), null, (t)->remove(t)); 
     
     public void start() {
         topic = TopicUtil.findOrCreateTopic(publisher.get_participant(), himss.MetricDataQualityTopic.VALUE, himss.MetricDataQualityTypeSupport.class);
         writer = (MetricDataQualityDataWriter) publisher.create_datawriter_with_profile(topic, "ice_library", "himss", null, StatusKind.STATUS_MASK_NONE);
-        numericList.addListener(listener);
-        numericList.forEach((t)->add(t));
+        validationOracle.addListener(listener);
+        validationOracle.forEach((t)->add(t));
     }
     public void stop() {
-        numericList.removeListener(listener);
-        numericList.forEach((t)->remove(t));
+        validationOracle.removeListener(listener);
+        validationOracle.forEach((t)->remove(t));
         publisher.delete_datawriter(writer);
         publisher.get_participant().delete_topic(topic);
     }

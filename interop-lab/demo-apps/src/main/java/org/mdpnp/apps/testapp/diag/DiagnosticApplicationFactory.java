@@ -10,6 +10,7 @@ import org.mdpnp.apps.fxbeans.AlertFxList;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
+import org.mdpnp.apps.testapp.validate.ValidationOracle;
 import org.springframework.context.ApplicationContext;
 
 public class DiagnosticApplicationFactory implements IceApplicationProvider {
@@ -33,7 +34,9 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
         
         final AlertFxList technicalAlertList = parentContext.getBean("technicalAlertList", AlertFxList.class);
         
-        final Diagnostic diagnostic = new Diagnostic(patientAlertList, technicalAlertList, numericList, sampleArrayList);
+        final ValidationOracle validationOracle = parentContext.getBean("validationOracle", ValidationOracle.class);
+        
+        final Diagnostic diagnostic = new Diagnostic(patientAlertList, technicalAlertList, numericList, sampleArrayList, validationOracle);
 
         FXMLLoader loader = new FXMLLoader(DiagnosticApplication.class.getResource("DiagnosticApplication.fxml"));
         

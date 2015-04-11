@@ -22,11 +22,16 @@
     
    </right>
    <bottom>
-    <HBox>
+    <HBox spacing="10.0">
        <children>
        <Label text="Add a vital sign:" />
             <ComboBox fx:id="vitalSigns" />
          <Button mnemonicParsing="false" onAction="#addVitalSign" text="Add" />
+         <Label text="Data Points:"/>
+         <Spinner fx:id="maxDataPointsSpinner" editable="true" initialValue="20" min="1" max="100"/>
+         <Label text="Max σ(%):"/>
+         <Spinner fx:id="maxSigmaPctSpinner" editable="true" initialValue="2.0" min="0.1" max="5.0" amountToStepBy="0.1">
+         </Spinner>
        </children>
       </HBox>
       </bottom>

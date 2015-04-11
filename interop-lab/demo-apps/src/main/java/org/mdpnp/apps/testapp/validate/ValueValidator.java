@@ -13,7 +13,11 @@ import javafx.collections.ObservableList;
 import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Data;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.mdpnp.apps.testapp.vital.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ValueValidator implements ChangeListener<Date> {
     private final List<Integer> dataPoints = new LinkedList<Integer>();
@@ -22,15 +26,31 @@ public class ValueValidator implements ChangeListener<Date> {
         return series;
     }
     
+    private final DescriptiveStatistics stats = new DescriptiveStatistics();
+    
     
     private final Value value;
     private final ObservableList<Data<String,Number>> data = FXCollections.observableArrayList();
     private final XYChart.Series<String, Number> series;
     private final IntegerProperty maxDataPoints;
     
-    public ValueValidator(final IntegerProperty maxDataPoints, final Value value) {
+    public DescriptiveStatistics getStats() {
+        return stats;
+    }
+    private static final Logger log = LoggerFactory.getLogger(ValueValidator.class);
+    public ValueValidator(final VitalValidator vitalValidator, final IntegerProperty maxDataPoints, final Value value, final ValidationOracle validationOracle) {
         this.maxDataPoints = maxDataPoints;
         this.value = value;
+        
+        Validation validation = validationOracle.getByNumeric(value.getNumeric());
+        if(null == validation) {
+            log.warn("No validation available for " + value.getNumeric());
+        } else {
+            validation.validatedProperty().bind(vitalValidator.validatedProperty());
+        }
+        maxDataPoints.addListener((t)->stats.setWindowSize(maxDataPoints.get()));
+        stats.setWindowSize(maxDataPoints.get());
+        
         int low = (int) (value.getParent().getCriticalLow()==null?value.getParent().getMinimum():value.getParent().getCriticalLow());
         int high = (int) (value.getParent().getCriticalHigh()==null?value.getParent().getMaximum():value.getParent().getCriticalHigh());
         for(int i = low; i <= high; i++) {
@@ -74,6 +94,8 @@ public class ValueValidator implements ChangeListener<Date> {
     public void newTimestamp(Date newValue) {
         int value = (int) this.value.getValue();
         dataPoints.add(value);
+        stats.addValue(value);
+
         final int max = maxDataPoints.get();
         while(dataPoints.size()>max) {
             Integer x = dataPoints.remove((int)0);

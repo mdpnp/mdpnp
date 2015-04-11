@@ -6,6 +6,7 @@ import javafx.scene.control.TableView;
 import org.mdpnp.apps.fxbeans.AlertFx;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
+import org.mdpnp.apps.testapp.validate.Validation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,7 @@ public class DiagnosticApplication {
     @FXML protected TableView<NumericFx> numericTable;
     @FXML protected TableView<SampleArrayFx> sampleArrayTable;
     @FXML protected TableView <AlertFx> patientAlertTable, technicalAlertTable;
+    @FXML protected TableView<Validation> validationTable;
     
     public DiagnosticApplication() {
     }
@@ -30,7 +32,7 @@ public class DiagnosticApplication {
         sampleArrayTable.setItems(diagnostic.getSampleArrayModel());
         patientAlertTable.setItems(diagnostic.getPatientAlertModel());
         technicalAlertTable.setItems(diagnostic.getTechnicalAlertModel());
-        
+        validationTable.setItems(diagnostic.getValidationOracle());
     }
 }
 

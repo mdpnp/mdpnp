@@ -1,6 +1,7 @@
 package org.mdpnp.apps.testapp.validate;
 
 import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -24,15 +25,19 @@ public class ValidateApplicationFactory implements IceApplicationProvider {
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
-        final VitalModel model = (VitalModel) parentContext.getBean("vitalModel");
+        final VitalModel model = parentContext.getBean("vitalModel", VitalModel.class);
 
+        final ScheduledExecutorService executor = parentContext.getBean("refreshScheduler", ScheduledExecutorService.class);
+        
+        final ValidationOracle validationOracle = parentContext.getBean("validationOracle", ValidationOracle.class);
+        
         FXMLLoader loader = new FXMLLoader(ValidateApplication.class.getResource("ValidateApplication.fxml"));
 
         final Parent ui = loader.load();
 
         final ValidateApplication controller = ((ValidateApplication) loader.getController());
 
-        controller.setModel(model);
+        controller.setModel(model, executor, validationOracle);
         
         return new IceApplicationProvider.IceApp() {
 

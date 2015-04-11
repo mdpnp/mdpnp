@@ -1,10 +1,14 @@
 package org.mdpnp.apps.testapp.hl7;
 
 import ca.uhn.fhir.context.FhirContext;
+
 import com.rti.dds.subscription.Subscriber;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.mdpnp.apps.fxbeans.*;
+import org.mdpnp.apps.testapp.validate.Validation;
+import org.mdpnp.apps.testapp.validate.ValidationOracle;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -33,13 +37,13 @@ public class HL7EmitterTest {
             Subscriber subscriber = (Subscriber)context.getBean("himssSubscriber");
 
             FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu2();
-            NumericFxList numericList = new NumericFxList("test");
-            numericList.add(number);
+            ValidationOracle validationOracle = new ValidationOracle();
+            validationOracle.add(new Validation(number));
 
-            HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, numericList, null, fhirContext);
+            HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, validationOracle, null, fhirContext);
 
             number.setPresentation_time(new Date());
-            Set<NumericFx> updates = emitter.getRecentUpdates();
+            Set<Object> updates = emitter.getRecentUpdates();
 
             Assert.assertNotEquals(0, updates.size());
 
@@ -75,7 +79,7 @@ public class HL7EmitterTest {
             HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, null, assessmentList, fhirContext);
 
             assessment.setDate_and_time(new Date());
-            Set<NumericFx> updates = emitter.getRecentUpdates();
+            Set<Object> updates = emitter.getRecentUpdates();
 
             Assert.assertNotEquals(0, updates.size());
 

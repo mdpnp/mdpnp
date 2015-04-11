@@ -11,13 +11,11 @@
  xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
  fx:controller="org.mdpnp.apps.testapp.diag.DiagnosticApplication">
  <center>
-  <ScrollPane fitToHeight="true" fitToWidth="true"
-   hbarPolicy="NEVER">
-   <content>
-    <GridPane>
-     <children>
-      <Label text="Numeric Values" GridPane.rowIndex="0" />
-      <TableView fx:id="numericTable" prefWidth="-1.0"
+  <TabPane>
+    <tabs>
+      <Tab text="Numerics">
+         <content>
+               <TableView fx:id="numericTable" prefWidth="-1.0"
        prefHeight="200.0" GridPane.rowIndex="1">
        <columns>
         <TableColumn prefWidth="200.0" text="Source Time">
@@ -68,8 +66,11 @@
 
        </columns>
       </TableView>
-      <Label text="Waveform Traces" GridPane.rowIndex="2" />
-      <TableView fx:id="sampleArrayTable" prefWidth="-1.0"
+         
+         </content>
+      </Tab>
+      <Tab text="Waveform Traces">
+            <TableView fx:id="sampleArrayTable" prefWidth="-1.0"
        prefHeight="200" GridPane.rowIndex="3">
        <columns>
         <TableColumn prefWidth="200.0" text="Source Time">
@@ -125,8 +126,10 @@
 
        </columns>
       </TableView>
-      <Label text="Patient Alerts" GridPane.rowIndex="4" />
-      <TableView fx:id="patientAlertTable" prefWidth="-1.0"
+      
+      </Tab>
+      <Tab text="Patient Alerts">
+            <TableView fx:id="patientAlertTable" prefWidth="-1.0"
        prefHeight="200" GridPane.rowIndex="5">
        <columns>
         <TableColumn prefWidth="200.0" text="Source Time">
@@ -151,8 +154,10 @@
         </TableColumn>
        </columns>
       </TableView>
-      <Label text="Technical Alerts" GridPane.rowIndex="6" />
-      <TableView fx:id="technicalAlertTable" prefWidth="-1.0"
+      
+      </Tab>
+      <Tab text="Technical Alerts">
+            <TableView fx:id="technicalAlertTable" prefWidth="-1.0"
        prefHeight="200" GridPane.rowIndex="7">
        <columns>
         <TableColumn prefWidth="200.0" text="Source Time">
@@ -177,25 +182,44 @@
         </TableColumn>
        </columns>
       </TableView>
-     </children>
-     <columnConstraints>
-      <ColumnConstraints hgrow="ALWAYS" />
-     </columnConstraints>
-     <rowConstraints>
-      <RowConstraints />
-      <RowConstraints />
-      <RowConstraints />
-      <RowConstraints />
-      <RowConstraints />
-      <RowConstraints />
-      <RowConstraints />
-      <RowConstraints />
-     </rowConstraints>
+      
+      </Tab>
+      <Tab text="Validations">
+            <TableView fx:id="validationTable" prefWidth="-1.0"
+       prefHeight="200.0" GridPane.rowIndex="8">
+       <columns>
+        <TableColumn prefWidth="75.0" text="UDI">
+         <cellValueFactory>
+          <PropertyValueFactory property="unique_device_identifier" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="200.0" text="Metric">
+         <cellValueFactory>
+          <PropertyValueFactory property="metric_id" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="75.0" text="Instance">
+         <cellValueFactory>
+          <PropertyValueFactory property="instance_id" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="75.0" text="Value">
+         <cellValueFactory>
+          <PropertyValueFactory property="value" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="75.0" text="Validated">
+         <cellValueFactory>
+          <PropertyValueFactory property="validated" />
+         </cellValueFactory>
+        </TableColumn>
 
-
-    </GridPane>
-   </content>
-  </ScrollPane>
+       </columns>
+      </TableView>
+      
+      </Tab>
+    </tabs>
+  </TabPane>
 
  </center>
 </BorderPane>
