@@ -16,25 +16,54 @@ import java.text.NumberFormat;
 import java.util.Arrays;
 
 import ice.GlobalSimulationObjective;
+import ice.GlobalSimulationObjectiveDataReader;
 import ice.GlobalSimulationObjectiveDataWriter;
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.geometry.HPos;
 import javafx.scene.control.*;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Callback;
 import javafx.util.converter.NumberStringConverter;
 
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
 import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 
 import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.infrastructure.Condition;
+import com.rti.dds.infrastructure.InstanceHandleSeq;
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.OwnershipQosPolicy;
+import com.rti.dds.infrastructure.OwnershipStrengthQosPolicy;
+import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.DataWriterQos;
 import com.rti.dds.publication.Publisher;
+import com.rti.dds.publication.PublisherQos;
+import com.rti.dds.publication.builtin.PublicationBuiltinTopicData;
+import com.rti.dds.subscription.InstanceStateKind;
+import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleStateKind;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriptionMatchedStatus;
+import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -71,6 +100,7 @@ public class SimControl implements InitializingBean
         final Label  label;
         final Label  currentValue;
         final Label  enableJitter;
+        final CheckBox jitter;
 
         final ice.GlobalSimulationObjective objective;
         final InstanceHandle_t handle;
@@ -94,7 +124,6 @@ public class SimControl implements InitializingBean
             numberFormat.setMaximumFractionDigits(2);
             numberFormat.setMinimumFractionDigits(2);
             numberFormat.setMinimumIntegerDigits(1);
-
             objective = (GlobalSimulationObjective) ice.GlobalSimulationObjective.create();
             objective.metric_id = numericValue.metricId;
             objective.value = numericValue.initialValue;
@@ -117,11 +146,11 @@ public class SimControl implements InitializingBean
 
             boolean jitterOn = objective.jitterStep!=0;
 
-            final CheckBox cb  = new CheckBox();
-            cb.setSelected(false);
-            cb.setSelected(jitterOn);
+            jitter  = new CheckBox();
+            jitter.setSelected(false);
+            jitter.setSelected(jitterOn);
             enableJitter = new Label("Jitter:");
-            enableJitter.setGraphic(cb);
+            enableJitter.setGraphic(jitter);
             enableJitter.setContentDisplay(ContentDisplay.RIGHT);
 
             stepSize = makeNumberCombo("Step (%):",
@@ -157,13 +186,13 @@ public class SimControl implements InitializingBean
                 @Override
                 public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                     objective.value = newValue.floatValue();
-                    boolean jitterOn = cb.isSelected();
+                    boolean jitterOn = jitter.isSelected();
                     recalculate(numericValue, jitterOn);
                     publishObjective();
                 }
             });
 
-            cb.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            jitter.selectedProperty().addListener(new ChangeListener<Boolean>() {
                 public void changed(ObservableValue<? extends Boolean> ov,
                                     Boolean oldVal, Boolean newVal) {
 
@@ -286,14 +315,19 @@ public class SimControl implements InitializingBean
             new NumericValue("Cuff Mean", rosetta.MDC_PRESS_CUFF_MEAN.VALUE, 0, 300, 90, 5)
     };
 
-
+    private final Subscriber subscriber;
     private final Publisher publisher;
+    private final EventLoop eventLoop;
     private Topic topic;
     private ice.GlobalSimulationObjectiveDataWriter writer;
+    private IntegerProperty maxObservedOwnershipStrength = new SimpleIntegerProperty(this, "maxObservedOwnershipStrength", -1);
+    private IntegerProperty currentOwnershipStrength = new SimpleIntegerProperty(this, "currentOwnershipStrength", 0);
 
     private final UIControl[] controls = new UIControl[numericValues.length];
-
-    public SimControl(Publisher publisher) {
+    
+    public SimControl(EventLoop eventLoop, Subscriber subscriber, Publisher publisher) {
+        this.eventLoop = eventLoop;
+        this.subscriber = subscriber;
         this.publisher = publisher;
     }
 
@@ -308,26 +342,57 @@ public class SimControl implements InitializingBean
         ice.GlobalSimulationObjectiveTypeSupport.register_type(publisher.get_participant(),
                                                                ice.GlobalSimulationObjectiveTypeSupport.get_type_name());
 
-        topic = publisher.get_participant().create_topic(ice.GlobalSimulationObjectiveTopic.VALUE,
-                                         ice.GlobalSimulationObjectiveTypeSupport.get_type_name(),
-                                         DomainParticipant.TOPIC_QOS_DEFAULT,
-                                         null,
-                                         StatusKind.STATUS_MASK_NONE);
-
+        topic = TopicUtil.findOrCreateTopic(publisher.get_participant(), ice.GlobalSimulationObjectiveTopic.VALUE,
+                                         ice.GlobalSimulationObjectiveTypeSupport.class);
+        
         writer = (GlobalSimulationObjectiveDataWriter) publisher.create_datawriter_with_profile(topic,
                                                                                                   QosProfiles.ice_library,
                                                                                                   QosProfiles.state,
                                                                                                   null,
                                                                                                   StatusKind.STATUS_MASK_NONE);
 
-
+        Button button = new Button("Assert Control");
+        button.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                setOwnershipStrength(maxObservedOwnershipStrength.get()+1);
+            }
+        });
+        button.disableProperty().bind(currentOwnershipStrength.greaterThan(maxObservedOwnershipStrength));
+        main.add(button, 0, 0, 3, 1);
+        GridPane.setHalignment(button, HPos.CENTER);
+        CheckBox jitter = new CheckBox();
+        jitter.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                Arrays.asList(controls).forEach((c)->c.jitter.setSelected(jitter.isSelected()));
+            }
+        });
+        Label jitterLbl = new Label("Jitter:", jitter);
+        jitterLbl.setContentDisplay(ContentDisplay.RIGHT);
+        main.add(new Label("Jitter:", jitter), 3, 0, 1, 1);
+        Label maxObserved = new Label();
+        maxObserved.textProperty().bind(Bindings.concat("Max Strength: ", maxObservedOwnershipStrength.asString()));
+        Label current = new Label();
+        current.textProperty().bind(Bindings.concat("Strength: ", currentOwnershipStrength.asString()));
+        main.add(current, 4, 0);
+        main.add(maxObserved, 5, 0);
+        
         for (int i = 0; i < numericValues.length; i++) {
             controls[i] = new UIControl(numericValues[i], writer);
-            controls[i].addTo(main, i);
+            controls[i].addTo(main, i + 1);
         }
     }
     
-
+    public void setOwnershipStrength(final int ownershipStrength) {
+        DataWriterQos dwQos = new DataWriterQos();
+        writer.get_qos(dwQos);
+        dwQos.ownership_strength.value = ownershipStrength;
+        writer.set_qos(dwQos);
+        eventLoop.doLater(()->Arrays.asList(controls).forEach((c)->c.publishObjective()));
+        currentOwnershipStrength.set(ownershipStrength);
+    }
+    
     public void shutDown() {
         for (int i = 0; i < controls.length; i++) {
             controls[i].close();
