@@ -295,8 +295,8 @@ public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Conf
         @Override
         public void start(final Stage primaryStage) throws Exception {
 
-            if(!Platform.isFxApplicationThread())
-                throw new IllegalStateException("Sneaky developer! Trying to start ui outside of FX thread");
+//            if(!Platform.isFxApplicationThread())
+//                throw new IllegalStateException("Sneaky developer! Trying to start ui outside of FX thread");
 
             AbstractDevice device = controller.getDevice();
             DeviceType deviceType = controller.getDeviceType();
@@ -336,8 +336,7 @@ public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Conf
             deFact = new DeviceListModelFactory(eventLoop, subscriber, tm);
             final DeviceListModel deviceListModel = deFact.getObject();
             
-            deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier, deviceListModel, numericList, sampleArrayList, infusionStatusList);
-
+            
             Callback<Class<?>, Object> factory = new Callback<Class<?>, Object>()
             {
                 public Object call(Class<?> type) {
@@ -348,64 +347,71 @@ public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Conf
             FXMLLoader loader = new FXMLLoader(DeviceView.class.getResource("DeviceView.fxml"));
             loader.setControllerFactory(factory);
             Parent node = loader.load();
-            deviceViewController.set(deviceMonitor);
 
-
-
-            TextArea descriptionText = new TextArea();
-            descriptionText.setEditable(false);
-            descriptionText.setWrapText(true);
-            descriptionText.setText(getDeviceTypeDescription(deviceType));
-            BorderPane root = new BorderPane();
-            descriptionText.setPrefColumnCount(1);
-            descriptionText.setPrefRowCount(1);
-            ScrollPane scrollPane = new ScrollPane(descriptionText);
-            scrollPane.setFitToHeight(true);
-            scrollPane.setFitToWidth(true);
-            root.setTop(scrollPane);
-            root.setCenter(node);
-
-            Stage stage = primaryStage == null ? new Stage(StageStyle.DECORATED) : primaryStage;
-
-            stage.setTitle("ICE Device Interface - "+deviceType.toString());
             
-            stage.setOnHiding(new EventHandler<WindowEvent>() {
+            Platform.runLater( () -> {
+                deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier, deviceListModel, numericList, sampleArrayList, infusionStatusList);
+    
+                deviceViewController.set(deviceMonitor);
+    
+    
+    
+                TextArea descriptionText = new TextArea();
+                descriptionText.setEditable(false);
+                descriptionText.setWrapText(true);
+                descriptionText.setText(getDeviceTypeDescription(deviceType));
+                BorderPane root = new BorderPane();
+                descriptionText.setPrefColumnCount(1);
+                descriptionText.setPrefRowCount(1);
+                ScrollPane scrollPane = new ScrollPane(descriptionText);
+                scrollPane.setFitToHeight(true);
+                scrollPane.setFitToWidth(true);
+                root.setTop(scrollPane);
+                root.setCenter(node);
 
-                @Override
-                public void handle(WindowEvent event) {
 
-                    progressBar.setProgress(0.0);
-                    update("Shutting down", 1);
-                    root.getChildren().clear();
-                    root.setTop(progressBar);
-
-                    // this is a dialog - the application's 'close' event
-                    // wont happen
-                    if(primaryStage == null) {
-                        try {
-                            GUIAdapter.this.stop();
-                        } catch (Exception e) {
-                            log.error("Failed to stop device adapter");
+                Stage stage = primaryStage == null ? new Stage(StageStyle.DECORATED) : primaryStage;
+    
+                stage.setTitle("ICE Device Interface - "+deviceType.toString());
+                
+                stage.setOnHiding(new EventHandler<WindowEvent>() {
+    
+                    @Override
+                    public void handle(WindowEvent event) {
+    
+                        progressBar.setProgress(0.0);
+                        update("Shutting down", 1);
+                        root.getChildren().clear();
+                        root.setTop(progressBar);
+    
+                        // this is a dialog - the application's 'close' event
+                        // wont happen
+                        if(primaryStage == null) {
+                            try {
+                                GUIAdapter.this.stop();
+                            } catch (Exception e) {
+                                log.error("Failed to stop device adapter");
+                            }
                         }
+                        // In case of this being a 'real' application,  stop will be called
+                        // by the fx framework
                     }
-                    // In case of this being a 'real' application,  stop will be called
-                    // by the fx framework
-                }
-
+    
+                });
+                stage.setScene(new Scene(root));
+                stage.setWidth(640);
+                stage.setHeight(480);
+                stage.centerOnScreen();
+    
+                // controller.setChanged();
+                // MIKEFIX controller.notifyObservers(AdapterState.init);
+    
+                Thread deviceRunner = new Thread(AbstractDevice.threadGroup, this);
+                deviceRunner.setDaemon(true);
+                deviceRunner.start();
+    
+                stage.show();
             });
-            stage.setScene(new Scene(root));
-            stage.setWidth(640);
-            stage.setHeight(480);
-            stage.centerOnScreen();
-
-            // controller.setChanged();
-            // MIKEFIX controller.notifyObservers(AdapterState.init);
-
-            Thread deviceRunner = new Thread(AbstractDevice.threadGroup, this);
-            deviceRunner.setDaemon(true);
-            deviceRunner.start();
-
-            stage.show();
         }
 
         private String getDeviceTypeDescription(DeviceType deviceType) {

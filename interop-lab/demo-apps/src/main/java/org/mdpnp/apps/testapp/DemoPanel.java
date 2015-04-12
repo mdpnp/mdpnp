@@ -163,39 +163,49 @@ public class DemoPanel implements Runnable {
     public void clickCreateAdapter(ActionEvent evt) {
         try {
             final Subscriber subscriber = partitionChooserModel.getSubscriber();
-            Configuration c = CreateAdapter.showDialog(subscriber.get_participant().get_domain_id());
-            if (null != c) {
-                SubscriberQos qos = new SubscriberQos();
-                subscriber.get_qos(qos);
-                List<String> partition = new ArrayList<String>();
-                for (int i = 0; i < qos.partition.name.size(); i++) {
-                    partition.add((String) qos.partition.name.get(i));
-                }
-
-                try {
-                    // TODO this must not use the same context as the app as it messes up DDS
-                    final AbstractApplicationContext context = c.createContext("DeviceAdapterContext.xml");
-                    DeviceAdapterCommand.GUIAdapter da = new DeviceAdapterCommand.GUIAdapter(c.getDeviceFactory(), context) {
-                        // intercept stop to destroy the context specific to this device
-                        public void stop() {
-                            super.stop();
-                            context.destroy();
-                        };
-                    };
-                    // Use the current partition of the app container
-                    da.setPartition(partition.toArray(new String[0]));
-                    da.setAddress(c.getAddress());
-                    da.init();
-                    da.start(null); // Passing null will force the adapter to start a new dialog
-                } catch (Exception e) {
-                    log.error("Error in spawned DeviceAdapter", e);
-                }
+            final Configuration c = CreateAdapter.showDialog(subscriber.get_participant().get_domain_id());
+            if(null != c) {
+                Thread t = new Thread(() -> {
+                    try {
+                        
+                        if (null != c) {
+                            SubscriberQos qos = new SubscriberQos();
+                            subscriber.get_qos(qos);
+                            List<String> partition = new ArrayList<String>();
+                            for (int i = 0; i < qos.partition.name.size(); i++) {
+                                partition.add((String) qos.partition.name.get(i));
+                            }
+            
+                            try {
+                                // TODO this must not use the same context as the app as it messes up DDS
+                                final AbstractApplicationContext context = c.createContext("DeviceAdapterContext.xml");
+                                DeviceAdapterCommand.GUIAdapter da = new DeviceAdapterCommand.GUIAdapter(c.getDeviceFactory(), context) {
+                                    // intercept stop to destroy the context specific to this device
+                                    public void stop() {
+                                        super.stop();
+                                        context.destroy();
+                                    };
+                                };
+                                // Use the current partition of the app container
+                                da.setPartition(partition.toArray(new String[0]));
+                                da.setAddress(c.getAddress());
+                                da.init();
+                                da.start(null); // Passing null will force the adapter to start a new dialog
+                            } catch (Exception e) {
+                                log.error("Error in spawned DeviceAdapter", e);
+                            }
+                        }
+            
+                    } catch (Exception e) {
+                        log.error("", e);
+                    }
+                });
+                t.setDaemon(true);
+                t.start();
             }
-
         } catch (IOException e) {
-            log.error("", e);
+            log.error("Error getting configuration", e);
         }
-
     }
 
     @FXML
