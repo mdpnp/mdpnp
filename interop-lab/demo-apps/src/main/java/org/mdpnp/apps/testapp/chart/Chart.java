@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.mdpnp.apps.device.OnListChange;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 
@@ -21,7 +22,7 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 
-public class Chart implements ListChangeListener<Value> {
+public class Chart {
     @FXML protected LineChart<Date, Number> lineChart;
     final ObservableList<XYChart.Series<Date, Number>> series = FXCollections.observableArrayList();
     private final List<ValueSeriesListener> values = new ArrayList<ValueSeriesListener>();
@@ -40,17 +41,14 @@ public class Chart implements ListChangeListener<Value> {
         return removeButton;
     }
     
+    private final OnListChange<Value> valueListener = new OnListChange<>(
+            (t)->add(t), null, (t)->remove(t));
+    
     public void setModel(Vital v, final DateAxis dateAxis) {
         
         if(null != this.vital) {
-            this.vital.removeListener(this);
-            Iterator <ValueSeriesListener> vslitr = values.iterator();
-            while(vslitr.hasNext()) {
-                ValueSeriesListener vsl = vslitr.next();
-                vsl.v.timestampProperty().removeListener(vsl.l);
-                series.remove(vsl.s);
-                vslitr.remove();
-            }
+            this.vital.removeListener(valueListener);
+            this.vital.forEach((t)->remove(t));
             main.setCenter(null);
             lineChart.titleProperty().unbind();
             lineChart = null;
@@ -59,7 +57,7 @@ public class Chart implements ListChangeListener<Value> {
         if(null != v) {
             NumberAxis yAxis = new NumberAxis();
             lineChart = new LineChart<>(dateAxis, yAxis);
-            lineChart.setMinHeight(200.0);
+            lineChart.setMinHeight(250.0);
             lineChart.setAnimated(false);
             lineChart.setCreateSymbols(false);
             
@@ -67,61 +65,58 @@ public class Chart implements ListChangeListener<Value> {
             lineChart.setData(series);
             main.setCenter(lineChart);
             BorderPane.setAlignment(lineChart, Pos.CENTER);
-            v.addListener(this);
+            v.addListener(valueListener);
+            v.forEach((t)->add(t));
+            yAxis.setForceZeroInRange(false);
             yAxis.setAutoRanging(false);
             yAxis.setUpperBound(v.getMaximum());
             yAxis.setLowerBound(v.getMinimum());
         }
     }
 
+    private void add(final Value vital) {
+        ValueSeriesListener vsl = new ValueSeriesListener();
+        vsl.v = vital;
+        values.add(vsl);
+        
+        final ObservableList<XYChart.Data<Date, Number>> data = FXCollections.observableArrayList();
+        vsl.s = new XYChart.Series<>(data);
+        vsl.s.nameProperty().bind(vsl.v.getDevice().makeAndModelProperty());
+        series.add(vsl.s);
+        vsl.v.timestampProperty().addListener(vsl.l = new ChangeListener<Date>() {
+
+            @Override
+            public void changed(ObservableValue<? extends Date> observable, Date oldValue, Date newValue) {
+                if(newValue != null) {
+                    if(data.size()>MAX_POINTS) {
+                        data.remove(0);
+                    }
+                    data.add(new XYChart.Data<>(newValue, vsl.v.getValue()));
+                }
+            }
+            
+        });
+
+        
+    }
+    
+    private void remove(final Value v) {
+        Iterator <ValueSeriesListener> vslitr = values.iterator();
+        while(vslitr.hasNext()) {
+            ValueSeriesListener vsl = vslitr.next();
+            if(vsl.v.equals(v)) {
+                vsl.v.timestampProperty().removeListener(vsl.l);
+                series.remove(vsl.s);
+                vslitr.remove();
+            }
+        }
+
+    }
+    
     private static class ValueSeriesListener { 
         public XYChart.Series<Date, Number> s;
         public Value v;
         public ChangeListener<Date> l;
     }
     
-    @Override
-    public void onChanged(javafx.collections.ListChangeListener.Change<? extends Value> c) {
-        while(c.next()) {
-            Iterator <? extends Value> itr = c.getRemoved().iterator();
-            while(itr.hasNext()) {
-                Value v = itr.next();
-                Iterator <ValueSeriesListener> vslitr = values.iterator();
-                while(vslitr.hasNext()) {
-                    ValueSeriesListener vsl = vslitr.next();
-                    if(vsl.v.equals(v)) {
-                        vsl.v.timestampProperty().removeListener(vsl.l);
-                        series.remove(vsl.s);
-                        vslitr.remove();
-                    }
-                }
-            }
-            
-            itr = c.getAddedSubList().iterator();
-            while(itr.hasNext()) {
-                ValueSeriesListener vsl = new ValueSeriesListener();
-                vsl.v = itr.next();
-                values.add(vsl);
-                
-                final ObservableList<XYChart.Data<Date, Number>> data = FXCollections.observableArrayList();
-                vsl.s = new XYChart.Series<>(data);
-                vsl.s.nameProperty().bind(vsl.v.getDevice().makeAndModelProperty());
-                series.add(vsl.s);
-                vsl.v.timestampProperty().addListener(vsl.l = new ChangeListener<Date>() {
-
-                    @Override
-                    public void changed(ObservableValue<? extends Date> observable, Date oldValue, Date newValue) {
-                        if(newValue != null) {
-                            if(data.size()>MAX_POINTS) {
-                                data.remove(0);
-                            }
-                            data.add(new XYChart.Data<>(newValue, vsl.v.getValue()));
-                        }
-                    }
-                    
-                });
-            }
-        }
-
-    }
 }
