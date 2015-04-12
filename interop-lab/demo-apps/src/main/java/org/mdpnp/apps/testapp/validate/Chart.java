@@ -102,7 +102,7 @@ public class Chart {
             n.textProperty().bind(Bindings.concat("n=", vitalValidator.nProperty().asString("%.0f")));
             rsd.textProperty().bind(Bindings.concat("%RSD=", vitalValidator.sigmaPctProperty().asString("%.2f")));
             rsd.textFillProperty().bind(Bindings.when(vitalValidator.countValuesProperty().greaterThan(1).and(vitalValidator.validatedProperty().not())).then(Color.RED).otherwise(Color.BLACK));
-            barChart.setMinHeight(250.0);
+            
             barChart.setVerticalGridLinesVisible(false);
             barChart.setAnimated(false);
             barChart.setCategoryGap(0.0);

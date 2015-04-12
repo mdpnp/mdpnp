@@ -17,7 +17,7 @@
  fx:controller="org.mdpnp.apps.testapp.validate.Chart">
  <center>
   <StackPane>
-   <StackedBarChart fx:id="barChart">
+   <StackedBarChart fx:id="barChart" minHeight="250.0">
     <xAxis>
      <CategoryAxis />
     </xAxis>

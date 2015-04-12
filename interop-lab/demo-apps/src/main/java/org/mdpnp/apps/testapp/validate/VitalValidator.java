@@ -91,6 +91,15 @@ public class VitalValidator {
             double stdev = normal.getStandardDeviation();
             mean.set(mu);
             sigma.set(stdev);
+            Double criticalLow = vital.getCriticalLow();
+            double low = vital.getMinimum();
+            if(null != criticalLow && mu > criticalLow) {
+                    low = criticalLow;
+            }
+            if(mu > low) {
+                mu -= low;
+            }
+            
             rsd.set(stdev/mu*100.0);
             n.set(N);
         });
