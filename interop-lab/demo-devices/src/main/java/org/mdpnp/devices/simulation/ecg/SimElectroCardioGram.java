@@ -55,7 +55,7 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
 
         @Override
         protected void receiveECG(DeviceClock.Reading sampleTime, Number[] iValues, Number[] iiValues, Number[] iiiValues,
-                                  double heartRateValue, double respiratoryRateValue, int frequency) {
+                                  int heartRateValue, int respiratoryRateValue, int frequency) {
             // ecgCache[0][ecgCount] = copy(iValues, ecgCache[0][ecgCount]);
             // ecgCache[1][ecgCount] = copy(iiValues, ecgCache[1][ecgCount]);
             // ecgCache[2][ecgCount] = copy(iiiValues, ecgCache[2][ecgCount]);

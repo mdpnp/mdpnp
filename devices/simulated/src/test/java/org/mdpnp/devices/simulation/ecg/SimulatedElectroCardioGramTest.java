@@ -38,7 +38,7 @@ public class SimulatedElectroCardioGramTest {
         SimulatedElectroCardioGram srv = new SimulatedElectroCardioGram(referenceClock, 1000L, msPerSample, SimulatedElectroCardioGram.TimestampType.metronome, 0) {
 
             @Override
-            protected void receiveECG(DeviceClock.Reading sampleTime, Number[] i, Number[] ii, Number[] iii, double heartRate, double respiratoryRate, int frequency) {
+            protected void receiveECG(DeviceClock.Reading sampleTime, Number[] i, Number[] ii, Number[] iii, int heartRate, int respiratoryRate, int frequency) {
 
                 Date dt = new Date(sampleTime.getTime().toEpochMilli());
                 log.info(dateFormat.format(dt) + " data size=" + i.length + " heartRate=" + heartRate + " respiratoryRate=" + respiratoryRate + " frequency=" + frequency);
@@ -62,7 +62,7 @@ public class SimulatedElectroCardioGramTest {
         SimulatedElectroCardioGram srv = new SimulatedElectroCardioGram(referenceClock, 1000L, 5, SimulatedElectroCardioGram.TimestampType.realtime, 10) {
 
             @Override
-            protected void receiveECG(DeviceClock.Reading sampleTime, Number[] i, Number[] ii, Number[] iii, double heartRate, double respiratoryRate, int frequency) {
+            protected void receiveECG(DeviceClock.Reading sampleTime, Number[] i, Number[] ii, Number[] iii, int heartRate, int respiratoryRate, int frequency) {
 
                 Date dt = new Date(sampleTime.getTime().toEpochMilli());
                 log.info(dateFormat.format(dt) + " data size=" + i.length + " heartRate=" + heartRate + " respiratoryRate=" + respiratoryRate + " frequency=" + frequency);

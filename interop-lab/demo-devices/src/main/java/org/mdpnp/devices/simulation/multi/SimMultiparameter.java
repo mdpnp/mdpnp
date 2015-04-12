@@ -96,7 +96,7 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
 
         @Override
         protected void receiveECG(DeviceClock.Reading sampleTime, Number[] iValues, Number[] iiValues, Number[] iiiValues,
-                                  double heartRateValue, double respiratoryRateValue, int frequency) {
+                                  int heartRateValue, int respiratoryRateValue, int frequency) {
 
             try {
                 // TODO get better numbers in actual millivolts

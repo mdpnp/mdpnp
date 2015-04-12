@@ -74,15 +74,15 @@ public class SimulatedElectroCardioGram {
 
             DeviceClock.Reading  t = deviceClock.instant();
 
-            double hr = heartRate.doubleValue();
-            double rr = respiratoryRate.doubleValue();
+            int hr = heartRate.intValue();
+            int rr = respiratoryRate.intValue();
 
             receiveECG(t, iValues, iiValues, iiiValues, hr, rr, frequency);
         }
 
     }
 
-    protected void receiveECG(DeviceClock.Reading sampleTime, Number[] i, Number[] ii, Number[] iii, double heartRate, double respiratoryRate, int frequency) {
+    protected void receiveECG(DeviceClock.Reading sampleTime, Number[] i, Number[] ii, Number[] iii, int heartRate, int respiratoryRate, int frequency) {
 
     }
 
