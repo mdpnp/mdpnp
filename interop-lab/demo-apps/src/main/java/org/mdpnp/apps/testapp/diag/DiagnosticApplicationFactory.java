@@ -7,6 +7,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
 import org.mdpnp.apps.fxbeans.AlertFxList;
+import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
@@ -36,7 +37,9 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
         
         final ValidationOracle validationOracle = parentContext.getBean("validationOracle", ValidationOracle.class);
         
-        final Diagnostic diagnostic = new Diagnostic(patientAlertList, technicalAlertList, numericList, sampleArrayList, validationOracle);
+        final InfusionStatusFxList infusionStatusList = parentContext.getBean("infusionStatusList", InfusionStatusFxList.class);
+        
+        final Diagnostic diagnostic = new Diagnostic(patientAlertList, technicalAlertList, numericList, sampleArrayList, validationOracle, infusionStatusList);
 
         FXMLLoader loader = new FXMLLoader(DiagnosticApplication.class.getResource("DiagnosticApplication.fxml"));
         

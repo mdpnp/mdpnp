@@ -6,6 +6,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
+import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.vital.VitalModel;
@@ -35,17 +36,15 @@ public class PCAApplicationFactory implements IceApplicationProvider {
         final ice.InfusionObjectiveDataWriter objectiveWriter = (ice.InfusionObjectiveDataWriter) parentContext.getBean("objectiveWriter");
         final VitalModel vitalModel = parentContext.getBean("vitalModel", VitalModel.class);
         final DeviceListModel deviceListModel = (DeviceListModel) parentContext.getBean("deviceListModel");
-        final Subscriber subscriber = parentContext.getBean("subscriber", Subscriber.class);
-        final EventLoop eventLoop = parentContext.getBean("eventLoop", EventLoop.class);
+        final InfusionStatusFxList infusionStatusList = parentContext.getBean("infusionStatusList", InfusionStatusFxList.class);
         
         FXMLLoader loader = new FXMLLoader(PCAPanel.class.getResource("PCAPanel.fxml"));
         Parent ui = loader.load();
         
         final PCAPanel pcaPanel = loader.getController();        
         
-        pcaPanel.set(refreshScheduler, objectiveWriter, deviceListModel);
-        pcaPanel.setModel(vitalModel);
-        pcaPanel.start(subscriber, eventLoop);
+        pcaPanel.set(refreshScheduler, objectiveWriter, deviceListModel, infusionStatusList);
+        
 
         return new IceApplicationProvider.IceApp() {
 
@@ -61,17 +60,16 @@ public class PCAApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void activate(ApplicationContext context) {
-                
+                pcaPanel.setModel(vitalModel);
             }
 
             @Override
             public void stop() {
+                pcaPanel.setModel(null);
             }
 
             @Override
             public void destroy() {
-                pcaPanel.setModel(null);
-                pcaPanel.stop();
             }
         };
     }

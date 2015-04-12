@@ -37,6 +37,7 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -71,8 +72,9 @@ public class PCAPanel implements InvalidationListener {
         return new ByteArrayInputStream(baos.toByteArray());
     }
 
-    public PCAPanel set(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListModel deviceListModel) {
-        pcaConfigController.set(refreshScheduler, objectiveWriter, deviceListModel);
+    public PCAPanel set(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter, 
+            DeviceListModel deviceListModel, InfusionStatusFxList infusionStatusList) {
+        pcaConfigController.set(refreshScheduler, objectiveWriter, deviceListModel, infusionStatusList);
         return this;
     }
     
@@ -110,14 +112,6 @@ public class PCAPanel implements InvalidationListener {
     }
 
     private VitalModel model;
-
-    public void start(Subscriber subscriber, EventLoop eventLoop) {
-        pcaConfigController.start(subscriber, eventLoop);
-    }
-    
-    public void stop() {
-        pcaConfigController.stop();
-    }
     
     public void setModel(VitalModel vitalModel) {
         if (this.model != null) {
@@ -129,6 +123,9 @@ public class PCAPanel implements InvalidationListener {
         if(null != vitalModel) {
             model.stateProperty().addListener(this);
             model.isInfusionStoppedProperty().addListener(this);
+        } else {
+            generalAlarm.stop();
+            drugDeliveryAlarm.stop();
         }
     }
 

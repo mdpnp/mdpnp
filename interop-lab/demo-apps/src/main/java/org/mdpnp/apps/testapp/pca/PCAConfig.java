@@ -51,13 +51,10 @@ import org.mdpnp.apps.testapp.InfusionStatusFxListCell;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModel.State;
-import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.QosProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.infrastructure.InstanceHandle_t;
-import com.rti.dds.subscription.Subscriber;
 
 /**
  * @author Jeff Plourde
@@ -77,7 +74,8 @@ public class PCAConfig implements ListChangeListener<Vital> {
 
     
     
-    public PCAConfig set(ScheduledExecutorService executor, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListModel deviceListModel) {
+    public PCAConfig set(final ScheduledExecutorService executor, final ice.InfusionObjectiveDataWriter objectiveWriter, 
+            final DeviceListModel deviceListModel, final InfusionStatusFxList infusionStatusList) {
         controls.visibleProperty().bind(configure.selectedProperty());
         this.objectiveWriter = objectiveWriter;
         pumpList.setCellFactory(new Callback<ListView<InfusionStatusFx>, ListCell<InfusionStatusFx>>() {
@@ -95,6 +93,7 @@ public class PCAConfig implements ListChangeListener<Vital> {
         warningsToAlarm.setItems(FXCollections.observableList(values));
         vitalSigns.setItems(FXCollections.observableArrayList(VitalSign.values()));
         
+        
         pumpList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<InfusionStatusFx>() {
 
             @Override
@@ -108,7 +107,7 @@ public class PCAConfig implements ListChangeListener<Vital> {
             }
             
         });
-        
+        pumpList.setItems(infusionStatusList);
         return this;
     }
     
@@ -124,13 +123,11 @@ public class PCAConfig implements ListChangeListener<Vital> {
     }
     
     public PCAConfig() {
-        pumpModel = new InfusionStatusFxList(ice.InfusionStatusTopic.VALUE);
     }
 
 
 
     private VitalModel model;
-    private final InfusionStatusFxList pumpModel;
     @FXML Button add;
     @FXML FlowPane controls;
     @FXML CheckBox configure;
@@ -180,15 +177,6 @@ public class PCAConfig implements ListChangeListener<Vital> {
                 vitalsPanel.getChildren().add(jVital);
             }
         }
-    }
-
-    public void start(Subscriber subscriber, EventLoop eventLoop) {
-        pumpList.setItems(pumpModel);
-        pumpModel.start(subscriber, eventLoop, null, null, QosProfiles.ice_library, QosProfiles.state);
-    }
-    
-    public void stop() {
-        pumpModel.stop();
     }
     
     public void setModel(VitalModel model) {

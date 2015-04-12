@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
 
 import org.mdpnp.apps.fxbeans.AlertFx;
+import org.mdpnp.apps.fxbeans.InfusionStatusFx;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.testapp.validate.Validation;
@@ -18,6 +19,7 @@ public class DiagnosticApplication {
     @FXML protected TableView<SampleArrayFx> sampleArrayTable;
     @FXML protected TableView <AlertFx> patientAlertTable, technicalAlertTable;
     @FXML protected TableView<Validation> validationTable;
+    @FXML protected TableView<InfusionStatusFx> infusionStatusTable;
     
     public DiagnosticApplication() {
     }
@@ -33,6 +35,7 @@ public class DiagnosticApplication {
         patientAlertTable.setItems(diagnostic.getPatientAlertModel());
         technicalAlertTable.setItems(diagnostic.getTechnicalAlertModel());
         validationTable.setItems(diagnostic.getValidationOracle());
+        infusionStatusTable.setItems(diagnostic.getInfusionStatusList());
     }
 }
 

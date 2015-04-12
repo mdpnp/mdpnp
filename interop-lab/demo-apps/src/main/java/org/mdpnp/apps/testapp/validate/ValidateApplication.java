@@ -117,7 +117,7 @@ public class ValidateApplication implements Runnable {
     public void run() {
         try {
             for(VitalValidator vv : vitalValidators.toArray(new VitalValidator[0])) {
-                log.info("RECOMPUTE "+vv.getVital().getLabel());
+                log.trace("RECOMPUTE "+vv.getVital().getLabel());
                 vv.recompute();
             }
         } catch (Throwable t) {

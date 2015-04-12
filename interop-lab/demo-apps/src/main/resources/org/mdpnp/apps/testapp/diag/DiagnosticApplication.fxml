@@ -11,7 +11,7 @@
  xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
  fx:controller="org.mdpnp.apps.testapp.diag.DiagnosticApplication">
  <center>
-  <TabPane>
+  <TabPane tabClosingPolicy="UNAVAILABLE">
     <tabs>
       <Tab text="Numerics">
          <content>
@@ -218,6 +218,56 @@
       </TableView>
       
       </Tab>
+            <Tab text="Infusions">
+            <TableView fx:id="infusionStatusTable" prefWidth="-1.0"
+       prefHeight="200.0" GridPane.rowIndex="8">
+       <columns>
+        <TableColumn prefWidth="75.0" text="UDI">
+         <cellValueFactory>
+          <PropertyValueFactory property="unique_device_identifier" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="100.0" text="Drug Name">
+         <cellValueFactory>
+          <PropertyValueFactory property="drug_name" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="125.0" text="Drug Mass (mcg)">
+         <cellValueFactory>
+          <PropertyValueFactory property="drug_mass_mcg" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="150.0" text="Solution Volume (mL)">
+         <cellValueFactory>
+          <PropertyValueFactory property="solution_volume_ml" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="100.0" text="Duration (s)">
+         <cellValueFactory>
+          <PropertyValueFactory property="infusion_duration_seconds" />
+         </cellValueFactory>
+        </TableColumn>
+                <TableColumn prefWidth="75.0" text="VTBI (mL)">
+         <cellValueFactory>
+          <PropertyValueFactory property="volume_to_be_infused_ml" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="150.0" text="Fraction Complete (%)">
+         <cellValueFactory>
+          <PropertyValueFactory property="infusion_fraction_complete" />
+         </cellValueFactory>
+        </TableColumn>        
+        <TableColumn prefWidth="75.0" text="Active">
+         <cellValueFactory>
+          <PropertyValueFactory property="infusionActive" />
+         </cellValueFactory>
+        </TableColumn>
+
+       </columns>
+      </TableView>
+      
+      </Tab>
+      
     </tabs>
   </TabPane>
 
