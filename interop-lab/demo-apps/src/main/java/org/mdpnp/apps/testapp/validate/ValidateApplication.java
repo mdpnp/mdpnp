@@ -39,7 +39,7 @@ public class ValidateApplication implements Runnable {
     private ValidationOracle validationOracle;
 
     private final IntegerProperty maxDataPoints = new SimpleIntegerProperty(this, "maxDataPoints", 20);
-    private final DoubleProperty maxSigmaPct = new SimpleDoubleProperty(this, "maxSigmaPct", 0.0);
+    private final DoubleProperty maxRsd = new SimpleDoubleProperty(this, "maxRsd", 0.0);
     
     private List<VitalValidator> vitalValidators = Collections.synchronizedList(new ArrayList<VitalValidator>());
     
@@ -50,14 +50,14 @@ public class ValidateApplication implements Runnable {
 
     @FXML Spinner<Number> maxDataPointsSpinner;
 
-    @FXML Spinner<Number> maxSigmaPctSpinner;
+    @FXML Spinner<Number> maxRsdSpinner;
     
     private void add(Vital vi) {
         FXMLLoader loader = new FXMLLoader(Chart.class.getResource("Chart.fxml"));
         try {
             Parent node = loader.load();
             Chart chart = loader.getController();
-            chart.setModel(maxDataPoints, maxSigmaPct, vi, validationOracle);
+            chart.setModel(maxDataPoints, maxRsd, vi, validationOracle);
             node.setUserData(chart);
             vitalValidators.add(chart.getVitalValidator());
             chart.getRemoveButton().setOnAction(new EventHandler<ActionEvent>() {
@@ -91,7 +91,7 @@ public class ValidateApplication implements Runnable {
     public void setModel(VitalModel vitalModel, ScheduledExecutorService executor, ValidationOracle validationOracle) {
         this.validationOracle = validationOracle;
         maxDataPoints.bind(maxDataPointsSpinner.valueProperty());
-        maxSigmaPct.bind(maxSigmaPctSpinner.valueProperty());
+        maxRsd.bind(maxRsdSpinner.valueProperty());
 
         executor.scheduleWithFixedDelay(this, 1000L, 3000L, TimeUnit.MILLISECONDS);
         if(null != this.vitalModel) {

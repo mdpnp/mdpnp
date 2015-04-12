@@ -1,44 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.StackPane?>
-<?import org.mdpnp.apps.testapp.chart.DateAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.StackedBarChart?>
 <?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.control.Tooltip?>
 
-<BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.validate.Chart">
-<center>
-      <StackPane fx:id="stackPane">
-      <HBox alignment="TOP_RIGHT" spacing="10.0">
-            <ImageView fitHeight="0.0" fitWidth="50.0"
+<BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1"
+ fx:controller="org.mdpnp.apps.testapp.validate.Chart">
+ <center>
+  <StackPane>
+   <StackedBarChart fx:id="barChart">
+    <xAxis>
+     <CategoryAxis />
+    </xAxis>
+    <yAxis>
+     <NumberAxis />
+    </yAxis>
+   </StackedBarChart>
+   <VBox alignment="TOP_RIGHT" spacing="5.0">
+    <HBox alignment="TOP_RIGHT" spacing="2.0">
+
+     <StackPane>
+      <ImageView fitHeight="0.0" fitWidth="50.0"
        preserveRatio="true" fx:id="validatedImageView">
        <image>
         <Image url="@checkbox.png" />
        </image>
       </ImageView>
-      <Label fx:id="mean"/>
-      <Label fx:id="stdev"/>
-      <Label fx:id="n"/>
-      <Label fx:id="stdevpct"/>
-      
-      </HBox>
-      </StackPane>
-</center>
-<right>
-    <Button prefWidth="30.0" BorderPane.alignment="CENTER" fx:id="removeButton">
-    <graphic>
+      <ImageView fitHeight="0.0" fitWidth="50.0"
+       preserveRatio="true" fx:id="unvalidatedImageView">
+       <image>
+        <Image url="@circle.png" />
+       </image>
+      </ImageView>
+     </StackPane>
+     <Label styleClass="validation" fx:id="validationText"
+      minWidth="200.0" prefWidth="200.0" />
+
+
+    </HBox>
+    <HBox alignment="TOP_RIGHT" spacing="10.0">
+    <Label styleClass="stat" fx:id="count" />
+    <Label styleClass="stat" fx:id="n" />
+     <Label styleClass="stat" fx:id="mean" />
+     <Label styleClass="stat" fx:id="stdev" />
+     <Label styleClass="stat" fx:id="rsd" />
+    </HBox>
+   </VBox>
+  </StackPane>
+ </center>
+ <right>
+  <Button prefWidth="30.0" BorderPane.alignment="CENTER" fx:id="removeButton">
+   <graphic>
     <ImageView fitHeight="0.0" fitWidth="25.0" preserveRatio="true">
-    <Image url="@/org/mdpnp/apps/testapp/patient/stop.png"/>
+     <Image url="@/org/mdpnp/apps/testapp/patient/stop.png" />
     </ImageView>
-    </graphic>
-    <tooltip>
-    <Tooltip text="Remove this vital sign"/>
-    </tooltip>
-    </Button>
-</right>
+   </graphic>
+   <tooltip>
+    <Tooltip text="Remove this vital sign" />
+   </tooltip>
+  </Button>
+ </right>
 </BorderPane>
 

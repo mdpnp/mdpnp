@@ -113,7 +113,7 @@ public class HimssEmitter {
                 
             }
             
-            log.info("registered " + data.getNumeric().getMetric_id() + " with " + code);
+            log.debug("registered " + data.getNumeric().getMetric_id() + " with " + code);
             h = new Holder(writer);
             himss.MetricDataQuality q = new himss.MetricDataQuality();
             q.udi = data.getNumeric().getUnique_device_identifier().substring(0, Math.min(16, data.getNumeric().getUnique_device_identifier().length()));

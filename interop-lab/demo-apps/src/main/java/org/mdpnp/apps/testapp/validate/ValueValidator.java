@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -14,7 +15,6 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Data;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +57,7 @@ public class ValueValidator implements ChangeListener<Date> {
             data.add(new Data<String,Number>(""+i, 0));
         }
         series = new XYChart.Series<String,Number>(data);
-        series.nameProperty().bind(value.getDevice().makeAndModelProperty());
+        series.nameProperty().bind(Bindings.concat(value.getDevice().modelProperty(), " (", value.metricIdProperty(), ")"));
         value.timestampProperty().addListener(this);
         newTimestamp(value.getTimestamp());
     }

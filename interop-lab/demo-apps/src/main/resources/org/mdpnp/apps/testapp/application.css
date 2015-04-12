@@ -28,6 +28,20 @@
     -fx-font: 10 fixed;
 }
 
+.heading {
+    -fx-font: 25 fixed;
+}
+
+.stat {
+    -fx-font: 12 fixed;    
+}
+
+.validation {
+    -fx-text-fill: #003f7f;
+    -fx-font: 35 fixed;
+    -fx-text-alignment: left;
+}
+
 .metric-text {
     -fx-font: 10 fixed;
 }

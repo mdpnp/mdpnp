@@ -26,7 +26,7 @@ public enum VitalSign {
             rosetta.MDC_BLD_PULS_RATE_INV.VALUE, rosetta.MDC_ECG_CARD_BEAT_RATE.VALUE, rosetta.MDC_ECG_HEART_RATE.VALUE, rosetta.MDC_PULS_RATE.VALUE,
             rosetta.MDC_BLD_PULS_RATE_INV.VALUE }, 40.0, 140.0, 20.0, 160.0, 0.0, 250.0, 5000L, 5000L, Color.green),
     SpO2("SpO\u2082", "%", new String[] { rosetta.MDC_PULS_OXIM_SAT_O2.VALUE }, 95.0, 100.0, 85.0, 100.0, 50.0, 100.0, 5000L, 5000L, Color.pink), 
-    RespiratoryRate("Resp Rate", "bpm", new String[] { rosetta.MDC_RESP_RATE.VALUE, rosetta.MDC_TTHOR_RESP_RATE.VALUE, rosetta.MDC_CO2_RESP_RATE.VALUE,
+    RespiratoryRate("Respiration Rate", "bpm", new String[] { rosetta.MDC_RESP_RATE.VALUE, rosetta.MDC_TTHOR_RESP_RATE.VALUE, rosetta.MDC_CO2_RESP_RATE.VALUE,
                     rosetta.MDC_VENT_RESP_RATE.VALUE, rosetta.MDC_AWAY_RESP_RATE.VALUE }, 10.0, 25.0, 4.0, 35.0, 0.0, 40.0, 5000L, 5000L,
                     Color.yellow), 
     EndTidalCO2("etCO\u2082", "mmHg", new String[] { rosetta.MDC_AWAY_CO2_ET.VALUE }, 20.0, 45.0, 10.0, 75.0, 0.0, 120.0,

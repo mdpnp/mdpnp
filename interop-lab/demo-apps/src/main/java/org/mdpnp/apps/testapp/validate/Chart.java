@@ -16,6 +16,7 @@ import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.mdpnp.apps.testapp.vital.Vital;
@@ -24,10 +25,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.control.Label;
 
 public class Chart {
-    protected StackedBarChart<String, Number> barChart;
+    @FXML protected StackedBarChart<String, Number> barChart;
 //    protected LineChart<String, Number> lineChart;
 
-    @FXML StackPane stackPane;
+//    @FXML StackPane stackPane;
     
     @FXML Button removeButton;
     @FXML BorderPane main;
@@ -35,12 +36,18 @@ public class Chart {
     private Vital vital;
     private VitalValidator vitalValidator;
     @FXML ImageView validatedImageView;
+    @FXML ImageView unvalidatedImageView;
     @FXML Label stdev;
     @FXML Label mean;
     @FXML Label n;
-    @FXML Label stdevpct;
+    @FXML Label rsd;
+    
     
     private ValidationOracle validationOracle;
+
+    @FXML Label validationText;
+
+    @FXML Label count;
     
     public Chart() {
         
@@ -78,18 +85,23 @@ public class Chart {
         }
         this.vital = v;
         if(null != v) {
-            CategoryAxis xAxis = new CategoryAxis();
-            NumberAxis yAxis = new NumberAxis();
+//            CategoryAxis xAxis = new CategoryAxis();
+//            NumberAxis yAxis = new NumberAxis();
             
 //            lineChart = new LineChart<>(xAxis, new NumberAxis());
-            barChart = new StackedBarChart<>(xAxis, yAxis);
+//            barChart = new StackedBarChart<>(xAxis, yAxis);
 //            this.vitalValidator = new VitalValidator(maxDataPoints, maxSigma, v, barChart.getData(), lineChart.getData(), validationOracle);
             this.vitalValidator = new VitalValidator(maxDataPoints, maxSigmaPct, v, barChart.getData(), validationOracle);
             validatedImageView.visibleProperty().bind(vitalValidator.validatedProperty());
+            unvalidatedImageView.visibleProperty().bind(vitalValidator.validatedProperty().not());
+            validationText.textProperty().bind(Bindings.when(vitalValidator.validatedProperty()).then("Final").otherwise("Preliminary"));
+            count.textFillProperty().bind(Bindings.when(vitalValidator.countValuesProperty().greaterThan(1)).then(Color.BLACK).otherwise(Color.RED));
+            count.textProperty().bind(Bindings.concat("sources=", vitalValidator.countValuesProperty()));
             mean.textProperty().bind(Bindings.concat("μ=", vitalValidator.meanProperty().asString("%.1f")));
-            stdev.textProperty().bind(Bindings.concat("σ=", vitalValidator.sigmaProperty().asString("%.4f")));
-            n.textProperty().bind(Bindings.concat("n=", vitalValidator.nProperty().asString()));
-            stdevpct.textProperty().bind(Bindings.concat("σ(%)=", vitalValidator.sigmaPctProperty().asString("%.4f")));
+            stdev.textProperty().bind(Bindings.concat("σ=", vitalValidator.sigmaProperty().asString("%.2f")));
+            n.textProperty().bind(Bindings.concat("n=", vitalValidator.nProperty().asString("%.0f")));
+            rsd.textProperty().bind(Bindings.concat("%RSD=", vitalValidator.sigmaPctProperty().asString("%.2f")));
+            rsd.textFillProperty().bind(Bindings.when(vitalValidator.countValuesProperty().greaterThan(1).and(vitalValidator.validatedProperty().not())).then(Color.RED).otherwise(Color.BLACK));
             barChart.setMinHeight(250.0);
             barChart.setVerticalGridLinesVisible(false);
             barChart.setAnimated(false);
@@ -107,7 +119,7 @@ public class Chart {
 //            lineChart.setLegendVisible(true);
             
 //            stackPane.getChildren().add(0, lineChart);
-            stackPane.getChildren().add(0, barChart);
+//            stackPane.getChildren().add(0, barChart);
             
 //            main.setCenter(barChart);
 //            BorderPane.setAlignment(barChart, Pos.CENTER);

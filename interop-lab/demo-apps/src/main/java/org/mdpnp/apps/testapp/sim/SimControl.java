@@ -217,7 +217,7 @@ public class SimControl implements InitializingBean
         }
 
         private void publishObjective() {
-            log.info("Publish objective changes:" + objective);
+            log.debug("Publish objective changes:" + objective);
             writer.write(objective, handle);
         }
 
