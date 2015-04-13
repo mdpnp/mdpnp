@@ -2,7 +2,6 @@ package org.mdpnp.apps.testapp.sim;
 
 import java.io.IOException;
 
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -12,8 +11,6 @@ import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
-
-import com.rti.dds.domain.DomainParticipant;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.support.AbstractApplicationContext;
@@ -69,7 +66,7 @@ public class SimControlFactory implements IceApplicationProvider {
 
             dialog = new Stage(StageStyle.DECORATED);
             dialog.setTitle("Simulator Control");
-            dialog.setAlwaysOnTop(true);
+//            dialog.setAlwaysOnTop(true);
             Scene scene = new Scene(ui);
             dialog.setScene(scene);
             dialog.sizeToScene();
