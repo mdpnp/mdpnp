@@ -144,7 +144,7 @@ public class RapidRespiratoryRate implements Runnable {
                         DeviceDriverProvider.SpringLoadedDriver df = new DeviceDriverProvider.SpringLoadedDriver() {
                             @Override
                             public DeviceType getDeviceType() {
-                                return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "RespiratoryRate", "RespiratoryRate");
+                                return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "RespiratoryRate", "RespiratoryRate", 1);
                             }
 
                             @Override

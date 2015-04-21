@@ -70,16 +70,18 @@ public interface DeviceDriverProvider {
 
         private final ice.ConnectionType connectionType;
         private final String manufacturer, model, aliases[];
+        private final int connectionCount;
 
-        public DeviceType(ice.ConnectionType connectionType, String manufacturer, String model, String alias) {
-            this(connectionType, manufacturer, model, new String[] { alias });
+        public DeviceType(ice.ConnectionType connectionType, String manufacturer, String model, String alias, int connectionCount) {
+            this(connectionType, manufacturer, model, new String[] { alias }, connectionCount);
         }
-
-        public DeviceType(ice.ConnectionType connectionType, String manufacturer, String model, String[] alias) {
+        
+        public DeviceType(ice.ConnectionType connectionType, String manufacturer, String model, String[] alias, int connectionCount) {
             this.connectionType = connectionType;
             this.manufacturer = manufacturer;
             this.model = model;
             this.aliases = alias;
+            this.connectionCount = connectionCount;
         }
 
         public ice.ConnectionType getConnectionType() {
@@ -100,6 +102,10 @@ public interface DeviceDriverProvider {
 
         public String getAlias() {
             return aliases[0];
+        }
+        
+        public int getConnectionCount() {
+            return connectionCount;
         }
 
         @Override

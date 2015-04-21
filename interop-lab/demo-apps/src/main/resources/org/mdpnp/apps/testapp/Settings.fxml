@@ -4,6 +4,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.*?>
 
@@ -58,12 +59,12 @@
     <Insets bottom="5.0" right="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
-  <ComboBox fx:id="serialPorts" GridPane.columnIndex="1"
-   GridPane.hgrow="SOMETIMES" GridPane.rowIndex="2">
+  <VBox fx:id="serialPortsContainer" GridPane.columnIndex="1"
+   GridPane.hgrow="SOMETIMES" GridPane.rowIndex="2" spacing="5.0">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
-  </ComboBox>
+  </VBox>
   <Label fx:id="addressLabel" text="IP Address"
    GridPane.columnIndex="0" GridPane.rowIndex="3">
    <GridPane.margin>

@@ -79,7 +79,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Pulse Oximeter", "PO_Simulator");
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Pulse Oximeter", "PO_Simulator", 1);
         }
 
         @Override
@@ -96,7 +96,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Noninvasive Blood Pressure", "NIBP_Simulator");
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Noninvasive Blood Pressure", "NIBP_Simulator", 1);
         }
 
         @Override
@@ -112,7 +112,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Invasive Blood Pressure", "IBP_Simulator");
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Invasive Blood Pressure", "IBP_Simulator", 1);
         }
 
         @Override
@@ -128,7 +128,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "ElectroCardioGram", "ECG_Simulator");
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "ElectroCardioGram", "ECG_Simulator", 1);
         }
 
         @Override
@@ -144,7 +144,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Capnometer", "CO2_Simulator");
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Capnometer", "CO2_Simulator", 1);
         }
 
         @Override
@@ -160,7 +160,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Temperature Probe", "Temp_Simulator");
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Temperature Probe", "Temp_Simulator", 1);
         }
 
         @Override
@@ -176,7 +176,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Infusion Pump", "Pump_Simulator");
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Infusion Pump", "Pump_Simulator", 1);
         }
 
         @Override
@@ -192,7 +192,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Fluke", "Prosim 6/8" , "FlukeProsim68");
+            return new DeviceType(ice.ConnectionType.Serial, "Fluke", "Prosim 6/8" , "FlukeProsim68", 1);
         }
 
         @Override
@@ -208,7 +208,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Network, "CardioPulmonaryCorp", "Bernoulli", "Bernoulli");
+            return new DeviceType(ice.ConnectionType.Network, "CardioPulmonaryCorp", "Bernoulli", "Bernoulli", 1);
         }
 
         @Override
@@ -224,7 +224,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Ivy", "450C Monitor", "Ivy450C");
+            return new DeviceType(ice.ConnectionType.Serial, "Ivy", "450C Monitor", "Ivy450C", 1);
         }
 
         @Override
@@ -240,7 +240,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Nonin", "Bluetooth Pulse Oximeter", "Nonin");
+            return new DeviceType(ice.ConnectionType.Serial, "Nonin", "Bluetooth Pulse Oximeter", "Nonin", 1);
         }
 
         @Override
@@ -256,7 +256,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Network, "Philips", "Intellivue (LAN)", "IntellivueEthernet");
+            return new DeviceType(ice.ConnectionType.Network, "Philips", "Intellivue (LAN)", "IntellivueEthernet", 1);
         }
 
         @Override
@@ -272,7 +272,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Philips", "Intellivue (MIB/RS232)", "IntellivueSerial");
+            return new DeviceType(ice.ConnectionType.Serial, "Philips", "Intellivue (MIB/RS232)", "IntellivueSerial", 1);
         }
 
         @Override
@@ -288,7 +288,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Oridion", "Capnostream20", "Capnostream20");
+            return new DeviceType(ice.ConnectionType.Serial, "Oridion", "Capnostream20", "Capnostream20", 1);
         }
 
         @Override
@@ -305,7 +305,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Nellcor", "N-595", "NellcorN595");
+            return new DeviceType(ice.ConnectionType.Serial, "Nellcor", "N-595", "NellcorN595", 1);
         }
 
         @Override
@@ -321,7 +321,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Masimo", "Radical-7", "MasimoRadical7");
+            return new DeviceType(ice.ConnectionType.Serial, "Masimo", "Radical-7", "MasimoRadical7", 1);
         }
 
         @Override
@@ -337,7 +337,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Hospira", "Symbiq", "Symbiq");
+            return new DeviceType(ice.ConnectionType.Simulated, "Hospira", "Symbiq", "Symbiq", 1);
         }
 
         @Override
@@ -353,7 +353,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Multiparameter Monitor", "Multiparameter");
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Multiparameter Monitor", "Multiparameter", 1);
         }
 
         @Override
@@ -369,7 +369,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo", new String[] {"DraegerApollo", "Dr\u00E4gerApollo" });
+            return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "Apollo", new String[] {"DraegerApollo", "Dr\u00E4gerApollo" }, 1);
         }
 
         @Override
@@ -385,7 +385,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL", new String[] { "DraegerEvitaXL", "Dr\u00E4gerEvitaXL" });
+            return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "EvitaXL", new String[] { "DraegerEvitaXL", "Dr\u00E4gerEvitaXL" }, 1);
         }
 
         @Override
@@ -402,7 +402,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500", new String[] { "DraegerV500", "Dr\u00E4gerV500" });
+            return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500", new String[] { "DraegerV500", "Dr\u00E4gerV500" }, 1);
         }
 
         @Override
@@ -419,7 +419,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500", new String[] { "DraegerV500_38400", "Dr\u00E4gerV500_38400" });
+            return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "V500", new String[] { "DraegerV500_38400", "Dr\u00E4gerV500_38400" }, 1);
         }
 
         @Override
@@ -436,7 +436,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4", new String[] { "DraegerEvita4", "Dr\u00E4gerEvita4" });
+            return new DeviceType(ice.ConnectionType.Serial, "Dr\u00E4ger", "Evita4", new String[] { "DraegerEvita4", "Dr\u00E4gerEvita4" }, 1);
         }
 
         @Override
@@ -453,7 +453,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "Zephyr", "BioPatch", "BioPatch");
+            return new DeviceType(ice.ConnectionType.Serial, "Zephyr", "BioPatch", "BioPatch", 1);
         }
 
         @Override

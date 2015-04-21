@@ -15,7 +15,7 @@ public class PB840Provider extends DeviceDriverProvider.SpringLoadedDriver {
 
     @Override
     public DeviceType getDeviceType(){
-        return new DeviceType(ice.ConnectionType.Serial, "Puritan Bennett", "840", "PB840");
+        return new DeviceType(ice.ConnectionType.Serial, "Puritan Bennett", "840", "PB840", 2);
     }
 
     @Override
