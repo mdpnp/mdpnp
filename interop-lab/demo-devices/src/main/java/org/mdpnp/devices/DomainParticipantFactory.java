@@ -35,7 +35,9 @@ public class DomainParticipantFactory implements FactoryBean<DomainParticipant>,
             DomainParticipantQos dpQos = new DomainParticipantQos();
             
             com.rti.dds.domain.DomainParticipantFactory.get_instance().get_default_participant_qos(dpQos);
-            dpQos.wire_protocol.participant_id = nextParticipantId++;
+            // TODO I neutered this for the time being because other participants on
+            // the localhost might be outside of this process.
+//            dpQos.wire_protocol.participant_id = nextParticipantId++;
             
             instance = com.rti.dds.domain.DomainParticipantFactory.get_instance().create_participant(domain, dpQos, null,
                     StatusKind.STATUS_MASK_NONE);
