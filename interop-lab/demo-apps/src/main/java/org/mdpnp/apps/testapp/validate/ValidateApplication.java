@@ -40,6 +40,7 @@ public class ValidateApplication implements Runnable {
 
     private final IntegerProperty maxDataPoints = new SimpleIntegerProperty(this, "maxDataPoints", 20);
     private final DoubleProperty maxRsd = new SimpleDoubleProperty(this, "maxRsd", 0.0);
+    private final DoubleProperty minKurtosis = new SimpleDoubleProperty(this, "minKurtosis", 0.0);
     
     private List<VitalValidator> vitalValidators = Collections.synchronizedList(new ArrayList<VitalValidator>());
     
@@ -52,12 +53,14 @@ public class ValidateApplication implements Runnable {
 
     @FXML Spinner<Number> maxRsdSpinner;
     
+    @FXML Spinner<Number> minKurtosisSpinner;
+    
     private void add(Vital vi) {
         FXMLLoader loader = new FXMLLoader(Chart.class.getResource("Chart.fxml"));
         try {
             Parent node = loader.load();
             Chart chart = loader.getController();
-            chart.setModel(maxDataPoints, maxRsd, vi, validationOracle);
+            chart.setModel(maxDataPoints, maxRsd, vi, validationOracle, minKurtosis);
             node.setUserData(chart);
             vitalValidators.add(chart.getVitalValidator());
             chart.getRemoveButton().setOnAction(new EventHandler<ActionEvent>() {
@@ -82,7 +85,7 @@ public class ValidateApplication implements Runnable {
             
             if(chart.getVital().equals(vi)) {
                 vitalValidators.remove(chart.getVitalValidator());
-                chart.setModel(null, null, null, null);
+                chart.setModel(null, null, null, null, null);
                 childitr.remove();
             }
         }
@@ -92,6 +95,7 @@ public class ValidateApplication implements Runnable {
         this.validationOracle = validationOracle;
         maxDataPoints.bind(maxDataPointsSpinner.valueProperty());
         maxRsd.bind(maxRsdSpinner.valueProperty());
+        minKurtosis.bind(minKurtosisSpinner.valueProperty());
 
         executor.scheduleWithFixedDelay(this, 1000L, 3000L, TimeUnit.MILLISECONDS);
         if(null != this.vitalModel) {

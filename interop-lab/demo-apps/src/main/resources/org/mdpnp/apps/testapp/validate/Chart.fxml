@@ -53,6 +53,7 @@
      <Label styleClass="stat" fx:id="mean" />
      <Label styleClass="stat" fx:id="stdev" />
      <Label styleClass="stat" fx:id="rsd" />
+     <Label styleClass="stat" fx:id="kurtosis" />
     </HBox>
    </VBox>
   </StackPane>

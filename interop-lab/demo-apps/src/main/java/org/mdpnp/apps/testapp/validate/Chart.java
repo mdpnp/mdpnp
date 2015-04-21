@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.validate;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -41,6 +42,7 @@ public class Chart {
     @FXML Label mean;
     @FXML Label n;
     @FXML Label rsd;
+    @FXML Label kurtosis;
     
     
     private ValidationOracle validationOracle;
@@ -76,7 +78,7 @@ public class Chart {
     }
     
     
-    public void setModel(final IntegerProperty maxDataPoints, final DoubleProperty maxSigmaPct, Vital v, ValidationOracle validationOracle) {
+    public void setModel(final IntegerProperty maxDataPoints, final DoubleProperty maxSigmaPct, Vital v, ValidationOracle validationOracle, final ReadOnlyDoubleProperty minKurtosis) {
         this.validationOracle = validationOracle;
         if(null != this.vital) {
             main.setCenter(null);
@@ -91,17 +93,26 @@ public class Chart {
 //            lineChart = new LineChart<>(xAxis, new NumberAxis());
 //            barChart = new StackedBarChart<>(xAxis, yAxis);
 //            this.vitalValidator = new VitalValidator(maxDataPoints, maxSigma, v, barChart.getData(), lineChart.getData(), validationOracle);
-            this.vitalValidator = new VitalValidator(maxDataPoints, maxSigmaPct, v, barChart.getData(), validationOracle);
+            this.vitalValidator = new VitalValidator(maxDataPoints, maxSigmaPct, v, barChart.getData(), validationOracle, minKurtosis);
             validatedImageView.visibleProperty().bind(vitalValidator.validatedProperty());
             unvalidatedImageView.visibleProperty().bind(vitalValidator.validatedProperty().not());
             validationText.textProperty().bind(Bindings.when(vitalValidator.validatedProperty()).then("Final").otherwise("Preliminary"));
             count.textFillProperty().bind(Bindings.when(vitalValidator.countValuesProperty().greaterThan(1)).then(Color.BLACK).otherwise(Color.RED));
             count.textProperty().bind(Bindings.concat("sources=", vitalValidator.countValuesProperty()));
+            
             mean.textProperty().bind(Bindings.concat("μ=", vitalValidator.meanProperty().asString("%.1f")));
-            stdev.textProperty().bind(Bindings.concat("σ=", vitalValidator.sigmaProperty().asString("%.2f")));
-            n.textProperty().bind(Bindings.concat("n=", vitalValidator.nProperty().asString("%.0f")));
-            rsd.textProperty().bind(Bindings.concat("%RSD=", vitalValidator.sigmaPctProperty().asString("%.2f")));
-            rsd.textFillProperty().bind(Bindings.when(vitalValidator.countValuesProperty().greaterThan(1).and(vitalValidator.validatedProperty().not())).then(Color.RED).otherwise(Color.BLACK));
+            
+            stdev.textProperty().bind(Bindings.concat("σ=", vitalValidator.stdevProperty().asString("%.2f")));
+            
+            n.textProperty().bind(Bindings.concat("n=", vitalValidator.nProperty()));
+            
+            rsd.textProperty().bind(Bindings.concat("%RSD=", vitalValidator.rsdProperty().asString("%.2f")));
+            rsd.textFillProperty().bind(Bindings.when(vitalValidator.rsdProperty().lessThanOrEqualTo(maxSigmaPct)).then(Color.BLACK).otherwise(Color.RED));
+
+            kurtosis.textProperty().bind(Bindings.concat("kurt=", vitalValidator.kurtosisProperty().asString("%.2f")));
+            kurtosis.textFillProperty().bind(Bindings.when(vitalValidator.kurtosisProperty().greaterThanOrEqualTo(minKurtosis)).then(Color.BLACK).otherwise(Color.RED));
+            
+            
             
             barChart.setVerticalGridLinesVisible(false);
             barChart.setAnimated(false);
