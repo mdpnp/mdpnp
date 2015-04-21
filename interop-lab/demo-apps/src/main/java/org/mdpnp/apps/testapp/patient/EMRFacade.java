@@ -52,7 +52,7 @@ public interface EMRFacade {
         @Override
         public EMRFacade getObject() throws Exception {
             if(instance == null) {
-                if(fhirEMRUrl == null) {
+                if(fhirEMRUrl == null || "".equals(fhirEMRUrl)) {
                     instance = new JdbcEMRImpl(new ExecutorFx());
                     ((JdbcEMRImpl)instance).setDataSource(jdbcDB);
                 }

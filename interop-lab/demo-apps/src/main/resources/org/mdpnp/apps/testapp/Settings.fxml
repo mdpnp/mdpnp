@@ -7,6 +7,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.*?>
+<?import javafx.scene.control.CheckBox?>
 
 <GridPane id="deviceTypeRow" fx:id="gridPane" alignment="CENTER"
  hgap="5.0" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.SettingsController">
@@ -77,6 +78,13 @@
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </TextField>
+    <Label fx:id="useInternalPatientsLabel" text="Use Internal Patients"
+   GridPane.columnIndex="0" GridPane.rowIndex="5">
+   <GridPane.margin>
+    <Insets bottom="5.0" right="5.0" top="5.0" />
+   </GridPane.margin>
+  </Label>
+  <CheckBox fx:id="useInternalPatients" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
  </children>
  <columnConstraints>
   <ColumnConstraints halignment="RIGHT" hgrow="NEVER"
@@ -87,6 +95,7 @@
  <rowConstraints>
   <RowConstraints minHeight="0" prefHeight="-1"
    valignment="CENTER" vgrow="NEVER" />
+  <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
   <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
   <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
   <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />

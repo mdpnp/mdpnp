@@ -68,8 +68,9 @@ public class CreateAdapter {
             return null;
         }
         address = d.settingsController.addressProperty().get();
+        boolean useInternalPatients = d.settingsController.isInternalPatients();
         
-        return d.closePressed ? null : new Configuration(false, Application.ICE_Device_Interface, domainId, ddp, address);
+        return d.closePressed ? null : new Configuration(false, Application.ICE_Device_Interface, domainId, ddp, address, useInternalPatients);
 
     }
 }

@@ -139,7 +139,8 @@ public class ConfigurationDialog {
                 d.settingsController.selectedAppProperty().get(), 
                 Integer.parseInt(d.settingsController.domainProperty().get()), 
                 d.settingsController.selectedDeviceProperty().get(),
-                d.settingsController.addressProperty().get());
+                d.settingsController.addressProperty().get(),
+                d.settingsController.internalPatientsProperty().get());
 
         return d;
     }

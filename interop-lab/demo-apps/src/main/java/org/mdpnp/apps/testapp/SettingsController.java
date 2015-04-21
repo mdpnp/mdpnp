@@ -22,6 +22,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -46,9 +47,11 @@ public class SettingsController {
     @FXML
     ComboBox<DeviceDriverProvider> deviceType;
     @FXML
-    Label applicationsLabel, domainIdLabel, deviceTypeLabel, serialPortsLabel, addressLabel;
+    Label applicationsLabel, domainIdLabel, deviceTypeLabel, serialPortsLabel, addressLabel, useInternalPatientsLabel;
     @FXML
     GridPane gridPane;
+    @FXML
+    CheckBox useInternalPatients;
 
     @FXML
     VBox serialPortsContainer;
@@ -64,6 +67,9 @@ public class SettingsController {
     private final ObjectProperty<DeviceDriverProvider> selectedDevice = new SimpleObjectProperty<>(this, "selectedDevice", null);
     private final StringProperty address = new SimpleStringProperty(this, "address", "");
     private final StringProperty domain = new SimpleStringProperty(this, "domain", "");
+    private final BooleanProperty internalPatients = new SimpleBooleanProperty(this, "internalPatients", false);
+    
+    
     
     public boolean isReady() {
         return ready.get();
@@ -100,6 +106,8 @@ public class SettingsController {
     protected void set(Application app, DeviceDriverProvider dt) {
         switch (app) {
         case ICE_Device_Interface:
+            gridPane.getChildren().remove(useInternalPatients);
+            gridPane.getChildren().remove(useInternalPatientsLabel);
             if(!gridPane.getChildren().contains(deviceType)) { gridPane.getChildren().add(deviceType); }
             if(!gridPane.getChildren().contains(deviceTypeLabel)) { gridPane.getChildren().add(deviceTypeLabel); }
 
@@ -143,6 +151,8 @@ public class SettingsController {
             gridPane.getChildren().remove(addressField);
             gridPane.getChildren().remove(serialPortsLabel);
             gridPane.getChildren().remove(serialPortsContainer);
+            if(!gridPane.getChildren().contains(useInternalPatientsLabel)) { gridPane.getChildren().add(useInternalPatientsLabel); }
+            if(!gridPane.getChildren().contains(useInternalPatients)) { gridPane.getChildren().add(useInternalPatients); }
             ready.set(true);
             start.set("Start " + app);
             break;
@@ -224,6 +234,7 @@ public class SettingsController {
         selectedDevice.bind(deviceType.getSelectionModel().selectedItemProperty());
         domain.bind(domainId.textProperty());
         address.bind(addressField.textProperty());
+        internalPatients.bind(useInternalPatients.selectedProperty());
 
         selectedDevice.addListener(new ChangeListener<DeviceDriverProvider>() {
 
@@ -265,6 +276,18 @@ public class SettingsController {
         
         set((Application) applications.getSelectionModel().getSelectedItem(), deviceType.getSelectionModel().getSelectedItem());
         
+    }
+
+    public BooleanProperty internalPatientsProperty() {
+        return this.internalPatients;
+    }
+
+    public boolean isInternalPatients() {
+        return this.internalPatientsProperty().get();
+    }
+
+    public void setInternalPatients(final boolean internalPatients) {
+        this.internalPatientsProperty().set(internalPatients);
     }
 
     
