@@ -140,7 +140,7 @@ public class AbstractFxList<D extends Copyable, R extends DataReader, F extends 
                             try {
                                 F x = fxClass.newInstance();
                                 x.update(d, si);
-                                add(x);
+                                add(0, x);
                             } catch (Exception e) {
                                 log.error("Unable to create a new instance of fx object", e);
                             }
