@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,8 +27,6 @@ import javafx.util.Callback;
 import org.mdpnp.apps.device.OnListChange;
 import org.mdpnp.apps.fxbeans.ElementObserver;
 import org.mdpnp.apps.fxbeans.NumericFx;
-import org.mdpnp.apps.fxbeans.PatientAssessmentFx;
-import org.mdpnp.apps.fxbeans.PatientAssessmentFxList;
 import org.mdpnp.apps.testapp.validate.Validation;
 import org.mdpnp.apps.testapp.validate.ValidationOracle;
 import org.mdpnp.devices.MDSHandler;
@@ -52,7 +49,6 @@ import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.model.dstu2.valueset.ObservationStatusEnum;
 import ca.uhn.fhir.model.primitive.DateTimeDt;
 import ca.uhn.fhir.model.primitive.IdDt;
-import ca.uhn.fhir.model.primitive.StringDt;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.IGenericClient;
 import ca.uhn.hl7v2.DefaultHapiContext;
@@ -93,14 +89,13 @@ public class HL7Emitter implements MDSListener, Runnable {
     private final Map<String, IdDt> patientMRNtoResourceId = Collections.synchronizedMap(new HashMap<String, IdDt>());
     private final Map<String, IdDt> deviceUDItoResourceId = Collections.synchronizedMap(new HashMap<String, IdDt>());
     
-    private final Set<Object> recentUpdates = Collections.synchronizedSet(new HashSet<>());
+    private final Set<Validation> recentUpdates = Collections.synchronizedSet(new HashSet<>());
 
     private final ListenerList<LineEmitterListener> listeners = new ListenerList<LineEmitterListener>(LineEmitterListener.class);
     private final ListenerList<StartStopListener> ssListeners = new ListenerList<StartStopListener>(StartStopListener.class);
 
     public HL7Emitter(final Subscriber subscriber, final EventLoop eventLoop,
                       final ValidationOracle validationOracle,
-                      final PatientAssessmentFxList patientAssessmentList,
                       final FhirContext fhirContext)
     {
 
@@ -112,11 +107,6 @@ public class HL7Emitter implements MDSListener, Runnable {
         if(validationOracle != null) {
             validationObserver = attachValidationObserver(validationOracle);
             validationOracle.forEach((t) -> add(t));
-        }
-
-        if(patientAssessmentList != null) {
-            patientAssessmentObserver = attachPatientAssessmentObserver(patientAssessmentList);
-            patientAssessmentList.forEach((t) -> add(t));
         }
 
         this.mdsHandler = new MDSHandler(eventLoop, subscriber.get_participant());
@@ -157,44 +147,6 @@ public class HL7Emitter implements MDSListener, Runnable {
         }, validationOracle);
 
         validationOracle.addListener(new OnListChange<>((t) -> add(t), null, (t) -> remove(t)));
-
-        return observer;
-    }
-
-    ElementObserver<PatientAssessmentFx>  attachPatientAssessmentObserver(PatientAssessmentFxList paList) {
-        // Observes changes to source_timestamp and queues the NumericFx for emission
-        ElementObserver<PatientAssessmentFx> observer =
-                new ElementObserver<PatientAssessmentFx>(new Callback<PatientAssessmentFx, Observable[]>() {
-
-            @Override
-            public Observable[] call(PatientAssessmentFx param) {
-                return new Observable[] {param.date_and_timeProperty()};
-            }
-
-        }, new Callback<PatientAssessmentFx, InvalidationListener>() {
-
-            @Override
-            public InvalidationListener call(final PatientAssessmentFx param) {
-
-                return new InvalidationListener() {
-                    private Date lastPresentationTime = null;
-
-                    @Override
-                    public void invalidated(Observable observable) {
-                        Date dt = param.getDate_and_time();
-                        if(null == lastPresentationTime || !lastPresentationTime.equals(dt)) {
-                            recentUpdates.add(param);
-                            lastPresentationTime = dt;
-                        } else {
-                            log.trace("Ignoring a redundant " + param.getOperator_id());
-                        }
-                    }
-                };
-            }
-
-        }, paList);
-
-        paList.addListener(new OnListChange<>((t) -> add(t), null, (t) -> remove(t)));
 
         return observer;
     }
@@ -478,37 +430,6 @@ public class HL7Emitter implements MDSListener, Runnable {
         return obs;
     }
 
-    Set<Observation> fhirObservation(PatientAssessmentFx data) {
-        final String mrn = "10101"; //deviceUdiToPatientMRN.get(data.getUnique_device_identifier());
-        //if(null == mrn) {
-        //    log.debug("No known mrn for udi="+data.getUnique_device_identifier());
-        //    return null;
-        //}
-
-        IdDt resourceId = getPatientResource(mrn);
-        if(null == resourceId) {
-            log.debug("No known patient resource id for mrn="+mrn);
-            return null;
-        }
-
-
-        Set<Observation> obss = new HashSet<>();
-
-        List<Map.Entry<String, String>> assessments = data.getAssessments();
-        for (Iterator<Map.Entry<String, String>> iterator = assessments.iterator(); iterator.hasNext(); ) {
-            Map.Entry<String, String> next = iterator.next();
-
-            Observation obs = new Observation();
-            obs.getIdentifier().add(new IdentifierDt(PTID_SYSTEM, next.getKey()));
-            obs.setValue(new StringDt(next.getValue()));
-            obs.setApplies(new DateTimeDt(data.getDate_and_time(), TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
-            obs.setSubject(new ResourceReferenceDt(resourceId));
-            obss.add(obs);
-        }
-        return obss;
-    }
-
-
     static final String METRIC_PREFIX = "MDC_";
     static final String PTID_SYSTEM = "urn:oid:2.16.840.1.113883.3.1974";
     
@@ -519,27 +440,10 @@ public class HL7Emitter implements MDSListener, Runnable {
         
         synchronized(recentUpdates) {
             recentUpdates.forEach((x) -> {
-
-                if(x instanceof Validation) {
-                    Validation validation = (Validation)x;
-                    Observation obs = fhirObservation(validation);
-                    bundle.add(obs);
-                    String jsonEncoded = fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(obs);
-                    jsonStrings.add(jsonEncoded + "\n");
-                }
-                else if(x instanceof PatientAssessmentFx) {
-                    PatientAssessmentFx assessment = (PatientAssessmentFx)x;
-                    Set<Observation> obss = fhirObservation(assessment);
-                    for (Observation obs : obss) {
-                        bundle.add(obs);
-                        String jsonEncoded = fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(obs);
-                        jsonStrings.add(jsonEncoded + "\n");
-                    }
-                }
-                else {
-                    log.error("Do not know how to sendFHIR for " + x);
-                }
-
+                Observation obs = fhirObservation(x);
+                bundle.add(obs);
+                String jsonEncoded = fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(obs);
+                jsonStrings.add(jsonEncoded + "\n");
             });
             log.debug("flushing {} FHIR observations", recentUpdates.size());
             recentUpdates.clear();
@@ -555,7 +459,7 @@ public class HL7Emitter implements MDSListener, Runnable {
         }
     }
 
-    Set<Object> getRecentUpdates() {
+    Set<Validation> getRecentUpdates() {
         return recentUpdates;
     }
 
@@ -578,7 +482,6 @@ public class HL7Emitter implements MDSListener, Runnable {
     }
     
     private ElementObserver<Validation> validationObserver;
-    private ElementObserver<PatientAssessmentFx> patientAssessmentObserver;
 
     private void add(Validation validation) {
         if(validation.getNumeric().getMetric_id().startsWith(METRIC_PREFIX)) {
@@ -590,17 +493,6 @@ public class HL7Emitter implements MDSListener, Runnable {
         if(validation.getNumeric().getMetric_id().startsWith(METRIC_PREFIX)) {
             validationObserver.detachListener(validation);
         }
-    }
-
-    private void add(PatientAssessmentFx assessment) {
-        patientAssessmentObserver.attachListener(assessment);
-        // Send the initial value here (these are less frequent)
-        recentUpdates.add(assessment);
-        
-    }
-    private void remove(PatientAssessmentFx assessment) {
-        // Must not detach what we did not attach
-        patientAssessmentObserver.detachListener(assessment);
     }
 
     @Override

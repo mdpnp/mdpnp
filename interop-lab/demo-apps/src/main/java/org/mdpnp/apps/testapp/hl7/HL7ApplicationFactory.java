@@ -6,16 +6,14 @@ import java.net.URL;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
-import org.mdpnp.apps.fxbeans.NumericFxList;
-import org.mdpnp.apps.fxbeans.PatientAssessmentFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.validate.ValidationOracle;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
 
-import com.rti.dds.subscription.Subscriber;
-
 import ca.uhn.fhir.context.FhirContext;
+
+import com.rti.dds.subscription.Subscriber;
 
 public class HL7ApplicationFactory implements IceApplicationProvider {
     private final IceApplicationProvider.AppType HL7Application =
@@ -36,11 +34,9 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
 
         final ValidationOracle validationOracle = parentContext.getBean("validationOracle", ValidationOracle.class);
 
-        final PatientAssessmentFxList assessmentList=parentContext.getBean("assessmentList", PatientAssessmentFxList.class);;
-
         final FhirContext fhirContext = parentContext.getBean("fhirContext", FhirContext.class);
         
-        final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, validationOracle, assessmentList, fhirContext);
+        final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, validationOracle, fhirContext);
 
         FXMLLoader loader = new FXMLLoader(HL7Application.class.getResource("HL7Application.fxml"));
         

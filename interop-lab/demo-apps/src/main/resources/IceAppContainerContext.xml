@@ -131,6 +131,8 @@
         <property name="fhirContext" ref="fhirContext"/>
     </bean>        
     
+    <!-- Components from HIMSS'15
+    
     <bean id="himssDomainParticipant" class="org.mdpnp.devices.DomainParticipantFactory">
         <constructor-arg value="${himss.domain}"/>
     </bean>
@@ -160,5 +162,5 @@
     <bean id="himssIntaker" class="org.mdpnp.apps.testapp.HimssIntaker" init-method="start" destroy-method="stop">
         <property name="subscriber" ref="himssSubscriber"/>
     </bean>
-
+   -->
 </beans>
