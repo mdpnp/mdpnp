@@ -2,8 +2,12 @@ package org.mdpnp.devices;
 
 import ice.*;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -44,6 +48,7 @@ import com.rti.dds.subscription.SubscriberQos;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.ContentFilteredTopic;
 import com.rti.dds.topic.Topic;
+
 import org.springframework.jmx.export.annotation.ManagedResource;
 
 @ManagedResource(description="TimeManager Controller")
@@ -287,6 +292,7 @@ public class TimeManager {
     private static final long HEARTBEAT_INTERVAL = 2000L;
     
     protected void processAliveHeartbeat(final String unique_device_identifier, final String type, String host_name) {
+        
         log.trace("ALIVE:{}",unique_device_identifier);
         for(TimeManagerListener listener : listeners) {
             listener.aliveHeartbeat(unique_device_identifier, type, host_name);
@@ -305,6 +311,8 @@ public class TimeManager {
             listener.synchronization(remote_udi, latency, clockDifference);
         }
     }
+    
+    private DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"); 
 
     private final ConditionHandler hbReadHandler = new ConditionHandler() {
         private final ice.HeartBeatSeq hb_seq = new ice.HeartBeatSeq();
@@ -363,6 +371,21 @@ public class TimeManager {
                                     log.warn("Unable to get participant information for HeartBeat publication");
                                 }
                             }
+                            
+                            if(null != df && System.currentTimeMillis() < 31536000000L) {
+                                // one time attempt to set the system clock
+                                String dt = df.format(new Date(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L));
+                                try {
+                                    log.warn("Attempting date --set " + dt);
+                                    // This may or may not work, in any event we only try once
+                                    Runtime.getRuntime().exec(new String[]{"sudo", "date","--set",dt});
+                                } catch (IOException e) {
+                                    log.error("Error invoking 'date'", e);
+                                }
+                                df = null;
+                            }
+                            
+                            
                             processAliveHeartbeat(heartbeat.unique_device_identifier, heartbeat.type, host_name);
                             if(null != tsWriter && sampleInfo.valid_data) {
                                 if(holder == null) {
