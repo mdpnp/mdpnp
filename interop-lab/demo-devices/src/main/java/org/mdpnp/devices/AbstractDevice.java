@@ -16,7 +16,7 @@ import ice.Alert;
 import ice.DeviceIdentity;
 import ice.DeviceIdentityDataWriter;
 import ice.DeviceIdentityTypeSupport;
-import ice.LocalAlarmSettingsObjectiveDataWriter;
+import ice.LocalAlarmLimitObjectiveDataWriter;
 import ice.Numeric;
 import ice.NumericDataWriter;
 import ice.NumericTypeSupport;
@@ -99,11 +99,13 @@ public abstract class AbstractDevice {
 
     private final DeviceClock timestampFactory;
 
-    protected final Topic alarmSettingsTopic;
-    protected final ice.AlarmSettingsDataWriter alarmSettingsDataWriter;
+    protected final Topic alarmLimitTopic;
+    protected final ice.AlarmLimitDataWriter alarmLimitDataWriter;
 
-    protected final Topic localAlarmSettingsObjectiveTopic;
-    protected final ice.LocalAlarmSettingsObjectiveDataWriter alarmSettingsObjectiveWriter;
+
+    protected final Topic localAlarmLimitObjectiveTopic;
+    protected final ice.LocalAlarmLimitObjectiveDataWriter alarmLimitObjectiveWriter;
+
     
     protected Topic deviceAlertConditionTopic;
     protected ice.DeviceAlertConditionDataWriter deviceAlertConditionWriter;
@@ -113,10 +115,11 @@ public abstract class AbstractDevice {
     
     protected Topic technicalAlertTopic;
     protected ice.AlertDataWriter technicalAlertWriter;
-    
-    protected Topic globalAlarmSettingsObjectiveTopic;
-    protected ice.GlobalAlarmSettingsObjectiveDataReader alarmSettingsObjectiveReader;
-    protected ReadCondition alarmSettingsObjectiveCondition;
+
+	protected Topic globalAlarmLimitObjectiveTopic;
+    protected ice.GlobalAlarmLimitObjectiveDataReader alarmLimitObjectiveReader;
+    protected ReadCondition alarmLimitObjectiveCondition;
+
     
     protected InstanceHolder<ice.DeviceAlertCondition> deviceAlertConditionInstance;
 
@@ -179,39 +182,41 @@ public abstract class AbstractDevice {
         return holder;
     }
 
-    protected InstanceHolder<ice.AlarmSettings> createAlarmSettingsInstance(String metric_id) {
+    protected InstanceHolder<ice.AlarmLimit> createAlarmLimitInstance(String metric_id, ice.LimitType limit_type ) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createAlarmInstance");
         }
 
-        InstanceHolder<ice.AlarmSettings> holder = new InstanceHolder<ice.AlarmSettings>();
-        holder.data = new ice.AlarmSettings();
+        InstanceHolder<ice.AlarmLimit> holder = new InstanceHolder<ice.AlarmLimit>();
+        holder.data = new ice.AlarmLimit();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
-        holder.handle = alarmSettingsDataWriter.register_instance(holder.data);
-        registeredAlarmSettingsInstances.add(holder);
+        holder.data.limit_type = limit_type;
+        holder.handle = alarmLimitDataWriter.register_instance(holder.data);
+        registeredAlarmLimitInstances.add(holder);
         return holder;
     }
 
-    protected InstanceHolder<ice.LocalAlarmSettingsObjective> createAlarmSettingsObjectiveInstance(String metric_id) {
+    //XXX Diego: should I use ice.LimitType or String?
+    protected InstanceHolder<ice.LocalAlarmLimitObjective> createAlarmLimitObjectiveInstance(String metric_id, ice.LimitType limit_type) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createAlarmInstance");
         }
 
-        InstanceHolder<ice.LocalAlarmSettingsObjective> holder = new InstanceHolder<ice.LocalAlarmSettingsObjective>();
-        holder.data = new ice.LocalAlarmSettingsObjective();
+        InstanceHolder<ice.LocalAlarmLimitObjective> holder = new InstanceHolder<ice.LocalAlarmLimitObjective>();
+        holder.data = new ice.LocalAlarmLimitObjective();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
-        holder.handle = alarmSettingsObjectiveWriter.register_instance(holder.data);
-        registeredAlarmSettingsObjectiveInstances.add(holder);
+        holder.handle = alarmLimitObjectiveWriter.register_instance(holder.data);
+        registeredAlarmLimitObjectiveInstances.add(holder);
         return holder;
     }
 
     protected void unregisterAllInstances() {
         unregisterAllNumericInstances();
         unregisterAllSampleArrayInstances();
-        unregisterAllAlarmSettingsInstances();
-        unregisterAllAlarmSettingsObjectiveInstances();
+        unregisterAllAlarmLimitInstances();
+        unregisterAllAlarmLimitObjectiveInstances();
         unregisterAllPatientAlertInstances();
         unregisterAllTechnicalAlertInstances();
     }
@@ -229,15 +234,15 @@ public abstract class AbstractDevice {
         unregisterAllAlertInstances(oldTechnicalAlertInstances, technicalAlertInstances, technicalAlertWriter);
     }
 
-    protected void unregisterAllAlarmSettingsObjectiveInstances() {
-        while (!registeredAlarmSettingsObjectiveInstances.isEmpty()) {
-            unregisterAlarmSettingsObjectiveInstance(registeredAlarmSettingsObjectiveInstances.get(0));
+    protected void unregisterAllAlarmLimitObjectiveInstances() {
+        while (!registeredAlarmLimitObjectiveInstances.isEmpty()) {
+            unregisterAlarmLimitObjectiveInstance(registeredAlarmLimitObjectiveInstances.get(0));
         }
     }
 
-    protected void unregisterAllAlarmSettingsInstances() {
-        while (!registeredAlarmSettingsInstances.isEmpty()) {
-            unregisterAlarmSettingsInstance(registeredAlarmSettingsInstances.get(0));
+    protected void unregisterAllAlarmLimitInstances() {
+        while (!registeredAlarmLimitInstances.isEmpty()) {
+            unregisterAlarmLimitInstance(registeredAlarmLimitInstances.get(0));
         }
     }
 
@@ -267,20 +272,20 @@ public abstract class AbstractDevice {
         sampleArrayDataWriter.unregister_instance(holder.data, holder.handle);
     }
 
-    protected void unregisterAlarmSettingsInstance(InstanceHolder<ice.AlarmSettings> holder) {
-        registeredAlarmSettingsInstances.remove(holder);
-        alarmSettingsDataWriter.unregister_instance(holder.data, holder.handle);
+    protected void unregisterAlarmLimitInstance(InstanceHolder<ice.AlarmLimit> holder) {
+        registeredAlarmLimitInstances.remove(holder);
+        alarmLimitDataWriter.unregister_instance(holder.data, holder.handle);
     }
 
-    protected void unregisterAlarmSettingsObjectiveInstance(InstanceHolder<ice.LocalAlarmSettingsObjective> holder) {
-        registeredAlarmSettingsObjectiveInstances.remove(holder);
-        alarmSettingsObjectiveWriter.unregister_instance(holder.data, holder.handle);
+    protected void unregisterAlarmLimitObjectiveInstance(InstanceHolder<ice.LocalAlarmLimitObjective> holder) {
+        registeredAlarmLimitObjectiveInstances.remove(holder);
+        alarmLimitObjectiveWriter.unregister_instance(holder.data, holder.handle);
     }
 
     private final List<InstanceHolder<SampleArray>> registeredSampleArrayInstances = new ArrayList<InstanceHolder<SampleArray>>();
     private final List<InstanceHolder<Numeric>> registeredNumericInstances = new ArrayList<InstanceHolder<Numeric>>();
-    private final List<InstanceHolder<ice.AlarmSettings>> registeredAlarmSettingsInstances = new ArrayList<InstanceHolder<ice.AlarmSettings>>();
-    private final List<InstanceHolder<ice.LocalAlarmSettingsObjective>> registeredAlarmSettingsObjectiveInstances = new ArrayList<InstanceHolder<ice.LocalAlarmSettingsObjective>>();
+    private final List<InstanceHolder<ice.AlarmLimit>> registeredAlarmLimitInstances = new ArrayList<InstanceHolder<ice.AlarmLimit>>();
+    private final List<InstanceHolder<ice.LocalAlarmLimitObjective>> registeredAlarmLimitObjectiveInstances = new ArrayList<InstanceHolder<ice.LocalAlarmLimitObjective>>();
     private final Map<String, InstanceHolder<ice.Alert>> patientAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>();
     private final Map<String, InstanceHolder<ice.Alert>> technicalAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>();
     private final Set<String> oldPatientAlertInstances = new HashSet<String>();
@@ -330,52 +335,53 @@ public abstract class AbstractDevice {
         numericDataWriter.write(holder.data, holder.handle);
     }
 
-    protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper) {
-        newLower = null == newLower ? Float.NEGATIVE_INFINITY : newLower;
-        newUpper = null == newUpper ? Float.POSITIVE_INFINITY : newUpper;
-        if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
-            holder.data.lower = newLower;
-            holder.data.upper = newUpper;
-            alarmSettingsDataWriter.write(holder.data, holder.handle);
+    protected void alarmLimitSample(InstanceHolder<ice.AlarmLimit> holder, String unit_id, Float newValue) {
+    	//XXX Should we avoid the comparison w/ the unitID for now?...
+    	newValue = null==newValue?Float.NEGATIVE_INFINITY:newValue;
+        if(0 != Float.compare(newValue, holder.data.value)  /*||  !unit_id.equals(holder.data.unit_identifier) */) {
+            holder.data.value = newValue;
+            holder.data.unit_identifier = unit_id;
+            alarmLimitDataWriter.write(holder.data, holder.handle);
         }
     }
 
-    protected void alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, float newLower, float newUpper) {
-        if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
-            holder.data.lower = newLower;
-            holder.data.upper = newUpper;
-            alarmSettingsObjectiveWriter.write(holder.data, holder.handle);
+    protected void alarmLimitObjectiveSample(InstanceHolder<ice.LocalAlarmLimitObjective> holder, String unit_id, Float newValue) {
+        if(0 != Float.compare(newValue, holder.data.value) ||  !unit_id.equals(holder.data.unit_identifier)) {
+            holder.data.value = newValue;
+            holder.data.unit_identifier = unit_id;
+            alarmLimitObjectiveWriter.write(holder.data, holder.handle);
         }
     }
 
-    protected InstanceHolder<ice.AlarmSettings> alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper,
-            String metric_id) {
-        if (holder != null && !holder.data.metric_id.equals(metric_id)) {
-            unregisterAlarmSettingsInstance(holder);
+    protected InstanceHolder<ice.AlarmLimit> alarmLimitSample(InstanceHolder<ice.AlarmLimit> holder, String unit_id, Float newValue,
+            String metric_id, ice.LimitType limit_type) {
+    	// this should check all key values
+        if (holder != null && (!holder.data.metric_id.equals(metric_id) || !holder.data.limit_type.equals(limit_type))) {
+            unregisterAlarmLimitInstance(holder);
             holder = null;
         }
         if (null == holder) {
-            holder = createAlarmSettingsInstance(metric_id);
+            holder = createAlarmLimitInstance(metric_id, limit_type);
         }
-        alarmSettingsSample(holder, newLower, newUpper);
+        alarmLimitSample(holder, unit_id, newValue);
 
         return holder;
     }
 
-    protected InstanceHolder<ice.LocalAlarmSettingsObjective> alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder,
-            Float newLower, Float newUpper, String metric_id) {
-        if (holder != null && !holder.data.metric_id.equals(metric_id)) {
-            unregisterAlarmSettingsObjectiveInstance(holder);
+    protected InstanceHolder<ice.LocalAlarmLimitObjective> alarmLimitObjectiveSample(InstanceHolder<ice.LocalAlarmLimitObjective> holder,
+            Float newValue, String unit_id, String metric_id, ice.LimitType limit_type) {
+        if (holder != null && !holder.data.metric_id.equals(metric_id)) {//XXX correct comparison here? should compare w/ limit type too, the other key
+            unregisterAlarmLimitObjectiveInstance(holder);
             holder = null;
         }
-        if (null != newLower && null != newUpper) {
+        if (null != newValue) {
             if (null == holder) {
-                holder = createAlarmSettingsObjectiveInstance(metric_id);
+                holder = createAlarmLimitObjectiveInstance(metric_id, limit_type);
             }
-            alarmSettingsObjectiveSample(holder, newLower, newUpper);
+            alarmLimitObjectiveSample(holder, newValue, unit_id, metric_id, limit_type);
         } else {
             if (null != holder) {
-                unregisterAlarmSettingsObjectiveInstance(holder);
+                unregisterAlarmLimitObjectiveInstance(holder);
                 holder = null;
             }
 
@@ -619,24 +625,24 @@ public abstract class AbstractDevice {
         // inheritor may have registered... perhaps they should be responsible
         // in their override of shutdown?
 
-        if (null != alarmSettingsObjectiveCondition) {
-            eventLoop.removeHandler(alarmSettingsObjectiveCondition);
-            alarmSettingsObjectiveReader.delete_readcondition(alarmSettingsObjectiveCondition);
-            alarmSettingsObjectiveCondition = null;
-        }
+		if (null != alarmLimitObjectiveCondition) {
+		    eventLoop.removeHandler(alarmLimitObjectiveCondition);
+		    alarmLimitObjectiveReader.delete_readcondition(alarmLimitObjectiveCondition);
+		    alarmLimitObjectiveCondition = null;
+		}
 
-        subscriber.delete_datareader(alarmSettingsObjectiveReader);
-        domainParticipant.delete_topic(globalAlarmSettingsObjectiveTopic);
+		subscriber.delete_datareader(alarmLimitObjectiveReader);
+        domainParticipant.delete_topic(globalAlarmLimitObjectiveTopic);
 
-        publisher.delete_datawriter(alarmSettingsObjectiveWriter);
-        domainParticipant.delete_topic(localAlarmSettingsObjectiveTopic);
+        publisher.delete_datawriter(alarmLimitObjectiveWriter);
+        domainParticipant.delete_topic(localAlarmLimitObjectiveTopic);
         // TODO Where a participant is shared it is not safe to unregister types
-//        ice.LocalAlarmSettingsObjectiveTypeSupport.unregister_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
+//        ice.LocalAlarmLimitObjectiveTypeSupport.unregister_type(domainParticipant, ice.LocalAlarmLimitObjectiveTypeSupport.get_type_name());
 
-        publisher.delete_datawriter(alarmSettingsDataWriter);
-        domainParticipant.delete_topic(alarmSettingsTopic);
+        publisher.delete_datawriter(alarmLimitDataWriter);
+        domainParticipant.delete_topic(alarmLimitTopic);
         // TODO Where a participant is shared it is not safe to unregister types
-//        ice.AlarmSettingsTypeSupport.unregister_type(domainParticipant, ice.AlarmSettingsTypeSupport.get_type_name());
+//        ice.AlarmLimitTypeSupport.unregister_type(domainParticipant, ice.AlarmLimitTypeSupport.get_type_name());
 
         publisher.delete_datawriter(sampleArrayDataWriter);
         domainParticipant.delete_topic(sampleArrayTopic);
@@ -703,21 +709,22 @@ public abstract class AbstractDevice {
             throw new RuntimeException("sampleArrayDataWriter not created");
         }
 
-        ice.AlarmSettingsTypeSupport.register_type(domainParticipant, ice.AlarmSettingsTypeSupport.get_type_name());
-        alarmSettingsTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.AlarmSettingsTopic.VALUE, ice.AlarmSettingsTypeSupport.class);
-        alarmSettingsDataWriter = (ice.AlarmSettingsDataWriter) publisher.create_datawriter_with_profile(alarmSettingsTopic, QosProfiles.ice_library,
+        ice.AlarmLimitTypeSupport.register_type(domainParticipant, ice.AlarmLimitTypeSupport.get_type_name());
+        alarmLimitTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.AlarmLimitTopic.VALUE, ice.AlarmLimitTypeSupport.class);
+        alarmLimitDataWriter = (ice.AlarmLimitDataWriter) publisher.create_datawriter_with_profile(alarmLimitTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
-        ice.LocalAlarmSettingsObjectiveTypeSupport.register_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
-        localAlarmSettingsObjectiveTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.LocalAlarmSettingsObjectiveTopic.VALUE, ice.LocalAlarmSettingsObjectiveTypeSupport.class);
-        alarmSettingsObjectiveWriter = (LocalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(localAlarmSettingsObjectiveTopic,
+        ice.LocalAlarmLimitObjectiveTypeSupport.register_type(domainParticipant, ice.LocalAlarmLimitObjectiveTypeSupport.get_type_name());
+        localAlarmLimitObjectiveTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.LocalAlarmLimitObjectiveTopic.VALUE,
+                ice.LocalAlarmLimitObjectiveTypeSupport.class);
+        alarmLimitObjectiveWriter = (LocalAlarmLimitObjectiveDataWriter) publisher.create_datawriter_with_profile(localAlarmLimitObjectiveTopic,
                 QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
-        globalAlarmSettingsObjectiveTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
-                ice.GlobalAlarmSettingsObjectiveTypeSupport.class);
-        alarmSettingsObjectiveReader = (ice.GlobalAlarmSettingsObjectiveDataReader) subscriber.create_datareader_with_profile(
-                globalAlarmSettingsObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-
+        globalAlarmLimitObjectiveTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.GlobalAlarmLimitObjectiveTopic.VALUE,
+                ice.GlobalAlarmLimitObjectiveTypeSupport.class);
+        alarmLimitObjectiveReader = (ice.GlobalAlarmLimitObjectiveDataReader) subscriber.create_datareader_with_profile(
+                 globalAlarmLimitObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+       
         ice.DeviceAlertConditionTypeSupport.register_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
         deviceAlertConditionTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.DeviceAlertConditionTopic.VALUE,
                 ice.DeviceAlertConditionTypeSupport.class);
@@ -758,12 +765,10 @@ public abstract class AbstractDevice {
         return timestampFactory;
     }
 
-    public void setAlarmSettings(ice.GlobalAlarmSettingsObjective obj) {
-
+    public void setAlarmLimit(ice.GlobalAlarmLimitObjective obj) {
     }
 
-    public void unsetAlarmSettings(String metricId) {
-
+    public void unsetAlarmLimit(String metricId) {
     }
 
     private Map<InstanceHandle_t, String> instanceMetrics = new HashMap<InstanceHandle_t, String>();
@@ -784,20 +789,20 @@ public abstract class AbstractDevice {
         InstanceHandle_t deviceAlertHandle = deviceAlertConditionWriter.register_instance(alertCondition);
         deviceAlertConditionInstance = new InstanceHolder<ice.DeviceAlertCondition>(alertCondition, deviceAlertHandle);
 
-        if (null == alarmSettingsObjectiveCondition) {
+        if (null == alarmLimitObjectiveCondition) {
             final SampleInfoSeq info_seq = new SampleInfoSeq();
-            final ice.GlobalAlarmSettingsObjectiveSeq data_seq = new ice.GlobalAlarmSettingsObjectiveSeq();
+            final ice.GlobalAlarmLimitObjectiveSeq data_seq = new ice.GlobalAlarmLimitObjectiveSeq();
             eventLoop.addHandler(
-                    alarmSettingsObjectiveCondition = alarmSettingsObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
+            		alarmLimitObjectiveCondition = alarmLimitObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
                             ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE), new ConditionHandler() {
                         @Override
                         public void conditionChanged(Condition condition) {
                             try {
-                                alarmSettingsObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+                            	alarmLimitObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
                                         (ReadCondition) condition);
                                 for (int i = 0; i < data_seq.size(); i++) {
                                     SampleInfo si = (SampleInfo) info_seq.get(i);
-                                    ice.GlobalAlarmSettingsObjective obj = (ice.GlobalAlarmSettingsObjective) data_seq.get(i);
+                                    ice.GlobalAlarmLimitObjective obj = (ice.GlobalAlarmLimitObjective) data_seq.get(i);
 
                                     if (0 != (si.view_state & ViewStateKind.NEW_VIEW_STATE) && si.valid_data) {
                                         log.debug("Handle for metric_id=" + obj.metric_id + " is " + si.instance_handle);
@@ -806,11 +811,11 @@ public abstract class AbstractDevice {
 
                                     if (0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
                                         if (si.valid_data) {
-                                            log.debug("Setting " + obj.metric_id + " to [ " + obj.lower + " , " + obj.upper + "]");
-                                            setAlarmSettings(obj);
+                                            log.warn("Limit " + obj.metric_id + " "+obj.limit_type+" limit changed to [ " + obj.value + "  " + obj.unit_identifier + "]");
+                                            setAlarmLimit(obj);
                                         }
                                     } else {
-                                        obj = new ice.GlobalAlarmSettingsObjective();
+                                        obj = new ice.GlobalAlarmLimitObjective();
                                         log.warn("Unsetting handle " + si.instance_handle);
                                         // TODO 1-Oct-2013 JP This call to
                                         // get_key_value fails consistently on
@@ -820,9 +825,9 @@ public abstract class AbstractDevice {
                                         // alarmSettingsObjectiveReader.get_key_value(obj,
                                         // si.instance_handle);
                                         String metricId = instanceMetrics.get(si.instance_handle);
-                                        log.debug("Unsetting " + metricId);
+                                        log.debug("Unsetting alarm limit " + metricId);
                                         if (null != metricId) {
-                                            unsetAlarmSettings(metricId);
+                                        	unsetAlarmLimit(metricId);
                                         }
 
                                     }
@@ -830,7 +835,7 @@ public abstract class AbstractDevice {
                             } catch (RETCODE_NO_DATA noData) {
 
                             } finally {
-                                alarmSettingsObjectiveReader.return_loan(data_seq, info_seq);
+                            	alarmLimitObjectiveReader.return_loan(data_seq, info_seq);
                             }
                         }
                     });

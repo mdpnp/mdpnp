@@ -12,7 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
-import ice.GlobalAlarmSettingsObjective;
+import ice.GlobalAlarmLimitObjective;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -135,7 +135,7 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
     private final StringProperty labelMaximum = new SimpleStringProperty(this, "labelMaximum", "");
     private final ElementObserver<Value> elementObserver;
     
-    private final InstanceHolder<ice.GlobalAlarmSettingsObjective>[] alarmObjectives;
+    private final InstanceHolder<ice.GlobalAlarmLimitObjective>[] alarmObjectivesLow, alarmObjectivesHigh;
 
     @SuppressWarnings("unchecked")
     VitalImpl(VitalModel parent, String label, String units, String[] metricIds, Double low, Double high, Double criticalLow, Double criticalHigh,
@@ -147,19 +147,25 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
         this.minimum.set(minimum);
         this.maximum.set(maximum);
 
-        ice.GlobalAlarmSettingsObjectiveDataWriter writer = getParent().getWriter();
+        ice.GlobalAlarmLimitObjectiveDataWriter writer = getParent().getWriter();
         
         if(null != writer) {
-        
-            alarmObjectives = new InstanceHolder[metricIds.length];
-            for (int i = 0; i < metricIds.length; i++) {
-                alarmObjectives[i] = new InstanceHolder<ice.GlobalAlarmSettingsObjective>();
-                alarmObjectives[i].data = (GlobalAlarmSettingsObjective) ice.GlobalAlarmSettingsObjective.create();
-                alarmObjectives[i].data.metric_id = metricIds[i];
-                alarmObjectives[i].handle = getParent().getWriter().register_instance(alarmObjectives[i].data);
-            }
+	        alarmObjectivesLow = new InstanceHolder[metricIds.length];
+	        alarmObjectivesHigh = new InstanceHolder[metricIds.length];
+	        for (int i = 0; i < metricIds.length; i++) {
+	            alarmObjectivesLow[i] = new InstanceHolder<ice.GlobalAlarmLimitObjective>();
+	            alarmObjectivesLow[i].data = (GlobalAlarmLimitObjective) ice.GlobalAlarmLimitObjective.create();
+	            alarmObjectivesLow[i].data.metric_id = metricIds[i];
+	            alarmObjectivesLow[i].handle = getParent().getWriter().register_instance(alarmObjectivesLow[i].data);
+	            
+	            alarmObjectivesHigh[i] = new InstanceHolder<ice.GlobalAlarmLimitObjective>();
+	            alarmObjectivesHigh[i].data = (GlobalAlarmLimitObjective) ice.GlobalAlarmLimitObjective.create();
+	            alarmObjectivesHigh[i].data.metric_id = metricIds[i];
+	            alarmObjectivesHigh[i].handle = getParent().getWriter().register_instance(alarmObjectivesHigh[i].data);
+	        }
         } else {
-            alarmObjectives = null;
+        	alarmObjectivesLow = null;
+            alarmObjectivesHigh = null;
         }
 
         
@@ -319,14 +325,23 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
         this.criticalLow.set(low);
     }
 
-    private void writeCriticalLimits() {
-        if(alarmObjectives != null) {
-            for (int i = 0; i < alarmObjectives.length; i++) {
-                alarmObjectives[i].data.lower = null == criticalLow.get() ? Float.NEGATIVE_INFINITY : (float)(double)criticalLow.get();
-                alarmObjectives[i].data.upper = null == criticalHigh.get() ? Float.POSITIVE_INFINITY : (float)(double) criticalHigh.get();
-                getParent().getWriter().write(alarmObjectives[i].data, alarmObjectives[i].handle);
+    private void writeCriticalLimits() {  
+        if(alarmObjectivesLow != null) {
+            for (int i = 0; i < alarmObjectivesLow.length; i++) {
+            	alarmObjectivesLow[i].data.value = null == criticalLow.get() ? Float.NEGATIVE_INFINITY : (float)(double)criticalLow.get();
+            	alarmObjectivesLow[i].data.limit_type = ice.LimitType.low_limit;
+            	getParent().getWriter().write(alarmObjectivesLow[i].data, alarmObjectivesLow[i].handle);    
             }
         }
+        
+        if(alarmObjectivesHigh != null) {
+            for (int i = 0; i < alarmObjectivesHigh.length; i++) {
+            	alarmObjectivesHigh[i].data.value = null == criticalHigh.get() ? Float.POSITIVE_INFINITY : (float)(double) criticalHigh.get();
+        		alarmObjectivesHigh[i].data.limit_type = ice.LimitType.high_limit;
+                getParent().getWriter().write(alarmObjectivesHigh[i].data, alarmObjectivesHigh[i].handle);
+            }
+        }
+
     }
 
     @Override
@@ -335,10 +350,9 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
     }
 
     public void destroy() {
-        if(null != alarmObjectives) {
-            for (int i = 0; i < alarmObjectives.length; i++) {
-                getParent().getWriter().unregister_instance(alarmObjectives[i].data, alarmObjectives[i].handle);
-            }
+        for (int i = 0; i < metricIds.getValue().length/*alarmObjectives.length*/; i++) {
+            getParent().getWriter().unregister_instance(alarmObjectivesLow[i].data, alarmObjectivesLow[i].handle);
+            getParent().getWriter().unregister_instance(alarmObjectivesHigh[i].data, alarmObjectivesHigh[i].handle);
         }
     }
 

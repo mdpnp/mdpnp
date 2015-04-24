@@ -177,8 +177,12 @@ public class PB840Parameters extends PB840 {
         
     }
     
-    public void receiveAlarmSetting(String name, String lower, String upper) {
-        
+//    public void receiveAlarmSetting(String name, String lower, String upper) {
+//        
+//    }
+    
+    public void receiveAlarmLimit(String metricName, PB840.Units unitID, String value, String limitType){
+    	
     }
     
     public void receiveTechnicalAlert(String name, String value) {
@@ -255,26 +259,36 @@ public class PB840Parameters extends PB840 {
             return "Setting["+name+","+description+","+units+","+fieldNumber+"]";
         }
     }    
-    class AlarmSetting extends Field {
-        final int lowFieldNumber, highFieldNumber;
+    class AlarmLimit extends Field {
+    	final int value;
+    	final Units units;
+    	final String limitType;
+    	//String AlarmType, String unitID, String AlrmThreshold, String value
+    	
 
-        public AlarmSetting(final String name, final String description, final int lowFieldNumber, final int highFieldNumber) {
-            super(name, description);
-            this.lowFieldNumber = lowFieldNumber;
-            this.highFieldNumber = highFieldNumber;
-        }
+		public AlarmLimit(final String name, final String description, final Units units, final int value, final String limitType){
+	            super(name, description);
+	            this.units = units;
+	            this.value = value;
+	            this.limitType = limitType;
+			}
 
-        @Override
-        void handle(List<String> fieldValues) {
-            receiveAlarmSetting(name, 
-                    lowFieldNumber < 0 ? null : fieldValues.get(lowFieldNumber), 
-                    highFieldNumber < 0 ? null : fieldValues.get(highFieldNumber));
-        }
-        
+		
+	     @Override
+	        void handle(List<String> fieldValues) {
+	    	 if (value > -1)//inexistent limits are fields -1 in the PB840.fields
+	    		 receiveAlarmLimit(name, units, fieldValues.get(value), limitType);
+//	    		 receiveAlarmLimit(name, units, value < 0 ? null:fieldValues.get(value), limitType);
+//	                    lowFieldNumber < 0 ? null : fieldValues.get(lowFieldNumber), 
+//	                    highFieldNumber < 0 ? null : fieldValues.get(highFieldNumber));
+	        }
+		
+		
         @Override
         public String toString() {
-            return "AlarmSetting["+name+","+description+","+lowFieldNumber+","+highFieldNumber+"]";
+            return "AlarmLimit["+name+","+description+","+value+","+units+","+limitType+"]";
         }
+    	
     }
     
     class PatientAlert extends Field {
@@ -429,7 +443,8 @@ public class PB840Parameters extends PB840 {
                         } else if("N".equals(type)) {
                             currentFields.add(new Numeric(name, description, Units.valueOf(units), Integer.parseInt(field1)));
                         } else if("AS".equals(type)) {
-                            currentFields.add(new AlarmSetting(name, description, Integer.parseInt(field1), Integer.parseInt(field2)));
+                        	currentFields.add(new AlarmLimit(name, description, Units.getValue(units), Integer.parseInt(field1), "low_limit"));
+                        	currentFields.add(new AlarmLimit(name, description, Units.getValue(units), Integer.parseInt(field2), "high_limit"));
                         } else if("PA".equals(type)) {
                             currentFields.add(new PatientAlert(name, description, Integer.parseInt(field1)));
                         } else if("TA".equals(type)) {

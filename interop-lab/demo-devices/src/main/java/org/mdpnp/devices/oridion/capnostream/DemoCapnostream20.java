@@ -12,8 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.devices.oridion.capnostream;
 
-import ice.AlarmSettings;
-import ice.LocalAlarmSettingsObjective;
+import ice.AlarmLimit;
+import ice.LocalAlarmLimitObjective;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -108,7 +108,8 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     protected InstanceHolder<ice.Numeric> endOfBreath;
 
 
-    protected InstanceHolder<ice.AlarmSettings> spo2AlarmSettings, pulserateAlarmSettings, rrAlarmSettings, etco2AlarmSettings;
+    protected InstanceHolder<ice.AlarmLimit> spo2AlarmLimitLow, pulserateAlarmLimitLow, rrAlarmLimitLow, etco2AlarmLimitLow,
+                                             spo2AlarmLimitHigh, pulserateAlarmLimitHigh, rrAlarmLimitHigh, etco2AlarmLimitHigh;
     
 
     protected void linkIsActive() {
@@ -132,14 +133,14 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     private final Map<String, Integer> priorSafeHigh = new HashMap<String, Integer>();
 
     @Override
-    protected InstanceHolder<AlarmSettings> alarmSettingsSample(InstanceHolder<AlarmSettings> holder, Float newLower, Float newUpper, String metric_id) {
-        if (newLower != null) {
-            currentLow.put(metric_id, (int) (float) newLower);
+    protected InstanceHolder<AlarmLimit> alarmLimitSample(InstanceHolder<AlarmLimit> holder, String unit_id, Float newValue, String metric_id, ice.LimitType limit_type)  {
+    	if (newValue != null && limit_type==ice.LimitType.low_limit) {
+            currentLow.put(metric_id, (int) (float) newValue);
         }
-        if (newUpper != null) {
-            currentHigh.put(metric_id, (int) (float) newUpper);
+        if (newValue != null && limit_type==ice.LimitType.high_limit) {
+            currentHigh.put(metric_id, (int) (float) newValue);
         }
-        return super.alarmSettingsSample(holder, newLower, newUpper, metric_id);
+        return super.alarmLimitSample(holder, unit_id, newValue, metric_id, limit_type);
     }
 
     public DemoCapnostream20(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
@@ -251,31 +252,32 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     }
 
     @Override
-    public void unsetAlarmSettings(String metricId) {
-        super.unsetAlarmSettings(metricId);
+    public void unsetAlarmLimit(String metricId) {//XXX is it going to need limit_type too?
+        super.unsetAlarmLimit(metricId);
         log.warn("Resetting " + metricId + " to [" + priorSafeLow.get(metricId) + " , " + priorSafeHigh.get(metricId));
         setupItemHandler.send(lowerAlarm(metricId), priorSafeLow.get(metricId));
         setupItemHandler.send(upperAlarm(metricId), priorSafeHigh.get(metricId));
     }
+    
 
-    private Map<String, InstanceHolder<ice.LocalAlarmSettingsObjective>> localAlarmSettings = new HashMap<String, InstanceHolder<ice.LocalAlarmSettingsObjective>>();
+    private Map<String, InstanceHolder<ice.LocalAlarmLimitObjective>> localAlarmLimit = new HashMap<String, InstanceHolder<ice.LocalAlarmLimitObjective>>();
 
     @Override
-    protected void unregisterAlarmSettingsObjectiveInstance(InstanceHolder<LocalAlarmSettingsObjective> holder) {
-        localAlarmSettings.clear();
-        super.unregisterAlarmSettingsObjectiveInstance(holder);
+    protected void unregisterAlarmLimitObjectiveInstance(InstanceHolder<LocalAlarmLimitObjective> holder) {
+        localAlarmLimit.clear();
+        super.unregisterAlarmLimitObjectiveInstance(holder);
     }
 
     @Override
-    public void setAlarmSettings(ice.GlobalAlarmSettingsObjective obj) {
-        super.setAlarmSettings(obj);
+    public void setAlarmLimit(ice.GlobalAlarmLimitObjective obj){
+        super.setAlarmLimit(obj);
         priorSafeHigh.put(obj.metric_id, currentHigh.get(obj.metric_id));
         priorSafeLow.put(obj.metric_id, currentLow.get(obj.metric_id));
-        setupItemHandler.send(lowerAlarm(obj.metric_id), (int) obj.lower);
-        setupItemHandler.send(upperAlarm(obj.metric_id), (int) obj.upper);
-        // TODO Does this really below here?
-        localAlarmSettings.put(obj.metric_id,
-                alarmSettingsObjectiveSample(localAlarmSettings.get(obj.metric_id), obj.lower, obj.upper, obj.metric_id));
+        setupItemHandler.send(lowerAlarm(obj.metric_id), (int) obj.value);
+        setupItemHandler.send(upperAlarm(obj.metric_id), (int) obj.value);
+        // TODO Does this really belong here?
+        localAlarmLimit.put(obj.metric_id +"_"+obj.limit_type,
+                alarmLimitObjectiveSample(localAlarmLimit.get(obj.metric_id), obj.value, obj.unit_identifier, obj.metric_id, obj.limit_type));
     }
 
     public void init() {
@@ -329,17 +331,54 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
 
             DemoCapnostream20.this.pulserate = numericSample(DemoCapnostream20.this.pulserate, 0xFF == pulserate ? null : pulserate,
                     rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, sampleTime);
-
-            DemoCapnostream20.this.spo2AlarmSettings = alarmSettingsSample(DemoCapnostream20.this.spo2AlarmSettings, 0xFF == spo2AlarmLow ? null
-                    : (float) spo2AlarmLow, 0xFF == spo2AlarmHigh ? null : (float) spo2AlarmHigh, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
-
-            DemoCapnostream20.this.etco2AlarmSettings = alarmSettingsSample(DemoCapnostream20.this.etco2AlarmSettings, 0xFF == etCo2AlarmLow ? null
-                    : (float) etCo2AlarmLow, 0xFF == etCo2AlarmHigh ? null : (float) spo2AlarmLow, rosetta.MDC_AWAY_CO2_ET.VALUE);
-
-            DemoCapnostream20.this.pulserateAlarmSettings = alarmSettingsSample(DemoCapnostream20.this.pulserateAlarmSettings,
-                    0xFF == pulseAlarmLow ? null : (float) pulseAlarmLow, 0xFF == pulseAlarmHigh ? null : (float) pulseAlarmHigh,
-                    rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
-
+            
+            
+            //Shall we use rosetta.XXX.VALUE for UNITS as well as metric_ID???
+            //spo2Alarm rosetta.MDC_PULS_OXIM_SAT_O2
+            if(0xFF == spo2AlarmLow)
+            	DemoCapnostream20.this.spo2AlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.spo2AlarmLimitLow, rosetta.MDC_DIM_PERCENT.VALUE, null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.low_limit);
+            else 
+            	DemoCapnostream20.this.spo2AlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.spo2AlarmLimitLow, rosetta.MDC_DIM_PERCENT.VALUE, (float) spo2AlarmLow, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.low_limit);
+            
+            if(0xFF == spo2AlarmHigh)
+              	DemoCapnostream20.this.spo2AlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.spo2AlarmLimitHigh, rosetta.MDC_DIM_PERCENT.VALUE, null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.high_limit);
+            else 
+            	DemoCapnostream20.this.spo2AlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.spo2AlarmLimitHigh, rosetta.MDC_DIM_PERCENT.VALUE, (float) spo2AlarmHigh, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.high_limit);
+            
+            //etco2Alarm rosetta.MDC_AWAY_CO2_ET
+            if(0xFF == etCo2AlarmLow)
+            	DemoCapnostream20.this.etco2AlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.etco2AlarmLimitLow, units(units), null, rosetta.MDC_AWAY_CO2_ET.VALUE, ice.LimitType.low_limit);
+            else
+            	DemoCapnostream20.this.etco2AlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.etco2AlarmLimitLow, units(units), (float) etCo2AlarmLow, rosetta.MDC_AWAY_CO2_ET.VALUE, ice.LimitType.low_limit);
+            
+            if(0xFF == etCo2AlarmHigh)
+            	DemoCapnostream20.this.etco2AlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.etco2AlarmLimitHigh, units(units), null, rosetta.MDC_AWAY_CO2_ET.VALUE, ice.LimitType.high_limit);
+            else
+            	DemoCapnostream20.this.etco2AlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.etco2AlarmLimitHigh, units(units), (float) etCo2AlarmHigh, rosetta.MDC_AWAY_CO2_ET.VALUE, ice.LimitType.high_limit);
+            
+            //pulserateAlarms rosetta.MDC_PULS_OXIM_PULS_RATE
+            if(0xFF == pulseAlarmLow)
+            	DemoCapnostream20.this.pulserateAlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.pulserateAlarmLimitLow, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.low_limit);
+            else
+            	DemoCapnostream20.this.pulserateAlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.pulserateAlarmLimitLow, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, (float) pulseAlarmLow, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.low_limit);
+            
+            if(0xFF == pulseAlarmHigh)
+            	DemoCapnostream20.this.pulserateAlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.pulserateAlarmLimitHigh, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.high_limit);
+            else
+            	DemoCapnostream20.this.pulserateAlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.pulserateAlarmLimitHigh, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, (float) pulseAlarmHigh, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.high_limit);
+            
+            //rosetta.MDC_RESP_RATE
+            if(0xFF == rrAlarmLow)
+            	DemoCapnostream20.this.rrAlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.rrAlarmLimitLow, rosetta.MDC_DIM_RESP_PER_MIN.VALUE, null, rosetta.MDC_RESP_RATE.VALUE, ice.LimitType.low_limit);
+            else
+            	DemoCapnostream20.this.rrAlarmLimitLow = alarmLimitSample(DemoCapnostream20.this.rrAlarmLimitLow, rosetta.MDC_DIM_RESP_PER_MIN.VALUE, (float) rrAlarmLow, rosetta.MDC_RESP_RATE.VALUE, ice.LimitType.low_limit);
+            
+            if(0xFF == rrAlarmHigh)
+            	DemoCapnostream20.this.rrAlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.rrAlarmLimitHigh, rosetta.MDC_DIM_RESP_PER_MIN.VALUE, null, rosetta.MDC_RESP_RATE.VALUE, ice.LimitType.high_limit);
+            else
+            	DemoCapnostream20.this.rrAlarmLimitHigh = alarmLimitSample(DemoCapnostream20.this.rrAlarmLimitHigh, rosetta.MDC_DIM_RESP_PER_MIN.VALUE, (float) rrAlarmHigh, rosetta.MDC_RESP_RATE.VALUE, ice.LimitType.high_limit);
+            
+            
             return true;
         }
 

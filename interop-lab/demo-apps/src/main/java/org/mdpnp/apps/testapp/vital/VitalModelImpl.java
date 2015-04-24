@@ -111,10 +111,11 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         }
     }
 
-    private ice.GlobalAlarmSettingsObjectiveDataWriter writer;
-    private Topic globalAlarmSettingsTopic;
+    private ice.GlobalAlarmLimitObjectiveDataWriter writer;
+    private Topic globalAlarmLimitTopic;
 
-    public ice.GlobalAlarmSettingsObjectiveDataWriter getWriter() {
+
+    public ice.GlobalAlarmLimitObjectiveDataWriter getWriter() {
         return writer;
     }
 
@@ -175,18 +176,18 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         VitalModelImpl.this.publisher = publisher;
         DomainParticipant participant = publisher.get_participant();
 
-        ice.GlobalAlarmSettingsObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name());
-
-        globalAlarmSettingsTopic = TopicUtil.findOrCreateTopic(participant, ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
-                ice.GlobalAlarmSettingsObjectiveTypeSupport.class); 
-        writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(globalAlarmSettingsTopic, QosProfiles.ice_library,
+        ice.GlobalAlarmLimitObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmLimitObjectiveTypeSupport.get_type_name());
+        
+        globalAlarmLimitTopic = TopicUtil.findOrCreateTopic(participant, ice.GlobalAlarmLimitObjectiveTopic.VALUE,
+                ice.GlobalAlarmLimitObjectiveTypeSupport.class); 
+        writer = (ice.GlobalAlarmLimitObjectiveDataWriter) publisher.create_datawriter_with_profile(globalAlarmLimitTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
     }
 
     @Override
     public void stop() {
         publisher.delete_datawriter(writer);
-        publisher.get_participant().delete_topic(globalAlarmSettingsTopic);
+        publisher.get_participant().delete_topic(globalAlarmLimitTopic);
     }
 
     private static final String DEFAULT_INTERLOCK_TEXT = "";

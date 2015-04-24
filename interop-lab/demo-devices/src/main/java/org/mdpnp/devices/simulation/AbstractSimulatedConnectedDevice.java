@@ -12,10 +12,10 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation;
 
-import ice.AlarmSettings;
-import ice.GlobalAlarmSettingsObjective;
+import ice.AlarmLimit;
+import ice.GlobalAlarmLimitObjective;
 import ice.GlobalSimulationObjective;
-import ice.LocalAlarmSettingsObjective;
+import ice.LocalAlarmLimitObjective;
 import ice.Numeric;
 
 import java.util.HashMap;
@@ -95,28 +95,28 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
         // properly implementing this
     }
     
-    private Map<String, InstanceHolder<ice.LocalAlarmSettingsObjective>> localAlarmSettings = new HashMap<String, InstanceHolder<ice.LocalAlarmSettingsObjective>>();
-    private Map<String, InstanceHolder<ice.AlarmSettings>> alarmSettings = new HashMap<String, InstanceHolder<ice.AlarmSettings>>();
-    
+    private Map<String, InstanceHolder<ice.LocalAlarmLimitObjective>> localAlarmLimit = new HashMap<String, InstanceHolder<ice.LocalAlarmLimitObjective>>();
+    private Map<String, InstanceHolder<ice.AlarmLimit>> alarmLimit = new HashMap<String, InstanceHolder<ice.AlarmLimit>>();
+       
     @Override
-    protected void unregisterAlarmSettingsObjectiveInstance(InstanceHolder<LocalAlarmSettingsObjective> holder) {
-        localAlarmSettings.clear();
-        super.unregisterAlarmSettingsObjectiveInstance(holder);
+    protected void unregisterAlarmLimitObjectiveInstance(InstanceHolder<LocalAlarmLimitObjective> holder) {
+        localAlarmLimit.clear();
+        super.unregisterAlarmLimitObjectiveInstance(holder);
     }
     
     @Override
-    protected void unregisterAlarmSettingsInstance(InstanceHolder<AlarmSettings> holder) {
-        alarmSettings.clear();
-        super.unregisterAlarmSettingsInstance(holder);
+    protected void unregisterAlarmLimitInstance(InstanceHolder<AlarmLimit> holder) {
+        alarmLimit.clear();
+        super.unregisterAlarmLimitInstance(holder);
     }
     
     @Override
-    public void setAlarmSettings(GlobalAlarmSettingsObjective obj) {
-        super.setAlarmSettings(obj);
-        localAlarmSettings.put(obj.metric_id,
-                alarmSettingsObjectiveSample(localAlarmSettings.get(obj.metric_id), obj.lower, obj.upper, obj.metric_id));
-        alarmSettings.put(obj.metric_id,
-                alarmSettingsSample(alarmSettings.get(obj.metric_id), obj.lower, obj.upper, obj.metric_id));
+    public void setAlarmLimit(GlobalAlarmLimitObjective obj) {
+        super.setAlarmLimit(obj);
+        localAlarmLimit.put(obj.metric_id+"_"+obj.limit_type,
+                alarmLimitObjectiveSample(localAlarmLimit.get(obj.metric_id), obj.value, obj.unit_identifier, obj.metric_id, obj.limit_type));
+        alarmLimit.put(obj.metric_id+"_"+obj.limit_type,
+                alarmLimitSample(alarmLimit.get(obj.metric_id), obj.unit_identifier, obj.value, obj.metric_id, obj.limit_type));
         // TODO really should also check alarm violation on threshold change here but it will be tricky to get the right
         // sample of Numeric
     }
@@ -125,29 +125,49 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, DeviceClock.Reading time) {
         super.numericSample(holder, newValue, time);
         String identifier = holder.data.metric_id + "-" + holder.data.instance_id;
-        InstanceHolder<ice.AlarmSettings> alarmSettings = this.alarmSettings.get(holder.data.metric_id);
-        if(null != alarmSettings) {
+//        InstanceHolder<ice.AlarmSettings> alarmSettings = this.alarmSettings.get(holder.data.metric_id);
+        InstanceHolder<ice.AlarmLimit> alarmLimit = this.alarmLimit.get(holder.data.metric_id);//need other keys?
+        if(null != alarmLimit) {
             
-            // There are threshold settings for this numeric value, let's emit an alarm!
-            if(Float.compare(alarmSettings.data.lower, newValue)>0) {
-                log.debug("For " + identifier + " lower bound is exceeded " + newValue + " < " + alarmSettings.data.lower);
-                writePatientAlert(identifier, "LOW");
-            } else if(Float.compare(alarmSettings.data.upper, newValue)<0) {
-                log.debug("For " + identifier + " upper bound is exceeded " + newValue + " > " + alarmSettings.data.upper);
-                writePatientAlert(identifier, "HIGH");
-            } else {
-                log.trace("For " + identifier + " is in range " + newValue + " in [" + alarmSettings.data.lower+"-"+alarmSettings.data.upper);
-                writePatientAlert(identifier, "NORMAL");
-            }
+            //There are threshold settings for this numeric value, let's emit an alarm!
+        	//LOW LIMIT
+        	if(ice.LimitType.low_limit==alarmLimit.data.limit_type){
+        		if(Float.compare(alarmLimit.data.value, newValue) >0){
+	        		//TODO WRONG? what about the Units_ID? Is it enough comparing values or do we need to 
+	        		// make sure we compare values that have the same units?
+	        		log.debug("For " + identifier + " lower limit is exceeded " + newValue + " < " + alarmLimit.data.value);
+        		}else{
+        			log.debug("For " + identifier + " lower limit is in range " + newValue + " > " + alarmLimit.data.value);
+        		}
+        	}
+        	
+        	//HIGH LIMIT
+        	if(ice.LimitType.high_limit==alarmLimit.data.limit_type){
+        		if(Float.compare(alarmLimit.data.value, newValue) < 0)//TODO compare between units
+        			log.debug("For " + identifier + " upper limit is exceeded " + newValue + " < " + alarmLimit.data.value);
+        		else
+        			log.debug("For " + identifier + " upper limit is in range " + newValue + " > " + alarmLimit.data.value);
+        	}
+        	
+//            if(Float.compare(alarmSettings.data.lower, newValue)>0) {
+//                log.debug("For " + identifier + " lower bound is exceeded " + newValue + " < " + alarmSettings.data.lower);
+//                writePatientAlert(identifier, "LOW");
+//            } else if(Float.compare(alarmSettings.data.upper, newValue)<0) {
+//                log.debug("For " + identifier + " upper bound is exceeded " + newValue + " > " + alarmSettings.data.upper);
+//                writePatientAlert(identifier, "HIGH");
+//            } else {
+//                log.trace("For " + identifier + " is in range " + newValue + " in [" + alarmSettings.data.lower+"-"+alarmSettings.data.upper);
+//                writePatientAlert(identifier, "NORMAL");
+//            }
         } else {
             log.trace("For " + identifier + " no alarm settings");
         }
     }
     
     @Override
-    public void unsetAlarmSettings(String metricId) {
-        // TODO Really ought to unreg the local objective and alarm settings when the alarm settings are unset
-        super.unsetAlarmSettings(metricId);
+    public void unsetAlarmLimit(String metricId) {
+        // TODO Really ought to unread the local objective and alarm settings when the alarm settings are unset
+        super.unsetAlarmLimit(metricId);
     }
     
     
