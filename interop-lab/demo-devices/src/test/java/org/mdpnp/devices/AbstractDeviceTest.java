@@ -2,6 +2,8 @@ package org.mdpnp.devices;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mdpnp.devices.AbstractDevice.ArrayContainer;
+import org.mdpnp.devices.AbstractDevice.CollectionContainer;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -20,7 +22,7 @@ public class AbstractDeviceTest {
 
         int n;
 
-        AbstractDevice.ArrayContainer<Number> a1 = new AbstractDevice.ArrayContainer<>(f);
+        /*AbstractDevice.ArrayContainer<Number> a1 */ ArrayContainer<Double> a1= new AbstractDevice.ArrayContainer<>(f);
         Assert.assertFalse(a1.isNull());
         Assert.assertEquals(a1.size(), 5);
         n=0;
@@ -29,7 +31,7 @@ public class AbstractDeviceTest {
         }
         Assert.assertEquals(n, 5);
 
-        AbstractDevice.ArrayContainer<Number> a2 = new AbstractDevice.ArrayContainer<>(f, 2);
+        ArrayContainer<Double> a2 /*AbstractDevice.ArrayContainer<Number> a2*/ = new AbstractDevice.ArrayContainer<>(f, 2);
         Assert.assertFalse(a2.isNull());
         Assert.assertEquals(a2.size(), 2);
         n=0;
@@ -48,9 +50,9 @@ public class AbstractDeviceTest {
         Assert.assertTrue(a0.isNull());
         Assert.assertFalse(a0.iterator().hasNext());
 
-        List<Number> l = Arrays.asList(f);
+        List<Double> l /*List<Number> l*/ = Arrays.asList(f);
 
-        AbstractDevice.CollectionContainer<Number> a1 = new AbstractDevice.CollectionContainer<>(l);
+        CollectionContainer<Double> a1 /* AbstractDevice.CollectionContainer<Number> a1 */= new AbstractDevice.CollectionContainer<>(l);
         Assert.assertFalse(a1.isNull());
         Assert.assertEquals(a1.size(), 5);
         int n = 0;

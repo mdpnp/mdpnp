@@ -49,7 +49,7 @@ public class AbstractDraegerVentTest {
     @Test
     public void testClockImpl() throws Exception {
 
-        Calendar cal = Calendar.getInstance();
+        final Calendar cal = Calendar.getInstance();
         cal.set(Calendar.YEAR,        1986);
         cal.set(Calendar.MONTH,       Calendar.JANUARY);
         cal.set(Calendar.DATE,        28);

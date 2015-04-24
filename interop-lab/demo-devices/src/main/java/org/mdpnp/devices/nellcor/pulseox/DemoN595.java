@@ -36,7 +36,7 @@ import com.rti.dds.subscription.Subscriber;
  */
 public class DemoN595 extends AbstractSerialDevice {
     protected InstanceHolder<ice.Numeric> pulse, spo2, pulseAmplitude;
-    protected InstanceHolder<ice.AlarmSettings> pulseAlarmSettings, spo2AlarmSettings;
+    protected InstanceHolder<ice.AlarmLimit> pulseAlarmLimit, spo2AlarmLimit;
 
     private class MyNellcorN595 extends NellcorN595 {
         public MyNellcorN595() throws NoSuchFieldException, SecurityException, IOException {
@@ -106,8 +106,12 @@ public class DemoN595 extends AbstractSerialDevice {
 
         @Override
         public void fireAlarmPulseOximeter() {
-            pulseAlarmSettings = alarmSettingsSample(pulseAlarmSettings, getPRLower(), getPRUpper(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
-            spo2AlarmSettings = alarmSettingsSample(spo2AlarmSettings, getSpO2Lower(), getSpO2Upper(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
+        	pulseAlarmLimit = alarmLimitSample(pulseAlarmLimit, "unit_id", getPRLower(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.low_limit);
+        	pulseAlarmLimit = alarmLimitSample(pulseAlarmLimit, "unit_id", getPRUpper(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, ice.LimitType.high_limit);
+        	spo2AlarmLimit = alarmLimitSample(spo2AlarmLimit, "unit_id", getSpO2Lower(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.low_limit);
+        	spo2AlarmLimit = alarmLimitSample(spo2AlarmLimit, "unit_id", getSpO2Upper(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, ice.LimitType.high_limit);
+//            pulseAlarmSettings = alarmSettingsSample(pulseAlarmSettings, getPRLower(), getPRUpper(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE);
+//            spo2AlarmSettings = alarmSettingsSample(spo2AlarmSettings, getSpO2Lower(), getSpO2Upper(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE);
         }
         
 
@@ -202,9 +206,9 @@ public class DemoN595 extends AbstractSerialDevice {
     }
     
     @Override
-    protected void unregisterAllAlarmSettingsInstances() {
-        super.unregisterAllAlarmSettingsInstances();
-        this.spo2AlarmSettings = null;
-        this.pulseAlarmSettings = null;
+    protected void unregisterAllAlarmLimitInstances() {
+        super.unregisterAllAlarmLimitInstances();
+        this.spo2AlarmLimit = null;
+        this.pulseAlarmLimit = null;
     }
 }
