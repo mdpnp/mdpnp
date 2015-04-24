@@ -11,7 +11,6 @@
 <BorderPane fx:id="main" prefHeight="-1" prefWidth="-1"
  xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
  fx:controller="org.mdpnp.apps.testapp.ConfigurationDialog">
- <!-- TODO Add Nodes -->
  <bottom>
   <BorderPane prefHeight="-1.0" prefWidth="-1.0">
    <left>
@@ -26,7 +25,7 @@
      text="Start" />
    </right>
    <BorderPane.margin>
-    <Insets fx:id="x1" />
+    <Insets />
    </BorderPane.margin>
   </BorderPane>
  </bottom>

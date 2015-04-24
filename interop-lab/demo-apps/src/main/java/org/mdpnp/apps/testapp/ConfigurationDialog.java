@@ -23,7 +23,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.BorderPane;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -119,14 +118,10 @@ public class ConfigurationDialog {
         FXMLLoader loader = new FXMLLoader(ConfigurationDialog.class.getResource("ConfigurationDialog.fxml"));
         Parent ui = loader.load();
         ConfigurationDialog d = loader.getController();
-        d.currentStage = new Stage(StageStyle.UNDECORATED);
+        d.currentStage = new Stage(StageStyle.DECORATED);
         d.set(configuration, d.currentStage);
 
-        
-
-        d.currentStage.initModality(Modality.APPLICATION_MODAL);
         d.currentStage.setTitle("MD PnP Demo Apps");
-        d.currentStage.setAlwaysOnTop(true);
         d.currentStage.setScene(new Scene(ui));
         d.currentStage.sizeToScene();
         d.currentStage.centerOnScreen();
