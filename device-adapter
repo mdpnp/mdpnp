@@ -18,7 +18,7 @@ then
 fi
 
 export ADAPTER_OPTS="-app ICE_Device_Interface $DEVICE_SETTINGS"
-export ADAPTER_DIR=$HOME/OpenICE-0.6.1/bin
+export ADAPTER_DIR=$HOME/OpenICE-0.6.2-SNAPSHOT/bin
 export ADAPTER_SCR=OpenICE
 export PIDFILE=/var/run/$NAME.pid
 export OPEN_ICE_OPTS="-Dlog4j.configuration=file:$ADAPTER_DIR/../../log4j.properties -DrandomUDI=$DEVICE_ID"
