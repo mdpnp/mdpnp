@@ -7,11 +7,7 @@
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.geometry.*?>
 
-
 <BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.validate.ValidateApplication">
-   <top>
-      <Label text="Automated Validation" styleClass="heading" BorderPane.alignment="CENTER"/>
-   </top>
    <center>
       <ScrollPane fitToHeight="true" fitToWidth="true" BorderPane.alignment="CENTER">
         <content>
@@ -35,13 +31,13 @@
        <Label text="Add a vital sign:" />
             <ComboBox fx:id="vitalSigns" />
          <Button mnemonicParsing="false" onAction="#addVitalSign" text="Add" />
-         <Label text="Data Points:"/>
-         <Spinner fx:id="maxDataPointsSpinner" editable="true" initialValue="20" min="1" max="100" prefWidth="75.0"/>
-         <Label text="Max %RSD:"/>
-         <Spinner fx:id="maxRsdSpinner" editable="true" initialValue="2.5" min="0.0" max="10.0" amountToStepBy="0.1" prefWidth="75.0">
+         <Label text="Data Points:" />
+         <Spinner fx:id="maxDataPointsSpinner" editable="true" initialValue="20" max="100" min="1" prefWidth="75.0" />
+         <Label text="Max %RSD:" />
+         <Spinner fx:id="maxRsdSpinner" amountToStepBy="0.1" editable="true" initialValue="2.5" max="10.0" min="0.0" prefWidth="75.0">
          </Spinner>
-         <Label text="Min Kurtosis:"/>
-         <Spinner fx:id="minKurtosisSpinner" editable="true" initialValue="-3.0" min="-20.0" max="20.0" amountToStepBy="0.1" prefWidth="75.0">
+         <Label text="Min Kurtosis:" />
+         <Spinner fx:id="minKurtosisSpinner" amountToStepBy="0.1" editable="true" initialValue="-3.0" max="20.0" min="-20.0" prefWidth="75.0">
          </Spinner>
        </children>
       </HBox>

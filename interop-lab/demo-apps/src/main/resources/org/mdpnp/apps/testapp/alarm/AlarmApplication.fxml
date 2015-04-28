@@ -8,7 +8,7 @@
 
 <BorderPane prefHeight="-1" prefWidth="-1" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.alarm.AlarmApplication">
  <center>
-  <SplitPane><items>
+  <SplitPane dividerPositions="0.5"><items>
   <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
    <content>
     <AnchorPane id="Content" prefHeight="-1.0" prefWidth="-1.0">
@@ -74,7 +74,4 @@
    </content>
   </ScrollPane>
  </items></SplitPane></center>
-   <top>
-      <Label text="Alarm History" BorderPane.alignment="CENTER" />
-   </top>
 </BorderPane>

@@ -59,7 +59,4 @@
       </content>
     </ScrollPane>
   </center>
-   <top>
-      <Label text="HL7 Exporter" BorderPane.alignment="CENTER" />
-   </top>
 </BorderPane>
