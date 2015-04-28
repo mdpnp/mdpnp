@@ -119,6 +119,9 @@ public class ConfigurationDialog {
         Parent ui = loader.load();
         ConfigurationDialog d = loader.getController();
         d.currentStage = new Stage(StageStyle.DECORATED);
+        d.currentStage.setOnCloseRequest((event) -> {
+            d.quitPressed = true;
+        });
         d.set(configuration, d.currentStage);
 
         d.currentStage.setTitle("MD PnP Demo Apps");
