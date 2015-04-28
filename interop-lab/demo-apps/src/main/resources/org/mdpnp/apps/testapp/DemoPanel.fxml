@@ -3,6 +3,7 @@
 <?import java.lang.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
+<?import org.mdpnp.apps.testapp.comboboxfix.FixedComboBox?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
@@ -18,7 +19,7 @@
      GridPane.rowIndex="0" />
     <FlowPane GridPane.columnIndex="1">
      <Label text="Select a patient:" />
-     <ComboBox fx:id="patients" onAction="#changePatient"
+     <FixedComboBox fx:id="patients" onAction="#changePatient"
       prefWidth="150.0"/>
     </FlowPane>
     <Button fx:id="createAdapter" mnemonicParsing="false"

@@ -31,12 +31,12 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 
+import org.mdpnp.apps.testapp.comboboxfix.FixedComboBox;
 import org.mdpnp.apps.testapp.patient.PatientInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,7 +160,7 @@ public class DemoPanel implements Runnable {
     BorderPane demoPanel;
 
     @FXML
-    ComboBox<PatientInfo> patients;
+    FixedComboBox<PatientInfo> patients;
 
     @FXML
     public void clickCreateAdapter(ActionEvent evt) {
