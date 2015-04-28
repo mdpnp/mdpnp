@@ -60,6 +60,9 @@ public class DemoPanel implements Runnable {
 
     @FXML
     protected BorderPane content;
+    
+    @FXML 
+    protected Label appTitle;
 
     private PartitionChooserModel partitionChooserModel;
 

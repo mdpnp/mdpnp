@@ -110,6 +110,7 @@ public class IceAppsContainer extends IceApplication {
         Runnable goBackAction = new Runnable() {
             public void run() {
                 try {
+                    panelController.appTitle.setText("");
                     app.stop();
                 } catch (Exception ex) {
                     log.error("Failed to stop " + appName, ex);
@@ -117,6 +118,7 @@ public class IceAppsContainer extends IceApplication {
             }
         };
         panelController.back.setVisible(true);
+        
         panelController.content.setCenter(app.getUI());
         panelController.getBack().setOnAction(new GoBackAction(goBackAction));
     }
@@ -277,7 +279,7 @@ public class IceAppsContainer extends IceApplication {
 
         FXMLLoader loader = new FXMLLoader(DemoPanel.class.getResource("DemoPanel.fxml"));
         panelRoot = loader.load();
-        panelController = ((DemoPanel) loader.getController()).setModel(partitionChooserModel).setUdi(udi).setVersion(BuildInfo.getDescriptor())
+        panelController = ((DemoPanel)loader.getController()).setModel(partitionChooserModel).setUdi(udi).setVersion(BuildInfo.getDescriptor())
                 .setModel(emr.getPatients());
         panelRoot.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 
@@ -329,8 +331,10 @@ public class IceAppsContainer extends IceApplication {
                 final IceApplicationProvider.IceApp app = activeApps.get(appType);
                 if (app != null) {
                     if (app.getUI() != null) {
+                        panelController.appTitle.setText(app.getDescriptor().getName());
                         activateGoBack(app);
                     }
+
                     app.activate(context);
                 }
 
