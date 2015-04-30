@@ -11,9 +11,10 @@
 
 <GridPane id="deviceTypeRow" fx:id="gridPane" alignment="CENTER"
  hgap="5.0" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.SettingsController">
+
  <children>
-  <Label fx:id="applicationsLabel" text="Application" GridPane.columnIndex="0"
-   GridPane.rowIndex="0">
+  <Label fx:id="applicationsLabel" text="Application"
+   GridPane.columnIndex="0" GridPane.rowIndex="0">
    <opaqueInsets>
     <Insets />
    </opaqueInsets>
@@ -27,8 +28,15 @@
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
-  <Label fx:id="domainIdLabel" text="Domain Id" GridPane.columnIndex="0"
-   GridPane.rowIndex="4">
+
+
+
+  <Label fx:id="domainIdLabel" text="Domain Id"
+   GridPane.columnIndex="0" GridPane.rowIndex="4">
+   <tooltip>
+    <Tooltip fx:id="domainTooltip" text="This is a domain identifier" />
+
+   </tooltip>
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
@@ -40,8 +48,8 @@
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </ComboBox>
-  <ComboBox fx:id="deviceType" GridPane.hgrow="SOMETIMES" GridPane.columnIndex="1"
-   GridPane.rowIndex="1">
+  <ComboBox fx:id="deviceType" GridPane.hgrow="SOMETIMES"
+   GridPane.columnIndex="1" GridPane.rowIndex="1">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
@@ -50,6 +58,9 @@
    maxWidth="40.0" minWidth="-1.0" prefColumnCount="2" prefWidth="30.0"
    promptText="" text="0" GridPane.columnIndex="1" GridPane.hgrow="NEVER"
    GridPane.rowIndex="4">
+   <tooltip>
+    <fx:reference source="domainTooltip" />
+   </tooltip>
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
@@ -78,13 +89,14 @@
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </TextField>
-    <Label fx:id="useInternalPatientsLabel" text="Use Internal Patients"
+  <Label fx:id="useInternalPatientsLabel" text="Internal Patients"
    GridPane.columnIndex="0" GridPane.rowIndex="5">
    <GridPane.margin>
     <Insets bottom="5.0" right="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
-  <CheckBox fx:id="useInternalPatients" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+  <CheckBox fx:id="useInternalPatients" GridPane.columnIndex="1"
+   GridPane.rowIndex="5" />
  </children>
  <columnConstraints>
   <ColumnConstraints halignment="RIGHT" hgrow="NEVER"

@@ -5,6 +5,7 @@
 <?import javafx.collections.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.web.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
@@ -34,34 +35,10 @@
    BorderPane.alignment="TOP_CENTER" BorderPane.margin="$x1" />
  </center>
  <top>
-  <BorderPane>
-   <top>
-    <ImageView fitHeight="150.0" fitWidth="200.0"
-     pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER">
-     <image>
-      <Image url="@mdpnp-small.png" />
-     </image>
-    </ImageView>
-   </top>
-   <center>
-    <ScrollPane fitToHeight="true" fitToWidth="true"
-     prefHeight="-1.0" prefWidth="-1.0">
-     <content>
-      <AnchorPane id="Content" minHeight="0.0" minWidth="0.0"
-       prefHeight="-1.0" prefWidth="-1.0">
-       <children>
-        <TextArea editable="false" opacity="0.8"
-         prefColumnCount="50" prefHeight="-1.0" prefRowCount="6"
-         prefWidth="-1.0"
-         text="Welcome to the MD PnP Demonstration Applications!&#10;&#10;Please select the component you would like to launch:&#10;&#10;ICE_Supervisor&#10;The Supervisor is the host for clinical apps.  Launching this component will also create an ICE Network Controller.&#10;&#10;ICE_Device_Interface&#10;The Device Interface allows you to connect devices to the ICE Supervisor.  Don't worry if you have no devices as several simulated devices are available.&#10;&#10;If you selected ICE_Device_Interface you will further be asked which device you would like to connect.  If the device is connected via a serial port please select that port under &quot;Address&quot;.  If the device is connected on the network type it's address in the provided text field.&#10;"
-         wrapText="true" AnchorPane.bottomAnchor="0.0"
-         AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
-         AnchorPane.topAnchor="0.0" />
-       </children>
-      </AnchorPane>
-     </content>
-    </ScrollPane>
-   </center>
-  </BorderPane>
+
+  <WebView fx:id="welcome" minHeight="170.0" minWidth="520.0"
+   prefHeight="170.0" prefWidth="520.0" AnchorPane.bottomAnchor="0.0"
+   AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+   AnchorPane.topAnchor="0.0"></WebView>
  </top>
 </BorderPane>

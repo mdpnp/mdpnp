@@ -78,7 +78,7 @@ public class Main {
         public void start(Stage primaryStage) throws Exception {
             runConf = Configuration.searchAndLoadSettings(searchPath);
 
-            ConfigurationDialog d = ConfigurationDialog.showDialog(runConf);
+            ConfigurationDialog d = ConfigurationDialog.showDialog(runConf, this);
 
             // It's nice to be able to change settings even without running
             // Even if the user presses 'quit' save the state so that it can be used

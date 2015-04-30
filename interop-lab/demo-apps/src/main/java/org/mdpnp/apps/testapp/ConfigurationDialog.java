@@ -14,6 +14,9 @@ package org.mdpnp.apps.testapp;
 
 import java.io.IOException;
 
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -23,6 +26,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -40,6 +44,8 @@ public class ConfigurationDialog {
     BorderPane main;
     @FXML
     Button start, quit;
+    @FXML
+    WebView welcome;
     
     @FXML
     SettingsController settingsController;
@@ -68,8 +74,23 @@ public class ConfigurationDialog {
         }
     }
 
-    public ConfigurationDialog set(Configuration conf, final Stage currentStage) {
+    public ConfigurationDialog set(Configuration conf, final Stage currentStage, final javafx.application.Application application) {
         settingsController.set(conf, true, currentStage);
+        
+        String welcomeUrl = ConfigurationDialog.class.getResource("welcome.html").toExternalForm();
+        
+        welcome.getEngine().locationProperty().addListener(new ChangeListener<String>() {
+
+            @Override
+            public void changed(ObservableValue<? extends String> observable, final String oldValue, String newValue) {
+                if(null != newValue && newValue.startsWith("http")) {
+                    application.getHostServices().showDocument(newValue);
+                    Platform.runLater(() -> welcome.getEngine().load(oldValue));
+                }
+            }
+            
+        });
+        welcome.getEngine().load(welcomeUrl);
         
         start.visibleProperty().bind(settingsController.readyProperty());
         start.textProperty().bind(settingsController.startProperty());
@@ -114,7 +135,7 @@ public class ConfigurationDialog {
     }
     private Stage currentStage;
 
-    public static ConfigurationDialog showDialog(Configuration configuration) throws IOException {
+    public static ConfigurationDialog showDialog(Configuration configuration, javafx.application.Application application) throws IOException {
         FXMLLoader loader = new FXMLLoader(ConfigurationDialog.class.getResource("ConfigurationDialog.fxml"));
         Parent ui = loader.load();
         ConfigurationDialog d = loader.getController();
@@ -122,9 +143,9 @@ public class ConfigurationDialog {
         d.currentStage.setOnCloseRequest((event) -> {
             d.quitPressed = true;
         });
-        d.set(configuration, d.currentStage);
+        d.set(configuration, d.currentStage, application);
 
-        d.currentStage.setTitle("MD PnP Demo Apps");
+        d.currentStage.setTitle("MD PnP OpenICE");
         d.currentStage.setScene(new Scene(ui));
         d.currentStage.sizeToScene();
         d.currentStage.centerOnScreen();
