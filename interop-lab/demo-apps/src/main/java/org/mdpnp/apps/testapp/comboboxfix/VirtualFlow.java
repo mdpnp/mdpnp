@@ -33,7 +33,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Callback;
 import javafx.util.Duration;
-import sun.util.logging.PlatformLogger;
+//import sun.util.logging.PlatformLogger;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
@@ -1307,14 +1307,14 @@ public class VirtualFlow<T extends IndexedCell> extends Region {
                 if (! fillEmptyCells) return filledWithNonEmpty;
                 // RT-36507 - return if we've exceeded the maximum
                 if (index > maxCellCount) {
-                    final PlatformLogger logger = Logging.getControlsLogger();
-                    if (logger.isLoggable(PlatformLogger.Level.INFO)) {
-                        if (startCell != null) {
-                            logger.info("index exceeds maxCellCount. Check size calculations for " + startCell.getClass());
-                        } else {
-                            logger.info("index exceeds maxCellCount");
-                        }
-                    }
+//                    final PlatformLogger logger = Logging.getControlsLogger();
+//                    if (logger.isLoggable(PlatformLogger.Level.INFO)) {
+//                        if (startCell != null) {
+//                            logger.info("index exceeds maxCellCount. Check size calculations for " + startCell.getClass());
+//                        } else {
+//                            logger.info("index exceeds maxCellCount");
+//                        }
+//                    }
                     return filledWithNonEmpty;
                 }
             }
