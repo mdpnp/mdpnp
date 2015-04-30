@@ -196,9 +196,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         long now = System.currentTimeMillis();
         switch (stateMachine.getState().ordinal()) {
         case ice.ConnectionState._Negotiating:
-            // In the negotiating state we are emitted association requests
+            // In the negotiating state we are emitting association requests
             if (now - lastAssociationRequest >= ASSOCIATION_REQUEST_INTERVAL) {
                 try {
+                    log.debug("Requesting association");
                     myIntellivue.requestAssociation();
                     lastAssociationRequest = now;
                 } catch (IOException e1) {
@@ -1277,7 +1278,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
         registrationKeys.add(networkLoop.register(myIntellivue, channel));
 
-        state(ice.ConnectionState.Negotiating, "");
+        state(ice.ConnectionState.Negotiating, "Requesting Association");
     }
 
     @Override
