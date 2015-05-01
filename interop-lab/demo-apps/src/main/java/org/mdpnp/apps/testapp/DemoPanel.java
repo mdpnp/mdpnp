@@ -28,6 +28,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBoxBase;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
@@ -52,7 +53,7 @@ public class DemoPanel implements Runnable {
     protected Label clock;
 
     @FXML
-    protected Button back, changePartition, createAdapter;
+    protected Button back, createAdapter;
 
     @FXML
     protected BorderPane content;
@@ -72,8 +73,8 @@ public class DemoPanel implements Runnable {
         return back;
     }
 
-    public Button getChangePartition() {
-        return changePartition;
+    public FixedComboBox<PatientInfo> getPatients() {
+        return patients;
     }
 
     public Button getCreateAdapter() {

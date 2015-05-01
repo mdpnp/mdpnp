@@ -24,6 +24,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -39,8 +44,10 @@ import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
+import org.mdpnp.apps.testapp.comboboxfix.SingleSelectionModel;
 import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.apps.testapp.patient.EMRFacade;
+import org.mdpnp.apps.testapp.patient.PatientInfo;
 import org.mdpnp.devices.BuildInfo;
 import org.mdpnp.devices.TimeManager;
 import org.slf4j.Logger;
@@ -317,11 +324,34 @@ public class IceAppsContainer extends IceApplication {
                 return o1.getName().compareTo(o2.getName());
             }
         });
-
+        
+        
         loader = new FXMLLoader(MainMenu.class.getResource("MainMenu.fxml"));
         mainMenuRoot = loader.load();
         final MainMenu mainMenuController = loader.getController();
-
+        
+        final SingleSelectionModel<PatientInfo> selectionModel = panelController.getPatients().getSelectionModel();
+        StringProperty patientNameProperty = new SimpleStringProperty("");
+        patientNameProperty.bind(
+                Bindings.when(selectionModel.selectedItemProperty().isNotNull())
+                .then(selectionModel.selectedItemProperty().asString())
+                .otherwise(""));
+        
+        ListProperty<Device> deviceListProperty = new SimpleListProperty<>(nc.getContents());
+        
+        mainMenuController.getDevicesEmptyText().textProperty().bind(
+                Bindings.when(deviceListProperty.emptyProperty())
+                .then(Bindings.concat(
+                        "There are no devices associated with ", 
+                        patientNameProperty, 
+                        ".  Create an ICE_Device_Adapter connected to a physical medical device or a software simulator and associate that device with ", patientNameProperty, "."))
+                .otherwise(""));
+        mainMenuController.devicesLabel.textProperty().bind(
+                Bindings.when(patientNameProperty.isEmpty())
+                .then("Devices")
+                .otherwise(Bindings.concat("Devices assigned to ", patientNameProperty)));
+        
+        
         mainMenuController.getAppList().setCellFactory(new AppTypeCellFactory(new EventHandler<MouseEvent>() {
 
             @Override
