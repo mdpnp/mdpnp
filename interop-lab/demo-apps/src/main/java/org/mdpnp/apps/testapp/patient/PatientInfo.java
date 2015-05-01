@@ -17,7 +17,7 @@ import java.util.List;
 
 public class PatientInfo {
 
-    enum Gender { M, F };
+    public enum Gender { M, F };
 
     private final StringProperty lastName = new SimpleStringProperty();
     private final StringProperty firstName = new SimpleStringProperty();

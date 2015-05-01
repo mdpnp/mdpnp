@@ -24,11 +24,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBoxBase;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
@@ -82,7 +82,11 @@ public class DemoPanel implements Runnable {
     }
 
     public DemoPanel setModel(ObservableList<PatientInfo> patients) {
-        this.patients.setItems(patients);
+        
+        ObservableList<PatientInfo> metaPatients = FXCollections.observableArrayList();
+        metaPatients.add(new PatientInfo("", "", "<Nobody>", PatientInfo.Gender.M, new Date()));
+        metaPatients.add(new PatientInfo("*", "", "<Anyone>", PatientInfo.Gender.M, new Date()));
+        this.patients.setItems(ObservableLists.concat(metaPatients, patients));
         return this;
     }
 
@@ -207,7 +211,11 @@ public class DemoPanel implements Runnable {
         PatientInfo pi = this.patients.getSelectionModel().getSelectedItem();
         if(null != pi) {
             final List<String> partitions = new ArrayList<String>(1);
-            partitions.add("MRN="+pi.getMrn());
+            if("".equals(pi.getMrn())||"*".equals(pi.getMrn())) {
+                partitions.add(pi.getMrn());
+            } else {
+                partitions.add("MRN="+pi.getMrn());
+            }
             partitionChooserModel.set(partitions);
         }
         

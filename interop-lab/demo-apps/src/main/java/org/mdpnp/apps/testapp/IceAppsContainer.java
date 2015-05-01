@@ -344,7 +344,7 @@ public class IceAppsContainer extends IceApplication {
                 .then(Bindings.concat(
                         "There are no devices associated with ", 
                         patientNameProperty, 
-                        ".  Create an ICE_Device_Adapter connected to a physical medical device or a software simulator and associate that device with ", patientNameProperty, "."))
+                        ".  Create an ICE Device Adapter connected to a physical medical device or a software simulator and associate that device with ", patientNameProperty, " using the Patient ID application."))
                 .otherwise(""));
         mainMenuController.devicesLabel.textProperty().bind(
                 Bindings.when(patientNameProperty.isEmpty())
