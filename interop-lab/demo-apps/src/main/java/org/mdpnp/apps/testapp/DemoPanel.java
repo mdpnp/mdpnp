@@ -84,9 +84,11 @@ public class DemoPanel implements Runnable {
     public DemoPanel setModel(ObservableList<PatientInfo> patients) {
         
         ObservableList<PatientInfo> metaPatients = FXCollections.observableArrayList();
-        metaPatients.add(new PatientInfo("", "", "<Nobody>", PatientInfo.Gender.M, new Date()));
+        PatientInfo nobody = new PatientInfo("", "", "<Nobody>", PatientInfo.Gender.M, new Date());
+        metaPatients.add(nobody);
         metaPatients.add(new PatientInfo("*", "", "<Anyone>", PatientInfo.Gender.M, new Date()));
         this.patients.setItems(ObservableLists.concat(metaPatients, patients));
+        this.patients.setValue(nobody);
         return this;
     }
 

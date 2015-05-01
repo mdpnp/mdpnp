@@ -1,7 +1,9 @@
 package org.mdpnp.apps.testapp;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import ice.ConnectionType;
 import javafx.beans.binding.Bindings;
@@ -68,6 +70,7 @@ public class SettingsController {
     private final StringProperty address = new SimpleStringProperty(this, "address", "");
     private final StringProperty domain = new SimpleStringProperty(this, "domain", "");
     private final BooleanProperty internalPatients = new SimpleBooleanProperty(this, "internalPatients", false);
+    @FXML ComboBox<ice.ConnectionType> deviceCategory;
     
     
     
@@ -109,7 +112,9 @@ public class SettingsController {
             gridPane.getChildren().remove(useInternalPatients);
             gridPane.getChildren().remove(useInternalPatientsLabel);
             if(!gridPane.getChildren().contains(deviceType)) { gridPane.getChildren().add(deviceType); }
+            if(!gridPane.getChildren().contains(deviceCategory)) { gridPane.getChildren().add(deviceCategory); }
             if(!gridPane.getChildren().contains(deviceTypeLabel)) { gridPane.getChildren().add(deviceTypeLabel); }
+            if(!gridPane.getChildren().contains(deviceCategoryLabel)) { gridPane.getChildren().add(deviceCategoryLabel); }
 
             ice.ConnectionType selected = null;
             if (dt != null) {
@@ -145,6 +150,8 @@ public class SettingsController {
             }
             break;
         case ICE_Supervisor:
+            gridPane.getChildren().remove(deviceCategory);
+            gridPane.getChildren().remove(deviceCategoryLabel);
             gridPane.getChildren().remove(deviceType);
             gridPane.getChildren().remove(deviceTypeLabel);
             gridPane.getChildren().remove(addressLabel);
@@ -160,6 +167,9 @@ public class SettingsController {
         currentStage.sizeToScene();
     }
     
+    private Map<ice.ConnectionType, ObservableList<DeviceDriverProvider>> deviceTypesByCategory = new HashMap<>();
+    @FXML Label deviceCategoryLabel;
+    
     @SuppressWarnings("unchecked")
     public void set(Configuration conf, boolean showAppsOption, Stage currentStage) {
         
@@ -174,8 +184,35 @@ public class SettingsController {
             }
 
         });
+        
+        ObservableList<ice.ConnectionType> categories = FXCollections.observableArrayList();
+        for(int ordinal : ice.ConnectionType.getOrdinals()) {
+            categories.add(ice.ConnectionType.from_int(ordinal));
+        }
 
-        deviceType.setItems(FXCollections.observableArrayList(DeviceFactory.getAvailableDevices()));
+        deviceCategory.setItems(categories);
+       
+        
+        for(DeviceDriverProvider ddp : DeviceFactory.getAvailableDevices()) {
+            ObservableList<DeviceDriverProvider> list = deviceTypesByCategory.get(ddp.getDeviceType().getConnectionType());
+            if(null==list) {
+                list = FXCollections.observableArrayList();
+                deviceTypesByCategory.put(ddp.getDeviceType().getConnectionType(), list);
+            }
+            list.add(ddp);
+        }
+        
+        deviceCategory.valueProperty().addListener(new ChangeListener<ConnectionType>() {
+
+            @Override
+            public void changed(ObservableValue<? extends ConnectionType> observable, ConnectionType oldValue, ConnectionType newValue) {
+                if(null != newValue) {
+                    deviceType.setItems(deviceTypesByCategory.get(newValue));
+                }
+            }
+        });
+        
+        deviceCategory.setValue(ice.ConnectionType.Simulated);
         applications.setItems(FXCollections.observableArrayList(Application.values()));
 
         if (null != conf) {

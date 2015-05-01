@@ -22,8 +22,14 @@
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
+  <Label fx:id="deviceCategoryLabel" text="Device Category" GridPane.columnIndex="0"
+   GridPane.rowIndex="1">
+   <GridPane.margin>
+    <Insets bottom="5.0" top="5.0" />
+   </GridPane.margin>
+  </Label>
   <Label fx:id="deviceTypeLabel" text="Device Type"
-   GridPane.columnIndex="0" GridPane.rowIndex="1">
+   GridPane.columnIndex="0" GridPane.rowIndex="2">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
@@ -32,11 +38,7 @@
 
 
   <Label fx:id="domainIdLabel" text="Domain Id"
-   GridPane.columnIndex="0" GridPane.rowIndex="4">
-   <tooltip>
-    <Tooltip fx:id="domainTooltip" text="This is a domain identifier" />
-
-   </tooltip>
+   GridPane.columnIndex="0" GridPane.rowIndex="5">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
@@ -48,8 +50,14 @@
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </ComboBox>
-  <ComboBox fx:id="deviceType" GridPane.hgrow="SOMETIMES"
+  <ComboBox fx:id="deviceCategory" GridPane.hgrow="SOMETIMES"
    GridPane.columnIndex="1" GridPane.rowIndex="1">
+   <GridPane.margin>
+    <Insets bottom="5.0" top="5.0" />
+   </GridPane.margin>
+  </ComboBox>
+  <ComboBox fx:id="deviceType" GridPane.hgrow="SOMETIMES"
+   GridPane.columnIndex="1" GridPane.rowIndex="2">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
@@ -57,46 +65,44 @@
   <TextField fx:id="domainId" alignment="CENTER_RIGHT"
    maxWidth="40.0" minWidth="-1.0" prefColumnCount="2" prefWidth="30.0"
    promptText="" text="0" GridPane.columnIndex="1" GridPane.hgrow="NEVER"
-   GridPane.rowIndex="4">
-   <tooltip>
-    <fx:reference source="domainTooltip" />
-   </tooltip>
+   GridPane.rowIndex="5">
+
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </TextField>
   <Label fx:id="serialPortsLabel" text="Serial Port"
-   GridPane.columnIndex="0" GridPane.rowIndex="2">
+   GridPane.columnIndex="0" GridPane.rowIndex="3">
    <GridPane.margin>
     <Insets bottom="5.0" right="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
   <VBox fx:id="serialPortsContainer" GridPane.columnIndex="1"
-   GridPane.hgrow="SOMETIMES" GridPane.rowIndex="2" spacing="5.0">
+   GridPane.hgrow="SOMETIMES" GridPane.rowIndex="3" spacing="5.0">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </VBox>
   <Label fx:id="addressLabel" text="IP Address"
-   GridPane.columnIndex="0" GridPane.rowIndex="3">
+   GridPane.columnIndex="0" GridPane.rowIndex="4">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
   <TextField fx:id="addressField" maxWidth="200.0" prefWidth="200.0"
-   GridPane.columnIndex="1" GridPane.rowIndex="3">
+   GridPane.columnIndex="1" GridPane.rowIndex="4">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </TextField>
   <Label fx:id="useInternalPatientsLabel" text="Internal Patients"
-   GridPane.columnIndex="0" GridPane.rowIndex="5">
+   GridPane.columnIndex="0" GridPane.rowIndex="6">
    <GridPane.margin>
     <Insets bottom="5.0" right="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
   <CheckBox fx:id="useInternalPatients" GridPane.columnIndex="1"
-   GridPane.rowIndex="5" />
+   GridPane.rowIndex="6" />
  </children>
  <columnConstraints>
   <ColumnConstraints halignment="RIGHT" hgrow="NEVER"
@@ -107,6 +113,7 @@
  <rowConstraints>
   <RowConstraints minHeight="0" prefHeight="-1"
    valignment="CENTER" vgrow="NEVER" />
+  <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
   <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
   <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
   <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
