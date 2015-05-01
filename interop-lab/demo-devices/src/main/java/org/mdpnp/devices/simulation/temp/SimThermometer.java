@@ -12,6 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation.temp;
 
+import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 
@@ -24,25 +25,27 @@ import com.rti.dds.subscription.Subscriber;
  */
 public class SimThermometer extends AbstractSimulatedConnectedDevice {
 
-    protected InstanceHolder<ice.Numeric> temperature1, temperature2;
+    protected InstanceHolder<ice.Numeric> temperature1;
 
-    private class MySimulatedThermometer extends SimulatedThermometer {
+    private class SimulatedThermometerExt extends SimulatedThermometer {
+        public SimulatedThermometerExt(final DeviceClock referenceClock) {
+            super(referenceClock);
+        }
+        
         @Override
-        protected void receiveTemp1(float temperature1) {
+        protected void receiveTemp1(float temperature1, DeviceClock.Reading time) {
             // TODO assign a unit type
             SimThermometer.this.temperature1 = numericSample(SimThermometer.this.temperature1, temperature1, rosetta.MDC_TEMP_BLD.VALUE, "", 0, 
-                    rosetta.MDC_DIM_DIMLESS.VALUE, null);
+                    rosetta.MDC_DIM_DIMLESS.VALUE, time);
         }
 
         @Override
-        protected void receiveTemp2(float temperature2) {
-            // TODO assign a unit type
-            SimThermometer.this.temperature2 = numericSample(SimThermometer.this.temperature2, temperature2, rosetta.MDC_TEMP_BLD.VALUE, "", 1, 
-                    rosetta.MDC_DIM_DIMLESS.VALUE, null);
+        protected void receiveTemp2(float temperature2, DeviceClock.Reading time) {
+
         }
     }
 
-    private final MySimulatedThermometer thermometer = new MySimulatedThermometer();
+    private final SimulatedThermometerExt thermometer = new SimulatedThermometerExt(getClockProvider());
 
     @Override
     public boolean connect(String str) {
@@ -64,6 +67,6 @@ public class SimThermometer extends AbstractSimulatedConnectedDevice {
 
     @Override
     protected String iconResourceName() {
-        return null;
+        return "temp.png";
     }
 }

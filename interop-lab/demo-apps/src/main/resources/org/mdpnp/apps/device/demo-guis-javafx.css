@@ -30,6 +30,10 @@
   -fx-background-color: black;
 }
 
+.temperature-probe-panel {
+  -fx-background-color: black;
+}
+
 
 .pulse-oximeter-panel .label {
   -fx-text-fill: cyan;
@@ -48,4 +52,8 @@
 }
 .blood-pressure-panel .label {
   -fx-text-fill: magenta;
+}
+
+.temperature-probe-panel .label {
+  -fx-text-fill: ;
 }

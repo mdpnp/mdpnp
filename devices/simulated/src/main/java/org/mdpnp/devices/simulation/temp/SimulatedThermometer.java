@@ -16,26 +16,31 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.DeviceClock;
+
 /**
  * @author Jeff Plourde
  *
  */
 public class SimulatedThermometer {
 
+    
+    
     private final class MyTask implements Runnable {
         @Override
         public void run() {
-            receiveTemp1(temperature1);
-            receiveTemp2(temperature2);
+            DeviceClock.Reading  t = deviceClock.instant();
+            receiveTemp1(temperature1, t);
+            receiveTemp2(temperature2, t);
         }
 
     };
 
-    protected void receiveTemp1(float temperature1) {
+    protected void receiveTemp1(float temperature1, DeviceClock.Reading time) {
 
     }
 
-    protected void receiveTemp2(float temperature2) {
+    protected void receiveTemp2(float temperature2, DeviceClock.Reading time) {
 
     }
 
@@ -59,8 +64,15 @@ public class SimulatedThermometer {
             task = null;
         }
     }
-
-    public SimulatedThermometer() {
+    private final DeviceClock deviceClock;
+    public SimulatedThermometer(final DeviceClock referenceClock) {
+        deviceClock = new DeviceClock() {
+            final DeviceClock dev=new DeviceClock.Metronome(UPDATE_PERIOD);
+            @Override
+            public Reading instant() {
+                return new CombinedReading(referenceClock.instant(), dev.instant());
+            }
+        };
     }
 
 }
