@@ -372,7 +372,9 @@ public abstract class AbstractDevice {
 
     protected InstanceHolder<ice.LocalAlarmLimitObjective> alarmLimitObjectiveSample(InstanceHolder<ice.LocalAlarmLimitObjective> holder,
             Float newValue, String unit_id, String metric_id, ice.LimitType limit_type) {
-        if (holder != null && !holder.data.metric_id.equals(metric_id)) {//XXX correct comparison here? should compare w/ limit type too, the other key
+        if ( holder != null && 
+            !holder.data.metric_id.equals(metric_id) &&
+            !holder.data.limit_type.equals(limit_type)) {
             unregisterAlarmLimitObjectiveInstance(holder);
             holder = null;
         }
@@ -380,7 +382,7 @@ public abstract class AbstractDevice {
             if (null == holder) {
                 holder = createAlarmLimitObjectiveInstance(metric_id, limit_type);
             }
-            alarmLimitObjectiveSample(holder, newValue, unit_id, metric_id, limit_type);
+            alarmLimitObjectiveSample(holder, unit_id, newValue);
         } else {
             if (null != holder) {
                 unregisterAlarmLimitObjectiveInstance(holder);
