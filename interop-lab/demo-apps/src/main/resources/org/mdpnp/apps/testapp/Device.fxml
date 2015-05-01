@@ -20,7 +20,7 @@
    <children>
     <ImageView fx:id="icon" fitHeight="0.0" fitWidth="100.0"
      pickOnBounds="true" preserveRatio="true" />
-    <GridPane fx:id="outofsync" visible="false">
+    <GridPane>
      <columnConstraints>
       <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
       <ColumnConstraints halignment="RIGHT" hgrow="ALWAYS"
@@ -32,30 +32,22 @@
        vgrow="ALWAYS" />
      </rowConstraints>
      <children>
-
-      <ImageView fitHeight="0.0" fitWidth="50.0"
+      <ImageView fx:id="closeSimulator" onMouseClicked="#clickCloseSimulator" visible="false" fitHeight="0.0" fitWidth="25.0"
+       pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1"
+       GridPane.rowIndex="0">
+       <image>
+        <Image url="@close.png" />
+       </image>
+      </ImageView>
+      <ImageView fx:id="outofsync" visible="false" fitHeight="0.0" fitWidth="50.0"
        pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1"
        GridPane.rowIndex="1">
        <image>
         <Image url="@outofsync.png" />
        </image>
       </ImageView>
-     </children>
-    </GridPane>
-    <GridPane fx:id="overlay" visible="false">
-     <columnConstraints>
-      <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
-      <ColumnConstraints halignment="RIGHT" hgrow="ALWAYS"
-       minWidth="10.0" />
-     </columnConstraints>
-     <rowConstraints>
-      <RowConstraints minHeight="10.0" vgrow="ALWAYS" />
-      <RowConstraints minHeight="10.0" valignment="BOTTOM"
-       vgrow="ALWAYS" />
-     </rowConstraints>
-     <children>
-      <ImageView fitHeight="0.0" fitWidth="50.0" pickOnBounds="true"
-       preserveRatio="true" visible="true" GridPane.columnIndex="0"
+      <ImageView fx:id="overlay" visible="false" fitHeight="0.0" fitWidth="50.0" pickOnBounds="true"
+       preserveRatio="true" GridPane.columnIndex="0"
        GridPane.rowIndex="1">
        <image>
         <Image url="@disconnected.png" />
@@ -63,8 +55,6 @@
       </ImageView>
      </children>
     </GridPane>
-
-
    </children>
    <BorderPane.margin>
     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

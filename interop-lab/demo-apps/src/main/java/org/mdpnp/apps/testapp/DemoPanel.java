@@ -12,10 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.awt.Desktop;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -31,7 +28,6 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
@@ -96,6 +92,7 @@ public class DemoPanel implements Runnable {
 
     private String udiText = "";
     private String versionText = "";
+    private DeviceListModel deviceListModel;
 
     private void setTooltip() {
         clock.setTooltip(new Tooltip(udiText + "\n" + versionText));
@@ -110,6 +107,11 @@ public class DemoPanel implements Runnable {
     public DemoPanel setVersion(String version) {
         versionText = version;
         setTooltip();
+        return this;
+    }
+    
+    public DemoPanel setDeviceListModel(DeviceListModel deviceListModel) {
+        this.deviceListModel = deviceListModel;
         return this;
     }
 
@@ -141,26 +143,12 @@ public class DemoPanel implements Runnable {
     }
 
     @FXML
-    public void clickURL(ActionEvent evt) {
-        String url = ((Hyperlink) evt.getSource()).getText();
-        if (Desktop.isDesktopSupported()) {
-            Desktop desktop = Desktop.getDesktop();
-            try {
-                URI uri = new URI(url);
-                desktop.browse(uri);
-            } catch (IOException ex) {
-
-            } catch (URISyntaxException ex) {
-
-            }
-        }
-    }
-
-    @FXML
     BorderPane demoPanel;
 
     @FXML
     FixedComboBox<PatientInfo> patients;
+    
+    
 
     @FXML
     public void clickCreateAdapter(ActionEvent evt) {
@@ -182,7 +170,7 @@ public class DemoPanel implements Runnable {
                             try {
                                 // TODO this must not use the same context as the app as it messes up DDS
                                 final AbstractApplicationContext context = c.createContext("DeviceAdapterContext.xml");
-                                DeviceAdapterCommand.GUIAdapter da = new DeviceAdapterCommand.GUIAdapter(c.getDeviceFactory(), context) {
+                                final DeviceAdapterCommand.HeadlessAdapter da = new DeviceAdapterCommand.HeadlessAdapter(c.getDeviceFactory(), context, false) {
                                     // intercept stop to destroy the context specific to this device
                                     public void stop() {
                                         super.stop();
@@ -193,7 +181,8 @@ public class DemoPanel implements Runnable {
                                 da.setPartition(partition.toArray(new String[0]));
                                 da.setAddress(c.getAddress());
                                 da.init();
-                                da.start(null); // Passing null will force the adapter to start a new dialog
+                                da.connect();
+                                Platform.runLater(()->deviceListModel.getByUniqueDeviceIdentifier(da.getDevice().getUniqueDeviceIdentifier()).setHeadlessAdapter(da));
                             } catch (Exception e) {
                                 log.error("Error in spawned DeviceAdapter", e);
                             }
@@ -206,6 +195,7 @@ public class DemoPanel implements Runnable {
                 t.setDaemon(true);
                 t.start();
             }
+            
         } catch (IOException e) {
             log.error("Error getting configuration", e);
         }

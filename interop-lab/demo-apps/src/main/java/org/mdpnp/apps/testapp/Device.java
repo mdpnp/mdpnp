@@ -29,6 +29,7 @@ import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 
+import org.mdpnp.apps.testapp.DeviceAdapterCommand.HeadlessAdapter;
 import org.mdpnp.devices.TimeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -353,5 +354,22 @@ public class Device {
 
     public void setConnectivityInfo(final java.lang.String connectivityInfo) {
         this.connectivityInfoProperty().set(connectivityInfo);
+    }
+    
+    private ObjectProperty<HeadlessAdapter> headlessAdapter;
+    
+    public ObjectProperty<HeadlessAdapter> headlessAdapterProperty() {
+        if(null == headlessAdapter) {
+            headlessAdapter = new SimpleObjectProperty<>(this, "headlessAdapter", null);
+        }
+        return this.headlessAdapter;
+    }
+    
+    public HeadlessAdapter getHeadlessAdapter() {
+        return this.headlessAdapterProperty().get();
+    }
+    
+    public void setHeadlessAdapter(HeadlessAdapter headlessAdapter) {
+        this.headlessAdapterProperty().set(headlessAdapter);
     }
 }
