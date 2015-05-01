@@ -207,6 +207,7 @@ public abstract class AbstractDevice {
         holder.data = new ice.LocalAlarmLimitObjective();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
+        holder.data.limit_type = limit_type;
         holder.handle = alarmLimitObjectiveWriter.register_instance(holder.data);
         registeredAlarmLimitObjectiveInstances.add(holder);
         return holder;
@@ -346,6 +347,7 @@ public abstract class AbstractDevice {
     }
 
     protected void alarmLimitObjectiveSample(InstanceHolder<ice.LocalAlarmLimitObjective> holder, String unit_id, Float newValue) {
+        // TODO is zero really not an acceptable value for an alarm limit?
         if(0 != Float.compare(newValue, holder.data.value) ||  !unit_id.equals(holder.data.unit_identifier)) {
             holder.data.value = newValue;
             holder.data.unit_identifier = unit_id;
