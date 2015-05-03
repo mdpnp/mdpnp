@@ -79,7 +79,22 @@ public class PatientInfo {
 
     @Override
     public String toString() {
-        return firstName.getValue() + " " + lastName.getValue();
+        String first = firstName.get();
+        String last = lastName.get();
+        if(null == first || "".equals(first)) {
+            if(null == last || "".equals(last)) {
+                return "Unknown";
+            } else {
+                return last;
+            }
+        } else {
+            if(null == last || "".equals(last)) {
+                return first;
+            } else {
+                return firstName.getValue() + " " + lastName.getValue();
+            }
+        }
+        
 
     }
 
