@@ -20,7 +20,7 @@ import com.rti.dds.subscription.Subscriber;
 public class IceApplicationFactory implements IceApplicationProvider {
 
     private final IceApplicationProvider.AppType XRay =
-            new IceApplicationProvider.AppType("X-Ray Ventilator Sync", "NOXRAYVENT", XRayVentPanel.class.getResource("xray-vent.png"), 0.75);
+            new IceApplicationProvider.AppType("X-Ray Ventilator Sync", "NOXRAYVENT", XRayVentPanel.class.getResource("xray-vent.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() { return XRay;}

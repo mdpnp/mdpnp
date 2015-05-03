@@ -14,7 +14,7 @@ import com.rti.dds.subscription.Subscriber;
 
 public class AlarmApplicationFactory implements IceApplicationProvider {
     private final IceApplicationProvider.AppType AlarmApplication = new IceApplicationProvider.AppType("Alarm History", "NOALARM",
-            (URL) AlarmApplicationFactory.class.getResource("alarm.png"), 0.75);
+            (URL) AlarmApplicationFactory.class.getResource("alarm.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {

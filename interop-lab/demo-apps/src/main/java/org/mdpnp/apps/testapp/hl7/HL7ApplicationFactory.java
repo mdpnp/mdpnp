@@ -17,7 +17,7 @@ import com.rti.dds.subscription.Subscriber;
 
 public class HL7ApplicationFactory implements IceApplicationProvider {
     private final IceApplicationProvider.AppType HL7Application =
-            new IceApplicationProvider.AppType("HL7 Exporter", "NOHL7", (URL)HL7ApplicationFactory.class.getResource("hl7.png"), 0.75);
+            new IceApplicationProvider.AppType("HL7 Exporter", "NOHL7", (URL)HL7ApplicationFactory.class.getResource("hl7.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {

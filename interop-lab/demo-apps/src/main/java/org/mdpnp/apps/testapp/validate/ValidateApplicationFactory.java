@@ -12,7 +12,7 @@ import org.springframework.context.ApplicationContext;
 
 public class ValidateApplicationFactory implements IceApplicationProvider {
     private final IceApplicationProvider.AppType ValidateApplication = new IceApplicationProvider.AppType("Auto Validate", "NOCHART",
-            ValidateApplicationFactory.class.getResource("checkbox.png"), 0.75);
+            ValidateApplicationFactory.class.getResource("checkbox.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {

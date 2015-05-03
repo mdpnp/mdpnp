@@ -16,7 +16,7 @@ import org.springframework.context.ApplicationContext;
 
 public class DiagnosticApplicationFactory implements IceApplicationProvider {
     private final IceApplicationProvider.AppType DiagnosticApplication =
-            new IceApplicationProvider.AppType("System Explorer", "NODIAG", (URL)DiagnosticApplicationFactory.class.getResource("diag.png"), 0.75);
+            new IceApplicationProvider.AppType("System Explorer", "NODIAG", (URL)DiagnosticApplicationFactory.class.getResource("diag.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {

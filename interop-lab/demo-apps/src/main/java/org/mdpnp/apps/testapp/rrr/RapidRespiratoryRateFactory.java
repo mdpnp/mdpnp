@@ -19,7 +19,7 @@ import com.rti.dds.subscription.Subscriber;
 public class RapidRespiratoryRateFactory implements IceApplicationProvider {
 
     private final IceApplicationProvider.AppType RRR =
-            new IceApplicationProvider.AppType("Respiratory Rate Calc", "NORRR", RapidRespiratoryRate.class.getResource("rrr.png"), 0.75);
+            new IceApplicationProvider.AppType("Respiratory Rate Calc", "NORRR", RapidRespiratoryRate.class.getResource("rrr.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() { return RRR;}

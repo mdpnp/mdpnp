@@ -24,7 +24,7 @@ public class SimControlFactory implements IceApplicationProvider {
     private static final Logger log = LoggerFactory.getLogger(SimControlFactory.class);
 
     private final IceApplicationProvider.AppType SimControl =
-            new IceApplicationProvider.AppType("Simulation Control", "NOSIM", IceApplicationProvider.class.getResource("sim.png"), 0.75);
+            new IceApplicationProvider.AppType("Simulation Control", "NOSIM", IceApplicationProvider.class.getResource("sim.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {

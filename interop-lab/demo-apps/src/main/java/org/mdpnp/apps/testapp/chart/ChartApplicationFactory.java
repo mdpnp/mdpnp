@@ -12,7 +12,7 @@ import org.springframework.context.ApplicationContext;
 
 public class ChartApplicationFactory implements IceApplicationProvider {
     private final IceApplicationProvider.AppType ChartApplication = new IceApplicationProvider.AppType("Chart", "NOCHART",
-            ChartApplicationFactory.class.getResource("chart.png"), 0.75);
+            ChartApplicationFactory.class.getResource("chart.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {

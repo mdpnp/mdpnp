@@ -40,7 +40,7 @@ public interface IceApplicationProvider {
          * No expensive resources are excepted to be freed at this point.
          */
 
-        void stop() throws Exception;;
+        void stop() throws Exception;
 
         /**
          * Destructor for the application. resources should be freed, state cleared. app is not expected
@@ -62,16 +62,18 @@ public interface IceApplicationProvider {
         private final String name;
         private final Image icon;
         private final String disableProperty;
+        private final boolean coordinatorApp;
 
-        public AppType(final String name, final String disableProperty, final URL icon, double scale) {
-            this(name, disableProperty, null == icon ? null : new Image(icon.toExternalForm()), scale);
+        public AppType(final String name, final String disableProperty, final URL icon, double scale, boolean coordinatorApp) {
+            this(name, disableProperty, null == icon ? null : new Image(icon.toExternalForm()), scale, coordinatorApp);
         }
 
-        public AppType(final String name, final String disableProperty, final Image icon, double scale) {
+        public AppType(final String name, final String disableProperty, final Image icon, double scale, boolean coordinatorApp) {
             this.id   = generateId(name);
             this.name = name;
             this.icon = icon;
             this.disableProperty = disableProperty;
+            this.coordinatorApp = coordinatorApp;
         }
 
         /**
@@ -99,6 +101,10 @@ public interface IceApplicationProvider {
 
         public boolean isDisabled() {
             return null != disableProperty && Boolean.getBoolean(disableProperty);
+        }
+        
+        public boolean isCoordinatorApp() {
+            return coordinatorApp;
         }
 
         private String generateId(String name) {

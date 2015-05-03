@@ -88,8 +88,8 @@ public class IceAppsContainer extends IceApplication {
     private static final Logger log = LoggerFactory.getLogger(IceAppsContainer.class);
 
     @SuppressWarnings("unused")
-    private static IceApplicationProvider.AppType Main = new IceApplicationProvider.AppType("Main Menu", null, (URL) null, 0);
-    private static IceApplicationProvider.AppType Device = new IceApplicationProvider.AppType("Device Info", null, (URL) null, 0);
+    private static IceApplicationProvider.AppType Main = new IceApplicationProvider.AppType("Main Menu", null, (URL) null, 0, false);
+    private static IceApplicationProvider.AppType Device = new IceApplicationProvider.AppType("Device Info", null, (URL) null, 0, false);
 
     DeviceApp driverWrapper = new DeviceApp();
 
@@ -119,13 +119,18 @@ public class IceAppsContainer extends IceApplication {
                 try {
                     panelController.appTitle.setText("");
                     app.stop();
+                    panelController.patients.setVisible(true);
+                    panelController.patientsLabel.setVisible(true);
                 } catch (Exception ex) {
                     log.error("Failed to stop " + appName, ex);
                 }
             }
         };
+        if(app.getDescriptor().isCoordinatorApp()) {
+            panelController.patientsLabel.setVisible(false);
+            panelController.patients.setVisible(false);
+        }
         panelController.back.setVisible(true);
-        
         panelController.content.setCenter(app.getUI());
         panelController.getBack().setOnAction(new GoBackAction(goBackAction));
     }

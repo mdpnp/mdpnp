@@ -155,6 +155,9 @@ public class DemoPanel implements Runnable {
     @FXML
     FixedComboBox<PatientInfo> patients;
     
+    @FXML
+    Label patientsLabel;
+    
     
 
     @FXML

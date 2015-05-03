@@ -21,7 +21,7 @@ import com.rti.dds.subscription.Subscriber;
 public class PCAApplicationFactory implements IceApplicationProvider {
 
     private final IceApplicationProvider.AppType PCA =
-            new  IceApplicationProvider.AppType("Infusion Safety", "NOPCA", PCAConfig.class.getResource("infusion-safety.png"), 0.75);
+            new  IceApplicationProvider.AppType("Infusion Safety", "NOPCA", PCAConfig.class.getResource("infusion-safety.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {
