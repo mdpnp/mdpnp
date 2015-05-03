@@ -8,8 +8,8 @@
 <?import javafx.scene.layout.BorderPane?>
 
 <BorderPane prefHeight="130.0" prefWidth="100.0"
- fx:controller="org.mdpnp.apps.testapp.DeviceController"
- xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+ fx:controller="org.mdpnp.apps.testapp.DeviceController" xmlns="http://javafx.com/javafx/8"
+ xmlns:fx="http://javafx.com/fxml/1">
  <bottom>
   <Label fx:id="text" alignment="CENTER" contentDisplay="CENTER"
    text="Label" textAlignment="CENTER" wrapText="true"
@@ -32,27 +32,50 @@
        vgrow="ALWAYS" />
      </rowConstraints>
      <children>
-      <ImageView fx:id="closeSimulator" onMouseClicked="#clickCloseSimulator" visible="false" fitHeight="0.0" fitWidth="25.0"
-       pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1"
-       GridPane.rowIndex="0">
-       <image>
-        <Image url="@close.png" />
-       </image>
-      </ImageView>
-      <ImageView fx:id="outofsync" visible="false" fitHeight="0.0" fitWidth="50.0"
-       pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1"
+      <Button fx:id="closeSimulator" visible="false"
+       onAction="#clickCloseSimulator" GridPane.columnIndex="1"
+       GridPane.rowIndex="0" styleClass="closeSimulatorButton">
+       <graphic>
+        <ImageView fitHeight="0.0" fitWidth="25.0"
+         pickOnBounds="true" preserveRatio="true">
+
+         <image>
+          <Image url="@close.png" />
+         </image>
+        </ImageView>
+       </graphic>
+       <tooltip>
+        <Tooltip text="Shutdown this locally attached device." />
+       </tooltip>
+      </Button>
+      <Label fx:id="outofsync" visible="false"
+       GridPane.columnIndex="1" GridPane.rowIndex="1">
+       <graphic>
+        <ImageView fitHeight="0.0" fitWidth="50.0"
+         pickOnBounds="true" preserveRatio="true">
+         <image>
+          <Image url="@outofsync.png" />
+         </image>
+        </ImageView>
+       </graphic>
+       <tooltip>
+        <Tooltip text="Device clock is not synchronized." />
+       </tooltip>
+      </Label>
+      <Label fx:id="overlay" visible="false" GridPane.columnIndex="0"
        GridPane.rowIndex="1">
-       <image>
-        <Image url="@outofsync.png" />
-       </image>
-      </ImageView>
-      <ImageView fx:id="overlay" visible="false" fitHeight="0.0" fitWidth="50.0" pickOnBounds="true"
-       preserveRatio="true" GridPane.columnIndex="0"
-       GridPane.rowIndex="1">
-       <image>
-        <Image url="@disconnected.png" />
-       </image>
-      </ImageView>
+       <graphic>
+        <ImageView fitHeight="0.0" fitWidth="50.0"
+         pickOnBounds="true" preserveRatio="true">
+         <image>
+          <Image url="@disconnected.png" />
+         </image>
+        </ImageView>
+       </graphic>
+       <tooltip>
+        <Tooltip text="Device is disconnected or powered down." />
+       </tooltip>
+      </Label>
      </children>
     </GridPane>
    </children>

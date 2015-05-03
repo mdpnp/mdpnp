@@ -1,15 +1,17 @@
 package org.mdpnp.apps.testapp;
 
-import org.mdpnp.apps.testapp.DeviceAdapterCommand.HeadlessAdapter;
-
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
+
+import org.mdpnp.apps.testapp.DeviceAdapterCommand.HeadlessAdapter;
 
 public class DeviceController {
-    @FXML public ImageView icon, outofsync, closeSimulator, overlay;
-    @FXML public Label text;
+    @FXML public ImageView icon;
+    @FXML public Button closeSimulator;
+    @FXML public Label text, outofsync, overlay;
     private Device device;
     
     // TODO values like these should be externalized into some global
@@ -39,7 +41,7 @@ public class DeviceController {
         }
     }
 
-    @FXML public void clickCloseSimulator(MouseEvent event) {
+    @FXML public void clickCloseSimulator(ActionEvent event) {
         HeadlessAdapter da = device.getHeadlessAdapter();
         if(null != da) {
             new Thread(()->da.stop()).start();
