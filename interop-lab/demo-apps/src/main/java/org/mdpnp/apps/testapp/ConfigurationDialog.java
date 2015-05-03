@@ -149,6 +149,19 @@ public class ConfigurationDialog {
         d.currentStage.setScene(new Scene(ui));
         d.currentStage.sizeToScene();
         d.currentStage.centerOnScreen();
+        d.currentStage.showingProperty().addListener(new ChangeListener<Boolean>() {
+
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if(newValue != null && newValue) {
+                    d.currentStage.setMinHeight(d.currentStage.getHeight());
+                    d.currentStage.setMinWidth(d.currentStage.getWidth());
+                }
+            }
+            
+        });
+        
+        
         d.currentStage.showAndWait();
 
         String s = System.getProperty("mdpnp.ui");
