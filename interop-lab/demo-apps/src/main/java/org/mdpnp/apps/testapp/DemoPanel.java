@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -81,14 +82,31 @@ public class DemoPanel implements Runnable {
         return createAdapter;
     }
 
-    public DemoPanel setModel(ObservableList<PatientInfo> patients) {
+    public DemoPanel setModel(final ObservableList<PatientInfo> patients) {
+        final ObservableList<PatientInfo> combined = FXCollections.observableArrayList();
+        PatientInfo nobody = new PatientInfo("", "", "<Unassigned>", PatientInfo.Gender.M, new Date());
+        combined.add(nobody);
+        combined.add(new PatientInfo("*", "", "<Anybody>", PatientInfo.Gender.M, new Date()));
+        patients.forEach((x)->combined.add(x));
         
-        ObservableList<PatientInfo> metaPatients = FXCollections.observableArrayList();
-        PatientInfo nobody = new PatientInfo("", "", "<Nobody>", PatientInfo.Gender.M, new Date());
-        metaPatients.add(nobody);
-        metaPatients.add(new PatientInfo("*", "", "<Anyone>", PatientInfo.Gender.M, new Date()));
-        this.patients.setItems(ObservableLists.concat(metaPatients, patients));
+        patients.addListener(new ListChangeListener<PatientInfo>() {
+
+            @Override
+            public void onChanged(javafx.collections.ListChangeListener.Change<? extends PatientInfo> c) {
+                while(c.next()) {
+                    if(c.wasAdded()) {
+                        c.getAddedSubList().forEach((x)->combined.add(x));
+                    }
+                    if(c.wasRemoved()) {
+                        c.getRemoved().forEach((x)->combined.remove(x));
+                    }
+                }
+            }
+            
+        });
+        this.patients.setItems(combined);
         this.patients.setValue(nobody);
+        
         return this;
     }
 
