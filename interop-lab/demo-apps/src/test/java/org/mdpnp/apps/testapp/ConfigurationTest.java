@@ -1,16 +1,13 @@
 package org.mdpnp.apps.testapp;
 
+import java.io.InputStream;
+import java.net.URL;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Properties;
 
 /**
  *
@@ -97,7 +94,7 @@ public class ConfigurationTest {
     @Test
     public void testCreateContext() throws Exception {
 
-        Configuration c = new Configuration(false, null, 1234, null, null, false);
+        Configuration c = new Configuration(false, null, 1234, null, null, "");
 
         ApplicationContext ctx =
                 c.createContext("classpath*:/org/mdpnp/apps/testapp/ConfigurationTestContext.0.xml");

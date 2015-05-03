@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
@@ -9,12 +11,10 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.CheckBox?>
 
-<GridPane id="deviceTypeRow" fx:id="gridPane" alignment="CENTER"
- hgap="5.0" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.SettingsController">
+<GridPane id="deviceTypeRow" fx:id="gridPane" alignment="CENTER" hgap="5.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="org.mdpnp.apps.testapp.SettingsController">
 
  <children>
-  <Label fx:id="applicationsLabel" text="Application"
-   GridPane.columnIndex="0" GridPane.rowIndex="0">
+  <Label fx:id="applicationsLabel" text="Application" GridPane.columnIndex="0" GridPane.rowIndex="0">
    <opaqueInsets>
     <Insets />
    </opaqueInsets>
@@ -22,14 +22,12 @@
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
-  <Label fx:id="deviceCategoryLabel" text="Device Category" GridPane.columnIndex="0"
-   GridPane.rowIndex="1">
+  <Label fx:id="deviceCategoryLabel" text="Device Category" GridPane.columnIndex="0" GridPane.rowIndex="1">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
-  <Label fx:id="deviceTypeLabel" text="Device Type"
-   GridPane.columnIndex="0" GridPane.rowIndex="2">
+  <Label fx:id="deviceTypeLabel" text="Device Type" GridPane.columnIndex="0" GridPane.rowIndex="2">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
@@ -37,82 +35,65 @@
 
 
 
-  <Label fx:id="domainIdLabel" text="Domain Id"
-   GridPane.columnIndex="0" GridPane.rowIndex="5">
+  <Label fx:id="domainIdLabel" text="Domain Id" GridPane.columnIndex="0" GridPane.rowIndex="5">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
-  <ComboBox fx:id="applications" editable="false"
-   GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES"
-   GridPane.rowIndex="0">
+  <ComboBox fx:id="applications" editable="false" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="0">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </ComboBox>
-  <ComboBox fx:id="deviceCategory" GridPane.hgrow="SOMETIMES"
-   GridPane.columnIndex="1" GridPane.rowIndex="1">
+  <ComboBox fx:id="deviceCategory" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="1">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </ComboBox>
-  <ComboBox fx:id="deviceType" GridPane.hgrow="SOMETIMES"
-   GridPane.columnIndex="1" GridPane.rowIndex="2">
+  <ComboBox fx:id="deviceType" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="2">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </ComboBox>
-  <TextField fx:id="domainId" alignment="CENTER_RIGHT"
-   maxWidth="40.0" minWidth="-1.0" prefColumnCount="2" prefWidth="30.0"
-   promptText="" text="0" GridPane.columnIndex="1" GridPane.hgrow="NEVER"
-   GridPane.rowIndex="5">
+  <TextField fx:id="domainId" alignment="CENTER_RIGHT" maxWidth="40.0" minWidth="-1.0" prefColumnCount="2" prefWidth="30.0" promptText="" text="0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="5">
 
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </TextField>
-  <Label fx:id="serialPortsLabel" text="Serial Port"
-   GridPane.columnIndex="0" GridPane.rowIndex="3">
+  <Label fx:id="serialPortsLabel" text="Serial Port" GridPane.columnIndex="0" GridPane.rowIndex="3">
    <GridPane.margin>
     <Insets bottom="5.0" right="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
-  <VBox fx:id="serialPortsContainer" GridPane.columnIndex="1"
-   GridPane.hgrow="SOMETIMES" GridPane.rowIndex="3" spacing="5.0">
+  <VBox fx:id="serialPortsContainer" spacing="5.0" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="3">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </VBox>
-  <Label fx:id="addressLabel" text="IP Address"
-   GridPane.columnIndex="0" GridPane.rowIndex="4">
+  <Label fx:id="addressLabel" text="IP Address" GridPane.columnIndex="0" GridPane.rowIndex="4">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
-  <TextField fx:id="addressField" maxWidth="200.0" prefWidth="200.0"
-   GridPane.columnIndex="1" GridPane.rowIndex="4">
+  <TextField fx:id="addressField" maxWidth="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
    <GridPane.margin>
     <Insets bottom="5.0" top="5.0" />
    </GridPane.margin>
   </TextField>
-  <Label fx:id="useInternalPatientsLabel" text="Internal Patients"
-   GridPane.columnIndex="0" GridPane.rowIndex="6">
+  <Label fx:id="fhirServerLabel" text="FHIR Server" GridPane.columnIndex="0" GridPane.rowIndex="6">
    <GridPane.margin>
     <Insets bottom="5.0" right="5.0" top="5.0" />
    </GridPane.margin>
   </Label>
-  <CheckBox fx:id="useInternalPatients" GridPane.columnIndex="1"
-   GridPane.rowIndex="6" />
+  <TextField fx:id="fhirServer" maxWidth="200.0" prefWidth="200.0" promptText="FHIR URL for patient records" GridPane.columnIndex="1" GridPane.rowIndex="6" />
  </children>
  <columnConstraints>
-  <ColumnConstraints halignment="RIGHT" hgrow="NEVER"
-   minWidth="10.0" percentWidth="25.0" prefWidth="100.0" />
-  <ColumnConstraints halignment="LEFT" hgrow="NEVER"
-   minWidth="10.0" prefWidth="100.0" />
+  <ColumnConstraints halignment="RIGHT" hgrow="NEVER" minWidth="10.0" percentWidth="25.0" prefWidth="100.0" />
+  <ColumnConstraints halignment="LEFT" hgrow="NEVER" minWidth="10.0" prefWidth="100.0" />
  </columnConstraints>
  <rowConstraints>
-  <RowConstraints minHeight="0" prefHeight="-1"
-   valignment="CENTER" vgrow="NEVER" />
+  <RowConstraints minHeight="0" prefHeight="-1" valignment="CENTER" vgrow="NEVER" />
   <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
   <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
   <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
@@ -120,5 +101,7 @@
   <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
   <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
  </rowConstraints>
+   <padding>
+      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+   </padding>
 </GridPane>
-

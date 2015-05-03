@@ -159,7 +159,7 @@ public class ConfigurationDialog {
                 Integer.parseInt(d.settingsController.domainProperty().get()), 
                 d.settingsController.selectedDeviceProperty().get(),
                 d.settingsController.addressProperty().get(),
-                d.settingsController.internalPatientsProperty().get());
+                d.settingsController.fhirServerNameProperty().get());
 
         return d;
     }

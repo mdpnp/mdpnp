@@ -90,24 +90,20 @@ public class Configuration {
     private final DeviceDriverProvider deviceFactory;
     private final String               address;
     private final int                  domainId;
-    private final boolean              useInternalPatients;
+    private final String               fhirServerName;
     private final Properties           cmdLineEnv = new Properties();
 
     public Configuration(boolean headless, Application application, int domainId, 
-            DeviceDriverProvider deviceFactory, String address, boolean useInternalPatients) {
+            DeviceDriverProvider deviceFactory, String address, String fhirServerName) {
         this.headless = headless;
         this.deviceFactory = deviceFactory;
         this.address = address;
         this.domainId = domainId;
         this.application = application;
-        this.useInternalPatients = useInternalPatients;
+        this.fhirServerName = fhirServerName;
 
         cmdLineEnv.put("mdpnp.domain", Integer.toString(domainId));
-        
-        // TODO expand this to allow specification of a different FHIR base url
-        if(useInternalPatients) {
-            cmdLineEnv.put("mdpnp.fhir.url", "");
-        }
+        cmdLineEnv.put("mdpnp.fhir.url", fhirServerName);
     }
 
     public boolean isHeadless()
@@ -151,7 +147,7 @@ public class Configuration {
     private static final String DOMAIN_ID             = "domainId";
     private static final String DEVICE_TYPE           = "deviceType";
     private static final String ADDRESS               = "address";
-    private static final String USE_INTERNAL_PATIENTS = "useInternalPatients"; 
+    private static final String FHIR_SERVER_NAME      = "fhirServerName"; 
 
     private final static Logger log = LoggerFactory.getLogger(Configuration.class);
 
@@ -183,10 +179,17 @@ public class Configuration {
         Properties p = new Properties();
         p.setProperty(APPLICATION, application.name());
         p.setProperty(DOMAIN_ID,   Integer.toString(domainId));
-        if (null != deviceFactory)
+        if (null != deviceFactory) {
             p.setProperty(DEVICE_TYPE, deviceFactory.getDeviceType().getAlias());
-        if (null != address)
+        }
+        
+        if (null != address) {
             p.setProperty(ADDRESS, address);
+        }
+        
+        if (null != fhirServerName) {
+            p.setProperty(FHIR_SERVER_NAME, fhirServerName);
+        }
 
         p.list(os);
     }
@@ -200,7 +203,7 @@ public class Configuration {
         int domainId = 0;
         DeviceDriverProvider deviceType = null;
         String address = null;
-        boolean useInternalPatients = false;
+        String fhirServerName = "";
 
         if(p.containsKey(APPLICATION)) {
             String s = p.getProperty(APPLICATION);
@@ -230,11 +233,11 @@ public class Configuration {
             address = p.getProperty(ADDRESS);
         }
         
-        if(p.containsKey(USE_INTERNAL_PATIENTS)) {
-            useInternalPatients = Boolean.valueOf(p.getProperty(USE_INTERNAL_PATIENTS));
+        if(p.containsKey(FHIR_SERVER_NAME)) {
+            fhirServerName = p.getProperty(FHIR_SERVER_NAME, "");
         }
 
-        return new Configuration(false, app, domainId, deviceType, address, useInternalPatients);
+        return new Configuration(false, app, domainId, deviceType, address, fhirServerName);
     }
 
     @SuppressWarnings("static-access")
@@ -256,11 +259,11 @@ public class Configuration {
                 .withDescription("DDS domain identifier")
                 .create("domain");
         
-        Option useInternalPatientsArg = OptionBuilder.withArgName("useInternalPatients")
+        Option fhirServerNameArg = OptionBuilder.withArgName("fhirServerName")
                 .hasArg()
                 .isRequired(false)
-                .withDescription("Use local set of patients instead of querying a FHIR server")
-                .create("useInternalPatients");
+                .withDescription("FHIR Server URL to use for patient information")
+                .create("fhirServerNAme");
 
         StringBuilder ds = new StringBuilder();
         ds.append("if Application is ").append(Application.ICE_Device_Interface.name()).append(" then DeviceType may be one of:");
@@ -295,7 +298,7 @@ public class Configuration {
         options.addOption( domainArg );
         options.addOption( deviceArg );
         options.addOption( addressArg );
-        options.addOption( useInternalPatientsArg );
+        options.addOption( fhirServerNameArg );
 
         CommandLine line = parseCommandLine("ICE", cmdLineArgs, options);
         if(line == null)
@@ -305,7 +308,7 @@ public class Configuration {
         int domainId = 0;
         DeviceDriverProvider deviceType = null;
         String address = null;
-        boolean useInternalPatients = false;
+        String fhirServerName = "";
 
         String v = line.getOptionValue("app");
         try {
@@ -329,16 +332,16 @@ public class Configuration {
             }
         }
         
-        if(line.hasOption("useInternalPatients")) {
-            v = line.getOptionValue("useInternalPatients");
-            useInternalPatients = Boolean.valueOf(v);
+        if(line.hasOption("fhirServerName")) {
+            v = line.getOptionValue("fhirServerName");
+            fhirServerName = v;
         }
 
         // if mdpnp.ui is set to true, force the system to come up in the UI mode regardless of
         // command line having arguments or not. If not set, default to headless==true.
         //
         boolean headless=!Boolean.getBoolean("mdpnp.ui");
-        return new Configuration(headless, app, domainId, deviceType, address, useInternalPatients);
+        return new Configuration(headless, app, domainId, deviceType, address, fhirServerName);
     }
 
     public static Configuration searchAndLoadSettings(File[] fPath) throws IOException {
