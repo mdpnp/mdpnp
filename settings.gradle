@@ -39,8 +39,8 @@ if(null != System.getenv().get("OSPL_HOME") && null != System.getenv().get("SPLI
 include 'interop-lab:demo-devices'
 include 'interop-lab:demo-apps'
 
-include 'himss-2013:docsubmit'
-include 'himss-2013:docreceive'
-include 'himss-2013:infusion-pump-ui'
-include 'himss-2013:settings-transfer'
+//include 'himss-2013:docsubmit'
+//include 'himss-2013:docreceive'
+//include 'himss-2013:infusion-pump-ui'
+//include 'himss-2013:settings-transfer'
 

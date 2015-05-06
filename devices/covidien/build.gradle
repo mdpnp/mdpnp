@@ -17,5 +17,6 @@ sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
 dependencies {
-	compile project(':devices:common')
+    compile project(':devices:common')
+    testCompile group: 'junit', name: 'junit', version: '4.11'
 }
