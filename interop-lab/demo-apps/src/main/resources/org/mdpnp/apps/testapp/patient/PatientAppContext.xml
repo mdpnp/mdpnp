@@ -35,16 +35,6 @@
         <constructor-arg ref="wildcardTimeManager" />
     </bean>    
 
-    <bean id="mdsConnectivity"
-          class="org.mdpnp.devices.MDSHandler"
-          init-method="start"
-          destroy-method="shutdown">
-        <constructor-arg ref="eventLoop"/>
-        <constructor-arg ref="wildcardDomainParticipant" />
-    </bean>
-
-
-
     <!--
     Controller that would know which beans from the contest to lookup when
     loading a particular fxml UI definition

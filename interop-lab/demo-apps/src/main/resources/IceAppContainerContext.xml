@@ -153,7 +153,15 @@
         <property name="url"         value="${mdpnp.fhir.url}"/>
         <property name="jdbcDB"      ref="jdbcDB"/>
         <property name="fhirContext" ref="fhirContext"/>
-    </bean>        
+    </bean>       
+    
+    <bean id="mdsConnectivity"
+          class="org.mdpnp.devices.MDSHandler"
+          init-method="start"
+          destroy-method="shutdown">
+        <constructor-arg ref="eventLoop"/>
+        <constructor-arg ref="domainParticipant" />
+    </bean>
     
     <!-- Components from HIMSS'15
     

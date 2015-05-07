@@ -36,6 +36,7 @@ import javafx.scene.layout.BorderPane;
 
 import org.mdpnp.apps.testapp.comboboxfix.FixedComboBox;
 import org.mdpnp.apps.testapp.patient.PatientInfo;
+import org.mdpnp.devices.MDSHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
@@ -118,6 +119,7 @@ public class DemoPanel implements Runnable {
     private String udiText = "";
     private String versionText = "";
     private DeviceListModel deviceListModel;
+    protected MDSHandler mdsHandler;
 
     private void setTooltip() {
         clock.setTooltip(new Tooltip(udiText + "\n" + versionText));
@@ -132,6 +134,11 @@ public class DemoPanel implements Runnable {
     public DemoPanel setVersion(String version) {
         versionText = version;
         setTooltip();
+        return this;
+    }
+    
+    public DemoPanel setMdsHandler(MDSHandler mdsHandler) {
+        this.mdsHandler = mdsHandler;
         return this;
     }
     
@@ -211,6 +218,11 @@ public class DemoPanel implements Runnable {
                                 da.init();
                                 da.connect();
                                 Platform.runLater(()->deviceListModel.getByUniqueDeviceIdentifier(da.getDevice().getUniqueDeviceIdentifier()).setHeadlessAdapter(da));
+                                
+                                ice.MDSConnectivityObjective obj = new ice.MDSConnectivityObjective();
+                                obj.unique_device_identifier = da.getDevice().getUniqueDeviceIdentifier();
+                                obj.partition = partition.isEmpty() ? "" : partition.get(0);
+                                mdsHandler.publish(obj);
                             } catch (Exception e) {
                                 log.error("Error in spawned DeviceAdapter", e);
                             }
