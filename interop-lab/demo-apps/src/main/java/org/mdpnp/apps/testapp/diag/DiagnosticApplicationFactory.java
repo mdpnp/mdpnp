@@ -6,6 +6,7 @@ import java.net.URL;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
+import org.mdpnp.apps.fxbeans.AlarmLimitFxList;
 import org.mdpnp.apps.fxbeans.AlertFxList;
 import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
 import org.mdpnp.apps.fxbeans.NumericFxList;
@@ -35,11 +36,13 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
         
         final AlertFxList technicalAlertList = parentContext.getBean("technicalAlertList", AlertFxList.class);
         
+        final AlarmLimitFxList alarmLimitList = parentContext.getBean("alarmLimitList", AlarmLimitFxList.class);
+        
         final ValidationOracle validationOracle = parentContext.getBean("validationOracle", ValidationOracle.class);
         
         final InfusionStatusFxList infusionStatusList = parentContext.getBean("infusionStatusList", InfusionStatusFxList.class);
         
-        final Diagnostic diagnostic = new Diagnostic(patientAlertList, technicalAlertList, numericList, sampleArrayList, validationOracle, infusionStatusList);
+        final Diagnostic diagnostic = new Diagnostic(patientAlertList, technicalAlertList, numericList, sampleArrayList, validationOracle, infusionStatusList, alarmLimitList);
 
         FXMLLoader loader = new FXMLLoader(DiagnosticApplication.class.getResource("DiagnosticApplication.fxml"));
         

@@ -2,6 +2,8 @@ package org.mdpnp.apps.testapp.diag;
 
 import javafx.collections.ObservableList;
 
+import org.mdpnp.apps.fxbeans.AlarmLimitFx;
+import org.mdpnp.apps.fxbeans.AlarmLimitFxList;
 import org.mdpnp.apps.fxbeans.AlertFx;
 import org.mdpnp.apps.fxbeans.AlertFxList;
 import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
@@ -17,14 +19,22 @@ public class Diagnostic {
     private final SampleArrayFxList sampleArrays;
     private final ValidationOracle validationOracle;
     private final InfusionStatusFxList infusionStatusList;
+    private final AlarmLimitFxList alarmLimits;
     
-    public Diagnostic(AlertFxList patientAlerts, AlertFxList technicalAlerts, NumericFxList numerics, SampleArrayFxList sampleArrayList, ValidationOracle validationOracle, InfusionStatusFxList infusionStatusList) {
+    public Diagnostic(AlertFxList patientAlerts, 
+            AlertFxList technicalAlerts, 
+            NumericFxList numerics, 
+            SampleArrayFxList sampleArrayList, 
+            ValidationOracle validationOracle, 
+            InfusionStatusFxList infusionStatusList,
+            AlarmLimitFxList alarmLimits) {
         this.numerics = numerics;
         this.sampleArrays = sampleArrayList;
         this.patientAlerts = patientAlerts;
         this.technicalAlerts = technicalAlerts;
         this.validationOracle = validationOracle;
         this.infusionStatusList = infusionStatusList;
+        this.alarmLimits = alarmLimits;
     }
     
     public ObservableList<NumericFx> getNumericModel() {
@@ -49,6 +59,10 @@ public class Diagnostic {
     
     public InfusionStatusFxList getInfusionStatusList() {
         return infusionStatusList;
+    }
+    
+    public ObservableList<AlarmLimitFx> getAlarmLimitModel() {
+        return alarmLimits;
     }
     
 }

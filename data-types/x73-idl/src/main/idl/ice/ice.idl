@@ -394,16 +394,16 @@ module ice {
    */
   enum LimitType {
     low_limit, 
-  	high_limit
+    high_limit
   };
   
   /**
   * Priority of an alarm 
   */
   enum AlarmPriority{
-  	low,
-  	medium,
-  	high
+    low,
+    medium,
+    high
   }; 
   
   

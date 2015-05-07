@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.diag;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
 
+import org.mdpnp.apps.fxbeans.AlarmLimitFx;
 import org.mdpnp.apps.fxbeans.AlertFx;
 import org.mdpnp.apps.fxbeans.InfusionStatusFx;
 import org.mdpnp.apps.fxbeans.NumericFx;
@@ -20,6 +21,7 @@ public class DiagnosticApplication {
     @FXML protected TableView <AlertFx> patientAlertTable, technicalAlertTable;
     @FXML protected TableView<Validation> validationTable;
     @FXML protected TableView<InfusionStatusFx> infusionStatusTable;
+    @FXML protected TableView<AlarmLimitFx> alarmLimitTable;
     
     public DiagnosticApplication() {
     }
@@ -36,6 +38,7 @@ public class DiagnosticApplication {
         technicalAlertTable.setItems(diagnostic.getTechnicalAlertModel());
         validationTable.setItems(diagnostic.getValidationOracle());
         infusionStatusTable.setItems(diagnostic.getInfusionStatusList());
+        alarmLimitTable.setItems(diagnostic.getAlarmLimitModel());
     }
 }
 
