@@ -197,7 +197,6 @@ public abstract class AbstractDevice {
         return holder;
     }
 
-    //XXX Diego: should I use ice.LimitType or String?
     protected InstanceHolder<ice.LocalAlarmLimitObjective> createAlarmLimitObjectiveInstance(String metric_id, ice.LimitType limit_type) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createAlarmInstance");
@@ -337,9 +336,8 @@ public abstract class AbstractDevice {
     }
 
     protected void alarmLimitSample(InstanceHolder<ice.AlarmLimit> holder, String unit_id, Float newValue) {
-    	//XXX Should we avoid the comparison w/ the unitID for now?...
-    	newValue = null==newValue?Float.NEGATIVE_INFINITY:newValue;
-        if(0 != Float.compare(newValue, holder.data.value)  /*||  !unit_id.equals(holder.data.unit_identifier) */) {
+        if(0 != Float.compare(newValue, holder.data.value) ||  
+           !unit_id.equals(holder.data.unit_identifier)) {
             holder.data.value = newValue;
             holder.data.unit_identifier = unit_id;
             alarmLimitDataWriter.write(holder.data, holder.handle);
@@ -347,8 +345,8 @@ public abstract class AbstractDevice {
     }
 
     protected void alarmLimitObjectiveSample(InstanceHolder<ice.LocalAlarmLimitObjective> holder, String unit_id, Float newValue) {
-        // TODO is zero really not an acceptable value for an alarm limit?
-        if(0 != Float.compare(newValue, holder.data.value) ||  !unit_id.equals(holder.data.unit_identifier)) {
+        if(0 != Float.compare(newValue, holder.data.value) || 
+           !unit_id.equals(holder.data.unit_identifier)) {
             holder.data.value = newValue;
             holder.data.unit_identifier = unit_id;
             alarmLimitObjectiveWriter.write(holder.data, holder.handle);
@@ -357,15 +355,24 @@ public abstract class AbstractDevice {
 
     protected InstanceHolder<ice.AlarmLimit> alarmLimitSample(InstanceHolder<ice.AlarmLimit> holder, String unit_id, Float newValue,
             String metric_id, ice.LimitType limit_type) {
-    	// this should check all key values
-        if (holder != null && (!holder.data.metric_id.equals(metric_id) || !holder.data.limit_type.equals(limit_type))) {
+        if (holder != null && 
+                (!holder.data.unique_device_identifier.equals(deviceIdentity.unique_device_identifier) ||
+                 !holder.data.metric_id.equals(metric_id) || 
+                 !holder.data.limit_type.equals(limit_type))) {
             unregisterAlarmLimitInstance(holder);
             holder = null;
         }
-        if (null == holder) {
-            holder = createAlarmLimitInstance(metric_id, limit_type);
+        if(null != newValue) {
+            if (null == holder) {
+                holder = createAlarmLimitInstance(metric_id, limit_type);
+            }
+            alarmLimitSample(holder, unit_id, newValue);
+        } else {
+            if(null != holder) {
+                unregisterAlarmLimitInstance(holder);
+                holder = null;
+            }
         }
-        alarmLimitSample(holder, unit_id, newValue);
 
         return holder;
     }
@@ -373,8 +380,9 @@ public abstract class AbstractDevice {
     protected InstanceHolder<ice.LocalAlarmLimitObjective> alarmLimitObjectiveSample(InstanceHolder<ice.LocalAlarmLimitObjective> holder,
             Float newValue, String unit_id, String metric_id, ice.LimitType limit_type) {
         if ( holder != null && 
-            !holder.data.metric_id.equals(metric_id) &&
-            !holder.data.limit_type.equals(limit_type)) {
+                (!holder.data.unique_device_identifier.equals(deviceIdentity.unique_device_identifier) ||
+                 !holder.data.metric_id.equals(metric_id) ||
+                 !holder.data.limit_type.equals(limit_type))) {
             unregisterAlarmLimitObjectiveInstance(holder);
             holder = null;
         }
@@ -764,8 +772,7 @@ public abstract class AbstractDevice {
      * to provide clock reading that would contain multiple values.
      **/
 
-    protected final DeviceClock getClockProvider()
-    {
+    protected final DeviceClock getClockProvider() {
         return timestampFactory;
     }
 
@@ -831,7 +838,7 @@ public abstract class AbstractDevice {
                                         String metricId = instanceMetrics.get(si.instance_handle);
                                         log.debug("Unsetting alarm limit " + metricId);
                                         if (null != metricId) {
-                                        	unsetAlarmLimit(metricId);
+                                            unsetAlarmLimit(metricId);
                                         }
 
                                     }
