@@ -316,6 +316,8 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
                 setupItemHandler.send(si, (int) obj.value);
             } else {
                 log.debug("Ignoring unsettable global upper alarm objective for " + obj.metric_id);
+                // explicitly returning so that we do NOT acknowledge the global setting with a local objective
+                return;                
             }
             break;
         case ice.LimitType._low_limit:
@@ -325,6 +327,8 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
                 setupItemHandler.send(si, (int) obj.value);
             } else {
                 log.debug("Ignoring unsettable global lower alarm objective for " + obj.metric_id);
+                // explicitly returning so that we do NOT acknowledge the global setting with a local objective
+                return;
             }
             break;
         default:
