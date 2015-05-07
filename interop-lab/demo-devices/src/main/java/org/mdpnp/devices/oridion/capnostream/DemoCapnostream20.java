@@ -185,10 +185,17 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
         private Integer sentValue;
 
         public synchronized void send(SetupItem si, Integer value) {
+            if(!ice.ConnectionState.Connected.equals(getState())) {
+                // TODO settings need to be re-synchronized every time we re-enter
+                // the Connected state
+                return;
+            }
+            
             Integer oldValue = setupValuesToSend.get(si);
             if (null != oldValue) {
                 log.debug("Skipping setting " + si + " to " + oldValue + " and now setting to " + value);
             }
+
             setupValuesToSend.put(si, value);
             executor.schedule(this, 0L, TimeUnit.MILLISECONDS);
         }
@@ -254,9 +261,37 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     @Override
     public void unsetAlarmLimit(String metricId, ice.LimitType limit_type) {
         super.unsetAlarmLimit(metricId, limit_type);
-        log.warn("Resetting " + metricId + " to [" + priorSafeLow.get(metricId) + " , " + priorSafeHigh.get(metricId));
-        setupItemHandler.send(lowerAlarm(metricId), priorSafeLow.get(metricId));
-        setupItemHandler.send(upperAlarm(metricId), priorSafeHigh.get(metricId));
+        SetupItem si = null;
+        
+        switch(limit_type.ordinal()) {
+        case ice.LimitType._high_limit:
+            si = upperAlarm(metricId);
+            if(null != si) {
+                log.warn("Resetting " + metricId + " high limit to " + priorSafeHigh.get(metricId));
+                setupItemHandler.send(si, priorSafeHigh.get(metricId));
+            } else {
+                // Do not deacknowledge this unknown alarm limit setting
+                return;
+            }
+            break;
+        case ice.LimitType._low_limit:
+            si = lowerAlarm(metricId);
+            if(null != si) {
+                log.warn("Resetting " + metricId + " low limit to " + priorSafeLow.get(metricId));
+                setupItemHandler.send(si, priorSafeLow.get(metricId));
+            } else {
+             // Do not deacknowledge this unknown alarm limit setting
+                return;
+            }
+            break;
+        default:
+            // explicitly returning so that we do NOT acknowledge the global setting with a local objective
+            return;
+        }
+
+        // TODO Does this really belong here or in a parent?
+        localAlarmLimit.put(metricId +"_"+limit_type,
+                alarmLimitObjectiveSample(localAlarmLimit.get(metricId+"-"+limit_type), null, "", metricId, limit_type));
     }
     
 
@@ -271,13 +306,35 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     @Override
     public void setAlarmLimit(ice.GlobalAlarmLimitObjective obj){
         super.setAlarmLimit(obj);
-        priorSafeHigh.put(obj.metric_id, currentHigh.get(obj.metric_id));
-        priorSafeLow.put(obj.metric_id, currentLow.get(obj.metric_id));
-        setupItemHandler.send(lowerAlarm(obj.metric_id), (int) obj.value);
-        setupItemHandler.send(upperAlarm(obj.metric_id), (int) obj.value);
-        // TODO Does this really belong here?
+        SetupItem si = null;
+        
+        switch(obj.limit_type.ordinal()) {
+        case ice.LimitType._high_limit:
+            si = upperAlarm(obj.metric_id);
+            if(null != si) {
+                priorSafeHigh.put(obj.metric_id, currentHigh.get(obj.metric_id));
+                setupItemHandler.send(si, (int) obj.value);
+            } else {
+                log.debug("Ignoring unsettable global upper alarm objective for " + obj.metric_id);
+            }
+            break;
+        case ice.LimitType._low_limit:
+            si = lowerAlarm(obj.metric_id);
+            if(null != si) {
+                priorSafeLow.put(obj.metric_id, currentLow.get(obj.metric_id));
+                setupItemHandler.send(si, (int) obj.value);
+            } else {
+                log.debug("Ignoring unsettable global lower alarm objective for " + obj.metric_id);
+            }
+            break;
+        default:
+            // explicitly returning so that we do NOT acknowledge the global setting with a local objective
+            return;
+        }
+
+        // TODO Does this really belong here or in a parent?
         localAlarmLimit.put(obj.metric_id +"_"+obj.limit_type,
-                alarmLimitObjectiveSample(localAlarmLimit.get(obj.metric_id), obj.value, obj.unit_identifier, obj.metric_id, obj.limit_type));
+                alarmLimitObjectiveSample(localAlarmLimit.get(obj.metric_id+"-"+obj.limit_type), obj.value, obj.unit_identifier, obj.metric_id, obj.limit_type));
     }
 
     public void init() {
