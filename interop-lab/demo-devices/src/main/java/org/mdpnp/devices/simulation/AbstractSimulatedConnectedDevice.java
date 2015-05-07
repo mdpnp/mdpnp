@@ -165,9 +165,9 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
     }
     
     @Override
-    public void unsetAlarmLimit(String metricId) {
+    public void unsetAlarmLimit(String metricId, ice.LimitType limit_type) {
         // TODO Really ought to unread the local objective and alarm settings when the alarm settings are unset
-        super.unsetAlarmLimit(metricId);
+        super.unsetAlarmLimit(metricId, limit_type);
     }
     
     

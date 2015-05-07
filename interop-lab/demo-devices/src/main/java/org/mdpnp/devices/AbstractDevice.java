@@ -779,10 +779,24 @@ public abstract class AbstractDevice {
     public void setAlarmLimit(ice.GlobalAlarmLimitObjective obj) {
     }
 
-    public void unsetAlarmLimit(String metricId) {
+    public void unsetAlarmLimit(String metricId, ice.LimitType limit_type) {
     }
 
-    private Map<InstanceHandle_t, String> instanceMetrics = new HashMap<InstanceHandle_t, String>();
+    private static class MetricAndType {
+        private final String metric_id;
+        private final ice.LimitType limit_type;
+        public MetricAndType(final String metric_id, final ice.LimitType limit_type) {
+            this.metric_id = metric_id;
+            this.limit_type = limit_type;
+        }
+        public ice.LimitType getLimit_type() {
+            return limit_type;
+        }
+        public String getMetric_id() {
+            return metric_id;
+        }
+    }
+    private Map<InstanceHandle_t, MetricAndType> instanceToAlarmLimit = new HashMap<>();
 
     protected void writeDeviceIdentity() {
         if (null == deviceIdentity.unique_device_identifier || "".equals(deviceIdentity.unique_device_identifier)) {
@@ -817,7 +831,7 @@ public abstract class AbstractDevice {
 
                                     if (0 != (si.view_state & ViewStateKind.NEW_VIEW_STATE) && si.valid_data) {
                                         log.debug("Handle for metric_id=" + obj.metric_id + " is " + si.instance_handle);
-                                        instanceMetrics.put(new InstanceHandle_t(si.instance_handle), obj.metric_id);
+                                        instanceToAlarmLimit.put(new InstanceHandle_t(si.instance_handle), new MetricAndType(obj.metric_id, obj.limit_type));
                                     }
 
                                     if (0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
@@ -835,10 +849,11 @@ public abstract class AbstractDevice {
                                         // for the time being
                                         // alarmSettingsObjectiveReader.get_key_value(obj,
                                         // si.instance_handle);
-                                        String metricId = instanceMetrics.get(si.instance_handle);
-                                        log.debug("Unsetting alarm limit " + metricId);
-                                        if (null != metricId) {
-                                            unsetAlarmLimit(metricId);
+                                        MetricAndType mt = instanceToAlarmLimit.get(si.instance_handle);
+                                        
+                                        if (null != mt) {
+                                            log.debug("Unsetting alarm limit " + mt.getMetric_id()+ " " + mt.getLimit_type());
+                                            unsetAlarmLimit(mt.getMetric_id(), mt.getLimit_type());
                                         }
 
                                     }

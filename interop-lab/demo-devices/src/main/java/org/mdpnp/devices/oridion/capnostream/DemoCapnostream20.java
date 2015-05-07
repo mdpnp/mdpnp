@@ -252,8 +252,8 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
     }
 
     @Override
-    public void unsetAlarmLimit(String metricId) {//XXX is it going to need limit_type too?
-        super.unsetAlarmLimit(metricId);
+    public void unsetAlarmLimit(String metricId, ice.LimitType limit_type) {
+        super.unsetAlarmLimit(metricId, limit_type);
         log.warn("Resetting " + metricId + " to [" + priorSafeLow.get(metricId) + " , " + priorSafeHigh.get(metricId));
         setupItemHandler.send(lowerAlarm(metricId), priorSafeLow.get(metricId));
         setupItemHandler.send(upperAlarm(metricId), priorSafeHigh.get(metricId));
