@@ -123,6 +123,9 @@ public abstract class AbstractConnectedDevice extends AbstractDevice {
             // Connection still open but no active session (silence on the
             // RS-232 line for example)
             { ice.ConnectionState.Connected, ice.ConnectionState.Negotiating },
+            // A fatal error in data processing that has caused us to close the connection
+            // and to attempt to reopen it
+            { ice.ConnectionState.Connected, ice.ConnectionState.Connecting },
             // Negotiation was successful
             { ice.ConnectionState.Negotiating, ice.ConnectionState.Connected },
             // A lack of an open connection while trying to attempt to negotiate
