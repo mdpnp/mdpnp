@@ -50,7 +50,7 @@ public class Generator {
             
             out.append(prefix).append("public ").append(typeName).append("Property").append(templateName!=null?("<"+templateName+">"):"").append(" ").append(f.getName()).append("Property() {\n");
             out.append(prefix).append("    if(null == this.").append(f.getName()).append(") {\n");
-            out.append(prefix).append("        this.").append(f.getName()).append(" = new Simple").append(typeName).append("Property").append(templateName!=null?("<"+templateName+">"):"").append("();\n");
+            out.append(prefix).append("        this.").append(f.getName()).append(" = new Simple").append(typeName).append("Property").append(templateName!=null?("<"+templateName+">"):"").append("(this, \"").append(f.getName()).append("\");\n");
             out.append(prefix).append("    }\n");
             out.append(prefix).append("    ").append("return ").append(f.getName()).append(";\n");
             out.append(prefix).append("}\n\n");
