@@ -476,6 +476,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
         @Override
         public void run() {
+            if(ice.ConnectionState.Connected.equals(getState())) {
             try {
                 for (int i = 0; i < realtimeBuffer.length; i++) {
                     if (null == realtimeConfig[i] || realtimeFrequency[i] != this.frequency) {
@@ -528,6 +529,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             } catch (Throwable t) {
                 log.error("error emitting fast data", t);
             }
+        }
         }
 
     }
