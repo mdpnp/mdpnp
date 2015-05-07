@@ -156,11 +156,13 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
 	            alarmObjectivesLow[i] = new InstanceHolder<ice.GlobalAlarmLimitObjective>();
 	            alarmObjectivesLow[i].data = (GlobalAlarmLimitObjective) ice.GlobalAlarmLimitObjective.create();
 	            alarmObjectivesLow[i].data.metric_id = metricIds[i];
+	            alarmObjectivesLow[i].data.limit_type = ice.LimitType.low_limit;
 	            alarmObjectivesLow[i].handle = getParent().getWriter().register_instance(alarmObjectivesLow[i].data);
 	            
 	            alarmObjectivesHigh[i] = new InstanceHolder<ice.GlobalAlarmLimitObjective>();
 	            alarmObjectivesHigh[i].data = (GlobalAlarmLimitObjective) ice.GlobalAlarmLimitObjective.create();
 	            alarmObjectivesHigh[i].data.metric_id = metricIds[i];
+	            alarmObjectivesHigh[i].data.limit_type = ice.LimitType.high_limit;
 	            alarmObjectivesHigh[i].handle = getParent().getWriter().register_instance(alarmObjectivesHigh[i].data);
 	        }
         } else {
