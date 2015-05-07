@@ -1,4 +1,4 @@
-PARCEL=OpenICE-0.6.2
+PARCEL=OpenICE-0.6.3-SNAPSHOT
 TARGETS=`cat targets | sed '/^\s*#/d'`
 # Add --offline to the following line if no internet access
 ./gradlew :interop-lab:demo-apps:distZip
