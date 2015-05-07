@@ -306,7 +306,83 @@
       </TableView>
          
          </content>
+      </Tab>
+            <Tab text="Global Alarm Obj">
+         <content>
+               <TableView fx:id="globalAlarmLimitObjectiveTable" prefWidth="-1.0"
+       prefHeight="200.0" GridPane.rowIndex="1">
+       <columns>
+        <TableColumn prefWidth="200.0" text="Source Time">
+         <cellValueFactory>
+          <PropertyValueFactory property="source_timestamp" />
+         </cellValueFactory>
+        </TableColumn>       
+        <TableColumn prefWidth="200.0" text="Metric">
+         <cellValueFactory>
+          <PropertyValueFactory property="metric_id" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="75.0" text="Type">
+         <cellValueFactory>
+          <PropertyValueFactory property="limit_type" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="200.0" text="Units">
+         <cellValueFactory>
+          <PropertyValueFactory property="unit_identifier" />
+         </cellValueFactory>
+        </TableColumn>        
+        <TableColumn prefWidth="75.0" text="Value">
+         <cellValueFactory>
+          <PropertyValueFactory property="value" />
+         </cellValueFactory>
+        </TableColumn>
+       </columns>
+      </TableView>
+         
+         </content>
       </Tab>      
+                  <Tab text="Local Limit Obj ">
+         <content>
+               <TableView fx:id="localAlarmLimitObjectiveTable" prefWidth="-1.0"
+       prefHeight="200.0" GridPane.rowIndex="1">
+       <columns>
+        <TableColumn prefWidth="200.0" text="Source Time">
+         <cellValueFactory>
+          <PropertyValueFactory property="source_timestamp" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="75.0" text="UDI">
+         <cellValueFactory>
+          <PropertyValueFactory property="unique_device_identifier" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="200.0" text="Metric">
+         <cellValueFactory>
+          <PropertyValueFactory property="metric_id" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="75.0" text="Type">
+         <cellValueFactory>
+          <PropertyValueFactory property="limit_type" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="200.0" text="Units">
+         <cellValueFactory>
+          <PropertyValueFactory property="unit_identifier" />
+         </cellValueFactory>
+        </TableColumn>        
+        <TableColumn prefWidth="75.0" text="Value">
+         <cellValueFactory>
+          <PropertyValueFactory property="value" />
+         </cellValueFactory>
+        </TableColumn>
+       </columns>
+      </TableView>
+         
+         </content>
+      </Tab>      
+            
     </tabs>
   </TabPane>
 

@@ -81,6 +81,22 @@
         <property name="qosProfile"><value>state</value></property>
     </bean>
     
+    <bean id="localAlarmLimitObjectiveList" class="org.mdpnp.apps.fxbeans.LocalAlarmLimitObjectiveFxListFactory" lazy-init="false">
+        <property name="topicName"><util:constant static-field="ice.LocalAlarmLimitObjectiveTopic.VALUE"/></property>
+        <property name="subscriber" ref="subscriber"/>
+        <property name="eventLoop" ref="eventLoop"/>
+        <property name="qosLibrary"><value>ice_library</value></property>
+        <property name="qosProfile"><value>state</value></property>
+    </bean>
+    
+    <bean id="globalAlarmLimitObjectiveList" class="org.mdpnp.apps.fxbeans.GlobalAlarmLimitObjectiveFxListFactory" lazy-init="false">
+        <property name="topicName"><util:constant static-field="ice.GlobalAlarmLimitObjectiveTopic.VALUE"/></property>
+        <property name="subscriber" ref="subscriber"/>
+        <property name="eventLoop" ref="eventLoop"/>
+        <property name="qosLibrary"><value>ice_library</value></property>
+        <property name="qosProfile"><value>state</value></property>
+    </bean>    
+    
     <!-- This wrapper adds a validation flag to each numeric by containment -->
     <bean id="validationOracle" class="org.mdpnp.apps.testapp.validate.ValidationOracleFactory" lazy-init="false">
         <property name="numericList" ref="numericList"/>

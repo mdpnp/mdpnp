@@ -6,7 +6,11 @@ import org.mdpnp.apps.fxbeans.AlarmLimitFx;
 import org.mdpnp.apps.fxbeans.AlarmLimitFxList;
 import org.mdpnp.apps.fxbeans.AlertFx;
 import org.mdpnp.apps.fxbeans.AlertFxList;
+import org.mdpnp.apps.fxbeans.GlobalAlarmLimitObjectiveFx;
+import org.mdpnp.apps.fxbeans.GlobalAlarmLimitObjectiveFxList;
 import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
+import org.mdpnp.apps.fxbeans.LocalAlarmLimitObjectiveFx;
+import org.mdpnp.apps.fxbeans.LocalAlarmLimitObjectiveFxList;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
@@ -20,6 +24,8 @@ public class Diagnostic {
     private final ValidationOracle validationOracle;
     private final InfusionStatusFxList infusionStatusList;
     private final AlarmLimitFxList alarmLimits;
+    private final LocalAlarmLimitObjectiveFxList localAlarmLimitObjectives;
+    private final GlobalAlarmLimitObjectiveFxList globalAlarmLimitObjectives;
     
     public Diagnostic(AlertFxList patientAlerts, 
             AlertFxList technicalAlerts, 
@@ -27,7 +33,9 @@ public class Diagnostic {
             SampleArrayFxList sampleArrayList, 
             ValidationOracle validationOracle, 
             InfusionStatusFxList infusionStatusList,
-            AlarmLimitFxList alarmLimits) {
+            AlarmLimitFxList alarmLimits,
+            LocalAlarmLimitObjectiveFxList localAlarmLimitObjectives,
+            GlobalAlarmLimitObjectiveFxList globalAlarmLimitObjectives) {
         this.numerics = numerics;
         this.sampleArrays = sampleArrayList;
         this.patientAlerts = patientAlerts;
@@ -35,6 +43,8 @@ public class Diagnostic {
         this.validationOracle = validationOracle;
         this.infusionStatusList = infusionStatusList;
         this.alarmLimits = alarmLimits;
+        this.localAlarmLimitObjectives = localAlarmLimitObjectives;
+        this.globalAlarmLimitObjectives = globalAlarmLimitObjectives;
     }
     
     public ObservableList<NumericFx> getNumericModel() {
@@ -63,6 +73,14 @@ public class Diagnostic {
     
     public ObservableList<AlarmLimitFx> getAlarmLimitModel() {
         return alarmLimits;
+    }
+    
+    public ObservableList<GlobalAlarmLimitObjectiveFx> getGlobalAlarmLimitObjectiveModel() {
+        return globalAlarmLimitObjectives;
+    }
+    
+    public ObservableList<LocalAlarmLimitObjectiveFx> getLocalAlarmLimitObjectiveModel() {
+        return localAlarmLimitObjectives;
     }
     
 }

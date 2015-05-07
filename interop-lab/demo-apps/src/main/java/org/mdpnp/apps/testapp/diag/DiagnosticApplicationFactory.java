@@ -8,7 +8,9 @@ import javafx.scene.Parent;
 
 import org.mdpnp.apps.fxbeans.AlarmLimitFxList;
 import org.mdpnp.apps.fxbeans.AlertFxList;
+import org.mdpnp.apps.fxbeans.GlobalAlarmLimitObjectiveFxList;
 import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
+import org.mdpnp.apps.fxbeans.LocalAlarmLimitObjectiveFxList;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
@@ -38,11 +40,26 @@ public class DiagnosticApplicationFactory implements IceApplicationProvider {
         
         final AlarmLimitFxList alarmLimitList = parentContext.getBean("alarmLimitList", AlarmLimitFxList.class);
         
+        final LocalAlarmLimitObjectiveFxList localAlarmLimitObjectiveList = parentContext.getBean("localAlarmLimitObjectiveList", LocalAlarmLimitObjectiveFxList.class);
+        
+        final GlobalAlarmLimitObjectiveFxList globalAlarmLimitObjectiveList = parentContext.getBean("globalAlarmLimitObjectiveList", GlobalAlarmLimitObjectiveFxList.class);        
+        
         final ValidationOracle validationOracle = parentContext.getBean("validationOracle", ValidationOracle.class);
         
         final InfusionStatusFxList infusionStatusList = parentContext.getBean("infusionStatusList", InfusionStatusFxList.class);
         
-        final Diagnostic diagnostic = new Diagnostic(patientAlertList, technicalAlertList, numericList, sampleArrayList, validationOracle, infusionStatusList, alarmLimitList);
+        
+        
+        final Diagnostic diagnostic = new Diagnostic(
+                patientAlertList, 
+                technicalAlertList, 
+                numericList, 
+                sampleArrayList, 
+                validationOracle, 
+                infusionStatusList, 
+                alarmLimitList,
+                localAlarmLimitObjectiveList,
+                globalAlarmLimitObjectiveList);
 
         FXMLLoader loader = new FXMLLoader(DiagnosticApplication.class.getResource("DiagnosticApplication.fxml"));
         

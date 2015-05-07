@@ -5,7 +5,9 @@ import javafx.scene.control.TableView;
 
 import org.mdpnp.apps.fxbeans.AlarmLimitFx;
 import org.mdpnp.apps.fxbeans.AlertFx;
+import org.mdpnp.apps.fxbeans.GlobalAlarmLimitObjectiveFx;
 import org.mdpnp.apps.fxbeans.InfusionStatusFx;
+import org.mdpnp.apps.fxbeans.LocalAlarmLimitObjectiveFx;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.testapp.validate.Validation;
@@ -22,6 +24,8 @@ public class DiagnosticApplication {
     @FXML protected TableView<Validation> validationTable;
     @FXML protected TableView<InfusionStatusFx> infusionStatusTable;
     @FXML protected TableView<AlarmLimitFx> alarmLimitTable;
+    @FXML protected TableView<LocalAlarmLimitObjectiveFx> localAlarmLimitObjectiveTable;
+    @FXML protected TableView<GlobalAlarmLimitObjectiveFx> globalAlarmLimitObjectiveTable;
     
     public DiagnosticApplication() {
     }
@@ -39,6 +43,8 @@ public class DiagnosticApplication {
         validationTable.setItems(diagnostic.getValidationOracle());
         infusionStatusTable.setItems(diagnostic.getInfusionStatusList());
         alarmLimitTable.setItems(diagnostic.getAlarmLimitModel());
+        localAlarmLimitObjectiveTable.setItems(diagnostic.getLocalAlarmLimitObjectiveModel());
+        globalAlarmLimitObjectiveTable.setItems(diagnostic.getGlobalAlarmLimitObjectiveModel());
     }
 }
 
