@@ -81,12 +81,11 @@ targetCompatibility = JAVA_VERSION_CLASSES
 
 mainClassName = 'org.mdpnp.apps.testapp.Main'
 
-def String BUILD_NUMBER = "$System.env.BUILD_NUMBER"
-
 Date buildTimeAndDate = new Date()
 ext {
     buildDate = new java.text.SimpleDateFormat('dd-MMM-yyyy').format(buildTimeAndDate)
     buildTime = new java.text.SimpleDateFormat('hh:mm aa').format(buildTimeAndDate)
+    specificationVersion = project.version.substring(0, project.version.lastIndexOf('.')) 
 }
 
 manifest { attributes "Main-Class" : mainClassName }
@@ -130,9 +129,17 @@ dependencies {
 
 jar {
     manifest {
-        attributes("Main-Class": 'org.mdpnp.apps.testapp.Main', "Built-By": System.properties['user.name'], "Created-By": System.properties['java.version'] + " (" + System.properties['java.vendor'] + " " + System.getProperty("java.vm.version") + ")",
-        "Implementation-Title": project.name, "Implementation-Version": project.version, "Build-Date": buildDate, "Build-Time": buildTime,
-        "Specification-Title": project.name, "Specification-Version": project.version, "Implementation-Vendor": project.group,
-        "Specification-Vendor": project.group, "Build-Number": BUILD_NUMBER)
+        attributes("Main-Class": 'org.mdpnp.apps.testapp.Main', 
+        "Built-By": System.properties['user.name'], 
+        "Created-By": System.properties['java.version'] + " (" + System.properties['java.vendor'] + " " + System.getProperty("java.vm.version") + ")",
+        "Implementation-Title": project.name, 
+        "Implementation-Version": project.version, 
+        "Build-Date": buildDate, 
+        "Build-Time": buildTime,
+        "Specification-Title": project.name, 
+        "Specification-Version": specificationVersion, 
+        "Implementation-Vendor": project.group,
+        "Specification-Vendor": project.group, 
+        "Build-Number": project.version)
     }
 }
