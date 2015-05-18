@@ -18,20 +18,19 @@ then
 fi
 
 export ADAPTER_OPTS="-app ICE_Device_Interface $DEVICE_SETTINGS"
-export ADAPTER_DIR=$HOME/OpenICE-0.6.3-SNAPSHOT/bin
-export ADAPTER_SCR=OpenICE
+export ADAPTER_SCR=/home/debian/OpenICE/OpenICE.current/bin/OpenICE
 export PIDFILE=/var/run/$NAME.pid
-export OPEN_ICE_OPTS="-Dlog4j.configuration=file:$ADAPTER_DIR/../../log4j.properties -DrandomUDI=$DEVICE_ID"
+export OPEN_ICE_OPTS="-Dlog4j.configuration=file:$HOME/log4j.properties -DrandomUDI=$DEVICE_ID"
 
 case "$1" in
     start)
-  echo -n "Starting $NAME: $ADAPTER_DIR/$ADAPTER_SCR $ADAPTER_OPTS"
-  start-stop-daemon --background --make-pidfile --chuid debian --chdir $ADAPTER_DIR/../../ --exec $ADAPTER_DIR/$ADAPTER_SCR  --start --pidfile $PIDFILE -- $ADAPTER_OPTS
+  echo -n "Starting $NAME: $ADAPTER_SCR $ADAPTER_OPTS"
+  start-stop-daemon --background --make-pidfile --chuid debian --chdir $HOME --exec $ADAPTER_SCR  --start --pidfile $PIDFILE -- $ADAPTER_OPTS
   echo "."
   ;;
     stop)
   echo -n "Stopping $NAME: pid at $PIDFILE"
-  start-stop-daemon --stop --chdir $ADAPTER_DIR/../../ --chuid debian --signal 2 --oknodo --pidfile $PIDFILE
+  start-stop-daemon --stop --chdir $HOME --chuid debian --signal 2 --oknodo --pidfile $PIDFILE
   echo "."
   ;;
     restart)
