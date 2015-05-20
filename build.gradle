@@ -72,7 +72,7 @@ ext {
     localOsArch = fromOsArch(System.properties['os.arch'])
     targetOsName = project.hasProperty('OS_NAME') ? fromOsName(OS_NAME) : localOsName
     targetOsArch = project.hasProperty('OS_ARCH') ? fromOsArch(OS_ARCH) : localOsArch
-    VERSION_NUMBER = MDPNP_VERSION_NUMBER + '-' + BUILD_NUMBER 
+    VERSION_NUMBER = MDPNP_VERSION_NUMBER + ((null!=BUILD_NUMBER&&!"".equals(BUILD_NUMBER))?"-":"") + BUILD_NUMBER 
 }
 
 group 'org.mdpnp'
