@@ -3,13 +3,13 @@ package org.mdpnp.devices.simulation.multi;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mdpnp.devices.EventLoopHandler;
-import org.mdpnp.devices.IceQos;
 import org.mdpnp.devices.PublisherFactory;
 import org.mdpnp.devices.SubscriberFactory;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 import org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl;
+import org.mdpnp.rtiapi.qos.IceQos;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;

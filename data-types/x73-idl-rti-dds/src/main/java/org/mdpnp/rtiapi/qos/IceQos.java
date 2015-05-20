@@ -1,4 +1,4 @@
-package org.mdpnp.devices;
+package org.mdpnp.rtiapi.qos;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,7 +61,7 @@ public class IceQos {
         }
     }
 
-    static boolean hasUserDefinedQoS(File userProfiles) throws ParserConfigurationException, SAXException, IOException {
+    public static boolean hasUserDefinedQoS(File userProfiles) throws ParserConfigurationException, SAXException, IOException {
 
         boolean userIceLibrary = false;
 
@@ -85,7 +85,7 @@ public class IceQos {
     }
 
 
-    static void loadIceQosLibrary(DomainParticipantFactoryQos qos) throws IOException {
+    public static void loadIceQosLibrary(DomainParticipantFactoryQos qos) throws IOException {
 
         URL url = IceQos.class.getResource("/META-INF/ice_library.xml");
         if (url != null) {

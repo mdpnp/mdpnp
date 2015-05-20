@@ -15,6 +15,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.qos.IceQos;
 
 import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.publication.Publisher;

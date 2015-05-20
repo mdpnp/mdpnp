@@ -159,12 +159,12 @@
      <value>
       <element>
        <!-- Default setting; for future experimentation -->
-       <name>interface_poll_period</name>
+       <name>dds.transport.UDPv4.builtin.interface_poll_period</name>
        <value>500</value>
       </element>
       <element>
        <!-- Don't ignore an interface just because it is nonup -->
-       <name>ignore_nonup_interfaces</name>
+       <name>dds.transport.UDPv4.builtin.ignore_nonup_interfaces</name>
        <value>0</value>
       </element>
       <!-- 65507 is the default; IP level fragmentation doesn't seem to be 
@@ -179,6 +179,18 @@
       <element>
        <name>dds.transport.UDPv4.builtin.send_ping</name>
        <value>false</value>
+      </element>
+      <element>
+       <name>dds.transport.UDPv4.builtin.ignore_loopback_interface</name>
+       <value>0</value>
+      </element>
+      <element>
+       <name>ignore_loopback_interface</name>
+       <value>0</value>
+      </element>
+      <element>
+       <name>ignore_loopback_interface</name>
+       <value>0</value>
       </element>
      </value>
     </property>

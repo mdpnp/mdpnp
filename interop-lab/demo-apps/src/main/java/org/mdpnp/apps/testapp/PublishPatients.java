@@ -13,8 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import org.mdpnp.devices.IceQos;
 import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.qos.IceQos;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;

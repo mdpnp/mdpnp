@@ -13,7 +13,7 @@
         
     </bean>
     
-    <bean id="iceQoS" class="org.mdpnp.devices.IceQos" factory-method="loadAndSetIceQos">
+    <bean id="iceQoS" class="org.mdpnp.rtiapi.qos.IceQos" factory-method="loadAndSetIceQos">
     </bean>
 
     
