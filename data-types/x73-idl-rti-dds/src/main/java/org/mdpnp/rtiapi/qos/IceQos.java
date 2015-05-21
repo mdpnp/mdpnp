@@ -29,8 +29,9 @@ public class IceQos {
 
     private IceQos() {}
 
+    public enum LoadStatus { NONE, USER, SYSTEM }
 
-    public static boolean loadAndSetIceQos() {
+    public static LoadStatus loadAndSetIceQos() {
 
         // Unfortunately this throws an Exception if there are errors in
         // XML profiles
@@ -39,21 +40,21 @@ public class IceQos {
         try {
 
             File userProfiles = new File("USER_QOS_PROFILES.xml");
-            boolean userIceLibrary = hasUserDefinedQoS(userProfiles);
+            LoadStatus statusCode = hasUserDefinedQoS(userProfiles)?LoadStatus.USER:LoadStatus.NONE;
 
             DomainParticipantFactory factory = DomainParticipantFactory.get_instance();
             DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
             factory.get_qos(qos);
 
-            if (!userIceLibrary) {
-                loadIceQosLibrary(qos);
-                log.debug("Loaded default ice_library QoS");
+            if (statusCode==LoadStatus.NONE) {
+                statusCode = loadIceQosLibrary(qos)?LoadStatus.SYSTEM:LoadStatus.NONE;
+                log.info((statusCode==LoadStatus.SYSTEM?"Loaded":"Failed to load") + " default ice_library QoS from classpath");
             }
 
             qos.resource_limits.max_objects_per_thread = 8192;
             factory.set_qos(qos);
 
-            return userIceLibrary;
+            return statusCode;
 
         } catch (Exception e) {
             log.error("Unable to set factory qos", e);
@@ -85,7 +86,7 @@ public class IceQos {
     }
 
 
-    public static void loadIceQosLibrary(DomainParticipantFactoryQos qos) throws IOException {
+    public static boolean loadIceQosLibrary(DomainParticipantFactoryQos qos) throws IOException {
 
         URL url = IceQos.class.getResource("/META-INF/ice_library.xml");
         if (url != null) {
@@ -97,6 +98,7 @@ public class IceQos {
                 qos.profile.url_profile.clear();
                 qos.profile.string_profile.clear();
                 qos.profile.string_profile.add(scanner.useDelimiter("\\A").next());
+                return true;
             } finally {
                 scanner.close();
                 try {
@@ -106,7 +108,9 @@ public class IceQos {
                 }
             }
         }
-        else
+        else {
             log.warn("Could not locate '/META-INF/ice_library.xml' on classpath");
+            return false;
+        }
     }
 }

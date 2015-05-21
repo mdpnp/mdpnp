@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 public class SerialProviderFactory {
 
     private static SerialProvider defaultProvider;
+
     private static final String[] DEFAULT_PROVIDERS = new String[] {
             "org.mdpnp.data.serial.PureJavaCommSerialProvider",
             "org.mdpnp.devices.serial.TCPSerialProvider"
@@ -67,20 +68,26 @@ public class SerialProviderFactory {
 
     static SerialProvider locateDefaultProvider() {
 
-        List<String> candidates = new ArrayList<>();
+      List<String> candidates = new ArrayList<>();
 
-        String sysProp = System.getProperty(SYSTEM_PROPERTY);
+      String sysProp = System.getProperty(SYSTEM_PROPERTY);
 
-        if (sysProp != null) {
-            candidates.add(sysProp);
-        }
+      if (sysProp != null) {
+        candidates.add(sysProp);
+      }
 
-        addCandidates(candidates, SerialProviderFactory.class.getResourceAsStream("serial-providers"));
-        addCandidates(candidates, SerialProviderFactory.class.getClassLoader().getResourceAsStream("serial-providers"));
+      addCandidates(candidates, SerialProviderFactory.class.getResourceAsStream("serial-providers"));
+      addCandidates(candidates, SerialProviderFactory.class.getClassLoader().getResourceAsStream("serial-providers"));
 
-        candidates.addAll(Arrays.asList(DEFAULT_PROVIDERS));
+      candidates.addAll(Arrays.asList(DEFAULT_PROVIDERS));
+
+      return locateDefaultProvider(candidates);
+    }
+
+  static SerialProvider locateDefaultProvider(List<String> orig) {
 
         SerialProvider sp=null;
+        ArrayList<String> candidates = new ArrayList<>(orig);
         while (null == sp) {
             if (candidates.isEmpty()) {
                 throw new IllegalStateException("No valid defaultProvider available");
@@ -89,7 +96,8 @@ public class SerialProviderFactory {
             try {
                 candidate = candidates.remove(0);
                 log.warn("Attempt to load " + candidate);
-                Constructor<?> constructor = Class.forName(candidate).getConstructor(new Class<?>[0]);
+                Class clazz = Class.forName(candidate);
+                Constructor<?> constructor = clazz.getConstructor(new Class<?>[0]);
                 sp = (SerialProvider) constructor.newInstance(new Object[0]);
             } catch (Exception e) {
                 if (candidates.isEmpty()) {

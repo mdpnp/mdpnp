@@ -18,6 +18,9 @@ import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.Subscriber;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 /**
  *
  */
@@ -29,14 +32,20 @@ public class SimMultiparameterTest {
     @Test
     public void testDeviceSetup() throws Exception {
 
-        IceQos.loadAndSetIceQos();
+        IceQos.LoadStatus qosStatus = IceQos.loadAndSetIceQos();
+        if(qosStatus==IceQos.LoadStatus.NONE)
+          Assert.fail("Failed to load QOS settings");
 
         EventLoop eventLoop = new EventLoop();
         EventLoopHandler handler = new EventLoopHandler(eventLoop);
         org.mdpnp.devices.DomainParticipantFactory dpf = new org.mdpnp.devices.DomainParticipantFactory(domainId);
         SubscriberFactory sf = new SubscriberFactory(dpf.getObject());
         PublisherFactory pf = new PublisherFactory(dpf.getObject());
+
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
         SimMultiparameter device = new SimMultiparameter(sf.getObject(), pf.getObject(), eventLoop);
+        device.setExecutor(scheduler);
         device.connect(null);
 
         final SampleArrayInstanceModel capnoModel =
@@ -49,18 +58,18 @@ public class SimMultiparameterTest {
 
         final DomainParticipant participant =
                 DomainParticipantFactory.get_instance().create_participant(domainId, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null,
-                StatusKind.STATUS_MASK_NONE);
+                                                                           StatusKind.STATUS_MASK_NONE);
 
         final Subscriber subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
 
         participant.enable();
 
         StringSeq params = new StringSeq();
-        params.add("'"+rosetta.MDC_AWAY_CO2.VALUE+"'");
-        params.add("'"+rosetta.MDC_IMPED_TTHOR.VALUE+"'");
+        params.add("'" + rosetta.MDC_AWAY_CO2.VALUE+"'");
+        params.add("'" + rosetta.MDC_IMPED_TTHOR.VALUE + "'");
         capnoModel.startReader(subscriber, eventLoop, "metric_id = %0 or metric_id = %1 ", params, QosProfiles.ice_library, QosProfiles.waveform_data);
 
-        Thread.sleep(2000);
+        Thread.sleep(5000);
 
         int nDev = capnoModel.size();
 
@@ -68,9 +77,7 @@ public class SimMultiparameterTest {
         capnoModel.stopReader();
         handler.shutdown();
 
-        sf.destroy();
-        pf.destroy();
-        dpf.destroy();
+        scheduler.shutdown();
         
         Assert.assertEquals("CapnoModel did not locate the device", 1, nDev);
     }
