@@ -23,12 +23,12 @@ public class PartitionAssignmentControllerTest {
 
     ice.DeviceIdentity deviceIdentity = new ice.DeviceIdentity();
 
-    private static ConfigurableApplicationContext createContext() {
+    private ConfigurableApplicationContext createContext() throws Exception {
         ClassPathXmlApplicationContext ctx =
                 new ClassPathXmlApplicationContext(new String[] { "RtConfig.xml" }, false);
         PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();
         Properties props = new Properties();
-        props.setProperty("mdpnp.domain", "0");
+        props.load(getClass().getResourceAsStream("/RtConfig.properties"));
         ppc.setProperties(props);
         ppc.setOrder(0);
 
@@ -46,7 +46,7 @@ public class PartitionAssignmentControllerTest {
     }
 
     @Test
-    public void testSetPartition() throws Exception{
+    public void testSetPartition() throws Exception {
         ConfigurableApplicationContext ctx = createContext();
         
         final DomainParticipant participant = ctx.getBean("domainParticipant", DomainParticipant.class);

@@ -28,12 +28,13 @@ public class RtConfigTest {
 
     private static final Logger log = LoggerFactory.getLogger(RtConfigTest.class);
 
-    private static ConfigurableApplicationContext createContext() {
+    private ConfigurableApplicationContext createContext() throws Exception
+    {
         ClassPathXmlApplicationContext ctx =
                 new ClassPathXmlApplicationContext(new String[] { "RtConfig.xml" }, false);
         PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();
         Properties props = new Properties();
-        props.setProperty("mdpnp.domain", "0");
+        props.load(getClass().getResourceAsStream("/RtConfig.properties"));
         ppc.setProperties(props);
         ppc.setOrder(0);
 

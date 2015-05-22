@@ -21,12 +21,12 @@ import com.rti.dds.subscription.Subscriber;
 
 public class MDSHandlerTest {
 
-    private static ConfigurableApplicationContext createContext() {
+    private ConfigurableApplicationContext createContext() throws Exception {
         ClassPathXmlApplicationContext ctx =
                 new ClassPathXmlApplicationContext(new String[] { "RtConfig.xml" }, false);
         PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();
         Properties props = new Properties();
-        props.setProperty("mdpnp.domain", "0");
+        props.load(getClass().getResourceAsStream("/RtConfig.properties"));
         ppc.setProperties(props);
         ppc.setOrder(0);
 
@@ -144,8 +144,8 @@ public class MDSHandlerTest {
 
 
             MDSHandler.Objective c = new MDSHandler.Objective(eventLoop,
-                                                                                                          publisher,
-                                                                                                          subscriber);
+                                                              publisher,
+                                                              subscriber);
             c.start();
 
             c.addConnectivityListener(new MDSHandler.Objective.MDSListener() {
