@@ -55,5 +55,5 @@
 }
 
 .temperature-probe-panel .label {
-  -fx-text-fill: red;
+  -fx-text-fill: yellow;
 }
