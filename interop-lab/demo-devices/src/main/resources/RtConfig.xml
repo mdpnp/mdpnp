@@ -15,9 +15,10 @@
     <bean id="iceQoS" class="org.mdpnp.rtiapi.qos.IceQos" factory-method="loadAndSetIceQos">
     </bean>
 
+    <!-- dds.discovery.address is optional; pass down null if not specified. -->
     <bean id="domainParticipant" class="org.mdpnp.devices.DomainParticipantFactory">
         <constructor-arg ref="domainId" />
-        <constructor-arg value="${dds.discovery.address}" />
+        <constructor-arg value="${dds.discovery.address:#{null}}" />
     </bean>
 
     <bean id="eventLoop" class="org.mdpnp.rtiapi.data.EventLoop">

@@ -15,13 +15,16 @@ import com.rti.dds.subscription.builtin.SubscriptionBuiltinTopicDataTypeSupport;
 import com.rti.dds.topic.builtin.TopicBuiltinTopicDataTypeSupport;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DomainParticipantFactory implements FactoryBean<DomainParticipant>, DisposableBean {
 
     private static final Logger log = LoggerFactory.getLogger(DomainParticipantFactory.class);
 
-    private final String discoveryAddress; // if not set, default from ice_library.xml are used.
-    private final int    domain;
+    // if not set (empty), default from ice_library.xml are used.
+    private final List<String> discoveryAddress=new ArrayList<>();
+    private final int  domain;
 
     private DomainParticipant instance;
 
@@ -31,7 +34,12 @@ public class DomainParticipantFactory implements FactoryBean<DomainParticipant>,
 
     public DomainParticipantFactory(int domain, String discoveryAddress) {
         this.domain = domain;
-        this.discoveryAddress = (discoveryAddress!=null&&discoveryAddress.trim().length()!=0)?discoveryAddress.trim():null;
+        if(discoveryAddress != null) {
+            String [] arr = discoveryAddress.split("[;]");
+            for(String s:arr) {
+                this.discoveryAddress.add(s.trim());
+            }
+        }
     }
 
     private static int nextParticipantId = 0;
@@ -56,15 +64,19 @@ public class DomainParticipantFactory implements FactoryBean<DomainParticipant>,
             if(dpQos.discovery.multicast_receive_addresses.size() != 0)
                 log.warn(dpQos.discovery.multicast_receive_addresses.size() + " " + dpQos.discovery.multicast_receive_addresses.get(0).toString());
 
-            if(discoveryAddress != null) {
-                String s = "udpv4://" + discoveryAddress;
-                log.warn("Overriding default discovery settings to use " + s);
-                InetAddress ip = InetAddress.getByName(discoveryAddress);
+            if(!discoveryAddress.isEmpty()) {
                 dpQos.discovery.multicast_receive_addresses.clear();
                 dpQos.discovery.initial_peers.clear();
-                dpQos.discovery.initial_peers.add(s);
-                if (ip.isMulticastAddress()) {
-                    dpQos.discovery.multicast_receive_addresses.add(s);
+
+                for(int i=0; i<discoveryAddress.size(); i++) {
+                    String addr = discoveryAddress.get(i);
+                    String s = "udpv4://" + addr;
+                    log.warn("Overriding default discovery settings to use " + s);
+                    InetAddress ip = InetAddress.getByName(addr);
+                    dpQos.discovery.initial_peers.add(s);
+                    if (i == 0 && ip.isMulticastAddress()) {
+                        dpQos.discovery.multicast_receive_addresses.add(s);
+                    }
                 }
             }
 
