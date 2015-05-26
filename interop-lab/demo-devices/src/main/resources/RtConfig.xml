@@ -6,20 +6,18 @@
                            http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
     
     <bean id="domainId" class="java.lang.Integer">
-        <constructor-arg value="${mdpnp.domain}" />
+      <constructor-arg value="${mdpnp.domain}" />
     </bean>
 
     <bean id="domainParticipantFactory" class="org.mdpnp.devices.DomainParticipantFactoryFactory">
-        
     </bean>
     
     <bean id="iceQoS" class="org.mdpnp.rtiapi.qos.IceQos" factory-method="loadAndSetIceQos">
     </bean>
 
-    
-    
     <bean id="domainParticipant" class="org.mdpnp.devices.DomainParticipantFactory">
         <constructor-arg ref="domainId" />
+        <constructor-arg value="${dds.discovery.address}" />
     </bean>
 
     <bean id="eventLoop" class="org.mdpnp.rtiapi.data.EventLoop">
