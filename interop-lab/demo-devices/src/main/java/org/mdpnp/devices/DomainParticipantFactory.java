@@ -28,6 +28,8 @@ public class DomainParticipantFactory implements FactoryBean<DomainParticipant>,
 
     private DomainParticipant instance;
 
+    static final String TOKENIZER_REGEX = "[\\s,;]+";
+
     public DomainParticipantFactory(int domain) {
         this(domain, null);
     }
@@ -35,7 +37,7 @@ public class DomainParticipantFactory implements FactoryBean<DomainParticipant>,
     public DomainParticipantFactory(int domain, String discoveryAddress) {
         this.domain = domain;
         if(discoveryAddress != null) {
-            String [] arr = discoveryAddress.split("[;]");
+            String [] arr = discoveryAddress.split(TOKENIZER_REGEX);
             for(String s:arr) {
                 this.discoveryAddress.add(s.trim());
             }

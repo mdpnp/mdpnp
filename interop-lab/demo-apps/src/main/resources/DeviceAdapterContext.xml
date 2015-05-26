@@ -16,6 +16,8 @@
     <property name="locations">
       <list>
         <value>classpath:/ice.properties</value>
+        <!-- if present, will override whatever is set in the default ice.properties -->
+        <value>file:${user.dir}/ice.properties</value>
       </list>
     </property>
   </bean>
